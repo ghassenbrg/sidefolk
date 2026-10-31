@@ -28,7 +28,7 @@ enum SamplePlayBoards {
     }
 
     static let trivia = GameInfo(extensionId: "dev.sidefolk.playtime", extensionName: "Playtime", game: "trivia", title: "Trivia",
-                                 symbol: "questionmark.bubble.fill", levels: [], iconPath: FixtureServices.addonIcon("playtime"))
+                                 symbol: "questionmark.bubble.fill", levels: [], iconPath: FixtureServices.addonIcon("playtime"), look: .quiz)
 
     /// Each sample's model as the panel shows it, and the moment of its reveal to draw. The build-up samples prove the
     /// order (D75): what shows while the reveal plays or the answer waits has no verdict in it.
@@ -36,6 +36,7 @@ enum SamplePlayBoards {
         var out: [(String, PlayModel, Double?)] = []
         for (name, info, board) in boards() {
             let model = PlayModel(info: info, provider: Fixed(info, board), companionName: "Mochi", portrait: portrait, soundsOn: name.hasPrefix("trivia-question"))
+            dress(model)
             await model.start(GameSetup())
             // A board that opens on a reveal plays it first; these samples show it landed.
             if board?.reveal != nil { try? await Task.sleep(for: .seconds(GameSuspense.revealSeconds + 0.2)) }
@@ -76,17 +77,48 @@ enum SamplePlayBoards {
             let previous = json["previous"].flatMap { try? GameBoard.parse($0) }
             let info = GameInfo(extensionId: "dev.sidefolk.playtime", extensionName: "Playtime", game: json["game"]?.stringValue ?? "game",
                                 title: json["title"]?.stringValue ?? "Game", symbol: json["symbol"]?.stringValue,
-                                iconPath: FixtureServices.addonIcon("playtime"))
+                                iconPath: FixtureServices.addonIcon("playtime"), tagline: json["tagline"]?.stringValue,
+                                look: json["look"]?.stringValue.flatMap(GameLook.init(rawValue:)))
             let name = file.deletingPathExtension().lastPathComponent
             var stages = [(name, false)]
             if let previous, GameSuspense.buildUp(from: previous, to: board, picked: nil) != nil { stages.insert((name + "-buildup", true), at: 0) }
             for (shot, held) in stages {
                 let model = PlayModel(info: info, provider: Fixed(info, board), companionName: "Mochi", portrait: portrait, soundsOn: false)
+                dress(model)
                 model.stage(after: previous, board, buildUp: held)
                 out.append((shot, model))
             }
         }
         return out
+    }
+
+    /// As the app opens a game: the companion's figure in the scene, a way back to the menu (the stand-in face for "You",
+    /// never the Mac account's picture in a snapshot).
+    static func dress(_ model: PlayModel) {
+        model.figure = { state in CompanionArt.portrait(for: AppSettings(), state: state, side: 220) }
+        model.onBack = {}
+    }
+
+    /// The menu of games as the panel's home shows it: Sidefolk's best of three and Playtime's games from the boards'
+    /// folder (their titles and taglines in its language), with a game kept to resume and some stats.
+    static func menu(from dir: URL?, portrait: NSImage?) -> PlayMenuModel {
+        var seen: [String: GameInfo] = [:]
+        let files = dir.flatMap { try? FileManager.default.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil) } ?? []
+        for file in files.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) where file.pathExtension == "json" {
+            guard let data = try? Data(contentsOf: file), let json = try? JSONDecoder().decode(JSONValue.self, from: data),
+                  let game = json["game"]?.stringValue, seen[game] == nil else { continue }
+            seen[game] = GameInfo(extensionId: "dev.sidefolk.playtime", extensionName: "Playtime", game: game, title: json["title"]?.stringValue ?? game,
+                                  symbol: json["symbol"]?.stringValue, iconPath: FixtureServices.addonIcon("playtime"),
+                                  tagline: json["tagline"]?.stringValue, look: json["look"]?.stringValue.flatMap(GameLook.init(rawValue:)))
+        }
+        let order = ["daily_word", "trivia", "tictactoe", "copy_me", "quick_paws", "which_cup", "higher_lower", "guess_animal", "balloon_words",
+                     "last_stick", "memory_pairs"]
+        let games = [GameInfo.handsMatch] + order.compactMap { seen[$0] }
+        var stats = GameStats()
+        (stats.played, stats.wins, stats.streak, stats.bestStreak) = (23, 12, 3, 5)
+        return PlayMenuModel(games: games, stats: stats, companionName: "Mochi", portrait: portrait,
+                             figure: CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220),
+                             kept: games.first { $0.game == "which_cup" })
     }
 
     private static func json(_ text: String) -> GameBoard { try! GameBoard.parse(try! JSONValue.parse(text)) }

@@ -110,13 +110,14 @@ struct GameChannelTests {
         let folder = try ExtFixtures.tempDir("game-bad").appendingPathComponent("fixture")
         let bad: JSONValue = [
             "Quiz Game": ["title": "Quiz"],
-            "quiz": ["title": "", "symbol": "Not A Symbol", "levels": ["easy", "easy"], "say": ["yes", "play {what:text}", "quiz me", "Quiz me!"]],
+            "quiz": ["title": "", "symbol": "Not A Symbol", "levels": ["easy", "easy"], "say": ["yes", "play {what:text}", "quiz me", "Quiz me!"],
+                     "look": "castle", "tagline": "A tagline far, far too long to fit under a title on the menu's little card"],
         ]
         _ = try ExtFixtures.makeExtension(at: folder, manifest: Self.manifest(games: bad), files: ["server.py": Self.fixture])
         let preview = await h.host.preview(folder: folder)
         let fields = Set(preview.report.errors.map(\.field))
         for field in ["games.Quiz Game", "games.quiz.title", "games.quiz.symbol", "games.quiz.levels", "games.quiz.say[0]", "games.quiz.say[1]",
-                      "games.quiz.say[3]"] {
+                      "games.quiz.say[3]", "games.quiz.look", "games.quiz.tagline"] {
             #expect(fields.contains(field), "\(field) in \(fields)")
         }
         #expect(!fields.contains("games.quiz.say[2]"))
@@ -233,6 +234,7 @@ struct GameChannelTests {
 
         let record = GameRecord.entry(.handsMatch, last: end, companionName: "Mochi", at: Date())
         #expect(record.summary == "Played Rock, Paper, Scissors with Mochi · You 2 · Mochi 1" && record.tool == "games.play")
+        #expect(record.args?["result"]?.stringValue == "win", "how it ended is kept for the menu's stats")
     }
 
     /// The founder found the companion "always" answering rock with rock: its throw must be sealed before the person's
@@ -340,5 +342,26 @@ struct GameChannelTests {
         #expect(Toss.coins([true], call: true).called == true && Toss.coins([false], call: true).called == false)
         #expect(Toss.coins([true]).called == nil && Toss.coins([true, false], call: true).called == nil)
         #expect(Toss.coins([false], call: true).forModel == "tails; the user called heads and was wrong")
+    }
+
+    /// The menu's stats come from Sidefolk's own rows: wins, the run of wins up to now, the longest run, games finished.
+    @Test func statsAreCountedFromTheActivityRows() {
+        func row(_ result: String?, _ tool: String = "games.play") -> ActivityEntry {
+            var args: [String: JSONValue] = ["game": "quiz"]
+            if let result { args["result"] = .string(result) }
+            return ActivityEntry(caller: "user", tool: tool, risk: "low", decision: .auto, summary: "", args: .object(args))
+        }
+        // Newest first, as `ActivityStore.recent` gives them.
+        let stats = GameStats([row("win"), row("win"), row(nil), row("loss"), row("win"), row("win"), row("win"), row("draw"), row("win", "notes.save")])
+        #expect(stats.played == 7 && stats.wins == 5 && stats.streak == 2 && stats.bestStreak == 3)
+        #expect(GameStats([]).played == 0 && GameStats([row("loss")]).streak == 0)
+    }
+
+    /// A game's look and tagline reach the shelf, a tagline in the person's language when its strings have one.
+    @Test func aGamesLookAndTaglineAreRead() throws {
+        let m = try JSONDecoder().decode(ExtensionManifest.GameMeta.self, from: Data(#"{"title": "Cups", "look": "cups", "tagline": "Watch the gem"}"#.utf8))
+        #expect(m.look.flatMap(GameLook.init(rawValue:)) == .cups && m.tagline == "Watch the gem")
+        #expect(GameLook.words.solo && !GameLook.cups.solo, "a puzzle is played alone; the menu groups it apart")
+        #expect(GameInfo.handsMatch.look == .hands && GameInfo.handsMatch.tagline != nil)
     }
 }

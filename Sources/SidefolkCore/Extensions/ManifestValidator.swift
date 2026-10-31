@@ -590,6 +590,13 @@ extension ManifestValidator {
             if let s = g.symbol, s.count > 64 || s.range(of: Self.symbolPattern, options: .regularExpression) == nil {
                 issues.append(ValidationIssue(field: "\(field).symbol", message: "must be an SF Symbol name, like gamecontroller."))
             }
+            if let t = g.tagline, t.isEmpty || t.count > 60 || ExtensionText.clean(t) != t || t.contains(where: \.isNewline) {
+                issues.append(ValidationIssue(field: "\(field).tagline", message: "must be one line of 1–60 characters of plain text."))
+            }
+            if let look = g.look, GameLook(rawValue: look) == nil {
+                issues.append(ValidationIssue(field: "\(field).look", message: "must be one of Sidefolk's game looks: "
+                    + GameLook.allCases.map(\.rawValue).joined(separator: ", ") + "."))
+            }
             if g.levels.count > 5 || Set(g.levels).count != g.levels.count
                 || g.levels.contains(where: { $0.range(of: #"^[a-z][a-z0-9_]{0,19}$"#, options: .regularExpression) == nil }) {
                 issues.append(ValidationIssue(field: "\(field).levels", message: "must be at most 5 different names of lowercase letters, digits and _."))

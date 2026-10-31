@@ -139,6 +139,10 @@ struct SticksView: View {
     @State private var hovered: Int?
 
     var body: some View {
+        VStack(spacing: 4) { row }
+    }
+
+    @ViewBuilder private var row: some View {
         let groups = Dictionary(sticks.groups.enumerated().flatMap { g, members in members.map { ($0, g) } }, uniquingKeysWith: { a, _ in a })
         HStack(alignment: .bottom, spacing: 5) {
             ForEach(0..<sticks.total, id: \.self) { i in
@@ -166,6 +170,23 @@ struct SticksView: View {
         .animation(.spring(duration: 0.3), value: hovered)
         .animation(.spring(duration: 0.45), value: sticks.left)
         .frame(maxWidth: .infinity)
+        if !sticks.locked {
+            // The takes as big buttons too, each showing its sticks: the same moves as clicking the row.
+            HStack(spacing: 8) {
+                ForEach(1...max(1, min(sticks.take, sticks.left)), id: \.self) { n in
+                    Button { model.send(.number(n)) } label: {
+                        VStack(spacing: 2) {
+                            HStack(spacing: 3) { ForEach(0..<n, id: \.self) { _ in CandyStick(color: Theme.coral).frame(width: 6, height: 18) } }
+                            Text(String(localized: "Take \(n)", comment: "Last Stick: a button that takes that many sticks"))
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(ChunkyButtonStyle(kind: .secondary))
+                    .disabled(model.pending != nil)
+                }
+            }
+            .padding(.top, 6)
+        }
     }
 
     /// Candy stripes; the companion's lesson tints its groups of four in turn and lights the sticks to take.

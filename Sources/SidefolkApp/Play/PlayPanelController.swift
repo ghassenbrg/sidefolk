@@ -36,18 +36,38 @@ final class PlayPanelController {
         return model
     }
 
+    /// Whether the panel shows `model`'s board now (not the menu): its cues play only then.
+    func shows(_ model: PlayModel?) -> Bool { isVisible && !holder.showingMenu && holder.model === model }
+
     func show(_ model: PlayModel, beside anchor: NSRect, on screen: NSScreen, focus: Bool) {
         expiry?.cancel()
         holder.model = model
+        holder.showingMenu = false
+        present(beside: anchor, on: screen, focus: focus)
+    }
+
+    /// The menu of games, the panel's home; a game kept stays kept, to be resumed from it.
+    func showMenu(_ menu: PlayMenuModel, beside anchor: NSRect, on screen: NSScreen, focus: Bool) {
+        expiry?.cancel()
+        holder.menu = menu
+        holder.showingMenu = true
+        present(beside: anchor, on: screen, focus: focus)
+    }
+
+    private func present(beside anchor: NSRect, on screen: NSScreen, focus: Bool) {
         hosted.place(beside: anchor, on: screen)
         hosted.panel.orderFrontRegardless()
         if focus { hosted.panel.makeKey() }
         if keyMonitor == nil {
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                guard let self, event.window === self.hosted.panel, let model = self.holder.model else { return event }
+                guard let self, event.window === self.hosted.panel else { return event }
                 // A text field being typed in (an idiom through the input method, an animal's name) keeps its keys.
                 if self.hosted.panel.firstResponder is NSTextView { return event }
                 guard !event.modifierFlags.contains(.command), let key = Self.key(event) else { return event }
+                if self.holder.showingMenu, let menu = self.holder.menu {
+                    return menu.press(key) ? nil : event
+                }
+                guard let model = self.holder.model else { return event }
                 // Return and Space are the board's alone: never a press of whichever header button has the focus.
                 return model.press(key, at: event.timestamp) || key == "return" || key == "space" ? nil : event
             }
@@ -104,6 +124,9 @@ final class PlayPanelController {
 @MainActor @Observable
 final class PlayHolder {
     var model: PlayModel?
+    var menu: PlayMenuModel?
+    /// The menu shows, the game (if any) kept behind it.
+    var showingMenu = false
     var onSpeaker: (() -> Void)?
 }
 
@@ -111,7 +134,9 @@ struct PlayRoot: View {
     var holder: PlayHolder
 
     var body: some View {
-        if let model = holder.model {
+        if holder.showingMenu, let menu = holder.menu {
+            PlayMenuView(menu: menu)
+        } else if let model = holder.model {
             PlayView(model: model) { holder.onSpeaker?() }
         } else {
             Color.clear.frame(width: PlayView.width, height: 10)

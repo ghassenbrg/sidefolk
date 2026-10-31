@@ -24,6 +24,8 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var palettes: [String: Palette] = [:]
         /// Game titles (D75), shown in the Play menu, the panel's header and `games.open`.
         public var games: [String: String] = [:]
+        /// Game taglines, under the title on the Play panel's menu card.
+        public var gameTaglines: [String: String] = [:]
         /// The program's sentences by their English key: one text, or forms by count (`one`, `other`…).
         public var text: [String: Text] = [:]
 
@@ -217,8 +219,9 @@ extension ExtensionStrings {
                                                          base: m.palettes[name]?.placeholder))
         }
         for (name, value) in object("games", names: Set(m.games.keys)) {
-            let f = fields(value, "\(file).games.\(name)", ["title"])
+            let f = fields(value, "\(file).games.\(name)", ["title", "tagline"])
             w.games[name] = line(f["title"], "\(file).games.\(name).title", max: 40, base: m.games[name]?.title)
+            w.gameTaglines[name] = line(f["tagline"], "\(file).games.\(name).tagline", max: 60, base: m.games[name]?.tagline)
         }
         w.text = texts(o["text"], file: file, code: code, base: base, issues: &issues)
         return w

@@ -53,8 +53,12 @@ extension AppCoordinator {
             : ExtensionGame(info: request.info, host: runtime.extensions)
         let model = PlayModel(info: request.info, provider: provider, companionName: s.companionName,
                               portrait: CompanionArt.avatar(for: s, side: 40), soundsOn: s.games.soundsOn(request.info.id))
+        // The person's own companion in the scene, in the pose of the moment where its look has poses.
+        model.figure = { state in CompanionArt.portrait(for: s, state: state, side: 220) }
+        model.you = GameFigures.accountPicture
+        model.onBack = { [weak self] in self?.openPlayMenu(focus: true) }
         // Cues act only while the panel shows this game.
-        func showing(_ model: PlayModel?) -> Bool { playPanel.isVisible && playPanel.model === model }
+        func showing(_ model: PlayModel?) -> Bool { playPanel.shows(model) }
         model.onCue = { [weak self, weak model] board in
             guard let self, let model, showing(model) else { return }
             self.cues.play(board, tone: self.runtime.settings.current.games.tone, sounds: model.soundsOn)
@@ -81,6 +85,29 @@ extension AppCoordinator {
         let options: [String: JSONValue] = ["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky),
                                             "companion": .string(s.companionName)]
         Task { await model.start(GameSetup(level: request.level, language: AppLanguage.current, options: options)) }
+    }
+
+    /// The Play panel's menu of games (its home): every game with its look, the person's stats from Activity, and the
+    /// game put away, to resume. Opened from the Play menu or a game's back button; a game opens from it as the person's
+    /// own choice, through the tool like every way in.
+    func openPlayMenu(focus: Bool) {
+        askPanel.hide()
+        if !companion.isVisible { showCompanion(true) }
+        guard let (frame, screen) = anchor() else { return }
+        cues.reset()
+        let s = runtime.settings.current
+        let games = [GameInfo.handsMatch] + runtime.extensions.gameShelf.all
+        let kept = playPanel.model.flatMap { playPanel.kept($0.info) }?.info
+        let menu = PlayMenuModel(games: games, stats: GameStats(), companionName: s.companionName,
+                                 portrait: CompanionArt.avatar(for: s, side: 40),
+                                 figure: CompanionArt.portrait(for: s, state: .listening, side: 220), kept: kept)
+        menu.onOpen = { [weak self] info in self?.openGameFromMenu(info) }
+        menu.onClose = { [weak self] in self?.playPanel.hide() }
+        playPanel.showMenu(menu, beside: frame, on: screen, focus: focus)
+        let activity = runtime.activity
+        Task { @MainActor in
+            if let rows = try? await activity.recent(limit: 1000, tool: "games.play") { menu.stats = GameStats(rows) }
+        }
     }
 
     /// From the Play menu: the person's own choice, through the tool like every way in.

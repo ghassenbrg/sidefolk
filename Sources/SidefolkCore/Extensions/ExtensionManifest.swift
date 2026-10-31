@@ -276,23 +276,33 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var levels: [String]
         /// Offered to Sidefolk's AI through `games.open`; missing means yes.
         public var ai: Bool?
+        /// One line under its title on the Play panel's menu card ("Keep your eye on the gem").
+        public var tagline: String?
+        /// Which of Sidefolk's looks dresses it (`GameLook`, D79 amended): its colour, scene and icon, all Sidefolk's art.
+        /// Kept as written so the validator can name a wrong one.
+        public var look: String?
 
-        public init(title: String, symbol: String? = nil, say: [String] = [], levels: [String] = [], ai: Bool? = nil) {
+        public init(title: String, symbol: String? = nil, say: [String] = [], levels: [String] = [], ai: Bool? = nil,
+                    tagline: String? = nil, look: String? = nil) {
             self.title = title
             self.symbol = symbol
             self.say = say
             self.levels = levels
             self.ai = ai
+            self.tagline = tagline
+            self.look = look
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "symbol", "say", "levels", "ai"])
+            try decoder.rejectUnknownKeys(["title", "symbol", "say", "levels", "ai", "tagline", "look"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decode(String.self, forKey: "title")
             symbol = try c.decodeIfPresent(String.self, forKey: "symbol")
             say = try c.decodeIfPresent([String].self, forKey: "say") ?? []
             levels = try c.decodeIfPresent([String].self, forKey: "levels") ?? []
             ai = try c.decodeIfPresent(Bool.self, forKey: "ai")
+            tagline = try c.decodeIfPresent(String.self, forKey: "tagline")
+            look = try c.decodeIfPresent(String.self, forKey: "look")
         }
     }
 

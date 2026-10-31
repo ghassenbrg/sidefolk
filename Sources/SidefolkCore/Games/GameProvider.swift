@@ -16,9 +16,13 @@ public struct GameInfo: Sendable, Hashable, Identifiable {
     public var say: [String]
     /// The extension's icon, for the badge that says whose game it is; nil for Sidefolk's own.
     public var iconPath: String?
+    /// One line under its title on the panel's menu card, in the person's language.
+    public var tagline: String?
+    /// The look Sidefolk dresses it in (its colour, scene and icon); nil is the plain one.
+    public var look: GameLook?
 
     public init(extensionId: String, extensionName: String, game: String, title: String, symbol: String? = nil, levels: [String] = [],
-                ai: Bool = true, say: [String] = [], iconPath: String? = nil) {
+                ai: Bool = true, say: [String] = [], iconPath: String? = nil, tagline: String? = nil, look: GameLook? = nil) {
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.game = game
@@ -28,6 +32,8 @@ public struct GameInfo: Sendable, Hashable, Identifiable {
         self.ai = ai
         self.say = say
         self.iconPath = iconPath
+        self.tagline = tagline
+        self.look = look
     }
 
     public var id: String { "\(extensionId)/\(game)" }
@@ -37,7 +43,9 @@ public struct GameInfo: Sendable, Hashable, Identifiable {
     /// The best of three, Sidefolk's own (D44): its hand is drawn in core.
     public static let handsMatch = GameInfo(extensionId: sidefolk, extensionName: "Sidefolk", game: "rock_paper_scissors",
                                             title: String(localized: "Rock, Paper, Scissors", comment: "A game: the best of three against the companion"),
-                                            symbol: "hand.raised.fill", say: [])
+                                            symbol: "hand.raised.fill", say: [],
+                                            tagline: String(localized: "Best of three, no peeking", comment: "Rock, Paper, Scissors on the Play panel's menu"),
+                                            look: .hands)
 }
 
 /// How a game starts: the level, the person's language (`en`, `de`, `ar`) and Sidefolk's options for every game
@@ -101,7 +109,42 @@ public enum GameRecord {
             summary += " · " + String(localized: "You \(s.you) · \(companionName) \(s.companion)",
                                       comment: "A game's score: the person's, then the companion's (named)")
         }
+        var args: [String: JSONValue] = ["extension": .string(info.extensionId), "game": .string(info.game)]
+        // How it ended for the person, when it did: the menu's stats are counted from these rows (`GameStats`).
+        if let board, board.over, let result = board.result { args["result"] = .string(GameVerdict(tone: result.tone).rawValue) }
         return ActivityEntry(at: at, caller: "user", tool: "games.play", risk: Risk.low.rawValue, decision: .auto, summary: summary,
-                             args: ["extension": .string(info.extensionId), "game": .string(info.game)])
+                             args: .object(args))
+    }
+}
+
+/// The person's games at a glance, for the Play panel's menu: counted from Sidefolk's own Activity rows (`games.play`),
+/// so they cover every game, Sidefolk's and the extensions', and nothing is read from a game's own records.
+public struct GameStats: Sendable, Hashable {
+    /// Games played to the end.
+    public var played = 0
+    public var wins = 0
+    /// Wins in a row up to the latest game.
+    public var streak = 0
+    /// The longest run of wins.
+    public var bestStreak = 0
+
+    public init() {}
+
+    /// From Activity rows, newest first as `ActivityStore.recent` gives them.
+    public init(_ rows: [ActivityEntry]) {
+        var run = 0, counting = true
+        for row in rows where row.tool == "games.play" {
+            guard let result = row.args?["result"]?.stringValue.flatMap(GameVerdict.init(rawValue:)) else { continue }
+            played += 1
+            if result == .win {
+                wins += 1
+                run += 1
+                if counting { streak += 1 }
+            } else {
+                counting = false
+                run = 0
+            }
+            bestStreak = max(bestStreak, run)
+        }
     }
 }

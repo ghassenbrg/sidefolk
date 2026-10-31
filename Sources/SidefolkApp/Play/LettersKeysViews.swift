@@ -16,14 +16,17 @@ struct LettersView: View {
                 row(r, side: side)
             }
         }
+        .padding(8)
         .frame(maxWidth: .infinity)
+        // A card behind the tiles, so they read on any scene.
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.88)))
         .accessibilityElement(children: .contain)
     }
 
     /// Tiles as large as the row allows: up to 46 pt, smaller for long words.
     static func side(_ l: GameBoard.Letters) -> CGFloat {
         let widest = max(l.length, l.rows.map(\.count).max() ?? 0)
-        let room = PlayView.width - 32 - CGFloat(max(0, widest - 1)) * 5
+        let room = PlayView.inner - 16 - CGFloat(max(0, widest - 1)) * 5
         return min(l.style == .slots ? 34 : 46, room / CGFloat(max(widest, 1)))
     }
 
@@ -238,10 +241,13 @@ struct GameEntryView: View {
                     .onSubmit(submit)
                     .onChange(of: text) { _, new in if new.count > entry.max { text = String(new.prefix(entry.max)) } }
                 Button(entry.button ?? String(localized: "OK", comment: "Sends what was typed in a game")) { submit() }
-                    .buttonStyle(.sf(.primary))
+                    .buttonStyle(ChunkyButtonStyle(kind: .primary))
+                    .fixedSize()
                     .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.94)))
         .disabled(entry.locked)
     }
 
