@@ -3,6 +3,19 @@ import Foundation
 /// Which releases a person wants (D46): finished releases only, or snapshots too (prereleases made for testing).
 public enum UpdateChannel: String, Codable, Sendable, CaseIterable {
     case releases, snapshots
+
+    /// Whether this choice takes `version`: a snapshot only for people who chose snapshots. Add-ons follow the same
+    /// choice as Sidefolk itself (D65): on Releases the gallery shows, and updates offer, released versions only.
+    public func includes(_ version: String) -> Bool {
+        guard let v = ReleaseVersion(version) else { return false }
+        return self == .snapshots || !v.isPrerelease
+    }
+
+    /// Whether `new` is offered as an update over `old`: newer, and one this choice takes.
+    public func offers(_ new: String, over old: String) -> Bool {
+        guard let n = ReleaseVersion(new), let o = ReleaseVersion(old), n > o else { return false }
+        return includes(new)
+    }
 }
 
 /// A newer Sidefolk someone could install: one GitHub release with its disk image.

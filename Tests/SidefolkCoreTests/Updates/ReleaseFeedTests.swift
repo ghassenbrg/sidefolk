@@ -18,6 +18,21 @@ import Testing
         #expect(v("0.1.0-dev") < v("0.1.0-snapshot.1"))
     }
 
+    /// Add-on updates follow the same choice as Sidefolk's (D65): releases only, or snapshots too.
+    @Test func aChannelOffersSnapshotsOnlyWhenChosen() {
+        #expect(UpdateChannel.releases.offers("1.0.0", over: "1.0.0-snapshot.3"))
+        #expect(UpdateChannel.releases.offers("1.1.0", over: "1.0.0"))
+        #expect(!UpdateChannel.releases.offers("1.0.0-snapshot.2", over: "1.0.0-snapshot.1"))
+        #expect(!UpdateChannel.releases.offers("1.1.0-snapshot.1", over: "1.0.0"))
+        #expect(UpdateChannel.snapshots.offers("1.0.0-snapshot.2", over: "1.0.0-snapshot.1"))
+        #expect(UpdateChannel.snapshots.offers("1.0.0", over: "1.0.0-snapshot.2"))
+        #expect(!UpdateChannel.snapshots.offers("1.0.0-snapshot.1", over: "1.0.0"), "never backwards")
+        #expect(!UpdateChannel.snapshots.offers("1.0.0", over: "1.0.0"))
+        #expect(!UpdateChannel.snapshots.offers("not a version", over: "1.0.0"))
+        #expect(UpdateChannel.releases.includes("1.0.0") && !UpdateChannel.releases.includes("1.0.0-snapshot.1"))
+        #expect(UpdateChannel.snapshots.includes("1.0.0-snapshot.1") && !UpdateChannel.snapshots.includes("one"))
+    }
+
     @Test func readsTagsAndRefusesWhatIsntAVersion() {
         #expect(v("v0.1.0-snapshot.411").description == "0.1.0-snapshot.411")
         #expect(v("0.1").description == "0.1.0")

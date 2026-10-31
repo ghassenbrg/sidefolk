@@ -69,6 +69,11 @@ struct ThemeSettingsGroup: View {
             .padding(.horizontal, Theme.Space.l)
             .padding(.bottom, Theme.Space.m)
         }
+        if model.gallery.hidesSnapshots(.theme) {
+            RowsCard { SnapshotsHiddenNote(gallery: model.gallery) }
+                .padding(.horizontal, Theme.Space.l)
+                .padding(.bottom, Theme.Space.m)
+        }
     }
 
     @ViewBuilder private var makeButtons: some View {

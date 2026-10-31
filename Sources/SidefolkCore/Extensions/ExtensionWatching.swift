@@ -105,10 +105,11 @@ public enum ExtensionContext {
     }
 
     /// "Currency (Money in 30 currencies at today's rates)" for each of Sidefolk's own extensions in the gallery that
-    /// isn't installed (D55). Only official entries: their words are Sidefolk's, from the signed catalog.
-    public static func inGallery(_ catalog: AddonCatalog?, installed: [ExtensionInfo]) -> [String] {
+    /// isn't installed (D55), as the gallery shows them on `channel` (D65). Only official entries: their words are
+    /// Sidefolk's, from the signed catalog.
+    public static func inGallery(_ catalog: AddonCatalog?, installed: [ExtensionInfo], channel: UpdateChannel) -> [String] {
         let have = Set(installed.map(\.id))
-        return (catalog?.addons ?? []).filter { $0.kind == .extension && $0.official && !have.contains($0.id) }
+        return (catalog?.offered(on: channel) ?? []).filter { $0.kind == .extension && $0.official && !have.contains($0.id) }
             .sorted { $0.name < $1.name }.prefix(16).map { e in
                 ExtensionText.line(e.name, characters: 40) + (e.tagline.isEmpty ? "" : " (\(ExtensionText.line(e.tagline, characters: 80)))")
             }

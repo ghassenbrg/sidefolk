@@ -24,6 +24,8 @@ struct GalleryExtensionsView: View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
             if !gallery.available {
                 RowsCard { InlineEmpty(text: "This copy of Sidefolk has no add-on gallery.", systemImage: "shippingbox") }
+            } else if entries.isEmpty, gallery.hidesSnapshots(.extension) {
+                RowsCard { SnapshotsHiddenNote(gallery: gallery) }
             } else if entries.isEmpty {
                 RowsCard {
                     if gallery.loading {
@@ -53,6 +55,7 @@ struct GalleryExtensionsView: View {
                         ForEach(shown.filter { $0.shelf == category }) { GalleryRow(entry: $0, model: model) }
                     }
                 }
+                if gallery.hidesSnapshots(.extension) { RowsCard { SnapshotsHiddenNote(gallery: gallery) } }
                 Text("Sidefolk's own carry its seal. Every extension here is signed by Sidefolk, runs in its own sandbox, and shows what it may do before it is added.")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -226,5 +229,16 @@ struct GalleryCompanionCard: View {
         } else {
             Circle().fill(Theme.surfaceSunken).padding(6)
         }
+    }
+}
+
+/// On Releases (the default) the gallery keeps its snapshots out of sight (D65); this says so, so it doesn't look
+/// empty, and offers them: the same choice as Settings › General › Updates, which Sidefolk's own updates follow too.
+struct SnapshotsHiddenNote: View {
+    var gallery: AddonGalleryModel
+
+    var body: some View {
+        InlineEmpty(text: "Add-ons in snapshots are hidden: test versions, before their release. Showing them offers Sidefolk's own snapshots too, as in Settings › General › Updates.",
+                    systemImage: "testtube.2", actionTitle: "Show Snapshots") { gallery.showSnapshots() }
     }
 }

@@ -231,7 +231,8 @@ final class AppCoordinator {
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(90))
             while !Task.isCancelled {
-                let updated = await addons.updateCompanions()
+                let channel = self?.runtime.settings.current.updates.effectiveChannel ?? .releases
+                let updated = await addons.updateCompanions(channel: channel)
                 if !updated.isEmpty, let self {
                     CompanionArt.forgetPictures()
                     companion.reload3D(updated.map(\.companion))

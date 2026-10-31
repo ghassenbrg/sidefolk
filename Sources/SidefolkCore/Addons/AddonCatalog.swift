@@ -65,6 +65,10 @@ public struct AddonCatalog: Sendable, Equatable {
 
     public func companion(_ name: String) -> AddonEntry? { addons.first { $0.kind == .companion && $0.companion == name } }
 
+    /// What the gallery shows on the person's choice in Settings › Updates (D65): snapshots only to those who chose
+    /// them. One catalog serves both choices; what's already installed stays, whatever its version.
+    public func offered(on channel: UpdateChannel) -> [AddonEntry] { addons.filter { channel.includes($0.version) } }
+
     /// The preview's file, if the catalog brought one.
     public func preview(for entry: AddonEntry) -> URL? {
         guard let path = entry.preview else { return nil }

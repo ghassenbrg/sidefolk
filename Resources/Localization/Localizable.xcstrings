@@ -20754,6 +20754,64 @@
         }
       }
     },
+    "Add-ons in snapshots are hidden: test versions, before their release. Showing them offers Sidefolk's own snapshots too, as in Settings › General › Updates." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإضافات التجريبية مخفية: إصدارات اختبار قبل إصدارها الرسمي. إظهارها يعرض أيضًا النسخ التجريبية من Sidefolk نفسه، كما في الإعدادات › عام › التحديثات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add-ons als Snapshot sind ausgeblendet: Testversionen vor ihrem Release. Wenn du sie zeigst, werden auch Sidefolks eigene Snapshots angeboten, wie unter Einstellungen › Allgemein › Updates."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos en snapshot están ocultos: versiones de prueba, antes de su versión estable. Mostrarlos también ofrece los snapshots de Sidefolk, como en Ajustes › General › Actualizaciones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modules en snapshot sont masqués : des versions de test, avant leur version stable. Les afficher propose aussi les snapshots de Sidefolk, comme dans Réglages › Général › Mises à jour."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I componenti aggiuntivi in snapshot sono nascosti: versioni di prova, prima della versione stabile. Mostrarli propone anche gli snapshot di Sidefolk, come in Impostazioni › Generale › Aggiornamenti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スナップショットのアドオンは非表示です。リリース前のテスト版です。表示すると、設定 › 一般 › アップデートと同じく、Sidefolk 自体のスナップショットも提供されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스냅샷 애드온은 숨겨져 있어요. 릴리스 전의 테스트 버전이에요. 표시하면 설정 › 일반 › 업데이트에서처럼 Sidefolk 자체의 스냅샷도 제공돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complementos em snapshot ficam ocultos: versões de teste, antes do lançamento. Mostrá-los também oferece os snapshots do próprio Sidefolk, como em Ajustes › Geral › Atualizações."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快照版附加组件已隐藏：它们是正式发布前的测试版本。显示它们后，也会提供 Sidefolk 本身的快照版，与“设置 › 通用 › 更新”中相同。"
+          }
+        }
+      }
+    },
     "Added" : {
       "localizations" : {
         "ar" : {
@@ -116121,6 +116179,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示文件"
+          }
+        }
+      }
+    },
+    "Show Snapshots" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار النسخ التجريبية"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snapshots zeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar snapshots"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les snapshots"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra snapshot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スナップショットを表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스냅샷 표시"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar snapshots"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示快照版"
           }
         }
       }

@@ -230,11 +230,12 @@ public actor AddonStore {
     }
 
     /// The gallery's companions on this Mac (not those added from a folder) that `catalog` has a newer version of.
-    /// The catalog already leaves out what this Sidefolk can't run (a newer engine or app), so such a version waits.
-    public func companionUpdates(in catalog: AddonCatalog) -> [AddonEntry] {
+    /// The catalog already leaves out what this Sidefolk can't run (a newer engine or app), so such a version waits;
+    /// a snapshot waits too unless the person chose snapshots (`channel`).
+    public func companionUpdates(in catalog: AddonCatalog, channel: UpdateChannel) -> [AddonEntry] {
         installedCompanions().filter { !$0.addedFromFolder }.compactMap { have in
             guard let entry = catalog.companion(have.companion), entry.id == have.id,
-                  let new = ReleaseVersion(entry.version), let old = ReleaseVersion(have.version), new > old else { return nil }
+                  channel.offers(entry.version, over: have.version) else { return nil }
             return entry
         }
     }
@@ -242,10 +243,10 @@ public actor AddonStore {
     /// Installs the newer version of each gallery companion on this Mac, without asking: a companion only draws.
     /// Returns those it updated. One that fails keeps its old copy (a pack is swapped in only once checked) and is
     /// tried again at the next look.
-    public func updateCompanions() async -> [InstalledCompanion] {
+    public func updateCompanions(channel: UpdateChannel) async -> [InstalledCompanion] {
         guard source != nil, let catalog = try? await catalog() else { return [] }
         var updated: [InstalledCompanion] = []
-        for entry in companionUpdates(in: catalog) {
+        for entry in companionUpdates(in: catalog, channel: channel) {
             do {
                 updated.append(try await install(companion: entry))
             } catch {
@@ -274,11 +275,11 @@ public actor AddonStore {
         return theme
     }
 
-    /// The gallery's themes on this Mac that `catalog` has a newer version of.
-    public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary) -> [AddonEntry] {
+    /// The gallery's themes on this Mac that `catalog` has a newer version of, a snapshot only on `channel` snapshots.
+    public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary, channel: UpdateChannel) -> [AddonEntry] {
         library.all().compactMap { have in
             guard have.folder != nil, let entry = catalog.entry(have.id), entry.kind == .theme,
-                  let new = ReleaseVersion(entry.version), let old = have.version.flatMap(ReleaseVersion.init), new > old else { return nil }
+                  let old = have.version, channel.offers(entry.version, over: old) else { return nil }
             return entry
         }
     }

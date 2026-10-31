@@ -187,6 +187,7 @@ struct CompanionPicker: View {
                 ForEach(more) { entry in GalleryCompanionCard(entry: entry, model: model) }
             }
             ForEach(failures, id: \.message) { InlineError(error: $0) }
+            if model.gallery.hidesSnapshots(.companion) { RowsCard { SnapshotsHiddenNote(gallery: model.gallery) } }
             if !more.isEmpty || !model.gallery.companions.isEmpty {
                 Text("Companions from the add-on gallery download when you pick them. To remove one, Control-click it.")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)

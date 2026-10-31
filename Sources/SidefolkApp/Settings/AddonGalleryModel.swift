@@ -27,10 +27,23 @@ final class AddonGalleryModel {
 
     var available: Bool { store.source != nil }
 
-    /// What the gallery offers of one kind, Sidefolk's own first, then by name.
+    /// The person's choice in Settings › Updates, which the gallery follows too (D65).
+    private var channel: UpdateChannel { parent.settings.updates.effectiveChannel }
+
+    /// What the gallery offers of one kind, Sidefolk's own first, then by name: snapshots only on Releases and
+    /// snapshots (D65).
     func entries(_ kind: AddonEntry.Kind) -> [AddonEntry] {
-        (catalog?.addons ?? []).filter { $0.kind == kind }.sorted { ($0.official ? 0 : 1, $0.name) < ($1.official ? 0 : 1, $1.name) }
+        (catalog?.offered(on: channel) ?? []).filter { $0.kind == kind }
+            .sorted { ($0.official ? 0 : 1, $0.name) < ($1.official ? 0 : 1, $1.name) }
     }
+
+    /// The gallery has snapshots of this kind that Releases keeps out of sight: said, so it doesn't look empty.
+    func hidesSnapshots(_ kind: AddonEntry.Kind) -> Bool {
+        (catalog?.addons ?? []).contains { $0.kind == kind && !channel.includes($0.version) }
+    }
+
+    /// Offers snapshots, of Sidefolk and of the gallery: the same choice as Settings › Updates.
+    func showSnapshots() { parent.update { $0.updates.channel = .snapshots } }
 
     func preview(_ entry: AddonEntry) -> URL? { catalog?.preview(for: entry) }
 
@@ -60,7 +73,8 @@ final class AddonGalleryModel {
     func state(_ entry: AddonEntry) -> State {
         if let p = progress[entry.id] { return .working(p) }
         guard let version = installedVersion(entry) else { return .get }
-        return ExtensionVersionOrder.newer(entry.version, than: version) ? .update(from: version) : .installed
+        // Updates follow Settings › Updates, as Sidefolk's own do: a snapshot only for people who chose snapshots.
+        return parent.settings.updates.effectiveChannel.offers(entry.version, over: version) ? .update(from: version) : .installed
     }
 
     func installedVersion(_ entry: AddonEntry) -> String? {
@@ -201,13 +215,5 @@ final class AddonGalleryModel {
             failures[entry.id] = error as? UserFacingError ?? UserFacingError("\(entry.name) couldn't be downloaded.")
         }
         catalog = await store.stored() ?? catalog
-    }
-}
-
-/// Dotted versions in order, as extensions and add-ons number them.
-enum ExtensionVersionOrder {
-    static func newer(_ a: String, than b: String) -> Bool {
-        guard let x = ReleaseVersion(a), let y = ReleaseVersion(b) else { return false }
-        return x > y
     }
 }

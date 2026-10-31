@@ -1605,7 +1605,7 @@ heading for (`1.0.0`), and sidefolk-addons' `build.py` publishes it as `1.0.0-sn
 files change, and the published pack stays while they don't. Writing `"released": "1.0.0"` in its `addon.json`
 releases it: the next build publishes plain `1.0.0`. From then on 1.0.0 is fixed (files changed means raise the
 version, as before), and the next version (`1.1.0`) starts its own snapshots. All twelve extensions began at
-`1.0.0-snapshot.1`, including those already published as 1.1.0 or 1.2.0. Companions and themes keep plain versions.
+`1.0.0-snapshot.1`, including those already published as 1.1.0 or 1.2.0. Companions and themes too (amended below).
 
 **Why:** the founder treats extensions like the app, which is still in 0.1.0 snapshots: no extension is released
 yet, so it shouldn't need a new version number for every change while it's being made.
@@ -1615,3 +1615,15 @@ number and a release above them, and offers each as an update; 0.1.0-snapshot.48
 carries the snapshot version, so what's installed compares with the gallery. A copy that installed currency 1.1.0,
 dev-toolbox 1.1.0, git 1.1.0, playtime 1.2.0 or qr-codes 1.1.0 keeps it and isn't offered the 1.0.0 snapshots
 (they're lower), until it removes and reinstalls it.
+
+**Amended (2026-10-31): every add-on, and the gallery follows Settings › Updates.** Companions and themes are
+snapshots until released too, by the same `"released"` in their `addon.json`; all eight companions and three themes
+went out as `1.0.0-snapshot.1`, and a theme's packed `theme.json` carries that version (Sidefolk compares an
+installed theme's own file with the gallery). The gallery follows the person's choice in Settings › Updates, as
+Sidefolk's own updates do (`UpdateChannel.includes`, the founder's call): on Releases (the default, D52) it shows,
+offers to update, and updates companions by themselves to, released versions only, and the AI hears only of those;
+on Releases and snapshots, snapshots as well. One catalog serves both: the app filters (`AddonCatalog.offered`).
+While a gallery list hides snapshots it says so, with **Show Snapshots**, which turns on snapshots in Settings ›
+Updates (Sidefolk's own included, as the note says): on the default, nothing is released yet, and an empty gallery
+would look broken. An add-on already installed stays and runs whatever its version; on Releases it waits for its
+release. A copy that installed a companion or theme as plain 1.0.0 keeps it, as with the extensions above.

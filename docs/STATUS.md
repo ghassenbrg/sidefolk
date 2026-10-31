@@ -12,6 +12,18 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Every add-on in snapshots; the gallery follows Settings › Updates (D65 amended):** companions and themes are
+  `1.0.0-snapshot.<n>` until released, like extensions (sidefolk-addons 17020a4; a theme's packed `theme.json`
+  carries the snapshot version). The gallery (a GitHub pre-release now, not "Latest") was published once more with
+  all 23 add-ons at `1.0.0-snapshot.1`; the twelve extension packs were kept byte for byte. On Releases (the
+  default) the gallery shows and updates released versions only, so today it shows none and says why, with Show
+  Snapshots (Extensions › Gallery, the companion picker, themes); on Releases and snapshots it shows everything and
+  offers newer snapshots. Installed add-ons stay whatever their version. *Checked:* every live pack downloaded and
+  matched against the signed catalog; the add-ons' `check.sh` against this app; ReleaseVersionTests
+  (`aChannelOffersSnapshotsOnlyWhenChosen`), AddonStoreTests (a theme from snapshot to snapshot to release, by
+  channel; the AI's gallery lines by channel); `make test`; the debug app with the live gallery: the companion
+  picker on Releases (no gallery companions, the note) and on snapshots (all eight). *Not yet:* clicking Show
+  Snapshots by hand (agents can't click); Extensions › Gallery and the themes list looked at (same note and model).
 - **Extensions that keep running and act; Clipboard and Keep Awake (D63):** `background` extensions, clipboard and
   power permissions, palettes on a shortcut that paste, page switches and buttons, nudges. Clipboard (⇧⌘C, Maccy's
   replacement with secrets masked and forgotten) and Keep Awake (Mouse Jiggler's, with nothing moving) are in
