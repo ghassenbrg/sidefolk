@@ -12,6 +12,14 @@ public struct AgentChip: Sendable, Equatable, Identifiable {
     /// It waits for the person in its own terminal.
     public var needsYou: Bool
     public var since: Date
+
+    public init(id: String, agent: String, project: String?, needsYou: Bool, since: Date) {
+        self.id = id
+        self.agent = agent
+        self.project = project
+        self.needsYou = needsYou
+        self.since = since
+    }
 }
 
 public enum AgentLane {

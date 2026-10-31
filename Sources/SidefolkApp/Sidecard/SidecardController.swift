@@ -1,0 +1,277 @@
+import AppKit
+import SidefolkCore
+import SwiftUI
+
+/// Presents notices above the companion as the Sidecard (D84), one moment at a time, with timing from the attention
+/// policy: a gentle one is a whisper for six seconds (it waits while the pointer is on it, and grows into a card when
+/// clicked); one that needs attention is a card, and a card nobody answered folds into the count on the companion's
+/// shoulder after half a minute. Hovering that count fans out what waits; clicking it opens Ask on top of them.
+final class SidecardController {
+    let model = SidecardModel()
+    private let hosted: HostedPanel<SidecardView>
+    /// Whispers waiting for the card or whisper in front of them to go.
+    private var queue: [(AttentionItem, AttentionPresentation)] = []
+    private var timer: Task<Void, Never>?
+    private var fanEnd: Task<Void, Never>?
+    /// Cards that folded into the stack since it was last empty: when the last of them is answered, "All clear".
+    private var folded: Set<String> = []
+    var anchorProvider: (() -> (NSRect, NSScreen)?)?
+    var onRespond: ((AttentionItem, String?) -> Void)?
+    /// A gentle notice faded on its own: it needed no decision, so it is done.
+    var onAutoDismiss: ((AttentionItem) -> Void)?
+    /// What waits right now, newest last, for the fanned stack.
+    var waitingItems: (() async -> [AttentionItem])?
+    /// A card went out or came back: the light at the companion's feet follows.
+    var onChange: (() -> Void)?
+
+    init() {
+        hosted = HostedPanel(rootView: SidecardView(model: model), allowsKey: false)
+        hosted.panel.level = .floating
+        // The glass draws its own shadow; a window shadow would be traced from its faint pixels as a grey outline.
+        hosted.panel.hasShadow = false
+        hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
+        model.respond = { [weak self] item, action in
+            self?.close(id: item.id)
+            self?.onRespond?(item, action)
+        }
+        model.grow = { [weak self] in self?.growWhisper() }
+        model.openStack = { [weak self] in
+            self?.hideStack()
+            self?.onOpenStack?()
+        }
+    }
+
+    /// The stack was clicked: Ask opens on top of it.
+    var onOpenStack: (() -> Void)?
+
+    var currentId: String? { model.shape == .stack ? nil : model.item?.id }
+    /// A card (not a whisper) is out asking now.
+    var cardOut: Bool { hosted.panel.isVisible && model.shape == .card }
+
+    func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+        if model.item?.id == item.id, model.shape != .stack { return }
+        let card = Self.isCard(item, presentation)
+        if hosted.panel.isVisible, model.shape != .stack, let current = model.item {
+            // A whisper never pushes anything aside: it waits its turn.
+            guard card else {
+                queue.append((item, presentation))
+                return
+            }
+            // A new card: a card in front folds into the stack (it still waits there), a whisper waits its turn.
+            if model.shape == .card { fold(current) } else { queue.insert((current, .gentle(autoDismiss: AttentionPolicy.gentleSeconds)), at: 0) }
+        }
+        show(item, presentation, card: card)
+    }
+
+    func withdraw(id: String) {
+        queue.removeAll { $0.0.id == id }
+        if model.item?.id == id, model.shape != .stack { close(id: id) }
+    }
+
+    /// How many wait now; when the last folded card was answered, the companion says "All clear" once.
+    func setWaiting(_ count: Int) {
+        model.waiting = count
+        if count == 0, !folded.isEmpty {
+            folded.removeAll()
+            allClear()
+        }
+        if model.shape == .stack, count == 0 { hideStack() }
+    }
+
+    func reposition() {
+        guard hosted.panel.isVisible, let (anchor, screen) = anchorProvider?() else { return }
+        place(anchor, screen)
+    }
+
+    // MARK: Moments
+
+    /// Attention, a card that stays, the morning brief; everything else gentle is a whisper.
+    static func isCard(_ item: AttentionItem, _ presentation: AttentionPresentation) -> Bool {
+        if item.refKind == "brief" { return true }
+        if case .gentle = presentation { return false }
+        return true
+    }
+
+    private func show(_ item: AttentionItem, _ presentation: AttentionPresentation, card: Bool) {
+        fanEnd?.cancel()
+        model.item = item
+        model.shape = card ? .card : .whisper
+        model.pausedLeft = nil
+        timer?.cancel()
+        switch presentation {
+        case .gentle(let seconds) where !card:
+            model.whisperSeconds = seconds
+            model.deadline = Date().addingTimeInterval(seconds)
+            watchWhisper(item)
+        case .gentle:
+            // A gentle card (the morning brief) needs nothing: it goes after a while, never under the pointer.
+            schedule(after: AttentionPolicy.expandSeconds) { [weak self] in self?.autoDismiss(id: item.id) }
+        case .attention(let expandFor):
+            // Questions never fold: their answers must stay one click away.
+            if item.refKind != "ask", Self.folds(item) { schedule(after: expandFor) { [weak self] in self?.foldCurrent(id: item.id) } }
+        case .system(_, alsoOnDesktop: true):
+            if Self.folds(item) { schedule(after: AttentionPolicy.expandSeconds) { [weak self] in self?.foldCurrent(id: item.id) } }
+        default:
+            break
+        }
+        appear()
+        onChange?()
+    }
+
+    /// Only what the attention center keeps waits in the stack; the companion's own lines (onboarding) stay out.
+    private static func folds(_ item: AttentionItem) -> Bool {
+        item.source != Onboarding.source && item.source != AppCoordinator.ownVoice
+    }
+
+    private func appear() {
+        guard let (anchor, screen) = anchorProvider?() else { return }
+        // Sized to this moment first: a visible panel keeps its size when placed.
+        hosted.panel.setContentSize(hosted.fittingSize)
+        place(anchor, screen)
+        guard !hosted.panel.isVisible else { return }
+        let still = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        hosted.panel.alphaValue = 0
+        hosted.panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = still ? 0.15 : 0.2
+            hosted.panel.animator().alphaValue = 1
+        }
+    }
+
+    private func place(_ anchor: NSRect, _ screen: NSScreen) {
+        // The tail's tip lands just above the head; the margin under the glass is the shadow's room.
+        hosted.place(beside: anchor, on: screen, gap: 4 - SidecardView.margin.bottom, preferAbove: true)
+    }
+
+    /// The whisper runs out its time unless the pointer holds it; leaving gives it three more seconds (b02).
+    private func watchWhisper(_ item: AttentionItem) {
+        timer = Task { [weak self] in
+            while let self, !Task.isCancelled, self.model.item?.id == item.id, self.model.shape == .whisper {
+                if self.model.hovering {
+                    if self.model.pausedLeft == nil {
+                        self.model.pausedLeft = max(0, self.model.deadline?.timeIntervalSinceNow ?? 0)
+                        self.model.deadline = nil
+                    }
+                } else if self.model.pausedLeft != nil {
+                    self.model.pausedLeft = nil
+                    self.model.deadline = Date().addingTimeInterval(min(3, self.model.whisperSeconds))
+                } else if let deadline = self.model.deadline, deadline <= Date() {
+                    self.autoDismiss(id: item.id)
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+    }
+
+    private func growWhisper() {
+        guard let item = model.item, model.shape == .whisper else { return }
+        timer?.cancel()
+        model.shape = .card
+        model.pausedLeft = nil
+        // Grown on purpose, it stays until answered or closed.
+        appear()
+        onChange?()
+    }
+
+    private func schedule(after seconds: TimeInterval, _ action: @escaping () -> Void) {
+        timer?.cancel()
+        timer = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled, let self else { return }
+            // Hovering keeps it open; look again shortly.
+            if self.model.hovering { self.schedule(after: 2, action) } else { action() }
+        }
+    }
+
+    private func autoDismiss(id: String) {
+        guard let item = model.item, item.id == id else { return }
+        close(id: id)
+        onAutoDismiss?(item)
+    }
+
+    /// Nobody answered in time: the card shrinks into the count on the shoulder, where it still waits.
+    private func foldCurrent(id: String) {
+        guard let item = model.item, item.id == id, model.shape == .card else { return }
+        fold(item)
+        hide()
+        next()
+    }
+
+    private func fold(_ item: AttentionItem) {
+        folded.insert(item.id)
+    }
+
+    private func close(id: String) {
+        guard model.item?.id == id else { return }
+        timer?.cancel()
+        folded.remove(id)
+        hide()
+        next()
+    }
+
+    private func next() {
+        guard !queue.isEmpty else { return }
+        let (item, presentation) = queue.removeFirst()
+        show(item, presentation, card: Self.isCard(item, presentation))
+    }
+
+    private func hide() {
+        model.item = nil
+        hosted.panel.orderOut(nil)
+        onChange?()
+    }
+
+    // MARK: The stack
+
+    /// The pointer is on the count: the top three fan out. Leaving it, they fold back unless the pointer moved onto
+    /// them.
+    func fanStack(_ show: Bool) {
+        fanEnd?.cancel()
+        if show {
+            guard !hosted.panel.isVisible || model.shape == .stack else { return }
+            Task { [weak self] in
+                guard let self, let items = await self.waitingItems?(), !items.isEmpty else { return }
+                self.model.stack = items
+                self.model.item = nil
+                self.model.shape = .stack
+                self.appear()
+            }
+        } else if model.shape == .stack {
+            fanEnd = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(450))
+                guard !Task.isCancelled, let self, !self.model.hovering else { return }
+                self.hideStack()
+            }
+        }
+    }
+
+    private func hideStack() {
+        guard model.shape == .stack else { return }
+        model.stack = []
+        model.shape = .whisper
+        hosted.panel.orderOut(nil)
+        next()
+    }
+
+    /// The last held card was answered: said once, the only celebration on the desktop (b06).
+    private func allClear() {
+        let item = AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
+                                 title: String(localized: "All clear. Nothing waits for you.", comment: "A whisper when the last held card was answered"),
+                                 refKind: "clear")
+        present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+    }
+
+    /// Points the tail at the head, along the card's bottom edge; a card that had to sit below has none.
+    private func aimTail(from frame: NSRect, at anchor: NSRect) {
+        let margin = SidecardView.margin
+        guard frame.minY + margin.bottom >= anchor.midY else {
+            model.tailAt = nil
+            return
+        }
+        let width = frame.width - margin.leading - margin.trailing
+        let physical = (anchor.midX - frame.minX - margin.leading) / max(width, 1)
+        let rtl = NSApp.userInterfaceLayoutDirection == .rightToLeft
+        model.tailAt = min(max(rtl ? 1 - physical : physical, 0), 1)
+    }
+}

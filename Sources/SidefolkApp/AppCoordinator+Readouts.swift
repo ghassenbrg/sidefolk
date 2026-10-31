@@ -1,7 +1,7 @@
 import AppKit
 import SidefolkCore
 
-/// Reports on the desktop (D35): a pill beside the companion for each live value, the newest value in the menu
+/// Reports on the desktop (D35): a pin beside the companion (D84) for each live value, the newest value in the menu
 /// bar while the companion is away, and a notification only when one was asked for, or when the companion is away
 /// and the value comes slower than once a minute, never in quiet mode (`WatchReading.notifies`). A value every few
 /// seconds touches no database and no list.
@@ -9,6 +9,7 @@ extension AppCoordinator {
     /// A report read a new value.
     func showReading(_ reading: WatchReading) {
         readings[reading.watcherId] = reading
+        noteSpark(reading)
         renderReadouts()
         if reading.notifies(companionVisible: companion.isVisible, quiet: runtime.settings.current.isQuiet(at: Date())) {
             notifier.showReport(reading)
@@ -29,6 +30,7 @@ extension AppCoordinator {
             reports = live.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
             let ids = Set(live.map(\.id))
             readings = readings.filter { ids.contains($0.key) }
+            sparks = sparks.filter { ids.contains($0.key) }
             for r in latest where readings[r.watcherId] == nil { readings[r.watcherId] = r }
             for gone in notifiedReports.subtracting(ids) { notifier.withdrawReport(gone) }
             notifiedReports.formIntersection(ids)
@@ -38,7 +40,9 @@ extension AppCoordinator {
 
     func renderReadouts() {
         let items = reports.map { w in
-            Readout(id: w.id, label: readings[w.id]?.label ?? w.title, value: readings[w.id]?.value ?? "…", paused: w.state == .paused)
+            Readout(id: w.id, label: readings[w.id]?.label ?? w.title, value: readings[w.id]?.value ?? "…",
+                    symbol: Describe.watcherKind(w.kind).symbol, spark: sparks[w.id] ?? [], paused: w.state == .paused,
+                    at: readings[w.id]?.at, interval: w.intervalS)
         }
         companion.setReadouts(items)
         // Away from the desktop, the newest value lives in the menu bar instead.

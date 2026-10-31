@@ -1,7 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Shows and hides the Ask panel beside the companion.
+/// Shows and hides Ask beside the companion (the Sidecard's Ask size, D84), its tail toward the head. Opened by a
+/// permission slip alone, it stands above the companion as that slip until the person opens Ask.
 final class AskPanelController {
     let model: AskModel
     private let hosted: HostedPanel<AskView>
@@ -16,6 +17,11 @@ final class AskPanelController {
     init(model: AskModel, companionName: String, portrait: NSImage?, hotkey: String) {
         self.model = model
         hosted = HostedPanel(rootView: AskView(model: model, companionName: companionName, portrait: portrait, hotkey: hotkey), allowsKey: true)
+        // The glass draws its own shadow; a window shadow would be traced from its faint pixels as a grey outline.
+        hosted.panel.hasShadow = false
+        hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
+        model.companionName = companionName
+        model.onClose = { [weak self] in self?.hide() }
         hosted.panel.onCancel = { [weak self] in self?.cancel() }
         resignObserver = NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: hosted.panel,
                                                                 queue: .main) { [weak self] _ in
@@ -32,13 +38,17 @@ final class AskPanelController {
     var frame: NSRect { hosted.panel.frame }
 
     func update(companionName: String, portrait: NSImage?, hotkey: String) {
+        model.companionName = companionName
         hosted.host.rootView = AskView(model: model, companionName: companionName, portrait: portrait, hotkey: hotkey)
     }
 
-    func show(beside anchor: NSRect, on screen: NSScreen, focus: Bool = true) {
+    /// `slipsOnly`: a permission slip opened it while it was closed; it shows only that until the person opens Ask.
+    func show(beside anchor: NSRect, on screen: NSScreen, focus: Bool = true, slipsOnly: Bool = false) {
         model.freshenIfStale()
+        model.compact = slipsOnly && (!isVisible || model.compact)
         fit(on: screen)
-        hosted.place(beside: anchor, on: screen)
+        hosted.panel.setContentSize(hosted.fittingSize)
+        place(anchor, screen)
         hosted.panel.orderFrontRegardless()
         if focus {
             hosted.panel.makeKey()
@@ -51,7 +61,40 @@ final class AskPanelController {
     func reposition(beside anchor: NSRect, on screen: NSScreen) {
         guard isVisible else { return }
         fit(on: screen)
-        hosted.place(beside: anchor, on: screen)
+        place(anchor, screen)
+    }
+
+    /// Ask beside the companion; slips alone above its head. The margins are the glass's shadow room.
+    private func place(_ anchor: NSRect, _ screen: NSScreen) {
+        if model.showsSlipsOnly {
+            hosted.place(beside: anchor, on: screen, gap: 4 - AskView.margin.bottom, preferAbove: true)
+        } else {
+            hosted.place(beside: anchor, on: screen, gap: 6 - AskView.margin.leading)
+        }
+    }
+
+    /// Points the tail at the companion's head: from the bottom edge for slips above it, from the side facing it for Ask.
+    private func aimTail(from frame: NSRect, at anchor: NSRect) {
+        let m = AskView.margin
+        let glass = NSRect(x: frame.minX + m.leading, y: frame.minY + m.bottom, width: frame.width - m.leading - m.trailing,
+                           height: frame.height - m.top - m.bottom)
+        let rtl = NSApp.userInterfaceLayoutDirection == .rightToLeft
+        var tail: SidecardTail?
+        if model.showsSlipsOnly {
+            if glass.minY >= anchor.midY {
+                let physical = min(max((anchor.midX - glass.minX) / max(glass.width, 1), 0), 1)
+                tail = SidecardTail(edge: .bottom, at: rtl ? 1 - physical : physical)
+            }
+        } else {
+            // The head, about a quarter down the companion's body.
+            let head = anchor.maxY - anchor.height * 0.25
+            let at = (glass.maxY - head) / max(glass.height, 1)
+            if (0.05...0.95).contains(at) {
+                let right = glass.maxX <= anchor.midX
+                tail = SidecardTail(edge: right != rtl ? .trailing : .leading, at: at)
+            }
+        }
+        if model.tail != tail { model.tail = tail }
     }
 
     /// The results scroll before the panel outgrows the screen (the header and input take about 160 points).

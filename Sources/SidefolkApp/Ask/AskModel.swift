@@ -78,6 +78,11 @@ struct AskEntry: Identifiable, Equatable {
 @MainActor
 protocol AskActions: AnyObject {
     func hint(for text: String) -> String?
+    /// What Return would do with these words, from the same parse that runs them (D84): nil while Sidefolk waits for
+    /// a time or an address, which the hint line asks for.
+    func understanding(for text: String) -> Understanding?
+    /// The AI ⌘Return asks ("Claude"), nil when none is set up.
+    var aiName: String? { get }
     /// `spoken`: the words came from the talk key, so the reply may be said aloud (D34). `followUp`: the conversation
     /// the person chose to reply in, which continues however long ago it was (D45).
     /// - Parameter askAI: the AI answers even words Sidefolk understands without it (⌘Return, D58).
@@ -148,8 +153,10 @@ final class AskModel {
     }
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
-    /// Today at a glance, shown while nothing is typed (D58).
+    /// Today at a glance, shown while nothing is typed (D58): Ask's resting state, on top of the stack (D84).
     var glance = Glance()
+    /// How many wait on the person in all (the count on the companion's shoulder).
+    var waiting = 0
     var attachment: Attachment?
     var entries: [AskEntry] = []
     var busy = false
@@ -178,6 +185,14 @@ final class AskModel {
     var extensionLooks: [String: ExtensionLook] = [:]
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
+    /// The header's close button.
+    var onClose: (() -> Void)?
+    /// Who the person talks to, for "Mochi wants to".
+    var companionName = "Sidefolk"
+    /// Opened by a slip or a question alone: only they show, above the companion, until the person opens Ask (D84).
+    var compact = false
+    /// Where the Sidecard's tail points, toward the companion's head; set when the panel is placed.
+    var tail: SidecardTail?
 
     /// Results kept: the newest under the input, older ones a scroll away. Cards, not a chat (D5).
     static let keptEntries = 40
@@ -199,6 +214,13 @@ final class AskModel {
         return actions?.hint(for: trimmed)
     }
 
+    /// The understanding row under the field: what Return will do with the words typed so far.
+    var understanding: Understanding? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, pendingQuestion == nil, voice == nil, !busy else { return nil }
+        return actions?.understanding(for: trimmed)
+    }
+
     /// One request and what came of it, in order; the first entry carries the request's words.
     struct Request: Identifiable, Equatable {
         var entries: [AskEntry]
@@ -208,6 +230,11 @@ final class AskModel {
 
     /// Questions and approvals: they wait for an answer, so they stay in view above the results.
     var pinnedEntries: [AskEntry] { entries.filter(\.isPinned) }
+
+    /// Opened by permission slips alone: only they show, above the companion (a question needs the field to answer).
+    var showsSlipsOnly: Bool {
+        compact && !pinnedEntries.isEmpty && pinnedEntries.allSatisfy { if case .approval = $0.content { true } else { false } }
+    }
 
     /// Every result so far, grouped by request, oldest first.
     var requests: [Request] {
@@ -342,6 +369,11 @@ final class AskModel {
 
     func removeApproval(id: String) {
         entries.removeAll { if case .approval(let r) = $0.content { return r.id == id } else { return false } }
+        // A slip that stood alone was answered: nothing else was asked for, so it goes.
+        if compact, pinnedEntries.isEmpty {
+            compact = false
+            onAutoClose?()
+        }
     }
 
     /// Clears old results when the panel opens after a while, so it starts clean.

@@ -509,7 +509,7 @@ private struct DSSidecard: View {
             LightPool(state: state, width: 120).offset(y: 10)
             Image(nsImage: portrait).resizable().scaledToFit().frame(width: 84, height: 84)
                 .opacity(state == .quiet ? 0.7 : 1)
-                .overlay(alignment: .topTrailing) { ShoulderBadge(state: state, held: held).offset(x: 6, y: -4) }
+                .overlay(alignment: .topTrailing) { ShoulderBadge(state: state, count: held).offset(x: 6, y: -4) }
         }
         .frame(height: 112)
     }

@@ -3,7 +3,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
+/// Renders the Home and Settings windows, the Ask panel and the Sidecard with sample data to PNGs, in light
 /// and dark, then exits:
 /// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>] [--only now,calendar]`. Lets agents (who can't see the screen) review
 /// the UI, in any language (SnapshotLanguage) and in any theme (D58), read straight from its folder. Uses an in-memory database, a temp home and fixture services:
@@ -13,7 +13,7 @@ import SwiftUI
 /// - `window-*`: the real windows, titlebar and toolbar included, as the controllers build them.
 /// - `page-*`: a page at its full height, to review everything below the fold.
 /// - `sheet-*`: sheets on their own.
-/// - `desktop-*`: the Ask panel and bubbles (on a plain background, without the desktop behind them).
+/// - `desktop-*`: the Ask panel, the Sidecard and the companion's floor (on a plain wallpaper, without the desktop behind them).
 enum UISnapshots {
     static func runIfRequested() {
         let args = CommandLine.arguments
@@ -384,12 +384,30 @@ enum UISnapshots {
                           ("desktop-ask-now", sampleAskNow())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
-                try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space"), width: 380)
+                ask.companionName = "Mochi"
+                ask.tail = SidecardTail(edge: .trailing, at: 0.85)
+                try await page(name, AskView(model: ask, companionName: "Mochi", portrait: portrait, hotkey: "⇧⌘Space").background(Wallpaper()),
+                               width: Theme.Size.sidecardAsk + 48)
             }
-            for (name, bubble) in sampleBubbles() {
-                try await page("desktop-bubble-\(name)", BubbleView(model: bubble), width: 320)
+            // Permission slips alone above the companion (D84): calm from your own words, firm from another app or
+            // after outside content, with the exact request unfolded.
+            for (name, request, exact) in DesktopScenes.slips() {
+                let slip = PermissionSlip(request: request, look: request.extensionId.map { ExtensionLook(name: $0.hasSuffix("miraya") ? "Miraya" : $0) },
+                                          companionName: "Mochi", tail: SidecardTail(edge: .bottom, at: 0.8), standalone: true, exactOpen: exact,
+                                          decide: { _ in }, changeMode: {})
+                try await page("desktop-slip-\(name)", slip.padding(AskView.margin).frame(maxWidth: .infinity).background(Wallpaper()),
+                               width: Theme.Size.sidecardMax + 48)
             }
-            try await page("desktop-readouts", ReadoutPills(model: sampleReadouts()), width: 200)
+            // The desktop of D84: the Sidecard's moments, every state of the light, and the companion on its floor.
+            let face = CompanionArt.avatar(for: AppSettings(), side: 48)
+            let still = CompanionArt.portrait(for: AppSettings(), side: 300)
+            for (name, moment) in DesktopScenes.sidecards(face: face) {
+                try await page("desktop-sidecard-\(name)", SidecardView(model: moment).frame(maxWidth: .infinity).background(Wallpaper()), width: 470)
+            }
+            try await page("desktop-states", DesktopScenes.statesBoard(portrait: still), width: 1100)
+            for (name, floor) in DesktopScenes.scenes(portrait: still, face: face) {
+                try await page("desktop-floor-\(name)", FloorScene(portrait: still, floor: floor), width: 860)
+            }
             for (name, caption) in sampleTosses(face: portrait) {
                 try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 300)
             }
@@ -667,15 +685,6 @@ enum UISnapshots {
         return ask
     }
 
-    /// The live values beside the companion: two running, one paused.
-    private static func sampleReadouts() -> ReadoutPillsModel {
-        let model = ReadoutPillsModel()
-        model.items = [Readout(id: "1", label: String(localized: "CPU"), value: "23%"),
-                       Readout(id: "2", label: "Fukuoka", value: "18.4 °C"),
-                       Readout(id: "3", label: String(localized: "Network"), value: "↓ 1.2 MB/s ↑ 40 kB/s", paused: true)]
-        return model
-    }
-
     /// A panel in Auto or Full access after a request that went on while nobody answered: what was
     /// done without asking, and the step that was skipped (D37).
     private static func awayAsk(_ mode: GuardMode) -> AskModel {
@@ -825,50 +834,6 @@ enum UISnapshots {
         upload.mode = .askOncePerKind
         ask.add(.approval(upload), caption: "summarize that page and share my notes")
         return ask
-    }
-
-    private static func sampleBubbles() -> [(String, BubbleModel)] {
-        func bubble(_ item: AttentionItem, tail: BubbleModel.Tail = .init(onTop: false, x: 220)) -> BubbleModel {
-            let model = BubbleModel()
-            model.item = item
-            model.tail = tail
-            return model
-        }
-        return [
-            ("reminder", bubble(AttentionItem(level: .attention, source: "reminder", title: "Stretch", body: "You asked at 16:40.",
-                                              actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
-                                                        AttentionAction(id: "snooze", title: String(localized: "10 min"))],
-                                              refKind: "reminder", refId: "r1"))),
-            ("reminder-repeating", bubble(AttentionItem(level: .attention, source: "reminder", title: "Drink some water",
-                                                        body: "Every 30 minutes until 18:00",
-                                                        actions: [AttentionAction(id: "done", title: String(localized: "Done"), isPrimary: true),
-                                                                  AttentionAction(id: "snooze10", title: String(localized: "10 min")),
-                                                                  AttentionAction(id: "stop", title: String(localized: "Stop repeating"))],
-                                                        refKind: "reminder", refId: "r2"))),
-            ("job-failed", bubble(AttentionItem(level: .attention, source: "job", title: "npm test failed (exit 1)",
-                                                body: "FAIL src/app.test.ts\nExpected 2, received 3\nAfter 4m 12s in sidefolk",
-                                                actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),
-                                                          AttentionAction(id: "open", title: String(localized: "Open folder"))],
-                                                refKind: "job", refId: "j1"))),
-            ("question", bubble(AttentionItem(level: .attention, source: "external:codex", title: "Codex asks",
-                                              body: "Deploy to staging now?",
-                                              actions: [AttentionAction(id: "yes", title: "Yes", isPrimary: true),
-                                                        AttentionAction(id: "no", title: "No")],
-                                              refKind: "ask"),
-                                tail: .init(onTop: true, x: 60))),
-            ("done-without-asking", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
-                                                         title: String(localized: "Done without asking: \("Rename 3 files in ~/Documents/Invoices")",
-                                                                       comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
-                                                         body: GuardMode.auto.title, refKind: "unasked"))),
-            ("intro", bubble(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice, title: AppCoordinator.introduction(.scout).0,
-                                           body: AppCoordinator.introduction(.scout).1, refKind: "intro"))),
-            ("welcome", bubble(Onboarding.item(for: .hello, name: "Mochi", hotkey: "⇧⌘Space"))),
-            ("update", bubble({
-                let n = UpdateController.notice(UpdateController.sampleOffer)
-                return AttentionItem(level: n.level, source: n.source, title: n.title, body: n.body, actions: n.actions,
-                                     refKind: n.refKind, refId: n.refId)
-            }())),
-        ]
     }
 
     /// The update window's states (D46): file name, phase, and how this copy would install it.

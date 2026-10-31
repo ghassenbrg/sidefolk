@@ -85,7 +85,7 @@ extension AppCoordinator: AppServices {
             let item = AttentionItem(level: .gentle, source: Self.ownVoice,
                                      title: String(localized: "I can't bring that session to the front."),
                                      body: [String(localized: "Its window may be closed."), place].filter { !$0.isEmpty }.joined(separator: " "))
-            bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+            sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
         }
     }
 

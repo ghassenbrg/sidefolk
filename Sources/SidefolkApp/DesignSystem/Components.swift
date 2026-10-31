@@ -6,8 +6,18 @@ import SwiftUI
 struct SFCard<Content: View>: View {
     var accent: Color?
     @ViewBuilder var content: Content
+    @Environment(\.flatCards) private var flat
 
     var body: some View {
+        if flat {
+            // Inside a card already (a request in Ask): no second frame around it.
+            content.frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            framed
+        }
+    }
+
+    private var framed: some View {
         HStack(spacing: 0) {
             if let accent {
                 Rectangle().fill(accent).frame(width: 3)
@@ -167,6 +177,8 @@ enum TimeText {
 extension EnvironmentValues {
     /// When true, pages lay out at their full height instead of scrolling (snapshot rendering).
     @Entry var rendersFullPage = false
+    /// Cards drawn inside a card (Ask's request cards, D84) lose their own frame.
+    @Entry var flatCards = false
 }
 
 /// A folk's mark: a circle in its color with its symbol. Stands in until rendered folk images land.

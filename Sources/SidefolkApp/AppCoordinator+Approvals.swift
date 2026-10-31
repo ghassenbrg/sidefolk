@@ -44,7 +44,7 @@ extension AppCoordinator {
                                  title: String(localized: "Done without asking: \(activity.summary)",
                                                comment: "A bubble: what Sidefolk did on its own in Auto or Full access"),
                                  body: mode.title, refKind: "unasked")
-        bubbles.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+        sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
     }
 
     /// The menu bar's Now line for steps skipped while nobody answered.

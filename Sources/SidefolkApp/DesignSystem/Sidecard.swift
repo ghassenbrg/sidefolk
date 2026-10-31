@@ -109,6 +109,8 @@ struct SidecardSurface<Content: View>: View {
 struct Whisper<Action: View>: View {
     var text: Text
     var folk: String?
+    /// The companion's own face, when it speaks for itself (no folk).
+    var face: NSImage? = nil
     var timeLeft: Double?
     var paused = false
     var tail: SidecardTail? = SidecardTail(edge: .bottom)
@@ -117,11 +119,11 @@ struct Whisper<Action: View>: View {
     var body: some View {
         SidecardSurface(tail: tail, radius: 22, padding: 0) {
             HStack(spacing: Theme.Space.s) {
-                if let folk { FolkAvatar(name: folk, size: Theme.Size.avatarSmall) }
+                if let folk { FolkAvatar(name: folk, size: Theme.Size.avatarSmall) } else if let face { CompanionFace(image: face) }
                 text.font(Theme.Font.bubble).foregroundStyle(Theme.ink).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 action.buttonStyle(.sf(.quiet, size: .small))
             }
-            .padding(.leading, folk == nil ? Theme.Space.l : Theme.Space.s)
+            .padding(.leading, folk == nil && face == nil ? Theme.Space.l : Theme.Space.s)
             .padding(.trailing, Action.self == EmptyView.self ? Theme.Space.l : Theme.Space.xs)
             .padding(.vertical, Theme.Space.s)
             .frame(maxWidth: Theme.Size.sidecardMax)
@@ -142,8 +144,19 @@ struct Whisper<Action: View>: View {
 }
 
 extension Whisper where Action == EmptyView {
-    init(text: Text, folk: String? = nil, timeLeft: Double? = nil, paused: Bool = false, tail: SidecardTail? = SidecardTail(edge: .bottom)) {
-        self.init(text: text, folk: folk, timeLeft: timeLeft, paused: paused, tail: tail) { EmptyView() }
+    init(text: Text, folk: String? = nil, face: NSImage? = nil, timeLeft: Double? = nil, paused: Bool = false,
+         tail: SidecardTail? = SidecardTail(edge: .bottom)) {
+        self.init(text: text, folk: folk, face: face, timeLeft: timeLeft, paused: paused, tail: tail) { EmptyView() }
+    }
+}
+
+/// The companion's own face in a Sidecard's source line, where a folk's avatar would be: the portrait is already round.
+struct CompanionFace: View {
+    var image: NSImage
+    var size: CGFloat = Theme.Size.avatarSmall
+
+    var body: some View {
+        Image(nsImage: image).resizable().scaledToFit().frame(width: size, height: size).accessibilityHidden(true)
     }
 }
 
@@ -176,6 +189,8 @@ struct SidecardStrip: View {
 /// 320 to 400 wide; a close button unless it needs an answer.
 struct SidecardCard<Extra: View, Actions: View>: View {
     var folk: String?
+    /// The companion's own face, when it speaks for itself (no folk).
+    var face: NSImage? = nil
     var source: Text?
     var title: Text
     var message: Text?
@@ -195,7 +210,7 @@ struct SidecardCard<Extra: View, Actions: View>: View {
                     let sourceLine = source != nil || close != nil
                     if sourceLine {
                         HStack(spacing: Theme.Space.s) {
-                            if let folk { FolkAvatar(name: folk, size: Theme.Size.avatarSmall) }
+                            if let folk { FolkAvatar(name: folk, size: Theme.Size.avatarSmall) } else if let face { CompanionFace(image: face) }
                             source?.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
                             Spacer(minLength: 0)
                             if let close {
@@ -231,9 +246,9 @@ struct SidecardCard<Extra: View, Actions: View>: View {
 }
 
 extension SidecardCard where Extra == EmptyView {
-    init(folk: String? = nil, source: Text? = nil, title: Text, message: Text? = nil, strip: SidecardStrip? = nil,
+    init(folk: String? = nil, face: NSImage? = nil, source: Text? = nil, title: Text, message: Text? = nil, strip: SidecardStrip? = nil,
          tail: SidecardTail? = SidecardTail(edge: .bottom), close: (() -> Void)? = nil, @ViewBuilder actions: () -> Actions) {
-        self.init(folk: folk, source: source, title: title, message: message, strip: strip, tail: tail, close: close,
+        self.init(folk: folk, face: face, source: source, title: title, message: message, strip: strip, tail: tail, close: close,
                   extra: { EmptyView() }, actions: actions)
     }
 }

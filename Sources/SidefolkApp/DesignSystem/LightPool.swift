@@ -40,6 +40,8 @@ struct LightPool: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var breathing = false
+    /// An alert's one pulse (600 ms), then steady.
+    @State private var pulse = false
 
     var body: some View {
         ZStack {
@@ -51,15 +53,23 @@ struct LightPool: View {
                         .fill(RadialGradient(colors: [light.color.opacity(light.opacity), light.color.opacity(0)],
                                              center: .center, startRadius: 0, endRadius: width / 2))
                         .frame(width: width, height: width * 0.28)
-                        .scaleEffect(breathes && breathing ? 1.08 : 1)
+                        .scaleEffect(breathes && breathing ? 1.08 : pulse ? 1.18 : 1)
                         .opacity(breathes && breathing ? 0.75 : 1)
                 }
             }
         }
         .frame(width: width, height: width * 0.28)
-        .onAppear { if breathes { withAnimation(Theme.Motion.breath) { breathing = true } } }
-        .onChange(of: state) { breathing = false; if breathes { withAnimation(Theme.Motion.breath) { breathing = true } } }
+        .onAppear { light() }
+        .onChange(of: state) { breathing = false; light() }
         .accessibilityHidden(true)
+    }
+
+    private func light() {
+        if breathes { withAnimation(Theme.Motion.breath) { breathing = true } }
+        guard state == .alert, !reduceMotion else { return }
+        withAnimation(.easeOut(duration: 0.3)) { pulse = true } completion: {
+            withAnimation(.easeIn(duration: 0.3)) { pulse = false }
+        }
     }
 
     private var breathes: Bool { state == .working && !reduceMotion }
@@ -69,15 +79,18 @@ struct LightPool: View {
 /// Quiet's moon when nothing waits. 28 pt for a count, smaller for a symbol.
 struct ShoulderBadge: View {
     var state: LightPoolState
-    /// Held while focusing: Focus still says how many wait, in grey (package B's note).
-    var held = 0
+    /// How many wait while a card asks (alert), or are held while focusing: Focus still says it, in grey (package B's
+    /// note). `.waiting` carries its own.
+    var count = 0
 
     var body: some View {
         switch state {
         case .waiting(let n) where n > 0:
             countBadge(n, waiting: true)
-        case .focus where held > 0:
-            countBadge(held, waiting: false)
+        case .alert where count > 0:
+            countBadge(count, waiting: true)
+        case .focus where count > 0:
+            countBadge(count, waiting: false)
         case .focus:
             symbol(Theme.Symbol.focus)
         case .quiet:
