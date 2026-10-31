@@ -82,7 +82,10 @@ struct NumberFieldView: View {
             }
             if let label = field.label { Text(verbatim: label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted) }
         }
+        .padding(10)
         .frame(maxWidth: .infinity)
+        // A card behind the field and its pad, so they read on any scene.
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.9)))
         .disabled(field.locked)
     }
 

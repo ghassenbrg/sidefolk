@@ -2208,6 +2208,33 @@ Stick, Memory Pairs and Daily Word, beside trivia.
 awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
 **Amended (2026-11-01):** some parts are drawn with built-in pictures (`Sources/SidefolkApp/Play/Art`: cup, gem,
 balloon, trophy, made for Sidefolk), picked from the part's data; a board still never carries an image.
+**Amended (2026-11-01), the games look:** the founder wanted the games to look and feel like real games (two direction
+boards). The Play panel (400 pt) is drawn as one: a header in the game's colour (back to the menu, its icon on a tile,
+title, whose game it is, speaker, ✕), "You vs <companion>" with both faces (the Mac account's picture read once from the
+local directory through Collaboration, else a smiling stand-in; never in snapshots) and the score or round pips, the
+game's illustrated scene behind the board (dimmed in dark mode, the arcade dark in both), the companion in it saying the
+prompt in a speech bubble (peeking over the table for cups, pads, sticks and the Boop button; small at the side over a
+bigger board; its 2D poses follow the cue's move, a 3D one shows its still; always the person's own companion), the
+eyebrow as a round chip, chunky toy buttons and tiles, a hint pill, and an end card that stands in for the board (who
+won in words, the trophy with rays and confetti for the person's win, "Back to games"). The panel's home is a **menu**
+(the Play menu's All Games…, a game's back button): game cards in their colours with icon and tagline, "Play against
+<companion>" then "Puzzles" (`GameLook.solo`), "Resume" on a game put away, and Wins, Streak and Played counted from
+Sidefolk's own Activity rows (`GameStats`; each `games.play` row now records `result` win, loss or draw).
+- **Fixed keys, checked:** the manifest's `games.<name>.look` (`GameLook`: cups, dance, arcade, sticks, quiz, grid,
+  numbers, animals, balloons, cards, hands, words; the validator names a wrong one) and `tagline` (60 characters,
+  translated as `games.<name>.tagline`); a pad's `art` (wave, hop, spin, bow, wave_both; an unknown one keeps the shape).
+  Pictures for SF Symbols a board already names (Memory Pairs' faces, trivia's topics) are Sidefolk's own mapping.
+- **What is drawn where:** `GameStyle.of(look)` (Play/GameLooks.swift) holds each look's colours, scene and icon;
+  `GameArt` (Play/GameArt.swift) the pictures; Play/GameStage.swift the companion and its bubble; Play/PlayMenu.swift the
+  menu. A look's colour is identity only (D78): verdicts keep GameVerdict's colours, primary buttons the app's accent.
+- **The art budget:** about 1 MB of the 6–8 MB allowed, in one warm, glossy, toy-like style made with Codex image
+  generation: 11 scenes (HEIC, 768 × 1024, 40–100 KB; the table a prop stands on is the scene's own bottom), 12 menu
+  icons, 5 pad moves, 12 card faces, 10 topics, the Boop button, a bulb, a card back and a magnifier (WebP with alpha),
+  beside the earlier cup, gem, balloon and trophy. The companion is never generated.
+- **A new game's look:** a `GameLook` case (and `solo` for a puzzle), its row in `GameStyle.of`, `game-bg-<look>.heic`
+  and `game-icon-<look>.webp` in Play/Art with their `GameArt` cases, then `"look"` in the manifest.
+- **Implications:** a Sidefolk from before this refuses a Playtime naming looks and taglines (unknown manifest keys,
+  T13), as with earlier snapshots; a pad's `art` is ignored by older copies.
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
