@@ -1,0 +1,61 @@
+{
+  "name": "系统状态",
+  "tagline": "快速回答电池、磁盘和内存的情况",
+  "description": "快速回答电池、磁盘和内存的情况，并在电池或磁盘不足时提醒你。想要带实时图表的页面，请从图库添加“你的 Mac”。",
+  "tools": {
+    "about": {
+      "title": "关于本机"
+    },
+    "battery": {
+      "title": "电池状态"
+    },
+    "disk": {
+      "title": "磁盘空间"
+    },
+    "memory": {
+      "title": "内存使用情况"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "电池电量低",
+      "description": "未充电时电量低于某个水平时提醒你一次。"
+    },
+    "disk_low": {
+      "title": "磁盘空间不足",
+      "description": "启动磁盘的可用空间低于某个大小时提醒你一次。"
+    }
+  },
+  "text": {
+    ", ": "，",
+    "Battery at {percent}, {state} ({time} left).": "电量 {percent}，{state}（剩余 {time}）。",
+    "Battery at {percent}, {state}.": "电量 {percent}，{state}。",
+    "Home": "个人文件夹",
+    "Only {free} free on the startup disk.": "启动磁盘仅剩 {free} 可用。",
+    "Startup disk": "启动磁盘",
+    "The Mac didn't report its memory.": "Mac 没有报告内存信息。",
+    "The startup disk didn't report its space.": "启动磁盘没有报告空间信息。",
+    "This Mac has no battery; it runs on {source}.": "这台 Mac 没有电池，使用{source}供电。",
+    "This Mac: {chip}": "这台 Mac：{chip}",
+    "an unknown processor": "未知处理器",
+    "an unknown time": "未知时长",
+    "charged": "已充满",
+    "charging": "正在充电",
+    "critical": "严重",
+    "discharging": "正在放电",
+    "finishing charge": "即将充满",
+    "model {model}": "型号 {model}",
+    "normal": "正常",
+    "plugged in, not charging": "已接通电源，未充电",
+    "power": "电源",
+    "unknown": "未知",
+    "warning": "警告",
+    "{about}; on for {time}.": "{about}；已开机 {time}。",
+    "{count} cores": {
+      "other": "{count} 核"
+    },
+    "{disk}: {free} free of {total}.": "{disk}：{total} 中可用 {free}。",
+    "{memory} of memory": "{memory} 内存",
+    "{used} of {total} in use; memory pressure is {pressure}.": "已用 {used}（共 {total}）；内存压力：{pressure}。"
+  }
+}

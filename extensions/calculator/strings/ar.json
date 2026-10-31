@@ -1,0 +1,81 @@
+{
+  "name": "الآلة الحاسبة",
+  "tagline": "حسابات ووحدات وتواريخ بدقة",
+  "description": "عمليات حسابية ونسب مئوية وتحويل وحدات وحساب تواريخ بدقة، فلا يعتمد الجواب على التخمين أبدًا.",
+  "tools": {
+    "calculate": {
+      "title": "احسب"
+    },
+    "convert_units": {
+      "title": "تحويل الوحدات"
+    },
+    "date_math": {
+      "title": "حساب التواريخ"
+    }
+  },
+  "text": {
+    "A parenthesis isn't closed.": "هناك قوس غير مغلق.",
+    "From {from} to {to}: {span}, going back, {weekdays}.": "من {from} إلى {to}: {span}، بالعودة إلى الوراء، {weekdays}.",
+    "From {from} to {to}: {span}, {weekdays}.": "من {from} إلى {to}: {span}، {weekdays}.",
+    "I can't use “{text}” in a calculation.": "لا يمكن استخدام «{text}» في عملية حسابية.",
+    "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.": "تعذّرت قراءة «{amount}» كمدة. استخدم مثلًا 3 weeks أو -10 days أو 2 months.",
+    "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.": "تعذّرت قراءة «{date}» كتاريخ. استخدم YYYY-MM-DD أو 25 December 2026 أو today.",
+    "I couldn't read “{text}” as a calculation.": "تعذّرت قراءة «{text}» كعملية حسابية.",
+    "I don't know the unit “{unit}”.": "لا أعرف الوحدة «{unit}».",
+    "I don't know “{text}”. I know {names}, pi and e.": "لا أعرف «{text}». أعرف {names} وpi وe.",
+    "That has no finite answer (dividing by zero, or a number too big).": "لا توجد نتيجة محدودة (قسمة على صفر، أو عدد كبير جدًا).",
+    "That's too big to convert.": "القيمة أكبر من أن تُحوَّل.",
+    "The calculation ends too early or has an operator in the wrong place.": "تنتهي العملية الحسابية مبكرًا أو فيها عامل في غير موضعه.",
+    "US measures": "مقاييس أمريكية",
+    "Write decimals with a dot, like 1.5.": "اكتب الكسور العشرية بنقطة، مثل 1.5.",
+    "an average month or year": "شهر أو سنة في المتوسط",
+    "in {count} days": {
+      "zero": "بعد {count} يوم",
+      "one": "بعد يوم واحد",
+      "two": "بعد يومين",
+      "few": "بعد {count} أيام",
+      "many": "بعد {count} يومًا",
+      "other": "بعد {count} يوم"
+    },
+    "today": "اليوم",
+    "{a} and {b} measure different things: they don't convert.": "{a} و{b} يقيسان أشياء مختلفة: لا يتحوّل أحدهما إلى الآخر.",
+    "{count} days": {
+      "zero": "{count} يوم",
+      "one": "يوم واحد",
+      "two": "يومان",
+      "few": "{count} أيام",
+      "many": "{count} يومًا",
+      "other": "{count} يوم"
+    },
+    "{count} days ago": {
+      "zero": "قبل {count} يوم",
+      "one": "قبل يوم واحد",
+      "two": "قبل يومين",
+      "few": "قبل {count} أيام",
+      "many": "قبل {count} يومًا",
+      "other": "قبل {count} يوم"
+    },
+    "{count} of them weekdays": {
+      "zero": "ليس بينها أيام عمل",
+      "one": "منها يوم عمل واحد",
+      "two": "منها يوما عمل",
+      "few": "منها {count} أيام عمل",
+      "many": "منها {count} يوم عمل",
+      "other": "منها {count} يوم عمل"
+    },
+    "{count} weeks": {
+      "zero": "{count} أسبوع",
+      "one": "أسبوع واحد",
+      "two": "أسبوعان",
+      "few": "{count} أسابيع",
+      "many": "{count} أسبوعًا",
+      "other": "{count} أسبوع"
+    },
+    "{date} minus {amount} is {result}.": "{date} ناقص {amount} يساوي {result}.",
+    "{date} plus {amount} is {result}.": "{date} زائد {amount} يساوي {result}.",
+    "{date}: {when}, week {week}, day {day} of the year.": "{date}: {when}، الأسبوع {week}، اليوم {day} من السنة.",
+    "{weeks} and {days}": "{weeks} و{days}",
+    "“{key}” must be a number.": "يجب أن يكون «{key}» رقمًا.",
+    "“{text}” isn't a number.": "«{text}» ليس رقمًا."
+  }
+}

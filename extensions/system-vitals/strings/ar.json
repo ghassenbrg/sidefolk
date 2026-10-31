@@ -1,0 +1,66 @@
+{
+  "name": "حالة النظام",
+  "tagline": "إجابات سريعة عن البطارية والقرص والذاكرة",
+  "description": "إجابات سريعة عن البطارية والقرص والذاكرة، وتنبيه عندما توشك البطارية أو مساحة القرص على النفاد. لصفحة برسوم بيانية مباشرة، أضف «جهاز Mac الخاص بك» من المعرض.",
+  "tools": {
+    "about": {
+      "title": "حول هذا الـ Mac"
+    },
+    "battery": {
+      "title": "حالة البطارية"
+    },
+    "disk": {
+      "title": "مساحة القرص"
+    },
+    "memory": {
+      "title": "استخدام الذاكرة"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "البطارية منخفضة",
+      "description": "يُعلمك مرة واحدة حين تنخفض البطارية عن مستوى معيّن وهي لا تشحن."
+    },
+    "disk_low": {
+      "title": "مساحة القرص منخفضة",
+      "description": "يُعلمك مرة واحدة حين تنخفض المساحة الحرة على قرص بدء التشغيل عن حجم معيّن."
+    }
+  },
+  "text": {
+    ", ": "، ",
+    "Battery at {percent}, {state} ({time} left).": "البطارية عند {percent}، {state} (متبقٍ {time}).",
+    "Battery at {percent}, {state}.": "البطارية عند {percent}، {state}.",
+    "Home": "المجلد الرئيسي",
+    "Only {free} free on the startup disk.": "لم يبقَ سوى {free} حرة على قرص بدء التشغيل.",
+    "Startup disk": "قرص بدء التشغيل",
+    "The Mac didn't report its memory.": "لم يُبلغ الـMac عن ذاكرته.",
+    "The startup disk didn't report its space.": "لم يُبلغ قرص بدء التشغيل عن مساحته.",
+    "This Mac has no battery; it runs on {source}.": "لا توجد بطارية في هذا الـMac؛ يعمل على {source}.",
+    "This Mac: {chip}": "هذا الـMac: {chip}",
+    "an unknown processor": "معالج غير معروف",
+    "an unknown time": "مدة غير معروفة",
+    "charged": "مشحونة",
+    "charging": "قيد الشحن",
+    "critical": "حرجة",
+    "discharging": "تُفرَّغ",
+    "finishing charge": "يكتمل الشحن",
+    "model {model}": "الطراز {model}",
+    "normal": "طبيعي",
+    "plugged in, not charging": "موصولة بالشاحن، لا تشحن",
+    "power": "التيار",
+    "unknown": "غير معروف",
+    "warning": "تحذير",
+    "{about}; on for {time}.": "{about}؛ يعمل منذ {time}.",
+    "{count} cores": {
+      "zero": "{count} نواة",
+      "one": "نواة واحدة",
+      "two": "نواتان",
+      "few": "{count} نوى",
+      "many": "{count} نواة",
+      "other": "{count} نواة"
+    },
+    "{disk}: {free} free of {total}.": "{disk}: {free} حرة من {total}.",
+    "{memory} of memory": "{memory} من الذاكرة",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{used} من {total} قيد الاستخدام؛ ضغط الذاكرة {pressure}."
+  }
+}

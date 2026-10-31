@@ -38,14 +38,21 @@ enum Dates {
                                                matchingPolicy: .nextTime) else { break }
             return next
         }
-        throw Problem("I couldn't read “\(raw ?? "")” as a date. Use YYYY-MM-DD, 25 December 2026, or today.")
+        throw Problem(L("I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.", ["date": raw ?? ""]))
     }
 
+    /// "Friday 25 December 2026", in the person's language.
     static func show(_ date: Date) -> String {
         let format = DateFormatter()
-        format.locale = Locale(identifier: "en_US_POSIX")
         format.timeZone = .current
-        format.dateFormat = "EEEE d MMMM yyyy"
+        if Language.code == "en" {
+            // Sidefolk's own English way of writing a day.
+            format.locale = Locale(identifier: "en_US_POSIX")
+            format.dateFormat = "EEEE d MMMM yyyy"
+        } else {
+            format.locale = Language.locale
+            format.dateFormat = DateFormatter.dateFormat(fromTemplate: "EEEEdMMMMy", options: 0, locale: Language.locale)
+        }
         return format.string(from: date)
     }
 
@@ -53,7 +60,7 @@ enum Dates {
     static func add(_ amount: String, to date: Date) throws -> Date {
         guard let m = amount.lowercased().trimmingCharacters(in: .whitespaces)
             .wholeMatch(of: /([+-]?\s*\d+)\s*(day|days|d|week|weeks|wk|month|months|year|years|yr|weekday|weekdays|business days?|working days?)/) else {
-            throw Problem("I couldn't read “\(amount)” as an amount of time. Use something like 3 weeks, -10 days or 2 months.")
+            throw Problem(L("I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.", ["amount": amount]))
         }
         let n = Int(m.1.replacingOccurrences(of: " ", with: ""))!
         switch m.2 {
@@ -81,16 +88,21 @@ enum Dates {
             day = calendar.date(byAdding: .day, value: 1, to: day)!
             if !calendar.isDateInWeekend(day) { weekdays += 1 }
         }
-        let span = abs(days) == 1 ? "1 day" : "\(abs(days)) days"
-        let breakdown = weeks > 0 ? " (\(weeks) week\(weeks == 1 ? "" : "s")\(rest > 0 ? " and \(rest) day\(rest == 1 ? "" : "s")" : ""))" : ""
-        let direction = days < 0 ? ", going back" : ""
-        return "From \(show(from)) to \(show(to)): \(span)\(breakdown)\(direction), \(weekdays) of them weekdays."
+        var span = L(one: "{count} day", other: "{count} days", count: abs(days))
+        if weeks > 0 {
+            let week = L(one: "{count} week", other: "{count} weeks", count: weeks)
+            span += " (" + (rest > 0 ? L("{weeks} and {days}", ["weeks": week, "days": L(one: "{count} day", other: "{count} days", count: rest)]) : week) + ")"
+        }
+        let values = ["from": show(from), "to": show(to), "span": span,
+                      "weekdays": L(one: "{count} of them a weekday", other: "{count} of them weekdays", count: weekdays)]
+        return days < 0 ? L("From {from} to {to}: {span}, going back, {weekdays}.", values) : L("From {from} to {to}: {span}, {weekdays}.", values)
     }
 
     static func describe(_ date: Date, today: Date = Date()) -> String {
         let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: today), to: date).day!
         let week = calendar.component(.weekOfYear, from: date), dayOfYear = calendar.ordinality(of: .day, in: .year, for: date) ?? 0
-        let when = days == 0 ? "today" : days > 0 ? "in \(days) day\(days == 1 ? "" : "s")" : "\(-days) day\(days == -1 ? "" : "s") ago"
-        return "\(show(date)): \(when), week \(week), day \(dayOfYear) of the year."
+        let when = days == 0 ? L("today") : days > 0 ? L(one: "in {count} day", other: "in {count} days", count: days)
+            : L(one: "{count} day ago", other: "{count} days ago", count: -days)
+        return L("{date}: {when}, week {week}, day {day} of the year.", ["date": show(date), "when": when, "week": week, "day": dayOfYear])
     }
 }

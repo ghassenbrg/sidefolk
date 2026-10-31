@@ -303,5 +303,6 @@ final class ExtensionPageModel {
     var folder: URL? { services?.runtime.extensions.dataFolder(extensionId: info.extensionId) ?? sampleFolder }
     private var sampleFolder: URL?
 
-    static var language: String { Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en" }
+    /// The language Sidefolk speaks (`pt-BR` and `zh-Hans` whole), which the extension answers in (D76).
+    static var language: String { ExtensionStrings.current }
 }

@@ -1,0 +1,62 @@
+{
+  "name": "Stato del sistema",
+  "tagline": "Risposte rapide su batteria, disco e memoria",
+  "description": "Risposte rapide su batteria, disco e memoria, e un avviso quando la batteria o il disco si esauriscono. Per una pagina con grafici dal vivo, aggiungi Il tuo Mac dalla galleria.",
+  "tools": {
+    "about": {
+      "title": "Informazioni su questo Mac"
+    },
+    "battery": {
+      "title": "Stato della batteria"
+    },
+    "disk": {
+      "title": "Spazio su disco"
+    },
+    "memory": {
+      "title": "Uso della memoria"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "Batteria scarica",
+      "description": "Ti avvisa una volta quando la batteria scende sotto un livello mentre non è in carica."
+    },
+    "disk_low": {
+      "title": "Poco spazio su disco",
+      "description": "Ti avvisa una volta quando lo spazio libero sul disco di avvio scende sotto una certa dimensione."
+    }
+  },
+  "text": {
+    ", ": ", ",
+    "Battery at {percent}, {state} ({time} left).": "Batteria al {percent}, {state} (ancora {time}).",
+    "Battery at {percent}, {state}.": "Batteria al {percent}, {state}.",
+    "Home": "Cartella Inizio",
+    "Only {free} free on the startup disk.": "Solo {free} liberi sul disco di avvio.",
+    "Startup disk": "Disco di avvio",
+    "The Mac didn't report its memory.": "Il Mac non ha indicato la sua memoria.",
+    "The startup disk didn't report its space.": "Il disco di avvio non ha indicato il suo spazio.",
+    "This Mac has no battery; it runs on {source}.": "Questo Mac non ha batteria; funziona con {source}.",
+    "This Mac: {chip}": "Questo Mac: {chip}",
+    "an unknown processor": "un processore sconosciuto",
+    "an unknown time": "un tempo sconosciuto",
+    "charged": "carica",
+    "charging": "in carica",
+    "critical": "critica",
+    "discharging": "in scarica",
+    "finishing charge": "carica in completamento",
+    "model {model}": "modello {model}",
+    "normal": "normale",
+    "plugged in, not charging": "collegata, non in carica",
+    "power": "corrente",
+    "unknown": "sconosciuta",
+    "warning": "avviso",
+    "{about}; on for {time}.": "{about}; acceso da {time}.",
+    "{count} cores": {
+      "one": "{count} core",
+      "other": "{count} core"
+    },
+    "{disk}: {free} free of {total}.": "{disk}: {free} liberi su {total}.",
+    "{memory} of memory": "{memory} di memoria",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{used} su {total} in uso; pressione della memoria {pressure}."
+  }
+}

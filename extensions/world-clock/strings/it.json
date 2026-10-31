@@ -1,0 +1,33 @@
+{
+  "name": "Orologio mondiale",
+  "tagline": "L'ora ovunque e da un luogo all'altro",
+  "description": "L'ora in qualsiasi parte del mondo e un orario convertito tra luoghi, con l'ora legale calcolata con precisione.",
+  "tools": {
+    "convert_time": {
+      "title": "Converti un orario tra luoghi"
+    },
+    "current_time": {
+      "title": "L'ora nel mondo"
+    }
+  },
+  "text": {
+    "I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.": "Non riesco a leggere «{time}» come un orario. Usa HH:MM, 9am, noon o AAAA-MM-GG HH:MM.",
+    "I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.": "Non so dove sia «{place}». Prova con una grande città vicina, un paese con un solo fuso orario o un fuso IANA come Europe/Paris.",
+    "It is {time}, {difference}.": "Sono le {time}, {difference}.",
+    "It is {time}.": "Sono le {time}.",
+    "the same time as you": "la stessa ora che da te",
+    "{date} at {offset} ({zone})": "{date} a {offset} ({zone})",
+    "{date} here ({zone})": "{date} qui ({zone})",
+    "{date} here in {place} ({zone})": "{date} qui a {place} ({zone})",
+    "{date} in UTC ({zone})": "{date} in UTC ({zone})",
+    "{date} in {place} ({zone})": "{date} a {place} ({zone})",
+    "{offset} isn't a real UTC offset.": "{offset} non è uno scostamento UTC reale.",
+    "{span} ahead of you": "{span} avanti rispetto a te",
+    "{span} behind you": "{span} indietro rispetto a te",
+    "{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.": "{time} non esiste quel giorno: gli orologi saltano quell’ora. Prova un’ora dopo.",
+    "{time} is:": "{time} corrisponde a:",
+    "“{time}” isn't a real date.": "«{time}» non è una data reale.",
+    "“{time}” isn't a time of day.": "«{time}» non è un orario del giorno.",
+    "“{time}” isn't a time on a 12-hour clock.": "«{time}» non è un orario nel formato a 12 ore."
+  }
+}

@@ -71,6 +71,8 @@ for source in extensions/*/Sources; do
   dest="$STAGE/Contents/Resources/Extensions/$name"
   mkdir -p "$dest/bin"
   cp "extensions/$name/sidefolk-extension.json" "extensions/$name/icon.pdf" "$dest/"
+  # Its words in Sidefolk's other languages (D76).
+  [[ -d "extensions/$name/strings" ]] && cp -R "extensions/$name/strings" "$dest/strings"
   cp "$BIN/ext-$name" "$dest/bin/ext-$name"
 done
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.

@@ -1,0 +1,56 @@
+{
+  "name": "계산기",
+  "tagline": "정확한 계산, 단위, 날짜",
+  "description": "계산, 백분율, 단위 변환, 날짜 계산을 정확하게 해서 답이 짐작에 기대지 않아요.",
+  "tools": {
+    "calculate": {
+      "title": "계산하기"
+    },
+    "convert_units": {
+      "title": "단위 변환"
+    },
+    "date_math": {
+      "title": "날짜 계산"
+    }
+  },
+  "text": {
+    "A parenthesis isn't closed.": "괄호가 닫히지 않았습니다.",
+    "From {from} to {to}: {span}, going back, {weekdays}.": "{from}부터 {to}까지: {span}(거꾸로), {weekdays}.",
+    "From {from} to {to}: {span}, {weekdays}.": "{from}부터 {to}까지: {span}, {weekdays}.",
+    "I can't use “{text}” in a calculation.": "계산에 ‘{text}’을(를) 쓸 수 없습니다.",
+    "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.": "‘{amount}’을(를) 기간으로 읽을 수 없습니다. 3 weeks, -10 days, 2 months처럼 입력하세요.",
+    "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.": "‘{date}’을(를) 날짜로 읽을 수 없습니다. YYYY-MM-DD, 25 December 2026 또는 today를 사용하세요.",
+    "I couldn't read “{text}” as a calculation.": "‘{text}’을(를) 계산식으로 읽을 수 없습니다.",
+    "I don't know the unit “{unit}”.": "‘{unit}’ 단위는 모릅니다.",
+    "I don't know “{text}”. I know {names}, pi and e.": "‘{text}’은(는) 모릅니다. {names}, pi, e를 알고 있습니다.",
+    "That has no finite answer (dividing by zero, or a number too big).": "유한한 답이 없습니다(0으로 나누기 또는 너무 큰 수).",
+    "That's too big to convert.": "너무 커서 변환할 수 없습니다.",
+    "The calculation ends too early or has an operator in the wrong place.": "계산식이 너무 일찍 끝나거나 연산자 위치가 잘못되었습니다.",
+    "US measures": "미국 단위",
+    "Write decimals with a dot, like 1.5.": "소수는 1.5처럼 점으로 쓰세요.",
+    "an average month or year": "평균적인 한 달 또는 1년",
+    "in {count} days": {
+      "other": "{count}일 후"
+    },
+    "today": "오늘",
+    "{a} and {b} measure different things: they don't convert.": "{a}와(과) {b}은(는) 측정하는 대상이 달라 변환할 수 없습니다.",
+    "{count} days": {
+      "other": "{count}일"
+    },
+    "{count} days ago": {
+      "other": "{count}일 전"
+    },
+    "{count} of them weekdays": {
+      "other": "그중 평일 {count}일"
+    },
+    "{count} weeks": {
+      "other": "{count}주"
+    },
+    "{date} minus {amount} is {result}.": "{date}에서 {amount} 전은 {result}입니다.",
+    "{date} plus {amount} is {result}.": "{date}에서 {amount} 후는 {result}입니다.",
+    "{date}: {when}, week {week}, day {day} of the year.": "{date}: {when}, {week}번째 주, 올해 {day}번째 날.",
+    "{weeks} and {days}": "{weeks} {days}",
+    "“{key}” must be a number.": "‘{key}’은(는) 숫자여야 합니다.",
+    "“{text}” isn't a number.": "‘{text}’은(는) 숫자가 아닙니다."
+  }
+}

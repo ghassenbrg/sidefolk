@@ -83,9 +83,14 @@ public final class MCPClient: Sendable {
     private let state = Mutex(State())
     private let slots = MCPRequestSlots(MCPClient.maxInFlight)
     private let onEvent: @Sendable (MCPClientEvent) -> Void
+    /// The person's language, added as `language` to every tool call and `sidefolk/` request, so a Sidefolk extension
+    /// answers in it (D76). Nil for a plain MCP server, which gets requests exactly as MCP has them.
+    private let language: (@Sendable () -> String)?
 
-    public init(process: ExtensionProcess, onEvent: @escaping @Sendable (MCPClientEvent) -> Void = { _ in }) {
+    public init(process: ExtensionProcess, language: (@Sendable () -> String)? = nil,
+                onEvent: @escaping @Sendable (MCPClientEvent) -> Void = { _ in }) {
         self.process = process
+        self.language = language
         self.onEvent = onEvent
     }
 
@@ -189,7 +194,7 @@ public final class MCPClient: Sendable {
         return MCPWatchResult(triggered: triggered, state: r["state"] ?? .null, summary: r["summary"]?.stringValue ?? "")
     }
 
-    /// `sidefolk/page.render {page, language}` → `{page: {summary, sections}}` (D62).
+    /// `sidefolk/page.render {page, language}` → `{page: {summary, sections}}` (D62). `language` here wins over the client's.
     public func pageRender(page: String, language: String, timeout: TimeInterval = 30) async throws -> JSONValue {
         let r = try await request("sidefolk/page.render", params: ["page": .string(page), "language": .string(language)], timeout: timeout)
         guard let page = r["page"], page.objectValue != nil else { throw MCPError.badResponse("sidefolk/page.render") }
@@ -207,6 +212,11 @@ public final class MCPClient: Sendable {
         }
         var message: [String: JSONValue] = ["jsonrpc": "2.0", "id": .number(Double(id)), "method": .string(method)]
         if let params { message["params"] = params }
+        if let language, method == "tools/call" || method.hasPrefix("sidefolk/"), var object = params?.objectValue ?? (params == nil ? [:] : nil),
+           object["language"] == nil {
+            object["language"] = .string(language())
+            message["params"] = .object(object)
+        }
         let line = Data((JSONValue.object(message).jsonString + "\n").utf8)
 
         return try await withTaskCancellationHandler {

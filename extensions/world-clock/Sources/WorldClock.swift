@@ -60,26 +60,35 @@ enum WorldClock {
         return (full, city)
     }()
 
-    /// The zone for a place, with a label worded to follow a time ("in Tokyo", "here in Paris").
-    static func resolve(_ place: String) throws -> (label: String, zone: TimeZone) {
+    /// Where a time is, as an answer says it ("in Tokyo", "here in Paris", "at UTC+2").
+    enum Spot {
+        case here(city: String?)
+        case utc
+        case offset(String)
+        case named(String)
+    }
+
+    /// The zone for a place, and how to say where it is.
+    static func resolve(_ place: String) throws -> (spot: Spot, zone: TimeZone) {
         let key = fold(place)
         let shown = place.trimmingCharacters(in: .whitespaces)
         if here.contains(key) {
             let local = TimeZone.current
             let city = local.identifier.split(separator: "/").last.map { $0.replacingOccurrences(of: "_", with: " ") }
-            return (city.map { "here in \($0)" } ?? "here", local)
+            return (.here(city: city), local)
         }
-        if ["utc", "gmt", "z", "zulu"].contains(key) { return ("in UTC", TimeZone(identifier: "UTC")!) }
+        if ["utc", "gmt", "z", "zulu"].contains(key) { return (.utc, TimeZone(identifier: "UTC")!) }
         let compact = place.lowercased().replacingOccurrences(of: " ", with: "")
         if let m = compact.wholeMatch(of: /(?:utc|gmt)([+\-−])(\d{1,2})(?::?(\d{2}))?/) {
             let seconds = (Int(m.2)! * 60 + (m.3.map { Int($0)! } ?? 0)) * 60
-            guard seconds <= 14 * 3600 else { throw Problem("\(shown) isn't a real UTC offset.") }
-            return ("at " + shown, TimeZone(secondsFromGMT: m.1 == "+" ? seconds : -seconds)!)
+            guard seconds <= 14 * 3600 else { throw Problem(L("{offset} isn't a real UTC offset.", ["offset": shown])) }
+            return (.offset(shown), TimeZone(secondsFromGMT: m.1 == "+" ? seconds : -seconds)!)
         }
         guard let name = zones.full[key] ?? aliases[key] ?? zones.city[key], let zone = TimeZone(identifier: name) else {
-            throw Problem("I don't know where “\(shown)” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.")
+            throw Problem(L("I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.",
+                            ["place": shown]))
         }
-        return ("in " + shown, zone)
+        return (.named(shown), zone)
     }
 
     static func offset(_ zone: TimeZone, at moment: Date) -> String {
@@ -88,25 +97,37 @@ enum WorldClock {
         return "UTC\(minutes >= 0 ? "+" : "−")\(hours)\(rest == 0 ? "" : String(format: ":%02d", rest))"
     }
 
-    /// "Thursday 15 January, 21:00 in Asia/Tokyo (JST, UTC+9)".
-    static func describe(_ moment: Date, in zone: TimeZone, label: String) -> String {
+    /// "Thursday 15 January, 21:00 in Asia/Tokyo (JST, UTC+9)", in the person's language.
+    static func describe(_ moment: Date, in zone: TimeZone, at spot: Spot) -> String {
         let format = DateFormatter()
-        format.locale = Locale(identifier: "en_US_POSIX")
         format.timeZone = zone
-        format.dateFormat = "EEEE d MMMM, HH:mm"
+        if Language.code == "en" {
+            // Sidefolk's own English way of writing a day and a time.
+            format.locale = Locale(identifier: "en_US_POSIX")
+            format.dateFormat = "EEEE d MMMM, HH:mm"
+        } else {
+            format.locale = Language.locale
+            format.dateFormat = DateFormatter.dateFormat(fromTemplate: "EEEEdMMMMHHmm", options: 0, locale: Language.locale)
+        }
         // Named zones have an abbreviation (CET, JST); offsets and UTC itself only repeat the offset.
         // UTC's own zone is called GMT on Apple's systems: it gets no name beside its offset either.
         let abbreviation = ["GMT", "UTC"].contains(zone.identifier) ? "" : TZif.abbreviation(zone, at: moment) ?? ""
         let named = !abbreviation.isEmpty && !["+", "-", "UTC"].contains { abbreviation.hasPrefix($0) }
-        return "\(format.string(from: moment)) \(label) (\(named ? abbreviation + ", " : "")\(offset(zone, at: moment)))"
+        let values = ["date": format.string(from: moment), "zone": (named ? abbreviation + ", " : "") + offset(zone, at: moment)]
+        switch spot {
+        case .here(let city?): return L("{date} here in {place} ({zone})", values.merging(["place": city]) { a, _ in a })
+        case .here(nil): return L("{date} here ({zone})", values)
+        case .utc: return L("{date} in UTC ({zone})", values)
+        case .offset(let name): return L("{date} at {offset} ({zone})", values.merging(["offset": name]) { a, _ in a })
+        case .named(let name): return L("{date} in {place} ({zone})", values.merging(["place": name]) { a, _ in a })
+        }
     }
 
     static func difference(_ zone: TimeZone, from reference: TimeZone, at moment: Date) -> String {
         let minutes = (zone.secondsFromGMT(for: moment) - reference.secondsFromGMT(for: moment)) / 60
-        guard minutes != 0 else { return "the same time as you" }
-        let (hours, rest) = (abs(minutes) / 60, abs(minutes) % 60)
-        let span = rest == 0 ? "\(hours) hour\(hours == 1 ? "" : "s")" : String(format: "%d h %02d", hours, rest)
-        return "\(span) \(minutes > 0 ? "ahead of" : "behind") you"
+        guard minutes != 0 else { return L("the same time as you") }
+        let span = Format.duration(Double(abs(minutes)) * 60, units: [.hours, .minutes], width: .wide)
+        return minutes > 0 ? L("{span} ahead of you", ["span": span]) : L("{span} behind you", ["span": span])
     }
 
     /// "09:30", "9am", "noon", or "2026-03-29 02:30", in `zone`; today there when no date is given.
@@ -115,27 +136,27 @@ enum WorldClock {
         var key = shown.lowercased().replacingOccurrences(of: ".", with: "")
         if key == "noon" || key == "midday" { key = "12:00" } else if key == "midnight" { key = "00:00" }
         guard let m = key.wholeMatch(of: /(?:(\d{4})-(\d{2})-(\d{2})[ t])?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/) else {
-            throw Problem("I couldn't read “\(shown)” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.")
+            throw Problem(L("I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.", ["time": shown]))
         }
         var hour = Int(m.4)!
         let minute = m.5.map { Int($0)! } ?? 0
         if let half = m.6 {
-            guard (1...12).contains(hour) else { throw Problem("“\(shown)” isn't a time on a 12-hour clock.") }
+            guard (1...12).contains(hour) else { throw Problem(L("“{time}” isn't a time on a 12-hour clock.", ["time": shown])) }
             hour = hour % 12 + (half == "pm" ? 12 : 0)
         }
-        guard hour <= 23, minute <= 59 else { throw Problem("“\(shown)” isn't a time of day.") }
+        guard hour <= 23, minute <= 59 else { throw Problem(L("“{time}” isn't a time of day.", ["time": shown])) }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = zone
         var wanted = calendar.dateComponents([.year, .month, .day], from: now)
         if let y = m.1, let mo = m.2, let d = m.3 { (wanted.year, wanted.month, wanted.day) = (Int(y), Int(mo), Int(d)) }
         wanted.hour = hour
         wanted.minute = minute
-        guard let moment = calendar.date(from: wanted) else { throw Problem("“\(shown)” isn't a real date.") }
+        guard let moment = calendar.date(from: wanted) else { throw Problem(L("“{time}” isn't a real date.", ["time": shown])) }
         let back = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: moment)
-        guard back.year == wanted.year, back.month == wanted.month, back.day == wanted.day else { throw Problem("“\(shown)” isn't a real date.") }
+        guard back.year == wanted.year, back.month == wanted.month, back.day == wanted.day else { throw Problem(L("“{time}” isn't a real date.", ["time": shown])) }
         // In the hour the clocks skip in spring, that wall time never happens there.
         guard back.hour == hour, back.minute == minute else {
-            throw Problem("\(shown) doesn't happen on that day: the clocks skip that hour. Try an hour later.")
+            throw Problem(L("{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.", ["time": shown]))
         }
         return moment
     }
@@ -144,10 +165,10 @@ enum WorldClock {
         var lines: [String] = [], problems: [String] = []
         for place in places.isEmpty ? ["here"] : places {
             do {
-                let (label, zone) = try resolve(place)
-                var line = "It is " + describe(now, in: zone, label: label)
-                if !here.contains(fold(place)) { line += ", " + difference(zone, from: .current, at: now) }
-                lines.append(line + ".")
+                let (spot, zone) = try resolve(place)
+                let time = describe(now, in: zone, at: spot)
+                lines.append(here.contains(fold(place)) ? L("It is {time}.", ["time": time])
+                    : L("It is {time}, {difference}.", ["time": time, "difference": difference(zone, from: .current, at: now)]))
             } catch let problem as Problem {
                 problems.append(problem.message)
             }
@@ -157,13 +178,13 @@ enum WorldClock {
     }
 
     static func convert(_ time: String, from origin: String?, to places: [String], now: Date = Date()) throws -> String {
-        let (originLabel, originZone) = try resolve(origin ?? "here")
+        let (originSpot, originZone) = try resolve(origin ?? "here")
         let moment = try parse(time, in: originZone, now: now)
-        var lines = ["\(describe(moment, in: originZone, label: originLabel)) is:"], problems: [String] = []
+        var lines = [L("{time} is:", ["time": describe(moment, in: originZone, at: originSpot)])], problems: [String] = []
         for place in places {
             do {
-                let (label, zone) = try resolve(place)
-                lines.append("- " + describe(moment, in: zone, label: label))
+                let (spot, zone) = try resolve(place)
+                lines.append("- " + describe(moment, in: zone, at: spot))
             } catch let problem as Problem {
                 problems.append(problem.message)
             }

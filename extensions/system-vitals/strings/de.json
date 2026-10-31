@@ -1,0 +1,62 @@
+{
+  "name": "Systemzustand",
+  "tagline": "Schnelle Antworten zu Batterie, Festplatte und Speicher",
+  "description": "Schnelle Antworten zu Batterie, Festplatte und Speicher, und ein Hinweis, wenn Batterie oder Festplatte knapp werden. Für eine Seite mit Live-Diagrammen füge Dein Mac aus der Galerie hinzu.",
+  "tools": {
+    "about": {
+      "title": "Über diesen Mac"
+    },
+    "battery": {
+      "title": "Batteriestatus"
+    },
+    "disk": {
+      "title": "Speicherplatz"
+    },
+    "memory": {
+      "title": "Arbeitsspeicher-Nutzung"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "Batterie schwach",
+      "description": "Sagt dir einmal Bescheid, wenn die Batterie ohne Laden unter einen Stand fällt."
+    },
+    "disk_low": {
+      "title": "Wenig Speicherplatz",
+      "description": "Sagt dir einmal Bescheid, wenn der freie Platz auf dem Startvolume unter eine Größe fällt."
+    }
+  },
+  "text": {
+    ", ": ", ",
+    "Battery at {percent}, {state} ({time} left).": "Batterie bei {percent}, {state} (noch {time}).",
+    "Battery at {percent}, {state}.": "Batterie bei {percent}, {state}.",
+    "Home": "Benutzerordner",
+    "Only {free} free on the startup disk.": "Nur noch {free} frei auf dem Startvolume.",
+    "Startup disk": "Startvolume",
+    "The Mac didn't report its memory.": "Der Mac hat seinen Speicher nicht gemeldet.",
+    "The startup disk didn't report its space.": "Das Startvolume hat seinen Speicherplatz nicht gemeldet.",
+    "This Mac has no battery; it runs on {source}.": "Dieser Mac hat keine Batterie; er läuft mit {source}.",
+    "This Mac: {chip}": "Dieser Mac: {chip}",
+    "an unknown processor": "ein unbekannter Prozessor",
+    "an unknown time": "unbekannte Zeit",
+    "charged": "geladen",
+    "charging": "wird geladen",
+    "critical": "kritisch",
+    "discharging": "wird entladen",
+    "finishing charge": "Ladevorgang wird abgeschlossen",
+    "model {model}": "Modell {model}",
+    "normal": "normal",
+    "plugged in, not charging": "am Netzteil, lädt nicht",
+    "power": "Netzstrom",
+    "unknown": "unbekannt",
+    "warning": "Warnung",
+    "{about}; on for {time}.": "{about}; seit {time} an.",
+    "{count} cores": {
+      "one": "{count} Kern",
+      "other": "{count} Kerne"
+    },
+    "{disk}: {free} free of {total}.": "{disk}: {free} frei von {total}.",
+    "{memory} of memory": "{memory} Arbeitsspeicher",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{used} von {total} belegt; Speicherdruck: {pressure}."
+  }
+}

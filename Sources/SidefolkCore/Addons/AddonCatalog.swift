@@ -31,6 +31,9 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
     public var license: String?
     /// Where an extension sits in the gallery (`AddonCategory`); one this copy doesn't know shows under Other.
     public var category: String?
+    /// Its name, tagline and description in other languages, by language code (D76): from the extension's `strings/`.
+    /// Copies from before this ignore the key (entries aren't decoded strictly).
+    public var localized: AddonWords?
 
     /// Made by Sidefolk. Only Sidefolk signs packs and catalogs (D55), and review refuses this prefix to anyone
     /// else, so the id is enough.
@@ -38,7 +41,7 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
     public static func isOfficial(id: String) -> Bool { id.hasPrefix("dev.sidefolk.") }
 
     enum CodingKeys: String, CodingKey {
-        case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license, category
+        case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license, category, localized
         case minimumSidefolk = "minimum_sidefolk"
     }
 }
@@ -199,10 +202,49 @@ extension AddonEntry {
         return text.split(whereSeparator: \.isWhitespace).allSatisfy { haystack.contains(fold(String($0))) }
     }
 
-    /// Sidefolk's own extensions in the person's language (their words are in the app's string catalog, D28);
-    /// anyone else's as published.
+    /// In the person's language: the entry's own translation (D76), then for Sidefolk's own extensions the app's
+    /// string catalog (D28), then as published.
     private var translated: Bool { official && kind == .extension }
-    public var shownName: String { translated ? BuiltInExtensionWords.name(id) ?? name : name }
-    public var shownTagline: String { translated ? BuiltInExtensionWords.tagline(id) ?? tagline : tagline }
-    public var shownDescription: String { translated ? BuiltInExtensionWords.description(id) ?? description : description }
+    private var words: AddonWords.Words? { localized?.words(for: ExtensionStrings.current) }
+    public var shownName: String { words?.name ?? (translated ? BuiltInExtensionWords.name(id) : nil) ?? name }
+    public var shownTagline: String { words?.tagline ?? (translated ? BuiltInExtensionWords.tagline(id) : nil) ?? tagline }
+    public var shownDescription: String { words?.description ?? (translated ? BuiltInExtensionWords.description(id) : nil) ?? description }
+}
+
+/// A gallery entry's words in other languages (D76). Read leniently: a language or a field that isn't plain text within
+/// the entry's own limits is left out, never the entry.
+public struct AddonWords: Codable, Sendable, Hashable {
+    public struct Words: Codable, Sendable, Hashable {
+        public var name: String?
+        public var tagline: String?
+        public var description: String?
+    }
+
+    public var tables: [String: Words]
+
+    public init(tables: [String: Words]) { self.tables = tables }
+
+    public init(from decoder: Decoder) throws {
+        let raw = (try? decoder.singleValueContainer().decode([String: [String: JSONValue]].self)) ?? [:]
+        func text(_ v: JSONValue?, _ max: Int) -> String? {
+            guard let s = v?.stringValue, !s.trimmingCharacters(in: .whitespaces).isEmpty, s.count <= max, ExtensionText.clean(s) == s else { return nil }
+            return s
+        }
+        // Half as long again as an entry's own limits, as for an extension's strings (languages run longer than English).
+        tables = raw.filter { ExtensionStrings.languages.contains($0.key) }.mapValues {
+            Words(name: text($0["name"], 60).flatMap { $0.contains(where: \.isNewline) ? nil : $0 },
+                  tagline: text($0["tagline"], 90).flatMap { $0.contains(where: \.isNewline) ? nil : $0 },
+                  description: text($0["description"], 1500))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(tables)
+    }
+
+    func words(for language: String) -> Words? {
+        guard let code = ExtensionStrings.match(language, in: Set(tables.keys)), code != "en" else { return nil }
+        return tables[code]
+    }
 }

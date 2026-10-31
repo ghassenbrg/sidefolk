@@ -1,0 +1,68 @@
+{
+  "name": "Wetter",
+  "tagline": "Das Wetter heute und die Woche voraus",
+  "description": "Das heutige Wetter und die Vorschau auf die Woche für jeden Ort, dazu ein Hinweis vor Regen – von Open-Meteo. Nur der Ort, nach dem du fragst, verlässt deinen Mac.",
+  "tools": {
+    "forecast": {
+      "title": "Wettervorhersage"
+    },
+    "sun_and_moon": {
+      "title": "Sonnenaufgang, Sonnenuntergang und Mond"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "Bald Regen",
+      "description": "Sagt dir einmal Bescheid, wenn an einem Ort in den nächsten Stunden Regen wahrscheinlich wird."
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "Einen Ort namens „{place}“ habe ich nicht gefunden. Versuch die nächste Stadt, oder füge das Land hinzu.",
+    "No rain likely in {place} in the next {count} hours.": {
+      "one": "In {place} ist in der nächsten Stunde kein Regen zu erwarten.",
+      "other": "In {place} ist in den nächsten {count} Stunden kein Regen zu erwarten."
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "Open-Meteo hat Sonnenauf- und -untergang für {place} nicht geliefert.",
+    "Rain is likely in {place} around {time} ({chance} chance).": "In {place} ist gegen {time} Regen wahrscheinlich ({chance} Wahrscheinlichkeit).",
+    "The moon is a new moon, {lit} lit.": "Es ist Neumond, zu {lit} beleuchtet.",
+    "The moon is a waning crescent, {lit} lit.": "Der Mond ist eine abnehmende Sichel, zu {lit} beleuchtet.",
+    "The moon is a waning gibbous, {lit} lit.": "Der Mond ist abnehmend dreiviertel, zu {lit} beleuchtet.",
+    "The moon is a waxing crescent, {lit} lit.": "Der Mond ist eine zunehmende Sichel, zu {lit} beleuchtet.",
+    "The moon is a waxing gibbous, {lit} lit.": "Der Mond ist zunehmend dreiviertel, zu {lit} beleuchtet.",
+    "The moon is at its first quarter, {lit} lit.": "Der Mond steht im ersten Viertel, zu {lit} beleuchtet.",
+    "The moon is at its last quarter, {lit} lit.": "Der Mond steht im letzten Viertel, zu {lit} beleuchtet.",
+    "The moon is full, {lit} lit.": "Es ist Vollmond, zu {lit} beleuchtet.",
+    "Today": "Heute",
+    "Tomorrow": "Morgen",
+    "clear": "klar",
+    "drizzle": "Nieselregen",
+    "fog": "Nebel",
+    "freezing drizzle": "gefrierender Nieselregen",
+    "freezing fog": "gefrierender Nebel",
+    "freezing rain": "gefrierender Regen",
+    "heavy drizzle": "starker Nieselregen",
+    "heavy rain": "starker Regen",
+    "heavy snow": "starker Schneefall",
+    "heavy snow showers": "starke Schneeschauer",
+    "light drizzle": "leichter Nieselregen",
+    "light rain": "leichter Regen",
+    "light showers": "leichte Schauer",
+    "light snow": "leichter Schneefall",
+    "mostly clear": "überwiegend klar",
+    "overcast": "bedeckt",
+    "partly cloudy": "teilweise bewölkt",
+    "rain": "Regen",
+    "showers": "Schauer",
+    "snow": "Schnee",
+    "snow grains": "Schneegriesel",
+    "snow showers": "Schneeschauer",
+    "thunderstorms": "Gewitter",
+    "thunderstorms with hail": "Gewitter mit Hagel",
+    "unknown weather": "unbekanntes Wetter",
+    "violent showers": "heftige Schauer",
+    "weather code {code}": "Wettercode {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day}: {weather}, {low} bis {high}, Regenwahrscheinlichkeit {chance}.",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place}, jetzt: {weather}, {temperature} (gefühlt {feels}), Wind {wind}.",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place}: Sonnenaufgang {sunrise}, Sonnenuntergang {sunset}, {daylight} Tageslicht."
+  }
+}

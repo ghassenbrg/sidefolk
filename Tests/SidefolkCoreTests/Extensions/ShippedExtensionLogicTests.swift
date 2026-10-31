@@ -64,7 +64,7 @@ struct ShippedExtensionLogicTests {
         #expect(first.summary == "Rain is likely in Lyon around 15:00 (70% chance).")
         // The eclipse of 8 April 2024 was a new moon; 23 April 2024 a full one.
         #expect(Weather.moon(at: Date(timeIntervalSince1970: 1_712_600_460)).hasPrefix("The moon is a new moon"))
-        #expect(Weather.moon(at: Date(timeIntervalSince1970: 1_713_916_140)).hasPrefix("The moon is a full moon"))
+        #expect(Weather.moon(at: Date(timeIntervalSince1970: 1_713_916_140)).hasPrefix("The moon is full"))
     }
 
 

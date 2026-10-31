@@ -124,7 +124,8 @@ Keep Awake (background, `power`, a page with buttons and switches, `"ai": false`
 
 ## 3. The program on the Kit
 
-`extensions/Kit/` (`Extension.swift`, `Page.swift`, `Schema.swift`, `System.swift`), copied unchanged to
+`extensions/Kit/` (`Extension.swift`, `Page.swift`, `Schema.swift`, `System.swift`, `Language.swift`, `KitWords.swift`,
+`Localized.swift`), copied unchanged to
 `../sidefolk-addons/Kit/` (change it here first; `check.sh` warns when they differ). One `Extension(name:)`, register
 handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit answers `initialize`, `ping`,
 `tools/list`, `tools/call`, `sidefolk/watch.check`, `sidefolk/page.render`, `sidefolk/palette.query` and
@@ -144,10 +145,19 @@ handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit
   a page over 128 KB fails; at most 16 sections, 24 blocks a section, 24 items a list, 4 series a chart; chart `id` and
   series `key` must match `^[a-z0-9_]{1,40}$` and stay stable (they name the kept history); a switch or button must
   name a tool of this extension (`^[a-z0-9_]{1,64}$`), its `input` ≤ 4 KB, and a switch adds `on`. Text is clipped
-  (summary title 80, detail 160, labels 30–60, notes 400) and never reaches a model.
-- **Language**: `args.string("language")` in a page render is the person's (`en`, `fr`, `ar`). Page text is English
-  for now (D62). A gallery extension's name, tagline, description, tool, watcher, page and palette titles are
-  translated by the app instead (`BuiltInExtensionWords.swift`, step 7).
+  (summary title 80, detail 240, labels 30–60, notes 400) and never reaches a model.
+- **Language** (D76): Sidefolk sends `language` with every tool call, watcher check, page and palette request; the Kit
+  keeps it (`Language.code`). Write every word people see as `L("English text", ["name": value])` (named `{name}`
+  placeholders) or `L(one: "{count} app", other: "{count} apps", count: n)`, and numbers, sizes, durations and times
+  with `Format` (`percent`, `bytes`, `duration`, `time` on 24 hours, `date`, `list`, `sentences`), never by hand. The
+  words live in `strings/<language>.json` beside the manifest: `en.json` lists the English (`scripts/extension-strings.py
+  sync <folder>` writes it from the `L(…)` calls), each other language translates `text` and the manifest's words people
+  see (name, tagline, description, tool/watcher/page/palette titles, watcher descriptions, palette placeholder,
+  `network_purpose`). `extension-strings.py check <folder>` says what's missing; `sidefolk ext validate` checks
+  placeholders, plural forms and limits (half as long again as the manifest's). What a command or an `ask` button says
+  stays English (Sidefolk understands typed requests in English). Don't put direction marks in text: Sidefolk strips
+  them and keeps numbers, sizes and paths left to right itself when it lays out right to left. In-code tables work too
+  (`Localized`, D75, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
 - **Palettes**: `query` returns `PaletteList([PaletteItem(id:, title:, detail:, kind:, pinned:, actions:)], note:)`
   (kinds `text link image file color code`, actions `plain pin delete`; at most 200 items, 10 s a call); `choose`
   gets the item id and `choose|plain|pin|delete` and returns `PaletteChoice(close:, paste:, message:)`. With `paste`,
@@ -239,10 +249,12 @@ definitions are held until approved.
   its entry in `icons`. The script writes `extensions/<name>/icon.pdf` in this repo, so for a gallery extension make
   that folder, run `swift scripts/extension-icons.swift --png /tmp/icons <name>`, look at the PNG, move the PDF to the
   add-on folder and remove the folder. Name only the icon you changed: a PDF records when it was written.
-- Translated words: add the extension's name, tagline, description, every tool, watcher, page and palette title and
-  placeholder to `Sources/SidefolkCore/Extensions/BuiltInExtensionWords.swift`, word for word as in the manifest
-  (`BuiltInExtensionWordsTests` compares them); then `bash scripts/strings.sh` and translate the new strings into the
-  nine other languages in `Resources/Localization/Localizable.xcstrings` (say so if your task forbids touching it).
+- Translated words: the extension's own `strings/` in all ten languages (step 3, Language): `build.py` packs it and
+  puts the name, tagline and description per language in the catalog, so the gallery, the install sheet and every
+  page speak the person's language. `ExtensionLanguagesTests` here wants every word in every language for Sidefolk's
+  own. `BuiltInExtensionWords.swift` (the app's catalog) is the fallback for packs from before D76: keep it word for
+  word with the manifest (`BuiltInExtensionWordsTests`), and add a new extension's words there too while older packs
+  are around.
 - `swift test`, `python3 scripts/build.py --unsigned`, `scripts/check.sh` there; `make test` here.
 - `python3 scripts/build.py` (Developer ID) and `scripts/publish.sh` are the founder's. `build.py` numbers snapshots
   itself, keeps a published pack byte for byte, and stops when a released version's files changed. Never raise a
@@ -264,6 +276,8 @@ definitions are held until approved.
 - [ ] Snapshots of the page (and palette, Ask answers) read and compared with what was meant, light and dark if the
       layout is new.
 - [ ] Icon, tagline ≤ 60, description ≤ 300, author; gallery: `addon.json`, `BuiltInExtensionWords`, strings.
+- [ ] Every word people see through `L` and `strings/`, complete in ten languages (`extension-strings.py check`);
+      numbers, sizes and dates through `Format`; snapshots in German (long), Japanese and Arabic (right to left) read.
 - [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;
       `docs/EXTENSIONS.md` when the platform changed. Commit in a coherent milestone, no Co-Authored-By trailer.
 

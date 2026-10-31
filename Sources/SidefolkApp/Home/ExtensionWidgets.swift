@@ -53,14 +53,14 @@ struct ExtensionWidgetsSection: View {
                 HStack(spacing: Theme.Space.m) {
                     PageIcon(info: w.info, size: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: w.info.title).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        Text(ext: w.info.title).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         HStack(spacing: 6) {
                             if tone != .neutral { Image(systemName: tone.symbol).foregroundStyle(tone.color).imageScale(.small) }
-                            Text(verbatim: w.summary?.title ?? String(localized: "Not read yet", comment: "A Today tile whose extension page hasn't been read"))
+                            Text(ext: w.summary?.title ?? String(localized: "Not read yet", comment: "A Today tile whose extension page hasn't been read"))
                                 .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                         }
                         if let detail = w.summary?.detail, !detail.isEmpty {
-                            Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1).monospacedDigit()
+                            Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1).monospacedDigit()
                         }
                     }
                     Spacer(minLength: 0)
@@ -96,13 +96,13 @@ struct QuickControl: View {
             Toggle(isOn: Binding(get: { pages?.isOn(info.id) ?? on }, set: { new in
                 guard let pages else { return }
                 Task { await pages.flip(info, control, on: new) }
-            })) { Text(verbatim: control.label) }
+            })) { Text(ext: control.label) }
                 .toggleStyle(.switch)
                 .labelsHidden()
                 .controlSize(small ? .mini : .regular)
                 .disabled(pages == nil || pages?.switching[info.id] != nil)
-                .help(Text(verbatim: control.detail ?? control.label))
-                .accessibilityLabel(Text(verbatim: "\(info.title), \(control.label)"))
+                .help(Text(ext: control.detail ?? control.label))
+                .accessibilityLabel(Text(ext: "\(info.title), \(control.label)"))
         case .button:
             Button {
                 guard let pages else { return }
@@ -115,13 +115,13 @@ struct QuickControl: View {
                 if let symbol = control.symbol, small {
                     Image(systemName: symbol)
                 } else {
-                    Text(verbatim: control.label)
+                    Text(ext: control.label)
                 }
             }
             .buttonStyle(.sf(style))
             .controlSize(small ? .mini : .small)
             .disabled(pages == nil || running || control.disabled)
-            .help(Text(verbatim: control.detail ?? control.label))
+            .help(Text(ext: control.detail ?? control.label))
         }
     }
 

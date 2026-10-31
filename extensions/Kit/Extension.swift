@@ -51,8 +51,8 @@ public final class Extension {
         watchers[name] = check
     }
 
-    /// A page the manifest declares (`pages.<name>`): what it shows now. The arguments carry `language`, the
-    /// person's (`en`, `fr`, `ar`), for an extension that speaks it.
+    /// A page the manifest declares (`pages.<name>`): what it shows now, in the person's language (`L`, `Format`; the
+    /// arguments carry `language` too).
     public func page(_ name: String, render: @escaping @MainActor (Arguments) async throws -> Page) {
         pages[name] = render
     }
@@ -131,6 +131,8 @@ public final class Extension {
     }
 
     private func answer(_ method: String, _ params: [String: Any]) async throws -> [String: Any] {
+        // Sidefolk says the person's language with each request (D76); what this request answers is in it.
+        Language.use(params["language"] as? String)
         switch method {
         case "initialize":
             return ["protocolVersion": params["protocolVersion"] as? String ?? "2025-06-18", "capabilities": ["tools": [:]],
@@ -260,7 +262,7 @@ public struct Arguments {
 
     /// A string that must be there: a clear problem when it isn't.
     public func required(_ key: String) throws -> String {
-        guard let value = string(key) else { throw Problem("“\(key)” is missing.") }
+        guard let value = string(key) else { throw Problem(L("“{key}” is missing.", ["key": key])) }
         return value
     }
 

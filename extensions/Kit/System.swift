@@ -14,7 +14,7 @@ public enum Paths {
     /// A path the person named, made full: Sidefolk passes full paths, "~/…" is for trying an extension by hand.
     public static func full(_ raw: String) throws -> String {
         let path = raw == "~" || raw.hasPrefix("~/") ? home + raw.dropFirst() : raw
-        guard path.hasPrefix("/") else { throw Problem("Give the full path, like ~/Downloads/photo.jpg.") }
+        guard path.hasPrefix("/") else { throw Problem(L("Give the full path, like ~/Downloads/photo.jpg.")) }
         return (path as NSString).standardizingPath
     }
 
@@ -70,7 +70,8 @@ public func run(_ program: String, _ arguments: [String], environment: [String: 
     }
     if reading.wait(timeout: .now() + timeout) == .timedOut {
         process.terminate()
-        throw Problem("\((program as NSString).lastPathComponent) took longer than \(Int(timeout)) seconds, so it was stopped.")
+        throw Problem(L("{program} took longer than {seconds} seconds, so it was stopped.",
+                         ["program": (program as NSString).lastPathComponent, "seconds": Int(timeout)]))
     }
     process.waitUntilExit()
     return Output(status: process.terminationStatus, out: String(decoding: collected.out.data, as: UTF8.self),
@@ -91,16 +92,19 @@ public enum Web {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
-            throw Problem("Couldn't reach \(url.host ?? "the server") (\(error.localizedDescription)). Check the internet connection.")
+            throw Problem(L("Couldn't reach {host} ({error}). Check the internet connection.",
+                             ["host": url.host ?? L("the server"), "error": error.localizedDescription]))
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard (200..<300).contains(status) else { throw Problem("\(url.host ?? "The server") answered with HTTP \(status).") }
+        guard (200..<300).contains(status) else {
+            throw Problem(L("{host} answered with HTTP {status}.", ["host": url.host ?? L("The server"), "status": String(status)]))
+        }
         return data
     }
 
     public static func json(_ url: URL, timeout: TimeInterval = 15) async throws -> [String: Any] {
         guard let object = try? JSONSerialization.jsonObject(with: try await data(url, timeout: timeout)) as? [String: Any] else {
-            throw Problem("\(url.host ?? "The server") sent something that isn't JSON.")
+            throw Problem(L("{host} sent something that isn't JSON.", ["host": url.host ?? L("The server")]))
         }
         return object
     }

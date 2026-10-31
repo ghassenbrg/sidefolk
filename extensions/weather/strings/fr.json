@@ -1,0 +1,68 @@
+{
+  "name": "Météo",
+  "tagline": "Météo du jour et de la semaine à venir",
+  "description": "La météo du jour et de la semaine à venir pour n’importe quel lieu, avec une alerte avant la pluie, grâce à Open-Meteo. Seul le lieu que vous demandez quitte votre Mac.",
+  "tools": {
+    "forecast": {
+      "title": "Prévisions météo"
+    },
+    "sun_and_moon": {
+      "title": "Lever, coucher du soleil et lune"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "Pluie imminente",
+      "description": "Vous prévient une fois quand la pluie devient probable dans un lieu au cours des prochaines heures."
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "Impossible de trouver un lieu nommé « {place} ». Essayez la ville la plus proche, ou ajoutez le pays.",
+    "No rain likely in {place} in the next {count} hours.": {
+      "one": "Pas de pluie probable à {place} dans l’heure qui vient.",
+      "other": "Pas de pluie probable à {place} dans les {count} prochaines heures."
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "Open-Meteo n’a pas donné le lever et le coucher du soleil pour {place}.",
+    "Rain is likely in {place} around {time} ({chance} chance).": "Pluie probable à {place} vers {time} ({chance} de risque).",
+    "The moon is a new moon, {lit} lit.": "C’est la nouvelle lune, éclairée à {lit}.",
+    "The moon is a waning crescent, {lit} lit.": "La lune est un dernier croissant, éclairée à {lit}.",
+    "The moon is a waning gibbous, {lit} lit.": "La lune est gibbeuse décroissante, éclairée à {lit}.",
+    "The moon is a waxing crescent, {lit} lit.": "La lune est un premier croissant, éclairée à {lit}.",
+    "The moon is a waxing gibbous, {lit} lit.": "La lune est gibbeuse croissante, éclairée à {lit}.",
+    "The moon is at its first quarter, {lit} lit.": "La lune est au premier quartier, éclairée à {lit}.",
+    "The moon is at its last quarter, {lit} lit.": "La lune est au dernier quartier, éclairée à {lit}.",
+    "The moon is full, {lit} lit.": "C’est la pleine lune, éclairée à {lit}.",
+    "Today": "Aujourd’hui",
+    "Tomorrow": "Demain",
+    "clear": "dégagé",
+    "drizzle": "bruine",
+    "fog": "brouillard",
+    "freezing drizzle": "bruine verglaçante",
+    "freezing fog": "brouillard givrant",
+    "freezing rain": "pluie verglaçante",
+    "heavy drizzle": "forte bruine",
+    "heavy rain": "forte pluie",
+    "heavy snow": "forte neige",
+    "heavy snow showers": "fortes averses de neige",
+    "light drizzle": "bruine légère",
+    "light rain": "pluie légère",
+    "light showers": "averses légères",
+    "light snow": "neige légère",
+    "mostly clear": "plutôt dégagé",
+    "overcast": "couvert",
+    "partly cloudy": "partiellement nuageux",
+    "rain": "pluie",
+    "showers": "averses",
+    "snow": "neige",
+    "snow grains": "neige en grains",
+    "snow showers": "averses de neige",
+    "thunderstorms": "orages",
+    "thunderstorms with hail": "orages avec grêle",
+    "unknown weather": "temps inconnu",
+    "violent showers": "averses violentes",
+    "weather code {code}": "code météo {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day} : {weather}, de {low} à {high}, {chance} de risque de pluie.",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place}, maintenant : {weather}, {temperature} (ressenti {feels}), vent {wind}.",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place} : lever du soleil {sunrise}, coucher {sunset}, {daylight} de jour."
+  }
+}
