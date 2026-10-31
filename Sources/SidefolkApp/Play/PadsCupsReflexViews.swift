@@ -31,12 +31,11 @@ struct PadsView: View {
                             .offset(y: lit ? 3 : 0)
                         }
                         .frame(height: pads.pads.count > 4 ? 60 : 66)
+                        .overlay(alignment: .topTrailing) { GameKeyCap(text: "\(i + 1)", light: true).padding(5) }
                         .padding(.bottom, 4)
-                        HStack(spacing: 4) {
-                            Text(verbatim: pad.label).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(Color(hex: 0x4A3B2E))
-                                .lineLimit(1).minimumScaleFactor(0.6)
-                            GameKeyCap(text: "\(i + 1)", ink: Color(hex: 0x8A7560))
-                        }
+                        // The name has the base's whole width (the key cap sits on the tile), so a long one fits.
+                        Text(verbatim: pad.label).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(Color(hex: 0x4A3B2E))
+                            .lineLimit(1).minimumScaleFactor(0.7)
                     }
                     .padding(6)
                     .frame(maxWidth: .infinity)
