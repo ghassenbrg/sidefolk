@@ -30,12 +30,12 @@ struct PageButton: View {
                 } else if let symbol = control.symbol {
                     Image(systemName: symbol)
                 }
-                Text(verbatim: control.label)
+                Text(ext: control.label)
             }
         }
         .buttonStyle(.sf(kind, compact: !large && control.style != .primary, large: large))
         .disabled(running || control.disabled)
-        .help(control.detail.map { Text(verbatim: $0) } ?? Text(verbatim: control.label))
+        .help(control.detail.map { Text(ext: $0) } ?? Text(ext: control.label))
     }
 
     private var kind: SFButtonStyle.Kind {
@@ -116,32 +116,32 @@ struct HeroView: View {
                             else { Circle().fill(hero.tone == .neutral ? Theme.inkFaint : hero.tone.color).frame(width: 7, height: 7) }
                             if let eyebrow = hero.eyebrow {
                                 // Yellow words on a pale wash are hard to read: a warning says it with its dot.
-                                Text(verbatim: eyebrow).font(Theme.Font.captionStrong)
+                                Text(ext: eyebrow).font(Theme.Font.captionStrong)
                                     .foregroundStyle(hero.tone == .neutral || hero.tone == .warn ? Theme.inkMuted : hero.tone.color)
                             }
                         }
                     }
-                    Text(verbatim: hero.title).font(.system(size: 22, weight: .bold)).foregroundStyle(Theme.ink)
+                    Text(ext: hero.title).font(.system(size: 22, weight: .bold)).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
                     if let detail = hero.detail {
-                        Text(verbatim: detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                        Text(ext: detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
             if let code = hero.code {
-                Text(verbatim: code).font(.system(size: 46, weight: .semibold, design: .monospaced)).tracking(4).foregroundStyle(Theme.ink)
+                Text(ext: code).font(.system(size: 46, weight: .semibold, design: .monospaced)).tracking(4).foregroundStyle(Theme.ink)
                     .padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s)
                     .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .textSelection(.enabled)
-                    .accessibilityLabel(Text(verbatim: code.map { String($0) }.joined(separator: " ")))
+                    .accessibilityLabel(Text(ext: code.map { String($0) }.joined(separator: " ")))
             }
             if !hero.facts.isEmpty {
                 HStack(alignment: .top, spacing: Theme.Space.xl) {
                     ForEach(Array(hero.facts.enumerated()), id: \.offset) { _, fact in
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(verbatim: fact.value).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
+                            Text(ext: fact.value).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
                                 .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
-                            Text(verbatim: fact.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                            Text(ext: fact.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                         }
                         .accessibilityElement(children: .combine)
                     }
@@ -173,8 +173,8 @@ struct TransportView: View {
                 HStack(spacing: Theme.Space.s) {
                     if transport.state == .buffering { ProgressView().controlSize(.small) }
                     VStack(alignment: .leading, spacing: 2) {
-                        if let title = transport.title { Text(verbatim: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2) }
-                        if let detail = transport.detail { Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted) }
+                        if let title = transport.title { Text(ext: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2) }
+                        if let detail = transport.detail { Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted) }
                     }
                 }
             }
@@ -190,14 +190,14 @@ struct TransportView: View {
                         .frame(height: 6)
                     }
                     HStack {
-                        Text(verbatim: Self.clock(position))
+                        Text(ext: Self.clock(position))
                         Spacer()
-                        if let duration = transport.duration { Text(verbatim: Self.clock(duration)) }
+                        if let duration = transport.duration { Text(ext: Self.clock(duration)) }
                     }
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).monospacedDigit()
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text(verbatim: Self.clock(position) + (transport.duration.map { " / " + Self.clock($0) } ?? "")))
+                .accessibilityLabel(Text(ext: Self.clock(position) + (transport.duration.map { " / " + Self.clock($0) } ?? "")))
             }
             HStack(spacing: Theme.Space.l) {
                 Spacer(minLength: 0)
@@ -242,7 +242,7 @@ private struct RoundButton: View {
         .buttonStyle(.plain)
         .opacity(running || control.disabled ? 0.45 : 1)
         .disabled(running || control.disabled)
-        .help(Text(verbatim: control.label))
-        .accessibilityLabel(Text(verbatim: control.label))
+        .help(Text(ext: control.label))
+        .accessibilityLabel(Text(ext: control.label))
     }
 }

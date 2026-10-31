@@ -110,7 +110,7 @@ public struct InstallReview: Sendable, Hashable {
 extension InstallReview {
     /// The sheet for an extension folder `ExtensionHost.preview` checked.
     public init?(_ preview: InstallPreview, source: InstallSource) {
-        guard let manifest = preview.report.manifest, let permissions = preview.report.permissions else { return nil }
+        guard let manifest = preview.report.manifest, let permissions = preview.report.shownPermissions() else { return nil }
         self.init(id: manifest.id, permissions: permissions, background: manifest.background, toolRisks: preview.report.toolRisks.map(\.risk),
                   checks: preview.report.warnings, update: preview.update, source: source)
     }

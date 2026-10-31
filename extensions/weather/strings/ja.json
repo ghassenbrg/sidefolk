@@ -1,0 +1,67 @@
+{
+  "name": "天気",
+  "tagline": "今日の天気と1週間の予報",
+  "description": "あらゆる場所の今日の天気と1週間の予報、雨の前のお知らせを、Open-Meteoから取得します。Macの外に出るのは、尋ねた場所だけです。",
+  "tools": {
+    "forecast": {
+      "title": "天気予報"
+    },
+    "sun_and_moon": {
+      "title": "日の出・日の入りと月"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "まもなく雨",
+      "description": "ある場所で数時間以内に雨が降りそうになったら、一度だけ知らせます。"
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "「{place}」という場所が見つかりませんでした。近くの都市を試すか、国名を加えてください。",
+    "No rain likely in {place} in the next {count} hours.": {
+      "other": "{place}では今後{count}時間、雨の可能性は低いです。"
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "Open-Meteo から{place}の日の出と日の入りが得られませんでした。",
+    "Rain is likely in {place} around {time} ({chance} chance).": "{place}では{time}ごろ雨が降りそうです（確率{chance}）。",
+    "The moon is a new moon, {lit} lit.": "月は新月で、{lit}が照らされています。",
+    "The moon is a waning crescent, {lit} lit.": "月は有明月で、{lit}が照らされています。",
+    "The moon is a waning gibbous, {lit} lit.": "月は寝待月（欠けていく満ちた月）で、{lit}が照らされています。",
+    "The moon is a waxing crescent, {lit} lit.": "月は三日月で、{lit}が照らされています。",
+    "The moon is a waxing gibbous, {lit} lit.": "月は十三夜月（満ちていく月）で、{lit}が照らされています。",
+    "The moon is at its first quarter, {lit} lit.": "月は上弦の月で、{lit}が照らされています。",
+    "The moon is at its last quarter, {lit} lit.": "月は下弦の月で、{lit}が照らされています。",
+    "The moon is full, {lit} lit.": "月は満月で、{lit}が照らされています。",
+    "Today": "今日",
+    "Tomorrow": "明日",
+    "clear": "快晴",
+    "drizzle": "霧雨",
+    "fog": "霧",
+    "freezing drizzle": "着氷性の霧雨",
+    "freezing fog": "着氷性の霧",
+    "freezing rain": "着氷性の雨",
+    "heavy drizzle": "強い霧雨",
+    "heavy rain": "強い雨",
+    "heavy snow": "大雪",
+    "heavy snow showers": "強いにわか雪",
+    "light drizzle": "弱い霧雨",
+    "light rain": "小雨",
+    "light showers": "弱いにわか雨",
+    "light snow": "小雪",
+    "mostly clear": "おおむね晴れ",
+    "overcast": "曇り",
+    "partly cloudy": "晴れ時々曇り",
+    "rain": "雨",
+    "showers": "にわか雨",
+    "snow": "雪",
+    "snow grains": "霧雪",
+    "snow showers": "にわか雪",
+    "thunderstorms": "雷雨",
+    "thunderstorms with hail": "ひょうを伴う雷雨",
+    "unknown weather": "不明な天気",
+    "violent showers": "激しいにわか雨",
+    "weather code {code}": "天気コード {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day}：{weather}、{low}〜{high}、降水確率{chance}。",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place}の現在：{weather}、{temperature}（体感{feels}）、風速{wind}。",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place}：日の出 {sunrise}、日の入り {sunset}、日照 {daylight}。"
+  }
+}

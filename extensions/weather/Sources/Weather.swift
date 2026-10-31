@@ -7,19 +7,21 @@ enum Weather {
     static let geocoding = "https://geocoding-api.open-meteo.com/v1/search"
     static let forecastAddress = "https://api.open-meteo.com/v1/forecast"
 
-    /// WMO weather codes, as Open-Meteo reports them.
-    static let conditions: [Int: String] = [
-        0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast", 45: "fog", 48: "freezing fog",
-        51: "light drizzle", 53: "drizzle", 55: "heavy drizzle", 56: "freezing drizzle", 57: "freezing drizzle",
-        61: "light rain", 63: "rain", 65: "heavy rain", 66: "freezing rain", 67: "freezing rain",
-        71: "light snow", 73: "snow", 75: "heavy snow", 77: "snow grains", 80: "light showers", 81: "showers",
-        82: "violent showers", 85: "snow showers", 86: "heavy snow showers", 95: "thunderstorms",
-        96: "thunderstorms with hail", 99: "thunderstorms with hail",
-    ]
+    /// WMO weather codes, as Open-Meteo reports them, in the person's language.
+    static var conditions: [Int: String] {
+        [
+            0: L("clear"), 1: L("mostly clear"), 2: L("partly cloudy"), 3: L("overcast"), 45: L("fog"), 48: L("freezing fog"),
+            51: L("light drizzle"), 53: L("drizzle"), 55: L("heavy drizzle"), 56: L("freezing drizzle"), 57: L("freezing drizzle"),
+            61: L("light rain"), 63: L("rain"), 65: L("heavy rain"), 66: L("freezing rain"), 67: L("freezing rain"),
+            71: L("light snow"), 73: L("snow"), 75: L("heavy snow"), 77: L("snow grains"), 80: L("light showers"), 81: L("showers"),
+            82: L("violent showers"), 85: L("snow showers"), 86: L("heavy snow showers"), 95: L("thunderstorms"),
+            96: L("thunderstorms with hail"), 99: L("thunderstorms with hail"),
+        ]
+    }
 
     static func condition(_ code: Any?) -> String {
-        guard let code = (code as? NSNumber)?.intValue else { return "unknown weather" }
-        return conditions[code] ?? "weather code \(code)"
+        guard let code = (code as? NSNumber)?.intValue else { return L("unknown weather") }
+        return conditions[code] ?? L("weather code {code}", ["code": String(code)])
     }
 
     struct Place {
@@ -36,7 +38,7 @@ enum Weather {
                                                            ("language", "en"), ("format", "json")]))
         guard let spot = pick(found["results"] as? [[String: Any]] ?? [], within: parts.count > 1 ? parts[1] : nil),
               let latitude = spot["latitude"] as? Double, let longitude = spot["longitude"] as? Double else {
-            throw Problem("I couldn't find a place called “\(place)”. Try the nearest city, or add the country.")
+            throw Problem(L("I couldn't find a place called “{place}”. Try the nearest city, or add the country.", ["place": place]))
         }
         let label = ["name", "admin1", "country"].compactMap { spot[$0] as? String }.filter { !$0.isEmpty }.joined(separator: ", ")
         return Place(latitude: latitude, longitude: longitude, label: label)
@@ -70,18 +72,33 @@ enum Weather {
         let degree = units["temperature_2m"] as? String ?? "°C"
         let now = data["current"] as? [String: Any] ?? [:]
         func rounded(_ value: Any?) -> String { "\(Int(((value as? NSNumber)?.doubleValue ?? 0).rounded()))" }
-        var lines = ["\(label), now: \(condition(now["weather_code"])), \(rounded(now["temperature_2m"]))\(degree) (feels like "
-            + "\(rounded(now["apparent_temperature"]))\(degree)), wind \(rounded(now["wind_speed_10m"])) \(units["wind_speed_10m"] as? String ?? "km/h")."]
+        var lines = [L("{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.", [
+            "place": label, "weather": condition(now["weather_code"]), "temperature": rounded(now["temperature_2m"]) + degree,
+            "feels": rounded(now["apparent_temperature"]) + degree,
+            "wind": rounded(now["wind_speed_10m"]) + " " + (units["wind_speed_10m"] as? String ?? "km/h"),
+        ])]
         let daily = data["daily"] as? [String: Any] ?? [:]
         let days = daily["time"] as? [String] ?? []
         func column(_ name: String) -> [Any] { daily[name] as? [Any] ?? [] }
         for (i, day) in days.enumerated() {
-            let name = i == 0 ? "Today" : i == 1 ? "Tomorrow" : day
-            let chance = column("precipitation_probability_max")[safe: i].flatMap { ($0 as? NSNumber)?.stringValue } ?? "?"
-            lines.append("\(name): \(condition(column("weather_code")[safe: i])), \(rounded(column("temperature_2m_min")[safe: i])) to "
-                + "\(rounded(column("temperature_2m_max")[safe: i]))\(degree), \(chance)% chance of rain.")
+            let name = i == 0 ? L("Today") : i == 1 ? L("Tomorrow") : Self.day(day)
+            let chance = column("precipitation_probability_max")[safe: i].flatMap { ($0 as? NSNumber)?.doubleValue }
+            lines.append(L("{day}: {weather}, {low} to {high}, {chance} chance of rain.", [
+                "day": name, "weather": condition(column("weather_code")[safe: i]), "low": rounded(column("temperature_2m_min")[safe: i]),
+                "high": rounded(column("temperature_2m_max")[safe: i]) + degree, "chance": chance.map { Format.percent(points: $0) } ?? "?%",
+            ]))
         }
         return lines.joined(separator: "\n")
+    }
+
+    /// "Wed 28 Oct" for Open-Meteo's "2026-10-28", in the person's language (the day as it is there).
+    static func day(_ iso: String) -> String {
+        let read = DateFormatter()
+        read.locale = Locale(identifier: "en_US_POSIX")
+        read.timeZone = TimeZone(identifier: "UTC")
+        read.dateFormat = "yyyy-MM-dd"
+        guard let date = read.date(from: iso) else { return iso }
+        return Format.date(date, weekday: true, timeZone: TimeZone(identifier: "UTC")!)
     }
 
     /// Fires once per wet spell: when rain becomes likely within the window, and again only after a dry spell.
@@ -103,11 +120,14 @@ enum Weather {
             return (time, p)
         }.prefix(withinHours)
         guard let (when, probability) = ahead.first(where: { $0.1 >= chance }) else {
-            return Check(triggered: false, state: ["wet": false], summary: "No rain likely in \(label) in the next \(withinHours) hours.")
+            return Check(triggered: false, state: ["wet": false],
+                         summary: L(one: "No rain likely in {place} in the next hour.", other: "No rain likely in {place} in the next {count} hours.",
+                                    count: withinHours, ["place": label]))
         }
         let at = when.dropFirst(11).prefix(5)
         return Check(triggered: state["wet"] as? Bool != true, state: ["wet": true],
-                     summary: "Rain is likely in \(label) around \(at) (\(probability)% chance).")
+                     summary: L("Rain is likely in {place} around {time} ({chance} chance).",
+                                ["place": label, "time": String(at), "chance": Format.percent(points: Double(probability))]))
     }
 
     /// Sunrise, sunset and daylight from Open-Meteo; the moon worked out here.
@@ -120,8 +140,11 @@ enum Weather {
         func first(_ name: String) -> Any? { (daily[name] as? [Any])?.first }
         let rise = (first("sunrise") as? String)?.dropFirst(11).prefix(5), set = (first("sunset") as? String)?.dropFirst(11).prefix(5)
         let light = Int(((first("daylight_duration") as? NSNumber)?.doubleValue ?? 0) / 60)
-        guard let rise, let set else { throw Problem("Open-Meteo didn't give sunrise and sunset for \(spot.label).") }
-        return "\(spot.label): sunrise \(rise), sunset \(set), \(light / 60) h \(String(format: "%02d", light % 60)) of daylight. " + moon(at: now)
+        guard let rise, let set else { throw Problem(L("Open-Meteo didn't give sunrise and sunset for {place}.", ["place": spot.label])) }
+        return L("{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.", [
+            "place": spot.label, "sunrise": String(rise), "sunset": String(set),
+            "daylight": Format.duration(Double(light) * 60, units: [.hours, .minutes]),
+        ]) + " " + moon(at: now)
     }
 
     /// The moon's phase from its age since a known new moon (6 January 2000, 18:14 UTC).
@@ -130,10 +153,19 @@ enum Weather {
         let age = (moment.timeIntervalSince1970 - 947_182_440) / 86_400
         let day = (age.truncatingRemainder(dividingBy: month) + month).truncatingRemainder(dividingBy: month)
         let lit = Int(((1 - cos(2 * Double.pi * day / month)) / 2 * 100).rounded())
-        let names = ["new moon", "waxing crescent", "first quarter", "waxing gibbous", "full moon", "waning gibbous", "last quarter",
-                     "waning crescent"]
-        let name = names[Int((day / month * 8 + 0.5).rounded(.down)) % 8]
-        return "The moon is a \(name), \(lit)% lit."
+        let phase = Int((day / month * 8 + 0.5).rounded(.down)) % 8
+        let lighted = Format.percent(points: Double(lit))
+        // Whole sentences, so each language can say the phase its own way.
+        switch phase {
+        case 0: return L("The moon is a new moon, {lit} lit.", ["lit": lighted])
+        case 1: return L("The moon is a waxing crescent, {lit} lit.", ["lit": lighted])
+        case 2: return L("The moon is at its first quarter, {lit} lit.", ["lit": lighted])
+        case 3: return L("The moon is a waxing gibbous, {lit} lit.", ["lit": lighted])
+        case 4: return L("The moon is full, {lit} lit.", ["lit": lighted])
+        case 5: return L("The moon is a waning gibbous, {lit} lit.", ["lit": lighted])
+        case 6: return L("The moon is at its last quarter, {lit} lit.", ["lit": lighted])
+        default: return L("The moon is a waning crescent, {lit} lit.", ["lit": lighted])
+        }
     }
 }
 

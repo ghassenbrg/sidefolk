@@ -1,0 +1,62 @@
+{
+  "name": "État du système",
+  "tagline": "Réponses rapides sur la batterie, le disque et la mémoire",
+  "description": "Réponses rapides sur la batterie, le disque et la mémoire, et un rappel quand la batterie ou le disque s’épuise. Pour une page avec des graphiques en direct, ajoutez Votre Mac depuis la galerie.",
+  "tools": {
+    "about": {
+      "title": "À propos de ce Mac"
+    },
+    "battery": {
+      "title": "État de la batterie"
+    },
+    "disk": {
+      "title": "Espace disque"
+    },
+    "memory": {
+      "title": "Utilisation de la mémoire"
+    }
+  },
+  "watchers": {
+    "battery_low": {
+      "title": "Batterie faible",
+      "description": "Vous prévient une fois quand la batterie passe sous un seuil alors qu’elle ne charge pas."
+    },
+    "disk_low": {
+      "title": "Espace disque faible",
+      "description": "Vous prévient une fois quand l’espace libre du disque de démarrage passe sous une taille."
+    }
+  },
+  "text": {
+    ", ": ", ",
+    "Battery at {percent}, {state} ({time} left).": "Batterie à {percent}, {state} (encore {time}).",
+    "Battery at {percent}, {state}.": "Batterie à {percent}, {state}.",
+    "Home": "Dossier personnel",
+    "Only {free} free on the startup disk.": "Plus que {free} libres sur le disque de démarrage.",
+    "Startup disk": "Disque de démarrage",
+    "The Mac didn't report its memory.": "Le Mac n’a pas indiqué sa mémoire.",
+    "The startup disk didn't report its space.": "Le disque de démarrage n’a pas indiqué son espace.",
+    "This Mac has no battery; it runs on {source}.": "Ce Mac n’a pas de batterie ; il fonctionne sur {source}.",
+    "This Mac: {chip}": "Ce Mac : {chip}",
+    "an unknown processor": "un processeur inconnu",
+    "an unknown time": "une durée inconnue",
+    "charged": "chargée",
+    "charging": "en charge",
+    "critical": "critique",
+    "discharging": "en décharge",
+    "finishing charge": "fin de charge",
+    "model {model}": "modèle {model}",
+    "normal": "normale",
+    "plugged in, not charging": "branchée, sans charger",
+    "power": "secteur",
+    "unknown": "inconnue",
+    "warning": "avertissement",
+    "{about}; on for {time}.": "{about} ; allumé depuis {time}.",
+    "{count} cores": {
+      "one": "{count} cœur",
+      "other": "{count} cœurs"
+    },
+    "{disk}: {free} free of {total}.": "{disk} : {free} libres sur {total}.",
+    "{memory} of memory": "{memory} de mémoire",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{used} utilisés sur {total} ; pression mémoire {pressure}."
+  }
+}

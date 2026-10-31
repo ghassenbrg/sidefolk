@@ -1,0 +1,72 @@
+{
+  "name": "الطقس",
+  "tagline": "طقس اليوم والأسبوع القادم",
+  "description": "طقس اليوم والأسبوع القادم لأي مكان، وتنبيه قبل المطر، من Open-Meteo. لا يغادر الـ Mac الخاص بك سوى المكان الذي تسأل عنه.",
+  "tools": {
+    "forecast": {
+      "title": "توقعات الطقس"
+    },
+    "sun_and_moon": {
+      "title": "الشروق والغروب والقمر"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "مطر قريبًا",
+      "description": "يُعلمك مرة واحدة حين يصبح المطر مرجّحًا في مكان ما خلال الساعات القادمة."
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "تعذّر العثور على مكان باسم «{place}». جرّب أقرب مدينة، أو أضف اسم البلد.",
+    "No rain likely in {place} in the next {count} hours.": {
+      "zero": "لا يُرجَّح هطول المطر في {place}.",
+      "one": "لا يُرجَّح هطول المطر في {place} خلال الساعة القادمة.",
+      "two": "لا يُرجَّح هطول المطر في {place} خلال الساعتين القادمتين.",
+      "few": "لا يُرجَّح هطول المطر في {place} خلال الساعات الـ{count} القادمة.",
+      "many": "لا يُرجَّح هطول المطر في {place} خلال الـ{count} ساعة القادمة.",
+      "other": "لا يُرجَّح هطول المطر في {place} خلال الـ{count} ساعة القادمة."
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "لم يقدّم Open-Meteo موعدي الشروق والغروب في {place}.",
+    "Rain is likely in {place} around {time} ({chance} chance).": "يُرجَّح هطول المطر في {place} نحو {time} (احتمال {chance}).",
+    "The moon is a new moon, {lit} lit.": "القمر في طور المحاق، مضاء بنسبة {lit}.",
+    "The moon is a waning crescent, {lit} lit.": "القمر هلال متناقص، مضاء بنسبة {lit}.",
+    "The moon is a waning gibbous, {lit} lit.": "القمر أحدب متناقص، مضاء بنسبة {lit}.",
+    "The moon is a waxing crescent, {lit} lit.": "القمر هلال متزايد، مضاء بنسبة {lit}.",
+    "The moon is a waxing gibbous, {lit} lit.": "القمر أحدب متزايد، مضاء بنسبة {lit}.",
+    "The moon is at its first quarter, {lit} lit.": "القمر في التربيع الأول، مضاء بنسبة {lit}.",
+    "The moon is at its last quarter, {lit} lit.": "القمر في التربيع الأخير، مضاء بنسبة {lit}.",
+    "The moon is full, {lit} lit.": "القمر بدر، مضاء بنسبة {lit}.",
+    "Today": "اليوم",
+    "Tomorrow": "غدًا",
+    "clear": "صافٍ",
+    "drizzle": "رذاذ",
+    "fog": "ضباب",
+    "freezing drizzle": "رذاذ متجمد",
+    "freezing fog": "ضباب متجمد",
+    "freezing rain": "مطر متجمد",
+    "heavy drizzle": "رذاذ كثيف",
+    "heavy rain": "مطر غزير",
+    "heavy snow": "ثلج كثيف",
+    "heavy snow showers": "زخات ثلجية كثيفة",
+    "light drizzle": "رذاذ خفيف",
+    "light rain": "مطر خفيف",
+    "light showers": "زخات خفيفة",
+    "light snow": "ثلج خفيف",
+    "mostly clear": "صافٍ في الغالب",
+    "overcast": "غائم كليًا",
+    "partly cloudy": "غائم جزئيًا",
+    "rain": "مطر",
+    "showers": "زخات",
+    "snow": "ثلج",
+    "snow grains": "حبيبات ثلج",
+    "snow showers": "زخات ثلجية",
+    "thunderstorms": "عواصف رعدية",
+    "thunderstorms with hail": "عواصف رعدية مع برَد",
+    "unknown weather": "طقس غير معروف",
+    "violent showers": "زخات عنيفة",
+    "weather code {code}": "رمز الطقس {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day}: {weather}، من {low} إلى {high}، احتمال المطر {chance}.",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place}، الآن: {weather}، {temperature} (الإحساس بـ{feels})، الرياح {wind}.",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place}: الشروق {sunrise}، الغروب {sunset}، {daylight} من ضوء النهار."
+  }
+}

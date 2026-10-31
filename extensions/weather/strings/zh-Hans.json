@@ -1,0 +1,67 @@
+{
+  "name": "天气",
+  "tagline": "今日天气和未来一周的预报",
+  "description": "任何地方的今日天气和未来一周的预报，以及下雨前的提前提醒，数据来自 Open-Meteo。只有你询问的地点会离开你的 Mac。",
+  "tools": {
+    "forecast": {
+      "title": "天气预报"
+    },
+    "sun_and_moon": {
+      "title": "日出、日落和月亮"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "即将下雨",
+      "description": "某地在接下来几小时内可能下雨时提醒你一次。"
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "找不到名为“{place}”的地方。试试最近的城市，或加上国家。",
+    "No rain likely in {place} in the next {count} hours.": {
+      "other": "{place} 未来 {count} 小时内不太可能下雨。"
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "Open-Meteo 没有提供 {place} 的日出和日落时间。",
+    "Rain is likely in {place} around {time} ({chance} chance).": "{place} 约 {time} 可能下雨（概率 {chance}）。",
+    "The moon is a new moon, {lit} lit.": "今天是新月，照亮 {lit}。",
+    "The moon is a waning crescent, {lit} lit.": "今天是残月，照亮 {lit}。",
+    "The moon is a waning gibbous, {lit} lit.": "今天是亏凸月，照亮 {lit}。",
+    "The moon is a waxing crescent, {lit} lit.": "今天是蛾眉月，照亮 {lit}。",
+    "The moon is a waxing gibbous, {lit} lit.": "今天是盈凸月，照亮 {lit}。",
+    "The moon is at its first quarter, {lit} lit.": "今天是上弦月，照亮 {lit}。",
+    "The moon is at its last quarter, {lit} lit.": "今天是下弦月，照亮 {lit}。",
+    "The moon is full, {lit} lit.": "今天是满月，照亮 {lit}。",
+    "Today": "今天",
+    "Tomorrow": "明天",
+    "clear": "晴",
+    "drizzle": "毛毛雨",
+    "fog": "雾",
+    "freezing drizzle": "冻毛毛雨",
+    "freezing fog": "冻雾",
+    "freezing rain": "冻雨",
+    "heavy drizzle": "大毛毛雨",
+    "heavy rain": "大雨",
+    "heavy snow": "大雪",
+    "heavy snow showers": "强阵雪",
+    "light drizzle": "小毛毛雨",
+    "light rain": "小雨",
+    "light showers": "小阵雨",
+    "light snow": "小雪",
+    "mostly clear": "大部晴朗",
+    "overcast": "阴",
+    "partly cloudy": "多云间晴",
+    "rain": "雨",
+    "showers": "阵雨",
+    "snow": "雪",
+    "snow grains": "米雪",
+    "snow showers": "阵雪",
+    "thunderstorms": "雷暴",
+    "thunderstorms with hail": "雷暴伴有冰雹",
+    "unknown weather": "未知天气",
+    "violent showers": "强阵雨",
+    "weather code {code}": "天气代码 {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day}：{weather}，{low} 至 {high}，降雨概率 {chance}。",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place}，现在：{weather}，{temperature}（体感 {feels}），风速 {wind}。",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place}：日出 {sunrise}，日落 {sunset}，白昼 {daylight}。"
+  }
+}

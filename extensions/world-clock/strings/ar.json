@@ -1,0 +1,33 @@
+{
+  "name": "الساعة العالمية",
+  "tagline": "الوقت في أي مكان، وتحويله بين الأماكن",
+  "description": "الوقت في أي مكان في العالم، وتحويل الوقت بين الأماكن، مع حساب التوقيت الصيفي بدقة.",
+  "tools": {
+    "convert_time": {
+      "title": "تحويل الوقت بين الأماكن"
+    },
+    "current_time": {
+      "title": "الوقت حول العالم"
+    }
+  },
+  "text": {
+    "I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.": "تعذّرت قراءة «{time}» كوقت. استخدم HH:MM أو 9am أو noon أو YYYY-MM-DD HH:MM.",
+    "I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.": "لا أعرف أين يقع «{place}». جرّب مدينة كبيرة قريبة، أو بلدًا بمنطقة زمنية واحدة، أو منطقة IANA مثل Europe/Paris.",
+    "It is {time}, {difference}.": "الوقت {time}، {difference}.",
+    "It is {time}.": "الوقت {time}.",
+    "the same time as you": "الوقت نفسه لديك",
+    "{date} at {offset} ({zone})": "{date} عند {offset} ({zone})",
+    "{date} here ({zone})": "{date} هنا ({zone})",
+    "{date} here in {place} ({zone})": "{date} هنا في {place} ({zone})",
+    "{date} in UTC ({zone})": "{date} بتوقيت UTC ({zone})",
+    "{date} in {place} ({zone})": "{date} في {place} ({zone})",
+    "{offset} isn't a real UTC offset.": "{offset} ليس فرقًا حقيقيًا عن UTC.",
+    "{span} ahead of you": "متقدّم عنك بـ{span}",
+    "{span} behind you": "متأخر عنك بـ{span}",
+    "{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.": "لا يوجد {time} في ذلك اليوم: تقفز الساعات عن تلك الساعة. جرّب بعد ساعة.",
+    "{time} is:": "{time} يوافق:",
+    "“{time}” isn't a real date.": "«{time}» ليس تاريخًا حقيقيًا.",
+    "“{time}” isn't a time of day.": "«{time}» ليس وقتًا من اليوم.",
+    "“{time}” isn't a time on a 12-hour clock.": "«{time}» ليس وقتًا بنظام 12 ساعة."
+  }
+}

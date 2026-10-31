@@ -18,6 +18,8 @@ public actor ExtensionHost {
         public var programs = ProgramResolver.system
         /// Where MCP server commands named without a path are looked up, and the PATH they get.
         public var mcpSearchPath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        /// The person's language: which of an extension's words are shown, and what its program is told (D76).
+        public var language: @Sendable () -> String = { ExtensionStrings.current }
         public init() {}
     }
 
@@ -37,6 +39,8 @@ public actor ExtensionHost {
         var toolWarnings: [String] = []
         /// The installed copy's icon, when it passed the checks.
         var iconPath: String?
+        /// Its words in other languages (`strings/`, D76).
+        var strings: ExtensionStrings?
         var lastNudge = Date.distantPast
         /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
         var oneShots: [ObjectIdentifier: MCPClient] = [:]
@@ -131,6 +135,7 @@ public actor ExtensionHost {
                 let report = validator.validate(folder: URL(fileURLWithPath: folder), mode: .installed)
                 rt.manifest = report.manifest
                 rt.iconPath = report.iconPath
+                rt.strings = report.strings
                 if !report.isValid, record.enabled {
                     rt.record.enabled = false
                     let issue = report.errors.first?.description ?? String(localized: "unknown problem")
@@ -193,7 +198,7 @@ public actor ExtensionHost {
         guard let rt = runtimes[id] else { return nil }
         let summary = rt.record.kind == .mcp
             ? PermissionSummary.forMCPServer(command: rt.pin.server?.command ?? "", arguments: rt.pin.server?.arguments ?? [])
-            : PermissionSummary.forExtension(rt.pin.permissions ?? ExtensionPermissions())
+            : PermissionSummary.forExtension(shown(rt.pin.permissions ?? ExtensionPermissions(), words(rt)))
         var tools: [ExtensionToolInfo] = []
         for name in Set(rt.pin.tools.keys).union(rt.pin.pending.keys).sorted() {
             guard let def = rt.pin.tools[name] ?? rt.pin.pending[name], let local = localName(rt, def.name) else { continue }
@@ -204,15 +209,39 @@ public actor ExtensionHost {
                                            commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) }?.shown ?? [],
                                            forAI: meta?.offeredToModel ?? true))
         }
-        let builtIn = rt.pin.origin?.firstParty == true
-        return ExtensionInfo(id: id, name: (builtIn ? BuiltInExtensionWords.name(id) : nil) ?? rt.pin.name,
+        return ExtensionInfo(id: id, name: name(rt),
                              version: rt.record.version, kind: rt.record.kind,
                              enabled: rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
-                             description: (builtIn ? BuiltInExtensionWords.description(id) : nil) ?? rt.pin.description,
-                             tagline: (builtIn ? BuiltInExtensionWords.tagline(id) : nil) ?? rt.pin.tagline, folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
+                             description: description(rt), tagline: tagline(rt), folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings, restingFor: restingFor(id))
+    }
+
+    // MARK: Words (D76)
+
+    /// The extension's own words in the person's language, when it has them.
+    private func words(_ rt: Runtime) -> ExtensionStrings.Words? { rt.strings?.words(for: config.language()) }
+
+    /// Its own translation, then (for Sidefolk's own copies from before `strings/`) the app's catalog, then the manifest.
+    private func name(_ rt: Runtime) -> String {
+        words(rt)?.name ?? (rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.name(rt.record.id) : nil) ?? rt.pin.name
+    }
+
+    private func tagline(_ rt: Runtime) -> String? {
+        words(rt)?.tagline ?? (rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.tagline(rt.record.id) : nil) ?? rt.pin.tagline
+    }
+
+    private func description(_ rt: Runtime) -> String? {
+        words(rt)?.description ?? (rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.description(rt.record.id) : nil) ?? rt.pin.description
+    }
+
+    /// Permissions as the sheet says them: the network's purpose in the person's language when the extension gives it.
+    /// Only the wording changes; what is granted is the pinned `permissions`.
+    private func shown(_ p: ExtensionPermissions, _ words: ExtensionStrings.Words?) -> ExtensionPermissions {
+        var p = p
+        if p.networkPurpose != nil, let purpose = words?.networkPurpose { p.networkPurpose = purpose }
+        return p
     }
 
     // MARK: Resting (D67)
@@ -221,7 +250,7 @@ public actor ExtensionHost {
     func restingFor(_ id: String) -> String? {
         guard let bigger = ExtensionOverlap.includedIn[id], let small = runtimes[id], let big = runtimes[bigger],
               small.pin.origin?.firstParty == true, big.pin.origin?.firstParty == true, big.record.enabled else { return nil }
-        return (BuiltInExtensionWords.name(bigger)) ?? big.pin.name
+        return name(big)
     }
 
     /// After an extension came, went, or was switched: the ones it includes register their tools again, or rest.
@@ -247,10 +276,12 @@ public actor ExtensionHost {
             let had = old.pin.permissions ?? ExtensionPermissions()
             let oldTools = old.manifest.map { Array($0.tools.keys) } ?? Array(old.pin.tools.keys)
             let before = ExtensionUpdateDiff.Side(
-                version: old.record.version, permissions: had, lines: PermissionSummary.forExtension(had).texts,
+                version: old.record.version, permissions: had, lines: PermissionSummary.forExtension(shown(had, words(old))).texts,
                 tools: Dictionary(oldTools.map { ($0, risk(old, $0)) }, uniquingKeysWith: max), background: old.manifest?.background ?? false)
+            let now = report.permissions ?? ExtensionPermissions()
             let after = ExtensionUpdateDiff.Side(
-                version: manifest.version, permissions: report.permissions ?? ExtensionPermissions(), lines: report.summary?.texts ?? [],
+                version: manifest.version, permissions: now,
+                lines: PermissionSummary.forExtension(shown(now, report.strings?.words(for: config.language()))).texts,
                 tools: Dictionary(report.toolRisks.map { ($0.name, $0.risk) }, uniquingKeysWith: max), background: manifest.background)
             preview.update = ExtensionUpdateDiff(from: before, to: after)
         }
@@ -304,7 +335,7 @@ public actor ExtensionHost {
             record.manifestHash = ExtensionFiles.aggregateHash(staged.pins)
             let pin = ExtensionPin(name: manifest.name, description: manifest.description, tagline: manifest.tagline, folk: manifest.folk,
                                    author: manifest.author, origin: origin, launch: start, permissions: permissions, files: staged.pins)
-            runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath)
+            runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath, strings: final.strings)
             _ = try await launch(id, approveAll: true)
             guard runtimes[id] != nil else { throw UserFacingError("The extension stopped while it was being installed.") }
             if !enabled {
@@ -505,9 +536,10 @@ public actor ExtensionHost {
         guard let m = rt.manifest else { return [] }
         return m.watchers.keys.sorted().compactMap { name in
             guard let w = m.watchers[name] else { return nil }
-            let words = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.watcher(rt.record.id, name) : nil
-            return ExtensionWatcherKind(extensionId: rt.record.id, watcher: name, title: words ?? w.title,
-                                        description: w.description ?? "", config: w.config)
+            let own = words(rt)?.watchers[name]
+            let builtIn = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.watcher(rt.record.id, name) : nil
+            return ExtensionWatcherKind(extensionId: rt.record.id, watcher: name, title: own?.title ?? builtIn ?? w.title,
+                                        description: own?.description ?? w.description ?? "", config: w.config)
         }
     }
 
@@ -539,19 +571,19 @@ public actor ExtensionHost {
             guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
             return m.pages.keys.sorted().compactMap { name -> ExtensionPageInfo? in
                 guard let p = m.pages[name] else { return nil }
-                let words = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.page(id, name) : nil
-                return ExtensionPageInfo(extensionId: id, extensionName: rt.pin.name, page: name, title: words ?? p.title,
+                let builtIn = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.page(id, name) : nil
+                return ExtensionPageInfo(extensionId: id, extensionName: self.name(rt), page: name, title: words(rt)?.pages[name] ?? builtIn ?? p.title,
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
                                          history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
                                          needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true,
-                                         tagline: (rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.tagline(id) : nil) ?? rt.pin.tagline)
+                                         tagline: tagline(rt))
             }
         }
     }
 
     /// Asks the extension for one of its pages, and keeps what its charts said. `language` is the person's
     /// (`fr`, `ar`), for an extension that speaks it.
-    public func renderPage(extensionId id: String, page: String, language: String = "en", now: Date = Date()) async throws -> ExtensionPage {
+    public func renderPage(extensionId id: String, page: String, language: String? = nil, now: Date = Date()) async throws -> ExtensionPage {
         guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         guard let meta = rt.manifest?.pages[page] else { throw ToolError.notFound(String(localized: "the page \(page) in \(rt.pin.name)")) }
         begin(id)
@@ -559,7 +591,7 @@ public actor ExtensionHost {
         let client = try await ensureRunning(id)
         let json: JSONValue
         do {
-            json = try await client.pageRender(page: page, language: language, timeout: config.callTimeout)
+            json = try await client.pageRender(page: page, language: language ?? config.language(), timeout: config.callTimeout)
         } catch let error as MCPError {
             throw userFacing(error, action: String(localized: "showing “\(meta.title)”"), name: rt.pin.name)
         }
@@ -595,10 +627,10 @@ public actor ExtensionHost {
             guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
             return m.palettes.keys.sorted().compactMap { name -> ExtensionPaletteInfo? in
                 guard let p = m.palettes[name] else { return nil }
-                let firstParty = rt.pin.origin?.firstParty == true
-                return ExtensionPaletteInfo(extensionId: id, extensionName: rt.pin.name, palette: name,
-                                            title: (firstParty ? BuiltInExtensionWords.palette(id, name) : nil) ?? p.title, hotkey: p.hotkey,
-                                            placeholder: (firstParty ? BuiltInExtensionWords.placeholder(id, name) : nil) ?? p.placeholder,
+                let firstParty = rt.pin.origin?.firstParty == true, own = words(rt)?.palettes[name]
+                return ExtensionPaletteInfo(extensionId: id, extensionName: self.name(rt), palette: name,
+                                            title: own?.title ?? (firstParty ? BuiltInExtensionWords.palette(id, name) : nil) ?? p.title, hotkey: p.hotkey,
+                                            placeholder: own?.placeholder ?? (firstParty ? BuiltInExtensionWords.placeholder(id, name) : nil) ?? p.placeholder,
                                             iconPath: rt.iconPath)
             }
         }
@@ -752,7 +784,7 @@ public actor ExtensionHost {
         }
         try await verifyFiles(id)
         let process = try ExtensionProcess(spec: try sandboxedSpec(id, folders: folders), limits: config.limits)
-        let client = MCPClient(process: process)
+        let client = MCPClient(process: process, language: config.language)
         let key = ObjectIdentifier(client)
         runtimes[id]?.oneShots[key] = client
         func finish() async {
@@ -844,7 +876,8 @@ public actor ExtensionHost {
         let generation = launches
         runtimes[id]?.generation = generation
         let process = try ExtensionProcess(spec: spec, limits: config.limits)
-        let client = MCPClient(process: process) { [weak self, process] event in
+        // Only Sidefolk's own protocol is told the person's language; a plain MCP server gets requests as MCP has them.
+        let client = MCPClient(process: process, language: rt.record.kind == .sidefolk ? config.language : nil) { [weak self, process] event in
             let stderr = if case .exited = event { process.stderrTail } else { "" }
             Task { await self?.handle(event, id: id, generation: generation, stderr: stderr) }
         }
@@ -1229,7 +1262,7 @@ public actor ExtensionHost {
         let paired = firstParty && meta?.reach == .paired
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
-        return ExtensionTool(spec: spec, extensionId: id, extensionName: rt.pin.name, remoteName: remote,
+        return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote,
                              folderParameters: meta?.paths ?? [:], firstParty: firstParty,
                              commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) },
                              paired: paired) { [weak self] input, folders in
@@ -1290,6 +1323,7 @@ public actor ExtensionHost {
     }
 
     private func title(_ rt: Runtime, _ def: MCPToolDefinition) -> String {
+        if let t = words(rt)?.tools[def.name] { return t }
         if rt.pin.origin?.firstParty == true, let t = BuiltInExtensionWords.tool(rt.record.id, def.name) { return t }
         if let t = rt.manifest?.tools[def.name]?.title { return t }
         if let t = def.title, !t.isEmpty { return t }

@@ -1,0 +1,61 @@
+{
+  "name": "Calculadora",
+  "tagline": "Cuentas, unidades y fechas exactas",
+  "description": "Cuentas, porcentajes, conversiones de unidades y cálculos de fechas hechos con exactitud, para que una respuesta nunca dependa de una suposición.",
+  "tools": {
+    "calculate": {
+      "title": "Calcular"
+    },
+    "convert_units": {
+      "title": "Convertir unidades"
+    },
+    "date_math": {
+      "title": "Cálculo de fechas"
+    }
+  },
+  "text": {
+    "A parenthesis isn't closed.": "Falta cerrar un paréntesis.",
+    "From {from} to {to}: {span}, going back, {weekdays}.": "Del {from} al {to}: {span}, hacia atrás, {weekdays}.",
+    "From {from} to {to}: {span}, {weekdays}.": "Del {from} al {to}: {span}, {weekdays}.",
+    "I can't use “{text}” in a calculation.": "No puedo usar «{text}» en un cálculo.",
+    "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.": "No pude leer «{amount}» como una cantidad de tiempo. Usa algo como 3 weeks, -10 days o 2 months.",
+    "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.": "No pude leer «{date}» como una fecha. Usa AAAA-MM-DD, 25 December 2026 o today.",
+    "I couldn't read “{text}” as a calculation.": "No pude leer «{text}» como un cálculo.",
+    "I don't know the unit “{unit}”.": "No conozco la unidad «{unit}».",
+    "I don't know “{text}”. I know {names}, pi and e.": "No conozco «{text}». Conozco {names}, pi y e.",
+    "That has no finite answer (dividing by zero, or a number too big).": "No tiene un resultado finito (división entre cero o un número demasiado grande).",
+    "That's too big to convert.": "Es demasiado grande para convertirlo.",
+    "The calculation ends too early or has an operator in the wrong place.": "El cálculo termina antes de tiempo o tiene un operador fuera de lugar.",
+    "US measures": "medidas estadounidenses",
+    "Write decimals with a dot, like 1.5.": "Escribe los decimales con punto, como 1.5.",
+    "an average month or year": "un mes o un año promedio",
+    "in {count} days": {
+      "one": "dentro de {count} día",
+      "other": "dentro de {count} días"
+    },
+    "today": "hoy",
+    "{a} and {b} measure different things: they don't convert.": "{a} y {b} miden cosas distintas: no se convierten.",
+    "{count} days": {
+      "one": "{count} día",
+      "other": "{count} días"
+    },
+    "{count} days ago": {
+      "one": "hace {count} día",
+      "other": "hace {count} días"
+    },
+    "{count} of them weekdays": {
+      "one": "{count} de ellos laborable",
+      "other": "{count} de ellos laborables"
+    },
+    "{count} weeks": {
+      "one": "{count} semana",
+      "other": "{count} semanas"
+    },
+    "{date} minus {amount} is {result}.": "{date} menos {amount} es {result}.",
+    "{date} plus {amount} is {result}.": "{date} más {amount} es {result}.",
+    "{date}: {when}, week {week}, day {day} of the year.": "{date}: {when}, semana {week}, día {day} del año.",
+    "{weeks} and {days}": "{weeks} y {days}",
+    "“{key}” must be a number.": "«{key}» debe ser un número.",
+    "“{text}” isn't a number.": "«{text}» no es un número."
+  }
+}

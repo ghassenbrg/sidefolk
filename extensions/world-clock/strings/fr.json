@@ -1,0 +1,33 @@
+{
+  "name": "Horloge mondiale",
+  "tagline": "L’heure partout, et d’un lieu à l’autre",
+  "description": "L’heure partout dans le monde, et une heure convertie d’un lieu à un autre, avec les changements d’heure calculés avec exactitude.",
+  "tools": {
+    "convert_time": {
+      "title": "Convertir une heure d’un lieu à un autre"
+    },
+    "current_time": {
+      "title": "L’heure dans le monde"
+    }
+  },
+  "text": {
+    "I couldn't read “{time}” as a time. Use HH:MM, 9am, noon, or YYYY-MM-DD HH:MM.": "Impossible de lire « {time} » comme une heure. Utilisez HH:MM, 9am, noon ou AAAA-MM-JJ HH:MM.",
+    "I don't know where “{place}” is. Try a big city nearby, a country with one time zone, or an IANA zone like Europe/Paris.": "Je ne sais pas où se trouve « {place} ». Essayez une grande ville proche, un pays avec un seul fuseau horaire ou un fuseau IANA comme Europe/Paris.",
+    "It is {time}, {difference}.": "Il est {time}, {difference}.",
+    "It is {time}.": "Il est {time}.",
+    "the same time as you": "la même heure que chez vous",
+    "{date} at {offset} ({zone})": "{date} à {offset} ({zone})",
+    "{date} here ({zone})": "{date} ici ({zone})",
+    "{date} here in {place} ({zone})": "{date} ici, à {place} ({zone})",
+    "{date} in UTC ({zone})": "{date} en UTC ({zone})",
+    "{date} in {place} ({zone})": "{date} à {place} ({zone})",
+    "{offset} isn't a real UTC offset.": "{offset} n’est pas un vrai décalage UTC.",
+    "{span} ahead of you": "{span} d’avance sur vous",
+    "{span} behind you": "{span} de retard sur vous",
+    "{time} doesn't happen on that day: the clocks skip that hour. Try an hour later.": "{time} n’existe pas ce jour-là : les horloges sautent cette heure. Essayez une heure plus tard.",
+    "{time} is:": "{time} correspond à :",
+    "“{time}” isn't a real date.": "« {time} » n’est pas une vraie date.",
+    "“{time}” isn't a time of day.": "« {time} » n’est pas une heure de la journée.",
+    "“{time}” isn't a time on a 12-hour clock.": "« {time} » n’est pas une heure au format 12 heures."
+  }
+}

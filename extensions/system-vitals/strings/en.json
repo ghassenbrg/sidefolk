@@ -1,0 +1,35 @@
+{
+  "text": {
+    ", ": ", ",
+    "Battery at {percent}, {state} ({time} left).": "Battery at {percent}, {state} ({time} left).",
+    "Battery at {percent}, {state}.": "Battery at {percent}, {state}.",
+    "Home": "Home",
+    "Only {free} free on the startup disk.": "Only {free} free on the startup disk.",
+    "Startup disk": "Startup disk",
+    "The Mac didn't report its memory.": "The Mac didn't report its memory.",
+    "The startup disk didn't report its space.": "The startup disk didn't report its space.",
+    "This Mac has no battery; it runs on {source}.": "This Mac has no battery; it runs on {source}.",
+    "This Mac: {chip}": "This Mac: {chip}",
+    "an unknown processor": "an unknown processor",
+    "an unknown time": "an unknown time",
+    "charged": "charged",
+    "charging": "charging",
+    "critical": "critical",
+    "discharging": "discharging",
+    "finishing charge": "finishing charge",
+    "model {model}": "model {model}",
+    "normal": "normal",
+    "plugged in, not charging": "plugged in, not charging",
+    "power": "power",
+    "unknown": "unknown",
+    "warning": "warning",
+    "{about}; on for {time}.": "{about}; on for {time}.",
+    "{count} cores": {
+      "one": "{count} core",
+      "other": "{count} cores"
+    },
+    "{disk}: {free} free of {total}.": "{disk}: {free} free of {total}.",
+    "{memory} of memory": "{memory} of memory",
+    "{used} of {total} in use; memory pressure is {pressure}.": "{used} of {total} in use; memory pressure is {pressure}."
+  }
+}

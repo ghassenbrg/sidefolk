@@ -1,0 +1,47 @@
+{
+  "text": {
+    "A parenthesis isn't closed.": "A parenthesis isn't closed.",
+    "From {from} to {to}: {span}, going back, {weekdays}.": "From {from} to {to}: {span}, going back, {weekdays}.",
+    "From {from} to {to}: {span}, {weekdays}.": "From {from} to {to}: {span}, {weekdays}.",
+    "I can't use “{text}” in a calculation.": "I can't use “{text}” in a calculation.",
+    "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.": "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.",
+    "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.": "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.",
+    "I couldn't read “{text}” as a calculation.": "I couldn't read “{text}” as a calculation.",
+    "I don't know the unit “{unit}”.": "I don't know the unit “{unit}”.",
+    "I don't know “{text}”. I know {names}, pi and e.": "I don't know “{text}”. I know {names}, pi and e.",
+    "That has no finite answer (dividing by zero, or a number too big).": "That has no finite answer (dividing by zero, or a number too big).",
+    "That's too big to convert.": "That's too big to convert.",
+    "The calculation ends too early or has an operator in the wrong place.": "The calculation ends too early or has an operator in the wrong place.",
+    "US measures": "US measures",
+    "Write decimals with a dot, like 1.5.": "Write decimals with a dot, like 1.5.",
+    "an average month or year": "an average month or year",
+    "in {count} days": {
+      "one": "in {count} day",
+      "other": "in {count} days"
+    },
+    "today": "today",
+    "{a} and {b} measure different things: they don't convert.": "{a} and {b} measure different things: they don't convert.",
+    "{count} days": {
+      "one": "{count} day",
+      "other": "{count} days"
+    },
+    "{count} days ago": {
+      "one": "{count} day ago",
+      "other": "{count} days ago"
+    },
+    "{count} of them weekdays": {
+      "one": "{count} of them a weekday",
+      "other": "{count} of them weekdays"
+    },
+    "{count} weeks": {
+      "one": "{count} week",
+      "other": "{count} weeks"
+    },
+    "{date} minus {amount} is {result}.": "{date} minus {amount} is {result}.",
+    "{date} plus {amount} is {result}.": "{date} plus {amount} is {result}.",
+    "{date}: {when}, week {week}, day {day} of the year.": "{date}: {when}, week {week}, day {day} of the year.",
+    "{weeks} and {days}": "{weeks} and {days}",
+    "“{key}” must be a number.": "“{key}” must be a number.",
+    "“{text}” isn't a number.": "“{text}” isn't a number."
+  }
+}

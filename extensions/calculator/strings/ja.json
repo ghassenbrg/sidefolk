@@ -1,0 +1,56 @@
+{
+  "name": "電卓",
+  "tagline": "計算、単位、日付を正確に",
+  "description": "計算、パーセント、単位の換算、日付の計算を正確に行うので、答えが推測に頼ることはありません。",
+  "tools": {
+    "calculate": {
+      "title": "計算する"
+    },
+    "convert_units": {
+      "title": "単位を換算"
+    },
+    "date_math": {
+      "title": "日付の計算"
+    }
+  },
+  "text": {
+    "A parenthesis isn't closed.": "括弧が閉じていません。",
+    "From {from} to {to}: {span}, going back, {weekdays}.": "{from}から{to}まで：{span}（さかのぼり）、{weekdays}。",
+    "From {from} to {to}: {span}, {weekdays}.": "{from}から{to}まで：{span}、{weekdays}。",
+    "I can't use “{text}” in a calculation.": "計算に「{text}」は使えません。",
+    "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.": "「{amount}」を期間として読み取れませんでした。3 weeks、-10 days、2 months のように指定してください。",
+    "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.": "「{date}」を日付として読み取れませんでした。YYYY-MM-DD、25 December 2026、または today を使ってください。",
+    "I couldn't read “{text}” as a calculation.": "「{text}」を計算式として読み取れませんでした。",
+    "I don't know the unit “{unit}”.": "単位「{unit}」はわかりません。",
+    "I don't know “{text}”. I know {names}, pi and e.": "「{text}」はわかりません。使えるのは {names}、pi、e です。",
+    "That has no finite answer (dividing by zero, or a number too big).": "有限の答えがありません（ゼロ除算、または数が大きすぎます）。",
+    "That's too big to convert.": "大きすぎて換算できません。",
+    "The calculation ends too early or has an operator in the wrong place.": "計算式が途中で終わっているか、演算子の位置が違います。",
+    "US measures": "米国の単位",
+    "Write decimals with a dot, like 1.5.": "小数は 1.5 のようにピリオドで書いてください。",
+    "an average month or year": "平均的な月または年",
+    "in {count} days": {
+      "other": "{count}日後"
+    },
+    "today": "今日",
+    "{a} and {b} measure different things: they don't convert.": "{a} と {b} は測るものが違うため、換算できません。",
+    "{count} days": {
+      "other": "{count}日"
+    },
+    "{count} days ago": {
+      "other": "{count}日前"
+    },
+    "{count} of them weekdays": {
+      "other": "そのうち平日は{count}日"
+    },
+    "{count} weeks": {
+      "other": "{count}週間"
+    },
+    "{date} minus {amount} is {result}.": "{date}の{amount}前は{result}です。",
+    "{date} plus {amount} is {result}.": "{date}の{amount}後は{result}です。",
+    "{date}: {when}, week {week}, day {day} of the year.": "{date}：{when}、第{week}週、年間{day}日目。",
+    "{weeks} and {days}": "{weeks}と{days}",
+    "“{key}” must be a number.": "「{key}」は数値でなければなりません。",
+    "“{text}” isn't a number.": "「{text}」は数値ではありません。"
+  }
+}

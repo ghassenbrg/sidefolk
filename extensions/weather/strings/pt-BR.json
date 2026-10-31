@@ -1,0 +1,68 @@
+{
+  "name": "Clima",
+  "tagline": "O clima de hoje e a semana que vem",
+  "description": "O clima de hoje e a semana que vem para qualquer lugar, e um aviso antes da chuva, via Open-Meteo. Só o lugar sobre o qual você pergunta sai do seu Mac.",
+  "tools": {
+    "forecast": {
+      "title": "Previsão do tempo"
+    },
+    "sun_and_moon": {
+      "title": "Nascer e pôr do sol e a lua"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "Chuva em breve",
+      "description": "Avisa uma vez quando a chuva fica provável em um lugar nas próximas horas."
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "Não encontrei nenhum lugar chamado “{place}”. Tente a cidade mais próxima ou adicione o país.",
+    "No rain likely in {place} in the next {count} hours.": {
+      "one": "Sem chuva provável em {place} na próxima hora.",
+      "other": "Sem chuva provável em {place} nas próximas {count} horas."
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "O Open-Meteo não informou o nascer e o pôr do sol para {place}.",
+    "Rain is likely in {place} around {time} ({chance} chance).": "Chuva provável em {place} por volta das {time} ({chance} de chance).",
+    "The moon is a new moon, {lit} lit.": "É lua nova, {lit} iluminada.",
+    "The moon is a waning crescent, {lit} lit.": "A lua é minguante, {lit} iluminada.",
+    "The moon is a waning gibbous, {lit} lit.": "A lua é gibosa minguante, {lit} iluminada.",
+    "The moon is a waxing crescent, {lit} lit.": "A lua é crescente, {lit} iluminada.",
+    "The moon is a waxing gibbous, {lit} lit.": "A lua é gibosa crescente, {lit} iluminada.",
+    "The moon is at its first quarter, {lit} lit.": "A lua está no quarto crescente, {lit} iluminada.",
+    "The moon is at its last quarter, {lit} lit.": "A lua está no quarto minguante, {lit} iluminada.",
+    "The moon is full, {lit} lit.": "É lua cheia, {lit} iluminada.",
+    "Today": "Hoje",
+    "Tomorrow": "Amanhã",
+    "clear": "céu limpo",
+    "drizzle": "garoa",
+    "fog": "neblina",
+    "freezing drizzle": "garoa congelante",
+    "freezing fog": "neblina congelante",
+    "freezing rain": "chuva congelante",
+    "heavy drizzle": "garoa forte",
+    "heavy rain": "chuva forte",
+    "heavy snow": "neve forte",
+    "heavy snow showers": "fortes pancadas de neve",
+    "light drizzle": "garoa fraca",
+    "light rain": "chuva fraca",
+    "light showers": "pancadas fracas",
+    "light snow": "neve fraca",
+    "mostly clear": "predominantemente limpo",
+    "overcast": "nublado",
+    "partly cloudy": "parcialmente nublado",
+    "rain": "chuva",
+    "showers": "pancadas de chuva",
+    "snow": "neve",
+    "snow grains": "grãos de neve",
+    "snow showers": "pancadas de neve",
+    "thunderstorms": "tempestades",
+    "thunderstorms with hail": "tempestades com granizo",
+    "unknown weather": "tempo desconhecido",
+    "violent showers": "pancadas fortes",
+    "weather code {code}": "código do tempo {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day}: {weather}, de {low} a {high}, {chance} de chance de chuva.",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place}, agora: {weather}, {temperature} (sensação de {feels}), vento {wind}.",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place}: nascer do sol {sunrise}, pôr do sol {sunset}, {daylight} de luz."
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "name": "날씨",
+  "tagline": "오늘의 날씨와 한 주의 예보",
+  "description": "어느 곳이든 오늘의 날씨와 앞으로 한 주의 예보, 비 오기 전 알림을 Open-Meteo에서 가져와요. Mac 밖으로 나가는 건 물어본 장소뿐이에요.",
+  "tools": {
+    "forecast": {
+      "title": "일기 예보"
+    },
+    "sun_and_moon": {
+      "title": "일출, 일몰과 달"
+    }
+  },
+  "watchers": {
+    "rain_soon": {
+      "title": "곧 비 올 예정",
+      "description": "어떤 곳에 앞으로 몇 시간 안에 비가 올 것 같으면 한 번 알려 줍니다."
+    }
+  },
+  "text": {
+    "I couldn't find a place called “{place}”. Try the nearest city, or add the country.": "‘{place}’(이)라는 곳을 찾을 수 없습니다. 가까운 도시를 입력하거나 나라 이름을 덧붙여 보세요.",
+    "No rain likely in {place} in the next {count} hours.": {
+      "other": "{place}에는 앞으로 {count}시간 동안 비가 올 가능성이 낮습니다."
+    },
+    "Open-Meteo didn't give sunrise and sunset for {place}.": "Open-Meteo가 {place}의 일출과 일몰을 알려 주지 않았습니다.",
+    "Rain is likely in {place} around {time} ({chance} chance).": "{place}에 {time}쯤 비가 올 것 같습니다(확률 {chance}).",
+    "The moon is a new moon, {lit} lit.": "달은 삭이며, {lit} 밝습니다.",
+    "The moon is a waning crescent, {lit} lit.": "달은 그믐달이며, {lit} 밝습니다.",
+    "The moon is a waning gibbous, {lit} lit.": "달은 기울어 가는 볼록달이며, {lit} 밝습니다.",
+    "The moon is a waxing crescent, {lit} lit.": "달은 초승달이며, {lit} 밝습니다.",
+    "The moon is a waxing gibbous, {lit} lit.": "달은 차오르는 볼록달이며, {lit} 밝습니다.",
+    "The moon is at its first quarter, {lit} lit.": "달은 상현달이며, {lit} 밝습니다.",
+    "The moon is at its last quarter, {lit} lit.": "달은 하현달이며, {lit} 밝습니다.",
+    "The moon is full, {lit} lit.": "달은 보름달이며, {lit} 밝습니다.",
+    "Today": "오늘",
+    "Tomorrow": "내일",
+    "clear": "맑음",
+    "drizzle": "이슬비",
+    "fog": "안개",
+    "freezing drizzle": "어는 이슬비",
+    "freezing fog": "어는 안개",
+    "freezing rain": "어는 비",
+    "heavy drizzle": "강한 이슬비",
+    "heavy rain": "강한 비",
+    "heavy snow": "폭설",
+    "heavy snow showers": "강한 소낙눈",
+    "light drizzle": "약한 이슬비",
+    "light rain": "약한 비",
+    "light showers": "약한 소나기",
+    "light snow": "약한 눈",
+    "mostly clear": "대체로 맑음",
+    "overcast": "흐림",
+    "partly cloudy": "구름 조금",
+    "rain": "비",
+    "showers": "소나기",
+    "snow": "눈",
+    "snow grains": "싸락눈",
+    "snow showers": "소낙눈",
+    "thunderstorms": "뇌우",
+    "thunderstorms with hail": "우박을 동반한 뇌우",
+    "unknown weather": "알 수 없는 날씨",
+    "violent showers": "격렬한 소나기",
+    "weather code {code}": "날씨 코드 {code}",
+    "{day}: {weather}, {low} to {high}, {chance} chance of rain.": "{day}: {weather}, {low}~{high}, 강수 확률 {chance}.",
+    "{place}, now: {weather}, {temperature} (feels like {feels}), wind {wind}.": "{place} 현재: {weather}, {temperature}(체감 {feels}), 바람 {wind}.",
+    "{place}: sunrise {sunrise}, sunset {sunset}, {daylight} of daylight.": "{place}: 일출 {sunrise}, 일몰 {sunset}, 낮 길이 {daylight}."
+  }
+}

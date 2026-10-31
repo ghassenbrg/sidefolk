@@ -1,0 +1,56 @@
+{
+  "name": "计算器",
+  "tagline": "精确的计算、单位和日期",
+  "description": "精确完成计算、百分比、单位换算和日期计算，答案绝不靠猜。",
+  "tools": {
+    "calculate": {
+      "title": "计算"
+    },
+    "convert_units": {
+      "title": "换算单位"
+    },
+    "date_math": {
+      "title": "日期计算"
+    }
+  },
+  "text": {
+    "A parenthesis isn't closed.": "有括号没有闭合。",
+    "From {from} to {to}: {span}, going back, {weekdays}.": "从 {from} 到 {to}：{span}（往回算），{weekdays}。",
+    "From {from} to {to}: {span}, {weekdays}.": "从 {from} 到 {to}：{span}，{weekdays}。",
+    "I can't use “{text}” in a calculation.": "计算中不能使用“{text}”。",
+    "I couldn't read “{amount}” as an amount of time. Use something like 3 weeks, -10 days or 2 months.": "无法把“{amount}”识别为时长。请写成 3 weeks、-10 days 或 2 months 这样的形式。",
+    "I couldn't read “{date}” as a date. Use YYYY-MM-DD, 25 December 2026, or today.": "无法把“{date}”识别为日期。请使用 YYYY-MM-DD、25 December 2026 或 today。",
+    "I couldn't read “{text}” as a calculation.": "无法把“{text}”识别为算式。",
+    "I don't know the unit “{unit}”.": "不认识单位“{unit}”。",
+    "I don't know “{text}”. I know {names}, pi and e.": "不认识“{text}”。认识的有 {names}、pi 和 e。",
+    "That has no finite answer (dividing by zero, or a number too big).": "没有有限的结果（除以零，或数字太大）。",
+    "That's too big to convert.": "数值太大，无法换算。",
+    "The calculation ends too early or has an operator in the wrong place.": "算式结束得太早，或运算符位置不对。",
+    "US measures": "美制单位",
+    "Write decimals with a dot, like 1.5.": "小数请用点号，例如 1.5。",
+    "an average month or year": "按平均月或年计算",
+    "in {count} days": {
+      "other": "{count} 天后"
+    },
+    "today": "今天",
+    "{a} and {b} measure different things: they don't convert.": "{a} 和 {b} 度量的不是同一种东西，无法换算。",
+    "{count} days": {
+      "other": "{count} 天"
+    },
+    "{count} days ago": {
+      "other": "{count} 天前"
+    },
+    "{count} of them weekdays": {
+      "other": "其中工作日 {count} 天"
+    },
+    "{count} weeks": {
+      "other": "{count} 周"
+    },
+    "{date} minus {amount} is {result}.": "{date} 减去 {amount} 是 {result}。",
+    "{date} plus {amount} is {result}.": "{date} 加上 {amount} 是 {result}。",
+    "{date}: {when}, week {week}, day {day} of the year.": "{date}：{when}，第 {week} 周，全年第 {day} 天。",
+    "{weeks} and {days}": "{weeks}零 {days}",
+    "“{key}” must be a number.": "“{key}”必须是数字。",
+    "“{text}” isn't a number.": "“{text}”不是数字。"
+  }
+}

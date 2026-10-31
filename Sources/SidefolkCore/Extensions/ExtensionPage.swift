@@ -354,7 +354,8 @@ public struct ExtensionPage: Sendable, Hashable {
         guard let title = text(j["title"], 80) else { return nil }
         var control: Control?
         if let c = j["control"], case .control(let parsed)? = block(c) { control = parsed }
-        return Summary(title: title, detail: text(j["detail"], 160) ?? "", tone: tone(j["tone"]), symbol: symbol(j["symbol"]), control: control)
+        // Details have room for translations, which run longer than English (240 characters, D76).
+        return Summary(title: title, detail: text(j["detail"], 240) ?? "", tone: tone(j["tone"]), symbol: symbol(j["symbol"]), control: control)
     }
 
     static func block(_ j: JSONValue) -> Block? {
@@ -396,7 +397,7 @@ public struct ExtensionPage: Sendable, Hashable {
             return .ask(Ask(label: label, ask: ask))
         case "switch":
             guard let label = text(j["label"], 60), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
-            return .control(Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 160), tool: tool,
+            return .control(Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 240), tool: tool,
                                     input: input, symbol: symbol(j["symbol"])))
         case "button":
             return button(j, characters: 60).map { .control($0) }
@@ -416,7 +417,7 @@ public struct ExtensionPage: Sendable, Hashable {
             let key = j["key"]?.stringValue ?? "value"
             guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
             let selected = j["selected"]?.stringValue ?? ""
-            return .choice(Choice(label: label, detail: text(j["detail"], 160), options: options,
+            return .choice(Choice(label: label, detail: text(j["detail"], 240), options: options,
                                   selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input,
                                   style: style, key: key, disabled: j["disabled"]?.boolValue ?? false))
         case "hero":
@@ -442,7 +443,7 @@ public struct ExtensionPage: Sendable, Hashable {
                   let input = smallInput(j["input"]) else { return nil }
             let key = j["key"]?.stringValue ?? "text"
             guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
-            return .field(Field(label: label, detail: text(j["detail"], 160), placeholder: text(j["placeholder"], 60), button: button, tool: tool,
+            return .field(Field(label: label, detail: text(j["detail"], 240), placeholder: text(j["placeholder"], 60), button: button, tool: tool,
                                 input: input, key: key))
         case "list":
             let rows = (j["items"]?.arrayValue ?? []).prefix(maxItems).compactMap { r -> Row? in
@@ -451,7 +452,7 @@ public struct ExtensionPage: Sendable, Hashable {
                 if let b = r["button"], let label = text(b["label"], 24), let tool = toolName(b["tool"]), let input = smallInput(b["input"]) {
                     button = Control(kind: .button(.secondary), label: label, tool: tool, input: input, symbol: symbol(b["symbol"]))
                 }
-                return Row(title: title, detail: text(r["detail"], 160), image: dataFile(r["image"]), color: color(r["color"]),
+                return Row(title: title, detail: text(r["detail"], 240), image: dataFile(r["image"]), color: color(r["color"]),
                            symbol: symbol(r["symbol"]), button: button)
             }
             guard !rows.isEmpty || j["title"] != nil else { return nil }
@@ -466,7 +467,7 @@ public struct ExtensionPage: Sendable, Hashable {
     static func button(_ j: JSONValue, characters: Int) -> Control? {
         guard let label = text(j["label"], characters), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
         return Control(kind: .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary), label: label,
-                       detail: text(j["detail"], 160), tool: tool, input: input, symbol: symbol(j["symbol"]), disabled: j["disabled"]?.boolValue ?? false)
+                       detail: text(j["detail"], 240), tool: tool, input: input, symbol: symbol(j["symbol"]), disabled: j["disabled"]?.boolValue ?? false)
     }
 
     /// The extension's own tool's name, never another's (`ext.other.tool`).

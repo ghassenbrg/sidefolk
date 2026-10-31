@@ -28,8 +28,22 @@ enum Vitals {
     }
 
     static func describe(_ b: Battery) -> String {
-        guard let percent = b.percent else { return "This Mac has no battery; it runs on \(b.source ?? "power")." }
-        return "Battery at \(percent)%, \(b.state)" + (b.remaining.map { " (\($0) left)" } ?? "") + "."
+        guard let percent = b.percent else { return L("This Mac has no battery; it runs on {source}.", ["source": b.source ?? L("power")]) }
+        let values = ["percent": Format.percent(points: Double(percent)), "state": state(b.state)]
+        if let left = b.remaining { return L("Battery at {percent}, {state} ({time} left).", values.merging(["time": left]) { a, _ in a }) }
+        return L("Battery at {percent}, {state}.", values)
+    }
+
+    /// pmset's words for the battery, in the person's language; one it hasn't said before as it says it.
+    static func state(_ raw: String) -> String {
+        switch raw {
+        case "charging": L("charging")
+        case "charged": L("charged")
+        case "discharging": L("discharging")
+        case "finishing charge": L("finishing charge")
+        case "AC attached": L("plugged in, not charging")
+        default: raw
+        }
     }
 
     static func charging(_ b: Battery) -> Bool {
@@ -45,7 +59,7 @@ enum Vitals {
     /// The startup disk, and the home disk when it is another one (same APFS container: counted once).
     static func disks() -> [Volume] {
         var volumes: [Volume] = []
-        for (label, path) in [("Startup disk", "/"), ("Home", Paths.home)] {
+        for (label, path) in [(L("Startup disk"), "/"), (L("Home"), Paths.home)] {
             var st = statvfs()
             guard statvfs(path, &st) == 0 else { continue }
             let free = Double(st.f_bavail) * Double(st.f_frsize), total = Double(st.f_blocks) * Double(st.f_frsize)
@@ -55,7 +69,12 @@ enum Vitals {
     }
 
     static func describe(_ volumes: [Volume]) -> String {
-        volumes.map { String(format: "%@: %.1f GB free of %.1f GB.", $0.label, $0.free / 1e9, $0.total / 1e9) }.joined(separator: " ")
+        volumes.map { L("{disk}: {free} free of {total}.", ["disk": $0.label, "free": gb($0.free), "total": gb($0.total)]) }.joined(separator: " ")
+    }
+
+    /// "12.3 GB" in the person's digits (gigabytes as the Finder counts them).
+    static func gb(_ bytes: Double, per: Double = 1e9) -> String {
+        (bytes / per).formatted(.number.precision(.fractionLength(1)).locale(Language.locale)) + " GB"
     }
 
     /// Activity Monitor's "Memory Used": app memory, wired and compressed.
@@ -65,38 +84,37 @@ enum Vitals {
         let status = withUnsafeMutablePointer(to: &stats) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &count) }
         }
-        guard status == KERN_SUCCESS, let total: UInt64 = sysctl("hw.memsize") else { throw Problem("The Mac didn't report its memory.") }
+        guard status == KERN_SUCCESS, let total: UInt64 = sysctl("hw.memsize") else { throw Problem(L("The Mac didn't report its memory.")) }
         let pageSize: Int = sysctl("hw.pagesize") ?? 16_384
         let page = Double(pageSize)
         let used = (Double(stats.internal_page_count) - Double(stats.purgeable_count) + Double(stats.wire_count)
             + Double(stats.compressor_page_count)) * page
         let level: Int32 = sysctl("kern.memorystatus_vm_pressure_level") ?? 0
-        let pressure = [1: "normal", 2: "warning", 4: "critical"][level] ?? "unknown"
-        return String(format: "%.1f GB of %.1f GB in use; memory pressure is %@.", used / 1_073_741_824, Double(total) / 1_073_741_824, pressure)
+        let pressure = [1: L("normal"), 2: L("warning"), 4: L("critical")][level] ?? L("unknown")
+        return L("{used} of {total} in use; memory pressure is {pressure}.",
+                 ["used": gb(used, per: 1_073_741_824), "total": gb(Double(total), per: 1_073_741_824), "pressure": pressure])
     }
 
     /// "Apple M3 Pro, 12 cores, 36 GB of memory, macOS 27.0 (25A123); on for 3 days 4 hours."
     static func about() -> String {
-        let chip = sysctlString("machdep.cpu.brand_string") ?? "an unknown processor"
+        let chip = sysctlString("machdep.cpu.brand_string") ?? L("an unknown processor")
         let cores: Int32 = sysctl("hw.physicalcpu") ?? 0
         let memory: UInt64 = sysctl("hw.memsize") ?? 0
         let version = ProcessInfo.processInfo.operatingSystemVersion
         let build = sysctlString("kern.osversion").map { " (\($0))" } ?? ""
-        var parts = ["This Mac: \(chip)", "\(cores) cores", "\(memory / 1_073_741_824) GB of memory",
+        var parts = [L("This Mac: {chip}", ["chip": chip]), L(one: "{count} core", other: "{count} cores", count: Int(cores)),
+                     L("{memory} of memory", ["memory": "\(memory / 1_073_741_824) GB"]),
                      "macOS \(version.majorVersion).\(version.minorVersion)\(version.patchVersion > 0 ? ".\(version.patchVersion)" : "")\(build)"]
-        if let model = sysctlString("hw.model") { parts.append("model \(model)") }
-        return parts.joined(separator: ", ") + "; on for " + uptime() + "."
+        if let model = sysctlString("hw.model") { parts.append(L("model {model}", ["model": model])) }
+        return L("{about}; on for {time}.", ["about": parts.joined(separator: L(", ")), "time": uptime()])
     }
 
     static func uptime(now: Date = Date()) -> String {
         var boot = timeval()
         var size = MemoryLayout<timeval>.size
-        guard sysctlbyname("kern.boottime", &boot, &size, nil, 0) == 0 else { return "an unknown time" }
+        guard sysctlbyname("kern.boottime", &boot, &size, nil, 0) == 0 else { return L("an unknown time") }
         let minutes = Int(now.timeIntervalSince1970) / 60 - boot.tv_sec / 60
-        let (days, hours, rest) = (minutes / 1440, minutes % 1440 / 60, minutes % 60)
-        func unit(_ n: Int, _ word: String) -> String { "\(n) \(word)\(n == 1 ? "" : "s")" }
-        if days > 0 { return unit(days, "day") + (hours > 0 ? " " + unit(hours, "hour") : "") }
-        return hours > 0 ? unit(hours, "hour") + " " + unit(rest, "minute") : unit(rest, "minute")
+        return Format.duration(Double(minutes) * 60, units: minutes >= 1440 ? [.days, .hours] : [.hours, .minutes], width: .wide)
     }
 
     static func sysctl<T>(_ name: String) -> T? {

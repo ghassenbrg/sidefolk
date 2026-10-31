@@ -48,6 +48,28 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   ones until the content packs merge (they implement `TriviaPack`); Sneaky's switch shows once a game offers it;
   phase 2 parts (`pads`, `shuffle`, `reflex`, `meter`, `number`) and the new games. Merge team/play in both repos
   together: a Sidefolk without games refuses Playtime 2.0 at install.
+- **Extensions in all ten languages (D76), on branch team/i18n (app and sidefolk-addons):** an extension's words live in
+  `strings/<language>.json` beside its manifest (manifest words people see, and its program's sentences under `text`),
+  checked by the validator (known languages, strict keys, the manifest's limits or half as long again, placeholders,
+  CLDR plural forms). Sidefolk shows the person's language everywhere (Settings, Home, tiles, palettes, heads-ups, tool
+  titles, the install sheet, the gallery via the catalog's `localized`) and sends `language` with every tool call,
+  watcher check, page and palette request. Kit: `L`, `L(one:other:count:)`, `Format`, `Language.with`, `KitWords`, and
+  team/play's `Localized.swift` carried as it is (L looks plain words up through it). Extension text drawn right to left
+  keeps numbers, sizes and paths the right way round (`BidiText`; "3024 × 1964" was reversed). Page details have 240
+  characters. Every official extension but Playtime speaks all ten: World Clock, Calculator, Weather, System Vitals,
+  Your Mac, Clipboard, Keep Awake, Miraya, Git, Currency, Images, PDF Tools, QR Codes, Archives, Dev Toolbox, Feeds
+  (about 1,000 texts, plus their manifest words). `scripts/extension-strings.py sync|check`. *Checked:* `make test` with
+  `SIDEFOLK_ADDONS_REPO` pointing at the add-ons worktree, 1521 of 1522 (the one left is AddonStoreTests'
+  signed-gallery check, which needs a Developer ID build of the gallery; only an unsigned one was made); add-ons
+  `swift test` (44); `build.py --unsigned` and `check.sh` (all ok, `Languages: en … ar`, Kit identical); the debug app
+  (`build/qa1`) with Your Mac, Clipboard, Keep Awake and Miraya installed from that build's folders, in German,
+  Japanese and Arabic: pages, Today tiles, install sheets read (German switch details were cut at 160 characters, now
+  240; Japanese sentences no longer get a space between them in Your Mac). UI snapshots of the extension pages in
+  Arabic rendered. *Not checked by eye:* a palette (snap doesn't capture it); gallery cards (needs a signed gallery).
+  *Next:* merge with team/play (D75): `Localized.swift` is identical; `docs/EXTENSIONS.md` has a section of the same
+  name on each branch to merge into one; `zh-Hant` is matched differently (D76 shows the manifest, `Localized` uses
+  `zh-Hans`). The app's install sheet subtitle wraps a folder path oddly in Arabic (the app's own text, not D76's).
+  Packs change, so each official extension goes out as its next snapshot (versions unchanged, D65).
 - **Updates for Sidefolk and for add-ons, chosen apart (D70), on branch team/updates:** Settings › General › Updates
   now has "New versions of Sidefolk" (Don't check / Tell me, the default / Install automatically) and "Update add-ons
   automatically" (on by default); Versions to offer covers both. Install automatically downloads and checks exactly

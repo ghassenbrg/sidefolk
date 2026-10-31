@@ -23,9 +23,9 @@ ext.watcher("battery_low") { settings, state in
     return Check(triggered: low && state["low"] as? Bool != true, state: ["low": low], summary: Vitals.describe(b))
 }
 ext.watcher("disk_low") { settings, state in
-    guard let startup = Vitals.disks().first else { throw Problem("The startup disk didn't report its space.") }
+    guard let startup = Vitals.disks().first else { throw Problem(L("The startup disk didn't report its space.")) }
     let low = startup.free / 1e9 < (settings.double("below_gb") ?? 10)
-    let summary = low ? String(format: "Only %.1f GB free on the startup disk.", startup.free / 1e9) : Vitals.describe([startup])
+    let summary = low ? L("Only {free} free on the startup disk.", ["free": Vitals.gb(startup.free)]) : Vitals.describe([startup])
     return Check(triggered: low && state["low"] as? Bool != true, state: ["low": low], summary: summary)
 }
 
