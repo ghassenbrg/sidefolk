@@ -354,14 +354,31 @@ struct GameResultView: View {
     var body: some View {
         VStack(spacing: 10) {
             if let ribbon = result.ribbon {
+                // A new best: a sticker slapped on the card.
                 Label { Text(verbatim: ribbon) } icon: { Image(systemName: "star.fill") }
                     .font(Theme.Font.captionStrong).foregroundStyle(Theme.navy)
-                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
                     .background(Capsule().fill(Theme.sun))
-                    .rotationEffect(.degrees(-3))
+                    .overlay(Capsule().strokeBorder(.white, lineWidth: 2.5))
+                    .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+                    .rotationEffect(.degrees(shown ? -4 : -14))
+                    .scaleEffect(shown ? 1 : 1.6)
+                    .opacity(shown ? 1 : 0)
             }
-            Image(systemName: Self.symbol(verdict)).font(.system(size: 26, weight: .bold)).foregroundStyle(GameColors.color(verdict))
-                .opacity(shown ? 1 : 0)
+            if verdict == .win, GameArt.trophy.image != nil {
+                // The person's win: a trophy (a crown in it, the symbol that goes with the colour), bouncing in.
+                GameArt.trophy.view(height: 64)
+                    .overlay(alignment: .topTrailing) {
+                        Image(systemName: "crown.fill").font(.system(size: 13, weight: .bold)).foregroundStyle(GameColors.color(verdict))
+                            .padding(4).background(Circle().fill(Theme.surface)).offset(x: 8, y: -4)
+                    }
+                    .scaleEffect(shown ? 1 : 0.3, anchor: .bottom)
+                    .rotationEffect(.degrees(shown ? 0 : -12))
+                    .opacity(shown ? 1 : 0)
+            } else {
+                Image(systemName: Self.symbol(verdict)).font(.system(size: 26, weight: .bold)).foregroundStyle(GameColors.color(verdict))
+                    .opacity(shown ? 1 : 0)
+            }
             Text(verbatim: result.figure)
                 .font(.system(size: 46, weight: .heavy, design: .rounded))
                 .foregroundStyle(verdict == .draw ? Theme.ink : GameColors.color(verdict))
@@ -377,6 +394,8 @@ struct GameResultView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(14)
+        // The confetti flies behind the words, so they stay readable.
+        .background { if verdict == .win { Celebration() } }
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surfaceSunken.opacity(0.6)))
         .onAppear {
             withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .spring(duration: 0.5, bounce: 0.45)) { shown = true }
@@ -455,6 +474,33 @@ struct GameChoiceView: View {
 
 // MARK: Grid
 
+/// A memory card face down: the app's accent with a pattern of paws, a white inner frame, raised on its lip.
+struct CardBack: View {
+    var side: CGFloat
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
+        ZStack {
+            GameBevel(color: Theme.accent, corner: 9, depth: 3)
+            shape.strokeBorder(.white.opacity(0.55), lineWidth: 1.5).padding(4).offset(y: 0)
+            VStack(spacing: side * 0.06) {
+                ForEach(0..<2, id: \.self) { r in
+                    HStack(spacing: side * 0.1) {
+                        ForEach(0..<2, id: \.self) { c in
+                            Image(systemName: "pawprint.fill").font(.system(size: side * 0.14))
+                                .rotationEffect(.degrees((r + c).isMultiple(of: 2) ? -18 : 14))
+                        }
+                    }
+                }
+            }
+            .foregroundStyle(.white.opacity(0.5))
+            .offset(y: -1)
+        }
+        .padding(side * 0.07)
+        .padding(.bottom, 3)
+    }
+}
+
 /// Cells up to 8 × 8: an X, an O, a disc, a letter or a symbol; the winning line highlighted.
 struct GameGridView: View {
     var grid: GameBoard.Grid
@@ -481,6 +527,9 @@ struct GameGridView: View {
                     // A winning line is the person's win or loss by whose marks it holds.
                     .fill(cell.state == .win ? GameColors.fill(cell.companion ? .loss : .win).opacity(cell.companion ? 1 : 0.35)
                           : cell.state == .hint ? Theme.sun.opacity(0.25) : Theme.surfaceSunken)
+                    // A slot pressed into the board: shade along its top edge.
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(LinearGradient(colors: [.black.opacity(0.08), .clear], startPoint: .top, endPoint: .center), lineWidth: 3))
                 mark(cell, side).frame(maxWidth: .infinity, maxHeight: .infinity)
                     .modifier(CellArrival(animate: cell.animate, key: "\(index)\(cell.mark.rawValue)\(cell.value ?? "")"))
                 if grid.numpad, open {
@@ -504,18 +553,20 @@ struct GameGridView: View {
     @ViewBuilder private func mark(_ cell: GameBoard.Grid.Cell, _ side: CGFloat) -> some View {
         let color = cell.companion ? Theme.accent : Theme.ink
         switch cell.mark {
-        case .x: Image(systemName: "xmark").font(.system(size: side * 0.45, weight: .heavy)).foregroundStyle(color)
-        case .o: Circle().strokeBorder(color, lineWidth: side * 0.09).padding(side * 0.22)
+        // Chunky marks lit from above, with a small drop shadow: pieces on a board rather than strokes.
+        case .x: Image(systemName: "xmark").font(.system(size: side * 0.45, weight: .black))
+            .foregroundStyle(LinearGradient(colors: [color.opacity(0.75), color], startPoint: .top, endPoint: .bottom))
+            .shadow(color: color.opacity(0.35), radius: 0, y: 3)
+        case .o: Circle().strokeBorder(LinearGradient(colors: [color.opacity(0.7), color], startPoint: .top, endPoint: .bottom), lineWidth: side * 0.11)
+            .padding(side * 0.22).shadow(color: color.opacity(0.35), radius: 0, y: 3)
         case .disc: Circle().fill(cell.value.flatMap(Self.hex) ?? color).padding(side * 0.14)
         case .letter: Text(verbatim: cell.value ?? "").font(.system(size: side * 0.45, weight: .bold, design: .rounded)).foregroundStyle(color)
         case .symbol: Image(systemName: cell.value ?? "questionmark").font(.system(size: side * 0.4, weight: .semibold)).foregroundStyle(color)
-        case .cardBack:
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(LinearGradient(colors: [Theme.accent.opacity(0.7), Theme.accent], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .overlay(Image(systemName: "sparkle").font(.system(size: side * 0.22)).foregroundStyle(.white.opacity(0.6)))
-                .padding(side * 0.08)
-        case .stick: Capsule().fill(Theme.coral).frame(width: side * 0.16).padding(.vertical, side * 0.12)
-        case .cup: Image(systemName: "cup.and.saucer.fill").font(.system(size: side * 0.42)).foregroundStyle(color)
+        case .cardBack: CardBack(side: side)
+        case .stick: CandyStick(color: Theme.coral).frame(width: side * 0.16).padding(.vertical, side * 0.12)
+        case .cup:
+            if GameArt.cup.image != nil { GameArt.cup.view(height: side * 0.62) }
+            else { Image(systemName: "cup.and.saucer.fill").font(.system(size: side * 0.42)).foregroundStyle(color) }
         case .empty: EmptyView()
         }
     }

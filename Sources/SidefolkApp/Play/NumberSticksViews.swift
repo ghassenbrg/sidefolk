@@ -6,22 +6,42 @@ import SwiftUI
 /// Cold to warm, with its words: a thermometer for how close a guess is. Blue to orange, never a verdict's colours.
 struct MeterView: View {
     var meter: GameBoard.Meter
+    /// Cold sits at the reading's start: the gradients turn round with the layout in Arabic.
+    @Environment(\.layoutDirection) private var direction
+    private var start: UnitPoint { direction == .rightToLeft ? .trailing : .leading }
+    private var end: UnitPoint { direction == .rightToLeft ? .leading : .trailing }
 
     var body: some View {
         VStack(spacing: 4) {
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(LinearGradient(colors: [Color(hex: 0x5AA9FF), Color(hex: 0xB8D8FF), Color(hex: 0xFFC46B), Color(hex: 0xFF8A3D)],
-                                                  startPoint: .leading, endPoint: .trailing)).opacity(0.35)
-                    Capsule().fill(LinearGradient(colors: [Color(hex: 0x5AA9FF), Self.tint(meter.value)], startPoint: .leading, endPoint: .trailing))
-                        .frame(width: max(14, geo.size.width * meter.value))
-                    Circle().fill(Self.tint(meter.value)).overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                        .frame(width: 20, height: 20)
-                        .offset(x: max(0, geo.size.width * meter.value - 10))
+            // A thermometer lying down: its bulb in the reading's colour, the tube filling toward Hot, ticks along it.
+            HStack(spacing: -6) {
+                Circle().fill(RadialGradient(colors: [.white.opacity(0.7), Self.tint(meter.value)], center: UnitPoint(x: 0.35, y: 0.3),
+                                             startRadius: 1, endRadius: 14))
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    .frame(width: 26, height: 26)
+                    .shadow(color: Self.tint(meter.value).opacity(0.5), radius: 4)
+                    .zIndex(1)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(LinearGradient(colors: [Color(hex: 0x5AA9FF), Color(hex: 0xB8D8FF), Color(hex: 0xFFC46B), Color(hex: 0xFF8A3D)],
+                                                      startPoint: start, endPoint: end)).opacity(0.3)
+                        Capsule().fill(LinearGradient(colors: [Color(hex: 0x5AA9FF), Self.tint(meter.value)], startPoint: start, endPoint: end))
+                            .frame(width: max(14, geo.size.width * meter.value))
+                            .overlay(alignment: .top) { Capsule().fill(.white.opacity(0.35)).frame(height: 3).padding(.horizontal, 6).padding(.top, 2) }
+                        HStack(spacing: 0) {
+                            ForEach(1..<10, id: \.self) { _ in
+                                Spacer(minLength: 0)
+                                Rectangle().fill(.white.opacity(0.6)).frame(width: 1, height: 6)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        Capsule().strokeBorder(.white.opacity(0.8), lineWidth: 1.5)
+                    }
+                    .animation(GameMotion.reduced ? nil : .spring(duration: 0.5, bounce: 0.3), value: meter.value)
                 }
-                .animation(.spring(duration: 0.5), value: meter.value)
+                .frame(height: 14)
             }
-            .frame(height: 20)
+            .frame(height: 26)
             HStack {
                 if let low = meter.low { Label(low, systemImage: "snowflake").labelStyle(.titleAndIcon) }
                 Spacer()
@@ -127,10 +147,8 @@ struct SticksView: View {
                 let takes = sticks.left - i
                 let would = hovered.map { i >= $0 && !gone } ?? false
                 Button { if (1...sticks.take).contains(takes) { model.send(.number(takes)) } } label: {
-                    Capsule()
-                        .fill(stickColor(group: groups[i], hint: sticks.hint.contains(i)))
-                        .overlay(Capsule().fill(.white.opacity(0.5)).frame(width: 2).offset(x: -1.5))
-                        .frame(width: 8, height: 66)
+                    CandyStick(color: stickColor(group: groups[i], hint: sticks.hint.contains(i)))
+                        .frame(width: 11, height: 70)
                         .offset(y: would ? -10 : lifting ? -30 : 0)
                         .opacity(gone ? (lifting ? 0.25 : 0) : 1)
                         .frame(maxWidth: .infinity, minHeight: 80, alignment: .bottom)
@@ -157,18 +175,26 @@ struct SticksView: View {
     }
 }
 
-/// Balloons or hearts left: the ones lost drawn as faint outlines, the count beside them.
+/// Balloons or hearts left: balloons are Sidefolk's picture tinted one colour each, bobbing a little; the ones lost
+/// shrink to faint grey (a heart's outline), the count beside them.
 struct LivesView: View {
     var lives: GameBoard.Lives
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(alignment: .bottom, spacing: lives.symbol == .balloon ? 2 : 4) {
             ForEach(0..<lives.total, id: \.self) { i in
                 let kept = i < lives.left
-                Image(systemName: lives.symbol == .balloon ? (kept ? "balloon.fill" : "balloon") : (kept ? "heart.fill" : "heart"))
-                    .font(.system(size: 18))
-                    .foregroundStyle(kept ? Self.hue(i) : Theme.inkFaint.opacity(0.5))
-                    .scaleEffect(kept ? 1 : 0.8)
+                if lives.symbol == .balloon, GameArt.balloon.image != nil {
+                    GameArt.balloon.tinted(kept ? Self.hue(i) : Theme.inkFaint, height: 30)
+                        .opacity(kept ? 1 : 0.3)
+                        .scaleEffect(kept ? 1 : 0.6, anchor: .bottom)
+                        .rotationEffect(.degrees(kept ? Double(i % 3 - 1) * 5 : 0), anchor: .bottom)
+                } else {
+                    Image(systemName: lives.symbol == .balloon ? (kept ? "balloon.fill" : "balloon") : (kept ? "heart.fill" : "heart"))
+                        .font(.system(size: 18))
+                        .foregroundStyle(kept ? Self.hue(i) : Theme.inkFaint.opacity(0.5))
+                        .scaleEffect(kept ? 1 : 0.8)
+                }
             }
             Spacer(minLength: 0)
         }
@@ -178,4 +204,33 @@ struct LivesView: View {
     }
 
     static func hue(_ i: Int) -> Color { [Theme.coral, Theme.sun, PadsView.color(.blue), PadsView.color(.green), PadsView.color(.purple)][i % 5] }
+}
+
+/// A candy stick: its colour with white stripes across, lit from the left, a small shadow.
+struct CandyStick: View {
+    var color: Color
+
+    var body: some View {
+        Capsule().fill(color)
+            .overlay(CandyStripes().fill(.white.opacity(0.55)).clipShape(Capsule()))
+            .overlay(Capsule().fill(LinearGradient(colors: [.white.opacity(0.45), .clear, .black.opacity(0.15)], startPoint: .leading, endPoint: .trailing)))
+            .shadow(color: .black.opacity(0.18), radius: 1.5, x: 1, y: 2)
+    }
+}
+
+/// Slanted bands every 9 points.
+nonisolated struct CandyStripes: Shape {
+    func path(in r: CGRect) -> Path {
+        Path { p in
+            var y = r.minY - r.width
+            while y < r.maxY {
+                p.move(to: CGPoint(x: r.minX, y: y + r.width))
+                p.addLine(to: CGPoint(x: r.maxX, y: y))
+                p.addLine(to: CGPoint(x: r.maxX, y: y + 3.5))
+                p.addLine(to: CGPoint(x: r.minX, y: y + r.width + 3.5))
+                p.closeSubpath()
+                y += 9
+            }
+        }
+    }
 }

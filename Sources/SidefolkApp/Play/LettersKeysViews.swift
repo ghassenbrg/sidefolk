@@ -87,7 +87,12 @@ struct LetterTileView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            RoundedRectangle(cornerRadius: slot ? 4 : 8, style: .continuous).fill(fill)
+            if turned, !slot, tile.mark != .none, tile.mark != .hidden {
+                // A played letter stands up as a tile on its lip.
+                GameBevel(color: fill, corner: 8, depth: 3).padding(.bottom, 3)
+            } else {
+                RoundedRectangle(cornerRadius: slot ? 4 : 8, style: .continuous).fill(fill)
+            }
             if slot {
                 Rectangle().fill(Theme.ink.opacity(0.6)).frame(height: 2.5).frame(maxHeight: .infinity, alignment: .bottom)
             } else if tile.mark == .none {
@@ -182,10 +187,9 @@ struct KeyboardView: View {
                 .strikethrough(key.mark == .miss || key.mark == .absent, color: ink.opacity(0.7))
                 .frame(maxWidth: 30, minHeight: 32)
                 .frame(maxWidth: .infinity)
-                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(fill))
-                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Theme.line, lineWidth: key.mark == .none ? 1 : 0))
+                .background(KeyFace(fill: fill, plain: key.mark == .none))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(GamePressStyle())
         // Not `disabled`, which would grey out the marks: a used key just takes no more presses.
         .allowsHitTesting(!(keys.mode == .letter && key.mark != .none))
         .accessibilityLabel(Text(verbatim: key.key))
@@ -195,10 +199,9 @@ struct KeyboardView: View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 .frame(minWidth: 40, minHeight: 32)
-                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.surfaceRaised))
-                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+                .background(KeyFace(fill: Theme.surfaceRaised, plain: true))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(GamePressStyle())
         .accessibilityLabel(name == "return" ? String(localized: "Try this word", comment: "A word game's Return key, read by VoiceOver")
                             : String(localized: "Delete", comment: "A word game's delete key, read by VoiceOver"))
     }
@@ -286,5 +289,22 @@ enum Hangul {
             i = end
         }
         return out
+    }
+}
+
+/// A keyboard key: its fill on a slightly darker lip, an outline while unused.
+struct KeyFace: View {
+    var fill: Color
+    var plain: Bool
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+        ZStack(alignment: .top) {
+            shape.fill(plain ? Theme.line : fill).brightness(plain ? 0 : -0.14).offset(y: 2)
+            shape.fill(fill)
+                .overlay(shape.fill(LinearGradient(colors: [.white.opacity(0.18), .clear], startPoint: .top, endPoint: .center)))
+                .overlay(shape.strokeBorder(Theme.line, lineWidth: plain ? 1 : 0))
+        }
+        .padding(.bottom, 2)
     }
 }
