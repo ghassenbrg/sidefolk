@@ -47,13 +47,13 @@ struct KeyHint: View {
     init(_ keys: String) { self.keys = keys }
 
     var body: some View {
-        Text(verbatim: keys)
+        // Isolated left to right: a chord reads ⌘↩ in Arabic too (03-system › RTL: keys aren't mirrored).
+        Text(verbatim: "\u{2066}\(keys)\u{2069}")
             .font(.system(size: 11, weight: .medium, design: .rounded))
             .foregroundStyle(Theme.inkMuted)
             .padding(.horizontal, 5)
             .frame(minHeight: 18)
             .background(Theme.well, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
-            .environment(\.layoutDirection, .leftToRight)
             .accessibilityHidden(true)
     }
 }

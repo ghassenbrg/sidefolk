@@ -526,7 +526,7 @@ private struct DSSidecard: View {
             Button {} label: {
                 HStack(spacing: 6) {
                     Text(verbatim: primary)
-                    if let hint { Text(verbatim: hint).opacity(0.75) }
+                    if let hint { Text(verbatim: "\u{2066}\(hint)\u{2069}").opacity(0.75) }
                 }
             }.buttonStyle(.sf(.primary, size: .sidecard))
         })
