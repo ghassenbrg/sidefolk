@@ -15,7 +15,8 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 - **Extensions that keep running and act; Clipboard and Keep Awake (D63):** `background` extensions, clipboard and
   power permissions, palettes on a shortcut that paste, page switches and buttons, nudges. Clipboard (⇧⌘C, Maccy's
   replacement with secrets masked and forgotten) and Keep Awake (Mouse Jiggler's, with nothing moving) are in
-  sidefolk-addons, minimum 0.2.0. *Checked:* ExtensionServiceTests (manifest, sandbox lines, palettes and nudges with a
+  sidefolk-addons, minimum 0.2.0, published to the gallery on 2026-10-31 (both packs downloaded back and their
+  digests match the catalog). *Checked:* ExtensionServiceTests (manifest, sandbox lines, palettes and nudges with a
   fixture, Keep Awake for real), the add-ons' ClipboardKeepAwakeTests, UI snapshots (`panel-extension-palette`,
   `page-extension-awake`), and the debug app: five copies captured and classified, the palette listing them, "keep my
   Mac awake for 30 minutes" holding `PreventUserIdleDisplaySleep` and "let my mac sleep" releasing it. *Not yet by
@@ -30,7 +31,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   the real sandbox), the add-ons' SystemVitalsPlusTests, `scripts/check.sh`, `make test`, UI snapshots
   (`page-extension-mac`, `page-now-extension-tile`, light and dark), and the debug app with the extension installed
   from a folder (`dev.swift installFolder:` / `page:`). *Not yet:* the page in Arabic looked at; page text is English
-  only; installing from the published gallery needs a 0.2.0 build (snapshot or release) of this branch.
+  only. Published in the gallery; v0.2.0-snapshot.513 (from f483f420) is the first build that installs it.
 - **Gallery companions update by themselves (D55, amended):** a companion from the gallery gets its newer version
   90 s after launch and every six hours after, without asking; the one on the desktop swaps in place. Extensions
   keep their Update button. Launch's tidy no longer deletes a download already under way (a chosen companion coming
