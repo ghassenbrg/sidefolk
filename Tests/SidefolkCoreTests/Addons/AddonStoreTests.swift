@@ -394,7 +394,7 @@ import Testing
             let folder = try await store.fetch(vitals)
             #expect(await h.host.preview(folder: folder).canInstall)
             let installed = try await h.host.install(from: folder, origin: .official)
-            #expect(installed.origin == .official && installed.name == "System Vitals+")
+            #expect(installed.origin == .official && installed.name == "Your Mac", "named as the app names it (D67)")
             #expect(try await h.host.renderPage(extensionId: installed.id, page: "mac").summary != nil)
             await store.discard(vitals)
         }
