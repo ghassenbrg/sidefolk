@@ -288,8 +288,22 @@ public actor AttentionCenter {
                                 comment: "One card after Focus ends: what waited during it")
             case .quiet: String(localized: "While Quiet was on: \(items.count) things", comment: "A card when quiet mode ends")
             }
-            // Coming back to several things: one summary instead of a parade of bubbles.
-            for i in items { held[i.id] = nil }
+            // Coming back to several things: one summary instead of a parade of bubbles. Each is settled in the
+            // store, or a restart would hold it again and the next card would count it twice: a notice is told by
+            // the card; something that still needs an answer counts as shown and waits in Needs you.
+            for i in items {
+                held[i.id] = nil
+                timers.removeValue(forKey: i.id)?.cancel()
+                guard var settled = try? await store.item(id: i.id), settled.state == .pending else { continue }
+                if settled.level >= .attention, !settled.actions.isEmpty {
+                    settled.state = .shown
+                    settled.shownAt = clock.now
+                } else {
+                    settled.state = .acknowledged
+                    settled.acknowledgedAt = clock.now
+                }
+                try? await store.save(settled)
+            }
             let titles = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
             let card = AttentionItem(level: .attention, source: "summary",
                                         title: title,

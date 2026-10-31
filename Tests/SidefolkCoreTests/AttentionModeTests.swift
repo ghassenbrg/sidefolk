@@ -109,4 +109,31 @@ import Testing
         }
         #expect(await center.heldCount == 0)
     }
+
+    /// What one card told is settled: a restart doesn't hold it again, and the next card doesn't count it twice.
+    /// Something held that still needs an answer waits in Needs you, shown rather than pending.
+    @Test func whatTheCardToldNeverComesBack() async throws {
+        let events = EventBus()
+        let store = AttentionStore(try AppDatabase.inMemory())
+        let center = AttentionCenter(store: store, events: events)
+        await center.update { $0.away = true }
+        _ = await center.post(AttentionRequest(level: .gentle, source: "job", title: "Build finished"))
+        _ = await center.post(AttentionRequest(level: .gentle, source: "watcher", title: "Price changed"))
+        let question = await center.post(AttentionRequest(level: .attention, source: "reminder", title: "Stretch",
+                                                          actions: [AttentionAction(id: "done", title: "Done")]))
+        #expect(await center.heldCount == 3)
+        let stream = events.stream()
+        await center.update { $0.away = false }
+        for await e in stream {
+            if case .attention(.present(let item, _)) = e, item.source == "summary" { break }
+        }
+        let open = try await store.open()
+        #expect(!open.contains { $0.state == .pending })
+        #expect(open.contains { $0.id == question.id && $0.state == .shown })
+        #expect(!open.contains { $0.title == "Build finished" || $0.title == "Price changed" })
+
+        let restarted = AttentionCenter(store: store, events: EventBus())
+        await restarted.restoreWaiting()
+        #expect(await restarted.heldCount == 0)
+    }
 }
