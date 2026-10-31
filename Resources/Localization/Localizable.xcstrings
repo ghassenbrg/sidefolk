@@ -12283,6 +12283,71 @@
         }
       }
     },
+    "%@. It waits for your answer beside %@." : {
+      "comment" : "VoiceOver, when a card appears beside the companion: its title, then that it waits",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. ينتظر ردّك بجانب ⁨%2$@⁩."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. Es wartet neben %2$@ auf deine Antwort."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@. It waits for your answer beside %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. Espera tu respuesta junto a %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. Cela attend votre réponse à côté de %2$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. Aspetta la tua risposta accanto a %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@。%2$@のそばであなたの返事を待っています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. %2$@ 옆에서 답을 기다리고 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. Aguarda sua resposta ao lado de %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@。正在%2$@旁边等你回复。"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "comment" : "A label, then what it is about: “Remind me Tomorrow 09:00: Call the bank”, “Claude Code: Saved “Tea ideas””\nA value read now: “CPU: 23 %”, “Temperature in Fukuoka: 18 °C”",
       "localizations" : {
@@ -28323,6 +28388,7 @@
       }
     },
     "Add Folder…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -28556,6 +28622,7 @@
     },
     "Add Your Own" : {
       "comment" : "The tile after the companions in Settings: add one you made",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -29077,6 +29144,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请在 elevenlabs.io 上增加字符额度，或在设置 › 语音中选择 Apple 语音。"
+          }
+        }
+      }
+    },
+    "Add folder…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un dossier…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir carpeta…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner hinzufügen …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi cartella…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar Pasta…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダを追加…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더 추가…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加文件夹…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة مجلد…"
           }
         }
       }
@@ -29836,6 +29961,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请先添加你的 ElevenLabs 密钥。"
+          }
+        }
+      }
+    },
+    "Add your own" : {
+      "comment" : "The tile after the companions in Settings: add one you made",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter le vôtre"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir el tuyo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigenen hinzufügen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi il tuo"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar o Seu"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自作を追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 추가"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加你自己的"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة رفيقك"
           }
         }
       }
@@ -33231,6 +33415,7 @@
       }
     },
     "Allow Site" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -33574,6 +33759,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许一次"
+          }
+        }
+      }
+    },
+    "Allow site" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser le site"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir sitio"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Website erlauben"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti sito"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir Site"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイトを許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사이트 허용"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许网站"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح بالموقع"
           }
         }
       }
@@ -39888,6 +40131,7 @@
     },
     "Attention Settings…" : {
       "comment" : "The Pocket: opens Settings › Attention",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -39941,6 +40185,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "专注与通知设置…"
+          }
+        }
+      }
+    },
+    "Attention settings…" : {
+      "comment" : "The Pocket: opens Settings › Attention",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Attention…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de Atención…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufmerksamkeit-Einstellungen …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni Attenzione…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de Atenção…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "集中と通知の設定…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "집중과 알림 설정…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专注与通知设置…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات الانتباه…"
           }
         }
       }
@@ -45865,6 +46168,7 @@
       }
     },
     "Check Now" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -46044,13 +46348,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الفحص الآن"
+            "value" : "بحث الآن"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jetzt prüfen"
+            "value" : "Jetzt suchen"
           }
         },
         "es" : {
@@ -46086,7 +46390,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verificar agora"
+            "value" : "Buscar Agora"
           }
         },
         "zh-Hans" : {
@@ -50816,6 +51120,7 @@
       }
     },
     "Clear Search" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -50966,7 +51271,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "検索を消去"
+            "value" : "検索をクリア"
           }
         },
         "ko" : {
@@ -50978,7 +51283,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Limpar busca"
+            "value" : "Limpar Busca"
           }
         },
         "zh-Hans" : {
@@ -57528,6 +57833,7 @@
       }
     },
     "Copy Setup Instructions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -57697,6 +58003,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝命令"
+          }
+        }
+      }
+    },
+    "Copy setup instructions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier les instructions de configuration"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar instrucciones de configuración"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einrichtungsanleitung kopieren"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia le istruzioni di configurazione"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar Instruções de Configuração"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セットアップ手順をコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 방법 복사"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝设置说明"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخ تعليمات الإعداد"
           }
         }
       }
@@ -60109,6 +60473,7 @@
       }
     },
     "Delete All Data…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60167,6 +60532,7 @@
       }
     },
     "Delete All History" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60225,6 +60591,7 @@
       }
     },
     "Delete All History…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60283,6 +60650,7 @@
       }
     },
     "Delete Conversation" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60630,6 +60998,180 @@
         }
       }
     },
+    "Delete all data…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer toutes les données…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar todos los datos…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Daten löschen …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina tutti i dati…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Todos os Dados…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのデータを削除…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 데이터 삭제…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除所有数据…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف كل البيانات…"
+          }
+        }
+      }
+    },
+    "Delete all history" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer tout l’historique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar todo el historial"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamten Verlauf löschen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina tutta la cronologia"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Todo o Histórico"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "履歴をすべて削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 기록 삭제"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除所有历史记录"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف السجل بالكامل"
+          }
+        }
+      }
+    },
+    "Delete all history…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer tout l’historique…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar todo el historial…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamten Verlauf löschen …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina tutta la cronologia…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Todo o Histórico…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "履歴をすべて削除…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 기록 삭제…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除所有历史记录…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف السجل بالكامل…"
+          }
+        }
+      }
+    },
     "Delete collection" : {
       "localizations" : {
         "ar" : {
@@ -60684,6 +61226,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除合集"
+          }
+        }
+      }
+    },
+    "Delete conversation" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la conversation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar conversación"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespräch löschen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina conversazione"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Conversa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話を削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대화 삭제"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除对话"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف المحادثة"
           }
         }
       }
@@ -66433,6 +67033,7 @@
       }
     },
     "Every conversation with the AI is deleted from this Mac. Your notes, reminders and Activity stay. This can't be undone." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -66486,6 +67087,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "与 AI 的所有对话都会从这台 Mac 上删除。你的笔记、提醒和活动会保留。此操作无法撤销。"
+          }
+        }
+      }
+    },
+    "Every conversation with the AI is deleted from this Mac. Your notes, reminders and History stay. This can't be undone." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les conversations avec l’IA sont supprimées de ce Mac. Vos notes, vos rappels et Historique sont conservés. Cette action est irréversible."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las conversaciones con la IA se eliminan de este Mac. Tus notas, recordatorios y Historial se conservan. Esta acción no se puede deshacer."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Gespräch mit der KI wird von diesem Mac gelöscht. Deine Notizen, Erinnerungen und die Verlauf bleiben. Das lässt sich nicht widerrufen."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutte le conversazioni con l'IA vengono eliminate da questo Mac. Le tue note, i promemoria e il Cronologia restano. L'operazione non può essere annullata."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as conversas com a IA são apagadas deste Mac. Suas notas, lembretes e a Histórico continuam. Isso não pode ser desfeito."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIとのすべての会話をこのMacから削除します。メモ、リマインダー、履歴はそのまま残ります。この操作は取り消せません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI와 나눈 모든 대화가 이 Mac에서 삭제돼요. 메모, 미리 알림, 기록은 그대로 남아요. 이 작업은 실행 취소할 수 없어요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 AI 的所有对话都会从这台 Mac 上删除。你的笔记、提醒和历史记录会保留。此操作无法撤销。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحذف كل المحادثات مع الذكاء الاصطناعي من هذا الـ Mac. تبقى ملاحظاتك وتذكيراتك والسجل. لا يمكن التراجع عن ذلك."
           }
         }
       }
@@ -67898,6 +68557,7 @@
       }
     },
     "Export Data…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -67956,6 +68616,7 @@
       }
     },
     "Export Diagnostics…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -68067,6 +68728,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出数据"
+          }
+        }
+      }
+    },
+    "Export data…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter les données…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar datos…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daten exportieren …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esporta dati…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar Dados…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "データを書き出す…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데이터 내보내기…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出数据…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصدير البيانات…"
+          }
+        }
+      }
+    },
+    "Export diagnostics…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter les diagnostics…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar diagnóstico…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnosedaten exportieren …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esporta diagnostica…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar Diagnóstico…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "診断情報を書き出す…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "진단 정보 내보내기…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出诊断信息…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصدير التشخيص…"
           }
         }
       }
@@ -71603,6 +72380,7 @@
       }
     },
     "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in Activity, and you can undo it there. They never reach your files, commands, the web or Settings." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71656,6 +72434,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "适用于 Claude Code、Codex 以及其他连接到 Sidefolk 的应用。它们做的每件事都显示在“活动”中，你可以在那里撤销。它们永远无法访问你的文件、命令、网络或设置。"
+          }
+        }
+      }
+    },
+    "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour Claude Code, Codex et les autres apps connectées à Sidefolk. Tout ce qu’ils font apparaît dans Historique, où vous pouvez l’annuler. Ils n’accèdent jamais à vos fichiers, commandes, au web ni aux Réglages."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para Claude Code, Codex y otras apps conectadas a Sidefolk. Todo lo que hacen aparece en Historial, donde puedes deshacerlo. Nunca acceden a tus archivos, comandos, la web ni Ajustes."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für Claude Code, Codex und andere mit Sidefolk verbundene Apps. Alles, was sie tun, erscheint unter Verlauf, wo du es widerrufen kannst. Deine Dateien, Befehle, das Web und die Einstellungen erreichen sie nie."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per Claude Code, Codex e le altre app collegate a Sidefolk. Tutto ciò che fanno compare nel Cronologia, dove puoi annullarlo. Non raggiungono mai i tuoi file, i comandi, il web o le Impostazioni."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para o Claude Code, o Codex e outros apps conectados ao Sidefolk. Tudo o que eles fazem aparece em Histórico, onde você pode desfazer. Eles nunca acessam seus arquivos, comandos, a web ou os Ajustes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code、Codex、そのほかSidefolkに接続したアプリが対象です。行ったことはすべて履歴に表示され、そこで取り消せます。ファイル、コマンド、Web、設定には決して触れません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code, Codex 등 Sidefolk에 연결된 앱에 적용됩니다. 하는 일은 모두 기록에 표시되며 거기서 되돌릴 수 있습니다. 파일, 명령, 웹, 설정에는 절대 접근하지 않습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适用于 Claude Code、Codex 以及其他连接到 Sidefolk 的应用。它们做的每件事都显示在“历史记录”中，你可以在那里撤销。它们永远无法访问你的文件、命令、网络或设置。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لـ Claude Code وCodex والتطبيقات الأخرى المتصلة بـ Sidefolk. يظهر كل ما تفعله في السجل، ويمكنك التراجع عنه هناك. لا تصل أبدًا إلى ملفاتك أو أوامرك أو الويب أو الإعدادات."
           }
         }
       }
@@ -71777,6 +72613,7 @@
       }
     },
     "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in Activity." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71830,6 +72667,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "适用于你让 Sidefolk 做的事。其他智能体和扩展仍遵循各自的规则，所有操作都会显示在“活动”中。"
+          }
+        }
+      }
+    },
+    "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour ce que vous demandez à Sidefolk de faire. Les autres agents et extensions gardent leurs propres règles, et tout apparaît dans Historique."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para lo que le pides hacer a Sidefolk. Los demás agentes y extensiones mantienen sus propias reglas, y todo aparece en Historial."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gilt für das, worum du Sidefolk bittest. Andere Agenten und Erweiterungen behalten ihre eigenen Regeln, und alles erscheint in „Verlauf“."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale per ciò che chiedi a Sidefolk di fare. Gli altri agenti e le estensioni seguono le loro regole, e tutto compare nel Cronologia."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale para o que você pede ao Sidefolk. Outros agentes e extensões seguem suas próprias regras, e tudo aparece na Histórico."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkに頼んだことが対象です。ほかのエージェントや拡張機能には、それぞれのルールが適用されます。すべて履歴に表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에게 시킨 일에 적용돼요. 다른 에이전트와 확장 프로그램은 각자의 규칙을 따르고, 모든 내용은 기록에 표시돼요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适用于你让 Sidefolk 做的事。其他智能体和扩展仍遵循各自的规则，所有操作都会显示在“历史记录”中。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسري هذا على ما تطلب من Sidefolk فعله. للوكلاء والملحقات الأخرى قواعدها الخاصة، ويظهر كل شيء في «السجل»."
           }
         }
       }
@@ -74618,6 +75513,7 @@
     },
     "Get Add-ons" : {
       "comment" : "Settings › Add-ons: opens the add-on gallery",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -74677,6 +75573,7 @@
     },
     "Get More" : {
       "comment" : "The tile after the companions in Settings: browse the gallery",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -74852,7 +75749,7 @@
       }
     },
     "Get add-ons" : {
-      "comment" : "Home's sidebar: opens the Gallery of companions, extensions and themes",
+      "comment" : "Home's sidebar: opens the Gallery of companions, extensions and themes\nSettings › Add-ons: opens the add-on gallery",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -74863,7 +75760,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Add-ons laden"
+            "value" : "Add-ons holen"
           }
         },
         "es" : {
@@ -74875,13 +75772,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Obtenir des extensions"
+            "value" : "Obtenir des modules"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ottieni componenti"
+            "value" : "Trova componenti aggiuntivi"
           }
         },
         "ja" : {
@@ -75022,6 +75919,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "获取更好的语音…"
+          }
+        }
+      }
+    },
+    "Get more" : {
+      "comment" : "The tile after the companions in Settings: browse the gallery",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En obtenir d'autres"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conseguir más"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr holen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trovane altri"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obter Mais"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もっと入手"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "더 받기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "获取更多"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المزيد"
           }
         }
       }
@@ -89679,6 +90635,65 @@
         }
       }
     },
+    "In 10 min" : {
+      "comment" : "A reminder card's snooze button: remind again in ten minutes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعد 10 دقائق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In 10 Min."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En 10 min"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans 10 min"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tra 10 min"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10分後"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10분 후"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em 10 min"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 分钟后"
+          }
+        }
+      }
+    },
     "In System Settings › Privacy & Security › Automation, switch on %@ under Sidefolk." : {
       "localizations" : {
         "ar" : {
@@ -90381,6 +91396,7 @@
       }
     },
     "Install from Folder…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -90434,6 +91450,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从文件夹安装…"
+          }
+        }
+      }
+    },
+    "Install from folder…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer depuis un dossier…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar desde carpeta…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Ordner installieren …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installa da cartella…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar de uma Pasta…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダからインストール…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더에서 설치…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从文件夹安装…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التثبيت من مجلد…"
           }
         }
       }
@@ -100656,6 +101730,7 @@
       }
     },
     "Load from Folder…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -100709,6 +101784,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从文件夹载入…"
+          }
+        }
+      }
+    },
+    "Load from folder…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger depuis un dossier…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargar desde carpeta…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Ordner laden …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carica da cartella…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregar de uma Pasta…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダから読み込む…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더에서 불러오기…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从文件夹载入…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التحميل من مجلد…"
           }
         }
       }
@@ -137666,6 +138799,7 @@
       }
     },
     "Release Page" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -137719,6 +138853,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发布页面"
+          }
+        }
+      }
+    },
+    "Release page" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page de la version"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Página de la versión"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Release-Seite"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pagina della versione"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Página do Lançamento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リリースページ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "릴리스 페이지"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发布页面"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحة الإصدار"
           }
         }
       }
@@ -142524,6 +143716,7 @@
       }
     },
     "Restart Now" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -142745,7 +143938,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reiniciar agora"
+            "value" : "Reiniciar Agora"
           }
         },
         "zh-Hans" : {
@@ -144097,6 +145290,7 @@
     },
     "Review Update" : {
       "comment" : "Settings › Add-ons: opens an extension update's install sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -144442,6 +145636,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请在设置 › 扩展 › %@ 中查看。"
+          }
+        }
+      }
+    },
+    "Review update" : {
+      "comment" : "Settings › Add-ons: opens an extension update's install sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examiner la mise à jour"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar actualización"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update prüfen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rivedi aggiornamento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar atualização"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデートを確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트 검토"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看更新"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجع التحديث"
           }
         }
       }
@@ -152095,6 +153348,7 @@
       }
     },
     "Set Your Location…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -152381,6 +153635,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置 AI…"
+          }
+        }
+      }
+    },
+    "Set your location…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir votre position…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer tu ubicación…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standort festlegen …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imposta la tua posizione…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir Sua Localização…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在地を設定…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 위치 설정…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置你的位置…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد موقعك…"
           }
         }
       }
@@ -153322,6 +154634,7 @@
       }
     },
     "Show All" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -153496,6 +154809,7 @@
       }
     },
     "Show Files" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -153554,6 +154868,7 @@
       }
     },
     "Show Snapshots" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -153774,7 +155089,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mostrar tudo"
+            "value" : "Mostrar Tudo"
           }
         },
         "zh-Hans" : {
@@ -154072,6 +155387,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收起"
+          }
+        }
+      }
+    },
+    "Show files" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les fichiers"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar archivos"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateien zeigen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra file"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar Arquivos"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルを表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示文件"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار الملفات"
           }
         }
       }
@@ -154420,6 +155793,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示我的日历"
+          }
+        }
+      }
+    },
+    "Show snapshots" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les snapshots"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar snapshots"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snapshots zeigen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra snapshot"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar snapshots"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スナップショットを表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스냅샷 표시"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示快照版"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار النسخ التجريبية"
           }
         }
       }
@@ -160967,6 +162398,7 @@
       }
     },
     "Skip This Version" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -161253,6 +162685,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳过下一次拷贝"
+          }
+        }
+      }
+    },
+    "Skip this version" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer cette version"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir esta versión"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version überspringen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salta questa versione"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar Esta Versão"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このバージョンをスキップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 버전 건너뛰기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过此版本"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تخطي هذا الإصدار"
           }
         }
       }
@@ -162657,6 +164147,7 @@
       }
     },
     "Some of it was already done; Activity shows what." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -162710,6 +164201,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分操作已经完成；可以在“活动”中查看具体内容。"
+          }
+        }
+      }
+    },
+    "Some of it was already done; History shows what." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une partie était déjà faite ; Historique indique laquelle."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una parte ya estaba hecha; Historial muestra cuál."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Teil war schon erledigt; „Verlauf“ zeigt, welcher."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una parte era già stata fatta; il Cronologia mostra cosa."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma parte já foi feita; a Histórico mostra o quê."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一部はすでに完了しています。内容は履歴で確認できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일부는 이미 처리했어요. 무엇을 했는지는 기록에서 볼 수 있어요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分操作已经完成；可以在“历史记录”中查看具体内容。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُنجز بعضه بالفعل؛ يعرض «السجل» ما أُنجز."
           }
         }
       }
@@ -164176,6 +165725,7 @@
       }
     },
     "Start a Theme…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -164287,6 +165837,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始新对话"
+          }
+        }
+      }
+    },
+    "Start a theme…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer un thème…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear un tema…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Theme erstellen …"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea un tema…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar um Tema…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーマを作成…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "테마 만들기…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建主题…"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنشاء سمة…"
           }
         }
       }
@@ -165172,6 +166780,7 @@
       }
     },
     "Stop Following" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -165342,6 +166951,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止显示"
+          }
+        }
+      }
+    },
+    "Stop following" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le suivi"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar de seguir"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht mehr verfolgen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smetti di seguire"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de Acompanhar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追跡をやめる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "따라가기 중단"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止跟随"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف المتابعة"
           }
         }
       }
@@ -188673,6 +190340,7 @@
       }
     },
     "Try Again" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -190244,6 +191912,7 @@
       }
     },
     "Turn Off" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -190536,7 +192205,6 @@
       }
     },
     "Turn off" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -193407,6 +195075,7 @@
       }
     },
     "Update All" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -193750,6 +195419,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动更新附加组件"
+          }
+        }
+      }
+    },
+    "Update all" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout mettre à jour"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar todo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle aktualisieren"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna tutto"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar Tudo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてアップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 업데이트"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部更新"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديث الكل"
           }
         }
       }
@@ -202648,6 +204375,7 @@
     },
     "Whatever you pick, Guard checks every step outside the AI, and every step shows in Activity." : {
       "comment" : "Settings › Trust: under the mode's headline",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -202701,6 +204429,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无论选哪个，Guard 都会检查 AI 之外的每一步，每一步都会显示在“活动”中。"
+          }
+        }
+      }
+    },
+    "Whatever you pick, Guard checks every step outside the AI, and every step shows in History." : {
+      "comment" : "Settings › Trust: under the mode's headline",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quel que soit votre choix, Guard vérifie chaque étape hors de l'IA, et chaque étape apparaît dans Historique."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elijas lo que elijas, Guard revisa cada paso fuera de la IA y cada paso aparece en Historial."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was du auch wählst: Guard prüft jeden Schritt außerhalb der KI, und jeder Schritt erscheint im Verlauf."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualunque cosa tu scelga, Guard controlla ogni passaggio fuori dall'IA, e ogni passaggio compare nel Cronologia."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seja o que você escolher, o Guard confere cada passo fora da IA, e cada passo aparece em Histórico."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どれを選んでも、Guard は AI の外の手順をすべて確認し、どの手順も履歴に残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무엇을 고르든 Guard가 AI 바깥의 모든 단계를 확인하고, 모든 단계가 기록에 남아요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无论选哪个，Guard 都会检查 AI 之外的每一步，每一步都会显示在“历史记录”中。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أيًّا كان اختيارك، يتحقق Guard من كل خطوة خارج الذكاء الاصطناعي، وتظهر كل خطوة في السجل."
           }
         }
       }
@@ -208086,6 +209873,7 @@
     },
     "You still see each one in Activity, word for word." : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -208139,6 +209927,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每一条仍会逐字显示在“活动”中。"
+          }
+        }
+      }
+    },
+    "You still see each one in History, word for word." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous les voyez toujours dans Historique, mot pour mot."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigues viendo cada uno en Historial, palabra por palabra."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du siehst jeden weiterhin im Verlauf, Wort für Wort."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Li vedi comunque nel Cronologia, parola per parola."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você continua vendo cada um em Histórico, palavra por palavra."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どれも履歴に一字一句残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 명령은 기록에 그대로 남아요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每一条仍会逐字显示在“历史记录”中。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تظل ترى كلًّا منها في السجل، حرفيًّا."
           }
         }
       }
