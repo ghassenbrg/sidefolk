@@ -26,6 +26,28 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Games beside the companion, phase 1 (D75), on branch team/play (both repos):** the Play panel (board parts,
+  keys, focus rules, kept 10 minutes, one of Ask or Play at a time), `games` in the manifest and its validator, the
+  game channel with its limits, `games.open`, companion cues from fixed lists with their pacing and Sidefolk's own
+  lines in three tones, game sounds made in code (off by default, a speaker per game), Settings › Companion › Games,
+  one Activity row per game. Founder's rules built in: no result before its reveal ends (`GameSuspense` build-up, the
+  Ask card, spoken line and AI reply wait for a toss to land) and one colour per meaning (`GameVerdict`: success green,
+  a calm sand loss tone `GameColors.lost`, neutral draw, always with a symbol). Rock, paper, scissors is Sidefolk's own
+  best of three in the panel, its hand drawn and sealed before the person picks; both RPS bugs he found are fixed (the
+  pumping fists looked like rocks; "paper wraps rock" drew paper over the person's rock). Coin with the companion's
+  face, called or not; dice on a felt tray with real shapes; hands that clash; result chips and an Again pill; the
+  companion reacts. Playtime 2.0 (sidefolk-addons): trivia in the panel with no AI (topics, 5/10/endless, relaxed or
+  15 s, the companion's sealed pick by how well it knows the question, a lifeline, facts, records, a Home page), words
+  in ten languages through the Kit's new `Localized`, rules as engines under `Sources/GameKit` (`GameEngine`,
+  `GameScreen`, `TriviaPack`) for the engines and content branch to drop into. *Checked:* `make test` with
+  SIDEFOLK_ADDONS_REPO on the add-ons worktree (including Playtime played over the channel in the sandbox), `swift
+  test`, `build.py --unsigned` and `check.sh` there; UI snapshots `--only game-,desktop-toss` in English, German and
+  Arabic, light and dark; the debug app with Playtime installed from a local build, frames filmed through a throw,
+  an answer and a called coin. *Half done / next:* the new companion moves (sulk, shrug, tease, ready, accents) borrow
+  the nearest existing moment until made and filmed for every 3D companion; trivia's questions stay the 52 English
+  ones until the content packs merge (they implement `TriviaPack`); Sneaky's switch shows once a game offers it;
+  phase 2 parts (`pads`, `shuffle`, `reflex`, `meter`, `number`) and the new games. Merge team/play in both repos
+  together: a Sidefolk without games refuses Playtime 2.0 at install.
 - **Updates for Sidefolk and for add-ons, chosen apart (D70), on branch team/updates:** Settings › General › Updates
   now has "New versions of Sidefolk" (Don't check / Tell me, the default / Install automatically) and "Update add-ons
   automatically" (on by default); Versions to offer covers both. Install automatically downloads and checks exactly

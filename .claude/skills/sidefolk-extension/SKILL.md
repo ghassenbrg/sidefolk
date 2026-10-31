@@ -267,8 +267,19 @@ definitions are held until approved.
 - [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;
       `docs/EXTENSIONS.md` when the platform changed. Commit in a coherent milestone, no Co-Authored-By trailer.
 
-## Newer features (D67, D68, D69, D74)
+## Newer features (D67, D68, D69, D74, D75)
 
+- **Games in the Play panel (D75).** `games.<name>` in the manifest (`title`, `symbol`, `say`, `levels`, `ai`) and
+  `ext.game(name, start:, move:, end:)` in the Kit (extensions/Kit/Game.swift): answer `start` with a session and a
+  `Board`, each `Move` with the next board, within 2 s and 64 KB. Parts: prompt, answers, board, score, result, timer,
+  reveal, note, facts, button (a move, never a tool), choice. A board's `Cue` names a move, effect, prop, line key,
+  sound and look from Sidefolk's fixed lists; the companion says Sidefolk's own words for a line key. Send the
+  verdict in the board: Sidefolk shows the build-up first and colours right/wrong/draw itself. Playtime (sidefolk-addons
+  `extensions/playtime`: `Sources/GameKit`, `Sources/Trivia`) is the example; docs/EXTENSIONS.md › Games.
+- **The person's language (D75).** Pages and games get `language`; keep a table per language and read it with the
+  Kit's `Localized(language, tables)` (`words["key"]`, `words("key", words.number(n))`). Official extensions speak all
+  ten languages; test that every table has every key with the same placeholders (sidefolk-addons
+  `Tests/PlaytimeGameTests.swift`). docs/EXTENSIONS.md › Speaking the person's language.
 - **A main switch where people are (D67).** An extension that is mostly on/off puts its switch on the page summary:
   `Summary("Awake until 18:00", detail: "25 min left", tone: .good, control: .toggle(...))` (extensions/Kit/Page.swift),
   with `"widget": true` on the page. Sidefolk shows it on the page, its Today tile and its sidebar row, runs the
