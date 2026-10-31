@@ -6,10 +6,13 @@ permissioned tools and extensions, and other AI agents can reach it over MCP.
 
 ## Start here
 
-1. [docs/STATUS.md](docs/STATUS.md): what is done, in progress, next.
+1. [docs/STATUS.md](docs/STATUS.md): where Sidefolk is now, in progress, next, known gaps, how to verify.
+   [docs/HISTORY.md](docs/HISTORY.md) keeps what was built before, newest first.
 2. [docs/PRODUCT.md](docs/PRODUCT.md): V1 spec. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how it fits.
+   [docs/DESIGN.md](docs/DESIGN.md): Lantern's tokens and components, for any screen (D84).
 3. [docs/DECISIONS.md](docs/DECISIONS.md) before changing anything a decision covers; add new major decisions there.
-4. Before you stop, update docs/STATUS.md (what changed, what is half done, exact next step, how verified).
+4. Before you stop, update docs/STATUS.md (what changed, what is half done, exact next step, how verified). When a
+   piece is done, move its entry to the top of docs/HISTORY.md and keep STATUS short.
 
 ## Commands
 
@@ -19,13 +22,14 @@ make test                        # core tests (Swift Testing), serially: swift t
 make dev                         # build + assemble build/Sidefolk-dev.app + launch with SIDEFOLK_HOME=build/dev-home
 make app                         # release build/Sidefolk.app (Apple Development identity if present, else ad hoc)
 swift run sidefolk-render out/   # character contact sheets for visual review
-swift run SidefolkApp --ui-snapshots out/   # Home, Settings, Ask panel and bubbles, light and dark, sample data
+swift run SidefolkApp --ui-snapshots out/   # Home, Settings, the Sidecard and Ask, the Pocket, games, light and dark, sample data
 ```
 
 Agents can't see the screen. To check the running debug app:
 - `swift scripts/dev.swift snap` writes a PNG of every visible Sidefolk window to `$SIDEFOLK_HOME/snapshots/`
   (read them as images); `swift scripts/dev.swift "ask:…"`, `respond:<action>`, `dismiss`, `approve`, `deny`,
-  `home`, `settings:<tab>`, `find:<query>`, `drop:<url or path>` drive it (list at the top of the script).
+  `home:<place>`, `settings:<tab>`, `pocket`, `find:<query>`, `drop:<url or path>`, `game:<id>/<game>` drive it (list at
+  the top of the script).
 - Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
 - `sidefolk` (in `build/Sidefolk-dev.app/Contents/Helpers/`) with the same `SIDEFOLK_HOME` talks to that app.
 - Voice without a microphone or speakers: `say -o /tmp/x.aiff "remind me at 5 to stretch"`, then
