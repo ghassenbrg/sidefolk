@@ -157,7 +157,7 @@ handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit
   placeholders, plural forms and limits (half as long again as the manifest's). What a command or an `ask` button says
   stays English (Sidefolk understands typed requests in English). Don't put direction marks in text: Sidefolk strips
   them and keeps numbers, sizes and paths left to right itself when it lays out right to left. In-code tables work too
-  (`Localized`, D75, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
+  (`Localized`, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
 - **Palettes**: `query` returns `PaletteList([PaletteItem(id:, title:, detail:, kind:, pinned:, actions:)], note:)`
   (kinds `text link image file color code`, actions `plain pin delete`; at most 200 items, 10 s a call); `choose`
   gets the item id and `choose|plain|pin|delete` and returns `PaletteChoice(close:, paste:, message:)`. With `paste`,

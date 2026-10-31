@@ -20,7 +20,7 @@ struct PageRegions: Layout {
     /// Below this, one column.
     var minimumWide: CGFloat = 780
 
-    func sideWidth(_ width: CGFloat) -> CGFloat { min(360, max(280, (width - spacing) * 0.32)) }
+    func sideWidth(_ width: CGFloat) -> CGFloat { min(440, max(280, (width - spacing) * 0.40)) }
 
     private func frames(_ width: CGFloat, _ subviews: Subviews) -> (frames: [CGRect], height: CGFloat) {
         func height(_ view: LayoutSubview, _ w: CGFloat) -> CGFloat { view.sizeThatFits(ProposedViewSize(width: w, height: nil)).height }
@@ -44,7 +44,7 @@ struct PageRegions: Layout {
         }
         // Laid out start to end; SwiftUI mirrors it right to left.
         var sideY = top, mainY = top
-        for (i, view) in subviews.enumerated() where view[RegionKey.self] != .top {
+        for (i, view) in subviews.enumerated() where view[RegionKey.self] == .side || view[RegionKey.self] == .main {
             if view[RegionKey.self] == .side {
                 let h = height(view, side)
                 frames[i] = CGRect(x: 0, y: sideY, width: side, height: h)
@@ -55,7 +55,13 @@ struct PageRegions: Layout {
                 mainY += h + spacing
             }
         }
-        return (frames, max(0, max(sideY, mainY) - spacing))
+        var bottomY = max(sideY, mainY)
+        for (i, view) in subviews.enumerated() where view[RegionKey.self] == .bottom {
+            let h = height(view, width)
+            frames[i] = CGRect(x: 0, y: bottomY, width: width, height: h)
+            bottomY += h + spacing
+        }
+        return (frames, max(0, bottomY - spacing))
     }
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

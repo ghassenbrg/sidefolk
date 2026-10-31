@@ -16,6 +16,10 @@ public actor ExtensionHost {
         public var limits = ExtensionProcessLimits.standard
         public var resolver = InterpreterResolver.system
         public var programs = ProgramResolver.system
+        /// Test-only injection for the audio guardian; production uses the signed Sidefolk helper.
+        var outputMuteHelper: URL?
+        /// Validation trials must never change the person's real audio output.
+        var allowOutputMute = true
         /// Where MCP server commands named without a path are looked up, and the PATH they get.
         public var mcpSearchPath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         /// The person's language: which of an extension's words are shown, and what its program is told (D76).
@@ -42,6 +46,8 @@ public actor ExtensionHost {
         /// Its words in other languages (`strings/`, D76).
         var strings: ExtensionStrings?
         var lastNudge = Date.distantPast
+        var outputMuteSequence = 0
+        var outputMuteStarts: [Date] = []
         /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
         var oneShots: [ObjectIdentifier: MCPClient] = [:]
     }
@@ -55,6 +61,7 @@ public actor ExtensionHost {
     private let installer: ExtensionInstaller
     private let validator: ManifestValidator
     private let integrity = ExtensionIntegrity()
+    private let outputMute: OutputMuteRouter
     private var runtimes: [String: Runtime] = [:]
     private var launches = 0
     /// What extension pages' charts said (D62).
@@ -73,6 +80,7 @@ public actor ExtensionHost {
         self.registry = registry
         self.events = events
         config = configuration
+        outputMute = configuration.outputMuteHelper.map { OutputMuteRouter(executable: $0) } ?? OutputMuteRouter()
         self.secrets = secrets
         installer = ExtensionInstaller(paths: paths)
         pageHistory = ExtensionPageHistory(folder: paths.pageHistory)
@@ -102,6 +110,7 @@ public actor ExtensionHost {
             runtimes[id]?.client = nil
             runtimes[id]?.oneShots = [:]
         }
+        try? await outputMute.releaseAll()
         await withTaskGroup(of: Void.self) { group in
             for c in clients { group.addTask { await c.shutdown() } }
         }
@@ -405,9 +414,12 @@ public actor ExtensionHost {
             registerTools(id)
             keepRunning(id)
         } else {
+            // Mark it disabled before awaiting shutdown, so a concurrent call cannot start a new
+            // process and acquire resources while the previous process is being stopped.
+            rt.record.enabled = false
+            runtimes[id] = rt
             await stop(id)
             rt = runtimes[id] ?? rt
-            rt.record.enabled = false
             runtimes[id] = rt
             registry.unregister(owner: id)
             try await store.save(rt.record)
@@ -839,6 +851,8 @@ public actor ExtensionHost {
         launches += 1
         let generation = launches
         runtimes[id]?.generation = generation
+        runtimes[id]?.outputMuteSequence = 0
+        runtimes[id]?.outputMuteStarts = []
         let process = try ExtensionProcess(spec: spec, limits: config.limits)
         // Only Sidefolk's own protocol is told the person's language; a plain MCP server gets requests as MCP has them.
         let client = MCPClient(process: process, language: rt.record.kind == .sidefolk ? config.language : nil) { [weak self, process] event in
@@ -1073,6 +1087,7 @@ public actor ExtensionHost {
         case .exited(let exit):
             runtimes[id]?.client = nil
             runtimes[id]?.idleTask?.cancel()
+            await releaseOutputMute(id: id, generation: generation)
             if !exit.requested {
                 let tail = ExtensionText.untrusted(stderr, bytes: 2000)
                 Log.shared.warning("extensions", "stopped unexpectedly", ["id": id, "exit": exit.watchdog ?? exit.description, "stderr": tail])
@@ -1098,6 +1113,37 @@ public actor ExtensionHost {
             // Only with the clipboard permission the person saw at install; the app answers at most once per copy.
             guard rt.pin.permissions?.clipboard == true else { return }
             events.publish(.clipboardSource(extensionId: id))
+        case .outputMute(let request, let enabled, let sequence):
+            guard config.allowOutputMute, rt.record.enabled, rt.pin.permissions?.outputMute == true, let client = rt.client,
+                  sequence > rt.outputMuteSequence else { return }
+            runtimes[id]?.outputMuteSequence = sequence
+            if enabled {
+                let now = Date()
+                var starts = rt.outputMuteStarts.filter { now.timeIntervalSince($0) < 10 }
+                guard starts.count < 5 else {
+                    await client.notify("sidefolk/output_mute.result", params: ["request": .string(request), "ok": false,
+                        "message": .string("Too many sound routing changes. Wait a moment and try again.")])
+                    return
+                }
+                starts.append(now)
+                runtimes[id]?.outputMuteStarts = starts
+            }
+            let owner = "\(id)#\(generation)"
+            do {
+                try await outputMute.set(enabled, owner: owner, sequence: sequence) { [weak self] reason in
+                    Task { await self?.outputMuteFailed(id: id, generation: generation, sequence: sequence, reason: reason) }
+                }
+                // An extension can be stopped while the helper is starting.
+                guard let current = runtimes[id], current.record.enabled, current.generation == generation, current.client != nil else {
+                    try? await outputMute.release(owner: owner)
+                    return
+                }
+                guard current.outputMuteSequence == sequence else { return }
+                await client.notify("sidefolk/output_mute.result", params: ["request": .string(request), "ok": true, "enabled": .bool(enabled)])
+            } catch {
+                await client.notify("sidefolk/output_mute.result", params: ["request": .string(request), "ok": false,
+                    "message": .string((error as? UserFacingError)?.message ?? error.localizedDescription)])
+            }
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:
@@ -1108,6 +1154,20 @@ public actor ExtensionHost {
             } catch {
                 Log.shared.warning("extensions", "tools/list failed after a change", ["id": id, "error": String(describing: error)])
             }
+        }
+    }
+
+    private func outputMuteFailed(id: String, generation: Int, sequence: Int, reason: String) async {
+        guard let rt = runtimes[id], rt.generation == generation, rt.record.enabled,
+              rt.outputMuteSequence == sequence else { return }
+        await rt.client?.notify("sidefolk/output_mute.failed", params: ["sequence": .number(Double(sequence)), "message": .string(reason)])
+    }
+
+    private func releaseOutputMute(id: String, generation: Int) async {
+        do { try await outputMute.release(owner: "\(id)#\(generation)") }
+        catch {
+            let message = (error as? UserFacingError)?.message ?? error.localizedDescription
+            events.publish(.notice(message))
         }
     }
 
@@ -1138,17 +1198,20 @@ public actor ExtensionHost {
         Log.shared.warning("extensions", "turned off", ["id": id, "why": reason])
         if let notice { events.publish(.notice(notice)) }
         events.changed(.extensions)
+        await releaseOutputMute(id: id, generation: rt.generation)
         if let client { await client.shutdown() }
     }
 
     private func stop(_ id: String) async {
+        let generation = runtimes[id]?.generation
+        let client = runtimes[id]?.client
+        runtimes[id]?.client = nil
         runtimes[id]?.idleTask?.cancel()
         let oneShots = runtimes[id]?.oneShots.values.map { $0 } ?? []
         runtimes[id]?.oneShots = [:]
+        if let generation { await releaseOutputMute(id: id, generation: generation) }
         for client in oneShots { _ = await client.shutdown() }
-        guard let client = runtimes[id]?.client else { return }
-        runtimes[id]?.client = nil
-        await client.shutdown()
+        if let client { await client.shutdown() }
     }
 
     /// Marks the extension used now and (re)arms its idle stop; a `background` one never stops for being idle.

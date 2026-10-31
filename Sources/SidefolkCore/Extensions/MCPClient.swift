@@ -55,6 +55,8 @@ public enum MCPClientEvent: Sendable {
     case nudge
     /// `sidefolk/clipboard.source`: which app was in front for the copy just made (D68); the host decides.
     case clipboardSource
+    /// The extension requests a temporary default-output mute under its install permission.
+    case outputMute(request: String, enabled: Bool, sequence: Int)
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -301,6 +303,12 @@ public final class MCPClient: Sendable {
                 onEvent(.nudge)
             } else if method == "sidefolk/clipboard.source" {
                 onEvent(.clipboardSource)
+            } else if method == "sidefolk/output_mute",
+                      let request = message["params"]?["request"]?.stringValue,
+                      UUID(uuidString: request) != nil,
+                      let enabled = message["params"]?["enabled"]?.boolValue,
+                      let sequence = message["params"]?["sequence"]?.intValue, sequence > 0 {
+                onEvent(.outputMute(request: request, enabled: enabled, sequence: sequence))
             }
             return
         }

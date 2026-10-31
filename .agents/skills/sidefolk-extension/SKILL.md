@@ -157,7 +157,7 @@ handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit
   placeholders, plural forms and limits (half as long again as the manifest's). What a command or an `ask` button says
   stays English (Sidefolk understands typed requests in English). Don't put direction marks in text: Sidefolk strips
   them and keeps numbers, sizes and paths left to right itself when it lays out right to left. In-code tables work too
-  (`Localized`, D75, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
+  (`Localized`, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
 - **Palettes**: `query` returns `PaletteList([PaletteItem(id:, title:, detail:, kind:, pinned:, actions:)], note:)`
   (kinds `text link image file color code`, actions `plain pin delete`; at most 200 items, 10 s a call); `choose`
   gets the item id and `choose|plain|pin|delete` and returns `PaletteChoice(close:, paste:, message:)`. With `paste`,
@@ -330,3 +330,9 @@ definitions are held until approved.
   connection details). `.transport(Transport(...))` shows something playing: position, duration, round symbol buttons
   with play or pause as the primary. An older Sidefolk skips hero and transport and draws pickers as plain choices,
   so keep the summary meaningful (with its `control`) for those copies.
+- **Full-width settings and audio output (D75).** `Section(..., place: .bottom, collapsed: true, detail: ...)` ends the
+  side/main columns and summarizes a folded setting. `permissions.output_mute` separately grants a temporary,
+  device-wide mute through Sidefolk's crash-recovery helper. Send `sidefolk/output_mute` with a UUID `request`, boolean
+  `enabled` and increasing `sequence`; wait for `sidefolk/output_mute.result` before claiming success and handle
+  `sidefolk/output_mute.failed` for the current sequence. Explain that TV-only sound affects all Mac apps. The Kit
+  receives notices even while a tool request is awaiting. Validation trials cannot mute the person's output.

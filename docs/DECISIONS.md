@@ -1945,6 +1945,29 @@ so an older file still reads); no new tool and no manifest change. Window stills
 own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
 
+### D75 — Responsive extension pages and a host-owned temporary audio mute (2026-10-31)
+**Decision:** extension pages may end their side and main columns with `place: bottom`; this section and the ones after
+it span the page, while a narrow window keeps the original order. A collapsible section may summarize its current
+setting with `detail`. Miraya uses these parts for the approved responsive layout, with focused discovery, pairing and
+live-sharing states. It retains presets for a screen region, rather than promising a freehand crop.
+
+Miraya's sound choices are Mac only, TV only and Mac and TV. TV only temporarily mutes the Mac's default output,
+including other apps, as Miraya's Mac app does; it does not use the microphone. `permissions.output_mute` separately
+discloses this capability and widens an update, so installation requires review. The sandboxed extension sends an
+ordered request to Sidefolk and reports TV-only only after confirmation. Sidefolk owns a helper outside the extension's
+process tree; EOF on its pipe restores the previous mute state after the host exits, and stopping or crashing the
+extension releases its lease. Only one extension holds it. Device changes and unsupported mute are reported; a person
+unmuting the device is respected. The SDK delivers notices while a serialized tool request is waiting, so the host can
+answer without deadlocking a long request. Validation trials cannot mute the person's output.
+
+**Why:** the founder approved screens that adapt within Home and asked for the original Miraya app's three sound
+choices. An extension-owned helper is unsafe here: Sidefolk deliberately kills an extension's complete process tree
+on stop, crash or watchdog. The host-owned helper keeps that boundary and the recovery path separate.
+
+**Verification:** fake-device and helper-process tests cover ownership, changes, timeouts and recovery. On the Mac's
+actual default output, the helper muted and restored the original state both normally and after its parent was killed.
+An isolated Android TV emulator confirmed pairing. Live screen and sound playback on a physical TV remains to be checked.
+
 ### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
 **Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.
 - **What the manifest shows people** (name, tagline, description, tool, watcher, page and palette titles, watcher
@@ -1964,14 +1987,14 @@ own Home, as they would in Miraya's app; they stay in Miraya's data folder, roun
   under `text` in the same files, keyed by their English, `en.json` listing every one; named placeholders kept, CLDR
   plural forms per language. The Kit reads them (`Language.swift`: `L`, `L(one:other:count:)`, `Format` for numbers,
   sizes, durations, 24-hour times, dates, lists and sentence joining, `Language.with` for tests), carries its own few
-  sentences in ten languages (`KitWords`), and looks plain words up through `Localized` (D75's helper, the same file).
+  sentences in ten languages (`KitWords`), and looks plain words up through `Localized` (team/play's helper, the same file).
   `scripts/extension-strings.py` keeps `en.json` in step with the `L(…)` calls and lists what each language lacks.
 - **Right to left**: extension text stays stripped of direction marks (T13). Sidefolk adds its own when drawing in
   Arabic (`BidiText`, `Text(ext:)` on pages, tiles and palettes): a value of numbers and signs alone is isolated left to
   right ("3024 × 1964" read reversed before), and so are paths, addresses and number runs inside an Arabic sentence.
 - **Page details** (switches, choices, rows, the summary) are clipped at 240 characters instead of 160, so a German
   sentence fits (an older Sidefolk still clips at 160).
-- Every official extension but Playtime (rebuilt on team/play, which localizes itself with D75's tables) speaks all ten:
+- Every official extension but Playtime (rebuilt on team/play, which localizes itself with its own `Localized` tables) speaks all ten:
   World Clock, Calculator, Weather and System Vitals in the app; Your Mac, Clipboard, Keep Awake, Miraya, Git, Currency,
   Images, PDF Tools, QR Codes, Archives, Dev Toolbox and Feeds in the gallery. Miraya's sources copied from its Mac app
   (`Miraya/`) stay as they are: what they say passes through `Said.shown` on its way to the person.
@@ -1986,7 +2009,7 @@ word order and counts differ (Arabic has six forms). *Sidefolk draws the directi
 layout, and direction marks stay a way to disguise text.
 
 **Alternatives:** a `localized` object in the manifest (older copies refuse it); tables compiled into each program
-(D75's `Localized`: fine for a few words, but invisible to the validator and the gallery, and a third party writing
+(team/play's `Localized`: fine for a few words, but invisible to the validator and the gallery, and a third party writing
 Python would need its own; both work, and `L` uses `Localized` underneath); translating tool descriptions from
 `tools/list` (they are pinned at install: a language change would hold every tool); letting extensions send isolates
 (the same characters that reorder a name); the install sheet trusting `BuiltInExtensionWords` alone (only Sidefolk's own,
@@ -1999,7 +2022,7 @@ build.py copy `strings/`; tests `ExtensionStringsTests`, `BidiTextTests`, `Exten
 extension, every key, every language), add-ons `LanguagesTests`. An extension's English output changed where Foundation
 now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
 Commands and `ask` sentences stay English (GLOSSARY rule 1). Not done: `zh-Hant` falls back to the manifest in Sidefolk
-but to `zh-Hans` in `Localized` (D75 normalizes any Chinese), a difference to settle when merging.
+but to `zh-Hans` in `Localized` (team/play's normalizes any Chinese), a difference to settle when merging.
 
 ### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
 **Decision:** *amends D43, D55, D56 and D60 for companions.* Settings › Companion has two pages at the top, outside the

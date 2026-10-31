@@ -91,7 +91,9 @@ public final class Extension {
     /// Answers every message that has an id until Sidefolk closes stdin. Nothing else may reach stdout.
     public func serve() async {
         if let work = backgroundWork, !Self.isOneCall { Task { await work() } }
-        // Read without blocking the main actor, so background work runs between requests.
+        // Requests stay in order, but notices must be delivered while a long request awaits work:
+        // a host response (such as audio routing) can otherwise wait behind the request that needs it.
+        var last: Task<Void, Never>?
         for await line in Self.lines() {
             guard let message = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
                   let method = message["method"] as? String else { continue }
@@ -99,17 +101,22 @@ public final class Extension {
                 notices[method]?(Arguments(message["params"] as? [String: Any] ?? [:]))
                 continue
             }
-            var reply: [String: Any] = ["jsonrpc": "2.0", "id": id]
-            do {
-                reply["result"] = try await answer(method, message["params"] as? [String: Any] ?? [:])
-            } catch let unknown as Unknown {
-                reply["error"] = ["code": -32601, "message": unknown.what]
-            } catch {
-                // Reported, not fatal: one bad call shouldn't stop the extension.
-                reply["error"] = ["code": -32603, "message": "\(error)"]
+            let previous = last
+            let params = message["params"] as? [String: Any] ?? [:]
+            last = Task { @MainActor in
+                await previous?.value
+                var reply: [String: Any] = ["jsonrpc": "2.0", "id": id]
+                do {
+                    reply["result"] = try await answer(method, params)
+                } catch let unknown as Unknown {
+                    reply["error"] = ["code": -32601, "message": unknown.what]
+                } catch {
+                    reply["error"] = ["code": -32603, "message": "\(error)"]
+                }
+                Self.write(reply)
             }
-            Self.write(reply)
         }
+        await last?.value
     }
 
     /// Started for one call that works in a file or folder the person named (`tools.<name>.paths`): it answers that

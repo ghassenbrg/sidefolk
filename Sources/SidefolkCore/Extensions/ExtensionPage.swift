@@ -39,17 +39,19 @@ public struct ExtensionPage: Sendable, Hashable {
     public struct Section: Sendable, Hashable {
         /// Where a section goes in a wide window (D74): with the page's main sections, or in a column beside them at
         /// the start edge (a list of devices or accounts to pick from). A narrow window keeps the page's order.
-        public enum Place: String, Sendable, Hashable { case main, side }
+        public enum Place: String, Sendable, Hashable { case main, side, bottom }
 
         public var title: String?
+        public var detail: String?
         public var blocks: [Block]
         public var place: Place
         /// Folded under its title until the person opens it (advanced settings, connection details); nil is always open.
         /// Needs a title to fold under.
         public var collapsed: Bool?
 
-        public init(title: String? = nil, blocks: [Block], place: Place = .main, collapsed: Bool? = nil) {
+        public init(title: String? = nil, blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil) {
             self.title = title
+            self.detail = detail
             self.blocks = blocks
             self.place = place
             self.collapsed = collapsed
@@ -312,7 +314,8 @@ public struct ExtensionPage: Sendable, Hashable {
             let blocks = (s["blocks"]?.arrayValue ?? []).prefix(maxBlocks).compactMap(block)
             let title = text(s["title"], 60)
             return blocks.isEmpty ? nil : Section(title: title, blocks: blocks, place: s["place"]?.stringValue.flatMap(Section.Place.init) ?? .main,
-                                                  collapsed: title == nil ? nil : s["collapsed"]?.boolValue)
+                                                  collapsed: title == nil ? nil : s["collapsed"]?.boolValue,
+                                                  detail: title == nil ? nil : text(s["detail"], 160))
         }
         var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections)
         page.keepOnePrimary()

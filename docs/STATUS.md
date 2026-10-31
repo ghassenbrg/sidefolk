@@ -7,8 +7,9 @@
   its window keeps the folder from being added. All new strings are in the ten languages. *Checked:*
   `CustomCompanionTests`, `LocalCompanionsTests`, `CompanionLibraryTests`; `sidefolk-render --check-companion` on a
   draft form; a debug app (build 582) switching a folder companion between 3D and 2D on the desktop and in Settings,
-  with placeholder paintings. *Next:* paint a real 2D form with image generation (`companions-2d/README.md`); no
-  companion in the repositories has one yet.
+  with placeholder paintings, then with a real painted form (2026-11-01: a private companion's, made by
+  `companions-2d/README.md`'s steps outside the repositories; filmed, and live in the app). *Next:* none in the
+  repositories has one yet; the founder decides whether the gallery's companions get folder-style 2D forms too.
 
 - **3D engine options for big-headed and screen-faced companions (2026-10-31):** the screen face gained `mouthGlow`
   (the mouth in a light of its own), `layout.mouth.scale` and `softGlow` (halos blurred with a shadow instead of
@@ -16,6 +17,8 @@
   window). All default to the old behaviour: Spark is unchanged (checked in the playground). `companions-3d/serve.py`
   queues 128 connections (the default 5 reset module fetches). *Checked:* a companion added from a folder using
   them, in the playground and a debug app; every move, posture and state kept inside the app's square framing.
+
+- **Miraya screen redesign and audio routing:** the approved responsive screen covers discovery, source selection, pairing, sharing and pause, with settings below the main choices. Mac only, TV only and Mac and TV are saved sound destinations; TV only uses a separately disclosed host-owned output-mute lease with crash recovery. *Checked:* Sidefolk and Miraya suites, sandboxed installation and destination choices, light/dark wide/narrow snapshots, an isolated Android TV emulator pairing with matching codes, and actual Mac output mute and restoration on closure and parent death. All nine localizations are complete; the unsigned gallery build and checks pass. *Still to verify:* live screen and sound playback with a physical TV. *Next:* exercise screen, window and region sharing and all three sound destinations on that setup; sign and publish a gallery update only when requested. No gallery pack has been shipped.
 
 - **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved
   `folk-family/redesign-2026-10-31/folk-redesign-reference.png` in the desktop and app windows. Their roles,
@@ -79,7 +82,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   Japanese and Arabic: pages, Today tiles, install sheets read (German switch details were cut at 160 characters, now
   240; Japanese sentences no longer get a space between them in Your Mac). UI snapshots of the extension pages in
   Arabic rendered. *Not checked by eye:* a palette (snap doesn't capture it); gallery cards (needs a signed gallery).
-  *Next:* merge with team/play (D75): `Localized.swift` is identical; `docs/EXTENSIONS.md` has a section of the same
+  *Next:* merge with team/play: `Localized.swift` is identical; `docs/EXTENSIONS.md` has a section of the same
   name on each branch to merge into one; `zh-Hant` is matched differently (D76 shows the manifest, `Localized` uses
   `zh-Hans`). The app's install sheet subtitle wraps a folder path oddly in Arabic (the app's own text, not D76's).
   Packs change, so each official extension goes out as its next snapshot (versions unchanged, D65).

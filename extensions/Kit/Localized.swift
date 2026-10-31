@@ -1,6 +1,6 @@
 import Foundation
 
-/// Words in the person's language for an extension that speaks it (D75). Sidefolk passes `language` with every page,
+/// Words in the person's language for an extension that speaks it (D76). Sidefolk passes `language` with every page,
 /// game and palette request (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`); the extension keeps a
 /// table of its words per language, English first, and asks for each by key. A word missing in a language falls back
 /// to English, so a half-done table still shows everything.
