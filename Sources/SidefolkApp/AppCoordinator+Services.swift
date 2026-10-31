@@ -27,13 +27,12 @@ extension AppCoordinator {
         Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/sidefolk").path
     }
 
+    /// The person's agent configs only when this copy runs on their own data folder; any other data folder
+    /// gets stand-ins inside it (D86). The helper is told which folder unless it is the person's own.
     var integrations: AgentIntegrations {
-        #if DEBUG
-        let env = ["SIDEFOLK_HOME": runtime.paths.home.path]
-        #else
-        let env: [String: String] = [:]
-        #endif
-        return AgentIntegrations(locations: .standard(), helperPath: stableHelperPath, helperEnvironment: env,
+        let paths = runtime.paths
+        let env = paths.isDefaultHome ? [:] : ["SIDEFOLK_HOME": paths.home.path]
+        return AgentIntegrations(locations: .forApp(paths: paths), helperPath: stableHelperPath, helperEnvironment: env,
                                  skill: ResourceLocator.agentSkill)
     }
 

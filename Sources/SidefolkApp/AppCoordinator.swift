@@ -177,6 +177,7 @@ final class AppCoordinator {
             Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
         }
         installHelperLink()
+        IntegrationLocations.prepareStandIns(paths: runtime.paths)
         // Extension pages' charts reach back a day, and Today's tiles stay current (D62).
         await runtime.extensions.startPageSampling()
         await palettes.refresh()

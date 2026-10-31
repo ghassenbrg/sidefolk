@@ -173,6 +173,9 @@ Claude Code's and Codex's folders: the MCP entry (T4), hooks (Claude Code's `set
 agents load into their models' context.
 - Only on the person's click, after a dialog listing every file, change and backup (D16); never at launch.
   Each file is backed up before it changes, except a skill exactly as Sidefolk writes it.
+- Only from the copy on the person's own data folder. A copy on any other `SIDEFOLK_HOME` (dev, QA) writes
+  stand-ins inside that folder (D86), the `sidefolk` command link included: its helper goes away with the
+  folder, and the person's agents pointed at it would fail on every start.
 - The skill is fixed text from the app's signed Resources, the same for everyone: nothing personal, no
   paths, no secrets. It tells agents not to store secrets, not to spam, to respect quiet mode and not to
   write instructions for other AIs. It grants nothing: whatever it says, Guard, quotas and approvals decide
