@@ -95,8 +95,10 @@ final class CompanionWindowController {
     /// The feet stand 10% above the view's bottom edge.
     private var feetInset: CGFloat { characterBox.height * 0.1 }
     private var folkSize: CGFloat { (size * 0.62).rounded() }
-    /// The pins stand above the folks' heads.
-    private var readoutBase: CGFloat { feetInset + folkSize * 0.95 }
+    /// The pins stand above the folks' heads, and above the agents lane when it is taller.
+    private var readoutBase: CGFloat {
+        max(feetInset + folkSize * 0.95, agentsSize.height == 0 ? 0 : feetInset + agentsSize.height + Theme.Space.s)
+    }
     /// How far the robot's body frame sits inside its view, where folks always stood.
     private var reach: CGFloat { characterBox.width * 0.17 }
     /// From the body's edge to the outer edge of the folks standing beside it.
@@ -109,7 +111,7 @@ final class CompanionWindowController {
     /// chip. The light and the pins' glass need a little room around them too.
     private var windowSize: NSSize {
         let inset = characterBox.width * 0.19
-        let beside = max(folkSize * 2.6, reach * 0.4 + pinsSize.width + 16 - inset, agentsSpan + 16 - inset)
+        let beside = max(folkSize * 2.6, reach * 0.4 + pinsSize.width + 28 - inset, agentsSpan + 28 - inset)
         let pins = pinsSize.height == 0 ? 0 : readoutBase + pinsSize.height + 24
         let agents = agentsSize.height == 0 ? 0 : feetInset + agentsSize.height + 24
         return NSSize(width: characterBox.width + beside, height: max(characterBox.height, pins, agents))

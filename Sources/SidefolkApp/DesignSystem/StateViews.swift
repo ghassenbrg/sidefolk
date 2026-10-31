@@ -135,7 +135,7 @@ struct PinCapsule: View {
         }
         .padding(.horizontal, Theme.Space.m + 2)
         .frame(height: Theme.Size.pin)
-        .lanternGlass(radius: Theme.Size.pin / 2)
+        .lanternGlass(radius: Theme.Size.pin / 2, elevation: .e2)
         .accessibilityElement(children: .combine)
     }
 }

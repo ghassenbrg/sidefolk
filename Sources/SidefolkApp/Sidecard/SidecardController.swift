@@ -13,6 +13,8 @@ final class SidecardController {
     private var queue: [(AttentionItem, AttentionPresentation)] = []
     private var timer: Task<Void, Never>?
     private var fanEnd: Task<Void, Never>?
+    /// The companion's own card, put aside while Ask is open.
+    private var parked: AttentionItem?
     /// Cards that folded into the stack since it was last empty: when the last of them is answered, "All clear".
     private var folded: Set<String> = []
     var anchorProvider: (() -> (NSRect, NSScreen)?)?
@@ -23,6 +25,8 @@ final class SidecardController {
     var waitingItems: (() async -> [AttentionItem])?
     /// A card went out or came back: the light at the companion's feet follows.
     var onChange: (() -> Void)?
+    /// A card folded into the stack: the companion stops looking alarmed; the count says it waits.
+    var onFold: ((AttentionItem) -> Void)?
 
     init() {
         hosted = HostedPanel(rootView: SidecardView(model: model), allowsKey: false)
@@ -200,6 +204,7 @@ final class SidecardController {
 
     private func fold(_ item: AttentionItem) {
         folded.insert(item.id)
+        onFold?(item)
     }
 
     private func close(id: String) {
@@ -220,6 +225,37 @@ final class SidecardController {
         model.item = nil
         hosted.panel.orderOut(nil)
         onChange?()
+    }
+
+    /// Ask opened beside the companion: a card folds into the stack (Ask shows it on top, under "Needs you") and a
+    /// whisper, which needed nothing, goes; one surface at a time.
+    func yieldToAsk() {
+        queue.removeAll { !Self.isCard($0.0, $0.1) }
+        guard hosted.panel.isVisible else { return }
+        switch model.shape {
+        case .card:
+            guard let item = model.item else { return }
+            if Self.folds(item) {
+                foldCurrent(id: item.id)
+            } else {
+                // The companion's own card (onboarding) waits behind Ask and comes back when it closes.
+                timer?.cancel()
+                parked = item
+                hosted.panel.orderOut(nil)
+            }
+        case .whisper:
+            if let item = model.item { autoDismiss(id: item.id) }
+        case .stack:
+            hideStack()
+        }
+    }
+
+    /// Ask closed: a card of the companion's own that waited behind it comes back.
+    func askClosed() {
+        guard let item = parked else { return }
+        parked = nil
+        guard !hosted.panel.isVisible || model.item?.id == item.id else { return queue.insert((item, .attention(expandFor: 600)), at: 0) }
+        show(item, .attention(expandFor: 600), card: true)
     }
 
     // MARK: The stack

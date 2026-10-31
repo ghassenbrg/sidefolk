@@ -69,7 +69,9 @@ final class AskPanelController {
         if model.showsSlipsOnly {
             hosted.place(beside: anchor, on: screen, gap: 4 - AskView.margin.bottom, preferAbove: true)
         } else {
-            hosted.place(beside: anchor, on: screen, gap: 6 - AskView.margin.leading)
+            // The glass, not the window with its shadow room, starts low enough beside the companion for the tail to
+            // reach its head.
+            hosted.place(beside: anchor.offsetBy(dx: 0, dy: -AskView.margin.bottom), on: screen, gap: 6 - AskView.margin.leading)
         }
     }
 
@@ -86,8 +88,8 @@ final class AskPanelController {
                 tail = SidecardTail(edge: .bottom, at: rtl ? 1 - physical : physical)
             }
         } else {
-            // The head, about a quarter down the companion's body.
-            let head = anchor.maxY - anchor.height * 0.25
+            // The head, about a quarter down the companion's body (placed against the body lowered by the margin).
+            let head = anchor.maxY + AskView.margin.bottom - anchor.height * 0.25
             let at = (glass.maxY - head) / max(glass.height, 1)
             if (0.05...0.95).contains(at) {
                 let right = glass.maxX <= anchor.midX

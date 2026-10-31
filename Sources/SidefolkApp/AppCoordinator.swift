@@ -98,7 +98,10 @@ final class AppCoordinator {
         askPanel.onEscape = { [weak self] in self?.voice.cancel() ?? false }
         askPanel.onVisibilityChange = { [weak self] visible in
             self?.mood.panelOpen = visible
-            if !visible { self?.companion.keepRaised(false) }
+            if !visible {
+                self?.companion.keepRaised(false)
+                self?.sidecard.askClosed()
+            }
             self?.renderMood()
         }
 
@@ -563,9 +566,15 @@ final class AppCoordinator {
             // Typed but not sent: the hint under the field says what Enter would do.
             showAsk()
             ask.text = String(command.dropFirst(5))
-        } else if command.hasPrefix("respond:"), let item = sidecard.model.item {
-            respond(to: item, action: String(command.dropFirst(8)))
-            sidecard.withdraw(id: item.id)
+        } else if command.hasPrefix("respond:") {
+            // The card in view, or else the oldest one waiting in the stack (as Ask on top of it would answer).
+            let action = String(command.dropFirst(8))
+            if let item = sidecard.model.item {
+                respond(to: item, action: action)
+                sidecard.withdraw(id: item.id)
+            } else {
+                Task { if let held = await runtime.attention.open().filter({ $0.level >= .attention }).first { respond(to: held, action: action) } }
+            }
         } else if command == "dismiss", let item = sidecard.model.item {
             respond(to: item, action: nil)
             sidecard.withdraw(id: item.id)
@@ -618,8 +627,9 @@ final class AppCoordinator {
     /// `slipsOnly`: a permission slip arrived while Ask was closed; it stands alone above the companion.
     func showAsk(prefill: String? = nil, focus: Bool = true, slipsOnly: Bool = false) {
         if let prefill { ask.text = prefill }
-        // One panel at a time: the game is kept and comes back as it was (D75).
+        // One panel at a time: the game is kept and comes back as it was (D75); a card folds into what Ask shows.
         playPanel.hide()
+        if !slipsOnly { sidecard.yieldToAsk() }
         refreshGlance()
         companion.keepRaised(true)
         guard let (frame, screen) = anchor() else { return }

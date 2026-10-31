@@ -42,6 +42,8 @@ struct SayBarField<Trailing: View>: View {
                 .foregroundStyle(Theme.ink)
                 .lineLimit(multiline ? 1...5 : 1...1)
                 .focused(binding)
+                // The field's own ring is the focus ring; AppKit's square one would show beside the rounded ends.
+                .focusEffectDisabled()
                 .disabled(disabled)
                 .onSubmit(onSubmit)
                 .onKeyPress(.return, phases: .down) { press in
@@ -54,7 +56,7 @@ struct SayBarField<Trailing: View>: View {
         .padding(.horizontal, size == .home ? Theme.Space.l : Theme.Space.l + 2)
         .padding(.vertical, multiline ? (height - 22) / 2 : 0)
         .frame(minHeight: height)
-        .frame(maxWidth: size == .home ? Theme.Size.sayBarHomeMaxWidth : nil)
+        .frame(maxWidth: size == .home ? Theme.Size.sayBarHomeMaxWidth : .infinity)
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: height / 2, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: height / 2, style: .continuous)

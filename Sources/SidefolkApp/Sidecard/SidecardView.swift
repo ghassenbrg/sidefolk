@@ -60,7 +60,9 @@ struct SidecardView: View {
                 Button { model.openStack?() } label: { Text("Answer", comment: "Under the held cards: opens Ask on top of them") }
                     .buttonStyle(.sf(.quiet, size: .small))
             }
-            .padding(.horizontal, Theme.Space.s)
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.xxs)
+            .lanternGlass(radius: 16)
         }
         .contentShape(Rectangle())
         .onTapGesture { model.openStack?() }

@@ -136,8 +136,8 @@ struct AgentChipView: View {
         HStack(spacing: Theme.Space.xs + 2) {
             Circle().fill(chip.needsYou ? Theme.waitGlow : Theme.glow).frame(width: 8, height: 8)
                 .overlay(Circle().strokeBorder(Color.white.opacity(0.7), lineWidth: 1))
-            Text(verbatim: chip.agent).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-            Text(verbatim: detail).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+            (Text(verbatim: chip.agent).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                + Text(verbatim: detail).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted))
         }
         .lineLimit(1)
         .fixedSize()
@@ -153,7 +153,7 @@ struct AgentChipView: View {
     private var detail: String {
         let state = chip.needsYou ? String(localized: "needs you", comment: "A chip on an agent waiting for an answer")
             : TimeText.span(now.timeIntervalSince(chip.since))
-        return ([""] + [chip.project, state].compactMap { $0 }).joined(separator: " · ")
+        return ([""] + [chip.project, state].compactMap { $0 }).joined(separator: "  ·  ")
     }
 }
 

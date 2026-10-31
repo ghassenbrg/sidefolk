@@ -17,6 +17,10 @@ extension AppCoordinator {
         }
         sidecard.onOpenStack = { [weak self] in self?.showAsk() }
         sidecard.onChange = { [weak self] in self?.renderLight() }
+        sidecard.onFold = { [weak self] item in
+            self?.mood.quietAlert(id: item.id)
+            self?.renderMood()
+        }
     }
 
     /// What waits on the person: open notices that need an answer, and approvals.
