@@ -12,7 +12,9 @@
   card, slip strip and stack, the light pool and shoulder badge), all listed with their files in docs/DESIGN.md.
   Applied app-wide where it was a direct swap: every button (SFButtonStyle), every segmented picker but the companion
   stage's, sentence-case eyebrows, card depth, the search and CommitField as wells, approval risk tags as chips.
-  *Checked:* `make test` (see the commit), the new `design-system-foundations|controls|sidecard` UI snapshots light and
+  *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on a clean add-ons clone at its origin/main (1581 core and 36
+  character tests pass; the sibling add-ons checkout is 23 commits behind with a stray dist/, so its gallery, words and
+  game tests fail there), the new `design-system-foundations|controls|sidecard` UI snapshots light and
   dark in English, German and Arabic read against the mockups' design-system boards, and Today, Settings › General, the
   Ask panel and the install sheet read in light and dark. *Half done:* 16 text fields still `.roundedBorder`; the
   theme-only Today blocks (console, planner) keep capitals; the layout keys of D64 still read (retire in phase 3).
