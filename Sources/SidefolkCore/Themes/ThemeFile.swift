@@ -45,7 +45,8 @@ public struct ThemeFile: Codable, Sendable, Equatable {
         public var tile: String?
     }
 
-    /// Where things go (D64): a preset by name, then anything the theme sets itself.
+    /// Where things went (D64). Only `icons` (and a preset's icons) is read since D84 gave each place one layout;
+    /// the rest still decodes, so older themes load.
     public struct LayoutSection: Codable, Sendable, Equatable {
         public var preset: String?
         public var navigation: String?
@@ -88,14 +89,6 @@ public struct ThemeFile: Codable, Sendable, Equatable {
             }
         }
 
-        var width: Double? { if case .column(let w, _, _) = self { w } else { nil } }
-        var page: Bool? { if case .column(_, let p, _) = self { p } else { nil } }
-        var blocks: [String] {
-            switch self {
-            case .block(let name): [name]
-            case .column(_, _, let blocks): blocks
-            }
-        }
     }
 
     public var format: Int
@@ -143,17 +136,9 @@ extension ThemeFile {
 }
 
 extension ThemeFile.LayoutSection {
-    /// A layout written out in full, so whoever starts from it sees every block and can move it.
+    /// What a new theme writes: only its icons, the one layout key still read (D84).
     public init(_ layout: ThemeLayout) {
-        self.init(preset: nil, navigation: layout.navigation.rawValue, nook: layout.nook.rawValue, icons: layout.icons.rawValue,
-                  today: layout.today.map { row in
-                      row.map { column in
-                          column.width == 1 && column.blocks.count == 1 && !column.page
-                              ? .block(column.blocks[0].description)
-                              : .column(width: column.width, page: column.page ? true : nil, blocks: column.blocks.map(\.description))
-                      }
-                  },
-                  activity: layout.activity.rawValue, editor: layout.editor.rawValue)
+        self.init(icons: layout.icons.rawValue)
     }
 }
 
