@@ -1,5 +1,11 @@
 # Status
 
+- **Folk redesign reference (2026-10-31):** `folk-family/redesign-2026-10-31/folk-redesign-reference.png`
+  explores new silhouettes for the ten on-duty helper folks, preserving their roles and identifying cues.
+  Generated with the built-in image generator from `folk-family/folk-family-sheet.png`; visually checked that
+  all ten named helpers appear. This is concept artwork only; the app and companions are unchanged.
+  *Next:* founder reviews the direction before any individual character sheets or implementation.
+
 Updated: 2026-10-31. Version 0.1.0. Latest: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
 extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
