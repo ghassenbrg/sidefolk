@@ -83,26 +83,22 @@ import Testing
             .write(to: folder.appendingPathComponent("fr.json"))
         try Data(#"{"text": {"{count} apps": {"zero": "لا تطبيقات", "one": "تطبيق واحد", "two": "تطبيقان", "few": "{count} تطبيقات", "many": "{count} تطبيقًا", "other": "{count} تطبيق"}}}"#.utf8)
             .write(to: folder.appendingPathComponent("ar.json"))
-        Language.load(from: folder.path)
-        defer {
-            Language.use("en")
-            Language.load(from: "/nonexistent")
+        Language.with("fr", strings: folder.path) {
+            #expect(L("Hello {name}", ["name": "Ada"]) == "Bonjour Ada")
+            #expect(L(one: "{count} app", other: "{count} apps", count: 0) == "0 app", "French says one for 0")
+            #expect(L(one: "{count} app", other: "{count} apps", count: 1234) == "1\u{202F}234 apps", "French digits group with a narrow space")
+            #expect(L("Not translated") == "Not translated", "English when a language lacks it")
+            #expect(L("“{key}” is missing.", ["key": "x"]) == "« x » manque.", "the Kit's own words")
+            #expect(Format.percent(0.42) == "42\u{00A0}%" && Format.time(Date(timeIntervalSince1970: 61_200), timeZone: TimeZone(identifier: "UTC")!) == "17:00")
         }
-        Language.use("fr")
-        #expect(L("Hello {name}", ["name": "Ada"]) == "Bonjour Ada")
-        #expect(L(one: "{count} app", other: "{count} apps", count: 0) == "0 app", "French says one for 0")
-        #expect(L(one: "{count} app", other: "{count} apps", count: 1234) == "1\u{202F}234 apps", "French digits group with a narrow space")
-        #expect(L("Not translated") == "Not translated", "English when a language lacks it")
-        #expect(L("“{key}” is missing.", ["key": "x"]) == "« x » manque.", "the Kit's own words")
-        #expect(Format.percent(0.42) == "42\u{00A0}%" && Format.time(Date(timeIntervalSince1970: 61_200), timeZone: TimeZone(identifier: "UTC")!) == "17:00")
-        Language.use("ar")
-        #expect([0, 1, 2, 5, 11, 100].map { L(one: "{count} app", other: "{count} apps", count: $0) }
-                == ["لا تطبيقات", "تطبيق واحد", "تطبيقان", "5 تطبيقات", "11 تطبيقًا", "100 تطبيق"])
-        Language.use("pt-BR")
-        #expect(L("Hello {name}", ["name": "Ada"]) == "Hello Ada")
+        Language.with("ar", strings: folder.path) {
+            #expect([0, 1, 2, 5, 11, 100].map { L(one: "{count} app", other: "{count} apps", count: $0) }
+                    == ["لا تطبيقات", "تطبيق واحد", "تطبيقان", "5 تطبيقات", "11 تطبيقًا", "100 تطبيق"])
+        }
+        Language.with("pt-BR", strings: folder.path) { #expect(L("Hello {name}", ["name": "Ada"]) == "Hello Ada") }
+        // Each request's language, as the Kit hears it; a code that isn't one is ignored.
         Language.use("not a language!")
-        #expect(Language.code == "pt-BR", "a code that isn't one is ignored")
-        Language.use("en")
+        #expect(Language.code == "en")
         #expect(L(one: "{count} app", other: "{count} apps", count: 1) == "1 app" && Format.time(Date(timeIntervalSince1970: 61_200), timeZone: TimeZone(identifier: "UTC")!) == "17:00",
                 "English needs no table, and keeps 24 hours")
     }

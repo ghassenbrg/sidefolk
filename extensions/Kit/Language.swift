@@ -25,9 +25,11 @@ public enum Language {
     }
 
     private static let state = Mutex(State())
+    /// A language and tables for one piece of work only (`with`), so tests running side by side don't change each other's.
+    @TaskLocal private static var scoped: (code: String, tables: [String: [String: Entry]]?)?
 
     /// The language of the request being answered: `en`, `fr`, `pt-BR`, `zh-Hans`, `ar`… English until Sidefolk says.
-    public static var code: String { state.withLock { $0.code } }
+    public static var code: String { scoped?.code ?? state.withLock { $0.code } }
 
     /// For Foundation's formatters (`Format` uses it): the language alone, as Sidefolk's own words are formatted.
     public static var locale: Locale { Locale(identifier: code) }
@@ -42,21 +44,21 @@ public enum Language {
         state.withLock { $0.code = code }
     }
 
-    /// Reads the tables from `folder` (an extension's `strings/`) instead of the one beside the program: for tests.
-    public static func load(from folder: String) {
-        let tables = read(folder)
-        state.withLock { $0.tables = tables }
+    /// Runs `work` in `code`, with the tables in `strings` (an extension's `strings/` folder) when given, without changing
+    /// the language of anything else: for tests, which run side by side.
+    public static func with<T>(_ code: String, strings: String? = nil, _ work: () throws -> T) rethrows -> T {
+        try $scoped.withValue((code, strings.map(read)), operation: work)
     }
 
     /// The text for `key` in the current language, or in the closest one it has (`pt` for `pt-BR`), nil when none.
     static func entry(_ key: String) -> Entry? {
         let (code, loaded) = state.withLock { ($0.code, $0.tables) }
-        let tables = loaded ?? {
+        let tables = scoped?.tables ?? loaded ?? {
             let found = read(defaultFolder)
             state.withLock { $0.tables = $0.tables ?? found }
             return found
         }()
-        for candidate in candidates(code) { if let e = tables[candidate]?[key] { return e } }
+        for candidate in candidates(scoped?.code ?? code) { if let e = tables[candidate]?[key] { return e } }
         return nil
     }
 
