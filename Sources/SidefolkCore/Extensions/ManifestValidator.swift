@@ -174,11 +174,22 @@ public struct ManifestValidator: Sendable {
 
     // MARK: Identity
 
+    /// The name a source folder goes by. A gallery pack is unpacked as `<name>.sidefolkaddon/Contents/Resources`
+    /// (D55), so its name is the bundle's, not "Resources".
+    static func sourceName(_ folder: String) -> String {
+        let parts = (folder as NSString).pathComponents
+        if parts.count >= 3, parts[parts.count - 1] == "Resources", parts[parts.count - 2] == "Contents",
+           parts[parts.count - 3].hasSuffix(".sidefolkaddon") {
+            return (parts[parts.count - 3] as NSString).deletingPathExtension
+        }
+        return (folder as NSString).lastPathComponent
+    }
+
     private func checkIdentity(_ m: ExtensionManifest, folder: String, mode: Mode, issues: inout [ValidationIssue], warnings: inout [String]) {
         if m.id.count > 64 || m.id.range(of: Self.idPattern, options: .regularExpression) == nil {
             issues.append(ValidationIssue(field: "id", message: "must look like com.example.my-extension (lowercase, at least one dot, at most 64 characters)."))
         }
-        let folderName = (folder as NSString).lastPathComponent
+        let folderName = mode == .installed ? (folder as NSString).lastPathComponent : Self.sourceName(folder)
         if folderName != m.id {
             switch mode {
             case .installed:

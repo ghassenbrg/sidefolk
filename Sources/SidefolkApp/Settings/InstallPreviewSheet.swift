@@ -119,8 +119,9 @@ struct InstallPreviewSheet: View {
     }
 
     private var origin: Text {
-        preview.fromDraft
-            ? Text("Version \(preview.version) · written by Sidefolk for you")
-            : Text("Version \(preview.version) · from \(FolderAccess.displayPath(preview.sourceFolder.path))")
+        if preview.fromDraft { return Text("Version \(preview.version) · written by Sidefolk for you") }
+        // A gallery download sits in a temporary folder whose path means nothing to the person.
+        if preview.fromGallery { return Text("Version \(preview.version) · from the Sidefolk gallery") }
+        return Text("Version \(preview.version) · from \(FolderAccess.displayPath(preview.sourceFolder.path))")
     }
 }

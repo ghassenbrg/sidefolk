@@ -95,6 +95,11 @@ import Testing
         #expect(source.warnings.count == 1)
         let short = try validate(ExtFixtures.manifest(), folder: "sample")
         #expect(short.isValid && short.warnings.isEmpty)
+        // A gallery pack unpacks to <name>.sidefolkaddon/Contents/Resources: the bundle names it, not "Resources".
+        let pack = try validate(ExtFixtures.manifest(), folder: "sample.sidefolkaddon/Contents/Resources")
+        #expect(pack.isValid && pack.warnings.isEmpty)
+        let wrongPack = try validate(ExtFixtures.manifest(), folder: "other3.sidefolkaddon/Contents/Resources")
+        #expect(wrongPack.warnings.first?.contains("“other3”") == true)
         let exact = try validate(ExtFixtures.manifest(), folder: "dev.test.sample", mode: .installed)
         #expect(exact.isValid)
     }
