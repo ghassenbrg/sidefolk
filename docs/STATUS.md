@@ -1,5 +1,36 @@
 # Status
 
+- **The Lantern revamp, phase 4: Settings, the menu bar Pocket, sheets (D84, branch `team/lantern-4`, not merged):**
+  Settings is a sidebar window with search and eight tabs (General, Companion, Attention, Brain, Trust, Connections,
+  Add-ons, Appearance); every setting kept a home and the old tab names still open the right place; every
+  "Settings › AI/Privacy/Extensions/Voice/Agents" sentence (errors, notices, the install sheet, the AI's context)
+  now names the new tab, translations moved along. Search (`SettingKey` catalog + Core's `SettingsSearch`) finds
+  rows by title, detail and section, shows switches and short choices in place, and jumps to the row (the tab opens,
+  scrolls, the row glows). New and real: **Focus** (whispers wait and come back as one "While you were focused" card,
+  `AttentionEnvironment.focus`, `AppSettings.focusUntil`), **ends** for Focus and Quiet, **quiet hours**, what a
+  **full-screen app** does, **density**, and **Full access with an end** (`GuardPolicy.fullAccessEnds`, read through
+  `current(at:)` by Guard, the store and the executor's clock). Trust leads with the four modes as cards with an
+  example each; the Full access sheet asks when it ends. The **menu bar Pocket** (a popover: state, the
+  Open/Focus/Quiet dial with its end, Full access with Turn Off, a waiting version, Needs you, Next up, Agents, Ask; ⋯
+  or right-click for Settings, Check for Updates…, About, Quit) replaces the long menu; the icon's corner shows a
+  waiting dot, Focus or Quiet, fades while the companion hides. **Install sheets** are a two-step passport (D71's
+  words and tones kept, Install armed on step 2); the update window and About are on Lantern; onboarding's Connect…
+  opens Settings › Connections instead of editing agents' files at once. Strings in all ten languages, counts with
+  plural forms. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons checkout (1595 core and 36 character tests; the one external-agents test that read the old "Other agents" words updated and rerun alone), new tests
+  `AttentionModeTests`, `FullAccessEndTests` (Guard asks again once the hour is over), `SettingsSearchTests`; UI
+  snapshots `window-settings-*` (every tab, search, no results, the smallest window), `page-settings-attention-*`,
+  `sheet-full-access`, `sheet-install-*` and `*-touch`, `panel-pocket-*`, `window-update-*`, `window-about`, light and
+  dark, English, German and Arabic, read against the c-settings mockups; the debug app (`build/qa4`): `settings:<tab>`,
+  `settings:jump:debugLogging` (scrolled to it), `settings:full-access`, `attention:focus:60` then `pocket` (Focus
+  until …, the dial and the corner mark), the About window. *Half done / not done:* the mockups' per-source "what may
+  interrupt you" table (no source has its own level; left out as not real); Settings › Add-ons' "Get Add-ons" opens
+  the old gallery page until the Home teammate's Gallery lands (then point it there); the Pocket's dial and Full
+  access's Turn Off were not clicked in the debug app (no clicks from here; covered by the same paths the dev commands
+  use); the skill file's note still says "Settings › Agents" (changing it would mark every installed skill outdated);
+  Reduce Transparency/Contrast versions are phase 5. *Next:* merge with phases 2 and 3 (shared files: AppCoordinator,
+  UISnapshots, Localizable.xcstrings, ExtensionsSettingsView's gallery page), point "Get Add-ons" at Home's Gallery,
+  then the phase 5 polish.
+
 - **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
   revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
   Notebook; the Gallery in Home; half circle = Focus, moon = Quiet; Full access with an end time; Latin companion names
