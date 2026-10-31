@@ -6,7 +6,10 @@
   `scripts/cut-folk-redesign.py` rebuilds the paintings; the companions are unchanged. *Checked:* all ten
   bundled artwork cases and the rendered contact sheet against the reference, a dark-background cutout review,
   `make test` (1502 core and 36 character tests), and Tempo beside Mochi in an isolated debug app with a real
-  reminder. *Next:* founder reviews the new helpers in everyday use.
+  reminder. The running `/Applications/Sidefolk.app` is still snapshot 538; a fresh local `build/Sidefolk.app`
+  (build 554) contains all ten paintings and is signed with the same Developer ID, but is not a published,
+  notarized release and has no `SidefolkRelease` stamp, so its built-in updater will not replace it. *Next:*
+  choose whether to replace the installed snapshot with the local build or ship a normal snapshot first.
 
 Updated: 2026-10-31. Version 0.1.0. Latest (team/updates): Sidefolk and add-on updates chosen apart (D70). Before that: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
