@@ -40,10 +40,14 @@ enum CollectionLook {
 struct CollectionIcon: View {
     var collection: NotebookCollection
     var size: CGFloat = 13
+    /// In Home's navigation, where colorful icons are tiles (D67); an emoji is colourful already.
+    var nav = false
 
     var body: some View {
         if let emoji = collection.emoji, !emoji.isEmpty {
             Text(verbatim: emoji).font(.system(size: size + 1))
+        } else if nav {
+            NavIcon(symbol: CollectionLook.symbol(collection), color: CollectionLook.color(collection))
         } else {
             Image(systemName: CollectionLook.symbol(collection)).foregroundStyle(CollectionLook.color(collection))
         }

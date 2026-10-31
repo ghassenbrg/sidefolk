@@ -273,6 +273,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var agentAccess = AgentAccess()
     /// Extensions' pages in Home as the person arranged them (D67).
     public var homePages = HomePages()
+    /// Simple or colorful icons in Home's navigation; nil follows the theme (D67).
+    public var sidebarIcons: ThemeLayout.Icons?
 
     public init() {}
 
@@ -323,6 +325,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.location, &location)
         read(.agentAccess, &agentAccess)
         read(.homePages, &homePages)
+        sidebarIcons = try? c.decodeIfPresent(ThemeLayout.Icons.self, forKey: .sidebarIcons)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }

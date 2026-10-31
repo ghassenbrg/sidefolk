@@ -11,7 +11,7 @@ struct ExtensionsSidebarSection: View {
         Section(isExpanded: Binding(get: { !pages.layout.collapsed }, set: { pages.setCollapsed(!$0) })) {
             ForEach(pages.shown) { p in
                 HStack(spacing: Theme.Space.xs) {
-                    Label { Text(verbatim: p.title) } icon: { Image(systemName: p.symbol ?? "puzzlepiece.extension").foregroundStyle(Theme.folkColor("byte")) }
+                    Label { Text(verbatim: p.title) } icon: { PageNavIcon(info: p) }
                     Spacer(minLength: Theme.Space.xs)
                     if let control = pages.summaries[p.id]?.control, case .toggle = control.kind {
                         QuickControl(info: p, control: control, pages: pages, small: true)
@@ -29,7 +29,7 @@ struct ExtensionsSidebarSection: View {
             Label {
                 Text("All Extensions", comment: "Home's sidebar: the page listing every extension's page and tile")
             } icon: {
-                Image(systemName: "square.grid.2x2").foregroundStyle(Theme.inkMuted)
+                NavIcon(symbol: "square.grid.2x2", color: Theme.inkMuted)
             }
             .tag(HomeSelection.page(ExtensionPagesModel.hub))
             .help(Text("Every extension's page and tile, and where each one shows", comment: "Home's sidebar: All Extensions"))

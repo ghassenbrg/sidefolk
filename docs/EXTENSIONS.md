@@ -73,8 +73,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
   "name": "System Vitals",
   "version": "1.0.0",
   "sidefolk": ">=0.1",
-  "description": "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low.",
-  "tagline": "Battery, disk and memory at a glance",
+  "description": "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low. For a page with live charts, add Your Mac from the gallery.",
+  "tagline": "Quick answers on battery, disk and memory",
   "folk": "byte",
   "author": "Sidefolk",
   "icon": "icon.pdf",
@@ -124,7 +124,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `tools.<name>.ai` | no | `false` keeps the tool from Sidefolk's AI: only its commands reach it, and it costs no tokens. Missing means `true`. |
 | `words.<list>` | no | Word lists a command's slots can take (`"unit": ["km", "miles", "°F"]`), at most 16 lists and 2,000 words. |
 | `watchers.<name>` | no | A watcher kind: `title` (≤ 60), `description` (≤ 300) and `config`, its settings. |
-| `pages.<name>` | no | A page in Home (D62): `title` (≤ 40), `symbol` (an SF Symbol), `refresh` (seconds while it is open, 2–3600, 5 if missing), `history` (also read once a minute in the background so its charts reach back a day) and `widget` (its summary is a tile on Today). At most 4. See [Pages](#pages). |
+| `pages.<name>` | no | A page in Home (D62): `title` (≤ 40), `symbol` (an SF Symbol), `refresh` (seconds while it is open, 2–3600, 5 if missing), `history` (also read once a minute in the background so its charts reach back a day) and `widget` (its summary, with its main switch if it has one, is a tile on Today). At most 4. See [Pages](#pages). |
 | `background` | no | `true` keeps it running while it is on: it starts with Sidefolk, never stops for being idle, and comes back after a crash (up to the crash limit). For work that must watch all the time (the clipboard, a power assertion). The install preview says so. |
 | `palettes.<name>` | no | A pop-up list on a keyboard shortcut (D63): `title` (≤ 40), `hotkey` (`shift+cmd+c`: cmd, ctrl or option, then one key; the person can change it) and `placeholder`. At most 2. See [Palettes](#palettes). |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
@@ -503,7 +503,20 @@ ext.page("mac") { args in
 }
 ```
 
-- **`summary`**: `title`, `detail`, `tone`, `symbol`. The banner on top of the page, and the Today tile.
+- **`summary`**: `title`, `detail`, `tone`, `symbol`, and `control`. The banner on top of the page, and the Today tile.
+  `control` is your extension's main switch or button (a `switch` or `button` part, below; D67): Sidefolk puts it on
+  the banner, on the Today tile and, for a switch, beside the page's row in the sidebar, so a feature that is mostly
+  on or off (Keep Awake) is one click from where people are. The tile and the sidebar show the last reading, so give
+  a page with a `control` a `widget`, which is read once a minute. In the Kit:
+  `Summary("Awake until 18:00", detail: "25 min left", control: .toggle("Keep awake", on: true, tool: "keep_awake"))`.
+- **How it fills the window** (D67): a section with numbers (`gauge`, `stat`), two or more cards (`chart`, `bars`,
+  `facts`), only notes, or only buttons and questions runs across the page; any other (one card with its note, a few
+  switches) sits beside its neighbours, two or three to a row in a wide window. Cards in a row share its width and
+  height. A page with numbers or cards may grow wide (centred); a page of switches stays a readable column. So group
+  what belongs together into one section, and give a long detail its own section.
+- **A page is optional.** The person can take a page out of the sidebar (it stays in **All Extensions**) and a tile off
+  Today. Give an extension a page when it has something to look at or several choices; a feature that is mostly an
+  on/off switch needs a `widget` with a summary `control` more than a page of its own.
 - **Parts** (`type`): `gauge` (a ring: `label`, `value`, `fraction` 0–1, `caption`), `stat` (`label`, `value`, `caption`),
   `chart` (`id`, `title`, `unit`, `max`, `caption`, `series` of `{key, label, value, display}`, at most 4), `bars`
   (`title`, `caption`, `items` of `{label, value, fraction}`), `facts` (`title`, `items` of `{label, value}`), `note`
@@ -630,7 +643,7 @@ hash of tidied text would be the wrong answer.
 |---|---|---|---|
 | Git | On | The internet, `git`, a folder named per call | Clone, status, pull, log |
 | World Clock | On | None | The time anywhere, conversions with daylight saving |
-| System Vitals | On | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers |
+| System Vitals | On | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers. Rests while Your Mac (gallery) is on, which does all of it (D67) |
 | Weather | On | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
 | Calculator | On | None | Exact sums and percentages, units, date maths |
 | Currency | On | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |

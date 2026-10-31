@@ -92,6 +92,32 @@ enum UISnapshots {
             full.activity.openId = full.activity.entries.first { $0.decision == .always }?.id
             try await homeShot("activity-open")
             full.activity.openId = nil
+            // A wide window, to catch pages left on one side (D67).
+            let wide = CGSize(width: 1600, height: 900)
+            try await homeShot("activity-wide", size: wide)
+            await full.showConversation("c-plan")
+            try await homeShot("conversations-wide", size: wide)
+            await full.reveal(sample.selectedItem)
+            try await homeShot("notebook-wide", size: wide)
+            full.selection = .trash
+            try await homeShot("trash-wide", size: wide)
+            full.selection = .now
+            try await homeShot("now-wide", size: wide)
+            // Extensions' pages in the sidebar with Keep Awake's switch, their tiles, and All Extensions, in simple and
+            // colorful icons (D67).
+            SampleExtensionPage.showPages(in: full.pages)
+            full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
+            try await homeShot("now-extensions")
+            full.selection = .page(ExtensionPagesModel.hub)
+            try await homeShot("extensions-hub")
+            ThemeStore.shared.setIcons(.colorful)
+            try await homeShot("extensions-hub-colorful")
+            full.selection = .now
+            try await homeShot("now-extensions-colorful")
+            ThemeStore.shared.setIcons(nil)
+            full.pages.showSample([], summaries: [:])
+            full.now.widgets = []
+            full.selection = .activity
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             try await homeShot("activity-small", size: small)

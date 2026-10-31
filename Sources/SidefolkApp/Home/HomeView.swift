@@ -274,7 +274,7 @@ private struct HomeSidebar: View {
     }
 
     private func collectionRow(_ c: NotebookCollection) -> some View {
-        Label { Text(NotebookCollections.shownName(c)) } icon: { CollectionIcon(collection: c) }
+        Label { Text(NotebookCollections.shownName(c)) } icon: { CollectionIcon(collection: c, nav: true) }
             .badge(notebook.counts[c.id] ?? 0)
             .tag(HomeSelection.collection(c.id))
             .help(c.kind == .profile ? Text("Sidefolk keeps these in mind in every conversation.") : Text(verbatim: c.name))
@@ -294,7 +294,7 @@ private struct HomeSidebar: View {
     }
 
     private func icon(_ name: String, _ color: Color) -> some View {
-        Image(systemName: name).foregroundStyle(color)
+        NavIcon(symbol: name, color: color)
     }
 
 }

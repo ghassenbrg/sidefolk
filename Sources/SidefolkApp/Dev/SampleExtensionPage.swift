@@ -6,7 +6,8 @@ import SidefolkCore
 /// for extension pages (D62) without running the extension.
 enum SampleExtensionPage {
     static let info = ExtensionPageInfo(extensionId: "dev.sidefolk.system-vitals-plus", extensionName: "System Vitals+", page: "mac",
-                                        title: "Your Mac", symbol: "gauge.with.dots.needle.67percent", refresh: 3, history: true, widget: true)
+                                        title: "Your Mac", symbol: "gauge.with.dots.needle.67percent", refresh: 3, history: true, widget: true,
+                                        iconPath: FixtureServices.addonIcon("system-vitals-plus"))
 
     static let json = #"""
     {"summary": {"title": "Your Mac is doing fine", "detail": "CPU 18% · Memory 62% · 214 GB free · Battery 84%", "tone": "good", "symbol": "checkmark.seal.fill"},
@@ -113,7 +114,8 @@ enum SampleExtensionPage {
     }
 
     static let awakeInfo = ExtensionPageInfo(extensionId: "dev.sidefolk.keep-awake", extensionName: "Keep Awake", page: "awake", title: "Keep Awake",
-                                             symbol: "cup.and.saucer", refresh: 5, widget: true, needsAccessibility: true)
+                                             symbol: "cup.and.saucer", refresh: 5, widget: true,
+                                             iconPath: FixtureServices.addonIcon("keep-awake"), needsAccessibility: true)
 
     /// Keep Awake's tile, its main switch on it (D67).
     static func awakeWidget() -> ExtensionWidget {
@@ -121,6 +123,20 @@ enum SampleExtensionPage {
             .summary?.control
         return ExtensionWidget(info: awakeInfo, summary: ExtensionPage.Summary(title: "Awake until 18:00", detail: "1 h 25 min left · Screen on",
                                                                                tone: .good, symbol: "cup.and.saucer.fill", control: control), at: Date())
+    }
+
+    static let clipboardInfo = ExtensionPageInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", page: "clipboard",
+                                                 title: "Clipboard", symbol: "doc.on.clipboard", refresh: 3,
+                                                 iconPath: FixtureServices.addonIcon("clipboard"), needsAccessibility: true, tagline: "Everything you copy, a shortcut away")
+
+    /// Home with three extension pages, Keep Awake's switch on, for the sidebar and All Extensions (D67).
+    @MainActor static func showPages(in pages: ExtensionPagesModel) {
+        var mac = info
+        mac.extensionName = "Your Mac"
+        mac.tagline = "This Mac, live: charts, a Today tile and heads-ups"
+        var awake = awakeInfo
+        awake.tagline = "Your Mac awake and you active, for as long as you say"
+        pages.showSample([clipboardInfo, awake, mac], summaries: [awake.id: awakeWidget().summary!, mac.id: widget().summary!])
     }
 
     static func widget() -> ExtensionWidget {

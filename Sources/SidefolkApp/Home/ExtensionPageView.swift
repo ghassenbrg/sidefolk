@@ -61,17 +61,14 @@ struct ExtensionPageView: View {
     }
 }
 
-/// The extension's icon, or its page's symbol when it has none.
+/// The extension's icon, or its page's symbol when it has none, in the shared rounded badge.
 struct PageIcon: View {
     var info: ExtensionPageInfo
     var size: CGFloat
 
     var body: some View {
-        if let path = info.iconPath, let image = NSImage(contentsOfFile: path) {
-            Image(nsImage: image).resizable().interpolation(.high).frame(width: size, height: size)
-        } else {
-            IconTile(symbol: info.symbol ?? "puzzlepiece.extension", folk: "byte", size: size)
-        }
+        ExtensionBadge(look: ExtensionLook(name: info.extensionName, iconPath: info.iconPath, folk: "byte"), size: size,
+                       symbol: info.symbol ?? "puzzlepiece.extension")
     }
 }
 

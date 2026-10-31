@@ -25,7 +25,7 @@ struct HomeRail: View {
             ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
                 let selected = (model.selection ?? .now).isPlace(place)
                 Button { model.go(to: place) } label: {
-                    Image(systemName: place.symbol).font(.system(size: 15, weight: .medium))
+                    railIcon(place.symbol, place.navColor)
                         .frame(width: 36, height: 32)
                         .foregroundStyle(selected ? Theme.ink : Theme.inkMuted)
                         .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
@@ -48,7 +48,13 @@ struct HomeRail: View {
                 ForEach(model.pages.shown + [ExtensionPagesModel.hubInfo]) { p in
                     let selected = model.selection == .page(p.id)
                     Button { model.selection = .page(p.id) } label: {
-                        Image(systemName: p.symbol ?? "puzzlepiece.extension").font(.system(size: 15, weight: .medium))
+                        Group {
+                            if colorful, p.id != ExtensionPagesModel.hub {
+                                PageNavIcon(info: p, size: 24)
+                            } else {
+                                railIcon(p.symbol ?? "puzzlepiece.extension", Theme.folkColor("byte"))
+                            }
+                        }
                             .frame(width: 36, height: 32)
                             .foregroundStyle(selected ? Theme.ink : Theme.inkMuted)
                             .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
@@ -72,6 +78,17 @@ struct HomeRail: View {
         .frame(width: 56)
         .frame(maxHeight: .infinity)
         .background(Theme.surface)
+    }
+
+    private var colorful: Bool { ThemeStore.shared.icons == .colorful }
+
+    /// A glyph, or a white glyph on its colour's tile when the icons are colorful (D67).
+    @ViewBuilder private func railIcon(_ symbol: String, _ color: Color) -> some View {
+        if colorful {
+            NavIcon(symbol: symbol.hasSuffix(".fill") ? symbol : symbol + ".fill", color: color, size: 24)
+        } else {
+            Image(systemName: symbol).font(.system(size: 15, weight: .medium))
+        }
     }
 }
 
@@ -195,7 +212,11 @@ struct PillTabs: View {
                 let selected = (model.selection ?? .now).isPlace(place)
                 Button { model.go(to: place) } label: {
                     HStack(spacing: 5) {
-                        Image(systemName: place.symbol)
+                        if ThemeStore.shared.icons == .colorful {
+                            NavIcon(symbol: place.symbol + ".fill", color: place.navColor, size: 18)
+                        } else {
+                            Image(systemName: place.symbol)
+                        }
                         Text(place.title)
                         if place == .now, model.now.needsYouCount > 0 {
                             Text(model.now.needsYouCount.formatted()).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.onDanger)
@@ -212,13 +233,17 @@ struct PillTabs: View {
                 .help(Text("\(Text(place.title)) (⌘\(i + 1))", comment: "A place, then its shortcut"))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
-            // Extensions' pages (D62) after the places, as the person arranged them, then All Extensions (D67).
+            // Extensions' pages (D62) after the places, as the person arranged them, then All Extensions (D67): by their icon
+            // alone, so the bar still fits the toolbar with a few of them.
             ForEach(model.pages.list.isEmpty ? [] : model.pages.shown + [ExtensionPagesModel.hubInfo]) { p in
                 let selected = model.selection == .page(p.id)
                 Button { model.selection = .page(p.id) } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: p.symbol ?? "puzzlepiece.extension")
-                        Text(verbatim: p.title)
+                    Group {
+                        if ThemeStore.shared.icons == .colorful, p.id != ExtensionPagesModel.hub {
+                            PageNavIcon(info: p, size: 18)
+                        } else {
+                            Image(systemName: p.symbol ?? "puzzlepiece.extension")
+                        }
                     }
                     .font(Theme.Font.captionStrong)
                     .foregroundStyle(selected ? Theme.ink : Theme.inkMuted)
@@ -227,6 +252,8 @@ struct PillTabs: View {
                     .shadow(color: selected ? .black.opacity(0.08) : .clear, radius: 3, y: 1)
                 }
                 .buttonStyle(.plain)
+                .help(Text(verbatim: p.title))
+                .accessibilityLabel(Text(verbatim: p.title))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
@@ -317,9 +344,10 @@ struct RibbonTabs: View {
                 .accessibilityLabel(Text(place.title))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
-            // Extensions' pages (D62), a ribbon each, after the places, as arranged, then All Extensions (D67).
-            ForEach(model.pages.list.isEmpty ? [] : model.pages.shown + [ExtensionPagesModel.hubInfo]) { p in
-                let selected = model.selection == .page(p.id)
+            // Extensions (D62, D67): one ribbon, All Extensions, which opens each page; a ribbon per page would run off
+            // the window's edge with a few of them.
+            ForEach(model.pages.list.isEmpty ? [] : [ExtensionPagesModel.hubInfo]) { p in
+                let selected: Bool = if case .page = model.selection { true } else { false }
                 Button { model.selection = .page(p.id) } label: {
                     Text(verbatim: p.title)
                         .font(Theme.Font.captionStrong)
@@ -352,5 +380,18 @@ struct RibbonTabs: View {
     /// The ribbons' colours, Today's first: the theme's own, then the app's quiet ones.
     static func tint(_ i: Int) -> Color {
         [Theme.accent, Theme.success, Theme.link, Theme.sun][i % 4]
+    }
+}
+
+extension HomeSelection {
+    /// A place's colour in the navigation, as the sidebar draws it.
+    var navColor: Color {
+        switch self {
+        case .now: Theme.sun
+        case .collection, .trash: Theme.coral
+        case .conversations: Theme.aqua
+        case .activity: Theme.folkColor("guard")
+        case .page: Theme.folkColor("byte")
+        }
     }
 }

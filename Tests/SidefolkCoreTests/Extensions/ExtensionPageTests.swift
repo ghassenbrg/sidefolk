@@ -103,6 +103,20 @@ struct ExtensionPageTests {
         }
     }
 
+    /// A summary may carry the extension's main switch or button (D67); anything else there is left out.
+    @Test func aSummaryCarriesItsMainSwitch() throws {
+        let page = try ExtensionPage.parse(["summary": ["title": "Awake", "control": ["type": "switch", "label": "Keep awake", "on": true,
+                                                                                      "tool": "keep_awake"]]])
+        let control = try #require(page.summary?.control)
+        #expect(control.kind == .toggle(on: true) && control.tool == "keep_awake")
+        #expect(control.input(switchedTo: false) == ["on": false])
+        let button = try ExtensionPage.parse(["summary": ["title": "x", "control": ["type": "button", "label": "Stop", "tool": "stop"]]])
+        #expect(button.summary?.control?.kind == .button(.secondary))
+        for wrong: JSONValue in [["type": "gauge", "label": "CPU", "value": "1%"], ["type": "switch", "label": "x", "tool": "Bad Name"], "on"] {
+            #expect(try ExtensionPage.parse(["summary": ["title": "x", "control": wrong]]).summary?.control == nil, "\(wrong)")
+        }
+    }
+
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("system-vitals-plus"), ExtFixtures.noAddons))
     func systemVitalsPlusDrawsItsPageInTheSandbox() async throws {
         let h = try HostEnv()

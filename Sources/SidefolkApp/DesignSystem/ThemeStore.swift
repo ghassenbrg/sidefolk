@@ -13,6 +13,18 @@ final class ThemeStore: Sendable {
 
     @ObservationIgnored private let state = Mutex(ThemeStyle(.harbor))
     @ObservationIgnored private let folderState = Mutex<ThemeReport?>(nil)
+    @ObservationIgnored private let iconsState = Mutex<ThemeLayout.Icons?>(nil)
+
+    /// Home's navigation icons (D67): the person's choice in Settings › General, else the theme's.
+    var icons: ThemeLayout.Icons {
+        access(keyPath: \.icons)
+        return iconsState.withLock { $0 } ?? style.tokens.layout.icons
+    }
+
+    func setIcons(_ choice: ThemeLayout.Icons?) {
+        guard iconsState.withLock({ $0 }) != choice else { return }
+        withMutation(keyPath: \.icons) { iconsState.withLock { $0 = choice } }
+    }
 
     var style: ThemeStyle {
         access(keyPath: \.style)

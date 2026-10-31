@@ -64,17 +64,24 @@ public struct ThemeLayout: Sendable, Equatable {
         public var holdsQueue: Bool { blocks.contains { $0.kind == .queue || ($0.kind == .companion && $0.style == "stage") } }
     }
 
+    /// How Home's navigation draws its icons (D67): `simple`, the glyph in its colour; `colorful`, a white glyph on a
+    /// rounded tile of that colour, and each extension page with its extension's own icon. The person may override it
+    /// in Settings › General.
+    public enum Icons: String, Sendable, Equatable, Codable, CaseIterable { case simple, colorful }
+
     public var navigation: Navigation
     public var nook: NookPlace
+    public var icons: Icons
     /// Today, top to bottom; a row's columns sit side by side when the window has room, else one under the other.
     public var today: [[Column]]
     public var activity: Activity
     public var editor: Editor
 
-    public init(navigation: Navigation = .sidebar, nook: NookPlace = .top, today: [[Column]], activity: Activity = .table,
+    public init(navigation: Navigation = .sidebar, nook: NookPlace = .top, icons: Icons = .simple, today: [[Column]], activity: Activity = .table,
                 editor: Editor = .rich) {
         self.navigation = navigation
         self.nook = nook
+        self.icons = icons
         self.today = today
         self.activity = activity
         self.editor = editor
@@ -83,6 +90,7 @@ public struct ThemeLayout: Sendable, Equatable {
     /// The choices the app draws today; a theme naming another gets the first, and the check says so.
     public static let drawnNavigation: [Navigation] = [.sidebar, .rail, .pills, .ribbons]
     public static let drawnNook: [NookPlace] = [.top, .foot, .none]
+    public static let drawnIcons: [Icons] = [.simple, .colorful]
     public static let drawnActivity: [Activity] = [.table, .log, .diary]
     public static let drawnEditor: [Editor] = [.rich, .markdown]
     /// Most rows and columns a layout may have: more would be a page nobody can take in.
@@ -119,9 +127,9 @@ extension ThemeLayout {
          Column([Block(.watching, "signals"), Block(.day, "compact")])],
     ], activity: .log, editor: .markdown)
 
-    /// Marshmallow's: the companion big on its stage, saying what needs you; the day as stickers, watches as round badges,
+    /// Marshmallow's: colourful icons; the companion big on its stage, saying what needs you; the day as stickers, watches as round badges,
     /// helpers and what was jotted today beside it.
-    public static let stage = ThemeLayout(navigation: .pills, nook: .none, today: [
+    public static let stage = ThemeLayout(navigation: .pills, nook: .none, icons: .colorful, today: [
         [Column(width: 1, [Block(.companion, "stage")]),
          Column(width: 1.15, [Block(.day, "stickers"), Block(.watching, "badges"), Block(.agents, "helpers"), Block(.notes, "chips")])],
     ])

@@ -53,6 +53,14 @@ final class ExtensionPagesModel {
 
     func info(_ id: String) -> ExtensionPageInfo? { list.first { $0.id == id } }
 
+    #if DEBUG
+    /// Pages and what they said, without extensions behind them: the UI snapshots' sidebar and All Extensions.
+    func showSample(_ pages: [ExtensionPageInfo], summaries: [String: ExtensionPage.Summary]) {
+        list = pages
+        self.summaries = summaries
+    }
+    #endif
+
     /// The page's model, kept while Home is open so its charts and window choice survive switching away.
     func model(_ info: ExtensionPageInfo) -> ExtensionPageModel {
         if let m = models[info.id] { return m }
@@ -84,7 +92,9 @@ final class ExtensionPagesModel {
     /// the Extensions page. Nothing is read here that wouldn't be read in the background.
     func refreshSummaries() async {
         let host = services.runtime.extensions
-        var out: [String: ExtensionPage.Summary] = [:]
+        // What a page said stays until it says something new (a flip may know sooner than the host's last reading).
+        let ids = Set(list.map(\.id))
+        var out = summaries.filter { ids.contains($0.key) }
         for info in list where info.widget || info.history {
             if let latest = await host.latestPage(extensionId: info.extensionId, page: info.page), let summary = latest.page.summary {
                 out[info.id] = summary
