@@ -69,14 +69,11 @@ struct CalendarView: View {
                         .help(Text(nextHelp)).accessibilityLabel(Text(nextHelp))
                 }
                 .buttonStyle(.sf(.plain))
-                Picker("View", selection: $model.mode) {
-                    Text("Month").tag(CalendarModel.Mode.month)
-                    Text("Week").tag(CalendarModel.Mode.week)
-                    Text("Day", comment: "The Calendar's list of days, from one day").tag(CalendarModel.Mode.day)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                SegmentedPicker("View", selection: $model.mode, segments: [
+                    .init(CalendarModel.Mode.month, "Month"),
+                    .init(CalendarModel.Mode.week, "Week"),
+                    .init(CalendarModel.Mode.day, Text("Day", comment: "The Calendar's list of days, from one day")),
+                ])
             }
             .fixedSize()
         }

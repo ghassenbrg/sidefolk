@@ -230,6 +230,22 @@ import UniformTypeIdentifiers
         #expect(messages(report).contains("light.warning"))
     }
 
+    /// A theme made before Lantern (D84) has no well or lights: it keeps its own sunken surface for wells and gets
+    /// Harbor's lights, and nothing is said, since nothing is wrong.
+    @Test func aThemeWithoutTheLanternRolesKeepsItsLook() throws {
+        var file = ThemeFile(.harbor, id: "com.you.older", name: "Older")
+        file.colors?["light"]?["surfaceSunken"] = "#EFEAE0"
+        for appearance in ["light", "dark"] {
+            for role in ThemeTokens.Colors.optionalRoles { file.colors?[appearance]?[role] = nil }
+        }
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(report.isUsable && report.problems.isEmpty, "\(messages(report))")
+        #expect(report.tokens.colors.well.light == 0xEFEAE0)
+        #expect(report.tokens.colors.well.dark == ThemeTokens.harbor.colors.surfaceSunken.dark)
+        #expect(report.tokens.colors.glow == ThemeTokens.harbor.colors.glow)
+    }
+
     /// The themes Sidefolk ships (Resources/Themes) all pass their own check, contrast included, and come in order.
     @Test func theBuiltInsPassTheirCheck() throws {
         let resources = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

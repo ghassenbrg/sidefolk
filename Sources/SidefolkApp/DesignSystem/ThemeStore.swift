@@ -59,13 +59,17 @@ struct ThemeStyle: Sendable {
     var tokens: ThemeTokens { theme.tokens }
     let ink, inkMuted, inkFaint, surface, surfaceSunken, surfaceRaised, line: Color
     let accent, onAccent, accentSoft, link, danger, dangerSoft, onDanger, success, successSoft, warning, warningSoft, onWarning: Color
+    let well, glow, waitGlow: Color
     /// Spacing after the theme's density.
     let space: ThemeTokens.Space
     let fonts: Fonts
     /// The theme's own pictures, decoded once: paper grain, the nook's backdrop, the empty-page art.
     let grain, page, pageDark, backdrop, backdropDark, emptyArt, artTile: CGImage?
 
+    /// Lantern's type scale (D84, docs/DESIGN.md). The theme's face dresses titles, the greeting, state words and big
+    /// numbers; everything read, the companion's words included, is the system face, at the theme's scale.
     struct Fonts: Sendable {
+        let display, title1, title2, headline, callout, stateWord, number, mono: Font
         let bubble, bubbleTitle, input, hint, hero, title, heading, body, bodyStrong, caption, captionStrong, eyebrow: Font
 
         init(_ type: ThemeTokens.Typography) {
@@ -74,19 +78,29 @@ struct ThemeStyle: Sendable {
             case .rounded: .rounded
             case .serif: .serif
             }
+            // Section heads stay in the reading face unless the theme's face is a serif, which is its whole flavour.
+            let heads: Font.Design = type.display == .serif ? .serif : .default
             let k = type.scale
-            bubble = .system(size: 14 * k, weight: .medium, design: d)
-            bubbleTitle = .system(size: 15 * k, weight: .semibold, design: d)
-            input = .system(size: 16 * k, weight: .regular, design: d)
-            hint = .system(size: 11.5 * k, weight: .medium, design: d)
-            hero = .system(size: 30 * k, weight: .bold, design: d)
-            title = .system(size: 22 * k, weight: .bold, design: d)
+            display = .system(size: 30 * k, weight: .semibold, design: d)
+            title1 = .system(size: 22 * k, weight: .semibold, design: d)
+            title2 = .system(size: 17 * k, weight: .semibold, design: heads)
+            headline = .system(size: 14 * k, weight: .semibold)
+            callout = .system(size: 12 * k)
+            stateWord = .system(size: 26 * k, weight: .semibold, design: d)
+            number = .system(size: 26 * k, weight: .medium, design: d).monospacedDigit()
+            mono = .system(size: 12 * k, design: .monospaced)
+            bubble = .system(size: 14 * k)
+            bubbleTitle = .system(size: 15 * k, weight: .semibold)
+            input = .system(size: 17 * k)
+            hint = .system(size: 11.5 * k, weight: .medium)
+            hero = display
+            title = title1
             heading = .system(size: 15 * k, weight: .semibold, design: d)
             body = .system(size: 13 * k)
             bodyStrong = .system(size: 13 * k, weight: .semibold)
             caption = .system(size: 11.5 * k)
             captionStrong = .system(size: 11.5 * k, weight: .semibold)
-            eyebrow = .system(size: 10.5 * k, weight: .semibold, design: d)
+            eyebrow = .system(size: 11 * k, weight: .semibold)
         }
     }
 
@@ -113,6 +127,9 @@ struct ThemeStyle: Sendable {
         warning = Color(c.warning)
         warningSoft = Color(c.warningSoft)
         onWarning = Color(c.onWarning)
+        well = Color(c.well)
+        glow = Color(c.glow)
+        waitGlow = Color(c.waitGlow)
         // Whole and half points, so a compact or relaxed theme still lands on the pixel grid.
         let f = tokens.type.density.factor, s = tokens.space
         func scaled(_ v: Double) -> Double { (v * f * 2).rounded() / 2 }

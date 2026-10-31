@@ -15,15 +15,11 @@ struct CompanionPageHeader: View {
     var body: some View {
         @Bindable var chooser = model.chooser
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            Picker("Page", selection: $chooser.page) {
-                Text(String(localized: "companions.yours", defaultValue: "Yours",
-                            comment: "Settings › Companion: the page of companions on this Mac, to wear (several companions)"))
-                    .tag(CompanionChooserModel.Page.yours)
-                Text("Gallery", comment: "Settings › Companion: companions to download from the add-on gallery").tag(CompanionChooserModel.Page.gallery)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
+            SegmentedPicker("Page", selection: $chooser.page, segments: [
+                .init(CompanionChooserModel.Page.yours, Text(String(localized: "companions.yours", defaultValue: "Yours",
+                                                                    comment: "Settings › Companion: the page of companions on this Mac, to wear (several companions)"))),
+                .init(CompanionChooserModel.Page.gallery, Text("Gallery", comment: "Settings › Companion: companions to download from the add-on gallery")),
+            ])
             if chooser.page == .gallery, model.gallery.available, !chooser.galleryEntries.isEmpty {
                 SearchBox(text: $chooser.browse.text, prompt: Text("Search companions in the gallery"), focus: focus, focusValue: .search)
                 filters
@@ -37,14 +33,11 @@ struct CompanionPageHeader: View {
         let entries = chooser.galleryEntries
         return HStack(spacing: Theme.Space.m) {
             if CompanionBrowse.offersLooks(entries) {
-                Picker("Look", selection: $chooser.browse.look) {
-                    Text("All", comment: "Gallery filter: companions in any look").tag(CompanionBrowse.Look.any)
-                    Text(verbatim: "3D").tag(CompanionBrowse.Look.threeD)
-                    Text(verbatim: "2D").tag(CompanionBrowse.Look.twoD)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                SegmentedPicker("Look", selection: $chooser.browse.look, segments: [
+                    .init(CompanionBrowse.Look.any, Text("All", comment: "Gallery filter: companions in any look")),
+                    .init(CompanionBrowse.Look.threeD, verbatim: "3D"),
+                    .init(CompanionBrowse.Look.twoD, verbatim: "2D"),
+                ], small: true)
                 .help(Text("Only companions that come in 3D, or in 2D", comment: "The look filter in the companion gallery"))
             }
             if CompanionBrowse.offersMakers(entries) {

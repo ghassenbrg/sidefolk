@@ -24,25 +24,19 @@ struct GeneralSettingsView: View {
                 }
                 LanguageRow()
                 SettingsRow(title: "Appearance", detail: "Light or dark windows, or the same as your Mac.") {
-                    Picker("Appearance", selection: Binding(get: { model.settings.appearance }, set: { a in model.update { $0.appearance = a } })) {
-                        Text("Same as Mac").tag(AppAppearance.system)
-                        Text("Light").tag(AppAppearance.light)
-                        Text("Dark").tag(AppAppearance.dark)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
+                    SegmentedPicker("Appearance", selection: Binding(get: { model.settings.appearance }, set: { a in model.update { $0.appearance = a } }),
+                                    segments: [.init(AppAppearance.system, "Same as Mac", symbol: "macwindow"),
+                                               .init(AppAppearance.light, "Light", symbol: "sun.max"),
+                                               .init(AppAppearance.dark, "Dark", symbol: "moon")])
                 }
                 // The theme says simple or colorful; the person may prefer the other (D67).
                 SettingsRow(title: "Icons in Home", detail: "Simple glyphs, or colourful tiles with each extension's own icon.") {
-                    Picker("Icons in Home", selection: Binding(get: { model.settings.sidebarIcons }, set: { i in model.update { $0.sidebarIcons = i } })) {
-                        Text("As the theme", comment: "Settings › General › Icons in Home: follow the theme").tag(ThemeLayout.Icons?.none)
-                        Text("Simple", comment: "Settings › General › Icons in Home: glyphs").tag(ThemeLayout.Icons?.some(.simple))
-                        Text("Colourful", comment: "Settings › General › Icons in Home: tiles and extensions' own icons").tag(ThemeLayout.Icons?.some(.colorful))
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
+                    SegmentedPicker("Icons in Home", selection: Binding(get: { model.settings.sidebarIcons }, set: { i in model.update { $0.sidebarIcons = i } }),
+                                    segments: [
+                        .init(ThemeLayout.Icons?.none, Text("As the theme", comment: "Settings › General › Icons in Home: follow the theme")),
+                        .init(ThemeLayout.Icons?.some(.simple), Text("Simple", comment: "Settings › General › Icons in Home: glyphs")),
+                        .init(ThemeLayout.Icons?.some(.colorful), Text("Colourful", comment: "Settings › General › Icons in Home: tiles and extensions' own icons")),
+                    ])
                 }
             }
 

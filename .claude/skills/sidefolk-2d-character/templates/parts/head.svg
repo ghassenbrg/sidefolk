@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- The head on the 200 x 200 canvas, y down, measured off the canvas target: everything painted on the head
+       (here a helmet, two headphone cups and two ears), so its bounds place the painting where it belongs. -->
+  <ellipse cx="100" cy="80" rx="50" ry="38"/>
+  <ellipse cx="47" cy="86" rx="11" ry="20"/>
+  <ellipse cx="153" cy="86" rx="11" ry="20"/>
+  <path d="M 56 64 L 54 29 L 84 47 Z"/>
+  <path d="M 144 64 L 146 29 L 116 47 Z"/>
+</svg>

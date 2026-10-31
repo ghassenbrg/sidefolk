@@ -1,5 +1,46 @@
 # Status
 
+- **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
+  in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen
+  face in lights of its own (`face.screen`, `glow`, `mouthGlow`) and face colours and sizes. Settings › Companion
+  shows its Look switch (3D first, kept per companion), its tile says 2D or 3D, and a form that doesn't load or leaves
+  its window keeps the folder from being added. All new strings are in the ten languages. *Checked:*
+  `CustomCompanionTests`, `LocalCompanionsTests`, `CompanionLibraryTests`; `sidefolk-render --check-companion` on a
+  draft form; a debug app (build 582) switching a folder companion between 3D and 2D on the desktop and in Settings,
+  with placeholder paintings, then with a real painted form (2026-11-01: a private companion's, made by
+  `companions-2d/README.md`'s steps outside the repositories; filmed, and live in the app). *Next:* none in the
+  repositories has one yet; the founder decides whether the gallery's companions get folder-style 2D forms too.
+
+- **3D engine options for big-headed and screen-faced companions (2026-10-31):** the screen face gained `mouthGlow`
+  (the mouth in a light of its own), `layout.mouth.scale` and `softGlow` (halos blurred with a shadow instead of
+  three stepped passes that read as rings up close); petting leans by `petLean` (a big head leaned out of its
+  window). All default to the old behaviour: Spark is unchanged (checked in the playground). `companions-3d/serve.py`
+  queues 128 connections (the default 5 reset module fetches). *Checked:* a companion added from a folder using
+  them, in the playground and a debug app; every move, posture and state kept inside the app's square framing.
+
+- **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
+  revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
+  Notebook; the Gallery in Home; half circle = Focus, moon = Quiet; Full access with an end time; Latin companion names
+  in Arabic; only what exists is shown). Built: Harbor is Lantern (navy ink, neutral canvas and cards, the deep aqua
+  action colour #0B7783 / #3CD6DB with its label at 5.3 / 8.8:1), new optional theme roles `well`, `glow`, `waitGlow`
+  (older themes keep their look, no warning), Lantern's type scale, sizes, depth, glass, motion, folk accents and the
+  Focus/Quiet symbols; shared components (buttons with sizes and states, chips with their tone's ink, what-it-touches
+  chips, `SegmentedPicker`, `ListRow`, status badges, counts, state tiles, pins, folk avatars, field chrome and the
+  search, the Say bar's shell with key hints and the understanding row, the Sidecard surface with its tail, whisper,
+  card, slip strip and stack, the light pool and shoulder badge), all listed with their files in docs/DESIGN.md.
+  Applied app-wide where it was a direct swap: every button (SFButtonStyle), every segmented picker but the companion
+  stage's, sentence-case eyebrows, card depth, the search and CommitField as wells, approval risk tags as chips.
+  *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on a clean add-ons clone at its origin/main (1581 core and 36
+  character tests pass; the sibling add-ons checkout is 23 commits behind with a stray dist/, so its gallery, words and
+  game tests fail there), the new `design-system-foundations|controls|sidecard` UI snapshots light and
+  dark in English, German and Arabic read against the mockups' design-system boards, and Today, Settings › General, the
+  Ask panel and the install sheet read in light and dark. *Half done:* 16 text fields still `.roundedBorder`; the
+  theme-only Today blocks (console, planner) keep capitals; the layout keys of D64 still read (retire in phase 3).
+  *Next:* phase 2, the desktop: place `LightPool` and `ShoulderBadge` under the companion (CompanionWindow), turn bubbles
+  into `Whisper`/`SidecardCard`, the Ask panel into the Sidecard's Ask size on `SidecardSurface`, the stack, the
+  permission slip (`SidecardStrip` calm/firm, `TouchChip(Touch(request.effect))`, ⌘Return on firm), pins as
+  `PinCapsule`. Then phase 3 (Home) and 4 (Settings) on docs/DESIGN.md.
+
 - **Miraya screen redesign and audio routing:** the approved responsive screen covers discovery, source selection, pairing, sharing and pause, with settings below the main choices. Mac only, TV only and Mac and TV are saved sound destinations; TV only uses a separately disclosed host-owned output-mute lease with crash recovery. *Checked:* Sidefolk and Miraya suites, sandboxed installation and destination choices, light/dark wide/narrow snapshots, an isolated Android TV emulator pairing with matching codes, and actual Mac output mute and restoration on closure and parent death. All nine localizations are complete; the unsigned gallery build and checks pass. *Still to verify:* live screen and sound playback with a physical TV. *Next:* exercise screen, window and region sharing and all three sound destinations on that setup; Released (D81): merged with D76 (its 14 new sentences in all ten languages), Sidefolk snapshot 593, then Miraya `1.0.0-snapshot.4` in the gallery (kept at 1.0.0, the founder's call). A Sidefolk before 593 refuses that snapshot (`output_mute` unknown).
 
 - **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved
@@ -30,6 +71,11 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **An add-on version can need a Sidefolk snapshot (D83):** the founder's 590 showed Miraya snapshot.4's update failing
+  on `output_mute`. Catalog minimums may name a snapshot (`AddonCatalog.fits`, `SidefolkVersion.running`); the validator
+  reads `>=0.1.0-snapshot.N`; an install blocked only by unknown keys or the minimum says to update Sidefolk. Gallery:
+  `addon.json` `minimum_sidefolk` (Miraya: 593). *Checked:* `make test` on a clean add-ons checkout; new tests
+  `aSnapshotMinimumLeavesOlderSnapshotsOut`, `keysFromANewerSidefolkAskForAnUpdate`, snapshot requirements.
 - **Copies from before the renumbering get the gallery's version (D80):** the founder's Mac kept Playtime 1.2.0
   (and git, currency, dev-toolbox, qr-codes 1.1.0, archives, feeds, images, pdf 1.0.0) from before D65, never offered
   `1.0.0-snapshot.<n>`, so snapshot 588's games never arrived. `AddonCatalog.offers(_:over:on:)` offers the gallery's

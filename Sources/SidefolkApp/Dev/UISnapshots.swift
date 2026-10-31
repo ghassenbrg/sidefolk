@@ -404,6 +404,11 @@ enum UISnapshots {
                 }
             }
 
+            // Lantern's design-system sheet (D84): tokens and shared components, the reference for every screen.
+            for sheet in DesignSystemSheet.Page.allCases {
+                try await page("design-system-\(sheet.rawValue)", DesignSystemSheet(page: sheet), width: 1600)
+            }
+
             // Sheets.
             // Where a time is set (WhenField): typed, read back, picked; and the sheets that use it.
             try await page("panel-when-field", WhenFieldSamples(parser: full.now.whenParser), width: 380)

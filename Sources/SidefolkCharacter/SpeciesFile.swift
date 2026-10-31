@@ -19,6 +19,8 @@ struct SpeciesFile: Decodable {
     var gear: [GearFile]?
     var collar: CollarFile?
     var marks: [String: Point]?
+    /// Paintings drawn over the parts' outlines (D85): `head`, `torso`, `armL`/`armR`, `footL`/`footR`.
+    var paint: [String: PaintFile]?
 
     struct BodyFile: Decodable {
         var colors: [String]
@@ -27,6 +29,10 @@ struct SpeciesFile: Decodable {
         var head: ShapeFile?
         var neck: Point
         var scale: Double?
+        /// "flat", the 2D cartoon of the gallery's 2D forms (D59), or "soft" (the default).
+        var look: String?
+        /// A flat body's outline colour.
+        var line: String?
     }
 
     struct FeetFile: Decodable {
@@ -47,6 +53,27 @@ struct SpeciesFile: Decodable {
         var scale: Double?
         var cheeks: Bool?
         var temper: String?
+        /// A dark screen whose eyes and mouth are light (D85).
+        var screen: ScreenFile?
+        var glow: String?
+        var mouthGlow: String?
+        var ink: String?
+        var iris: String?
+        var eyeSize: Double?
+        var mouthSize: Double?
+    }
+
+    struct ScreenFile: Decodable {
+        var center: Point
+        var size: Point
+        var radius: Double?
+    }
+
+    struct PaintFile: Decodable {
+        var image: String
+        var nudge: Point?
+        var grow: Double?
+        var widen: Double?
     }
 
     struct NoseFile: Decodable {
@@ -134,17 +161,26 @@ struct SpeciesFile: Decodable {
                                                     "blob": .any, "path": .any, "part": .any])
     static let schema: Schema = .object([
         "format": .any, "sidefolk": .any, "id": .any, "name": .any, "description": .any, "author": .any,
-        "body": .object(["colors": .any, "edge": .any, "torso": shapeKeys, "head": shapeKeys, "neck": .any, "scale": .any]),
+        "body": .object(["colors": .any, "edge": .any, "torso": shapeKeys, "head": shapeKeys, "neck": .any, "scale": .any,
+                         "look": .any, "line": .any]),
         "feet": .object(["at": .any, "size": .any, "colors": .any]),
         "arms": .object(["shoulders": .any, "shape": shapeKeys]),
         "face": .object(["eyes": .any, "mouth": .any, "nose": .object(["center": .any, "size": .any, "color": .any]),
-                         "scale": .any, "cheeks": .any, "temper": .any]),
+                         "scale": .any, "cheeks": .any, "temper": .any,
+                         "screen": .object(["center": .any, "size": .any, "radius": .any]),
+                         "glow": .any, "mouthGlow": .any, "ink": .any, "iris": .any, "eyeSize": .any, "mouthSize": .any]),
         "ears": .list(.object(["part": .any, "base": .any, "angle": .any, "side": .any, "floppiness": .any])),
         "gear": .list(.object(["part": .any, "mount": .any])),
         "collar": .object(["center": .any, "halfWidth": .any, "sag": .any, "height": .any, "tail": .any]),
         "marks": .object(["zzz": .any, "dots": .any, "exclaim": .any, "question": .any, "sparkles": .any, "sweat": .any,
                           "waves": .any, "confetti": .any, "ticks": .any]),
+        "paint": .object(Dictionary(uniqueKeysWithValues: paintParts.map {
+            ($0, Schema.object(["image": .any, "nudge": .any, "grow": .any, "widen": .any]))
+        })),
     ])
+
+    /// The parts a painting may cover, as `Species.painted` names them.
+    static let paintParts = ["head", "torso", "armL", "armR", "footL", "footR"]
 
     indirect enum Schema: Sendable {
         case any
@@ -172,8 +208,8 @@ struct SpeciesFile: Decodable {
 
     // MARK: Resolving
 
-    /// Checks every value against its range and reads the parts, into plain values.
-    func resolve(part: (String) throws -> [PartShape]) throws -> CompanionBody {
+    /// Checks every value against its range and reads the parts and paintings, into plain values.
+    func resolve(part: (String) throws -> [PartShape], paint: (String) throws -> Data) throws -> CompanionBody {
         typealias Invalid = CustomCompanions.Invalid
         guard format == CustomCompanions.formatVersion else { throw Invalid("format must be \(CustomCompanions.formatVersion)") }
         if let sidefolk, sidefolk.range(of: #"^>=[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]{1,3})?$"#, options: .regularExpression) == nil {
@@ -239,6 +275,13 @@ struct SpeciesFile: Decodable {
         guard (ears ?? []).count <= 4 else { throw Invalid("ears: at most 4") }
         guard (gear ?? []).count <= 8 else { throw Invalid("gear: at most 8 pieces") }
         let temper = try Self.temper(face.temper ?? "calm")
+        guard ["flat", "soft"].contains(body.look ?? "soft") else { throw Invalid("body.look: flat or soft") }
+        let painting = self.paint ?? [:]
+        for (left, right) in [("armL", "armR"), ("footL", "footR")] where (painting[left] == nil) != (painting[right] == nil) {
+            throw Invalid("paint.\(left) and paint.\(right) come together")
+        }
+        if painting["head"] != nil, body.head == nil { throw Invalid("paint.head: the body has no head") }
+        guard painting.count <= 8 else { throw Invalid("paint: at most 8 paintings") }
 
         return CompanionBody(
             colors: try body.colors.enumerated().map { try color($1, "body.colors[\($0)]") },
@@ -286,6 +329,28 @@ struct SpeciesFile: Decodable {
             marks: try (marks ?? [:]).mapValues { p in
                 guard abs(p.x) <= 60, abs(p.y) <= 60 else { throw Invalid("marks: offsets are -60 to 60") }
                 return p.cg
+            },
+            flat: body.look == "flat",
+            line: try body.line.map { try color($0, "body.line") },
+            screen: try face.screen.map { screen in
+                let c = try point(screen.center, "face.screen.center"), z = try extent(screen.size, "face.screen.size")
+                return CompanionBody.Screen(rect: CGRect(x: c.x - z.width / 2, y: c.y - z.height / 2, width: z.width, height: z.height),
+                                            radius: try number(screen.radius, "face.screen.radius", 0...60, 12))
+            },
+            glow: try face.glow.map { try color($0, "face.glow") },
+            mouthGlow: try face.mouthGlow.map { try color($0, "face.mouthGlow") },
+            ink: try face.ink.map { try color($0, "face.ink") },
+            iris: try face.iris.map { try color($0, "face.iris") },
+            eyeSize: try number(face.eyeSize, "face.eyeSize", 0.5...3, 1),
+            mouthSize: try number(face.mouthSize, "face.mouthSize", 0.5...3, 1),
+            paint: try painting.mapValues { p in
+                CompanionBody.Paint(png: try paint(p.image),
+                                    nudge: try p.nudge.map { n in
+                                        guard abs(n.x) <= 40, abs(n.y) <= 40 else { throw Invalid("paint: nudges are -40 to 40") }
+                                        return n.cg
+                                    } ?? .zero,
+                                    grow: try number(p.grow, "paint.grow", 0.5...2, 1),
+                                    widen: try number(p.widen, "paint.widen", 0.5...2, 1))
             })
     }
 

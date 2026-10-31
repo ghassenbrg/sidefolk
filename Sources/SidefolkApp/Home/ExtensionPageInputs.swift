@@ -103,7 +103,7 @@ private struct PageChoiceRow: View {
         let options = ForEach(choice.options, id: \.value) { Text(ext: $0.label).tag($0.value) }
         Group {
             if choice.options.count <= 4 {
-                Picker(selection: binding) { options } label: { Text(ext: choice.label) }.pickerStyle(.segmented)
+                SegmentedPicker(Text(ext: choice.label), selection: binding, segments: choice.options.map { .init($0.value, Text(ext: $0.label)) })
             } else {
                 Picker(selection: binding) { options } label: { Text(ext: choice.label) }.pickerStyle(.menu)
             }

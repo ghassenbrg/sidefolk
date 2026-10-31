@@ -104,6 +104,11 @@ extension AppCoordinator: AppServices {
 
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
         let preview = await runtime.extensions.preview(folder: folder)
+        if preview.report.needsNewerSidefolk {
+            return .failure(UserFacingError("This version needs a newer Sidefolk.",
+                                            recovery: "Choose Check for Updates… in Sidefolk's menu, then try again.",
+                                            detail: preview.report.text.clipped(400)))
+        }
         guard let manifest = preview.report.manifest else {
             return .failure(UserFacingError(verbatim: String(localized: "That folder isn't a Sidefolk extension."), recovery: preview.report.text.clipped(400)))
         }

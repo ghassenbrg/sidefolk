@@ -1,7 +1,8 @@
 import Foundation
+import ImageIO
 import QuartzCore
 
-/// A companion made from data: a folder with `species.json` and optional `parts/*.svg`, drawn on a
+/// A companion made from data: a folder with `species.json` and optional `parts/*.svg` and `paint/*.png`, drawn on a
 /// soft rig like Mochi and the folks (docs/research/lively-companions.md, "Custom companions").
 /// Loading reads numbers, colours and shapes; nothing in the folder is ever run.
 public struct CustomCompanion: Equatable, Sendable, Identifiable {
@@ -36,6 +37,31 @@ struct CompanionBody: Equatable, Sendable {
     var gear: [Worn]
     var collar: CollarSpec?
     var marks: [String: CGPoint]
+    /// Drawn as a 2D cartoon with this outline (D59), and the rest of what D85 added: a screen face in lights of its
+    /// own, the face's colours and sizes, and paintings by part name.
+    var flat = false
+    var line: RGBValue?
+    var screen: Screen?
+    var glow: RGBValue?
+    var mouthGlow: RGBValue?
+    var ink: RGBValue?
+    var iris: RGBValue?
+    var eyeSize: CGFloat = 1
+    var mouthSize: CGFloat = 1
+    var paint: [String: Paint] = [:]
+
+    struct Screen: Equatable, Sendable {
+        var rect: CGRect
+        var radius: CGFloat
+    }
+
+    /// A PNG, checked to decode and to be no larger than `CustomCompanions.maxPaintSide`, fitted over its part.
+    struct Paint: Equatable, Sendable {
+        var png: Data
+        var nudge: CGPoint
+        var grow: CGFloat
+        var widen: CGFloat
+    }
 
     struct Ear: Equatable, Sendable {
         var shapes: [PartShape]
@@ -72,6 +98,8 @@ public enum CustomCompanions {
     nonisolated public static let formatVersion = 1
     static let maxJSON = 64 * 1024
     static let maxParts = 16
+    static let maxPaintBytes = 4 * 1024 * 1024
+    static let maxPaintSide = 2048
     /// Where people put their own companions under Sidefolk's home folder.
     public static func folder(home: URL) -> URL { home.appendingPathComponent("companions", isDirectory: true) }
 
@@ -126,8 +154,19 @@ public enum CustomCompanions {
                     throw Invalid("\(path): \(error)")
                 }
             }
-            let body = try spec.resolve(part: part)
-            if spec.id != folder.lastPathComponent, folder.lastPathComponent != "companion" {
+            func paint(_ path: String) throws -> Data {
+                guard path.range(of: #"^paint/[A-Za-z0-9._-]{1,64}\.png$"#, options: .regularExpression) != nil, !path.contains("..") else {
+                    throw Invalid("\(path): paintings are PNG files in the paint folder, like paint/head.png")
+                }
+                let data = try readFile(folder.appendingPathComponent(path), in: folder, limit: maxPaintBytes)
+                guard let image = decode(data) else { throw Invalid("\(path) isn't a PNG that can be read") }
+                guard image.width <= maxPaintSide, image.height <= maxPaintSide else {
+                    throw Invalid("\(path) is larger than \(maxPaintSide) pixels a side")
+                }
+                return data
+            }
+            let body = try spec.resolve(part: part, paint: paint)
+            if spec.id != folder.lastPathComponent, !["companion", "2d"].contains(folder.lastPathComponent) {
                 report.warnings.append("the folder is called \(folder.lastPathComponent) but the id is \(spec.id)")
             }
             let companion = CustomCompanion(id: spec.id, name: spec.name, author: spec.author, summary: spec.description, body: body)
@@ -180,6 +219,14 @@ public enum CustomCompanions {
 
     // MARK: Reading
 
+    /// A PNG's picture; nothing else is read as one.
+    nonisolated static func decode(_ png: Data) -> CGImage? {
+        guard png.starts(with: [0x89, 0x50, 0x4E, 0x47]),
+              let source = CGImageSourceCreateWithData(png as CFData, [kCGImageSourceTypeIdentifierHint: "public.png"] as CFDictionary),
+              CGImageSourceGetType(source) as String? == "public.png" else { return nil }
+        return CGImageSourceCreateImageAtIndex(source, 0, nil)
+    }
+
     struct Invalid: Error {
         let why: String
         init(_ why: String) { self.why = why }
@@ -228,10 +275,14 @@ extension Species {
     init(_ companion: CustomCompanion) {
         let b = companion.body
         let stops = b.colors.indices.map { CGFloat($0) / CGFloat(max(b.colors.count - 1, 1)) }
-        let shading = Shading(colors: b.colors.map(\.rgb), locations: stops, center: CGPoint(x: 0.34, y: 0.76),
-                              reach: CGSize(width: 0.98, height: 1.05))
-        let limbShading = Shading(colors: b.colors.map(\.rgb), locations: stops, center: CGPoint(x: 0.35, y: 0.7),
-                                  reach: CGSize(width: 0.9, height: 0.9))
+        // Flat: the first colour fills, the last is the hard shade (D59).
+        func flat(_ colors: [RGBValue]) -> Shading {
+            .flat(colors[0].rgb, shade: colors.count > 1 ? colors[colors.count - 1].rgb : nil, line: b.line?.rgb)
+        }
+        let shading = b.flat ? flat(b.colors) : Shading(colors: b.colors.map(\.rgb), locations: stops, center: CGPoint(x: 0.34, y: 0.76),
+                                                         reach: CGSize(width: 0.98, height: 1.05))
+        let limbShading = b.flat ? shading : Shading(colors: b.colors.map(\.rgb), locations: stops, center: CGPoint(x: 0.35, y: 0.7),
+                                                      reach: CGSize(width: 0.9, height: 0.9))
         let edge = b.edge?.rgb
         let torso = PathOp.path(b.torso), head = b.head.map { PathOp.path($0) }
         let feetRects = b.feet.map { CGRect(x: $0.x - b.foot.width / 2, y: $0.y - b.foot.height / 2, width: b.foot.width, height: b.foot.height) }
@@ -265,12 +316,18 @@ extension Species {
         for (name, offset) in b.marks { if let effect = Effect.named(name) { marks[effect] = offset } }
         self.init(
             shading: shading, edge: edge, torso: torso, head: head, neck: b.neck, feet: b.feet, foot: b.foot,
-            footShading: b.footColors.map { Shading(colors: $0.map(\.rgb), locations: stops) },
+            footShading: b.footColors.map { b.flat ? flat($0) : Shading(colors: $0.map(\.rgb), locations: stops) },
             shoulders: (b.shoulders[0], b.shoulders[1]),
             arm: ArmStyle(shape: PathOp.path(b.arm), shading: limbShading, edge: edge.map { ($0, 0.4) }),
-            face: SoftFace(kind: .ink, eyes: (b.eyes[0], b.eyes[1]), mouth: b.mouth, nose: b.nose, scale: b.faceScale, cheeks: b.cheeks,
-                           temper: b.temper, noseColor: b.noseColor?.rgb),
+            face: SoftFace(kind: b.screen.map { .screen($0.rect, radius: $0.radius) } ?? .ink, eyes: (b.eyes[0], b.eyes[1]),
+                           mouth: b.mouth, nose: b.nose, scale: b.faceScale, cheeks: b.cheeks, temper: b.temper,
+                           noseColor: b.noseColor?.rgb, iris: b.iris?.rgb, eyeSize: b.eyeSize, mouthSize: b.mouthSize,
+                           ink: b.ink?.rgb, glow: b.glow.map { Light($0.rgb) }, mouthGlow: b.mouthGlow.map { Light($0.rgb) }),
             appendages: ears, gear: gear, collar: collar, restingFrame: frame, markOffsets: marks, scale: b.scale)
+        guard !b.paint.isEmpty else { return }
+        let paint = b.paint
+        self = painted(image: { paint[$0].flatMap { CustomCompanions.decode($0.png) } },
+                       nudge: paint.mapValues(\.nudge), grow: paint.mapValues(\.grow), widen: paint.mapValues(\.widen))
     }
 
     /// Shapes of a part in canvas units: the body's own shading, the style colour, or their own colour.

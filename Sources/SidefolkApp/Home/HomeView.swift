@@ -346,11 +346,7 @@ struct CollectionSheet: View {
             }
             if isCreate {
                 VStack(alignment: .leading, spacing: 6) {
-                    Picker("Kind", selection: $kind) {
-                        ForEach(Self.kinds, id: \.0) { Text($0.1).tag($0.0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
+                    SegmentedPicker("Kind", selection: $kind, segments: Self.kinds.map { .init($0.0, Text($0.1)) }, equalWidths: true)
                     if let detail = Self.kinds.first(where: { $0.0 == kind })?.2 {
                         Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     }

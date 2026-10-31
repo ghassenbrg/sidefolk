@@ -32,6 +32,12 @@ public struct ValidationReport: Sendable {
 
     public var isValid: Bool { errors.isEmpty && manifest != nil && launch != nil && permissions != nil }
 
+    /// Whether what stops it is only what a newer Sidefolk reads: keys this copy doesn't know, or its `sidefolk`
+    /// minimum (D83). The install sheet then says to update Sidefolk instead of listing the validator's words.
+    public var needsNewerSidefolk: Bool {
+        !errors.isEmpty && errors.allSatisfy { $0.message == "isn't a known key." || ($0.field == "sidefolk" && $0.message.hasPrefix("needs Sidefolk")) }
+    }
+
     /// Effective risk of each declared tool after Sidefolk's floors.
     public var toolRisks: [(name: String, risk: Risk)] {
         guard let manifest, let permissions else { return [] }
@@ -228,7 +234,7 @@ public struct ManifestValidator: Sendable {
             issues.append(ValidationIssue(field: "folk", message: "must be a folk name like byte."))
         }
         if let req = m.sidefolk {
-            switch Self.satisfies(req, current: SidefolkVersion.current) {
+            switch Self.satisfies(req, current: SidefolkVersion.running) {
             case nil: issues.append(ValidationIssue(field: "sidefolk", message: "must look like >=0.1."))
             case false?: issues.append(ValidationIssue(field: "sidefolk", message: "needs Sidefolk \(req.dropFirst(2)) or later; this is \(SidefolkVersion.current)."))
             case true?: break
@@ -236,16 +242,22 @@ public struct ManifestValidator: Sendable {
         }
     }
 
-    /// `>=X[.Y[.Z]]` against a dotted version. Nil when the requirement can't be read.
+    /// `>=X[.Y[.Z]]` against a dotted version, or `>=X.Y.Z-snapshot.N` against the running snapshot (D83). Nil
+    /// when the requirement can't be read.
     static func satisfies(_ requirement: String, current: String) -> Bool? {
         let r = requirement.trimmingCharacters(in: .whitespaces)
         guard r.hasPrefix(">=") else { return nil }
+        let wanted = r.dropFirst(2).drop { $0 == " " }
+        if wanted.contains("-") {
+            guard let need = ReleaseVersion(String(wanted)), need.isPrerelease, let have = ReleaseVersion(current) else { return nil }
+            return have >= need
+        }
         func parts(_ s: Substring) -> [Int]? {
             let p = s.split(separator: ".").map { Int($0) }
             guard (1...3).contains(p.count), p.allSatisfy({ $0 != nil }) else { return nil }
             return p.map { $0! } + Array(repeating: 0, count: 3 - p.count)
         }
-        guard let need = parts(r.dropFirst(2).drop { $0 == " " }), let have = parts(Substring(current)) else { return nil }
+        guard let need = parts(wanted), let have = parts(Substring(current.prefix { $0 != "-" })) else { return nil }
         return have.lexicographicallyPrecedes(need) == false
     }
 

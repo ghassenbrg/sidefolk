@@ -157,12 +157,15 @@ public struct ThemeLibrary: Sendable {
         **colors**: `light` and `dark`, each with every role as `#RRGGBB`: ink, inkMuted, inkFaint (text, strongest to
         faintest); surface, surfaceSunken, surfaceRaised, line (what things sit on); accent, onAccent, accentSoft (fills
         and the text on them); link (the accent as text); danger, dangerSoft, onDanger; success, successSoft; warning,
-        warningSoft, onWarning. Text must read at 4.5:1 on every surface; the check tells you which pair doesn't.
+        warningSoft, onWarning; well (fields, chips and the search, inside cards). Text must read at 4.5:1 on every
+        surface; the check tells you which pair doesn't. `glow` and `waitGlow` are light, never text: the pool at the
+        companion's feet while it works and when something waits on you. well, glow and waitGlow may be left out.
         Status colours keep their meaning: danger looks red (an error or a real risk), warning amber (waiting, needs a
         look), success green (done, allowed, won).
 
         **type**: `display` is system, rounded or serif (headings); `scale` 0.9 to 1.15; `density` compact, regular or
-        relaxed. Body text is always the system face.
+        relaxed. The display face is for titles, the greeting and big numbers; what you read, the companion's words
+        included, is always the system face.
 
         **shape**: corner radii for `control` (4 to 999), `card` and `window` (0 to 28).
 

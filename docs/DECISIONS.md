@@ -2251,3 +2251,113 @@ on stop, crash or watchdog. The host-owned helper keeps that boundary and the re
 **Verification:** fake-device and helper-process tests cover ownership, changes, timeouts and recovery. On the Mac's
 actual default output, the helper muted and restored the original state both normally and after its parent was killed.
 An isolated Android TV emulator confirmed pairing. Live screen and sound playback on a physical TV remains to be checked.
+
+### D83 — An add-on version can need a Sidefolk snapshot, and an add-on Sidefolk can't read yet says to update (2026-11-01)
+**Decision:** *amends D55 and D65.* A gallery entry's `minimum_sidefolk` may name a snapshot (`0.1.0-snapshot.593`):
+copies of Sidefolk then compare their own published snapshot (`SidefolkVersion.running`, from the `SidefolkRelease`
+stamp; a build on this Mac counts as its plain version) and leave the version out until they're that snapshot or later.
+A plain minimum (`0.1.0`) still counts every 0.1.0 snapshot as 0.1.0. The gallery sets it in an extension's
+`addon.json` (`build.py`), not its manifest, because a copy before this would refuse a manifest's
+`"sidefolk": ">=0.1.0-snapshot.593"` (the validator now reads that form too). When an extension can't be installed only
+because of keys this copy doesn't know or its `sidefolk` minimum (`ValidationReport.needsNewerSidefolk`), the sheet
+says "This version needs a newer Sidefolk. Choose Check for Updates… in Sidefolk's menu, then try again." with the
+validator's words folded in the detail.
+
+**Why:** the founder's Mac on snapshot 590 was offered Miraya `1.0.0-snapshot.4`, which needs 593's `output_mute`, and
+the Update button showed "That folder isn't a Sidefolk extension … permissions.output_mute isn't a known key". D75 and
+D81 had accepted that refusal for snapshots; it reads as broken.
+
+**Alternatives:** raising Sidefolk's version for each such snapshot (the founder keeps 0.1.0 until release); holding
+the add-on back until everyone updates (no way to know).
+
+**Implications:** copies before this snapshot still see such versions and get the old error; from this snapshot on
+they don't. Miraya's `addon.json` names 593.
+
+
+### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+**Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
+design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
+1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
+   screen; state as light (a pool at the companion's feet: aqua while it works, amber when something waits, dim in
+   Focus); one surface family on the desktop, the Sidecard (whisper, card, Ask, stack); one deep aqua action colour
+   that reads with its label in light and dark (#0B7783 / #3CD6DB; the pale brand aqua under navy read as disabled).
+   Field Journal and Playroom may come back as themes on Lantern.
+2. **Themes dress the app only:** colours, the display face, density, materials, radii, the light pool's colours and
+   the nook's art. Each place has **one excellent layout**; a theme no longer arranges Today or picks navigation,
+   Activity or editor layouts (narrows D64; the layout keys and presets stay readable until phase 3 retires them, so
+   existing themes keep working).
+3. **Firm cards never take Return:** another app's approval, agents' questions and anything after outside content need
+   ⌘Return or a click (D58's rule, widened).
+4. **Merges:** Conversations and Activity become History; AI and Voice become Brain; Trash moves into the Notebook.
+5. **The Gallery moves into Home** and leaves Settings.
+6. **Focus is a half circle, Quiet a moon,** everywhere (`Theme.Symbol`).
+7. **Full access may have an end time** ("for 1 hour", "until tonight").
+8. **Companion names stay in Latin letters in Arabic** (Mochi, not موتشي), direction-isolated.
+9. **Only what exists is shown** (AGENTS.md: no fake features). Content the app doesn't keep yet (which facts went
+   into an answer, a watched page's last two versions, a log of each watch's checks) is left out of the screens, or
+   stored where that is cheap and safe, decided per screen.
+
+**Phases:** 1 foundations (this), 2 the desktop (light pool, Sidecard, stack, permission slip, pins, agents lane), 3
+Home (Today, the Say bar and ⌘K, On duty, History with Undo, You, Calendar's Agenda, the Gallery in Home), 4 Settings
+and the rest (8 tabs with search, Attention, Brain, Trust, the menu bar Pocket, onboarding, updates, install sheets),
+5 polish (Reduce Motion, Transparency and Contrast versions, German and Arabic on real systems, the companions' own
+reactions). Each ships in snapshots behind the same tests; the version stays 0.1.0.
+
+**Phase 1, built:** Harbor is Lantern (ink, surfaces, the action colour, status colours, every text pair ≥ 4.5:1 on
+every surface, the action colour ≥ 3:1 on a card). New optional theme roles `well` (fields, chips, the search, a
+segmented track), `glow` and `waitGlow` (light, never text): a theme without them keeps its `surfaceSunken` for wells
+and Harbor's lights, with no warning, so Night Shift, Marshmallow, Field Notes and the gallery's Daylight, Night Studio
+and Paper Garden pass as they are. Type: the theme's face dresses titles, the greeting, state words and numbers; what
+is read, the companion's words included, is the system face (D58 had the companion's words in the theme face).
+Eyebrows are sentence case. Sizes, depth (e0–e3), glass, motion tokens and the folk accents are Lantern's. Shared
+components (docs/DESIGN.md): buttons with sizes, hover, press and working states; chips with their tone's ink; what-it-
+touches chips; the segmented picker (every segmented Picker but the companion stage's, which falls back to a menu by
+measuring AppKit's control); list rows; status badges, counts, state tiles, pins and folk avatars; fields and the
+search as wells; the Say bar's shell, key hints and the understanding row; the Sidecard surface with its tail, the
+whisper, card, slip strip and stack; the light pool and shoulder badge. A design-system sheet in the UI snapshots is
+the reference. An approval's risk tag became a sentence-case chip.
+
+**Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
+disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
+per place and one component set keep the product learnable and let extensions place parts predictably; themes still
+serve different people through how things look.
+
+**Alternatives:** Field Journal (paper and ink: slower, hard with glass and 3D companions) or Playroom (bright, toy-like:
+tiring, fights extension pages and themes) as the base; themes that keep arranging Today (D64: every arrangement needs
+its own care and extensions can't count on a place); a new `canvas` role (the page already is `surfaceSunken`); new
+roles required (every existing theme would warn).
+
+**Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
+fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
+snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.
+
+### D85 — A companion added from a folder may bring a 2D form, painted, beside its 3D one (2026-10-31)
+**Decision:** *amends D43 and D60.* A 3D companion added from a folder (D60) may carry a `2d/` folder: `species.json`
+in the custom companion format (D43) with its `parts/*.svg` and, new, `paint/*.png`. When it does, it comes in both
+looks like a gallery companion (Settings › Companion › Look, 3D first; the choice is kept per companion,
+`AppSettings.dimensions["local.<name>"]`), and in 2D it is drawn from that data on the soft rig, its paintings fitted
+over its outlines as the gallery's 2D forms are (D59). The format gained, all optional so every file that loaded still
+does:
+- `paint`: `head`, `torso`, `armL`/`armR`, `footL`/`footR` (arms and feet in pairs), each `{image, nudge?, grow?,
+  widen?}` like `Species.painted`; PNGs of at most 2048 px a side and 4 MiB, eight at most.
+- `body.look` `"flat"` (the 2D cartoon of D59: one fill, one hard shade, an outline, `body.line`) or `"soft"`.
+- `face.screen` `{center, size, radius}`: a dark screen whose eyes and mouth are light (Spark's), in `face.glow`
+  and `face.mouthGlow` instead of the style colour; `face.ink`, `face.iris`, `face.eyeSize`, `face.mouthSize`.
+The `2d/` tree is checked like the rest of the folder (names, kinds, sizes, nothing else in it), and its data is loaded
+and drawn in every state before the companion is added: one whose 2D form doesn't load isn't added. Nothing in it runs;
+it is data, as D43's always was.
+
+**Why:** the founder wanted a private companion in 2D as well as 3D, kept out of the repositories like its 3D files
+(D60). The gallery's 2D forms are Swift rigs and paintings built into the app (D59), which can't hold a private one;
+D43's data couldn't say paintings, a screen face or eye colours, so a robot with a black visor would have had dark ink
+eyes on black. Extending the data keeps one 2D engine and one format, and makes "Made by you" companions better too.
+
+**Alternatives:** a Swift rig on a local branch that is never pushed (fragile, and private code beside the app's);
+shipping 2D rigs as data in gallery packs (later, on this format); a separate 2D companion in "Made by you" (two
+entries for one character, and no Look switch).
+
+**Implications:** `SpeciesFile` (`paint`, `body.look/line`, `face.screen/glow/mouthGlow/ink/iris/eyeSize/mouthSize`),
+`CompanionBody` and `Species(custom)`; `Species.painted(image:)` and `Painted(image:over:)`; `SoftFace.glow`,
+`mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
+companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
+`docs/research/lively-companions.md` documents the keys.
