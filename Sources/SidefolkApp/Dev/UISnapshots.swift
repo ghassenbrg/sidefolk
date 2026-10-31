@@ -210,7 +210,7 @@ enum UISnapshots {
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
-            // Miraya in each of its states (D73): a hero with the one thing to do, TVs beside, pictures to pick from.
+            // Miraya in each of its states (D74): a hero with the one thing to do, TVs beside, pictures to pick from.
             for state in ["notv", "ready", "window", "norecord", "pairing", "authorizing", "sharing", "paused", "playing", "problem"] {
                 try await page("page-extension-miraya-\(state)", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 1180)
             }

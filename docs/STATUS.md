@@ -89,7 +89,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   `check.sh` against this app, the Activity chip in `--ui-snapshots`. *Not verified:* a real tainted agent run in the
   debug app (needs a live model) and a real TV (no TV or emulator used). *Next:* the founder tries it with a paired TV;
   maybe extend D47's "Always" to paired calls in "Ask once per kind".
-- **Extension pages read like app screens; Miraya's page rebuilt (D73, branch team/miraya-page in both repos):** the
+- **Extension pages read like app screens; Miraya's page rebuilt (D74):** the
   founder found Miraya's page confusing (every button alike, nothing highlighted, "Show windows" only revealed more
   buttons). *Platform, for any extension:* a `hero` leading the page (state, large title, a large code, a picture, live
   facts, up to three large actions; it takes the banner's place), one primary button a page (`ExtensionPage.parse`

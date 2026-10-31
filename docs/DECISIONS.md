@@ -1898,7 +1898,7 @@ the resource-free plain version; the selectable companions are unchanged. `scrip
 rebuilds the bundled paintings from the reference.
 **Why:** the founder approved the new silhouettes and asked for the current helpers to match them.
 
-### D73 — Extension pages read like app screens: a hero, one primary action, choices as pictures, cards and rows; Miraya rebuilt on them (2026-10-31)
+### D74 — Extension pages read like app screens: a hero, one primary action, choices as pictures, cards and rows; Miraya rebuilt on them (2026-10-31)
 **Decision:** pages get what a well-organised app screen needs, for any extension, still drawn by Sidefolk from data
 (D62):
 - **`hero`**: what the page is about now (an eyebrow with the state, a large title, a line, a large `code` to compare, a

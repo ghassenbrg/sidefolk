@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// How an extension's page uses the window's width (D62, D67, D73): the rules of what goes where are
+// How an extension's page uses the window's width (D62, D67, D74): the rules of what goes where are
 // ExtensionPage+Layout in SidefolkCore; these are the layouts that place it. Cards in a row share the row's width and
 // height, so nothing is left hanging at one side.
 
@@ -12,7 +12,7 @@ extension View {
     func pageRegion(_ region: PageRegion) -> some View { layoutValue(key: RegionKey.self, value: region) }
 }
 
-/// A page with a side column (D73): in a window wide enough, the top parts across, then the side parts in a column at
+/// A page with a side column (D74): in a window wide enough, the top parts across, then the side parts in a column at
 /// the start edge (as a list of devices sits in an app's sidebar) beside the main ones; narrower, everything in one
 /// column in the page's order. Each column stacks its parts; the page is as tall as the longer one.
 struct PageRegions: Layout {
@@ -77,7 +77,7 @@ struct CardGrid: Layout {
     var minWidth: CGFloat
     var maxColumns: Int
     var spacing: CGFloat
-    /// Off: as many columns as fit even when there are fewer cards, so two pictures stay picture-sized (D73).
+    /// Off: as many columns as fit even when there are fewer cards, so two pictures stay picture-sized (D74).
     var stretch = true
 
     func columns(_ width: CGFloat, count: Int) -> Int {

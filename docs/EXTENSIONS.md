@@ -557,7 +557,7 @@ ext.page("mac") { args in
 - **Switches and buttons** (D63): `switch` (`label`, `detail`, `on`, `tool`, `input`) and `button` (`label`, `tool`,
   `input`, `style`, `symbol`, `detail`, `disabled`) run one of your own tools as the person, through Guard, then read
   the page again. A switch adds `on` (its new state) to `input`. `tool` is your tool's own name (`set_option`), never
-  another extension's. A tool only switches and buttons use can be `"ai": false`. **Emphasis** (D73): `primary` is the
+  another extension's. A tool only switches and buttons use can be `"ai": false`. **Emphasis** (D74): `primary` is the
   one thing to do here, filled in the accent colour and larger; Sidefolk keeps only the first primary of a page (the
   summary's control first, when the banner shows it) and draws any later one as `secondary`, so a page always has one
   answer to "what do I do?". `secondary` is framed, `destructive` red (filled when nothing on the page is primary:
@@ -570,7 +570,7 @@ ext.page("mac") { args in
   `key` (`text` by default, never `on`); `list` (`title`, `caption`, `items` of `{title, detail, image, color, symbol,
   button: {label, tool, input, symbol}}`) shows rows with a picture, a `#RRGGBB` swatch or a symbol, each with a button
   that runs one of your tools. Like switches, all of these go through Guard as the person, then the page is read again.
-- **A page that reads like an app screen** (D73). For a feature with states and a main action, build the page per state
+- **A page that reads like an app screen** (D74). For a feature with states and a main action, build the page per state
   and lead it with a **`hero`**: `eyebrow` (the state in a few words, ≤ 30 characters), `title` (≤ 80), `detail`
   (≤ 300), `tone`, `symbol`, `code` (a pairing code or PIN, drawn very large: ≤ 12 of `0-9 A-Z`, spaces and dashes),
   `image` (a picture, as below), `busy` (a spinner), `facts` (up to four `{label, value}` live numbers) and `actions`
@@ -596,7 +596,7 @@ ext.page("mac") { args in
     `.picker("Share to", style: .rows, [Option(id, "Living Room", badge: Badge("Paired", tone: .good))], selected: id,
     tool: "choose_tv", key: "tv")`, `Section("TVs", blocks, place: .side)`, `Section("More", blocks, collapsed: true)`.
     Miraya (sidefolk-addons `extensions/miraya/Sources/MirayaPage.swift`) builds a page per state this way.
-- **Pictures** (D68) on list rows, palettes, heroes and tiles (D73) are files your program wrote in its own data
+- **Pictures** (D68) on list rows, palettes, heroes and tiles (D74) are files your program wrote in its own data
   folder (`Paths.data`), named relative to it: `thumbs/ab12.png`, a PNG or JPEG, up to four folders deep, no part
   starting with a dot. Sidefolk opens the file without following links, checks that what it opened is inside that
   folder with one link, and reads at most

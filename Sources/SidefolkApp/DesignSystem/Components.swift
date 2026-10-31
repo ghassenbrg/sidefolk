@@ -5,11 +5,11 @@ import SwiftUI
 /// Primary action: aqua with navy text. Secondary: quiet surface. Destructive: coral tint.
 struct SFButtonStyle: ButtonStyle {
     /// `quiet`: accent text without a frame, for what's rarely needed. `danger`: filled red, for a page whose main
-    /// action is stopping something (D73).
+    /// action is stopping something (D74).
     enum Kind { case primary, secondary, destructive, plain, quiet, danger }
     var kind: Kind = .secondary
     var compact = false
-    /// The one main action of a page or a hero (D73): taller and wider, so it is found at a glance.
+    /// The one main action of a page or a hero (D74): taller and wider, so it is found at a glance.
     var large = false
 
     func makeBody(configuration: Configuration) -> some View {

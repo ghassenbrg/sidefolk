@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// What pages can say since D73 (a hero, a transport, choices as cards, pictures or rows, a side column, folding
+/// What pages can say since D74 (a hero, a transport, choices as cards, pictures or rows, a side column, folding
 /// sections, quiet and dimmed buttons), how Sidefolk checks it, and where each part goes on the page.
 struct ExtensionPageLayoutTests {
     static func page(_ text: String) throws -> ExtensionPage {

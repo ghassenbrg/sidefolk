@@ -36,7 +36,7 @@ struct ExtensionPageInputs: View {
     }
 
     /// Choices and fields next to each other share a card, as switches do; a list, and a choice drawn as cards, tiles
-    /// or rows (D73), stand on their own.
+    /// or rows (D74), stand on their own.
     private var runs: [Run] {
         var out: [Run] = []
         for block in blocks {

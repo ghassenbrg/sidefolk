@@ -14,7 +14,7 @@ struct ExtensionPageView: View {
         PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
             header
             if let page = model.page {
-                // A hero leading the page says what the summary would, larger and with its actions (D73).
+                // A hero leading the page says what the summary would, larger and with its actions (D74).
                 if let summary = page.summary, page.hero == nil { SummaryBanner(summary: summary, model: model) }
                 if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
                 PageRegions(spacing: Theme.Space.xl) {
@@ -188,7 +188,7 @@ private struct SectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
             if let title = section.title, section.collapsed != nil {
-                // Folded under its title until opened (D73): settings most people never change.
+                // Folded under its title until opened (D74): settings most people never change.
                 Button {
                     withAnimation(Theme.Motion.ease(0.18)) { model.toggleOpen(title) }
                 } label: {

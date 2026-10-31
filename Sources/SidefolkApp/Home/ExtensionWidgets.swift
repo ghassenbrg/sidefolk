@@ -125,7 +125,7 @@ struct QuickControl: View {
         }
     }
 
-    /// The page's own emphasis (D73): "Start sharing" filled, "Stop sharing" red.
+    /// The page's own emphasis (D74): "Start sharing" filled, "Stop sharing" red.
     private var style: SFButtonStyle.Kind {
         switch control.style ?? .secondary {
         case .primary: .primary

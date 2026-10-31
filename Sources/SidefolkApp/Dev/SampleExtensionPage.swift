@@ -170,7 +170,7 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: pictureFolder())
     }
 
-    /// Miraya's page in one of its states (D73), with made-up pictures of two displays, three windows and the parts of
+    /// Miraya's page in one of its states (D74), with made-up pictures of two displays, three windows and the parts of
     /// a screen, as Miraya keeps them in its data folder.
     @MainActor static func miraya(_ state: String, now: Date = Date()) -> ExtensionPageModel {
         let page = SampleMirayaPages.json[state].flatMap { try? JSONDecoder().decode(JSONValue.self, from: Data($0.utf8)) }

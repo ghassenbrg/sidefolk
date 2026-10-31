@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// A choice drawn as what it chooses between (D73): presets as cards with a line each, things on screen as pictures,
+/// A choice drawn as what it chooses between (D74): presets as cards with a line each, things on screen as pictures,
 /// devices or accounts as rows with their state. The one picked is marked in the accent colour; picking another runs
 /// the extension's tool with its value, through Guard, and shows the pick at once until the page confirms it.
 struct PageChoiceView: View {

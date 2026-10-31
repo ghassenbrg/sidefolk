@@ -1,10 +1,10 @@
 import Foundation
 
-// What goes where on an extension's page (D62, D67, D73), decided from what it holds; the app's layouts place it. A
+// What goes where on an extension's page (D62, D67, D74), decided from what it holds; the app's layouts place it. A
 // page that shows a lot (numbers, charts, pictures, a column beside) grows to a wide centred column, its big sections
 // across it and its small ones side by side; a page of switches stays a readable column.
 
-/// Where a part of the page goes (D73): across the top, in the column beside the main one, or in the main one.
+/// Where a part of the page goes (D74): across the top, in the column beside the main one, or in the main one.
 public enum PageRegion: Equatable, Sendable { case top, side, main }
 
 extension ExtensionPage {
@@ -14,10 +14,10 @@ extension ExtensionPage {
         hasSide || sections.contains { $0.isWide && $0.blocks.contains { $0.isCard || $0.isMetric || $0.kind == "hero" || $0.kind == "tiles" } }
     }
 
-    /// Some sections go in a column beside the others (D73).
+    /// Some sections go in a column beside the others (D74).
     public var hasSide: Bool { sections.contains { $0.place == .side } }
 
-    /// What the page draws, in reading order, each with where it goes (D73): a hero leading the page across it, side
+    /// What the page draws, in reading order, each with where it goes (D74): a hero leading the page across it, side
     /// sections one by one, and the main sections in runs (the wide ones alone, small ones between them together).
     public var regions: [(region: PageRegion, sections: [Section])] {
         var out: [(region: PageRegion, sections: [Section])] = []

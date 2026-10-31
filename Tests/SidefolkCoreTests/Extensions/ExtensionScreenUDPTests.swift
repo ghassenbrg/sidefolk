@@ -158,7 +158,7 @@ struct ExtensionScreenUDPTests {
     """
 
     /// The gallery's Miraya in this host's sandbox: WebRTC loads from its lib/, it starts and keeps running, its page
-    /// (D73) leads with a hero holding one primary action and lists TVs in a side column, and a link that isn't HTTPS is
+    /// (D74) leads with a hero holding one primary action and lists TVs in a side column, and a link that isn't HTTPS is
     /// refused before anything is sent.
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func mirayaStartsInItsSandbox() async throws {

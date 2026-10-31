@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
 
-/// Miraya's page in each of its states, as the extension sends it (D73): made by Miraya's `MirayaPage.make` from fixed
+/// Miraya's page in each of its states, as the extension sends it (D74): made by Miraya's `MirayaPage.make` from fixed
 /// states (as sidefolk-addons' tests build them), so the UI snapshots show the real page without a TV, a network or screen
 /// recording.
 enum SampleMirayaPages {

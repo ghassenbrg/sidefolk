@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// What leads an extension's page and how its actions look (D73): a hero that says what is happening now with its main
+// What leads an extension's page and how its actions look (D74): a hero that says what is happening now with its main
 // actions, large; a transport for something playing; and every button drawn by its emphasis, so the one primary
 // action is found at a glance and the rarely needed ones stay quiet. All of it is Sidefolk's drawing in the theme's
 // colours; every word is the extension's, and every click runs one of its own tools as the person, through Guard.
@@ -49,7 +49,7 @@ struct PageButton: View {
 }
 
 extension ExtensionPage {
-    /// Whether any button on the page is primary: when none is, a destructive one in the hero leads (D73).
+    /// Whether any button on the page is primary: when none is, a destructive one in the hero leads (D74).
     var hasPrimary: Bool {
         if hero == nil, summary?.control?.style == .primary { return true }
         return sections.contains { s in

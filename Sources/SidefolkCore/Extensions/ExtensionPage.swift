@@ -37,7 +37,7 @@ public struct ExtensionPage: Sendable, Hashable {
     }
 
     public struct Section: Sendable, Hashable {
-        /// Where a section goes in a wide window (D73): with the page's main sections, or in a column beside them at
+        /// Where a section goes in a wide window (D74): with the page's main sections, or in a column beside them at
         /// the start edge (a list of devices or accounts to pick from). A narrow window keeps the page's order.
         public enum Place: String, Sendable, Hashable { case main, side }
 
@@ -80,10 +80,10 @@ public struct ExtensionPage: Sendable, Hashable {
         case field(Field)
         /// Rows with a picture, a swatch or a symbol, each with an optional button.
         case list(List)
-        /// What the page is about right now, large, with its main actions (D73): "Ready to share", a pairing code to
+        /// What the page is about right now, large, with its main actions (D74): "Ready to share", a pairing code to
         /// compare, "Sharing to the TV" and its live numbers. It leads the page in place of the summary.
         case hero(Hero)
-        /// Where a playing video or song is, and its play, pause and skip buttons (D73).
+        /// Where a playing video or song is, and its play, pause and skip buttons (D74).
         case transport(Transport)
     }
 
@@ -126,7 +126,7 @@ public struct ExtensionPage: Sendable, Hashable {
     }
 
     public struct Choice: Sendable, Hashable {
-        /// How the options are drawn (D73): `segmented` side by side (a menu above four), `cards` as equal cards with a
+        /// How the options are drawn (D74): `segmented` side by side (a menu above four), `cards` as equal cards with a
         /// line each (presets), `tiles` as pictures in a grid (displays, windows), `rows` as a list with a badge each
         /// (devices, accounts). An older Sidefolk draws them all as `segmented`.
         public enum Style: String, Sendable, Hashable { case segmented, cards, tiles, rows }
@@ -199,7 +199,7 @@ public struct ExtensionPage: Sendable, Hashable {
             case button(Style)
         }
 
-        /// `plain` (D73) is a quiet text button for what's rarely needed ("Look again", "Forget"); an older Sidefolk
+        /// `plain` (D74) is a quiet text button for what's rarely needed ("Look again", "Forget"); an older Sidefolk
         /// draws it as `secondary`.
         public enum Style: String, Sendable, Hashable { case primary, secondary, destructive, plain }
 
@@ -325,7 +325,7 @@ public struct ExtensionPage: Sendable, Hashable {
         return nil
     }
 
-    /// One primary action a page (D73): the first in reading order stays filled, any later one is drawn as secondary,
+    /// One primary action a page (D74): the first in reading order stays filled, any later one is drawn as secondary,
     /// so "what do I do here" has one answer. The summary's control counts first when the banner shows it.
     mutating func keepOnePrimary() {
         var seen = false
