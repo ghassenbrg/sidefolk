@@ -10,9 +10,12 @@ import SwiftUI
 final class PaletteController {
     private let host: ExtensionHost
     private var registered: Set<String> = []
+    /// The palettes now on, for the menu bar icon's menu.
+    private(set) var current: [ExtensionPaletteInfo] = []
     private var panel: FloatingPanel?
     private var model: PaletteModel?
     private var resignObserver: NSObjectProtocol?
+    private var keyMonitor: Any?
 
     init(host: ExtensionHost) {
         self.host = host
@@ -25,6 +28,7 @@ final class PaletteController {
     /// Registers the shortcut of every palette now on, and drops those gone; call it when extensions change.
     func refresh() async {
         let palettes = await host.palettes()
+        current = palettes
         let ids = Set(palettes.map(\.id))
         for gone in registered.subtracting(ids) {
             KeyboardShortcuts.disable(KeyboardShortcuts.Name("palette.\(gone)"))
@@ -38,35 +42,56 @@ final class PaletteController {
         }
     }
 
-    func toggle(_ id: String) async {
+    /// Opens or closes the palette; `under` is the menu bar icon's frame when it was opened from its menu.
+    func toggle(_ id: String, under: NSRect? = nil) async {
         if let panel, panel.isVisible, model?.info.id == id { return hide() }
         guard let info = await host.palettes().first(where: { $0.id == id }) else { return }
-        show(PaletteModel(info: info, host: host))
+        // The list first, so the panel opens at its size (with the preview beside it or not) and nothing jumps.
+        let model = PaletteModel(info: info, host: host)
+        await model.reload()
+        show(model, under: under)
     }
 
-    private func show(_ model: PaletteModel) {
+    private func show(_ model: PaletteModel, under: NSRect?) {
         hide()
         self.model = model
         model.onClose = { [weak self] paste in self?.hide(paste: paste) }
-        let panel = FloatingPanel(size: NSSize(width: 600, height: 440))
+        let size = NSSize(width: PaletteView.width(preview: model.hasPreview), height: PaletteView.height)
+        let panel = FloatingPanel(size: size)
         panel.contentViewController = NSHostingController(rootView: PaletteView(model: model))
         panel.onCancel = { [weak self] in self?.hide() }
-        // The upper part of the screen the pointer is on, like Spotlight.
-        let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) } ?? NSScreen.main
-        if let frame = screen?.visibleFrame {
-            panel.setFrameOrigin(NSPoint(x: frame.midX - 300, y: frame.maxY - frame.height * 0.22 - 440))
-        }
+        let position = under == nil ? PalettePosition.saved(model.info) : .menuBar
+        panel.setFrameOrigin(position.origin(for: size, menuIcon: under))
         panel.makeKeyAndOrderFront(nil)
         resignObserver = NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: panel, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.hide() }
         }
+        // Maccy's keys and the row numbers, read before the search field so ⌥P pins instead of typing π (PaletteKeys).
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self, weak panel] event in
+            guard let self, let panel, event.window === panel, let model = self.model else { return event }
+            let flags = event.modifierFlags
+            guard let command = PaletteKeys.command(keyCode: event.keyCode, command: flags.contains(.command), option: flags.contains(.option),
+                                                    shift: flags.contains(.shift), control: flags.contains(.control)) else { return event }
+            model.handle(command)
+            return nil
+        }
+        // A list that starts or stops offering a preview changes the panel's width, about its middle.
+        model.onPreviewChange = { [weak panel] wide in
+            guard let panel else { return }
+            var frame = panel.frame
+            let width = PaletteView.width(preview: wide)
+            frame.origin.x += (frame.width - width) / 2
+            frame.size.width = width
+            panel.setFrame(frame, display: true)
+        }
         self.panel = panel
-        Task { await model.reload() }
     }
 
     private func hide(paste: Bool = false) {
         if let resignObserver { NotificationCenter.default.removeObserver(resignObserver) }
         resignObserver = nil
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         panel?.orderOut(nil)
         panel = nil
         model = nil

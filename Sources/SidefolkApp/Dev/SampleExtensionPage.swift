@@ -1,5 +1,5 @@
 #if DEBUG
-import Foundation
+import AppKit
 import SidefolkCore
 
 /// System Vitals+'s page as it reads on a typical afternoon, with ten minutes of history: what the UI snapshots show
@@ -97,20 +97,50 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now)
     }
 
-    /// Clipboard's palette with a few copies (D63).
+    /// Clipboard's palette with a few copies (D63), pins in their own section, a screenshot's picture and the picked
+    /// copy in full beside the list (D68).
     @MainActor static func palette(host: ExtensionHost) -> PaletteModel {
         let info = ExtensionPaletteInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", palette: "history", title: "Clipboard",
                                         hotkey: "shift+cmd+c", placeholder: "Search what you copied")
+        let all = ["plain", "alternate", "pin", "delete"]
         let items: [ExtensionPaletteList.Item] = [
-            .init(id: "1", title: "Meeting notes: ship System Vitals+ on Friday", detail: "just now", kind: .text, pinned: false),
-            .init(id: "2", title: "https://github.com/ghassenbrg/sidefolk/pull/2", detail: "3 min ago · copied 2×", kind: .link, pinned: true),
-            .init(id: "3", title: "func hello() {", detail: "Xcode · 12 min ago · 3 lines", kind: .code),
-            .init(id: "4", title: "•••••••• (looks like a password or key)", detail: "just now · forgotten in 2 min", kind: .text),
-            .init(id: "5", title: "#2ED4D9", detail: "1 h ago", kind: .color),
-            .init(id: "6", title: "Picture 1440 × 900", detail: "yesterday", kind: .image),
-            .init(id: "7", title: "report.pdf, budget.xlsx", detail: "2 days ago", kind: .file),
+            .init(id: "2", title: "https://github.com/ghassenbrg/sidefolk/pull/2", detail: "Safari · 3 min ago · copied 2×", kind: .link, pinned: true,
+                  actions: all, section: "Pinned"),
+            .init(id: "1", title: "Meeting notes: ship System Vitals+ on Friday", detail: "Notes · just now", kind: .text, actions: all, section: "Recent"),
+            .init(id: "6", title: "Screenshot 1440 × 900", detail: "Screenshot · 2 min ago", kind: .image, actions: all, image: "thumbs/sample.png",
+                  section: "Recent"),
+            .init(id: "3", title: "func hello() {", detail: "Xcode · 12 min ago · 3 lines", kind: .code, actions: all, section: "Recent"),
+            .init(id: "4", title: "•••••••• (looks like a password or key)", detail: "just now · forgotten in 2 min", kind: .text, section: "Recent"),
+            .init(id: "5", title: "#2ED4D9", detail: "1 h ago", kind: .color, actions: all, color: "#2ED4D9", section: "Recent"),
+            .init(id: "7", title: "report.pdf, budget.xlsx", detail: "Finder · 2 days ago", kind: .file, actions: all, section: "Recent"),
         ]
-        return PaletteModel(info: info, host: host, items: items, note: "312 copies kept")
+        let preview = ExtensionPalettePreview(title: nil, text: "Meeting notes: ship System Vitals+ on Friday\n\n- Charts reach back a day\n"
+                                                + "- Heads-ups for memory and heat\n- Clipboard: pictures, previews and pins", facts: [
+                                                    .init(label: "From", value: "Notes"), .init(label: "Copied", value: "Today 14:02"),
+                                                    .init(label: "First copied", value: "Today 13:40"), .init(label: "Copies", value: "1")])
+        let model = PaletteModel(info: info, folder: pictureFolder(), list: ExtensionPaletteList(items: items, note: "312 copies · ↩ pastes, ⌥↩ copies",
+                                                                                                 preview: true, actions: ["clear", "clear_all"]),
+                                 preview: preview)
+        model.selected = 1
+        return model
+    }
+
+    /// A made-up screenshot's thumbnail in a temporary folder, as Clipboard keeps one in its data folder.
+    @MainActor static func pictureFolder() -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-clipboard", isDirectory: true)
+        let file = folder.appendingPathComponent("thumbs/sample.png")
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let image = NSImage(size: NSSize(width: 240, height: 150), flipped: false) { rect in
+            NSGradient(starting: NSColor(red: 0.18, green: 0.83, blue: 0.85, alpha: 1), ending: NSColor(red: 0.06, green: 0.18, blue: 0.36, alpha: 1))?
+                .draw(in: rect, angle: -35)
+            NSColor.white.withAlphaComponent(0.85).setFill()
+            NSBezierPath(roundedRect: NSRect(x: 24, y: 30, width: 120, height: 80), xRadius: 8, yRadius: 8).fill()
+            return true
+        }
+        if let tiff = image.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+            try? png.write(to: file)
+        }
+        return folder
     }
 
     static func widget() -> ExtensionWidget {

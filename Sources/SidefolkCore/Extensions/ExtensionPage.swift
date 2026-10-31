@@ -60,6 +60,62 @@ public struct ExtensionPage: Sendable, Hashable {
         case ask(Ask)
         /// A switch or a button that runs one of the extension's own tools as the person, through Guard (D63).
         case control(Control)
+        /// One of a few options; picking one runs the extension's tool with the option's `value`, through Guard.
+        case choice(Choice)
+        /// A text field and a button; the tool gets what was typed, through Guard.
+        case field(Field)
+        /// Rows with a picture, a swatch or a symbol, each with an optional button.
+        case list(List)
+    }
+
+    public struct Choice: Sendable, Hashable {
+        public struct Option: Sendable, Hashable {
+            public var value: String
+            public var label: String
+        }
+
+        public var label: String
+        public var detail: String?
+        public var options: [Option]
+        public var selected: String
+        public var tool: String
+        public var input: JSONValue
+
+        /// What runs when `value` is picked.
+        public func input(picking value: String) -> JSONValue { input.setting("value", .string(value)) }
+    }
+
+    public struct Field: Sendable, Hashable {
+        public var label: String
+        public var detail: String?
+        public var placeholder: String?
+        public var button: String
+        public var tool: String
+        public var input: JSONValue
+        /// The name the typed text goes under in `input`.
+        public var key: String
+
+        /// What runs for `text`, trimmed and at most 500 characters.
+        public func input(typing text: String) -> JSONValue {
+            input.setting(key, .string(String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))))
+        }
+    }
+
+    public struct List: Sendable, Hashable {
+        public var title: String?
+        public var caption: String?
+        public var rows: [Row]
+    }
+
+    public struct Row: Sendable, Hashable {
+        public var title: String
+        public var detail: String?
+        /// A picture in the extension's data folder (`ExtensionDataFile`).
+        public var image: String?
+        /// `#RRGGBB`.
+        public var color: String?
+        public var symbol: String?
+        public var button: Control?
     }
 
     /// `switch`: on or off, and the tool gets `on` with the new state merged into `input`. `button`: the tool with `input`.
@@ -141,6 +197,11 @@ public struct ExtensionPage: Sendable, Hashable {
     public struct Fact: Sendable, Hashable {
         public var label: String
         public var value: String
+
+        public init(label: String, value: String) {
+            self.label = label
+            self.value = value
+        }
     }
 
     public struct Note: Sendable, Hashable {
@@ -224,9 +285,59 @@ public struct ExtensionPage: Sendable, Hashable {
             let kind: Control.Kind = j["type"]?.stringValue == "switch" ? .toggle(on: j["on"]?.boolValue ?? false)
                 : .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary)
             return .control(Control(kind: kind, label: label, detail: text(j["detail"], 160), tool: tool, input: input, symbol: symbol(j["symbol"])))
+        case "choice":
+            guard let label = text(j["label"], 60), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
+            let options = (j["options"]?.arrayValue ?? []).prefix(8).compactMap { o -> Choice.Option? in
+                guard let value = o["value"]?.stringValue, (1...40).contains(value.count), let label = text(o["label"], 30) else { return nil }
+                return Choice.Option(value: value, label: label)
+            }
+            guard options.count >= 2 else { return nil }
+            let selected = j["selected"]?.stringValue ?? ""
+            return .choice(Choice(label: label, detail: text(j["detail"], 160), options: options,
+                                  selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input))
+        case "field":
+            guard let label = text(j["label"], 60), let button = text(j["button"], 24), let tool = toolName(j["tool"]),
+                  let input = smallInput(j["input"]) else { return nil }
+            let key = j["key"]?.stringValue ?? "text"
+            guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
+            return .field(Field(label: label, detail: text(j["detail"], 160), placeholder: text(j["placeholder"], 60), button: button, tool: tool,
+                                input: input, key: key))
+        case "list":
+            let rows = (j["items"]?.arrayValue ?? []).prefix(maxItems).compactMap { r -> Row? in
+                guard let title = text(r["title"], 120) else { return nil }
+                var button: Control?
+                if let b = r["button"], let label = text(b["label"], 24), let tool = toolName(b["tool"]), let input = smallInput(b["input"]) {
+                    button = Control(kind: .button(.secondary), label: label, tool: tool, input: input, symbol: symbol(b["symbol"]))
+                }
+                return Row(title: title, detail: text(r["detail"], 160), image: dataFile(r["image"]), color: color(r["color"]),
+                           symbol: symbol(r["symbol"]), button: button)
+            }
+            guard !rows.isEmpty || j["title"] != nil else { return nil }
+            return .list(List(title: text(j["title"], 60), caption: text(j["caption"], 120), rows: rows))
         default:
             return nil
         }
+    }
+
+    /// The extension's own tool's name, never another's (`ext.other.tool`).
+    static func toolName(_ j: JSONValue?) -> String? {
+        guard let tool = j?.stringValue, tool.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil else { return nil }
+        return tool
+    }
+
+    static func smallInput(_ j: JSONValue?) -> JSONValue? {
+        let input = j?.objectValue.map(JSONValue.object) ?? .object([:])
+        return input.jsonString.utf8.count <= 4096 ? input : nil
+    }
+
+    static func color(_ j: JSONValue?) -> String? {
+        guard let c = j?.stringValue, c.range(of: #"^#[0-9A-Fa-f]{6}$"#, options: .regularExpression) != nil else { return nil }
+        return c
+    }
+
+    static func dataFile(_ j: JSONValue?) -> String? {
+        guard let name = j?.stringValue, ExtensionDataFile.isValidName(name) else { return nil }
+        return name
     }
 
     static func text(_ j: JSONValue?, _ characters: Int) -> String? {

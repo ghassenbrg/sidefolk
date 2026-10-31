@@ -20,6 +20,8 @@ final class AppCoordinator {
     let statusItem = StatusItemController()
     /// Extensions' palettes on their shortcuts (D63).
     private(set) lazy var palettes = PaletteController(host: runtime.extensions)
+    /// Which app a copy came from, for the clipboard extensions that ask (D68).
+    let clipboardSource = ClipboardSource()
     let notifier: SystemNotifier
     let monitor: EnvironmentMonitor
     let companion = CompanionWindowController()
@@ -119,6 +121,8 @@ final class AppCoordinator {
             size: NSSize(width: 18, height: 18))
         statusItem.install(image: menuBarImage)
         statusItem.onAsk = { [weak self] in self?.toggleAsk() }
+        statusItem.palettes = { [weak self] in self?.palettes.current ?? [] }
+        statusItem.onPalette = { [weak self] id, under in Task { await self?.palettes.toggle(id, under: under) } }
         statusItem.onOpenHome = { [weak self] in self?.openHome() }
         statusItem.onOpenSettings = { [weak self] in self?.openSettings() }
         statusItem.onAbout = { [weak self] in self?.showAbout() }
@@ -641,6 +645,8 @@ final class AppCoordinator {
         switch event {
         case .nudge:
             PaletteController.nudge()
+        case .clipboardSource(let id):
+            clipboardSource.answer(id, host: runtime.extensions)
         case .attention(.present(let item, let presentation)):
             present(item, presentation)
         case .attention(.withdraw(let id)):

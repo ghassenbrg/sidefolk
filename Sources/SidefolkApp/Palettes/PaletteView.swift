@@ -1,11 +1,15 @@
 import SidefolkCore
 import SwiftUI
 
-/// The palette (D63): a search field over the extension's list, driven from the keyboard. Its rows are the extension's
-/// text, shown verbatim.
+/// The palette (D63): a search field over the extension's list, driven from the keyboard (`PaletteKeys`, read by the
+/// controller), and, when the extension offers it, the picked row in full beside the list (D68). Its rows are the
+/// extension's text, shown verbatim, with its pictures from its own data folder.
 struct PaletteView: View {
     var model: PaletteModel
     @FocusState private var focused: Bool
+
+    static let height: CGFloat = 460
+    static func width(preview: Bool) -> CGFloat { preview ? 880 : 600 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -20,42 +24,42 @@ struct PaletteView: View {
                 .onSubmit { Task { await model.act("choose") } }
                 .onKeyPress(.downArrow) { model.move(1); return .handled }
                 .onKeyPress(.upArrow) { model.move(-1); return .handled }
-                .onKeyPress(.return, phases: .down) { press in
-                    guard press.modifiers.contains(.shift) else { return .ignored }
-                    Task { await model.act("plain") }
-                    return .handled
-                }
                 Text(verbatim: model.info.title).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkFaint)
             }
             .padding(.horizontal, Theme.Space.l)
             .padding(.vertical, Theme.Space.m)
             Rectangle().fill(Theme.line).frame(height: 1)
-            list
+            HStack(spacing: 0) {
+                list.frame(width: model.hasPreview ? 400 : nil)
+                if model.hasPreview {
+                    Rectangle().fill(Theme.line).frame(width: 1)
+                    PalettePreviewPane(preview: model.preview, item: model.picked, folder: model.folder)
+                }
+            }
+            .frame(maxHeight: .infinity)
             footer
         }
-        .frame(width: 600, height: 440)
+        .frame(width: Self.width(preview: model.hasPreview), height: Self.height)
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous).strokeBorder(Theme.line))
-        .background {
-            // ⌘P and ⌘⌫ on the picked row, as hidden buttons so the field keeps the typing.
-            Group {
-                Button { Task { await model.act("pin") } } label: { EmptyView() }.keyboardShortcut("p", modifiers: .command)
-                Button { Task { await model.act("delete") } } label: { EmptyView() }.keyboardShortcut(.delete, modifiers: .command)
-            }
-            .opacity(0)
-        }
         .onAppear { focused = true }
     }
 
     private var list: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(alignment: .leading, spacing: 2) {
                     ForEach(Array(model.items.enumerated()), id: \.element.id) { i, item in
-                        PaletteRow(item: item, picked: i == model.selected)
+                        if let section = item.section, i == 0 || model.items[i - 1].section != section {
+                            Text(verbatim: section).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkFaint)
+                                .padding(.horizontal, Theme.Space.m).padding(.top, i == 0 ? 2 : Theme.Space.s).padding(.bottom, 2)
+                        }
+                        PaletteRow(item: item, number: i < 9 ? i + 1 : nil, picked: i == model.selected, folder: model.folder)
                             .id(item.id)
                             .contentShape(Rectangle())
-                            .onTapGesture(count: 2) { Task { await model.act("choose", on: i) } }
+                            .onTapGesture(count: 2) {
+                                Task { await model.act(NSEvent.modifierFlags.contains(.option) ? "alternate" : "choose", on: i) }
+                            }
                             .onTapGesture { model.selected = i }
                     }
                     if model.items.isEmpty {
@@ -69,7 +73,6 @@ struct PaletteView: View {
                 if model.items.indices.contains(i) { proxy.scrollTo(model.items[i].id) }
             }
         }
-        .frame(maxHeight: .infinity)
     }
 
     private var footer: some View {
@@ -78,7 +81,7 @@ struct PaletteView: View {
                 Text(verbatim: message).font(Theme.Font.caption).foregroundStyle(model.message == nil ? Theme.inkFaint : Theme.ink).lineLimit(1)
             }
             Spacer(minLength: Theme.Space.s)
-            Text("↩ Paste  ⇧↩ Plain text  ⌘P Pin  ⌘⌫ Delete", comment: "Keys in an extension's palette")
+            Text("⌘1–9 Choose  ⇧↩ Plain text  ⌥P Pin  ⌥⌫ Delete", comment: "Keys in an extension's palette")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1)
         }
         .padding(.horizontal, Theme.Space.l)
@@ -89,28 +92,48 @@ struct PaletteView: View {
 
 private struct PaletteRow: View {
     var item: ExtensionPaletteList.Item
+    var number: Int?
     var picked: Bool
+    var folder: URL
 
     var body: some View {
-        HStack(alignment: .top, spacing: Theme.Space.s + 2) {
-            Image(systemName: symbol).foregroundStyle(picked ? Theme.onAccent : Theme.inkMuted).frame(width: 18).padding(.top, 2)
+        HStack(alignment: .center, spacing: Theme.Space.s + 2) {
+            leading
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: item.title).font(item.kind == .code ? .system(size: 13, design: .monospaced) : Theme.Font.body)
-                    .foregroundStyle(picked ? Theme.onAccent : Theme.ink).lineLimit(2)
+                    .foregroundStyle(picked ? Theme.onAccent : Theme.ink).lineLimit(item.image == nil ? 2 : 1)
                 if let detail = item.detail {
                     Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(picked ? Theme.onAccent.opacity(0.8) : Theme.inkFaint).lineLimit(1)
                 }
             }
             Spacer(minLength: Theme.Space.s)
             if item.pinned { Image(systemName: "pin.fill").foregroundStyle(picked ? Theme.onAccent : Theme.sun).imageScale(.small) }
+            if let number {
+                Text(verbatim: "⌘\(number)").font(Theme.Font.caption.monospacedDigit())
+                    .foregroundStyle(picked ? Theme.onAccent.opacity(0.85) : Theme.inkFaint)
+            }
         }
         .padding(.horizontal, Theme.Space.m)
-        .padding(.vertical, Theme.Space.s)
+        .padding(.vertical, item.image == nil ? Theme.Space.s : 5)
         .background(picked ? Theme.accent : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
     }
 
-    private var symbol: String {
-        switch item.kind {
+    @ViewBuilder private var leading: some View {
+        if let image = item.image {
+            ExtensionPictureView(name: image, folder: folder, pixels: 112)
+                .frame(width: 52, height: 38)
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.line))
+        } else if let color = item.color.flatMap(Color.init(extensionHex:)) {
+            RoundedRectangle(cornerRadius: 4, style: .continuous).fill(color).frame(width: 18, height: 18)
+                .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(Theme.line))
+        } else {
+            Image(systemName: Self.symbol(item.kind)).foregroundStyle(picked ? Theme.onAccent : Theme.inkMuted).frame(width: 18)
+        }
+    }
+
+    static func symbol(_ kind: ExtensionPaletteList.Item.Kind) -> String {
+        switch kind {
         case .text: "text.alignleft"
         case .link: "link"
         case .image: "photo"
@@ -118,5 +141,54 @@ private struct PaletteRow: View {
         case .color: "paintpalette"
         case .code: "chevron.left.forwardslash.chevron.right"
         }
+    }
+}
+
+/// The picked row in full: its picture at size, its text to read and select, and its facts (where it came from, when).
+private struct PalettePreviewPane: View {
+    var preview: ExtensionPalettePreview?
+    var item: ExtensionPaletteList.Item?
+    var folder: URL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            if let preview {
+                if let image = preview.image {
+                    ExtensionPictureView(name: image, folder: folder, pixels: 1000, limit: ExtensionDataFile.previewLimit, fill: false)
+                        .frame(maxWidth: .infinity, maxHeight: preview.text == nil ? .infinity : 200)
+                }
+                if let title = preview.title {
+                    Text(verbatim: title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
+                }
+                if let text = preview.text {
+                    ScrollView {
+                        Text(verbatim: text).font(preview.code ? .system(size: 12, design: .monospaced) : Theme.Font.body)
+                            .foregroundStyle(Theme.ink).textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: .infinity)
+                } else if preview.image == nil {
+                    Spacer(minLength: 0)
+                }
+                if !preview.facts.isEmpty {
+                    Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Theme.Space.m, verticalSpacing: 3) {
+                        ForEach(Array(preview.facts.enumerated()), id: \.offset) { _, fact in
+                            GridRow {
+                                Text(verbatim: fact.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                                Text(verbatim: fact.value).font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(3).textSelection(.enabled)
+                            }
+                        }
+                    }
+                    .padding(.top, Theme.Space.xs)
+                }
+            } else if let item {
+                Text(verbatim: item.title).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                Spacer(minLength: 0)
+            } else {
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }

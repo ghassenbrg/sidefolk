@@ -117,7 +117,7 @@ public struct PermissionSummary: Sendable, Hashable {
             lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's graphics hardware for pictures"), caution: false))
         }
         if p.clipboard {
-            lines.append(Line(kind: .clipboard, text: String(localized: "Can read and change what you copy (the clipboard)"), caution: true))
+            lines.append(Line(kind: .clipboard, text: String(localized: "Can read and change what you copy (the clipboard), and see which app you copied in"), caution: true))
         }
         if p.power {
             lines.append(Line(kind: .power, text: String(localized: "Can keep your Mac awake and tell macOS you're active"), caution: false))

@@ -143,14 +143,23 @@ final class ExtensionPageModel {
 
     /// A switch or button: the extension's own tool, run as the person through Guard (D63), then the page again.
     func run(_ control: ExtensionPage.Control, on: Bool?) async {
-        guard let services else { return }
+        await run(tool: control.tool, input: control.input(switchedTo: on))
+    }
+
+    /// A switch, button, choice, field or list row's tool (D63, D68): whether it ran without a problem.
+    @discardableResult
+    func run(tool: String, input: JSONValue) async -> Bool {
+        guard let services else { return false }
         let short = String(info.extensionId.split(separator: ".").last ?? "")
-        let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: control.tool),
-                                                              input: control.input(switchedTo: on), caller: .user)
+        let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: tool), input: input, caller: .user)
         await refresh()
         // After the read, which clears any earlier problem: what went wrong with this click stays in sight.
         if let why = outcome.problem?.message { problem = why }
+        return outcome.problem == nil
     }
+
+    /// Where the extension's pictures are (`ExtensionDataFile`); nil in UI snapshots.
+    var folder: URL? { services?.runtime.extensions.dataFolder(extensionId: info.extensionId) }
 
     static var language: String { Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en" }
 }
