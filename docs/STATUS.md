@@ -1,5 +1,26 @@
 # Status
 
+- **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
+  revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
+  Notebook; the Gallery in Home; half circle = Focus, moon = Quiet; Full access with an end time; Latin companion names
+  in Arabic; only what exists is shown). Built: Harbor is Lantern (navy ink, neutral canvas and cards, the deep aqua
+  action colour #0B7783 / #3CD6DB with its label at 5.3 / 8.8:1), new optional theme roles `well`, `glow`, `waitGlow`
+  (older themes keep their look, no warning), Lantern's type scale, sizes, depth, glass, motion, folk accents and the
+  Focus/Quiet symbols; shared components (buttons with sizes and states, chips with their tone's ink, what-it-touches
+  chips, `SegmentedPicker`, `ListRow`, status badges, counts, state tiles, pins, folk avatars, field chrome and the
+  search, the Say bar's shell with key hints and the understanding row, the Sidecard surface with its tail, whisper,
+  card, slip strip and stack, the light pool and shoulder badge), all listed with their files in docs/DESIGN.md.
+  Applied app-wide where it was a direct swap: every button (SFButtonStyle), every segmented picker but the companion
+  stage's, sentence-case eyebrows, card depth, the search and CommitField as wells, approval risk tags as chips.
+  *Checked:* `make test` (see the commit), the new `design-system-foundations|controls|sidecard` UI snapshots light and
+  dark in English, German and Arabic read against the mockups' design-system boards, and Today, Settings › General, the
+  Ask panel and the install sheet read in light and dark. *Half done:* 16 text fields still `.roundedBorder`; the
+  theme-only Today blocks (console, planner) keep capitals; the layout keys of D64 still read (retire in phase 3).
+  *Next:* phase 2, the desktop: place `LightPool` and `ShoulderBadge` under the companion (CompanionWindow), turn bubbles
+  into `Whisper`/`SidecardCard`, the Ask panel into the Sidecard's Ask size on `SidecardSurface`, the stack, the
+  permission slip (`SidecardStrip` calm/firm, `TouchChip(Touch(request.effect))`, ⌘Return on firm), pins as
+  `PinCapsule`. Then phase 3 (Home) and 4 (Settings) on docs/DESIGN.md.
+
 - **Miraya screen redesign and audio routing:** the approved responsive screen covers discovery, source selection, pairing, sharing and pause, with settings below the main choices. Mac only, TV only and Mac and TV are saved sound destinations; TV only uses a separately disclosed host-owned output-mute lease with crash recovery. *Checked:* Sidefolk and Miraya suites, sandboxed installation and destination choices, light/dark wide/narrow snapshots, an isolated Android TV emulator pairing with matching codes, and actual Mac output mute and restoration on closure and parent death. All nine localizations are complete; the unsigned gallery build and checks pass. *Still to verify:* live screen and sound playback with a physical TV. *Next:* exercise screen, window and region sharing and all three sound destinations on that setup; Released (D81): merged with D76 (its 14 new sentences in all ten languages), Sidefolk snapshot 593, then Miraya `1.0.0-snapshot.4` in the gallery (kept at 1.0.0, the founder's call). A Sidefolk before 593 refuses that snapshot (`output_mute` unknown).
 
 - **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved

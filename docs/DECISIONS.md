@@ -2273,3 +2273,60 @@ the add-on back until everyone updates (no way to know).
 **Implications:** copies before this snapshot still see such versions and get the old error; from this snapshot on
 they don't. Miraya's `addon.json` names 593.
 
+
+### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+**Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
+design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
+1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
+   screen; state as light (a pool at the companion's feet: aqua while it works, amber when something waits, dim in
+   Focus); one surface family on the desktop, the Sidecard (whisper, card, Ask, stack); one deep aqua action colour
+   that reads with its label in light and dark (#0B7783 / #3CD6DB; the pale brand aqua under navy read as disabled).
+   Field Journal and Playroom may come back as themes on Lantern.
+2. **Themes dress the app only:** colours, the display face, density, materials, radii, the light pool's colours and
+   the nook's art. Each place has **one excellent layout**; a theme no longer arranges Today or picks navigation,
+   Activity or editor layouts (narrows D64; the layout keys and presets stay readable until phase 3 retires them, so
+   existing themes keep working).
+3. **Firm cards never take Return:** another app's approval, agents' questions and anything after outside content need
+   ⌘Return or a click (D58's rule, widened).
+4. **Merges:** Conversations and Activity become History; AI and Voice become Brain; Trash moves into the Notebook.
+5. **The Gallery moves into Home** and leaves Settings.
+6. **Focus is a half circle, Quiet a moon,** everywhere (`Theme.Symbol`).
+7. **Full access may have an end time** ("for 1 hour", "until tonight").
+8. **Companion names stay in Latin letters in Arabic** (Mochi, not موتشي), direction-isolated.
+9. **Only what exists is shown** (AGENTS.md: no fake features). Content the app doesn't keep yet (which facts went
+   into an answer, a watched page's last two versions, a log of each watch's checks) is left out of the screens, or
+   stored where that is cheap and safe, decided per screen.
+
+**Phases:** 1 foundations (this), 2 the desktop (light pool, Sidecard, stack, permission slip, pins, agents lane), 3
+Home (Today, the Say bar and ⌘K, On duty, History with Undo, You, Calendar's Agenda, the Gallery in Home), 4 Settings
+and the rest (8 tabs with search, Attention, Brain, Trust, the menu bar Pocket, onboarding, updates, install sheets),
+5 polish (Reduce Motion, Transparency and Contrast versions, German and Arabic on real systems, the companions' own
+reactions). Each ships in snapshots behind the same tests; the version stays 0.1.0.
+
+**Phase 1, built:** Harbor is Lantern (ink, surfaces, the action colour, status colours, every text pair ≥ 4.5:1 on
+every surface, the action colour ≥ 3:1 on a card). New optional theme roles `well` (fields, chips, the search, a
+segmented track), `glow` and `waitGlow` (light, never text): a theme without them keeps its `surfaceSunken` for wells
+and Harbor's lights, with no warning, so Night Shift, Marshmallow, Field Notes and the gallery's Daylight, Night Studio
+and Paper Garden pass as they are. Type: the theme's face dresses titles, the greeting, state words and numbers; what
+is read, the companion's words included, is the system face (D58 had the companion's words in the theme face).
+Eyebrows are sentence case. Sizes, depth (e0–e3), glass, motion tokens and the folk accents are Lantern's. Shared
+components (docs/DESIGN.md): buttons with sizes, hover, press and working states; chips with their tone's ink; what-it-
+touches chips; the segmented picker (every segmented Picker but the companion stage's, which falls back to a menu by
+measuring AppKit's control); list rows; status badges, counts, state tiles, pins and folk avatars; fields and the
+search as wells; the Say bar's shell, key hints and the understanding row; the Sidecard surface with its tail, the
+whisper, card, slip strip and stack; the light pool and shoulder badge. A design-system sheet in the UI snapshots is
+the reference. An approval's risk tag became a sentence-case chip.
+
+**Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
+disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
+per place and one component set keep the product learnable and let extensions place parts predictably; themes still
+serve different people through how things look.
+
+**Alternatives:** Field Journal (paper and ink: slower, hard with glass and 3D companions) or Playroom (bright, toy-like:
+tiring, fights extension pages and themes) as the base; themes that keep arranging Today (D64: every arrangement needs
+its own care and extensions can't count on a place); a new `canvas` role (the page already is `surfaceSunken`); new
+roles required (every existing theme would warn).
+
+**Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
+fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
+snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.
