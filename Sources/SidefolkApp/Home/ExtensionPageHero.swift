@@ -161,8 +161,7 @@ struct HeroView: View {
                             Text(ext: fact.value).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.ink)
                                 .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                             Text(ext: fact.label).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
-                        }
-                        .accessibilityElement(children: .combine)
+                        }.accessibilityElement(children: .combine)
                     }
                 }
             }

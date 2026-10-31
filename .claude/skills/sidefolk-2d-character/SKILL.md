@@ -1,6 +1,6 @@
 ---
 name: sidefolk-2d-character
-description: Create a Sidefolk companion's 2D form end to end, or remake one - style target and painted parts sheet (Codex image gen), cutting the parts, measuring outlines, face and colours into a rig (a Species in Swift for a gallery companion, or 2d/species.json for a companion added from a folder, D79), reviewing it against the target, filming it, and checking it live in the app. Use when the user asks for a 2D version of a companion ("do the 2D one", "make Kiko's 2D form", "the 2D Nimbo doesn't look like the 3D one, fix it"), or for a new companion's 2D form after its 3D one. Not for the 3D model (sidefolk-3d-character), Mochi's flat vector drawing, or the helper folks (D73).
+description: Create a Sidefolk companion's 2D form end to end, or remake one - style target and painted parts sheet (Codex image gen), cutting the parts, measuring outlines, face and colours into a rig (a Species in Swift for a gallery companion, or 2d/species.json for a companion added from a folder, D85), reviewing it against the target, filming it, and checking it live in the app. Use when the user asks for a 2D version of a companion ("do the 2D one", "make Kiko's 2D form", "the 2D Nimbo doesn't look like the 3D one, fix it"), or for a new companion's 2D form after its 3D one. Not for the 3D model (sidefolk-3d-character), Mochi's flat vector drawing, or the helper folks (D73).
 ---
 
 # Sidefolk 2D character
@@ -18,7 +18,7 @@ expressions and talking work. Every 2D form follows one style target, `companion
 | `companions-2d/parts/` | `prompts.tsv`, `generate.sh` (parts sheets), `cut.py` (key and cut), `blank.py` (wipe a face drawn anyway), `<name>.json` (which piece is which part) |
 | `Sources/SidefolkCharacter/<Name>.swift`, `Art/<name>/` | A gallery companion's rig and its paintings |
 | `Sources/SidefolkCharacter/SpeciesFile.swift` | The data format a folder companion's `2d/species.json` uses (strict: an unknown key is an error) |
-| `~/git/sidefolk-private/companions/<id>/2d/` | A folder companion's form (D60, D79): `species.json`, `parts/*.svg`, `paint/*.png`; never in a repository |
+| `~/git/sidefolk-private/companions/<id>/2d/` | A folder companion's form (D60, D85): `species.json`, `parts/*.svg`, `paint/*.png`; never in a repository |
 | This skill's `templates/` | `target.py`, `cut.py`, `compare.py`, `species.json`, `parts/*.svg` for a folder companion |
 
 Copy the finished companion closest to the new one (screen face, headphones: `Spark.swift`; ears and tail: `Ember.swift`;

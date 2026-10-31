@@ -19,7 +19,7 @@ struct SpeciesFile: Decodable {
     var gear: [GearFile]?
     var collar: CollarFile?
     var marks: [String: Point]?
-    /// Paintings drawn over the parts' outlines (D79): `head`, `torso`, `armL`/`armR`, `footL`/`footR`.
+    /// Paintings drawn over the parts' outlines (D85): `head`, `torso`, `armL`/`armR`, `footL`/`footR`.
     var paint: [String: PaintFile]?
 
     struct BodyFile: Decodable {
@@ -53,7 +53,7 @@ struct SpeciesFile: Decodable {
         var scale: Double?
         var cheeks: Bool?
         var temper: String?
-        /// A dark screen whose eyes and mouth are light (D79).
+        /// A dark screen whose eyes and mouth are light (D85).
         var screen: ScreenFile?
         var glow: String?
         var mouthGlow: String?

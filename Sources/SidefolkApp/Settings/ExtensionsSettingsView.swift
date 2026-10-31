@@ -165,14 +165,10 @@ struct ExtensionsSettingsView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(alignment: .center, spacing: Theme.Space.m) {
-                Picker("Page", selection: $page) {
-                    Text("Installed", comment: "Settings › Extensions: the title over the extensions and skills on this Mac")
-                        .tag(Page.installed)
-                    Text("Gallery", comment: "Settings › Extensions: extensions to add from the add-on gallery").tag(Page.gallery)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                SegmentedPicker("Page", selection: $page, segments: [
+                    .init(Page.installed, Text("Installed", comment: "Settings › Extensions: the title over the extensions and skills on this Mac")),
+                    .init(Page.gallery, Text("Gallery", comment: "Settings › Extensions: extensions to add from the add-on gallery")),
+                ])
                 Spacer(minLength: Theme.Space.s)
                 Button("Install from Folder…", systemImage: "folder", action: chooseFolder).buttonStyle(.sf(.secondary))
                     .help("Review and install an extension from a folder on this Mac")
@@ -183,17 +179,11 @@ struct ExtensionsSettingsView: View {
                 HStack(alignment: .center, spacing: Theme.Space.m) {
                     SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
                               submit: focusFirstRow)
-                    Picker("Show", selection: $show) {
-                        Text("All \(counts.all)", comment: "A filter in Settings › Extensions with how many it shows: “All 15”")
-                            .tag(ExtensionListQuery.Show.all)
-                        Text("On \(counts.on)", comment: "A filter in Settings › Extensions: the extensions switched on, “On 9”")
-                            .tag(ExtensionListQuery.Show.on)
-                        Text("Off \(counts.off)", comment: "A filter in Settings › Extensions: the extensions switched off, “Off 6”")
-                            .tag(ExtensionListQuery.Show.off)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
+                    SegmentedPicker("Show", selection: $show, segments: [
+                        .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Extensions with how many it shows: “All 15”")),
+                        .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Extensions: the extensions switched on, “On 9”")),
+                        .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Extensions: the extensions switched off, “Off 6”")),
+                    ])
                     .help("Show every extension, or only those switched on or off")
                 }
             } else {

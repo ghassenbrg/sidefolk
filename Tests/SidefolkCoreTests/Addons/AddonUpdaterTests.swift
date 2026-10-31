@@ -130,6 +130,26 @@ import Testing
         await h.host.shutdown()
     }
 
+    /// The founder's case (D80): Playtime 1.2.0, installed before D65 renumbered the gallery, was never offered
+    /// `1.0.0-snapshot.2` and its games, being numbered higher. The gallery never listed 1.2.0, so its version is
+    /// offered; once installed nothing more is, and a release the gallery lists is never offered a lower snapshot.
+    @Test(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
+    func aCopyFromBeforeTheRenumberingGetsTheGallerysVersion() async throws {
+        let g = try Gallery(), h = try HostEnv()
+        try Self.publish(g, "1.2.0")
+        try await h.host.install(from: try await g.store.fetch(try #require(try await g.store.catalog().entry(Self.id))), origin: .official)
+        let updater = AddonUpdater(store: g.store, extensions: h.host, themes: ThemeLibrary(paths: g.paths))
+        try Self.publish(g, "1.0.0-snapshot.2", note: "\n# the games\n")
+        _ = try await g.store.catalog(refresh: true)
+
+        #expect(await updater.run(channel: .releases, automatic: true).extensions.isEmpty, "a snapshot waits on Releases")
+        let report = await updater.run(channel: .snapshots, automatic: true)
+        #expect(report.extensions.map(\.version) == ["1.0.0-snapshot.2"])
+        #expect(await Self.installed(h)?.version == "1.0.0-snapshot.2")
+        #expect(await updater.run(channel: .snapshots, automatic: true).extensions.isEmpty, "nothing more")
+        await h.host.shutdown()
+    }
+
     @Test(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
     func aDisabledExtensionUpdatesAndStaysOff() async throws {
         let (g, h, updater) = try await Self.scene()

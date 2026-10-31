@@ -245,7 +245,7 @@ Every companion also gets a 2D form (D59): make it after the 3D one with the `si
 outside the repos (e.g. `~/git/sidefolk-private/companions/<id>/` with the pipeline beside it), give `addon.json`
 an optional `body` (`biped`, `floating`, `card`: whose stand-in rig it borrows), and skip the rest of this step: the
 user adds the folder in Settings › Companion › Made by you › Add from Folder… (D60), or in the debug app
-`swift scripts/dev.swift addCompanion:<folder>`. Its 2D form is data in the folder's `2d/` (D79; `companions-2d/README.md`). For a likeness, keep the sheet's face in the design image, project
+`swift scripts/dev.swift addCompanion:<folder>`. Its 2D form is data in the folder's `2d/` (D85; `companions-2d/README.md`). For a likeness, keep the sheet's face in the design image, project
 it onto the texture in the rig, and use the ink face's `lids` and `mouth.lips` instead of drawn eyes (D60).
 Never name a private companion in a repository: not in code comments, docs, tests, decision text or commit
 messages; generic engine options it needed are described without it. Record its prompts and task ids in

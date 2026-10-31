@@ -260,14 +260,12 @@ private struct SectionView: View {
     private var hasCharts: Bool { section.blocks.contains { if case .chart = $0 { true } else { false } } }
 
     private var windowPicker: some View {
-        Picker(selection: Binding(get: { model.window }, set: { model.window = $0 })) {
-            Text("10 min", comment: "Chart window: the last ten minutes").tag(ExtensionPageModel.Window.tenMinutes)
-            Text("1 hour", comment: "Chart window: the last hour").tag(ExtensionPageModel.Window.hour)
-            Text("24 hours", comment: "Chart window: the last day").tag(ExtensionPageModel.Window.day)
-        } label: { EmptyView() }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
+        SegmentedPicker(Text("Chart window", comment: "What the 10 min / 1 hour / 24 hours choice above a chart is, read by VoiceOver"),
+                        selection: Binding(get: { model.window }, set: { model.window = $0 }), segments: [
+            .init(ExtensionPageModel.Window.tenMinutes, Text("10 min", comment: "Chart window: the last ten minutes")),
+            .init(ExtensionPageModel.Window.hour, Text("1 hour", comment: "Chart window: the last hour")),
+            .init(ExtensionPageModel.Window.day, Text("24 hours", comment: "Chart window: the last day")),
+        ], small: true)
     }
 
     /// Consecutive parts of one kind stay together, in the order the extension gave them.

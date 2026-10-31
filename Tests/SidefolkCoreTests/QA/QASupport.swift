@@ -40,6 +40,7 @@ enum QA {
         case .chance(let c): return "chance \(c.kind.rawValue) x\(c.count) d\(c.sides)\(c.modifier) \(c.hand?.rawValue ?? "-")"
         case .newConversation: return "newConversation"
         case .extensionCommand(let call): return "command \(call.tool) \(call.input.jsonString)"
+        case .game(let id, let game): return "game \(id)/\(game)"
         }
     }
 

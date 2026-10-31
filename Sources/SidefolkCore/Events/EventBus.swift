@@ -67,6 +67,8 @@ public enum AppEvent: Sendable {
     case companion(CompanionAct)
     /// A coin, dice or a hand the companion just drew (D44, amended), to play on the desktop.
     case toss(Toss)
+    /// A game to open in the Play panel (D75), from the person's words, the Play menu or the AI.
+    case game(GameRequest)
     /// An extension with the power permission asked that apps see the person as active (D63): the app moves the
     /// pointer by nothing.
     case nudge

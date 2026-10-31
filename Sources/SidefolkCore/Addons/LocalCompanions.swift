@@ -8,14 +8,14 @@ import Foundation
 extension AddonStore {
     /// Largest each file may be: a character file is a few kilobytes, a model a few megabytes.
     static let localLimits: [String: Int64] = ["js": 512 * 1024, "glb": 64 * 1024 * 1024, "png": 8 * 1024 * 1024]
-    /// A 2D form's files (D79), in `2d/`: its data, its SVG parts and its paintings, as many and as large as the custom
+    /// A 2D form's files (D85), in `2d/`: its data, its SVG parts and its paintings, as many and as large as the custom
     /// companion format reads.
     static let twoDLimits: [String: (count: Int, bytes: Int64)] = ["json": (1, 64 * 1024), "svg": (16, 256 * 1024), "png": (8, 4 * 1024 * 1024)]
 
     /// What `folder` would add, read and checked, nothing copied: its `addon.json` (as the gallery's add-ons write
     /// it: `name`, `companion`, and optionally `tagline`, `author`, `version`, `engine`, `body`) and exactly
     /// `characters/<companion>.js`, `assets/<companion>.glb`, `portraits/<companion>.png` and `avatars/<companion>.png`;
-    /// optionally a 2D form in `2d/` (D79), whose data the app reads and draws before adding it.
+    /// optionally a 2D form in `2d/` (D85), whose data the app reads and draws before adding it.
     public nonisolated static func readLocalCompanion(_ folder: URL) throws -> InstalledCompanion {
         let manifestFile = folder.appendingPathComponent("addon.json")
         guard let data = FileManager.default.contents(atPath: manifestFile.path) else {
@@ -54,7 +54,7 @@ extension AddonStore {
 
     /// Exactly the four files a 3D companion needs beside its `addon.json`, each no larger than it should be and of
     /// its kind (a glTF binary, PNGs): no links, no other files (Finder's litter aside). A `2d/` folder may hold a 2D
-    /// form (D79): `species.json`, `parts/*.svg` and `paint/*.png`, nothing else. Says whether it has one.
+    /// form (D85): `species.json`, `parts/*.svg` and `paint/*.png`, nothing else. Says whether it has one.
     @discardableResult
     nonisolated static func checkLocalFiles(_ folder: URL, name: String) throws -> Bool {
         let entries = try ExtensionFiles.walk(folder.path, skipping: ExtensionFiles.skippedNames)

@@ -24,10 +24,10 @@ struct ExtensionKitProtocolTests {
         let kit = ExtFixtures.repoRoot.appendingPathComponent("extensions/Kit")
         let compiler = Process()
         compiler.executableURL = URL(fileURLWithPath: "/usr/bin/swiftc")
-        // Every Kit file, as extensions build it: a list of names went stale when the Kit gained its language files.
-        let files = try FileManager.default.contentsOfDirectory(at: kit, includingPropertiesForKeys: nil)
+        // The whole Kit, as an extension's package builds it: its files depend on each other.
+        let kitFiles = try FileManager.default.contentsOfDirectory(at: kit, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }.map(\.path).sorted()
-        compiler.arguments = files + [main.path, "-o", binary.path]
+        compiler.arguments = kitFiles + [main.path, "-o", binary.path]
         compiler.standardOutput = FileHandle.nullDevice
         compiler.standardError = FileHandle.nullDevice
         try compiler.run(); compiler.waitUntilExit()

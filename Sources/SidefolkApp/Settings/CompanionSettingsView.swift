@@ -57,16 +57,27 @@ struct CompanionSettingsView: View {
             }
         }
 
+        // Games in the Play panel (D75): how the companion takes a win, and sounds, off until turned on.
+        SettingsGroup(title: "Games") {
+            SettingsRow(title: "When it wins", detail: toneDetail) {
+                SegmentedPicker("When it wins", selection: Binding(get: { model.settings.games.tone }, set: { tone in model.update { $0.games.tone = tone } }),
+                                segments: [
+                    .init(GameTone.gentle, Text(String(localized: "tone.gentle", defaultValue: "Gentle", comment: "How the companion takes a win in games: kindly"))),
+                    .init(GameTone.cheeky, Text(String(localized: "tone.cheeky", defaultValue: "Cheeky", comment: "How the companion takes a win in games: a small tease, then kind"))),
+                    .init(GameTone.competitive, Text(String(localized: "tone.competitive", defaultValue: "Competitive", comment: "How the companion takes a win in games: a victory dance"))),
+                ])
+            }
+            SettingsToggle(title: "Game sounds", detail: "Soft sounds in games. Each game's speaker button turns its own on or off.",
+                           isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
+        }
+
         SettingsGroup(title: "Look") {
             SettingsRow(title: "Size") {
-                Picker("Size", selection: Binding(get: { model.settings.size }, set: { size in model.update { $0.size = size } })) {
-                    Text(String(localized: "size.small", defaultValue: "Small", comment: "Companion size")).tag(CompanionSize.small)
-                    Text(String(localized: "size.medium", defaultValue: "Medium", comment: "Companion size, between Small and Large")).tag(CompanionSize.medium)
-                    Text(String(localized: "size.large", defaultValue: "Large", comment: "Companion size")).tag(CompanionSize.large)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                SegmentedPicker("Size", selection: Binding(get: { model.settings.size }, set: { size in model.update { $0.size = size } }), segments: [
+                    .init(CompanionSize.small, Text(String(localized: "size.small", defaultValue: "Small", comment: "Companion size"))),
+                    .init(CompanionSize.medium, Text(String(localized: "size.medium", defaultValue: "Medium", comment: "Companion size, between Small and Large"))),
+                    .init(CompanionSize.large, Text(String(localized: "size.large", defaultValue: "Large", comment: "Companion size"))),
+                ])
             }
             SettingsToggle(title: "Eyes follow the pointer", detail: "A glance now and then, never a stare.",
                            isOn: setting(\.eyesFollowPointer))
@@ -77,20 +88,25 @@ struct CompanionSettingsView: View {
 
         SettingsGroup(title: "Behavior") {
             SettingsRow(title: "Liveliness", detail: livelinessDetail) {
-                Picker("Liveliness", selection: Binding(get: { model.settings.liveliness },
-                                                        set: { level in model.update { $0.liveliness = level } })) {
-                    // Their own keys: "Minimal" is also a reasoning effort, which other languages word apart.
-                    Text(String(localized: "liveliness.minimal", defaultValue: "Minimal", comment: "How lively the companion is: moves only when something happens")).tag(CompanionLiveliness.minimal)
-                    Text(String(localized: "liveliness.balanced", defaultValue: "Balanced", comment: "How lively the companion is: the default")).tag(CompanionLiveliness.balanced)
-                    Text(String(localized: "liveliness.lively", defaultValue: "Lively", comment: "How lively the companion is: the most moments")).tag(CompanionLiveliness.lively)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                // Their own keys: "Minimal" is also a reasoning effort, which other languages word apart.
+                SegmentedPicker("Liveliness", selection: Binding(get: { model.settings.liveliness },
+                                                                 set: { level in model.update { $0.liveliness = level } }), segments: [
+                    .init(CompanionLiveliness.minimal, Text(String(localized: "liveliness.minimal", defaultValue: "Minimal", comment: "How lively the companion is: moves only when something happens"))),
+                    .init(CompanionLiveliness.balanced, Text(String(localized: "liveliness.balanced", defaultValue: "Balanced", comment: "How lively the companion is: the default"))),
+                    .init(CompanionLiveliness.lively, Text(String(localized: "liveliness.lively", defaultValue: "Lively", comment: "How lively the companion is: the most moments"))),
+                ])
             }
             SettingsToggle(title: "Sleep when you're away", detail: "Naps after 10 minutes without input and wakes when you're back.",
                            isOn: setting(\.sleepWhenIdle))
             SettingsToggle(title: "Sounds", detail: "A soft chime for reminders and finished jobs.", isOn: setting(\.sounds))
+        }
+    }
+
+    private var toneDetail: LocalizedStringKey {
+        switch model.settings.games.tone {
+        case .gentle: "“Good game!” and nothing more."
+        case .cheeky: "A small tease, then kind: “Ha! Mine. Rematch?”"
+        case .competitive: "A victory dance, and it wants a rematch when it loses."
         }
     }
 

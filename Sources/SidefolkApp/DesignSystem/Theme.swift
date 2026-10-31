@@ -42,6 +42,14 @@ enum Theme {
     static var warning: Color { style.warning }
     static var warningSoft: Color { style.warningSoft }
     static var onWarning: Color { style.onWarning }
+    /// Wells inside a card: fields, the search, chips, a segmented track (D84).
+    static var well: Color { style.well }
+    /// The companion's light while it works or listens, and when something waits on the person: light, never text.
+    static var glow: Color { style.glow }
+    static var waitGlow: Color { style.waitGlow }
+    /// The border of a control that has no fill of its own (a secondary button, an unchecked box): 3:1 where it must
+    /// be seen, faint where a hairline is enough.
+    static var controlBorder: Color { style.inkFaint.opacity(0.45) }
 
     /// A status's colour for text and icons, and its soft fill (StatusTone, docs/ARCHITECTURE.md › Colour meaning).
     /// Pair it with a word or an icon: colour is never the only signal.
@@ -75,6 +83,9 @@ enum Theme {
         static var l: CGFloat { space.l }
         static var xl: CGFloat { space.xl }
         static var xxl: CGFloat { space.xxl }
+        /// Lantern's 48 and 64, after the theme's density.
+        static var xxxl: CGFloat { space.xxl * 1.5 }
+        static var xxxxl: CGFloat { space.xxl * 2 }
     }
 
     enum Radius {
@@ -83,10 +94,23 @@ enum Theme {
         static var card: CGFloat { radius.card }
         static var panel: CGFloat { radius.panel }
         static var bubble: CGFloat { radius.bubble }
+        /// Inside a chip, a checkbox: three quarters of a control's corner.
+        static var xs: CGFloat { (radius.control * 0.75).rounded() }
     }
 
+    /// Lantern's type scale (D84): display (the greeting, empty pages), title1 (a place), title2 (a section, a sheet),
+    /// headline (a card or row title), body, callout (a second line), caption, eyebrow (a group, sentence case),
+    /// stateWord and number (tiles, pins), bubble (the Sidecard), input (the Say bar), mono (the exact request only).
     enum Font {
         private static var fonts: ThemeStyle.Fonts { style.fonts }
+        static var display: SwiftUI.Font { fonts.display }
+        static var title1: SwiftUI.Font { fonts.title1 }
+        static var title2: SwiftUI.Font { fonts.title2 }
+        static var headline: SwiftUI.Font { fonts.headline }
+        static var callout: SwiftUI.Font { fonts.callout }
+        static var stateWord: SwiftUI.Font { fonts.stateWord }
+        static var number: SwiftUI.Font { fonts.number }
+        static var mono: SwiftUI.Font { fonts.mono }
         static var bubble: SwiftUI.Font { fonts.bubble }
         static var bubbleTitle: SwiftUI.Font { fonts.bubbleTitle }
         static var input: SwiftUI.Font { fonts.input }
@@ -117,6 +141,25 @@ enum Theme {
         static func ease(_ duration: Double) -> Animation? {
             style.tokens.motion == .none ? nil : .easeOut(duration: duration)
         }
+
+        // Lantern's motion tokens (D84). Views still check Reduce Motion: then nothing scales or travels, and the
+        // light pool shows its state as a still colour.
+        /// Hover, press, a chip toggling: 120 ms.
+        static var micro: Animation? { style.tokens.motion == .none ? nil : .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.12) }
+        /// A list changing, a tab switching: 200 ms.
+        static var standard: Animation? { style.tokens.motion == .none ? nil : .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.2) }
+        /// The Sidecard growing, a sheet arriving.
+        static var enter: Animation? {
+            switch style.tokens.motion {
+            case .calm: .spring(response: 0.32, dampingFraction: 0.86)
+            case .bouncy: .spring(response: 0.36, dampingFraction: 0.7)
+            case .none: nil
+            }
+        }
+        /// Something dismissed: 160 ms, easing in.
+        static var exit: Animation? { style.tokens.motion == .none ? nil : .timingCurve(0.4, 0, 1, 1, duration: 0.16) }
+        /// The working light's breath: 3 s, back and forth.
+        static var breath: Animation? { style.tokens.motion == .none ? nil : .easeInOut(duration: 1.5).repeatForever(autoreverses: true) }
     }
 
     /// The theme's own pictures (D58), when it has them.
@@ -129,20 +172,21 @@ enum Theme {
         static var tile: CGImage? { style.artTile }
     }
 
-    /// Accent color for each folk, used on cards of its domain. Identity, never status: a folk's colour never says
-    /// that something went well or badly, even when it happens to be green or red.
+    /// Accent color for each folk, used on cards of its domain: a dot, an avatar's disc, a 2 pt bar (Lantern's folk
+    /// accents, D84). Identity, never status: a folk's colour never says that something went well or badly, even when
+    /// it happens to be green or red, and it is never body text.
     static func folkColor(_ name: String) -> Color {
         switch name {
         case "pip": coral
-        case "tempo": lightBlue
-        case "scout": sun
-        case "byte": Color(hex: 0x4F7DF3)
-        case "guard": Color(hex: 0x2BB3A3)
-        case "seed": mint
-        case "melody": Color(hex: 0xA77BF3)
-        case "nova": Color(hex: 0xC4A5F5)
-        case "play": Color(hex: 0xF25C5C)
-        case "brew": Color(hex: 0xE9C79A)
+        case "tempo": Color(hex: 0x5B8DEF)
+        case "scout": Color(hex: 0xF2B33D)
+        case "byte": Color(hex: 0x3B6FF5)
+        case "guard": Color(hex: 0x1FA88A)
+        case "seed": Color(hex: 0x52C08A)
+        case "melody": Color(hex: 0x8E6CF0)
+        case "nova": Color(hex: 0xA68BFA)
+        case "play": Color(hex: 0xF0524F)
+        case "brew": Color(hex: 0xC99A5B)
         default: aqua
         }
     }

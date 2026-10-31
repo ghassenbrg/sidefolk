@@ -2,79 +2,6 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Primary action: aqua with navy text. Secondary: quiet surface. Destructive: coral tint.
-struct SFButtonStyle: ButtonStyle {
-    /// `quiet`: accent text without a frame, for what's rarely needed. `danger`: filled red, for a page whose main
-    /// action is stopping something (D74).
-    enum Kind { case primary, secondary, destructive, plain, quiet, danger }
-    var kind: Kind = .secondary
-    var compact = false
-    /// The one main action of a page or a hero (D74): taller and wider, so it is found at a glance.
-    var large = false
-
-    func makeBody(configuration: Configuration) -> some View {
-        StyledLabel(style: self, configuration: configuration)
-    }
-
-    /// A view, so it can read whether the button is enabled (a ButtonStyle can't).
-    private struct StyledLabel: View {
-        var style: SFButtonStyle
-        var configuration: Configuration
-        @Environment(\.isEnabled) private var isEnabled
-
-        var body: some View {
-            style.styled(configuration).opacity(isEnabled ? 1 : 0.45)
-        }
-    }
-
-    private func styled(_ configuration: Configuration) -> some View {
-        configuration.label
-            .font(compact ? Theme.Font.captionStrong : Theme.Font.bodyStrong)
-            .lineLimit(1)
-            .padding(.horizontal, large ? Theme.Space.l + 2 : compact ? Theme.Space.s + 2 : Theme.Space.m)
-            .padding(.vertical, large ? 10 : compact ? 4 : 7)
-            .foregroundStyle(foreground)
-            .background(background(pressed: configuration.isPressed), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-            .overlay {
-                if kind == .secondary {
-                    RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line)
-                }
-            }
-            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-            .animation(Theme.Motion.ease(0.12), value: configuration.isPressed)
-    }
-
-    private var foreground: Color {
-        switch kind {
-        case .primary: Theme.onAccent
-        case .secondary, .plain: Theme.ink
-        case .destructive: Theme.danger
-        case .quiet: Theme.accent
-        case .danger: .white
-        }
-    }
-
-    private func background(pressed: Bool) -> Color {
-        switch kind {
-        case .primary: Theme.accent.opacity(pressed ? 0.8 : 1)
-        case .secondary: (pressed ? Theme.surfaceSunken : Theme.surfaceRaised)
-        case .destructive: Theme.dangerSoft.opacity(pressed ? 0.7 : 1)
-        case .plain, .quiet: pressed ? Theme.surfaceSunken : .clear
-        case .danger: Theme.danger.opacity(pressed ? 0.8 : 1)
-        }
-    }
-}
-
-extension ButtonStyle where Self == SFButtonStyle {
-    static var sfPrimary: SFButtonStyle { SFButtonStyle(kind: .primary) }
-    static var sfSecondary: SFButtonStyle { SFButtonStyle(kind: .secondary) }
-    static var sfDestructive: SFButtonStyle { SFButtonStyle(kind: .destructive) }
-    static var sfPlain: SFButtonStyle { SFButtonStyle(kind: .plain) }
-    static func sf(_ kind: SFButtonStyle.Kind, compact: Bool = true, large: Bool = false) -> SFButtonStyle {
-        SFButtonStyle(kind: kind, compact: compact && !large, large: large)
-    }
-}
-
 /// A rounded content card with an optional accent stripe in the folk's color.
 struct SFCard<Content: View>: View {
     var accent: Color?
@@ -99,7 +26,8 @@ struct SFCard<Content: View>: View {
 // collected by `make strings` as it is, and `Text` for anything else: `Text(verbatim:)` for names,
 // paths and words already localized where they were made, `Text("…")` beside other text.
 
-/// Small uppercase label above a group.
+/// A group's label (Lantern's eyebrow, D84): small, semibold, in sentence case. Never all capitals: they shout, and
+/// some scripts have none.
 struct Eyebrow: View {
     var text: Text
     var color: Color = Theme.inkMuted
@@ -114,29 +42,39 @@ struct Eyebrow: View {
     }
 
     var body: some View {
-        // Upper case in the text's own language, after it is translated.
-        text.textCase(.uppercase).font(Theme.Font.eyebrow).kerning(0.6).foregroundStyle(color)
+        text.font(Theme.Font.eyebrow).tracking(Self.tracking).foregroundStyle(color)
+    }
+
+    /// Arabic and the languages written without spaces between letters get no tracking (03-system › RTL).
+    private static var tracking: CGFloat {
+        let script = Locale.current.language.script?.identifier
+        return ["Arab", "Hans", "Hant", "Jpan", "Kore"].contains(script ?? "") ? 0 : 0.3
     }
 }
 
+/// A capsule 22 tall with a word and an optional symbol (Lantern's chip, D84). Plain chips sit on a well; a status
+/// chip takes its tone's soft fill and ink ("Changes files", "2 problems"), always with words.
 struct Chip: View {
     var text: Text
     var systemImage: String?
     var tint: Color = Theme.accentSoft
+    var ink: Color = Theme.ink
+
     var body: some View {
         HStack(spacing: 4) {
-            if let systemImage { Image(systemName: systemImage).imageScale(.small) }
+            if let systemImage { Image(systemName: systemImage).font(.system(size: 10, weight: .semibold)) }
             text.lineLimit(1)
         }
-        .font(Theme.Font.captionStrong)
-        .foregroundStyle(Theme.ink)
+        .font(.system(size: 11 * ThemeStore.shared.style.tokens.type.scale, weight: .medium))
+        .foregroundStyle(ink)
         .padding(.horizontal, 8)
-        .padding(.vertical, 3)
+        .frame(minHeight: Theme.Size.chip)
         .background(tint, in: Capsule())
     }
 }
 
-/// A friendly empty state with one line of guidance.
+/// A friendly empty state with one line of guidance and, when there is one, the one action that fills it
+/// (03-system › States: "empty, with the one action that fills it").
 struct EmptyState: View {
     var title: Text
     var message: Text
@@ -145,13 +83,19 @@ struct EmptyState: View {
     var folk: String?
     /// Or any picture, such as your companion at work, at its own size.
     var art: NSImage?
+    /// The step that fills the page, drawn as its one primary button.
+    var actionTitle: Text?
+    var action: () -> Void = {}
 
-    init(title: Text, message: Text, systemImage: String, folk: String? = nil, art: NSImage? = nil) {
+    init(title: Text, message: Text, systemImage: String, folk: String? = nil, art: NSImage? = nil, actionTitle: Text? = nil,
+         action: @escaping () -> Void = {}) {
         self.title = title
         self.message = message
         self.systemImage = systemImage
         self.folk = folk
         self.art = art
+        self.actionTitle = actionTitle
+        self.action = action
     }
 
     init(title: LocalizedStringKey, message: LocalizedStringKey, systemImage: String, folk: String? = nil, art: NSImage? = nil) {
@@ -171,8 +115,12 @@ struct EmptyState: View {
             } else {
                 Image(systemName: systemImage).font(.system(size: 28, weight: .light)).foregroundStyle(Theme.inkFaint)
             }
-            title.font(Theme.Font.heading).foregroundStyle(Theme.ink).multilineTextAlignment(.center)
+            title.font(Theme.Font.title2).foregroundStyle(Theme.ink).multilineTextAlignment(.center)
             message.font(Theme.Font.body).foregroundStyle(Theme.inkMuted).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            if let actionTitle {
+                Button(action: action) { actionTitle }.buttonStyle(.sf(.primary, size: .regular)).padding(.top, Theme.Space.xs)
+            }
         }
         .frame(maxWidth: 320)
         .padding(Theme.Space.xxl)
@@ -326,43 +274,73 @@ enum ChipTone {
 
     var tint: Color {
         switch self {
-        case .neutral: Theme.surfaceSunken
+        case .neutral: Theme.well
         case .accent: Theme.accentSoft
         case .success: Theme.successSoft
         case .warning: Theme.warningSoft
         case .danger: Theme.dangerSoft
         }
     }
+
+    /// The words on the tint: each soft fill with its own ink, so a status reads before it is read.
+    var ink: Color {
+        switch self {
+        case .neutral: Theme.ink
+        case .accent: Theme.link
+        case .success: Theme.success
+        case .warning: Theme.warning
+        case .danger: Theme.danger
+        }
+    }
 }
 
 extension Chip {
     init(_ text: LocalizedStringKey, tone: ChipTone, systemImage: String? = nil) {
-        self.init(text: Text(text), systemImage: systemImage, tint: tone.tint)
+        self.init(text: Text(text), systemImage: systemImage, tint: tone.tint, ink: tone.ink)
     }
 
     init(verbatim text: String, tone: ChipTone, systemImage: String? = nil) {
-        self.init(text: Text(verbatim: text), systemImage: systemImage, tint: tone.tint)
+        self.init(text: Text(verbatim: text), systemImage: systemImage, tint: tone.tint, ink: tone.ink)
+    }
+
+    init(text: Text, tone: ChipTone, systemImage: String? = nil) {
+        self.init(text: text, systemImage: systemImage, tint: tone.tint, ink: tone.ink)
     }
 }
 
-/// A section title with its folk, a count, and optional trailing controls.
+/// A section title with its folk, a count, a quiet line beside it ("2 checks failed"), and optional trailing controls.
 struct SectionHeader<Trailing: View>: View {
-    var title: LocalizedStringKey
+    var title: Text
     var folk: String?
     var count: Int?
+    var detail: Text?
     @ViewBuilder var trailing: Trailing
+
+    init(title: Text, folk: String? = nil, count: Int? = nil, detail: Text? = nil, @ViewBuilder trailing: () -> Trailing) {
+        self.title = title
+        self.folk = folk
+        self.count = count
+        self.detail = detail
+        self.trailing = trailing()
+    }
+
+    init(title: LocalizedStringKey, folk: String? = nil, count: Int? = nil, detail: Text? = nil, @ViewBuilder trailing: () -> Trailing) {
+        self.init(title: Text(title), folk: folk, count: count, detail: detail, trailing: trailing)
+    }
 
     var body: some View {
         // In a narrow column the controls go under the title rather than squeezing it.
         WrapRow(minimum: 140, spacing: Theme.Space.s) {
             HStack(spacing: Theme.Space.s) {
                 if let folk { FolkBadge(name: folk, size: 26) }
-                Text(title).font(Theme.Font.heading).foregroundStyle(Theme.ink).lineLimit(1)
+                title.font(Theme.Font.heading).foregroundStyle(Theme.ink).lineLimit(1)
                 if let count, count > 0 {
                     Text(count.formatted()).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-                        .padding(.horizontal, 6).padding(.vertical, 1)
-                        .background(Theme.surfaceRaised, in: Capsule())
-                        .overlay(Capsule().strokeBorder(Theme.line))
+                        .padding(.horizontal, 7).padding(.vertical, 1)
+                        .background(Theme.well, in: Capsule())
+                }
+                if let detail {
+                    detail.font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(1)
                 }
             }
             trailing
@@ -373,17 +351,20 @@ struct SectionHeader<Trailing: View>: View {
 }
 
 extension SectionHeader where Trailing == EmptyView {
-    init(title: LocalizedStringKey, folk: String? = nil, count: Int? = nil) {
-        self.init(title: title, folk: folk, count: count) { EmptyView() }
+    init(title: LocalizedStringKey, folk: String? = nil, count: Int? = nil, detail: Text? = nil) {
+        self.init(title: Text(title), folk: folk, count: count, detail: detail) { EmptyView() }
+    }
+
+    init(title: Text, folk: String? = nil, count: Int? = nil, detail: Text? = nil) {
+        self.init(title: title, folk: folk, count: count, detail: detail) { EmptyView() }
     }
 }
 
 extension View {
-    /// The raised card surface used across windows: white (navy in dark), hairline, soft lift.
+    /// The card surface used across windows (Lantern's card, D84): the theme's card colour, a hairline and e1.
     func cardSurface(radius: CGFloat = Theme.Radius.card) -> some View {
         background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.line))
-            .shadow(color: Theme.navy.opacity(0.05), radius: 8, y: 2)
+            .elevation(.e1, radius: radius)
     }
 }
 
@@ -675,10 +656,13 @@ struct CommitField: View {
     var body: some View {
         TextField(text: $draft, prompt: prompt) { label }
             .labelsHidden()
-            .textFieldStyle(.roundedBorder)
-            .font(monospaced ? .system(size: 12, design: .monospaced) : Theme.Font.body)
-            .frame(width: width)
+            .textFieldStyle(.plain)
+            .font(monospaced ? Theme.Font.mono : Theme.Font.body)
             .focused($focused)
+            .padding(.horizontal, Theme.Space.s)
+            .frame(minHeight: Theme.Size.field)
+            .fieldChrome(focused: focused)
+            .frame(width: width)
             .onAppear { draft = value }
             .onChange(of: value) { _, new in if !focused { draft = new } }
             .onChange(of: focused) { _, isFocused in if !isFocused { save() } }

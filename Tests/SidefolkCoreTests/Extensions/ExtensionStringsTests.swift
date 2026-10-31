@@ -98,7 +98,8 @@ import Testing
         #expect(try fields(["strings/en.json": Self.english, "strings/es.json": #"{"text": {"Hello": ""}}"#]) == [#"strings/es.json.text["Hello"]"#])
     }
 
-    /// `pt` finds `pt-BR`, a Chinese Mac in Simplified script finds `zh-Hans`; Traditional doesn't, and English is the manifest.
+    /// `pt` finds `pt-BR`, a Chinese Mac in Simplified or Traditional script finds `zh-Hans`
+    /// (the nearest Sidefolk speaks, as the Kit's `Localized` decides), and English is the manifest.
     @Test func theClosestLanguageOrTheManifest() {
         var strings = ExtensionStrings()
         var pt = ExtensionStrings.Words(), zh = ExtensionStrings.Words(), en = ExtensionStrings.Words()
@@ -110,7 +111,7 @@ import Testing
         #expect(strings.words(for: "pt")?.name == "Exemplo")
         #expect(strings.words(for: "zh-Hans-CN")?.name == "示例")
         #expect(strings.words(for: "zh-CN")?.name == "示例")
-        #expect(strings.words(for: "zh-Hant") == nil)
+        #expect(strings.words(for: "zh-Hant")?.name == "示例")
         #expect(strings.words(for: "en") == nil)
         #expect(strings.words(for: "fr") == nil)
     }

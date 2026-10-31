@@ -157,7 +157,7 @@ handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit
   placeholders, plural forms and limits (half as long again as the manifest's). What a command or an `ask` button says
   stays English (Sidefolk understands typed requests in English). Don't put direction marks in text: Sidefolk strips
   them and keeps numbers, sizes and paths left to right itself when it lays out right to left. In-code tables work too
-  (`Localized`, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
+  (`Localized`, D75, as Playtime does). Tests: `Language.with("de", strings: folder) { … }`.
 - **Palettes**: `query` returns `PaletteList([PaletteItem(id:, title:, detail:, kind:, pinned:, actions:)], note:)`
   (kinds `text link image file color code`, actions `plain pin delete`; at most 200 items, 10 s a call); `choose`
   gets the item id and `choose|plain|pin|delete` and returns `PaletteChoice(close:, paste:, message:)`. With `paste`,
@@ -281,8 +281,24 @@ definitions are held until approved.
 - [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;
       `docs/EXTENSIONS.md` when the platform changed. Commit in a coherent milestone, no Co-Authored-By trailer.
 
-## Newer features (D67, D68, D69, D74)
+## Newer features (D67, D68, D69, D74, D75, D76)
 
+- **Games in the Play panel (D75, D79).** `games.<name>` in the manifest (`title`, `symbol`, `say` up to
+  24 sentences, about two a language, `levels`, `ai`) and `ext.game(name, start:, move:, end:)` in the Kit
+  (extensions/Kit/Game.swift, GameParts.swift): answer `start` with a session and a `Board`, each `Move` with the next
+  board, within 2 s and 64 KB. Parts: prompt, answers (a tile's own `key`: Y, N, ?), board (`numpad`), score, result,
+  timer, reveal, note, facts, button (a move, never a tool), choice, and `.play(...)`: pads (Sidefolk plays the
+  sequence), cups (Sidefolk animates your swaps), reflex (Sidefolk times the press), meter, number, letters, keys (a
+  keyboard per script, `letter` or `spell`), entry (a text field for input methods), sticks, lives. `afterMs` on a board
+  is the companion thinking: Sidefolk waits, then sends `.next`. A board's `Cue` names a move, effect, prop, line key,
+  sound and look from Sidefolk's fixed lists. Send the verdict in the board: Sidefolk shows the build-up first (the old
+  score, words and keyboard, the cups down, the row flipping) and colours right/wrong/draw itself. Playtime
+  (sidefolk-addons `extensions/playtime`: `Sources/GameKit` with `EventCues`, `Sources/Screens`, `Sources/Trivia`) is
+  the example, eleven games; docs/EXTENSIONS.md › Games.
+- **The person's language (D76 over D75).** One way: `strings/<language>.json` and `L("English {name}", [...])`,
+  `L(one:other:count:)`, `Format`. The Kit's `Localized(language, tables)` (D75) is the lower layer `L` reads through
+  (normalization: `zh-Hant` is `zh-Hans`, the nearest Sidefolk speaks; English fallback); use it directly only for a
+  table that isn't the extension's words. Playtime's words, the engines' phrases included, are in its `strings/`.
 - **A main switch where people are (D67).** An extension that is mostly on/off puts its switch on the page summary:
   `Summary("Awake until 18:00", detail: "25 min left", tone: .good, control: .toggle(...))` (extensions/Kit/Page.swift),
   with `"widget": true` on the page. Sidefolk shows it on the page, its Today tile and its sidebar row, runs the
@@ -330,3 +346,9 @@ definitions are held until approved.
   connection details). `.transport(Transport(...))` shows something playing: position, duration, round symbol buttons
   with play or pause as the primary. An older Sidefolk skips hero and transport and draws pickers as plain choices,
   so keep the summary meaningful (with its `control`) for those copies.
+- **Full-width settings and audio output (D81).** `Section(..., place: .bottom, collapsed: true, detail: ...)` ends the
+  side/main columns and summarizes a folded setting. `permissions.output_mute` separately grants a temporary,
+  device-wide mute through Sidefolk's crash-recovery helper. Send `sidefolk/output_mute` with a UUID `request`, boolean
+  `enabled` and increasing `sequence`; wait for `sidefolk/output_mute.result` before claiming success and handle
+  `sidefolk/output_mute.failed` for the current sequence. Explain that TV-only sound affects all Mac apps. The Kit
+  receives notices even while a tool request is awaiting. Validation trials cannot mute the person's output.

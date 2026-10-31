@@ -1,6 +1,6 @@
 # Status
 
-- **2D forms for companions added from a folder (D79, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
+- **2D forms for companions added from a folder (D85, 2026-10-31):** a folder companion (D60) may bring a `2d/` form
   in the custom companion format, which gained paintings (`paint`), the flat cartoon look (`body.look`), a screen
   face in lights of its own (`face.screen`, `glow`, `mouthGlow`) and face colours and sizes. Settings › Companion
   shows its Look switch (3D first, kept per companion), its tile says 2D or 3D, and a form that doesn't load or leaves
@@ -18,7 +18,30 @@
   queues 128 connections (the default 5 reset module fetches). *Checked:* a companion added from a folder using
   them, in the playground and a debug app; every move, posture and state kept inside the app's square framing.
 
-- **Miraya screen redesign and audio routing:** the approved responsive screen covers discovery, source selection, pairing, sharing and pause, with settings below the main choices. Mac only, TV only and Mac and TV are saved sound destinations; TV only uses a separately disclosed host-owned output-mute lease with crash recovery. *Checked:* Sidefolk and Miraya suites, sandboxed installation and destination choices, light/dark wide/narrow snapshots, an isolated Android TV emulator pairing with matching codes, and actual Mac output mute and restoration on closure and parent death. All nine localizations are complete; the unsigned gallery build and checks pass. *Still to verify:* live screen and sound playback with a physical TV. *Next:* exercise screen, window and region sharing and all three sound destinations on that setup; sign and publish a gallery update only when requested. No gallery pack has been shipped.
+- **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
+  revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
+  Notebook; the Gallery in Home; half circle = Focus, moon = Quiet; Full access with an end time; Latin companion names
+  in Arabic; only what exists is shown). Built: Harbor is Lantern (navy ink, neutral canvas and cards, the deep aqua
+  action colour #0B7783 / #3CD6DB with its label at 5.3 / 8.8:1), new optional theme roles `well`, `glow`, `waitGlow`
+  (older themes keep their look, no warning), Lantern's type scale, sizes, depth, glass, motion, folk accents and the
+  Focus/Quiet symbols; shared components (buttons with sizes and states, chips with their tone's ink, what-it-touches
+  chips, `SegmentedPicker`, `ListRow`, status badges, counts, state tiles, pins, folk avatars, field chrome and the
+  search, the Say bar's shell with key hints and the understanding row, the Sidecard surface with its tail, whisper,
+  card, slip strip and stack, the light pool and shoulder badge), all listed with their files in docs/DESIGN.md.
+  Applied app-wide where it was a direct swap: every button (SFButtonStyle), every segmented picker but the companion
+  stage's, sentence-case eyebrows, card depth, the search and CommitField as wells, approval risk tags as chips.
+  *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on a clean add-ons clone at its origin/main (1581 core and 36
+  character tests pass; the sibling add-ons checkout is 23 commits behind with a stray dist/, so its gallery, words and
+  game tests fail there), the new `design-system-foundations|controls|sidecard` UI snapshots light and
+  dark in English, German and Arabic read against the mockups' design-system boards, and Today, Settings › General, the
+  Ask panel and the install sheet read in light and dark. *Half done:* 16 text fields still `.roundedBorder`; the
+  theme-only Today blocks (console, planner) keep capitals; the layout keys of D64 still read (retire in phase 3).
+  *Next:* phase 2, the desktop: place `LightPool` and `ShoulderBadge` under the companion (CompanionWindow), turn bubbles
+  into `Whisper`/`SidecardCard`, the Ask panel into the Sidecard's Ask size on `SidecardSurface`, the stack, the
+  permission slip (`SidecardStrip` calm/firm, `TouchChip(Touch(request.effect))`, ⌘Return on firm), pins as
+  `PinCapsule`. Then phase 3 (Home) and 4 (Settings) on docs/DESIGN.md.
+
+- **Miraya screen redesign and audio routing:** the approved responsive screen covers discovery, source selection, pairing, sharing and pause, with settings below the main choices. Mac only, TV only and Mac and TV are saved sound destinations; TV only uses a separately disclosed host-owned output-mute lease with crash recovery. *Checked:* Sidefolk and Miraya suites, sandboxed installation and destination choices, light/dark wide/narrow snapshots, an isolated Android TV emulator pairing with matching codes, and actual Mac output mute and restoration on closure and parent death. All nine localizations are complete; the unsigned gallery build and checks pass. *Still to verify:* live screen and sound playback with a physical TV. *Next:* exercise screen, window and region sharing and all three sound destinations on that setup; Released (D81): merged with D76 (its 14 new sentences in all ten languages), Sidefolk snapshot 593, then Miraya `1.0.0-snapshot.4` in the gallery (kept at 1.0.0, the founder's call). A Sidefolk before 593 refuses that snapshot (`output_mute` unknown).
 
 - **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved
   `folk-family/redesign-2026-10-31/folk-redesign-reference.png` in the desktop and app windows. Their roles,
@@ -31,7 +54,9 @@
   notarized release and has no `SidefolkRelease` stamp, so its built-in updater will not replace it. *Next:*
   choose whether to replace the installed snapshot with the local build or ship a normal snapshot first.
 
-Updated: 2026-10-31. Version 0.1.0. Latest: Sidefolk and add-on updates chosen apart (D70), honest install sheets and
+Updated: 2026-10-31. Version 0.1.0. Latest: add-ons installed before the renumbering get the gallery's version (D80); snapshot 588 and the
+gallery with the ten new games in the Play panel (D79, Playtime 1.0.0-snapshot.2); before that snapshot 581 with translations (D76), the companion chooser
+(D77), colour meaning (D78) and new resting poses; before that Sidefolk and add-on updates chosen apart (D70), honest install sheets and
 approval cards (D71), paired TVs without a card (D72), the helper folks redesigned (D73), extension pages that read
 like app screens with Miraya's rebuilt (D74), and a crash fix (a download cancelled before it started). Before that: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
@@ -46,6 +71,65 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **An add-on version can need a Sidefolk snapshot (D83):** the founder's 590 showed Miraya snapshot.4's update failing
+  on `output_mute`. Catalog minimums may name a snapshot (`AddonCatalog.fits`, `SidefolkVersion.running`); the validator
+  reads `>=0.1.0-snapshot.N`; an install blocked only by unknown keys or the minimum says to update Sidefolk. Gallery:
+  `addon.json` `minimum_sidefolk` (Miraya: 593). *Checked:* `make test` on a clean add-ons checkout; new tests
+  `aSnapshotMinimumLeavesOlderSnapshotsOut`, `keysFromANewerSidefolkAskForAnUpdate`, snapshot requirements.
+- **Copies from before the renumbering get the gallery's version (D80):** the founder's Mac kept Playtime 1.2.0
+  (and git, currency, dev-toolbox, qr-codes 1.1.0, archives, feeds, images, pdf 1.0.0) from before D65, never offered
+  `1.0.0-snapshot.<n>`, so snapshot 588's games never arrived. `AddonCatalog.offers(_:over:on:)` offers the gallery's
+  version over a release the gallery doesn't list at or above; used by the updater, companion and theme updates, the
+  gallery's Update state and the waiting list. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on a clean add-ons
+  checkout (new: `aReleaseTheGalleryNeverListedIsOfferedItsVersion`, `aCopyFromBeforeTheRenumberingGetsTheGallerysVersion`).
+  *Next:* ships with the next snapshot; until then a stuck add-on is removed and installed again from the gallery.
+- **Games, phases 2 and 3 (D79, amends D75), merged into main (both repos):** all ten new games
+  play in the Play panel from Playtime, beside trivia: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower
+  (both ways), Guess My Animal (it learns), Balloon Words, Last Stick (it teaches), Memory Pairs and Daily Word (one
+  word a day per language, its streak on Playtime's Today tile). App: new board parts drawn, timed and fed by Sidefolk
+  (`GameBoardParts`: pads with playback, cups with the shuffle, a reflex timed from the key's timestamp, meter, number
+  pad, letter rows that flip, keyboards per script with Korean syllable grouping, a text field for input methods,
+  sticks, lives), a board's `after_ms` for the companion's turn, a build-up before every verdict (`GameSuspense`
+  extended: points, winning lines, cups, reflex times, guesses, flipped cards, end cards, with the previous words and
+  keys), game titles from `strings/`, 24 sentences a game (ten languages), `zh-Hant` → `zh-Hans` in both language
+  layers, the chance card's stripe no longer Play's red. Playtime: an engine adapter and a screen per game over the
+  `Games.*` engines, one `EventCues` table, records in its folder, `Games.Random.fresh()`, Home listing every game
+  with its best; trivia kept from phase 1 with the 400 questions × 10 languages as `TriviaPack`s and per-companion
+  strengths (the Quiz engine removed); all words, the engines' phrases included, in `strings/` through `L()`
+  (team/i18n merged in both repos first). *Checked:* `make test` with SIDEFOLK_ADDONS_REPO (1543 tests, among them a
+  bot playing every game to its end over the channel in the sandbox in English, Japanese and Arabic, checking each
+  build-up hides its verdict, and each game opening from its sentences in several languages); add-ons `swift test`
+  (93); `build.py --unsigned` and `check.sh` (all ok; dist/ removed after); UI snapshots of Playtime's real boards
+  (`--game-boards`, written by its `writeSampleBoards` test) for every game and moment, light and dark, in English,
+  German, Japanese, Korean, Chinese and Arabic, read; the debug app (`build/qg1`) with Playtime from that build: a
+  round of each game through dev commands with frames read (the companion thinking, Copy Me's playback, the cups'
+  shuffle, a reflex timed, a Daily Word row flipping, trivia's beat and verdict). *Not done / next:* catching the
+  companion by clicking it in Which Cup? (a "Check its paw" button does it); AI trivia packs; the bank has no
+  "Did you know?" lines; new companion moves still borrow the nearest moment (D75); sounds and VoiceOver not heard;
+  on a shared Mac, clicks on the panel from someone else reach the game (it never takes keys unless opened by the
+  person). Playtime stays 1.0.0, shipped as its next snapshot (founder's call, D65).
+- **Games beside the companion, phase 1 (D75), merged into main with D79 (both repos):** the Play panel (board parts,
+  keys, focus rules, kept 10 minutes, one of Ask or Play at a time), `games` in the manifest and its validator, the
+  game channel with its limits, `games.open`, companion cues from fixed lists with their pacing and Sidefolk's own
+  lines in three tones, game sounds made in code (off by default, a speaker per game), Settings › Companion › Games,
+  one Activity row per game. Founder's rules built in: no result before its reveal ends (`GameSuspense` build-up, the
+  Ask card, spoken line and AI reply wait for a toss to land) and one colour per meaning (`GameVerdict`: success green,
+  a calm sand loss tone `GameColors.lost`, neutral draw, always with a symbol). Rock, paper, scissors is Sidefolk's own
+  best of three in the panel, its hand drawn and sealed before the person picks; both RPS bugs the founder found are fixed (the
+  pumping fists looked like rocks; "paper wraps rock" drew paper over the person's rock). Coin with the companion's
+  face, called or not; dice on a felt tray with real shapes; hands that clash; result chips and an Again pill; the
+  companion reacts. Playtime with games (sidefolk-addons): trivia in the panel with no AI (topics, 5/10/endless, relaxed or
+  15 s, the companion's sealed pick by how well it knows the question, a lifeline, facts, records, a Home page), words
+  in ten languages through the Kit's new `Localized`, rules as engines under `Sources/GameKit` (`GameEngine`,
+  `GameScreen`, `TriviaPack`) for the engines and content branch to drop into. *Checked:* `make test` with
+  SIDEFOLK_ADDONS_REPO on the add-ons worktree (including Playtime played over the channel in the sandbox), `swift
+  test`, `build.py --unsigned` and `check.sh` there; UI snapshots `--only game-,desktop-toss` in English, German and
+  Arabic, light and dark; the debug app with Playtime installed from a local build, frames filmed through a throw,
+  an answer and a called coin. *Half done / next:* the new companion moves (sulk, shrug, tease, ready, accents) borrow
+  the nearest existing moment until made and filmed for every 3D companion; trivia's questions stay the 52 English
+  ones until the content packs merge (they implement `TriviaPack`); Sneaky's switch shows once a game offers it;
+  phase 2 parts and the new games (done in D79). A Sidefolk without games refuses Playtime's games snapshots at install, so
+  the app ships before they are published.
 - **Resting poses that suit each 3D companion (sit, lie, sleep), on branch team/poses in both repos:** the founder
   found Spark lying in the shared lie (rolled onto its side, a Mochi pose) looking broken: big helmet upright over a
   sideways body, legs sticking out. All ten were reviewed in the playground (front, ¾, side, head close up, and the way
@@ -82,9 +166,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   Japanese and Arabic: pages, Today tiles, install sheets read (German switch details were cut at 160 characters, now
   240; Japanese sentences no longer get a space between them in Your Mac). UI snapshots of the extension pages in
   Arabic rendered. *Not checked by eye:* a palette (snap doesn't capture it); gallery cards (needs a signed gallery).
-  *Next:* merge with team/play: `Localized.swift` is identical; `docs/EXTENSIONS.md` has a section of the same
-  name on each branch to merge into one; `zh-Hant` is matched differently (D76 shows the manifest, `Localized` uses
-  `zh-Hans`). The app's install sheet subtitle wraps a folder path oddly in Arabic (the app's own text, not D76's).
+  Merged with D75 in D79 (one section in EXTENSIONS, `zh-Hant` → `zh-Hans` in both layers). The app's install sheet subtitle wraps a folder path oddly in Arabic (the app's own text, not D76's).
   Packs change, so each official extension goes out as its next snapshot (versions unchanged, D65).
 - **The companion chooser (D77):** Settings › Companion has Yours and Gallery at
   the top, as Extensions has Installed and Gallery. Yours is one grid of every companion the person can wear (built in,
@@ -129,7 +211,7 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
   warning naming the roles), StatusTone, ThemeCheck and transcript tests; `make strings` unchanged (no new words).
   `make test`: everything of mine passes; Miraya/gallery tests fail on the shared sidefolk-addons copy being edited
   (`permissions.output_mute`), unrelated. *Not built:* a late reminder in the snapshot sample data (late visuals are
-  checked in code and tests only); the games' own verdicts (team/play); Field Notes' link is rust, close to its danger,
+  checked in code and tests only); Field Notes' link is rust, close to its danger,
   so news reads reddish there (a theme decision for the founder). *Next:* the gallery themes may add their own
   warning roles (sidefolk-addons).
 - **Updates for Sidefolk and for add-ons, chosen apart (D70), on branch team/updates:** Settings › General › Updates

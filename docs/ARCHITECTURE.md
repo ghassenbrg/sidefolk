@@ -222,6 +222,12 @@ through `EventBus` streams consumed by `@MainActor @Observable` presenters. No l
 - Ask panel: non-activating `NSPanel` that can become key so typing never steals app activation.
 - Bubbles: child panels of the companion, positioned to stay on screen.
 
+## Design system (D84)
+
+The app's look is Lantern: tokens in `ThemeTokens` (Core) and `Theme` (app), shared components in
+`Sources/SidefolkApp/DesignSystem/`, listed with their files in [DESIGN.md](DESIGN.md). Themes dress the app (colours,
+faces, density, radii, materials, the light pool, the nook); each place has one layout.
+
 ## Colour meaning (D78)
 
 Colours say what happened, the same way on every screen and in every theme. The meaning lives in Core's

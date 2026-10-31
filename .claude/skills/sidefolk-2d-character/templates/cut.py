@@ -1,4 +1,4 @@
-# Cuts a folder companion's painted parts (D79) with the checkout's companions-2d/parts/cut.py (its keying and piece
+# Cuts a folder companion's painted parts (D85) with the checkout's companions-2d/parts/cut.py (its keying and piece
 # finding) into the companion folder's 2d/paint/. Copy it beside the sheets and fill in PARTS:
 #   python3 cut.py [checkout]     work/<sheet>/NN.png and index.png (to read the numbers off), then the named parts
 import os, sys

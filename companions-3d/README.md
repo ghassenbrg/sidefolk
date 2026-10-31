@@ -54,7 +54,7 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
    keeps its eyes, brows and lips: `layout.lids` paints only lids over its eyes and `layout.mouth.lips` parts the
    lips only while the mouth opens (see `face.js`). A companion that should stay on one Mac only (a person's
    likeness) isn't published: its add-on folder is added in Settings › Companion (D60), and may bring its 2D form
-   in `2d/` (D79, `companions-2d/README.md`).
+   in `2d/` (D85, `companions-2d/README.md`).
 6. **Portrait.** In the playground, `(await import('./sheet.js')).portrait(companion)` saves the
    still Settings shows; copy it to `Resources/Companions3D/portraits/<name>.png`.
 

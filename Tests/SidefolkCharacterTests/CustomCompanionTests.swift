@@ -39,7 +39,7 @@ import Testing
         return data as Data
     }
 
-    /// The template painted (D79): a flat body, a screen face in lights of its own, every part with a painting.
+    /// The template painted (D85): a flat body, a screen face in lights of its own, every part with a painting.
     func painted(_ edit: (inout [String: Any]) -> Void = { _ in }, paintings: [String: Data]? = nil) throws -> URL {
         let folder = try scratch { json in
             var body = json["body"] as! [String: Any], face = json["face"] as! [String: Any]

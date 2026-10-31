@@ -1,6 +1,6 @@
 # Cuts a companion's 2D style target into the rig's canvas, like companions-2d/targets.py does for the lineup:
 # 200 x 200, y up, soles on y = 20, centred on x = 100, 4 px a unit. For a companion whose target is an image of its
-# own (a folder companion, D79, or one painted apart from the lineup). Copy it beside the target and set the four
+# own (a folder companion, D85, or one painted apart from the lineup). Copy it beside the target and set the four
 # numbers below from the target image (any image viewer, or the --grid output of a first guess):
 #   python3 target.py            writes <name>-target-canvas.webp
 #   python3 target.py --grid     and work/grid-<name>.png, the same with the canvas grid, to read shapes off

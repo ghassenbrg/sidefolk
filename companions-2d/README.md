@@ -57,7 +57,7 @@ From a 3D companion, from reference images, or from a description:
    needs its pack in `$SIDEFOLK_HOME/Addons/Companions/<name>/`).
 
 **A companion kept on one Mac** (added from a folder, D60) can't have a rig in the app's code: its 2D form is data
-in its folder's `2d/` (D79): the same paintings in `2d/paint/`, and the outlines, face and colours you would write in
+in its folder's `2d/` (D85): the same paintings in `2d/paint/`, and the outlines, face and colours you would write in
 `<Name>.swift` as `2d/species.json` (`docs/research/lively-companions.md`, "Custom companions": `body.look: "flat"`,
 `face.screen` and `glow` for a visor face, `paint`). Steps 1–4 are the same; check it with `swift run sidefolk-render
 --check-companion <folder>/2d`, add the folder again, and switch with `swift scripts/dev.swift companion:local:<name>:2d`.

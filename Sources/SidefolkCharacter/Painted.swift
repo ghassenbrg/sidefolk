@@ -22,7 +22,7 @@ struct Painted {
         self.init(image: image, over: outline, nudge: nudge, grow: grow, widen: widen, turn: turn, mirrored: mirrored)
     }
 
-    /// `image` fitted over `outline` the same way: a painting that isn't in this module (a companion's own, D79).
+    /// `image` fitted over `outline` the same way: a painting that isn't in this module (a companion's own, D85).
     init(image: CGImage, over outline: CGPath, nudge: CGPoint = .zero, grow: CGFloat = 1, widen: CGFloat = 1,
          turn: CGFloat = 0, mirrored: Bool = false) {
         let box = outline.boundingBoxOfPath
@@ -84,7 +84,7 @@ extension Species {
         painted(image: { Art.image("\(name)/\($0)") }, head: head, torso: torso, nudge: nudge, grow: grow, widen: widen)
     }
 
-    /// The same with each part's painting from `image` (by part name): a companion's own, read from its folder (D79).
+    /// The same with each part's painting from `image` (by part name): a companion's own, read from its folder (D85).
     func painted(image: (String) -> CGImage?, head: CGPath? = nil, torso: CGPath? = nil, nudge: [String: CGPoint] = [:],
                  grow: [String: CGFloat] = [:], widen: [String: CGFloat] = [:]) -> Species {
         func part(_ part: String, _ outline: CGPath?) -> Painted? {

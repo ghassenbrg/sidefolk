@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// A search field in the app's look: a magnifier, the words, and a button that clears them. Escape clears them too;
-/// Return and ↓ hand the keyboard to the results (`submit`).
+/// A search field in the app's look (Lantern's field, D84): a well 28 tall with a magnifier, the words and a button that
+/// clears them, no border until it has the keyboard. Escape clears the words; Return and ↓ hand the keyboard to the
+/// results (`submit`).
 struct SearchBox<Focus: Hashable>: View {
     @Binding var text: String
     var prompt: Text
@@ -28,8 +29,7 @@ struct SearchBox<Focus: Hashable>: View {
             }
         }
         .padding(.horizontal, Theme.Space.s)
-        .padding(.vertical, 6)
-        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line))
+        .frame(minHeight: Theme.Size.field)
+        .fieldChrome(focused: focus.wrappedValue == focusValue)
     }
 }

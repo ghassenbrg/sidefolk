@@ -37,7 +37,7 @@ struct CompanionBody: Equatable, Sendable {
     var gear: [Worn]
     var collar: CollarSpec?
     var marks: [String: CGPoint]
-    /// Drawn as a 2D cartoon with this outline (D59), and the rest of what D79 added: a screen face in lights of its
+    /// Drawn as a 2D cartoon with this outline (D59), and the rest of what D85 added: a screen face in lights of its
     /// own, the face's colours and sizes, and paintings by part name.
     var flat = false
     var line: RGBValue?

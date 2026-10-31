@@ -15,7 +15,7 @@ public struct InstalledCompanion: Codable, Sendable, Hashable {
     public var body: CompanionBody?
     /// Added from a folder on this Mac (D60), not from the gallery: unsigned, shown under "Made by you".
     public var fromFolder: Bool?
-    /// Brought a 2D form in its `2d/` folder (D79), so it comes in both looks.
+    /// Brought a 2D form in its `2d/` folder (D85), so it comes in both looks.
     public var twoD: Bool?
 
     public var addedFromFolder: Bool { fromFolder == true }
@@ -247,7 +247,7 @@ public actor AddonStore {
     public func companionUpdates(in catalog: AddonCatalog, channel: UpdateChannel) -> [AddonEntry] {
         installedCompanions().filter { !$0.addedFromFolder }.compactMap { have in
             guard let entry = catalog.companion(have.companion, on: channel), entry.id == have.id,
-                  channel.offers(entry.version, over: have.version) else { return nil }
+                  catalog.offers(entry, over: have.version, on: channel) else { return nil }
             return entry
         }
     }
@@ -291,7 +291,7 @@ public actor AddonStore {
     public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary, channel: UpdateChannel) -> [AddonEntry] {
         library.all().compactMap { have in
             guard have.folder != nil, let entry = catalog.entry(have.id, on: channel), entry.kind == .theme,
-                  let old = have.version, channel.offers(entry.version, over: old) else { return nil }
+                  let old = have.version, catalog.offers(entry, over: old, on: channel) else { return nil }
             return entry
         }
     }

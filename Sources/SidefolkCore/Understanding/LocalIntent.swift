@@ -51,13 +51,16 @@ public struct ChanceIntent: Sendable, Equatable {
     public var modifier = 0
     /// Rock, paper, scissors: the person's hand; nil when they haven't said it yet.
     public var hand: Hand?
+    /// A coin the person called before it flew: true for heads (D75).
+    public var call: Bool?
 
-    public init(_ kind: Kind, count: Int = 1, sides: Int = 6, modifier: Int = 0, hand: Hand? = nil) {
+    public init(_ kind: Kind, count: Int = 1, sides: Int = 6, modifier: Int = 0, hand: Hand? = nil, call: Bool? = nil) {
         self.kind = kind
         self.count = count
         self.sides = sides
         self.modifier = modifier
         self.hand = hand
+        self.call = call
     }
 }
 
@@ -104,6 +107,8 @@ public enum LocalIntent: Sendable, Equatable {
     case newConversation
     /// A sentence one switched-on extension answers without the AI (D50).
     case extensionCommand(ExtensionCommandCall)
+    /// A game to open in the Play panel (D75): an extension's, by one of its sentences, or the companion's own match.
+    case game(extensionId: String, game: String)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

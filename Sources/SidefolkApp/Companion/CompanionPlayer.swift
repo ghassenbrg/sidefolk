@@ -7,7 +7,8 @@ import SwiftUI
 /// little while with one line of text above the companion, and put it back where the person keeps it.
 final class CompanionPlayer {
     private let companion: CompanionWindowController
-    private let caption = CompanionCaption()
+    /// The line above the companion, shared with the Play panel's cues (D75).
+    let caption = CompanionCaption()
     /// The game being played, if any.
     private(set) var game: CompanionAct?
     private var run: Task<Void, Never>?
@@ -51,6 +52,7 @@ final class CompanionPlayer {
         run?.cancel()
         run = nil
         caption.hide()
+        caption.offerAgain(nil)
         guard game != nil else { return }
         if game == .catchMe, let home { companion.hop(to: home) }
         game = nil
@@ -64,8 +66,8 @@ final class CompanionPlayer {
 
     /// When the toss being played lands.
     private var landsAt: Date?
-    /// The longest a toss is in the air (dice: thrown at 0.96 s, 0.9 s of flight).
-    static let longestToss: TimeInterval = 1.86
+    /// The longest a toss is in the air and settling (dice: thrown at 0.96 s, 0.9 s of flight, then 0.6 s to rest).
+    static let longestToss: TimeInterval = 2.46
 
     /// How long a coin's or a die's card should wait, so the Ask panel doesn't say "Heads!" while the coin still spins.
     /// The tool's card can come before its event reaches the player; then it waits for the longest toss.
@@ -75,33 +77,76 @@ final class CompanionPlayer {
         return landsAt.timeIntervalSince(now)
     }
 
+    /// The companion's face, embossed on the coin.
+    var face: NSImage? {
+        get { caption.model.face }
+        set { caption.model.face = newValue }
+    }
+    /// Calls the person got right in a row, for the streak sparkles.
+    private var calledRight = 0
+
     /// Plays what core drew: the companion flicks the coin, throws the dice or pumps its fist, the objects fly above it
-    /// and land on the result, then the result is said and stays a few seconds. `done` runs once it has gone.
-    func toss(_ toss: Toss, done: @escaping @MainActor () -> Void = {}) {
+    /// and land on the result, then the companion reacts and the result stays a few seconds under an Again pill.
+    /// `again` plays the same toss once more; `done` runs once it has gone.
+    func toss(_ toss: Toss, again: (() -> Void)? = nil, done: @escaping @MainActor () -> Void = {}) {
         stop()
         let still = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         // When the objects leave its paws, and how long they fly, from the moments' own beats (Antics).
         let (antic, launch, flight, waiting): (CharacterAntic, TimeInterval, TimeInterval, String) = switch toss {
-        case .coins: (.flick, 0.32, 1.04, String(localized: "Heads or tails…", comment: "Said while a coin spins in the air"))
+        case .coins: (.flick, 0.32, 1.2, String(localized: "Heads or tails…", comment: "Said while a coin spins in the air"))
         case .dice: (.roll, 0.96, 0.9, String(localized: "Rolling…", comment: "Said while dice tumble in the air"))
         case .hands: (.pump, 0, 1.12, String(localized: "Rock… paper… scissors…", comment: "Said while the companion pumps its fist"))
         }
         companion.character.perform(antic)
-        landsAt = Date().addingTimeInterval(still ? 0 : launch + flight)
+        landsAt = Date().addingTimeInterval(still ? 0 : launch + flight + TossShow.settle)
         var show = TossShow(toss: toss, start: Date().addingTimeInterval(launch), flight: flight, still: still)
-        caption.show(still ? toss.result : waiting, stage: show, announce: still, companionName: companionName)
+        caption.show(still ? "" : waiting, stage: show, announce: false, companionName: companionName)
         run = Task { [weak self] in
             try? await Task.sleep(for: .seconds(still ? 0.2 : launch + flight))
             guard let self, !Task.isCancelled else { return }
+            // The wobble or the clash plays out first.
+            if !still { try? await Task.sleep(for: .seconds(TossShow.settle)) }
+            guard !Task.isCancelled else { return }
             show.landed = true
-            caption.show(toss.result, stage: show, for: 5, companionName: companionName)
-            if case .hands(let person, let mine) = toss {
-                // A good sport: a bow when the person wins, a cheer when it does, a nod for a draw.
-                companion.character.perform(person == mine ? .nod : person.beats == mine ? .bow : .cheer)
-            }
+            let (move, line) = reaction(to: toss)
+            caption.show(line ?? "", stage: show, for: 5, announce: false, companionName: companionName)
+            NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
+                                 userInfo: [.announcement: [toss.result, line].compactMap { $0 }.joined(separator: " "),
+                                            .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+            if let again, game == nil, !Self.isHands(toss) { caption.offerAgain(again) }
+            if let move { companion.character.perform(move) }
             try? await Task.sleep(for: .seconds(5))
             guard !Task.isCancelled else { return }
             done()
+        }
+    }
+
+    private static func isHands(_ toss: Toss) -> Bool { if case .hands = toss { true } else { false } }
+
+    /// How the companion takes what came up (D75): a call right or wrong, a natural 20 or a 1, doubles, a hand won or lost.
+    private func reaction(to toss: Toss) -> (CharacterAntic?, String?) {
+        switch toss {
+        case .coins:
+            guard let right = toss.called else { return (.nod, nil) }
+            calledRight = right ? calledRight + 1 : 0
+            if right, calledRight >= 3, calledRight.isMultiple(of: 3) {
+                caption.flash(.sparkles)
+                return (.cheer, String(localized: "\(calledRight) in a row!", comment: "The companion: the person called the coin right several times"))
+            }
+            return right ? (.cheer, String(localized: "You called it!", comment: "The companion: the person called the coin right"))
+                : (.giggle, String(localized: "Next one's yours.", comment: "The companion: the person called the coin wrong"))
+        case .dice(let sides, let rolls, _):
+            if sides == 20, rolls.count == 1, rolls[0] == 20 {
+                caption.flash(.sparkles)
+                return (.cheer, String(localized: "Natural 20!", comment: "The companion: a d20 landed on 20"))
+            }
+            if sides == 20, rolls.count == 1, rolls[0] == 1 { return (.startle, String(localized: "Oof.", comment: "The companion: a d20 landed on 1")) }
+            if sides == 6, rolls == [1, 1] { return (.giggle, String(localized: "Snake eyes!", comment: "The companion: two dice both landed on 1")) }
+            if rolls.count == 2, rolls[0] == rolls[1] { return (.cheer, String(localized: "Doubles!", comment: "The companion: two dice landed on the same face")) }
+            return (.nod, nil)
+        case .hands(let person, let mine):
+            // A good sport: a bow when the person wins, a cheer when it does, a nod for a draw.
+            return (person == mine ? .nod : person.beats == mine ? .bow : .cheer, nil)
         }
     }
 
@@ -202,85 +247,5 @@ final class CompanionPlayer {
             companion.character.perform(.nod)
             caption.show(String(localized: "Nicely done. A little calmer?", comment: "The end of the breathing exercise"), for: 5)
         }
-    }
-}
-
-/// One line of text above the companion while a game runs, and what it flipped, rolled or played above that line.
-/// It never takes a click: catch-me needs them all.
-final class CompanionCaption {
-    private let model = CaptionModel()
-    private lazy var hosted: HostedPanel<CaptionView> = {
-        let hosted = HostedPanel(rootView: CaptionView(model: model), allowsKey: false)
-        hosted.panel.ignoresMouseEvents = true
-        hosted.panel.hasShadow = false
-        return hosted
-    }()
-    private var hiding: Task<Void, Never>?
-    var anchorProvider: (() -> (NSRect, NSScreen)?)?
-
-    /// Shows `text` (and `stage` beneath it), for `seconds` when given (then it goes), otherwise until the next line.
-    /// `announce: false` keeps a passing line ("Rolling…") from VoiceOver, which hears the result.
-    func show(_ text: String, stage: TossShow? = nil, for seconds: TimeInterval? = nil, announce: Bool = true, companionName: String = "") {
-        hiding?.cancel()
-        model.text = text
-        model.stage = stage
-        model.companionName = companionName
-        if announce {
-            NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
-                                 userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
-        }
-        reposition()
-        if !hosted.panel.isVisible { hosted.panel.orderFrontRegardless() }
-        guard let seconds else { return }
-        hiding = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(seconds))
-            guard !Task.isCancelled else { return }
-            self?.hide()
-        }
-    }
-
-    func reposition() {
-        guard let (anchor, screen) = anchorProvider?() else { return }
-        // Sized to this line first: a visible panel keeps its size when placed, and a longer line would be cut.
-        hosted.panel.setContentSize(hosted.fittingSize)
-        hosted.place(beside: anchor, on: screen, gap: 2, preferAbove: true)
-    }
-
-    func hide() {
-        hiding?.cancel()
-        hosted.panel.orderOut(nil)
-        // Nothing left to animate while it is away.
-        model.stage = nil
-    }
-}
-
-@MainActor @Observable
-final class CaptionModel {
-    var text = ""
-    var stage: TossShow?
-    var companionName = ""
-}
-
-struct CaptionView: View {
-    var model: CaptionModel
-
-    var body: some View {
-        // The objects sit nearest the companion, whom they fly up from; the words are on top.
-        VStack(spacing: 6) {
-            Text(verbatim: model.text)
-                .font(Theme.Font.bubbleTitle)
-                .foregroundStyle(Theme.ink)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.surface)
-                        .strokeBorder(Theme.folkColor("play").opacity(0.5), lineWidth: 1)
-                        .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
-                }
-            if let stage = model.stage { TossStage(show: stage, companionLabel: model.companionName) }
-        }
-        .padding(10)
-        .fixedSize()
-        .accessibilityHidden(true)
     }
 }

@@ -80,7 +80,7 @@ enum CompanionArt {
         return locals.first { $0.companion == name }
     }
 
-    /// The 2D forms companions added from a folder brought (D79), by folder name, as last read: data, never run.
+    /// The 2D forms companions added from a folder brought (D85), by folder name, as last read: data, never run.
     private(set) static var localForms: [String: CompanionReport] = loadLocalForms()
 
     private static func loadLocalForms() -> [String: CompanionReport] {
@@ -94,7 +94,7 @@ enum CompanionArt {
 
     static func localForm(_ name: String) -> CustomCompanion? { localForms[name]?.companion }
 
-    /// A folder about to be added whose `2d/` form doesn't load or leaves its window isn't added (D79): says why.
+    /// A folder about to be added whose `2d/` form doesn't load or leaves its window isn't added (D85): says why.
     static func checkForm(_ companion: InstalledCompanion, in folder: URL) throws {
         guard companion.twoD == true else { return }
         let report = CustomCompanions.load(folder: folder.appendingPathComponent("2d", isDirectory: true))

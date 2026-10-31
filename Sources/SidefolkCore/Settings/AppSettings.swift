@@ -275,6 +275,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var homePages = HomePages()
     /// Simple or colorful icons in Home's navigation; nil follows the theme (D67).
     public var sidebarIcons: ThemeLayout.Icons?
+    /// Games in the Play panel: the companion's tone, sounds, Sneaky (D75).
+    public var games = GameSettings()
 
     public init() {}
 
@@ -326,6 +328,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.agentAccess, &agentAccess)
         read(.homePages, &homePages)
         sidebarIcons = try? c.decodeIfPresent(ThemeLayout.Icons.self, forKey: .sidebarIcons)
+        read(.games, &games)
     }
 
     public func isQuiet(at now: Date) -> Bool { (quietUntil ?? .distantPast) > now }
@@ -377,7 +380,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     }
 
     /// How a companion added from a folder (by its folder's name) is drawn: 3D, as it comes, unless the person chose
-    /// its 2D form (D79). Kept under "local.<name>", which no `CompanionChoice` can be.
+    /// its 2D form (D85). Kept under "local.<name>", which no `CompanionChoice` can be.
     public func dimension(forLocal name: String) -> CompanionDimension {
         dimensions["local.\(name)"] ?? .threeD
     }

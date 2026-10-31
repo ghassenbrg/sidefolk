@@ -1614,7 +1614,7 @@ yet, so it shouldn't need a new version number for every change while it's being
 number and a release above them, and offers each as an update; 0.1.0-snapshot.489 does too. The pack's manifest
 carries the snapshot version, so what's installed compares with the gallery. A copy that installed currency 1.1.0,
 dev-toolbox 1.1.0, git 1.1.0, playtime 1.2.0 or qr-codes 1.1.0 keeps it and isn't offered the 1.0.0 snapshots
-(they're lower), until it removes and reinstalls it.
+(they're lower), until it removes and reinstalls it. *Superseded by D80:* such a copy is offered the gallery's version.
 
 **Amended (2026-10-31): every add-on, and the gallery follows Settings › Updates.** Companions and themes are
 snapshots until released too, by the same `"released"` in their `addon.json`; all eight companions and three themes
@@ -1945,28 +1945,71 @@ so an older file still reads); no new tool and no manifest change. Window stills
 own Home, as they would in Miraya's app; they stay in Miraya's data folder, round before last deleted, removed with it.
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
 
-### D75 — Responsive extension pages and a host-owned temporary audio mute (2026-10-31)
-**Decision:** extension pages may end their side and main columns with `place: bottom`; this section and the ones after
-it span the page, while a narrow window keeps the original order. A collapsible section may summarize its current
-setting with `detail`. Miraya uses these parts for the approved responsive layout, with focused discovery, pairing and
-live-sharing states. It retains presets for a screen region, rather than promising a freehand crop.
+### D75 — Games beside the companion: the Play panel, a game channel, companion cues; trivia without AI; the four redesigned (2026-10-31)
+**Decision:** games are played in a **Play panel** beside the companion, drawn by Sidefolk from data, with the companion
+as the opponent next to it (the approved plan, phase 1):
+- **`games` in the manifest** (`title`, `symbol`, `say`, `levels`, `ai`): `say` sentences follow the command rules
+  (whole sentences, no slots) and open the game without the AI; every game is in the companion's Play menu and in the
+  core tool **`games.open`** (low risk; it only shows a panel), whose description lists them for the AI. The panel takes
+  the keyboard when the person opened it and waits for a click when the AI did.
+- **The game channel, not tool calls:** `sidefolk/game.start {game, level, language, options}` → `{session, board}`,
+  `sidefolk/game.move {game, session, move}` → `{board}`, `sidefolk/game.end {game, session, reason}`. A move is small
+  and typed (`answer`, `cell`, `button`, `choice`, `timeout`, …) and sent only when the board on screen offered it,
+  only for the one game open, at most 20 a second; an answer later than 2 s or over 64 KB ends the game ("Playtime
+  didn't answer"). One Activity row per game, written when it ends ("Played Trivia with Playtime · You 7 · Mochi 6").
+  Options are `tone`, `sneaky` and the companion's name, nothing else about the person.
+- **Board parts, game-only:** `prompt`, `answers` (2–4 tiles, states, the companion's pick with its face, Sidefolk's
+  own pictures for hands), `board` (up to 8 × 8), `score` (pills, round pips, a streak, the companion's sealed pick),
+  `result`, `timer` (Sidefolk keeps time and sends `timeout`), `reveal` (coin, dice, hands), `note`, `facts`, `button`
+  (a move, never a tool; one primary), `choice` (cards or segments). Unknown parts are skipped. Text is cleaned and
+  clipped as on pages and never reaches a model.
+- **Companion cues (a new, narrow reach):** a board may carry one cue, every value from a fixed list (`GameCue`): a
+  move (mapped to moments and states every 2D and 3D companion has), an effect and a prop (drawn above it in code),
+  a **line key** for which Sidefolk says one of its own lines in the person's language and the chosen tone, a sound
+  and where to look. Moves 0.8 s apart (a newer one replaces one waiting), a line every 2 s, four sounds a second,
+  only while the panel shows that game. A cue never moves the window, opens a bubble, takes focus or says the game's
+  words. This amends D44's "extensions can't animate the companion": a game names a mood, it never drives the rig.
+- **Suspense and meaning (the founder's rules):** nothing gives a result away before its reveal ends: the panel
+  first shows a build-up (`GameSuspense`: the hands pumping sealed, the pick pressed beside the sealed card) and the
+  verdict a beat after (colours, score, words, the cue, sounds, VoiceOver); the Ask panel's card, its spoken line and
+  the AI's reply after a toss wait until it lands. One colour per meaning (`GameVerdict`): the person's win is the
+  theme's success green, a loss (the companion's win included) a calm sand tone (`GameColors.lost`), never the danger
+  red, a draw neutral ink; always with a symbol (✓, ✕, =, a crown). Selections use the theme's accent.
+- **Sidefolk's own game on the same path:** rock, paper, scissors as a best of three (`HandsMatch`): the companion's
+  hand is drawn with the system's generator when each round begins, sealed before the person picks and never read
+  from it; now and then a bluff ("I'm going rock…"). A hand alone ("rock") is still a quick throw on the desktop.
+- **Coin, dice and hands redesigned (D44 stays):** a 48-pt coin with the companion's own face on heads, flicked
+  150 pt and wobbling to rest, called or not ("flip a coin, I call tails", Play › Flip a Coin › Call Heads); dice
+  thrown onto a felt tray, d6 tumbling in 3D, other dice as their real shapes; hands that meet and act on each other;
+  the result as a chip under the objects with an Again pill (the only click the layer takes, never during catch-me);
+  the companion reacts (a call right or wrong, a natural 20 or 1, doubles, snake eyes).
+- **Settings › Companion › Games:** "When it wins" gentle, cheeky (the default) or competitive; game sounds, off by
+  default, with a speaker button per game (sounds are made in code, follow Quiet, a fullscreen app and macOS's
+  interface-sounds setting). Lines are spoken only for someone who hears every reply (Settings › Voice) with the
+  game's sound on. Sneaky is a setting passed to games (off), shown when a game offers it.
+- **Playtime** (still 1.0.0, in snapshots; first planned as 2.0) plays trivia in the panel with no AI: a topic, 5, 10 or endless questions, relaxed or 15 s each,
+  the companion's sealed pick (right as often as it knows the question: by difficulty, its favourite and weak
+  topics, the level), "Ask Mochi" once a round (unsure in a weak topic, it can fade the right one), a fact after
+  each answer, an end card with a new best, records in its data folder, and a page in Home. Its words come in all ten
+  languages from tables chosen by the `language` Sidefolk passes (the Kit's new `Localized`). The `trivia` tool stays
+  for chat and voice. The rules are pure engines under `Sources/GameKit`'s protocols, so the new games and the 400
+  questions per language drop in.
 
-Miraya's sound choices are Mac only, TV only and Mac and TV. TV only temporarily mutes the Mac's default output,
-including other apps, as Miraya's Mac app does; it does not use the microphone. `permissions.output_mute` separately
-discloses this capability and widens an update, so installation requires review. The sandboxed extension sends an
-ordered request to Sidefolk and reports TV-only only after confirmation. Sidefolk owns a helper outside the extension's
-process tree; EOF on its pipe restores the previous mute state after the host exits, and stopping or crashing the
-extension releases its lease. Only one extension holds it. Device changes and unsupported mute are reported; a person
-unmuting the device is respected. The SDK delivers notices while a serialized tool request is waiting, so the host can
-answer without deadlocking a long request. Validation trials cannot mute the person's output.
+**Why:** the founder approved the games plan: today's games were things you read, trivia cost a model call per answer,
+and the companion barely played. Founder's answers: all ten games, cheeky by default as a setting, sounds off with
+a speaker per game, Sneaky off, one extension, lines spoken only with spoken replies, coin/dice/hands in core, and
+every official extension in all ten languages. Trying it, he found the result shown before the animation, red used
+for draws and wins, and the companion seeming to mirror rock; these rules come from that.
 
-**Why:** the founder approved screens that adapt within Home and asked for the original Miraya app's three sound
-choices. An extension-owned helper is unsafe here: Sidefolk deliberately kills an extension's complete process tree
-on stop, crash or watchdog. The host-owned helper keeps that boundary and the recovery path separate.
+**Alternatives:** moves as tool calls (an Activity row and Guard per click); a web view per game (could imitate
+Sidefolk's cards, ignores themes); extension text spoken by the companion (an extension could make it say anything);
+modelling props per companion (twelve companions); shipping sound files (synthesized ones cost nothing to bundle).
 
-**Verification:** fake-device and helper-process tests cover ownership, changes, timeouts and recovery. On the Mac's
-actual default output, the helper muted and restored the original state both normally and after its parent was killed.
-An isolated Android TV emulator confirmed pairing. Live screen and sound playback on a physical TV remains to be checked.
+**Implications:** a 0.1.0 snapshot from before games refuses Playtime's games snapshots at install (an unknown `games` key), as with
+pages (D62); accepted for snapshots. New companion moves (sulk, shrug, tease, ready and the short accents) borrow the
+nearest existing moment until each is made and filmed for every 3D companion; trivia's questions stay the 52 English
+ones until the content packs land (`TriviaPack`). **Not built:** the `pads`, `shuffle`, `reflex`, `meter`, `number`,
+`letters` and `keys` parts (phase 2–3), Sneaky's switch in Settings, a tail on the panel.
 
 ### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
 **Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.
@@ -1987,14 +2030,14 @@ An isolated Android TV emulator confirmed pairing. Live screen and sound playbac
   under `text` in the same files, keyed by their English, `en.json` listing every one; named placeholders kept, CLDR
   plural forms per language. The Kit reads them (`Language.swift`: `L`, `L(one:other:count:)`, `Format` for numbers,
   sizes, durations, 24-hour times, dates, lists and sentence joining, `Language.with` for tests), carries its own few
-  sentences in ten languages (`KitWords`), and looks plain words up through `Localized` (team/play's helper, the same file).
+  sentences in ten languages (`KitWords`), and looks plain words up through `Localized` (D75's helper, the same file).
   `scripts/extension-strings.py` keeps `en.json` in step with the `L(…)` calls and lists what each language lacks.
 - **Right to left**: extension text stays stripped of direction marks (T13). Sidefolk adds its own when drawing in
   Arabic (`BidiText`, `Text(ext:)` on pages, tiles and palettes): a value of numbers and signs alone is isolated left to
   right ("3024 × 1964" read reversed before), and so are paths, addresses and number runs inside an Arabic sentence.
 - **Page details** (switches, choices, rows, the summary) are clipped at 240 characters instead of 160, so a German
   sentence fits (an older Sidefolk still clips at 160).
-- Every official extension but Playtime (rebuilt on team/play, which localizes itself with its own `Localized` tables) speaks all ten:
+- Every official extension but Playtime (rebuilt on team/play, which localizes itself with D75's tables) speaks all ten:
   World Clock, Calculator, Weather and System Vitals in the app; Your Mac, Clipboard, Keep Awake, Miraya, Git, Currency,
   Images, PDF Tools, QR Codes, Archives, Dev Toolbox and Feeds in the gallery. Miraya's sources copied from its Mac app
   (`Miraya/`) stay as they are: what they say passes through `Said.shown` on its way to the person.
@@ -2009,7 +2052,7 @@ word order and counts differ (Arabic has six forms). *Sidefolk draws the directi
 layout, and direction marks stay a way to disguise text.
 
 **Alternatives:** a `localized` object in the manifest (older copies refuse it); tables compiled into each program
-(team/play's `Localized`: fine for a few words, but invisible to the validator and the gallery, and a third party writing
+(D75's `Localized`: fine for a few words, but invisible to the validator and the gallery, and a third party writing
 Python would need its own; both work, and `L` uses `Localized` underneath); translating tool descriptions from
 `tools/list` (they are pinned at install: a language change would hold every tool); letting extensions send isolates
 (the same characters that reorder a name); the install sheet trusting `BuiltInExtensionWords` alone (only Sidefolk's own,
@@ -2021,8 +2064,8 @@ and only the app's copy of them).
 build.py copy `strings/`; tests `ExtensionStringsTests`, `BidiTextTests`, `ExtensionLanguagesTests` (every official
 extension, every key, every language), add-ons `LanguagesTests`. An extension's English output changed where Foundation
 now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
-Commands and `ask` sentences stay English (GLOSSARY rule 1). Not done: `zh-Hant` falls back to the manifest in Sidefolk
-but to `zh-Hans` in `Localized` (team/play's normalizes any Chinese), a difference to settle when merging.
+Commands and `ask` sentences stay English (GLOSSARY rule 1), except a sentence that only opens a game (D79). `zh-Hant`
+reads `zh-Hans` in both layers since D79.
 
 ### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
 **Decision:** *amends D43, D55, D56 and D60 for companions.* Settings › Companion has two pages at the top, outside the
@@ -2117,11 +2160,178 @@ convention); a separate "late" or "changed" token (warning and the accent alread
 (a theme mapping success to red would mislead every screen).
 
 **Implications:** the install sheet's tones (D71) and Full access's red chip and orange menu bar icon (D37) stay. The
-games' own verdicts (toss, rock-paper-scissors, dice, trivia) are fixed on their own branch; Play's folk colour is red,
-so it must never mark a win or a draw. Community themes made before this get Harbor's amber and a warning naming the
+games' verdicts come from `GameVerdict` (D79); Play's folk colour is red, so it marks only the panel's icon, never a
+win or a draw. Community themes made before this get Harbor's amber and a warning naming the
 roles; gallery themes pass as they are.
 
-### D79 — A companion added from a folder may bring a 2D form, painted, beside its 3D one (2026-10-31)
+### D79 — Games, phases 2 and 3: the ten new games in the Play panel, their parts, one trivia, one way to speak (2026-10-31)
+**Decision:** *amends D75 and D76.* All ten approved games are played in the Play panel from Playtime, on the engines written for them, with
+no AI: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower (both ways), Guess My Animal, Balloon Words, Last
+Stick, Memory Pairs and Daily Word, beside trivia.
+- **New board parts, drawn, timed and fed by Sidefolk** (`GameBoardParts`): `pads` (Sidefolk plays the sequence: each
+  pad lit with its note and the companion's short move, then takes presses), `cups` (the gem shown, the game's swaps
+  animated, a pick after), `reflex` (Sidefolk shows the signal and times the press from the key's own timestamp; an
+  early press says "Too soon!" at once), `meter`, `number` (with a digit pad and the guesses so far), `letters` (rows
+  that flip, or slots), `keys` (a keyboard per script, letter by letter or spelling a word; Korean jamo drawn as the
+  syllables they make), `entry` (a text field, for input methods: Chinese idioms, an animal's name), `sticks`, `lives`;
+  a tile's own key cap (Y, N, ?) and a number-pad grid. Each value is checked and capped (64 steps, 40 swaps, 8 × 24
+  tiles, 120 characters), every move only for a part on the board.
+- **The companion's turn is the game's, the clock Sidefolk's:** a board's `after_ms` (0.1–6 s) has Sidefolk wait
+  (the companion thinking, two cards left up) and ask for the next board with `{next: true}`; nothing else is taken
+  meanwhile. The engines' `think(ms)` becomes that wait.
+- **No verdict before its build-up, for every game** (`GameSuspense`): besides a reveal and a judged answer, a board
+  that scores a point, draws a winning line, lifts the cups, times a reflex, judges a guess, turns a card with a
+  reaction or shows the end card comes after a beat with the previous score, words, keyboard and lives, the cups down
+  and the pick pressed; a Daily Word row flips tile by tile before its keys, cue and card. Colours stay GameVerdict's:
+  letters right in success green with ●, elsewhere yellow with ◐, absent faded; a missed key the calm loss tone, struck
+  through; the thermometer cold blue to warm orange, never red.
+- **Fairness:** every chance is `Games.Random.fresh()` in play (seeded in tests), and what the companion hides is drawn
+  before the person moves: the gem's cup with the shuffle, the reflex time with the round, the number at the start,
+  trivia's pick with the question; tested to be the same whatever the person does.
+- **One event table:** the engines' `Games.Event` becomes the companion's reaction through `EventCues` (the weightiest
+  event first: an ended match before a point, a point before a turn); a screen only adds its own props (balloons held,
+  a magnifier, the gem). Records in Playtime's folder: tallies and bests, the last ten games, Daily Word's day, streak
+  and Today tile (the page's summary, `widget`), what it learned about animals (per language, capped), Last Stick's
+  lesson after three losses.
+- **One trivia:** phase 1's round (set-up, pace, levels, records, Home) is kept, with the engines' 400 questions in all
+  ten languages as one `TriviaPack` per language and the Quiz engine's idea folded in: each companion has its own
+  strong and weak topics, drawn from its name. The Quiz engine is gone. The bank has no "Did you know?" lines, so none
+  shows.
+- **One way to speak (D76 over D75):** Playtime's words and the engines' phrases are its `strings/<language>.json`,
+  read with `L()`; `Localized` is the layer `L` reads through. `zh-Hant` is `zh-Hans` in both layers (the nearest
+  language Sidefolk speaks); numbers through `Format`; placeholders named. A game's title is translated in `strings/`
+  (`games.<name>.title`), and a game's `say` holds up to 24 sentences so each opens in all ten languages (an exception to
+  D76's "commands stay English", only for a sentence that just opens a game).
+
+**Why:** the founder approved all ten games; phase 1 built the platform and left these parts and games to come.
+**Alternatives:** a timer in the extension for the companion's turn (stdin can't keep time, and it would hold a process
+awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own instead of the input method for idioms.
+**Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
+Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
+clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
+
+### D80 — A copy from before the renumbering gets the gallery's version (2026-10-31)
+**Decision:** *amends D65.* An installed add-on from the gallery (an extension, companion or theme) is offered the
+gallery's version on the person's channel when that version is newer, as before, or when the installed version is a
+release the gallery doesn't list, nor any release above it (`AddonCatalog.offers(_:over:on:)`). Those are the copies
+from before D65 numbered everything `1.0.0-snapshot.<n>`: playtime 1.2.0, git, currency, dev-toolbox and qr-codes
+1.1.0, archives, feeds, images and pdf 1.0.0, companions at plain 1.0.0. They update like any other version (by
+themselves when nothing new is asked, D70, else after a look), on Releases only to a release.
+
+**Why:** the founder's Mac kept Playtime 1.2.0 and never got the games in `1.0.0-snapshot.2`, nor this week's
+translations for eight more extensions: each looked newer than the gallery. D65 had accepted "remove and reinstall";
+nobody would know to.
+
+**Alternatives:** raising every add-on above 1.2.0 (the founder keeps them at 1.0.0 until released); a one-time
+migration at launch (the rule is the same and also covers a copy restored from a backup).
+
+**Implications:** a release the gallery publishes stays listed (D65 amended), so its copies are never offered a lower
+snapshot. A waiting update is dropped once its version is installed (`AddonUpdateController.dropSettled`), not when
+the installed one is higher. A copy of Sidefolk before this still needs the remove and reinstall.
+
+### D81 — Responsive extension pages and a host-owned temporary audio mute (2026-10-31)
+**Decision:** extension pages may end their side and main columns with `place: bottom`; this section and the ones after
+it span the page, while a narrow window keeps the original order. A collapsible section may summarize its current
+setting with `detail`. Miraya uses these parts for the approved responsive layout, with focused discovery, pairing and
+live-sharing states. It retains presets for a screen region, rather than promising a freehand crop.
+
+Miraya's sound choices are Mac only, TV only and Mac and TV. TV only temporarily mutes the Mac's default output,
+including other apps, as Miraya's Mac app does; it does not use the microphone. `permissions.output_mute` separately
+discloses this capability and widens an update, so installation requires review. The sandboxed extension sends an
+ordered request to Sidefolk and reports TV-only only after confirmation. Sidefolk owns a helper outside the extension's
+process tree; EOF on its pipe restores the previous mute state after the host exits, and stopping or crashing the
+extension releases its lease. Only one extension holds it. Device changes and unsupported mute are reported; a person
+unmuting the device is respected. The SDK delivers notices while a serialized tool request is waiting, so the host can
+answer without deadlocking a long request. Validation trials cannot mute the person's output.
+
+**Why:** the founder approved screens that adapt within Home and asked for the original Miraya app's three sound
+choices. An extension-owned helper is unsafe here: Sidefolk deliberately kills an extension's complete process tree
+on stop, crash or watchdog. The host-owned helper keeps that boundary and the recovery path separate.
+
+**Verification:** fake-device and helper-process tests cover ownership, changes, timeouts and recovery. On the Mac's
+actual default output, the helper muted and restored the original state both normally and after its parent was killed.
+An isolated Android TV emulator confirmed pairing. Live screen and sound playback on a physical TV remains to be checked.
+
+### D83 — An add-on version can need a Sidefolk snapshot, and an add-on Sidefolk can't read yet says to update (2026-11-01)
+**Decision:** *amends D55 and D65.* A gallery entry's `minimum_sidefolk` may name a snapshot (`0.1.0-snapshot.593`):
+copies of Sidefolk then compare their own published snapshot (`SidefolkVersion.running`, from the `SidefolkRelease`
+stamp; a build on this Mac counts as its plain version) and leave the version out until they're that snapshot or later.
+A plain minimum (`0.1.0`) still counts every 0.1.0 snapshot as 0.1.0. The gallery sets it in an extension's
+`addon.json` (`build.py`), not its manifest, because a copy before this would refuse a manifest's
+`"sidefolk": ">=0.1.0-snapshot.593"` (the validator now reads that form too). When an extension can't be installed only
+because of keys this copy doesn't know or its `sidefolk` minimum (`ValidationReport.needsNewerSidefolk`), the sheet
+says "This version needs a newer Sidefolk. Choose Check for Updates… in Sidefolk's menu, then try again." with the
+validator's words folded in the detail.
+
+**Why:** the founder's Mac on snapshot 590 was offered Miraya `1.0.0-snapshot.4`, which needs 593's `output_mute`, and
+the Update button showed "That folder isn't a Sidefolk extension … permissions.output_mute isn't a known key". D75 and
+D81 had accepted that refusal for snapshots; it reads as broken.
+
+**Alternatives:** raising Sidefolk's version for each such snapshot (the founder keeps 0.1.0 until release); holding
+the add-on back until everyone updates (no way to know).
+
+**Implications:** copies before this snapshot still see such versions and get the old error; from this snapshot on
+they don't. Miraya's `addon.json` names 593.
+
+
+### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+**Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
+design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
+1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
+   screen; state as light (a pool at the companion's feet: aqua while it works, amber when something waits, dim in
+   Focus); one surface family on the desktop, the Sidecard (whisper, card, Ask, stack); one deep aqua action colour
+   that reads with its label in light and dark (#0B7783 / #3CD6DB; the pale brand aqua under navy read as disabled).
+   Field Journal and Playroom may come back as themes on Lantern.
+2. **Themes dress the app only:** colours, the display face, density, materials, radii, the light pool's colours and
+   the nook's art. Each place has **one excellent layout**; a theme no longer arranges Today or picks navigation,
+   Activity or editor layouts (narrows D64; the layout keys and presets stay readable until phase 3 retires them, so
+   existing themes keep working).
+3. **Firm cards never take Return:** another app's approval, agents' questions and anything after outside content need
+   ⌘Return or a click (D58's rule, widened).
+4. **Merges:** Conversations and Activity become History; AI and Voice become Brain; Trash moves into the Notebook.
+5. **The Gallery moves into Home** and leaves Settings.
+6. **Focus is a half circle, Quiet a moon,** everywhere (`Theme.Symbol`).
+7. **Full access may have an end time** ("for 1 hour", "until tonight").
+8. **Companion names stay in Latin letters in Arabic** (Mochi, not موتشي), direction-isolated.
+9. **Only what exists is shown** (AGENTS.md: no fake features). Content the app doesn't keep yet (which facts went
+   into an answer, a watched page's last two versions, a log of each watch's checks) is left out of the screens, or
+   stored where that is cheap and safe, decided per screen.
+
+**Phases:** 1 foundations (this), 2 the desktop (light pool, Sidecard, stack, permission slip, pins, agents lane), 3
+Home (Today, the Say bar and ⌘K, On duty, History with Undo, You, Calendar's Agenda, the Gallery in Home), 4 Settings
+and the rest (8 tabs with search, Attention, Brain, Trust, the menu bar Pocket, onboarding, updates, install sheets),
+5 polish (Reduce Motion, Transparency and Contrast versions, German and Arabic on real systems, the companions' own
+reactions). Each ships in snapshots behind the same tests; the version stays 0.1.0.
+
+**Phase 1, built:** Harbor is Lantern (ink, surfaces, the action colour, status colours, every text pair ≥ 4.5:1 on
+every surface, the action colour ≥ 3:1 on a card). New optional theme roles `well` (fields, chips, the search, a
+segmented track), `glow` and `waitGlow` (light, never text): a theme without them keeps its `surfaceSunken` for wells
+and Harbor's lights, with no warning, so Night Shift, Marshmallow, Field Notes and the gallery's Daylight, Night Studio
+and Paper Garden pass as they are. Type: the theme's face dresses titles, the greeting, state words and numbers; what
+is read, the companion's words included, is the system face (D58 had the companion's words in the theme face).
+Eyebrows are sentence case. Sizes, depth (e0–e3), glass, motion tokens and the folk accents are Lantern's. Shared
+components (docs/DESIGN.md): buttons with sizes, hover, press and working states; chips with their tone's ink; what-it-
+touches chips; the segmented picker (every segmented Picker but the companion stage's, which falls back to a menu by
+measuring AppKit's control); list rows; status badges, counts, state tiles, pins and folk avatars; fields and the
+search as wells; the Say bar's shell, key hints and the understanding row; the Sidecard surface with its tail, the
+whisper, card, slip strip and stack; the light pool and shoulder badge. A design-system sheet in the UI snapshots is
+the reference. An approval's risk tag became a sentence-case chip.
+
+**Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
+disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
+per place and one component set keep the product learnable and let extensions place parts predictably; themes still
+serve different people through how things look.
+
+**Alternatives:** Field Journal (paper and ink: slower, hard with glass and 3D companions) or Playroom (bright, toy-like:
+tiring, fights extension pages and themes) as the base; themes that keep arranging Today (D64: every arrangement needs
+its own care and extensions can't count on a place); a new `canvas` role (the page already is `surfaceSunken`); new
+roles required (every existing theme would warn).
+
+**Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
+fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
+snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.
+
+### D85 — A companion added from a folder may bring a 2D form, painted, beside its 3D one (2026-10-31)
 **Decision:** *amends D43 and D60.* A 3D companion added from a folder (D60) may carry a `2d/` folder: `species.json`
 in the custom companion format (D43) with its `parts/*.svg` and, new, `paint/*.png`. When it does, it comes in both
 looks like a gallery companion (Settings › Companion › Look, 3D first; the choice is kept per companion,

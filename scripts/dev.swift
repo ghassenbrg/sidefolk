@@ -15,7 +15,7 @@
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
-//   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>[:2d|3d]   (a companion from a folder, D60, D79)
+//   swift scripts/dev.swift addCompanion:/path/to/folder | companion:local:<name>[:2d|3d]   (a companion from a folder, D60, D85)
 //   swift scripts/dev.swift chooser:gallery | chooser:yours | chooser:search:cat | chooser:detail:rune | chooser:get:rune
 //                           | chooser:remove:local:cumulus | chooser:confirm (its Remove) | chooser:add | chooser:snapshots (Show Snapshots) | chooser:close
 //                           (Settings › Companion's chooser)

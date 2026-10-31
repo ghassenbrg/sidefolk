@@ -90,15 +90,24 @@ public enum ThemeCheck {
         t.id = file.id
         t.name = name
 
-        // Colours: every role in both appearances, Harbor's for any that's missing.
+        // Colours: every role in both appearances, Harbor's for any that's missing; the optional ones (D84) take
+        // their stand-ins quietly.
         var missing: [String] = []
+        var missingOptional: Set<String> = []
         for appearance in ["light", "dark"] {
             let given = file.colors?[appearance] ?? [:]
             for unknown in given.keys where !ThemeTokens.Colors.roles.contains(where: { $0.name == unknown }) {
                 problem(.warning, "colors.\(appearance).\(unknown) isn't a colour role; it's ignored.")
             }
             for role in ThemeTokens.Colors.roles {
-                guard let text = given[role.name] else { missing.append("\(appearance).\(role.name)"); continue }
+                guard let text = given[role.name] else {
+                    if ThemeTokens.Colors.optionalRoles.contains(role.name) {
+                        missingOptional.insert(role.name)
+                    } else {
+                        missing.append("\(appearance).\(role.name)")
+                    }
+                    continue
+                }
                 guard let value = ThemeFile.colour(text) else {
                     problem(.error, "colors.\(appearance).\(role.name) “\(text)” isn't a colour like #1A2B3C.")
                     continue
@@ -106,6 +115,7 @@ public enum ThemeCheck {
                 if appearance == "light" { t.colors[keyPath: role.key].light = value } else { t.colors[keyPath: role.key].dark = value }
             }
         }
+        t.colors.fillOptional(missing: missingOptional)
         if !missing.isEmpty { problem(.warning, "Harbor's colour is used for \(missing.joined(separator: ", ")).") }
         for row in contrastRows(t.colors) where !row.passes {
             problem(.error, "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1.")
@@ -258,7 +268,8 @@ public enum ThemeCheck {
         }
         for (name, text) in [("ink", c.ink), ("inkMuted", c.inkMuted), ("inkFaint", c.inkFaint), ("link", c.link), ("danger", c.danger),
                              ("warning", c.warning)] {
-            for (surface, back) in [("surface", c.surface), ("surfaceSunken", c.surfaceSunken), ("surfaceRaised", c.surfaceRaised)] {
+            for (surface, back) in [("surface", c.surface), ("surfaceSunken", c.surfaceSunken), ("surfaceRaised", c.surfaceRaised),
+                                    ("well", c.well)] {
                 add("\(name) on \(surface)", text, on: back)
             }
         }

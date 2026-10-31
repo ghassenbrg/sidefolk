@@ -108,7 +108,7 @@ struct SoftFace {
     var blushAt: (CGPoint, CGPoint)?
     var blushSize = CGSize(width: 5.5, height: 3.4)
     /// A screen face's eyes (and mouth) in a light of their own rather than the style colour, and its mouth in
-    /// another (a pink smile under blue-white eyes, D79).
+    /// another (a pink smile under blue-white eyes, D85).
     var glow: Light?
     var mouthGlow: Light?
 }

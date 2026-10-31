@@ -30,14 +30,17 @@ public struct IntentParser: Sendable {
     let here: String?
     /// The tools of switched-on extensions that answer sentences without the AI (D50), tried after every core intent.
     let commandTools: [ExtensionTool]
+    /// The games of switched-on extensions, whose sentences open them (D75).
+    let games: [GameInfo]
 
     public init(when: WhenParser, home: String = NSHomeDirectory(), companionNames: [String] = ["sidefolk", "pip"], here: String? = nil,
-                commandTools: [ExtensionTool] = []) {
+                commandTools: [ExtensionTool] = [], games: [GameInfo] = []) {
         self.when = when
         self.home = home
         names = companionNames.map { $0.lowercased() }
         self.here = here
         self.commandTools = commandTools
+        self.games = games
     }
 
     public init(calendar: Calendar = .autoupdatingCurrent, morningHour: Int = 9, afternoonHour: Int = 14, eveningHour: Int = 18,
@@ -53,7 +56,7 @@ public struct IntentParser: Sendable {
         let ctx = Context(now: now, known: knownCollections, watching: watching)
         // In two parts: one chain of eleven is more than the type checker will take in reasonable time. An extension's
         // command comes after every one of Sidefolk's own (D50).
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command)
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? game(p.command)
         return quick ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
             ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx) ?? extensionCommand(p.command)
     }
