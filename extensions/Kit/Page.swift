@@ -115,6 +115,14 @@ public enum Block {
     case toggle(_ label: String, detail: String? = nil, on: Bool, tool: String, input: [String: Any] = [:])
     /// A button that runs one of this extension's tools with `input`.
     case button(_ label: String, tool: String, input: [String: Any] = [:], style: ButtonStyle = .secondary, symbol: String? = nil)
+    /// One of a few options, as `(value, label)`: picking one runs one of this extension's tools with `value` (the
+    /// option's) merged into `input`.
+    case choice(_ label: String, detail: String? = nil, options: [(String, String)], selected: String, tool: String, input: [String: Any] = [:])
+    /// A text field with a button: runs one of this extension's tools with what was typed merged into `input` as `key`.
+    case field(_ label: String, detail: String? = nil, placeholder: String? = nil, button: String, tool: String, input: [String: Any] = [:],
+               key: String = "text")
+    /// Rows with a picture, a colour or a symbol, a line under each, and a button each (Copy, Remove).
+    case list(_ title: String? = nil, caption: String? = nil, _ rows: [Row])
 
     var json: [String: Any] {
         switch self {
@@ -138,6 +146,14 @@ public enum Block {
             return Self.dropNil(["type": "switch", "label": label, "detail": detail, "on": on, "tool": tool, "input": input])
         case .button(let label, let tool, let input, let style, let symbol):
             return Self.dropNil(["type": "button", "label": label, "tool": tool, "input": input, "style": style.rawValue, "symbol": symbol])
+        case .choice(let label, let detail, let options, let selected, let tool, let input):
+            return Self.dropNil(["type": "choice", "label": label, "detail": detail, "selected": selected, "tool": tool, "input": input,
+                                 "options": options.map { ["value": $0.0, "label": $0.1] }])
+        case .field(let label, let detail, let placeholder, let button, let tool, let input, let key):
+            return Self.dropNil(["type": "field", "label": label, "detail": detail, "placeholder": placeholder, "button": button, "tool": tool,
+                                 "input": input, "key": key])
+        case .list(let title, let caption, let rows):
+            return Self.dropNil(["type": "list", "title": title, "caption": caption, "items": rows.map(\.json)])
         }
     }
 
@@ -148,19 +164,63 @@ public enum ButtonStyle: String {
     case primary, secondary, destructive
 }
 
-/// What a palette lists. `items` in order; `note` is one line under them ("312 copies kept").
+/// One row of a `list`: `image` is a picture file in the extension's data folder (`Paths.data`), named relative to it,
+/// which Sidefolk reads and draws (a PNG or JPEG up to 4 MB); `color` is `#RRGGBB`; `button` runs one of the
+/// extension's tools.
+public struct Row {
+    public var title: String
+    public var detail: String?
+    public var image: String?
+    public var color: String?
+    public var symbol: String?
+    public var button: (label: String, tool: String, input: [String: Any], symbol: String?)?
+
+    public init(_ title: String, detail: String? = nil, image: String? = nil, color: String? = nil, symbol: String? = nil,
+                button: (label: String, tool: String, input: [String: Any], symbol: String?)? = nil) {
+        self.title = title
+        self.detail = detail
+        self.image = image
+        self.color = color
+        self.symbol = symbol
+        self.button = button
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["title": title]
+        if let detail { out["detail"] = detail }
+        if let image { out["image"] = image }
+        if let color { out["color"] = color }
+        if let symbol { out["symbol"] = symbol }
+        if let button {
+            var b: [String: Any] = ["label": button.label, "tool": button.tool, "input": button.input]
+            if let symbol = button.symbol { b["symbol"] = symbol }
+            out["button"] = b
+        }
+        return out
+    }
+}
+
+/// What a palette lists. `items` in order; `note` is one line under them ("312 copies kept"). `preview`: the palette
+/// answers `sidefolk/palette.preview`, so Sidefolk shows the picked item beside the list. `actions`: what the palette
+/// as a whole can do, sent to `choose` with an empty item: `clear` (⌥⌘⌫) and `clear_all` (⇧⌥⌘⌫).
 public struct PaletteList {
     public var items: [PaletteItem]
     public var note: String?
+    public var preview: Bool
+    public var actions: [String]
 
-    public init(_ items: [PaletteItem], note: String? = nil) {
+    public init(_ items: [PaletteItem], note: String? = nil, preview: Bool = false, actions: [String] = []) {
         self.items = items
         self.note = note
+        self.preview = preview
+        self.actions = actions
     }
 
     var json: [String: Any] {
         var out: [String: Any] = ["items": items.map(\.json)]
         if let note { out["note"] = note }
+        if preview { out["preview"] = true }
+        if !actions.isEmpty { out["actions"] = actions }
         return out
     }
 }
@@ -172,21 +232,62 @@ public struct PaletteItem {
     public var detail: String?
     public var kind: Kind
     public var pinned: Bool
-    /// Besides choosing it: `plain`, `pin`, `delete`.
+    /// Besides choosing it: `plain`, `alternate` (⌥: paste when choosing copies, and the other way round), `pin`, `delete`.
     public var actions: [String]
+    /// A small picture: a PNG or JPEG in the extension's data folder, named relative to it (`thumbs/abc.png`), at most
+    /// 4 MB. Make it small once (a few hundred pixels) rather than pointing at a big original: a list has 200 rows.
+    public var image: String?
+    /// `#RRGGBB`, drawn as a swatch.
+    public var color: String?
+    /// A heading drawn above this item when it differs from the one before ("Pinned").
+    public var section: String?
 
-    public init(id: String, title: String, detail: String? = nil, kind: Kind = .text, pinned: Bool = false, actions: [String] = []) {
+    public init(id: String, title: String, detail: String? = nil, kind: Kind = .text, pinned: Bool = false, actions: [String] = [],
+                image: String? = nil, color: String? = nil, section: String? = nil) {
         self.id = id
         self.title = title
         self.detail = detail
         self.kind = kind
         self.pinned = pinned
         self.actions = actions
+        self.image = image
+        self.color = color
+        self.section = section
     }
 
     var json: [String: Any] {
         var out: [String: Any] = ["id": id, "title": title, "kind": kind.rawValue, "pinned": pinned, "actions": actions]
         if let detail { out["detail"] = detail }
+        if let image { out["image"] = image }
+        if let color { out["color"] = color }
+        if let section { out["section"] = section }
+        return out
+    }
+}
+
+/// The picked item in full, beside the list: its text (up to 20,000 characters), a bigger picture (a file in the data
+/// folder, as for items, up to 25 MB), and facts ("Copied", "From").
+public struct PalettePreview {
+    public var title: String?
+    public var text: String?
+    /// Shown in a fixed-width font.
+    public var code: Bool
+    public var image: String?
+    public var facts: [(String, String)]
+
+    public init(title: String? = nil, text: String? = nil, code: Bool = false, image: String? = nil, facts: [(String, String)] = []) {
+        self.title = title
+        self.text = text
+        self.code = code
+        self.image = image
+        self.facts = facts
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["code": code, "facts": facts.map { ["label": $0.0, "value": $0.1] }]
+        if let title { out["title"] = title }
+        if let text { out["text"] = text }
+        if let image { out["image"] = image }
         return out
     }
 }

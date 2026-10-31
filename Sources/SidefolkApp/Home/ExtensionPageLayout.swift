@@ -36,7 +36,7 @@ extension ExtensionPage.Section {
 
 extension ExtensionPage.Block {
     var isMetric: Bool { kind == "gauge" || kind == "stat" }
-    var isCard: Bool { kind == "chart" || kind == "bars" || kind == "facts" }
+    var isCard: Bool { kind == "chart" || kind == "bars" || kind == "facts" || kind == "list" }
 
     var kind: String {
         switch self {
@@ -48,6 +48,9 @@ extension ExtensionPage.Block {
         case .note: "note"
         case .ask: "ask"
         case .control(let c): if case .toggle = c.kind { "switch" } else { "button" }
+        case .choice: "choice"
+        case .field: "field"
+        case .list: "list"
         }
     }
 }

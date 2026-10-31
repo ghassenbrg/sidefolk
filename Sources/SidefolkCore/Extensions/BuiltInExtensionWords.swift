@@ -137,6 +137,8 @@ enum BuiltInExtensionWords {
         case ("dev.sidefolk.clipboard", "pause"): String(localized: "Pause the history")
         case ("dev.sidefolk.clipboard", "resume"): String(localized: "Resume the history")
         case ("dev.sidefolk.clipboard", "clear_history"): String(localized: "Clear the history")
+        case ("dev.sidefolk.clipboard", "skip_next"): String(localized: "Skip the next copy", comment: "Clipboard: a tool that leaves the next copy out")
+        case ("dev.sidefolk.clipboard", "ignore"): String(localized: "Ignore copies", comment: "Clipboard: a tool that leaves out an app's copies")
         case ("dev.sidefolk.clipboard", "set_option"): String(localized: "Clipboard setting")
         case ("dev.sidefolk.keep-awake", "keep_awake"): String(localized: "Keep the Mac awake")
         case ("dev.sidefolk.keep-awake", "stop_keeping_awake"): String(localized: "Let the Mac sleep")

@@ -1,5 +1,5 @@
 #if DEBUG
-import Foundation
+import AppKit
 import SidefolkCore
 
 /// System Vitals+'s page as it reads on a typical afternoon, with ten minutes of history: what the UI snapshots show
@@ -97,20 +97,95 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: awakeInfo, page: page, history: [:], alerts: [], updated: now)
     }
 
-    /// Clipboard's palette with a few copies (D63).
+    /// Clipboard's palette with a few copies (D63), pins in their own section, a screenshot's picture and the picked
+    /// copy in full beside the list (D68).
     @MainActor static func palette(host: ExtensionHost) -> PaletteModel {
         let info = ExtensionPaletteInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", palette: "history", title: "Clipboard",
                                         hotkey: "shift+cmd+c", placeholder: "Search what you copied")
+        let all = ["plain", "alternate", "pin", "delete"]
         let items: [ExtensionPaletteList.Item] = [
-            .init(id: "1", title: "Meeting notes: ship System Vitals+ on Friday", detail: "just now", kind: .text, pinned: false),
-            .init(id: "2", title: "https://github.com/ghassenbrg/sidefolk/pull/2", detail: "3 min ago · copied 2×", kind: .link, pinned: true),
-            .init(id: "3", title: "func hello() {", detail: "Xcode · 12 min ago · 3 lines", kind: .code),
-            .init(id: "4", title: "•••••••• (looks like a password or key)", detail: "just now · forgotten in 2 min", kind: .text),
-            .init(id: "5", title: "#2ED4D9", detail: "1 h ago", kind: .color),
-            .init(id: "6", title: "Picture 1440 × 900", detail: "yesterday", kind: .image),
-            .init(id: "7", title: "report.pdf, budget.xlsx", detail: "2 days ago", kind: .file),
+            .init(id: "2", title: "https://github.com/ghassenbrg/sidefolk/pull/2", detail: "Safari · 3 min ago · copied 2×", kind: .link, pinned: true,
+                  actions: all, section: "Pinned"),
+            .init(id: "1", title: "Meeting notes: ship System Vitals+ on Friday", detail: "Notes · just now", kind: .text, actions: all, section: "Recent"),
+            .init(id: "6", title: "Screenshot 1440 × 900", detail: "Screenshot · 2 min ago", kind: .image, actions: all, image: "thumbs/sample.png",
+                  section: "Recent"),
+            .init(id: "3", title: "func hello() {", detail: "Xcode · 12 min ago · 3 lines", kind: .code, actions: all, section: "Recent"),
+            .init(id: "4", title: "•••••••• (looks like a password or key)", detail: "just now · forgotten in 2 min", kind: .text, section: "Recent"),
+            .init(id: "5", title: "#2ED4D9", detail: "1 h ago", kind: .color, actions: all, color: "#2ED4D9", section: "Recent"),
+            .init(id: "7", title: "report.pdf, budget.xlsx", detail: "Finder · 2 days ago", kind: .file, actions: all, section: "Recent"),
         ]
-        return PaletteModel(info: info, host: host, items: items, note: "312 copies kept")
+        let preview = ExtensionPalettePreview(title: nil, text: "Meeting notes: ship System Vitals+ on Friday\n\n- Charts reach back a day\n"
+                                                + "- Heads-ups for memory and heat\n- Clipboard: pictures, previews and pins", facts: [
+                                                    .init(label: "From", value: "Notes"), .init(label: "Copied", value: "Today 14:02"),
+                                                    .init(label: "First copied", value: "Today 13:40"), .init(label: "Copies", value: "1")])
+        let model = PaletteModel(info: info, folder: pictureFolder(), list: ExtensionPaletteList(items: items, note: "312 copies · ↩ pastes, ⌥↩ copies",
+                                                                                                 preview: true, actions: ["clear", "clear_all"]),
+                                 preview: preview)
+        model.selected = 1
+        return model
+    }
+
+    /// Clipboard's page (D68): its switches, the latest copies with their pictures, and Maccy's settings as choices,
+    /// switches, fields and a list, as the extension sends them.
+    @MainActor static func clipboard(now: Date = Date()) -> ExtensionPageModel {
+        let json = #"""
+        {"summary": {"title": "Keeping your copies", "detail": "312 kept · 41 today · open them from any app with the shortcut below", "tone": "good", "symbol": "doc.on.clipboard.fill"},
+         "sections": [
+          {"blocks": [
+            {"type": "switch", "label": "Keep a history of what I copy", "detail": "Passwords from password managers are never kept.", "on": true, "tool": "set_option"},
+            {"type": "switch", "label": "Hide passwords, keys and card numbers", "detail": "They show as dots, stay in memory only and are forgotten after two minutes.", "on": true, "tool": "set_option"},
+            {"type": "button", "label": "Pause 10 minutes", "tool": "pause", "symbol": "pause"},
+            {"type": "button", "label": "Skip my next copy", "tool": "skip_next", "symbol": "forward"},
+            {"type": "button", "label": "Clear history", "tool": "clear_history", "style": "destructive", "symbol": "trash"}]},
+          {"title": "Latest", "blocks": [{"type": "list", "caption": "In the order the palette shows them. Copy puts one back on the clipboard.", "items": [
+            {"title": "Screenshot 1440 × 900", "detail": "Safari · 2 min ago", "image": "thumbs/sample.png", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}},
+            {"title": "https://github.com/ghassenbrg/sidefolk/pull/2", "detail": "Safari · 3 min ago · copied 2×", "symbol": "pin.fill", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}},
+            {"title": "#2ED4D9", "detail": "Figma · 1 h ago", "color": "#2ED4D9", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}},
+            {"title": "func hello() {", "detail": "Xcode · 2 h ago · 3 lines", "symbol": "chevron.left.forwardslash.chevron.right", "button": {"label": "Copy", "tool": "copy_again", "symbol": "doc.on.doc"}}]}]},
+          {"title": "Choosing a copy", "blocks": [
+            {"type": "choice", "label": "Return", "detail": "What choosing a copy does. Option-Return does the other; Shift-Return pastes plain text.", "tool": "set_option",
+             "options": [{"value": "paste", "label": "Pastes it"}, {"value": "copy", "label": "Only copies it"}], "selected": "paste"},
+            {"type": "choice", "label": "Formatting", "detail": "Fonts, colours and links that came with copied text.", "tool": "set_option",
+             "options": [{"value": "keep", "label": "Keep it"}, {"value": "remove", "label": "Remove it"}], "selected": "keep"}]},
+          {"title": "History", "blocks": [
+            {"type": "choice", "label": "Keep up to", "detail": "Copies, pinned ones aside. The oldest go first.", "tool": "set_option", "selected": "500",
+             "options": [{"value": "100", "label": "100 copies"}, {"value": "200", "label": "200 copies"}, {"value": "500", "label": "500 copies"},
+                         {"value": "1000", "label": "1,000 copies"}, {"value": "2000", "label": "2,000 copies"}, {"value": "5000", "label": "5,000 copies"}]},
+            {"type": "choice", "label": "Order", "tool": "set_option", "selected": "recent",
+             "options": [{"value": "recent", "label": "Last copied"}, {"value": "first", "label": "First copied"}, {"value": "count", "label": "Most copied"}]},
+            {"type": "choice", "label": "Pinned copies", "tool": "set_option", "selected": "top", "options": [{"value": "top", "label": "On top"}, {"value": "bottom", "label": "At the bottom"}]},
+            {"type": "switch", "label": "Keep pictures", "detail": "Screenshots and copied images, 300 at most.", "on": true, "tool": "set_option"}]},
+          {"title": "Leave out", "blocks": [
+            {"type": "switch", "label": "Ignore Safari", "detail": "com.apple.Safari", "on": false, "tool": "ignore"},
+            {"type": "switch", "label": "Ignore 1Password", "detail": "com.1password.1password", "on": true, "tool": "ignore"},
+            {"type": "list", "title": "Also left out", "items": [
+              {"title": "^\\d{6}$", "detail": "Text matching", "symbol": "textformat", "button": {"label": "Remove", "tool": "ignore"}}]},
+            {"type": "field", "label": "Ignore an app", "detail": "Its name or bundle id, like 1Password or com.apple.keychainaccess.", "placeholder": "App name or bundle id",
+             "button": "Ignore", "tool": "ignore", "key": "app"}]}
+         ]}
+        """#
+        let page = (try? JSONDecoder().decode(JSONValue.self, from: Data(json.utf8))).flatMap { try? ExtensionPage.parse($0) } ?? ExtensionPage()
+        let info = ExtensionPageInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", page: "clipboard", title: "Clipboard",
+                                     symbol: "doc.on.clipboard", refresh: 3, needsAccessibility: true)
+        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: pictureFolder())
+    }
+
+    /// A made-up screenshot's thumbnail in a temporary folder, as Clipboard keeps one in its data folder.
+    @MainActor static func pictureFolder() -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-clipboard", isDirectory: true)
+        let file = folder.appendingPathComponent("thumbs/sample.png")
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let image = NSImage(size: NSSize(width: 240, height: 150), flipped: false) { rect in
+            NSGradient(starting: NSColor(red: 0.18, green: 0.83, blue: 0.85, alpha: 1), ending: NSColor(red: 0.06, green: 0.18, blue: 0.36, alpha: 1))?
+                .draw(in: rect, angle: -35)
+            NSColor.white.withAlphaComponent(0.85).setFill()
+            NSBezierPath(roundedRect: NSRect(x: 24, y: 30, width: 120, height: 80), xRadius: 8, yRadius: 8).fill()
+            return true
+        }
+        if let tiff = image.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+            try? png.write(to: file)
+        }
+        return folder
     }
 
     static let awakeInfo = ExtensionPageInfo(extensionId: "dev.sidefolk.keep-awake", extensionName: "Keep Awake", page: "awake", title: "Keep Awake",

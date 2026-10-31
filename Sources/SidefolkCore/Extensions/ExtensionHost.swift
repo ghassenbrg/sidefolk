@@ -626,6 +626,30 @@ public actor ExtensionHost {
         }
     }
 
+    /// The picked item in full, when the palette offers it (its list says `preview`); nil when it has nothing to show.
+    public func previewPalette(extensionId id: String, palette: String, item: String) async throws -> ExtensionPalettePreview? {
+        let (client, name) = try await paletteClient(id, palette)
+        begin(id)
+        defer { end(id) }
+        do {
+            let r = try await client.request("sidefolk/palette.preview", params: ["palette": .string(palette), "item": .string(String(item.prefix(200)))],
+                                             timeout: 10)
+            return ExtensionPalettePreview.parse(r)
+        } catch let error as MCPError {
+            throw userFacing(error, action: String(localized: "showing “\(name)”"), name: runtimes[id]?.pin.name ?? id)
+        }
+    }
+
+    /// Where an extension keeps its files, for the pictures its palettes and pages name (`ExtensionDataFile`).
+    public nonisolated func dataFolder(extensionId id: String) -> URL {
+        paths.extensionData.appendingPathComponent(id, isDirectory: true)
+    }
+
+    /// Tells a running extension something without asking (`sidefolk/clipboard.source`).
+    public func tell(extensionId id: String, _ method: String, _ params: JSONValue) async {
+        await runtimes[id]?.client?.notify(method, params: params)
+    }
+
     private func paletteClient(_ id: String, _ palette: String) async throws -> (MCPClient, String) {
         guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         guard let meta = rt.manifest?.palettes[palette] else { throw ToolError.notFound(String(localized: "the page \(palette) in \(rt.pin.name)")) }
@@ -1022,6 +1046,10 @@ public actor ExtensionHost {
             guard rt.pin.permissions?.power == true, Date().timeIntervalSince(rt.lastNudge) >= 20 else { return }
             runtimes[id]?.lastNudge = Date()
             events.publish(.nudge)
+        case .clipboardSource:
+            // Only with the clipboard permission the person saw at install; the app answers at most once per copy.
+            guard rt.pin.permissions?.clipboard == true else { return }
+            events.publish(.clipboardSource(extensionId: id))
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:

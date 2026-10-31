@@ -53,6 +53,8 @@ public enum MCPClientEvent: Sendable {
     case rejectedServerRequest(String)
     /// `sidefolk/nudge` (D63); the host decides whether the extension may.
     case nudge
+    /// `sidefolk/clipboard.source`: which app was in front for the copy just made (D68); the host decides.
+    case clipboardSource
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -287,6 +289,8 @@ public final class MCPClient: Sendable {
                 onEvent(.toolsChanged)
             } else if method == "sidefolk/nudge" {
                 onEvent(.nudge)
+            } else if method == "sidefolk/clipboard.source" {
+                onEvent(.clipboardSource)
             }
             return
         }

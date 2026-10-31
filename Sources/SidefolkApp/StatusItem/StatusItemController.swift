@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import SidefolkCore
 
 /// The menu bar icon: Ask, what's live now, how much Sidefolk asks, quiet mode, show/hide, Home,
@@ -15,6 +16,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private let menu = NSMenu()
 
     var onAsk: (() -> Void)?
+    /// Extensions' palettes (D63), so Clipboard is in the menu bar as Maccy is (D68): opened under the icon.
+    var palettes: () -> [ExtensionPaletteInfo] = { [] }
+    var onPalette: ((_ id: String, _ under: NSRect?) -> Void)?
     var onOpenHome: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onAbout: (() -> Void)?
@@ -90,6 +94,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let ask = menu.addItem(withTitle: String(localized: "Ask \(companionName())…"), action: #selector(ask), keyEquivalent: "")
         ask.target = self
         ask.toolTip = hotkeyLabel()
+        for info in palettes() {
+            let mi = menu.addItem(withTitle: "\(info.title)…", action: #selector(openPalette(_:)), keyEquivalent: "")
+            mi.target = self
+            mi.representedObject = info.id
+            mi.setShortcut(for: PaletteController.shortcutName(info))
+        }
         if mode == .fullAccess {
             // First thing in the menu while it lasts, with the way out right under it.
             let on = menu.addItem(withTitle: "", action: nil, keyEquivalent: "")
@@ -181,6 +191,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func ask() { onAsk?() }
+    @objc private func openPalette(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String else { return }
+        onPalette?(id, item.button?.window?.frame)
+    }
     @objc private func openHome() { onOpenHome?() }
     @objc private func openSettings() { onOpenSettings?() }
     @objc private func showAbout() { onAbout?() }

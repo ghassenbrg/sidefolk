@@ -27,8 +27,10 @@ public final class Extension {
     private var watchers: [String: @MainActor (Arguments, [String: Any]) async throws -> Check] = [:]
     private var pages: [String: @MainActor (Arguments) async throws -> Page] = [:]
     private var palettes: [String: (query: @MainActor (String) async throws -> PaletteList,
-                                    choose: @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice)] = [:]
+                                    choose: @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice,
+                                    preview: (@MainActor (_ item: String) async throws -> PalettePreview?)?)] = [:]
     private var backgroundWork: (@MainActor () async -> Void)?
+    private var notices: [String: @MainActor (Arguments) -> Void] = [:]
 
     public init(name: String, version: String = "1.0.0") {
         self.name = name
@@ -55,10 +57,18 @@ public final class Extension {
     }
 
     /// A palette the manifest declares (`palettes.<name>`): what it lists for what the person typed, and what
-    /// choosing an item does. `action` is `choose` (Return), `plain` (Shift-Return), `pin` or `delete`.
+    /// choosing an item does. `action` is `choose` (Return), `plain` (Shift-Return), `alternate` (Option-Return), `pin`
+    /// or `delete`; or, with an empty item, one of the list's own `actions` (`clear`). `preview`, when given, shows the
+    /// picked item in full beside the list (say so with `PaletteList(preview: true)`).
     public func palette(_ name: String, query: @escaping @MainActor (String) async throws -> PaletteList,
-                        choose: @escaping @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice) {
-        palettes[name] = (query, choose)
+                        choose: @escaping @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice,
+                        preview: (@MainActor (_ item: String) async throws -> PalettePreview?)? = nil) {
+        palettes[name] = (query, choose, preview)
+    }
+
+    /// What to do when Sidefolk tells the program something without asking (`sidefolk/clipboard.source`).
+    public func on(_ method: String, _ handle: @escaping @MainActor (Arguments) -> Void) {
+        notices[method] = handle
     }
 
     /// Work that runs alongside requests for as long as the program runs: with `"background": true` in the manifest,
@@ -74,7 +84,11 @@ public final class Extension {
         // Read without blocking the main actor, so background work runs between requests.
         for await line in Self.lines() {
             guard let message = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
-                  let id = message["id"], let method = message["method"] as? String else { continue }
+                  let method = message["method"] as? String else { continue }
+            guard let id = message["id"] else {
+                notices[method]?(Arguments(message["params"] as? [String: Any] ?? [:]))
+                continue
+            }
             var reply: [String: Any] = ["jsonrpc": "2.0", "id": id]
             do {
                 reply["result"] = try await answer(method, message["params"] as? [String: Any] ?? [:])
@@ -136,13 +150,19 @@ public final class Extension {
             let name = params["palette"] as? String ?? ""
             guard let palette = palettes[name] else { throw Unknown(what: "Unknown palette: \(name)") }
             return try await palette.choose(params["item"] as? String ?? "", params["action"] as? String ?? "choose").json
+        case "sidefolk/palette.preview":
+            let name = params["palette"] as? String ?? ""
+            guard let palette = palettes[name], let preview = palette.preview else { throw Unknown(what: "No preview in palette: \(name)") }
+            return try await preview(params["item"] as? String ?? "")?.json ?? [:]
         default:
             throw Unknown(what: "Method not found: \(method)")
         }
     }
 
-    /// A message to Sidefolk that needs no answer. The only one it acts on is `sidefolk/nudge` (with the power
-    /// permission): it moves the pointer by nothing, so apps that watch for activity see some (D63).
+    /// A message to Sidefolk that needs no answer. It acts on two: `sidefolk/nudge` (with the power permission) moves
+    /// the pointer by nothing, so apps that watch for activity see some (D63); `sidefolk/clipboard.source` (with the
+    /// clipboard permission), sent when the clipboard just changed, is answered with the same notice naming the app
+    /// in front (`app`, its bundle id, and `name`), once per copy.
     public func send(_ method: String, _ params: [String: Any] = [:]) {
         Self.write(["jsonrpc": "2.0", "method": method, "params": params])
     }

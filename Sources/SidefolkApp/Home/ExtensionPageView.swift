@@ -1,6 +1,5 @@
 import ApplicationServices
 import Charts
-import KeyboardShortcuts
 import SidefolkCore
 import SwiftUI
 
@@ -160,6 +159,8 @@ private struct SectionView: View {
     private enum Group: Identifiable {
         case gauges([ExtensionPage.Block]), stats([ExtensionPage.Block]), cards([ExtensionPage.Block]), notes([ExtensionPage.Note]), asks([ExtensionPage.Ask])
         case switches([ExtensionPage.Control]), buttons([ExtensionPage.Control])
+        /// Choices, fields and lists (D68), drawn in ExtensionPageInputs.swift.
+        case inputs([ExtensionPage.Block])
         var id: String {
             switch self {
             case .gauges(let b): "g\(b.count)\(b.hashValue)"
@@ -169,6 +170,7 @@ private struct SectionView: View {
             case .asks(let a): "a\(a.count)\(a.hashValue)"
             case .switches(let c): "s\(c.count)\(c.hashValue)"
             case .buttons(let c): "b\(c.count)\(c.hashValue)"
+            case .inputs(let b): "i\(b.count)\(b.hashValue)"
             }
         }
     }
@@ -203,6 +205,8 @@ private struct SectionView: View {
                     FlowRow(spacing: Theme.Space.s) {
                         ForEach(Array(controls.enumerated()), id: \.offset) { _, c in ControlButton(control: c, model: model) }
                     }
+                case .inputs(let blocks):
+                    ExtensionPageInputs(blocks: blocks, model: model)
                 case .asks(let asks):
                     FlowRow(spacing: Theme.Space.s) {
                         ForEach(Array(asks.enumerated()), id: \.offset) { _, a in
@@ -244,6 +248,8 @@ private struct SectionView: View {
                 if case .notes(let ns) = out.last { out[out.count - 1] = .notes(ns + [n]) } else { out.append(.notes([n])) }
             case .ask(let a):
                 if case .asks(let as_) = out.last { out[out.count - 1] = .asks(as_ + [a]) } else { out.append(.asks([a])) }
+            case .choice, .field, .list:
+                if case .inputs(let b) = out.last { out[out.count - 1] = .inputs(b + [block]) } else { out.append(.inputs([block])) }
             case .control(let c):
                 if case .toggle = c.kind {
                     if case .switches(let cs) = out.last { out[out.count - 1] = .switches(cs + [c]) } else { out.append(.switches([c])) }
@@ -270,7 +276,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control: EmptyView()
+        case .ask, .control, .choice, .field, .list: EmptyView()
         }
     }
 }
@@ -590,17 +596,7 @@ private struct HostControls: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             if !model.palettes.isEmpty {
                 RowsCard {
-                    ForEach(model.palettes) { p in
-                        HStack(spacing: Theme.Space.m) {
-                            Image(systemName: "keyboard").foregroundStyle(Theme.inkMuted)
-                            Text("Open \(p.title) from any app", comment: "An extension's palette and its keyboard shortcut")
-                                .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                            Spacer(minLength: Theme.Space.m)
-                            KeyboardShortcuts.Recorder(for: PaletteController.shortcutName(p))
-                        }
-                        .padding(.horizontal, Theme.Space.l)
-                        .padding(.vertical, Theme.Space.s + 2)
-                    }
+                    ForEach(model.palettes) { p in PaletteSettingsRow(info: p) }
                 }
             }
             if model.info.needsAccessibility, !trusted {

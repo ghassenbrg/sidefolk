@@ -148,9 +148,15 @@ final class ExtensionPagesModel {
 enum ExtensionControl {
     @MainActor
     static func run(_ control: ExtensionPage.Control, on: Bool?, extensionId: String, services: AppServices) async -> String? {
+        await run(tool: control.tool, input: control.input(switchedTo: on), extensionId: extensionId, services: services)
+    }
+
+    /// The extension's own tool, run as the person through Guard: what went wrong, if anything.
+    @MainActor
+    static func run(tool: String, input: JSONValue, extensionId: String, services: AppServices) async -> String? {
         let short = String(extensionId.split(separator: ".").last ?? "")
-        let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: control.tool),
-                                                              input: control.input(switchedTo: on), caller: .user)
+        let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: tool),
+                                                              input: input, caller: .user)
         return outcome.problem?.message
     }
 }
@@ -194,9 +200,11 @@ final class ExtensionPageModel {
     }
 
     /// A page with nothing behind it, for UI snapshots.
-    init(info: ExtensionPageInfo, page: ExtensionPage, history: [String: [ExtensionPageHistory.Point]], alerts: [Alert], updated: Date) {
+    init(info: ExtensionPageInfo, page: ExtensionPage, history: [String: [ExtensionPageHistory.Point]], alerts: [Alert], updated: Date,
+         folder: URL? = nil) {
         self.info = info
         services = nil
+        sampleFolder = folder
         self.page = page
         self.history = history
         self.alerts = alerts
@@ -277,6 +285,20 @@ final class ExtensionPageModel {
         if let why { problem = why }
         onControl?()
     }
+
+    /// A choice, field or list row's tool (D68): whether it ran without a problem.
+    @discardableResult
+    func run(tool: String, input: JSONValue) async -> Bool {
+        guard let services else { return false }
+        let why = await ExtensionControl.run(tool: tool, input: input, extensionId: info.extensionId, services: services)
+        await refresh()
+        if let why { problem = why }
+        return why == nil
+    }
+
+    /// Where the extension's pictures are (`ExtensionDataFile`); a sample folder in UI snapshots.
+    var folder: URL? { services?.runtime.extensions.dataFolder(extensionId: info.extensionId) ?? sampleFolder }
+    private var sampleFolder: URL?
 
     static var language: String { Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en" }
 }

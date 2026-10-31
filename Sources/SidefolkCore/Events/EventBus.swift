@@ -65,6 +65,9 @@ public enum AppEvent: Sendable {
     /// An extension with the power permission asked that apps see the person as active (D63): the app moves the
     /// pointer by nothing.
     case nudge
+    /// An extension with the clipboard permission saw a new copy and asks which app it came from (D68): the app answers
+    /// with the app in front, once per change of the clipboard.
+    case clipboardSource(extensionId: String)
 }
 
 /// Broadcasts events to any number of async subscribers. Slow subscribers drop the oldest events.

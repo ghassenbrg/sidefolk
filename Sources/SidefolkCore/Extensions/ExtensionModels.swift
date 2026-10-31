@@ -124,8 +124,8 @@ public struct ExtensionPaletteInfo: Sendable, Hashable, Identifiable {
     }
 }
 
-/// What a palette lists: `{items: [{id, title, detail, kind, pinned, actions}], note}`. Every text is the extension's,
-/// cleaned and clipped; at most 200 items.
+/// What a palette lists: `{items: [{id, title, detail, kind, pinned, actions, image, color, section}], note, preview,
+/// actions}`. Every text is the extension's, cleaned and clipped; at most 200 items.
 public struct ExtensionPaletteList: Sendable, Hashable {
     public struct Item: Sendable, Hashable, Identifiable {
         public enum Kind: String, Sendable, Hashable { case text, link, image, file, color, code }
@@ -134,26 +134,45 @@ public struct ExtensionPaletteList: Sendable, Hashable {
         public var detail: String?
         public var kind: Kind
         public var pinned: Bool
-        /// Besides choosing it: `plain`, `pin`, `delete`.
+        /// Besides choosing it: `plain`, `alternate`, `pin`, `delete`.
         public var actions: [String]
+        /// A picture in the extension's data folder (`ExtensionDataFile`), drawn small.
+        public var image: String?
+        /// `#RRGGBB`, drawn as a swatch.
+        public var color: String?
+        /// A heading over this item when it differs from the item before.
+        public var section: String?
 
-        public init(id: String, title: String, detail: String? = nil, kind: Kind = .text, pinned: Bool = false, actions: [String] = []) {
+        public init(id: String, title: String, detail: String? = nil, kind: Kind = .text, pinned: Bool = false, actions: [String] = [],
+                    image: String? = nil, color: String? = nil, section: String? = nil) {
             self.id = id
             self.title = title
             self.detail = detail
             self.kind = kind
             self.pinned = pinned
             self.actions = actions
+            self.image = image
+            self.color = color
+            self.section = section
         }
     }
+
+    public static let itemActions = ["plain", "alternate", "pin", "delete"]
+    /// What the palette as a whole can do, chosen with an empty item: ⌥⌘⌫ and ⇧⌥⌘⌫.
+    public static let listActions = ["clear", "clear_all"]
 
     public var items: [Item]
     /// One line under the list, like "Paused" or "312 items".
     public var note: String?
+    /// The extension answers `sidefolk/palette.preview`: the picked item is shown in full beside the list.
+    public var preview: Bool
+    public var actions: [String]
 
-    public init(items: [Item], note: String? = nil) {
+    public init(items: [Item], note: String? = nil, preview: Bool = false, actions: [String] = []) {
         self.items = items
         self.note = note
+        self.preview = preview
+        self.actions = actions
     }
 
     public static func parse(_ j: JSONValue) -> ExtensionPaletteList {
@@ -162,12 +181,44 @@ public struct ExtensionPaletteList: Sendable, Hashable {
                   let raw = i["title"]?.stringValue else { return nil }
             let title = ExtensionText.line(raw, characters: 300).trimmingCharacters(in: .whitespaces)
             guard !title.isEmpty else { return nil }
-            let actions = (i["actions"]?.arrayValue ?? []).compactMap(\.stringValue).filter { ["plain", "pin", "delete"].contains($0) }
+            let actions = (i["actions"]?.arrayValue ?? []).compactMap(\.stringValue).filter { itemActions.contains($0) }
             return Item(id: id, title: title, detail: i["detail"]?.stringValue.map { ExtensionText.line($0, characters: 120) },
                         kind: i["kind"]?.stringValue.flatMap(Item.Kind.init(rawValue:)) ?? .text, pinned: i["pinned"]?.boolValue ?? false,
-                        actions: actions)
+                        actions: actions, image: ExtensionPage.dataFile(i["image"]), color: ExtensionPage.color(i["color"]),
+                        section: ExtensionPage.text(i["section"], 40))
         }
-        return ExtensionPaletteList(items: Array(items), note: j["note"]?.stringValue.map { ExtensionText.line($0, characters: 120) })
+        return ExtensionPaletteList(items: Array(items), note: j["note"]?.stringValue.map { ExtensionText.line($0, characters: 120) },
+                                    preview: j["preview"]?.boolValue ?? false,
+                                    actions: (j["actions"]?.arrayValue ?? []).compactMap(\.stringValue).filter { listActions.contains($0) })
+    }
+}
+
+/// The picked palette item in full (`sidefolk/palette.preview`): up to 20,000 characters of its text, a bigger picture,
+/// and facts. The extension's text, cleaned, and only ever drawn.
+public struct ExtensionPalettePreview: Sendable, Hashable {
+    public var title: String?
+    public var text: String?
+    public var code: Bool
+    public var image: String?
+    public var facts: [ExtensionPage.Fact]
+
+    public init(title: String? = nil, text: String? = nil, code: Bool = false, image: String? = nil, facts: [ExtensionPage.Fact] = []) {
+        self.title = title
+        self.text = text
+        self.code = code
+        self.image = image
+        self.facts = facts
+    }
+
+    public static func parse(_ j: JSONValue) -> ExtensionPalettePreview? {
+        let text = j["text"]?.stringValue.map { String(ExtensionText.clean($0).prefix(20_000)) }.flatMap { $0.isEmpty ? nil : $0 }
+        let facts = (j["facts"]?.arrayValue ?? []).prefix(12).compactMap { f -> ExtensionPage.Fact? in
+            guard let label = ExtensionPage.text(f["label"], 30), let value = ExtensionPage.text(f["value"], 300) else { return nil }
+            return ExtensionPage.Fact(label: label, value: value)
+        }
+        let preview = ExtensionPalettePreview(title: ExtensionPage.text(j["title"], 200), text: text, code: j["code"]?.boolValue ?? false,
+                                              image: ExtensionPage.dataFile(j["image"]), facts: facts)
+        return preview.title == nil && text == nil && preview.image == nil && facts.isEmpty ? nil : preview
     }
 }
 

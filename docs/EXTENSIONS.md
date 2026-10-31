@@ -531,6 +531,17 @@ ext.page("mac") { args in
   `input`, `style`: `primary`, `secondary` or `destructive`, `symbol`) run one of your own tools as the person, through
   Guard, then read the page again. A switch adds `on` (its new state) to `input`. `tool` is your tool's own name
   (`set_option`), never another extension's. A tool only switches and buttons use can be `"ai": false`.
+- **Choices, fields and lists** (D68): `choice` (`label`, `detail`, `options` of `{value, label}`, 2–8, `selected`, `tool`,
+  `input`; drawn side by side up to four, a menu above) runs your tool with the picked option's `value` added to `input`;
+  `field` (`label`, `detail`, `placeholder`, `button`, `tool`, `input`, `key`) runs it with what was typed added under
+  `key` (`text` by default, never `on`); `list` (`title`, `caption`, `items` of `{title, detail, image, color, symbol,
+  button: {label, tool, input, symbol}}`) shows rows with a picture, a `#RRGGBB` swatch or a symbol, each with a button
+  that runs one of your tools. Like switches, all of these go through Guard as the person, then the page is read again.
+- **Pictures** (D68) on list rows and palettes are files your program wrote in its own data folder (`Paths.data`), named
+  relative to it: `thumbs/ab12.png`, a PNG or JPEG, up to four folders deep, no part starting with a dot. Sidefolk opens
+  the file without following links, checks that what it opened is inside that folder with one link, and reads at most
+  4 MB for a row (25 MB for a palette preview); anything else shows a placeholder. Make thumbnails once, small (a few
+  hundred pixels), rather than pointing at big originals: a palette lists up to 200 rows as the person types.
 - **Heads-ups.** Under the page, each of your watchers is a switch: on, it checks every five minutes in `repeat`
   mode and the companion tells the person when it triggers. So a watcher should trigger on change (see Watchers).
 - **What Sidefolk refuses or drops.** A page over 128 KB, or one without `sections` or `summary`, fails. Within it, a
@@ -553,12 +564,33 @@ Shift-Return, ⌘P and ⌘⌫ send `sidefolk/palette.choose {palette, item, acti
 `delete` (the last three only when the item lists them in `actions`) → `{close, paste, message}`. With `paste`,
 Sidefolk closes the palette and presses ⌘V in the app in front: put what to paste on the clipboard first (that needs
 `permissions.clipboard`). Pasting needs Accessibility for Sidefolk; until the person allows it, what they chose is on
-the clipboard. Your page shows the shortcut, and the person can change it there.
+the clipboard. Your page shows the shortcut, and the person can change it there, with where the palette opens (the
+top of the screen, the pointer or the middle); the menu bar icon's menu lists every palette too, opening it under the icon.
+
+Palettes do more since D68, all optional (an older Sidefolk ignores them):
+- **Items** can carry `image` (a picture in your data folder, see Pictures under Pages), `color` (`#RRGGBB`, drawn as a
+  swatch) and `section` (a heading drawn above the item when it differs from the item before: "Pinned", "History").
+- **Keys.** The first nine rows show ⌘1–⌘9. Maccy's keys work beside Sidefolk's: ⌘1–9 choose a row, ⌥↩ and ⌥1–9 send
+  `alternate` (do the other thing: paste when choosing copies, copy when it pastes), ⇧↩, ⌥⇧↩ and ⌥⇧1–9 `plain`, ⌘P or
+  ⌥P `pin`, ⌘⌫ or ⌥⌫ `delete` (each only when the item lists it in `actions`).
+- **List actions.** `{actions: ["clear", "clear_all"]}` on the list lets ⌥⌘⌫ and ⇧⌥⌘⌫ send `choose` with an empty
+  `item` and that action, once the person pressed the keys twice (Sidefolk asks in between).
+- **Preview.** With `{preview: true}` on the list, the palette is wider and shows the picked item in full beside it:
+  Sidefolk asks `sidefolk/palette.preview {palette, item}` → `{title, text, code, image, facts: [{label, value}]}`
+  (text up to 20,000 characters, selectable; `code` sets it in a fixed-width font; `image` a picture in your data folder).
 
 ```swift
-ext.palette("history", query: { query in PaletteList(items(matching: query)) },
-            choose: { id, action in copy(id); return PaletteChoice(close: true, paste: true) })
+ext.palette("history", query: { query in PaletteList(items(matching: query), preview: true, actions: ["clear"]) },
+            choose: { id, action in copy(id); return PaletteChoice(close: true, paste: true) },
+            preview: { id in PalettePreview(text: fullText(id), facts: [("Copied", "Today 14:02")]) })
 ```
+
+**Which app a copy came from** (D68). With `permissions.clipboard`, `ext.send("sidefolk/clipboard.source")` right after
+you see the clipboard change; Sidefolk answers with the same notice, `{change, app, name}` (the clipboard's change count,
+the bundle id and name of the app in front), which `ext.on("sidefolk/clipboard.source") { args in … }` receives. It
+answers once per change of the clipboard: asking again before the next copy gets nothing, so an extension can't follow
+which apps the person uses. The sandbox keeps Launch Services closed (it would also open apps and links), so this is the
+only way to know.
 
 **Nudges.** `ext.send("sidefolk/nudge")` asks Sidefolk to keep the person active: it moves the pointer by nothing
 where it is, which resets macOS's idle time (what chat and meeting apps watch) without anything moving on screen.
@@ -739,7 +771,8 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Tool result shown to the model | 20 KB (an `isError` explanation: 4 KB) |
 | Processes running at once | 32, the program included |
 | Watcher interval | at least 5 minutes, 15 by default |
-| Palettes | 2 per extension; 200 items a list; 10 s per query or choice |
+| Palettes | 2 per extension; 200 items a list; 10 s per query, choice or preview; preview text 20,000 characters |
+| Pictures (palettes, list rows) | a PNG or JPEG in the data folder: 4 MB a row, 25 MB a preview |
 | Nudges | one every 20 seconds, with `permissions.power` |
 | Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart |
 | Watcher summary / state | 200 characters / 64 KB |
