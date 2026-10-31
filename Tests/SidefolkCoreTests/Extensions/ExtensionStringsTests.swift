@@ -71,13 +71,15 @@ import Testing
     }
 
     @Test func theSameLimitsAsTheManifest() throws {
-        let long = String(repeating: "x", count: 61)
+        // Half as long again as the manifest's limit (60 for a name), languages running longer than English.
+        #expect(try fields(["strings/de.json": #"{"name": "\#(String(repeating: "x", count: 90))"}"#]).isEmpty)
+        let long = String(repeating: "x", count: 91)
         #expect(try fields(["strings/ja.json": #"{"name": "\#(long)"}"#]) == ["strings/ja.json.name"])
         #expect(try fields(["strings/ja.json": #"{"name": "  "}"#]) == ["strings/ja.json.name"])
         #expect(try fields(["strings/ja.json": #"{"tagline": "one\ntwo"}"#]) == ["strings/ja.json.tagline"])
         // Hidden characters can disguise a name (T13), in any language.
         #expect(try fields(["strings/ar.json": #"{"name": "‮elpmas"}"#]) == ["strings/ar.json.name"])
-        #expect(try fields(["strings/ko.json": #"{"pages": {"main": {"title": "\#(String(repeating: "가", count: 41))"}}}"#]) == ["strings/ko.json.pages.main.title"])
+        #expect(try fields(["strings/ko.json": #"{"pages": {"main": {"title": "\#(String(repeating: "가", count: 61))"}}}"#]) == ["strings/ko.json.pages.main.title"])
     }
 
     @Test func textsFollowTheEnglish() throws {

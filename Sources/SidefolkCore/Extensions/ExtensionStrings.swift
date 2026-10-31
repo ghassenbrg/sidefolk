@@ -164,8 +164,11 @@ extension ExtensionStrings {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
             issues.append(ValidationIssue(field: "\(file).\(key)", message: why))
         }
-        func line(_ value: Any?, _ field: String, max: Int, oneLine: Bool = true, base: String?) -> String? {
+        func line(_ value: Any?, _ field: String, max limit: Int, oneLine: Bool = true, base: String?) -> String? {
             guard let value else { return nil }
+            // Most languages run longer than English: a translation may take half as much room again as the manifest's
+            // own limit (German, French), still bounded, so no translation can flood a row or a sheet.
+            let max = limit * 3 / 2
             guard base != nil else {
                 issues.append(ValidationIssue(field: field, message: "translates something the manifest doesn't have."))
                 return nil

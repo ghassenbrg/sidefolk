@@ -230,10 +230,11 @@ public struct AddonWords: Codable, Sendable, Hashable {
             guard let s = v?.stringValue, !s.trimmingCharacters(in: .whitespaces).isEmpty, s.count <= max, ExtensionText.clean(s) == s else { return nil }
             return s
         }
+        // Half as long again as an entry's own limits, as for an extension's strings (languages run longer than English).
         tables = raw.filter { ExtensionStrings.languages.contains($0.key) }.mapValues {
-            Words(name: text($0["name"], 40).flatMap { $0.contains(where: \.isNewline) ? nil : $0 },
-                  tagline: text($0["tagline"], 60).flatMap { $0.contains(where: \.isNewline) ? nil : $0 },
-                  description: text($0["description"], 1000))
+            Words(name: text($0["name"], 60).flatMap { $0.contains(where: \.isNewline) ? nil : $0 },
+                  tagline: text($0["tagline"], 90).flatMap { $0.contains(where: \.isNewline) ? nil : $0 },
+                  description: text($0["description"], 1500))
         }
     }
 
