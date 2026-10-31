@@ -14,6 +14,10 @@ func fail(_ message: String, code: Int32 = 64) -> Never {
 }
 
 switch arguments.first {
+case "--audio-guardian":
+    signal(SIGPIPE, SIG_IGN)
+    exit(OutputMuteGuardian.run())
+
 case "mcp":
     // A client that goes away must end us quietly, not with SIGPIPE.
     signal(SIGPIPE, SIG_IGN)

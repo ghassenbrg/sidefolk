@@ -28198,6 +28198,64 @@
         }
       }
     },
+    "Another extension is using the Mac's sound output." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يستخدم امتداد آخر مخرج صوت الـ Mac."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine andere Erweiterung verwendet die Tonausgabe des Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otra extensión está usando la salida de sonido del Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une autre extension utilise la sortie audio du Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un’altra estensione sta usando l’uscita audio del Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別の拡張機能が Mac のサウンド出力を使用しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 확장 프로그램이 Mac 사운드 출력을 사용 중입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outra extensão está usando a saída de som do Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一个扩展正在使用 Mac 的声音输出。"
+          }
+        }
+      }
+    },
     "Answer with Claude Code" : {
       "localizations" : {
         "ar" : {
@@ -35318,6 +35376,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可以运行 %@，而它可以运行任何东西"
+          }
+        }
+      }
+    },
+    "Can temporarily mute the Mac’s default sound output, including other apps" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه كتم مخرج الصوت الافتراضي للـ Mac مؤقتًا، بما في ذلك التطبيقات الأخرى"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann die Standard-Tonausgabe des Mac vorübergehend stummschalten, auch für andere Apps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede silenciar temporalmente la salida de sonido predeterminada del Mac, incluidas otras apps"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut couper temporairement la sortie audio par défaut du Mac, y compris pour les autres apps"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può disattivare temporaneamente l’uscita audio predefinita del Mac, anche per le altre app"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのアプリを含め、Mac のデフォルトのサウンド出力を一時的に消音できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱을 포함하여 Mac의 기본 사운드 출력을 일시적으로 음소거할 수 있음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode silenciar temporariamente a saída de som padrão do Mac, incluindo outros apps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以暂时将 Mac 的默认声音输出静音，包括其他应用的声音"
           }
         }
       }
@@ -132779,6 +132895,122 @@
         }
       }
     },
+    "Sidefolk couldn't confirm audio routing. Check the Mac's mute control, then choose Mac and TV or Mac only." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر على Sidefolk تأكيد توجيه الصوت. تحقّق من كتم صوت الـ Mac، ثم اختر Mac والتلفاز أو Mac فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk konnte die Audioausgabe nicht bestätigen. Prüfe die Stummschaltung des Mac und wähle dann Mac und TV oder Nur Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk no pudo confirmar el destino del audio. Comprueba el control de silencio del Mac y elige Mac y TV o Solo Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk n’a pas pu confirmer le routage audio. Vérifiez la commande de silence du Mac, puis choisissez Mac et TV ou Mac uniquement."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk non ha potuto confermare la destinazione audio. Controlla il comando Muto del Mac, poi scegli Mac e TV o Solo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk は音声の出力先を確認できませんでした。Mac の消音設定を確認し、「Mac と TV」または「Mac のみ」を選んでください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에서 오디오 출력을 확인하지 못했습니다. Mac의 음소거 설정을 확인한 다음 Mac과 TV 또는 Mac만을 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk não conseguiu confirmar o direcionamento do áudio. Verifique o controle de mudo do Mac e escolha Mac e TV ou Somente Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 无法确认音频输出位置。请检查 Mac 的静音控制，然后选择“Mac 和电视”或“仅 Mac”。"
+          }
+        }
+      }
+    },
+    "Sidefolk couldn't confirm that the Mac's sound output was restored. Check the Mac's mute control." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر على Sidefolk التأكد من استعادة صوت الـ Mac. تحقّق من إعداد كتم الصوت على الـ Mac."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk konnte nicht bestätigen, dass die Tonausgabe des Mac wiederhergestellt wurde. Prüfe die Stummschaltung des Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk no pudo confirmar que se haya restaurado el sonido del Mac. Comprueba el control de silencio del Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk n’a pas pu confirmer que le son du Mac a été rétabli. Vérifiez la commande de silence du Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk non ha potuto confermare il ripristino dell’audio del Mac. Controlla il comando Muto del Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk は Mac のサウンド出力が復元されたことを確認できませんでした。Mac の消音設定を確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에서 Mac 사운드 출력이 복원되었는지 확인하지 못했습니다. Mac의 음소거 설정을 확인하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk não conseguiu confirmar a restauração do som do Mac. Verifique o controle de mudo do Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 无法确认 Mac 的声音输出已恢复。请检查 Mac 的静音控制。"
+          }
+        }
+      }
+    },
     "Sidefolk couldn't copy the new version beside itself." : {
       "localizations" : {
         "ar" : {
@@ -133007,6 +133239,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 无法打开它的数据文件夹。没有删除或更改任何内容。\n\n请试试重新启动 Mac。如果问题持续出现，请从 ~/Library/Logs/Sidefolk 导出诊断信息，并检查位于 %@ 的数据文件夹。"
+          }
+        }
+      }
+    },
+    "Sidefolk couldn't prepare its sound helper." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر على Sidefolk تجهيز مساعد الصوت."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk konnte seinen Ton-Helfer nicht vorbereiten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk no pudo preparar su asistente de sonido."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk n’a pas pu préparer son utilitaire audio."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk non ha potuto preparare il suo assistente audio."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk はサウンドヘルパーを準備できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에서 사운드 도우미를 준비하지 못했습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk não conseguiu preparar seu auxiliar de som."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 无法准备声音辅助程序。"
           }
         }
       }
@@ -133761,6 +134051,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 已经在运行"
+          }
+        }
+      }
+    },
+    "Sidefolk is stopping." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتوقف Sidefolk الآن."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk wird beendet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk se está cerrando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk s’arrête."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk si sta chiudendo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk を終了しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk를 종료하는 중입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk está encerrando."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 正在停止。"
           }
         }
       }
@@ -134521,6 +134869,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 已把你的 %1$@ 副本（%2$@）替换为内置版本 %3$@。"
+          }
+        }
+      }
+    },
+    "Sidefolk restores its previous mute state when the extension stops." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يستعيد Sidefolk حالة كتم الصوت السابقة عند توقف الامتداد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk stellt beim Beenden der Erweiterung den vorherigen Stummschaltzustand wieder her."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk restaura el estado anterior del silencio cuando se detiene la extensión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk rétablit l’état précédent du son lorsque l’extension s’arrête."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk ripristina lo stato audio precedente quando l’estensione si interrompe."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能の停止時に、Sidefolk は以前の消音状態を復元します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 중지되면 Sidefolk가 이전 음소거 상태를 복원합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk restaura o estado anterior de mudo quando a extensão para."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展停止时，Sidefolk 会恢复之前的静音状态。"
           }
         }
       }
@@ -135740,6 +136146,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 自己的扩展带有其标志。这里的每个扩展都由 Sidefolk 签名，在各自的沙盒中运行，并在添加前显示它能做什么。"
+          }
+        }
+      }
+    },
+    "Sidefolk's sound helper couldn't be found." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر العثور على مساعد الصوت في Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ton-Helfer von Sidefolk wurde nicht gefunden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró el asistente de sonido de Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’utilitaire audio de Sidefolk est introuvable."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’assistente audio di Sidefolk non è stato trovato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk のサウンドヘルパーが見つかりませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 사운드 도우미를 찾을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O auxiliar de som do Sidefolk não foi encontrado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到 Sidefolk 的声音辅助程序。"
           }
         }
       }
@@ -157833,6 +158297,65 @@
         }
       }
     },
+    "This Mac output couldn't be muted automatically. Choose Both or Mac only." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر كتم مخرج الـ Mac هذا تلقائيًا. اختر Mac والتلفاز أو Mac فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Mac-Ausgabe konnte nicht automatisch stummgeschaltet werden. Wähle Mac und TV oder Nur Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo silenciar automáticamente esta salida del Mac. Elige Mac y TV o Solo Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette sortie du Mac ne peut pas être coupée automatiquement. Choisissez Mac et TV ou Mac uniquement."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile disattivare automaticamente questa uscita del Mac. Scegli Mac e TV o Solo Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この Mac の出力を自動で消音できませんでした。「Mac と TV」または「Mac のみ」を選んでください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 Mac 출력을 자동으로 음소거할 수 없습니다. Mac과 TV 또는 Mac만을 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível silenciar automaticamente esta saída do Mac. Escolha Mac e TV ou Somente Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法自动将此 Mac 输出静音。请选择“Mac 和电视”或“仅 Mac”。"
+          }
+        }
+      }
+    },
     "This Mac's specs" : {
       "localizations" : {
         "ar" : {
@@ -169846,6 +170369,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "稍等片刻后再次请求那个网站。"
+          }
+        }
+      }
+    },
+    "Waiting for the Mac's sound output to be restored." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بانتظار استعادة مخرج صوت الـ Mac."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Tonausgabe des Mac wird wiederhergestellt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando a que se restaure la salida de sonido del Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du rétablissement de la sortie audio du Mac."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In attesa del ripristino dell’uscita audio del Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac のサウンド出力が復元されるのを待っています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac 사운드 출력이 복원되기를 기다리는 중입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando a restauração da saída de som do Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待 Mac 的声音输出恢复。"
           }
         }
       }

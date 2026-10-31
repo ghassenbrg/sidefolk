@@ -18,6 +18,8 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var power: Bool
     /// The screen and the Mac's sound, recorded and compressed to video (`permissions.screen`, D69).
     public var screen: Bool
+    /// May temporarily mute the default output device, affecting every app.
+    public var outputMute: Bool
     /// UDP received from anyone who can reach the Mac, for live audio and video (`permissions.udp`, D69).
     public var udp: Bool
     /// What the extension says it uses the network for (`permissions.network_purpose`, D69): one cleaned line.
@@ -25,7 +27,8 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
-                clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil) {
+                clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil,
+                outputMute: Bool = false) {
         self.network = network
         self.read = read
         self.write = write
@@ -36,6 +39,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         self.clipboard = clipboard
         self.power = power
         self.screen = screen
+        self.outputMute = outputMute
         self.udp = udp
         self.networkPurpose = networkPurpose
     }
@@ -53,6 +57,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         clipboard = try c.decodeIfPresent(Bool.self, forKey: .clipboard) ?? false
         power = try c.decodeIfPresent(Bool.self, forKey: .power) ?? false
         screen = try c.decodeIfPresent(Bool.self, forKey: .screen) ?? false
+        outputMute = try c.decodeIfPresent(Bool.self, forKey: .outputMute) ?? false
         udp = try c.decodeIfPresent(Bool.self, forKey: .udp) ?? false
         networkPurpose = try c.decodeIfPresent(String.self, forKey: .networkPurpose)
     }
@@ -63,7 +68,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 
     /// Raises every tool to at least medium risk: it can reach the internet, change files or run anything.
     /// The clipboard counts: what someone copied (a password, an address) is theirs alone. So does the screen.
-    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty || clipboard || screen }
+    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty || clipboard || screen || outputMute }
 
     static let anythingRunners: Set<String> = [
         "sh", "bash", "zsh", "dash", "ksh", "csh", "tcsh", "fish", "env", "xargs", "nohup", "sudo", "su", "login",
@@ -84,7 +89,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 /// (SECURITY T13, T16). Deterministic: built from the manifest, never from model text.
 public struct PermissionSummary: Sendable, Hashable {
     public struct Line: Sendable, Hashable {
-        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, udp, none, unsandboxed }
+        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, none, unsandboxed }
         public var kind: Kind
         public var text: String
         /// Worth drawing attention to on the install sheet.
@@ -162,6 +167,10 @@ public struct PermissionSummary: Sendable, Hashable {
             // switch is Sidefolk's, not this extension's (SECURITY T36).
             lines.append(Line(kind: .screen, text: String(localized: "Can record your screen and the sound your Mac plays"), caution: true,
                               note: String(localized: "Only once you switch Sidefolk on in Screen & System Audio Recording (System Settings › Privacy & Security). That switch covers every extension that records.")))
+        }
+        if p.outputMute {
+            lines.append(Line(kind: .outputMute, text: String(localized: "Can temporarily mute the Mac’s default sound output, including other apps"), caution: true,
+                              note: String(localized: "Sidefolk restores its previous mute state when the extension stops.")))
         }
         if p.udp {
             lines.append(Line(kind: .udp, text: String(localized: "Can receive live audio and video traffic (UDP) from any device that can reach your Mac"),

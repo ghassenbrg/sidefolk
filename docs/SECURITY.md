@@ -779,6 +779,19 @@ have (D44). Mitigations:
 *Residual:* a game decides its own outcomes and could make the companion react unkindly within the fixed moods;
 the panel can take the keyboard when the person opened it, like the Ask panel, so keys typed meanwhile go to the game.
 
+**T38 Temporary output mute (M), D81.** An extension can request Sidefolk's device-wide output mute only when its
+pinned install permission `output_mute` is true; the install sheet names the effect on other apps and an update adding
+it is not automatic. This capability does not open CoreAudio or process-fork in the extension sandbox. A Sidefolk-owned
+helper holds the lease outside the extension's killed process tree, restores the prior mute state on stdin EOF, and
+tracks default-output changes. The host releases the lease when that extension stops or crashes, serializes ownership,
+rejects stale request sequences, and limits starts to five per ten seconds. Trial installs disable this capability. A mute request is not a substitute for
+ToolExecutor: page and agent actions still invoke the extension's tools through Guard and audit. Since this is an install
+permission, an extension with it may request muting while running; the sheet must not claim that Sidefolk enforces the
+extension's own promise about when to ask. If the helper or an output cannot restore, Sidefolk reports the failure and
+does not grant another lease while restoration remains uncertain. The helper was also checked against the Mac's actual
+default output: its original state was restored on normal closure and after killing the parent process.
+
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person

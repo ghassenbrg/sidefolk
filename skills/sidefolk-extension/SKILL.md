@@ -31,7 +31,7 @@ names, run a well-known command-line program, check something every few minutes.
 
 | Needs | Use instead |
 |---|---|
-| Other apps' content (Mail, Notes, Calendar, Music), the screen, the clipboard | Nothing yet: those are Sidefolk built-in tools to propose to the Sidefolk team |
+| Other apps' content through Apple Events (Mail, Notes, Calendar, Music) | Sidefolk built-in tools, proposed to the Sidefolk team |
 | The person's account or API token | An MCP server (Settings › Extensions › Add MCP Server): extensions can't hold secrets yet |
 | A Unix socket or a long-running background job | An MCP server, for now |
 
@@ -46,6 +46,10 @@ Write down, before any code: the tools (verbs), the watchers, and what each need
   `SIDEFOLK_DATA_DIR`) and its own files, read-only.
 - **`"network": true`** only to reach your service. It is all-or-nothing (any host, the LAN too), so the
   install sheet warns when it is combined with folders.
+- **Screen, clipboard and sound output:** `permissions.screen` and `permissions.clipboard` grant recording and clipboard
+  access. `permissions.output_mute` separately lets Sidefolk temporarily mute the Mac's default output, including other
+  apps, through a recovery helper. Use ordered `sidefolk/output_mute` notices and wait for confirmation as described in
+  docs/EXTENSIONS.md; don't claim TV-only playback before confirmation.
 - **Folders the person picks per request**: `tools.<name>.paths: {"<parameter>": "read" | "write"}`.
   Guard checks that folder against the ones the person shared with Sidefolk (asking them if needed), and
   the call runs in a process of its own whose sandbox opens just that folder. The parameter arrives as a
@@ -91,7 +95,8 @@ Copy one of `templates/` into a folder named after your id's last part, then cha
 A compiled program works too: put it in the folder (`bin/server`) and set `"run": {"command": "bin/server"}`.
 
 Rules every program follows:
-- stdout carries only JSON-RPC lines; logs go to stderr. Answer every message with an `id`; ignore the rest.
+- stdout carries only JSON-RPC lines; logs go to stderr. Answer every message with an `id`; handle any notifications
+  your extension uses without replying to them, including while a request waits.
 - Answer `initialize`, `tools/list`, `tools/call`, `ping`, and `sidefolk/watch.check` if you have watchers.
 - Report a failure the model can fix as a result with `"isError": true` and a short explanation.
 - Do work only when called; never at start-up.

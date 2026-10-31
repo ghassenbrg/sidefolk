@@ -122,6 +122,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `permissions.network_purpose` | no | With `network`: what you use it for, one line starting with "to" or "for" (≤ 120 characters), e.g. "to find TVs on your local network and stream to them". The sheet adds it to "Can use the network, the internet included": the sandbox can't keep you to the local network (D69). |
 | `permissions.udp` | no | With `network`: a UDP port of your own and the packets that come back to it, which live audio and video (WebRTC) needs; `network` alone refuses the bind. No listening TCP server. |
 | `permissions.screen` | no | `true` lets it record the screen and the sound the Mac plays (ScreenCaptureKit) and compress it with the hardware video encoder (D69). macOS asks the person to allow **Sidefolk** in Screen Recording: an extension runs as Sidefolk's child, so the permission is Sidefolk's, and this line is what keeps other extensions from using it. Pictures in IOSurfaces need `media` too. Its tools can't be below medium risk. |
+| `permissions.output_mute` | no | Allows an extension to ask Sidefolk to temporarily mute the Mac's default sound output, affecting every app. The install/update sheet names this separately; tools are at least medium risk. A helper owned by Sidefolk restores the previous mute state when the extension or Sidefolk stops. Unsupported devices report a failure. Send `sidefolk/output_mute` with `request` (a UUID), `enabled` (a boolean) and an increasing positive `sequence`; `sidefolk/output_mute.result` returns that request and `ok`, and `sidefolk/output_mute.failed` reports later device errors with the enabling `sequence`, so ignore failures for an older request. Do not claim the output is muted before confirmation. |
 | `tools.<name>` | no | Sidefolk's metadata for a tool your program lists: `title`, `risk` (`low`, `medium`, `high`), `category` (`notes`, `memory`, `time`, `watch`, `files`, `web`, `system`, `agents`, `extensions`) and `mutates` (`false` if it only reads). Tool names: `^[a-z0-9_]{1,64}$`. |
 | `tools.<name>.paths` | no | Parameters that name a folder or file the person chooses, each `"read"` or `"write"` (at most 4). See [Folders named per call](#folders-named-per-call). |
 | `tools.<name>.timeout` | no | Seconds one call may take, 1–300; 30 if missing. For slow work like cloning. |
@@ -282,7 +283,8 @@ Your program reads JSON-RPC 2.0 messages from stdin, one per line, and writes on
 line to stdout. **Write nothing else to stdout.** Logs and debugging go to stderr; Sidefolk keeps
 the last 16 KB for its diagnostics.
 
-**Answer every message that has an `id`** (requests); ignore those that don't (notifications).
+**Answer every message that has an `id`** (requests). Notifications have no `id` or reply; handle the ones your
+extension uses, even while a request is waiting. The Swift Kit serializes requests while continuing to deliver notices.
 
 ### Startup
 
@@ -596,8 +598,9 @@ ext.page("mac") { args in
     times), `state` (`playing`, `paused`, `buffering`, `stopped`) and up to five `buttons`, each with a `symbol` (one
     without is left out), drawn round, the primary one (play or pause) larger.
   - **Section `place` and `collapsed`**: `"place": "side"` puts a section in a column at the start edge beside the
-    main ones when the window is wide enough (a list of devices, as in an app's sidebar); narrower, sections keep the
-    page's order. `"collapsed": true` folds a titled section under its title until the person opens it (`false`: open,
+    main ones when the window is wide enough (a list of devices, as in an app's sidebar). `"place": "bottom"` ends
+    the columns: that section and the following sections span the page beneath both columns. Narrower, sections keep the
+    page's order. A titled section may have a short `detail` summarizing its current setting. `"collapsed": true` folds a titled section under its title until the person opens it (`false`: open,
     but foldable): advanced settings, connection details.
   - An older Sidefolk skips `hero` and `transport` and ignores `place`, `collapsed`, `plain` and `disabled`, so keep the
     summary meaningful (with its `control`) for those copies.
@@ -1010,3 +1013,11 @@ Settings › Extensions › Add MCP server takes a name, a command and its argum
 | Memory / CPU | 512 MB / half a core sustained for 60 s |
 | Idle stop | 5 minutes |
 | Crash limit | 3 in 5 minutes |
+
+### Miraya pairing in a disposable emulator
+
+With a separately created Android TV emulator running Miraya and port 7421 forwarded to a local test port, run
+`SIDEFOLK_MIRAYA_EMULATOR_SERIAL=emulator-5584 SIDEFOLK_MIRAYA_EMULATOR_PORT=17421 swift test --no-parallel --filter MirayaEmulatorTests`.
+Set `ANDROID_USER_HOME` and `ANDROID_ADB_SERVER_PORT` to the isolated emulator's values. The test refuses a physical
+serial, uses a fresh Sidefolk home, compares the displayed pairing codes and approves the emulator's TV dialog. It does
+not record the screen or change the Mac's audio; it doesn't verify playback.

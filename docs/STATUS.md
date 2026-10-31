@@ -1,5 +1,7 @@
 # Status
 
+- **Miraya screen redesign and audio routing:** the approved responsive screen covers discovery, source selection, pairing, sharing and pause, with settings below the main choices. Mac only, TV only and Mac and TV are saved sound destinations; TV only uses a separately disclosed host-owned output-mute lease with crash recovery. *Checked:* Sidefolk and Miraya suites, sandboxed installation and destination choices, light/dark wide/narrow snapshots, an isolated Android TV emulator pairing with matching codes, and actual Mac output mute and restoration on closure and parent death. All nine localizations are complete; the unsigned gallery build and checks pass. *Still to verify:* live screen and sound playback with a physical TV. *Next:* exercise screen, window and region sharing and all three sound destinations on that setup; sign and publish a gallery update only when requested. No gallery pack has been shipped.
+
 - **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved
   `folk-family/redesign-2026-10-31/folk-redesign-reference.png` in the desktop and app windows. Their roles,
   placement, accessibility and whole-body pop/breath/settle remain; the original vector rig is a fallback.

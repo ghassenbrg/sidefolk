@@ -58,17 +58,19 @@ public struct Summary {
 public struct Section {
     /// `side`: in a wide window, in a column beside the main sections at the start edge (a list of devices to pick
     /// from); narrower, in the page's order.
-    public enum Place: String { case main, side }
+    public enum Place: String { case main, side, bottom }
 
     public var title: String?
+    public var detail: String?
     public var blocks: [Block]
     public var place: Place
     /// Folded under its title (`true`) or open (`false`) until the person opens or folds it: settings most people never
     /// change. nil: always open.
     public var collapsed: Bool?
 
-    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil) {
+    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil) {
         self.title = title
+        self.detail = detail
         self.blocks = blocks
         self.place = place
         self.collapsed = collapsed
@@ -77,6 +79,7 @@ public struct Section {
     var json: [String: Any] {
         var out: [String: Any] = ["blocks": blocks.map(\.json)]
         if let title { out["title"] = title }
+        if let detail { out["detail"] = detail }
         if place != .main { out["place"] = place.rawValue }
         if let collapsed { out["collapsed"] = collapsed }
         return out

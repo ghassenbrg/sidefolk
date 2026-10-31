@@ -68,6 +68,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         /// Recording the screen and the sound the Mac plays (ScreenCaptureKit) and compressing it to video; macOS
         /// still asks the person to allow Sidefolk in Screen Recording (D69).
         public var screen: Bool
+        /// Temporarily mute the Mac's default output; a Sidefolk-owned helper restores it.
+        public var outputMute: Bool
         /// Receiving UDP, which live audio and video (WebRTC) needs; only with `network` (D69).
         public var udp: Bool
         /// What the network is for, in the author's words ("to find and stream to TVs on your local network"). The
@@ -75,7 +77,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var networkPurpose: String?
 
         public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
-                    power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil) {
+                    power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false) {
             self.network = network
             self.networkPurpose = networkPurpose
             self.files = files
@@ -84,11 +86,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             self.clipboard = clipboard
             self.power = power
             self.screen = screen
+            self.outputMute = outputMute
             self.udp = udp
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
@@ -97,6 +100,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             clipboard = try c.decodeIfPresent(Bool.self, forKey: "clipboard") ?? false
             power = try c.decodeIfPresent(Bool.self, forKey: "power") ?? false
             screen = try c.decodeIfPresent(Bool.self, forKey: "screen") ?? false
+            outputMute = try c.decodeIfPresent(Bool.self, forKey: "output_mute") ?? false
             udp = try c.decodeIfPresent(Bool.self, forKey: "udp") ?? false
             networkPurpose = try c.decodeIfPresent(String.self, forKey: "network_purpose")
         }

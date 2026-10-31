@@ -2229,3 +2229,25 @@ migration at launch (the rule is the same and also covers a copy restored from a
 snapshot. A waiting update is dropped once its version is installed (`AddonUpdateController.dropSettled`), not when
 the installed one is higher. A copy of Sidefolk before this still needs the remove and reinstall.
 
+### D81 — Responsive extension pages and a host-owned temporary audio mute (2026-10-31)
+**Decision:** extension pages may end their side and main columns with `place: bottom`; this section and the ones after
+it span the page, while a narrow window keeps the original order. A collapsible section may summarize its current
+setting with `detail`. Miraya uses these parts for the approved responsive layout, with focused discovery, pairing and
+live-sharing states. It retains presets for a screen region, rather than promising a freehand crop.
+
+Miraya's sound choices are Mac only, TV only and Mac and TV. TV only temporarily mutes the Mac's default output,
+including other apps, as Miraya's Mac app does; it does not use the microphone. `permissions.output_mute` separately
+discloses this capability and widens an update, so installation requires review. The sandboxed extension sends an
+ordered request to Sidefolk and reports TV-only only after confirmation. Sidefolk owns a helper outside the extension's
+process tree; EOF on its pipe restores the previous mute state after the host exits, and stopping or crashing the
+extension releases its lease. Only one extension holds it. Device changes and unsupported mute are reported; a person
+unmuting the device is respected. The SDK delivers notices while a serialized tool request is waiting, so the host can
+answer without deadlocking a long request. Validation trials cannot mute the person's output.
+
+**Why:** the founder approved screens that adapt within Home and asked for the original Miraya app's three sound
+choices. An extension-owned helper is unsafe here: Sidefolk deliberately kills an extension's complete process tree
+on stop, crash or watchdog. The host-owned helper keeps that boundary and the recovery path separate.
+
+**Verification:** fake-device and helper-process tests cover ownership, changes, timeouts and recovery. On the Mac's
+actual default output, the helper muted and restored the original state both normally and after its parent was killed.
+An isolated Android TV emulator confirmed pairing. Live screen and sound playback on a physical TV remains to be checked.

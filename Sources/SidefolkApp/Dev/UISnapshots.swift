@@ -215,11 +215,17 @@ enum UISnapshots {
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
             // Miraya in each of its states (D74): a hero with the one thing to do, TVs beside, pictures to pick from.
-            for state in ["notv", "ready", "window", "norecord", "pairing", "authorizing", "sharing", "paused", "playing", "problem"] {
+            for state in ["notv", "ready", "window", "area", "norecord", "pairing", "authorizing", "sharing", "paused", "playing", "problem"] {
                 try await page("page-extension-miraya-\(state)", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 1180)
             }
             try await page("page-extension-miraya-ready-narrow", ExtensionPageView(model: SampleExtensionPage.miraya("ready")), width: 640)
             try await page("page-extension-miraya-ready-wide", ExtensionPageView(model: SampleExtensionPage.miraya("ready")), width: 1560)
+            for state in ["sharing", "paused", "pairing", "area", "window"] {
+                try await page("page-extension-miraya-\(state)-narrow", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 640)
+            }
+            let audioPage = SampleExtensionPage.miraya("ready")
+            audioPage.toggleOpen("Picture & sound")
+            try await page("page-extension-miraya-audio-narrow", ExtensionPageView(model: audioPage), width: 640)
             full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
             try await page("page-now-extension-tile", NowView(model: full.now), width: 870)
             full.now.widgets = []

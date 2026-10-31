@@ -227,6 +227,21 @@ import Testing
 /// The gallery's Miraya answering in its sandbox, with no TV around (D72).
 @Suite struct MirayaPairedCheckTests {
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
+    func audioChoicesAreSavedThroughTheExecutorInTheSandbox() async throws {
+        let h = try HostEnv { $0.allowOutputMute = false }
+        try await h.env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+        let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"), origin: .official)
+        for (destination, expectedSound) in [("mac", false), ("tv", true), ("both", true)] {
+            let result = await h.call("ext.miraya.set_option", ["option": "audio_destination", "value": .string(destination)])
+            #expect(result.okText == "Done.", "\(result.status)")
+            let path = h.host.dataFolder(extensionId: info.id).appendingPathComponent("choices.json")
+            let saved = try JSONValue.parse(Data(contentsOf: path))
+            #expect(saved["audioDestination"]?.stringValue == destination && saved["sound"]?.boolValue == expectedSound)
+        }
+        await h.host.shutdown()
+    }
+
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func mirayaAnswersThePairedCheckInItsSandbox() async throws {
         let h = try HostEnv()
         try await h.env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
