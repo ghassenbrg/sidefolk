@@ -327,8 +327,13 @@ final class CompanionWindowController {
         }
         tip.host.rootView = FloorTip(content: content)
         tip.panel.setContentSize(tip.fittingSize)
-        let onScreen = panel.convertToScreen(container.convert(rect, to: nil))
-        // On the far side from the companion, level with it: above, it would cover the extras over it.
+        // Beyond the whole column of extras, level with this one: it never covers another pin or face.
+        var beside = rect
+        if case .folk = item {} else if let first = extras.first {
+            let column = extras.dropFirst().reduce(first.rect) { $0.union($1.rect) }
+            beside = NSRect(x: column.minX, y: rect.minY, width: column.width, height: rect.height)
+        }
+        let onScreen = panel.convertToScreen(container.convert(beside, to: nil))
         tip.place(beside: onScreen, on: screen, gap: -8)
         if !tip.panel.isVisible { tip.panel.orderFrontRegardless() }
     }
