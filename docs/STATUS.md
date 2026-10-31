@@ -1,5 +1,12 @@
 # Status
 
+- **3D engine options for big-headed and screen-faced companions (2026-10-31):** the screen face gained `mouthGlow`
+  (the mouth in a light of its own), `layout.mouth.scale` and `softGlow` (halos blurred with a shadow instead of
+  three stepped passes that read as rings up close); petting leans by `petLean` (a big head leaned out of its
+  window). All default to the old behaviour: Spark is unchanged (checked in the playground). `companions-3d/serve.py`
+  queues 128 connections (the default 5 reset module fetches). *Checked:* a companion added from a folder using
+  them, in the playground and a debug app; every move, posture and state kept inside the app's square framing.
+
 - **Redesigned helper folks (D73, 2026-10-31):** the ten helpers now use paintings cut from the approved
   `folk-family/redesign-2026-10-31/folk-redesign-reference.png` in the desktop and app windows. Their roles,
   placement, accessibility and whole-body pop/breath/settle remain; the original vector rig is a fallback.

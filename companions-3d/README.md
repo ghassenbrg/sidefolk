@@ -48,7 +48,9 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
    3D eyes with shader lids and a painted decal cut from the head; screen: light on Spark's visor),
    springy chains (ears, antenna, tail), its stand pose, and postures for bodies that need their own
    (Nimbo floats; Folio, a flat card, rests sitting). `limbScale` keeps limbs that are one piece with
-   the body (Nimbo's puffs) from tearing away from it. A likeness (a person's face in the model's own texture)
+   the body (Nimbo's puffs) from tearing away from it. A screen face can light its mouth in a colour of its own
+   (`mouthGlow`), size it (`layout.mouth.scale`) and blur its halos smoothly (`softGlow`); a big head leans less
+   when petted (`petLean`), so it stays in its window. A likeness (a person's face in the model's own texture)
    keeps its eyes, brows and lips: `layout.lids` paints only lids over its eyes and `layout.mouth.lips` parts the
    lips only while the mouth opens (see `face.js`). A companion that should stay on one Mac only (a person's
    likeness) isn't published: its add-on folder is added in Settings › Companion › Made by you (D60).
