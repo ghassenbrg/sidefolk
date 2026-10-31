@@ -75,7 +75,7 @@ struct PocketView: View {
         .overlay(alignment: .bottomTrailing) {
             ShoulderBadge(state: content.attention == .focus ? .focus : content.attention == .quiet ? .quiet
                           : content.needsYou.isEmpty ? .idle : .waiting(content.needsYou.count), held: content.held)
-                .scaleEffect(0.8).offset(x: 4, y: 4)
+                .scaleEffect(0.7).offset(x: 8, y: 6)
         }
         .accessibilityHidden(true)
     }

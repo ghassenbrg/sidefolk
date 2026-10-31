@@ -47,7 +47,7 @@ final class AppCoordinator {
     var currentRun: String?
     private(set) lazy var home = HomeWindowController(services: self)
     private(set) lazy var settingsWindow = SettingsWindowController(services: self)
-    private lazy var about = AboutWindowController()
+    private lazy var about = AboutWindowController(updates: updater.model)
     /// Looking for a newer Sidefolk and installing it when asked (D46).
     private(set) lazy var updater = UpdateController(runtime: runtime)
     private(set) lazy var addonUpdater = AddonUpdateController(runtime: runtime, model: updater.model, themes: .app(runtime.paths))

@@ -139,22 +139,34 @@ struct InstallUpdateBox: View {
     }
 }
 
-/// One thing it may do, with what keeps it in check underneath when Sidefolk or macOS enforces something.
+/// One thing it may do, with what keeps it in check underneath when Sidefolk or macOS enforces something: a row of the
+/// passport's second step (D84).
 struct InstallPermissionRow: View {
     var line: PermissionSummary.Line
 
     var body: some View {
-        Label {
+        HStack(alignment: .top, spacing: Theme.Space.m) {
+            Image(systemName: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.ink)
+                .frame(width: 30, height: 30)
+                .background(line.kind == .unsandboxed ? Theme.dangerSoft : Theme.well,
+                            in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: line.text).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                Text(verbatim: line.text).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                 if let note = line.note {
-                    Text(verbatim: note).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    Label {
+                        Text(verbatim: note)
+                    } icon: {
+                        Image(systemName: "checkmark.shield").foregroundStyle(Theme.folkColor("guard"))
+                    }
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
-        } icon: {
-            Image(systemName: symbol).foregroundStyle(Theme.folkColor("guard")).frame(width: 18).accessibilityHidden(true)
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.vertical, Theme.Space.m - 2)
         .accessibilityElement(children: .combine)
     }
 

@@ -191,8 +191,10 @@ enum UISnapshots {
             settingsWindow.orderOut(nil)
 
             let aboutWindow = SnapshotWindow()
-            AboutWindowController.configure(aboutWindow)
-            try await capture(aboutWindow, size: CGSize(width: 380, height: 470), dark: dark, to: file("window-about"))
+            let aboutUpdates = UpdateModel()
+            aboutUpdates.phase = .upToDate
+            AboutWindowController.configure(aboutWindow, updates: aboutUpdates)
+            try await capture(aboutWindow, size: CGSize(width: 420, height: 560), dark: dark, to: file("window-about"))
             aboutWindow.orderOut(nil)
 
             // The update window in each state it has words for (D46).
@@ -201,7 +203,7 @@ enum UISnapshots {
                 (model.running, model.lastCheck, model.phase, model.plan) = ("0.1.0 snapshot 411", Date().addingTimeInterval(-120), phase, plan)
                 let window = SnapshotWindow()
                 UpdateWindowController.configure(window, model: model)
-                try await capture(window, size: CGSize(width: 460, height: 380), dark: dark, to: file("window-update-\(name)"))
+                try await capture(window, size: CGSize(width: 560, height: 460), dark: dark, to: file("window-update-\(name)"))
                 window.orderOut(nil)
             }
 
@@ -269,6 +271,12 @@ enum UISnapshots {
             await settings.setPolicy { $0 = policy }
             // What Full access means, and when it ends (D84).
             try await page("sheet-full-access", FullAccessSheet(model: settings), width: Theme.Size.sheet + 40)
+            // The menu bar's Pocket in the states that read differently (D84).
+            for (name, content) in SamplePocket.states(name: settings.settings.companionName) {
+                let pocket = PocketModel()
+                pocket.content = content
+                try await page("panel-pocket-\(name)", PocketView(model: pocket), width: 340)
+            }
             // Attention in Focus until five, with two things held, then Quiet for good with quiet hours on (D84).
             let five = Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: Date()) ?? Date()
             settings.setAttention(.focus, until: max(five, Date().addingTimeInterval(3500)))
@@ -451,15 +459,20 @@ enum UISnapshots {
             if let edited = full.notebook.collections.first(where: { $0.symbol != nil }) {
                 try await page("sheet-edit-collection", CollectionSheet(mode: .edit(edited), model: full.notebook) { _ in }, width: 420)
             }
-            try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 480)
-            try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 480)
+            try await page("sheet-install-extension", InstallPreviewSheet(preview: FixtureServices.samplePreview, model: settings), width: 600)
+            try await page("sheet-install-draft", InstallPreviewSheet(preview: FixtureServices.draftPreview, model: settings), width: 600)
             // One per source (D71): Sidefolk's own from the gallery, the same permissions from a folder, an update asking for more.
-            try await page("sheet-install-gallery", InstallPreviewSheet(preview: FixtureServices.galleryPreview, model: settings), width: 480)
-            try await page("sheet-install-unknown", InstallPreviewSheet(preview: FixtureServices.unknownMirrorPreview, model: settings), width: 480)
-            try await page("sheet-install-update", InstallPreviewSheet(preview: FixtureServices.updatePreview, model: settings), width: 480)
+            try await page("sheet-install-gallery", InstallPreviewSheet(preview: FixtureServices.galleryPreview, model: settings), width: 600)
+            try await page("sheet-install-unknown", InstallPreviewSheet(preview: FixtureServices.unknownMirrorPreview, model: settings), width: 600)
+            try await page("sheet-install-update", InstallPreviewSheet(preview: FixtureServices.updatePreview, model: settings), width: 600)
+            // The passport's second step: what it can touch (D84).
+            for (name, preview) in [("extension", FixtureServices.samplePreview), ("draft", FixtureServices.draftPreview),
+                                    ("gallery", FixtureServices.galleryPreview), ("unknown", FixtureServices.unknownMirrorPreview),
+                                    ("update", FixtureServices.updatePreview)] {
+                try await page("sheet-install-\(name)-touch", InstallPreviewSheet(preview: preview, model: settings, step: .touch), width: 600)
+            }
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)
             try await page("sheet-delete-all", DeleteAllSheet(model: settings), width: 440)
-            try await page("sheet-full-access", FullAccessSheet(model: settings), width: 460)
         }
         print("ui-snapshots: wrote \(dir.path) (\(Bundle.main.preferredLocalizations.first ?? "en"))")
     }
