@@ -2317,6 +2317,29 @@ search as wells; the Say bar's shell, key hints and the understanding row; the S
 whisper, card, slip strip and stack; the light pool and shoulder badge. A design-system sheet in the UI snapshots is
 the reference. An approval's risk tag became a sentence-case chip.
 
+**Phase 2, built (the desktop):** the companion stands on its light (`DesktopLight`: idle, working, waiting with
+a count, alert while a card is out, failed, Quiet) with the count on its outer shoulder, VoiceOver hearing the state.
+The bubbles are the Sidecard: a gentle notice is a whisper (6 s, a line runs out the time, it waits under the pointer
+and grows into a card when clicked, Undo on it when an agent's change can be undone); an attention notice is a card
+(who it is from, at most three answers, the rest in ⋯) that folds into the count after 30 s, and the companion calms
+down; hovering the count fans what waits, clicking it or the companion opens Ask on top of them; the last held card
+answered says "All clear" once. Ask is the Sidecard's largest size beside the companion with its tail to the head:
+the Say field, an understanding row from the same parse that runs the words (`Understanding`: a sentence, chips, "On
+this Mac, no AI" or the AI; ↩, ⌘↩, ⌥↩), Glance as its resting state, each request one card with its words inside.
+The approval is a permission slip (`slipTone`: calm for the person's own words and Sidefolk's own extensions, firm for
+another app, an unchecked extension or after outside content; only a calm slip of normal risk from the person's words
+takes Return, everything else ⌘Return or a click); a slip arriving while Ask is closed stands alone above the head.
+Pins and the agents lane (`AgentLane`: a face per working or waiting Claude Code or Codex session) are kept small at
+the founder's request during the phase: the companion's corner is no bigger than before (281 × 159 pt at the medium
+size in 3D, with three folks, two pins and two agents), pins show their number, agents a face with a status dot,
+details only in a tip on hover, and the extras fade and shrink while the person types in a window under them or passes
+the pointer through (the senses the companion's life already reads, no permission). Quiet shows a moon and no light;
+when it ends, what arrived meanwhile comes as one card (`AttentionCenter` digest; gentle notices held in Quiet are told
+there and done). A Quiet that ends by its time now tells the attention center too. The morning brief is a card with
+its day as rows. *Not built:* Focus as its own mode (only Quiet exists, so the half circle is unused on the desktop),
+the evening wrap, the drop choice card, the stack's arc animation, the level-reactive pool for voice, keyboard
+answering of cards outside Ask. Toss captions and the Play panel stay as they were (games are another teammate's).
+
 **Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
 disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
 per place and one component set keep the product learnable and let extensions place parts predictably; themes still

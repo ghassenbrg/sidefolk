@@ -1,5 +1,28 @@
 # Status
 
+- **The Lantern revamp, phase 2: the desktop (D84, branch `team/lantern-2`, not merged):** the companion stands on
+  its light pool (idle, working, waiting with the count on its shoulder, alert while a card is out, failed, Quiet's moon)
+  driven by `DesktopLight`; bubbles became the Sidecard (`Sidecard/`: whisper with its 6 s line, Undo for an agent's
+  undoable change, click to grow; cards with ≤ 3 answers and ⋯; cards fold into the shoulder's count after 30 s; hover
+  the count to fan the stack, click it or the companion for Ask on top of it; "All clear"); Ask is the Sidecard's Ask
+  size (Say field, understanding row from `ParsedIntent.understanding()`, ⌘↩ AI, ⌥↩ note, Glance as its resting state,
+  requests as cards); approvals are permission slips (`Ask/PermissionSlip.swift`, `slipTone`/`takesReturn`: firm never
+  takes Return), alone above the head when Ask was closed; pins and the agents lane kept to the founder's small-corner
+  rule (icon + number, round agent faces with a status dot, tips on hover, the extras step back while you type under
+  them; 281 × 159 pt with three folks, two pins and two agents, the same corner as before); Quiet's digest when it ends;
+  the brief as a card; toss captions as whispers. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on the clean add-ons
+  clone (1591 core, 36 character; new `DesktopTests`, `quietEndsWithOneDigest`); UI snapshots `--only desktop` in
+  English, German and Arabic, light and dark (sidecards, slips, Ask, the states board, the floor at rest, hovered and
+  stepping back, measured); the debug app (`build/qa3`–`qa6`) with real events: a reminder firing (card, amber light,
+  count, fold into the stack, fan), a folder watch firing, Claude Code and Codex sessions through `sidefolk hook`
+  (faces, "needs you" card), another app's approval over MCP (firm slip alone, ⌘↩ hint, deny), folder access (calm
+  slip, Allow's menu), `ask:` with the understanding row, Quiet's moon, a CPU and a memory pin with their tips.
+  *Half done / not built:* Focus as its own mode (only Quiet exists), the evening wrap, the drop choice card, the
+  stack's arc animation, voice's level-reactive pool, keyboard answering of cards outside Ask; the 3D companion's own
+  reactions (phase 5). `ApprovalCard` stays for Home's queue until phase 3 moves it to the slip. Other teammates' debug
+  apps receive `scripts/dev.swift` commands sent without SIDEFOLK_HOME: set it, or a stray `approve` reaches yours.
+  *Next:* phase 3 (Home) can reuse `PermissionSlip` in Today's queue and `UnderstandingRow` in the toolbar Say bar.
+
 - **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
   revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
   Notebook; the Gallery in Home; half circle = Focus, moon = Quiet; Full access with an end time; Latin companion names

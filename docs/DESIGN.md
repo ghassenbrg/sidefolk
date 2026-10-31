@@ -69,12 +69,26 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `SearchBox`, `.fieldChrome(focused:problem:)`, `CommitField` | `SearchBox.swift`, `FieldChrome.swift`, `Components.swift` | a well, no border until focus |
 | `SayBarField` (.home / .desktop), `KeyHint`, `UnderstandingRow` | `SayBar.swift` | the Say bar's shell; behaviour is the screen's |
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |
-| `LightPool(state:)`, `LightPoolState`, `ShoulderBadge` | `LightPool.swift` | the companion's state as light, with its VoiceOver words |
+| `LightPool(state:)`, `LightPoolState`, `ShoulderBadge(state:count:)` | `LightPool.swift` | the companion's state as light, with its VoiceOver words; an alert pulses once |
+| `.lanternGlass(radius:elevation:)` | `ThemeMetrics.swift` | e2 for small glass on the desktop (pins, tips), e3 for the Sidecard |
+
+### The desktop (phase 2)
+
+The parts above, placed and wired, in `Sources/SidefolkApp/`. The logic that decides is in the core and tested
+(`DesktopLight`, `AgentLane`, `Understanding`, `ApprovalRequest.slipTone/takesReturn`).
+
+| Part | File | What it does |
+|---|---|---|
+| The floor: `FloorModel`, `FloorUnderlay` (pool), `FloorOverlay` (badge, extras), `FloorExtras`, `MiniPin`, `AgentDot`, `FloorTip` | `Companion/CompanionFloor.swift` | the light under the feet, the count on the outer shoulder, pins as icon + number and agents as round faces above the folks; details only in a tip on hover; the extras fade and shrink while the person types in a window under them or passes the pointer through |
+| `CompanionWindowController.area(box:folk:extras:)` | `Companion/CompanionWindowController.swift` | the corner the companion takes; with everything on it is no bigger than before D84 (281 × 159 pt at the medium size, 3D) |
+| `SidecardController`, `SidecardModel`, `SidecardView`, `SidecardItemCard` | `Sidecard/` | whisper (6 s, a line runs out the time, waits under the pointer, grows into a card on click), card (source line, ≤ 3 answers with the rest in ⋯), the stack fanned from the count, "All clear" |
+| Ask: `AskView` on `SidecardSurface`, `SayBarField(size: .desktop)`, the understanding row, `GlanceView` (resting: Needs you, Next up, Working) | `Ask/` | the Sidecard's Ask size, its tail toward the head; requests as one card each with their words inside |
+| `PermissionSlip` | `Ask/PermissionSlip.swift` | the approval rebuilt: calm or firm strip, Guard's face, one sentence, what it touches, Allow with "Always…" in its menu, exact request folded; firm never takes Return (⌘↩ with a `KeyHint`) |
 
 ## Not built yet (phases 2–4)
 
-The desktop's behaviour (placing the pool and Sidecard by the companion, the stack's arc, pins, the agents lane, the
-permission slip wired to Guard), Home's places (Today rebuilt, On duty, History, You, the Gallery in Home, the Say
+On the desktop (phase 2 left these): the stack's arc animation, the choice card for drops, Focus as its own mode
+(only Quiet exists), the evening wrap, voice's level-reactive pool. Home's places (Today rebuilt, On duty, History, You, the Gallery in Home, the Say
 bar in the toolbar), Settings' 8 tabs with search, the menu bar Pocket, Full access with an end time. The 16 text
 fields still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. The theme-specific Today block
 styles (console, planner, stage) keep their own capitals until phase 3 retires them (one layout per place).
