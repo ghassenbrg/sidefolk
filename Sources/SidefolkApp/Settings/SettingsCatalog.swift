@@ -192,7 +192,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .lightOrDark: String(localized: "Light or dark windows, or the same as your Mac.")
         case .density: String(localized: "Compact fits more rows in Home and Settings.", comment: "Settings › Appearance")
         case .homeIcons: String(localized: "Simple glyphs, or colourful tiles with each extension's own icon.")
-        case .makeTheme: String(localized: "Starts from a copy of Lantern in a folder you choose.", comment: "Settings › Appearance")
+        case .makeTheme: String(localized: "Start from a copy of Harbor in a folder, or use a theme folder you have. Sidefolk repaints each time you save.")
         }
     }
 

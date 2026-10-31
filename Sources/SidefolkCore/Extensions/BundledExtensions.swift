@@ -113,7 +113,7 @@ public final class BundledExtensions: Sendable {
             // Something new it may do waits for the person to switch it back on.
             if let gained = preview.update?.addedPermissions, !gained.isEmpty, enabled {
                 enabled = false
-                notice = String(localized: "\(installed.name) was updated with Sidefolk and can now do more (\(Wording.list(gained))). I turned it off until you switch it on in Settings › Extensions.")
+                notice = String(localized: "\(installed.name) was updated with Sidefolk and can now do more (\(Wording.list(gained))). I turned it off until you switch it on in Settings › Add-ons.")
             }
         } else if preview.conflict != nil {
             return preview.conflict

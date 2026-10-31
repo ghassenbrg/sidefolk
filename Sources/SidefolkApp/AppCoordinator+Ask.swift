@@ -175,8 +175,8 @@ extension AppCoordinator: AskActions {
             await runtime.settings.update { $0.provider.switchProvider(to: kind) }
             // The card becomes a line saying what changed, and the answer joins it under the same request.
             let kept = model.entries.contains { $0.id == entry }
-            let line = kind == .codex ? String(localized: "Codex answers from now on. You can change that in Settings › AI.")
-                : String(localized: "Claude Code answers from now on. You can change that in Settings › AI.")
+            let line = kind == .codex ? String(localized: "Codex answers from now on. You can change that in Settings › Brain.")
+                : String(localized: "Claude Code answers from now on. You can change that in Settings › Brain.")
             model.replace(entry, with: .info(line))
             runAgent(request.request, attachment: request.attachment, thinkHarder: false, into: model, continuing: kept)
         }

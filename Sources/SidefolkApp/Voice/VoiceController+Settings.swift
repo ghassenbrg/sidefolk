@@ -74,7 +74,7 @@ extension VoiceController: VoiceServices {
 
     func testVoice(_ settings: VoiceSettings) async -> UserFacingError? {
         let name = host.currentSettings.companionName
-        let line = String(localized: "Hi, I'm \(name). This is how I'll answer you.", comment: "Said aloud by Settings › Voice › Test voice")
+        let line = String(localized: "Hi, I'm \(name). This is how I'll answer you.", comment: "Said aloud by Settings › Brain › Test voice")
         interrupt(cancelRun: false)
         return await withCheckedContinuation { continuation in
             say(line, with: settings) { error in

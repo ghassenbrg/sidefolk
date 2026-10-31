@@ -2327,6 +2327,38 @@ tiring, fights extension pages and themes) as the base; themes that keep arrangi
 its own care and extensions can't count on a place); a new `canvas` role (the page already is `surfaceSunken`); new
 roles required (every existing theme would warn).
 
+**Phase 4, built (Settings and the rest):** Settings is a sidebar window (920 × 700, at least 760 × 480) with a search
+and eight tabs: General (a waiting version on top, start, updates, words for times, the welcome), Companion (D77's
+chooser restyled; its Sounds moved to Attention), Attention, Brain (AI and Voice), Trust (was Privacy & Permissions),
+Connections (was Agents), Add-ons (was Extensions; "Get Add-ons" opens the old gallery page until Home has it) and
+Appearance (theme, light or dark, density, Home's icons). Every setting kept a home; the old tab names still open
+the right tab (`SettingsTab.privacy` is Trust, and so on), and every "Settings › AI/Privacy/Extensions…" sentence
+points at the new tab. **Search** reads `SettingKey`, one catalog of every row and group with its tab, section,
+title and detail (`SettingsRow(_ key:)` takes its words from it, so the page and search can't disagree); matching is
+`SettingsSearch` in Core (each word starts a word of the title, detail or section, accents and case ignored, titles
+first; CJK matched anywhere), results grouped by the tab with the best match, the match marked, switches and short
+choices usable in place, ↑↓ and Return or a click to jump: the tab opens, scrolls to the row, and the row glows.
+**Attention** is built on Attention's own rules: Open, Focus and Quiet with an end ("for 1 hour", "until 18:00",
+"until tomorrow morning", "until I turn it off"). Focus is new and real: whispers wait and come back as one "While
+you were focused" card when it ends; cards that need an answer still come (`AttentionEnvironment.focus`,
+`AppSettings.focusUntil`). Quiet hours every night (off until turned on; choosing Open or Focus inside them sets the
+rest of that night aside), what a full-screen app does (Quiet as before, Focus, or nothing), sounds, notifications
+and the morning brief. A timer looks again when an end or a quiet-hours edge passes. The per-source "what may
+interrupt you" table of the mockups was left out: no source has its own level to set. **Full access may end**
+(`GuardPolicy.fullAccessEnds`, `beforeFullAccess`, `choose(_:fullAccessEnds:)`): Guard reads the policy through
+`current(at:)`, so past its end Full access is the mode it replaced even if no timer fired (the Mac asleep, Sidefolk
+quit); the sheet offers in 1 hour, tonight at 22:00 (while more than an hour away) or when turned off, and its button
+is the primary, not red. **Trust** leads with Guard and the four modes as cards, each with what it does to one
+example step. **Appearance › Density** (`AppSettings.density`) overrides the theme's spacing. **The menu bar Pocket**
+replaces the long menu: a popover with the companion and its state, the Open/Focus/Quiet dial with its end, Full
+access with Turn Off, a waiting version, Needs you, Next up, Agents and an Ask field; a right-click (or ⋯) has Open
+Sidefolk, Settings, palettes, Hide/Show Companion, Check for Updates… (or Update to …), About and Quit. The icon's
+corner says the state (amber dot, half circle, moon), fades while the companion is hidden, and stays orange in Full
+access. **Install sheets** are a two-step passport (who made it, then what it can touch), D71's words and tones
+unchanged, Install armed only on the second step. The update window and About are on Lantern. Onboarding stays on the
+desktop (D4) and its bubbles are phase 2's; its "Connect…" now opens Settings › Connections, where each file that
+changes is listed, instead of connecting at once.
+
 **Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
 fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
 snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.

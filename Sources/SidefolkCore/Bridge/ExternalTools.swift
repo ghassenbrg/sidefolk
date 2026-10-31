@@ -114,7 +114,7 @@ public final class ExternalToolGateway: Sendable {
             let act = ToolActivity(id: Identifier.make(), tool: name, title: base.spec.title, summary: "Turned off", category: .system,
                                    caller: caller, error: "Turned off in Settings")
             return ToolOutcome(activity: act, status: .failed(UserFacingError(
-                "The user turned this off for other agents in Sidefolk's Settings › Privacy › Other agents. Ask them to do it in Sidefolk instead.")))
+                "The user turned this off for other agents in Sidefolk's Settings › Trust › What other agents may do. Ask them to do it in Sidefolk instead.")))
         }
         guard let base = source.tool(named: name), ExternalToolPolicy.isExposed(base.spec.name, access: access) else {
             Log.shared.info("bridge", "external tool refused", ["client": client, "tool": name.clipped(80)])

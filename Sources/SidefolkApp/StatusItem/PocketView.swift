@@ -87,7 +87,7 @@ struct PocketView: View {
             if !model.palettes.isEmpty {
                 Divider()
                 ForEach(model.palettes, id: \.id) { info in
-                    Button("\(info.title)…") { actions.openPalette(info.id) }
+                    Button { actions.openPalette(info.id) } label: { Text(verbatim: "\(info.title)…") }
                 }
             }
             Divider()

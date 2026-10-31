@@ -195,9 +195,9 @@ struct ExtensionsSettingsView: View {
                     SearchBox(text: $search, prompt: Text("Search names, tools and permissions"), focus: $focus, focusValue: .search,
                               submit: focusFirstRow)
                     SegmentedPicker("Show", selection: $show, segments: [
-                        .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Extensions with how many it shows: “All 15”")),
-                        .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Extensions: the extensions switched on, “On 9”")),
-                        .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Extensions: the extensions switched off, “Off 6”")),
+                        .init(ExtensionListQuery.Show.all, Text("All \(counts.all)", comment: "A filter in Settings › Add-ons with how many it shows: “All 15”")),
+                        .init(ExtensionListQuery.Show.on, Text("On \(counts.on)", comment: "A filter in Settings › Add-ons: the extensions switched on, “On 9”")),
+                        .init(ExtensionListQuery.Show.off, Text("Off \(counts.off)", comment: "A filter in Settings › Add-ons: the extensions switched off, “Off 6”")),
                     ])
                     .help("Show every extension, or only those switched on or off")
                     Menu {
@@ -260,11 +260,11 @@ struct ExtensionsSettingsView: View {
     private var noMatchText: String {
         let words = search.trimmingCharacters(in: .whitespacesAndNewlines)
         return switch (query.isSearching, show) {
-        case (true, .all): String(localized: "Nothing installed matches “\(words)”.", comment: "Settings › Extensions, a search that found nothing")
-        case (true, .on): String(localized: "No extension that is on matches “\(words)”.", comment: "Settings › Extensions, a search among those switched on")
-        case (true, .off): String(localized: "No extension that is off matches “\(words)”.", comment: "Settings › Extensions, a search among those switched off")
-        case (false, .on): String(localized: "No extension is on.", comment: "Settings › Extensions, the On filter with nothing in it")
-        case (false, _): String(localized: "Every extension is on.", comment: "Settings › Extensions, the Off filter with nothing in it")
+        case (true, .all): String(localized: "Nothing installed matches “\(words)”.", comment: "Settings › Add-ons, a search that found nothing")
+        case (true, .on): String(localized: "No extension that is on matches “\(words)”.", comment: "Settings › Add-ons, a search among those switched on")
+        case (true, .off): String(localized: "No extension that is off matches “\(words)”.", comment: "Settings › Add-ons, a search among those switched off")
+        case (false, .on): String(localized: "No extension is on.", comment: "Settings › Add-ons, the On filter with nothing in it")
+        case (false, _): String(localized: "Every extension is on.", comment: "Settings › Add-ons, the Off filter with nothing in it")
         }
     }
 
@@ -281,7 +281,7 @@ struct ExtensionsSettingsView: View {
     /// Extensions answer requests in your own words, so without an AI they have nothing to answer.
     private var builtInFooter: LocalizedStringKey {
         if model.settings.provider.kind == .none {
-            return "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › AI first."
+            return "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › Brain first."
         }
         return "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want."
     }

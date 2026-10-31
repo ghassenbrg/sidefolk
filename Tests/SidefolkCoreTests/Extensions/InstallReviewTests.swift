@@ -60,7 +60,7 @@ struct InstallReviewTests {
         #expect(miraya.contains { $0.hasPrefix("It keeps running while it's on") }, "a background program acts without a card")
         #expect(miraya.contains { $0.hasPrefix("Guard asks you before") })
         #expect(miraya.contains { $0.contains("Local Network") })
-        #expect(miraya.last == "You can turn it off or remove it any time in Settings › Extensions.")
+        #expect(miraya.last == "You can turn it off or remove it any time in Settings › Add-ons.")
 
         let quiet = review("x.y", ExtensionPermissions(media: true), .folder, tools: [.low]).next
         #expect(!quiet.contains { $0.hasPrefix("It keeps running") || $0.contains("Local Network") || $0.hasPrefix("Guard") })

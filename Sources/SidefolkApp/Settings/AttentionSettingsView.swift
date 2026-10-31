@@ -241,7 +241,8 @@ struct AttentionSpan {
 extension AttentionMode {
     var word: Text {
         switch self {
-        case .open: Text("Open", comment: "Attention: everything arrives as set")
+        // Its own key: "Open" is also the verb on buttons, which other languages word apart.
+        case .open: Text(String(localized: "attention.open", defaultValue: "Open", comment: "Attention: everything arrives as set (Open, Focus or Quiet)"))
         case .focus: Text("Focus", comment: "Attention: only cards that need an answer; whispers wait")
         case .quiet: Text("Quiet", comment: "Attention: only what can't wait")
         }

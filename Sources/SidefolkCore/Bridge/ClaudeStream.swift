@@ -93,7 +93,7 @@ public enum ClaudeStream {
                                    detail: detail)
         }
         if ["usage limit", "rate limit", "rate_limit", "limit reached", "hit your limit", "429", "overloaded"].contains(where: text.contains) {
-            return UserFacingError("Claude's usage limit is reached for now.", recovery: "Try again later or switch provider in Settings › AI.",
+            return UserFacingError("Claude's usage limit is reached for now.", recovery: "Try again later or switch provider in Settings › Brain.",
                                    detail: detail)
         }
         if ["enotfound", "econnrefused", "etimedout", "network", "could not connect", "fetch failed", "connection error"].contains(where: text.contains) {

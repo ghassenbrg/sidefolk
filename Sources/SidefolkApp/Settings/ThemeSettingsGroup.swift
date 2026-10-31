@@ -30,9 +30,7 @@ struct ThemeSettingsGroup: View {
             gallery
             suggestion
             following
-            SettingsRow(title: Text(verbatim: SettingKey.makeTheme.title),
-                        detail: Text("Start from a copy of Harbor in a folder, or use a theme folder you have. Sidefolk repaints each time you save."),
-                        anchor: .makeTheme) {
+            SettingsRow(.makeTheme) {
                 // Side by side where they fit; stacked in longer languages and larger theme type.
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: Theme.Space.s) { makeButtons }

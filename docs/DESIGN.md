@@ -71,10 +71,23 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |
 | `LightPool(state:)`, `LightPoolState`, `ShoulderBadge` | `LightPool.swift` | the companion's state as light, with its VoiceOver words |
 
-## Not built yet (phases 2–4)
+Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `StatusItem/`:
+
+| Component | File | Use |
+|---|---|---|
+| `SettingsRoot` (sidebar, search, page), `SettingsTab` (title, symbol, tile tint) | `SettingsRoot.swift`, `SettingsTab.swift` | the window; tabs are tiles like System Settings |
+| `SettingKey` (tab, section, title, detail), `SettingsNavigation`, `.settingAnchor(_:)`, `SettingsRow(_ key:)`, `SettingsToggle(_ key:)` | `SettingsCatalog.swift` | every searchable row; a new setting gets a key, or search can't find it |
+| `SettingsPage` | `GeneralSettingsView.swift` | a tab's column, 720 at most, leading; scrolls to a jumped-to row |
+| `SettingInlineControl` | `SettingsRoot.swift` | the control itself in a search result (switches, short choices) |
+| `AttentionDial` (cards or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
+| `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as cards with an example each |
+| `PocketView`, `PocketModel`, `PocketContent`, `PocketActions` | `StatusItem/` | the menu bar's popover; content gathered by `AppCoordinator+Pocket` |
+| `InstallPreviewSheet` (steps `.who`, `.touch`), `InstallPermissionRow` | `InstallPreviewSheet.swift`, `InstallReviewParts.swift` | the install passport |
+
+## Not built yet (phases 2–3)
 
 The desktop's behaviour (placing the pool and Sidecard by the companion, the stack's arc, pins, the agents lane, the
 permission slip wired to Guard), Home's places (Today rebuilt, On duty, History, You, the Gallery in Home, the Say
-bar in the toolbar), Settings' 8 tabs with search, the menu bar Pocket, Full access with an end time. The 16 text
+bar in the toolbar). Settings, the Pocket, Full access with an end and the install passport are phase 4 (above). The 16 text
 fields still on `.roundedBorder` move to `.fieldChrome` as their screens are rebuilt. The theme-specific Today block
 styles (console, planner, stage) keep their own capitals until phase 3 retires them (one layout per place).

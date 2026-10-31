@@ -149,7 +149,7 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
 
     private static func disabledError(_ reason: String) -> UserFacingError {
         UserFacingError("Sidefolk stopped using Codex because it \(reason).",
-                        recovery: "Restart Sidefolk to try again, or choose another provider in Settings › AI.", detail: reason)
+                        recovery: "Restart Sidefolk to try again, or choose another provider in Settings › Brain.", detail: reason)
     }
 
     // MARK: Reading the stream
