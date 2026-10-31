@@ -12,13 +12,13 @@ struct SidecardView: View {
     var body: some View {
         Group {
             switch model.shape {
-            case .whisper: if let item = model.item { whisper(item) }
-            case .card: if let item = model.item { SidecardItemCard(item: item, model: model, tail: tail) }
-            case .stack: stack
+            case .whisper: if let item = model.item { whisper(item).fixedSize() }
+            // As wide as the card allows (320–400), so long words and buttons wrap inside it rather than run off.
+            case .card: if let item = model.item { SidecardItemCard(item: item, model: model, tail: tail).fixedSize(horizontal: false, vertical: true) }
+            case .stack: stack.fixedSize()
             }
         }
         .padding(Self.margin)
-        .fixedSize()
         .onHover { model.hovering = $0 }
     }
 
@@ -117,14 +117,13 @@ struct SidecardItemCard: View {
         .accessibilityLabel(Text(verbatim: item.title))
     }
 
-    /// Up to three in sight, the main one last (macOS order); with more, the first in sight is a ⋯ menu holding the
-    /// rest in the order they came.
+    /// Three in sight at most, the main one last (macOS order): the likeliest other answer beside it, and the rest in a
+    /// ⋯ menu first in the row, in the order they came (b03). Long languages keep one row that way.
     static func arrange(_ actions: [AttentionAction]) -> (menu: [AttentionAction], buttons: [AttentionAction]) {
         let shown = actions.filter { $0.id != undo }
         guard let primary = shown.first(where: \.isPrimary) ?? shown.first else { return ([], []) }
         let others = shown.filter { $0.id != primary.id }
-        if others.count <= 2 { return ([], others.reversed() + [primary]) }
-        return (Array(others.dropFirst()), [others[0], primary])
+        return (Array(others.dropFirst()), others.prefix(1) + [primary])
     }
 
     /// A body made of lines (the brief's day, what waited while away or quiet) reads as rows.
