@@ -11,7 +11,8 @@
   notarized release and has no `SidefolkRelease` stamp, so its built-in updater will not replace it. *Next:*
   choose whether to replace the installed snapshot with the local build or ship a normal snapshot first.
 
-Updated: 2026-10-31. Version 0.1.0. Latest: the ten new games in the Play panel (D79, unreleased), snapshot 581 with translations (D76), the companion chooser
+Updated: 2026-10-31. Version 0.1.0. Latest: add-ons installed before the renumbering get the gallery's version (D80); snapshot 588 and the
+gallery with the ten new games in the Play panel (D79, Playtime 1.0.0-snapshot.2); before that snapshot 581 with translations (D76), the companion chooser
 (D77), colour meaning (D78) and new resting poses; before that Sidefolk and add-on updates chosen apart (D70), honest install sheets and
 approval cards (D71), paired TVs without a card (D72), the helper folks redesigned (D73), extension pages that read
 like app screens with Miraya's rebuilt (D74), and a crash fix (a download cancelled before it started). Before that: snapshot 538 and the gallery: the Calendar, extension pages
@@ -27,6 +28,13 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Copies from before the renumbering get the gallery's version (D80):** the founder's Mac kept Playtime 1.2.0
+  (and git, currency, dev-toolbox, qr-codes 1.1.0, archives, feeds, images, pdf 1.0.0) from before D65, never offered
+  `1.0.0-snapshot.<n>`, so snapshot 588's games never arrived. `AddonCatalog.offers(_:over:on:)` offers the gallery's
+  version over a release the gallery doesn't list at or above; used by the updater, companion and theme updates, the
+  gallery's Update state and the waiting list. *Checked:* `make test` with SIDEFOLK_ADDONS_REPO on a clean add-ons
+  checkout (new: `aReleaseTheGalleryNeverListedIsOfferedItsVersion`, `aCopyFromBeforeTheRenumberingGetsTheGallerysVersion`).
+  *Next:* ships with the next snapshot; until then a stuck add-on is removed and installed again from the gallery.
 - **Games, phases 2 and 3 (D79, amends D75), merged into main (both repos):** all ten new games
   play in the Play panel from Playtime, beside trivia: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower
   (both ways), Guess My Animal (it learns), Balloon Words, Last Stick (it teaches), Memory Pairs and Daily Word (one

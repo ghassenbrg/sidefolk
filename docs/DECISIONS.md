@@ -1614,7 +1614,7 @@ yet, so it shouldn't need a new version number for every change while it's being
 number and a release above them, and offers each as an update; 0.1.0-snapshot.489 does too. The pack's manifest
 carries the snapshot version, so what's installed compares with the gallery. A copy that installed currency 1.1.0,
 dev-toolbox 1.1.0, git 1.1.0, playtime 1.2.0 or qr-codes 1.1.0 keeps it and isn't offered the 1.0.0 snapshots
-(they're lower), until it removes and reinstalls it.
+(they're lower), until it removes and reinstalls it. *Superseded by D80:* such a copy is offered the gallery's version.
 
 **Amended (2026-10-31): every add-on, and the gallery follows Settings › Updates.** Companions and themes are
 snapshots until released too, by the same `"released"` in their `addon.json`; all eight companions and three themes
@@ -2209,3 +2209,23 @@ awake); keeping both trivia engines; a romaji/jamo input of Sidefolk's own inste
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
+
+### D80 — A copy from before the renumbering gets the gallery's version (2026-10-31)
+**Decision:** *amends D65.* An installed add-on from the gallery (an extension, companion or theme) is offered the
+gallery's version on the person's channel when that version is newer, as before, or when the installed version is a
+release the gallery doesn't list, nor any release above it (`AddonCatalog.offers(_:over:on:)`). Those are the copies
+from before D65 numbered everything `1.0.0-snapshot.<n>`: playtime 1.2.0, git, currency, dev-toolbox and qr-codes
+1.1.0, archives, feeds, images and pdf 1.0.0, companions at plain 1.0.0. They update like any other version (by
+themselves when nothing new is asked, D70, else after a look), on Releases only to a release.
+
+**Why:** the founder's Mac kept Playtime 1.2.0 and never got the games in `1.0.0-snapshot.2`, nor this week's
+translations for eight more extensions: each looked newer than the gallery. D65 had accepted "remove and reinstall";
+nobody would know to.
+
+**Alternatives:** raising every add-on above 1.2.0 (the founder keeps them at 1.0.0 until released); a one-time
+migration at launch (the rule is the same and also covers a copy restored from a backup).
+
+**Implications:** a release the gallery publishes stays listed (D65 amended), so its copies are never offered a lower
+snapshot. A waiting update is dropped once its version is installed (`AddonUpdateController.dropSettled`), not when
+the installed one is higher. A copy of Sidefolk before this still needs the remove and reinstall.
+

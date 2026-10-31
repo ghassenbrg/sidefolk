@@ -54,7 +54,7 @@ public struct AddonUpdater: Sendable {
     public func extensionUpdates(in catalog: AddonCatalog, channel: UpdateChannel) async -> [AddonEntry] {
         await extensions.extensions().filter { $0.kind == .sidefolk && $0.origin == .official }.compactMap { have in
             guard let entry = catalog.entry(have.id, on: channel), entry.kind == .extension,
-                  channel.offers(entry.version, over: have.version) else { return nil }
+                  catalog.offers(entry, over: have.version, on: channel) else { return nil }
             return entry
         }
     }

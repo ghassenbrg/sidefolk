@@ -133,6 +133,31 @@ import Testing
         #expect(catalog.entry("dev.sidefolk.pdf", on: .releases) == nil)
     }
 
+    /// A copy from before D65's renumbering (D80): a release the gallery never listed at or above it gets the
+    /// gallery's version, a lower snapshot included; a release the gallery lists keeps waiting for a newer one.
+    @Test func aReleaseTheGalleryNeverListedIsOfferedItsVersion() throws {
+        func entry(_ id: String, _ version: String) -> [String: Any] {
+            ["id": id, "kind": "extension", "name": "N", "tagline": "", "description": "", "author": "Sidefolk",
+             "version": version, "file": "n-\(version).zip", "bytes": 10, "sha256": String(repeating: "a", count: 64)]
+        }
+        let data = try JSONSerialization.data(withJSONObject: ["format": 1, "addons": [
+            entry("dev.sidefolk.playtime", "1.0.0-snapshot.2"),
+            entry("dev.sidefolk.git", "1.1.0"), entry("dev.sidefolk.git", "1.2.0-snapshot.1"),
+        ]])
+        let catalog = try AddonCatalog.parse(data, folder: URL(fileURLWithPath: "/tmp"), fetched: Date())
+        let playtime = try #require(catalog.entry("dev.sidefolk.playtime"))
+        #expect(catalog.offers(playtime, over: "1.2.0", on: .snapshots))
+        #expect(catalog.offers(playtime, over: "1.0.0", on: .snapshots))
+        #expect(!catalog.offers(playtime, over: "1.2.0", on: .releases), "a snapshot only to those who chose them")
+        #expect(!catalog.offers(playtime, over: "1.0.0-snapshot.2", on: .snapshots))
+        #expect(!catalog.offers(playtime, over: "1.0.0-snapshot.3", on: .snapshots), "a newer snapshot isn't one of these")
+
+        let git = try #require(catalog.entry("dev.sidefolk.git"))
+        #expect(catalog.offers(git, over: "1.1.0", on: .snapshots))
+        #expect(!catalog.offers(try #require(catalog.entry("dev.sidefolk.git", on: .releases)), over: "1.1.0", on: .releases))
+        #expect(catalog.offers(git, over: "1.2.0", on: .snapshots), "1.2.0 was never listed")
+    }
+
     /// Shelves and search (D56): a known shelf, one this copy doesn't know (Other), and words found anywhere in the
     /// entry, ignoring case and accents.
     @Test func entriesAreShelvedAndFoundByTheirWords() throws {

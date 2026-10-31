@@ -88,6 +88,21 @@ public struct AddonCatalog: Sendable, Equatable {
         return addons.compactMap { seen.insert($0.id).inserted ? entry($0.id, on: channel) : nil }
     }
 
+    /// Whether `entry` is offered over an installed `version` on `channel`: a newer version, or any version the
+    /// channel takes when the installed one is a release this gallery never listed at or above it (D80). Those are
+    /// copies from before D65 renumbered every add-on to 1.0.0 snapshots (playtime 1.2.0, git 1.1.0, archives 1.0.0),
+    /// numbered above everything the gallery has now. A release the gallery publishes stays listed (D65), so a copy
+    /// of one is never offered a lower snapshot.
+    public func offers(_ entry: AddonEntry, over version: String, on channel: UpdateChannel) -> Bool {
+        if channel.offers(entry.version, over: version) { return true }
+        guard entry.version != version, channel.includes(entry.version),
+              let have = ReleaseVersion(version), !have.isPrerelease else { return false }
+        return !addons.contains { listed in
+            guard listed.id == entry.id, let v = ReleaseVersion(listed.version) else { return false }
+            return !v.isPrerelease && v >= have
+        }
+    }
+
     private static func newest(_ entries: [AddonEntry], on channel: UpdateChannel) -> AddonEntry? {
         entries.filter { channel.includes($0.version) }.max { a, b in
             guard let x = ReleaseVersion(a.version), let y = ReleaseVersion(b.version) else { return false }

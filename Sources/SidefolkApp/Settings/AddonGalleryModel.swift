@@ -89,7 +89,10 @@ final class AddonGalleryModel {
         if let p = progress[entry.id] { return .working(p) }
         guard let version = installedVersion(entry) else { return .get }
         // Updates follow Settings › Updates, as Sidefolk's own do: a snapshot only for people who chose snapshots.
-        return parent.settings.updates.effectiveChannel.offers(entry.version, over: version) ? .update(from: version) : .installed
+        // A copy from before the gallery's renumbering gets its version too (D80).
+        let channel = parent.settings.updates.effectiveChannel
+        let offered = catalog?.offers(entry, over: version, on: channel) ?? channel.offers(entry.version, over: version)
+        return offered ? .update(from: version) : .installed
     }
 
     func installedVersion(_ entry: AddonEntry) -> String? {

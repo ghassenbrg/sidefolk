@@ -176,7 +176,9 @@ final class AddonUpdateController: AddonUpdateActions {
         func waits(_ entry: AddonEntry) -> Bool {
             guard entry.kind == .extension else { return true }
             guard let have = installed[entry.id] else { return false }
-            return UpdateChannel.snapshots.offers(entry.version, over: have)
+            // Still waiting while another version is installed: a newer one, or the gallery's over a copy from
+            // before its renumbering (D80), which is numbered higher.
+            return have != entry.version
         }
         model.addonReview = model.addonReview.filter(waits)
         model.addonWaiting = model.addonWaiting.filter(waits)
