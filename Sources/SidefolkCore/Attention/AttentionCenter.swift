@@ -45,6 +45,8 @@ public actor AttentionCenter {
     /// Items an answer is being handled for; a second answer (double click, bubble plus notification) is dropped.
     private var answering: Set<String> = []
     private var timers: [String: Task<Void, Never>] = [:]
+    /// When quiet mode began, for the digest of what waited when it ends.
+    private var quietSince: Date?
     private var renudges: [String: Task<Void, Never>] = [:]
 
     public init(store: AttentionStore, events: EventBus, clock: any Clock = SystemClock()) {
@@ -74,9 +76,15 @@ public actor AttentionCenter {
         let before = env
         change(&env)
         guard env != before else { return }
+        if !before.quiet, env.quiet { quietSince = clock.now }
         let returned = before.away && !env.away && !idleAway
         let calmer = (before.quiet && !env.quiet) || (before.fullscreen && !env.fullscreen)
-        if returned || calmer { Task { await reconsiderHeld(summarise: returned) } }
+        if before.quiet, !env.quiet, let since = quietSince {
+            quietSince = nil
+            Task { await digestQuiet(since: since) }
+        } else if returned || calmer {
+            Task { await reconsiderHeld(summarise: returned) }
+        }
     }
 
     /// Posts and presents (or holds) an item; returns it.
@@ -284,6 +292,40 @@ public actor AttentionCenter {
             return
         }
         for i in items { await consider(i) }
+    }
+
+    /// Quiet mode ended (D84, "While you were focused"): what arrived meanwhile and still waits, as one card, so the
+    /// moment it ends isn't a parade of bubbles. Gentle notices held in quiet are told there and go; what needs an
+    /// answer stays open in the count as before. One thing alone just comes as itself.
+    private func digestQuiet(since: Date) async {
+        let heldItems = held.values.sorted { $0.createdAt < $1.createdAt }
+        let heldIds = Set(heldItems.map(\.id))
+        let waited = ((try? await store.open()) ?? []).filter {
+            $0.createdAt >= since && $0.level >= .attention && !heldIds.contains($0.id) && $0.source != "summary"
+        }
+        let items = (heldItems + waited).sorted { $0.createdAt < $1.createdAt }
+        guard items.count > 1 else { return await reconsiderHeld(summarise: false) }
+        for i in heldItems { held[i.id] = nil }
+        // Gentle ones are told here; they needed nothing, so they are done.
+        for i in heldItems where i.level == .gentle {
+            if var gone = try? await store.item(id: i.id) {
+                gone.state = .acknowledged
+                gone.acknowledgedAt = clock.now
+                try? await store.save(gone)
+            }
+        }
+        let lines = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
+        let summary = AttentionItem(level: .attention, source: "summary",
+                                    title: String(localized: "While Quiet was on: \(items.count) things", comment: "A card when quiet mode ends"),
+                                    body: lines + (items.count > 4 ? "\n…" : ""),
+                                    actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)],
+                                    refKind: "digest", now: clock.now)
+        let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
+        reserve(summary.source, presentation, now: clock.now)
+        try? await store.save(summary)
+        await present(summary, presentation)
+        // Attention-level ones held (no notifications allowed) still wait for their answer: they stay open, quietly.
+        await publishBacklog()
     }
 
     private func publishBacklog() async {

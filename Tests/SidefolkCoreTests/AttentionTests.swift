@@ -155,6 +155,30 @@ import Testing
     }
 }
 
+extension AttentionCenterTests {
+    /// Quiet ends (D84, "While you were focused"): one card says what waited, instead of a parade of bubbles.
+    @Test func quietEndsWithOneDigest() async throws {
+        let (center, events, store) = try center()
+        await center.update { $0.quiet = true }
+        let gentle = await center.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Saved a note"))
+        await center.post(AttentionRequest(level: .attention, source: "reminder", title: "Stretch", actions: [AttentionAction(id: "done", title: "Done")]))
+        #expect(await center.isHeld(gentle.id))
+        let stream = events.stream()
+        await center.update { $0.quiet = false }
+        for await e in stream {
+            if case .attention(.present(let item, _)) = e {
+                #expect(item.source == "summary" && item.refKind == "digest")
+                #expect(item.title.contains("2"))
+                #expect(item.body?.contains("Saved a note") == true && item.body?.contains("Stretch") == true)
+                break
+            }
+        }
+        // The gentle notice was told in the digest; it needed nothing, so it no longer waits.
+        #expect(try await store.item(id: gentle.id)?.state == .acknowledged)
+        #expect(!(await center.isHeld(gentle.id)))
+    }
+}
+
 final class Box<T: Sendable>: @unchecked Sendable {
     private let lock = NSLock()
     private var stored: T
