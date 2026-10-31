@@ -182,7 +182,9 @@ struct WhenResolver {
     }
 
     private func isoDate(_ s: WhenISOStamp) -> Date? {
-        var cal = calendar
+        // ISO 8601 years are Gregorian: on a Buddhist or Japanese calendar "2026" isn't this year.
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = calendar.timeZone
         if let offset = s.offset, let zone = TimeZone(secondsFromGMT: offset) { cal.timeZone = zone }
         var c = DateComponents()
         c.year = s.year; c.month = s.month; c.day = s.day

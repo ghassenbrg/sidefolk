@@ -17,13 +17,17 @@ struct DayRail: View {
     @State private var problem: UserFacingError?
     /// The rail's width, measured; laying out happens in points, so a short event still shows its title.
     @State private var width: CGFloat = 640
+    /// An hour label's width in the theme's caption font, measured, so labels are spaced by what they really take.
+    @State private var labelWidth: CGFloat = 32
 
     private static let step: TimeInterval = 15 * 60
     private static let lane: CGFloat = 44
 
     var body: some View {
         let span = range
-        let placed = layout(span)
+        let shown = items(in: span)
+        let placed = DayLine.place(shown.map { DayLine.Item(start: $0.start, end: $0.end, readable: readable($0)) },
+                                   in: span, width: Double(width))
         let lanes = max(1, (placed.map(\.lane).max() ?? 0) + 1)
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             ZStack(alignment: .topLeading) {
@@ -32,14 +36,20 @@ struct DayRail: View {
                 nowLine(span, width: width, height: CGFloat(lanes) * Self.lane)
                 // Double-click an empty time: a reminder there.
                 Color.clear.contentShape(Rectangle())
-                    .onTapGesture(count: 2) { location in add(snap(time(at: location.x, width: width, span: span))) }
-                ForEach(placed, id: \.item.id) { placed in
-                    view(placed.item, width: placed.width, span: span)
-                        .offset(x: placed.x, y: CGFloat(placed.lane) * Self.lane)
+                    .onTapGesture(count: 2) { location in
+                        add(snap(DayLine.time(at: Double(location.x), in: span, width: Double(width))))
+                    }
+                ForEach(Array(zip(shown, placed)), id: \.0.id) { item, place in
+                    view(item, place, span: span)
+                        .offset(x: CGFloat(place.x), y: CGFloat(place.lane) * Self.lane)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: CGFloat(lanes) * Self.lane + 20, alignment: .topLeading)
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = max($0, 1) }
+            .background(alignment: .topLeading) {
+                Text(verbatim: "00:00").font(Theme.Font.caption).monospacedDigit().fixedSize().hidden()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { labelWidth = $0 }
+            }
             if let problem {
                 InlineError(error: problem)
             }
@@ -51,35 +61,19 @@ struct DayRail: View {
 
     // MARK: Time and place
 
-    /// The hours shown: from an hour before now (or the first thing, if earlier) to a few hours ahead (or the last
-    /// thing), whole hours, at least six, within today.
+    /// The hours shown (DayLine.range): around now and everything still to come today, done things aside.
     private var range: ClosedRange<Date> {
         let cal = Calendar.current
         let dayStart = cal.startOfDay(for: now)
         let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(86400)
         let all = items(in: dayStart...dayEnd).filter { if case .done = $0 { false } else { true } }
-        var lower = min(now.addingTimeInterval(-3600), all.map(\.start).min() ?? now)
-        var upper = max(now.addingTimeInterval(3 * 3600), all.map(\.end).max() ?? now)
-        lower = max(dayStart, hourFloor(lower))
-        upper = min(dayEnd, hourFloor(upper.addingTimeInterval(3599)))
-        if upper.timeIntervalSince(lower) < 6 * 3600 {
-            upper = min(dayEnd, lower.addingTimeInterval(6 * 3600))
-            lower = max(dayStart, upper.addingTimeInterval(-6 * 3600))
-        }
-        return lower...upper
+        return DayLine.range(now: now, starts: all.map(\.start), ends: all.map(\.end), calendar: cal)
     }
 
-    private func hourFloor(_ date: Date) -> Date {
-        Calendar.current.dateInterval(of: .hour, for: date)?.start ?? date
-    }
-
-    private func x(_ date: Date, _ span: ClosedRange<Date>, _ width: CGFloat) -> CGFloat {
-        let total = span.upperBound.timeIntervalSince(span.lowerBound)
-        return CGFloat(date.timeIntervalSince(span.lowerBound) / max(total, 1)) * width
-    }
-
-    private func time(at x: CGFloat, width: CGFloat, span: ClosedRange<Date>) -> Date {
-        span.lowerBound.addingTimeInterval(Double(x / max(width, 1)) * span.upperBound.timeIntervalSince(span.lowerBound))
+    /// The points a chip needs for its words, up to a share of the rail, so a narrow rail still shows a few side by side.
+    private func readable(_ item: Item) -> Double {
+        let most = min(170, max(90, Double(width) * 0.4))
+        return min(most, Double(item.title.count) * 6.6 + 34)
     }
 
     /// To the nearest quarter hour.
@@ -136,40 +130,20 @@ struct DayRail: View {
         return (timed + due + finished).sorted { $0.start < $1.start }
     }
 
-    /// Where each item sits, in points: at its time, wide enough to read (an event at least its length), kept inside
-    /// the rail, on the first lane where it covers nothing.
-    private func layout(_ span: ClosedRange<Date>) -> [(item: Item, x: CGFloat, width: CGFloat, lane: Int)] {
-        var rights: [CGFloat] = []
-        return items(in: span).map { item in
-            let readable = min(170, CGFloat(item.title.count) * 6.6 + 34)
-            let long = x(item.end, span, width) - x(item.start, span, width)
-            let w = min(width, max(readable, long, 64))
-            let at = min(max(0, x(item.start, span, width)), width - w)
-            let lane: Int
-            if let free = rights.firstIndex(where: { $0 + 4 <= at }) {
-                lane = free
-                rights[free] = at + w
-            } else {
-                lane = rights.count
-                rights.append(at + w)
-            }
-            return (item, at, w, lane)
-        }
-    }
-
     // MARK: Drawing
 
+    /// A line at every hour, and labels where they fit (DayLine.ticks): never two touching, whatever the width.
     private func hours(_ span: ClosedRange<Date>, width: CGFloat, height: CGFloat) -> some View {
-        let total = span.upperBound.timeIntervalSince(span.lowerBound)
-        let every: TimeInterval = total > 12 * 3600 ? 2 * 3600 : 3600
-        let marks = stride(from: 0, through: total, by: every).map { span.lowerBound.addingTimeInterval($0) }
+        let ticks = DayLine.ticks(in: span, width: Double(width), labelWidth: Double(labelWidth), calendar: .current)
         return ZStack(alignment: .topLeading) {
-            ForEach(marks, id: \.self) { mark in
-                let at = x(mark, span, width)
-                Rectangle().fill(Theme.line).frame(width: 1, height: height).offset(x: at)
-                Text(verbatim: TimeFormat.clock(mark, calendar: .current)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
-                    .fixedSize()
-                    .offset(x: max(0, min(at - 14, width - 34)), y: height + 3)
+            ForEach(ticks, id: \.date) { tick in
+                Rectangle().fill(Theme.line).frame(width: 1, height: height).offset(x: CGFloat(tick.x))
+                if let labelX = tick.labelX {
+                    Text(verbatim: TimeFormat.clock(tick.date, calendar: .current)).font(Theme.Font.caption).monospacedDigit()
+                        .foregroundStyle(Theme.inkFaint)
+                        .fixedSize()
+                        .offset(x: CGFloat(labelX), y: height + 3)
+                }
             }
         }
         .accessibilityHidden(true)
@@ -177,12 +151,15 @@ struct DayRail: View {
 
     private func nowLine(_ span: ClosedRange<Date>, width: CGFloat, height: CGFloat) -> some View {
         Rectangle().fill(Theme.danger).frame(width: 2, height: height + 6)
-            .offset(x: x(now, span, width) - 1, y: -3)
+            .offset(x: CGFloat(DayLine.x(now, in: span, width: Double(width))) - 1, y: -3)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
 
-    @ViewBuilder private func view(_ item: Item, width itemWidth: CGFloat, span: ClosedRange<Date>) -> some View {
+    /// A chip at its place. Its edge at its time is marked (the leading one, or the trailing one when it had to end
+    /// there), and an event's length is drawn under it, so where it starts and ends reads exactly.
+    @ViewBuilder private func view(_ item: Item, _ place: DayLine.Placement, span: ClosedRange<Date>) -> some View {
+        let chipWidth = max(CGFloat(place.width) - 3, 20)
         switch item {
         case .event(let event):
             VStack(alignment: .leading, spacing: 0) {
@@ -191,14 +168,19 @@ struct DayRail: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
                 .padding(.horizontal, 7)
-                .frame(width: itemWidth - 3, height: Self.lane - 6, alignment: .leading)
+                .frame(width: chipWidth, height: Self.lane - 6, alignment: .leading)
                 .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(alignment: .bottomLeading) {
+                    Rectangle().fill(Theme.accent).frame(width: min(max(CGFloat(place.length), 2), chipWidth), height: 3)
+                }
+                .overlay(alignment: place.endsAtTime ? .trailing : .leading) { TimeEdge(color: Theme.accent) }
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Theme.accent.opacity(0.5)))
                 .help(Text(verbatim: "\(TimeFormat.clock(event.start, calendar: .current))–\(TimeFormat.clock(event.end, calendar: .current)) \(event.title)"))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text(verbatim: "\(TimeFormat.clock(event.start, calendar: .current)) \(event.title)"))
         case .reminder(let reminder, let due):
-            ReminderChip(reminder: reminder, due: due, late: due < now, width: itemWidth - 3,
+            ReminderChip(reminder: reminder, due: due, late: due < now, width: chipWidth, endsAtTime: place.endsAtTime,
                          pointsPerSecond: width / span.upperBound.timeIntervalSince(span.lowerBound)) { minutes in
                 shift(reminder, from: due, by: minutes)
             } drop: { seconds in
@@ -212,8 +194,10 @@ struct DayRail: View {
             }
             .foregroundStyle(Theme.success).lineLimit(1)
             .padding(.horizontal, 8)
-            .frame(width: itemWidth - 3, height: Self.lane - 6, alignment: .leading)
+            .frame(width: chipWidth, height: Self.lane - 6, alignment: .leading)
             .background(Theme.successSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(alignment: place.endsAtTime ? .trailing : .leading) { TimeEdge(color: Theme.success) }
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Done: \(reminder.title)"))
         }
@@ -240,6 +224,16 @@ struct DayRail: View {
     }
 }
 
+/// The edge of a chip that sits at its time: a bar of the chip's colour, so the chip reads as starting (or, near the
+/// end of the line, ending) there.
+private struct TimeEdge: View {
+    var color: Color
+
+    var body: some View {
+        Rectangle().fill(color).frame(width: 3).accessibilityHidden(true)
+    }
+}
+
 /// What undo registrations hang on: SwiftUI views aren't objects.
 private final class UndoBox: NSObject {
     @MainActor static let shared = UndoBox()
@@ -251,6 +245,7 @@ private struct ReminderChip: View {
     var due: Date
     var late: Bool
     var width: CGFloat
+    var endsAtTime = false
     var pointsPerSecond: CGFloat
     var nudge: (Double) -> Void
     var drop: (TimeInterval) -> Void
@@ -272,6 +267,8 @@ private struct ReminderChip: View {
         .padding(.horizontal, 8)
         .frame(width: width, height: 38, alignment: .leading)
         .background(late ? Theme.dangerSoft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(alignment: endsAtTime ? .trailing : .leading) { TimeEdge(color: late ? Theme.danger : Theme.accent) }
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(focused ? Theme.accent : Theme.accent.opacity(0.45), lineWidth: focused ? 2 : 1))
         .shadow(color: .black.opacity(drag == 0 ? 0 : 0.15), radius: 6, y: 2)
         .offset(x: drag)

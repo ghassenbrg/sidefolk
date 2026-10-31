@@ -130,6 +130,9 @@ final class NowModel {
 
     var calendarOn: Bool { runtime.calendarReader.isOn }
 
+    /// What reads a typed time, with the person's morning, afternoon and evening, as `reminders.create` will.
+    var whenParser: WhenParser { WhenParser(settings: runtime.settings.current) }
+
     /// The queue as the Console's filter shows it: agents' requests and sessions, your own (reminders and your
     /// companion's questions), or what watches noticed.
     var focusedQueue: [Decision] {

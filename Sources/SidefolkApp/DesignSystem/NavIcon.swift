@@ -1,3 +1,4 @@
+import AppKit
 import SidefolkCore
 import SwiftUI
 
@@ -19,11 +20,17 @@ struct NavIcon: View {
                 .fill(LinearGradient(colors: [color.mix(with: .white, by: 0.18), color], startPoint: .top, endPoint: .bottom))
                 .overlay(RoundedRectangle(cornerRadius: size * 0.225, style: .continuous).strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5))
                 .frame(width: size, height: size)
-                .overlay { Image(systemName: symbol).font(.system(size: size * 0.52, weight: .semibold)).foregroundStyle(.white) }
+                .overlay { Image(systemName: Self.drawable(symbol)).font(.system(size: size * 0.52, weight: .semibold)).foregroundStyle(.white) }
                 .accessibilityHidden(true)
         } else {
-            Image(systemName: symbol).foregroundStyle(color)
+            Image(systemName: Self.drawable(symbol)).foregroundStyle(color)
         }
+    }
+
+    /// Callers ask for a place's filled glyph; some have none ("calendar"), and an unknown name draws nothing.
+    static func drawable(_ symbol: String) -> String {
+        guard symbol.hasSuffix(".fill"), NSImage(systemSymbolName: symbol, accessibilityDescription: nil) == nil else { return symbol }
+        return String(symbol.dropLast(5))
     }
 }
 

@@ -63,7 +63,7 @@ struct HomeView: View {
                 .keyboardShortcut("k", modifiers: .command)
                 .opacity(0)
                 .accessibilityHidden(true)
-            // ⌘1–4 go to the four places in every navigation (D64).
+            // ⌘1–5 go to the places in every navigation (D64, D66).
             ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
                 Button(place.title) { model.go(to: place) }
                     .keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
@@ -128,6 +128,8 @@ struct HomeView: View {
         switch model.selection ?? .now {
         case .now:
             NowView(model: model.now)
+        case .calendar:
+            CalendarView(model: model.calendar)
         case .conversations:
             ConversationsView(model: model.conversations)
         case .activity:
@@ -186,6 +188,9 @@ private struct HomeSidebar: View {
                 Label { Text("Today") } icon: { icon("sun.max.fill", Theme.sun) }
                     .badge(model.now.needsYouCount)
                     .tag(HomeSelection.now)
+                // Everything with a time, a month or a week at once (D66).
+                Label { Text("Calendar") } icon: { icon("calendar", Theme.folkColor("tempo")) }
+                    .tag(HomeSelection.calendar)
                 Label { Text("Conversations") } icon: { icon("bubble.left.and.bubble.right.fill", Theme.aqua) }
                     .tag(HomeSelection.conversations)
             }

@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Renders the Home and Settings windows, the Ask panel and bubbles with sample data to PNGs, in light
 /// and dark, then exits:
-/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>] [--only <part of a name>]`. Lets agents (who can't see the screen) review
+/// `SidefolkApp --ui-snapshots <dir> [--language fr] [--theme <folder>] [--only now,calendar]`. Lets agents (who can't see the screen) review
 /// the UI, in any language (SnapshotLanguage) and in any theme (D58), read straight from its folder. Uses an in-memory database, a temp home and fixture services:
 /// no real data is read or touched. The sample notes, reminders and activity are content, so they stay
 /// English in every language.
@@ -27,6 +27,10 @@ enum UISnapshots {
                 exit(1)
             }
             ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
+        }
+        // Only the shots whose names contain one of these words: a page under review in seconds, not minutes.
+        if let i = args.firstIndex(of: "--only"), i + 1 < args.count {
+            only = args[i + 1].split(separator: ",").map(String.init)
         }
         let dir = URL(fileURLWithPath: args[flag + 1], isDirectory: true)
         let app = NSApplication.shared
@@ -92,6 +96,15 @@ enum UISnapshots {
             full.activity.openId = full.activity.entries.first { $0.decision == .always }?.id
             try await homeShot("activity-open")
             full.activity.openId = nil
+            // The Calendar (D66): the month, the week and the list, with the sample's reminders and events.
+            full.selection = .calendar
+            for mode in CalendarModel.Mode.allCases {
+                full.calendar.mode = mode
+                await full.calendar.reload()
+                try await homeShot("calendar-\(mode.rawValue)")
+            }
+            full.calendar.mode = .month
+            await full.calendar.reload()
             // A wide window, to catch pages left on one side (D67).
             let wide = CGSize(width: 1600, height: 900)
             try await homeShot("activity-wide", size: wide)
@@ -125,6 +138,13 @@ enum UISnapshots {
             try await homeShot("conversations-small", size: small)
             full.selection = .now
             try await homeShot("now-small", size: small)
+            full.selection = .calendar
+            for mode in CalendarModel.Mode.allCases {
+                full.calendar.mode = mode
+                await full.calendar.reload()
+                try await homeShot("calendar-\(mode.rawValue)-small", size: small)
+            }
+            full.calendar.mode = .month
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook-small", size: small)
             home.orderOut(nil)
@@ -138,6 +158,9 @@ enum UISnapshots {
                 await empty.notebook.show(collectionId: inbox)
             }
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-notebook-empty"))
+            empty.selection = .calendar
+            await empty.calendar.reload()
+            try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-calendar-empty"))
             empty.selection = .activity
             try await capture(blank, size: CGSize(width: 1100, height: 720), dark: dark, to: file("window-home-activity-empty"))
             await empty.showConversation(nil)
@@ -174,6 +197,9 @@ enum UISnapshots {
                 try await capturePage(view, width: width, dark: dark, to: file(name))
             }
             try await page("page-now", NowView(model: full.now), width: 870)
+            // The narrowest page that keeps the theme's Today columns side by side (D64), with and without anything in them.
+            try await page("page-now-tight", NowView(model: full.now), width: tightTodayWidth)
+            try await page("page-now-tight-empty", NowView(model: empty.now), width: tightTodayWidth)
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
             // A wide window and a narrow one: the page fills the width it has, centred (D67).
@@ -308,6 +334,15 @@ enum UISnapshots {
             }
 
             // Sheets.
+            // Where a time is set (WhenField): typed, read back, picked; and the sheets that use it.
+            try await page("panel-when-field", WhenFieldSamples(parser: full.now.whenParser), width: 380)
+            try await page("panel-when-picker", WhenPicker(start: nil, parser: full.now.whenParser) { _ in }, width: 300)
+            if let reminder = full.now.reminders.first(where: { $0.recurrence != nil }) {
+                try await page("sheet-edit-reminder", EditReminderSheet(reminder: reminder, model: full.now), width: 420)
+            }
+            try await page("sheet-remind-at", PickReminderTimeSheet(item: sample.remindedTask, model: full.notebook), width: 360)
+            try await page("sheet-calendar-new-reminder", NewReminderSheet(at: WhenPicker.nextHour(.autoupdatingCurrent), model: full.calendar),
+                           width: 400)
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 420)
             if let edited = full.notebook.collections.first(where: { $0.symbol != nil }) {
                 try await page("sheet-edit-collection", CollectionSheet(mode: .edit(edited), model: full.notebook) { _ in }, width: 420)
@@ -742,7 +777,7 @@ enum UISnapshots {
 
     /// The whole window, titlebar and toolbar included.
     private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, to url: URL) async throws {
-        if let only, !url.lastPathComponent.contains(only) { return }
+        guard wanted(url) else { return }
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         window.setContentSize(size)
         window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
@@ -755,7 +790,7 @@ enum UISnapshots {
 
     /// A view at its full height in a borderless window.
     private static func capturePage(_ view: some View, width: CGFloat, dark: Bool, to url: URL) async throws {
-        if let only, !url.lastPathComponent.contains(only) { return }
+        guard wanted(url) else { return }
         let host = NSHostingView(rootView: view
             .environment(\.rendersFullPage, true)
             .frame(width: width)
@@ -774,11 +809,23 @@ enum UISnapshots {
         window.orderOut(nil)
     }
 
-    /// `--only <text>`: only the pictures whose names contain it, for a quick look at one page.
-    private static let only: String? = {
-        let args = CommandLine.arguments
-        return args.firstIndex(of: "--only").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
-    }()
+    private static var only: [String] = []
+
+    /// The narrowest page where every row of the theme's Today stays side by side (ColumnsLayout's rule, with
+    /// NowView's least widths): where its columns are at their slimmest.
+    private static var tightTodayWidth: CGFloat {
+        let content = ThemeStore.shared.style.tokens.layout.today.map { row -> CGFloat in
+            guard row.count > 1 else { return 0 }
+            let total = row.map(\.width).reduce(0, +)
+            let least = row.map { NowView.leastWidth($0) * CGFloat(total / $0.width) }.max() ?? 0
+            return least + Theme.Space.l * CGFloat(row.count - 1)
+        }.max() ?? 0
+        return (max(content, 420) + 2 * Theme.Space.xxl + 2).rounded(.up)
+    }
+
+    private static func wanted(_ url: URL) -> Bool {
+        only.isEmpty || only.contains { url.lastPathComponent.contains($0) }
+    }
 
     private static func write(_ view: NSView, to url: URL) throws {
         view.layoutSubtreeIfNeeded()

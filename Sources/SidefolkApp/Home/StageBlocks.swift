@@ -14,6 +14,8 @@ struct TodayStage<Bubble: View>: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var cheering = false
+    /// The stage's width: beside a narrow stage's words there's no room for the companion, so it stands below them.
+    @State private var width: CGFloat = 500
 
     var body: some View {
         let settings = model.services.runtime.settings.current
@@ -22,6 +24,7 @@ struct TodayStage<Bubble: View>: View {
             VStack(alignment: .leading, spacing: Theme.Space.m) {
                 VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                     TodayHeader.greeting().font(Theme.Font.hero).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                        .lineLimit(2).minimumScaleFactor(0.6)
                     Text(verbatim: subtitle(settings)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                 }
                 if queue.isEmpty {
@@ -35,7 +38,8 @@ struct TodayStage<Bubble: View>: View {
                 Spacer(minLength: 0)
             }
             .padding(Theme.Space.l)
-            .padding(.trailing, 90)
+            .padding(.trailing, narrow ? 0 : 90)
+            .padding(.bottom, narrow ? 210 : 0)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             VStack(spacing: Theme.Space.xs) {
                 CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: 150)
@@ -52,6 +56,7 @@ struct TodayStage<Bubble: View>: View {
             .padding(Theme.Space.m)
         }
         .frame(maxWidth: .infinity, minHeight: 560)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         // In the background, so the picture's own size never widens the stage.
         .background { backdrop }
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
@@ -67,6 +72,8 @@ struct TodayStage<Bubble: View>: View {
         }
         .accessibilityElement(children: .contain)
     }
+
+    private var narrow: Bool { width < 400 }
 
     @ViewBuilder private var backdrop: some View {
         if let art = Theme.Art.backdrop(dark: scheme == .dark) {

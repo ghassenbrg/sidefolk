@@ -5,17 +5,19 @@ import SwiftUI
 
 /// What the Home sidebar can show.
 enum HomeSelection: Hashable {
-    case now, conversations, activity, trash
+    case now, calendar, conversations, activity, trash
     case collection(String)
     /// An extension's page (D62), by `ExtensionPageInfo.id`.
     case page(String)
 
-    /// The four places every navigation offers, in ⌘1–4 order; `.collection("")` stands for the Notebook.
-    static let places: [HomeSelection] = [.now, .collection(""), .conversations, .activity]
+    /// The places every navigation offers, in ⌘1–5 order; `.collection("")` stands for the Notebook. The Calendar came
+    /// last (D66), so the first four kept their keys.
+    static let places: [HomeSelection] = [.now, .collection(""), .conversations, .activity, .calendar]
 
     var title: LocalizedStringKey {
         switch self {
         case .now: "Today"
+        case .calendar: "Calendar"
         case .collection, .trash: "Notebook"
         case .conversations: "Conversations"
         case .activity: "Activity"
@@ -26,6 +28,7 @@ enum HomeSelection: Hashable {
     var symbol: String {
         switch self {
         case .now: "sun.max"
+        case .calendar: "calendar"
         case .collection, .trash: "book.closed"
         case .conversations: "bubble.left.and.bubble.right"
         case .activity: "list.bullet.rectangle"
@@ -50,6 +53,7 @@ final class HomeModel {
     let now: NowModel
     let notebook: NotebookModel
     let activity: ActivityModel
+    let calendar: CalendarModel
     let conversations: ConversationsModel
     /// Extensions' pages (D62).
     let pages: ExtensionPagesModel
@@ -73,6 +77,7 @@ final class HomeModel {
         now = NowModel(services: services)
         notebook = NotebookModel(services: services)
         activity = ActivityModel(services: services)
+        calendar = CalendarModel(services: services, now: now)
         conversations = ConversationsModel(services: services)
         pages = ExtensionPagesModel(services: services)
         find = FindModel { query in (try? await services.runtime.find(query)) ?? SearchResults() }
@@ -166,6 +171,7 @@ final class HomeModel {
         case .trash: Task { await notebook.reloadTrash() }
         case .activity: Task { await activity.reload() }
         case .conversations: Task { await conversations.reload() }
+        case .calendar: Task { await calendar.reload() }
         case .now, .page, nil: break
         }
     }
@@ -180,6 +186,8 @@ final class HomeModel {
             pending = []
             // Now shows reminders, watchers, sessions, jobs and attention together; any change can touch it.
             await now.reload()
+            // The Calendar shows reminders, their notes and the calendar setting: any change may move something on it.
+            if selection == .calendar { await calendar.reload() }
             if domains.contains(.notebook) || domains.contains(.memories) {
                 await notebook.reload()
             } else if domains.contains(.reminders) {

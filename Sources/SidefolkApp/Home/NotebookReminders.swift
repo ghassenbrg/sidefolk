@@ -73,35 +73,58 @@ struct RemindButton: View {
     }
 }
 
-/// Any other time for a note or task's reminder.
+/// Any other time for a note or task's reminder: typed ("monday at 9", "every friday") or picked, one value.
 struct PickReminderTimeSheet: View {
     var item: NotebookItem
     var model: NotebookModel
     @Environment(\.dismiss) private var dismiss
     @State private var date = PickReminderTimeSheet.nextHour()
+    @State private var text = ""
+    @FocusState private var typing: Bool
 
     var body: some View {
+        let parser = WhenParser(settings: model.services.runtime.settings.current)
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             Text("Remind me about “\(item.title.clipped(60))”").font(Theme.Font.heading).foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
+            WhenField(text: $text, prompt: Text("When, like “tomorrow 9:00”"), parser: parser, focus: $typing, showsPicker: false,
+                      submit: set)
+                .textFieldStyle(.roundedBorder)
             DatePicker("When", selection: $date, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                 .datePickerStyle(.graphical)
                 .labelsHidden()
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
-                Button("Set reminder") {
-                    let when = date
-                    dismiss()
-                    Task { await model.remind(item, at: when) }
-                }
-                .buttonStyle(.sf(.primary))
-                .keyboardShortcut(.defaultAction)
-                .disabled(date <= Date())
+                Button("Set reminder", action: set)
+                    .buttonStyle(.sf(.primary))
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(date <= Date())
             }
+        }
+        // Typing moves the picker; picking writes the field.
+        .onChange(of: text) {
+            if let reading = WhenReading(text, parser: parser), !reading.past, reading.date != date { date = reading.date }
+        }
+        .onChange(of: date) {
+            if WhenReading(text, parser: parser)?.date != date { text = WhenText.phrase(for: date, timeZone: parser.calendar.timeZone) }
+        }
+        .onAppear {
+            text = WhenText.phrase(for: date, timeZone: parser.calendar.timeZone)
+            typing = true
         }
         .padding(Theme.Space.xl)
         .frame(width: 360)
+    }
+
+    /// What was typed, when it says more than the picker can (a repeat); else the picked time.
+    private func set() {
+        guard date > Date() else { return }
+        let when = date
+        let parser = WhenParser(settings: model.services.runtime.settings.current)
+        let phrase = WhenReading(text, parser: parser).map { _ in text.trimmingCharacters(in: .whitespacesAndNewlines) }
+        dismiss()
+        Task { await model.remind(item, at: when, phrase: phrase) }
     }
 
     /// The next whole hour: a time most people would pick anyway.

@@ -361,11 +361,12 @@ final class NotebookModel {
         }
     }
 
-    /// A reminder that belongs to `item`, through the reminder tool like any reminder the person sets.
-    func remind(_ item: NotebookItem, at date: Date) async {
+    /// A reminder that belongs to `item`, through the reminder tool like any reminder the person sets; `phrase` is what
+    /// they typed for it ("every monday at 9" keeps its repeat), else the time itself.
+    func remind(_ item: NotebookItem, at date: Date, phrase: String? = nil) async {
         await flush()
         let stored = (try? await store.item(id: item.id)) ?? item
-        if let problem = await services.remind(about: stored, when: ISO8601DateFormatter().string(from: date)) {
+        if let problem = await services.remind(about: stored, when: phrase ?? ISO8601DateFormatter().string(from: date)) {
             showToast(problem.message)
         } else {
             showToast(String(localized: "I'll remind you \(TimeFormat.when(date, now: Date(), calendar: .autoupdatingCurrent)).",

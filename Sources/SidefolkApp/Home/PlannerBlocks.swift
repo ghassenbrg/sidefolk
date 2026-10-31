@@ -150,7 +150,9 @@ struct RuledDay: View {
             .padding(.vertical, 2)
         case .done(let r):
             row(at: line.at, title: r.title, struck: true, ticked: true) {
-                Text("done \(TimeFormat.clock(line.at, calendar: .current))", comment: "On a ruled line: when it was done").foregroundStyle(Theme.inkFaint)
+                Label { Text("done \(TimeFormat.clock(line.at, calendar: .current))", comment: "On a ruled line: when it was done") }
+                    icon: { Image(systemName: "checkmark") }
+                    .foregroundStyle(Theme.inkFaint)
             }
         case .reminder(let r):
             let late = line.at < Date()
@@ -191,10 +193,15 @@ struct RuledDay: View {
             } else {
                 Color.clear.frame(width: 14)
             }
+            // The title first: on a narrow page the mark keeps only its picture.
             Text(verbatim: title).font(.system(size: 15, design: .serif)).strikethrough(struck)
-                .foregroundStyle(struck ? Theme.inkFaint : Theme.ink).lineLimit(1)
+                .foregroundStyle(struck ? Theme.inkFaint : Theme.ink).lineLimit(2).layoutPriority(1)
             Spacer(minLength: Theme.Space.s)
-            mark().font(Theme.Font.caption).lineLimit(1)
+            ViewThatFits(in: .horizontal) {
+                mark().fixedSize()
+                mark().labelStyle(.iconOnly).fixedSize()
+            }
+            .font(Theme.Font.caption)
         }
         .ruled()
     }
@@ -226,18 +233,22 @@ struct IndexCardFrame<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            HStack(spacing: Theme.Space.s) {
-                Text(verbatim: label).textCase(.uppercase).font(.system(size: 10.5, weight: .bold)).kerning(0.8)
-                    .foregroundStyle(Theme.link).lineLimit(1)
-                if let risk, risk != .low {
-                    Text(verbatim: risk == .high ? String(localized: "High risk") : String(localized: "Medium risk"))
-                        .textCase(.uppercase).font(.system(size: 9.5, weight: .heavy)).kerning(0.6)
-                        .foregroundStyle(risk == .high ? Theme.danger : Theme.link)
-                        .padding(.horizontal, 5).padding(.vertical, 1)
-                        .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(risk == .high ? Theme.danger : Theme.link, lineWidth: 1.2))
-                        .rotationEffect(.degrees(-2))
+            HStack(alignment: .top, spacing: Theme.Space.s) {
+                // On a narrow card the stamp goes under who's asking rather than cutting it to "ANOTHE…".
+                WrapRow(minimum: 90, spacing: Theme.Space.s, alignment: .center) {
+                    Text(verbatim: label).textCase(.uppercase).font(.system(size: 10.5, weight: .bold)).kerning(0.8)
+                        .foregroundStyle(Theme.link).lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if let risk, risk != .low {
+                        Text(verbatim: risk == .high ? String(localized: "High risk") : String(localized: "Medium risk"))
+                            .textCase(.uppercase).font(.system(size: 9.5, weight: .heavy)).kerning(0.6)
+                            .foregroundStyle(risk == .high ? Theme.danger : Theme.link)
+                            .padding(.horizontal, 5).padding(.vertical, 1)
+                            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(risk == .high ? Theme.danger : Theme.link, lineWidth: 1.2))
+                            .fixedSize()
+                            .rotationEffect(.degrees(-2))
+                    }
                 }
-                Spacer(minLength: 0)
                 Image(systemName: "paperclip").font(.system(size: 18, weight: .light)).foregroundStyle(Theme.inkFaint)
                     .rotationEffect(.degrees(20)).offset(y: -6).accessibilityHidden(true)
             }
@@ -311,23 +322,36 @@ struct MarginWatches: View {
 /// The companion as a sticker on the page (D64), saying one line about what it's on.
 struct CompanionSticker: View {
     var model: NowModel
+    /// Its width: on a narrow page the line sits above the sticker rather than being squeezed beside it.
+    @State private var width: CGFloat = 400
 
     var body: some View {
         let settings = model.services.runtime.settings.current
-        HStack(alignment: .bottom, spacing: Theme.Space.s) {
-            Spacer(minLength: 0)
-            Text(verbatim: model.nookLine).font(.system(size: 14, design: .serif)).italic().foregroundStyle(Theme.ink)
-                .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
-                .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.line))
-                .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
-            CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: 74)
-                .padding(5)
-                .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
-                .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
-                .rotationEffect(.degrees(-4))
-                .accessibilityHidden(true)
+        let line = Text(verbatim: model.nookLine).font(.system(size: 14, design: .serif)).italic().foregroundStyle(Theme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
+            .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.line))
+            .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
+        let sticker = CompanionPortrait(settings: settings, state: settings.isQuiet(at: Date()) ? .sleeping : .idle, side: 74)
+            .padding(5)
+            .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
+            .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+            .rotationEffect(.degrees(-4))
+            .accessibilityHidden(true)
+        Group {
+            if width < 300 {
+                VStack(alignment: .trailing, spacing: Theme.Space.s) { line; sticker }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            } else {
+                HStack(alignment: .bottom, spacing: Theme.Space.s) {
+                    Spacer(minLength: 0)
+                    line
+                    sticker
+                }
+            }
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .accessibilityElement(children: .combine)
     }
 }

@@ -27,6 +27,7 @@ final class FixtureAskActions: AskActions {
     func askWhen(toRemind text: String, in model: AskModel) {}
     func answer(_ request: NoAIRequest, with kind: ProviderKind, replacing entry: AskEntry.ID, in model: AskModel) {}
     func reminderTimes() -> [(label: String, date: Date)] { [] }
+    var whenParser: WhenParser { WhenParser() }
     func remindPending(at date: Date, in model: AskModel) {}
     func answer(question: AttentionItem, actionId: String) {}
     func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel) {}

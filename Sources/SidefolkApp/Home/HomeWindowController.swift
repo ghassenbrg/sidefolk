@@ -6,7 +6,7 @@ import SwiftUI
 @MainActor
 final class HomeWindowController: NSObject, NSWindowDelegate {
     enum Section {
-        case now, notebook, activity
+        case now, calendar, notebook, activity
     }
 
     private let model: HomeModel
@@ -22,6 +22,7 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     func show(section: Section? = nil) {
         switch section {
         case .now: model.selection = .now
+        case .calendar: model.selection = .calendar
         case .activity: model.selection = .activity
         case .notebook: Task { await model.showNotebook() }
         case nil: break
@@ -74,6 +75,14 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     }
 
     #if DEBUG
+    /// Dev channel: the Calendar in a mode (D66), at a day when given ("calendar:week:2026-11-03").
+    func showCalendar(_ mode: String?, day: Date?) {
+        if let mode = mode.flatMap(CalendarModel.Mode.init(rawValue:)) { model.calendar.mode = mode }
+        if let day { model.calendar.jump(to: day) }
+        model.selection = .calendar
+        present()
+    }
+
     /// Dev channel: the one bar's search (D58).
     func showSearch(_ query: String) {
         model.find.query = query

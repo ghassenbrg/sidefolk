@@ -115,7 +115,9 @@ struct HomeStatusBar: View {
             if running > 0 { Text("\(running) running") }
             Spacer(minLength: Theme.Space.s)
             ViewThatFits(in: .horizontal) {
+                // Whole or not at all: cut short, the last place read "⌘5 Ca…".
                 Text(verbatim: HomeSelection.places.enumerated().map { "⌘\($0.offset + 1) \(String(localized: $0.element.titleResource))" }.joined(separator: "  "))
+                    .fixedSize()
                 EmptyView()
             }
             .foregroundStyle(Theme.inkFaint)
@@ -148,6 +150,7 @@ extension HomeSelection {
     var titleResource: LocalizedStringResource {
         switch self {
         case .now: "Today"
+        case .calendar: "Calendar"
         case .collection, .trash: "Notebook"
         case .conversations: "Conversations"
         case .activity: "Activity"
@@ -388,6 +391,7 @@ extension HomeSelection {
     var navColor: Color {
         switch self {
         case .now: Theme.sun
+        case .calendar: Theme.folkColor("tempo")
         case .collection, .trash: Theme.coral
         case .conversations: Theme.aqua
         case .activity: Theme.folkColor("guard")
