@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-31. Version 0.1.0. Latest: snapshot 538 and the gallery: the Calendar, extension pages
+Updated: 2026-10-31. Version 0.1.0. Latest (team/updates): Sidefolk and add-on updates chosen apart (D70). Before that: snapshot 538 and the gallery: the Calendar, extension pages
 arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
 extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
 published yet: the founder runs scripts/publish.sh there). 1374 core and 34 character tests pass, serially.
@@ -13,6 +13,36 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
 (D51) and snapshot 478, published, signed and notarized.
 
 ## Done and verified
+- **Updates for Sidefolk and for add-ons, chosen apart (D70), on branch team/updates:** Settings › General › Updates
+  now has "New versions of Sidefolk" (Don't check / Tell me, the default / Install automatically) and "Update add-ons
+  automatically" (on by default); Versions to offer covers both. Install automatically downloads and checks exactly
+  as Update does, then restarts once the person has been away five minutes with nothing running (no conversation,
+  approval, voice, Ask panel or job: `InstallMoment`), or swaps in as they quit; the new copy says "Updated to …"
+  once with What's New; anything that can't go that way tells instead, as before. Add-ons: companions and themes
+  update by themselves; a gallery extension too, but only if its update widens nothing (no new permission, judged
+  on the permissions themselves; no tool riskier than before; no `background`); otherwise it waits for Review… in
+  Settings › Updates (the install sheet with "New permission: …") with one heads-up per version; a disabled one
+  updates and stays off. With the switch off, Settings counts what waits (Update All), and a companion card gets an
+  update mark. Old settings load as they were (`automatic: false` is Don't check). Also fixed: a download cancelled
+  before it began (a Settings page closed while the gallery's catalog was on its way) threw an Objective-C exception
+  and ended the app (`UpdateDownloader`); `scroll:<0…1>` lets `snap` see below the fold.
+  *Checked:* AutoUpdateTests (the calm-moment rule, settings decoding, "Updated" once), AddonUpdaterTests (the rule
+  on its own: same permissions, added permission, narrowing, network reason, riskier new and raised tools,
+  background; against a folder gallery and a real host: same permissions installs, added permission and a riskier
+  tool wait, the reviewed one installs through the sheet's path, a disabled extension updates and stays off, Releases
+  doesn't see a snapshot, the switch off only lists, companions and themes follow the switch),
+  UpdateInstallerTests (`atQuitTheCopyGoesInWithoutReopening`); `make test`: 1476 core tests, one failure, `theSignedGalleryPassesTheRealChecks` (it runs only with the signed
+  sidefolk-addons dist beside this checkout and still expected "System Vitals+", named "Your Mac" since D67; fixed,
+  passes alone), and 35 character tests pass; strings in all nine languages;
+  UI snapshots of Settings › General and the ready window, light and dark, English and German; the debug app
+  (build/qa-2): Settings › Updates for a copy built on this Mac, the add-on rows, the review heads-up, the ready
+  window and the "Updated" note (`addons:review|waiting`, `update:ready|updated`), in English and German.
+  *Not yet:* a real automatic install (needs two published releases, as D46's swap does: RELEASE.md › Updates says
+  how); a real add-on update in the debug app against a local gallery (the same code ran in the tests against a
+  folder gallery and a real host); Review… and Update All clicked by hand (agents can't click; Review in the debug
+  app with the made-up entries would fetch from the live gallery, so it wasn't pressed).
+  *Next:* review on team/updates, merge; then, after the next two snapshots, prove "Install automatically" by leaving
+  the Mac alone (the log says `calm moment: installing`).
 - **3D companion lay down while alerting (fix):** the 2D director resets the posture to standing on any non-idle
   state but sends no cue, so a 3D companion that had lain down stayed lying, eyes open, when a bubble or alert
   arrived. `engine.js` `setState` now stands up for every state except idle (and `sleeping`, which lies by design).

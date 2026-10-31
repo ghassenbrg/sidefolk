@@ -306,17 +306,6 @@ public struct InstallPreview: Sendable {
     public var canInstall: Bool { report.isValid && conflict == nil }
 }
 
-public struct ExtensionUpdateDiff: Sendable, Hashable {
-    public var fromVersion: String
-    public var toVersion: String
-    public var addedPermissions: [String]
-    public var removedPermissions: [String]
-    public var addedTools: [String]
-    public var removedTools: [String]
-
-    public var changesPermissions: Bool { !addedPermissions.isEmpty || !removedPermissions.isEmpty }
-}
-
 /// What adding an MCP server would do, for the confirmation sheet.
 public struct MCPServerPreview: Sendable, Hashable {
     public var id: String

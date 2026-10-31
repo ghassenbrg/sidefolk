@@ -90,9 +90,10 @@ at least the macOS 26 SDK (voice uses SpeechAnalyzer). Xcode 26.6 (`macos-26`, S
 debug build and passes the tests since three fixes for it, but its optimizer crashes on the release build
 (in `HostedPanel`'s deinit), a compiler bug; prefer `xcode-27` until Swift 6.3 is no longer worth supporting.
 
-## Updates (D46)
+## Updates (D46, D70)
 
-A published Sidefolk looks for a newer one itself and asks before installing it. There is no update server and
+A published Sidefolk looks for a newer one itself and asks before installing it, or installs it by itself at a
+calm moment when the person chose that (D70). There is no update server and
 no key to keep: the feed is this repository's GitHub Releases, and trust is the Developer ID signature.
 
 - **What a release must keep doing**, or copies in the field stop updating: tags `v<version>` and
@@ -100,9 +101,12 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
   `package.sh` writes them); the app at the top of the image named `*.app`, alone; bundle id
   `app.sidefolk.Sidefolk`; `SidefolkRelease` equal to the release (`release.sh` checks it); signed with this
   team's Developer ID (a new certificate of the same team is fine) and notarized. Snapshots are prereleases.
-- **Who gets what.** A copy looks a minute after launch (unless it looked within the hour) and once a day, while
-  Settings › General › Updates › "Check for updates automatically" is on; "Check for Updates…" is in the menu
-  bar. A snapshot looks at releases and snapshots by default, a release at releases only. Versions sort as
+- **Who gets what.** A copy looks a minute after launch (unless it looked within the hour) and once a day, unless
+  Settings › General › Updates › New versions of Sidefolk is Don't check; "Check for Updates…" is in the menu
+  bar. On Tell me (the default) it asks; on Install automatically it downloads and checks the version as Update
+  does, then swaps it in once the person has been away five minutes with nothing running (no conversation,
+  approval, voice, Ask panel or job), or as they quit, and the new copy says "Updated to …" once. Every copy
+  offers releases only unless Versions to offer says snapshots too (D52). Versions sort as
   semver: every snapshot of 0.1.0 comes before 0.1.0, so **raise `Version.swift` right after a production
   release**, or the next snapshots sort below it and nobody is offered them.
 - **What it does on Update**: downloads the image, checks size and both checksums, mounts it hidden, checks the
@@ -116,7 +120,9 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
   for each later release: install the previous one in /Applications from its DMG, open it, choose "Check for
   Updates…", Update and Restart; it reopens as the new version (About shows the build) with no Gatekeeper
   question, and no `.Sidefolk-update-*` folder is left in /Applications. The log's `"cat":"updates"` lines say
-  what happened. `SIDEFOLK_LIVE_NETWORK=1 swift test --filter livePublishedImageChecksOut` downloads the newest
+  what happened. On Install automatically, the same proof without a click: leave the Mac alone five minutes after
+  the look (or quit Sidefolk), and the log says `installing by itself`, `calm moment: installing` (or `installed at
+  quit`) and, after the reopen, `opened after installing by itself`. `SIDEFOLK_LIVE_NETWORK=1 swift test --filter livePublishedImageChecksOut` downloads the newest
   image and runs every check but the swap.
 
 ## Checklist

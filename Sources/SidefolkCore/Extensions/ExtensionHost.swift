@@ -239,15 +239,15 @@ public actor ExtensionHost {
         guard let manifest = report.manifest else { return preview }
         preview.conflict = conflict(id: manifest.id, short: manifest.shortName, kind: .sidefolk)
         if let old = runtimes[manifest.id], old.record.kind == .sidefolk {
-            let before = Set(PermissionSummary.forExtension(old.pin.permissions ?? ExtensionPermissions()).texts)
-            let after = Set(report.summary?.texts ?? [])
-            let oldTools = Set(old.manifest?.tools.keys.map { $0 } ?? Array(old.pin.tools.keys))
-            let newTools = Set(manifest.tools.keys)
-            preview.update = ExtensionUpdateDiff(fromVersion: old.record.version, toVersion: manifest.version,
-                                                 addedPermissions: after.subtracting(before).sorted(),
-                                                 removedPermissions: before.subtracting(after).sorted(),
-                                                 addedTools: newTools.subtracting(oldTools).sorted(),
-                                                 removedTools: oldTools.subtracting(newTools).sorted())
+            let had = old.pin.permissions ?? ExtensionPermissions()
+            let oldTools = old.manifest.map { Array($0.tools.keys) } ?? Array(old.pin.tools.keys)
+            let before = ExtensionUpdateDiff.Side(
+                version: old.record.version, permissions: had, lines: PermissionSummary.forExtension(had).texts,
+                tools: Dictionary(oldTools.map { ($0, risk(old, $0)) }, uniquingKeysWith: max), background: old.manifest?.background ?? false)
+            let after = ExtensionUpdateDiff.Side(
+                version: manifest.version, permissions: report.permissions ?? ExtensionPermissions(), lines: report.summary?.texts ?? [],
+                tools: Dictionary(report.toolRisks.map { ($0.name, $0.risk) }, uniquingKeysWith: max), background: manifest.background)
+            preview.update = ExtensionUpdateDiff(from: before, to: after)
         }
         return preview
     }

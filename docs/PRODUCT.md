@@ -165,7 +165,8 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 
 Accounts, sync, mobile, web app, cloud backend, multi-user, purchases/shopping, sending email or
 messages on the user's behalf, reading other apps' window contents or the screen, continuous
-clipboard monitoring, AI-generated executable code. (Sidefolk does update itself, D46: it asks first.)
+clipboard monitoring, AI-generated executable code. (Sidefolk does update itself, D46: it asks first, unless
+the person chose to let it install at a calm moment, D70.)
 
 ## 7. Interaction map
 

@@ -1744,3 +1744,57 @@ instead of WebRTC (the TV app and Miraya's tests favour WebRTC).
 **Not built:** sound on the TV only (CoreAudio's `audiohald` stays closed), a drawn capture area (needs a picker
 Sidefolk draws), keeping the Mac awake while sharing, a Stop button on the Today tile. Pairings live in a 0600 file in
 its data folder (the sandbox has no Keychain). SECURITY T36.
+
+### D70 — Sidefolk and its add-ons update on separate choices; Sidefolk may install itself at a calm moment (2026-10-31)
+**Decision:** *amends D46 and D55.* Settings › General › Updates holds two independent choices, and "Versions to
+offer" (D65) applies to both.
+- **New versions of Sidefolk:** Don't check / Tell me (the default; D46 as it was) / Install automatically
+  (`UpdateSettings.app`, `AppUpdateMode`). Automatic uses the same looks and channel, and downloads and checks
+  exactly as Update does (`UpdateInstaller.prepare`: size, both checksums, bundle id, release, Developer ID of the
+  same team, notarization, the staged copy checked again), out of sight. The checked copy then waits beside the app
+  for a calm moment, `InstallMoment.decide`: never while a request to the AI runs, an approval card waits, voice is
+  on, the Ask panel is open or a `sidefolk run` job is going; and only once the person has been away five minutes
+  (no input). A ready copy is looked at every 30 s; quitting puts it in place without reopening
+  (`UpdateInstaller.installAtQuit`), so the next launch is the new version. The new copy says "Updated to Sidefolk …"
+  once, with What's New (its release page), from a mark written just before the swap
+  (`UpdateState.installedByItself`). A copy that can't replace itself (D46's cases), and any failure on the way,
+  falls back to telling, with Skip This Version; a version that failed isn't tried by itself again until relaunch.
+  The window, the menu bar and Settings show it ready with Restart Now.
+- **Update add-ons automatically** (`UpdateSettings.addons`, on by default): companions, themes and extensions from
+  the gallery, looked at 90 s after launch, every six hours and a few seconds after the switch or the channel changes
+  (`AddonUpdater`, `AddonUpdateController`). Companions and themes install by themselves (a companion only draws, a
+  theme is data, both checked as the gallery checks them). An extension installed from the gallery (origin
+  `official`) installs by itself **only if its update widens nothing** (`AddonUpdateRule`,
+  `ExtensionUpdateDiff.widens`): no permission it didn't have, judged on `ExtensionPermissions` itself (a new flag,
+  file path, program, or folders read→write) rather than on the sheet's wording; no tool riskier than before (a new
+  one above its riskiest tool, or one it had, raised); no `background`. Otherwise it waits for review, whatever the
+  switch says: Settings › Updates lists it with Review…, which fetches it and opens the install sheet ("New
+  permission: …"), and one gentle heads-up comes per version. An extension that was off updates and stays off.
+  With the switch off nothing installs by itself: Settings says how many updates wait (Update All, which follows the
+  same rule), the gallery keeps Update for extensions and themes, and a companion with a newer version gets an
+  update mark on its card and "Update … to …" on Control-click.
+- Settings from before this decode as they were: `automatic: false` is Don't check, `true` Tell me; `automatic` is
+  still written for older snapshots. What happened is in the log (`"cat":"updates"`, `"cat":"addons"`), and the last
+  add-ons updated by themselves are named in Settings › Updates. Activity stays the record of tool calls.
+
+**Why:** the founder wants to choose separately: add-ons updating by themselves but not the app, or the opposite.
+*Add-ons on by default* because companions already updated by themselves (D55) and turning that off for everyone
+would be a step back; extensions join them only within what the person already agreed to, so the default costs no
+consent, and every pack is signed by Sidefolk's Developer ID and checked as before (T33). *Sidefolk stays on Tell me*
+because installing restarts the companion, Sidefolk is in snapshots whose notes the person may want to read first
+(D52), and D46 promised to ask. *A calm moment rather than a schedule* because the person's work is in the app (a
+conversation, an approval, a dictation); away for five minutes is the longest wait that still lands within a day for
+most people, and the quit catches the rest.
+
+**Alternatives:** one switch for both (the founder asked for two); installing at the next launch instead of at quit
+(the staged copy is tidied at launch, and a launch is when people want the app at once); judging "widens" by the
+sheet's lines (a narrowing adds "No access to your files or the internet", a new network reason adds a line);
+silent extension updates whenever signed by Sidefolk (the permission is the person's, not the signer's); updates
+in Activity (it is the audit of tool calls; an update is not one).
+
+**Implications:** `UpdateSettings.app/addons`, `InstallMoment`, `UpdateChecker.markInstalling/takeInstalled`,
+`UpdateInstaller.installAtQuit` (`BundleSwap.relaunch` takes no app to open), `UpdateModel.Phase.ready`,
+`ExtensionUpdateDiff` (own file: `riskierTools`, `widensPermissions`, `startsInBackground`, `widens`),
+`ExtensionPermissions.widens`, `AddonUpdater`, `AddonUpdateRule`, app `AddonUpdateController` (replaces
+`keepCompanionAddonsUpdated`), `AppServices.companionsUpdated`, `AppCoordinator.installSignals`; dev commands
+`update:ready`, `update:updated`, `addons:review|waiting|clear`, `scroll:<0…1>`. RELEASE.md › Updates.

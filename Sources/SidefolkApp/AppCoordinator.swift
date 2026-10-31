@@ -47,6 +47,7 @@ final class AppCoordinator {
     private lazy var about = AboutWindowController()
     /// Looking for a newer Sidefolk and installing it when asked (D46).
     private(set) lazy var updater = UpdateController(runtime: runtime)
+    private(set) lazy var addonUpdater = AddonUpdateController(runtime: runtime, model: updater.model, themes: .app(runtime.paths))
     /// The folder a theme is being made in, followed while Settings says so (D58).
     let themeFollower = ThemeFollower()
     /// Collection names for the intent parser ("ideas for Sidefolk").
@@ -99,7 +100,6 @@ final class AppCoordinator {
         applyAppearance()
         applyTheme()
         restoreCompanionAddon()
-        keepCompanionAddonsUpdated()
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
                                                           object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyCompanionSettings() }
@@ -230,25 +230,6 @@ final class AppCoordinator {
         }
     }
 
-    /// Gallery companions on this Mac update by themselves (D55): a look soon after launch, then every six hours.
-    /// The companion on the desktop, if it was one of them, reloads in place, and its pictures are drawn again.
-    private func keepCompanionAddonsUpdated() {
-        let addons = runtime.addons
-        Task { [weak self] in
-            try? await Task.sleep(for: .seconds(90))
-            while !Task.isCancelled {
-                let channel = self?.runtime.settings.current.updates.effectiveChannel ?? .releases
-                let updated = await addons.updateCompanions(channel: channel)
-                if !updated.isEmpty, let self {
-                    CompanionArt.forgetPictures()
-                    companion.reload3D(updated.map(\.companion))
-                    settingsChanged()
-                }
-                try? await Task.sleep(for: .seconds(6 * 3600))
-            }
-        }
-    }
-
     func applyCompanionSettings() {
         let s = runtime.settings.current
         companion.eyesFollowPointer = s.eyesFollowPointer
@@ -328,6 +309,8 @@ final class AppCoordinator {
     /// Stops the engines and covers the next week of reminders with system notifications.
     func prepareForQuit() async {
         eventTask?.cancel()
+        // An update ready to go in goes in now, so the next launch is the new version (D70).
+        await updater.installAtQuit()
         // A request still running stops with the app: its CLI brain's process group gets SIGTERM rather than
         // finishing its turn on the person's quota with no one to answer it.
         await agent.cancelAll()
@@ -420,6 +403,7 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("update:") { updater.dev(String(command.dropFirst(7))); return }
+        if command.hasPrefix("addons:") { addonUpdater.dev(String(command.dropFirst(7))); return }
         if command.hasPrefix("language:") {
             let code = String(command.dropFirst(9))
             AppLanguage.chosen = code == "system" ? nil : code
@@ -454,6 +438,11 @@ final class AppCoordinator {
         }
         if command.hasPrefix("settings") {
             openSettings(tab: SettingsTab(rawValue: String(command.dropFirst("settings:".count))))
+            return
+        }
+        if command.hasPrefix("scroll:"), let fraction = Double(command.dropFirst(7)) {
+            // scroll:<0…1>: the tallest scroll view on screen that far down, so `snap` sees below the fold.
+            DebugSnapshots.scroll(to: fraction)
             return
         }
         if command.hasPrefix("page:") {

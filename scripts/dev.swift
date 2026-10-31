@@ -7,6 +7,7 @@
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:extensions | find:milk | drop:https://example.com
+//   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:month | calendar:week:2026-11-03 | calendar:day   (D66)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
@@ -23,6 +24,10 @@
 //   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
 //   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed
 //                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
+//   swift scripts/dev.swift update:ready | update:updated   (D70: installing by itself: the window waiting for a calm
+//                           moment, and the note the new copy gives)
+//   swift scripts/dev.swift addons:review | addons:waiting | addons:clear   (D70: Settings › Updates and the heads-up
+//                           with made-up add-on updates)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

@@ -9,6 +9,19 @@ public struct UpdateState: Codable, Sendable, Equatable {
     /// The version last offered on the desktop, and when, so the same one isn't brought up every day.
     public var asked: ReleaseVersion?
     public var askedAt: Date?
+    /// A version installed by itself (D70), written just before the swap: the copy that opens says so once.
+    public var installedByItself: Installed?
+
+    public struct Installed: Codable, Sendable, Equatable {
+        public var version: ReleaseVersion
+        /// Its release page, for "What's New".
+        public var page: URL
+
+        public init(version: ReleaseVersion, page: URL) {
+            self.version = version
+            self.page = page
+        }
+    }
 
     public init() {}
 }
@@ -91,6 +104,22 @@ public actor UpdateChecker {
         guard s.asked == offer.version, let at = s.askedAt else { return true }
         let since = clock.now.timeIntervalSince(at)
         return since >= Self.askAgainAfter || since < 0
+    }
+
+    /// Remembers that `offer` is being installed by itself, so the next launch can say so (D70).
+    public func markInstalling(_ offer: UpdateOffer) async {
+        var s = await state()
+        s.installedByItself = UpdateState.Installed(version: offer.version, page: offer.page)
+        await save(s)
+    }
+
+    /// The version installed by itself since the last launch, once: the mark is cleared as it is read.
+    public func takeInstalled() async -> UpdateState.Installed? {
+        var s = await state()
+        guard let installed = s.installedByItself else { return nil }
+        s.installedByItself = nil
+        await save(s)
+        return installed
     }
 
     public func markAsked(_ offer: UpdateOffer) async {
