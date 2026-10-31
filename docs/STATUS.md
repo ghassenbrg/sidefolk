@@ -1,6 +1,7 @@
 # Status
 
-Updated: 2026-10-31. Version 0.1.0. Latest: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
+Updated: 2026-10-31. Version 0.1.0. Latest: snapshot 538 and the gallery: the Calendar, extension pages
+arranged by the person, Your Mac, Clipboard to replace Maccy and Miraya as an extension (D66-D69). Before that: the add-on gallery (D55): Ember, Kiko, Nimbo, Folio and nine
 extensions moved to github.com/ghassenbrg/sidefolk-addons, signed packs Sidefolk downloads on demand (not
 published yet: the founder runs scripts/publish.sh there). 1374 core and 34 character tests pass, serially.
 Before that: the founder's list after snapshot 478: other agents change and
@@ -52,8 +53,10 @@ write (D53); and a brainstorm on companions made by people and a gallery to get 
     code matched on both screens, approval on the TV, reconnecting without a code, a file played with seek, resume
     and stop; in a sandbox probe, screen → H.264 → UDP → decoded. *Not yet:* a mirrored picture on a real TV (the
     emulator's network blocks direct UDP): with Sidefolk allowed in Screen Recording and Local Network, say "mirror my
-    screen"; an HTTPS link played; sound on the TV only, a drawn area, Stop on the tile. *Next:* the founder tries the merged build, then merge `team/merge` into
-    extension-services and sidefolk-addons' `team/merge` into main, and publish the add-ons (founder).
+    screen"; an HTTPS link played; sound on the TV only, a drawn area, Stop on the tile. *Released:* merged into main in both repositories; snapshot 538 (8b584618, Developer ID,
+    notarized) and the gallery published the same day (Your Mac, Keep Awake and Clipboard as 1.0.0-snapshot.2, Miraya
+    1.0.0-snapshot.1; the downloaded catalog checked against the build and its signature). *Next:* the founder tries
+    538 by hand (Calendar drags, sidebar arranging, ⇧⌘C, "mirror my screen" on a real TV).
 - **A release stays beside the next version's snapshots (D65 amended):** once an add-on is released and its next
   version starts snapshots, the gallery lists both (the release first) and Settings › Updates picks:
   `AddonCatalog.entry(_:on:)`, `companion(_:on:)`, `offered(on:)`; sidefolk-addons e99c207 keeps the latest release's
