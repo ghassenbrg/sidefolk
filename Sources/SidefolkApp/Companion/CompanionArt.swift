@@ -61,11 +61,14 @@ enum CompanionArt {
         return made.lazy.compactMap(\.companion).first { $0.id == id }
     }
 
-    /// 3D companions added from a folder (D60), as last read: those whose files are all here.
+    /// 3D companions worn by their folder's name, as last read, those whose files are all here: added from a folder
+    /// (D60), or from the gallery without a case in this copy (D?? companion chooser), standing on the rig their body names.
     private(set) static var locals: [InstalledCompanion] = loadLocals()
 
     private static func loadLocals() -> [InstalledCompanion] {
-        AddonStore.installedCompanions(in: CompanionAddons.folder).filter { $0.addedFromFolder && Companion3DStage.has($0.companion) }
+        AddonStore.installedCompanions(in: CompanionAddons.folder).filter {
+            ($0.addedFromFolder || CompanionChoice(rawValue: $0.companion) == nil) && Companion3DStage.has($0.companion)
+        }
     }
 
     static func local(_ name: String?) -> InstalledCompanion? {
@@ -152,6 +155,31 @@ enum CompanionArt {
             rect.fill()
             drawn.draw(in: NSRect(x: -side / 2, y: -side / 2 + 1, width: side * 2, height: side * 2))
             return true
+        }
+    }
+
+    /// Any companion the person can wear as it stands at rest, `side` across, as Settings' grid shows it: in the look
+    /// it is worn in. Nil for one worn by name whose still isn't here.
+    static func still(_ companion: OwnedCompanion, settings: AppSettings, side: CGFloat) -> NSImage? {
+        switch companion.wear {
+        case .choice(let choice):
+            return preview(choice, style: settings.style(for: choice), threeD: threeD(choice, in: settings), side: side)
+        case .custom(let id):
+            guard let made = custom(id) else { return nil }
+            let key = "custom:\(id).still.\(side)"
+            if let cached = previews[key] { return cached }
+            let size = CGSize(width: side, height: side)
+            let look = CharacterLook(custom: made, style: CharacterStyle(color: .aqua, accessory: .none))
+            let image = NSImage(cgImage: CharacterRenderer.image(state: .idle, size: size, scale: 2, look: look), size: size)
+            previews[key] = image
+            return image
+        case .local(let name):
+            let key = "local.\(name).\(side)"
+            if let cached = previews[key] { return cached }
+            guard let still = Companion3DStage.portrait(name) else { return nil }
+            still.size = CGSize(width: side, height: side)
+            previews[key] = still
+            return still
         }
     }
 

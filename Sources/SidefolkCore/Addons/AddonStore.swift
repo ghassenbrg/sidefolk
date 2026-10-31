@@ -217,6 +217,12 @@ public actor AddonStore {
     @discardableResult
     public func install(companion entry: AddonEntry, progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws -> InstalledCompanion {
         guard entry.kind == .companion, let name = entry.companion else { throw UserFacingError("That add-on isn't a companion.") }
+        guard entry.wearable else { throw UserFacingError("\(entry.name) can't be worn by this copy of Sidefolk.") }
+        // The person's own companion, added from a folder (D60), may already live under that name: never replaced.
+        if let there = installedCompanions().first(where: { $0.companion == name }), there.addedFromFolder {
+            throw UserFacingError("You already have a companion called “\(name)”, added from a folder.",
+                                  recovery: "Remove yours first to get the gallery's.")
+        }
         let (resources, entry) = try await fetchCurrent(entry, progress: progress)
         defer { discard(entry) }
         try Self.checkCompanionFiles(resources, name: name)
@@ -224,7 +230,9 @@ public actor AddonStore {
         try FileManager.default.createDirectory(at: companionsFolder, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         // The files were checked against the signature; their copies lose the download mark, as a built-in's do.
         try ExtensionFiles.copy(from: resources.path, to: staged.path, quarantine: .none)
-        let installed = InstalledCompanion(id: entry.id, name: entry.name, companion: name, version: entry.version, author: entry.author)
+        // Its tagline and body serve a companion this copy has no case for, worn by its folder's name.
+        let installed = InstalledCompanion(id: entry.id, name: entry.name, companion: name, version: entry.version, author: entry.author,
+                                           tagline: entry.tagline.isEmpty ? nil : entry.tagline, body: entry.body)
         try JSONEncoder().encode(installed).write(to: staged.appendingPathComponent("addon.json"))
         try replace(companionsFolder.appendingPathComponent(name, isDirectory: true), with: staged)
         Log.shared.info("addons", "installed companion", ["id": entry.id, "version": entry.version])

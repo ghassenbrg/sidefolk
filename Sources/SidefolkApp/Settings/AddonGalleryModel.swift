@@ -17,15 +17,16 @@ final class AddonGalleryModel {
     private(set) var progress: [String: Double] = [:]
     /// The last failure of each add-on, said under it until the next try.
     private(set) var failures: [String: UserFacingError] = [:]
-    /// Why the last companion added from a folder (D60) wasn't, said under "Made by you" until the next try.
-    private(set) var localError: UserFacingError?
-
-    /// 3D companions added from a folder (D60).
-    var locals: [InstalledCompanion] { companions.filter(\.addedFromFolder) }
+    /// Why the last companion added from a folder (D60), removed or moved to the Trash wasn't, said under the
+    /// person's companions until the next try.
+    var companionError: UserFacingError?
 
     init(parent: SettingsModel) { self.parent = parent }
 
-    var available: Bool { store.source != nil }
+    var available: Bool { sampled || store.source != nil }
+
+    /// Showing sample data (UISnapshots): nothing is fetched or read from this Mac's gallery folder.
+    private(set) var sampled = false
 
     /// The person's choice in Settings › Updates, which the gallery follows too (D65).
     private var channel: UpdateChannel { parent.settings.updates.effectiveChannel }
@@ -47,8 +48,16 @@ final class AddonGalleryModel {
 
     func preview(_ entry: AddonEntry) -> URL? { catalog?.preview(for: entry) }
 
+    /// Reads the companions in `Addons/Companions` again: one may have come by another way (an update by itself, the
+    /// chosen one fetched at launch, the debug app).
+    func readInstalled() async {
+        guard !sampled else { return }
+        companions = await store.installedCompanions()
+    }
+
     /// The gallery as last checked on this Mac at once, then a fresh look (unless it is recent).
     func load(refresh: Bool = false) async {
+        guard !sampled else { return }
         companions = await store.installedCompanions()
         if catalog == nil { catalog = await store.stored() }
         loading = true
@@ -93,9 +102,10 @@ final class AddonGalleryModel {
 
     // MARK: Companions
 
-    /// Downloads and installs a companion, then makes it the companion when `choose` (a click on its card).
+    /// Downloads and installs a companion, then makes it the companion when `choose`. One this copy has no case for
+    /// is worn by its folder's name, as one added from a folder is.
     func get(companion entry: AddonEntry, choose: Bool) async {
-        guard progress[entry.id] == nil, let name = entry.companion, let choice = CompanionChoice(rawValue: name) else { return }
+        guard progress[entry.id] == nil, let name = entry.companion, entry.wearable else { return }
         failures[entry.id] = nil
         progress[entry.id] = 0
         defer { progress[entry.id] = nil }
@@ -105,9 +115,15 @@ final class AddonGalleryModel {
             }
             let updating = companions.contains { $0.id == entry.id }
             companions = await store.installedCompanions()
+            CompanionArt.reloadMade()
+            CompanionArt.forgetPictures()
             if choose {
-                CompanionArt.forgetPictures()
-                parent.update { $0.choose(choice) }
+                if let choice = CompanionChoice(rawValue: name) {
+                    parent.update { $0.choose(choice) }
+                } else {
+                    let shown = entry.name
+                    parent.update { $0.choose(local: name, name: shown) }
+                }
             } else {
                 // An update (D70): the one on the desktop, if it is this one, reloads in place.
                 parent.services.companionsUpdated(updating ? [name] : [])
@@ -145,29 +161,12 @@ final class AddonGalleryModel {
         catalog = await store.stored() ?? catalog
     }
 
-    /// Removes a companion; the one in use gives way to Mochi first.
-    func remove(companion name: String) async {
-        if parent.settings.companion.rawValue == name, parent.settings.customCompanion == nil {
-            parent.update { $0.choose(.mochi) }
-        }
-        do {
-            try await store.remove(companion: name)
-        } catch {
-            if let id = companions.first(where: { $0.companion == name })?.id {
-                failures[id] = UserFacingError("It couldn't be removed.", detail: String(describing: error))
-            }
-        }
-        companions = await store.installedCompanions()
-        CompanionArt.forgetPictures()
-        parent.services.settingsChanged()
-    }
-
     // MARK: Added from a folder (D60)
 
     /// Adds the 3D companion in `folder` once the person agrees (its character file is code the 3D page runs), then
     /// makes it the companion.
     func add(companionFolder folder: URL) async {
-        localError = nil
+        companionError = nil
         do {
             let companion = try AddonStore.readLocalCompanion(folder)
             let alert = NSAlert()
@@ -185,18 +184,19 @@ final class AddonGalleryModel {
             CompanionArt.forgetPictures()
             parent.update { $0.choose(local: added.companion, name: added.name) }
         } catch {
-            localError = error as? UserFacingError ?? UserFacingError("That companion couldn't be added.", detail: String(describing: error))
+            companionError = error as? UserFacingError ?? UserFacingError("That companion couldn't be added.", detail: String(describing: error))
         }
     }
 
-    /// Removes a companion added from a folder; the one in use gives way to the companion chosen before it.
-    func remove(local name: String) async {
-        localError = nil
-        if parent.settings.localCompanion == name { parent.update { $0.choose($0.companion) } }
+    /// Removes a companion from `Addons/Companions` (the gallery's, or the copy of one added from a folder); the one in
+    /// use gives way first (`CompanionLibrary.replacement`). Its pictures and the made list are read again.
+    func remove(companion name: String, wearing replacement: CompanionChoice?) async {
+        companionError = nil
+        if let replacement { parent.update { $0.choose(replacement) } }
         do {
             try await store.remove(companion: name)
         } catch {
-            localError = UserFacingError("It couldn't be removed.", detail: String(describing: error))
+            companionError = UserFacingError("It couldn't be removed.", detail: String(describing: error))
         }
         companions = await store.installedCompanions()
         CompanionArt.reloadMade()
@@ -228,4 +228,14 @@ final class AddonGalleryModel {
         }
         catalog = await store.stored() ?? catalog
     }
+
+    #if DEBUG
+    /// A gallery to look at (UISnapshots, D?? companion chooser): this catalog and these companions on the Mac.
+    func showSample(catalog: AddonCatalog, companions: [InstalledCompanion], progress: [String: Double] = [:]) {
+        sampled = true
+        self.catalog = catalog
+        self.companions = companions
+        self.progress = progress
+    }
+    #endif
 }

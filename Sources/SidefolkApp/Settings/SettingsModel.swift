@@ -78,6 +78,8 @@ final class SettingsModel {
     private(set) var skills: [SkillInfo] = []
     /// Companions and extensions from the add-on gallery (D55).
     @ObservationIgnored private(set) lazy var gallery = AddonGalleryModel(parent: self)
+    /// Settings › Companion's grid of the person's companions and its gallery page.
+    @ObservationIgnored private(set) lazy var chooser = CompanionChooserModel(parent: self)
     private(set) var integration: IntegrationStatus?
     private(set) var extensionError: UserFacingError?
     private(set) var integrationError: UserFacingError?
