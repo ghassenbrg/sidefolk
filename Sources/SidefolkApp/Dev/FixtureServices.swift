@@ -209,6 +209,7 @@ final class FixtureServices: AppServices {
     var calendarAccess: CalendarAccess { .allowed }
     func showCalendar(_ on: Bool) async { await runtime.settings.update { $0.showCalendar = on } }
     func openCalendarSettings() {}
+    func allowCalendarChanges(_ on: Bool) async { await runtime.settings.update { $0.calendarPage.writes = on } }
     func removeCommandLineTool() async -> UserFacingError? { nil }
 
     func sampleExtensions() async -> [(name: String, folder: URL)] { [("Hello Folk", URL(fileURLWithPath: "/tmp/hello-folk"))] }

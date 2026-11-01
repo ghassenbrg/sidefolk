@@ -20,6 +20,12 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
 
     var isVisible: Bool { window?.isVisible ?? false }
 
+    #if DEBUG
+    /// The window and the Calendar's model, for the dev channel's calendar commands.
+    var devWindow: NSWindow? { window }
+    var devCalendar: CalendarModel { model.calendar }
+    #endif
+
     /// Brings Home to the front, optionally on a section; keeps the current section otherwise.
     func show(section: Section? = nil) {
         switch section {

@@ -384,6 +384,7 @@ final class AppCoordinator {
         if command == "about" { showAbout(); return }
         if devBackup(command) { return }
         if devConnect(command) { return }
+        if devCalendar(command) { return }
         if command == "calendar" || command.hasPrefix("calendar:") {
             let parts = command.split(separator: ":").dropFirst().map(String.init)
             let day = parts.count > 1 ? try? Date(parts[1] + "T12:00:00Z", strategy: .iso8601) : nil

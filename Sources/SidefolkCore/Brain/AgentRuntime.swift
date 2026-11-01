@@ -381,11 +381,15 @@ public actor AgentRuntime {
     }
 
     /// Tools an extension's author left to commands (D50) never reach the model, nor the calendar while it's hidden
-    /// (D57): a card asking to read something that can't be read would only puzzle the person.
+    /// (D57), nor changing it while the person hasn't allowed changes (D97): a card asking for something that can't be
+    /// done would only puzzle the person.
     private func offeredTools() -> [ToolSpec] {
-        let calendarShown = settings().showCalendar
+        let current = settings()
+        let calendarShown = current.showCalendar
+        let calendarWrites = calendarShown && current.calendarPage.writes
         return executor.registry.specs.filter {
             $0.offeredToModel && !excludedTools.contains($0.name) && (calendarShown || !$0.capabilities.contains(.calendar))
+                && (calendarWrites || !$0.capabilities.contains(.calendarWrite))
         }
     }
 

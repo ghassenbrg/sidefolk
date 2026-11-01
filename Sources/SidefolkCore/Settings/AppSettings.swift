@@ -264,6 +264,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var morningBrief = true
     /// Today, the morning brief and the AI may read the calendar (D57). Off until the person turns it on.
     public var showCalendar = false
+    /// The Calendar page's views, hidden calendars and whether it may change the Mac's calendars (D97).
+    public var calendarPage = CalendarPageSettings()
     /// The theme every window draws with (D58), by id; Harbor when it's missing.
     public var theme = "harbor"
     /// A theme folder being worked on: Sidefolk reloads it each time it changes.
@@ -334,6 +336,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.eveningHour, &eveningHour)
         read(.morningBrief, &morningBrief)
         read(.showCalendar, &showCalendar)
+        read(.calendarPage, &calendarPage)
         read(.theme, &theme)
         themeFolder = try? c.decodeIfPresent(String.self, forKey: .themeFolder)
         read(.themeSuccessorsOffered, &themeSuccessorsOffered)

@@ -129,13 +129,23 @@ enum UISnapshots {
             try await homeShot("today-quiet")
             await full.services.runtime.settings.update { $0.quietUntil = nil }
             await full.now.reload()
-            // The Calendar (D66, D84): Agenda first, then the week and the month.
+            // The Calendar (D66, D84, D97): Agenda first, then the day, the week, the month and the year; a selected event,
+            // the sidebar hidden, a wide window.
             full.selection = .calendar
             for mode in CalendarModel.Mode.allCases {
                 full.calendar.mode = mode
                 await full.calendar.reload()
                 try await homeShot("calendar-\(mode.rawValue)")
             }
+            full.calendar.mode = .week
+            await full.calendar.reload()
+            full.calendar.selection = "elunch"
+            try await homeShot("calendar-week-selected")
+            full.calendar.selection = nil
+            try await homeShot("calendar-week-wide", size: CGSize(width: 1600, height: 1000))
+            full.calendar.toggleSidebar()
+            try await homeShot("calendar-week-nosidebar")
+            full.calendar.toggleSidebar()
             full.calendar.mode = .agenda
             await full.calendar.reload()
             await full.reveal(sample.selectedItem)
@@ -206,6 +216,18 @@ enum UISnapshots {
                 full.calendar.mode = mode
                 await full.calendar.reload()
                 try await homeShot("calendar-\(mode.rawValue)-small", size: small)
+            }
+            // A crowded calendar (D97): reminders as pills, a repeating one once a day in the week, overlaps never
+            // narrower than a readable width, the rest in "+N".
+            if let crowd = (full.services.runtime.platform as? SamplePlatform)?.calendar {
+                crowd.crowd(300)
+                for mode in [CalendarModel.Mode.week, .day] {
+                    full.calendar.mode = mode
+                    await full.calendar.reload()
+                    try await homeShot("calendar-\(mode.rawValue)-crowded")
+                    try await homeShot("calendar-\(mode.rawValue)-crowded-small", size: small)
+                }
+                crowd.uncrowd()
             }
             full.calendar.mode = .agenda
             await full.reveal(sample.selectedItem)
@@ -617,8 +639,27 @@ enum UISnapshots {
                 try await page("sheet-edit-reminder", EditReminderSheet(reminder: reminder, model: full.now), width: 420)
             }
             try await page("sheet-remind-at", PickReminderTimeSheet(item: sample.remindedTask, model: full.notebook), width: 360)
-            try await page("sheet-calendar-new-reminder", NewReminderSheet(at: WhenPicker.nextHour(.autoupdatingCurrent), model: full.calendar),
-                           width: 400)
+            let next = WhenPicker.nextHour(.autoupdatingCurrent)
+            try await page("sheet-calendar-new-reminder", CalendarEditor(model: full.calendar, draft: CalendarNewDraft(start: next, end: next.addingTimeInterval(3600))),
+                           width: 320)
+            // The Calendar's details beside a thing (D97): an event with its place and notes, a meeting with people
+            // invited (read only), a reminder; the new event's editor; the sheet the first change asks.
+            full.calendar.mode = .week
+            await full.calendar.reload()
+            for (id, name) in [("elunch", "event"), ("ereview", "meeting"), ("etrip", "allday")] {
+                if let entry = full.calendar.entry(id: id) {
+                    try await page("panel-calendar-inspector-\(name)", CalendarInspector(entry: entry, model: full.calendar), width: 340)
+                }
+            }
+            if let reminder = full.calendar.entries.first(where: { if case .reminder(let o) = $0 { o.reminder.recurrence != nil } else { false } }) {
+                try await page("panel-calendar-inspector-reminder", CalendarInspector(entry: reminder, model: full.calendar), width: 340)
+            }
+            let tomorrow = Calendar.current.startOfDay(for: Date().addingTimeInterval(86400))
+            try await page("sheet-calendar-new-event", CalendarEditor(model: full.calendar, draft: CalendarNewDraft(start: tomorrow, end: tomorrow.addingTimeInterval(86400), allDay: true)),
+                           width: 320)
+            try await page("sheet-calendar-writes", CalendarWritesSheet(model: full.calendar), width: Theme.Size.sheet)
+            full.calendar.mode = .agenda
+            await full.calendar.reload()
             try await page("sheet-new-collection", CollectionSheet(mode: .create, model: full.notebook) { _ in }, width: 420)
             if let edited = full.notebook.collections.first(where: { $0.symbol != nil }) {
                 try await page("sheet-edit-collection", CollectionSheet(mode: .edit(edited), model: full.notebook) { _ in }, width: 420)

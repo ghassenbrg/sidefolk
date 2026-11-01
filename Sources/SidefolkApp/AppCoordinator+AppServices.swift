@@ -31,6 +31,12 @@ extension AppCoordinator: AppServices {
     }
 
     func openCalendarSettings() { MacCalendar.openSettings() }
+
+    func allowCalendarChanges(_ on: Bool) async {
+        // Full access covers writing too; it was asked when the calendar was shown, and is asked here if it wasn't.
+        if on { _ = await MacCalendar.request() }
+        await runtime.settings.update { $0.calendarPage.writes = on }
+    }
     func openActivity() { home.show(section: .history) }
     func cancelReminder(_ id: String) async { _ = try? await runtime.scheduler.cancel(id: id) }
 

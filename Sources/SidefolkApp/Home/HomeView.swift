@@ -191,7 +191,7 @@ private struct PlaceTitle: View {
         case .now:
             return Date().formatted(.dateTime.weekday(.wide).day().month(.wide))
         case .calendar:
-            return String(localized: "Next \(CalendarModel.listDays) days", comment: "Under the Calendar's title")
+            return model.calendar.subtitle
         case .onDuty:
             let duty = model.now.onDuty
             let running = String(localized: "\(model.onDutyRunning) running", comment: "Under On duty's title")

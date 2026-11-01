@@ -46,11 +46,11 @@ import Testing
         let narrow = CalendarGrid.fit(spans, maxColumns: 3)
         #expect(narrow.placed.map { $0?.column } == [1, 0, nil, nil, 0])
         #expect(narrow.placed.map { $0?.of } == [3, 3, nil, nil, 1])
-        #expect(narrow.more == [CalendarGrid.More(start: at(9.25), count: 2, column: 2, of: 3)])
-        // No room for two: everything that overlaps is the count.
+        #expect(narrow.more == [CalendarGrid.More(start: at(9.25), count: 2, column: 2, of: 3, items: [2, 3])])
+        // No room for two: the first column keeps the width (never a sliver, D97) and the rest is the count on it.
         let one = CalendarGrid.fit(spans, maxColumns: 1)
-        #expect(one.placed.map { $0?.column } == [nil, nil, nil, nil, 0])
-        #expect(one.more.map(\.count) == [4])
+        #expect(one.placed.map { $0?.column } == [nil, 0, nil, nil, 0])
+        #expect(one.more == [CalendarGrid.More(start: at(9), count: 3, column: 0, of: 1, items: [0, 2, 3])])
     }
 
     @Test func aRepeatingReminderShowsEveryTimeInRange() async throws {

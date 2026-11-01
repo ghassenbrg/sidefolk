@@ -1335,6 +1335,8 @@ matches`; `AddonStore.freshFor` 30 minutes. Supersedes D2 and D3's robot as a co
 D29) and D27's robot choice.
 
 ### D57 — Your calendar on Today, read-only and off until you turn it on (2026-10-30)
+*Amended by D97:* once the person allows changes, the Calendar adds, moves and deletes events through `calendar.create`,
+`.update` and `.delete`, never events with other people invited.
 **Decision:** Today's day line, Glance and the morning brief show calendar events beside reminders, read with
 EventKit and never written. Nothing is read until the person turns it on, from the day line ("Show your
 calendar") or Settings › Privacy › Calendar, which asks macOS for access. The AI sees events only through a new
@@ -1675,6 +1677,8 @@ companion that comes back by itself is the release on Releases, or the newest wh
 before this read the first entry of an id, which is the release.
 
 ### D66 — A Calendar of everything with a time, and a time is typed or picked (2026-10-31)
+*Amended by D97:* Day, Week, a scrolling Month, Year and Agenda, in the calendars' own colours, with the Mac's events
+changeable through Guard.
 **Decision:** Home gets a Calendar page (⌘5, under Today in the sidebar, last in the rail, pills and ribbons so ⌘1–4
 keep their places): a month, a week (an hour grid placed by the clock, overlaps side by side, an all-day row) or a list
 of 14 days. It shows pending reminders, a repeating one at every time it will fire (`ReminderScheduler.occurrences`,
@@ -3189,3 +3193,77 @@ players, like me and my friend on the same Mac".
 `GameBoard.Reflex.keys`, `GameMove.pressKey`/`earlyKey`, `GameRecord` for two players, `HandsMatch+Duel`,
 `GameSettings.players`, the Play panel's score bar and two-key reflex. A Sidefolk from before this shows "You" and the
 companion on a two-player score and takes Space on the reflex, so Playtime with two players needs it.
+
+### D97 — The Calendar works like a Mac calendar: its calendars' colours, Day to Year, gestures, and changing events through Guard (2026-11-01)
+*Amends D57 and D66:* the Mac's events stop being read-only once the person allows changes.
+**Decision:**
+- **Colours and calendars.** Each Mac or iCloud calendar's own colour (`EKCalendar.cgColor`) is on its events as a
+  tinted fill, a strong edge and text in that colour, made readable by `CalendarPalette` on the theme's card in light
+  and dark: only HSL lightness moves, never hue, until text reads 4.5:1 on its fill, the edge 3:1 on the card and a
+  selected event's words 4.5:1 on its solid fill. Sidefolk's own things are calendars too, in identity colours (D78:
+  identity, never status): reminders Tempo's blue, tasks Brew's tan, routines Nova's violet; late says so with an
+  amber outline and in words. The page's own sidebar has a month to jump with and the calendars by account, each with
+  its box; hidden ones are remembered (`AppSettings.calendarPage`) and left out everywhere (`CalendarReader`), so
+  Today, the brief and the AI see what the Calendar shows.
+- **Views.** Agenda (first, D84), Day, Week, a Month that scrolls on row by row (its title follows the month most on
+  screen) and a Year (twelve small months shaded by how busy each day is). Day and Week open at the working hours or
+  an hour before now, shade the night, draw now as a line with its time in the gutter, put all-day and multi-day events
+  as bars across their days (`CalendarGrid.lanes`), and show as much of an event as its size has room for: up to two
+  lines of title, then time, then place, then notes. A reminder is a moment, not a slab of time: a one-line pill at its
+  time; in the Week one that comes back through the day (every 30 minutes) is one pill at its next time saying how
+  often (`CalendarGrid.oncePerDay`), the Day shows every time. Things that overlap sit side by side, never narrower than
+  60 points (110 in the Day), so a title is never a letter; past that a "+N" lists the rest and opens their details
+  (`CalendarGrid.fit`: with room for one, the first keeps the width and the count sits beside or on it). The view, the
+  hour's height and the sidebar are remembered.
+- **Moving through time.** ⌘← ⌘→ and the chevrons step (in Arabic the next period is on the left), ⌘T or T is today;
+  two fingers sideways turn the period, the page following them until it lets go, then sliding in; two fingers down
+  the month scroll it on and it settles on a week; pinching Day or Week changes the hour's height. Only scroll events
+  over the page are read (a local monitor that leaves with the view).
+- **The keyboard and the mouse.** The arrows step through what is on screen in time order, Return opens the selected
+  thing's details, Delete removes it, Escape lets go. A click selects, a double-click opens details. A double-click or
+  a drag over empty time places a new thing and opens its editor there: a reminder or a task in a collection (the when
+  field's words, so "every monday 9" works) through `reminders.create` and `notes.save`, or an event in a chosen
+  calendar. Things are dragged to another time or day to the quarter hour, an event's bottom edge to change its
+  length; ⌘Z takes back each, and each is in History.
+- **Details.** A popover beside the thing: its calendar and account in its colour, when and its repeat, the place with
+  Maps, a web link (http and https only), the people invited with their answers (read only), notes; then Done, Edit
+  and Remove for a reminder, Edit and Delete for an event Sidefolk may change, Open in Calendar for every event.
+- **Changing the Mac's calendars: yes, carefully.** D57 kept the calendar read-only because nothing needed to write
+  it; a calendar people use like Calendar must. Three tools, `calendar.create` (medium), `calendar.update` (medium)
+  and `calendar.delete` (high), capability `calendar.write`, through `ToolExecutor` for the person's own drags and
+  clicks too, so Guard sees every change, History lists it and its Undo puts it back (a deleted event is recreated
+  from its kept copy, alerts included). They work only once the person allowed changes: the first change asks in a
+  sheet that says what Sidefolk will and won't do, or Settings › Trust › Your calendar. Never: an event other people
+  are invited to (changing it sends them notices, so that stays in Calendar, where the person sees who is told), a
+  calendar that can't be changed (subscriptions, birthdays, shared read-only), a whole repeating series (only the one
+  time, as Calendar's "Only this event"); and Sidefolk never adds attendees. The AI is offered the tools only while
+  changes are allowed (as `calendar.today` only while shown); `calendar.today` then gives each changeable event's id.
+  A turn that read outside content never changes the calendar without the person, in any mode
+  (`PermissionEngine.couldCarryOut`): calendars sync to accounts and may be shared, so a change can carry words out.
+  macOS's full access, asked when the calendar is shown, already covers writing; nothing new is asked of macOS.
+
+**Why:** the founder: "make it much better, like a real calendar … use the colours and everything; if there's space,
+show details, if not, just the title … how you add things, how you scroll, how you swipe … like a built-in calendar
+feature." Writing through the same tools as everything else keeps one path for Guard, History and Undo.
+
+**Alternatives:** keeping the Mac's events read-only with Open in Calendar (adding a meeting would mean leaving the
+page, the thing the founder asked to fix); writing from the view straight to EventKit (no Guard, no History, no
+Undo, and a second way in for the AI later); changing whole series or events with attendees (both reach other people
+or many dates with one drag); a colour of Sidefolk's own for every Mac event (the founder asked for the calendars'
+own); infinite horizontal scrolling of weeks (a swipe that turns a week reads better and keeps the hour grid still).
+
+**Implications:** Core: `CalendarEvent` gains its calendar's id and colour, place, notes, link, attendees, repeat,
+writability and alerts; `CalendarInfo`, `CalendarDraft`, `CalendarPalette`, `CalendarPageSettings`,
+`CalendarGrid.lanes/weeks/mainMonth/yearMonths`, `PlatformBridge.calendars/calendarEvent/createCalendarEvent/
+updateCalendarEvent/deleteCalendarEvent`, `CalendarWriteTools`; a repeating event's times each have their own id
+(EventKit's identifier and when it was meant to happen). App: `MacCalendar` reads colours and details and writes one
+occurrence; the Calendar page is `CalendarView`, `CalendarSidebar`, `CalendarTimeGrid`, `CalendarMonth`,
+`CalendarYear`, `CalendarList`, `CalendarParts` (block, bar, chip, menu), `CalendarInspector`, `CalendarEditor`,
+`CalendarGestures`, `CalendarModel` (+Changes). The week's read-only note (D84's leftovers) is gone: an event that
+can't change says why in its details. Debug builds: `SIDEFOLK_SAMPLE_CALENDAR=1` runs on `SampleCalendar` (realistic
+colours, a meeting, a subscription, a repeating standup) instead of the person's calendar, and `calendar:swipe`,
+`:scroll`, `:drag`, `:click`, `:key`, `:type`, `:crowd` (with `:film`) drive and film the page. Measured: 3,000 extra
+events, a week of 522 things reads and indexes in 4 ms; idle CPU with the week or month open is the same as on
+History (about 1.5% for the whole app with its companion). Not done: a real trackpad's swipe and pinch by hand (the
+swipes were fed as the trackpad's events; the pinch is SwiftUI's `MagnifyGesture`), the person's own EventKit data
+(the debug build wasn't given calendar access, so it ran on the sample).

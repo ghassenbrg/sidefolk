@@ -182,10 +182,11 @@ public struct PermissionEngine: Sendable {
     /// What a turn steered by a web page, file or extension still never does without the person, even
     /// in Full access (SECURITY T2, T12, T21): reach a server or another app at an address the person
     /// didn't type, run a program, change files (a shared folder may sync them anywhere), hand input to
-    /// an extension or MCP server, or write the clipboard or memory, which carry it into later moments.
+    /// an extension or MCP server, or write the clipboard or memory, which carry it into later moments, or the
+    /// person's calendar, which syncs to their accounts and may be shared (D97).
     static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool) -> Bool {
         outwardUntyped
-            || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions])
+            || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions, .calendarWrite])
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
     }
 
@@ -284,6 +285,7 @@ public struct PermissionEngine: Sendable {
         case .filesWrite: String(localized: "Changing files")
         case .macApps: String(localized: "Using Apple Notes and Reminders")
         case .calendar: String(localized: "Reading your calendar")
+        case .calendarWrite: String(localized: "Changing your calendar")
         }
     }
 }
