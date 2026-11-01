@@ -16969,24 +16969,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld يوم متتالٍ"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يوم واحد متتالٍ"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "يومان متتاليان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -16999,7 +16981,25 @@
                   "value" : "%lld يومًا متتاليًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يوم واحد متتالٍ"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld يوم متتالٍ"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يومان متتاليان"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld يوم متتالٍ"
@@ -22646,24 +22646,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld سؤال"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "سؤال واحد"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "سؤالان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -22676,7 +22658,25 @@
                   "value" : "%lld سؤالًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سؤال واحد"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld سؤال"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سؤالان"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld سؤال"
@@ -24730,24 +24730,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حُل %lld"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حُل %lld"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "حُل %lld"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -24760,7 +24742,25 @@
                   "value" : "حُل %lld"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُل %lld"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُل %lld"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُل %lld"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "حُل %lld"
@@ -28091,24 +28091,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld فوز متتالٍ"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "فوز واحد متتالٍ"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "فوزان متتاليان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -28121,7 +28103,25 @@
                   "value" : "%lld فوزًا متتاليًا"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "فوز واحد متتالٍ"
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld فوز متتالٍ"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "فوزان متتاليان"
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld فوز متتالٍ"
@@ -79128,6 +79128,7 @@
     },
     "Face off in these games" : {
       "comment" : "Game Center: under the games against the companion",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -88611,6 +88612,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "遇到问题"
+          }
+        }
+      }
+    },
+    "Head to head" : {
+      "comment" : "Game Center: two people's games against each other on this Mac",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المواجهات بينكما"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktvergleich"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cara a cara"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face à face"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testa a testa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対戦成績"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상대 전적"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frente a frente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对战记录"
           }
         }
       }
@@ -145191,7 +145251,7 @@
       }
     },
     "Play against %@" : {
-      "comment" : "Game Center: the games played against the companion\nPlay panel's menu: the games played against the companion",
+      "comment" : "Play panel's menu: the games played against the companion",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -145245,6 +145305,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "和 %@ 对战"
+          }
+        }
+      }
+    },
+    "Play against a friend on this Mac" : {
+      "comment" : "Game Center: the 2 players button's tooltip",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العب ضد صديق على هذا الماك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Mac gegen Freunde spielen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugar contra un amigo en este Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jouer contre un ami sur ce Mac"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gioca contro un amico su questo Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このMacで友だちと対戦"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 Mac에서 친구와 대결"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogar contra um amigo neste Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这台Mac上和朋友对战"
           }
         }
       }
@@ -147389,7 +147508,7 @@
       }
     },
     "Puzzles" : {
-      "comment" : "Game Center: the games played alone\nPlay panel's menu: the games played alone",
+      "comment" : "Play panel's menu: the games played alone",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -154177,6 +154296,7 @@
     },
     "Relax and challenge your brain" : {
       "comment" : "Game Center: under the puzzles",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
