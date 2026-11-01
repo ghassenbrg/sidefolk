@@ -19,6 +19,8 @@ protocol VoiceHost: AnyObject {
     func mouth(_ level: Double?)
     /// Cancels the AI run in progress, so no stale answer turns up after an interruption.
     func cancelRun()
+    /// How loud the person is while the microphone listens, 0...1 in steps; nil when it stops (D88).
+    func voiceLevel(_ level: Double?)
 }
 
 /// A request whose reply may be said aloud: spoken with the talk key, or typed while replies are
@@ -52,6 +54,8 @@ final class VoiceController {
     /// A spoken request is still being worked on (its run can be cancelled by an interruption).
     private var awaitingSpokenReply = false
     private var mouthLevel: Double?
+    /// Reads the microphone's level a dozen times a second, only while it listens (D88).
+    private var levelWatch: Task<Void, Never>?
     /// The preferred models this ElevenLabs key may use, listed (free) along with its voices.
     var elevenLabsModels: [String]?
 
@@ -194,8 +198,9 @@ final class VoiceController {
             // Let go while the recognizer was getting ready: opening the microphone now would hear nothing.
             if file == nil, !holding { return }
             host.ask.voice = .listening(basic: recognizer is BasicRecognizer)
+            watchLevel()
             if let file {
-                try await Self.play(file, into: recognizer)
+                try await Self.play(file, into: recognizer, meter: capture.meter)
             } else {
                 try capture.start(Self.feed(recognizer))
             }
@@ -295,6 +300,28 @@ final class VoiceController {
     private func finishedTalking() {
         host.voiceMood(hearing: false, transcribing: false)
         stopWatchingEscape()
+        levelWatch?.cancel()
+        levelWatch = nil
+        host.voiceLevel(nil)
+    }
+
+    /// The light at the companion's feet follows the voice while it listens: the meter is read twelve times a second
+    /// and only a step up or down reaches the screen, so silence costs nothing and nothing runs once it stops.
+    private func watchLevel() {
+        levelWatch?.cancel()
+        let meter = capture.meter
+        levelWatch = Task { [weak self] in
+            var last: Double?
+            while !Task.isCancelled, let host = self?.host, case .listening? = host.ask.voice {
+                let step = VoiceLevel.step(meter.reading.level)
+                if step != last {
+                    last = step
+                    host.voiceLevel(step)
+                }
+                try? await Task.sleep(for: .milliseconds(83))
+            }
+            if last != nil { self?.host.voiceLevel(nil) }
+        }
     }
 
     // MARK: Replies
@@ -417,8 +444,8 @@ final class VoiceController {
         { buffer in recognizer.append(buffer) }
     }
 
-    /// An audio file into the recognizer at the pace it was spoken, as if the microphone heard it.
-    nonisolated static func play(_ file: URL, into recognizer: any SpeechRecognizer) async throws {
+    /// An audio file into the recognizer at the pace it was spoken, as if the microphone heard it (and measured it).
+    nonisolated static func play(_ file: URL, into recognizer: any SpeechRecognizer, meter: MicrophoneMeter? = nil) async throws {
         let audio = try AVAudioFile(forReading: file)
         let format = audio.processingFormat
         let block: AVAudioFrameCount = 4096
@@ -426,6 +453,7 @@ final class VoiceController {
             guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: block) else { break }
             try audio.read(into: buffer, frameCount: block)
             guard buffer.frameLength > 0 else { break }
+            meter?.measure(buffer)
             recognizer.append(buffer)
             try await Task.sleep(for: .seconds(Double(buffer.frameLength) / format.sampleRate))
         }

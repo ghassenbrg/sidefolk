@@ -47,6 +47,7 @@ extension SidecardController {
         model.shape = .stack
         model.stackFocus = items.last?.id
         appear()
+        fanOut()
         makeKey()
         return true
     }

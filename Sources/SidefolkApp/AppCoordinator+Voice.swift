@@ -75,6 +75,10 @@ extension AppCoordinator: VoiceHost {
         renderMood()
     }
 
+    func voiceLevel(_ level: Double?) {
+        companion.setVoiceLevel(level)
+    }
+
     func mouth(_ level: Double?) {
         companion.character.speak(level)
     }

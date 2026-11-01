@@ -44,6 +44,13 @@ struct SidecardView: View {
         .accessibilityHint(Text("Shows more", comment: "VoiceOver: clicking a whisper beside the companion grows it into a card"))
     }
 
+    /// A held card as the stack shows it: who it's from, its title, and when.
+    static func stackItem(_ item: AttentionItem, companion: String, sessions: [String: AgentSession]) -> SidecardStack.Item {
+        SidecardStack.Item(id: item.id, folk: SidecardItemCard.folk(item), title: Text(verbatim: item.title),
+                           meta: SidecardItemCard.source(item, companion: companion, sessions: sessions)
+                               + Text(verbatim: " · \(TimeFormat.clock(item.shownAt ?? item.createdAt, calendar: .autoupdatingCurrent))"))
+    }
+
     /// Three held cards at most: the newest, or the three around the one the keyboard is on.
     static func shown(_ stack: [AttentionItem], around focus: String?) -> [AttentionItem] {
         guard let focus, let at = stack.firstIndex(where: { $0.id == focus }), stack.count > 3 else { return Array(stack.suffix(3)) }
@@ -62,11 +69,9 @@ struct SidecardView: View {
     /// What waits, fanned out from the shoulder: the newest in front, a click opens Ask on top of them.
     private var stack: some View {
         VStack(alignment: .trailing, spacing: Theme.Space.s) {
-            SidecardStack(items: Self.shown(model.stack, around: model.stackFocus).map { item in
-                SidecardStack.Item(id: item.id, folk: SidecardItemCard.folk(item), title: Text(verbatim: item.title),
-                                   meta: SidecardItemCard.source(item, companion: model.companionName, sessions: model.sessions)
-                                       + Text(verbatim: " · \(TimeFormat.clock(item.shownAt ?? item.createdAt, calendar: .autoupdatingCurrent))"))
-            }, selected: model.stackFocus)
+            SidecardStack(items: Self.shown(model.stack, around: model.stackFocus).map {
+                Self.stackItem($0, companion: model.companionName, sessions: model.sessions)
+            }, selected: model.stackFocus, out: model.stackOut, from: model.fanFrom)
             HStack(spacing: Theme.Space.s) {
                 if model.stackFocus != nil {
                     // From the shortcut: the keys that move through the held cards (D88).

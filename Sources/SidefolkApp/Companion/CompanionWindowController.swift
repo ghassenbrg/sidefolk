@@ -405,6 +405,11 @@ final class CompanionWindowController {
         container.setAccessibilityValue(Self.spoken(light))
     }
 
+    /// The light follows the person's voice while the microphone listens (D88).
+    func setVoiceLevel(_ level: Double?) {
+        if floor.voiceLevel != level { floor.voiceLevel = level }
+    }
+
     /// What VoiceOver hears about the companion's state beside its name.
     private static func spoken(_ light: DesktopLight) -> String {
         switch light {
@@ -437,6 +442,13 @@ final class CompanionWindowController {
         guard floor.count > 0 else { return false }
         let center = NSPoint(x: floor.badgeCenter.x, y: container.bounds.height - floor.badgeCenter.y)
         return hypot(point.x - center.x, point.y - center.y) <= Theme.Size.stackBadge * 0.7
+    }
+
+    /// The count on the shoulder on screen, where held cards fold to (D88); nil while the companion is away.
+    var badgeOnScreen: NSPoint? {
+        guard panel.isVisible else { return nil }
+        let point = NSPoint(x: floor.badgeCenter.x, y: container.bounds.height - floor.badgeCenter.y)
+        return panel.convertPoint(toScreen: container.convert(point, to: nil))
     }
 
     /// Folks sit on whichever side of the companion has more room on screen.

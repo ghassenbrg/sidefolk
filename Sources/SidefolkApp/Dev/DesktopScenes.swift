@@ -164,6 +164,8 @@ enum DesktopScenes {
         var tip: FloorTip.Content?
         /// The person works under the corner: the extras step back.
         var receded = false
+        /// The microphone listens: the light follows the voice (D88).
+        var voiceLevel: Double?
     }
 
     static var pins: [Readout] {
@@ -220,6 +222,9 @@ enum DesktopScenes {
             ("stack", Floor(light: .waiting(12), folks: ["scout"], sidecard: sidecards["stack"]), false),
             ("focus", Floor(light: .focus, count: 2, folks: ["scout"], pins: Array(pins.prefix(1))), false),
             ("quiet", Floor(light: .quiet, folks: ["scout"], pins: Array(pins.prefix(1))), false),
+            // Talking (D88): a soft voice and a raised one.
+            ("listening-soft", Floor(light: .working, voiceLevel: 0.25), false),
+            ("listening-loud", Floor(light: .working, voiceLevel: 1), false),
         ]
     }
 }
@@ -266,7 +271,7 @@ struct FloorScene: View {
                                 .padding(4)
                         }
                 }
-                LightPool(state: floor.light, width: min(max(Self.body * 1.9, 90), 240))
+                LightPool(state: floor.light, width: min(max(Self.body * 1.9, 90), 240), level: floor.voiceLevel)
                     .offset(x: -(Self.box / 2) + min(max(Self.body * 1.9, 90), 240) / 2, y: min(max(Self.body * 1.9, 90), 240) * 0.14 - Self.feet - 2)
                     .frame(width: Self.box, alignment: .center)
                 Image(nsImage: portrait).resizable().scaledToFit().frame(width: Self.box * 0.92, height: Self.box * 0.92)

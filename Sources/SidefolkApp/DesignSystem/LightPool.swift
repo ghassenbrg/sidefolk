@@ -40,6 +40,9 @@ struct LightPool: View {
     /// A still colour, as Reduce Motion has it: for copies of the light (Home's nook), where a breath forever would
     /// redraw a whole window every frame for something the desktop already shows.
     var still = false
+    /// How loud the person is while the microphone listens (0...1 in steps, D88): the light swells with the voice
+    /// instead of breathing. Nil the rest of the time.
+    var level: Double? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var breathing = false
@@ -48,7 +51,16 @@ struct LightPool: View {
 
     var body: some View {
         ZStack {
-            if let light = state.light {
+            if let level = listening {
+                // The voice's light: brighter and a little wider as the person speaks up, settling between words.
+                let color = state.light?.color ?? Theme.glow
+                Ellipse()
+                    .fill(RadialGradient(colors: [color.opacity(0.22 + 0.5 * level), color.opacity(0)],
+                                         center: .center, startRadius: 0, endRadius: width / 2))
+                    .frame(width: width, height: width * 0.28)
+                    .scaleEffect(0.92 + 0.26 * level)
+                    .animation(.easeOut(duration: 0.12), value: level)
+            } else if let light = state.light {
                 if contrast == .increased {
                     Ellipse().strokeBorder(light.color, lineWidth: 2).frame(width: width * 0.8, height: width * 0.18)
                 } else {
@@ -75,7 +87,11 @@ struct LightPool: View {
         }
     }
 
-    private var breathes: Bool { state == .working && !reduceMotion && !still }
+    private var breathes: Bool { state == .working && !reduceMotion && !still && listening == nil }
+
+    /// The voice's level, when the light may move with it (never with Reduce Motion or for a copy of the light; with
+    /// Increase Contrast the ring stays, which reads where a soft glow doesn't).
+    private var listening: Double? { reduceMotion || still || contrast == .increased ? nil : level }
 }
 
 /// The mark on the companion's shoulder: how many wait (amber), how many Focus holds (grey), or Focus's half circle and

@@ -27,6 +27,10 @@ final class SidecardController {
     var onChange: (() -> Void)?
     /// A card folded into the stack: the companion stops looking alarmed; the count says it waits.
     var onFold: ((AttentionItem) -> Void)?
+    /// Where the count on the companion's shoulder is on screen, for the stack's arc (D88).
+    var badgeProvider: (() -> NSPoint?)?
+    /// The stack folding back into the shoulder before it goes.
+    var foldBack: Task<Void, Never>?
     /// The keyboard, while its shortcut gave it to the Sidecard (D88): the held cards it moves through, and from when
     /// keys count after a card came to the front (a key held down or meant for the card before can't answer it).
     var holdsKeys = false
@@ -242,6 +246,7 @@ final class SidecardController {
     private func fold(_ item: AttentionItem) {
         // The companion's own lines (onboarding) wait nowhere: they give way, and never make an "All clear".
         guard Self.folds(item) else { return }
+        flyToShoulder(item)
         folded.insert(item.id)
         onFold?(item)
     }
@@ -306,12 +311,20 @@ final class SidecardController {
         fanEnd?.cancel()
         if show {
             guard !hosted.panel.isVisible || model.shape == .stack else { return }
+            // Back on the count while the cards fold away: they come out again.
+            if foldBack != nil {
+                foldBack?.cancel()
+                foldBack = nil
+                model.stackOut = true
+                return
+            }
             Task { [weak self] in
                 guard let self, let items = await self.waitingItems?(), !items.isEmpty else { return }
                 self.model.stack = items
                 self.model.item = nil
                 self.model.shape = .stack
                 self.appear()
+                self.fanOut()
             }
         } else if model.shape == .stack {
             fanEnd = Task { [weak self] in
@@ -324,9 +337,24 @@ final class SidecardController {
 
     func hideStack() {
         guard model.shape == .stack else { return }
-        model.stack = []
         model.stackFocus = nil
+        // The held cards fold back into the shoulder along their arc, then the panel goes (D88).
+        guard model.fanFrom != nil, hosted.panel.isVisible, foldBack == nil else { return putStackAway() }
+        model.stackOut = false
+        foldBack = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(240))
+            guard !Task.isCancelled, let self else { return }
+            self.foldBack = nil
+            if self.model.shape == .stack, !self.model.stackOut { self.putStackAway() }
+        }
+    }
+
+    private func putStackAway() {
+        foldBack?.cancel()
+        foldBack = nil
+        model.stack = []
         model.shape = .whisper
+        model.stackOut = true
         hosted.panel.orderOut(nil)
         next()
     }

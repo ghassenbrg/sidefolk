@@ -18,6 +18,10 @@ final class SidecardModel {
     var shape: Shape = .whisper
     /// The held cards the stack fans out, newest last.
     var stack: [AttentionItem] = []
+    /// The held cards are out of the shoulder (true) or folding back into it, and the way to it from the stack's foot
+    /// (D88's arc); no way with Reduce Motion, so they simply stand.
+    var stackOut = true
+    var fanFrom: CGSize?
     /// How many wait in all, for the stack's "+n more".
     var waiting = 0
     /// When the whisper goes, and how long it was given; nil while the pointer holds it.

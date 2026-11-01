@@ -268,6 +268,11 @@ struct SidecardStack: View {
     var items: [Item]
     /// The one the keyboard is on (D88), ringed.
     var selected: String?
+    /// Fanned out of the shoulder (D88): with `from`, the offset to the count, the cards come out of it along a short
+    /// arc when `out` turns true, the front one first, and fold back into it when it turns false. Without it they
+    /// simply stand (Reduce Motion, snapshots).
+    var out = true
+    var from: CGSize?
 
     var body: some View {
         let shown = Array(items.prefix(3))
@@ -290,6 +295,7 @@ struct SidecardStack: View {
                 .accessibilityAddTraits(item.id == selected ? .isSelected : [])
                 // The ones behind sit back a little: narrower and further in.
                 .padding(.horizontal, depth * 8)
+                .modifier(ArcFan(out: out, from: from, delay: depth * 0.045))
                 .zIndex(Double(index))
             }
         }
@@ -306,6 +312,29 @@ extension View {
                 .strokeBorder(Theme.accent, lineWidth: on ? 2 : 0)
                 .padding(-3)
                 .allowsHitTesting(false)
+        }
+    }
+}
+
+/// A card moving out of (or back into) the companion's shoulder along a short arc (D88): sideways and up at different
+/// paces, which bends the path, while it grows from a fifth of its size. Only while it moves: at rest it is the card.
+struct ArcFan: ViewModifier {
+    var out: Bool
+    var from: CGSize?
+    var delay: Double = 0
+
+    func body(content: Content) -> some View {
+        if let from {
+            content
+                .scaleEffect(out ? 1 : 0.2, anchor: .bottom)
+                .opacity(out ? 1 : 0)
+                .animation(.easeOut(duration: 0.26).delay(delay), value: out)
+                .offset(x: out ? 0 : from.width)
+                .animation(.easeOut(duration: 0.3).delay(delay), value: out)
+                .offset(y: out ? 0 : from.height)
+                .animation(.spring(response: 0.34, dampingFraction: 0.86).delay(delay), value: out)
+        } else {
+            content
         }
     }
 }

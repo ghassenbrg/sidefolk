@@ -37,6 +37,8 @@ enum FloorItem: Equatable {
 @MainActor @Observable
 final class FloorModel {
     var light: LightPoolState = .idle
+    /// The voice's level while the microphone listens (D88), nil otherwise.
+    var voiceLevel: Double?
     /// How many wait, for the shoulder (alert and Focus carry it; waiting carries its own).
     var count = 0
     var pins: [Readout] = []
@@ -65,7 +67,7 @@ struct FloorUnderlay: View {
     var model: FloorModel
 
     var body: some View {
-        LightPool(state: model.light, width: model.poolWidth)
+        LightPool(state: model.light, width: model.poolWidth, level: model.voiceLevel)
             .position(model.poolCenter)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .allowsHitTesting(false)
