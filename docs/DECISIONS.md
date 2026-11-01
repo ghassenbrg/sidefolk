@@ -3048,7 +3048,7 @@ switch in Settings, `AppCoordinator.installTriviaHelp`; Playtime's `TriviaAI` an
   paper, scissors (the first hand hidden behind a cover until the second is in). Guess My Animal stays the companion's:
   it is the one guessing and learning. The first board offers "vs <companion>" or "2 players"; names are typed one at
   a time or kept (`options.names`, remembered by the app from what a two-player score shows); the score shows both
-  names in identity colours, the end card names the winner in a neutral tone, the companion referees (no "I win"), and
+  names in identity colours, the end card names the winner in neutral ink with a trophy (tone `info`; a draw stays `neutral`), the companion referees (no "I win"), and
   head-to-head tallies are kept per pair of names, apart from the games against the companion (the Activity row has no
   result, so the Play menu's stats stay the person's).
 

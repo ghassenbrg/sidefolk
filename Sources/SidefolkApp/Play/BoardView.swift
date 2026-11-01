@@ -504,7 +504,9 @@ struct GameResultView: View {
                     .background { TrophyRays().frame(width: 124, height: 124).opacity(shown ? 1 : 0) }
                     .background { Celebration().clipped() }
             } else {
-                Image(systemName: Self.symbol(verdict)).font(.system(size: 24, weight: .bold)).foregroundStyle(GameColors.color(verdict))
+                // Two people (D96): a winner is named in neutral ink with a trophy, so the colour never says whose loss it was.
+                Image(systemName: result.tone == .info ? "trophy.fill" : Self.symbol(verdict)).font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(result.tone == .info ? Theme.ink : GameColors.color(verdict))
                     .opacity(shown ? 1 : 0)
             }
             Text(verbatim: Self.figure(result.figure, layoutDirection))

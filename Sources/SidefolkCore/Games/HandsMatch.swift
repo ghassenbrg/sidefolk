@@ -49,6 +49,8 @@ public final class HandsMatch: GameProvider {
     }
 
     let state = Mutex(State())
+    /// The names two people last played under, as Sidefolk passed them (D96), for a switch to two players.
+    let passedNames = Mutex<JSONValue?>(nil)
     let score: HandsScore
     let companionName: String
     /// A whole number in the range: the system's generator, or a script in tests.
@@ -66,6 +68,7 @@ public final class HandsMatch: GameProvider {
     }
 
     public func start(_ setup: GameSetup) async throws -> GameBoard {
+        if setup.options["names"] != nil { passedNames.withLock { $0 = setup.options["names"] } }
         if setup.options["players"]?.intValue == 2 {
             let names = TwoPlayers.names(setup.options["names"])
             let s = state.withLock { s -> State in

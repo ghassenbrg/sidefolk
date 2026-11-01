@@ -757,8 +757,8 @@ Activity row when the game ends.
   tone, a draw neutral, each with its symbol: don't encode a result in your own words' colour.
 
 **Two people on one Mac** (D96): a game may offer "vs <companion>" or "2 players" on its first board. Then the
-companion only referees: use no `i_win` or `you_win` line, give the end card a `neutral` tone (the winner is named,
-the colour says who rather than how it went), put both names in `score.players` (Sidefolk records the game apart from
+companion only referees: use no `i_win` or `you_win` line, give the end card the `info` tone for a winner (neutral ink and a
+trophy: the winner is named, nobody's loss is coloured) or `neutral` for a draw, put both names in `score.players` (Sidefolk records the game apart from
 the person's results against the companion and remembers the names), and pass a secret with a cover board that holds
 nothing of it ("Pass the Mac to Sam. Ana, look away!" and a ready button) before the other person's turn.
 

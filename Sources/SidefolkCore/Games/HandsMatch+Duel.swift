@@ -105,7 +105,7 @@ extension HandsMatch {
 
     /// Switches before the first throw: a fresh match either way, names first for two people.
     func opponent(_ two: Bool) -> GameBoard {
-        let names = TwoPlayers.names(nil)
+        let names = TwoPlayers.names(passedNames.withLock { $0 })
         let s = state.withLock { s -> State in
             guard s.round == 1, s.last == nil, s.firstHand == nil else { return s }
             if two {
@@ -181,7 +181,7 @@ extension HandsMatch {
             parts.append(.result(GameBoard.Result(
                 figure: "\(Toss.number(s.you)) – \(Toss.number(s.companion))",
                 line: String(localized: "\(winner) wins the match!", comment: "Two players: the end of rock, paper, scissors, the winner named"),
-                ribbon: nil, tone: .neutral, facts: [],
+                ribbon: nil, tone: .info, facts: [],
                 actions: [GameBoard.Button(label: String(localized: "Rematch", comment: "A button: play the best of three again"), move: "again",
                                            style: .primary, symbol: "arrow.clockwise", key: nil, disabled: false)])))
         } else if s.last != nil {

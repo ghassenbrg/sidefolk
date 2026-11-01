@@ -171,7 +171,7 @@ struct GamesV2Tests {
         _ = try await match.move(.answer(0))
         _ = try await match.move(.button("ready"))
         let end = try await match.move(.answer(2))
-        #expect(end.over && end.result?.tone == .neutral && end.result?.line?.contains("Lina") == true)
+        #expect(end.over && end.result?.tone == .info && end.result?.line?.contains("Lina") == true)
         let duels = try await kv.get(HandsScore.duelsKey, as: [String: HandsScore.Duel].self)
         #expect(duels?["Lina · Sam"]?.wins["Lina"] == 1)
         #expect(await HandsScore(kv: kv).record(person: .rock, companion: .rock) == HandsScore.Score(person: 0, companion: 0, draws: 1),
