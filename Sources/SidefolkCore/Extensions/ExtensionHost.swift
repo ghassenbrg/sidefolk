@@ -581,6 +581,7 @@ public actor ExtensionHost {
     public func pages() -> [ExtensionPageInfo] {
         runtimes.keys.sorted().flatMap { id -> [ExtensionPageInfo] in
             guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
+            let first = m.pages.keys.sorted().first
             return m.pages.keys.sorted().compactMap { name -> ExtensionPageInfo? in
                 guard let p = m.pages[name] else { return nil }
                 let builtIn = rt.pin.origin?.firstParty == true ? BuiltInExtensionWords.page(id, name) : nil
@@ -588,7 +589,7 @@ public actor ExtensionHost {
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
                                          history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
                                          needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true,
-                                         tagline: tagline(rt))
+                                         tagline: tagline(rt), gameCenter: !m.games.isEmpty && name == first)
             }
         }
     }

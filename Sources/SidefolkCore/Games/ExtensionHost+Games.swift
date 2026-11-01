@@ -96,10 +96,16 @@ struct OpenGame: Sendable {
     }
 }
 
-/// The games of enabled extensions, kept where the sentence matcher can read them at once.
+/// The games of enabled extensions, kept where the sentence matcher can read them at once, and the game opened last
+/// with its level, for "rematch", "make it harder" and "resume" (D93; after a relaunch, Activity's last game).
 public final class GameShelf: Sendable {
     private let games = Mutex<[GameInfo]>([])
+    private let opened = Mutex<(id: String, level: String?)?>(nil)
     public init() {}
     public var all: [GameInfo] { games.withLock { $0 } }
     func set(_ list: [GameInfo]) { games.withLock { $0 = list } }
+
+    /// The game `games.open` opened last (`extension/game`) and the level it asked for.
+    public var last: (id: String, level: String?)? { opened.withLock { $0 } }
+    func opened(_ info: GameInfo, level: String?) { opened.withLock { $0 = (info.id, level) } }
 }

@@ -122,7 +122,8 @@ public final class SidefolkRuntime: Sendable {
         registry.register(SkillTools.all(skills))
         registry.register(ExtensionWatchTool(host: extensions, engine: watchers))
         registry.register(ExtensionBuilderTools.all(drafts: extensionDrafts, host: extensions, events: events))
-        registry.register([GamesOpenTool(events: events, shelf: extensions.gameShelf)])
+        registry.register([GamesOpenTool(events: events, shelf: extensions.gameShelf, settings: settings, activity: activity),
+                           GamesSettingsTool(settings: settings, shelf: extensions.gameShelf)])
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening",

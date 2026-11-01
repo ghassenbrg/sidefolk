@@ -11,6 +11,9 @@ public struct GameSettings: Codable, Sendable, Equatable {
     public var speakers: [String: Bool] = [:]
     /// The companion may cheat for fun in games that offer it (Which Cup? palms the gem), always confessing when caught.
     public var sneaky = false
+    /// The level each game opens at, by `extension/game`, when the person chose one (the Game Center, "play tic-tac-toe on
+    /// hard", "make it harder", D93); a game without one picks its own.
+    public var levels: [String: String] = [:]
 
     public init() {}
 
@@ -24,5 +27,6 @@ public struct GameSettings: Codable, Sendable, Equatable {
         read(.sounds, &sounds)
         read(.speakers, &speakers)
         read(.sneaky, &sneaky)
+        read(.levels, &levels)
     }
 }

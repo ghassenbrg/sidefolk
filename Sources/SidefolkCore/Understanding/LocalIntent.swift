@@ -111,6 +111,8 @@ public enum LocalIntent: Sendable, Equatable {
     case game(extensionId: String, game: String)
     /// "show me the games", "let's play", "games": the Play panel's menu of every game (D79 amended).
     case gamesMenu
+    /// "rematch", "trivia about space, hard", "pause the game", "show my stats": the app's own game sentences (D93).
+    case gameCommand(GameCommand)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

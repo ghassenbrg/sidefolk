@@ -72,6 +72,10 @@ public enum AppEvent: Sendable {
     /// The Play panel's menu of every game (D79 amended): "show me the games", or `games.open` without a game. `focus`
     /// as for a game: the person's own words take the keyboard, the AI's wait for a click.
     case gamesMenu(focus: Bool)
+    /// The Game Center in Home (D93): "show my stats", or `games.open` with `center`.
+    case gameCenter
+    /// "pause the game": the Play panel puts its game away, to resume from the menu or with "resume" (D93).
+    case gamesAway
     /// An extension with the power permission asked that apps see the person as active (D63): the app moves the
     /// pointer by nothing.
     case nudge
