@@ -34,7 +34,7 @@ struct ExtensionPageView: View {
                 }
                 if !model.alerts.isEmpty { HeadsUps(model: model) }
             } else if let problem = model.problem {
-                RowsCard { InlineEmpty(text: LocalizedStringKey(problem), systemImage: "exclamationmark.triangle") }
+                RowsCard { InlineEmpty(label: Text(ext: problem), systemImage: "exclamationmark.triangle") }
             } else {
                 ProgressView().frame(maxWidth: .infinity).padding(Theme.Space.xxl)
             }

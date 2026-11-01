@@ -105,7 +105,9 @@ Resources, D39): their descriptions are first-party text and are reviewed like p
 Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), stripped of invisible
 and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
 That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
-host. *Residual:* injection can still steer low-risk actions; extension tool names and titles
+host, and open only as web pages (`webLinksOnly`: http and https without a user part; `file:` and app
+schemes are ignored, audit F12), in answers and release notes alike. Words that aren't Sidefolk's own, an
+extension's error included, are shown verbatim (`Text(ext:)`), never read as Markdown. *Residual:* injection can still steer low-risk actions; extension tool names and titles
 (≤ 60 characters) still reach the model. A site the person allowed for good can receive, in a page's
 path, whatever a steered model puts there: only that site's owner reads it, so the trade rests on the
 person allowing sites they trust (a site where strangers can read who fetched what, a request bin, isn't
@@ -576,6 +578,7 @@ paths and queries are dropped, hosts stay.
 | Fetch or watcher URLs (query, path, DNS label) | Taint rule; after outside content a fetch goes without a card only to a site allowed for good: exact site, no query or fragment, no redirect off it (D47) |
 | Open URL | Same as T11 |
 | Markdown images | Never loaded |
+| Markdown links | Web pages only (`webLinksOnly`); other text verbatim |
 | Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47), and Sidefolk's own extensions' calls to a device the person paired, confirmed and bound per call, in Auto and Full access (D72) |
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
