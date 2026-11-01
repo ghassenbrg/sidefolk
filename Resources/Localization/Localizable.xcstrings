@@ -16308,24 +16308,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا بطاقات منتظرة"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بطاقة منتظرة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "بطاقتان منتظرتان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -16338,10 +16320,28 @@
                   "value" : "%lld بطاقة منتظرة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بطاقة منتظرة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld بطاقة منتظرة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "بطاقتان منتظرتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا بطاقات منتظرة"
                 }
               }
             }
@@ -20023,7 +20023,7 @@
       }
     },
     "%lld paused" : {
-      "comment" : "Under On duty's title",
+      "comment" : "A watch's bar of checks: times it was paused\nUnder On duty's title",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -21789,24 +21789,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا جلسات"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "جلسة واحدة"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "جلستان"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -21819,10 +21801,28 @@
                   "value" : "%lld جلسة"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "جلسة واحدة"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld جلسة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "جلستان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا جلسات"
                 }
               }
             }
@@ -48480,6 +48480,7 @@
       }
     },
     "Change" : {
+      "comment" : "Opens Settings › Attention from Today",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -48535,8 +48536,7 @@
             "value" : "更改"
           }
         }
-      },
-      "comment" : "Opens Settings › Attention from Today"
+      }
     },
     "Change a note" : {
       "localizations" : {
@@ -58461,6 +58461,7 @@
       }
     },
     "Companion" : {
+      "comment" : "An add-on's kind, in its update row",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -58516,8 +58517,7 @@
             "value" : "伙伴"
           }
         }
-      },
-      "comment" : "An add-on's kind, in its update row"
+      }
     },
     "Companion name" : {
       "localizations" : {
@@ -72862,6 +72862,7 @@
       }
     },
     "Extension" : {
+      "comment" : "An add-on's kind, in its update row",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -72917,8 +72918,7 @@
             "value" : "扩展"
           }
         }
-      },
-      "comment" : "An add-on's kind, in its update row"
+      }
     },
     "Extension Settings…" : {
       "localizations" : {
@@ -122672,6 +122672,7 @@
       }
     },
     "Notes, reminders, watches and settings as one JSON file. No keys." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -135290,6 +135291,7 @@
       }
     },
     "Paused" : {
+      "comment" : "A watch's timeline: the person paused it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -135345,8 +135347,7 @@
             "value" : "已暂停"
           }
         }
-      },
-      "comment" : "A watch's timeline: the person paused it"
+      }
     },
     "Paused %@" : {
       "localizations" : {
@@ -159976,6 +159977,7 @@
       }
     },
     "See the change" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -161850,7 +161852,7 @@
       }
     },
     "Show" : {
-      "comment" : "Ask's tabs, for VoiceOver: the conversation, Today or Play",
+      "comment" : "Ask's tabs, for VoiceOver: the conversation, Today or Play\nOpens the Gallery's Updates",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -162673,7 +162675,7 @@
       }
     },
     "Show all %lld" : {
-      "comment" : "Today's queue, folded: shows every card",
+      "comment" : "A watch's timeline: show older checks\nToday's queue, folded: shows every card",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -192315,6 +192317,7 @@
       }
     },
     "Theme" : {
+      "comment" : "An add-on's kind, in its update row",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -192370,8 +192373,7 @@
             "value" : "主题"
           }
         }
-      },
-      "comment" : "An add-on's kind, in its update row"
+      }
     },
     "Themes" : {
       "localizations" : {
@@ -205168,6 +205170,7 @@
       }
     },
     "Updates" : {
+      "comment" : "The Gallery's section of add-on updates",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -205223,8 +205226,7 @@
             "value" : "更新"
           }
         }
-      },
-      "comment" : "The Gallery's section of add-on updates"
+      }
     },
     "Updates %@ to %@." : {
       "comment" : "Two version numbers",
@@ -205409,6 +205411,7 @@
       }
     },
     "Updating…" : {
+      "comment" : "An add-on's update row while it installs",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -205464,8 +205467,7 @@
             "value" : "正在更新…"
           }
         }
-      },
-      "comment" : "An add-on's update row while it installs"
+      }
     },
     "Use" : {
       "comment" : "Picks this town as the person's place",
@@ -207157,7 +207159,7 @@
       }
     },
     "Version %@" : {
-      "comment" : "A gallery companion's version, in its details\nAn extension's version: “Version 1.1.0”",
+      "comment" : "A gallery companion's version, in its details\nAn add-on's new version: “Version 1.0.0 snapshot 5”\nAn extension's version: “Version 1.1.0”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -210168,7 +210170,6 @@
       }
     },
     "Watches" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
