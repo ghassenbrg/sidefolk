@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// The drop card's four choices by what was dropped (D88).
+/// The drop card's four choices by what was dropped (D84).
 @Suite struct DropChoicesTests {
     @Test func eachKindHasFourChoicesTheLikeliestFirst() {
         #expect(DropChoices.choices(for: .file) == [.save, .watch, .ask, .openWith])

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// Answering the card beside the companion from the keyboard (D88).
+/// Answering the card beside the companion from the keyboard (D84).
 @Suite struct CardKeysTests {
     func item(_ source: String) -> AttentionItem { AttentionItem(level: .attention, source: source, title: "x") }
 

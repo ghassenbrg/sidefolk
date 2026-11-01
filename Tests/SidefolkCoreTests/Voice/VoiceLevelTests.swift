@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// The light that listens (D88): a voice's loudness in a few steps.
+/// The light that listens (D84): a voice's loudness in a few steps.
 @Suite struct VoiceLevelTests {
     @Test func silenceIsDarkAndARaisedVoiceIsFull() {
         #expect(VoiceLevel.step(0) == 0)
