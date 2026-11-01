@@ -74,7 +74,7 @@ final class PipedChild: Sendable {
 
     /// Signals every process in the child's group (the group id is the child's pid).
     func signalGroup(_ signal: Int32) {
-        _ = kill(-pid, signal)
+        _ = SafeKill.group(pid, signal)
     }
 
     /// SIGTERM to the group, SIGKILL after `grace` seconds if it is still there.

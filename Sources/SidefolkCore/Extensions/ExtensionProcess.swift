@@ -173,7 +173,7 @@ public final class ExtensionProcess: Sendable {
             var status: Int32 = 0
             while waitpid(pid, &status, 0) == -1, errno == EINTR {}
             // Anything the extension left behind, in its group or not, goes with it.
-            _ = Darwin.kill(-pid, SIGKILL)
+            _ = SafeKill.group(pid, SIGKILL)
             signalTree(SIGKILL, refresh: false)
             _ = stdoutDone.wait(timeout: .now() + 2)
             _ = stderrDone.wait(timeout: .now() + 2)
@@ -297,13 +297,13 @@ public final class ExtensionProcess: Sendable {
         writeQueue.async { [self] in closeStdin() }
         // Walk the tree while the root is still alive: once it exits, its children belong to launchd.
         if !hasExited {
-            _ = Darwin.kill(-pid, SIGTERM)
+            _ = SafeKill.group(pid, SIGTERM)
             signalTree(SIGTERM, refresh: true)
         }
         let grace = limits.terminateGrace
         let killer = Task { [self] in
             try await Task.sleep(for: .seconds(grace))
-            _ = Darwin.kill(-pid, SIGKILL)
+            _ = SafeKill.group(pid, SIGKILL)
             signalTree(SIGKILL, refresh: true)
         }
         let exit = await waitForExit()
@@ -334,7 +334,7 @@ public final class ExtensionProcess: Sendable {
     private func signalTree(_ signal: Int32, refresh: Bool) {
         if refresh { refreshTree() }
         for (p, start) in state.withLock({ $0.tree }) where ProcessTree.startTime(p) == start {
-            _ = Darwin.kill(p, signal)
+            _ = SafeKill.one(p, signal)
         }
     }
 
@@ -356,7 +356,7 @@ public final class ExtensionProcess: Sendable {
             return s.pid
         }
         signalTree(SIGKILL, refresh: true)
-        _ = Darwin.kill(-pid, SIGKILL)
+        _ = SafeKill.group(pid, SIGKILL)
     }
 
     // MARK: Watchdog
