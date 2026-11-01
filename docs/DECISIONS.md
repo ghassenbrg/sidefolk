@@ -3031,3 +3031,75 @@ both already a setting away).
 **Implications:** `ThemeLibrary.builtInOrder`, `Sources/SidefolkCore/Themes/ThemeSuccession.swift` and its tests,
 `AppCoordinator+Themes` (`succeedRetiredTheme`, `announceSuccession`, "Use …"), `Resources/Themes/{paper-garden,
 night-studio,marshmallow}`; the `sidefolk-theme` skill names the four as what a new theme must differ from.
+
+### D93 — The Game Center: Playtime's page drawn by Sidefolk from records; games steered in the person's own words (2026-11-01)
+**Decision:** *amends D62, D74, D75, D76 and D79.* A game extension's page in Home is a **Game Center** Sidefolk owns,
+and the common things people say about games work without AI in the ten languages.
+- **A native page, fed by records, not more page parts.** The first page of an extension that declares `games`
+  (`ExtensionPageInfo.gameCenter`) is drawn by `GameCenterView` instead of from parts. Its answer to `page.render`
+  keeps its `summary` (the Today tile and sidebar row, unchanged) and adds **`games`**: `records` (per game, by its
+  manifest name or a tally under it: `played`, `won`, `lost`, `drawn`, `streak`, `best_streak`, `best` in its own words,
+  `today` {`text`, `done`, `streak`} for a daily) and `recent` (the last games: `game`, `at`, `outcome` won/lost/draw/
+  solved, `text`). Numbers and short text only, read leniently and capped (`GameCenterRecords`: 64 games, 20 recent,
+  80/60 characters, cleaned like page text); an older Sidefolk ignores the key. Sections a page still sends are drawn
+  under the center with the usual parts. The Kit has `Page(summary:games:)` and `GameRecords`.
+- **What it shows** (`GameCenter` in core, tested): a hero in the Play panel's art (the playroom, by night in dark
+  mode) with the companion and one big action: Continue the game put away, else Play today's daily not done, else
+  Surprise me (a random game), and All games (the Play menu); Wins, Solved, Best streak, Played; **Today**, each
+  daily with its state, a tick when done and its days in a row; every game as a card in its group (Play against
+  <companion>, Puzzles; the menu's rule, `GameLook.solo`, so a new group is a new case), with its art, tagline, best,
+  record, when it was last played (Activity), Play, a Level menu and Resume when put away; the last games with their
+  verdict in D78's colours and symbols; **badges** earned only from those numbers (first win, ten and fifty wins, three
+  and five in a row, every game played, ten puzzles, a week of dailies, every daily today), the rest shown with how far
+  there is to go; and **game settings** in one place: when it wins, sounds (every game's speaker follows), Sneaky
+  (now also in Settings › Companion › Games), and a level per game. A game an extension says nothing about (Sidefolk's
+  own best of three, an older extension's) is counted from Activity's `games.play` rows. The cards use the look v2's
+  shared parts (`GameArtTile`, `GameSectionHeader`, `.gameCard()`, `GameStyle.levelChip`), so Home and the menu are
+  one look. Data-driven: a game added to the manifest is a card; the validator now allows 32 games an extension.
+- **The level a person chooses is theirs** (`GameSettings.levels`, by `extension/game`): set in the center, by
+  "play tic-tac-toe on hard" or by "make it harder", and sent whenever that game opens without a level; "Default"
+  lets the game pick (a puzzle's last level). The AI's choice of level is not remembered as the person's.
+- **The app's own game sentences** (`IntentGameCommands`, `GameCommandWords`, `GameSlotWords`), after a game's own
+  `say` sentences and before extensions' commands: whole sentences for *rematch / play again*, *make it harder /
+  easier / too easy*, *resume the game*, *a random game*, *show my stats / my scores / game center*, *pause the game*
+  (puts it away, no tool), *turn game sounds off / on*, *back to the games* (the menu); and **a game's name with
+  slots around it**: a level word, a quiz's `topic` and `count`, a number game's range (`min`, `max`) and who guesses
+  (`mode` mine / yours, Playtime's words), e.g. "trivia about space, hard, 10 questions", "jouons au morpion
+  difficile", "guess a number between 1 and 1000", "you guess my number up to 500", "daily sudoku", "today's word".
+  Conservative as the rest of the parser: once the slots and the words that only carry a sentence ("let's", "play",
+  "jouons", "しよう") are out, what remains must be exactly one game's name (its title in the person's language or one
+  of its `say` sentences, carried words out alike), slots only where they mean something (a topic for a quiz, a range
+  for numbers), and a bare name ("copy", "memory") needs a play word or a slot, so another extension's command keeps
+  it (D50). Slots are Sidefolk's for every game, checked in `GameSlots` and passed in `game.start`'s `options` beside
+  `tone`, `sneaky` and `companion`; a game uses those it knows. This extends D76/D79's exception: steering a game is
+  Sidefolk's own sentences in ten languages, not an extension's.
+- **The AI does what the commands do:** `games.open` takes `game` `last` (resume, else the last played; after a
+  relaunch, Activity's), `again` (a new round), `random`, `center`, `level` `harder`/`easier`, and the slots;
+  **`games.settings`** (low risk, new) changes sounds, tone, Sneaky or a game's level. Both through Guard and audited.
+- **Large titles in Home** (the founder's bug: scrolled up, the toolbar's "Playtime / Playtime" was drawn over the
+  page's own header): a place with its own title (an extension's page, the Game Center, Today, On duty, a watch, You)
+  marks it (`homePageTitle`); the toolbar's small title appears only once that has scrolled under the toolbar
+  (`HomeTitleTracker`); a page's scroll view is cut at its frame, the toolbar's edge, so nothing slides under the
+  toolbar's title or the Say bar (`clipsUnderToolbar`); an extension page's subtitle no longer repeats its title.
+
+**Why:** the founder: Playtime's page was "very simple, boring"; make it a game center where you can do everything,
+ready for more games; and make the companion much easier to steer by voice or typing. Page parts could have grown a
+card grid and a stat strip, but the center needs the app's own art by game key, the Play panel's look, settings and
+Activity: things an extension may not send or reach. Records keep what only the extension knows (bests, dailies) its
+own, as numbers and words.
+
+**Alternatives:** new page parts (`games`, `stats`, `continue`) any extension could arrange (more surface for a look no
+other extension needs, and still no settings or kept game); a `commands` list with slots in Playtime's manifest per
+game and language (hundreds of sentences each game would repeat, and older copies refuse an unknown key); counting
+everything from Activity (it can't know a best time or the day's word, and older rows have no result).
+
+**Implications:** an older Sidefolk draws Playtime's new page as its summary alone: Playtime's `minimum_sidefolk`
+must name the snapshot that ships this. Playtime's page sends no sections now (`PlaytimePage.records`); its Home
+words that only the old page used were dropped from `strings/`. New: `GameCenterRecords`, `GameCenter`, `GameBadge`,
+`GameLevels`, `GameSlots`, `GamesSettingsTool`, `GameShelf.last`, events `gameCenter` and `gamesAway`,
+`GameRequest.fresh/slots`, `LocalIntent.gameCommand`; app `GameCenterModel/View/Parts/Records/Settings`,
+`HomeTitle.swift`, `HomeWindowController.Section.page`, `AppServices.keptGame/openPlayMenu`; tests
+`GameCommandsTests`, `GameCenterTests`; snapshots `page-game-center*`, `window-home-gamecenter*` and
+`window-home-*-scrolled`. **Not built:** an AI trivia switch in the center (it comes with D95's `aiTrivia` setting:
+one row in `GameSettingsSection` once both are in), number words for counts ("ten questions": digits only), two
+players' commands (D96).

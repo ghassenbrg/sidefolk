@@ -48,6 +48,25 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   Playtime from a local build (the cups' shuffle and an end card filmed, idle CPU 2–3 %). Next: merge; the founder's
   call on Seesaw's pieces (the revision's crescent and sun versus D79's "no sun and moon").
 
+- **Game Center and game commands** (branch `team/game-center` in both repositories, not merged; D93; carries
+  `team/games-look-v2`): Playtime's page in Home is a Game Center Sidefolk draws from Playtime's records (a hero with
+  the companion and Continue / today's daily / Surprise me, the day's boards, every game as a card in its group with
+  its best, record and last played, Wins / Solved / Best streak / Played, last games, badges from the records, and the
+  games' settings: tone, sounds, Sneaky, a level per game); games steered without AI in ten languages ("rematch",
+  "make it harder", "trivia about space, hard, 10 questions", "guess a number between 1 and 1000", "you guess my
+  number up to 500", "pause the game", "resume the game", "show my stats", "turn game sounds off", "back to the
+  games"), `games.open`'s last/again/random/center and relative levels, a new `games.settings`; Sneaky in Settings ›
+  Companion; and Home's large titles (the toolbar's title only once the page's own has scrolled away, content cut at
+  the toolbar, no "Playtime / Playtime"). Verified: `GameCommandsTests`, `GameCenterTests`, full `make test` and the
+  add-ons' `swift test` (Playtime 71), `build.py --unsigned`, `check.sh`; UI snapshots `page-game-center*` and
+  `window-home-*` (scrolled too) in light, dark, de and ar; a debug app on `build/gc-1` with Playtime from a local
+  build: "play tic-tac-toe on hard" (Hard), "make it easier" (Fair), "pause the game", "resume the game",
+  "Spielgeräusche an", "guess a number between 1 and 1000", "jouons au morpion difficile", "더 쉽게 해줘", "show my
+  stats" (Home on the center, Continue Tic-tac-toe), scrolled pages cut at the toolbar. Next: merge with
+  `team/gameplay-ai` (conflicts expected in `GameSettings`, `SettingsCatalog`, the coordinator's game options and
+  Playtime's `strings/`: rerun `extension-strings.py sync`), then add D95's AI trivia switch as one row in
+  `GameSettingsSection`; set Playtime's `minimum_sidefolk` to the snapshot that ships D93.
+
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
