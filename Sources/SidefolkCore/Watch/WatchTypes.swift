@@ -20,10 +20,13 @@ public struct ProbeResult: Sendable, Equatable {
     public var firstLookNote: String?
     /// What a report read this time (`Watcher.Mode.report`): shown in place of a notice.
     public var reading: ReadingText?
+    /// The text a page or file watch compared, on its first look and when it changed, so the watch keeps its last two
+    /// versions (D87).
+    public var compared: ComparedText?
 
     public init(state: JSONValue, triggered: Bool = false, summary: String = "", detail: String? = nil,
                 openTarget: String? = nil, level: AttentionLevel? = nil, recheckIn: TimeInterval? = nil, firstLookNote: String? = nil,
-                reading: ReadingText? = nil) {
+                reading: ReadingText? = nil, compared: ComparedText? = nil) {
         self.state = state
         self.triggered = triggered
         self.summary = summary
@@ -33,6 +36,19 @@ public struct ProbeResult: Sendable, Equatable {
         self.recheckIn = recheckIn
         self.firstLookNote = firstLookNote
         self.reading = reading
+        self.compared = compared
+    }
+}
+
+/// What a page or file watch compared this time (D87): the text now and, when the probe still had it, the text it was
+/// compared with. A page keeps its last text in its state; a file's is the version the watch kept last time.
+public struct ComparedText: Sendable, Equatable {
+    public var text: String
+    public var before: String?
+
+    public init(_ text: String, before: String? = nil) {
+        self.text = text
+        self.before = before
     }
 }
 

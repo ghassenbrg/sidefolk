@@ -18,9 +18,11 @@ extension WatcherEngine {
 
         running.insert(id)
         let startEpoch = epoch
+        let started = ContinuousClock.now
         let task = Task { try await probe.check(w, now: now) }
         inflight[id] = task
         let outcome = await task.result
+        let took = ContinuousClock.now - started
         running.remove(id)
         inflight[id] = nil
         // Stopped, removed or paused while the probe was working: what it found is stale.
@@ -28,8 +30,12 @@ extension WatcherEngine {
 
         let finished = clock.now
         switch outcome {
-        case .success(let result): await apply(result, to: &current, probe: probe, at: finished)
-        case .failure(let error): await apply(error, to: &current, at: finished)
+        case .success(let result):
+            await apply(result, to: &current, probe: probe, at: finished)
+            await note(result, for: current, comparedSince: w.lastCheckedAt, at: finished, took: took)
+        case .failure(let error):
+            await apply(error, to: &current, at: finished)
+            await note(error, for: current, at: finished, took: took)
         }
     }
 
