@@ -1525,6 +1525,71 @@
         }
       }
     },
+    "%@ beats %@: a point for %@." : {
+      "comment" : "Two players: the winning hand, the losing one, then who gets the point",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ يغلب %2$@: نقطة لـ%3$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ schlägt %2$@: ein Punkt für %3$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ beats %2$@: a point for %3$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ gana a %2$@: un punto para %3$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ bat %2$@ : un point pour %3$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ batte %2$@: un punto a %3$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は%2$@に勝つ：%3$@に1点。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@이(가) %2$@을(를) 이겨요: %3$@에게 1점."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ganha de %2$@: um ponto para %3$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@胜%2$@：%3$@得一分。"
+          }
+        }
+      }
+    },
     "%@ belongs to another user" : {
       "localizations" : {
         "ar" : {
@@ -11623,6 +11688,65 @@
         }
       }
     },
+    "%@ wins the match!" : {
+      "comment" : "Two players: the end of rock, paper, scissors, the winner named",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فاز %@ بالمباراة!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gewinnt das Match!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡%@ gana la partida!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gagne le match !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ vince la partita!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の勝ち！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 승리!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ vence a partida!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@赢得比赛！"
+          }
+        }
+      }
+    },
     "%@ wins the match." : {
       "comment" : "The end of rock, paper, scissors: the companion (named) won",
       "localizations" : {
@@ -12166,6 +12290,65 @@
         }
       }
     },
+    "%@'s name" : {
+      "comment" : "Two people play each other: the field for one player's name (“Player 1's name”)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name von %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome di %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の名前"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 이름"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome de %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@的名字"
+          }
+        }
+      }
+    },
     "%@'s pick" : {
       "comment" : "A game's answer the companion chose, read by VoiceOver",
       "localizations" : {
@@ -12590,6 +12773,65 @@
         }
       }
     },
+    "%@, look away!" : {
+      "comment" : "Two players: the other one mustn't see the pick",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@، لا تنظر!"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, schau weg!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡%@, no mires!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, ne regardez pas !"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, non guardare!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は見ないでね！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, 보지 마세요!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, não olhe!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@，别看！"
+          }
+        }
+      }
+    },
     "%@, on power" : {
       "localizations" : {
         "ar" : {
@@ -12644,6 +12886,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@，已接通电源"
+          }
+        }
+      }
+    },
+    "%@, pick your hand." : {
+      "comment" : "Two players: the first picks while the second looks away\nTwo players: the second picks while the first looks away",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@، اختر يدك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, wähl deine Hand."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, elige tu mano."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, choisissez votre main."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, scegli la tua mano."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@、手を選んでね。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, 손을 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, escolha sua mão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@，选你的手势。"
           }
         }
       }
@@ -12833,6 +13134,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@：%2$@"
+          }
+        }
+      }
+    },
+    "%@: %@ · %@: %@" : {
+      "comment" : "Keys in the Play panel: two players share a reflex button, each name then its key",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$@ · %3$@ : %4$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@ · %3$@：%4$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ · %3$@: %4$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@ · %3$@：%4$@"
           }
         }
       }
@@ -27532,6 +27898,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1–9 落子"
+          }
+        }
+      }
+    },
+    "2 players" : {
+      "comment" : "Two people play each other on this Mac",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لاعبان"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 Spieler"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 jugadores"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 joueurs"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 giocatori"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2人で"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2인용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 jogadores"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双人"
           }
         }
       }
@@ -47294,6 +47719,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粗体（⌘B）"
+          }
+        }
+      }
+    },
+    "Both %@: a draw." : {
+      "comment" : "Two players threw the same hand in rock, paper, scissors",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلاكما %@: تعادل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beide %@: unentschieden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los dos sacaron %@: empate."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les deux ont fait %@ : égalité."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrambi %@: pareggio."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どちらも%@：あいこ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "둘 다 %@: 무승부."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os dois jogaram %@: empate."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "都出了%@：平局。"
           }
         }
       }
@@ -96210,6 +96694,65 @@
         }
       }
     },
+    "I'm %@: ready" : {
+      "comment" : "Two players: the second says they have the Mac",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنا %@: جاهز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich bin %@: bereit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soy %@: listo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est moi, %@ : prêt"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono %@: pronto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@です：準備OK"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저는 %@: 준비됐어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sou %@: pronto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我是%@：准备好了"
+          }
+        }
+      }
+    },
     "I'm already showing %lld live values. Stop one first." : {
       "localizations" : {
         "ar" : {
@@ -112075,6 +112618,65 @@
         }
       }
     },
+    "Make new trivia questions with AI" : {
+      "comment" : "Settings › Companion › Games: a switch (D95)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتابة أسئلة مسابقة جديدة بالذكاء الاصطناعي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Quizfragen mit KI schreiben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear nuevas preguntas de trivia con IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire de nouvelles questions de quiz avec l'IA"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea nuove domande di quiz con l'IA"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIで新しいクイズの問題を作る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI로 새 퀴즈 문제 만들기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar novas perguntas de quiz com IA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用AI出新的问答题"
+          }
+        }
+      }
+    },
     "Make sure %@ is running, and check the address in Settings › AI." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -112246,6 +112848,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请在另一台 Mac 上重新备份，或换一份副本。"
+          }
+        }
+      }
+    },
+    "Make trivia questions" : {
+      "comment" : "A tool: trivia questions made by the person's AI for a game",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتابة أسئلة مسابقة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quizfragen schreiben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear preguntas de trivia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire des questions de quiz"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea domande di quiz"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クイズの問題を作る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "퀴즈 문제 만들기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar perguntas de quiz"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出问答题"
+          }
+        }
+      }
+    },
+    "Make trivia questions about %@" : {
+      "comment" : "History: a game asked the AI for trivia questions about the topic the person named",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتابة أسئلة مسابقة عن %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quizfragen über %@ schreiben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear preguntas de trivia sobre %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire des questions de quiz sur %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea domande di quiz su %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」のクイズの問題を作る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 퀴즈 문제 만들기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar perguntas de quiz sobre %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出关于%@的问答题"
+          }
+        }
+      }
+    },
+    "Make trivia questions on a topic of the AI's choice" : {
+      "comment" : "History: a game asked the AI for trivia questions",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتابة أسئلة مسابقة عن موضوع يختاره الذكاء الاصطناعي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quizfragen zu einem Thema schreiben, das die KI wählt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear preguntas de trivia sobre un tema que elija la IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire des questions de quiz sur un thème choisi par l'IA"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea domande di quiz su un argomento scelto dall'IA"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIが選んだテーマでクイズの問題を作る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI가 고른 주제로 퀴즈 문제 만들기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar perguntas de quiz sobre um tema escolhido pela IA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按AI选的主题出问答题"
           }
         }
       }
@@ -112422,6 +113201,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "为链接或文字生成二维码图片，并读取图片或截图中的二维码。"
+          }
+        }
+      }
+    },
+    "Making trivia questions with AI is off." : {
+      "comment" : "Trivia: the person's setting is off, or no AI is set up",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتابة أسئلة المسابقة بالذكاء الاصطناعي متوقفة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quizfragen mit KI sind ausgeschaltet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las preguntas de trivia con IA están desactivadas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les questions de quiz par IA sont désactivées."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le domande di quiz con l'IA sono disattivate."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIでクイズの問題を作る設定はオフです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI로 퀴즈 문제 만들기가 꺼져 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As perguntas de quiz com IA estão desativadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用AI出问答题已关闭。"
           }
         }
       }
@@ -120431,7 +121269,7 @@
       }
     },
     "Next" : {
-      "extractionState" : "stale",
+      "comment" : "A button: on to the second player's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -138049,6 +138887,65 @@
         }
       }
     },
+    "Pass the Mac to %@." : {
+      "comment" : "Two players: a hidden pick is in; hand over",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعطِ الماك إلى %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib den Mac an %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasa el Mac a %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passez le Mac à %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passa il Mac a %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macを%@にわたしてね。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac을 %@에게 넘겨 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passe o Mac para %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把Mac交给%@。"
+          }
+        }
+      }
+    },
     "Password" : {
       "localizations" : {
         "ar" : {
@@ -141259,6 +142156,189 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "和%2$@玩了%1$@"
+          }
+        }
+      }
+    },
+    "Played %@: %@ %lld · %@ %lld" : {
+      "comment" : "Activity: two people played a game against each other on this Mac, each name then its points",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لُعبت %1$@: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ gespielt: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Played %1$@: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugaste a %1$@: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joué à %1$@ : %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giocato a %1$@: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@で遊んだ：%2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 플레이: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogou %1$@: %2$@ %3$lld · %4$@ %5$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "玩了%1$@：%2$@ %3$lld · %4$@ %5$lld"
+          }
+        }
+      }
+    },
+    "Player 1" : {
+      "comment" : "Two people play each other: the first one's name until they type their own",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اللاعب 1"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spieler 1"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugador 1"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joueur 1"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giocatore 1"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレイヤー1"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이어 1"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogador 1"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "玩家1"
+          }
+        }
+      }
+    },
+    "Player 2" : {
+      "comment" : "Two people play each other: the second one's name until they type their own",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اللاعب 2"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spieler 2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugador 2"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joueur 2"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giocatore 2"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレイヤー2"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이어 2"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogador 2"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "玩家2"
           }
         }
       }
@@ -178043,7 +179123,7 @@
       }
     },
     "Start" : {
-      "comment" : "Settings › General: a group",
+      "comment" : "A button: start the game\nSettings › General: a group",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -188711,6 +189791,65 @@
         }
       }
     },
+    "That's enough new trivia questions for today." : {
+      "comment" : "Trivia: the day's AI requests are used up",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يكفي هذا من أسئلة المسابقة الجديدة اليوم."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genug neue Quizfragen für heute."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya hay bastantes preguntas de trivia nuevas por hoy."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assez de nouvelles questions de quiz pour aujourd'hui."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basta domande di quiz nuove per oggi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日の新しいクイズの問題はここまでです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘은 새 퀴즈 문제를 충분히 만들었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chega de perguntas de quiz novas por hoje."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的新问答题已经够多了。"
+          }
+        }
+      }
+    },
     "That's faster than a game takes moves." : {
       "localizations" : {
         "ar" : {
@@ -189055,6 +190194,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "放到剪贴板的文本太多了（上限为 %@ 个字符）。"
+          }
+        }
+      }
+    },
+    "The AI didn't answer." : {
+      "comment" : "Trivia questions couldn't be made: the call failed",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُجب الذكاء الاصطناعي."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die KI hat nicht geantwortet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La IA no respondió."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'IA n'a pas répondu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'IA non ha risposto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIが答えませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI가 답하지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A IA não respondeu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI没有回答。"
+          }
+        }
+      }
+    },
+    "The AI's questions weren't usable." : {
+      "comment" : "Trivia: the AI's answer was refused by Sidefolk's checks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تكن أسئلة الذكاء الاصطناعي صالحة للاستخدام."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Fragen der KI waren nicht brauchbar."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las preguntas de la IA no se podían usar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les questions de l'IA n'étaient pas utilisables."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le domande dell'IA non erano utilizzabili."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIの問題は使えませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI가 만든 문제를 쓸 수 없었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As perguntas da IA não puderam ser usadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI出的题无法使用。"
           }
         }
       }
@@ -203997,6 +205254,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "休息时的问答游戏和随机挑选"
+          }
+        }
+      }
+    },
+    "Trivia on any topic you name, in your language. Each new topic is one short request to your AI; the questions aren't checked." : {
+      "comment" : "Settings › Companion › Games: what the AI trivia switch does and what it costs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسابقة عن أي موضوع تذكره، بلغتك. كل موضوع جديد طلب قصير واحد إلى ذكائك الاصطناعي، والأسئلة غير مُتحقَّق منها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quiz zu jedem Thema, das du nennst, in deiner Sprache. Jedes neue Thema ist eine kurze Anfrage an deine KI; die Fragen werden nicht geprüft."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trivia sobre cualquier tema que digas, en tu idioma. Cada tema nuevo es una petición breve a tu IA; las preguntas no están comprobadas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un quiz sur n'importe quel thème, dans votre langue. Chaque nouveau thème est une courte demande à votre IA ; les questions ne sont pas vérifiées."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quiz su qualsiasi argomento tu dica, nella tua lingua. Ogni nuovo argomento è una breve richiesta alla tua IA; le domande non sono verificate."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好きなテーマで、あなたの言語のクイズ。新しいテーマごとにAIへ短いリクエストを1回送ります。問題は確認されていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원하는 어떤 주제든 내 언어로 퀴즈를 해요. 새 주제마다 AI에 짧은 요청을 한 번 보내며, 문제는 확인되지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quiz sobre qualquer tema que você disser, no seu idioma. Cada tema novo é um pedido curto à sua IA; as perguntas não são verificadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任何你说的主题，用你的语言来答题。每个新主题会向你的AI发一次简短请求；题目未经核实。"
+          }
+        }
+      }
+    },
+    "Trivia questions are already being made." : {
+      "comment" : "Trivia: one request at a time",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُكتب أسئلة المسابقة الآن."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quizfragen werden schon geschrieben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya se están creando preguntas de trivia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des questions de quiz sont déjà en cours d'écriture."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le domande di quiz sono già in preparazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クイズの問題はもう作っているところです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 퀴즈 문제를 만들고 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já há perguntas de quiz sendo criadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "问答题已经在出了。"
+          }
+        }
+      }
+    },
+    "Trivia questions made by %@" : {
+      "comment" : "History: trivia questions the person's AI made, then the AI's name; they are not checked",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أسئلة مسابقة كتبها %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quizfragen von %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preguntas de trivia creadas por %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questions de quiz écrites par %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domande di quiz create da %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が作ったクイズの問題"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 만든 퀴즈 문제"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perguntas de quiz criadas por %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由%@出的问答题"
           }
         }
       }
@@ -221887,6 +223321,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "由谁制作"
+          }
+        }
+      }
+    },
+    "Who's playing?" : {
+      "comment" : "Two people play each other: the board where they type their names",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من يلعب؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wer spielt?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Quién juega?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qui joue ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chi gioca?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "だれが遊ぶ？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "누가 하나요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quem vai jogar?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "谁来玩？"
           }
         }
       }
@@ -247779,6 +249272,65 @@
         }
       }
     },
+    "vs %@" : {
+      "comment" : "A game against the companion (named)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ضد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gegen %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contra %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contre %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contro %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@と対戦"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와(과) 대결"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contra %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对战%@"
+          }
+        }
+      }
+    },
     "watch" : {
       "comment" : "A card's source line: “Scout · watch”",
       "localizations" : {
@@ -250230,7 +251782,7 @@
       }
     },
     "your AI" : {
-      "comment" : "Which AI answers\nWhich AI answers: an OpenAI-compatible one",
+      "comment" : "A custom AI service, named in a label\nWhich AI answers\nWhich AI answers: an OpenAI-compatible one",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

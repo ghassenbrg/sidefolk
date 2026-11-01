@@ -698,16 +698,21 @@ Activity row when the game ends.
 - **The channel:** `sidefolk/game.start {game, level, language, options}` answers `{session, board}`;
   `sidefolk/game.move {game, session, move}` answers `{board}`; `sidefolk/game.end {game, session, reason}` (`closed`,
   `timeout`, `finished`) needs no answer. `options` holds `tone` (gentle, cheeky, competitive), `sneaky` and
-  `companion` (its name). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
+  `companion` (its name); `players` (2) and `names` (the two names last played under) when two people play each other
+  on this Mac (D96); `ai_trivia` (the AI's name) while the person lets their AI make trivia questions (D95); and what
+  the person said about the game (`topic`, `count`, `min`, `max`, `mode`, D93). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
   for a part the board on screen offered, at most 20 a second: `{answer: i}`, `{cell: [r, c]}`, `{button: "next"}`,
   `{choice: {name, value}}`, `{timeout: true}`, `{letter: "e"}`, `{word: "crane"}`, `{number: 42}`, `{pad: 2}`,
-  `{press: {ms: 243}}`, `{early: true}`, `{text: {name, value}}`, `{next: true}` (a board's `after_ms` passed), and on a
+  `{press: {ms: 243}}`, `{early: true}` (with a two-key reflex, `{press: {ms, key}}` and `{early: {key}}`),
+  `{text: {name, value}}`, `{next: true}` (a board's `after_ms` passed), and on a
   puzzle `{area: [r, c, r2, c2]}` (a rectangle dragged) and `{place: {cell: [r, c], value, note}}` (a number, 0 clears). Moves
   are not tool calls: a game changes only its own state. Anything that acts on the world stays a tool behind Guard.
 - **Board parts:** `prompt` (text, `eyebrow`, `chip`), `answers` (2–4 `items` with `label`, `state` none, picked,
   right, wrong or faded, `companion` for its pick, `art` rock, paper or scissors; `layout` grid, row or column;
   `locked`), `board` (rows × columns ≤ 8 × 8 of `cells` with `mark`, `value`, `companion`, `state`, `label`, `animate`),
-  `score` (`you`, `companion`, `streak`, `best`, `rounds` to win, `companion_picked` for its sealed card), `result`
+  `score` (`you`, `companion`, `streak`, `best`, `rounds` to win, `companion_picked` for its sealed card; `players`, two
+  names, when two people play each other: `you` is the first's points and `companion` the second's, each drawn with
+  their name and a colour of their own, D96), `result`
   (`figure`, `line`, `ribbon`, `tone` good, bad or neutral, `facts`, up to three `actions`), `timer` (`id`, `seconds`:
   Sidefolk counts and sends `{timeout: true}`), `reveal` (`kind` coin, dice or hands), `note`, `facts`, `button`
   (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board; `companion: true`
@@ -721,7 +726,9 @@ Activity row when the game ends.
   shows first at `step_ms` 250–2000, a pad lit with its note and the companion's move, then `{pad: i}`), `cups` (2–5:
   the gem under `hide`, then `swaps` of positions, up to 40, at `swap_ms`; a pick is `{cell: [0, i]}`; `gem` (or `null`
   for none) lifts them), `reflex` (`wait`, `go`, `early` words, `after_ms` 300–10000, `window_ms`; Sidefolk shows the
-  signal and times the press from the key's own timestamp; `shows` once played), `meter` (0–1, `label`, `low`, `high`),
+  signal and times the press from the key's own timestamp; `shows` once played; `keys`, two letters, when two people
+  share it: each presses their own key, found by where it sits on any layout, the first key decides, and clicks don't
+  count), `meter` (0–1, `label`, `low`, `high`),
   `number` (`min`, `max`, `history` of `{value, mark}` higher, lower or right; Sidefolk's digit pad), `letters` (`rows` of
   tiles `{text, mark, group}` marked right, elsewhere, absent or hidden; `style` rows or slots; `flip` the row just
   played; `draft` shows what is typed in the next row), `keys` (`pages` of rows of single letters with marks; `mode`
@@ -748,6 +755,20 @@ Activity row when the game ends.
   the new score, a cue); when it would give a result away Sidefolk shows a build-up first (the reveal playing, or the
   pick pressed beside the sealed card) and the verdict after. Right is drawn in success green, wrong as a calm loss
   tone, a draw neutral, each with its symbol: don't encode a result in your own words' colour.
+
+**Two people on one Mac** (D96): a game may offer "vs <companion>" or "2 players" on its first board. Then the
+companion only referees: use no `i_win` or `you_win` line, give the end card a `neutral` tone (the winner is named,
+the colour says who rather than how it went), put both names in `score.players` (Sidefolk records the game apart from
+the person's results against the companion and remembers the names), and pass a secret with a cover board that holds
+nothing of it ("Pass the Mac to Sam. Ana, look away!" and a ready button) before the other person's turn.
+
+**Trivia from the person's AI** (D95, Sidefolk's own extensions only): send the notice `sidefolk/trivia.request` with
+`request` (a UUID), `topic` (up to 60 characters, empty for the AI's choice), `count` (10–20), `level` (easy, fair,
+hard) and `language`; Sidefolk answers with the notice `sidefolk/trivia.pack`: `request`, `ok`, then `topic`, `made_by`
+and `questions` (each `question`, four `choices`, `answer` the right one's index, `difficulty` 1–3, `fact`), or a
+`reason` (off, busy, limit, unusable, failed, denied). Ask only while `options.ai_trivia` is set, show who made the
+questions and that they aren't checked, keep the board's `after_ms` turning while you wait (the answer can take a
+minute), and fall back to your own questions when none come.
 
 In the Kit, `ext.game(name, start:, move:, end:)` with `Board`, `BoardPart`, `Tile`, `Cell`, `GameButton`,
 `ChoiceOption`, `Reveal`, `Cue` and `Move` (extensions/Kit/Game.swift):

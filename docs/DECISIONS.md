@@ -2986,3 +2986,79 @@ both already a setting away).
 **Implications:** `ThemeLibrary.builtInOrder`, `Sources/SidefolkCore/Themes/ThemeSuccession.swift` and its tests,
 `AppCoordinator+Themes` (`succeedRetiredTheme`, `announceSuccession`, "Use …"), `Resources/Themes/{paper-garden,
 night-studio,marshmallow}`; the `sidefolk-theme` skill names the four as what a new theme must differ from.
+
+### D95 — Trivia questions made by the person's AI, through one narrow host request (2026-11-01)
+**Decision:** *builds on D75 and D79; a new reach for Sidefolk's own extensions (SECURITY T39).* With AI set up in
+Settings › Brain, trivia can play any topic the person names, or one the AI picks ("Surprise me"), in their language.
+Extensions still never call a model: Playtime sends the notice `sidefolk/trivia.request` (a UUID, a topic of at most
+60 characters, 10–20 questions, a level, a language) and Sidefolk answers with `sidefolk/trivia.pack`, as data.
+- **Who may ask:** Sidefolk's own extensions (`origin.firstParty`), switched on, one request at a time each; anything
+  else is refused and logged. The person's switch, Settings › Companion › Games › "Make new trivia questions with AI"
+  (`GameSettings.aiTrivia`, nil follows whether a provider is set up, so it is on by default only with AI), is checked
+  by the host; the game learns it may offer the topic field from `options.ai_trivia` (the AI's name).
+- **One call, nothing else:** `games.trivia_questions`, a low-risk tool never offered to a model or to other agents,
+  runs through `ToolExecutor` as `Caller.extension`, so Guard weighs it and History shows "Trivia questions made by
+  Claude Code". It calls `AgentRuntime.oneShot`: Sidefolk's fixed system words (`TriviaPrompt`), one user message with
+  the request's fields, no tools, no memory, notes or conversation; the run is recorded like any other, so it counts in
+  the person's usage.
+- **Strict reading** (`TriviaPackParser`): only the JSON object asked for; each question a plain line (8–200
+  characters), exactly four distinct choices, one right by index, an optional fact; no links (also bare domains), no
+  markup, no control, zero-width or direction characters; a question that breaks a rule is dropped, a pack left with
+  under half (or five) is refused whole. An empty list is the model declining an unfit topic.
+- **Limits** (`TriviaMaker`): packs kept for the day by language, level and topic (the same topic again costs nothing),
+  at most 20 calls a day, one at a time; the game waits at most about a minute, checking every 1.5 s through its own
+  `after_ms`, then falls back.
+- **Honest labels:** the waiting board says who writes the questions and that they aren't checked; each fact the AI
+  gives is titled "Did you know? From Claude Code, not checked". The 400-question bank always works, offline or off.
+
+**Why:** the founder: "for trivia we have a set of questions offline, but with AI we can have many more questions and
+categories." Giving an extension the model would be quota theft and an injection path (T17); one typed request with
+fixed words and a checked answer gives the person the feature without either.
+**Alternatives:** MCP `sampling/createMessage` (any prompt, any length, refused since T17); Sidefolk's own agent writing
+questions through a tool (a conversation, context and tools the request doesn't need); a host-side trivia game (Playtime
+owns trivia).
+**Implications:** `Sources/SidefolkCore/Games/TriviaPack.swift`, `TriviaMaker.swift`, `TriviaQuestionsTool.swift`,
+`MCPClientEvent.triviaRequest`, `ExtensionHost.setTriviaHelp`, `AgentRuntime.oneShot`, `GameSettings.aiTrivia`, the
+switch in Settings, `AppCoordinator.installTriviaHelp`; Playtime's `TriviaAI` and the trivia board's topic field,
+"Surprise me" card and waiting board. Tested with scripted models only.
+
+### D96 — Games v2 gameplay: the companion plays like a person, any range, two people on one Mac (2026-11-01)
+**Decision:** *amends D44 (the companion's hand) and D75, D79 (Playtime's engines and boards).*
+- **Natural play by level.** Every engine plays like a person of its level, never one fixed sequence, its chance
+  drawn before the person moves as before. Tic-tac-toe: Easy sees most wins and half the blocks and likes the centre
+  and corners; Fair never misses a win and lapses one move in eight; Hard is perfect (minimax), choosing among equally
+  good cells as a person would (it never lost in 1,000 tested games). Last Stick: everyone sees the end coming and never
+  takes the last stick by choice; Easy rarely plays the trick, Fair mostly, Hard always (it wins every winning position);
+  with no winning take it stalls. Higher or Lower's guesser picks near the middle with a level's looseness (Hard 9 %,
+  Fair 18 %, Easy 28 % of the range, Easy now and then creeping on from the last answer), snaps to round numbers on a
+  wide range, and thinks longer for bigger numbers: no more 50, 75, 88. Memory Pairs forgets with time (a card seen
+  just now is nearly sure, one seen long ago fades; Hard barely forgets) and sometimes reaches for the card beside the
+  one it lost. Quick Paws' reflexes lean late as a person's do, with a moment it wasn't looking now and then. Copy Me
+  never repeats a move three times; Which Cup?'s shell player moves the gem's cup more than chance and rarely undoes a
+  swap. Think pauses vary with the position. Rock, paper, scissors stays uniform and blind to the person's hand, but
+  never throws the same hand three times running (D44 amended).
+- **Higher or Lower on any range:** 1–100 by default; 10, 1,000 and a million on the start board, or any top up to a
+  million typed in any digits; a range named in words (`options.min`, `max`, `mode`, D93's slots) is played straight
+  away. Par is what halving needs (7, 10, 20); the thermometer judges distance by size on wide ranges; the number pad
+  groups digits per locale and shows fewer chips for long numbers. Bests count on 1–100 only.
+- **Two people on one Mac** in nine games: tic-tac-toe, Last Stick, Memory Pairs (turns), Copy Me (the same dance
+  copied in turn), trivia (a question each), Quick Paws (one button, A and L by where they sit on any keyboard; a key
+  before the signal gives the round to the other; nobody in time replays it), Which Cup? (rounds in turn), Higher or
+  Lower and Balloon Words (each hides a number or sets a word for the other, passed with a cover), and Sidefolk's rock,
+  paper, scissors (the first hand hidden behind a cover until the second is in). Guess My Animal stays the companion's:
+  it is the one guessing and learning. The first board offers "vs <companion>" or "2 players"; names are typed one at
+  a time or kept (`options.names`, remembered by the app from what a two-player score shows); the score shows both
+  names in identity colours, the end card names the winner in a neutral tone, the companion referees (no "I win"), and
+  head-to-head tallies are kept per pair of names, apart from the games against the companion (the Activity row has no
+  result, so the Play menu's stats stay the person's).
+
+**Why:** the founder: "the intelligence when you play against Mochi should be good, and natural: in guess-my-number it
+always asks 50, then 75… there's a pattern"; "I want to play much higher too"; "make it possible to play with two
+players, like me and my friend on the same Mac".
+**Alternatives:** a single "difficulty" randomness knob per game (still mechanical); a separate two-player app section
+(the same games twice); hiding secrets by masking fields (a cover between turns works with every part as it is).
+**Implications:** Playtime's engines (`Games/*.swift`), `GameKit/TwoPlayers.swift`, `Screens/Duo/`, the Kit's
+`score(players:)`, `reflex(keys:)` and `Move.pressKey`/`earlyKey`, Core's `GameBoard.Score.players`,
+`GameBoard.Reflex.keys`, `GameMove.pressKey`/`earlyKey`, `GameRecord` for two players, `HandsMatch+Duel`,
+`GameSettings.players`, the Play panel's score bar and two-key reflex. A Sidefolk from before this shows "You" and the
+companion on a two-player score and takes Space on the reflex, so Playtime with two players needs it.

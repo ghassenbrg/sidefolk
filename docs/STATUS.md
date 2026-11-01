@@ -38,6 +38,17 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 
 ## In progress
 
+- **Games v2, gameplay and AI** (branch `team/gameplay-ai` in both repositories, not merged; D95, D96): the companion
+  plays like a person at every level (no more 50, 75, 88; Hard tic-tac-toe never loses, Hard Last Stick wins every
+  winning position, memory that fades, reflexes that lean late), Higher or Lower on 10, 100, 1,000, a million or any
+  top, two people on one Mac in nine games and rock, paper, scissors (covers for secrets, the companion referees,
+  head-to-head kept apart), and trivia on any topic made by the person's AI through `sidefolk/trivia.request` (Settings ›
+  Companion › Games, on by default with AI, 20 calls a day, packs cached for the day, facts labelled as not checked).
+  Verified: see the branch's last commit and HISTORY once merged. Next: merge with `team/game-center` (it passes
+  `players`, `topic`, `max`, `mode` from commands and shows the AI switch and the two-player entries) and
+  `team/games-look-v2` (the score bar's names, the two-key reflex); set Playtime's `minimum_sidefolk` to the snapshot
+  that carries this branch (two-player boards and AI trivia need it).
+
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
@@ -129,7 +140,7 @@ merge last.
 1. **The founder plays the puzzles** (Garden Plots, Seesaw, Sudoku, Blossoms) and the games in snapshot 661.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (it needs something real first; AGENTS.md: no fake features): the evening wrap.
-4. **Games not built** (D79): AI trivia packs, Connect Four.
+4. **Games not built** (D79): Connect Four.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence
    ([research/licence.md](research/licence.md)), the name and domain, a privacy policy and support contact,
    Open-Meteo's terms if Sidefolk is paid, Anthropic's and OpenAI's approval of their logos, curated release notes,
