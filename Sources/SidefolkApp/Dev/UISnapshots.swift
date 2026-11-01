@@ -1094,12 +1094,12 @@ enum UISnapshots {
         try write(frame, to: url)
     }
 
-    /// The page's scroll views (right of the sidebar), down by `offset` points from the top; back to the top at 0.
+    /// The page's scroll views (wider than the sidebar, on either side), down by `offset` points from the top; back to the top at 0.
     private static func scrollPages(in view: NSView, by offset: CGFloat) {
         for sub in view.subviews { scrollPages(in: sub, by: offset) }
         guard let scroll = view as? NSScrollView, let document = scroll.documentView,
               document.frame.height > scroll.contentView.bounds.height + 1,
-              scroll.convert(scroll.bounds, to: nil).minX > 200 else { return }
+              scroll.bounds.width > 400 else { return }
         let top = document.isFlipped ? -scroll.contentInsets.top : document.frame.height - scroll.contentView.bounds.height + scroll.contentInsets.top
         let y = document.isFlipped ? top + offset : top - offset
         scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX, y: y))
