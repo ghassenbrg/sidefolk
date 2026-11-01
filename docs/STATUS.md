@@ -38,6 +38,16 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 
 ## In progress
 
+- **Games look v2** (branch `team/games-look-v2`, not merged; D79 amended, the games look v2): every game's Play
+  panel, the All Games menu and the reward card reskinned along the founder's Imagine Skin concepts: the scene behind
+  the whole panel with night paintings for dark mode, header, score, hint and tiles as cards on the games' own
+  surfaces, a level chip never red, the menu's cards side by side (`GameCards.swift`, shared with Playtime's page in
+  Home), the reviewed flat reward card, puzzle boards in frames (Garden Plots' soil, Blossoms' rounded beds); 14
+  night scenes and two icons (Art about 1.5 MB). Verified: `make test` with an add-ons clone, `GameArtFilesTests`,
+  UI snapshots of every game and moment in light and dark, en, ar, ja and de (all under 720 pt), a debug app with
+  Playtime from a local build (the cups' shuffle and an end card filmed, idle CPU 2–3 %). Next: merge; the founder's
+  call on Seesaw's pieces (the revision's crescent and sun versus D79's "no sun and moon").
+
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 

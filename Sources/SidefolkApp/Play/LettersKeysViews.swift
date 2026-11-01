@@ -21,7 +21,7 @@ struct LettersView: View {
         .padding(6)
         .frame(maxWidth: .infinity)
         // A card behind the tiles, so they read on any scene.
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.88)))
+        .gameCard(corner: 16, opacity: 0.9)
         .accessibilityElement(children: .contain)
     }
 
@@ -258,7 +258,7 @@ struct GameEntryView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.94)))
+        .gameCard(corner: 16, opacity: 0.95)
         .disabled(entry.locked)
     }
 

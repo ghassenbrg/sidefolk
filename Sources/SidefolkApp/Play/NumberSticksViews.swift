@@ -85,7 +85,7 @@ struct NumberFieldView: View {
         .padding(10)
         .frame(maxWidth: .infinity)
         // A card behind the field and its pad, so they read on any scene.
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.9)))
+        .gameCard(corner: 16, opacity: 0.92)
         .disabled(field.locked)
     }
 
