@@ -72,6 +72,9 @@ final class NowModel {
     /// The notes and tasks reminders belong to (D49), by id.
     private(set) var linked: [String: NotebookItem] = [:]
     private(set) var watchers: [Watcher] = []
+    /// Each watch's last checks, oldest first, for On duty's bars (D87).
+    private(set) var ticks: [String: [WatchCheck.Result]] = [:]
+    static let ticks = 24
     /// Reports: values told every few seconds or minutes, with their latest readings.
     private(set) var reports: [Watcher] = []
     private(set) var readings: [String: WatchReading] = [:]
@@ -119,6 +122,8 @@ final class NowModel {
     var widgets: [ExtensionWidget] = []
     /// Opens an extension's page in Home; set by Home.
     var openPage: ((String) -> Void)?
+    /// Opens a watch's own page (D87); Home sets it.
+    var openWatch: ((String) -> Void)?
 
     init(services: AppServices) {
         self.services = services
@@ -270,6 +275,7 @@ final class NowModel {
         // From the engine, not the database: routine check times are only saved every few minutes.
         let watching = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
         watchers = watching.filter { $0.mode != .report }
+        ticks = await rt.watchers.recentTicks(for: watchers.map(\.id), count: Self.ticks)
         reports = watching.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
         readings = Dictionary(await rt.watchers.latestReadings().map { ($0.watcherId, $0) }, uniquingKeysWith: { a, _ in a })
         values = await rt.watchers.recentValues()

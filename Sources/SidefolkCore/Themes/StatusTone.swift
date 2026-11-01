@@ -51,6 +51,16 @@ extension StatusTone {
         }
     }
 
+    /// One check in a watch's history (D87): a change is news; a check that failed is worth a look, not an alarm (the
+    /// watch keeps trying, and only a watch that stopped for good is red, above).
+    public static func check(_ result: WatchCheck.Result) -> StatusTone {
+        switch result {
+        case .changed: .news
+        case .failed: .warning
+        case .unchanged, .paused: .neutral
+        }
+    }
+
     /// An agent session: waiting for the person is a question, not a failure.
     public static func session(_ state: AgentSession.State) -> StatusTone {
         switch state {

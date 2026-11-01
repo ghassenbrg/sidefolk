@@ -3,124 +3,6 @@ import SwiftUI
 
 // MARK: - Rows
 
-/// A watch as a tile: what it keeps an eye on, its state, when it last looked, and what it last saw change, with the
-/// way to see that change in full. It stands out while what it noticed is still waiting in the queue (D58).
-struct WatchTile: View {
-    var watcher: Watcher
-    var model: NowModel
-    @State private var showingChange = false
-
-    var body: some View {
-        let kind = Describe.watcherKind(watcher.kind)
-        let waiting = model.changeWaiting(for: watcher) != nil
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            HStack(alignment: .top, spacing: Theme.Space.s) {
-                IconTile(symbol: kind.symbol, folk: "scout", size: 28)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(watcher.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
-                    if let target = Describe.watcherTarget(watcher), !watcher.title.contains(target) {
-                        Text(target).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkFaint)
-                            .lineLimit(1).truncationMode(.middle)
-                    }
-                }
-                Spacer(minLength: Theme.Space.xs)
-                state
-            }
-            Text(meta(kind)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
-            if let change = watcher.lastPageChange {
-                Button { showingChange = true } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Changed \(TimeText.short(change.at))").font(Theme.Font.captionStrong)
-                            .foregroundStyle(waiting ? Theme.link : Theme.inkMuted)
-                        if let line = change.added.first ?? change.removed.first {
-                            Text(verbatim: line).font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(2)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help(Text("See the change"))
-                .popover(isPresented: $showingChange, arrowEdge: .bottom) { ChangeLines(change: change) }
-            }
-            if watcher.state == .error || watcher.errorCount > 0, let error = watcher.lastError {
-                Text(error).font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            HStack(spacing: 6) {
-                Button("Check now") { Task { await model.checkNow(watcher) } }
-                    .buttonStyle(.sf(.secondary))
-                    .disabled(watcher.state == .paused)
-                if watcher.state == .paused {
-                    Button("Resume") { Task { await model.resume(watcher) } }.buttonStyle(.sf(.secondary))
-                } else {
-                    Button("Pause") { Task { await model.pause(watcher) } }.buttonStyle(.sf(.secondary))
-                }
-                Spacer(minLength: 0)
-                Menu {
-                    Button("Stop watching", role: .destructive) { Task { await model.stop(watcher) } }
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .accessibilityLabel("More for “\(watcher.title)”")
-            }
-        }
-        .padding(Theme.Space.m)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .cardSurface()
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-            .strokeBorder(waiting ? Theme.accent.opacity(0.7) : .clear, lineWidth: 1.5))
-        .onChange(of: showingChange) { _, open in if open { Task { await model.seen(watcher) } } }
-        .accessibilityElement(children: .contain)
-    }
-
-    private func meta(_ kind: Describe.WatcherKind) -> String {
-        var parts = [kind.label, Describe.interval(watcher.intervalS)]
-        if let checked = watcher.lastCheckedAt {
-            parts.append(String(localized: "checked \(TimeText.relative(checked))", comment: "“checked 5 min ago”"))
-        } else {
-            parts.append(String(localized: "not checked yet"))
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    @ViewBuilder private var state: some View {
-        let tone = ChipTone(StatusTone.watch(watcher.state, changeWaiting: false))
-        switch watcher.state {
-        case .active: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: tone)
-        case .paused: Chip("Paused", tone: tone)
-        case .error: Chip("Having trouble", tone: tone)
-        case .triggered: Chip("Spotted", tone: tone)
-        case .expired: Chip("Expired", tone: tone)
-        }
-    }
-}
-
-/// A page's last change in full: the lines that went and the lines that came.
-struct ChangeLines: View {
-    var change: PageChange
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            Text("Changed \(TimeText.short(change.at))").font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-            // A change is news, not a verdict: the − and + say which way, so neither line is red or green.
-            ForEach(Array(change.removed.enumerated()), id: \.offset) { _, line in
-                Text(verbatim: "− " + line).foregroundStyle(Theme.inkMuted).strikethrough(color: Theme.inkFaint)
-            }
-            ForEach(Array(change.added.enumerated()), id: \.offset) { _, line in
-                Text(verbatim: "+ " + line).foregroundStyle(Theme.ink)
-            }
-        }
-        .font(.system(size: 12, design: .monospaced))
-        .textSelection(.enabled)
-        .padding(Theme.Space.m)
-        .frame(maxWidth: 420, alignment: .leading)
-    }
-}
-
 /// A session that finished in the last hour: how long it took, and the last thing it asked of Sidefolk.
 struct FinishedRow: View {
     var session: AgentSession
@@ -312,6 +194,18 @@ struct QueueRow: View {
                 Text(item.title).font(Theme.Font.headline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 if let body = item.body, !body.isEmpty {
                     Text(body).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                }
+                // The watch's own page has the change line by line and its checks (D87): a link, so the card keeps its
+                // three buttons.
+                if item.refKind == "watcher", let id = item.refId, let open = model.openWatch {
+                    Button { open(id) } label: {
+                        HStack(spacing: Theme.Space.xxs) {
+                            Text("See what changed")
+                            Image(systemName: "chevron.forward").font(.system(size: 10, weight: .semibold))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .font(Theme.Font.bodyStrong).foregroundStyle(Theme.link)
                 }
                 ButtonRow(spacing: Theme.Space.s) {
                     Button("Dismiss") { act { await model.respond(item, action: nil) } }.buttonStyle(.sf(.quiet, size: .regular))

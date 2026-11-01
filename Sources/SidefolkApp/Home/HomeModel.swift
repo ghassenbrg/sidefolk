@@ -10,6 +10,8 @@ enum HomeSelection: Hashable {
     case collection(String)
     /// An extension's page (D62), by `ExtensionPageInfo.id`.
     case page(String)
+    /// A watch's own page (D87), by `Watcher.id`; it belongs to On duty.
+    case watch(String)
 
     /// The places, in ⌘1–5 order (D84); `.collection("")` stands for the Notebook, which opens where it was.
     static let places: [HomeSelection] = [.now, .calendar, .collection(""), .onDuty, .history]
@@ -19,7 +21,7 @@ enum HomeSelection: Hashable {
         case .now: "Today"
         case .calendar: "Calendar"
         case .collection, .trash, .you: "Notebook"
-        case .onDuty: "On duty"
+        case .onDuty, .watch: "On duty"
         case .history: "History"
         case .page: "Extensions"
         case .gallery: "Gallery"
@@ -32,7 +34,7 @@ enum HomeSelection: Hashable {
         case .now: "sun.max"
         case .calendar: "calendar"
         case .collection, .trash, .you: "book.closed"
-        case .onDuty: "dot.radiowaves.left.and.right"
+        case .onDuty, .watch: "dot.radiowaves.left.and.right"
         case .history: "clock.arrow.circlepath"
         case .page: "puzzlepiece.extension"
         case .gallery: "sparkles"
@@ -42,7 +44,7 @@ enum HomeSelection: Hashable {
     /// The same place, whichever collection is open.
     func isPlace(_ place: HomeSelection) -> Bool {
         switch (self, place) {
-        case (.collection, .collection), (.trash, .collection), (.you, .collection): true
+        case (.collection, .collection), (.trash, .collection), (.you, .collection), (.watch, .onDuty): true
         default: self == place
         }
     }
@@ -64,6 +66,8 @@ final class HomeModel {
     let pages: ExtensionPagesModel
     /// The Say bar's search (D58, D84); while it has words, the understanding panel shows what Return does.
     let find: FindModel
+    /// The watch open on its own page (D87).
+    let watch: WatchDetailModel
     /// The Gallery in Home (D84) is Settings' own gallery models, with their install previews and downloads.
     @ObservationIgnored private(set) lazy var settingsHost = SettingsModel(services: services)
 
@@ -97,8 +101,10 @@ final class HomeModel {
         history = HistoryModel(services: services)
         you = YouModel(services: services)
         pages = ExtensionPagesModel(services: services)
+        watch = WatchDetailModel(services: services)
         find = FindModel { query in (try? await services.runtime.find(query)) ?? SearchResults() }
         now.openPage = { [weak self] id in self?.selection = .page(id) }
+        now.openWatch = { [weak self] id in self?.selection = .watch(id) }
         you.trash = { [weak self] item in await self?.notebook.moveToTrash(item) }
         // A switch flipped or a page arranged on one side shows on the other (D67).
         pages.changed = { [weak self] in Task { await self?.now.reloadWidgets() } }
@@ -205,6 +211,12 @@ final class HomeModel {
                 await settingsHost.refresh()
                 await settingsHost.gallery.load()
             }
+        case .watch(let id):
+            Task {
+                await watch.show(id)
+                // Opening the watch is seeing what it noticed, as its tile's popover was.
+                if let w = watch.watcher { await now.seen(w) }
+            }
         case .now, .onDuty, .page, nil: break
         }
     }
@@ -227,6 +239,7 @@ final class HomeModel {
             } else if domains.contains(.reminders) {
                 await notebook.reloadReminders()
             }
+            if case .watch = selection, domains.contains(.watchers) { await watch.reload() }
             if selection == .history, !domains.isDisjoint(with: [.activity, .runs, .conversations, .attention, .settings]) {
                 await history.reload()
             }

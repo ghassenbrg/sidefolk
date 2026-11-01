@@ -76,6 +76,17 @@ enum UISnapshots {
             // On duty in the same state as Today, so their counts can be read side by side.
             full.selection = .onDuty
             try await homeShot("onduty")
+            // A watch's own page (D87): its change inline and side by side, a watch in trouble, and a narrow window.
+            for (id, name) in [("w-pricing", "watch"), ("w-staging", "watch-trouble")] {
+                full.selection = .watch(id)
+                await full.watch.show(id)
+                try await homeShot(name)
+            }
+            full.watch.sideBySide = true
+            await full.watch.show("w-pricing")
+            try await homeShot("watch-sidebyside")
+            try await homeShot("watch-small", size: CGSize(width: 860, height: 560))
+            full.watch.sideBySide = false
             full.selection = .now
             // The Say bar (⌘K) with words in it: what Return does, in plain words, with or without AI, and what they find.
             for (name, words) in [("say", "remind me tomorrow at 9 to send the deck to Acme"), ("say-ai", "plan my afternoon around the design review"),

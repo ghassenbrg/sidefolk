@@ -103,6 +103,9 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         case "you": model.selection = .you
         case "trash": model.selection = .trash
         case "gallery": model.selection = .gallery
+        case "watch":
+            // home:watch:<id>, or the first watch On duty lists (D87).
+            if let id = parts.dropFirst().first ?? model.now.watchers.first?.id { model.selection = .watch(id) }
         default: Log.shared.warning("dev", "no such place", ["place": place])
         }
         present()
