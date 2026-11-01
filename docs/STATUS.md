@@ -22,7 +22,8 @@ with the Lantern revamp (D84, all five phases), the games look and the four puzz
 - **The menu bar** is the Pocket, a popover with the state, the Open/Focus/Quiet dial, Needs you, Next up, Agents
   and Ask.
 - **Themes dress the app only** (colours, faces, density, materials, the light): built in are Harbor (Lantern, the
-  default), Night Shift, Marshmallow and Field Notes; the gallery has Daylight, Night Studio and Paper Garden.
+  default), Night Shift, Marshmallow and Field Notes; the gallery has Daylight, Night Studio and Paper Garden
+  (Tea House waits on `team/theme-skill`). New themes start with the `sidefolk-theme` skill.
 - **Without AI:** notes, reminders, watches, live values, the calendar, search, games and extension commands. With
   the AI the person picks (Claude Code, Codex, an API key, Ollama or LM Studio), everything else, through Guard.
 - **For other agents:** `sidefolk mcp` and the skill Connect installs (D42, D52); session hooks tell the person when
@@ -81,6 +82,18 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
   debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
   no gallery companion changes.
+
+- **The theme skill** (branch `team/theme-skill` in both repositories, not merged): `sidefolk-theme` in
+  `.claude/skills/` and `.agents/skills/` (concept or references → three directions → every role in light and dark →
+  art by image generation → `sidefolk theme check` and `templates/palette.py` → snapshots with `--theme` in light, dark
+  and Arabic → a local folder or a gallery theme), and a public copy in `skills/sidefolk-theme/` for anyone with the
+  app. Made with it: **Tea House** (washi, hinoki, matcha), a gallery candidate in sidefolk-addons
+  `themes/tea-house/` (checked, packed by `build.py --unsigned`, not published). Found on the way and fixed: the nook
+  art (`companion.backdrop`) wasn't drawn since phase 3 (`SidebarNook` draws it now, clipped to its card); the starter
+  guide and `theme new` named Settings › General for themes (Appearance now) and left out the page wash. Not fixed:
+  `ThemeCheck` doesn't hold `success` to 4.5:1 although it is drawn as text, and Daylight, Night Studio and Paper
+  Garden read 3.2–4.4:1 there (`palette.py` lists it); `Home/TodayHeader.swift` (TodayHeader, CompanionNook,
+  NookBubble) is unused since D84 phase 3. Next: merge; publish Tea House when the founder asks.
 
 **Integration:** `team/desktop-polish` carries origin/main (D86), `team/addon-updates` (with watch history and the
 interrupt levels, D87–D89) and `team/reactions`, merged and tested together; `team/backup` and `team/games-items`

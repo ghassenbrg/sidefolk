@@ -150,7 +150,7 @@ public struct ThemeLibrary: Sendable {
         `theme.json` starts as a copy of Harbor. Change what you like, then:
 
         - `sidefolk theme check <this folder>` says what's wrong, in words, and how well each text colour reads.
-        - Settings › General › Theme › Load from Folder… uses it and repaints every window each time you save.
+        - Settings › Appearance › Theme › Load from folder… uses it and repaints every window each time you save.
 
         **id**: yours, lowercase, like `com.you.sunset`. **name**: up to 40 characters.
 
@@ -170,8 +170,11 @@ public struct ThemeLibrary: Sendable {
         **shape**: corner radii for `control` (4 to 999), `card` and `window` (0 to 28).
 
         **motion**: calm, bouncy or none (Reduce Motion always wins). **material**: `sidebar` solid or translucent;
-        `grain`, a PNG tiled faintly over the pages. **companion**: `nook` cushion, badge or sticker; `backdrop`, a PNG
-        behind it; `suggests`, a companion the theme was drawn for. **art**: `empty`, a PNG for empty pages.
+        `grain`, a PNG tiled faintly over the pages; `page` and `pageDark`, a wide PNG washed in at the top of each page
+        and faded into it. **companion**: `backdrop` and `backdropDark`, a PNG faded behind the companion's card in
+        Home's sidebar; `suggests`, a companion the theme was drawn for. **art**: `empty`, a PNG for empty pages.
+        A theme dresses Sidefolk, it doesn't arrange it: each place has one layout, and of `layout` only `icons`
+        (simple or colorful) is read.
 
         Images are PNGs inside this folder, 2 MB and 2048 pixels a side at most. A theme can't run anything.
         """

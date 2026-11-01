@@ -194,6 +194,7 @@ struct SidebarNook: View {
             Spacer(minLength: 0)
         }
         .padding(Theme.Space.s + 2)
+        .background { NookBackdrop() }
         .cardSurface()
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
@@ -240,6 +241,23 @@ struct SidebarNook: View {
 
 /// Open, Focus or Quiet at the sidebar's foot (D84), with the half circle and the moon (`Theme.Symbol`): the same choice
 /// and ends as Settings › Attention and the Pocket.
+/// The theme's nook art (`companion.backdrop`, D84: themes dress the nook) behind the companion's card, faded so its
+/// name and line still read, and clipped to the card: scaled to fill, it would spill over the sidebar otherwise.
+private struct NookBackdrop: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        if let art = Theme.Art.backdrop(dark: scheme == .dark) {
+            // In a clear frame of the card's size, so the clip is the card's and not the larger filled image's.
+            Color.clear
+                .overlay { Image(decorative: art, scale: 2).resizable().scaledToFill() }
+                .opacity(0.35)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+                .allowsHitTesting(false)
+        }
+    }
+}
+
 struct QuietPill: View {
     var model: HomeModel
 

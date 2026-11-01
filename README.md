@@ -103,7 +103,8 @@ No AI, in all ten languages.
 - **Voice, if you want it** (**Settings › Brain › Voice**): hold the Ask shortcut, talk, let go. Speech is
   recognised on your Mac and never kept; it answers in one short spoken line.
 - **Themes** dress the app (colours, type, density): Harbor, Night Shift, Marshmallow and Field Notes built in, more
-  in the gallery, or your own (`sidefolk theme new`).
+  in the gallery, or your own (`sidefolk theme new`, or the [`sidefolk-theme` skill](skills/sidefolk-theme/SKILL.md)
+  for Claude Code or Codex).
 
 ### You decide how much it asks
 
@@ -272,7 +273,10 @@ make strings                     # collect every string people read into the cat
 swift scripts/dev.swift snap     # snapshot the running debug app's windows (see AGENTS.md)
 ```
 
-Read [AGENTS.md](AGENTS.md) before changing things. The plan and the decisions live in [docs/](docs):
+Agent skills for this repository live in `.claude/skills/` (mirrored in `.agents/skills/` for Codex): an extension
+(`sidefolk-extension`), a companion (`sidefolk-3d-character`, `sidefolk-2d-character`) and a theme
+(`sidefolk-theme`: "brainstorm a theme around a tea house", or a theme like a picture, checked and reviewed in
+snapshots). Read [AGENTS.md](AGENTS.md) before changing things. The plan and the decisions live in [docs/](docs):
 [STATUS](docs/STATUS.md) · [PRODUCT](docs/PRODUCT.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) ·
 [DESIGN](docs/DESIGN.md) · [DECISIONS](docs/DECISIONS.md) · [SECURITY](docs/SECURITY.md) ·
 [EXTENSIONS](docs/EXTENSIONS.md) · [CHARACTER](docs/CHARACTER.md) · [VOICE](docs/VOICE.md) ·
@@ -286,7 +290,7 @@ Read [AGENTS.md](AGENTS.md) before changing things. The plan and the decisions l
 | `Sources/sidefolk/` | The `sidefolk` command-line helper (mcp, run, hook, status, ext validate, theme) |
 | `Resources/Companions3D/` | The three.js engine and the built-in 3D companions; `companions-3d/` and `companions-2d/` hold the pipelines |
 | `extensions/` | The built-in extensions, a sample, and the Kit they are written on |
-| `skills/` | The skill Connect gives other agents, and the `sidefolk-extension` skill |
+| `skills/` | The skill Connect gives other agents, and the public `sidefolk-extension` and `sidefolk-theme` skills |
 | `scripts/` | `build-app.sh`, `release.sh`, `dev.swift` (drive the debug app), strings and brand tools |
 
 **Release:** on GitHub, **CI** builds and tests every push and pull request to `main`, and **Release** (Actions ›

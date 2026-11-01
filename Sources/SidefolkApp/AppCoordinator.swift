@@ -522,7 +522,7 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("themeFolder:") || command.hasPrefix("theme:") {
-            // theme:<id> picks a theme, themeFolder:<path> follows a folder, as Settings › General › Theme does (D58).
+            // theme:<id> picks a theme, themeFolder:<path> follows a folder, as Settings › Appearance › Theme does (D58).
             let folder = command.hasPrefix("themeFolder:") ? String(command.dropFirst("themeFolder:".count)) : nil
             let id = folder == nil ? String(command.dropFirst("theme:".count)) : nil
             Task {

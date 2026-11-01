@@ -38,6 +38,18 @@ Agents can't see the screen. To check the running debug app:
 - When a test run seems stuck, run it through `script -q log.txt swift test --no-parallel < /dev/null`:
   plain redirection buffers the output, so the last lines lie about where it stopped.
 
+## Skills
+
+Project skills, in `.claude/skills/` (Claude Code) and mirrored in `.agents/skills/` (Codex): keep both identical.
+
+- `sidefolk-extension`: an extension end to end, to the gallery or a local folder.
+- `sidefolk-3d-character`, `sidefolk-2d-character`: a companion's 3D model and its 2D form.
+- `sidefolk-theme`: a theme from a concept or reference images ("brainstorm a theme around …"), checked, reviewed
+  in snapshots and delivered as a folder or a gallery theme.
+
+`skills/` holds what ships to other people: `sidefolk` (Connect installs it for other agents, D42) and the public
+`sidefolk-extension` and `sidefolk-theme` for anyone building with the app, without this repository.
+
 ## Rules
 
 - Tests and dev runs never touch the user's real data or agent configs: use `SIDEFOLK_HOME`, temp

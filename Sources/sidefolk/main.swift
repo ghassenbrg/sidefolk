@@ -78,7 +78,7 @@ case "theme":
         do {
             _ = try ThemeLibrary.start(name, at: folder)
             print("Made \(folder.path).\nChange theme.json, then: sidefolk theme check \(folder.path)")
-            print("To see it, choose Settings › General › Theme › Load from Folder…; each save repaints Sidefolk.")
+            print("To see it, choose Settings › Appearance › Theme › Load from folder…; each save repaints Sidefolk.")
         } catch {
             fail("\(error)", code: 1)
         }

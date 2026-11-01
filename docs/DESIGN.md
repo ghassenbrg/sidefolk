@@ -118,7 +118,7 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `.lanternTile(bar:)` | `TodayParts.swift` | a tile's surface with its 3 pt state bar (Today's watch and value tiles) |
 | `NeedsYouCard` | `TodayView.swift` | one thing that waits: folk avatar, "who · time", the card's words, a 3 pt amber bar, the keyboard's ring |
 | `FolkCard` | `OnDutyView.swift` | a folk's group of rows: avatar with its live ring, name, role, count |
-| `SidebarSquircle`, `PageSquircle`, `SidebarNook` | `HomeSidebar.swift`, `ExtensionsSidebar.swift` | 20 pt tinted icons in the sidebar; the companion's nook |
+| `SidebarSquircle`, `PageSquircle`, `SidebarNook` | `HomeSidebar.swift`, `ExtensionsSidebar.swift` | 20 pt tinted icons in the sidebar; the companion's nook, with the theme's `companion.backdrop` faded behind it |
 | `SayPanel`, `SayWords` | `SayPanel.swift` | what typed words will do, from `IntentPlan`: sentence, chips, AI chip, keys |
 | `PersonAvatar`, `CompanionAvatar` | `HistoryView.swift` | who did something, beside a sentence |
 | `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
