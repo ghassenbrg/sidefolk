@@ -34,6 +34,7 @@ struct TodayView: View {
                     }
                 }
             }
+            AddonUpdatesTodayRow(updates: model.services.updates)
             if !now.captured.isEmpty { captured }
         }
         .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: now) }

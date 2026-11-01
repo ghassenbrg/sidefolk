@@ -109,6 +109,7 @@ struct ExtensionRow: View {
         } subtitle: {
             subtitle
         } trailing: {
+            if let entry = model.services.updates.addonUpdate(for: ext.id) { AddonUpdateInline(entry: entry, updates: model.services.updates) }
             Toggle("Enable \(ext.name)", isOn: Binding(get: { ext.enabled }, set: { on in
                 switched()
                 Task { await model.setEnabled(ext, on) }

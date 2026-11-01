@@ -105,6 +105,13 @@ extension AppCoordinator {
                                     trailing: TimeText.clock(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.source),
                                     open: { [weak self] in self?.pocketClosing { $0.openNow() } }))
         }
+        // Add-on updates (D89): one row, however many.
+        let pending = updates.addonPending
+        if !pending.isEmpty {
+            c.needsYou.append(.init(id: "addon-updates", title: AddonUpdateWords.count(pending.count),
+                                    detail: Wording.list(pending.map(\.shownName)).clipped(60), symbol: "arrow.down.circle",
+                                    open: { [weak self] in self?.pocketClosing { $0.addonUpdater.showAddonUpdates() } }))
+        }
         let skipped = await runtime.executor.skipped.list()
         if let newest = skipped.first {
             c.needsYou.append(.init(id: "skipped", title: String(localized: "Skipped while you were away (\(skipped.count))"),

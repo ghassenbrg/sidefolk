@@ -33,6 +33,7 @@ struct HomeGalleryView: View {
                     .frame(maxWidth: 300)
             }
             if shelf == .companions && !chooser.galleryEntries.isEmpty { CompanionFilters(chooser: chooser) }
+            if shelf == .all && search.isEmpty { AddonUpdatesSection(updates: settings.services.updates, gallery: gallery) }
             channelNote
             if !gallery.available || (gallery.catalog == nil && (gallery.loading || gallery.error != nil)) {
                 GalleryStatus(gallery: gallery, kind: .extension)
