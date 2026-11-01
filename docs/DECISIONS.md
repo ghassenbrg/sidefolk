@@ -2028,9 +2028,26 @@ modelling props per companion (twelve companions); shipping sound files (synthes
 
 **Implications:** a 0.1.0 snapshot from before games refuses Playtime's games snapshots at install (an unknown `games` key), as with
 pages (D62); accepted for snapshots. New companion moves (sulk, shrug, tease, ready and the short accents) borrow the
-nearest existing moment until each is made and filmed for every 3D companion; trivia's questions stay the 52 English
+nearest existing moment until each is made and filmed for every 3D companion (built: the amendment below); trivia's questions stay the 52 English
 ones until the content packs land (`TriviaPack`). **Not built:** the `pads`, `shuffle`, `reflex`, `meter`, `number`,
 `letters` and `keys` parts (phase 2–3), Sneaky's switch in Settings, a tail on the panel.
+
+**Amended (2026-11-01), the reaction moves, built:** the game moves that borrowed a near one are each the companion's
+own now. In 3D, shared in `engine/moves.js` for every companion (Mochi and Spark in the app, the gallery's eight on
+the same engine): **sulk** (a huff, then the shoulder turned on you, head away rather than down, ears drooping, a
+glance back), **shrug** (shoulders up, paws out and open, head tipped), **tease** (a paw by the cheek, a lean with a
+short wink, a waggle of the hips), **ready** (a crouch, paws up in front and apart, two bounces), and the accents
+**waveQuick**, **hopQuick**, **spinQuick**, **bowQuick** (0.55–1 s, eyes open for the next beat); **wince** and
+**gasp** play the engine's `wince` and `surprised`. Each lasts 0.6–1.6 s and comes back to rest by itself. A move may
+carry a `still` version that the engine plays instead under Reduce Motion (`liveliness: 'still'`): the face and a
+small turn of the head, nothing that travels. In 2D the same ten are new `CharacterAntic` cases drawn from the rig's
+parts (`Antics`), with the moods each body already draws (a wink is the one-eye `wince`); a 2D spin narrows twice
+rather than turning edge-on. `CueDirector.moment` maps each `GameCue.Move` to its own antic; `sulk` is no longer the
+`error` state. Every move was filmed for every 3D companion from the front, 40° and the side, and tuned from the
+films: big heads turn rather than droop in a sulk, long arms stay apart in ready, the wink is short because a one-eyed
+body (Iris) reads a long one as shut, the accents keep their eyes open. No character file changed, so the gallery's
+companions need no new version: they get the moves with the app. The playground gained `reel()` (several moves at
+several angles in one picture) and `edges({ only })`; the debug app `cue:<move>`.
 
 ### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
 **Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.

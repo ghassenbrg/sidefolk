@@ -47,6 +47,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   (1626 + 38 tests), and a debug app on `build/safety-1` connected and disconnected both agents and the command
   while the real files kept their mtime and SHA-256. Next: merge.
 
+- **The companions' reaction moves** (branch `team/reactions`, not merged; D75 amended): sulk, shrug, tease, ready,
+  wince, gasp and the quick accents are each a real move now, in 3D for all ten companions (shared in
+  `engine/moves.js`, a still version under Reduce Motion) and in 2D (`Antics`). Verified: every move filmed for every
+  3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
+  debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
+  no gallery companion changes.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
@@ -55,7 +62,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
    choice card for drops, the stack's arc animation, voice's level-reactive pool, answering cards from the keyboard
-   outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
+   outside Ask, Ask's "Open in History" header, the Week view's "read only" note and
    "+1" overlaps, a watch's detail page (no check log or page versions are kept), a per-source "what may interrupt
    you" table (no source has a level of its own).
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
