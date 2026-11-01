@@ -57,8 +57,8 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   number up to 500", "pause the game", "resume the game", "show my stats", "turn game sounds off", "back to the
   games"), `games.open`'s last/again/random/center and relative levels, a new `games.settings`; Sneaky in Settings ›
   Companion; and Home's large titles (the toolbar's title only once the page's own has scrolled away, content cut at
-  the toolbar, no "Playtime / Playtime"). Verified: `GameCommandsTests`, `GameCenterTests`, full `make test` and the
-  add-ons' `swift test` (Playtime 71), `build.py --unsigned`, `check.sh`; UI snapshots `page-game-center*` and
+  the toolbar, no "Playtime / Playtime"). Verified: `GameCommandsTests`, `GameCenterTests`, full `make test` (1718 + 38) and
+  the add-ons' `swift test` (120), `build.py`, `check.sh`; UI snapshots `page-game-center*` and
   `window-home-*` (scrolled too) in light, dark, de and ar; a debug app on `build/gc-1` with Playtime from a local
   build: "play tic-tac-toe on hard" (Hard), "make it easier" (Fair), "pause the game", "resume the game",
   "Spielgeräusche an", "guess a number between 1 and 1000", "jouons au morpion difficile", "더 쉽게 해줘", "show my
