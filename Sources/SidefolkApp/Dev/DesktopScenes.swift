@@ -50,6 +50,13 @@ enum DesktopScenes {
             ("whisper-own", moment(AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
                                                  title: String(localized: "All clear. Nothing waits for you.", comment: "A whisper when the last held card was answered"),
                                                  refKind: "clear"), .whisper, tail: 0.5)),
+            // A retired theme at launch (D92): moved to its successor, or offered it.
+            ("theme-moved", moment(AppCoordinator.successionItem(.moved(from: ThemeSuccession.retired["dev.sidefolk.theme.field-notes"]!,
+                                                                         to: "dev.sidefolk.theme.paper-garden"),
+                                                                  successorName: "Paper Garden"), .whisper, tail: 0.5)),
+            ("theme-offer", moment(AppCoordinator.successionItem(.offer(ThemeSuccession.retired["dev.sidefolk.theme.daylight"]!,
+                                                                         id: "dev.sidefolk.theme.daylight"),
+                                                                  successorName: "Harbor"), .card, tail: 0.5)),
             ("reminder", moment(AttentionItem(level: .attention, source: "reminder", title: "Stretch and refill water",
                                               body: "It's 17:00. Next one at 19:00, the last at 21:00.",
                                               actions: [AttentionAction(id: actions.done, title: String(localized: "Done"), isPrimary: true),

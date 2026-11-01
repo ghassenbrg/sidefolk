@@ -18,6 +18,63 @@ extension AppCoordinator {
         }
     }
 
+    static let themeSuccessor = "themeSuccessor"
+    static let useSuccessor = "theme.useSuccessor"
+
+    /// A theme that left Sidefolk (D92): a retired built-in becomes its successor before the first paint; a theme that
+    /// left the gallery stays, and its successor is offered once (`announceSuccession`).
+    func succeedRetiredTheme() async -> ThemeSuccession.Step? {
+        let installed = Set(themes.all().map(\.id))
+        var next = runtime.settings.current
+        guard let step = ThemeSuccession.step(&next, installed: installed.contains) else { return nil }
+        let changed = next
+        await runtime.settings.update {
+            $0.theme = changed.theme
+            $0.density = changed.density
+            $0.themeSuccessorsOffered = changed.themeSuccessorsOffered
+        }
+        return step
+    }
+
+    /// Says what happened to the theme, once, as a whisper.
+    func announceSuccession(_ step: ThemeSuccession.Step) {
+        let successor = switch step {
+        case .moved(_, let to): to
+        case .offer(let old, _): old.successor
+        }
+        sidecard.present(Self.successionItem(step, successorName: themes.theme(id: successor).tokens.name),
+                         .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+    }
+
+    /// The whisper's words: moved needs nothing more; an offer carries "Use …" (`useSuccessor`).
+    static func successionItem(_ step: ThemeSuccession.Step, successorName name: String) -> AttentionItem {
+        switch step {
+        case .moved(let old, _):
+            AttentionItem(level: .gentle, source: ownVoice,
+                          title: String(localized: "\(old.name) is now \(name), its successor.",
+                                        comment: "A whisper at launch after a retired theme was replaced: “Field Notes is now Paper Garden, its successor.”"),
+                          refKind: themeSuccessor)
+        case .offer(let old, _):
+            AttentionItem(level: .gentle, source: ownVoice,
+                          title: String(localized: "\(old.name) left the gallery and stays yours. \(name) took its place.",
+                                        comment: "A whisper at launch about a theme no longer in the gallery: “Daylight left the gallery and stays yours. Harbor took its place.”"),
+                          actions: [AttentionAction(id: useSuccessor,
+                                                    title: String(localized: "Use \(name)", comment: "Wears a retired theme's successor: “Use Harbor”"))],
+                          refKind: themeSuccessor, refId: old.successor)
+        }
+    }
+
+    /// "Use Harbor" on that whisper.
+    func useTheme(_ id: String) {
+        Task {
+            await runtime.settings.update {
+                $0.theme = id
+                $0.themeFolder = nil
+            }
+            settingsChanged()
+        }
+    }
+
     /// Checks the followed folder again and uses it when it can be used. A theme with an error leaves the last good
     /// one on screen, and Settings says what's wrong.
     func reloadThemeFolder(_ folder: URL) {

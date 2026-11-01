@@ -2187,6 +2187,7 @@ name too), `AddonGalleryModel.remove(companion:wearing:)`, `readInstalled`, `com
 sidefolk-addons: `build.py` may write `published` (and `body` for a companion this app has no case for) into the catalog.
 
 ### D78 — Colour meaning: red only for errors and real risk, amber for waiting, green for good outcomes (2026-10-31)
+*Amended 2026-11-01 (`team/theme-skill`):* the theme check holds every role drawn as text to 4.5:1 where it is drawn (success on every surface, and each chip's words on its own soft fill: link, danger, warning, success), and the soft fills to their status's hue or grey (a purple `dangerSoft` read as news). The built-ins and the gallery's themes were darkened along their own hues to pass; Night Studio's and Marshmallow's dark soft fills moved to red and amber. The new rules are errors for a theme made or added from a folder (`sidefolk theme check`, Load from folder) and warnings for a copy Sidefolk already keeps or one from its own gallery (`ThemeCheck.check(folder:strict:)`), so a theme that passed when it was added isn't taken away before its update; sidefolk-addons' `check.sh` holds the gallery to the strict check.
 **Decision:** every status colour means one thing, in every screen and theme (ARCHITECTURE › Colour meaning):
 - **danger/red:** an error, a failure, a destructive action, or real risk to the person's data or privacy. Nothing else.
 - **warning/amber:** needs a look or is waiting (late reminders, what waits on you, a countdown running out, a step
@@ -2910,3 +2911,47 @@ and `.restore`, the menu's Back Up Everything… and Restore from a Backup…; d
 `restoreConfirm`, `restoreNow:`, `undoRestore`; snapshots `sheet-backup`, `sheet-backup-keys`, `sheet-restore`,
 `page-settings-trust-restored`. Tests: `BackupTests`. SECURITY T19.
 
+
+### D92 — Four themes, each its own atmosphere, all built in; retired themes move to their successor (2026-11-01)
+**Decision:** *narrows D58's set and D64's gallery themes; builds on D84 and D78.* Now that a theme only dresses the
+app (D84), seven themes were mostly the same few atmospheres. Sidefolk keeps four, each one nobody would mistake for
+another, and ships all four in the app:
+- **Harbor** (code): Lantern itself, neutral graphite and paper, the deep aqua action colour. The default.
+- **Paper Garden** (`dev.sidefolk.theme.paper-garden`, 2.0.0): the paper family in one: Field Notes' and Paper
+  Garden's warm paper, sage and editorial serif, with the finish of Tea House (made with the `sidefolk-theme` skill,
+  never published): a hinoki-wood sidebar, a washi grain, light through a paper screen with bamboo shadows on every
+  page and behind the companion's card, a full set of roles.
+- **Night Studio** (`dev.sidefolk.theme.night-studio`, 2.0.0): the evening one: Night Studio's indigo glass over a dusk
+  landscape and mint for good news, with Night Shift's crisper corners for long sessions beside agents.
+- **Marshmallow** (`dev.sidefolk.theme.marshmallow`, 2.0.0): the playful one, kept because nothing else is: candy
+  colours over its cotton-candy clouds, now a page wash and nook art instead of a portrait stage; a raspberry accent
+  that reads as a button (the pink read as an error and as disabled).
+Dropped: **Daylight** (white cards and an azure accent: Harbor's light look with a sky; Harbor covers it), **Field
+Notes** and **Tea House** (into Paper Garden), **Night Shift** (into Night Studio; Harbor's dark covers a neutral dark,
+and Appearance › Density covers compact).
+
+**Where they live:** all four in the app's `Resources/Themes` (2.7 MB with their art, about what the three built-ins
+took before: Marshmallow's two portrait stages became four small crops). The gallery has no themes for now. Every
+survivor is the successor of a theme someone may wear offline, and a successor must be there at launch without a
+download; Paper Garden and Night Studio keep their gallery ids, so an installed gallery copy is simply shadowed by the
+built-in (`ThemeLibrary.all`). The gallery stays open for a future theme whose atmosphere none of these has.
+
+**Mapping** (`ThemeSuccession`, at launch before the first paint, unless a theme folder is followed):
+Field Notes → Paper Garden and Night Shift → Night Studio (their files are gone: the setting moves, a whisper says
+"Field Notes is now Paper Garden, its successor." once; Night Shift's people get compact spacing unless they chose a
+density); Daylight → Harbor (a gallery theme: where it is still installed it stays and stays usable, D65, and one
+whisper offers "Use Harbor"; `AppSettings.themeSuccessorsOffered` keeps that to once; where it is gone, the setting
+moves to Harbor with the whisper). sidefolk-addons drops `themes/`, so `publish.sh` removes their packs.
+
+**Why:** the founder: "keep only the necessary themes; if some serve the same concept or atmosphere, make them one".
+Fewer, finished themes are easier to keep right on every screen (each was re-checked with the D78 amendment and
+snapshots in light, dark and Arabic) and easier to choose from.
+
+**Alternatives:** keep the gallery for the art-heavy two (a person on Field Notes or Night Shift would need a download
+at launch, or fall to Harbor); merge Daylight into Harbor (a sky behind the default changes everyone's look); keep
+Night Shift for developers (with one layout per place, what was left of it was a dark palette and compact spacing,
+both already a setting away).
+
+**Implications:** `ThemeLibrary.builtInOrder`, `Sources/SidefolkCore/Themes/ThemeSuccession.swift` and its tests,
+`AppCoordinator+Themes` (`succeedRetiredTheme`, `announceSuccession`, "Use …"), `Resources/Themes/{paper-garden,
+night-studio,marshmallow}`; the `sidefolk-theme` skill names the four as what a new theme must differ from.

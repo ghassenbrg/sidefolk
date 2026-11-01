@@ -28,10 +28,10 @@ role is ignored with a warning, an unknown top-level key is ignored silently. So
 | `accent` | the one action colour: primary buttons, selection, the focus ring, the sidebar's selected place | ≥ 3:1 on cards and page; never red (error) or amber (waiting) |
 | `onAccent` | the label on a primary button | ≥ 4.5:1 on `accent` (a dark label on a light accent is fine in dark) |
 | `accentSoft` | selection backgrounds, the calm strip on a slip ("Part of what you asked…") | a pale tint of the accent |
-| `link` | the accent as text ("Open Calendar", "Answer") | ≥ 4.5:1 on every surface; usually a touch darker (light) or lighter (dark) than `accent` |
-| `danger`, `dangerSoft`, `onDanger` | errors, failures, destructive actions, real risk ("Having trouble") | **red** (hue 0–30 or 330–360), check error otherwise |
-| `success`, `successSoft` | done, allowed, won (a "Connected" label, ticks, "done today") | **green** (hue 70–200); also drawn as text, so ≥ 4.5:1 (not in the check: `palette.py`) |
-| `warning`, `warningSoft`, `onWarning` | waiting on the person, late, "Another app is asking" strips, the waiting count | **amber** (hue 30–65), never an error |
+| `link` | the accent as text ("Open Calendar", "Answer") | ≥ 4.5:1 on every surface and on `accentSoft`; usually a touch darker (light) or lighter (dark) than `accent` |
+| `danger`, `dangerSoft`, `onDanger` | errors, failures, destructive actions, real risk ("Having trouble") | **red** (hue 0–30 or 330–360), check error otherwise; `dangerSoft` reddish or grey, `danger` ≥ 4.5:1 on it (chips) |
+| `success`, `successSoft` | done, allowed, won (a "Connected" label, ticks, "done today") | **green** (hue 70–200); drawn as text, so ≥ 4.5:1 on every surface and on `successSoft` |
+| `warning`, `warningSoft`, `onWarning` | waiting on the person, late, "Another app is asking" strips, the waiting count | **amber** (hue 30–65), never an error; `warningSoft` amber or grey |
 | `glow` | the light pool under the companion while it works or listens; Today's "on duty" dot | light, never text; not red or amber; not the same as `success`. Optional (Harbor's aqua) |
 | `waitGlow` | the light when something waits, the count on the companion's shoulder | light, never text; amber. Optional (Harbor's amber) |
 

@@ -6517,6 +6517,71 @@
         }
       }
     },
+    "%@ is now %@, its successor." : {
+      "comment" : "A whisper at launch after a retired theme was replaced: “Field Notes is now Paper Garden, its successor.”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصبح %1$@ الآن %2$@، خليفته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist jetzt %2$@, sein Nachfolger."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is now %2$@, its successor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ahora es %2$@, su sucesor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ devient %2$@, son successeur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ora è %2$@, il suo successore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は後継の%2$@になりました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 이제 후속 테마인 %2$@입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ agora é %2$@, seu sucessor."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 现在由后继主题 %2$@ 接替。"
+          }
+        }
+      }
+    },
     "%@ is on a read-only disk." : {
       "localizations" : {
         "ar" : {
@@ -8566,6 +8631,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "还剩 %@"
+          }
+        }
+      }
+    },
+    "%@ left the gallery and stays yours. %@ took its place." : {
+      "comment" : "A whisper at launch about a theme no longer in the gallery: “Daylight left the gallery and stays yours. Harbor took its place.”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غادر %1$@ المعرض ويبقى لك. حلّ %2$@ محله."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist nicht mehr in der Galerie und bleibt dir. %2$@ tritt an seine Stelle."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ left the gallery and stays yours. %2$@ took its place."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ha salido de la galería y sigue siendo tuyo. %2$@ ocupa su lugar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a quitté la galerie et reste à vous. %2$@ prend sa place."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ha lasciato la galleria e resta tuo. %2$@ ha preso il suo posto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@はギャラリーから外れましたが、そのまま使えます。後継は%2$@です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 갤러리에서 빠졌지만 계속 쓸 수 있어요. 후속 테마는 %2$@입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ saiu da galeria e continua sendo seu. %2$@ ficou no lugar dele."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 已离开画廊，仍归你使用。%2$@ 接替了它。"
           }
         }
       }
@@ -83493,6 +83623,7 @@
       }
     },
     "Good afternoon" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -83669,6 +83800,7 @@
       }
     },
     "Good evening" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -210714,7 +210846,7 @@
       }
     },
     "Use %@" : {
-      "comment" : "A button: “Use Portland, Oregon, United States”",
+      "comment" : "A button: “Use Portland, Oregon, United States”\nWears a retired theme's successor: “Use Harbor”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

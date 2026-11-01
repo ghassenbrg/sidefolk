@@ -102,8 +102,8 @@ No AI, in all ten languages.
   read your open reminders. It removes a note from Notes only when you ask, after a whole copy, asking every time.
 - **Voice, if you want it** (**Settings › Brain › Voice**): hold the Ask shortcut, talk, let go. Speech is
   recognised on your Mac and never kept; it answers in one short spoken line.
-- **Themes** dress the app (colours, type, density): Harbor, Night Shift, Marshmallow and Field Notes built in, more
-  in the gallery, or your own (`sidefolk theme new`, or the [`sidefolk-theme` skill](skills/sidefolk-theme/SKILL.md)
+- **Themes** dress the app (colours, type, density, a little art): Harbor, Paper Garden, Night Studio and Marshmallow
+  built in, or your own (`sidefolk theme new`, or the [`sidefolk-theme` skill](skills/sidefolk-theme/SKILL.md)
   for Claude Code or Codex).
 
 ### You decide how much it asks

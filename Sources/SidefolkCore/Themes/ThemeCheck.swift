@@ -43,8 +43,11 @@ public enum ThemeCheck {
     /// Text must stand out this much from what it's on (WCAG AA for body text).
     public static let textContrast = 4.5
 
-    /// Reads and checks the theme in `folder` (its `theme.json` and the images it names).
-    public static func check(folder: URL) -> ThemeReport {
+    /// Reads and checks the theme in `folder` (its `theme.json` and the images it names). `strict` is for a theme being
+    /// made or added from a folder; a copy Sidefolk already keeps, or one from its own gallery, is read with the rules
+    /// added on 2026-11-01 (success and chips as text, soft fills' hues) as warnings, so a theme that passed when it
+    /// was added keeps working until its update comes.
+    public static func check(folder: URL, strict: Bool = true) -> ThemeReport {
         var report = ThemeReport(tokens: .harbor)
         let manifest = folder.appendingPathComponent("theme.json")
         guard let size = (try? FileManager.default.attributesOfItem(atPath: manifest.path))?[.size] as? Int else {
@@ -63,7 +66,7 @@ public enum ThemeCheck {
             return report
         }
         report.file = file
-        resolve(file, into: &report)
+        resolve(file, strict: strict, into: &report)
         for (role, path) in file.images {
             switch image(path, in: folder) {
             case .success(let url): report.images[role] = url
@@ -76,7 +79,7 @@ public enum ThemeCheck {
 
     // MARK: Values
 
-    private static func resolve(_ file: ThemeFile, into report: inout ThemeReport) {
+    private static func resolve(_ file: ThemeFile, strict: Bool, into report: inout ThemeReport) {
         func problem(_ level: ThemeReport.Problem.Level, _ message: String) { report.problems.append(.init(level: level, message: message)) }
         if file.format != ThemeFile.currentFormat {
             problem(.error, "format \(file.format) isn't one this Sidefolk reads; it reads format \(ThemeFile.currentFormat).")
@@ -118,9 +121,11 @@ public enum ThemeCheck {
         t.colors.fillOptional(missing: missingOptional)
         if !missing.isEmpty { problem(.warning, "Harbor's colour is used for \(missing.joined(separator: ", ")).") }
         for row in contrastRows(t.colors) where !row.passes {
-            problem(.error, "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1.")
+            problem(strict || !row.newer ? .error : .warning,
+                    "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1.")
         }
         for message in meaningProblems(t.colors) { problem(.error, message) }
+        for message in softMeaningProblems(t.colors) { problem(strict ? .error : .warning, message) }
 
         // Type, shape, motion, material, nook and icons: from the app's own sets, within its limits.
         func pick<E: RawRepresentable & CaseIterable>(_ text: String?, _ key: String, _ fallback: E, level: ThemeReport.Problem.Level = .warning) -> E
@@ -187,20 +192,23 @@ public enum ThemeCheck {
         public var label: String
         public var light: Double
         public var dark: Double
+        /// Held since 2026-11-01 (success and chips as text): only a warning for a theme Sidefolk already keeps.
+        public var newer = false
         public var passes: Bool { min(light, dark) >= ThemeCheck.textContrast }
     }
 
-    /// Every pair of text and what it's drawn on that the app uses.
+    /// Every pair of text and what it's drawn on that the app uses: each text role on every surface (success too: a
+    /// "Connected" label, a state word), the label on each fill, and a chip's words on its own soft fill (`ChipTone`).
     public static func contrastRows(_ c: ThemeTokens.Colors) -> [ContrastRow] {
         var rows: [ContrastRow] = []
-        func add(_ label: String, _ text: ThemeTokens.Pair, on back: ThemeTokens.Pair) {
-            rows.append(ContrastRow(label: label, light: contrast(text.light, back.light), dark: contrast(text.dark, back.dark)))
+        func add(_ label: String, _ text: ThemeTokens.Pair, on back: ThemeTokens.Pair, newer: Bool = false) {
+            rows.append(ContrastRow(label: label, light: contrast(text.light, back.light), dark: contrast(text.dark, back.dark), newer: newer))
         }
         for (name, text) in [("ink", c.ink), ("inkMuted", c.inkMuted), ("inkFaint", c.inkFaint), ("link", c.link), ("danger", c.danger),
-                             ("warning", c.warning)] {
+                             ("warning", c.warning), ("success", c.success)] {
             for (surface, back) in [("surface", c.surface), ("surfaceSunken", c.surfaceSunken), ("surfaceRaised", c.surfaceRaised),
                                     ("well", c.well)] {
-                add("\(name) on \(surface)", text, on: back)
+                add("\(name) on \(surface)", text, on: back, newer: name == "success")
             }
         }
         add("ink on accentSoft", c.ink, on: c.accentSoft)
@@ -208,6 +216,10 @@ public enum ThemeCheck {
         add("onDanger on danger", c.onDanger, on: c.danger)
         add("ink on warningSoft", c.ink, on: c.warningSoft)
         add("onWarning on warning", c.onWarning, on: c.warning)
+        add("link on accentSoft", c.link, on: c.accentSoft, newer: true)
+        add("danger on dangerSoft", c.danger, on: c.dangerSoft, newer: true)
+        add("warning on warningSoft", c.warning, on: c.warningSoft, newer: true)
+        add("success on successSoft", c.success, on: c.successSoft, newer: true)
         return rows
     }
 
@@ -221,15 +233,39 @@ public enum ThemeCheck {
         ("success", \.success, "green", [70...200]),
     ] }
 
+    /// The soft fills behind a status (a chip, a strip, a tinted card) carry its hue too, or a purple fill would make
+    /// an error read as news. A fill with almost no colour (a grey) says nothing either way, so it passes.
+    static var softHues: [(role: String, key: KeyPath<ThemeTokens.Colors, ThemeTokens.Pair>, looks: String, hues: [ClosedRange<Double>])] {
+        zip(["dangerSoft", "warningSoft", "successSoft"], [\ThemeTokens.Colors.dangerSoft, \.warningSoft, \.successSoft])
+            .map { role, key in
+                let rule = meaningHues.first { role.hasPrefix($0.role) }!
+                return (role, key, rule.looks, rule.hues)
+            }
+    }
+
     /// Each status role whose colour doesn't look like what it means, in plain words.
     public static func meaningProblems(_ c: ThemeTokens.Colors) -> [String] {
+        problems(c, meaningHues, greyPasses: false)
+    }
+
+    /// Each soft fill whose colour isn't its status's hue (or a grey), in plain words.
+    public static func softMeaningProblems(_ c: ThemeTokens.Colors) -> [String] {
+        problems(c, softHues, greyPasses: true)
+    }
+
+    private static func problems(_ c: ThemeTokens.Colors,
+                                 _ rules: [(role: String, key: KeyPath<ThemeTokens.Colors, ThemeTokens.Pair>, looks: String, hues: [ClosedRange<Double>])],
+                                 greyPasses: Bool) -> [String] {
         var problems: [String] = []
-        for rule in meaningHues {
+        for rule in rules {
             let pair = c[keyPath: rule.key]
             for (appearance, value) in [("light", pair.light), ("dark", pair.dark)] {
                 let (hue, saturation) = hueAndSaturation(value)
+                if greyPasses && saturation < 0.1 { continue }
                 if saturation < 0.1 || !rule.hues.contains(where: { $0.contains(hue) }) {
-                    problems.append("\(rule.role) in \(appearance) must look \(rule.looks): it means \(meaning(rule.role)) everywhere in Sidefolk.")
+                    let looks = greyPasses ? "\(rule.looks) or grey" : rule.looks
+                    let base = rule.role.hasSuffix("Soft") ? String(rule.role.dropLast(4)) : rule.role
+                    problems.append("\(rule.role) in \(appearance) must look \(looks): it means \(meaning(base)) everywhere in Sidefolk.")
                 }
             }
         }

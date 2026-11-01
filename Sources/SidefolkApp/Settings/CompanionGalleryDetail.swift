@@ -70,7 +70,7 @@ struct CompanionGalleryDetail: View {
                 Text("Downloading…", comment: "A gallery companion's details while it downloads").font(Theme.Font.caption)
                     .foregroundStyle(Theme.inkMuted)
             case .wearing:
-                Label("Wearing", systemImage: "checkmark.circle.fill").font(Theme.Font.captionStrong).foregroundStyle(Theme.accent)
+                Label("Wearing", systemImage: "checkmark.circle.fill").font(Theme.Font.captionStrong).foregroundStyle(Theme.link)
             case .owned, .update:
                 Label("On this Mac", systemImage: "checkmark").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             case .get:

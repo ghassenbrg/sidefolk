@@ -77,7 +77,7 @@ import UniformTypeIdentifiers
         #expect(messages(ThemeCheck.check(folder: folder)).contains("“id” is missing."))
 
         let library = ThemeLibrary(paths: SidefolkPaths(home: FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-themes-\(UUID().uuidString)")))
-        for id in ["harbor", "dev.sidefolk.theme.night-shift"] {
+        for id in ["harbor", "dev.sidefolk.theme.night-studio"] {
             try write(ThemeFile(.harbor, id: id, name: "Borrowed"))
             #expect(throws: UserFacingError.self) { try library.install(from: folder) }
         }
@@ -171,6 +171,76 @@ import UniformTypeIdentifiers
         #expect(text.contains("warning in light must look amber"), "\(text)")
         // Rust reds, ochres and sage greens are still the right families.
         #expect(ThemeCheck.meaningProblems(ThemeTokens.harbor.colors).isEmpty)
+    }
+
+    /// Every role drawn as text is held to 4.5:1 where it is drawn: success on the surfaces (a "Connected" label) and
+    /// each chip's words on its own soft fill.
+    @Test func everyRoleDrawnAsTextMustRead() throws {
+        var file = ThemeFile(.harbor, id: "com.you.faint", name: "Faint")
+        file.colors?["light"]?["success"] = "#4CC48A"
+        file.colors?["dark"]?["dangerSoft"] = "#B04A42"
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(!report.isUsable)
+        let text = messages(report)
+        #expect(text.contains("success on surfaceRaised is"), "\(text)")
+        #expect(text.contains("success on successSoft is"), "\(text)")
+        #expect(text.contains("danger on dangerSoft is"), "\(text)")
+        let labels = Set(ThemeCheck.contrastRows(ThemeTokens.harbor.colors).map(\.label))
+        for pair in ["success on well", "link on accentSoft", "warning on warningSoft", "success on successSoft"] {
+            #expect(labels.contains(pair), "\(pair)")
+        }
+    }
+
+    /// A soft fill carries its status's hue: a purple danger fill would read as news. A grey one says nothing either
+    /// way and passes.
+    @Test func aSoftFillKeepsItsStatusHue() throws {
+        var c = ThemeTokens.harbor.colors
+        c.dangerSoft.dark = 0x3A2240
+        c.warningSoft.light = 0xE3F4EA
+        #expect(ThemeCheck.meaningProblems(c).isEmpty)
+        #expect(ThemeCheck.softMeaningProblems(c) == [
+            "dangerSoft in dark must look red or grey: it means an error or a real risk everywhere in Sidefolk.",
+            "warningSoft in light must look amber or grey: it means something waiting or needing a look everywhere in Sidefolk.",
+        ])
+        c.dangerSoft.dark = 0x2A2A2C
+        c.warningSoft.light = 0xF2F2F2
+        #expect(ThemeCheck.softMeaningProblems(c).isEmpty)
+    }
+
+    /// The rules added on 2026-11-01 refuse a theme being made or added from a folder, but a copy Sidefolk already
+    /// keeps (it passed when it was added) stays, with warnings, until its update comes.
+    @Test func aKeptThemeOutlivesANewerRule() throws {
+        var file = ThemeFile(.harbor, id: "com.you.minty", name: "Minty")
+        file.colors?["light"]?["success"] = "#4CC48A"
+        file.colors?["dark"]?["dangerSoft"] = "#3A2240"
+        try write(file)
+        #expect(!ThemeCheck.check(folder: folder).isUsable)
+        let lenient = ThemeCheck.check(folder: folder, strict: false)
+        #expect(lenient.isUsable, "\(messages(lenient))")
+        #expect(messages(lenient).contains("Warning: success on surfaceRaised is"), "\(messages(lenient))")
+        #expect(messages(lenient).contains("Warning: dangerSoft in dark must look red or grey"), "\(messages(lenient))")
+
+        let home = folder.appendingPathComponent("home", isDirectory: true)
+        let library = ThemeLibrary(paths: SidefolkPaths(home: home))
+        #expect(throws: UserFacingError.self) { try library.install(from: folder) }
+        let kept = SidefolkPaths(home: home).themes.appendingPathComponent(file.id, isDirectory: true)
+        try FileManager.default.createDirectory(at: kept, withIntermediateDirectories: true)
+        try file.encoded().write(to: kept.appendingPathComponent("theme.json"))
+        #expect(library.all().contains { $0.id == file.id })
+        #expect(try library.install(from: folder, own: true).theme.id == file.id)
+    }
+
+    /// The gallery's themes (sidefolk-addons `themes/`, when a checkout is there) can be used as Sidefolk reads its own
+    /// gallery. The strict check runs there, in its `scripts/check.sh`, so the two repositories can merge in any order.
+    @Test(.enabled(if: FileManager.default.fileExists(atPath: ExtFixtures.addonsRepo.appendingPathComponent("themes").path),
+                   ExtFixtures.noAddons))
+    func theGalleryThemesCanBeUsed() throws {
+        let root = ExtFixtures.addonsRepo.appendingPathComponent("themes", isDirectory: true)
+        for name in try FileManager.default.contentsOfDirectory(atPath: root.path) where !name.hasPrefix(".") {
+            let report = ThemeCheck.check(folder: root.appendingPathComponent(name), strict: false)
+            #expect(report.isUsable, "\(name): \(messages(report))")
+        }
     }
 
     /// A theme made before the warning roles still works: Harbor's amber stands in (it reads on every gallery theme's

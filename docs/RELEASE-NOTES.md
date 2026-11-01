@@ -54,8 +54,8 @@ reminds and keeps watch, plays with you, and your AI agents can talk to it.
 - Notebook: Inbox, You (the facts it keeps about you, with Edit and Forget), projects, topics and lists
   of notes, ideas, tasks and links, pinned notes and formatting (D53). Full-text search everywhere (⌘F).
   Trash for 30 days. Notes saved by agents are tagged and say who saved them.
-- Themes dress the app: Harbor, Night Shift, Marshmallow and Field Notes built in, three in the gallery,
-  your own from a folder (D58, D84).
+- Themes dress the app: Harbor, Paper Garden, Night Studio and Marshmallow built in, each its own
+  atmosphere, and your own from a folder (D58, D84, D92).
 
 ### Time
 - Reminders that survive restarts, with snooze, done, repeats from every minute to every month (with

@@ -21,9 +21,9 @@ with the Lantern revamp (D84, all five phases), the games look and the four puzz
   the `sidefolk` command), Add-ons and Appearance (theme, light or dark, density).
 - **The menu bar** is the Pocket, a popover with the state, the Open/Focus/Quiet dial, Needs you, Next up, Agents
   and Ask.
-- **Themes dress the app only** (colours, faces, density, materials, the light): built in are Harbor (Lantern, the
-  default), Night Shift, Marshmallow and Field Notes; the gallery has Daylight, Night Studio and Paper Garden
-  (Tea House waits on `team/theme-skill`). New themes start with the `sidefolk-theme` skill.
+- **Themes dress the app only** (colours, faces, density, materials, the light): four, all built in (D92): Harbor
+  (Lantern, the default), Paper Garden (warm paper and wood), Night Studio (indigo dusk) and Marshmallow (candy
+  clouds); retired ones move to their successor. New themes start with the `sidefolk-theme` skill.
 - **Without AI:** notes, reminders, watches, live values, the calendar, search, games and extension commands. With
   the AI the person picks (Claude Code, Codex, an API key, Ollama or LM Studio), everything else, through Guard.
 - **For other agents:** `sidefolk mcp` and the skill Connect installs (D42, D52); session hooks tell the person when
@@ -100,17 +100,16 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   backup from `build/bk-1` restored into a fresh `build/bk-2` through the sheet (same notes, reminders and skill,
   History's line), then undone. Next: merge.
 
-- **The theme skill** (branch `team/theme-skill` in both repositories, not merged): `sidefolk-theme` in
-  `.claude/skills/` and `.agents/skills/` (concept or references → three directions → every role in light and dark →
-  art by image generation → `sidefolk theme check` and `templates/palette.py` → snapshots with `--theme` in light, dark
-  and Arabic → a local folder or a gallery theme), and a public copy in `skills/sidefolk-theme/` for anyone with the
-  app. Made with it: **Tea House** (washi, hinoki, matcha), a gallery candidate in sidefolk-addons
-  `themes/tea-house/` (checked, packed by `build.py --unsigned`, not published). Found on the way and fixed: the nook
-  art (`companion.backdrop`) wasn't drawn since phase 3 (`SidebarNook` draws it now, clipped to its card); the starter
-  guide and `theme new` named Settings › General for themes (Appearance now) and left out the page wash. Not fixed:
-  `ThemeCheck` doesn't hold `success` to 4.5:1 although it is drawn as text, and Daylight, Night Studio and Paper
-  Garden read 3.2–4.4:1 there (`palette.py` lists it); `Home/TodayHeader.swift` (TodayHeader, CompanionNook,
-  NookBubble) is unused since D84 phase 3. Next: merge; publish Tea House when the founder asks.
+- **Themes, fewer and finished** (branch `team/theme-skill` in both repositories, not merged; D92): the
+  `sidefolk-theme` skill (`.claude/skills/`, `.agents/skills/`, a public copy in `skills/`); the set cut from seven
+  to four built-ins, each its own atmosphere: Harbor, Paper Garden (Field Notes, Paper Garden and the skill's Tea House
+  merged), Night Studio (Night Studio and Night Shift merged) and Marshmallow (its stage as a wash and nook). Field
+  Notes and Night Shift move to their successor at launch with a whisper (Night Shift's people keep compact
+  spacing); Daylight, gone from the gallery, stays where installed and offers Harbor once (`ThemeSuccession`). The
+  add-ons carry no themes now (publish.sh drops their packs); Tea House's branch `team/tea-house` is superseded.
+  Also: the check holds success and chips' words to 4.5:1 and soft fills to their hue (D78 amended; kept copies only
+  warn), the nook art is drawn again, `TodayHeader.swift` is gone, snapshot language runs work under Swift Build's
+  linked `.build/debug`. Next: merge both branches together, then publish the add-ons (the founder).
 
 **Integration:** `team/desktop-polish` carries origin/main (D86), `team/addon-updates` (with watch history and the
 interrupt levels, D87–D89) and `team/reactions`, merged and tested together; `team/backup` and `team/games-items`

@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""What `sidefolk theme check` doesn't hold a theme to, but Lantern (D84) and colour meaning (D78) still want.
+"""What `sidefolk theme check` doesn't hold a theme to (it holds every text pair, chips included, to 4.5:1 and the
+status colours and their soft fills to their hues), but Lantern (D84) and colour meaning (D78) still want.
 Run it after the check passes; nothing here stops a theme from loading, so fix what it lists by eye and judgement.
 
   palette.py <theme folder or theme.json>
 
-- success is drawn as text (a "Connected" label, a tick) but isn't in the check's contrast rows: wants 4.5:1.
 - the accent is the one action colour: a filled button must stand out from a card and the page (3:1).
 - the lights mean something too: waitGlow is "something waits" (amber), glow "working" (anything but red or amber),
   and glow must not read as success where they sit side by side (Today's counts).
 - the accent must not look like a status: red reads as an error, amber as waiting.
-- soft fills carry their role's hue (dangerSoft reddish, warningSoft amber, successSoft green).
 - wells are a step from cards: darker in light, lighter in dark.
 """
 import colorsys
@@ -40,10 +39,12 @@ def hue_sat(hex_):
 
 def in_hues(hex_, ranges):
     h, s = hue_sat(hex_)
-    return s >= 0.1 and any(lo <= h <= hi for lo, hi in ranges)
+    _, l, _ = colorsys.rgb_to_hls(*rgb(hex_))
+    # A near-black, near-white or greyish colour has a hue on paper but none to the eye: an ink accent isn't amber.
+    return s >= 0.3 and 0.2 < l < 0.85 and any(lo <= h <= hi for lo, hi in ranges)
 
 
-RED, AMBER, GREEN = [(0, 30), (330, 360)], [(30, 65)], [(70, 200)]
+RED, AMBER = [(0, 30), (330, 360)], [(30, 65)]
 
 
 def main():
@@ -58,10 +59,6 @@ def main():
         def has(*roles):
             return all(r in c for r in roles)
 
-        if has("success", "surfaceRaised", "surfaceSunken", "surface"):
-            for s in ("surfaceRaised", "surfaceSunken", "surface"):
-                r = contrast(c["success"], c[s])
-                need(r >= 4.5, f"success on {s} is {r:.2f}:1; it is drawn as text, so 4.5:1")
         if has("accent", "surfaceRaised", "surfaceSunken"):
             for s in ("surfaceRaised", "surfaceSunken"):
                 r = contrast(c["accent"], c[s])
@@ -78,14 +75,11 @@ def main():
                 d = min(abs(gh - sh), 360 - abs(gh - sh))
                 need(gs < 0.1 or d >= 25 or abs(lum(c["glow"]) - lum(c["success"])) > 0.25,
                      f"glow and success are {d:.0f}° apart and as light: working and done look alike on Today's counts")
-        for soft, ranges, name in (("dangerSoft", RED, "reddish"), ("warningSoft", AMBER, "amber"), ("successSoft", GREEN, "green")):
-            if soft in c and hue_sat(c[soft])[1] >= 0.1:
-                need(in_hues(c[soft], ranges), f"{soft} should be a {name} tint of its role")
         if has("well", "surfaceRaised"):
             darker = lum(c["well"]) < lum(c["surfaceRaised"])
             need(darker if look == "light" else not darker,
                  "well should be " + ("darker" if look == "light" else "lighter") + " than surfaceRaised (fields inside cards)")
-    print("\n".join(notes) if notes else "✓ Nothing more to look at: success, accent, lights and wells all read as Lantern wants.")
+    print("\n".join(notes) if notes else "✓ Nothing more to look at: the accent, the lights and the wells read as Lantern wants.")
 
 
 if __name__ == "__main__":

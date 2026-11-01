@@ -1,0 +1,86 @@
+{
+  "format": 1,
+  "id": "dev.sidefolk.theme.paper-garden",
+  "name": "Paper Garden",
+  "author": "Sidefolk",
+  "version": "2.0.0",
+  "summary": "Warm paper, a hinoki-wood sidebar and a sage-matcha green; an editorial serif, and light through a paper screen with bamboo shadows.",
+  "type": {
+    "display": "serif",
+    "text": "system",
+    "exact": "mono",
+    "scale": 1.0,
+    "density": "relaxed"
+  },
+  "shape": {
+    "control": 8,
+    "card": 12,
+    "window": 16
+  },
+  "motion": "calm",
+  "layout": {
+    "icons": "simple"
+  },
+  "material": {
+    "sidebar": "solid",
+    "grain": "art/grain.png",
+    "page": "art/page.png",
+    "pageDark": "art/page-dark.png"
+  },
+  "companion": {
+    "nook": "cushion",
+    "backdrop": "art/nook.png",
+    "backdropDark": "art/nook-dark.png",
+    "suggests": "mochi"
+  },
+  "colors": {
+    "light": {
+      "ink": "#2A2B22",
+      "inkMuted": "#56584B",
+      "inkFaint": "#646557",
+      "surface": "#EAE0CD",
+      "surfaceSunken": "#F4EFE6",
+      "surfaceRaised": "#FCFAF5",
+      "line": "#E3DACA",
+      "well": "#EEE8DC",
+      "accent": "#52692F",
+      "onAccent": "#FFFFFF",
+      "accentSoft": "#E6EBD8",
+      "link": "#4A6129",
+      "danger": "#A6402A",
+      "dangerSoft": "#F7E3DA",
+      "onDanger": "#FFFFFF",
+      "success": "#1C6A4F",
+      "successSoft": "#DDEFE6",
+      "warning": "#8A5200",
+      "warningSoft": "#FAEED6",
+      "onWarning": "#FFFFFF",
+      "glow": "#9CCB5E",
+      "waitGlow": "#F2A93B"
+    },
+    "dark": {
+      "ink": "#ECE7DA",
+      "inkMuted": "#BAB5A4",
+      "inkFaint": "#9C9786",
+      "surface": "#25211A",
+      "surfaceSunken": "#181814",
+      "surfaceRaised": "#22211B",
+      "line": "#36342B",
+      "well": "#2C2B24",
+      "accent": "#AFC57E",
+      "onAccent": "#1C2410",
+      "accentSoft": "#2E3624",
+      "link": "#BDD28C",
+      "danger": "#F08A6E",
+      "dangerSoft": "#45261D",
+      "onDanger": "#2A0E06",
+      "success": "#74D1A8",
+      "successSoft": "#183A2C",
+      "warning": "#F2B65A",
+      "warningSoft": "#3A2E17",
+      "onWarning": "#2A1A00",
+      "glow": "#A9D86E",
+      "waitGlow": "#F5A524"
+    }
+  }
+}

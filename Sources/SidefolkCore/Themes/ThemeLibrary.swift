@@ -31,7 +31,7 @@ public struct ThemeLibrary: Sendable {
     /// Ids that are Sidefolk's own: only its Resources and its signed gallery may use them.
     public static let ownPrefix = "dev.sidefolk."
     /// The built-ins in the order they're offered.
-    public static let builtInOrder = ["harbor", "dev.sidefolk.theme.night-shift", "dev.sidefolk.theme.marshmallow", "dev.sidefolk.theme.field-notes"]
+    public static let builtInOrder = ["harbor", "dev.sidefolk.theme.paper-garden", "dev.sidefolk.theme.night-studio", "dev.sidefolk.theme.marshmallow"]
 
     let directory: URL
     let bundled: URL?
@@ -73,7 +73,8 @@ public struct ThemeLibrary: Sendable {
     /// Checks the theme in `folder` and keeps a copy; a theme with the same id is replaced. Only Sidefolk's signed gallery
     /// (`own`) may install a theme with one of Sidefolk's ids.
     public func install(from folder: URL, own: Bool = false) throws -> (theme: InstalledTheme, report: ThemeReport) {
-        let report = ThemeCheck.check(folder: folder)
+        // Sidefolk's own gallery was checked when it was published; a newer rule doesn't refuse what it already offers.
+        let report = ThemeCheck.check(folder: folder, strict: !own)
         guard report.isUsable, let file = report.file else {
             throw UserFacingError("This theme can't be used yet.",
                                   detail: report.problems.filter { $0.level == .error }.map(\.message).joined(separator: "\n"))
@@ -108,7 +109,8 @@ public struct ThemeLibrary: Sendable {
 
     private func installed(_ folder: URL) -> InstalledTheme? {
         guard !folder.lastPathComponent.hasPrefix(".") else { return nil }
-        let report = ThemeCheck.check(folder: folder)
+        // A copy passed the check when it was added: a rule added since warns rather than taking the theme away.
+        let report = ThemeCheck.check(folder: folder, strict: false)
         guard report.isUsable else { return nil }
         return InstalledTheme(tokens: report.tokens, images: report.images, folder: folder, version: report.file?.version)
     }

@@ -65,7 +65,8 @@ enum SnapshotLanguage {
         try tool.run()
         tool.waitUntilExit()
         guard tool.terminationStatus == 0 else { throw CocoaError(.fileReadCorruptFile, userInfo: [NSFilePathErrorKey: catalog.path]) }
-        let home = Bundle.main.bundleURL
+        // Resolved: Swift Build's `.build/debug` is a link to its products, which a directory listing won't follow.
+        let home = Bundle.main.bundleURL.resolvingSymlinksInPath()
         if let executable = Bundle.main.executableURL {
             let target = folder.appendingPathComponent(executable.lastPathComponent)
             if (try? fm.linkItem(at: executable, to: target)) == nil { try fm.copyItem(at: executable, to: target) }

@@ -30,9 +30,8 @@ The `sidefolk` helper is in `Sidefolk.app/Contents/Helpers/` and, once installed
 - **A concept in words:** pull out materials, light, time of day, mood and two or three colours.
 - **Reference images:** look at each; say what you take from it (a palette, a material, a light) and what you won't
   copy. They are mood, never something to reproduce.
-- **Nothing:** pick a concept unlike Sidefolk's own themes: Harbor (neutral, deep aqua), Night Shift (dense, dark,
-  teal), Marshmallow (candy pastels), Field Notes (planner paper, serif), and the gallery's Daylight (a sky),
-  Night Studio (indigo dusk), Paper Garden (paper and sage), Tea House (washi, wood, matcha).
+- **Nothing:** pick a concept unlike Sidefolk's own four: Harbor (neutral, deep aqua), Paper Garden (warm paper, wood,
+  sage, bamboo shadows), Night Studio (indigo dusk) and Marshmallow (candy clouds).
 - **"Brainstorm":** three short directions, each with a name, its mood in a line, five swatches (page, card,
   sidebar, accent, glow), the type flavour and density, and an art idea. Recommend one and go on with it unless the
   person picks another.
@@ -87,7 +86,7 @@ python3 templates/palette.py ~/Themes/sunset-pier
 ```
 
 Fix until the check says it can be used with no errors and no warnings (give every role in both appearances), and
-`palette.py` lists nothing (success as text, the accent against cards, the lights, the wells).
+`palette.py` lists nothing (the accent against cards, the lights, the wells).
 
 ## 5. Look at it
 
@@ -107,7 +106,8 @@ send it to Sidefolk's developer.
 ## Pitfalls
 
 - A status colour off its hue is an **error**: the theme won't load.
-- `success` is drawn as text but isn't in the check's contrast table; `palette.py` checks it.
+- `success` is drawn as text, so a bright green fails 4.5:1 on light pages; soft fills must keep their status's hue
+  (a purple `dangerSoft` is an error) or be grey.
 - `layout` (beyond `icons`) and `companion.nook` are from older themes and aren't drawn.
 - Night pictures come out blue from image models: tint them toward the theme's darks.
 - A hard line along the wash's top edge shows as a seam under the page's title: fade it.

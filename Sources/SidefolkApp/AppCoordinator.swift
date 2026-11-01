@@ -124,6 +124,7 @@ final class AppCoordinator {
         companion.delegate = self
         applyCompanionSettings()
         applyAppearance()
+        let succession = await succeedRetiredTheme()
         applyTheme()
         restoreCompanionAddon()
         // The Mac switching Light/Dark: the menu bar icon follows it even when Sidefolk's own look is fixed.
@@ -141,6 +142,7 @@ final class AppCoordinator {
         }
 
         installSidecard()
+        if let succession { announceSuccession(succession) }
 
         let menuBarImage = BrandAsset.menuBar.image ?? NSImage(
             cgImage: CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2),
@@ -850,6 +852,7 @@ final class AppCoordinator {
             return
         }
         if action == SidecardItemCard.undo, item.refKind == Self.levelChanged { return undoLevel(item.id) }
+        if action == Self.useSuccessor, item.refKind == Self.themeSuccessor, let id = item.refId { return useTheme(id) }
         if item.source == Self.ownVoice { return }
         if action == SidecardItemCard.undo, item.refKind == "credit", let id = item.refId { return undoFromWhisper(id) }
         if action == "open", item.source == "summary" { openHome() }

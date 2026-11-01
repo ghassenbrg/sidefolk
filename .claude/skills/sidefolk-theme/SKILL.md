@@ -20,8 +20,8 @@ and `templates/palette.py` with nothing listed, and its snapshots were read.
 | `Sources/SidefolkCore/Themes/` | `ThemeFile` (the format), `ThemeTokens` (roles, Harbor's values), `ThemeCheck` (the rules), `ThemeLibrary` (install, `theme new`) |
 | `docs/DESIGN.md` | Lantern's tokens and roles; `--only design-system` draws them in any theme |
 | `docs/DECISIONS.md` | D58 (themes are data), D64 → D84 (themes dress, one layout), D78 (colour meaning) |
-| `Resources/Themes/` | the built-ins: Night Shift, Marshmallow, Field Notes (Harbor is in code) |
-| `../sidefolk-addons/themes/` | the gallery: Daylight, Night Studio, Paper Garden, Tea House (`addon.json`, `theme.json`, `art/*.png`) |
+| `Resources/Themes/` | the built-ins (D92): Paper Garden, Night Studio, Marshmallow (Harbor is in code); Paper Garden is the worked example of this skill (it began as Tea House) |
+| `../sidefolk-addons/themes/` | the gallery's themes (`addon.json`, `theme.json`, `art/*.png`); empty since D92 |
 | This skill's `templates/` | `roles.md` (every key, where it shows, its rule), `art-prompts.md`, `fit-art.py`, `palette.py` |
 
 ## 0. Plan
@@ -46,10 +46,11 @@ for a gallery theme). Build once: `swift build` (gives `.build/debug/sidefolk` a
   card, sidebar, accent, glow) as hex, the type flavour (system, rounded or serif) and density, and the art idea.
   Recommend one and say why, then go on with it unless the person picks another.
 
-Stay away from what exists: Harbor (neutral graphite and paper, deep aqua), Night Shift (dense, dark, teal), Marshmallow
-(candy pastels, rounded), Field Notes (planner paper, serif), Daylight (white cards on a sky, azure), Night Studio
-(indigo glass over a dusk landscape), Paper Garden (warm paper, sage, serif, leaves), Tea House (washi, hinoki wood,
-matcha). Never copy a brand, a trademarked character or art, or a specific game's, film's or product's look; describe
+Stay away from what exists (D92 keeps four, each its own atmosphere, and drops look-alikes): Harbor (neutral graphite
+and paper, deep aqua: also the plain light and plain dark), Paper Garden (warm paper, hinoki wood, sage-matcha, serif,
+bamboo shadows), Night Studio (indigo glass over a dusk landscape, periwinkle, mint), Marshmallow (candy colours over
+cotton-candy clouds, rounded). A new theme earns its place only with an atmosphere none of them has; a sky on white
+cards (the retired Daylight) or a darker Harbor (Night Shift) doesn't. Never copy a brand, a trademarked character or art, or a specific game's, film's or product's look; describe
 qualities in plain words instead (no "Ghibli", no "like Notion").
 
 ## 2. Design
@@ -109,11 +110,13 @@ band, so a hard line along its top edge shows as a seam there (`--fade-top`).
 
 ```sh
 .build/debug/sidefolk theme check <folder>                  # until "can be used" with no errors and no warnings
-python3 <skill>/templates/palette.py <folder>               # what the check doesn't hold: success as text, accent 3:1, lights, wells
+python3 <skill>/templates/palette.py <folder>               # what the check doesn't hold: accent 3:1, the lights, wells
 ```
 
-The check errors on: a missing or unreadable image, contrast under 4.5:1 for any text pair it lists, a status colour
-outside its hue (danger red 0–30/330–360°, warning amber 30–65°, success green 70–200°), a bad id or name. It warns
+The check errors on: a missing or unreadable image, contrast under 4.5:1 for any text pair it lists (every text role,
+success included, on every surface, the label on each fill, and each chip's words on its soft fill), a status colour
+outside its hue (danger red 0–30/330–360°, warning amber 30–65°, success green 70–200°; their soft fills the same hue
+or grey), a bad id or name. It warns
 on: a missing colour (Harbor's is used), an unknown role, a value clamped. A new theme should have **no warnings**
 either: give every role in both appearances. `palette.py` lists what Lantern still wants; fix all of it.
 
@@ -124,11 +127,11 @@ Render the screens with the theme, light and dark, then Arabic (right to left). 
 
 ```sh
 OUT=<scratch>/snapshots
-SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT --theme <folder> \
+SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT --theme <absolute folder> \
   --only window-home-today,desktop-sidecard,window-settings-attention,game-menu,window-settings-appearance,window-home-onduty
-SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT-ar --language ar --theme <folder> \
+SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT-ar --language ar --theme <absolute folder> \
   --only window-home-today,window-settings-attention,desktop-sidecard-question,game-menu
-SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT --theme <folder> --only design-system   # every token and component
+SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT --theme <absolute folder> --only design-system   # every token and component
 ```
 
 Read at least: `window-home-today-{light,dark}` (page wash, nook art, counts, cards, the sidebar), a few
@@ -173,8 +176,12 @@ Commit (no Co-Authored-By), and in Sidefolk update docs/STATUS.md.
 
 - **Meaning is an error, not a warning:** a status colour off its hue stops the theme from loading (`ThemeCheck.meaningProblems`).
   Older gallery themes painted success with the accent (Paper Garden); don't.
-- **success isn't in the check's contrast rows** but is drawn as text; Daylight, Night Studio and Paper Garden read
-  under 4.5:1 there. `palette.py` catches it.
+- **Bright greens fail as text:** success is drawn as words ("Connected", a chip), so a minty light-mode green
+  fails 4.5:1 on paper. Every theme Sidefolk had darkened its own when the check began to hold it.
+- **A soft fill off its hue** (a purple `dangerSoft` in a violet theme) is an error: tint it red, amber or green, or
+  keep it grey.
+- **A copy already installed** is read leniently (these newer rules only warn there), so an old theme in someone's
+  Sidefolk can look fine while the same folder fails `sidefolk theme check`: trust the command.
 - **Retired keys:** `layout` presets, navigation, Today blocks and `companion.nook` styles are not drawn since D84;
   only `layout.icons` is read. Don't design for them.
 - **The page wash** is 420 pt tall, scaled to fill the page width, faded downwards and at 55% opacity; anything in its
@@ -183,6 +190,7 @@ Commit (no Co-Authored-By), and in Sidefolk update docs/STATUS.md.
 - **Night pictures come out blue:** image models paint night blue-grey; tint them to the theme's darks.
 - **The nook art** sits behind the companion's name and line at 35%: busy art makes them hard to read; crop a calm part.
 - **A generated "transparent" PNG** is often a painted checkerboard; check the corners.
+- **A relative `--theme` path** can render Harbor without a word: pass the folder's absolute path.
 - **Parallel snapshot runs in two languages** collide in `.build/debug/*.lproj` ("Directory not empty"): one at a time.
 - **`dev.sidefolk.` ids** can't be loaded from a folder; snapshots with `--theme` take any id.
 - **Raw images inside the theme folder** get packed: keep them in scratch.

@@ -268,6 +268,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var theme = "harbor"
     /// A theme folder being worked on: Sidefolk reloads it each time it changes.
     public var themeFolder: String?
+    /// Retired themes whose successor was already offered (D92), so the offer is made once.
+    public var themeSuccessorsOffered: [String] = []
     public var useSystemNotificationsWhenHidden = true
     public var provider = ProviderSettings()
     /// Short-term conversation history is kept this many days.
@@ -334,6 +336,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.showCalendar, &showCalendar)
         read(.theme, &theme)
         themeFolder = try? c.decodeIfPresent(String.self, forKey: .themeFolder)
+        read(.themeSuccessorsOffered, &themeSuccessorsOffered)
         read(.useSystemNotificationsWhenHidden, &useSystemNotificationsWhenHidden)
         read(.provider, &provider)
         read(.historyDays, &historyDays)

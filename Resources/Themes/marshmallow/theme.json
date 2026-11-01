@@ -3,8 +3,8 @@
   "id": "dev.sidefolk.theme.marshmallow",
   "name": "Marshmallow",
   "author": "Sidefolk",
-  "version": "1.0.0",
-  "summary": "For people who love their companion most: soft candy colours, squishy buttons, the companion on a little stage.",
+  "version": "2.0.0",
+  "summary": "For people who love their companion most: candy colours over cotton-candy clouds, squishy buttons, a rounded face.",
   "type": {
     "display": "rounded",
     "text": "system",
@@ -19,59 +19,67 @@
   },
   "motion": "bouncy",
   "material": {
-    "sidebar": "solid"
+    "sidebar": "solid",
+    "page": "art/page.png",
+    "pageDark": "art/page-dark.png"
   },
   "companion": {
-    "nook": "sticker",
-    "backdrop": "art/stage.png",
-    "backdropDark": "art/stage-night.png",
+    "nook": "cushion",
+    "backdrop": "art/nook.png",
+    "backdropDark": "art/nook-dark.png",
     "suggests": "mochi"
   },
   "layout": {
-    "preset": "stage"
+    "icons": "colorful"
   },
   "colors": {
     "light": {
       "ink": "#4A3A5C",
-      "inkMuted": "#7A6A8C",
+      "inkMuted": "#76668A",
       "inkFaint": "#7A688B",
       "surface": "#FFF9F6",
       "surfaceSunken": "#FFF6F1",
       "surfaceRaised": "#FFFFFF",
       "line": "#F1E4EE",
-      "accent": "#FF9EB8",
-      "onAccent": "#4A2236",
+      "accent": "#C2418C",
+      "onAccent": "#FFFFFF",
       "accentSoft": "#FFE3EB",
-      "link": "#C2406A",
-      "danger": "#D22956",
-      "dangerSoft": "#FFE3EB",
+      "link": "#A8357A",
+      "danger": "#C42B3A",
+      "dangerSoft": "#FFE3E3",
       "onDanger": "#FFFFFF",
-      "success": "#2E9E73",
+      "success": "#237A59",
       "successSoft": "#DFF7EC",
       "warning": "#94570A",
       "warningSoft": "#FFF0D9",
-      "onWarning": "#FFFFFF"
+      "onWarning": "#FFFFFF",
+      "well": "#FFF2F6",
+      "glow": "#F59AD0",
+      "waitGlow": "#F5A524"
     },
     "dark": {
       "ink": "#F4ECFF",
       "inkMuted": "#C3B5D9",
-      "inkFaint": "#AA99C4",
+      "inkFaint": "#B3A3CC",
       "surface": "#2E2347",
       "surfaceSunken": "#261C3D",
       "surfaceRaised": "#3A2D58",
       "line": "#4A3C6B",
-      "accent": "#FF9EB8",
+      "accent": "#F59AD0",
       "onAccent": "#3A1426",
       "accentSoft": "#4A3366",
-      "link": "#FFB3C8",
-      "danger": "#FF8FAD",
-      "dangerSoft": "#552A45",
+      "link": "#F7B3DB",
+      "danger": "#FF8F8F",
+      "dangerSoft": "#55292E",
       "onDanger": "#2A1020",
       "success": "#7FD8B4",
       "successSoft": "#26443F",
       "warning": "#FFD08A",
-      "warningSoft": "#4A3A2E",
-      "onWarning": "#2E2347"
+      "warningSoft": "#4A3D2A",
+      "onWarning": "#2E2347",
+      "well": "#433463",
+      "glow": "#F59AD0",
+      "waitGlow": "#F5A524"
     }
   }
 }
