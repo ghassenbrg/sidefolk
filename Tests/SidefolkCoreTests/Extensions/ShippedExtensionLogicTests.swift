@@ -30,7 +30,7 @@ struct ShippedExtensionLogicTests {
         #expect(throws: (any Error).self) { try Units.convert(1, from: "km", to: "kg") }
 
         // Thursday 24 December 2026 to Monday 4 January 2027: the weekdays after the first day, up to the last.
-        #expect(Dates.between(try Self.day("2026-12-24"), try Self.day("2027-01-04"))
+        #expect(Dates.between(try Self.day("2026-12-24"), try Self.day("2027-01-04")).seen
             == "From Thursday 24 December 2026 to Monday 4 January 2027: 11 days (1 week and 4 days), 7 of them weekdays.")
         #expect(Dates.show(try Dates.add("5 weekdays", to: try Self.day("2026-10-30"))) == "Friday 6 November 2026")
         #expect(Dates.show(try Dates.add("1 month", to: try Self.day("2026-01-31"))) == "Saturday 28 February 2026")
@@ -47,7 +47,7 @@ struct ShippedExtensionLogicTests {
             "daily": ["time": ["2026-10-26", "2026-10-27"], "weather_code": [61, 2], "temperature_2m_min": [8.2, 6.9],
                       "temperature_2m_max": [13.1, 15.4], "precipitation_probability_max": [80, NSNull()]],
         ]
-        #expect(Weather.describe(data, label: "Lyon, France").split(separator: "\n") == [
+        #expect(Weather.describe(data, label: "Lyon, France").seen.split(separator: "\n") == [
             "Lyon, France, now: light rain, 12°C (feels like 10°C), wind 15 km/h.",
             "Today: light rain, 8 to 13°C, 80% chance of rain.",
             "Tomorrow: partly cloudy, 7 to 15°C, ?% chance of rain.",
@@ -61,7 +61,7 @@ struct ShippedExtensionLogicTests {
         let dry = Weather.rainCheck(hours([90, 0, 0, 0]), label: "Lyon", withinHours: 3, chance: 60, state: again.state)
         let wet = Weather.rainCheck(hours([0, 0, 0, 65]), label: "Lyon", withinHours: 3, chance: 60, state: dry.state)
         #expect([first, again, dry, wet].map(\.triggered) == [true, false, false, true], "the past hour (13:00) never counts")
-        #expect(first.summary == "Rain is likely in Lyon around 15:00 (70% chance).")
+        #expect(first.summary.seen == "Rain is likely in Lyon around 15:00 (70% chance).")
         // The eclipse of 8 April 2024 was a new moon; 23 April 2024 a full one.
         #expect(Weather.moon(at: Date(timeIntervalSince1970: 1_712_600_460)).hasPrefix("The moon is a new moon"))
         #expect(Weather.moon(at: Date(timeIntervalSince1970: 1_713_916_140)).hasPrefix("The moon is full"))
@@ -72,14 +72,14 @@ struct ShippedExtensionLogicTests {
 
     @Test func systemVitalsReadsPmset() {
         let onBattery = Vitals.battery(from: "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=4653155)\t84%; discharging; 5:12 remaining present: true")
-        #expect(Vitals.describe(onBattery) == "Battery at 84%, discharging (5:12 left).")
+        #expect(Vitals.describe(onBattery).seen == "Battery at 84%, discharging (5:12 left).")
         let full = Vitals.battery(from: "Now drawing from 'AC Power'\n -InternalBattery-0 (id=4653155)\t100%; charged; 0:00 remaining present: true")
-        #expect(Vitals.describe(full) == "Battery at 100%, charged." && Vitals.charging(full))
-        #expect(Vitals.describe(Vitals.battery(from: "Now drawing from 'AC Power'\n")) == "This Mac has no battery; it runs on AC Power.")
+        #expect(Vitals.describe(full).seen == "Battery at 100%, charged." && Vitals.charging(full))
+        #expect(Vitals.describe(Vitals.battery(from: "Now drawing from 'AC Power'\n")).seen == "This Mac has no battery; it runs on AC Power.")
     }
 
     @Test func worldClockZonesAndTheirNames() throws {
-        let converted = try WorldClock.convert("2026-01-15 12:00", from: "UTC", to: ["Asia/Tokyo", "New York", "Fukuoka"])
+        let converted = try WorldClock.convert("2026-01-15 12:00", from: "UTC", to: ["Asia/Tokyo", "New York", "Fukuoka"]).seen
         #expect(converted.contains("21:00 in Asia/Tokyo (JST, UTC+9)") && converted.contains("07:00 in New York (EST, UTC−5)"), "\(converted)")
         #expect(converted.hasPrefix("Thursday 15 January, 12:00 in UTC (UTC+0) is:"), "\(converted)")
         #expect(converted.contains("21:00 in Fukuoka (JST, UTC+9)"))
