@@ -6,7 +6,7 @@ import SwiftUI
 /// the toolbar's title.
 @MainActor @Observable
 final class HomeTitleTracker {
-    /// Where the toolbar ends, in the window's coordinates.
+    /// Where the toolbar ends, in the window's coordinates: the top of the page's scroll view (`clipsUnderToolbar`).
     var toolbarBottom: CGFloat = 0
     /// The page titles in sight now (a page leaving and the next arriving may overlap for a moment).
     private(set) var shown: Set<UUID> = []

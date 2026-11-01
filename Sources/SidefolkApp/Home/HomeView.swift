@@ -104,8 +104,6 @@ struct HomeView: View {
             .animation(reduceMotion ? nil : Theme.Motion.micro, value: showsPanel)
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
             // Where the toolbar ends, for the places' own titles (`homePageTitle`).
-            // The detail starts under the toolbar yet still reports the toolbar as its top inset: either says where it ends.
-            .onGeometryChange(for: CGFloat.self) { max($0.frame(in: .global).minY, $0.safeAreaInsets.top) } action: { model.title.toolbarBottom = $0 }
             .environment(model.pages)
             .environment(model.title)
     }
