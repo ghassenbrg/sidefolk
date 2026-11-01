@@ -7,11 +7,30 @@ import SwiftUI
 /// What an extension can touch is known once it's here (its permission summary); before, its install preview says it.
 struct HomeGalleryView: View {
     var settings: SettingsModel
-    @State private var shelf: Shelf = .all
-    @State private var search = ""
+    @State private var shelf: Shelf
+    @State private var search: String
     @FocusState private var focus: GalleryFocus?
 
-    enum Shelf: Hashable { case all, companions, extensions, themes }
+    /// `shelf` and `search` are where it opens (UI snapshots show a filter or a search).
+    init(settings: SettingsModel, shelf: Shelf = .all, search: String = "") {
+        self.settings = settings
+        _shelf = State(initialValue: shelf)
+        _search = State(initialValue: search)
+    }
+
+    enum Shelf: Hashable {
+        case all, companions, extensions, themes
+
+        /// The add-ons this shelf shows, nil for every kind.
+        var kind: AddonEntry.Kind? {
+            switch self {
+            case .all: nil
+            case .companions: .companion
+            case .extensions: .extension
+            case .themes: .theme
+            }
+        }
+    }
     enum GalleryFocus: Hashable { case search }
 
     private var gallery: AddonGalleryModel { settings.gallery }
@@ -33,7 +52,7 @@ struct HomeGalleryView: View {
                     .frame(maxWidth: 300)
             }
             if shelf == .companions && !chooser.galleryEntries.isEmpty { CompanionFilters(chooser: chooser) }
-            if shelf == .all && search.isEmpty { AddonUpdatesSection(updates: settings.services.updates, gallery: gallery) }
+            AddonUpdatesSection(updates: settings.services.updates, gallery: gallery, kind: shelf.kind, search: search)
             channelNote
             if !gallery.available || (gallery.catalog == nil && (gallery.loading || gallery.error != nil)) {
                 GalleryStatus(gallery: gallery, kind: .extension)
@@ -54,6 +73,7 @@ struct HomeGalleryView: View {
                 .accessibilityHidden(true)
         }
         .onChange(of: search) { chooser.browse.text = search }
+        .onAppear { if !search.isEmpty { chooser.browse.text = search } }
         .sheet(item: Binding(get: { settings.installPreview }, set: { settings.installPreview = $0 })) { p in
             InstallPreviewSheet(preview: p, model: settings)
         }

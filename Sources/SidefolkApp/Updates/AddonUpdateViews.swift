@@ -82,25 +82,32 @@ struct AddonUpdateButton: View {
 }
 
 /// The Gallery's Updates, at its top (D89): every update that waits, Update all for those that ask for nothing new,
-/// each row's progress, and what the last Update all did.
+/// each row's progress, and what the last Update all did. Under a filter or a search only the updates it shows are
+/// listed, and Update all updates those.
 struct AddonUpdatesSection: View {
     var updates: UpdateModel
     var gallery: AddonGalleryModel
+    var kind: AddonEntry.Kind?
+    var search = ""
 
     var body: some View {
-        let rows = updates.addonRows
+        let rows = updates.addonRows.filter(shown)
         if !rows.isEmpty {
-            SectionHeader(title: Text("Updates", comment: "The Gallery's section of add-on updates"), count: updates.addonPending.count,
+            let installable = updates.addonInstallable.filter(shown)
+            SectionHeader(title: Text("Updates", comment: "The Gallery's section of add-on updates"), count: updates.addonPending.filter(shown).count,
                           detail: updates.addonSummary.map { Text(verbatim: $0) }) {
-                if !updates.addonInstallable.isEmpty {
-                    Button("Update all") { updates.addonActions?.updateAddonsNow() }
-                        .buttonStyle(.sf(.primary, size: .regular, working: updates.addonsBusy))
-                        .disabled(updates.addonsBusy)
+                if !installable.isEmpty {
+                    Button("Update all") {
+                        // Everything in sight is everything waiting: Update all as everywhere else (it looks first).
+                        if kind == nil && search.isEmpty { updates.addonActions?.updateAddonsNow() } else { updates.addonActions?.update(installable) }
+                    }
+                    .buttonStyle(.sf(.primary, size: .regular, working: updates.addonsBusy))
+                    .disabled(updates.addonsBusy)
                 }
             }
             RowsCard {
                 ForEach(rows) { entry in
-                    ListRow(title: Text(verbatim: entry.shownName), meta: AddonUpdateWords.meta(entry, updates)) {
+                    ListRow(title: Text(verbatim: entry.shownName), meta: AddonUpdateWords.meta(entry, updates, kind: kind == nil)) {
                         AddonUpdateIcon(url: gallery.preview(entry), kind: entry.kind, size: 32)
                     } trailing: {
                         AddonUpdateButton(entry: entry, updates: updates)
@@ -108,6 +115,10 @@ struct AddonUpdatesSection: View {
                 }
             }
         }
+    }
+
+    private func shown(_ entry: AddonEntry) -> Bool {
+        (kind == nil || entry.kind == kind) && entry.matches(search.trimmingCharacters(in: .whitespaces))
     }
 }
 

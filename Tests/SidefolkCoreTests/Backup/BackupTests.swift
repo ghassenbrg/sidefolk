@@ -162,6 +162,55 @@ import Testing
         #expect(throws: UserFacingError.self) { try BackupRestore(paths: to).requestUndo() }
     }
 
+    @Test func undoPutsBackTheKeysAndPreferencesTheRestoreReplaced() async throws {
+        let (_, source) = try await Self.filled("undo-keys-from")
+        let other = InMemorySecretStore()
+        try ProviderKeys(store: other).save(Secret("sk-ant-from-backup"), account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost)
+        try other.set(SecretKey.mcpServer("mcp.github"), Secret("{\"GITHUB_TOKEN\":\"ghp_backup\"}"))
+        let file = try Self.file("undo-keys")
+        let carried: [String: JSONValue] = ["companion.catchBest": .number(12), "NSWindow Frame SidefolkHome": .string("10 20 900 600 0 0 1440 900 "),
+                                            "AppleLanguages": .array([.string("ar")])]
+        try await BackupWriter(runtime: source).write(to: file, keys: BackupKeys.collect(from: other, mcpServers: ["mcp.github"]),
+                                                      password: "pw", preferences: carried)
+
+        // This Mac: its own Anthropic key, no GitHub server's secret, its own window and no Catch Me record.
+        let to = try Self.home("undo-keys-to")
+        try to.prepare()
+        let store = InMemorySecretStore()
+        try ProviderKeys(store: store).save(Secret("sk-ant-mine"), account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost)
+        let suite = "sidefolk-backup-test-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("0 0 800 500 0 0 1440 900 ", forKey: "NSWindow Frame SidefolkHome")
+
+        let backup = try await BackupReader.open(file)
+        let restore = BackupRestore(paths: to)
+        try restore.stage(backup)
+        try restore.saveKeys(try backup.keys(password: "pw"), to: store)
+        backup.discard()
+        guard case .restored? = restore.applyAtLaunch(secrets: store, defaults: defaults) else { Issue.record("not restored"); return }
+        func anthropic() throws -> String? { try ProviderKeys(store: store).key(account: SecretKey.anthropicAPIKey, host: ProviderKeys.anthropicHost)?.reveal() }
+        #expect(try anthropic() == "sk-ant-from-backup")
+        #expect(try store.get(SecretKey.mcpServer("mcp.github")) != nil)
+        #expect(defaults.integer(forKey: "companion.catchBest") == 12)
+        #expect(defaults.string(forKey: "NSWindow Frame SidefolkHome")?.hasPrefix("10 20") == true)
+        #expect(defaults.persistentDomain(forName: suite)?["AppleLanguages"] == nil, "only the conveniences listed travel")
+        // The replaced values are sealed in the undo folder, never in the clear.
+        let undoFolder = try #require(restore.undoable?.folder)
+        let sealed = try Data(contentsOf: undoFolder.appendingPathComponent(BackupRestore.keysBefore))
+        #expect(!String(decoding: sealed, as: UTF8.self).contains("sk-ant-mine"))
+        let sealingKey = try JSONDecoder().decode(BackupKeys.Before.self, from: sealed).account
+        #expect(try store.get(sealingKey) != nil)
+
+        try restore.requestUndo()
+        guard case .undone? = restore.applyAtLaunch(secrets: store, defaults: defaults) else { Issue.record("not undone"); return }
+        #expect(try anthropic() == "sk-ant-mine")
+        #expect(try store.get(SecretKey.mcpServer("mcp.github")) == nil, "a key the backup added goes")
+        #expect(defaults.object(forKey: "companion.catchBest") == nil)
+        #expect(defaults.string(forKey: "NSWindow Frame SidefolkHome")?.hasPrefix("0 0") == true)
+        #expect(try store.get(sealingKey) == nil, "the sealing key goes with them")
+    }
+
     @Test func anOlderDatabaseMigratesAndANewerOneIsRefused() async throws {
         // A backup from a Sidefolk that had only the first migration.
         func backup(_ label: String, change: @escaping @Sendable (Database) throws -> Void = { _ in }) async throws -> URL {

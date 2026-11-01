@@ -11,10 +11,11 @@ public struct BackupWriter: Sendable {
 
     public init(runtime: SidefolkRuntime) { self.runtime = runtime }
 
-    /// Writes the backup to `url` (0600) and returns its manifest. `keys` seals these with `password` (BackupKeys).
+    /// Writes the backup to `url` (0600) and returns its manifest. `keys` seals these with `password` (BackupKeys);
+    /// `preferences` are the app's own conveniences from its defaults (`BackupPreferences.pick`).
     @discardableResult
-    public func write(to url: URL, keys: [String: String]? = nil, password: String? = nil, now: Date = Date(),
-                      device: String? = Host.current().localizedName) async throws -> BackupManifest {
+    public func write(to url: URL, keys: [String: String]? = nil, password: String? = nil, preferences: [String: JSONValue] = [:],
+                      now: Date = Date(), device: String? = Host.current().localizedName) async throws -> BackupManifest {
         let fm = FileManager.default
         let paths = runtime.paths
         let stage = fm.temporaryDirectory.appendingPathComponent("sidefolk-backup-\(UUID().uuidString)", isDirectory: true)
@@ -62,6 +63,9 @@ public struct BackupWriter: Sendable {
             }
         }
 
+        if !preferences.isEmpty {
+            try BackupManifest.encoder.encode(preferences).write(to: stage.appendingPathComponent(BackupPreferences.file))
+        }
         if let keys, let password, !keys.isEmpty {
             try BackupKeys.seal(keys, password: password).write(to: stage.appendingPathComponent(BackupLayout.keys))
         }

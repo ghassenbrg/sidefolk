@@ -88,6 +88,10 @@ final class AddonUpdateController: AddonUpdateActions {
         Task { await updateAll() }
     }
 
+    func update(_ entries: [AddonEntry]) {
+        Task { await updateAll(entries, summarize: true) }
+    }
+
     func update(_ entry: AddonEntry) {
         if model.addonNeedsReview(entry.id) { return review(entry) }
         Task {
@@ -137,9 +141,10 @@ final class AddonUpdateController: AddonUpdateActions {
         await nudge(automatic: s.addons)
     }
 
-    /// Update all (D89), or one add-on's Update: each in turn, its row following along, then a summary. With nothing
-    /// chosen, every waiting update that isn't known to ask for more, looked for first if none is known yet.
-    private func updateAll(_ chosen: [AddonEntry]? = nil) async {
+    /// Update all (D89), or one add-on's Update: each in turn, its row following along, then a summary (for one add-on
+    /// its row says it all). With nothing chosen, every waiting update that isn't known to ask for more, looked for first
+    /// if none is known yet.
+    private func updateAll(_ chosen: [AddonEntry]? = nil, summarize: Bool? = nil) async {
         if chosen == nil, model.addonInstallable.isEmpty { await look() }
         let entries = chosen ?? model.addonInstallable
         guard !model.addonsBusy, !entries.isEmpty else { return }
@@ -155,7 +160,7 @@ final class AddonUpdateController: AddonUpdateActions {
         let done = Set(report.companions.map(\.id) + report.themes.map(\.id) + report.extensions.map(\.id) + report.review.map(\.id))
         model.addonWaiting.removeAll { done.contains($0.id) }
         model.addonReview += report.review.filter { entry in !model.addonReview.contains { $0.id == entry.id } }
-        if chosen == nil { model.addonSummary = report.summary }
+        if summarize ?? (chosen == nil) { model.addonSummary = report.summary }
     }
 
     /// What installed: companions and themes drawn again, the names for Settings › Updates.

@@ -128,6 +128,8 @@ protocol AddonUpdateActions: AnyObject {
     func updateAddonsNow()
     /// Updates one add-on as Update all would; an extension that would do more opens its install sheet instead.
     func update(_ entry: AddonEntry)
+    /// Update all for some of them (the Gallery's filter or search): each in turn, then the summary.
+    func update(_ entries: [AddonEntry])
     /// Fetches an extension's update and opens the install sheet, which says what is new.
     func review(_ entry: AddonEntry)
     /// Home's Gallery, where the Updates section leads.

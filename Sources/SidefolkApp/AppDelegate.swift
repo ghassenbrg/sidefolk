@@ -39,8 +39,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let paths = SidefolkPaths.standard()
         Log.shared.configure(directory: paths.logs, debug: false)
         Log.shared.info("app", "launch", ["version": SidefolkVersion.current, "home": paths.home.path])
-        // A restore staged before the relaunch (or its undo) swaps in now, before the database opens (D91).
-        let restored = BackupRestore(paths: paths).applyAtLaunch()
+        // A restore staged before the relaunch (or its undo) swaps in now, before the database opens (D91); an undo
+        // puts back the keys and preferences the restore replaced.
+        let restored = BackupRestore(paths: paths).applyAtLaunch(secrets: KeychainSecretStore(), defaults: .standard)
         Task {
             do {
                 let secrets = KeychainSecretStore()

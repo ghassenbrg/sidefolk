@@ -167,6 +167,10 @@ enum UISnapshots {
             if let catalog = full.settingsHost.gallery.catalog {
                 SampleAddonUpdates.show(in: full.services.updates, catalog: catalog)
                 try await homeShot("gallery-updates")
+                // Under a filter and while searching, only the updates shown there.
+                try await page("page-home-gallery-updates-extensions", HomeGalleryView(settings: full.settingsHost, shelf: .extensions), width: 1100)
+                try await page("page-home-gallery-updates-search", HomeGalleryView(settings: full.settingsHost, search: "clip"), width: 1100)
+                full.settingsHost.chooser.browse.text = ""
                 full.services.updates.addonSummary = AddonUpdateReport.summary(installed: 3, review: 1, failed: 0)
                 SampleExtensionPage.showPages(in: full.pages)
                 full.selection = .now
