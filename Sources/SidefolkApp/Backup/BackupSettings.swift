@@ -31,6 +31,21 @@ extension SettingsModel {
         }
     }
 
+    /// Restores the chosen backup. A wrong password is said in the sheet, before anything changes; then the sheet goes
+    /// (an open sheet would hold the quit) and Sidefolk relaunches. A failure after that is said in Your data.
+    func confirmRestore(password: String?) async -> UserFacingError? {
+        guard let candidate = restoreCandidate else { return nil }
+        if let password, candidate.backup.hasKeys {
+            do { _ = try candidate.backup.keys(password: password) } catch {
+                return error as? UserFacingError ?? UserFacingError("That password doesn't open the keys in this backup.")
+            }
+        }
+        restoreCandidate = nil
+        try? await Task.sleep(for: .milliseconds(400))
+        if let error = await services.restore(candidate.backup, password: password) { backupMessage = .failure(error) }
+        return nil
+    }
+
     /// Asks where, then writes the backup; the sheet stays until it's written.
     func backUp(password: String?) async -> Bool {
         let panel = NSSavePanel()
@@ -228,7 +243,7 @@ struct RestoreSheet: View {
                     working = true
                     error = nil
                     Task {
-                        error = await model.services.restore(candidate.backup, password: password.isEmpty ? nil : password)
+                        error = await model.confirmRestore(password: password.isEmpty ? nil : password)
                         working = false
                     }
                 }

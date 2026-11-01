@@ -118,6 +118,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         if restoring { model.chooseBackup() } else { model.backingUp = true }
     }
 
+    #if DEBUG
+    /// The restore sheet's Replace, as clicked (the dev command `restoreConfirm`).
+    func confirmRestore() { Task { _ = await model.confirmRestore(password: nil) } }
+    #endif
+
     /// The restore sheet for this backup file, as if it were chosen.
     func showRestore(of file: URL) {
         show(tab: .trust)

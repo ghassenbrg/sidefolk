@@ -48,8 +48,8 @@
 //   swift scripts/dev.swift addons:updates | addons:nudge   (D89: the Gallery's Updates halfway through Update all, the whisper)
 //   swift scripts/dev.swift addons:auto:off | addons:get:<id> | addons:check | addons:updateAll   (D89, with SIDEFOLK_ADDONS=<local gallery>:
 //                           the switch, an add-on installed from it as from the Gallery, Update all)
-//   swift scripts/dev.swift backup:/path/x.sidefolkbackup | restoreFile:/path/x.sidefolkbackup | restoreNow:/path/x.sidefolkbackup
-//                           | undoRestore   (D91: a backup written; its restore sheet; restored at once, with a relaunch; undone)
+//   swift scripts/dev.swift backup:/path/x.sidefolkbackup | restoreFile:/path/x.sidefolkbackup | restoreConfirm | restoreNow:/path/x.sidefolkbackup
+//                           | undoRestore   (D91: a backup written; its restore sheet and its Replace; restored at once, with a relaunch; undone)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

@@ -148,7 +148,8 @@ extension AppCoordinator {
 
 #if DEBUG
 extension AppCoordinator {
-    /// `backup:<file>` writes a backup there (no keys); `restoreFile:<file>` opens it in Settings' restore sheet;
+    /// `backup:<file>` writes a backup there (no keys); `restoreFile:<file>` opens it in Settings' restore sheet, and
+    /// `restoreConfirm` answers that sheet's Replace;
     /// `restoreNow:<file>` restores it at once (stage and relaunch); `undoRestore` undoes the last one (D91).
     func devBackup(_ command: String) -> Bool {
         func file(_ prefix: String) -> URL? {
@@ -169,6 +170,8 @@ extension AppCoordinator {
                 case .failure(let error): Log.shared.warning("dev", "restore failed", ["error": error.message])
                 }
             }
+        } else if command == "restoreConfirm" {
+            settingsWindow.confirmRestore()
         } else if command == "undoRestore" {
             if let error = undoRestore() { Log.shared.warning("dev", "undo failed", ["error": error.message]) }
         } else {
