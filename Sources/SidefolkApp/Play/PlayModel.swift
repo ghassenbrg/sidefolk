@@ -274,7 +274,8 @@ final class PlayModel {
         for button in board?.buttons ?? [] where button.key != nil && !button.disabled {
             parts.append("\(button.key!.uppercased()): \(button.label)")
         }
-        parts.append(String(localized: "Esc to close", comment: "Keys in the Play panel"))
+        // While a plot is drawn from the keyboard, Esc lets the plot go (the hint above says so), not the panel.
+        if !self.parts.dragByKeys { parts.append(String(localized: "Esc to close", comment: "Keys in the Play panel")) }
         return parts.joined(separator: " · ")
     }
 }

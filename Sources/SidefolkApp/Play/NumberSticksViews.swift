@@ -150,7 +150,9 @@ struct SticksView: View {
         HStack(alignment: .bottom, spacing: 5) {
             ForEach(0..<sticks.total, id: \.self) { i in
                 let gone = i >= sticks.left
-                let lifting = gone && i < sticks.left + sticks.taken
+                // The sticks just taken rise and stay faint, to show the move; once none is left (the game decided),
+                // they go entirely, so the end leaves an empty row.
+                let lifting = gone && i < sticks.left + sticks.taken && sticks.left > 0
                 let takes = sticks.left - i
                 let would = hovered.map { i >= $0 && !gone } ?? false
                 Button { if (1...sticks.take).contains(takes) { model.send(.number(takes)) } } label: {

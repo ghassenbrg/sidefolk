@@ -16,6 +16,9 @@ struct PartsState {
     /// When the cups' shuffle began (the gem shows first), for the drawing; presses wait until it ends.
     var shuffleStart = Date.distantPast
     var shuffling = false
+    /// The round's cups as shuffled, so a board of the same round (the companion's paw checked mid-shuffle) carries on
+    /// with the shuffle instead of starting it again.
+    var shuffled: GameBoard.Cups?
     /// The reflex signal shows ("Boop!"), and when it was drawn, on the clock key events use.
     var signal: TimeInterval?
     /// The person pressed before the signal: "Too soon!" at once, the verdict after its beat.
@@ -29,8 +32,10 @@ struct PartsState {
     var notes = false
     /// When the puzzle's board showed, for its clock to count on from the time it says.
     var puzzleShown = Date()
-    /// A plot being dragged: the cell it started on and the one under the pointer.
+    /// A plot being dragged: the cell it started on and the one under the pointer (or the arrow keys' cursor).
     var drag: (from: Int, to: Int)?
+    /// The plot is being stretched with the arrow keys (Space or Return began it), not the pointer.
+    var dragByKeys = false
 }
 
 extension PlayModel {
@@ -63,13 +68,17 @@ extension PlayModel {
         if board.numberField?.history.count != parts.guessesSeen { parts.draft = "" }
         parts.guessesSeen = board.numberField?.history.count
         if let cursor = parts.cursor, cursor >= cells(board) { parts.cursor = nil }
+        if parts.dragByKeys {
+            parts.drag = nil
+            parts.dragByKeys = false
+        }
         if let p = board.puzzle {
             parts.puzzleShown = Date()
             // Sudoku's pad works at once: the first open cell is picked until the person picks another.
             if p.input == .digits, parts.cursor == nil { parts.cursor = p.cells.firstIndex { !$0.given } }
         }
         if let pads = board.pads, !pads.play.isEmpty, !pads.locked { play(pads) }
-        if let cups = board.cups, cups.shuffleSeconds > 0 { shuffle(cups) }
+        if let cups = board.cups, cups.shuffleSeconds > 0 { shuffle(cups) } else { parts.shuffled = nil }
         if let reflex = board.reflex, reflex.armed, let after = reflex.after { arm(after, window: reflex.window) }
         if let after = board.after {
             parts.waiting = true
@@ -111,11 +120,15 @@ extension PlayModel {
     }
 
     private func shuffle(_ cups: GameBoard.Cups) {
+        let same = parts.shuffled.map { $0.count == cups.count && $0.hide == cups.hide && $0.swaps == cups.swaps } ?? false
+        let left = same ? cups.shuffleSeconds - Date().timeIntervalSince(parts.shuffleStart) : cups.shuffleSeconds
+        parts.shuffled = cups
+        guard left > 0 else { return }
         parts.shuffling = true
-        parts.shuffleStart = Date()
+        if !same { parts.shuffleStart = Date() }
         partsTask = Task { [weak self] in
-            if self?.soundsOn == true { GameSounds.shared.play(.shuffle) }
-            try? await Task.sleep(for: .seconds(cups.shuffleSeconds))
+            if self?.soundsOn == true, !same { GameSounds.shared.play(.shuffle) }
+            try? await Task.sleep(for: .seconds(left))
             guard !Task.isCancelled else { return }
             self?.parts.shuffling = false
         }
@@ -209,6 +222,7 @@ extension PlayModel {
             return true
         }
         if let p = board.puzzle, !p.locked {
+            if p.input == .drag, dragPlot(k, columns: p.columns, count: p.rows * p.columns) { return true }
             // A puzzle is the same picture in every language: the arrows move as they point.
             if moveCursor(k, columns: p.columns, count: p.rows * p.columns, mirrored: false) { return true }
             switch p.input {
@@ -216,7 +230,9 @@ extension PlayModel {
                 if let d = Int(k), (0...(p.digits ?? 0)).contains(d) { placeDigit(d); return true }
                 if k == "delete" { placeDigit(0); return true }
                 if k == "n" { parts.notes.toggle(); return true }
-            case .tap, .drag:
+            case .drag:
+                break
+            case .tap:
                 if k == "return" || k == "space", let c = parts.cursor {
                     send(.cell(row: c / p.columns, column: c % p.columns))
                     return true
@@ -262,6 +278,35 @@ extension PlayModel {
         return false
     }
 
+    /// Garden Plots from the keyboard, as the pointer drags: Space or Return starts a plot at the cursor, the arrows
+    /// stretch it (the same dashed preview), Return or Space plants it (on one square: a click there, which clears a
+    /// plot or plants a one-square one), Esc lets it go. True when the key was used.
+    private func dragPlot(_ k: String, columns: Int, count: Int) -> Bool {
+        if parts.dragByKeys, let drag = parts.drag {
+            switch k {
+            case "escape":
+                parts.drag = nil
+                parts.dragByKeys = false
+            case "return", "space":
+                parts.drag = nil
+                parts.dragByKeys = false
+                let (a, b) = (drag.from, drag.to)
+                if a == b { send(.cell(row: a / columns, column: a % columns)) }
+                else { send(.area(row: a / columns, column: a % columns, toRow: b / columns, toColumn: b % columns)) }
+            default:
+                guard moveCursor(k, columns: columns, count: count, mirrored: false), let c = parts.cursor else { return false }
+                parts.drag = (drag.from, c)
+            }
+            return true
+        }
+        guard k == "return" || k == "space", parts.drag == nil else { return false }
+        let c = parts.cursor ?? 0
+        parts.cursor = c
+        parts.drag = (c, c)
+        parts.dragByKeys = true
+        return true
+    }
+
     /// The arrow keys move the pointer over cells or cups, starting at the first.
     private func moveCursor(_ k: String, columns: Int, count: Int, mirrored: Bool = true) -> Bool {
         let step = switch k {
@@ -294,8 +339,11 @@ extension PlayModel {
         if let p = board.puzzle, !p.locked {
             switch p.input {
             case .tap: return String(localized: "Click a cell to change it", comment: "Keys in the Play panel: a puzzle whose cells change with a click")
-            case .drag: return String(localized: "Drag from corner to corner, click a plot to clear it",
-                                      comment: "Keys in the Play panel: Garden Plots, drawing rectangles")
+            case .drag where parts.dragByKeys:
+                return String(localized: "Arrows stretch the plot · Return plants it · Esc lets it go",
+                              comment: "Keys in the Play panel: Garden Plots, while a plot is being drawn with the keyboard")
+            case .drag: return String(localized: "Drag corner to corner, or Space and the arrows · Click a plot to clear it",
+                                      comment: "Keys in the Play panel: Garden Plots, drawing rectangles with the pointer or the keyboard")
             case .digits: return String(localized: "Pick a cell, then a number · N for notes", comment: "Keys in the Play panel: Sudoku")
             }
         }

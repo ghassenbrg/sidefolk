@@ -48,16 +48,58 @@ struct GameStage: View {
                     }
             }
             HStack(alignment: peeking ? .top : .bottom, spacing: 6) {
-                CompanionFigure(picture: pose, size: peeking ? CGSize(width: 104, height: 100) : CGSize(width: 54, height: 54), beat: model.turn)
-                    // On a table: the feet sink a little past the stage's edge, onto the table's top.
-                    .padding(.bottom, peeking ? -Self.sink : 0)
+                let figure = CompanionFigure(picture: pose, size: peeking ? CGSize(width: 104, height: 100) : CGSize(width: 54, height: 54),
+                                             beat: model.turn)
+                Group {
+                    if let catching = board.companionButton { CatchableFigure(figure: figure, button: catching, model: model) } else { figure }
+                }
+                // On a table: the feet sink a little past the stage's edge, onto the table's top.
+                .padding(.bottom, peeking ? -Self.sink : 0)
                 if let words { SpeechBubble(text: words, chip: prompt?.chip, clock: model.clock, tail: .leading) }
                 else { Spacer(minLength: 0) }
             }
         }
         .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
+        // The prompt reads as one header; a companion that can be clicked stays its own button for VoiceOver.
+        .accessibilityElement(children: board.companionButton == nil ? .combine : .contain)
+        .accessibilityAddTraits(board.companionButton == nil ? .isHeader : [])
+    }
+}
+
+/// The companion as a button (a board's `companion` button: Which Cup?'s "Check its paw"): clicking it, during the
+/// shuffle or before the cups lift, makes the button's move. A small badge with the button's symbol on its shoulder
+/// and the pointing hand say it can be clicked; the button's key still works and its words are the tooltip.
+struct CatchableFigure: View {
+    var figure: CompanionFigure
+    var button: GameBoard.Button
+    var model: PlayModel
+    @State private var hovered = false
+
+    var body: some View {
+        Button { model.send(.button(button.move)) } label: {
+            figure
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: button.symbol ?? "hand.tap.fill").font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(hovered ? Theme.onAccent : Theme.accent)
+                        .frame(width: 24, height: 24)
+                        .background(Circle().fill(hovered ? Theme.accent : Theme.surface).shadow(color: .black.opacity(0.15), radius: 2, y: 1))
+                        .overlay(Circle().strokeBorder(Theme.accent.opacity(0.5), lineWidth: 1))
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(GamePressStyle())
+        .focusable(false)
+        .onHover { inside in
+            hovered = inside
+            if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .onDisappear { if hovered { NSCursor.pop() } }
+        .help(button.label)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: button.label))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { model.send(.button(button.move)) }
     }
 }
 

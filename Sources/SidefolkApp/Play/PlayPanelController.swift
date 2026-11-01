@@ -108,6 +108,8 @@ final class PlayPanelController {
         case 36, 76: return "return"
         case 49: return "space"
         case 51: return "delete"
+        // Esc is the board's only while it is using it (a plot drawn from the keyboard); otherwise it closes the panel.
+        case 53: return "escape"
         case 123: return "left"
         case 124: return "right"
         case 125: return "down"

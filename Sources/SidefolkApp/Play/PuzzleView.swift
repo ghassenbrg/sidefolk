@@ -72,10 +72,14 @@ struct PuzzleGrid: View {
         return r * puzzle.columns + c
     }
 
-    /// Corner to corner; a click without moving takes a plot away (or draws one cell).
+    /// Corner to corner; a click without moving takes a plot away (or draws one cell). The keyboard draws the same
+    /// way (`PlayModel.dragPlot`), into the same preview.
     private var dragging: some Gesture {
         DragGesture(minimumDistance: 0)
-            .onChanged { v in model.parts.drag = (index(at: v.startLocation), index(at: v.location)) }
+            .onChanged { v in
+                model.parts.dragByKeys = false
+                model.parts.drag = (index(at: v.startLocation), index(at: v.location))
+            }
             .onEnded { v in
                 let (a, b) = (index(at: v.startLocation), index(at: v.location))
                 model.parts.drag = nil

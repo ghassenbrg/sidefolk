@@ -710,7 +710,8 @@ Activity row when the game ends.
   `score` (`you`, `companion`, `streak`, `best`, `rounds` to win, `companion_picked` for its sealed card), `result`
   (`figure`, `line`, `ribbon`, `tone` good, bad or neutral, `facts`, up to three `actions`), `timer` (`id`, `seconds`:
   Sidefolk counts and sends `{timeout: true}`), `reveal` (`kind` coin, dice or hands), `note`, `facts`, `button`
-  (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board), `choice`
+  (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board; `companion: true`
+  makes the companion in the scene the button: clicking it presses it, no button is drawn, its key still works), `choice`
   (`name`, `style` cards or segmented, `options`, `selected`). Unknown parts are skipped; `"over": true` ends the game.
   A tile may carry its own `key` (a letter, a digit or `?`); a 3 × 3 `board` with `"keys": "numpad"` takes the digits
   as a number pad does.

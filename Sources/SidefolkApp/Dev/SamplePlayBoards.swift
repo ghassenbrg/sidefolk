@@ -88,8 +88,35 @@ enum SamplePlayBoards {
                 model.stage(after: previous, board, buildUp: held)
                 out.append((shot, model))
             }
+            // What the person does between boards: a word half typed in the next row, a plot stretched with the keys.
+            if let typing = typing(board) {
+                let model = PlayModel(info: info, provider: Fixed(info, board), companionName: "Mochi", portrait: portrait, soundsOn: false)
+                dress(model)
+                model.stage(after: previous, board, buildUp: false)
+                typing(model)
+                out.append((name + "-typing", model))
+            }
         }
         return out
+    }
+
+    /// A board's state while the person types or drags, if it has one worth a picture.
+    private static func typing(_ board: GameBoard) -> ((PlayModel) -> Void)? {
+        if let letters = board.letters, letters.draft, let keys = board.keys, keys.mode == .spell, !keys.locked {
+            // Korean jamo that make a syllable and a half; elsewhere the keyboard's first letters.
+            let first = keys.pages.first?.rows.first?.map(\.key) ?? []
+            let draft = keys.script == .hangul ? "ㅅㅏㄱㅗ" : first.prefix(min(3, keys.length - 1)).joined()
+            return { $0.parts.draft = draft }
+        }
+        if let p = board.puzzle, p.input == .drag, !p.locked, p.plots.isEmpty {
+            return { model in
+                // Space at the top corner, then right and down: a 2 × 3 plot in the dashed preview.
+                model.parts.cursor = p.columns + 2
+                model.parts.drag = (0, p.columns + 2)
+                model.parts.dragByKeys = true
+            }
+        }
+        return nil
     }
 
     /// As the app opens a game: the companion's figure in the scene, a way back to the menu (the stand-in face for "You",

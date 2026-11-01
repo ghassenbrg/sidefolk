@@ -253,19 +253,24 @@ public struct GameButton {
     /// A letter key that presses it too ("h" for a hint).
     public var key: String?
     public var disabled: Bool
+    /// Clicking the companion in the game's scene presses it, and Sidefolk draws no button for it (its key and VoiceOver
+    /// still press it). A Sidefolk from before this draws it as a plain button.
+    public var companion: Bool
 
-    public init(_ label: String, move: String, style: ButtonStyle = .secondary, symbol: String? = nil, key: String? = nil, disabled: Bool = false) {
+    public init(_ label: String, move: String, style: ButtonStyle = .secondary, symbol: String? = nil, key: String? = nil, disabled: Bool = false,
+                companion: Bool = false) {
         self.label = label
         self.move = move
         self.style = style
         self.symbol = symbol
         self.key = key
         self.disabled = disabled
+        self.companion = companion
     }
 
     var json: [String: Any] {
         drop(["type": "button", "label": label, "move": move, "style": style == .destructive ? "secondary" : style.rawValue, "symbol": symbol,
-              "key": key, "disabled": disabled ? true : nil])
+              "key": key, "disabled": disabled ? true : nil, "companion": companion ? true : nil])
     }
 }
 
