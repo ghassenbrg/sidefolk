@@ -85,9 +85,10 @@ final class CalendarModel {
     let now: NowModel
     var runtime: SidefolkRuntime { services.runtime }
     var calendar: Calendar { .autoupdatingCurrent }
-    var calendarOn: Bool { runtime.calendarReader.isOn }
-    var writesOn: Bool { runtime.calendarReader.writesOn }
-    var hidden: Set<String> { runtime.settings.current.calendarPage.hidden }
+    /// The settings the page draws from, kept here so the page redraws when they change (the store isn't observed).
+    private(set) var calendarOn = false
+    private(set) var writesOn = false
+    private(set) var hidden: Set<String> = []
     /// A reload replaced by a newer one leaves what it read.
     private var generation = 0
 
@@ -101,6 +102,7 @@ final class CalendarModel {
         self.services = services
         self.now = now
         let page = services.runtime.settings.current.calendarPage
+        hidden = page.hidden
         hourHeight = CGFloat(page.hourHeight)
         sidebarShown = page.sidebar
         mode = Mode(word: page.view) ?? .agenda
@@ -271,9 +273,12 @@ final class CalendarModel {
         let found = ids.isEmpty ? [] : ((try? await rt.notebook.items(ids: Array(ids))) ?? [])
         let calendars = await rt.calendarReader.calendars() ?? []
         guard mine == generation else { return }
+        let settings = rt.settings.current
+        calendarOn = settings.showCalendar
+        writesOn = rt.calendarReader.writesOn
+        hidden = settings.calendarPage.hidden
         items = Dictionary(found.filter { $0.deletedAt == nil }.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         self.calendars = calendars
-        let hidden = self.hidden
         let shown = reminders.filter { entry in kind(entry).listId.map { !hidden.contains($0) } ?? true }
         entries = (shown + events).sorted { ($0.start, $0.title) < ($1.start, $1.title) }
         byDay = index(entries)
@@ -344,10 +349,11 @@ final class CalendarModel {
     // MARK: The page's own settings
 
     func setHidden(_ id: String, _ hide: Bool) {
-        remember { if hide { $0.hidden.insert(id) } else { $0.hidden.remove(id) } }
+        if hide { hidden.insert(id) } else { hidden.remove(id) }
+        let settings = runtime.settings
         Task {
-            // The setting is written first: the reader leaves hidden calendars out.
-            try? await Task.sleep(for: .milliseconds(20))
+            // Written before reading again: the reader leaves hidden calendars out.
+            await settings.update { if hide { $0.calendarPage.hidden.insert(id) } else { $0.calendarPage.hidden.remove(id) } }
             await reload()
         }
     }

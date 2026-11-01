@@ -47,11 +47,13 @@ struct CalendarView: View {
         // On the page, not as the buttons' shortcuts: those would take ⌘← and ⌘→ from every text field in the window.
         .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
             let back = press.key == .upArrow || press.key == (direction == .rightToLeft ? .rightArrow : .leftArrow)
-            if press.modifiers == .command, press.key == .leftArrow || press.key == .rightArrow {
+            // Arrow keys always carry the function and keypad flags.
+            let modifiers = press.modifiers.subtracting([.function, .numericPad])
+            if modifiers == .command, press.key == .leftArrow || press.key == .rightArrow {
                 step(back ? -1 : 1)
                 return .handled
             }
-            guard press.modifiers.isEmpty else { return .ignored }
+            guard modifiers.isEmpty else { return .ignored }
             model.moveSelection(back ? -1 : 1)
             return .handled
         }
@@ -60,7 +62,7 @@ struct CalendarView: View {
             model.openSelection()
             return .handled
         }
-        .onKeyPress(keys: [.delete, .deleteForward]) { _ in
+        .onKeyPress(keys: [.delete, .deleteForward, KeyEquivalent("\u{7F}")]) { _ in
             guard let entry = model.entry(id: model.selection) else { return .ignored }
             model.delete(entry, undo: undo)
             return .handled

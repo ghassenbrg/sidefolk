@@ -15,8 +15,16 @@ struct CalendarScrollCatcher: NSViewRepresentable {
     func makeNSView(context: Context) -> CatcherView {
         let view = CatcherView()
         view.handle = { context.coordinator.handle($0, in: view) }
+        #if DEBUG
+        Self.dev = context.coordinator
+        #endif
         return view
     }
+
+    #if DEBUG
+    /// The page's catcher, for the dev channel's synthetic swipes.
+    @MainActor static weak var dev: Coordinator?
+    #endif
 
     func updateNSView(_ view: CatcherView, context: Context) {
         context.coordinator.parent = self
@@ -43,8 +51,16 @@ struct CalendarScrollCatcher: NSViewRepresentable {
 
         /// Whether the event was the Calendar's.
         func handle(_ event: NSEvent, in view: NSView) -> Bool {
+            #if DEBUG
+            CalendarScrollCatcher.dev = self
+            #endif
             guard event.window === view.window, view.window != nil,
                   view.bounds.contains(view.convert(event.locationInWindow, from: nil)) else { return false }
+            return scroll(event)
+        }
+
+        /// A scroll over the page: a period turned, the month moved, or nothing (the scroll views have it).
+        func scroll(_ event: NSEvent) -> Bool {
             let model = parent.model
             // A mouse wheel: the month moves a row a notch; everything else scrolls as it does.
             guard event.hasPreciseScrollingDeltas else {

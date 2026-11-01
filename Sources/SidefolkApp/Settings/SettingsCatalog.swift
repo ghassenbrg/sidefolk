@@ -185,7 +185,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .capabilities: String(localized: "Commands, the internet, the clipboard, files, apps, Apple Notes and Reminders.", comment: "Settings › Trust: search")
         case .agentAccess: String(localized: "What Claude Code, Codex and other apps may save, change and read.", comment: "Settings › Trust: search")
         case .location: String(localized: "Your town for the weather and times, from your Mac or a place you choose.", comment: "Settings › Trust: search")
-        case .calendar: String(localized: "Today, the morning brief and the AI may read your calendar.", comment: "Settings › Trust: search")
+        case .calendar: String(localized: "Today, the morning brief and the AI may read your calendar, and Sidefolk may change its events if you let it.", comment: "Settings › Trust: search")
         case .keeps: String(localized: "Everything stays on this Mac. It's encrypted at rest by FileVault when FileVault is on.")
         case .history: String(localized: "Conversations with the AI, kept so you can follow up, then deleted.", comment: "Settings › Trust: search")
         case .backUp: String(localized: "One file with your notes, reminders, watches, history, settings and add-ons, to move to another Mac or to start fresh and come back. Keys only if you choose, with a password.")

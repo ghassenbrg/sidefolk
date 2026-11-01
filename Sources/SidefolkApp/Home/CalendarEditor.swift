@@ -85,9 +85,13 @@ struct CalendarEditor: View {
             when = WhenText.phrase(for: draft.start)
             calendarId = model.writableCalendars.first?.id
             if draft.allDay, kinds.contains(where: { $0.value == .event }) { kind = .event }
-            titleFocused = true
         }
-        .task { await model.loadCollections() }
+        .task {
+            // A popover takes the keyboard once it is on screen; asking sooner leaves the title without it.
+            try? await Task.sleep(for: .milliseconds(80))
+            titleFocused = true
+            await model.loadCollections()
+        }
     }
 
     private var placeholder: String {
@@ -186,7 +190,7 @@ struct CalendarWritesSheet: View {
                 point("plus.circle", Text("Add, move, resize and delete events in your Mac's calendars from here, as you would in Calendar."))
                 point("arrow.uturn.backward", Text("Every change is in History, and ⌘Z or Undo puts it back."))
                 point("person.2", Text("Never events other people are invited to (changing them would tell them), calendars you can't edit, or a whole repeating series."))
-                point("sparkles", Text("Your AI asks you before it adds or changes an event, and every time before it deletes one."))
+                point("sparkles", Text("Your AI changes events through Guard, as your Trust settings say, and asks you every time before it deletes one."))
             }
             Text("You can turn this off in Settings › Trust › Your calendar.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             HStack {
