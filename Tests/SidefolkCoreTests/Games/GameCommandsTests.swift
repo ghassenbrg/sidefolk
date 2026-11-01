@@ -201,3 +201,32 @@ struct GameCommandsTests {
         #expect(!wrong.isOK)
     }
 }
+
+extension GameCommandsTests {
+    /// "Play tic-tac-toe with my friend" (D96): the players slot in the ten languages, only for games two can play.
+    @Test func twoPlayersInTenLanguages() {
+        let two = GameSlots(players: 2)
+        let cases: [(String, GameCommand)] = [
+            ("play tic-tac-toe with my friend", open(Self.ttt, nil, two)), ("let's play tic-tac-toe, two players", open(Self.ttt, nil, two)),
+            ("jouons au morpion avec mon ami", open(Self.ttt, nil, two)), ("juguemos a trivia con mi amigo", open(Self.trivia, nil, two)),
+            ("lass uns tic-tac-toe spielen zu zweit", open(Self.ttt, nil, two)), ("play copy me with a friend", open(Self.copy, nil, two)),
+            ("友だちとまるばつゲームしよう", open(Self.ttt, nil, two)), ("친구랑 틱택토 하자", open(Self.ttt, nil, two)),
+            ("和朋友来玩井字棋", open(Self.ttt, nil, two)), ("لنلعب إكس أو مع صديقي", open(Self.ttt, nil, two)),
+            ("play tic-tac-toe on hard with my friend", open(Self.ttt, "hard", two)),
+            ("guess a number up to 1000 with my friend", open(Self.numbers, nil, GameSlots(min: 1, max: 1000, mode: .mine, players: 2))),
+        ]
+        for (text, expected) in cases { #expect(command(text) == expected, "\(text)") }
+        #expect(command("play sudoku with my friend") == nil, "a puzzle is played alone")
+        #expect(command("daily word two players") == nil)
+        #expect(GameSlots(["players": 2]).options["players"] == 2 && GameSlots(["players": 5]).players == nil)
+    }
+
+    @Test func theCenterKnowsTwoPlayerGamesAndHeadToHeads() {
+        let records = GameCenterRecords.parse(["records": [:], "two_players": ["tictactoe", "Bad Name"],
+                                               "duels": [["game": "tictactoe", "names": ["Ana", "Sam"], "wins": [3, 2], "draws": 1],
+                                                         ["game": "tictactoe", "names": ["Only"], "wins": [1]]]])
+        #expect(records?.twoPlayers == ["tictactoe"] && records?.duels == [GameCenterRecords.Duel(game: "tictactoe", names: ["Ana", "Sam"], wins: [3, 2], draws: 1)])
+        let center = GameCenter(games: [GameInfo.handsMatch, Self.ttt, Self.sudoku], extensionId: Self.ttt.extensionId, records: records, rows: [])
+        #expect(center.twoPlayers == [GameInfo.handsMatch.id, Self.ttt.id] && center.duels.count == 1)
+    }
+}
