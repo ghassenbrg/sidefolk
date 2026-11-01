@@ -17,7 +17,11 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   --language en`) fails before the fix and passes afterward: initial/partial scrolling, header/weekday
   double-clicks, Day/Week/Month switching, overflow links, and a visible empty day's double-click. Normal and small
   window captures are in `build/calendar-input-*`; full tests with a clean gallery checkout: 1746 core + 38
-  character, all green. Prepared for snapshot 780; publication pending.
+  character, all green. **Published as [snapshot 780](https://github.com/ghassenbrg/sidefolk/releases/tag/v0.1.0-snapshot.780)**
+  from main commit `e20c27f6`, signed with Developer ID and notarized; disk image and checksum uploaded and the tag
+  verified against that commit. Main CI passed. Release run `41305325341` attempt 1 stopped at the existing
+  `childThatLeftTheGroupStopsWithTheExtension` cleanup timeout (the local full suite and five targeted rechecks
+  passed); attempt 2 passed every gate and published. The original affected user setup remains a manual retest.
 
 ## 2026-11-01: released in snapshots 673 to 724, or on main after it
 
