@@ -332,7 +332,7 @@ final class FixtureServices: AppServices {
     func revealDataFolder() {}
     func exportDiagnostics(to url: URL) async -> UserFacingError? { nil }
     func backUp(to url: URL, password: String?) async -> UserFacingError? { nil }
-    func openBackup(_ url: URL) async -> Result<OpenedBackup, UserFacingError> { .failure(UserFacingError("Not in snapshots.")) }
+    func openBackup(_ url: URL) async -> Result<OpenedBackup, UserFacingError> { .failure(UserFacingError(verbatim: "Not in snapshots.")) }
     func restore(_ backup: OpenedBackup, password: String?) async -> UserFacingError? { nil }
     func undoRestore() -> UserFacingError? { nil }
     func reviewRestored(_ item: RestoreFollowUp.ReviewItem) {}
