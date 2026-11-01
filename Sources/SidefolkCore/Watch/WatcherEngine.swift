@@ -64,6 +64,10 @@ public actor WatcherEngine {
     /// last few minutes, not a record.
     var history: [String: [Double]] = [:]
     public static let historyLength = 40
+    /// Each watch's checks and kept versions (D87).
+    let log: WatchHistoryStore
+    /// Each watch's newest run of checks, as it stands: a run that only grew is saved with the routine saves (see `note`).
+    var openRuns: [String: OpenRun] = [:]
 
     /// - Parameters:
     ///   - opener: opens a web address or a file for the "Open" button (the app's `PlatformBridge`).
@@ -71,6 +75,7 @@ public actor WatcherEngine {
     public init(store: WatcherStore, attention: AttentionCenter, events: EventBus, clock: any Clock = SystemClock(),
                 opener: @escaping @Sendable (URL) async -> Void = { _ in }, probes: [any WatcherProbe]? = nil) {
         self.store = store
+        log = WatchHistoryStore(store.db)
         self.attention = attention
         self.events = events
         self.clock = clock
@@ -221,6 +226,7 @@ public actor WatcherEngine {
         lastSaved[id] = nil
         readings[id] = nil
         history[id] = nil
+        openRuns[id] = nil // its rows go with it (the foreign key's cascade)
         await ensureLoaded()
         guard let w = watchers.removeValue(forKey: id) else { return nil }
         inflight.removeValue(forKey: id)?.cancel()
@@ -245,6 +251,7 @@ public actor WatcherEngine {
         watchers[id] = w
         hub?.remove(id)
         await persist(w)
+        await note(.paused, for: w, at: w.updatedAt)
         arm()
         return w
     }

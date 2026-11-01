@@ -102,7 +102,7 @@ extension AppCoordinator {
         }
         for item in await runtime.attention.open().filter({ $0.level >= .attention }) {
             c.needsYou.append(.init(id: "attention-\(item.id)", title: item.title, detail: item.body?.clipped(60),
-                                    trailing: TimeText.clock(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.source),
+                                    trailing: TimeText.clock(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.refKind == "watcher" ? "watcher" : item.source),
                                     open: { [weak self] in self?.pocketClosing { $0.openNow() } }))
         }
         // Add-on updates (D89): one row, however many.

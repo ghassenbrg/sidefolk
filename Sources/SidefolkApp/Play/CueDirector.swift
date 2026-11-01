@@ -21,6 +21,8 @@ final class CueDirector {
     var soundsAllowed: () -> Bool = { true }
     /// Says a line aloud, when the person hears spoken replies.
     var speak: ((String) -> Void)?
+    /// Whether the companion's game lines show (Settings › Attention › Games, D88); off, it still plays its moves.
+    var linesShown: () -> Bool = { true }
 
     init(companion: CompanionWindowController, caption: CompanionCaption) {
         self.companion = companion
@@ -74,7 +76,7 @@ final class CueDirector {
         }
         if let effect = cue.effect { caption.flash(effect) }
         if let prop = cue.prop { caption.hold(prop) }
-        if let line = said ?? cue.line.map({ GameLines.line($0, tone: tone) }), limiter.line(at: now) {
+        if linesShown(), let line = said ?? cue.line.map({ GameLines.line($0, tone: tone) }), limiter.line(at: now) {
             caption.show(line, for: 2.6)
             speak?(line)
         }

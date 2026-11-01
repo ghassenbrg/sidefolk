@@ -124,6 +124,8 @@ struct HomeView: View {
             TrashView(model: model.notebook)
         case .gallery:
             HomeGalleryView(settings: model.settingsHost)
+        case .watch:
+            WatchDetailView(home: model, model: model.watch)
         case .page(let id):
             if let info = model.pages.info(id) {
                 ExtensionPageView(model: model.pages.model(info))
@@ -162,7 +164,7 @@ private struct PlaceTitle: View {
         switch model.selection ?? .now {
         case .now: String(localized: "Today")
         case .calendar: String(localized: "Calendar")
-        case .onDuty: String(localized: "On duty")
+        case .onDuty, .watch: String(localized: "On duty")
         case .history: String(localized: "History")
         case .you: String(localized: "You", comment: "Notebook › You: what Sidefolk knows about the person")
         case .trash: String(localized: "Trash")
@@ -182,6 +184,8 @@ private struct PlaceTitle: View {
             let duty = model.now.onDuty
             let running = String(localized: "\(model.onDutyRunning) running", comment: "Under On duty's title")
             return duty.paused > 0 ? running + " · " + String(localized: "\(duty.paused) paused", comment: "Under On duty's title") : running
+        case .watch:
+            return model.watch.watcher.map { Describe.watcherKind($0.kind).label }
         case .history:
             let span = switch model.history.span {
             case .today: String(localized: "Today")

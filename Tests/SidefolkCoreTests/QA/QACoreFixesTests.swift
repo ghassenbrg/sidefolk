@@ -219,3 +219,63 @@ private final class Tally: Sendable {
         _ = try await store.search(String(repeating: "x y ", count: 25_000))
     }
 }
+
+// The rest of the QA branch's tests (ported 2026-11-01): one bug fixed since, and three
+// that passed then and stay as regression tests.
+
+@Suite struct QAFixedSeries {
+    // Undo of "cancel" brings a monthly-on-the-31st series back on the 31st, when the series was made with its
+    // anchor (31 Jan) and its first time clamped to 28 Feb.
+    @Test func undoOfCancelKeepsAnExplicitMonthlyAnchor() async throws {
+        let t = try await SchedulerEnv(now: TimeTest.date(2026, 1, 31, 10))
+        await t.scheduler.start()
+        let r = try await t.scheduler.create(title: "Pay rent", at: t.date(2026, 2, 28, 9), recurrence: Recurrence(frequency: .monthly),
+                                             anchor: t.date(2026, 1, 31, 9))
+        let before = try #require(try await t.scheduler.cancel(id: r.id))
+        try await t.scheduler.restore(before)
+        t.clock.set(t.date(2026, 2, 28, 9))
+        await t.scheduler.tick()
+        let next = try #require(await t.reminder(r.id)).fireAt
+        #expect(next == t.date(2026, 3, 31, 9), "next fire after the restore is \(TimeTest.show(next))")
+    }
+
+    // 40 reminders due in the same minute all fire and all reach the attention store, none lost to rate limits.
+    @Test func manyDueRemindersAllFire() async throws {
+        let t = try await SchedulerEnv()
+        await t.scheduler.start()
+        for i in 0..<40 { try await t.scheduler.create(title: "R\(i)", at: t.clock.now.addingTimeInterval(60)) }
+        t.clock.advance(61)
+        await t.scheduler.tick()
+        #expect(await t.posted().count == 40)
+        #expect(try await t.store.pending().isEmpty)
+    }
+}
+
+@Suite struct QAFixedSearchSyntax {
+    // FTS syntax characters are harmless, and accented, emoji and Japanese searches find their note.
+    @Test func ftsSyntaxAndUnicodeAreSafe() async throws {
+        let store = NotebookStore(try AppDatabase.inMemory())
+        let inbox = try await store.inbox()
+        try await store.add(NotebookItem(collectionId: inbox.id, kind: .note, title: "Café ☕ plans",
+                                         body: "日本語 notes about \"quotes\" and NEAR/3 AND OR", source: "user"))
+        for q in ["\"", "*", "-", "NEAR(", "a AND", "(", "café", "cafe", "☕", "日本語", "\"quotes\"", "NEAR/3", "title:Café",
+                  String(repeating: "x", count: 400)] {
+            _ = try await store.search(q)
+        }
+        #expect(try await store.search("cafe").count == 1)
+        #expect(try await store.search("日本語").count == 1)
+        #expect(try await store.search("☕").count == 1)
+    }
+}
+
+@Suite struct QAFixedFolderAccess {
+    // Protected places stay protected however the path is capitalised (realpath returns the on-disk case).
+    @Test func protectedFoldersAreCaseInsensitive() throws {
+        let home = NSHomeDirectory()
+        try #require(FileManager.default.fileExists(atPath: home + "/library"), "needs a case-insensitive volume")
+        #expect(FolderAccess.forbiddenReason([home + "/Library/Keychains"]) != nil)
+        #expect(FolderAccess.forbiddenReason([home + "/library/Keychains"]) != nil, "~/library/Keychains is allowed")
+        #expect(FolderAccess.forbiddenReason(["/system/Library"]) != nil, "/system/Library is allowed")
+        #expect(FolderAccess.isGrantable(home + "/library") == false, "~/library can be granted as a whole")
+    }
+}

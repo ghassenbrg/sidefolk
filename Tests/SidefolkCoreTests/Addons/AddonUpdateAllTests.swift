@@ -177,4 +177,12 @@ import Testing
         nudge.note([Self.entry("git", version: "1.2.0")], now: start.addingTimeInterval(60 * 3600))
         #expect(nudge.seen.keys.sorted() == ["dev.sidefolk.git@1.2.0"] && nudge.told.isEmpty)
     }
+
+    /// Its whispers are a source of their own in Settings › Attention (D88), gentle unless the person says otherwise.
+    @Test func addOnUpdatesAreASourceOfTheirOwn() {
+        #expect(InterruptSource.of(source: "addons", refKind: "addon-updates", refId: nil) == [.addonUpdates])
+        #expect(InterruptSource(key: InterruptSource.addonUpdates.key) == .addonUpdates)
+        #expect(InterruptSource.addonUpdates.defaultLevel == .whisper)
+        #expect(InterruptSource.addonUpdates.choices.contains(.off))
+    }
 }

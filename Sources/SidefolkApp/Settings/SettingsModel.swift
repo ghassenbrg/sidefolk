@@ -22,6 +22,11 @@ final class SettingsModel {
 
     // Attention
     private(set) var heldCount = 0
+    /// The agents What may interrupt you lists, by client name (D88): Claude Code and Codex, then every other app that
+    /// reached Sidefolk or has a level set.
+    private(set) var noticeAgents = ["claude-code", "codex"]
+    /// Titles of the watches set apart, by id.
+    private(set) var watchTitles: [String: String] = [:]
 
     // AI
     @ObservationIgnored private(set) lazy var ai = AISettingsModel(parent: self)
@@ -82,6 +87,7 @@ final class SettingsModel {
                     integration = await services.integrationStatus()
                     // A companion may have been updated by Update all or by itself (D89): its card no longer offers one.
                     await gallery.readInstalled()
+                    await loadNoticeSources()
                 case .permissions: await loadPermissions()
                 case .attention: await refreshHeld()
                 case .extensions:
@@ -149,6 +155,23 @@ final class SettingsModel {
     func setAttention(_ mode: AttentionMode, until: Date?) {
         update { $0.setAttention(mode, until: until, now: Date()) }
         Task { await refreshHeld() }
+    }
+
+    /// The agents that reached Sidefolk (a tool call or a session) and the watches set apart, for What may interrupt you.
+    func loadNoticeSources() async {
+        let calls = (try? await runtime.activity.recent(limit: 500)) ?? []
+        var names = Set(calls.compactMap { call in
+            call.caller.hasPrefix("external:") ? InterruptSource.agentName(String(call.caller.dropFirst("external:".count))) : nil
+        })
+        names.formUnion(((try? await runtime.sessions.recent(limit: 50)) ?? []).map { InterruptSource.agentName($0.agent) })
+        for case .agent(let name) in settings.interruptions.named { names.insert(name) }
+        let fixed = ["claude-code", "codex"]
+        noticeAgents = fixed + names.subtracting(fixed).filter { !$0.isEmpty }.sorted()
+        var titles: [String: String] = [:]
+        for id in settings.interruptions.watchOverrides.keys {
+            if let w = try? await runtime.watcherStore.watcher(id: id) { titles[id] = w.title }
+        }
+        watchTitles = titles
     }
 
     /// How many things wait for Focus or Quiet to end.

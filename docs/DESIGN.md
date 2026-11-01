@@ -99,6 +99,7 @@ Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `Sta
 | `SettingsPage` | `GeneralSettingsView.swift` | a tab's column, 720 at most, leading; scrolls to a jumped-to row |
 | `SettingInlineControl` | `SettingsRoot.swift` | the control itself in a search result (switches, short choices) |
 | `AttentionDial` (cards or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
+| `InterruptionsGroup`, `InterruptLevelMenu` | `InterruptionsGroup.swift` | What may interrupt you (D88): a row per source (icon, name, what it covers, a level menu one width down the column), watches set apart under Watches |
 | `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as cards with an example each |
 | `PocketView`, `PocketModel`, `PocketContent`, `PocketActions` | `StatusItem/` | the menu bar's popover; content gathered by `AppCoordinator+Pocket` |
 | `InstallPreviewSheet` (steps `.who`, `.touch`), `InstallPermissionRow` | `InstallPreviewSheet.swift`, `InstallReviewParts.swift` | the install passport |
@@ -118,6 +119,8 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `PersonAvatar`, `CompanionAvatar` | `HistoryView.swift` | who did something, beside a sentence |
 | `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
 | `AddonUpdatesSection`, `AddonUpdateButton`, `AddonUpdateInline`, `AddonUpdateStrip`, `AddonUpdatesTodayRow`, `AddonUpdateDot` | `Updates/AddonUpdateViews.swift` | add-on updates wherever add-ons appear (D89): the Gallery's Updates with Update all, a row's "New version · Update", an extension page's calm strip, Today's one row, the sidebar's accent dot |
+| `CheckTicks` (+ `CheckWords`), `CheckRow` | `WatchChecks.swift` | a watch's last checks as ticks, oldest to newest, in `StatusTone.check`'s colours with their counts said for VoiceOver (On duty's rows, 24; the watch's page, 48); one run on its timeline (D87) |
+| `WatchChangeLines`, `WatchChangeColumns`, `DiffLineView` | `WatchChangeView.swift` | "what changed" from `LineDiff`, inline or side by side: − struck in muted ink, + on the news tint, folded lines as a count; never red or green |
 
 ## Not built yet (phases 2 and 5)
 

@@ -16,6 +16,8 @@ extension AppCoordinator {
             return await runtime.attention.open().filter { $0.level >= .attention }.sorted { $0.createdAt < $1.createdAt }
         }
         sidecard.onOpenStack = { [weak self] in self?.showAsk() }
+        sidecard.remarksShown = { [weak self] in self?.ownRemarksShown ?? true }
+        sidecard.onLowerSource = { [weak self] _, source, level in self?.lowerSource(source, to: level) }
         sidecard.onChange = { [weak self] in self?.renderLight() }
         sidecard.onFold = { [weak self] item in
             self?.mood.quietAlert(id: item.id)

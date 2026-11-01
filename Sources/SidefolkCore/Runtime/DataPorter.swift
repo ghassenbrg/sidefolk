@@ -6,7 +6,7 @@ public struct DataPorter: Sendable {
     public let runtime: SidefolkRuntime
     public init(runtime: SidefolkRuntime) { self.runtime = runtime }
 
-    /// Writes notebook, reminders, watchers, history, activity and settings to `url` (0600).
+    /// Writes notebook, reminders, watchers with their checks and kept text, history, activity and settings to `url` (0600).
     public func export(to url: URL) async throws {
         let db = runtime.db
         let payload: JSONValue = try await db.writer.read { db in
@@ -18,6 +18,9 @@ public struct DataPorter: Sendable {
                 "items": try all(NotebookItem.self),
                 "reminders": try all(Reminder.self),
                 "watchers": try all(Watcher.self),
+                // Each watch's checks and the text it kept (D87).
+                "watchChecks": try all(WatchCheck.self),
+                "watchVersions": try all(WatchVersion.self),
                 "exchanges": try all(Exchange.self),
                 "activity": try JSONValue.from(ActivityEntry.order(Column("at").desc).limit(5000).fetchAll(db)),
                 "sessions": try all(AgentSession.self),
@@ -68,7 +71,7 @@ public struct DataPorter: Sendable {
             }
         }
         try await db.writer.write { db in
-            for table in ["items", "collections", "reminders", "watchers", "exchanges", "activity", "grants", "folders",
+            for table in ["items", "collections", "reminders", "watch_checks", "watch_versions", "watchers", "exchanges", "activity", "grants", "folders",
                           "extensions", "agent_runs", "attention", "sessions", "jobs", "kv"] {
                 try db.execute(sql: "DELETE FROM \(table)")
             }

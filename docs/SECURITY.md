@@ -105,7 +105,9 @@ Resources, D39): their descriptions are first-party text and are reviewed like p
 Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), stripped of invisible
 and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
 That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
-host. *Residual:* injection can still steer low-risk actions; extension tool names and titles
+host, and open only as web pages (`webLinksOnly`: http and https without a user part; `file:` and app
+schemes are ignored, audit F12), in answers and release notes alike. Words that aren't Sidefolk's own, an
+extension's error included, are shown verbatim (`Text(ext:)`), never read as Markdown. *Residual:* injection can still steer low-risk actions; extension tool names and titles
 (≤ 60 characters) still reach the model. A site the person allowed for good can receive, in a page's
 path, whatever a steered model puts there: only that site's owner reads it, so the trade rests on the
 person allowing sites they trust (a site where strangers can read who fetched what, a request bin, isn't
@@ -173,6 +175,9 @@ Claude Code's and Codex's folders: the MCP entry (T4), hooks (Claude Code's `set
 agents load into their models' context.
 - Only on the person's click, after a dialog listing every file, change and backup (D16); never at launch.
   Each file is backed up before it changes, except a skill exactly as Sidefolk writes it.
+- Only from the copy on the person's own data folder. A copy on any other `SIDEFOLK_HOME` (dev, QA) writes
+  stand-ins inside that folder (D86), the `sidefolk` command link included: its helper goes away with the
+  folder, and the person's agents pointed at it would fail on every start.
 - The skill is fixed text from the app's signed Resources, the same for everyone: nothing personal, no
   paths, no secrets. It tells agents not to store secrets, not to spam, to respect quiet mode and not to
   write instructions for other AIs. It grants nothing: whatever it says, Guard, quotas and approvals decide
@@ -573,6 +578,7 @@ paths and queries are dropped, hosts stay.
 | Fetch or watcher URLs (query, path, DNS label) | Taint rule; after outside content a fetch goes without a card only to a site allowed for good: exact site, no query or fragment, no redirect off it (D47) |
 | Open URL | Same as T11 |
 | Markdown images | Never loaded |
+| Markdown links | Web pages only (`webLinksOnly`); other text verbatim |
 | Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47), and Sidefolk's own extensions' calls to a device the person paired, confirmed and bound per call, in Auto and Full access (D72) |
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
@@ -621,6 +627,12 @@ binary targets or build plugins from dependencies.
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
   step that makes a watcher active.
+- A watch's history (D87) stays on the Mac in the database (T19): its checks for 30 days and at most 500 rows,
+  and the last two versions of the text it compared, 32,000 characters each, extracted text only (never a page's
+  HTML; a file only when it is a small plain text file in a folder it may watch), with invisible and
+  bidirectional controls removed (T2). It is deleted with the watch, exported and deleted with "Your data", and
+  never given to a model: `watch.list` says when a watch last changed, and repeats the notice's words only for
+  kinds whose summary is built from the watch's own settings.
 
 **T26 Voice: the microphone and a cloud voice (M/M), D34.** The microphone opens only while the
 person holds the talk key or the companion (off until voice input is turned on; macOS asks on the
