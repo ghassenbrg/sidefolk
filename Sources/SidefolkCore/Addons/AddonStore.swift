@@ -252,22 +252,6 @@ public actor AddonStore {
         }
     }
 
-    /// Installs the newer version of each gallery companion on this Mac, without asking: a companion only draws.
-    /// Returns those it updated. One that fails keeps its old copy (a pack is swapped in only once checked) and is
-    /// tried again at the next look.
-    public func updateCompanions(channel: UpdateChannel) async -> [InstalledCompanion] {
-        guard source != nil, let catalog = try? await catalog() else { return [] }
-        var updated: [InstalledCompanion] = []
-        for entry in companionUpdates(in: catalog, channel: channel) {
-            do {
-                updated.append(try await install(companion: entry))
-            } catch {
-                Log.shared.warning("addons", "companion not updated", ["id": entry.id, "error": String(describing: error)])
-            }
-        }
-        return updated
-    }
-
     // MARK: Themes
 
     /// Downloads a theme from the gallery, checks its signature, then installs it as any theme is: checked again,
