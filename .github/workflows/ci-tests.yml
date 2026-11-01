@@ -1,0 +1,80 @@
+name: CI tests (diagnostics)
+
+# The test suite alone, by hand, with what a silent death needs to be understood: each test bundle runs
+# through the toolchain's own runner on a terminal (lines reach the log as they are written, none lost to a
+# buffer when the process is killed), its exit status and signal are printed, and after a failure the
+# system log, crash reports, limits, memory and disk are shown. No signing, no secrets, nothing published.
+# Start it from Actions › CI tests (diagnostics) › Run workflow, on any branch.
+on:
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: Only tests matching this (swift test --filter), empty for all
+        type: string
+        default: ""
+      skip:
+        description: Leave out tests matching this (swift test --skip), empty for none
+        type: string
+        default: ""
+      addons:
+        description: With the add-on gallery beside it, as ci.yml runs (release.yml doesn't)
+        type: boolean
+        default: false
+  # A branch named ci-debug/… runs it on every push, for bisecting without a click per commit.
+  push:
+    branches: ["ci-debug/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests with diagnostics
+    runs-on: ${{ vars.SIDEFOLK_MACOS_RUNNER || 'xcode-27' }}
+    timeout-minutes: 60
+    env:
+      SIDEFOLK_XCODE: ${{ vars.SIDEFOLK_XCODE }}
+      FILTER: ${{ inputs.filter }}
+      SKIP: ${{ inputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        if: inputs.addons
+        with:
+          repository: ghassenbrg/sidefolk-addons
+          path: .addons
+
+      - name: Select Xcode
+        run: scripts/ci/select-xcode.sh
+
+      - name: The machine
+        run: scripts/ci/machine-report.sh
+
+      - name: Build the tests
+        run: |
+          swift build --build-tests
+          if [[ -d .addons ]]; then swift build --package-path .addons; fi
+
+      - name: Run each test bundle
+        id: tests
+        run: |
+          [[ -d .addons ]] && export SIDEFOLK_ADDONS_REPO="$PWD/.addons"
+          echo "start=$(date -u '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
+          scripts/ci/run-test-bundles.sh "$RUNNER_TEMP/tests"
+
+      - name: After a failure
+        if: failure()
+        env:
+          SINCE: ${{ steps.tests.outputs.start }}
+        run: scripts/ci/after-failure.sh "$SINCE" "$RUNNER_TEMP/tests"
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-diagnostics
+          path: ${{ runner.temp }}/tests
+          if-no-files-found: ignore
