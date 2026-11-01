@@ -41,7 +41,38 @@ final class UpdateModel {
     var addonsUpdatedAt: Date?
     /// A look or an Update All is under way.
     var addonsBusy = false
+    /// Where each add-on is while Update all runs, and how it ended, by id (D89): its row says so.
+    var addonSteps: [String: AddonUpdateStep] = [:]
+    /// What the last Update all did ("3 updated, 1 needs your review"), until the next look.
+    var addonSummary: String?
+    /// What the last Update all ran, so a row stays in sight with how it ended until the next look.
+    var addonRecent: [AddonEntry] = []
     @ObservationIgnored weak var addonActions: AddonUpdateActions?
+
+    /// Every add-on update that waits for the person (D89), one per add-on: those to review first. Shown wherever
+    /// add-ons appear: the Gallery's Updates, Settings › Add-ons, an extension's page, Home's sidebar, Today, the Pocket.
+    var addonPending: [AddonEntry] {
+        var seen = Set<String>()
+        return (addonReview + addonWaiting).filter { seen.insert($0.id).inserted }
+    }
+
+    /// The Updates list's rows: what waits, and what the last Update all did.
+    var addonRows: [AddonEntry] {
+        var seen = Set<String>()
+        return (addonReview + addonRecent + addonWaiting).filter { seen.insert($0.id).inserted }
+    }
+
+    /// What Update all installs: every waiting update not already known to ask for more.
+    var addonInstallable: [AddonEntry] {
+        addonWaiting.filter { entry in !addonReview.contains { $0.id == entry.id } }
+    }
+
+    func addonUpdate(for id: String) -> AddonEntry? { addonPending.first { $0.id == id } }
+
+    /// Its new version would be allowed to do more: Review opens the install sheet instead of updating.
+    func addonNeedsReview(_ id: String) -> Bool {
+        addonReview.contains { $0.id == id } || addonSteps[id] == .needsReview
+    }
 
     /// The offer the phase is about, if any.
     var offer: UpdateOffer? {
@@ -89,11 +120,16 @@ protocol UpdateActions: AnyObject {
     func openPage(_ offer: UpdateOffer)
 }
 
-/// What Settings › Updates can ask of the add-on updates (D70).
+/// What the add-on updates' rows and buttons can ask for (D70, D89).
 @MainActor
 protocol AddonUpdateActions: AnyObject {
-    /// Installs every waiting update the rule allows now; those that would do more open for review.
+    /// Update all: installs every waiting update that asks for nothing new, one at a time; those that would do more
+    /// stay in the list with Review.
     func updateAddonsNow()
+    /// Updates one add-on as Update all would; an extension that would do more opens its install sheet instead.
+    func update(_ entry: AddonEntry)
     /// Fetches an extension's update and opens the install sheet, which says what is new.
     func review(_ entry: AddonEntry)
+    /// Home's Gallery, where the Updates section leads.
+    func showAddonUpdates()
 }

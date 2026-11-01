@@ -124,6 +124,10 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   the app shows it as a pin beside the companion and a live row on On duty. `watch.read` takes one value now
   (`WatcherEngine.readNow`): the kind's probe looks once at a watcher that is never added, rates over a fresh
   half second (`WatchContext.isReadingNow`); "what's my CPU usage" reaches it from the parser without AI.
+  Every check of a watch that isn't a report is logged (D87, `WatcherEngine+History`): runs of the same outcome as
+  one row in `watch_checks`, a run that only grew saved with the routine saves; page and file watches keep the
+  last two versions of the text they compared (`ProbeResult.compared` → `watch_versions`), shown line by line on
+  the watch's page in Home (`LineDiff`). 30 days, 500 rows a watch, deleted with the watch.
 - `Companion/` — play (D44): `companion.play` publishes `AppEvent.companion` for a trick or a game;
   `companion.toss` draws coins, dice or a rock-paper-scissors hand with the system's generator (the score in
   `kv`) and publishes `AppEvent.toss`. The app's `CompanionPlayer` plays both: a moment (`flick`, `roll`,
@@ -211,6 +215,9 @@ agent_runs(id TEXT PK, thread_id, provider, model, started_at, ended_at, steps, 
            output_tokens, outcome, error)
 attention(id TEXT PK, level, source, title, body, actions JSON, state[pending|shown|acknowledged|
           expired], created_at, shown_at, acknowledged_at, renudged)
+watch_checks(id INTEGER PK, watcher_id → watchers ON DELETE CASCADE, result[unchanged|changed|failed|paused],
+             first_at, last_at, count, reason, duration_ms)   -- runs of checks, 30 days, 500 a watch (D87)
+watch_versions(id INTEGER PK, watcher_id → watchers ON DELETE CASCADE, at, text, hash)   -- the newest two (D87)
 kv(key TEXT PK, value JSON)   -- domain settings that must live with the data; applenotes.copied (D38)
 ```
 
@@ -334,7 +341,12 @@ automatically, prepares it out of sight and waits for `InstallMoment` (the coord
 quit (`installAtQuit`); it keeps `UpdateModel` for Settings › General, the Pocket and the update window, and quits
 for the swap. Add-ons: Core's `AddonUpdater` runs one look (`AddonUpdateRule`: companions and themes by themselves,
 an extension only when `ExtensionUpdateDiff.widens` is false), and the app's `AddonUpdateController` schedules it,
-keeps the add-on rows of `UpdateModel` and posts the heads-up for updates to review.
+keeps the add-on rows of `UpdateModel` and posts the heads-up for updates to review. Update all (D89) is
+`AddonUpdater.updateAll(_:step:)`, the same path as a timed look with the switch on, one add-on at a time
+(`update(_:)`), each row hearing its `AddonUpdateStep`; `AddonUpdateNudge` decides the one whisper about updates
+that waited a day. Every surface reads `UpdateModel.addonPending`/`addonRows` and asks `AddonUpdateActions`
+(`Updates/AddonUpdateViews.swift`: the Gallery's Updates, a row's inline update, an extension page's strip, Today's
+row, the sidebar's dot).
 A published app knows its release from Info.plist's `SidefolkRelease`; without it the app never replaces
 itself. Release side: docs/RELEASE.md › Updates.
 

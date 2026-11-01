@@ -45,7 +45,12 @@ final class SidecardModel {
     var face: NSImage?
     var companionName = "Sidefolk"
 
+    /// How far each source may interrupt (D88), for the card's "Fewer like this".
+    var interruptions = Interruptions()
+
     var respond: ((AttentionItem, String?) -> Void)?
+    /// The card's ⋯ asked for fewer notices like it: its source goes to this level.
+    var lowerSource: ((AttentionItem, InterruptSource, InterruptLevel) -> Void)?
     /// A whisper clicked: it grows into a card in place.
     var grow: (() -> Void)?
     /// The stack clicked: Ask opens on top of it.

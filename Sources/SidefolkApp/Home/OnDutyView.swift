@@ -240,23 +240,24 @@ struct FolkCard<Rows: View>: View {
     }
 }
 
-/// A watch on On duty: what it watches, how often, its state as a chip, and Pause, Resume or Stop; a click shows the
-/// whole watch with what it last saw (Today's tile's popover).
+/// A watch on On duty: what it watches, how often, a bar of its last checks (D87), its state as a chip when it says more
+/// than "watching", and Pause, Resume or Stop; a click opens the watch's own page.
 private struct WatchDutyRow: View {
     var watcher: Watcher
     var model: NowModel
-    @State private var open = false
 
     var body: some View {
         let kind = Describe.watcherKind(watcher.kind)
-        Button { open = true } label: {
+        Button { model.openWatch?(watcher.id) } label: {
             ListRow(title: Text(verbatim: Describe.watcherTarget(watcher) ?? watcher.title), meta: Text(verbatim: meta)) {
                 Image(systemName: kind.symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.inkMuted)
                     .frame(width: Theme.Size.rowIcon + 4, height: Theme.Size.rowIcon + 4)
                     .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.xs + 1, style: .continuous))
             } trailing: {
                 HStack(spacing: Theme.Space.s) {
-                    chip
+                    CheckTicks(ticks: model.ticks[watcher.id] ?? [], slots: NowModel.ticks, tick: CGSize(width: 2, height: 14))
+                    // The state is said whole; the title wraps first.
+                    chip.fixedSize()
                     RowChevron()
                 }
             } actions: {
@@ -270,10 +271,7 @@ private struct WatchDutyRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .popover(isPresented: $open, arrowEdge: .bottom) {
-            WatchTile(watcher: watcher, model: model).frame(width: 340).padding(Theme.Space.s)
-        }
-        .onChange(of: open) { _, isOpen in if isOpen { Task { await model.seen(watcher) } } }
+        .accessibilityHint(Text("Shows the watch"))
     }
 
     private var meta: String {
@@ -297,7 +295,8 @@ private struct WatchDutyRow: View {
             Chip(text: Text("Changed \(TimeFormat.clock(waiting?.createdAt ?? Date(), calendar: .current))", comment: "A watch noticed a change at a time"),
                  // The same tone as Today's tile and every watch: a change is news (D78), not something waiting on you.
                  tone: ChipTone(StatusTone.watch(watcher.state, changeWaiting: true)))
-        default: Chip(verbatim: String(localized: "watch.state.active", defaultValue: "Watching", comment: "Status chip on a watch that is running"), tone: .neutral)
+        // Watching is what the bar beside it already says.
+        default: EmptyView()
         }
     }
 }

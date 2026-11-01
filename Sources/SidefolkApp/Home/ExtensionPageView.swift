@@ -13,6 +13,9 @@ struct ExtensionPageView: View {
         // centred, so a wide window never leaves the page on one side.
         PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
             header
+            if let updates = model.updates, let entry = updates.addonUpdate(for: model.info.extensionId) {
+                AddonUpdateStrip(entry: entry, updates: updates)
+            }
             if let page = model.page {
                 // A hero leading the page says what the summary would, larger and with its actions (D74).
                 if let summary = page.summary, page.hero == nil { SummaryBanner(summary: summary, model: model) }

@@ -12,12 +12,14 @@
 //                           a jump to a setting by its SettingKey, the Full access sheet)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
 //   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
+//   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:games:default   (D88)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:agenda | calendar:week:2026-11-03 | calendar:month   (D66, D84)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
 //                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
+//   swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]   (D87: a watch's page, its Check now, its change in two columns)
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
@@ -47,6 +49,9 @@
 //                           they write the stand-ins in agent-configs/, never the person's agents)
 //   swift scripts/dev.swift addons:review | addons:waiting | addons:clear   (D70: Settings › Updates and the heads-up
 //                           with made-up add-on updates)
+//   swift scripts/dev.swift addons:updates | addons:nudge   (D89: the Gallery's Updates halfway through Update all, the whisper)
+//   swift scripts/dev.swift addons:auto:off | addons:get:<id> | addons:check | addons:updateAll   (D89, with SIDEFOLK_ADDONS=<local gallery>:
+//                           the switch, an add-on installed from it as from the Gallery, Update all)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

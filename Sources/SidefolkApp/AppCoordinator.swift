@@ -83,6 +83,8 @@ final class AppCoordinator {
     var cardKeysOn = false
     /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
     var attentionTimer: Task<Void, Never>?
+    /// What a "Fewer like this" changed, by the id of the whisper that offers Undo (D88).
+    var levelUndo: [String: (source: InterruptSource, before: InterruptLevel?)] = [:]
     var fullAccessTimer: Task<Void, Never>?
     #if DEBUG
     /// Set by the `connect:` dev command so a QA copy's Connect can run without a click (D86).
@@ -288,7 +290,7 @@ final class AppCoordinator {
 
     /// The first time a folk turns up, the companion says who it is: once, gently, never during onboarding.
     private func introduceNewFolks(_ folks: [DutyFolk]) {
-        guard runtime.settings.current.showFolks, !onboarding.isRunning else { return }
+        guard runtime.settings.current.showFolks, !onboarding.isRunning, ownRemarksShown else { return }
         let key = "introducedFolks"
         var met = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
         guard let folk = folks.first(where: { !met.contains($0.rawValue) }) else { return }
@@ -309,6 +311,10 @@ final class AppCoordinator {
 
     /// Bubbles the companion says itself, outside the attention center (folk introductions).
     static let ownVoice = "companion"
+
+    /// The companion's remarks of its own (folk introductions, "All clear") come only at Card or Whisper (D88); they are
+    /// passing words, so Only in Today keeps nothing of them. Answers to the person's own clicks always come.
+    var ownRemarksShown: Bool { runtime.settings.current.interruptions.level(for: .companion) >= .whisper }
 
     /// Shows a bubble that doesn't go through the attention center (onboarding).
     func presentLocal(_ item: AttentionItem) {
@@ -441,6 +447,18 @@ final class AppCoordinator {
             let parts = command.split(separator: ":").map(String.init)
             if parts.count > 1, let mode = AttentionMode(rawValue: parts[1]) {
                 setAttention(mode, until: parts.count > 2 ? Double(parts[2]).map { Date().addingTimeInterval($0 * 60) } : nil)
+            }
+            return
+        }
+        if command.hasPrefix("interrupt:") {
+            // interrupt:<source key>:<card|whisper|today|off> ("interrupt:agent:claude-code:today"), as Settings › Attention's
+            // table does (D88); "default" clears it.
+            let rest = command.dropFirst("interrupt:".count)
+            guard let cut = rest.lastIndex(of: ":"), let source = InterruptSource(key: String(rest[..<cut])) else { return }
+            let level = InterruptLevel(rawValue: String(rest[rest.index(after: cut)...]))
+            Task {
+                await runtime.settings.update { $0.interruptions.set(level, for: source) }
+                settingsChanged()
             }
             return
         }
@@ -648,6 +666,8 @@ final class AppCoordinator {
     /// An agent saved or set something through Sidefolk: say so, briefly, and credit it.
     private func creditExternal(_ activity: ToolActivity, ok: Bool) {
         guard ok, activity.mutates, case .external(let client) = activity.caller, let card = activity.card else { return }
+        // Only in Today or Off for this agent (D88): what it saved shows in Today and History, not on the desktop.
+        guard runtime.settings.current.interruptions.level(for: .agent(InterruptSource.agentName(client))) >= .whisper else { return }
         let name = AgentFacingTools.displayName(client)
         let item = AttentionItem(level: .gentle, source: "external:\(client)",
                                  title: String(localized: "\(name): \(card.title)",
@@ -816,6 +836,7 @@ final class AppCoordinator {
             onboarding.respond(action: action)
             return
         }
+        if action == SidecardItemCard.undo, item.refKind == Self.levelChanged { return undoLevel(item.id) }
         if item.source == Self.ownVoice { return }
         if action == SidecardItemCard.undo, item.refKind == "credit", let id = item.refId { return undoFromWhisper(id) }
         if action == "open", item.source == "summary" { openHome() }

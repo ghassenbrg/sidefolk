@@ -109,6 +109,7 @@ struct SidecardItemCard: View {
     var body: some View {
         let lines = Self.listLines(item)
         let (menu, buttons) = Self.arrange(item.actions)
+        let fewer = Self.fewer(item, model.interruptions)
         SidecardCard(folk: Self.folk(item), face: Self.speaksItself(item) ? model.face : nil,
                      source: Self.source(item, companion: model.companionName, sessions: model.sessions), title: Text(verbatim: item.title),
                      message: lines == nil ? item.body.map { Text(verbatim: $0) } : nil, tail: tail,
@@ -124,10 +125,16 @@ struct SidecardItemCard: View {
                 }
             }
         } actions: {
-            if !menu.isEmpty {
+            if !menu.isEmpty || !fewer.isEmpty {
                 Menu {
                     ForEach(menu, id: \.id) { action in
                         Button { model.respond?(item, action.id) } label: { Text(verbatim: action.title) }
+                    }
+                    if !fewer.isEmpty {
+                        if !menu.isEmpty { Divider() }
+                        ForEach(fewer, id: \.level) { choice in
+                            Button { model.lowerSource?(item, choice.source, choice.level) } label: { Text(verbatim: choice.title) }
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -158,6 +165,23 @@ struct SidecardItemCard: View {
         guard let primary = shown.first(where: \.isPrimary) ?? shown.first else { return ([], []) }
         let others = shown.filter { $0.id != primary.id }
         return (Array(others.dropFirst()), others.prefix(1) + [primary])
+    }
+
+    /// What the ⋯ menu offers to hear less from this card's source (D88): as whispers, for a card from a source that
+    /// may send cards; Fewer like this (Only in Today) while it may still reach the desktop. Nothing for what can never
+    /// be turned down (questions, an agent waiting in its own window) or what no setting covers.
+    static func fewer(_ item: AttentionItem, _ levels: Interruptions) -> [(title: String, source: InterruptSource, level: InterruptLevel)] {
+        guard item.source != AppCoordinator.ownVoice, item.source != Onboarding.source,
+              !Interruptions.mustReach(level: item.level, refKind: item.refKind) else { return [] }
+        let sources = InterruptSource.of(source: item.source, refKind: item.refKind, refId: item.refId)
+        guard let source = sources.first else { return [] }
+        let now = levels.ceiling(for: sources)
+        let asWhispers = String(localized: "Show these as whispers", comment: "A card's ⋯ menu: notices from this source come as whispers from now on")
+        let fewer = String(localized: "Fewer like this", comment: "A card's ⋯ menu: notices from this source show only in Today from now on")
+        var choices: [(title: String, source: InterruptSource, level: InterruptLevel)] = []
+        if now == .card, item.level >= .attention, source.choices.contains(.whisper) { choices.append((asWhispers, source, .whisper)) }
+        if now >= .whisper, source.choices.contains(.today) { choices.append((fewer, source, .today)) }
+        return choices
     }
 
     /// A body made of lines (the brief's day, what waited while away or quiet) reads as rows.
