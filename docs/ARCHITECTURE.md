@@ -51,6 +51,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Extension drafts (written by Sidefolk's AI, D39) | `~/Library/Application Support/Sidefolk/ExtensionDrafts/local.<name>/` |
 | Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/<folder>/` (manifest, icon, `bin/ext-<folder>`) with `catalog.json`; sources in `extensions/<folder>/Sources`, on `extensions/Kit` |
 | Skills | `~/Library/Application Support/Sidefolk/Skills/<name>/SKILL.md` |
+| Agent config stand-ins (D86) | `<SIDEFOLK_HOME>/agent-configs/` (`claude/`, `codex/`, `.local/bin/sidefolk`): what Connect and the command link change in a copy on any data folder but the default one |
 | Skill for other agents (D42) | `Sidefolk.app/Contents/Resources/AgentSkills/sidefolk` (repo: `skills/sidefolk`); Connect copies it to `~/.claude/skills/sidefolk`, `~/.codex/skills/sidefolk` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |
 | Brain workdir | `~/Library/Application Support/Sidefolk/brain/` (empty cwd for CLI brains) |
@@ -60,7 +61,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | UI prefs | `UserDefaults` (`app.sidefolk`) |
 
 `SIDEFOLK_HOME` overrides the Application Support folder (tests, dev, QA). Tests never touch real
-user folders or agent configs.
+user folders or agent configs, and neither can an app on such a folder (D86, below).
 
 ## Core concepts and types (SidefolkCore)
 
@@ -177,6 +178,13 @@ user folders or agent configs.
   and Codex (`codexHooks`: `$CODEX_HOME/hooks.json`, `sidefolk hook <Event> --agent codex`), and
   `setupInstructions` gives other MCP apps the command. Hook events feed `SessionTracker` (the agents lane, On duty,
   "needs you" and "finished" taps; `HostTrust` decides what "Open" brings forward).
+  The app builds its locations with `IntegrationLocations.forApp(paths:)` and the command link's with
+  `commandLineTool(paths:)`: the real `~/.claude.json`, `~/.claude/settings.json`, `~/.claude/skills`,
+  `~/.codex/*` and `~/.local/bin/sidefolk` only when `SidefolkPaths.isDefaultHome`; any other data folder
+  gets stand-ins in `<home>/agent-configs/`, laid out as `CLAUDE_CONFIG_DIR` (`claude/`) and `CODEX_HOME`
+  (`codex/`) folders, whatever those variables say (D86). `prepareStandIns` starts them as this Mac's agents
+  are (an empty `.claude.json`, the folders), so Connect works there; to try one with a throwaway agent, run
+  it with `CLAUDE_CONFIG_DIR=<home>/agent-configs/claude` or `CODEX_HOME=<home>/agent-configs/codex`.
 - `Diagnostics` — `os.Logger` categories + JSONL file sink with `Redactor` (keys, tokens, long
   content trimmed); `DiagnosticsExporter` writes a zip without user content by default.
 

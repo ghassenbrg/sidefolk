@@ -47,6 +47,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   and `window-home-onduty*` in light, dark, de and ar, and the debug app with a local file changed twice and a page
   on `python3 -m http.server` edited once. Next: merge.
 
+- **Safety and correctness** (branch `team/safety`, not merged): a copy on any `SIDEFOLK_HOME` writes agent-config
+  stand-ins in `<home>/agent-configs/`, never the person's Claude Code, Codex or `~/.local/bin/sidefolk` (D86, ported
+  from a branch that never reached main); `connect:`/`disconnect:` dev commands; the audit's F12 rule (links open only
+  as web pages) on release notes and extension errors; the QA branch's last four tests. Verified: full suite green
+  (1626 + 38 tests), and a debug app on `build/safety-1` connected and disconnected both agents and the command
+  while the real files kept their mtime and SHA-256. Next: merge.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
