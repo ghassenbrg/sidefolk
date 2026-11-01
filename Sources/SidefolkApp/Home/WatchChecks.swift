@@ -120,7 +120,7 @@ struct CheckRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .trailing, spacing: 1) {
                 Text(verbatim: CheckWords.when(check)).font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).monospacedDigit()
-                if let ms = check.durationMs, check.result != .paused {
+                if let ms = check.durationMs, ms > 0, check.result != .paused {
                     Text(verbatim: CheckWords.took(ms)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).monospacedDigit()
                 }
             }

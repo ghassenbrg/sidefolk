@@ -37,6 +37,10 @@ extension WatcherEngine {
         guard w.mode != .report else { return }
         let reason = result == .unchanged || result == .paused ? nil : reason?.clipped(WatchHistoryLimits.reasonCharacters)
         let ms = took.map { Int(($0.components.seconds * 1000) + $0.components.attoseconds / 1_000_000_000_000_000) }
+        // After a relaunch the newest run is the database's: a quiet watch goes on counting in the same row.
+        if openRuns[w.id] == nil, let newest = try? await log.checks(watcherId: w.id, limit: 1).first {
+            openRuns[w.id] = OpenRun(check: newest, savedAt: newest.lastAt)
+        }
         if var run = openRuns[w.id], run.check.continues(result, reason: reason) {
             run.check.count += 1
             run.check.lastAt = now

@@ -61,6 +61,20 @@ import Testing
         #expect(try await log.checks(watcherId: w.id).first?.count == 4, "quitting saves the run")
     }
 
+    @Test func aRelaunchedEngineGoesOnCountingTheSameRun() async throws {
+        let probe = fake { _, _ in ProbeResult(state: ["n": 0]) }
+        let first = env.engine(probes: [probe])
+        let w = try await first.add(.make("fake", interval: 60, mode: .repeat, now: now))
+        await first.tick()
+        await first.flushHistory()
+        env.clock.advance(60)
+        let second = env.engine(probes: [probe])
+        await second.tick()
+        let checks = await second.checks(for: w.id)
+        #expect(checks.count == 1)
+        #expect(checks.first?.count == 2)
+    }
+
     @Test func failuresCarryTheirReasonAndWaitingIsNoCheck() async throws {
         let failing = Mutex<(any Error)?>(ProbeError.failed("The site didn't answer in time."))
         let engine = env.engine(probes: [fake { _, _ in

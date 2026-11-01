@@ -104,8 +104,13 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         case "trash": model.selection = .trash
         case "gallery": model.selection = .gallery
         case "watch":
-            // home:watch:<id>, or the first watch On duty lists (D87).
-            if let id = parts.dropFirst().first ?? model.now.watchers.first?.id { model.selection = .watch(id) }
+            // home:watch[:<id>[:check|:sidebyside]], the first watch On duty lists without an id (D87): its page, then
+            // its Check now button or its change in two columns.
+            guard let id = parts.dropFirst().first ?? model.now.watchers.first?.id else { break }
+            model.selection = .watch(id)
+            let then = parts.dropFirst(2).first
+            model.watch.sideBySide = then == "sidebyside"
+            if then == "check" { Task { await model.watch.show(id); await model.watch.checkNow() } }
         default: Log.shared.warning("dev", "no such place", ["place": place])
         }
         present()

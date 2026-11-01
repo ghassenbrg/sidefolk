@@ -17,6 +17,7 @@
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
 //                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
+//   swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]   (D87: a watch's page, its Check now, its change in two columns)
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
