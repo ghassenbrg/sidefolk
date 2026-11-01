@@ -66,21 +66,21 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   `team/gameplay-ai` (conflicts expected in `GameSettings`, `SettingsCatalog`, the coordinator's game options and
   Playtime's `strings/`: rerun `extension-strings.py sync`), then add D95's AI trivia switch as one row in
   `GameSettingsSection`; set Playtime's `minimum_sidefolk` to the snapshot that ships D93.
-- **Games v2, gameplay and AI** (branch `team/gameplay-ai` in both repositories, not merged; D95, D96): the companion
-  plays like a person at every level (no more 50, 75, 88; Hard tic-tac-toe never loses, Hard Last Stick wins every
-  winning position, memory that fades, reflexes that lean late), Higher or Lower on 10, 100, 1,000, a million or any
-  top, two people on one Mac in nine games and rock, paper, scissors (covers for secrets, the companion referees,
-  head-to-head kept apart), and trivia on any topic made by the person's AI through `sidefolk/trivia.request` (Settings ›
-  Companion › Games, on by default with AI, 20 calls a day, packs cached for the day, facts labelled as not checked).
-  Verified: `make test` with the branch's add-ons (1716 + 38), the add-ons' `swift test` (141, new suites
-  `PlaytimeNaturalPlayTests` and `PlaytimeTwoPlayersTests`, core `GamesV2Tests`), `build.py --unsigned` and `check.sh`,
-  UI snapshots of every two-player and AI-trivia board in light, dark, de and ar (each within 720 pt), and a debug app
-  playing Higher or Lower to a million, tic-tac-toe and Quick Paws for two (A and L, a key too soon) and rock, paper,
-  scissors' cover. AI trivia is tested with scripted models only: no live call was made (the debug app's folder-installed
-  Playtime isn't Sidefolk's own, so the host refuses it, as designed). Next: merge with `team/game-center` (it passes
-  `players`, `topic`, `max`, `mode` from commands and shows the AI switch and the two-player entries) and
-  `team/games-look-v2` (the score bar's names, the two-key reflex); set Playtime's `minimum_sidefolk` to the snapshot
-  that carries this branch (two-player boards and AI trivia need it).
+- **Games v2, gameplay and AI** (branch `team/gameplay-ai` in both repositories, not merged; D95, D96; carries
+  `team/game-center` and `team/games-look-v2`, merged with origin/main): the companion plays like a person at every
+  level (Hard tic-tac-toe never loses, Hard Last Stick wins every winning position, memory that fades, reflexes that
+  lean late, round numbers whenever the numbers are big), Higher or Lower on 10, 100, 1,000, a million or any top, two
+  people on one Mac in nine games and rock, paper, scissors (covers for secrets, the companion referees, head-to-head
+  kept apart), and trivia on any topic made by the person's AI through `sidefolk/trivia.request` (on by default with
+  AI, 20 calls a day, packs cached for the day, facts labelled as not checked). Connected to the Game Center: "play
+  tic-tac-toe with my friend" and "two players" in ten languages (a `players` slot through `games.open`), a "2 players"
+  button on each card, Head to head, the AI trivia switch among the game settings; the range and mode slots reach
+  Higher or Lower. Verified: `make test` with the branch's add-ons (1729 + 38), the add-ons' `swift test` (141),
+  `build.py --unsigned` and `check.sh`; snapshots of the Game Center and of every two-player and AI-trivia board in
+  light, dark, de and ar (each within 720 pt); a debug app: "play tic-tac-toe with my friend" opened it on the names,
+  "guess a number up to 1000" straight into a game on 1 to 1,000 (par 10). AI trivia is tested with scripted models
+  only; no live call was made. Next: merge into main; set Playtime's `minimum_sidefolk` to the snapshot that carries
+  D93, D95 and D96.
 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
