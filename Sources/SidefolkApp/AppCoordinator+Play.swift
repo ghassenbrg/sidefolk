@@ -82,10 +82,11 @@ extension AppCoordinator {
         }
         model.onClose = { [weak self] in self?.playPanel.hide() }
         playPanel.show(model, beside: frame, on: screen, focus: request.focus)
-        // The companion's name lets a game word its buttons ("Ask Mochi"); nothing else about the person is passed but
-        // what they said about this game (D93: a topic, a count, a range, who guesses), checked by `GameSlots`.
-        var options = request.slots.options
-        options.merge(["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky), "companion": .string(s.companionName)]) { _, own in own }
+        // The companion's name lets a game word its buttons ("Ask Mochi"); nothing else about the person is passed.
+        var options: [String: JSONValue] = ["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky),
+                                            "companion": .string(s.companionName)]
+        // What the person said about this game (D93: a topic, a count, a range, who guesses), checked by `GameSlots`.
+        options.merge(request.slots.options) { own, _ in own }
         Task { await model.start(GameSetup(level: request.level, language: AppLanguage.current, options: options)) }
     }
 
