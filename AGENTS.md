@@ -34,7 +34,9 @@ Agents can't see the screen. To check the running debug app:
 - `sidefolk` (in `build/Sidefolk-dev.app/Contents/Helpers/`) with the same `SIDEFOLK_HOME` talks to that app.
 - Voice without a microphone or speakers: `say -o /tmp/x.aiff "remind me at 5 to stretch"`, then
   `swift run SidefolkApp --voice-transcribe /tmp/x.aiff`, `--voice-say "<answer>" out.caf`, or
-  `swift scripts/dev.swift voice:file:/tmp/x.aiff` in the debug app (ARCHITECTURE › Voice).
+  `swift scripts/dev.swift voice:file:/tmp/x.aiff` in the debug app (ARCHITECTURE › Voice). For an answer without
+  spending quota: `swift scripts/dev.swift "brain:scripted:<answer>"` (debug app on a SIDEFOLK_HOME only); the log's
+  `voice` lines say what was decided and played.
 - `--ui-snapshots --language <x>` runs in several languages at once are safe from each other's catalogs now (each run
   stages its own folder), but an Arabic run beside others has still come out laid out left to right (cause unknown):
   render Arabic on its own when you review right to left.

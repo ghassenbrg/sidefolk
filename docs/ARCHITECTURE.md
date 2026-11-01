@@ -318,13 +318,15 @@ core; the app holds the audio and speech frameworks.
   changes or when no buffer comes within a second) → a `SpeechRecognizer` (`AnalyzerRecognizer` on macOS 26+, `BasicRecognizer`
   before) whose partial words fill Ask's Say field → release → `AskModel.submit(spoken:)`, the normal
   pipeline. Replies come back through `VoiceController.reply`, which applies `VoicePolicy` and plays
-  through `AudioPlayer` (an `AudioSink`) with `AppleVoice` or `ElevenLabsVoice`. The companion's pose
+  through `AudioPlayer` (an `AudioSink`) with `AppleVoice` or `ElevenLabsVoice`. `ReplyLog` writes one
+  line per decision and one per playback's end (counts and settings, never the words). The companion's pose
   follows `CompanionMood.hearing`/`transcribing`, its mouth the player's levels.
 - **Dev paths** (debug builds): `SidefolkApp --voice-transcribe <audio file>` runs a file through the
   same recognizer and conversion as the microphone and prints what releasing would send;
   `--voice-say "<answer>" <out.caf>` writes the spoken line to a file through the real queue;
   `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
-  plays a file into a running debug app as if the talk key were held.
+  plays a file into a running debug app as if the talk key were held, and `brain:scripted:<answer>` (`DevBrain`)
+  answers every AI request with fixed words, with no network, so a spoken reply can be checked end to end.
 
 ## Updates (D46, D70)
 
