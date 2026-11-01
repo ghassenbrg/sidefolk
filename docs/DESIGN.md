@@ -99,6 +99,7 @@ Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `Sta
 | `SettingsPage` | `GeneralSettingsView.swift` | a tab's column, 720 at most, leading; scrolls to a jumped-to row |
 | `SettingInlineControl` | `SettingsRoot.swift` | the control itself in a search result (switches, short choices) |
 | `AttentionDial` (cards or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
+| `InterruptionsGroup`, `InterruptLevelMenu` | `InterruptionsGroup.swift` | What may interrupt you (D88): a row per source (icon, name, what it covers, a level menu one width down the column), watches set apart under Watches |
 | `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as cards with an example each |
 | `PocketView`, `PocketModel`, `PocketContent`, `PocketActions` | `StatusItem/` | the menu bar's popover; content gathered by `AppCoordinator+Pocket` |
 | `InstallPreviewSheet` (steps `.who`, `.touch`), `InstallPermissionRow` | `InstallPreviewSheet.swift`, `InstallReviewParts.swift` | the install passport |

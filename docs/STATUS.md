@@ -45,7 +45,9 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   timeline, Check now, Pause or Resume, Stop) and On duty's bars of the last 24 checks; `watch.list` says when each
   last changed. Verified with tests (migration, runs, versions, pruning, Your data), snapshots `window-home-watch*`
   and `window-home-onduty*` in light, dark, de and ar, and the debug app with a local file changed twice and a page
-  on `python3 -m http.server` edited once. Next: merge.
+  on `python3 -m http.server` edited once. The branch also carries origin/main (snapshot 673, D86) and
+  `team/interrupts` (D88, below), merged and tested together; the watch's Check now has its own key
+  (`watch.checkNow`: "Jetzt prüfen", not Updates' "Jetzt suchen"). Next: merge into main.
 
 - **Safety and correctness** (branch `team/safety`, not merged): a copy on any `SIDEFOLK_HOME` writes agent-config
   stand-ins in `<home>/agent-configs/`, never the person's Claude Code, Codex or `~/.local/bin/sidefolk` (D86, ported
@@ -53,6 +55,14 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   as web pages) on release notes and extension errors; the QA branch's last four tests. Verified: full suite green
   (1626 + 38 tests), and a debug app on `build/safety-1` connected and disconnected both agents and the command
   while the real files kept their mtime and SHA-256. Next: merge.
+
+- **What may interrupt you** (branch `team/interrupts`, not merged; D88): a level per source (Card, Whisper, Only in
+  Today, Off) in Settings › Attention, applied before Focus and Quiet; "Fewer like this" and "Show these as whispers"
+  in a card's ⋯ with Undo; Today's Kept for Today; "done today" counts only what changed something. Built, tested
+  (`InterruptionsTests`, `InterruptionsCenterTests`, `DoneTodayTests`), snapshots read (`page-settings-attention-sources`,
+  `page-today-kept`, light, dark, de, ar) and checked live (Claude Code at Only in Today, a `sidefolk hook` Stop: no
+  desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
+  click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
 
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
@@ -63,8 +73,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
    choice card for drops, the stack's arc animation, voice's level-reactive pool, answering cards from the keyboard
    outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
-   "+1" overlaps, a per-source "what may interrupt
-   you" table (no source has a level of its own).
+   "+1" overlaps.
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
    dragging a plot from the keyboard, a hint that plays its move, a daily board per level.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence
@@ -79,8 +88,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
 
 ## Known gaps
 
-- **Small things seen in phase 5:** "done today" on Today counts other agents' reads; the greeting says "Good
-  evening" after midnight.
+- **Small things seen in phase 5:** the greeting says "Good evening" after midnight.
 - **Not yet tried by hand with the real thing:** the microphone (permission prompt, hold to talk, AirPods), a live
   ElevenLabs voice, Location Services naming the town, an update's swap and reopen between two published snapshots,
   Apple Notes on a large real library, Claude Code hooks and Codex's hook trust dialog in a real session, "Connect…"

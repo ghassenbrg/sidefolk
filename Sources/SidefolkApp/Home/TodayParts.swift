@@ -29,7 +29,7 @@ struct WatchCard: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button("Check now") { Task { await model.checkNow(watcher) } }.disabled(watcher.state == .paused)
+            Button { Task { await model.checkNow(watcher) } } label: { Text(verbatim: WatchWordsUI.checkNow) }.disabled(watcher.state == .paused)
             if watcher.state == .paused {
                 Button("Resume") { Task { await model.resume(watcher) } }
             } else {

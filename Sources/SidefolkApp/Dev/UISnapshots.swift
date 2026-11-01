@@ -282,6 +282,20 @@ enum UISnapshots {
             try await page("page-today-full-access", TodayView(model: full), width: 1100)
             try await full.services.runtime.permissions.setPolicy(homePolicy)
             await full.now.reload()
+            // Claude Code set to Only in Today (D88): its notices wait under Needs you, never on the desktop.
+            let homeAttention = full.services.runtime.attention
+            await homeAttention.update { $0.interruptions = Interruptions([.agent("claude-code"): .today]) }
+            let kept = [
+                await homeAttention.post(AttentionRequest(level: .gentle, source: "session:claude-code:snap-1", title: "Claude finished in sidefolk",
+                                                          body: "Tidy the attention tests", refKind: "session", refId: "snap-1")),
+                await homeAttention.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Deploy to staging finished",
+                                                          body: "All checks passed.", refKind: "notify")),
+            ]
+            await full.now.reload()
+            try await page("page-today-kept", TodayView(model: full), width: 1100)
+            for item in kept { await homeAttention.respond(id: item.id, actionId: nil) }
+            await homeAttention.update { $0.interruptions = Interruptions() }
+            await full.now.reload()
             let width: CGFloat = 690
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
@@ -328,6 +342,20 @@ enum UISnapshots {
             settings.update { $0.quietHours.on = false }
             settings.setAttention(.open, until: nil)
             await settings.services.runtime.attention.update { $0.quiet = false }
+            // What may interrupt you, changed (D88): Claude Code only in Today, Codex in whispers, one watch set apart,
+            // an app that called once, the game's lines off.
+            let watch = try await settings.services.runtime.watcherStore.all().first
+            settings.update { s in
+                s.interruptions.set(.today, for: .agent("claude-code"))
+                s.interruptions.set(.whisper, for: .agent("codex"))
+                s.interruptions.set(.whisper, for: .agent("cursor"))
+                s.interruptions.set(.off, for: .games)
+                if let watch { s.interruptions.set(.today, for: .watch(watch.id)) }
+            }
+            await settings.loadNoticeSources()
+            try await page("page-settings-attention-sources", SettingsTabContent(tab: .attention, model: settings), width: width)
+            settings.update { $0.interruptions = Interruptions() }
+            await settings.loadNoticeSources()
             // The companion chooser with Spark chosen, then Spark in 2D, coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)

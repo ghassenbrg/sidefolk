@@ -480,7 +480,8 @@ public struct AttentionAction: Codable, Sendable, Hashable {
 
 public struct AttentionItem: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "attention"
-    public enum State: String, Codable, Sendable { case pending, shown, acknowledged, expired }
+    /// `kept`: its source is set to Only in Today (D88), so it waits in Today's lists, never on the desktop.
+    public enum State: String, Codable, Sendable { case pending, shown, acknowledged, expired, kept }
 
     public var id: String
     public var level: AttentionLevel

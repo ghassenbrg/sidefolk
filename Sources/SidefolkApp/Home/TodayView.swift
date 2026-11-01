@@ -27,7 +27,10 @@ struct TodayView: View {
                 Starters { words in model.find.query = words }
             } else {
                 ColumnsLayout(widths: [1.75, 1], spacing: Theme.Size.columnGap, minimums: [380, 260]) {
-                    VStack(alignment: .leading, spacing: Theme.Space.l) { needsYou }
+                    VStack(alignment: .leading, spacing: Theme.Space.l) {
+                        needsYou
+                        if !now.kept.isEmpty { keptForToday }
+                    }
                     VStack(alignment: .leading, spacing: Theme.Space.l) {
                         OnDutyGlance(model: model)
                         if !now.widgets.isEmpty { ExtensionWidgetsSection(model: now) }
@@ -42,7 +45,7 @@ struct TodayView: View {
     /// Nothing yet on this Mac: no reminders, watches, notes or questions. Today keeps the day and offers three starts.
     private var firstDay: Bool {
         now.reminders.isEmpty && now.doneToday.isEmpty && now.watchers.isEmpty && now.reports.isEmpty && now.recentNotes.isEmpty
-            && now.needsYouCount == 0 && now.workingSessions.isEmpty && now.widgets.isEmpty
+            && now.needsYouCount == 0 && now.kept.isEmpty && now.workingSessions.isEmpty && now.widgets.isEmpty
     }
 
     // MARK: The brief
@@ -115,6 +118,25 @@ struct TodayView: View {
             await work()
             let queue = now.queue
             if hadFocus { focused = queue.isEmpty ? nil : queue[min(index, queue.count - 1)].id }
+        }
+    }
+
+    // MARK: Kept for Today
+
+    /// News from sources set to Only in Today (Settings › Attention, D88): never on the desktop, here until dismissed.
+    private var keptForToday: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            SectionHeader(title: Text("Kept for Today", comment: "Today: notices Settings › Attention keeps off the desktop"),
+                          count: now.kept.count,
+                          detail: Text("Settings › Attention keeps these off the desktop.", comment: "Under Today's Kept for Today")) {
+                Button { model.services.openSettings(tab: .attention) } label: { Text("Change", comment: "Opens Settings › Attention from Today") }
+                    .buttonStyle(.sf(.quiet))
+            }
+            RowsCard {
+                ForEach(now.kept) { item in
+                    AttentionRow(item: item) { action in Task { await now.respond(item, action: action) } }
+                }
+            }
         }
     }
 

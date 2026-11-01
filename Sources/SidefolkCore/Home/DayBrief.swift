@@ -49,6 +49,38 @@ public enum DayBrief {
     }
 }
 
+extension DayBrief {
+    /// Today's "done today" (D88): what a person would call done. Reminders and tasks finished today, notes, ideas,
+    /// tasks and links saved today, and other actions today that changed something. A read (a search, a list, another
+    /// agent's status check) is not done, nor anything refused, failed or skipped; a call whose result the notebook or
+    /// the reminders already count (saving a note, finishing a reminder or task) isn't counted twice.
+    /// - Parameters:
+    ///   - items: recent notebook items, the Trash left out.
+    ///   - calls: recent tool calls from the activity log.
+    ///   - changes: whether a tool changes something (`ToolSpec.mutates`); a tool no longer there counts as a read.
+    public static func doneCount(reminders: [Reminder], items: [NotebookItem], calls: [ActivityEntry],
+                                 changes: (String) -> Bool, now: Date, calendar: Calendar = .autoupdatingCurrent) -> Int {
+        func today(_ date: Date) -> Bool { calendar.isDate(date, inSameDayAs: now) }
+        let reminded = reminders.filter { $0.state == .done && today($0.lastFiredAt ?? $0.fireAt) }.count
+        let saved = items.filter { $0.deletedAt == nil && today($0.createdAt) }.count
+        let ticked = items.filter { $0.deletedAt == nil && $0.kind == .task && $0.status == .done && today($0.updatedAt) }.count
+        let notDone: Set<ActivityEntry.Decision> = [.denied, .blocked, .failed, .skipped]
+        let acted = calls.filter { call in
+            today(call.at) && !notDone.contains(call.decision) && changes(call.tool) && !countedElsewhere(call)
+        }.count
+        return reminded + saved + ticked + acted
+    }
+
+    /// Saving a note and finishing a reminder or task are counted from the notebook and the reminders themselves.
+    private static func countedElsewhere(_ call: ActivityEntry) -> Bool {
+        switch call.tool {
+        case "notes.save", "reminders.complete": true
+        case "notes.update": call.args?.string("status")?.lowercased() == "done"
+        default: false
+        }
+    }
+}
+
 private extension String {
     var nilIfEmpty: String? { isEmpty ? nil : self }
 }

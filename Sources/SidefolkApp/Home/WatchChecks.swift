@@ -40,6 +40,13 @@ struct CheckTicks: View {
     }
 }
 
+/// Words a watch's buttons share with nothing else.
+enum WatchWordsUI {
+    /// Its own key: "Check now" in Settings › Updates looks for a new version ("Jetzt suchen"), a watch looks again.
+    static let checkNow = String(localized: "watch.checkNow", defaultValue: "Check now",
+                                 comment: "A watch's button: look at the page, site or file again right now")
+}
+
 enum CheckWords {
     /// "Last 24 checks: 21 with no change, 2 changed, 1 failed", or "Not checked yet".
     static func summary(_ ticks: [WatchCheck.Result]) -> String {

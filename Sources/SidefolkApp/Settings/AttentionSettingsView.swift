@@ -12,6 +12,8 @@ struct AttentionSettingsView: View {
             AttentionHero(model: model)
                 .settingAnchor(.attentionMode)
 
+            InterruptionsGroup(model: model)
+
             SettingsGroup(title: Text(verbatim: SettingKey.quietHours.section)) {
                 QuietHoursRow(model: model)
                 SettingsRow(.fullScreen) {
@@ -45,7 +47,10 @@ struct AttentionSettingsView: View {
                 }
             }
         }
-        .task { await model.refreshHeld() }
+        .task {
+            await model.refreshHeld()
+            await model.loadNoticeSources()
+        }
     }
 
     private var notificationDetail: Text {

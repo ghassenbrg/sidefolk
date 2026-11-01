@@ -2368,7 +2368,7 @@ they don't. Miraya's `addon.json` names 593.
 
 
 ### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
-*Amended by D87:* a watch has its own page in Home and On duty's rows a bar of its checks, now that a history is kept.
+*Amended by D87 and D88:* a watch has its own page in Home and On duty's rows a bar of its checks (D87); each source has its own level in Settings › Attention (D88).
 **Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
 design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
 1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
@@ -2495,7 +2495,7 @@ you were focused" card when it ends; cards that need an answer still come (`Atte
 `AppSettings.focusUntil`). Quiet hours every night (off until turned on; choosing Open or Focus inside them sets the
 rest of that night aside), what a full-screen app does (Quiet as before, Focus, or nothing), sounds, notifications
 and the morning brief. A timer looks again when an end or a quiet-hours edge passes. The per-source "what may
-interrupt you" table of the mockups was left out: no source has its own level to set. **Full access may end**
+interrupt you" table of the mockups was left out: no source has its own level to set. *(D88 built it.)* **Full access may end**
 (`GuardPolicy.fullAccessEnds`, `beforeFullAccess`, `choose(_:fullAccessEnds:)`): Guard reads the policy through
 `current(at:)`, so past its end Full access is the mode it replaced even if no timer fired (the Mac asleep, Sidefolk
 quit); the sheet offers in 1 hour, tonight at 22:00 (while more than an hour away) or when turned off, and its button
@@ -2650,3 +2650,48 @@ compares size and time; reading only on a change costs nothing while nothing cha
 `WatchChecks.swift` (`CheckTicks`, `CheckRow`, `CheckWords`), `WatchChangeView.swift`; `NowModel.ticks` and
 `openWatch`; `WatchTile` and `ChangeLines` removed; `swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]`;
 snapshots `window-home-watch*`.
+
+### D88 — What may interrupt you: a ceiling per source, Only in Today, and "done today" counts only what was done (2026-11-01)
+**Decision:** *amends D84 (phase 4 left the per-source table out) and D12.* Every notice now has a **source** with a
+level the person sets in Settings › Attention › What may interrupt you: reminders, watches (all, and one watch set
+apart), commands (`sidefolk run`), each agent by its client name (Claude Code, Codex, then any other app that called
+Sidefolk or started a session), each extension whose watches report, games (the companion's lines while playing) and
+the companion itself (its AI's notices, routines, folk introductions, "All clear"). The levels are **Card** (may step
+forward), **Whisper** (gentle; if it needs an answer it folds into the stack when it fades), **Only in Today** (never on
+the desktop: kept in Today, `AttentionItem.State.kept`) and **Off** (History only). Reminders offer no Off; games only
+Whisper or Off. A notice gets the **lower of its own level and its source's ceiling, then Focus or Quiet**
+(`Interruptions.route`, applied first in `AttentionCenter.consider`, so a held notice is judged again when it comes
+back). **Never turned down:** a question (`refKind "ask"`) and an agent session that needs the person (its approval in
+its own window); Guard's approvals never go through the attention center at all. The most specific level the person set
+wins (a watch, then its extension, then all watches); unset levels are the source's default, which is the behaviour
+before D88, and a default clears the stored value. Stored as `AppSettings.interruptions` (`{"agent:codex": "today",
+"watch:<id>": "whisper"}`); settings from before decode to the defaults and unknown keys or levels are skipped. To tell
+agents apart, a session's notices are `session:<agent>:<id>` (from before: no agent, so no ceiling), and an extension's
+watch posts as `extension:<id>` (`Watcher.noticeSource`; the card still reads as Scout's watch). A card's ⋯ menu has
+**Show these as whispers** (a card from a source at Card) and **Fewer like this** (Only in Today), for its most specific
+source; the card goes as a whisper would, and a whisper says what changed with **Undo**. `notify.user` tells the agent
+when its notice was kept in Today or turned off, so it doesn't resend it. Today shows kept news under **Kept for Today**
+(who · when, its answers, Dismiss) and kept notices that need an answer in Needs you; the desktop count, the stack and
+the Pocket leave them out.
+
+**"Done today"** (`DayBrief.doneCount`, the one definition) counts reminders and tasks finished today, notes, ideas,
+tasks and links saved today, and today's other calls that changed something (`ToolSpec.mutates`), refused, failed and
+skipped ones left out. Reads (searches, lists, another agent's `status`) never count, and the calls whose result the
+stores already count (`notes.save`, `reminders.complete`, `notes.update` to done) aren't counted twice.
+
+**Why:** levels came only from each event's kind, so the person could quiet everything (Focus, Quiet) but not one
+chatty agent; the founder's sessions finishing many times an hour were the case. A ceiling keeps each poster's own
+judgement (a failure stays louder than a success) while letting the person cap it, and Only in Today keeps the news
+without the interruption. Questions and approvals stay out of it so nothing waits unseen. "Done today" counted every
+call that didn't fail, so Codex checking `status` made the day look busy.
+
+**Alternatives:** a level per event kind (too many rows; the person thinks in who, not what); Off for reminders (the
+person's own words at their own time; Only in Today is the quietest); storing the source's agent in a new column (a
+migration for what the source string can say); counting done from History's rows (they mix reads and changes).
+
+**Implications:** `Interruptions`, `InterruptSource`, `InterruptLevel` (Core/Attention); `AttentionEnvironment.
+interruptions`, `AttentionCenter.kept()`, `AttentionStore.kept()`; `SidecardItemCard.fewer`, `SidecardModel.
+lowerSource`, `AppCoordinator.lowerSource/undoLevel`; `InterruptionsGroup` in Settings › Attention and
+`SettingKey.interruptions`; `NowModel.kept` and Today's Kept for Today; `CueDirector.linesShown`; the debug command
+`interrupt:<source key>:<level>`. Tests: `InterruptionsTests`, `InterruptionsCenterTests` (every level against every
+ceiling, then Open, Focus and Quiet), `DoneTodayTests`.

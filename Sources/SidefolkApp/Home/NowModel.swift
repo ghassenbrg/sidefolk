@@ -53,6 +53,9 @@ final class NowModel {
     }
 
     private(set) var attention: [AttentionItem] = []
+    /// News its source keeps off the desktop (Only in Today, D88), from today: in its own list under Needs you. What
+    /// such a source sends that needs an answer joins `attention`.
+    private(set) var kept: [AttentionItem] = []
     /// Guard's questions still waiting (D58). The Ask panel shows them too; an answer in either place answers both.
     private(set) var approvals: [ApprovalRequest] = []
     /// Icons and names of the extensions whose tools are asking.
@@ -89,7 +92,7 @@ final class NowModel {
     private(set) var captured: [NotebookItem] = []
     /// Until when Quiet holds what isn't urgent, while it's on (read at each reload, so Home's views follow it).
     private(set) var quietUntil: Date?
-    /// Things done today: reminders and tasks ticked, and actions Sidefolk ran (Today's "done today", D84).
+    /// Things done today, as `DayBrief.doneCount` counts them (D88).
     private(set) var doneCount = 0
     private(set) var jobs: [Job] = []
     private(set) var workingSessions: [AgentSession] = []
@@ -262,7 +265,10 @@ final class NowModel {
         // A session that needs you may also have posted an attention item; show it once, as the session.
         let sessionIds = Set(needing.map(\.id))
         // Only things that need a decision: informational notices (gentle) live in Recently, not here.
-        attention = open.filter { $0.level >= .attention && !($0.refKind == "session" && sessionIds.contains($0.refId ?? "")) }
+        let keptItems = await rt.attention.kept()
+        attention = (open + keptItems.filter { $0.level >= .attention })
+            .filter { $0.level >= .attention && !($0.refKind == "session" && sessionIds.contains($0.refId ?? "")) }
+        kept = Array(keptItems.filter { $0.level < .attention && Calendar.current.isDateInToday($0.createdAt) }.reversed())
         sessionsNeedingYou = needing
         workingSessions = live.filter { $0.state == .working }
         reminders = (try? await rt.reminderStore.pending()) ?? []
@@ -309,11 +315,16 @@ final class NowModel {
         let collections = (try? await rt.notebook.collections()) ?? []
         noteCollections = Dictionary(collections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let shown = Set(collections.filter { $0.kind != .profile }.map(\.id))
-        let latest = ((try? await rt.notebook.items(limit: 40)) ?? []).filter { shown.contains($0.collectionId) }
+        let latest = ((try? await rt.notebook.items(limit: 200)) ?? []).filter { shown.contains($0.collectionId) }
         recentNotes = latest.prefix(3).map { $0 }
         captured = latest.filter { Calendar.current.isDateInToday($0.createdAt) }.sorted { $0.createdAt > $1.createdAt }.prefix(6).map { $0 }
-        let ran: Set<ActivityEntry.Decision> = [.denied, .blocked, .failed, .skipped]
-        doneCount = doneToday.count + calls.filter { Calendar.current.isDateInToday($0.at) && !ran.contains($0.decision) && $0.tool != "notes.search" }.count
+        // Tasks finished today may be old ones, further down than the newest 200.
+        let finished = ((try? await rt.notebook.items(kinds: [.task], status: .done, limit: 500)) ?? []).filter { shown.contains($0.collectionId) }
+        let seen = Set(latest.map(\.id))
+        let counted = latest + finished.filter { !seen.contains($0.id) }
+        let registry = rt.registry
+        doneCount = DayBrief.doneCount(reminders: doneToday, items: counted, calls: calls,
+                                       changes: { registry.tool(named: $0)?.spec.mutates ?? false }, now: Date(), calendar: .current)
     }
 
     private func loadRecent() async -> [RecentEntry] {

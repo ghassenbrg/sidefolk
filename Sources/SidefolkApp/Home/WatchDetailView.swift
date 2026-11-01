@@ -62,7 +62,7 @@ struct WatchDetailView: View {
             ButtonRow(spacing: Theme.Space.s) {
                 // One primary: Check now while it watches; Resume when it doesn't (a paused or stuck watch can't look).
                 if w.state == .active {
-                    Button { Task { await model.checkNow() } } label: { Label("Check now", systemImage: "arrow.clockwise") }
+                    Button { Task { await model.checkNow() } } label: { Label(WatchWordsUI.checkNow, systemImage: "arrow.clockwise") }
                         .buttonStyle(.sf(.primary, size: .regular, working: model.working == .check))
                     Button { Task { await model.pause() } } label: { Label("Pause", systemImage: "pause") }
                         .buttonStyle(.sf(.secondary, size: .regular, working: model.working == .pause))

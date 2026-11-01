@@ -173,7 +173,7 @@ public actor SessionTracker {
 
     private func tapNeedsYou(_ s: AgentSession) async {
         let item = await attention.post(AttentionRequest(
-            level: .attention, source: "session:\(s.id)", title: String(localized: "\(Self.agentName(s.agent)) needs you in \(Self.project(s))"),
+            level: .attention, source: Self.source(s), title: String(localized: "\(Self.agentName(s.agent)) needs you in \(Self.project(s))"),
             body: s.detail, actions: Self.actions,
             refKind: "session", refId: s.id))
         needsYouItem[s.id] = item.id
@@ -185,12 +185,15 @@ public actor SessionTracker {
     private func tapFinished(_ s: AgentSession) async {
         await withdrawFinished(s.id)
         let item = await attention.post(AttentionRequest(
-            level: .gentle, source: "session:\(s.id)",
+            level: .gentle, source: Self.source(s),
             title: String(localized: "\(Self.agentName(s.agent)) finished in \(Self.project(s))", comment: "An agent, then its project: “Claude finished in sidefolk”"), body: s.title,
             actions: Self.actions,
             refKind: "session", refId: s.id))
         finishedItem[s.id] = item.id
     }
+
+    /// "session:<agent>:<id>": its own budget in the rate limits, and its agent's level in Settings › Attention (D88).
+    static func source(_ s: AgentSession) -> String { "session:\(s.agent):\(s.id)" }
 
     private func withdrawFinished(_ sessionId: String) async {
         guard let id = finishedItem.removeValue(forKey: sessionId) else { return }
