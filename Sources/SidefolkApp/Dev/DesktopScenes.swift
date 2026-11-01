@@ -92,7 +92,37 @@ enum DesktopScenes {
                 return AttentionItem(level: n.level, source: n.source, title: n.title, body: n.body, actions: n.actions, refKind: n.refKind, refId: n.refId)
             }())),
             ("stack", stack),
-        ]
+        ] + keyed(reminder: moment, needsYou: needsYou, stack: stack)
+    }
+
+    /// The card shortcut's moments (D88): a calm reminder with the keyboard on its main answer, the second of three held
+    /// cards; a firm card that only ⌘↩ answers; the held cards fanned from the keyboard with one chosen.
+    private static func keyed(reminder moment: (AttentionItem, SidecardModel.Shape, CGFloat?) -> SidecardModel, needsYou: SidecardModel,
+                              stack: SidecardModel) -> [(String, SidecardModel)] {
+        let actions = ReminderScheduler.ActionID.self
+        let item = AttentionItem(level: .attention, source: "reminder", title: "Stretch and refill water",
+                                 body: "It's 17:00. Next one at 19:00, the last at 21:00.",
+                                 actions: [AttentionAction(id: actions.done, title: String(localized: "Done"), isPrimary: true),
+                                           AttentionAction(id: actions.snooze10, title: String(localized: "In 10 min", comment: "A reminder card's snooze button: remind again in ten minutes")),
+                                           AttentionAction(id: actions.stop, title: String(localized: "Stop repeating"))],
+                                 refKind: "reminder", refId: "r1")
+        let calm = moment(item, .card, 0.78)
+        calm.keys = CardKeys(answers: [SidecardController.moreAnswers, actions.snooze10, actions.done], main: actions.done, takesReturn: true,
+                             deck: ["a", item.id, "c"], current: item.id)
+        let firm = SidecardModel()
+        firm.item = needsYou.item
+        firm.sessions = needsYou.sessions
+        firm.shape = .card
+        firm.tailAt = 0.78
+        firm.companionName = "Mochi"
+        firm.keys = CardKeys(answers: ["dismiss", "open"], main: "open", takesReturn: false)
+        let fanned = SidecardModel()
+        fanned.shape = .stack
+        fanned.tailAt = nil
+        fanned.waiting = stack.stack.count
+        fanned.stack = stack.stack
+        fanned.stackFocus = stack.stack[1].id
+        return [("keys-calm", calm), ("keys-firm", firm), ("keys-stack", fanned)]
     }
 
     // MARK: Permission slips

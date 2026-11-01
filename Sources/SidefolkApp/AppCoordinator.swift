@@ -605,6 +605,12 @@ final class AppCoordinator {
     /// `slipsOnly`: a permission slip arrived while Ask was closed; it stands alone above the companion.
     func showAsk(prefill: String? = nil, focus: Bool = true, slipsOnly: Bool = false) {
         if let prefill { ask.text = prefill }
+        // Opened with nothing to say yet while something waits or comes up: Today first (D88); otherwise the
+        // conversation, where typing goes either way.
+        if !askPanel.isVisible || ask.compact {
+            let fresh = ask.text.isEmpty && ask.attachment == nil && !ask.hasResults && ask.pinnedEntries.isEmpty
+            ask.tab = fresh && (waitingCount > 0 || !ask.glance.isEmpty) && !slipsOnly ? .today : .ask
+        }
         // One panel at a time: the game is kept and comes back as it was (D75); a card folds into what Ask shows.
         playPanel.hide()
         if !slipsOnly { sidecard.yieldToAsk() }

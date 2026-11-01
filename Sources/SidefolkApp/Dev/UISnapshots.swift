@@ -424,7 +424,13 @@ enum UISnapshots {
                 next: [Glance.Next(title: "Stretch", at: Date().addingTimeInterval(25 * 60), event: false),
                        Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)],
                 working: ["Codex in pockito"])
-            let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
+            glancing.waiting = 2
+            glancing.tab = .today
+            // Today's tab with nothing in it (D88).
+            let calmDay = AskModel()
+            calmDay.actions = actions
+            calmDay.tab = .today
+            let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask-today-empty", calmDay), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
                           ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-internet", sampleAskInternet()), ("desktop-ask-outside", sampleAskOutside()),

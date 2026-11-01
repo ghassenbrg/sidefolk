@@ -125,6 +125,8 @@ protocol AskActions: AnyObject {
     func openHome()
     /// Home › Now, where skipped steps wait (D37).
     func openNow()
+    /// The Play panel's menu of games, in Ask's place (D88).
+    func openPlay()
 }
 
 /// The answer a reply follows up: its card, its conversation, and the words it answered.
@@ -149,8 +151,15 @@ enum VoiceInput: Equatable {
 @MainActor @Observable
 final class AskModel {
     var text = "" {
-        didSet { if text != oldValue { found.query = text } }
+        didSet {
+            guard text != oldValue else { return }
+            found.query = text
+            // Words typed under Today are a request: the conversation shows what they will do.
+            if !text.isEmpty { tab = .ask }
+        }
     }
+    /// The conversation or a compact Today under the field (D88).
+    var tab: AskTab = .ask
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
     /// Today at a glance, shown while nothing is typed (D58): Ask's resting state, on top of the stack (D84).
@@ -322,6 +331,12 @@ final class AskModel {
         actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, askAI: askAI, spoken: spoken, followUp: followUp, into: self)
     }
 
+    /// When the AI last answered in the open conversation, for Ask's header (D88).
+    var threadAnsweredAt: Date? {
+        guard let thread else { return nil }
+        return entries.last { if case .answer(_, _, _, let t) = $0.content { t == thread } else { false } }?.createdAt
+    }
+
     /// The words of the newest request, to tell whether a newer one came in since.
     var latestCaption: String? { entries.last { $0.caption != nil }?.caption }
 
@@ -330,6 +345,8 @@ final class AskModel {
         entries.append(AskEntry(caption: caption, content: content, fadesAt: fades ? Date().addingTimeInterval(Self.noticeSeconds) : nil))
         if entries.count > Self.keptEntries { entries.removeFirst(entries.count - Self.keptEntries) }
         if fades { fadeLater() }
+        // Something new shows where it can be seen: the conversation (D88).
+        tab = .ask
     }
 
     /// Removes earlier notices under this caption: a new word about talking replaces the last one.

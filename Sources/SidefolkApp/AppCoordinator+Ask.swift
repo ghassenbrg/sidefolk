@@ -155,6 +155,8 @@ extension AppCoordinator: AskActions {
                   caption: caption, fades: true)
     }
 
+    func openPlay() { openPlayMenu(focus: true) }
+
     func openConversation(_ thread: String?) {
         askPanel.hide()
         home.show(conversation: thread)

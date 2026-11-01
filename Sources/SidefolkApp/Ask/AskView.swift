@@ -32,9 +32,13 @@ struct AskView: View {
             } else {
                 SidecardSurface(tail: model.tail, padding: 0) {
                     VStack(alignment: .leading, spacing: 0) {
-                        header
+                        AskHeader(model: model, companionName: companionName, portrait: portrait)
                         input
-                        if !model.entries.isEmpty || model.busy {
+                        if model.tab == .today {
+                            AskTodayTab(model: model)
+                                .padding(.horizontal, Theme.Space.l)
+                                .padding(.bottom, Theme.Space.l)
+                        } else if !model.entries.isEmpty || model.busy {
                             if clearable { clearAll }
                             results
                         }
@@ -59,27 +63,6 @@ struct AskView: View {
         model.actions?.startFresh(in: model, announce: true)
     }
 
-    private var header: some View {
-        HStack(spacing: Theme.Space.xs) {
-            if let portrait {
-                // Already round: a profile picture, or the drawn face on its disc (CompanionArt.avatar).
-                Image(nsImage: portrait).resizable().frame(width: 28, height: 28)
-                    .accessibilityHidden(true)
-                    .padding(.trailing, Theme.Space.xs)
-            }
-            Text(companionName).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
-                .layoutPriority(1)
-            ModeChip(mode: model.mode) { model.actions?.openSettings(tab: .privacy) }
-                .padding(.leading, Theme.Space.xs)
-            Spacer(minLength: Theme.Space.xs)
-            headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
-            headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
-            headerButton("xmark", help: "Close") { model.onClose?() }
-        }
-        .padding(.horizontal, Theme.Space.l)
-        .padding(.top, Theme.Space.l)
-    }
-
     private var clearable: Bool { model.hasResults && !model.busy }
 
     /// Above the results, as Notification Center has it, rather than in the header: there, in German, it left the
@@ -99,13 +82,6 @@ struct AskView: View {
         }
         .padding(.horizontal, Theme.Space.m)
         .padding(.top, Theme.Space.s)
-    }
-
-    private func headerButton(_ symbol: String, help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
-        Button(action: action) { Image(systemName: symbol).imageScale(.small) }
-            .buttonStyle(.sf(.plain))
-            .help(help)
-            .accessibilityLabel(help)
     }
 
     private var input: some View {
@@ -195,15 +171,6 @@ struct AskView: View {
             if model.voice == nil, model.pendingQuestion == nil, !model.found.results.isEmpty {
                 FoundList(results: model.found.results, each: 2) { model.actions?.open($0) }
                     .padding(.top, Theme.Space.xs)
-            }
-            // Nothing typed: Today at a glance (D58).
-            if model.text.isEmpty, model.attachment == nil, model.voice == nil, model.pendingQuestion == nil, !model.glance.isEmpty {
-                GlanceView(glance: model.glance, waiting: model.waiting,
-                           answer: { item, action in
-                               if let action { model.actions?.answer(question: item, actionId: action) } else { model.actions?.dismissAttention(item) }
-                           },
-                           openSession: { model.actions?.openSession($0) },
-                           openToday: { model.actions?.openNow() })
             }
         }
         .padding(.horizontal, Theme.Space.l)
@@ -622,8 +589,8 @@ private struct AnswerCard: View {
                             Image(systemName: "bubble.left.and.text.bubble.right").imageScale(.small)
                         }
                         .buttonStyle(.sf(.plain))
-                        .help("Open in Conversations")
-                        .accessibilityLabel("Open in Conversations")
+                        .help(Text("Open in History", comment: "Ask's header: opens this conversation in Home › History"))
+                        .accessibilityLabel(Text("Open in History", comment: "Ask's header: opens this conversation in Home › History"))
                     }
                 }
             }

@@ -37,6 +37,7 @@ final class FixtureAskActions: AskActions {
     func remindPending(at date: Date, in model: AskModel) {}
     func answer(question: AttentionItem, actionId: String) {}
     func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel) {}
+    func openPlay() {}
     func retry(_ text: String, in model: AskModel) {}
     func openSettings(tab: SettingsTab?) {}
     func openHome() {}
