@@ -117,6 +117,7 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `SayPanel`, `SayWords` | `SayPanel.swift` | what typed words will do, from `IntentPlan`: sentence, chips, AI chip, keys |
 | `PersonAvatar`, `CompanionAvatar` | `HistoryView.swift` | who did something, beside a sentence |
 | `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
+| `AddonUpdatesSection`, `AddonUpdateButton`, `AddonUpdateInline`, `AddonUpdateStrip`, `AddonUpdatesTodayRow`, `AddonUpdateDot` | `Updates/AddonUpdateViews.swift` | add-on updates wherever add-ons appear (D89): the Gallery's Updates with Update all, a row's "New version · Update", an extension page's calm strip, Today's one row, the sidebar's accent dot |
 
 ## Not built yet (phases 2 and 5)
 

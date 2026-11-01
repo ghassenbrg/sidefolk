@@ -326,7 +326,12 @@ automatically, prepares it out of sight and waits for `InstallMoment` (the coord
 quit (`installAtQuit`); it keeps `UpdateModel` for Settings › General, the Pocket and the update window, and quits
 for the swap. Add-ons: Core's `AddonUpdater` runs one look (`AddonUpdateRule`: companions and themes by themselves,
 an extension only when `ExtensionUpdateDiff.widens` is false), and the app's `AddonUpdateController` schedules it,
-keeps the add-on rows of `UpdateModel` and posts the heads-up for updates to review.
+keeps the add-on rows of `UpdateModel` and posts the heads-up for updates to review. Update all (D89) is
+`AddonUpdater.updateAll(_:step:)`, the same path as a timed look with the switch on, one add-on at a time
+(`update(_:)`), each row hearing its `AddonUpdateStep`; `AddonUpdateNudge` decides the one whisper about updates
+that waited a day. Every surface reads `UpdateModel.addonPending`/`addonRows` and asks `AddonUpdateActions`
+(`Updates/AddonUpdateViews.swift`: the Gallery's Updates, a row's inline update, an extension page's strip, Today's
+row, the sidebar's dot).
 A published app knows its release from Info.plist's `SidefolkRelease`; without it the app never replaces
 itself. Release side: docs/RELEASE.md › Updates.
 

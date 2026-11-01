@@ -1819,6 +1819,9 @@ in Activity (it is the audit of tool calls; an update is not one).
 the one kept for half an hour, then looks as the timed check does (installs what may install by itself, lists what
 waits). Miraya was published minutes after the founder's copy had kept the list, and nothing could make it look sooner.
 
+*Amended by D89:* waiting updates are shown wherever add-ons appear (the Gallery's Updates, an extension's page,
+Settings › Add-ons, Home's sidebar, Today, the Pocket) with Update all, and a whisper after a day.
+
 ### D71 — Install sheets and approval cards that are honest without being scary: trust first, tone by source, guards beside each permission (2026-10-31)
 **Decision:** the same facts for every extension, said as loudly as where it comes from calls for.
 - **Where it comes from, first** (`InstallSource`, a row under the title): *From the Sidefolk gallery · Signed by
@@ -2560,3 +2563,38 @@ entries for one character, and no Look switch).
 `mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
 companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
 `docs/research/lively-companions.md` documents the keys.
+
+### D89 — Add-on updates in sight wherever add-ons appear, with Update all (2026-11-01)
+**Decision:** *amends D70.* Updates that wait for the person (the switch off, or an extension update that would do more)
+are shown where add-ons are, from one list (`UpdateModel.addonPending`, kept by `AddonUpdateController`):
+- **Home's Gallery** leads with **Updates** and a count: one row per add-on (companions, extensions, themes) with
+  Update, Review… for one that would do more, its progress while it installs, Updated or Try again, and **Update all**.
+- **An extension's page** has a calm "Update available" strip with **What's new** (the install sheet, which says what
+  the version changes, D71) and Update; **Settings › Add-ons** rows say "New version x" with Update beside their switch,
+  and a card offers Update all; **Home's sidebar** marks a page's row with an accent dot and counts updates on Get
+  add-ons; **Today** has one compact row (count, names, Update all, Show), the **Pocket** one row in Needs you.
+- **Update all** installs every waiting update that asks for nothing new, one at a time, by D70's own rule
+  (`AddonUpdater.updateAll`, the path a timed look with the switch on takes too). One that would let an extension do
+  more stays listed with Review…, which opens its install sheet; one that fails keeps its old copy, says why and has
+  Try again, and the rest go on. It ends with a summary ("3 updated, 1 needs your review"). A single Update does the
+  same for one, and opens the sheet at once when the version asks for more. A version needing a newer Sidefolk is never
+  offered (the catalog leaves it out, D83).
+- **One whisper** ("2 add-ons have updates", Update all and Show) once updates have waited a day with the switch off
+  (`AddonUpdateNudge`); then nothing more about them, only about a later one after its own day. Gentle, source
+  "addons"; when per-source interrupt levels exist, it follows them.
+
+**Why:** the founder: "If I don't go there on purpose, I'll never notice." Updates lived in Settings › General and on
+gallery cards only. The App Store and Google Play put an Updates list with Update all where apps are, and say so once.
+
+**Alternatives:** a card per update on Today (a pile; the founder asked for one row); release notes in the catalog
+for What's new (the gallery publishes none; the install sheet already says what a version changes, honestly);
+installing widening updates with Update all (they need the person's look, D70); nudging with the switch on
+(updates then install by themselves; the review heads-up stays per version, D70).
+
+**Implications:** Core `AddonUpdater.update(_:)`, `updateAll(_:step:)`, `AddonUpdateStep`, `AddonUpdateOutcome`,
+`AddonUpdateReport.failed/summary`, `AddonUpdateNudge`; `AddonStore.updateCompanions` went (the updater installs
+companions). App: `UpdateModel.addonSteps/addonSummary/addonRecent/addonPending/addonInstallable/addonRows`,
+`AddonUpdateActions.update/showAddonUpdates`, `Updates/AddonUpdateViews.swift`, the whisper's kind `addon-updates`;
+dev commands `addons:updates|nudge|auto:off|get:<id>|check|updateAll`; snapshots `window-home-gallery-updates`,
+`window-home-today-updates`, `page-extension-clipboard-update`, `page-settings-addons-updates`,
+`panel-pocket-addon-updates`. Tests: `AddonUpdateAllTests`.

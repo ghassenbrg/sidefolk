@@ -40,6 +40,14 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
+- **Add-on updates in sight** (branch `team/addon-updates`, not merged, D89): the Gallery's Updates with Update all
+  (per-item progress, "3 updated, 1 needs your review", widening ones stay with Review…), an extension page's
+  "Update available" strip with What's new, Settings › Add-ons inline "New version · Update" and an Update all card,
+  Home's sidebar dot and count, Today's one row, the Pocket's Needs you, a whisper after a day with the switch off.
+  Verified: `AddonUpdateAllTests` (5), full suite, snapshots in light, dark, de and ar, and a debug app on a signed
+  local gallery (two extensions and a companion, one widening): Update all updated two and left one for review.
+  Next: merge; if `team/interrupts` lands, give source "addons" its interrupt level.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
