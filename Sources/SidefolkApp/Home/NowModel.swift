@@ -183,8 +183,8 @@ final class NowModel {
     }
 
     /// Looking at what changed counts as having seen it: the notice leaves Today's queue.
-    func seen(_ watcher: Watcher) async {
-        if let item = changeWaiting(for: watcher) { await respond(item, action: nil) }
+    func seen(watcherId id: String) async {
+        if let item = attention.first(where: { $0.refKind == "watcher" && $0.refId == id }) { await respond(item, action: nil) }
     }
 
     /// What the companion says in a nook with a speech bubble (D64): a hello for the time of day and how much needs you.

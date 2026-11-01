@@ -104,7 +104,12 @@ final class HomeModel {
         watch = WatchDetailModel(services: services)
         find = FindModel { query in (try? await services.runtime.find(query)) ?? SearchResults() }
         now.openPage = { [weak self] id in self?.selection = .page(id) }
-        now.openWatch = { [weak self] id in self?.selection = .watch(id) }
+        now.openWatch = { [weak self] id in
+            guard let self else { return }
+            selection = .watch(id)
+            // Opening the watch from its tile, row or card is seeing what it noticed, as the tile's popover was.
+            Task { await self.now.seen(watcherId: id) }
+        }
         you.trash = { [weak self] item in await self?.notebook.moveToTrash(item) }
         // A switch flipped or a page arranged on one side shows on the other (D67).
         pages.changed = { [weak self] in Task { await self?.now.reloadWidgets() } }
@@ -211,12 +216,7 @@ final class HomeModel {
                 await settingsHost.refresh()
                 await settingsHost.gallery.load()
             }
-        case .watch(let id):
-            Task {
-                await watch.show(id)
-                // Opening the watch is seeing what it noticed, as its tile's popover was.
-                if let w = watch.watcher { await now.seen(w) }
-            }
+        case .watch(let id): Task { await watch.show(id) }
         case .now, .onDuty, .page, nil: break
         }
     }
