@@ -106,7 +106,7 @@ struct CalendarInspector: View {
         }
         guard entry.end > entry.start else { return day + " · " + TimeFormat.clock(entry.start, calendar: cal) }
         if cal.isDate(entry.start, inSameDayAs: entry.end) {
-            return day + " · " + TimeFormat.clock(entry.start, calendar: cal) + "–" + TimeFormat.clock(entry.end, calendar: cal)
+            return day + " · " + CalendarEntry.span(entry.start, entry.end, calendar: cal)
         }
         return (entry.start..<entry.end).formatted(.interval.weekday(.abbreviated).day().month(.abbreviated).hour().minute())
     }

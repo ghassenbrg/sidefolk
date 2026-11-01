@@ -322,7 +322,7 @@ struct CalendarTimeGrid: View {
                 .fill(tint.fill.opacity(0.9))
                 .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(tint.edge, style: StrokeStyle(lineWidth: 1.5, dash: drag.kind == .create ? [4, 3] : [])))
                 .overlay(alignment: .topLeading) {
-                    Text(verbatim: TimeFormat.clock(drag.start, calendar: model.calendar) + "–" + TimeFormat.clock(drag.end, calendar: model.calendar))
+                    Text(verbatim: CalendarEntry.span(drag.start, drag.end, calendar: model.calendar))
                         .font(Theme.Font.captionStrong.monospacedDigit()).foregroundStyle(tint.text).padding(4)
                 }
                 .frame(width: max(width - 3, 10), height: max(CGFloat(span / 3600) * hour, 20))

@@ -115,6 +115,11 @@ enum CalendarEntry: Identifiable, Hashable {
         }
     }
 
+    /// "10:00–11:30", kept left to right in Arabic (numbers in isolation, DESIGN.md): it would otherwise read 11:30–10:00.
+    static func span(_ start: Date, _ end: Date, calendar: Calendar) -> String {
+        "\u{2066}" + TimeFormat.clock(start, calendar: calendar) + "–" + TimeFormat.clock(end, calendar: calendar) + "\u{2069}"
+    }
+
     /// "15:00 Call mom", for help and VoiceOver.
     var spoken: String {
         let time = allDay ? String(localized: "All day") : TimeFormat.clock(start, calendar: .current)

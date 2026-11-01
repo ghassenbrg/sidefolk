@@ -77,7 +77,7 @@ struct CalendarBlock: View {
     /// "10:00–11:30".
     private var span: String {
         let cal = model.calendar
-        return entry.end > entry.start ? TimeFormat.clock(entry.start, calendar: cal) + "–" + TimeFormat.clock(entry.end, calendar: cal)
+        return entry.end > entry.start ? CalendarEntry.span(entry.start, entry.end, calendar: cal)
             : TimeFormat.clock(entry.start, calendar: cal)
     }
 }
