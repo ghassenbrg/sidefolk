@@ -7,6 +7,11 @@ public struct OpenedBackup: Sendable {
     /// The unpacked backup: `manifest.json`, `data/`, `review/`, maybe `keys.json`.
     public let folder: URL
 
+    public init(manifest: BackupManifest, folder: URL) {
+        self.manifest = manifest
+        self.folder = folder
+    }
+
     public var hasKeys: Bool { manifest.keys }
 
     /// The sealed keys, opened with the person's password (`BackupKeys.open`).

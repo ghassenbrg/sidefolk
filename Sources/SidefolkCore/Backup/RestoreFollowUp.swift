@@ -8,6 +8,8 @@ public struct RestoreFollowUp: Sendable {
         public var name: String
         public var reason: String
         public var id: String { name }
+
+        public init(name: String, reason: String) { (self.name, self.reason) = (name, reason) }
     }
 
     /// Something to look at before it's back: an extension's install sheet, or a companion's question (D60).
@@ -17,6 +19,8 @@ public struct RestoreFollowUp: Sendable {
         public var id: String
         public var name: String
         public var folder: URL
+
+        public init(kind: Kind, id: String, name: String, folder: URL) { (self.kind, self.id, self.name, self.folder) = (kind, id, name, folder) }
     }
 
     public struct Report: Sendable, Equatable {

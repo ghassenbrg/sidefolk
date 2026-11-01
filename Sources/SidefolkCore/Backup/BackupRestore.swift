@@ -18,6 +18,12 @@ public struct BackupRestore: Sendable {
         public var extensions: [BackupManifest.Extension]
         public var addons: [BackupManifest.Addon]
         public var restoredAt: Date?
+
+        public init(backupCreated: Date, app: String, device: String?, extensions: [BackupManifest.Extension],
+                    addons: [BackupManifest.Addon], restoredAt: Date? = nil) {
+            (self.backupCreated, self.app, self.device, self.extensions, self.addons, self.restoredAt)
+                = (backupCreated, app, device, extensions, addons, restoredAt)
+        }
     }
 
     /// What the launch did.

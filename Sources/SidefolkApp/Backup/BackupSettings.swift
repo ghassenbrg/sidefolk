@@ -118,7 +118,7 @@ struct BackupRows: View {
 /// Back up everything (D91): one file, and the keys only with a password.
 struct BackupSheet: View {
     var model: SettingsModel
-    @State private var keys = false
+    @State var keys = false
     @State private var password = ""
     @State private var again = ""
     @State private var working = false

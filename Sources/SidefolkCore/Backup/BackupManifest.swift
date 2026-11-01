@@ -44,6 +44,10 @@ public struct BackupManifest: Codable, Sendable, Equatable {
         public var version: String
         public var enabled: Bool
         public var source: Source
+
+        public init(id: String, name: String, version: String, enabled: Bool, source: Source) {
+            (self.id, self.name, self.version, self.enabled, self.source) = (id, name, version, enabled, source)
+        }
     }
 
     /// A companion or theme from the gallery, installed again from it.
@@ -71,6 +75,12 @@ public struct BackupManifest: Codable, Sendable, Equatable {
     public var keys: Bool
     /// SHA-256 of every other file, by its path in the backup.
     public var files: [String: String]
+
+    public init(format: Int = currentFormat, app: String, version: String, created: Date, device: String?, schema: [String],
+                counts: Counts, extensions: [Extension], addons: [Addon], keys: Bool, files: [String: String]) {
+        (self.format, self.app, self.version, self.created, self.device, self.schema) = (format, app, version, created, device, schema)
+        (self.counts, self.extensions, self.addons, self.keys, self.files) = (counts, extensions, addons, keys, files)
+    }
 
     static let encoder: JSONEncoder = {
         let e = JSONEncoder()
