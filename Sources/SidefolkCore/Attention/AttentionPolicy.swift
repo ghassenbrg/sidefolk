@@ -17,6 +17,8 @@ public struct AttentionEnvironment: Sendable, Equatable {
     /// System notifications are allowed by the user (and macOS).
     public var systemNotificationsAllowed = true
     public var sounds = true
+    /// How far each source may interrupt (D88): applied before Focus and Quiet.
+    public var interruptions = Interruptions()
     public init() {}
 }
 

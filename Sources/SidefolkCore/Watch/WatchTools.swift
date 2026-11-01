@@ -493,18 +493,37 @@ struct WatchListTool: Tool {
         guard !all.isEmpty else {
             return ToolResult(text: "Nothing is being watched.", card: ResultCard(kind: .list, title: String(localized: "Nothing is being watched")))
         }
-        let lines = all.prefix(50).map { w in
+        let listed = Array(all.prefix(50))
+        let changes = await engine.lastChanges(for: listed.map(\.id))
+        let lines = listed.map { w in
             "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.stateForModel(w, now: context.now)), every \(WatchWords.everyForModel(w.intervalS))"
-                + (w.fireCount > 0 ? ", fired \(w.fireCount)×" : "")
+                + (w.fireCount > 0 ? ", fired \(w.fireCount)×" : "") + Self.lastChange(changes[w.id], of: w, now: context.now)
         }
-        let shown = all.prefix(50).map { w in
-            let line = String(localized: "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.state(w, now: context.now)), every \(WatchWords.every(w.intervalS))")
-            return w.fireCount > 0 ? line + String(localized: ", fired \(w.fireCount)×") : line
+        let shown = listed.map { w in
+            var line = String(localized: "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.state(w, now: context.now)), every \(WatchWords.every(w.intervalS))")
+            if w.fireCount > 0 { line += String(localized: ", fired \(w.fireCount)×") }
+            if let change = changes[w.id] {
+                line += String(localized: ", last changed \(WatchWords.every(context.now.timeIntervalSince(change.lastAt))) ago")
+            }
+            return line
         }
         let card = ResultCard(kind: .list, title: String(localized: "\(all.count) watchers"), detail: shown.joined(separator: "\n"))
         // Titles made by other agents, extensions, routines or a tainted turn are not the user's words.
         let outside = all.contains { !WatchSource.isUserSourced($0.source) }
         return ToolResult(text: lines.joined(separator: "\n"), card: card, untrusted: outside)
+    }
+
+    /// Kinds whose change summary is made only from the watch's own settings ("example.com/pricing changed", "report.md
+    /// changed"), so it is no more outside content than the title. A folder's new file names, a program's or an
+    /// extension's words are outside content (T2): for those only the time is said.
+    static let summarisedKinds: Set<String> = [WatchKind.urlChange, WatchKind.siteStatus, WatchKind.fileChanges, WatchKind.fileAppears]
+
+    /// ", last changed 2 h ago (example.com/pricing changed)" from the watch's history (D87), or nothing.
+    static func lastChange(_ change: WatchCheck?, of w: Watcher, now: Date) -> String {
+        guard let change else { return "" }
+        let ago = ", last changed \(WatchWords.everyForModel(now.timeIntervalSince(change.lastAt))) ago"
+        guard summarisedKinds.contains(w.kind), let summary = change.reason, !summary.isEmpty else { return ago }
+        return ago + " (\(summary))"
     }
 }
 

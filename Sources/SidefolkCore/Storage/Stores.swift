@@ -173,13 +173,18 @@ public struct AttentionStore: Sendable {
         }
     }
 
+    /// What Only in Today kept off the desktop (D88) and nobody has looked at yet, oldest first.
+    public func kept() async throws -> [AttentionItem] {
+        try await db.writer.read { db in try AttentionItem.filter(Column("state") == "kept").order(Column("created_at")).fetchAll(db) }
+    }
+
     public func recent(limit: Int = 100) async throws -> [AttentionItem] {
         try await db.writer.read { db in try AttentionItem.order(Column("created_at").desc).limit(limit).fetchAll(db) }
     }
 
     public func purge(olderThan cutoff: Date) async throws -> Int {
         try await db.writer.write { db in
-            try AttentionItem.filter(["acknowledged", "expired"].contains(Column("state")) && Column("created_at") < cutoff.timeIntervalSince1970).deleteAll(db)
+            try AttentionItem.filter(["acknowledged", "expired", "kept"].contains(Column("state")) && Column("created_at") < cutoff.timeIntervalSince1970).deleteAll(db)
         }
     }
 }

@@ -312,7 +312,8 @@ import Testing
         try g.publish()
         let first = try await g.store.catalog()
         for name in ["otter", "stoat", "heron"] { try await g.store.install(companion: try #require(first.companion(name))) }
-        #expect(await g.store.updateCompanions(channel: .releases).isEmpty, "nothing newer yet")
+        let updater = AddonUpdater(store: g.store, extensions: try HostEnv().host, themes: ThemeLibrary(paths: g.paths))
+        #expect(await updater.run(channel: .releases, automatic: true).companions.isEmpty, "nothing newer yet")
 
         try g.companion("otter", version: "1.1.0")
         try g.companion("stoat", version: "2.0.0")
@@ -323,11 +324,13 @@ import Testing
         try g.publish()
         _ = try await g.store.catalog(refresh: true)
 
-        let updated = await g.store.updateCompanions(channel: .releases)
-        #expect(updated.map(\.companion) == ["otter"])
+        let report = await updater.run(channel: .releases, automatic: true)
+        #expect(report.companions.map(\.companion) == ["otter"])
+        #expect(report.failed.map(\.companion) == ["heron"])
         let versions = Dictionary(uniqueKeysWithValues: await g.store.installedCompanions().map { ($0.companion, $0.version) })
         #expect(versions == ["otter": "1.1.0", "stoat": "1.0.0", "heron": "1.0.0"], "a newer engine waits; a bad pack keeps the old copy")
-        #expect(await g.store.updateCompanions(channel: .releases).isEmpty, "up to date now; heron is tried again and refused again")
+        let again = await updater.run(channel: .releases, automatic: true)
+        #expect(again.companions.isEmpty && again.failed.map(\.companion) == ["heron"], "up to date now; heron is tried again and refused again")
     }
 
     /// Tidying at launch removes what an earlier run left, not a download this run has already begun (a companion

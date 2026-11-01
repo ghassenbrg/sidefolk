@@ -20,6 +20,7 @@ extension AppCoordinator {
         let cues = CueDirector(companion: companion, caption: player.caption)
         cues.panelFrame = { [weak self] in self?.playPanel.isVisible == true ? self?.playPanel.frame : nil }
         cues.restoreMood = { [weak self] in self?.renderMood() }
+        cues.linesShown = { [weak self] in self?.runtime.settings.current.interruptions.level(for: .games) != .off }
         cues.soundsAllowed = { [weak self] in
             guard let self else { return false }
             let s = self.runtime.settings.current

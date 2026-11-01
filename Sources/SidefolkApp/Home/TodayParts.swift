@@ -4,17 +4,16 @@ import SwiftUI
 // Pieces of Today that more than one layout uses (D58): watches as small tiles, a line of recent values, tomorrow
 // beside the day, and what can be done with a reminder.
 
-/// A watch as a small tile: where it looks, its state in one word, and what it last saw. A click shows the whole
-/// watch with its buttons; it stands out while what it noticed waits for you.
+/// A watch as a small tile: where it looks, its state in one word, and what it last saw. A click opens the watch's own
+/// page (D87); it stands out while what it noticed waits for you.
 struct WatchCard: View {
     var watcher: Watcher
     var model: NowModel
-    @State private var open = false
 
     var body: some View {
         let kind = Describe.watcherKind(watcher.kind)
         let waiting = model.changeWaiting(for: watcher) != nil
-        Button { open = true } label: {
+        Button { model.openWatch?(watcher.id) } label: {
             VStack(alignment: .leading, spacing: Theme.Space.xs) {
                 Label { Text(verbatim: Describe.watcherTarget(watcher) ?? watcher.title).lineLimit(1).truncationMode(.middle) }
                     icon: { Image(systemName: kind.symbol) }
@@ -29,12 +28,8 @@ struct WatchCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .popover(isPresented: $open, arrowEdge: .bottom) {
-            WatchTile(watcher: watcher, model: model).frame(width: 340).padding(Theme.Space.s)
-        }
-        .onChange(of: open) { _, isOpen in if isOpen { Task { await model.seen(watcher) } } }
         .contextMenu {
-            Button("Check now") { Task { await model.checkNow(watcher) } }.disabled(watcher.state == .paused)
+            Button { Task { await model.checkNow(watcher) } } label: { Text(verbatim: WatchWordsUI.checkNow) }.disabled(watcher.state == .paused)
             if watcher.state == .paused {
                 Button("Resume") { Task { await model.resume(watcher) } }
             } else {

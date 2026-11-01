@@ -278,6 +278,30 @@ public final class AppDatabase: Sendable {
                 t.add(column: "run_id", .text)
             }
         }
+        // A watch's history (D87): its checks, a run of the same outcome as one row, and the last two versions of the text
+        // a page or file watch compared. Both go with their watch. Older databases start with none: nothing kept it.
+        m.registerMigration("v6-watch-history") { db in
+            try db.create(table: "watch_checks") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("watcher_id", .text).notNull().references("watchers", onDelete: .cascade)
+                t.column("result", .text).notNull()
+                t.column("first_at", .double).notNull()
+                t.column("last_at", .double).notNull()
+                t.column("count", .integer).notNull().defaults(to: 1)
+                t.column("reason", .text)
+                t.column("duration_ms", .integer)
+            }
+            try db.create(index: "watch_checks_watcher", on: "watch_checks", columns: ["watcher_id", "id"])
+            try db.create(index: "watch_checks_last_at", on: "watch_checks", columns: ["last_at"])
+            try db.create(table: "watch_versions") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("watcher_id", .text).notNull().references("watchers", onDelete: .cascade)
+                t.column("at", .double).notNull()
+                t.column("text", .text).notNull()
+                t.column("hash", .text).notNull()
+            }
+            try db.create(index: "watch_versions_watcher", on: "watch_versions", columns: ["watcher_id", "id"])
+        }
         return m
     }
 }

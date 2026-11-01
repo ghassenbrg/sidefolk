@@ -627,6 +627,12 @@ binary targets or build plugins from dependencies.
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
   step that makes a watcher active.
+- A watch's history (D87) stays on the Mac in the database (T19): its checks for 30 days and at most 500 rows,
+  and the last two versions of the text it compared, 32,000 characters each, extracted text only (never a page's
+  HTML; a file only when it is a small plain text file in a folder it may watch), with invisible and
+  bidirectional controls removed (T2). It is deleted with the watch, exported and deleted with "Your data", and
+  never given to a model: `watch.list` says when a watch last changed, and repeats the notice's words only for
+  kinds whose summary is built from the watch's own settings.
 
 **T26 Voice: the microphone and a cloud voice (M/M), D34.** The microphone opens only while the
 person holds the talk key or the companion (off until voice input is turned on; macOS asks on the

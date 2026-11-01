@@ -48,7 +48,13 @@ enum SamplePocket {
 
         var empty = base
         (empty.needsYou, empty.nextUp, empty.agents, empty.watching) = ([], [], [], 0)
-        return [("waiting", base), ("quiet", quiet), ("update", update), ("hidden", hidden), ("full-access", full), ("empty", empty)]
+
+        // Add-on updates are one row, however many (D89).
+        var addons = empty
+        addons.needsYou = [.init(id: "addon-updates", title: AddonUpdateWords.count(3), detail: "Feeds, Clipboard and Night Shift",
+                                 symbol: "arrow.down.circle", open: {})]
+        return [("waiting", base), ("quiet", quiet), ("update", update), ("hidden", hidden), ("full-access", full), ("empty", empty),
+                ("addon-updates", addons)]
     }
 }
 #endif

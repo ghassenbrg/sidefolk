@@ -157,13 +157,14 @@ enum SampleData {
             try await rt.watcherStore.save(w)
         }
         // What the page probe keeps of its last change (D58), and the notice about it still waiting on Today.
-        try await watcher("Pro pricing on example.com", kind: "web.change", config: ["url": "https://example.com/pricing"], every: 1800, checked: ago(4),
+        try await watcher("Pro pricing on example.com", kind: WatchKind.urlChange, config: ["url": "https://example.com/pricing"], every: 1800, checked: ago(4),
                           id: "w-pricing", seen: ["change": ["at": .number(ago(25).timeIntervalSince1970),
                                                              "removed": ["Pro $12 / month, billed yearly"], "added": ["Pro $15 / month, billed yearly"]]])
         try await watcher("Staging is up", kind: "site.up", config: ["url": "https://staging.sidefolk.app"], every: 60, state: .error, checked: ago(1),
-                          error: "Couldn't reach staging.sidefolk.app (timed out). I'll try again in 4 min.")
+                          error: "Couldn't reach staging.sidefolk.app (timed out). I'll try again in 4 min.", id: "w-staging")
         try await watcher("report.pdf lands in Downloads", kind: "file.appears", config: ["path": .string(home + "/Downloads/report.pdf")],
-                          every: 60, state: .paused, checked: ago(60 * 3))
+                          every: 60, state: .paused, checked: ago(60 * 3), id: "w-report")
+        try await SampleWatchHistory.fill(rt, now: now)
         try await watcher("Nils Frahm tickets go on sale", kind: "web.contains", config: ["url": "https://example.org/concerts"], every: 3600,
                           state: .triggered, checked: ago(170), updated: ago(170))
 

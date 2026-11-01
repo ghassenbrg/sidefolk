@@ -97,10 +97,16 @@ private struct AddonUpdateRows: View {
                 Button("Review…") { updates.addonActions?.review(entry) }.buttonStyle(.sf(.primary))
             }
         }
-        if !updates.addonWaiting.isEmpty {
-            SettingsRow(title: Text(waitingTitle), detail: Text(verbatim: Wording.list(updates.addonWaiting.map(\.shownName)))) {
-                Button("Update all") { updates.addonActions?.updateAddonsNow() }.buttonStyle(.sf(.secondary)).disabled(updates.addonsBusy)
+        if !updates.addonInstallable.isEmpty {
+            SettingsRow(title: Text(waitingTitle), detail: Text(verbatim: Wording.list(updates.addonInstallable.map(\.shownName)))) {
+                HStack(spacing: Theme.Space.s) {
+                    Button("Show") { updates.addonActions?.showAddonUpdates() }.buttonStyle(.sf(.quiet))
+                    Button("Update all") { updates.addonActions?.updateAddonsNow() }
+                        .buttonStyle(.sf(.secondary, size: .small, working: updates.addonsBusy)).disabled(updates.addonsBusy)
+                }
             }
+        } else if let summary = updates.addonSummary {
+            SettingsRow(title: Text(verbatim: summary), detail: nil) { EmptyView() }
         } else if let at = updates.addonsUpdatedAt, !updates.addonsUpdated.isEmpty {
             SettingsRow(title: Text("Add-ons updated \(TimeText.relative(at))", comment: "Settings › Updates: “Add-ons updated 2 hours ago”"),
                         detail: Text(verbatim: Wording.list(updates.addonsUpdated))) { EmptyView() }
@@ -108,6 +114,6 @@ private struct AddonUpdateRows: View {
     }
 
     private var waitingTitle: String {
-        String(localized: "\(updates.addonWaiting.count) add-on updates are ready", comment: "Settings › Updates, while add-ons don't update by themselves")
+        String(localized: "\(updates.addonInstallable.count) add-on updates are ready", comment: "Settings › Updates, while add-ons don't update by themselves")
     }
 }

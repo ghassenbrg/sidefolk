@@ -1823,6 +1823,9 @@ in Activity (it is the audit of tool calls; an update is not one).
 the one kept for half an hour, then looks as the timed check does (installs what may install by itself, lists what
 waits). Miraya was published minutes after the founder's copy had kept the list, and nothing could make it look sooner.
 
+*Amended by D89:* waiting updates are shown wherever add-ons appear (the Gallery's Updates, an extension's page,
+Settings › Add-ons, Home's sidebar, Today, the Pocket) with Update all, and a whisper after a day.
+
 ### D71 — Install sheets and approval cards that are honest without being scary: trust first, tone by source, guards beside each permission (2026-10-31)
 **Decision:** the same facts for every extension, said as loudly as where it comes from calls for.
 - **Where it comes from, first** (`InstallSource`, a row under the title): *From the Sidefolk gallery · Signed by
@@ -2368,6 +2371,7 @@ they don't. Miraya's `addon.json` names 593.
 
 
 ### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+*Amended by D87 and D88:* a watch has its own page in Home and On duty's rows a bar of its checks (D87); each source has its own level in Settings › Attention (D88).
 **Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
 design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
 1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
@@ -2494,7 +2498,7 @@ you were focused" card when it ends; cards that need an answer still come (`Atte
 `AppSettings.focusUntil`). Quiet hours every night (off until turned on; choosing Open or Focus inside them sets the
 rest of that night aside), what a full-screen app does (Quiet as before, Focus, or nothing), sounds, notifications
 and the morning brief. A timer looks again when an end or a quiet-hours edge passes. The per-source "what may
-interrupt you" table of the mockups was left out: no source has its own level to set. **Full access may end**
+interrupt you" table of the mockups was left out: no source has its own level to set. *(D88 built it.)* **Full access may end**
 (`GuardPolicy.fullAccessEnds`, `beforeFullAccess`, `choose(_:fullAccessEnds:)`): Guard reads the policy through
 `current(at:)`, so past its end Full access is the mode it replaced even if no timer fired (the Mac asleep, Sidefolk
 quit); the sheet offers in 1 hour, tonight at 22:00 (while more than an hour away) or when turned off, and its button
@@ -2593,3 +2597,143 @@ stand-in's place in dev copies. To try a dev copy's Connect with a real agent, r
 `IntegrationLocationsTests` checks a non-default folder never resolves to the real paths, even when the
 environment names them, and that installing and removing all six connections there leaves every byte of
 the person's folders as it was.
+
+### D87 — A watch keeps its history: every check, the latest change's two versions, and its own page in Home (2026-11-01)
+**Decision:** *amends D84 (a watch's detail page, left out for want of a history) and D58 (the page change kept for
+Today's tile).* Every watch that isn't a live value (D35) keeps a record of its checks and, for a page or a file, the text
+it compared, and has its own page in Home.
+- **The check log** (`watch_checks`, migration `v6-watch-history`): each check is unchanged, changed (with the notice's
+  words), failed (with the reason, the same words as `lastError`) or paused, with how long it took. Checks in a row that
+  found the same thing are one row with a count and their first and last times, so a watch looking every 30 s writes a
+  row only when the outcome changes; a run that only grew reaches the database with the watcher's routine saves (every
+  5 minutes, `WatcherEngine.routineSaveInterval`) and on quit (`flushHistory`), and readers ask the engine, which has it
+  as it stands. Waiting for a busy site or the network (`ProbeError.deferred`, `.offline`) isn't a check. Reports keep
+  no log: they read every few seconds and keep their own line of values in memory (D58).
+- **Versions** (`watch_versions`): the extracted text the probe compared, never the HTML: a page's readable lines
+  (`PageText`), a plain text file's lines (`FileText`: an allow list of text kinds, 512 KB at most, UTF-8, read only on
+  the first look and when the file changed, invisible and bidirectional controls removed, SECURITY T2). The first look
+  is kept, then each change with what it was before (`ComparedText`); only the newest two stay, each cut at 32,000
+  characters on a line, and the same text twice is kept once. A file that isn't text keeps none: its size and time are
+  what it compares.
+- **Kept small:** checks older than 30 days go at the daily tidy (`SidefolkRuntime.housekeeping`), and at most 500 rows
+  per watch whatever their age. The two versions stay while the watch does (the newer is what the next change is
+  compared with). Both tables reference `watchers` with a cascade, so stopping a watch deletes its history; "Your
+  data" exports both (`watchChecks`, `watchVersions`) and "Delete all data" empties both. Nothing leaves the Mac.
+- **The watch's page** (`HomeSelection.watch`, `WatchDetailView`), opened from On duty's rows, Today's watch tiles (the
+  popover they had is gone) and a changed-watch card on Today ("See what changed", a link, so the card keeps its three
+  buttons): what it watches, how often, Scout, since when and until when; Check now (the one primary while it watches)
+  or Resume (when it doesn't), Pause and Stop watching (confirmed: its history goes with it), through the same
+  `AppServices` calls On duty uses; "What changed" for page and file watches, inline or side by side (`LineDiff`: every
+  line that differs, in reading order, two lines of context, at most 600 lines), in the text's own direction; and the
+  timeline of runs under a bar of the last 48 checks. A page watch from before this shows the changed lines D58 kept.
+- **On duty's bars:** each watch row has its last 24 checks as ticks (`CheckTicks`), with their counts in words for
+  VoiceOver; "Watching" is no longer a chip there (the bar says it), other states still are.
+- **Colours (D78, `StatusTone.check`):** a change is news (the accent), a failed check amber; red stays for a watch that
+  stopped (`StatusTone.watch(.error)`). In "What changed", removed lines are struck through in muted ink and added ones
+  sit on the news tint, marked − and +.
+- **For agents:** `watch.list` adds ", last changed 2 h ago" to each watch that changed, with the notice's words in
+  brackets only for kinds whose summary is made from the watch's own settings (`url_change`, `site_status`,
+  `file_changes`, `file_appears`); a folder's new file names, a program's or an extension's words are outside content
+  (T2), so for those only the time is said. No tool's input schema changed, so MCP clients see the same tools.
+
+**Why:** the founder: a watch only kept its latest state, so the app couldn't say when it last changed, what changed,
+or that it had been failing all night; D84 left the watch page and On duty's bars out rather than fake them. A run-length
+log keeps a month of a 30-second watch in a few rows, and keeping the compared text (not the page) is what makes "what
+changed" possible at a size that doesn't matter (two versions of 32,000 characters, 50 watches at most).
+
+**Alternatives:** a row per check (2,880 a day for one file watch, and a write every 30 s against the routine-save rule);
+keeping the fetched HTML (big, and not what was compared); a diff stored at change time instead of the two versions (no
+side-by-side view, and nothing to compare the next change with for files); reading a file's text at every check (it
+compares size and time; reading only on a change costs nothing while nothing changes); putting the change summary in
+`watch.list` for every kind (it would make the list outside content whenever a folder watch fired).
+
+**Implications:** `WatchCheck`, `WatchVersion`, `WatchHistoryStore`, `WatchHistoryLimits` (Storage); `ProbeResult.compared`,
+`FileText`, `LineDiff`, `WatcherEngine+History` (`note`, `keep`, `checks(for:)`, `recentTicks`, `versions(for:)`,
+`lastChanges`, `flushHistory`); `StatusTone.check`; `DataPorter`; the app's `WatchDetailModel`, `WatchDetailView`,
+`WatchChecks.swift` (`CheckTicks`, `CheckRow`, `CheckWords`), `WatchChangeView.swift`; `NowModel.ticks` and
+`openWatch`; `WatchTile` and `ChangeLines` removed; `swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]`;
+snapshots `window-home-watch*`.
+
+### D88 — What may interrupt you: a ceiling per source, Only in Today, and "done today" counts only what was done (2026-11-01)
+**Decision:** *amends D84 (phase 4 left the per-source table out) and D12.* Every notice now has a **source** with a
+level the person sets in Settings › Attention › What may interrupt you: reminders, watches (all, and one watch set
+apart), commands (`sidefolk run`), each agent by its client name (Claude Code, Codex, then any other app that called
+Sidefolk or started a session), each extension whose watches report, games (the companion's lines while playing) and
+the companion itself (its AI's notices, routines, folk introductions, "All clear"). The levels are **Card** (may step
+forward), **Whisper** (gentle; if it needs an answer it folds into the stack when it fades), **Only in Today** (never on
+the desktop: kept in Today, `AttentionItem.State.kept`) and **Off** (History only). Reminders offer no Off; games only
+Whisper or Off. A notice gets the **lower of its own level and its source's ceiling, then Focus or Quiet**
+(`Interruptions.route`, applied first in `AttentionCenter.consider`, so a held notice is judged again when it comes
+back). **Never turned down:** a question (`refKind "ask"`) and an agent session that needs the person (its approval in
+its own window); Guard's approvals never go through the attention center at all. The most specific level the person set
+wins (a watch, then its extension, then all watches); unset levels are the source's default, which is the behaviour
+before D88, and a default clears the stored value. Stored as `AppSettings.interruptions` (`{"agent:codex": "today",
+"watch:<id>": "whisper"}`); settings from before decode to the defaults and unknown keys or levels are skipped. To tell
+agents apart, a session's notices are `session:<agent>:<id>` (from before: no agent, so no ceiling), and an extension's
+watch posts as `extension:<id>` (`Watcher.noticeSource`; the card still reads as Scout's watch). A card's ⋯ menu has
+**Show these as whispers** (a card from a source at Card) and **Fewer like this** (Only in Today), for its most specific
+source; the card goes as a whisper would, and a whisper says what changed with **Undo**. `notify.user` tells the agent
+when its notice was kept in Today or turned off, so it doesn't resend it. Today shows kept news under **Kept for Today**
+(who · when, its answers, Dismiss) and kept notices that need an answer in Needs you; the desktop count, the stack and
+the Pocket leave them out.
+
+**"Done today"** (`DayBrief.doneCount`, the one definition) counts reminders and tasks finished today, notes, ideas,
+tasks and links saved today, and today's other calls that changed something (`ToolSpec.mutates`), refused, failed and
+skipped ones left out. Reads (searches, lists, another agent's `status`) never count, and the calls whose result the
+stores already count (`notes.save`, `reminders.complete`, `notes.update` to done) aren't counted twice.
+
+**Why:** levels came only from each event's kind, so the person could quiet everything (Focus, Quiet) but not one
+chatty agent; the founder's sessions finishing many times an hour were the case. A ceiling keeps each poster's own
+judgement (a failure stays louder than a success) while letting the person cap it, and Only in Today keeps the news
+without the interruption. Questions and approvals stay out of it so nothing waits unseen. "Done today" counted every
+call that didn't fail, so Codex checking `status` made the day look busy.
+
+**Alternatives:** a level per event kind (too many rows; the person thinks in who, not what); Off for reminders (the
+person's own words at their own time; Only in Today is the quietest); storing the source's agent in a new column (a
+migration for what the source string can say); counting done from History's rows (they mix reads and changes).
+
+**Implications:** `Interruptions`, `InterruptSource`, `InterruptLevel` (Core/Attention); `AttentionEnvironment.
+interruptions`, `AttentionCenter.kept()`, `AttentionStore.kept()`; `SidecardItemCard.fewer`, `SidecardModel.
+lowerSource`, `AppCoordinator.lowerSource/undoLevel`; `InterruptionsGroup` in Settings › Attention and
+`SettingKey.interruptions`; `NowModel.kept` and Today's Kept for Today; `CueDirector.linesShown`; the debug command
+`interrupt:<source key>:<level>`. Tests: `InterruptionsTests`, `InterruptionsCenterTests` (every level against every
+ceiling, then Open, Focus and Quiet), `DoneTodayTests`.
+
+*Amended by D89:* the table gains **Add-on updates** (`addonUpdates`, key "addons"), Whisper by default: the whisper
+after updates waited a day and the heads-up about an update to look at.
+
+### D89 — Add-on updates in sight wherever add-ons appear, with Update all (2026-11-01)
+**Decision:** *amends D70.* Updates that wait for the person (the switch off, or an extension update that would do more)
+are shown where add-ons are, from one list (`UpdateModel.addonPending`, kept by `AddonUpdateController`):
+- **Home's Gallery** leads with **Updates** and a count: one row per add-on (companions, extensions, themes) with
+  Update, Review… for one that would do more, its progress while it installs, Updated or Try again, and **Update all**.
+- **An extension's page** has a calm "Update available" strip with **What's new** (the install sheet, which says what
+  the version changes, D71) and Update; **Settings › Add-ons** rows say "New version x" with Update beside their switch,
+  and a card offers Update all; **Home's sidebar** marks a page's row with an accent dot and counts updates on Get
+  add-ons; **Today** has one compact row (count, names, Update all, Show), the **Pocket** one row in Needs you.
+- **Update all** installs every waiting update that asks for nothing new, one at a time, by D70's own rule
+  (`AddonUpdater.updateAll`, the path a timed look with the switch on takes too). One that would let an extension do
+  more stays listed with Review…, which opens its install sheet; one that fails keeps its old copy, says why and has
+  Try again, and the rest go on. It ends with a summary ("3 updated, 1 needs your review"). A single Update does the
+  same for one, and opens the sheet at once when the version asks for more. A version needing a newer Sidefolk is never
+  offered (the catalog leaves it out, D83).
+- **One whisper** ("2 add-ons have updates", Update all and Show) once updates have waited a day with the switch off
+  (`AddonUpdateNudge`); then nothing more about them, only about a later one after its own day. Its source is
+  **Add-on updates** in D88's table (`InterruptSource.addonUpdates`, key "addons", Whisper by default), which also
+  covers D70's heads-up about an update to look at.
+
+**Why:** the founder: "If I don't go there on purpose, I'll never notice." Updates lived in Settings › General and on
+gallery cards only. The App Store and Google Play put an Updates list with Update all where apps are, and say so once.
+
+**Alternatives:** a card per update on Today (a pile; the founder asked for one row); release notes in the catalog
+for What's new (the gallery publishes none; the install sheet already says what a version changes, honestly);
+installing widening updates with Update all (they need the person's look, D70); nudging with the switch on
+(updates then install by themselves; the review heads-up stays per version, D70).
+
+**Implications:** Core `AddonUpdater.update(_:)`, `updateAll(_:step:)`, `AddonUpdateStep`, `AddonUpdateOutcome`,
+`AddonUpdateReport.failed/summary`, `AddonUpdateNudge`; `AddonStore.updateCompanions` went (the updater installs
+companions). App: `UpdateModel.addonSteps/addonSummary/addonRecent/addonPending/addonInstallable/addonRows`,
+`AddonUpdateActions.update/showAddonUpdates`, `Updates/AddonUpdateViews.swift`, the whisper's kind `addon-updates`;
+dev commands `addons:updates|nudge|auto:off|get:<id>|check|updateAll`; snapshots `window-home-gallery-updates`,
+`window-home-today-updates`, `page-extension-clipboard-update`, `page-settings-addons-updates`,
+`panel-pocket-addon-updates`. Tests: `AddonUpdateAllTests`.

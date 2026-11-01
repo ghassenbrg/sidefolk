@@ -27,6 +27,8 @@ final class SidecardController {
     var onChange: (() -> Void)?
     /// A card folded into the stack: the companion stops looking alarmed; the count says it waits.
     var onFold: ((AttentionItem) -> Void)?
+    /// "Fewer like this" or "Show these as whispers" on a card (D88).
+    var onLowerSource: ((AttentionItem, InterruptSource, InterruptLevel) -> Void)?
 
     init() {
         hosted = HostedPanel(rootView: SidecardView(model: model), allowsKey: false)
@@ -39,6 +41,11 @@ final class SidecardController {
             self?.onRespond?(item, action)
         }
         model.grow = { [weak self] in self?.growWhisper() }
+        model.lowerSource = { [weak self] item, source, level in
+            // The card goes as a whisper would: what needs an answer waits in the stack, news is done.
+            self?.autoDismiss(id: item.id)
+            self?.onLowerSource?(item, source, level)
+        }
         model.openStack = { [weak self] in
             self?.hideStack()
             self?.onOpenStack?()
@@ -208,6 +215,12 @@ final class SidecardController {
 
     private func autoDismiss(id: String) {
         guard let item = model.item, item.id == id else { return }
+        // A card its source turned into a whisper (D88) still needs its answer: it folds into the stack, as a card does.
+        if item.level >= .attention, Self.folds(item) {
+            fold(item)
+            close(id: id)
+            return
+        }
         close(id: id)
         onAutoDismiss?(item)
     }
@@ -310,8 +323,12 @@ final class SidecardController {
         next()
     }
 
+    /// Whether the companion's own remarks may show (Settings › Attention, D88).
+    var remarksShown: () -> Bool = { true }
+
     /// The last held card was answered: said once, the only celebration on the desktop (b06).
     private func allClear() {
+        guard remarksShown() else { return }
         let item = AttentionItem(level: .gentle, source: AppCoordinator.ownVoice,
                                  title: String(localized: "All clear. Nothing waits for you.", comment: "A whisper when the last held card was answered"),
                                  refKind: "clear")

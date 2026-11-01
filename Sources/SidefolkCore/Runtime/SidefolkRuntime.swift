@@ -175,6 +175,7 @@ public final class SidefolkRuntime: Sendable {
         let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400)
         await scheduler.stop()
         await watchers.stop()
+        await watchers.flushHistory()
         await extensions.shutdown()
         server.stop()
         await upkeep.stop()
@@ -192,7 +193,7 @@ public final class SidefolkRuntime: Sendable {
         return runtime
     }
 
-    /// Removes expired history, old activity, runs and jobs, and long-trashed notes.
+    /// Removes expired history, old activity, runs and jobs, long-trashed notes and watches' old checks (D87).
     public func housekeeping() async {
         let s = settings.current
         let now = clock.now
@@ -203,5 +204,6 @@ public final class SidefolkRuntime: Sendable {
         _ = try? await jobs.purge(olderThan: now.addingTimeInterval(-14 * 86400))
         _ = try? await runs.purge(olderThan: now.addingTimeInterval(-Double(s.activityDays) * 86400))
         _ = try? await AttentionStore(db).purge(olderThan: now.addingTimeInterval(-30 * 86400))
+        _ = try? await WatchHistoryStore(db).purge(olderThan: now.addingTimeInterval(-Double(WatchHistoryLimits.keepDays) * 86400))
     }
 }

@@ -14,6 +14,7 @@ struct ExtensionsSidebarSection: View {
                 HStack(spacing: Theme.Space.s + 2) {
                     PageSquircle(info: p)
                     Text(verbatim: p.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
+                    if pages.services.updates.addonUpdate(for: p.extensionId) != nil { AddonUpdateDot() }
                     Spacer(minLength: Theme.Space.xs)
                     if let control = pages.summaries[p.id]?.control, case .toggle = control.kind {
                         QuickControl(info: p, control: control, pages: pages, small: true)
@@ -50,6 +51,13 @@ struct ExtensionsSidebarSection: View {
                     Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).frame(width: 20)
                     Text("Get add-ons", comment: "Home's sidebar: opens the Gallery of companions, extensions and themes")
                         .font(Theme.Font.body)
+                    let updates = pages.services.updates.addonPending.count
+                    if updates > 0 {
+                        Spacer(minLength: Theme.Space.xs)
+                        CountBadge(count: updates, waiting: false)
+                            .help(Text(verbatim: AddonUpdateWords.count(updates)))
+                            .accessibilityLabel(Text(verbatim: AddonUpdateWords.count(updates)))
+                    }
                 }
                 .foregroundStyle(Theme.link)
             }

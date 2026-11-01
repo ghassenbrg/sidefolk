@@ -253,6 +253,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var quietHoursSetAside: Date?
     /// What a full-screen app does to interruptions (D84).
     public var fullScreen: FullScreenRule = .quiet
+    /// How far each source may interrupt: reminders, watches, agents, extensions, games, the companion (D88).
+    public var interruptions = Interruptions()
     /// Comfortable or compact spacing in every window; nil follows the theme (D84).
     public var density: ThemeTokens.Density?
     /// Hour (0-23) "morning" means for "tomorrow morning" and the morning brief.
@@ -323,6 +325,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.quietHours, &quietHours)
         quietHoursSetAside = try? c.decodeIfPresent(Date.self, forKey: .quietHoursSetAside)
         read(.fullScreen, &fullScreen)
+        read(.interruptions, &interruptions)
         density = try? c.decodeIfPresent(ThemeTokens.Density.self, forKey: .density)
         read(.morningHour, &morningHour)
         read(.afternoonHour, &afternoonHour)
