@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// The stack's arc (D88): held cards come out of the count on the companion's shoulder and fold back into it along a
+/// The stack's arc (D84): held cards come out of the count on the companion's shoulder and fold back into it along a
 /// short curve. It moves only at those moments (a few tenths of a second) and never with Reduce Motion; at rest
 /// nothing animates, so the desktop costs what it did.
 extension SidecardController {

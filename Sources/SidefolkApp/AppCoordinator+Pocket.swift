@@ -94,7 +94,7 @@ extension AppCoordinator {
 
         // Needs you: agents' sessions asking, cards waiting, steps skipped while nobody answered.
         let sessions = (try? await runtime.sessions.live()) ?? []
-        // One line per agent and folder, with how many when several sessions wait or work there (D88).
+        // One line per agent and folder, with how many when several sessions wait or work there (D90).
         for group in AgentSessionGroup.of(sessions.filter { $0.state == .needsYou }) {
             let session = group.session
             c.needsYou.append(.init(id: "session-\(session.id)", title: String(localized: "\(Self.agentName(session.agent)) needs you")

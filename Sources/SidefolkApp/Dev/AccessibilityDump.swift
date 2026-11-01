@@ -3,7 +3,7 @@ import AppKit
 
 /// Dev (`swift scripts/dev.swift ax`): the accessibility tree of every visible window, as VoiceOver walks it (role,
 /// label, value, whether it can be pressed), written beside the snapshots. Read from inside the app, so it needs no
-/// Accessibility permission for the tool asking (D88's VoiceOver pass).
+/// Accessibility permission for the tool asking (D84's VoiceOver pass).
 @MainActor
 enum AccessibilityDump {
     static func write(to folder: URL) {

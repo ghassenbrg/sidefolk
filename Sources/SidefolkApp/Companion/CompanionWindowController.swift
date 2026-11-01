@@ -46,7 +46,7 @@ protocol CompanionDelegate: AnyObject {
     var companionCanTalk: Bool { get }
     func companionHoldBegan()
     func companionHoldEnded()
-    /// What the companion is saying above its head (a card, the held cards, a permission slip), for VoiceOver (D88).
+    /// What the companion is saying above its head (a card, the held cards, a permission slip), for VoiceOver (D84).
     func companionSays() -> String?
     /// VoiceOver pressed it: the card takes the keyboard, as its shortcut does.
     func companionFocusCard()
@@ -74,7 +74,7 @@ final class CompanionWindowController {
     /// The extras' column (pins and agents) as measured, and where each one stands in the window.
     private var extrasSize = NSSize.zero
     private(set) var extras: [(item: FloorItem, rect: NSRect)] = []
-    /// VoiceOver's elements for the corner, by what they stand for (D88).
+    /// VoiceOver's elements for the corner, by what they stand for (D84).
     var axElements: [String: FloorElement] = [:]
     private var badgeHovered = false
     /// The item the pointer rests on, whose tip shows.
@@ -409,7 +409,7 @@ final class CompanionWindowController {
         container.setAccessibilityValue(Self.spoken(light))
     }
 
-    /// The light follows the person's voice while the microphone listens (D88).
+    /// The light follows the person's voice while the microphone listens (D84).
     func setVoiceLevel(_ level: Double?) {
         if floor.voiceLevel != level { floor.voiceLevel = level }
     }
@@ -448,7 +448,7 @@ final class CompanionWindowController {
         return hypot(point.x - center.x, point.y - center.y) <= Theme.Size.stackBadge * 0.7
     }
 
-    /// The count on the shoulder on screen, where held cards fold to (D88); nil while the companion is away.
+    /// The count on the shoulder on screen, where held cards fold to (D84); nil while the companion is away.
     var badgeOnScreen: NSPoint? {
         guard panel.isVisible else { return nil }
         let point = NSPoint(x: floor.badgeCenter.x, y: container.bounds.height - floor.badgeCenter.y)
@@ -826,7 +826,7 @@ final class CompanionContainerView: NSView {
         super.init(frame: .zero)
         addSubview(character)
         registerForDraggedTypes([.fileURL, .URL, .string])
-        // One group VoiceOver enters (D88): the companion and everything in its corner, in a sensible order.
+        // One group VoiceOver enters (D84): the companion and everything in its corner, in a sensible order.
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
         setAccessibilityLabel(String(localized: "Sidefolk companion", comment: "VoiceOver: the group holding the companion, its count, pins, agents and folks"))

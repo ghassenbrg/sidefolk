@@ -111,7 +111,7 @@ nonisolated final class MicrophoneMeter: Sendable {
         var waited: Duration?
         /// The loudest sample, 0...1 (full scale).
         var peak: Float = 0
-        /// The loudest sample of the last buffer: how loud it is right now, for the light that listens (D88).
+        /// The loudest sample of the last buffer: how loud it is right now, for the light that listens (D84).
         var level: Float = 0
         /// Below about -60 dBFS: a muted, switched-off or wrong microphone, not a quiet voice.
         var silent: Bool { buffers > 0 && peak < 0.001 }

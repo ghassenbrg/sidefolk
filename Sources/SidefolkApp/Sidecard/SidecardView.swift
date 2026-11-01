@@ -74,7 +74,7 @@ struct SidecardView: View {
             }, selected: model.stackFocus, out: model.stackOut, from: model.fanFrom)
             HStack(spacing: Theme.Space.s) {
                 if model.stackFocus != nil {
-                    // From the shortcut: the keys that move through the held cards (D88).
+                    // From the shortcut: the keys that move through the held cards (D84).
                     ButtonRow(spacing: Theme.Space.s) {
                         keyPair("↑↓", Text("choose", comment: "Under the held cards fanned from the keyboard: ↑↓ picks one"))
                         keyPair("↩", Text("open", comment: "Under the held cards fanned from the keyboard: ↩ brings the chosen one out"))
@@ -148,7 +148,7 @@ struct SidecardItemCard: View {
         .accessibilityLabel(Text(verbatim: item.title))
     }
 
-    /// The answer the keyboard is on, while the card has it (D88).
+    /// The answer the keyboard is on, while the card has it (D84).
     private func focused(_ id: String) -> Bool { model.keys?.focusedAnswer == id }
 
     /// Three in sight at most, the main one last (macOS order): the likeliest other answer beside it, and the rest in a

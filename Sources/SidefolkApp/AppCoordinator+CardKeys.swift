@@ -4,11 +4,11 @@ import KeyboardShortcuts
 import SidefolkCore
 
 extension KeyboardShortcuts.Name {
-    /// ⌃⌥Space by default (D88): the card beside the companion takes the keyboard.
+    /// ⌃⌥Space by default (D84): the card beside the companion takes the keyboard.
     static let answerCard = Self("answerCard", default: .init(.space, modifiers: [.control, .option]))
 }
 
-/// Answering cards from the keyboard outside Ask (D88). The shortcut is registered only while something on the desktop
+/// Answering cards from the keyboard outside Ask (D84). The shortcut is registered only while something on the desktop
 /// waits for an answer (a card, a slip, held cards), so the rest of the time the combination stays the other apps'; and
 /// never when macOS or Sidefolk's own shortcuts already use it.
 extension AppCoordinator {
@@ -40,7 +40,7 @@ extension AppCoordinator {
 }
 
 extension AppCoordinator {
-    /// What VoiceOver hears above the companion's head (D88): the slip standing alone, the card or whisper, or the
+    /// What VoiceOver hears above the companion's head (D84): the slip standing alone, the card or whisper, or the
     /// held cards fanned out.
     func companionSays() -> String? {
         if askPanel.isVisible, ask.compact, let slip = ask.pinnedEntries.first, case .approval(let request) = slip.content {

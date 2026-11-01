@@ -40,7 +40,7 @@ struct LightPool: View {
     /// A still colour, as Reduce Motion has it: for copies of the light (Home's nook), where a breath forever would
     /// redraw a whole window every frame for something the desktop already shows.
     var still = false
-    /// How loud the person is while the microphone listens (0...1 in steps, D88): the light swells with the voice
+    /// How loud the person is while the microphone listens (0...1 in steps, D84): the light swells with the voice
     /// instead of breathing. Nil the rest of the time.
     var level: Double? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

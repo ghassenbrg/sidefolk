@@ -1,6 +1,6 @@
 import Foundation
 
-/// How loud the person is, as the light at the companion's feet shows it while the microphone listens (D88): a few
+/// How loud the person is, as the light at the companion's feet shows it while the microphone listens (D84): a few
 /// steps, so the light moves with the voice and stays still in a quiet room.
 public enum VoiceLevel {
     /// Below this the room is quiet (about -50 dBFS); at the top a raised voice (-6 dBFS).

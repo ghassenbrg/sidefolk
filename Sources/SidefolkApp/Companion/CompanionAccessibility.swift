@@ -1,7 +1,7 @@
 import AppKit
 import SidefolkCore
 
-/// One thing in the companion's corner as VoiceOver reaches it (D88): the pins, agent faces and the count are drawn
+/// One thing in the companion's corner as VoiceOver reaches it (D84): the pins, agent faces and the count are drawn
 /// as one picture that takes no clicks of its own, so each gets an element here, with its words and what pressing
 /// it does (the same as a click).
 nonisolated final class FloorElement: NSAccessibilityElement {

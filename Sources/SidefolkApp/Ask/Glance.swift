@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// Today at a glance, Ask's Today tab (D58, D88): what needs you (answered here as on Today, a watch's notice among
+/// Today at a glance, Ask's Today tab (D58, D90): what needs you (answered here as on Today, a watch's notice among
 /// them), the next two things in your day, and the way to Today. Who's working isn't listed: the agents' faces beside
 /// the companion, On duty and the Pocket already show them.
 struct Glance: Equatable {

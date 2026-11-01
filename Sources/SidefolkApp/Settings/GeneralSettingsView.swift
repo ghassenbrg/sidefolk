@@ -225,7 +225,7 @@ private struct LanguageRow: View {
     }
 }
 
-/// The card shortcut (D88), with why it is off when macOS or another Sidefolk shortcut already has its keys.
+/// The card shortcut (D84), with why it is off when macOS or another Sidefolk shortcut already has its keys.
 private struct CardShortcutRow: View {
     var model: SettingsModel
     @State private var conflict = CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .answerCard))

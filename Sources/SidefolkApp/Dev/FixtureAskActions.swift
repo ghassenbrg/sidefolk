@@ -37,7 +37,7 @@ final class FixtureAskActions: AskActions {
     func remindPending(at date: Date, in model: AskModel) {}
     func answer(question: AttentionItem, actionId: String) {}
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel) {}
-    /// Miraya is there to play a video link on the TV (D88's drop card).
+    /// Miraya is there to play a video link on the TV (D84's drop card).
     var canPlayOnTV = false
     func dropChoices(for attachment: Attachment) -> [DropChoice] {
         guard case .url(let url) = attachment.kind else { return DropChoices.choices(for: attachment.dropKind) }

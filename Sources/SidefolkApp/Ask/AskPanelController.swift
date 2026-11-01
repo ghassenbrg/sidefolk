@@ -60,7 +60,7 @@ final class AskPanelController {
         onVisibilityChange?(true)
     }
 
-    /// The card shortcut (D88): a slip standing alone, or Ask, takes the keyboard it didn't take when it appeared.
+    /// The card shortcut (D84): a slip standing alone, or Ask, takes the keyboard it didn't take when it appeared.
     func focus() {
         hosted.panel.makeKey()
         model.focusRequest += 1

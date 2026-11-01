@@ -266,9 +266,9 @@ struct SidecardStack: View {
     }
 
     var items: [Item]
-    /// The one the keyboard is on (D88), ringed.
+    /// The one the keyboard is on (D84), ringed.
     var selected: String?
-    /// Fanned out of the shoulder (D88): with `from`, the offset to the count, the cards come out of it along a short
+    /// Fanned out of the shoulder (D84): with `from`, the offset to the count, the cards come out of it along a short
     /// arc when `out` turns true, the front one first, and fold back into it when it turns false. Without it they
     /// simply stand (Reduce Motion, snapshots).
     var out = true
@@ -305,7 +305,7 @@ struct SidecardStack: View {
 }
 
 extension View {
-    /// The keyboard's ring on the answer that Return would press (D88): the accent, 2 pt, just outside the button.
+    /// The keyboard's ring on the answer that Return would press (D84): the accent, 2 pt, just outside the button.
     func keyFocusRing(_ on: Bool, radius: CGFloat = Theme.Radius.control) -> some View {
         overlay {
             RoundedRectangle(cornerRadius: radius + 3, style: .continuous)
@@ -316,7 +316,7 @@ extension View {
     }
 }
 
-/// A card moving out of (or back into) the companion's shoulder along a short arc (D88): sideways and up at different
+/// A card moving out of (or back into) the companion's shoulder along a short arc (D84): sideways and up at different
 /// paces, which bends the path, while it grows from a fifth of its size. Only while it moves: at rest it is the card.
 struct ArcFan: ViewModifier {
     var out: Bool

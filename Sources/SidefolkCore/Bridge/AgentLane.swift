@@ -12,7 +12,7 @@ public struct AgentChip: Sendable, Equatable, Identifiable {
     /// It waits for the person in its own terminal.
     public var needsYou: Bool
     public var since: Date
-    /// Sessions of the same agent in the same folder, standing as this one face (D88).
+    /// Sessions of the same agent in the same folder, standing as this one face (D90).
     public var count: Int
 
     public init(id: String, agent: String, project: String?, needsYou: Bool, since: Date, count: Int = 1) {
@@ -25,7 +25,7 @@ public struct AgentChip: Sendable, Equatable, Identifiable {
     }
 }
 
-/// Sessions of one agent in one folder, in the same state, shown once with how many (D88): subagents and a second
+/// Sessions of one agent in one folder, in the same state, shown once with how many (D90): subagents and a second
 /// terminal in the same project would otherwise read as the same line three times.
 public struct AgentSessionGroup: Sendable, Equatable, Identifiable {
     /// The one that stands for the rest: the most recently active.

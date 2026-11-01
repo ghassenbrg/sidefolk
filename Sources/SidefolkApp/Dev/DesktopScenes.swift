@@ -95,7 +95,7 @@ enum DesktopScenes {
         ] + keyed(reminder: moment, needsYou: needsYou, stack: stack)
     }
 
-    /// The card shortcut's moments (D88): a calm reminder with the keyboard on its main answer, the second of three held
+    /// The card shortcut's moments (D84): a calm reminder with the keyboard on its main answer, the second of three held
     /// cards; a firm card that only ⌘↩ answers; the held cards fanned from the keyboard with one chosen.
     private static func keyed(reminder moment: (AttentionItem, SidecardModel.Shape, CGFloat?) -> SidecardModel, needsYou: SidecardModel,
                               stack: SidecardModel) -> [(String, SidecardModel)] {
@@ -164,7 +164,7 @@ enum DesktopScenes {
         var tip: FloorTip.Content?
         /// The person works under the corner: the extras step back.
         var receded = false
-        /// The microphone listens: the light follows the voice (D88).
+        /// The microphone listens: the light follows the voice (D84).
         var voiceLevel: Double?
     }
 
@@ -222,7 +222,7 @@ enum DesktopScenes {
             ("stack", Floor(light: .waiting(12), folks: ["scout"], sidecard: sidecards["stack"]), false),
             ("focus", Floor(light: .focus, count: 2, folks: ["scout"], pins: Array(pins.prefix(1))), false),
             ("quiet", Floor(light: .quiet, folks: ["scout"], pins: Array(pins.prefix(1))), false),
-            // Talking (D88): a soft voice and a raised one.
+            // Talking (D84): a soft voice and a raised one.
             ("listening-soft", Floor(light: .working, voiceLevel: 0.25), false),
             ("listening-loud", Floor(light: .working, voiceLevel: 1), false),
         ]

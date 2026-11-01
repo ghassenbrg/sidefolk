@@ -19,7 +19,7 @@ protocol VoiceHost: AnyObject {
     func mouth(_ level: Double?)
     /// Cancels the AI run in progress, so no stale answer turns up after an interruption.
     func cancelRun()
-    /// How loud the person is while the microphone listens, 0...1 in steps; nil when it stops (D88).
+    /// How loud the person is while the microphone listens, 0...1 in steps; nil when it stops (D84).
     func voiceLevel(_ level: Double?)
 }
 
@@ -54,7 +54,7 @@ final class VoiceController {
     /// A spoken request is still being worked on (its run can be cancelled by an interruption).
     private var awaitingSpokenReply = false
     private var mouthLevel: Double?
-    /// Reads the microphone's level a dozen times a second, only while it listens (D88).
+    /// Reads the microphone's level a dozen times a second, only while it listens (D84).
     private var levelWatch: Task<Void, Never>?
     /// The preferred models this ElevenLabs key may use, listed (free) along with its voices.
     var elevenLabsModels: [String]?

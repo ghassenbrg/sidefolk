@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// What the keys do while a card has the keyboard (D88), in one quiet line above its answers: ↩ (or ⌘↩ on a firm card)
+/// What the keys do while a card has the keyboard (D84), in one quiet line above its answers: ↩ (or ⌘↩ on a firm card)
 /// answers, ⎋ puts it away, ↑↓ and where it stands among the held cards. A Return that met a firm card makes ⌘↩ flash.
 struct SidecardKeysLine: View {
     var keys: CardKeys

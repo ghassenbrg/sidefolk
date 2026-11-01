@@ -37,7 +37,7 @@ enum FloorItem: Equatable {
 @MainActor @Observable
 final class FloorModel {
     var light: LightPoolState = .idle
-    /// The voice's level while the microphone listens (D88), nil otherwise.
+    /// The voice's level while the microphone listens (D84), nil otherwise.
     var voiceLevel: Double?
     /// How many wait, for the shoulder (alert and Focus carry it; waiting carries its own).
     var count = 0

@@ -1,11 +1,11 @@
 import SidefolkCore
 import SwiftUI
 
-/// What Ask shows under its field (D88): the conversation, or a compact Today. Play is the third tab, and opens the
+/// What Ask shows under its field (D84): the conversation, or a compact Today. Play is the third tab, and opens the
 /// Play panel in Ask's place (one panel at a time), so it is never a state of its own here.
 enum AskTab: Hashable { case ask, today, play }
 
-/// Ask's header (D84, D88): who you talk to, how much Sidefolk asks, the way home and to Settings; under it the tabs,
+/// Ask's header (D84): who you talk to, how much Sidefolk asks, the way home and to Settings; under it the tabs,
 /// and for an AI conversation when it happened with the way to it in History.
 struct AskHeader: View {
     @Bindable var model: AskModel
@@ -91,7 +91,7 @@ struct AskHeader: View {
     }
 }
 
-/// Ask's Today tab (D88): what needs you and what's next, as Glance has them, with the way to Today.
+/// Ask's Today tab (D84): what needs you and what's next, as Glance has them, with the way to Today.
 struct AskTodayTab: View {
     var model: AskModel
 

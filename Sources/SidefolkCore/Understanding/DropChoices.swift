@@ -1,6 +1,6 @@
 import Foundation
 
-/// What can be done with something dropped on the companion (D88): four likely choices by kind, the first one what
+/// What can be done with something dropped on the companion (D84): four likely choices by kind, the first one what
 /// Return does. Each is a path that already exists (a note, a watch, Ask, a reminder, the clipboard, an app, Miraya's
 /// tool); the app shows them as a 2×2 card in Ask and runs them.
 public enum DropChoice: String, Sendable, CaseIterable {

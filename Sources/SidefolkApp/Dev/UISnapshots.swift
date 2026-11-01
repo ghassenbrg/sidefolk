@@ -426,10 +426,10 @@ enum UISnapshots {
                        Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)])
             glancing.waiting = 2
             glancing.tab = .today
-            // Miraya installed: a video link plays on the TV (D88). Ask holds its actions weakly, so they're kept here.
+            // Miraya installed: a video link plays on the TV (D84). Ask holds its actions weakly, so they're kept here.
             let tvActions = FixtureAskActions()
             tvActions.canPlayOnTV = true
-            // Today's tab with nothing in it (D88).
+            // Today's tab with nothing in it (D84).
             let calmDay = AskModel()
             calmDay.actions = actions
             calmDay.tab = .today
@@ -786,7 +786,7 @@ enum UISnapshots {
         return ask
     }
 
-    /// Something just dropped on the companion, nothing typed: the drop card (D88).
+    /// Something just dropped on the companion, nothing typed: the drop card (D84).
     private static func dropped(_ kind: Attachment.Kind, _ label: String, _ actions: FixtureAskActions, text: String? = nil) -> AskModel {
         let ask = AskModel()
         ask.actions = actions

@@ -170,7 +170,7 @@ enum Describe {
         String(raw.split(separator: ":", maxSplits: 1).first ?? Substring(raw))
     }
 
-    /// Several sessions of one agent in one folder as one line: "Claude Code in sidefolk · 3" (D88).
+    /// Several sessions of one agent in one folder as one line: "Claude Code in sidefolk · 3" (D90).
     static func session(_ g: AgentSessionGroup) -> String {
         g.count > 1 ? "\(session(g.session)) · \(g.count.formatted())" : session(g.session)
     }

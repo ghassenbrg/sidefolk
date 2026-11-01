@@ -1,7 +1,7 @@
 import Foundation
 
 extension AttentionItem {
-    /// Sources whose cards Return may answer (D84, D88): the person's own reminders and commands, the morning brief,
+    /// Sources whose cards Return may answer (D84): the person's own reminders and commands, the morning brief,
     /// what waited while they were away, and Sidefolk speaking for itself. Everything else, another app's or an agent
     /// session's question, an extension's notice, `sidefolk notify` from any script, what a watched page said, needs
     /// ⌘Return or a click, so a Return typed for something else can never answer it.
@@ -11,7 +11,7 @@ extension AttentionItem {
     public var takesReturn: Bool { Self.calmSources.contains(source) }
 }
 
-/// The keyboard on the card beside the companion (D88): which answer has the focus, what the keys do, and which held
+/// The keyboard on the card beside the companion (D84): which answer has the focus, what the keys do, and which held
 /// card ↑/↓ brings to the front. It only decides; the desktop shows the focus and answers.
 public struct CardKeys: Sendable, Equatable {
     public enum Key: Sendable, Equatable {

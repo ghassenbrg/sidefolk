@@ -78,7 +78,7 @@ final class AppCoordinator {
     /// The Ask shortcut's press silenced the companion; its release doesn't toggle the panel too.
     var askKeySilenced = false
     var talkKeysInstalled = false
-    /// The card shortcut (D88): installed, and registered right now.
+    /// The card shortcut (D84): installed, and registered right now.
     var cardKeysInstalled = false
     var cardKeysOn = false
     /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
@@ -392,7 +392,7 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("dropChoice:") {
-            // One of the drop card's choices, as a click on it (D88).
+            // One of the drop card's choices, as a click on it (D84).
             if let choice = DropChoice(rawValue: String(command.dropFirst("dropChoice:".count))), let attachment = ask.attachment {
                 perform(choice, with: attachment, in: ask)
             }
@@ -401,7 +401,7 @@ final class AppCoordinator {
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
             if value.hasPrefix("text:") {
-                // Dropped words, as the companion takes them from another app (D88's drop card for text).
+                // Dropped words, as the companion takes them from another app (D84's drop card for text).
                 let text = String(value.dropFirst(5))
                 companionReceived(Attachment(kind: .text, label: "“\(text.clipped(40))”", text: text))
             } else if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
@@ -562,10 +562,10 @@ final class AppCoordinator {
             respond(to: item, action: nil)
             sidecard.withdraw(id: item.id)
         } else if command == "ax", let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"] {
-            // The accessibility tree of every visible window, beside the snapshots (D88).
+            // The accessibility tree of every visible window, beside the snapshots (D84).
             AccessibilityDump.write(to: URL(fileURLWithPath: home).appendingPathComponent("snapshots", isDirectory: true))
         } else if command == "cardKeys" {
-            // The card shortcut (D88), which debug copies don't register unless SIDEFOLK_DEV_HOTKEY=1.
+            // The card shortcut (D84), which debug copies don't register unless SIDEFOLK_DEV_HOTKEY=1.
             sidecard.devKeys = true
             focusFrontCard()
         } else if command.hasPrefix("cardKey:") {
@@ -619,7 +619,7 @@ final class AppCoordinator {
     /// `slipsOnly`: a permission slip arrived while Ask was closed; it stands alone above the companion.
     func showAsk(prefill: String? = nil, focus: Bool = true, slipsOnly: Bool = false) {
         if let prefill { ask.text = prefill }
-        // Opened with nothing to say yet while something waits or comes up: Today first (D88); otherwise the
+        // Opened with nothing to say yet while something waits or comes up: Today first (D84); otherwise the
         // conversation, where typing goes either way.
         if !askPanel.isVisible || ask.compact {
             let fresh = ask.text.isEmpty && ask.attachment == nil && !ask.hasResults && ask.pinnedEntries.isEmpty

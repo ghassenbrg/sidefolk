@@ -9,7 +9,7 @@ extension Attachment {
         return label
     }
 
-    /// What was dropped, as the drop card sorts it (D88).
+    /// What was dropped, as the drop card sorts it (D84).
     var dropKind: DropKind {
         switch kind {
         case .url: return .link
@@ -21,7 +21,7 @@ extension Attachment {
     }
 }
 
-/// The drop card (D88): something dropped on the companion, and four likely things to do with it in a 2×2 grid, each
+/// The drop card (D84): something dropped on the companion, and four likely things to do with it in a 2×2 grid, each
 /// with one plain line of what it does. The first is what Return does while nothing is typed; typing still asks about
 /// the item, as a drop always did.
 struct DropCard: View {

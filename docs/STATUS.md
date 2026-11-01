@@ -40,15 +40,18 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
-Nothing else is on a branch: every team branch is merged into main in both repositories.
+- **Desktop polish** (branch `team/desktop-polish`, not merged): cards answer from the keyboard (⌃⌥Space), Ask's
+  tabs and "Open in History", the drop card, the stack's arc and the voice's light, VoiceOver on the companion's
+  corner (D84's note); Ask tidies itself by each result's weight, agents grouped by folder (D90). Verified with
+  `make test`, UI snapshots (light, dark, de, ar) and the debug app. Next: merge; try ⌃⌥Space on a Mac whose input
+  sources don't take it, and VoiceOver by hand (an AX client this Mac's tools aren't allowed to be).
 
 ## Next
 
 1. **The founder plays the puzzles** (Garden Plots, Seesaw, Sudoku, Blossoms) and the games in snapshot 661.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
-   choice card for drops, the stack's arc animation, voice's level-reactive pool, answering cards from the keyboard
-   outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
+   companions' own reactions, the Week view's "read only" note and
    "+1" overlaps, a watch's detail page (no check log or page versions are kept), a per-source "what may interrupt
    you" table (no source has a level of its own).
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,

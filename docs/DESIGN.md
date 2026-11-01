@@ -74,7 +74,8 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `.contrastEdge(radius:)` | `FieldChrome.swift` | a border under Increase Contrast only, for fills that have none |
 | `SayBarField` (.home / .desktop), `KeyHint`, `UnderstandingRow` | `SayBar.swift` | the Say bar's shell; behaviour is the screen's |
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |
-| `LightPool(state:)`, `LightPoolState`, `ShoulderBadge(state:count:)` | `LightPool.swift` | the companion's state as light, with its VoiceOver words; an alert pulses once |
+| `LightPool(state:level:)`, `LightPoolState`, `ShoulderBadge(state:count:)` | `LightPool.swift` | the companion's state as light, with its VoiceOver words; an alert pulses once; `level` (0…1) swells it with the voice while listening |
+| `.keyFocusRing(_:)`, `ArcFan`, `SidecardStack(selected:out:from:)` | `Sidecard.swift` | the keyboard's ring on the answer Return presses; held cards coming out of (and back into) the shoulder along an arc |
 | `.lanternGlass(radius:elevation:)` | `ThemeMetrics.swift` | e2 for small glass on the desktop (pins, tips), e3 for the Sidecard |
 
 ### The desktop (phase 2)
@@ -88,6 +89,9 @@ The parts above, placed and wired, in `Sources/SidefolkApp/`. The logic that dec
 | `CompanionWindowController.area(box:folk:extras:)` | `Companion/CompanionWindowController.swift` | the corner the companion takes; with everything on it is no bigger than before D84 (281 × 159 pt at the medium size, 3D) |
 | `SidecardController`, `SidecardModel`, `SidecardView`, `SidecardItemCard` | `Sidecard/` | whisper (6 s, a line runs out the time, waits under the pointer, grows into a card on click), card (source line, ≤ 3 answers with the rest in ⋯), the stack fanned from the count, "All clear" |
 | Ask: `AskView` on `SidecardSurface`, `SayBarField(size: .desktop)`, the understanding row, `GlanceView` (resting: Needs you, Next up, Working) | `Ask/` | the Sidecard's Ask size, its tail toward the head; requests as one card each with their words inside |
+| `SidecardKeysLine`, `SidecardController+Keys`, `FoldFlight` | `Sidecard/` | while a card has the keyboard (its shortcut), what ↩ (or ⌘↩), ⎋ and ↑↓ do; a folding card dropping into the count |
+| `AskHeader` (tabs, "Just now · Open in History"), `AskTodayTab`, `DropCard` | `Ask/` | Ask's tabs (Ask, Today, Play); the drop card's 2×2 choices with what each does, the first on ↩ |
+| `FloorElement`, `accessibleParts(of:)` | `Companion/CompanionAccessibility.swift` | the corner as one VoiceOver group: companion, what it says, count, pins, agents, folks |
 | `PermissionSlip` | `Ask/PermissionSlip.swift` | the approval rebuilt: calm or firm strip, Guard's face, one sentence, what it touches, Allow with "Always…" in its menu, exact request folded; firm never takes Return (⌘↩ with a `KeyHint`) |
 
 Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `StatusItem/`:
@@ -120,7 +124,7 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 
 ## Not built yet (phases 2 and 5)
 
-On the desktop (phase 2 left these): the stack's arc animation, the choice card for drops, the evening wrap, voice's
-level-reactive pool, keyboard answering of cards outside Ask. Home is built (phase 3, D84; its theme layouts are
+On the desktop: the evening wrap (the stack's arc, the drop card, voice's pool, keyboard answering and Ask's tabs were
+built in the desktop polish, D84's note). Home is built (phase 3, D84; its theme layouts are
 retired); Settings, the Pocket, Full access with an end and the install passport are phase 4 (above); phase 5 polished
 them, moved the last fields to the well and made the Reduce Transparency and Increase Contrast versions.

@@ -130,7 +130,7 @@ protocol AskActions: AnyObject {
     /// Sets the reminder that was waiting for its time.
     func remindPending(at date: Date, in model: AskModel)
     func answer(question: AttentionItem, actionId: String)
-    /// Something dropped on the companion: one of its drop card's choices (D88).
+    /// Something dropped on the companion: one of its drop card's choices (D84).
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel)
     /// The drop card's four choices for what was dropped, the first what Return does.
     func dropChoices(for attachment: Attachment) -> [DropChoice]
@@ -141,7 +141,7 @@ protocol AskActions: AnyObject {
     func openHome()
     /// Home › Now, where skipped steps wait (D37).
     func openNow()
-    /// The Play panel's menu of games, in Ask's place (D88).
+    /// The Play panel's menu of games, in Ask's place (D84).
     func openPlay()
 }
 
@@ -174,7 +174,7 @@ final class AskModel {
             if !text.isEmpty { tab = .ask }
         }
     }
-    /// The conversation or a compact Today under the field (D88).
+    /// The conversation or a compact Today under the field (D84).
     var tab: AskTab = .ask
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
@@ -346,7 +346,7 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
-        // Nothing typed with something dropped: Return is the drop card's first choice (D88).
+        // Nothing typed with something dropped: Return is the drop card's first choice (D84).
         if trimmed.isEmpty, let attachment, let first = actions?.dropChoices(for: attachment).first {
             actions?.perform(first, with: attachment, in: self)
             return
@@ -361,7 +361,7 @@ final class AskModel {
         actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, askAI: askAI, spoken: spoken, followUp: followUp, into: self)
     }
 
-    /// When the AI last answered in the open conversation, for Ask's header (D88).
+    /// When the AI last answered in the open conversation, for Ask's header (D84).
     var threadAnsweredAt: Date? {
         guard let thread else { return nil }
         return entries.last { if case .answer(_, _, _, let t) = $0.content { t == thread } else { false } }?.createdAt
@@ -376,7 +376,7 @@ final class AskModel {
         if entries.count > Self.keptEntries { entries.removeFirst(entries.count - Self.keptEntries) }
         if visible { entries[entries.count - 1].seenAt = Date() }
         if fades { fadeLater() }
-        // Something new shows where it can be seen: the conversation (D88).
+        // Something new shows where it can be seen: the conversation (D84).
         tab = .ask
     }
 

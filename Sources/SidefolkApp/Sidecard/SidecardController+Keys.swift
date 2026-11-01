@@ -1,7 +1,7 @@
 import AppKit
 import SidefolkCore
 
-/// Answering the Sidecard from the keyboard (D88). The panel never takes keys on its own: only the card shortcut
+/// Answering the Sidecard from the keyboard (D84). The panel never takes keys on its own: only the card shortcut
 /// (⌃⌥Space unless the person changed it) hands it the keyboard, and it gives it back when the card is answered, put
 /// away, or the person clicks elsewhere. Then ↩ presses the answer in focus (⌘↩ on a firm card, D84), ←/→ and Tab move
 /// between answers, ⎋ puts the card back in the stack, and ↑/↓ bring the other held cards to the front.

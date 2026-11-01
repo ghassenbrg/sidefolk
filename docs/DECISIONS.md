@@ -2526,6 +2526,37 @@ its breath redrew the whole window every frame (Home open: 4.1% CPU against 1.4%
 desktop at rest 1.4% both). *Not done:* the mockups' per-source "what may interrupt you" table (no source has a level
 of its own), Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card.
 
+**Desktop polish, built (2026-11-01, branch `team/desktop-polish`):** what phase 2 left, each on a real path.
+- *Cards answer from the keyboard outside Ask:* a global shortcut (⌃⌥Space unless changed in Settings › General,
+  "Answer cards from the keyboard") is registered only while a card, a slip or held cards wait, and is off when
+  macOS (input sources use ⌃⌥Space on many Macs) or Ask's or talk's shortcut has the same keys. It hands the
+  keyboard to the slip standing alone, else the card in front (a whisper grows first), else the held cards fanned
+  with the newest chosen. ↩ presses the answer in focus only on the person's own cards (`AttentionItem.takesReturn`:
+  reminders, commands, the brief, Sidefolk's own words); everything else needs ⌘↩ and says so; ⎋ puts a held card
+  back (closes the companion's own); ←/→ and Tab move between answers (⋯ is one stop, its menu opens);
+  ↑/↓ bring the other held cards to the front; answering moves to the next held card. A key line on the card says
+  what the keys do. A held-down Return answers one card, keys wait half a second after a card changes, and the
+  keyboard goes back when the person clicks elsewhere. The logic is `CardKeys` (core, tested).
+- *Ask's header:* Ask, Today and Play tabs under the name (Today: Needs you and Next up, with its count; Play opens
+  the Play panel in Ask's place); "Just now · Open in History" for the open AI conversation. The field stays on
+  both tabs; typing or a new result shows Ask; Ask opens on Today when nothing is in the conversation and something
+  waits or comes up. Glance left Ask's resting state for the Today tab.
+- *The drop card:* a dropped file, folder, link or text shows four choices in a 2×2 card in Ask, each with one line
+  of what it does (`DropChoices`): file or folder Save to notebook, Watch it, Ask about it, Open with… (the apps
+  macOS offers); link Save link, Watch page, Ask, Play on TV when Miraya's tool is there and the link is an https
+  video (`ext.miraya.play_on_tv`, through Guard as its sentence runs it), else Remind me; text Save as note,
+  Remind me, Ask, Copy. Return does the first; typing still asks about the item, as before.
+- *Motion:* held cards come out of the shoulder count along a short arc and fold back into it; a card that folds
+  drops into the count as a small copy of itself (a window of its own for half a second). While the microphone
+  listens the light swells with the voice (`VoiceLevel`: twelve reads a second, eight steps, only a change reaches the
+  screen). None of it with Reduce Motion or Increase Contrast's ring, nothing at rest: idle CPU measured side by side
+  with origin/main (top, 12 × 5 s, two pins and two agents, a busy Mac): 2.14% against 2.09%.
+- *VoiceOver:* the companion's corner is one "Sidefolk companion" group: the companion (name, state, press to talk),
+  what it says above its head (the card, held cards or slip; pressing gives it the keyboard), the count, the pins top
+  to bottom (value, how live, their menu), the agents' faces, the folks, each pressable as a click is. The card's
+  window is named. `swift scripts/dev.swift ax` writes the tree; SwiftUI's own parts appear only to a connected
+  assistive app, so the Sidecard's inside is checked in code and snapshots.
+
 **Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
 fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
 snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.
@@ -2560,3 +2591,26 @@ entries for one character, and no Look switch).
 `mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
 companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
 `docs/research/lively-companions.md` documents the keys.
+
+### D90 — Ask tidies itself by each result's weight; agents' sessions in one folder are one line (2026-11-01)
+**Decision:** *amends D5 and D84.* Results in Ask go by themselves, each by its weight (`ResultLifetime`):
+- **Quick** (a value read now, a lookup, a calculation, chance, a notice): about two minutes after it was first seen
+  in Ask, so opening Ask again five minutes later finds it gone. Not seen yet, it waits for its look.
+- **Normal** (an answer, something made: a note saved, a reminder set; an error with nothing to retry): half an hour,
+  or the day: the next day's first look starts clean.
+- **Needs you** (an approval, a question, a failure with Retry): until dealt with or cleared.
+A request goes when all its results are past their time; a small Pin on it keeps it; Clear all stays. Nothing goes
+while the pointer is on Ask or Ask has the keyboard (Ask opening tidies first); what goes fades, and a quiet line,
+"Older answers are in History", links there: everything is still in History. The ten-minute reset that emptied Ask
+now only starts a new conversation. Ask's "Working" list is gone (the agents' faces, On duty and the Pocket show
+who works), and sessions of one agent in one folder in the same state (subagents, a second terminal) are one face,
+row or line with how many (`AgentSessionGroup`): "Claude Code in sidefolk · 3".
+
+**Why:** the founder: people ask and go without clearing, and an old battery level was still there ten minutes later;
+the same session three times read as noise.
+
+**Alternatives:** one fixed time for everything (a question waiting would vanish); clearing on every open (an answer
+read a minute ago would be gone); keeping them and collapsing old ones (still a list to scroll).
+
+**Implications:** `AskEntry.seenAt`, `.weight`; `AskModel.opened`, `tidy`, `pinnedRequests`, `tidied`; the panel
+looks every 15 s only while open. `AgentChip.count`, `Glance.sessions` as groups.

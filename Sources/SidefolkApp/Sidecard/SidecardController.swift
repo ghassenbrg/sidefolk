@@ -27,11 +27,11 @@ final class SidecardController {
     var onChange: (() -> Void)?
     /// A card folded into the stack: the companion stops looking alarmed; the count says it waits.
     var onFold: ((AttentionItem) -> Void)?
-    /// Where the count on the companion's shoulder is on screen, for the stack's arc (D88).
+    /// Where the count on the companion's shoulder is on screen, for the stack's arc (D84).
     var badgeProvider: (() -> NSPoint?)?
     /// The stack folding back into the shoulder before it goes.
     var foldBack: Task<Void, Never>?
-    /// The keyboard, while its shortcut gave it to the Sidecard (D88): the held cards it moves through, and from when
+    /// The keyboard, while its shortcut gave it to the Sidecard (D84): the held cards it moves through, and from when
     /// keys count after a card came to the front (a key held down or meant for the card before can't answer it).
     var holdsKeys = false
     var deckItems: [AttentionItem] = []
@@ -53,7 +53,7 @@ final class SidecardController {
         hosted.panel.level = .floating
         // The glass draws its own shadow; a window shadow would be traced from its faint pixels as a grey outline.
         hosted.panel.hasShadow = false
-        // VoiceOver's window list names it (D88).
+        // VoiceOver's window list names it (D84).
         hosted.panel.setAccessibilityTitle(String(localized: "Sidefolk card", comment: "VoiceOver: the window of the card above the companion"))
         hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
@@ -340,7 +340,7 @@ final class SidecardController {
     func hideStack() {
         guard model.shape == .stack else { return }
         model.stackFocus = nil
-        // The held cards fold back into the shoulder along their arc, then the panel goes (D88).
+        // The held cards fold back into the shoulder along their arc, then the panel goes (D84).
         guard model.fanFrom != nil, hosted.panel.isVisible, foldBack == nil else { return putStackAway() }
         model.stackOut = false
         foldBack = Task { [weak self] in

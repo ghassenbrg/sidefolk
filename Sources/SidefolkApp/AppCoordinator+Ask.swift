@@ -521,7 +521,7 @@ extension AppCoordinator: AskActions {
         model.submit()
     }
 
-    /// What dropping something on the companion leads to, without AI (D88's drop card): each choice through the path
+    /// What dropping something on the companion leads to, without AI (D84's drop card): each choice through the path
     /// that already does it.
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel) {
         model.attachment = nil

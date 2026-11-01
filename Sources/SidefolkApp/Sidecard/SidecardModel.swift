@@ -19,7 +19,7 @@ final class SidecardModel {
     /// The held cards the stack fans out, newest last.
     var stack: [AttentionItem] = []
     /// The held cards are out of the shoulder (true) or folding back into it, and the way to it from the stack's foot
-    /// (D88's arc); no way with Reduce Motion, so they simply stand.
+    /// (D84's arc); no way with Reduce Motion, so they simply stand.
     var stackOut = true
     var fanFrom: CGSize?
     /// How many wait in all, for the stack's "+n more".
@@ -34,7 +34,7 @@ final class SidecardModel {
     var tailAt: CGFloat? = 0.5
     /// The agent sessions Sidefolk follows, by id, so a session's notice says whose it is.
     var sessions: [String: AgentSession] = [:]
-    /// The card in front took the keyboard from its shortcut (D88): which answer has the focus and where it stands among
+    /// The card in front took the keyboard from its shortcut (D84): which answer has the focus and where it stands among
     /// the held cards. Nil while the card only shows, which is almost always.
     var keys: CardKeys?
     /// The held card the keyboard is on while the stack is fanned from the shortcut.
