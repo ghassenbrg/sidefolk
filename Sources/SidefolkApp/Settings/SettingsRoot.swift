@@ -338,6 +338,7 @@ struct SettingInlineControl: View {
         case .folks: toggle(setting(\.showFolks))
         case .sleep: toggle(setting(\.sleepWhenIdle))
         case .gameSounds: toggle(setting(\.games.sounds))
+        case .gameSneaky: toggle(setting(\.games.sneaky))
         case .sounds: toggle(setting(\.sounds))
         case .hiddenNotifications: toggle(setting(\.useSystemNotificationsWhenHidden))
         case .morningBrief: toggle(setting(\.morningBrief))

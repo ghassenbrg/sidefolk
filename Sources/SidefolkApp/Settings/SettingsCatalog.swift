@@ -8,7 +8,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     // General
     case openAtLogin, askShortcut, cardShortcut, language, appUpdates, addonUpdates, channel, timesOfDay, welcome
     // Companion
-    case chooseCompanion, presence, size, eyesFollow, folks, liveliness, sleep, gameTone, gameSounds
+    case chooseCompanion, presence, size, eyesFollow, folks, liveliness, sleep, gameTone, gameSounds, gameSneaky
     // Attention
     case attentionMode, interruptions, quietHours, fullScreen, sounds, systemNotifications, hiddenNotifications, morningBrief
     // Brain
@@ -26,7 +26,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     var tab: SettingsTab {
         switch self {
         case .openAtLogin, .askShortcut, .cardShortcut, .language, .appUpdates, .addonUpdates, .channel, .timesOfDay, .welcome: .general
-        case .chooseCompanion, .presence, .size, .eyesFollow, .folks, .liveliness, .sleep, .gameTone, .gameSounds: .companion
+        case .chooseCompanion, .presence, .size, .eyesFollow, .folks, .liveliness, .sleep, .gameTone, .gameSounds, .gameSneaky: .companion
         case .attentionMode, .interruptions, .quietHours, .fullScreen, .sounds, .systemNotifications, .hiddenNotifications, .morningBrief:
             .attention
         case .provider, .lastRequest, .voiceInput, .spokenReplies, .voice, .speechModel: .brain
@@ -48,7 +48,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .presence: String(localized: "Where it lives", comment: "Settings › Companion: always on the desktop, when needed, menu bar only")
         case .size, .eyesFollow, .folks: String(localized: "Look")
         case .liveliness, .sleep: String(localized: "How it behaves", comment: "Settings › Companion: a group")
-        case .gameTone, .gameSounds: String(localized: "Games")
+        case .gameTone, .gameSounds, .gameSneaky: String(localized: "Games")
         case .attentionMode: String(localized: "Right now", comment: "Settings › Attention: Open, Focus or Quiet at this moment")
         case .interruptions: String(localized: "What may interrupt you", comment: "Settings › Attention: a group, how far each source may go")
         case .quietHours, .fullScreen: String(localized: "Quiet on its own", comment: "Settings › Attention: quiet hours and full-screen apps")
@@ -89,6 +89,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .sleep: String(localized: "Sleep when you're away")
         case .gameTone: String(localized: "When it wins")
         case .gameSounds: String(localized: "Game sounds")
+        case .gameSneaky: String(localized: "Sneaky", comment: "A game setting: the companion may cheat for fun")
         case .attentionMode: String(localized: "Open, Focus or Quiet", comment: "Settings › Attention: the three ways things reach you")
         case .interruptions: String(localized: "What may interrupt you", comment: "Settings › Attention: a group, how far each source may go")
         case .quietHours: String(localized: "Quiet hours", comment: "Settings › Attention: quiet every night between two times")
@@ -159,6 +160,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .sleep: String(localized: "Naps after 10 minutes without input and wakes when you're back.")
         case .gameTone: String(localized: "How it takes a win in games: gently, cheekily or with a victory dance.", comment: "Settings › Companion: search")
         case .gameSounds: String(localized: "Soft sounds in games. Each game's speaker button turns its own on or off.")
+        case .gameSneaky: String(localized: "The companion may cheat for fun where a game allows it, and owns up when caught.")
         case .attentionMode: String(localized: "Focus holds whispers until it ends; Quiet lets through only what can't wait.",
                                     comment: "Settings › Attention")
         case .interruptions:

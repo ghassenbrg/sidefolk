@@ -2,8 +2,9 @@ import SidefolkCore
 import SwiftUI
 
 /// A game's picture on a tile in its colour: the Play menu's art for its look (`GameStyle`, `GameArt`), its symbol
-/// when the look has no icon. Never a picture from the game (D75).
-struct GameArtTile: View {
+/// when the look has no icon. Never a picture from the game (D75). The games look v2 (team/games-look-v2) brings the
+/// same tile shared with the menu (`GameArtTile` in Play/GameCards.swift): once both are in, this one goes for it.
+struct GameCenterTile: View {
     var info: GameInfo
     var side: CGFloat
 
@@ -66,7 +67,7 @@ struct DailyCard: View {
         let today = entry.record.today
         Button(action: play) {
             HStack(spacing: Theme.Space.m) {
-                GameArtTile(info: entry.info, side: 56)
+                GameCenterTile(info: entry.info, side: 56)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(verbatim: entry.info.title).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
                     if let today { Text(ext: today.text).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(2) }
@@ -107,7 +108,7 @@ struct GameCenterCard: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
-            Button { play(nil) } label: { GameArtTile(info: entry.info, side: 84) }
+            Button { play(nil) } label: { GameCenterTile(info: entry.info, side: 84) }
                 .buttonStyle(GamePressStyle())
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {

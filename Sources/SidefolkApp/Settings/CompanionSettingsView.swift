@@ -33,7 +33,7 @@ struct CompanionSettingsView: View {
             }
         }
 
-        // Games in the Play panel (D75): how the companion takes a win, and sounds, off until turned on.
+        // Games in the Play panel (D75): how the companion takes a win, sounds (off until turned on) and Sneaky (D93).
         SettingsGroup(title: "Games") {
             SettingsRow(title: Text("When it wins"), detail: Text(toneDetail), anchor: .gameTone) {
                 SegmentedPicker("When it wins", selection: Binding(get: { model.settings.games.tone }, set: { tone in model.update { $0.games.tone = tone } }),
@@ -44,6 +44,7 @@ struct CompanionSettingsView: View {
                 ])
             }
             SettingsToggle(.gameSounds, isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
+            SettingsToggle(.gameSneaky, isOn: Binding(get: { model.settings.games.sneaky }, set: { on in model.update { $0.games.sneaky = on } }))
         }
 
         SettingsGroup(title: "Look") {
