@@ -85,12 +85,12 @@ public actor AttentionCenter {
         }
     }
 
-    /// Posts and presents (or holds) an item; returns it.
+    /// Posts and presents (or holds) an item; returns it as it was stored (`kept` when its source is Only in Today,
+    /// `acknowledged` when it is Off).
     @discardableResult
     public func post(_ request: AttentionRequest) async -> AttentionItem {
         let item = makeItem(request)
-        await deliver(item)
-        return item
+        return await deliver(item)
     }
 
     /// Posts and waits for the user to pick an action (or the timeout). Returns the action id.
@@ -128,6 +128,9 @@ public actor AttentionCenter {
 
     public func open() async -> [AttentionItem] { (try? await store.open()) ?? [] }
 
+    /// What Only in Today kept off the desktop (D88) and is still waiting in Today.
+    public func kept() async -> [AttentionItem] { (try? await store.kept()) ?? [] }
+
     /// Whether an item is waiting for its turn (quiet mode, full screen, away, typing or the rate limits).
     public func isHeld(_ id: String) -> Bool { held[id] != nil }
 
@@ -137,7 +140,8 @@ public actor AttentionCenter {
     /// Retires what is still open about one thing (a repeating reminder's last time) without answering it: no
     /// handler runs, the bubble and notification go away, and it no longer counts as waiting.
     public func withdraw(refKind: String, refId: String) async {
-        for item in (try? await store.open()) ?? [] where item.refKind == refKind && item.refId == refId {
+        let live = ((try? await store.open()) ?? []) + ((try? await store.kept()) ?? [])
+        for item in live where item.refKind == refKind && item.refId == refId {
             await expire(id: item.id)
         }
     }
@@ -173,12 +177,38 @@ public actor AttentionCenter {
                              refId: request.refId, now: clock.now)
     }
 
-    private func deliver(_ item: AttentionItem) async {
+    @discardableResult
+    private func deliver(_ item: AttentionItem) async -> AttentionItem {
         try? await store.save(item)
-        await consider(item)
+        return await consider(item) ?? item
     }
 
-    private func consider(_ item: AttentionItem) async {
+    /// The level a notice is shown at after its source's ceiling (D88), or nil when the source keeps it off the desktop:
+    /// then it is settled here, kept for Today or told in History only, and nil is returned with the settled item.
+    private func ceiling(_ item: AttentionItem) async -> (level: AttentionLevel?, settled: AttentionItem?) {
+        let route = environment.interruptions.route(item)
+        if case .deliver(let level) = route { return (level, nil) }
+        var settled = item
+        if route == .today {
+            settled.state = .kept
+        } else {
+            settled.state = .acknowledged
+            settled.acknowledgedAt = clock.now
+        }
+        try? await store.save(settled)
+        let id = item.id
+        held[id] = nil
+        timers.removeValue(forKey: id)?.cancel()
+        events.changed(.attention)
+        await publishBacklog()
+        return (nil, settled)
+    }
+
+    /// Returns the item as settled when its source kept it off the desktop.
+    @discardableResult
+    private func consider(_ item: AttentionItem) async -> AttentionItem? {
+        let (capped, settled) = await ceiling(item)
+        guard let level = capped else { return settled }
         let now = clock.now
         if let s = signals?() {
             env.lastKeyAt = now.addingTimeInterval(-s.secondsSinceKey)
@@ -187,13 +217,13 @@ public actor AttentionCenter {
             idleAway = s.secondsSinceInput > 300
             if wasIdle, !idleAway, !env.away, !held.isEmpty { Task { await reconsiderHeld(summary: .away) } }
         }
-        let decision = AttentionPolicy.decide(level: item.level, source: item.source, createdAt: item.createdAt, now: now,
+        let decision = AttentionPolicy.decide(level: level, source: item.source, createdAt: item.createdAt, now: now,
                                               env: environment, recent: recent, gentle: gentle)
         switch decision {
         case .present(let presentation):
             held[item.id] = nil
             reserve(item.source, presentation, now: now)
-            await present(item, presentation)
+            await present(item, presentation, level: level)
         case .hold(let until):
             held[item.id] = item
             timers[item.id]?.cancel()
@@ -207,6 +237,7 @@ public actor AttentionCenter {
             }
             await publishBacklog()
         }
+        return nil
     }
 
     private func retry(id: String) async {
@@ -215,7 +246,8 @@ public actor AttentionCenter {
         await consider(item)
     }
 
-    private func present(_ item: AttentionItem, _ presentation: AttentionPresentation) async {
+    /// `level`: what it is shown at, after its source's ceiling; a card turned into a whisper is never nudged again.
+    private func present(_ item: AttentionItem, _ presentation: AttentionPresentation, level: AttentionLevel? = nil) async {
         var shown = item
         shown.state = .shown
         shown.shownAt = clock.now
@@ -224,7 +256,7 @@ public actor AttentionCenter {
         events.publish(.attention(.present(saved, presentation)))
 
         // One re-nudge for things that need an answer.
-        if item.level >= .attention, !item.actions.isEmpty, !item.renudged {
+        if (level ?? item.level) >= .attention, !item.actions.isEmpty, !item.renudged {
             let id = item.id
             renudges[id]?.cancel()
             renudges[id] = Task { [weak self] in

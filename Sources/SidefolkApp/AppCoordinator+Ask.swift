@@ -155,6 +155,8 @@ extension AppCoordinator: AskActions {
                   caption: caption, fades: true)
     }
 
+    func openPlay() { openPlayMenu(focus: true) }
+
     func openConversation(_ thread: String?) {
         askPanel.hide()
         home.show(conversation: thread)
@@ -459,8 +461,9 @@ extension AppCoordinator: AskActions {
         var glance = Glance()
         let now = Date()
         let live = (try? await runtime.sessions.live()) ?? []
-        glance.sessions = live.filter { $0.state == .needsYou }
-        let asking = Set(glance.sessions.map(\.id))
+        let waiting = live.filter { $0.state == .needsYou }
+        glance.sessions = AgentSessionGroup.of(waiting)
+        let asking = Set(waiting.map(\.id))
         // As on Today: things that need a decision, a session's own notice shown once, as the session.
         glance.decisions = await runtime.attention.open()
             .filter { $0.level >= .attention && !($0.refKind == "session" && asking.contains($0.refId ?? "")) }
@@ -472,8 +475,6 @@ extension AppCoordinator: AskActions {
         let events = (await runtime.calendarReader.events(from: now, to: soon) ?? []).filter { !$0.allDay && $0.start > now }
             .map { Glance.Next(title: $0.title, at: $0.start, event: true) }
         glance.next = Array((reminders + events).sorted { $0.at < $1.at }.prefix(Glance.nextShown))
-        glance.working = live.filter { $0.state == .working }.map(Describe.session)
-            + ((try? await runtime.jobs.running()) ?? []).map(\.title)
         return glance
     }
 
@@ -520,18 +521,37 @@ extension AppCoordinator: AskActions {
         model.submit()
     }
 
-    /// What dropping something on the companion leads to, without AI.
-    func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel) {
+    /// What dropping something on the companion leads to, without AI (D84's drop card): each choice through the path
+    /// that already does it.
+    func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel) {
         model.attachment = nil
         switch (action, attachment.kind) {
+        case (.openWith, .file(let file)):
+            // Return or VoiceOver without picking an app: the one macOS opens it with.
+            NSWorkspace.shared.open(file)
+            model.add(.info(String(localized: "Opened \(file.lastPathComponent).", comment: "Ask, after the drop card's Open with…")),
+                      caption: attachment.caption, fades: true)
+        case (.openWith, _):
+            break
+        case (.copy, _):
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(attachment.text ?? attachment.label, forType: .string)
+            model.add(.info(String(localized: "Copied.", comment: "Ask, after the drop card's Copy")), caption: attachment.caption, fades: true)
+        case (.playOnTV, .url(let url)):
+            // Miraya's own tool, as its sentence "play … on the tv" runs it: Guard asks as it always does.
+            runLocal(.extensionCommand(ExtensionCommandCall(tool: Self.playOnTV, input: ["url": .string(url.absoluteString)],
+                                                            extensionId: Self.miraya, said: url.absoluteString)),
+                     caption: attachment.caption, into: model)
+        case (.playOnTV, _):
+            break
         case (.save, .url(let url)):
             runLocal(.note(kind: .link, text: (url.host ?? url.absoluteString) + "\n" + url.absoluteString, collection: nil),
-                     caption: attachment.label, into: model)
+                     caption: attachment.caption, into: model)
         case (.save, .file(let file)):
             runLocal(.note(kind: .note, text: file.lastPathComponent + "\n" + FolderAccess.displayPath(file.path), collection: nil),
-                     caption: attachment.label, into: model)
+                     caption: attachment.caption, into: model)
         case (.save, .text):
-            runLocal(.note(kind: .note, text: attachment.text ?? attachment.label, collection: nil), caption: attachment.label, into: model)
+            runLocal(.note(kind: .note, text: attachment.text ?? attachment.label, collection: nil), caption: attachment.caption, into: model)
         case (.remind, _):
             let title: String = switch attachment.kind {
             case .url(let url): url.host.map { String(localized: "Look at \($0)") } ?? String(localized: "Look at the link")
@@ -539,15 +559,15 @@ extension AppCoordinator: AskActions {
             case .text: (attachment.text ?? attachment.label).clipped(80)
             }
             model.pendingReminderTitle = title
-            model.add(.info(String(localized: "When should I remind you to “\(title)”?")), caption: attachment.label)
+            model.add(.info(String(localized: "When should I remind you to “\(title)”?")), caption: attachment.caption)
             model.focusRequest += 1
         case (.watch, .url(let url)):
-            runLocal(.watch(WatchIntent(kind: "url_change", target: url.absoluteString)), caption: attachment.label, into: model)
+            runLocal(.watch(WatchIntent(kind: "url_change", target: url.absoluteString)), caption: attachment.caption, into: model)
         case (.watch, .file(let file)):
             var isDir: ObjCBool = false
             let folder = FileManager.default.fileExists(atPath: file.path, isDirectory: &isDir) && isDir.boolValue
             runLocal(.watch(WatchIntent(kind: folder ? "folder_new_file" : "file_changes", target: file.path)),
-                     caption: attachment.label, into: model)
+                     caption: attachment.caption, into: model)
         case (.watch, .text):
             model.add(.info(String(localized: "I can watch links and files, not text.")))
         case (.ask, _):
@@ -555,6 +575,24 @@ extension AppCoordinator: AskActions {
             model.add(.info(String(localized: "What should I do with \(attachment.label)? Type it below.")))
             model.focusRequest += 1
         }
+    }
+
+    static let miraya = "dev.sidefolk.miraya"
+    static let playOnTV = "ext.miraya.play_on_tv"
+
+    func dropChoices(for attachment: Attachment) -> [DropChoice] {
+        guard case .url(let url) = attachment.kind else { return DropChoices.choices(for: attachment.dropKind) }
+        let tv = (runtime.registry.tool(named: Self.playOnTV) as? ExtensionTool)?.extensionId == Self.miraya
+        return DropChoices.choices(for: .link, link: url, canPlayOnTV: tv)
+    }
+
+    func open(_ attachment: Attachment, with app: URL, in model: AskModel) {
+        guard case .file(let file) = attachment.kind else { return }
+        model.attachment = nil
+        NSWorkspace.shared.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        let name = FileManager.default.displayName(atPath: app.path)
+        model.add(.info(String(localized: "Opened \(file.lastPathComponent) in \(name).", comment: "Ask, after the drop card's Open with…: the file, then the app")),
+                  caption: attachment.caption, fades: true)
     }
 
     /// A result card for the panel. What the companion flipped or rolled waits until it lands on the desktop (D44).

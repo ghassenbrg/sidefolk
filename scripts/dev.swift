@@ -7,16 +7,19 @@
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:trust | find:milk | drop:https://example.com
+//                           | drop:text:<words>   (D84: dropped text) | dropChoice:save|watch|ask|openWith|remind|copy|playOnTV
 //   swift scripts/dev.swift settings:search:quiet | settings:jump:quietHours | settings:full-access   (D84: Settings' search,
 //                           a jump to a setting by its SettingKey, the Full access sheet)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
 //   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
+//   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:games:default   (D88)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:agenda | calendar:week:2026-11-03 | calendar:month   (D66, D84)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
 //                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
+//   swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]   (D87: a watch's page, its Check now, its change in two columns)
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)
 //   swift scripts/dev.swift reviewFolder:/path/to/extension   (its install preview, as Settings shows it)
 //   swift scripts/dev.swift companion:mochi | companion:mochi:2d | companion:sidefolk:coral   (as the Settings picker does)
@@ -30,8 +33,12 @@
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
 //                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)
+//   swift scripts/dev.swift ax   (D84: every visible window's accessibility tree, as VoiceOver walks it, in $SIDEFOLK_HOME/snapshots)
+//   swift scripts/dev.swift cardKeys | cardKey:return|cmdReturn|escape|left|right|tab|backtab|up|down   (D84: the card
+//                           shortcut, then keys on the card or the held cards it fanned)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
 //   swift scripts/dev.swift game:dev.sidefolk.playtime/which_cup | move:{"cell":[0,1]} | key:1 | closeGame | playMenu   (D75, D79)
+//                           | cue:sulk | cue:tease | cue:accent:wave   (a game cue's move, as an open game's board plays it)
 //   swift scripts/dev.swift drag:0,0,1,2   (a puzzle's plot dragged corner to corner, cell by cell, then let go)
 //   swift scripts/dev.swift click:companion | click:200,300   (a mouse click on the companion in the Play panel's scene,
 //                           Which Cup?'s paw, or at a point of the panel from its top left)
@@ -41,8 +48,14 @@
 //                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
 //   swift scripts/dev.swift update:ready | update:updated   (D70: installing by itself: the window waiting for a calm
 //                           moment, and the note the new copy gives)
+//   swift scripts/dev.swift connect:claude[:hooks] | connect:codex[:hooks] | connect:cli | disconnect:claude|codex|cli
+//                           (D86: Connections' cards with their dialog accepted, logged; only on a SIDEFOLK_HOME, where
+//                           they write the stand-ins in agent-configs/, never the person's agents)
 //   swift scripts/dev.swift addons:review | addons:waiting | addons:clear   (D70: Settings › Updates and the heads-up
 //                           with made-up add-on updates)
+//   swift scripts/dev.swift addons:updates | addons:nudge   (D89: the Gallery's Updates halfway through Update all, the whisper)
+//   swift scripts/dev.swift addons:auto:off | addons:get:<id> | addons:check | addons:updateAll   (D89, with SIDEFOLK_ADDONS=<local gallery>:
+//                           the switch, an add-on installed from it as from the Gallery, Update all)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

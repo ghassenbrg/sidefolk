@@ -20,6 +20,7 @@ extension AppCoordinator {
         let cues = CueDirector(companion: companion, caption: player.caption)
         cues.panelFrame = { [weak self] in self?.playPanel.isVisible == true ? self?.playPanel.frame : nil }
         cues.restoreMood = { [weak self] in self?.renderMood() }
+        cues.linesShown = { [weak self] in self?.runtime.settings.current.interruptions.level(for: .games) != .off }
         cues.soundsAllowed = { [weak self] in
             guard let self else { return false }
             let s = self.runtime.settings.current
@@ -159,9 +160,9 @@ extension AppCoordinator {
     #if DEBUG
     /// `game:<extension>/<game>[:level]` opens a game as the AI would, waiting for a click rather than taking the keyboard
     /// (a debug run must never catch the keys of someone typing elsewhere); `move:<json>` sends a move as a click on the
-    /// board would (only one it offers); `drag:r,c,r2,c2` drags a puzzle's plot cell by cell, then lets go; `click:companion`
-    /// clicks the companion in the scene, `click:x,y` a point of the panel; `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu`
-    /// opens the panel's menu of games.
+    /// board would (only one it offers); `cue:<move>` plays a cue's move; `drag:r,c,r2,c2` drags a puzzle's plot cell by
+    /// cell, then lets go; `click:companion` clicks the companion in the scene, `click:x,y` a point of the panel;
+    /// `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu` opens the panel's menu of games.
     func devGame(_ command: String) -> Bool {
         if command.hasPrefix("game:") {
             let parts = command.dropFirst(5).split(separator: ":").map(String.init)
@@ -208,6 +209,12 @@ extension AppCoordinator {
         if command.hasPrefix("key:") {
             // Timed now, as a key's own timestamp would be (a reflex press).
             _ = playPanel.model?.press(String(command.dropFirst(4)), at: ProcessInfo.processInfo.systemUptime)
+            return true
+        }
+        if command.hasPrefix("cue:") {
+            // `cue:<move>`: the companion plays a game cue's move (sulk, tease, accent:wave…) as an open game's board would.
+            guard let move = GameCue.Move(rawValue: String(command.dropFirst(4))) else { return true }
+            cues.play(GameBoard(cue: GameCue(move: move)), tone: runtime.settings.current.games.tone, sounds: false)
             return true
         }
         if command == "closeGame" {

@@ -19,9 +19,6 @@ struct ReminderGuess: Equatable {
     var label: String
 }
 
-/// Quick things to do with something dropped on the companion.
-enum DropAction { case save, remind, watch, ask }
-
 /// A request that needed AI while none was chosen: what works without it, and a way to send it again.
 struct NoAIRequest: Equatable {
     /// The words with the dropped item's text, for the actions that keep them as a task or a note.
@@ -63,6 +60,20 @@ struct AskEntry: Identifiable, Equatable {
     var createdAt = Date()
     /// A notice that needs nothing from anyone ("Undone", a word about talking) goes away on its own then.
     var fadesAt: Date?
+    /// When it was first on screen in Ask: a quick result's lifetime starts there (D90).
+    var seenAt: Date?
+
+    /// How long it stays in Ask (D90): what still needs the person stays, values and lookups go soon after they were
+    /// read, answers and things made after half an hour or with the day.
+    var weight: ResultLifetime.Weight {
+        switch content {
+        case .approval, .question: .needsYou
+        case .error(_, let retryable): retryable ? .needsYou : .normal
+        case .result(let card, _, _): ResultLifetime.weight(of: card.kind)
+        case .info, .spoken: .quick
+        case .answer, .list, .needsBrain, .doneWithoutAsking, .skipped: .normal
+        }
+    }
 
     static func == (a: AskEntry, b: AskEntry) -> Bool { a.id == b.id && a.content == b.content && a.caption == b.caption }
 
@@ -119,12 +130,19 @@ protocol AskActions: AnyObject {
     /// Sets the reminder that was waiting for its time.
     func remindPending(at date: Date, in model: AskModel)
     func answer(question: AttentionItem, actionId: String)
-    func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel)
+    /// Something dropped on the companion: one of its drop card's choices (D84).
+    func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel)
+    /// The drop card's four choices for what was dropped, the first what Return does.
+    func dropChoices(for attachment: Attachment) -> [DropChoice]
+    /// The drop card's Open with…: the dropped file in the app the person picked.
+    func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
     func openSettings(tab: SettingsTab?)
     func openHome()
     /// Home › Now, where skipped steps wait (D37).
     func openNow()
+    /// The Play panel's menu of games, in Ask's place (D84).
+    func openPlay()
 }
 
 /// The answer a reply follows up: its card, its conversation, and the words it answered.
@@ -149,8 +167,15 @@ enum VoiceInput: Equatable {
 @MainActor @Observable
 final class AskModel {
     var text = "" {
-        didSet { if text != oldValue { found.query = text } }
+        didSet {
+            guard text != oldValue else { return }
+            found.query = text
+            // Words typed under Today are a request: the conversation shows what they will do.
+            if !text.isEmpty { tab = .ask }
+        }
     }
+    /// The conversation or a compact Today under the field (D84).
+    var tab: AskTab = .ask
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
     /// Today at a glance, shown while nothing is typed (D58): Ask's resting state, on top of the stack (D84).
@@ -204,6 +229,13 @@ final class AskModel {
     var swipe: (id: UUID, offset: CGFloat)?
     /// The request under the pointer, the one a two-finger swipe moves.
     var hoveredRequest: UUID?
+    /// Results the person pinned: they stay until removed (D90).
+    var pinnedRequests: Set<UUID> = []
+    /// Results went on their own since Ask was cleared: a quiet line says they are in History.
+    var tidied = false
+    /// Ask is on screen, and has the keyboard: nothing is tidied away while someone may be reading.
+    var visible = false
+    var focused = false
     /// The tallest the results may grow before they scroll: the panel stays on screen.
     var resultsMaxHeight: CGFloat = 520
     private var fading: Task<Void, Never>?
@@ -271,6 +303,8 @@ final class AskModel {
     /// a follow-up shouldn't lean on answers the person just cleared away (D45).
     func clearResults() {
         entries.removeAll { !$0.isPinned }
+        pinnedRequests = []
+        tidied = false
         replyingTo = nil
         actions?.startFresh(in: self, announce: false)
     }
@@ -312,6 +346,11 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
+        // Nothing typed with something dropped: Return is the drop card's first choice (D84).
+        if trimmed.isEmpty, let attachment, let first = actions?.dropChoices(for: attachment).first {
+            actions?.perform(first, with: attachment, in: self)
+            return
+        }
         let followUp = replyingTo?.thread
         replyingTo = nil
         // Shown as the request's caption and sent with the item; the model answers in any language.
@@ -322,6 +361,12 @@ final class AskModel {
         actions?.submit(request, attachment: sent, thinkHarder: thinkHarder, askAI: askAI, spoken: spoken, followUp: followUp, into: self)
     }
 
+    /// When the AI last answered in the open conversation, for Ask's header (D84).
+    var threadAnsweredAt: Date? {
+        guard let thread else { return nil }
+        return entries.last { if case .answer(_, _, _, let t) = $0.content { t == thread } else { false } }?.createdAt
+    }
+
     /// The words of the newest request, to tell whether a newer one came in since.
     var latestCaption: String? { entries.last { $0.caption != nil }?.caption }
 
@@ -329,7 +374,10 @@ final class AskModel {
     func add(_ content: AskEntry.Content, caption: String? = nil, fades: Bool = false) {
         entries.append(AskEntry(caption: caption, content: content, fadesAt: fades ? Date().addingTimeInterval(Self.noticeSeconds) : nil))
         if entries.count > Self.keptEntries { entries.removeFirst(entries.count - Self.keptEntries) }
+        if visible { entries[entries.count - 1].seenAt = Date() }
         if fades { fadeLater() }
+        // Something new shows where it can be seen: the conversation (D84).
+        tab = .ask
     }
 
     /// Removes earlier notices under this caption: a new word about talking replaces the last one.
@@ -379,9 +427,37 @@ final class AskModel {
     /// Clears old results when the panel opens after a while, so it starts clean.
     func freshenIfStale(after seconds: TimeInterval = 600) {
         guard !busy, let last = entries.last, Date().timeIntervalSince(last.createdAt) > seconds else { return }
-        entries.removeAll()
-        // The runtime's conversation went quiet as long ago; nothing is left to follow up.
+        // The runtime's conversation went quiet as long ago: the next request starts a new one. The results themselves
+        // go by their own lifetimes (`tidy`).
         thread = nil
         replyingTo = nil
+    }
+
+    /// Ask came on screen: what is past its time goes, and what shows now counts as seen (D90).
+    func opened(at now: Date = Date()) {
+        visible = true
+        tidy(at: now, force: true)
+        for i in entries.indices where entries[i].seenAt == nil { entries[i].seenAt = now }
+    }
+
+    /// Takes away the requests whose every result is past its lifetime, never a pinned one, never while the person may
+    /// be reading (the pointer on Ask, or the keyboard in it) unless Ask is only now opening.
+    func tidy(at now: Date = Date(), force: Bool = false) {
+        guard force || (!hovering && !focused), !busy else { return }
+        var gone = Set<UUID>()
+        for request in requests where !pinnedRequests.contains(request.id) {
+            let done = request.entries.allSatisfy {
+                ResultLifetime.expired($0.weight, createdAt: $0.createdAt, seenAt: $0.seenAt, pinned: false, now: now)
+            }
+            if done { gone.formUnion(request.entries.map(\.id)) }
+        }
+        guard !gone.isEmpty else { return }
+        entries.removeAll { gone.contains($0.id) }
+        if replyingTo.map({ gone.contains($0.entry) }) == true { replyingTo = nil }
+        tidied = true
+    }
+
+    func togglePin(_ request: Request) {
+        if pinnedRequests.remove(request.id) == nil { pinnedRequests.insert(request.id) }
     }
 }

@@ -11,6 +11,7 @@ extension AppCoordinator {
         addonUpdater.onUpdated = { [weak self] report in self?.companionsUpdated(report.companions.map(\.companion)) }
         addonUpdater.openReview = { [weak self] folder in self?.settingsWindow.review(folder: folder) }
         addonUpdater.openSettings = { [weak self] in self?.openSettings(tab: .general) }
+        addonUpdater.openGallery = { [weak self] in self?.home.show(section: .gallery) }
         updater.onCheckNow = { [weak self] in self?.addonUpdater.checkNow() }
         Task {
             await updater.start()
@@ -23,6 +24,8 @@ extension AppCoordinator {
         // The companion on the desktop, if it was one of them, reloads in place (D55).
         if !names.isEmpty { companion.reload3D(names) }
         settingsChanged()
+        // Settings and the Gallery read what's installed again: a card updated by itself offers no Update (D89).
+        runtime.events.changed(.settings)
     }
 
     /// What an automatic update weighs before restarting Sidefolk (D70): anything the person would lose or have to

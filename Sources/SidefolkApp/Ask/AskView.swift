@@ -32,11 +32,18 @@ struct AskView: View {
             } else {
                 SidecardSurface(tail: model.tail, padding: 0) {
                     VStack(alignment: .leading, spacing: 0) {
-                        header
+                        AskHeader(model: model, companionName: companionName, portrait: portrait)
                         input
-                        if !model.entries.isEmpty || model.busy {
-                            if clearable { clearAll }
-                            results
+                        if model.tab == .today {
+                            AskTodayTab(model: model)
+                                .padding(.horizontal, Theme.Space.l)
+                                .padding(.bottom, Theme.Space.l)
+                        } else {
+                            if !model.entries.isEmpty || model.busy {
+                                if clearable { clearAll }
+                                results
+                            }
+                            if model.tidied { olderInHistory }
                         }
                     }
                     .frame(width: Theme.Size.sidecardAsk)
@@ -59,28 +66,19 @@ struct AskView: View {
         model.actions?.startFresh(in: model, announce: true)
     }
 
-    private var header: some View {
-        HStack(spacing: Theme.Space.xs) {
-            if let portrait {
-                // Already round: a profile picture, or the drawn face on its disc (CompanionArt.avatar).
-                Image(nsImage: portrait).resizable().frame(width: 28, height: 28)
-                    .accessibilityHidden(true)
-                    .padding(.trailing, Theme.Space.xs)
-            }
-            Text(companionName).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
-                .layoutPriority(1)
-            ModeChip(mode: model.mode) { model.actions?.openSettings(tab: .privacy) }
-                .padding(.leading, Theme.Space.xs)
-            Spacer(minLength: Theme.Space.xs)
-            headerButton("house", help: "Open Sidefolk") { model.actions?.openHome() }
-            headerButton("gearshape", help: "Settings") { model.actions?.openSettings(tab: nil) }
-            headerButton("xmark", help: "Close") { model.onClose?() }
-        }
-        .padding(.horizontal, Theme.Space.l)
-        .padding(.top, Theme.Space.l)
-    }
-
     private var clearable: Bool { model.hasResults && !model.busy }
+
+    /// Results went by themselves (D90): said once, quietly, with the way to them.
+    private var olderInHistory: some View {
+        Button { model.actions?.openConversation(nil) } label: {
+            Text("Older answers are in History", comment: "Ask, under the results after some went by themselves")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.bottom, Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
     /// Above the results, as Notification Center has it, rather than in the header: there, in German, it left the
     /// companion's name no room.
@@ -99,13 +97,6 @@ struct AskView: View {
         }
         .padding(.horizontal, Theme.Space.m)
         .padding(.top, Theme.Space.s)
-    }
-
-    private func headerButton(_ symbol: String, help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
-        Button(action: action) { Image(systemName: symbol).imageScale(.small) }
-            .buttonStyle(.sf(.plain))
-            .help(help)
-            .accessibilityLabel(help)
     }
 
     private var input: some View {
@@ -142,16 +133,11 @@ struct AskView: View {
                         .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
                         .accessibilityLabel("Remove attachment")
                 }
-                if model.text.isEmpty, !model.busy {
-                    // Drops work without AI: the common things are one click away.
-                    ButtonRow {
-                        Button("Save") { model.actions?.perform(.save, with: attachment, in: model) }.buttonStyle(.sf(.primary))
-                        Button("Remind me…") { model.actions?.perform(.remind, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
-                        if canWatch(attachment) {
-                            Button("Watch") { model.actions?.perform(.watch, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
-                        }
-                        Button("Ask about it…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
-                    }
+                if model.text.isEmpty, !model.busy, let actions = model.actions {
+                    // Drops work without AI: the likely things, one click or Return away (D84).
+                    DropCard(attachment: attachment, choices: actions.dropChoices(for: attachment),
+                             choose: { actions.perform($0, with: attachment, in: model) },
+                             openWith: { actions.open(attachment, with: $0, in: model) })
                 }
             }
             if let target = model.replyingTo {
@@ -195,15 +181,6 @@ struct AskView: View {
             if model.voice == nil, model.pendingQuestion == nil, !model.found.results.isEmpty {
                 FoundList(results: model.found.results, each: 2) { model.actions?.open($0) }
                     .padding(.top, Theme.Space.xs)
-            }
-            // Nothing typed: Today at a glance (D58).
-            if model.text.isEmpty, model.attachment == nil, model.voice == nil, model.pendingQuestion == nil, !model.glance.isEmpty {
-                GlanceView(glance: model.glance, waiting: model.waiting,
-                           answer: { item, action in
-                               if let action { model.actions?.answer(question: item, actionId: action) } else { model.actions?.dismissAttention(item) }
-                           },
-                           openSession: { model.actions?.openSession($0) },
-                           openToday: { model.actions?.openNow() })
             }
         }
         .padding(.horizontal, Theme.Space.l)
@@ -297,17 +274,11 @@ struct AskView: View {
         return String(localized: "Type something, or drop a file or link on me")
     }
 
-    private func canWatch(_ a: Attachment) -> Bool {
-        switch a.kind {
-        case .url, .file: true
-        case .text: false
-        }
-    }
-
     private func icon(for a: Attachment) -> String {
-        switch a.kind {
+        switch a.dropKind {
         case .file: "doc"
-        case .url: "link"
+        case .folder: "folder"
+        case .link: "link"
         case .text: "text.quote"
         }
     }
@@ -329,6 +300,19 @@ private struct RequestView: View {
                         .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
                 Spacer(minLength: 0)
+                // Kept past its time (D90): shown while hovering, and always once pinned.
+                let pinned = model.pinnedRequests.contains(request.id)
+                Button { model.togglePin(request) } label: {
+                    Image(systemName: pinned ? "pin.fill" : "pin").font(.system(size: 10, weight: .bold))
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(Theme.line.opacity(hovering ? 0.8 : 0)))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain).foregroundStyle(pinned ? Theme.link : Theme.inkMuted)
+                .opacity(hovering || pinned ? 1 : 0)
+                .help(pinned ? Text("Unpin", comment: "Ask: lets a pinned result go by itself again") : Text("Pin: keep it here", comment: "Ask: keeps a result past its time"))
+                .accessibilityLabel(pinned ? Text("Unpin", comment: "Ask: lets a pinned result go by itself again") : Text("Pin", comment: "Ask: keeps a result past its time"))
+                .accessibilityAddTraits(pinned ? .isSelected : [])
                 // A target the size of a fingertip, not of the glyph.
                 Button { model.dismiss(request.id, toward: 1) } label: {
                     Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
@@ -622,8 +606,8 @@ private struct AnswerCard: View {
                             Image(systemName: "bubble.left.and.text.bubble.right").imageScale(.small)
                         }
                         .buttonStyle(.sf(.plain))
-                        .help("Open in Conversations")
-                        .accessibilityLabel("Open in Conversations")
+                        .help(Text("Open in History", comment: "Ask's header: opens this conversation in Home › History"))
+                        .accessibilityLabel(Text("Open in History", comment: "Ask's header: opens this conversation in Home › History"))
                     }
                 }
             }

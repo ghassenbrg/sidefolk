@@ -81,10 +81,11 @@ python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (moch
 `?bare&frame=tight` for clean captures; in the console `(await import('./sheet.js')).sheet(companion)`
 lays 16 feelings, moves and postures out in one grid, and `turnaround(companion)` saves front, ¾,
 side and back views to compare with the sheet's turnaround. Stills hide what motion shows:
-`filmstrip(companion, 'flip', { yaw: 120 })` lays one move out frame by frame from any side, and
+`filmstrip(companion, 'flip', { yaw: 120 })` lays one move out frame by frame from any side,
+`reel(companion, ['sulk', 'shrug'], { yaws: [0, 40, 90] })` several moves at several angles in one picture, and
 `closeups(companion, name, [[yaw, height, size], …])` renders the surface close up. `edges(companion)` (in a
 `?frame=sidefolk&capture` page) plays everything the app can play in its square window and names whatever touches an
-edge; `front(companion)` saves a front view to compare colours and light with the sheet's
+edge (`{ only: ['sulk'] }` checks just those moves); `front(companion)` saves a front view to compare colours and light with the sheet's
 (`python3 companions-3d/zones.py <sheet> x0,y0,x1,y1 build/companions-3d/front-<id>/00001.png`). Console scripts
 start with `await ready`. Resting:
 `restSheet(companion)` lays out stand, sit, lie and sleep from the front, ¾ and side with the head close up, and

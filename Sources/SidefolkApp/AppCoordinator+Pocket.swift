@@ -57,6 +57,7 @@ extension AppCoordinator {
                 self?.statusItem.closePocket()
                 Task { await self?.palettes.toggle(id) }
             },
+            openGames: { [weak self] in self?.pocketClosing { $0.openPlayMenu(focus: true) } },
             quit: { NSApp.terminate(nil) })
         statusItem.setCompanionHidden(!companion.isVisible)
     }
@@ -94,16 +95,26 @@ extension AppCoordinator {
 
         // Needs you: agents' sessions asking, cards waiting, steps skipped while nobody answered.
         let sessions = (try? await runtime.sessions.live()) ?? []
-        for session in sessions where session.state == .needsYou {
-            c.needsYou.append(.init(id: "session-\(session.id)", title: String(localized: "\(Self.agentName(session.agent)) needs you"),
+        // One line per agent and folder, with how many when several sessions wait or work there (D90).
+        for group in AgentSessionGroup.of(sessions.filter { $0.state == .needsYou }) {
+            let session = group.session
+            c.needsYou.append(.init(id: "session-\(session.id)", title: String(localized: "\(Self.agentName(session.agent)) needs you")
+                                        + (group.count > 1 ? " · \(group.count.formatted())" : ""),
                                     detail: [session.projectName, session.detail].compactMap { $0 }.joined(separator: " · "),
                                     trailing: TimeText.clock(session.updatedAt), symbol: "hand.raised", folk: "byte",
                                     open: { [weak self] in self?.pocketClosing { $0.openSession(session) } }))
         }
         for item in await runtime.attention.open().filter({ $0.level >= .attention }) {
             c.needsYou.append(.init(id: "attention-\(item.id)", title: item.title, detail: item.body?.clipped(60),
-                                    trailing: TimeText.clock(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.source),
+                                    trailing: TimeText.clock(item.createdAt), symbol: "tray.full", folk: Self.folk(for: item.refKind == "watcher" ? "watcher" : item.source),
                                     open: { [weak self] in self?.pocketClosing { $0.openNow() } }))
+        }
+        // Add-on updates (D89): one row, however many.
+        let pending = updates.addonPending
+        if !pending.isEmpty {
+            c.needsYou.append(.init(id: "addon-updates", title: AddonUpdateWords.count(pending.count),
+                                    detail: Wording.list(pending.map(\.shownName)).clipped(60), symbol: "arrow.down.circle",
+                                    open: { [weak self] in self?.pocketClosing { $0.addonUpdater.showAddonUpdates() } }))
         }
         let skipped = await runtime.executor.skipped.list()
         if let newest = skipped.first {
@@ -123,10 +134,12 @@ extension AppCoordinator {
         }
 
         // Agents at work: sessions working, commands running.
-        for session in sessions where session.state == .working {
+        for group in AgentSessionGroup.of(sessions.filter { $0.state == .working }) {
+            let session = group.session
+            let name = session.projectName.map { String(localized: "\(Self.agentName(session.agent)) in \($0)", comment: "The Pocket: “Codex in pockito”") }
+                ?? Self.agentName(session.agent)
             c.agents.append(.init(id: "working-\(session.id)",
-                                  title: session.projectName.map { String(localized: "\(Self.agentName(session.agent)) in \($0)", comment: "The Pocket: “Codex in pockito”") }
-                                      ?? Self.agentName(session.agent),
+                                  title: group.count > 1 ? "\(name) · \(group.count.formatted())" : name,
                                   detail: session.detail, trailing: TimeText.duration(now.timeIntervalSince(session.startedAt)),
                                   symbol: "terminal", folk: "byte", live: true,
                                   open: { [weak self] in self?.pocketClosing { $0.openSession(session) } }))

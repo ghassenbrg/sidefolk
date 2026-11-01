@@ -30,6 +30,14 @@ import Testing
         #expect(StatusTone.watch(.error, changeWaiting: true) == .danger)
     }
 
+    /// D87: in a watch's history a change is news and a failed check is amber; red stays for a watch that stopped.
+    @Test func aFailedCheckIsAmberNotRed() {
+        #expect(StatusTone.check(.changed) == .news)
+        #expect(StatusTone.check(.failed) == .warning)
+        #expect(StatusTone.check(.unchanged) == .neutral)
+        #expect(StatusTone.check(.paused) == .neutral)
+    }
+
     @Test func waitingIsAmberNeverRed() {
         #expect(StatusTone.reminder(late: true) == .warning)
         #expect(StatusTone.reminder(late: false) == .neutral)

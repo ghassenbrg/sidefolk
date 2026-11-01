@@ -4,8 +4,8 @@ import SidefolkCore
 /// Gallery add-ons on this Mac keep up with the gallery (D55, D70): a look 90 s after launch, then every six hours,
 /// and soon after Settings › Updates changes. With "Update add-ons automatically" on, companions, themes and
 /// extensions whose update asks for nothing new install by themselves (`AddonUpdater`); an extension update that
-/// would let it do more waits for the person, with one gentle heads-up per version. With it off, every update waits
-/// and Settings › Updates says so, with Update All.
+/// would let it do more waits for the person, with one gentle heads-up per version. With it off, every update waits,
+/// shown wherever add-ons appear, with Update all (D89), and after a day one whisper says so.
 @MainActor
 final class AddonUpdateController: AddonUpdateActions {
     private let runtime: SidefolkRuntime
@@ -23,10 +23,15 @@ final class AddonUpdateController: AddonUpdateActions {
     var openReview: (URL) -> Void = { _ in }
     /// Opens Settings › General, where every update waiting for a look is listed.
     var openSettings: () -> Void = {}
+    /// Opens Home's Gallery, whose Updates section lists every update (D89).
+    var openGallery: () -> Void = {}
 
     static let reviewKind = "addon-review"
+    /// The whisper about updates that waited a day (D89).
+    static let waitingKind = "addon-updates"
     /// The versions already brought up on the desktop, so a heads-up comes once per version.
     private static let mentionedKey = "addonUpdates.mentioned"
+    private static let nudgeKey = "addonUpdates.nudge"
 
     init(runtime: SidefolkRuntime, model: UpdateModel, themes: ThemeLibrary) {
         self.runtime = runtime
@@ -40,6 +45,12 @@ final class AddonUpdateController: AddonUpdateActions {
         await runtime.attention.onAction(kind: Self.reviewKind) { [weak self] item, action in
             guard action == "review" else { return }
             await MainActor.run { self?.reviewFromNotice(item.refId) }
+        }
+        await runtime.attention.onAction(kind: Self.waitingKind) { [weak self] _, action in
+            await MainActor.run {
+                if action == "updateAll" { self?.updateAddonsNow() }
+                if action == "show" { self?.showAddonUpdates() }
+            }
         }
         // An update reviewed and installed (or the extension removed) no longer waits.
         let stream = runtime.events.stream()
@@ -74,8 +85,19 @@ final class AddonUpdateController: AddonUpdateActions {
     // MARK: AddonUpdateActions
 
     func updateAddonsNow() {
-        Task { await look(installing: true) }
+        Task { await updateAll() }
     }
+
+    func update(_ entry: AddonEntry) {
+        if model.addonNeedsReview(entry.id) { return review(entry) }
+        Task {
+            await updateAll([entry])
+            // The person asked for this one: one that would do more goes straight to its sheet.
+            if model.addonSteps[entry.id] == .needsReview { review(entry) }
+        }
+    }
+
+    func showAddonUpdates() { openGallery() }
 
     /// "Check for Updates…": the gallery's list fetched again now, not the one kept for half an hour, so an add-on
     /// published minutes ago is found without waiting for the next look.
@@ -96,23 +118,72 @@ final class AddonUpdateController: AddonUpdateActions {
 
     // MARK: Looking
 
-    /// One look. `installing` installs what the rule allows even with the switch off (Update All); `refresh` fetches
-    /// the gallery's list again.
-    private func look(installing: Bool = false, refresh: Bool = false) async {
+    /// One look; `refresh` fetches the gallery's list again. Rows that Update all finished go: what's left is
+    /// what still waits.
+    private func look(refresh: Bool = false) async {
         guard !model.addonsBusy else { return }
         let s = runtime.settings.current.updates
         followed = (s.effectiveChannel, s.addons)
         model.addonsBusy = true
-        let report = await updater.run(channel: s.effectiveChannel, automatic: s.addons || installing, refresh: refresh)
+        let report = await updater.run(channel: s.effectiveChannel, automatic: s.addons, refresh: refresh)
         model.addonsBusy = false
+        model.addonSteps = model.addonSteps.filter { $0.value != .updated }
+        model.addonRecent = model.addonRecent.filter { model.addonSteps[$0.id] != nil }
+        model.addonSummary = nil
+        settle(report)
+        model.addonWaiting = report.waiting
+        model.addonReview = report.review
+        await headsUp(report.review)
+        await nudge(automatic: s.addons)
+    }
+
+    /// Update all (D89), or one add-on's Update: each in turn, its row following along, then a summary. With nothing
+    /// chosen, every waiting update that isn't known to ask for more, looked for first if none is known yet.
+    private func updateAll(_ chosen: [AddonEntry]? = nil) async {
+        if chosen == nil, model.addonInstallable.isEmpty { await look() }
+        let entries = chosen ?? model.addonInstallable
+        guard !model.addonsBusy, !entries.isEmpty else { return }
+        model.addonsBusy = true
+        model.addonSummary = nil
+        for entry in entries { model.addonSteps[entry.id] = nil }
+        model.addonRecent = entries + model.addonRecent.filter { old in !entries.contains { $0.id == old.id } }
+        let report = await updater.updateAll(entries) { [weak self] entry, step in
+            await MainActor.run { self?.model.addonSteps[entry.id] = step }
+        }
+        model.addonsBusy = false
+        settle(report)
+        let done = Set(report.companions.map(\.id) + report.themes.map(\.id) + report.extensions.map(\.id) + report.review.map(\.id))
+        model.addonWaiting.removeAll { done.contains($0.id) }
+        model.addonReview += report.review.filter { entry in !model.addonReview.contains { $0.id == entry.id } }
+        if chosen == nil { model.addonSummary = report.summary }
+    }
+
+    /// What installed: companions and themes drawn again, the names for Settings › Updates.
+    private func settle(_ report: AddonUpdateReport) {
         if !report.companions.isEmpty || !report.themes.isEmpty { onUpdated(report) }
         if report.installed > 0 {
             model.addonsUpdated = report.companions.map(\.name) + report.themes.map(\.tokens.name) + report.extensions.map(\.name)
             model.addonsUpdatedAt = Date()
         }
-        model.addonWaiting = report.waiting
-        model.addonReview = report.review
-        await headsUp(report.review)
+    }
+
+    /// One whisper once updates have waited a day with the switch off (`AddonUpdateNudge`).
+    private func nudge(automatic: Bool) async {
+        var nudge = (try? await kv.get(Self.nudgeKey, as: AddonUpdateNudge.self)) ?? AddonUpdateNudge()
+        nudge.note(automatic ? [] : model.addonPending, now: Date())
+        let due = nudge.due(automatic: automatic, now: Date())
+        try? await kv.set(Self.nudgeKey, nudge)
+        if due { _ = await runtime.attention.post(Self.waitingNotice(model.addonPending, installable: !model.addonInstallable.isEmpty)) }
+    }
+
+    static func waitingNotice(_ entries: [AddonEntry], installable: Bool) -> AttentionRequest {
+        AttentionRequest(
+            level: .gentle, source: "addons",
+            title: String(localized: "\(entries.count) add-ons have updates", comment: "A whisper after updates waited a day: “2 add-ons have updates”"),
+            body: Wording.list(entries.map(\.shownName)),
+            actions: (installable ? [AttentionAction(id: "updateAll", title: String(localized: "Update all"), isPrimary: true)] : [])
+                + [AttentionAction(id: "show", title: String(localized: "Show", comment: "Opens the Gallery's Updates"), isPrimary: !installable)],
+            refKind: waitingKind)
     }
 
     /// A gentle word about updates that wait for a look, once per version: they never install by themselves.
@@ -147,9 +218,36 @@ final class AddonUpdateController: AddonUpdateActions {
     }
 
     #if DEBUG
-    /// `addons:review | waiting | clear` from scripts/dev.swift: Settings › Updates and the heads-up with made-up
-    /// gallery entries, without a gallery.
+    /// `addons:review | waiting | updates | nudge | clear` from scripts/dev.swift: Settings › Updates and the heads-up with
+    /// made-up gallery entries, without a gallery. With a gallery (`SIDEFOLK_ADDONS`, D89): `addons:auto:on|off` sets
+    /// "Update add-ons automatically", `addons:get:<id>` installs that add-on from it as Get and the install sheet would,
+    /// `addons:check` looks at it now, `addons:updateAll` is Update all.
     func dev(_ command: String) {
+        if command.hasPrefix("auto:") {
+            let on = command == "auto:on"
+            Task { await runtime.settings.update { $0.updates.addons = on } }
+            return
+        }
+        if command == "updateAll" { return updateAddonsNow() }
+        if command == "check" { return checkNow() }
+        if command.hasPrefix("get:") {
+            let id = String(command.dropFirst(4))
+            Task {
+                do {
+                    guard let entry = try await runtime.addons.catalog(refresh: true).entry(id) else { return }
+                    switch entry.kind {
+                    case .companion: try await runtime.addons.install(companion: entry)
+                    case .theme: break
+                    case .extension:
+                        try await runtime.extensions.install(from: try await runtime.addons.fetch(entry), origin: .official)
+                        await runtime.addons.discard(entry)
+                    }
+                } catch {
+                    Log.shared.warning("dev", "addons:get failed", ["id": id, "error": String(describing: error)])
+                }
+            }
+            return
+        }
         func entry(_ id: String, _ name: String, _ kind: AddonEntry.Kind) -> AddonEntry {
             let json = ["id": id, "kind": kind.rawValue, "name": name, "tagline": "", "description": "", "author": "Sidefolk",
                         "version": "1.0.0-snapshot.3", "file": "x.zip", "bytes": 1, "sha256": String(repeating: "0", count: 64)] as [String: Any]
@@ -161,9 +259,22 @@ final class AddonUpdateController: AddonUpdateActions {
             Task { _ = await runtime.attention.post(Self.notice(model.addonReview)) }
         case "waiting":
             model.addonWaiting = [entry("dev.sidefolk.companions.kiko", "Kiko", .companion), entry("dev.sidefolk.feeds", "Feeds", .extension)]
+        case "updates":
+            // The Gallery's Updates mid-way through Update all, as the D89 snapshots show it.
+            model.addonWaiting = [entry("dev.sidefolk.playtime", "Playtime", .extension), entry("dev.sidefolk.feeds", "Feeds", .extension),
+                                  entry("dev.sidefolk.companions.kiko", "Kiko", .companion), entry("dev.sidefolk.theme.daylight", "Daylight", .theme)]
+            model.addonReview = [entry("dev.sidefolk.miraya", "Miraya", .extension)]
+            model.addonRecent = [entry("dev.sidefolk.git", "Git", .extension)]
+            model.addonSteps = ["dev.sidefolk.git": .updated, "dev.sidefolk.feeds": .updating]
+        case "nudge":
+            model.addonWaiting = [entry("dev.sidefolk.playtime", "Playtime", .extension), entry("dev.sidefolk.feeds", "Feeds", .extension)]
+            Task { _ = await runtime.attention.post(Self.waitingNotice(model.addonPending, installable: true)) }
         case "clear":
             model.addonReview = []
             model.addonWaiting = []
+            model.addonSteps = [:]
+            model.addonRecent = []
+            model.addonSummary = nil
         default: break
         }
     }

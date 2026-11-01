@@ -179,6 +179,9 @@ public struct UrlChangeProbe: WatcherProbe {
         // The last change stays until the next, for Today's tile (D58).
         if let kept = previous?["change"] { state["change"] = kept }
         let open = url.absoluteString
+        // The watch keeps the text it compared (D87): its first look, then each change with what it was before.
+        let beforeText = previous?["text"]?.stringValue
+        let baseline = beforeText == nil ? ComparedText(text) : nil
 
         if condition.hasText {
             let hasContains = condition.contains.map { TextDiff.contains(text, $0) } ?? true
@@ -186,7 +189,7 @@ public struct UrlChangeProbe: WatcherProbe {
             let matched = hasContains && hasNot
             state["matched"] = .bool(matched)
             let wasMatched = previous?["matched"]?.boolValue ?? false
-            guard matched, !wasMatched else { return ProbeResult(state: .object(state)) }
+            guard matched, !wasMatched else { return ProbeResult(state: .object(state), compared: baseline) }
             let summary: String
             if let want = condition.contains, condition.notContains == nil {
                 summary = String(localized: "\(name) now says “\(want.clipped(60))”")
@@ -196,16 +199,18 @@ public struct UrlChangeProbe: WatcherProbe {
                 summary = String(localized: "\(name) now matches what you were waiting for")
             }
             let line = condition.contains.flatMap { want in text.components(separatedBy: "\n").first { TextDiff.contains($0, want) } }
-            return ProbeResult(state: .object(state), triggered: true, summary: summary, detail: line?.clipped(160), openTarget: open)
+            return ProbeResult(state: .object(state), triggered: true, summary: summary, detail: line?.clipped(160), openTarget: open,
+                               compared: ComparedText(text, before: beforeText))
         }
 
-        guard let before = previous?["text"]?.stringValue else {
-            return ProbeResult(state: .object(state)) // first look: this is what "unchanged" means from now on
+        guard let before = beforeText else {
+            return ProbeResult(state: .object(state), compared: baseline) // first look: this is what "unchanged" means from now on
         }
         let change = TextDiff.compare(old: before, new: text)
         guard change.isSignificant else { return ProbeResult(state: .object(state)) }
         state["change"] = PageChange(change, at: now).json
-        return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: change.snippet, openTarget: open)
+        return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: change.snippet, openTarget: open,
+                           compared: ComparedText(text, before: before))
     }
 
     static func hash(_ text: String) -> String {

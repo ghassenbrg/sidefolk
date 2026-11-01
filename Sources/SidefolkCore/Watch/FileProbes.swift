@@ -184,7 +184,10 @@ public struct FileChangesProbe: WatcherProbe {
         var state: [String: JSONValue] = ["exists": .bool(facts != nil)]
         if let facts { state["size"] = .number(facts.size); state["mtime"] = .number(facts.mtime) }
 
-        guard let previous = w.lastState else { return ProbeResult(state: .object(state)) } // the first look is the baseline
+        // A text file's lines are kept as the watch's versions (D87): on the first look, and each time it changes. What
+        // it was before is the version kept last time, so it isn't held in the state as well. Read only then, not at every look.
+        let text = { facts.flatMap { FileText.read(path, facts: $0) }.map { ComparedText($0) } }
+        guard let previous = w.lastState else { return ProbeResult(state: .object(state), compared: text()) } // the first look is the baseline
         let existed = previous["exists"]?.boolValue == true
         let before = FileAppearsProbe.facts(previous)
         let name = WatchedPath.name(path)
@@ -194,14 +197,15 @@ public struct FileChangesProbe: WatcherProbe {
         case (false, nil): return ProbeResult(state: .object(state))
         case (false, let now?):
             return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) was created"),
-                               detail: WatchedPath.size(now.size), openTarget: open)
+                               detail: WatchedPath.size(now.size), openTarget: open, compared: text())
         case (true, nil):
             return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) was deleted"),
                                openTarget: (path as NSString).deletingLastPathComponent)
         case (true, let now?):
             guard let before, !now.sameContent(as: before) else { return ProbeResult(state: .object(state)) }
             let sizes = before.size == now.size ? String(localized: "Size unchanged") : "\(WatchedPath.size(before.size)) → \(WatchedPath.size(now.size))"
-            return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: sizes, openTarget: open)
+            return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) changed"), detail: sizes, openTarget: open,
+                               compared: text())
         }
     }
 

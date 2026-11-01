@@ -17,8 +17,10 @@ extension AppCoordinator {
                 env.fullScreenRule = s.fullScreen
                 env.presence = s.presence
                 env.sounds = s.sounds
+                env.interruptions = s.interruptions
             }
         }
+        sidecard.model.interruptions = s.interruptions
         refreshMark()
         attentionTimer?.cancel()
         attentionTimer = nil
@@ -36,6 +38,41 @@ extension AppCoordinator {
         Task {
             await runtime.settings.update { $0.setAttention(mode, until: until, now: Date()) }
             settingsChanged()
+        }
+    }
+
+    static let levelChanged = "levelChanged"
+
+    /// "Fewer like this" or "Show these as whispers" on a card (D88): the source's level changes at once, and a whisper
+    /// says so with Undo.
+    func lowerSource(_ source: InterruptSource, to level: InterruptLevel) {
+        let before = runtime.settings.current.interruptions.explicit(source)
+        Task {
+            await runtime.settings.update { $0.interruptions.set(level, for: source) }
+            settingsChanged()
+            let name = source.name(companion: runtime.settings.current.companionName,
+                                   extensions: ask.extensionLooks.mapValues(\.name))
+            let title = level == .whisper
+                ? String(localized: "\(name): whispers from now on", comment: "A whisper after “Show these as whispers”: “Claude Code: whispers from now on”")
+                : String(localized: "\(name): only in Today from now on", comment: "A whisper after “Fewer like this”: “Claude Code: only in Today from now on”")
+            let item = AttentionItem(level: .gentle, source: Self.ownVoice, title: title,
+                                     actions: [AttentionAction(id: SidecardItemCard.undo, title: String(localized: "Undo"))],
+                                     refKind: Self.levelChanged, refId: source.key)
+            levelUndo[item.id] = (source, before)
+            sidecard.present(item, .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+        }
+    }
+
+    /// Undo on that whisper: the source's level as it was, said back.
+    func undoLevel(_ whisperId: String) {
+        guard let change = levelUndo.removeValue(forKey: whisperId) else { return }
+        Task {
+            await runtime.settings.update { $0.interruptions.set(change.before, for: change.source) }
+            settingsChanged()
+            sidecard.present(AttentionItem(level: .gentle, source: Self.ownVoice,
+                                           title: String(localized: "Undone: notices come as before.", comment: "A whisper after undoing “Fewer like this”"),
+                                           refKind: "undone"),
+                             .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
         }
     }
 

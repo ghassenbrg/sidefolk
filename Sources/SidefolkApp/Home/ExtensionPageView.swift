@@ -13,6 +13,9 @@ struct ExtensionPageView: View {
         // centred, so a wide window never leaves the page on one side.
         PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
             header
+            if let updates = model.updates, let entry = updates.addonUpdate(for: model.info.extensionId) {
+                AddonUpdateStrip(entry: entry, updates: updates)
+            }
             if let page = model.page {
                 // A hero leading the page says what the summary would, larger and with its actions (D74).
                 if let summary = page.summary, page.hero == nil { SummaryBanner(summary: summary, model: model) }
@@ -34,7 +37,7 @@ struct ExtensionPageView: View {
                 }
                 if !model.alerts.isEmpty { HeadsUps(model: model) }
             } else if let problem = model.problem {
-                RowsCard { InlineEmpty(text: LocalizedStringKey(problem), systemImage: "exclamationmark.triangle") }
+                RowsCard { InlineEmpty(label: Text(ext: problem), systemImage: "exclamationmark.triangle") }
             } else {
                 ProgressView().frame(maxWidth: .infinity).padding(Theme.Space.xxl)
             }

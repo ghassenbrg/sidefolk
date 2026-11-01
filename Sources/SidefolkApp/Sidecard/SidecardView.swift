@@ -44,16 +44,42 @@ struct SidecardView: View {
         .accessibilityHint(Text("Shows more", comment: "VoiceOver: clicking a whisper beside the companion grows it into a card"))
     }
 
+    /// A held card as the stack shows it: who it's from, its title, and when.
+    static func stackItem(_ item: AttentionItem, companion: String, sessions: [String: AgentSession]) -> SidecardStack.Item {
+        SidecardStack.Item(id: item.id, folk: SidecardItemCard.folk(item), title: Text(verbatim: item.title),
+                           meta: SidecardItemCard.source(item, companion: companion, sessions: sessions)
+                               + Text(verbatim: " · \(TimeFormat.clock(item.shownAt ?? item.createdAt, calendar: .autoupdatingCurrent))"))
+    }
+
+    /// Three held cards at most: the newest, or the three around the one the keyboard is on.
+    static func shown(_ stack: [AttentionItem], around focus: String?) -> [AttentionItem] {
+        guard let focus, let at = stack.firstIndex(where: { $0.id == focus }), stack.count > 3 else { return Array(stack.suffix(3)) }
+        let start = min(max(0, at - 1), stack.count - 3)
+        return Array(stack[start..<start + 3])
+    }
+
+    private func keyPair(_ key: String, _ words: Text) -> some View {
+        HStack(spacing: 4) {
+            KeyHint(key)
+            words.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     /// What waits, fanned out from the shoulder: the newest in front, a click opens Ask on top of them.
     private var stack: some View {
         VStack(alignment: .trailing, spacing: Theme.Space.s) {
-            SidecardStack(items: model.stack.suffix(3).map { item in
-                SidecardStack.Item(id: item.id, folk: SidecardItemCard.folk(item), title: Text(verbatim: item.title),
-                                   meta: SidecardItemCard.source(item, companion: model.companionName, sessions: model.sessions)
-                                       + Text(verbatim: " · \(TimeFormat.clock(item.shownAt ?? item.createdAt, calendar: .autoupdatingCurrent))"))
-            })
+            SidecardStack(items: Self.shown(model.stack, around: model.stackFocus).map {
+                Self.stackItem($0, companion: model.companionName, sessions: model.sessions)
+            }, selected: model.stackFocus, out: model.stackOut, from: model.fanFrom)
             HStack(spacing: Theme.Space.s) {
-                if model.waiting > 3 {
+                if model.stackFocus != nil {
+                    // From the shortcut: the keys that move through the held cards (D84).
+                    ButtonRow(spacing: Theme.Space.s) {
+                        keyPair("↑↓", Text("choose", comment: "Under the held cards fanned from the keyboard: ↑↓ picks one"))
+                        keyPair("↩", Text("open", comment: "Under the held cards fanned from the keyboard: ↩ brings the chosen one out"))
+                    }
+                } else if model.waiting > 3 {
                     Text("+\(model.waiting - 3) more", comment: "Under the held cards beside the companion: how many more wait")
                         .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
@@ -83,6 +109,7 @@ struct SidecardItemCard: View {
     var body: some View {
         let lines = Self.listLines(item)
         let (menu, buttons) = Self.arrange(item.actions)
+        let fewer = Self.fewer(item, model.interruptions)
         SidecardCard(folk: Self.folk(item), face: Self.speaksItself(item) ? model.face : nil,
                      source: Self.source(item, companion: model.companionName, sessions: model.sessions), title: Text(verbatim: item.title),
                      message: lines == nil ? item.body.map { Text(verbatim: $0) } : nil, tail: tail,
@@ -93,12 +120,21 @@ struct SidecardItemCard: View {
                     Image(nsImage: family).resizable().scaledToFit().frame(height: 84).frame(maxWidth: .infinity).accessibilityHidden(true)
                 }
                 if let lines { ListLines(lines: lines) }
+                if let keys = model.keys {
+                    SidecardKeysLine(keys: keys, nudge: model.keysNudge, closes: !(item.level >= .attention && SidecardController.folds(item)))
+                }
             }
         } actions: {
-            if !menu.isEmpty {
+            if !menu.isEmpty || !fewer.isEmpty {
                 Menu {
                     ForEach(menu, id: \.id) { action in
                         Button { model.respond?(item, action.id) } label: { Text(verbatim: action.title) }
+                    }
+                    if !fewer.isEmpty {
+                        if !menu.isEmpty { Divider() }
+                        ForEach(fewer, id: \.level) { choice in
+                            Button { model.lowerSource?(item, choice.source, choice.level) } label: { Text(verbatim: choice.title) }
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -107,15 +143,20 @@ struct SidecardItemCard: View {
                 .menuIndicator(.hidden)
                 .buttonStyle(.sf(.secondary, size: .sidecard))
                 .fixedSize()
+                .keyFocusRing(focused(SidecardController.moreAnswers))
                 .accessibilityLabel(Text("More choices", comment: "A ⋯ menu on a card beside the companion"))
             }
             ForEach(buttons, id: \.id) { action in
                 Button { model.respond?(item, action.id) } label: { Text(verbatim: action.title) }
                     .buttonStyle(.sf(action.isPrimary ? .primary : .secondary, size: .sidecard))
+                    .keyFocusRing(focused(action.id))
             }
         }
         .accessibilityLabel(Text(verbatim: item.title))
     }
+
+    /// The answer the keyboard is on, while the card has it (D84).
+    private func focused(_ id: String) -> Bool { model.keys?.focusedAnswer == id }
 
     /// Three in sight at most, the main one last (macOS order): the likeliest other answer beside it, and the rest in a
     /// ⋯ menu first in the row, in the order they came (b03). Long languages keep one row that way.
@@ -124,6 +165,23 @@ struct SidecardItemCard: View {
         guard let primary = shown.first(where: \.isPrimary) ?? shown.first else { return ([], []) }
         let others = shown.filter { $0.id != primary.id }
         return (Array(others.dropFirst()), others.prefix(1) + [primary])
+    }
+
+    /// What the ⋯ menu offers to hear less from this card's source (D88): as whispers, for a card from a source that
+    /// may send cards; Fewer like this (Only in Today) while it may still reach the desktop. Nothing for what can never
+    /// be turned down (questions, an agent waiting in its own window) or what no setting covers.
+    static func fewer(_ item: AttentionItem, _ levels: Interruptions) -> [(title: String, source: InterruptSource, level: InterruptLevel)] {
+        guard item.source != AppCoordinator.ownVoice, item.source != Onboarding.source,
+              !Interruptions.mustReach(level: item.level, refKind: item.refKind) else { return [] }
+        let sources = InterruptSource.of(source: item.source, refKind: item.refKind, refId: item.refId)
+        guard let source = sources.first else { return [] }
+        let now = levels.ceiling(for: sources)
+        let asWhispers = String(localized: "Show these as whispers", comment: "A card's ⋯ menu: notices from this source come as whispers from now on")
+        let fewer = String(localized: "Fewer like this", comment: "A card's ⋯ menu: notices from this source show only in Today from now on")
+        var choices: [(title: String, source: InterruptSource, level: InterruptLevel)] = []
+        if now == .card, item.level >= .attention, source.choices.contains(.whisper) { choices.append((asWhispers, source, .whisper)) }
+        if now >= .whisper, source.choices.contains(.today) { choices.append((fewer, source, .today)) }
+        return choices
     }
 
     /// A body made of lines (the brief's day, what waited while away or quiet) reads as rows.

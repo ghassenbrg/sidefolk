@@ -118,6 +118,8 @@ later update path is safe.
 atomic replace, exact removal) instead of shelling out to `claude mcp add`. Only on the user's click,
 after a dialog that lists every change and the backup path.
 **Why:** predictable and testable, no CLI on PATH needed, same backup/removal semantics everywhere.
+*Amended by D86:* only the copy on the person's own data folder edits these files; any other `SIDEFOLK_HOME`
+edits stand-ins inside itself.
 
 ### D17 — Proprietary license until the founder decides (2026-10-26)
 **Decision:** LICENSE reserves all rights. Dependencies (GRDB, KeyboardShortcuts) are MIT and listed in
@@ -916,6 +918,8 @@ symlink at it (macOS resolves a bundle through its path, and Finder and Launch S
 
 ### D42 — Other agents drive Sidefolk: a skill installed by Connect, the tools they were missing, Codex hooks (2026-10-27)
 **Decision:** what someone asks Codex or Claude Code about Sidefolk works from that agent, within T4.
+*Amended by D86:* Connect installs the skill and hooks into the person's agents only from the copy on
+their own data folder; any other `SIDEFOLK_HOME` writes stand-ins inside itself.
 - **Tools other agents were missing**, each safe under T4 and run through `ExternalToolGateway` (Guard,
   audit, quotas): `reminders.cancel` for the reminders that agent set (`ReminderTools.canManage`: another
   agent's or the user's read as not found), `watch.report` for this Mac's metrics only (cpu, memory,
@@ -1819,6 +1823,9 @@ in Activity (it is the audit of tool calls; an update is not one).
 the one kept for half an hour, then looks as the timed check does (installs what may install by itself, lists what
 waits). Miraya was published minutes after the founder's copy had kept the list, and nothing could make it look sooner.
 
+*Amended by D89:* waiting updates are shown wherever add-ons appear (the Gallery's Updates, an extension's page,
+Settings › Add-ons, Home's sidebar, Today, the Pocket) with Update all, and a whisper after a day.
+
 ### D71 — Install sheets and approval cards that are honest without being scary: trust first, tone by source, guards beside each permission (2026-10-31)
 **Decision:** the same facts for every extension, said as loudly as where it comes from calls for.
 - **Where it comes from, first** (`InstallSource`, a row under the title): *From the Sidefolk gallery · Signed by
@@ -2024,9 +2031,26 @@ modelling props per companion (twelve companions); shipping sound files (synthes
 
 **Implications:** a 0.1.0 snapshot from before games refuses Playtime's games snapshots at install (an unknown `games` key), as with
 pages (D62); accepted for snapshots. New companion moves (sulk, shrug, tease, ready and the short accents) borrow the
-nearest existing moment until each is made and filmed for every 3D companion; trivia's questions stay the 52 English
+nearest existing moment until each is made and filmed for every 3D companion (built: the amendment below); trivia's questions stay the 52 English
 ones until the content packs land (`TriviaPack`). **Not built:** the `pads`, `shuffle`, `reflex`, `meter`, `number`,
 `letters` and `keys` parts (phase 2–3), Sneaky's switch in Settings, a tail on the panel.
+
+**Amended (2026-11-01), the reaction moves, built:** the game moves that borrowed a near one are each the companion's
+own now. In 3D, shared in `engine/moves.js` for every companion (Mochi and Spark in the app, the gallery's eight on
+the same engine): **sulk** (a huff, then the shoulder turned on you, head away rather than down, ears drooping, a
+glance back), **shrug** (shoulders up, paws out and open, head tipped), **tease** (a paw by the cheek, a lean with a
+short wink, a waggle of the hips), **ready** (a crouch, paws up in front and apart, two bounces), and the accents
+**waveQuick**, **hopQuick**, **spinQuick**, **bowQuick** (0.55–1 s, eyes open for the next beat); **wince** and
+**gasp** play the engine's `wince` and `surprised`. Each lasts 0.6–1.6 s and comes back to rest by itself. A move may
+carry a `still` version that the engine plays instead under Reduce Motion (`liveliness: 'still'`): the face and a
+small turn of the head, nothing that travels. In 2D the same ten are new `CharacterAntic` cases drawn from the rig's
+parts (`Antics`), with the moods each body already draws (a wink is the one-eye `wince`); a 2D spin narrows twice
+rather than turning edge-on. `CueDirector.moment` maps each `GameCue.Move` to its own antic; `sulk` is no longer the
+`error` state. Every move was filmed for every 3D companion from the front, 40° and the side, and tuned from the
+films: big heads turn rather than droop in a sulk, long arms stay apart in ready, the wink is short because a one-eyed
+body (Iris) reads a long one as shut, the accents keep their eyes open. No character file changed, so the gallery's
+companions need no new version: they get the moves with the app. The playground gained `reel()` (several moves at
+several angles in one picture) and `edges({ only })`; the debug app `cue:<move>`.
 
 ### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
 **Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.
@@ -2420,6 +2444,7 @@ they don't. Miraya's `addon.json` names 593.
 
 
 ### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+*Amended by D87 and D88:* a watch has its own page in Home and On duty's rows a bar of its checks (D87); each source has its own level in Settings › Attention (D88).
 **Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
 design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
 1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
@@ -2546,7 +2571,7 @@ you were focused" card when it ends; cards that need an answer still come (`Atte
 `AppSettings.focusUntil`). Quiet hours every night (off until turned on; choosing Open or Focus inside them sets the
 rest of that night aside), what a full-screen app does (Quiet as before, Focus, or nothing), sounds, notifications
 and the morning brief. A timer looks again when an end or a quiet-hours edge passes. The per-source "what may
-interrupt you" table of the mockups was left out: no source has its own level to set. **Full access may end**
+interrupt you" table of the mockups was left out: no source has its own level to set. *(D88 built it.)* **Full access may end**
 (`GuardPolicy.fullAccessEnds`, `beforeFullAccess`, `choose(_:fullAccessEnds:)`): Guard reads the policy through
 `current(at:)`, so past its end Full access is the mode it replaced even if no timer fired (the Mac asleep, Sidefolk
 quit); the sheet offers in 1 hour, tonight at 22:00 (while more than an hour away) or when turned off, and its button
@@ -2582,6 +2607,37 @@ its breath redrew the whole window every frame (Home open: 4.1% CPU against 1.4%
 desktop at rest 1.4% both). *Not done:* the mockups' per-source "what may interrupt you" table (no source has a level
 of its own), Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card.
 
+**Desktop polish, built (2026-11-01, branch `team/desktop-polish`):** what phase 2 left, each on a real path.
+- *Cards answer from the keyboard outside Ask:* a global shortcut (⌃⌥Space unless changed in Settings › General,
+  "Answer cards from the keyboard") is registered only while a card, a slip or held cards wait, and is off when
+  macOS (input sources use ⌃⌥Space on many Macs) or Ask's or talk's shortcut has the same keys. It hands the
+  keyboard to the slip standing alone, else the card in front (a whisper grows first), else the held cards fanned
+  with the newest chosen. ↩ presses the answer in focus only on the person's own cards (`AttentionItem.takesReturn`:
+  reminders, commands, the brief, Sidefolk's own words); everything else needs ⌘↩ and says so; ⎋ puts a held card
+  back (closes the companion's own); ←/→ and Tab move between answers (⋯ is one stop, its menu opens);
+  ↑/↓ bring the other held cards to the front; answering moves to the next held card. A key line on the card says
+  what the keys do. A held-down Return answers one card, keys wait half a second after a card changes, and the
+  keyboard goes back when the person clicks elsewhere. The logic is `CardKeys` (core, tested).
+- *Ask's header:* Ask, Today and Play tabs under the name (Today: Needs you and Next up, with its count; Play opens
+  the Play panel in Ask's place); "Just now · Open in History" for the open AI conversation. The field stays on
+  both tabs; typing or a new result shows Ask; Ask opens on Today when nothing is in the conversation and something
+  waits or comes up. Glance left Ask's resting state for the Today tab.
+- *The drop card:* a dropped file, folder, link or text shows four choices in a 2×2 card in Ask, each with one line
+  of what it does (`DropChoices`): file or folder Save to notebook, Watch it, Ask about it, Open with… (the apps
+  macOS offers); link Save link, Watch page, Ask, Play on TV when Miraya's tool is there and the link is an https
+  video (`ext.miraya.play_on_tv`, through Guard as its sentence runs it), else Remind me; text Save as note,
+  Remind me, Ask, Copy. Return does the first; typing still asks about the item, as before.
+- *Motion:* held cards come out of the shoulder count along a short arc and fold back into it; a card that folds
+  drops into the count as a small copy of itself (a window of its own for half a second). While the microphone
+  listens the light swells with the voice (`VoiceLevel`: twelve reads a second, eight steps, only a change reaches the
+  screen). None of it with Reduce Motion or Increase Contrast's ring, nothing at rest: idle CPU measured side by side
+  with origin/main (top, 12 × 5 s, two pins and two agents, a busy Mac): 2.14% against 2.09%.
+- *VoiceOver:* the companion's corner is one "Sidefolk companion" group: the companion (name, state, press to talk),
+  what it says above its head (the card, held cards or slip; pressing gives it the keyboard), the count, the pins top
+  to bottom (value, how live, their menu), the agents' faces, the folks, each pressable as a click is. The card's
+  window is named. `swift scripts/dev.swift ax` writes the tree; SwiftUI's own parts appear only to a connected
+  assistive app, so the Sidecard's inside is checked in code and snapshots.
+
 **Implications:** phases 2–4 build on `docs/DESIGN.md`'s tokens and components. Not done in phase 1: the 16 text
 fields still on `.roundedBorder`, the theme-only Today blocks' capitals (console, planner), the macOS switch's tint in
 snapshots (AppKit draws it grey in an inactive app). `glow`/`waitGlow`/`well` are written by `sidefolk theme new`.
@@ -2616,3 +2672,195 @@ entries for one character, and no Look switch).
 `mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
 companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
 `docs/research/lively-companions.md` documents the keys.
+
+### D86 — Only the copy on the person's own data folder changes their agents' configs (2026-11-01)
+**Decision:** *amends D16 and D42.* `IntegrationLocations.forApp(paths:)` gives the app the real `~/.claude.json`,
+`~/.claude/settings.json`, `~/.claude/skills`, `~/.codex/config.toml`, `~/.codex/hooks.json` and
+`~/.codex/skills` (honouring `CLAUDE_CONFIG_DIR` and `CODEX_HOME`) only when `SidefolkPaths.isDefaultHome`,
+and `commandLineTool(paths:)` gives it `~/.local/bin/sidefolk` on the same condition. A copy on any other
+data folder (`SIDEFOLK_HOME`: `make dev`, agents' QA runs, a release build pointed elsewhere) gets stand-ins
+in `<home>/agent-configs/`: `claude/` and `codex/` laid out as `CLAUDE_CONFIG_DIR` and `CODEX_HOME` folders
+(whatever the environment says, since an agent's shell can name the real ones), and `.local/bin/sidefolk`.
+At launch `prepareStandIns` starts them as this Mac's agents are (an empty `.claude.json` and the folders
+where the real ones exist; it only checks that they exist), so Connect, its dialog, backups and
+Disconnect work in a dev copy exactly as for the person, on files nobody else reads. The helper's
+environment carries `SIDEFOLK_HOME` whenever the folder isn't the default one, not only in debug builds.
+**Why:** on 2026-10-26 a QA run (home `build/qv1` in an agent worktree) clicked Connect. The locations
+were the real ones, so the founder's Claude Code and Codex were pointed at `<worktree>/build/qv1/bin/sidefolk`;
+the worktree was deleted, and both failed on every start ("ENOENT … bin/sidefolk"), hooks included.
+AGENTS.md already said dev runs must not touch agent configs, but nothing enforced it. The fix was first
+written on 2026-10-27 (as a "D44" on a branch that never reached main, whose number main has since used for
+companion play) and is ported here onto today's code.
+**Alternatives:** *refusing Connect unless an opt-in variable is set*: safe, but Connect could no longer
+be tried in a dev copy, and the opt-in is one `export` away from the same accident. *Honouring
+`CLAUDE_CONFIG_DIR`/`CODEX_HOME` in dev copies*: an agent's own shell may set them to the real folders.
+*Keying on `#if DEBUG`*: a release build on a QA folder would still write the real files.
+**Implications:** `SidefolkPaths.isDefaultHome` and `agentConfigs`; the command link's dialog names the
+stand-in's place in dev copies. To try a dev copy's Connect with a real agent, run that agent with
+`CLAUDE_CONFIG_DIR=<home>/agent-configs/claude` or `CODEX_HOME=<home>/agent-configs/codex`.
+`IntegrationLocationsTests` checks a non-default folder never resolves to the real paths, even when the
+environment names them, and that installing and removing all six connections there leaves every byte of
+the person's folders as it was.
+
+### D87 — A watch keeps its history: every check, the latest change's two versions, and its own page in Home (2026-11-01)
+**Decision:** *amends D84 (a watch's detail page, left out for want of a history) and D58 (the page change kept for
+Today's tile).* Every watch that isn't a live value (D35) keeps a record of its checks and, for a page or a file, the text
+it compared, and has its own page in Home.
+- **The check log** (`watch_checks`, migration `v6-watch-history`): each check is unchanged, changed (with the notice's
+  words), failed (with the reason, the same words as `lastError`) or paused, with how long it took. Checks in a row that
+  found the same thing are one row with a count and their first and last times, so a watch looking every 30 s writes a
+  row only when the outcome changes; a run that only grew reaches the database with the watcher's routine saves (every
+  5 minutes, `WatcherEngine.routineSaveInterval`) and on quit (`flushHistory`), and readers ask the engine, which has it
+  as it stands. Waiting for a busy site or the network (`ProbeError.deferred`, `.offline`) isn't a check. Reports keep
+  no log: they read every few seconds and keep their own line of values in memory (D58).
+- **Versions** (`watch_versions`): the extracted text the probe compared, never the HTML: a page's readable lines
+  (`PageText`), a plain text file's lines (`FileText`: an allow list of text kinds, 512 KB at most, UTF-8, read only on
+  the first look and when the file changed, invisible and bidirectional controls removed, SECURITY T2). The first look
+  is kept, then each change with what it was before (`ComparedText`); only the newest two stay, each cut at 32,000
+  characters on a line, and the same text twice is kept once. A file that isn't text keeps none: its size and time are
+  what it compares.
+- **Kept small:** checks older than 30 days go at the daily tidy (`SidefolkRuntime.housekeeping`), and at most 500 rows
+  per watch whatever their age. The two versions stay while the watch does (the newer is what the next change is
+  compared with). Both tables reference `watchers` with a cascade, so stopping a watch deletes its history; "Your
+  data" exports both (`watchChecks`, `watchVersions`) and "Delete all data" empties both. Nothing leaves the Mac.
+- **The watch's page** (`HomeSelection.watch`, `WatchDetailView`), opened from On duty's rows, Today's watch tiles (the
+  popover they had is gone) and a changed-watch card on Today ("See what changed", a link, so the card keeps its three
+  buttons): what it watches, how often, Scout, since when and until when; Check now (the one primary while it watches)
+  or Resume (when it doesn't), Pause and Stop watching (confirmed: its history goes with it), through the same
+  `AppServices` calls On duty uses; "What changed" for page and file watches, inline or side by side (`LineDiff`: every
+  line that differs, in reading order, two lines of context, at most 600 lines), in the text's own direction; and the
+  timeline of runs under a bar of the last 48 checks. A page watch from before this shows the changed lines D58 kept.
+- **On duty's bars:** each watch row has its last 24 checks as ticks (`CheckTicks`), with their counts in words for
+  VoiceOver; "Watching" is no longer a chip there (the bar says it), other states still are.
+- **Colours (D78, `StatusTone.check`):** a change is news (the accent), a failed check amber; red stays for a watch that
+  stopped (`StatusTone.watch(.error)`). In "What changed", removed lines are struck through in muted ink and added ones
+  sit on the news tint, marked − and +.
+- **For agents:** `watch.list` adds ", last changed 2 h ago" to each watch that changed, with the notice's words in
+  brackets only for kinds whose summary is made from the watch's own settings (`url_change`, `site_status`,
+  `file_changes`, `file_appears`); a folder's new file names, a program's or an extension's words are outside content
+  (T2), so for those only the time is said. No tool's input schema changed, so MCP clients see the same tools.
+
+**Why:** the founder: a watch only kept its latest state, so the app couldn't say when it last changed, what changed,
+or that it had been failing all night; D84 left the watch page and On duty's bars out rather than fake them. A run-length
+log keeps a month of a 30-second watch in a few rows, and keeping the compared text (not the page) is what makes "what
+changed" possible at a size that doesn't matter (two versions of 32,000 characters, 50 watches at most).
+
+**Alternatives:** a row per check (2,880 a day for one file watch, and a write every 30 s against the routine-save rule);
+keeping the fetched HTML (big, and not what was compared); a diff stored at change time instead of the two versions (no
+side-by-side view, and nothing to compare the next change with for files); reading a file's text at every check (it
+compares size and time; reading only on a change costs nothing while nothing changes); putting the change summary in
+`watch.list` for every kind (it would make the list outside content whenever a folder watch fired).
+
+**Implications:** `WatchCheck`, `WatchVersion`, `WatchHistoryStore`, `WatchHistoryLimits` (Storage); `ProbeResult.compared`,
+`FileText`, `LineDiff`, `WatcherEngine+History` (`note`, `keep`, `checks(for:)`, `recentTicks`, `versions(for:)`,
+`lastChanges`, `flushHistory`); `StatusTone.check`; `DataPorter`; the app's `WatchDetailModel`, `WatchDetailView`,
+`WatchChecks.swift` (`CheckTicks`, `CheckRow`, `CheckWords`), `WatchChangeView.swift`; `NowModel.ticks` and
+`openWatch`; `WatchTile` and `ChangeLines` removed; `swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]`;
+snapshots `window-home-watch*`.
+
+### D88 — What may interrupt you: a ceiling per source, Only in Today, and "done today" counts only what was done (2026-11-01)
+**Decision:** *amends D84 (phase 4 left the per-source table out) and D12.* Every notice now has a **source** with a
+level the person sets in Settings › Attention › What may interrupt you: reminders, watches (all, and one watch set
+apart), commands (`sidefolk run`), each agent by its client name (Claude Code, Codex, then any other app that called
+Sidefolk or started a session), each extension whose watches report, games (the companion's lines while playing) and
+the companion itself (its AI's notices, routines, folk introductions, "All clear"). The levels are **Card** (may step
+forward), **Whisper** (gentle; if it needs an answer it folds into the stack when it fades), **Only in Today** (never on
+the desktop: kept in Today, `AttentionItem.State.kept`) and **Off** (History only). Reminders offer no Off; games only
+Whisper or Off. A notice gets the **lower of its own level and its source's ceiling, then Focus or Quiet**
+(`Interruptions.route`, applied first in `AttentionCenter.consider`, so a held notice is judged again when it comes
+back). **Never turned down:** a question (`refKind "ask"`) and an agent session that needs the person (its approval in
+its own window); Guard's approvals never go through the attention center at all. The most specific level the person set
+wins (a watch, then its extension, then all watches); unset levels are the source's default, which is the behaviour
+before D88, and a default clears the stored value. Stored as `AppSettings.interruptions` (`{"agent:codex": "today",
+"watch:<id>": "whisper"}`); settings from before decode to the defaults and unknown keys or levels are skipped. To tell
+agents apart, a session's notices are `session:<agent>:<id>` (from before: no agent, so no ceiling), and an extension's
+watch posts as `extension:<id>` (`Watcher.noticeSource`; the card still reads as Scout's watch). A card's ⋯ menu has
+**Show these as whispers** (a card from a source at Card) and **Fewer like this** (Only in Today), for its most specific
+source; the card goes as a whisper would, and a whisper says what changed with **Undo**. `notify.user` tells the agent
+when its notice was kept in Today or turned off, so it doesn't resend it. Today shows kept news under **Kept for Today**
+(who · when, its answers, Dismiss) and kept notices that need an answer in Needs you; the desktop count, the stack and
+the Pocket leave them out.
+
+**"Done today"** (`DayBrief.doneCount`, the one definition) counts reminders and tasks finished today, notes, ideas,
+tasks and links saved today, and today's other calls that changed something (`ToolSpec.mutates`), refused, failed and
+skipped ones left out. Reads (searches, lists, another agent's `status`) never count, and the calls whose result the
+stores already count (`notes.save`, `reminders.complete`, `notes.update` to done) aren't counted twice.
+
+**Why:** levels came only from each event's kind, so the person could quiet everything (Focus, Quiet) but not one
+chatty agent; the founder's sessions finishing many times an hour were the case. A ceiling keeps each poster's own
+judgement (a failure stays louder than a success) while letting the person cap it, and Only in Today keeps the news
+without the interruption. Questions and approvals stay out of it so nothing waits unseen. "Done today" counted every
+call that didn't fail, so Codex checking `status` made the day look busy.
+
+**Alternatives:** a level per event kind (too many rows; the person thinks in who, not what); Off for reminders (the
+person's own words at their own time; Only in Today is the quietest); storing the source's agent in a new column (a
+migration for what the source string can say); counting done from History's rows (they mix reads and changes).
+
+**Implications:** `Interruptions`, `InterruptSource`, `InterruptLevel` (Core/Attention); `AttentionEnvironment.
+interruptions`, `AttentionCenter.kept()`, `AttentionStore.kept()`; `SidecardItemCard.fewer`, `SidecardModel.
+lowerSource`, `AppCoordinator.lowerSource/undoLevel`; `InterruptionsGroup` in Settings › Attention and
+`SettingKey.interruptions`; `NowModel.kept` and Today's Kept for Today; `CueDirector.linesShown`; the debug command
+`interrupt:<source key>:<level>`. Tests: `InterruptionsTests`, `InterruptionsCenterTests` (every level against every
+ceiling, then Open, Focus and Quiet), `DoneTodayTests`.
+
+*Amended by D89:* the table gains **Add-on updates** (`addonUpdates`, key "addons"), Whisper by default: the whisper
+after updates waited a day and the heads-up about an update to look at.
+
+### D89 — Add-on updates in sight wherever add-ons appear, with Update all (2026-11-01)
+**Decision:** *amends D70.* Updates that wait for the person (the switch off, or an extension update that would do more)
+are shown where add-ons are, from one list (`UpdateModel.addonPending`, kept by `AddonUpdateController`):
+- **Home's Gallery** leads with **Updates** and a count: one row per add-on (companions, extensions, themes) with
+  Update, Review… for one that would do more, its progress while it installs, Updated or Try again, and **Update all**.
+- **An extension's page** has a calm "Update available" strip with **What's new** (the install sheet, which says what
+  the version changes, D71) and Update; **Settings › Add-ons** rows say "New version x" with Update beside their switch,
+  and a card offers Update all; **Home's sidebar** marks a page's row with an accent dot and counts updates on Get
+  add-ons; **Today** has one compact row (count, names, Update all, Show), the **Pocket** one row in Needs you.
+- **Update all** installs every waiting update that asks for nothing new, one at a time, by D70's own rule
+  (`AddonUpdater.updateAll`, the path a timed look with the switch on takes too). One that would let an extension do
+  more stays listed with Review…, which opens its install sheet; one that fails keeps its old copy, says why and has
+  Try again, and the rest go on. It ends with a summary ("3 updated, 1 needs your review"). A single Update does the
+  same for one, and opens the sheet at once when the version asks for more. A version needing a newer Sidefolk is never
+  offered (the catalog leaves it out, D83).
+- **One whisper** ("2 add-ons have updates", Update all and Show) once updates have waited a day with the switch off
+  (`AddonUpdateNudge`); then nothing more about them, only about a later one after its own day. Its source is
+  **Add-on updates** in D88's table (`InterruptSource.addonUpdates`, key "addons", Whisper by default), which also
+  covers D70's heads-up about an update to look at.
+
+**Why:** the founder: "If I don't go there on purpose, I'll never notice." Updates lived in Settings › General and on
+gallery cards only. The App Store and Google Play put an Updates list with Update all where apps are, and say so once.
+
+**Alternatives:** a card per update on Today (a pile; the founder asked for one row); release notes in the catalog
+for What's new (the gallery publishes none; the install sheet already says what a version changes, honestly);
+installing widening updates with Update all (they need the person's look, D70); nudging with the switch on
+(updates then install by themselves; the review heads-up stays per version, D70).
+
+**Implications:** Core `AddonUpdater.update(_:)`, `updateAll(_:step:)`, `AddonUpdateStep`, `AddonUpdateOutcome`,
+`AddonUpdateReport.failed/summary`, `AddonUpdateNudge`; `AddonStore.updateCompanions` went (the updater installs
+companions). App: `UpdateModel.addonSteps/addonSummary/addonRecent/addonPending/addonInstallable/addonRows`,
+`AddonUpdateActions.update/showAddonUpdates`, `Updates/AddonUpdateViews.swift`, the whisper's kind `addon-updates`;
+dev commands `addons:updates|nudge|auto:off|get:<id>|check|updateAll`; snapshots `window-home-gallery-updates`,
+`window-home-today-updates`, `page-extension-clipboard-update`, `page-settings-addons-updates`,
+`panel-pocket-addon-updates`. Tests: `AddonUpdateAllTests`.
+
+### D90 — Ask tidies itself by each result's weight; agents' sessions in one folder are one line (2026-11-01)
+**Decision:** *amends D5 and D84.* Results in Ask go by themselves, each by its weight (`ResultLifetime`):
+- **Quick** (a value read now, a lookup, a calculation, chance, a notice): about two minutes after it was first seen
+  in Ask, so opening Ask again five minutes later finds it gone. Not seen yet, it waits for its look.
+- **Normal** (an answer, something made: a note saved, a reminder set; an error with nothing to retry): half an hour,
+  or the day: the next day's first look starts clean.
+- **Needs you** (an approval, a question, a failure with Retry): until dealt with or cleared.
+A request goes when all its results are past their time; a small Pin on it keeps it; Clear all stays. Nothing goes
+while the pointer is on Ask or Ask has the keyboard (Ask opening tidies first); what goes fades, and a quiet line,
+"Older answers are in History", links there: everything is still in History. The ten-minute reset that emptied Ask
+now only starts a new conversation. Ask's "Working" list is gone (the agents' faces, On duty and the Pocket show
+who works), and sessions of one agent in one folder in the same state (subagents, a second terminal) are one face,
+row or line with how many (`AgentSessionGroup`): "Claude Code in sidefolk · 3".
+
+**Why:** the founder: people ask and go without clearing, and an old battery level was still there ten minutes later;
+the same session three times read as noise.
+
+**Alternatives:** one fixed time for everything (a question waiting would vanish); clearing on every open (an answer
+read a minute ago would be gone); keeping them and collapsing old ones (still a list to scroll).
+
+**Implications:** `AskEntry.seenAt`, `.weight`; `AskModel.opened`, `tidy`, `pinnedRequests`, `tidied`; the panel
+looks every 15 s only while open. `AgentChip.count`, `Glance.sessions` as groups.

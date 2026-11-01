@@ -320,6 +320,7 @@ extension AppCoordinator: AppServices {
         applyTheme()
         updater.settingsChanged()
         addonUpdater.settingsChanged()
+        applyCardKeys()
     }
 
     /// Light or dark for every window, or nil to follow the Mac. Theme's colours follow it.
@@ -329,6 +330,7 @@ extension AppCoordinator: AppServices {
         case .light: NSApp.appearance = NSAppearance(named: .aqua)
         case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
         }
+        statusItem.followMenuBar(app: NSApp.appearance)
     }
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }

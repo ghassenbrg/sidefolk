@@ -25,6 +25,7 @@ struct SettingsRoot: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .clipped()
         }
         .background(Theme.surfaceSunken)
         .environment(\.settingsNavigation, navigation)

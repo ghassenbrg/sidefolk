@@ -178,6 +178,8 @@ final class ExtensionPageModel {
 
     let info: ExtensionPageInfo
     private let services: AppServices?
+    /// Where its extension's update, if one waits, is said (D89).
+    var updates: UpdateModel?
     private(set) var page: ExtensionPage?
     var problem: String?
     private(set) var updated: Date?
@@ -198,6 +200,7 @@ final class ExtensionPageModel {
     init(info: ExtensionPageInfo, services: AppServices) {
         self.info = info
         self.services = services
+        updates = services.updates
     }
 
     /// A page with nothing behind it, for UI snapshots.

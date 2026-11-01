@@ -27,13 +27,12 @@ extension AppCoordinator {
         Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/sidefolk").path
     }
 
+    /// The person's agent configs only when this copy runs on their own data folder; any other data folder
+    /// gets stand-ins inside it (D86). The helper is told which folder unless it is the person's own.
     var integrations: AgentIntegrations {
-        #if DEBUG
-        let env = ["SIDEFOLK_HOME": runtime.paths.home.path]
-        #else
-        let env: [String: String] = [:]
-        #endif
-        return AgentIntegrations(locations: .standard(), helperPath: stableHelperPath, helperEnvironment: env,
+        let paths = runtime.paths
+        let env = paths.isDefaultHome ? [:] : ["SIDEFOLK_HOME": paths.home.path]
+        return AgentIntegrations(locations: .forApp(paths: paths), helperPath: stableHelperPath, helperEnvironment: env,
                                  skill: ResourceLocator.agentSkill)
     }
 
@@ -113,7 +112,7 @@ extension AppCoordinator {
         alert.informativeText = body + "\n\n" + String(localized: "Restart running sessions to pick this up.")
         alert.addButton(withTitle: connecting ? String(localized: "Connect") : String(localized: "Disconnect"))
         alert.addButton(withTitle: String(localized: "Cancel"))
-        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        guard confirmed(alert) else { return nil }
         for p in previews {
             do {
                 let result = p.install ? try tool.install(p.integration) : try tool.remove(p.integration)
@@ -163,4 +162,49 @@ enum AlreadyRunning {
         alert.runModal()
         AppDelegate.quit(prepare: false)
     }
+}
+
+extension AppCoordinator {
+    /// The person's answer to a Connect or command-link dialog. A debug copy on a QA folder may be told to
+    /// accept the next one (`connect:` below): it writes only stand-ins there (D86), and the log keeps the
+    /// dialog's words so a QA run can read what the person would have been shown.
+    func confirmed(_ alert: NSAlert) -> Bool {
+        #if DEBUG
+        if devAcceptsNextConfirmation, !runtime.paths.isDefaultHome {
+            devAcceptsNextConfirmation = false
+            Log.shared.info("integrations", "dev accepted", ["title": alert.messageText, "text": alert.informativeText])
+            return true
+        }
+        #endif
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    #if DEBUG
+    /// connect:claude|codex[:hooks] | connect:cli | disconnect:claude|codex|cli, as the Connections cards do,
+    /// with their dialog accepted. Refused on the person's own data folder: there it would be a click nobody made.
+    func devConnect(_ command: String) -> Bool {
+        let parts = command.split(separator: ":").map(String.init)
+        guard parts.count >= 2, ["connect", "disconnect"].contains(parts[0]) else { return false }
+        guard !runtime.paths.isDefaultHome else {
+            Log.shared.warning("integrations", "dev connect refused on the default data folder")
+            return true
+        }
+        let connect = parts[0] == "connect", hooks = parts.contains("hooks")
+        devAcceptsNextConfirmation = true
+        Task {
+            let error: UserFacingError? = switch (parts[1], connect) {
+            case ("claude", true): await connectClaudeCode(hooks: hooks)
+            case ("claude", false): await disconnectClaudeCode()
+            case ("codex", true): await connectCodex(hooks: hooks)
+            case ("codex", false): await disconnectCodex()
+            case ("cli", true): await installCommandLineTool()
+            case ("cli", false): await removeCommandLineTool()
+            default: nil
+            }
+            devAcceptsNextConfirmation = false
+            if let error { Log.shared.warning("integrations", "dev connect failed", ["error": error.message]) }
+        }
+        return true
+    }
+    #endif
 }

@@ -46,6 +46,23 @@ import Testing
         #expect(chips[1].agent == "Codex" && !chips[1].needsYou && chips[1].since == now.addingTimeInterval(-840))
     }
 
+    @Test func sessionsOfOneAgentInOneFolderStandAsOne() {
+        // Subagents or a second terminal in the same project: one face, one line, with how many.
+        var a = AgentSession(id: "a", agent: "claude-code", cwd: "/Users/me/git/sidefolk", state: .working, now: now.addingTimeInterval(-600))
+        a.updatedAt = now.addingTimeInterval(-300)
+        var b = AgentSession(id: "b", agent: "claude-code", cwd: "/Users/me/git/sidefolk", state: .working, now: now.addingTimeInterval(-60))
+        b.updatedAt = now
+        let c = AgentSession(id: "c", agent: "claude-code", cwd: "/Users/me/git/sidefolk", state: .needsYou, now: now)
+        let d = AgentSession(id: "d", agent: "codex", cwd: "/Users/me/git/sidefolk", state: .working, now: now)
+        let groups = AgentSessionGroup.of([a, b, c, d])
+        #expect(groups.map(\.count) == [2, 1, 1])
+        #expect(groups[0].session.id == "b")  // the most recently active stands for the others
+        let chips = AgentLane.chips([a, b, d])
+        #expect(chips.count == 2 && chips.first { $0.agent == "Claude Code" }?.count == 2)
+        // The face says how long the first of them has been at it.
+        #expect(chips.first { $0.agent == "Claude Code" }?.since == now.addingTimeInterval(-600))
+    }
+
     @Test func theLaneKeepsToThree() {
         let many = (0..<5).map { AgentSession(id: "s\($0)", agent: "codex", cwd: nil, state: .working, now: now) }
         #expect(AgentLane.chips(many).count == AgentLane.shown)

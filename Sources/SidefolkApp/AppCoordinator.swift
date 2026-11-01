@@ -78,9 +78,18 @@ final class AppCoordinator {
     /// The Ask shortcut's press silenced the companion; its release doesn't toggle the panel too.
     var askKeySilenced = false
     var talkKeysInstalled = false
+    /// The card shortcut (D84): installed, and registered right now.
+    var cardKeysInstalled = false
+    var cardKeysOn = false
     /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
     var attentionTimer: Task<Void, Never>?
+    /// What a "Fewer like this" changed, by the id of the whisper that offers Undo (D88).
+    var levelUndo: [String: (source: InterruptSource, before: InterruptLevel?)] = [:]
     var fullAccessTimer: Task<Void, Never>?
+    #if DEBUG
+    /// Set by the `connect:` dev command so a QA copy's Connect can run without a click (D86).
+    var devAcceptsNextConfirmation = false
+    #endif
 
     init(runtime: SidefolkRuntime) {
         self.runtime = runtime
@@ -104,6 +113,7 @@ final class AppCoordinator {
                 self?.sidecard.askClosed()
             }
             self?.renderMood()
+            self?.applyCardKeys()
         }
 
         agent = makeAgentRuntime()
@@ -113,6 +123,11 @@ final class AppCoordinator {
         applyAppearance()
         applyTheme()
         restoreCompanionAddon()
+        // The Mac switching Light/Dark: the menu bar icon follows it even when Sidefolk's own look is fixed.
+        DistributedNotificationCenter.default().addObserver(forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
+                                                            object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyAppearance() }
+        }
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
                                                           object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyCompanionSettings() }
@@ -138,7 +153,10 @@ final class AppCoordinator {
         #else
         let hotkey = true
         #endif
-        if hotkey { installTalkKeys() }
+        if hotkey {
+            installTalkKeys()
+            installCardKeys()
+        }
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
@@ -177,6 +195,7 @@ final class AppCoordinator {
             Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
         }
         installHelperLink()
+        IntegrationLocations.prepareStandIns(paths: runtime.paths)
         // Extension pages' charts reach back a day, and Today's tiles stay current (D62).
         await runtime.extensions.startPageSampling()
         await palettes.refresh()
@@ -271,7 +290,7 @@ final class AppCoordinator {
 
     /// The first time a folk turns up, the companion says who it is: once, gently, never during onboarding.
     private func introduceNewFolks(_ folks: [DutyFolk]) {
-        guard runtime.settings.current.showFolks, !onboarding.isRunning else { return }
+        guard runtime.settings.current.showFolks, !onboarding.isRunning, ownRemarksShown else { return }
         let key = "introducedFolks"
         var met = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
         guard let folk = folks.first(where: { !met.contains($0.rawValue) }) else { return }
@@ -292,6 +311,10 @@ final class AppCoordinator {
 
     /// Bubbles the companion says itself, outside the attention center (folk introductions).
     static let ownVoice = "companion"
+
+    /// The companion's remarks of its own (folk introductions, "All clear") come only at Card or Whisper (D88); they are
+    /// passing words, so Only in Today keeps nothing of them. Answers to the person's own clicks always come.
+    var ownRemarksShown: Bool { runtime.settings.current.interruptions.level(for: .companion) >= .whisper }
 
     /// Shows a bubble that doesn't go through the attention center (onboarding).
     func presentLocal(_ item: AttentionItem) {
@@ -352,6 +375,7 @@ final class AppCoordinator {
             return
         }
         if command == "about" { showAbout(); return }
+        if devConnect(command) { return }
         if command == "calendar" || command.hasPrefix("calendar:") {
             let parts = command.split(separator: ":").dropFirst().map(String.init)
             let day = parts.count > 1 ? try? Date(parts[1] + "T12:00:00Z", strategy: .iso8601) : nil
@@ -384,9 +408,20 @@ final class AppCoordinator {
             Task { await runtime.settings.update { $0.voice.volume = min(max(volume, 0), 1) } }
             return
         }
+        if command.hasPrefix("dropChoice:") {
+            // One of the drop card's choices, as a click on it (D84).
+            if let choice = DropChoice(rawValue: String(command.dropFirst("dropChoice:".count))), let attachment = ask.attachment {
+                perform(choice, with: attachment, in: ask)
+            }
+            return
+        }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
-            if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
+            if value.hasPrefix("text:") {
+                // Dropped words, as the companion takes them from another app (D84's drop card for text).
+                let text = String(value.dropFirst(5))
+                companionReceived(Attachment(kind: .text, label: "“\(text.clipped(40))”", text: text))
+            } else if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
                 companionReceived(Attachment(kind: .url(url), label: url.host ?? value, text: value))
             } else {
                 let file = URL(fileURLWithPath: value)
@@ -412,6 +447,18 @@ final class AppCoordinator {
             let parts = command.split(separator: ":").map(String.init)
             if parts.count > 1, let mode = AttentionMode(rawValue: parts[1]) {
                 setAttention(mode, until: parts.count > 2 ? Double(parts[2]).map { Date().addingTimeInterval($0 * 60) } : nil)
+            }
+            return
+        }
+        if command.hasPrefix("interrupt:") {
+            // interrupt:<source key>:<card|whisper|today|off> ("interrupt:agent:claude-code:today"), as Settings › Attention's
+            // table does (D88); "default" clears it.
+            let rest = command.dropFirst("interrupt:".count)
+            guard let cut = rest.lastIndex(of: ":"), let source = InterruptSource(key: String(rest[..<cut])) else { return }
+            let level = InterruptLevel(rawValue: String(rest[rest.index(after: cut)...]))
+            Task {
+                await runtime.settings.update { $0.interruptions.set(level, for: source) }
+                settingsChanged()
             }
             return
         }
@@ -543,6 +590,15 @@ final class AppCoordinator {
         } else if command == "dismiss", let item = sidecard.model.item {
             respond(to: item, action: nil)
             sidecard.withdraw(id: item.id)
+        } else if command == "ax", let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"] {
+            // The accessibility tree of every visible window, beside the snapshots (D84).
+            AccessibilityDump.write(to: URL(fileURLWithPath: home).appendingPathComponent("snapshots", isDirectory: true))
+        } else if command == "cardKeys" {
+            // The card shortcut (D84), which debug copies don't register unless SIDEFOLK_DEV_HOTKEY=1.
+            sidecard.devKeys = true
+            focusFrontCard()
+        } else if command.hasPrefix("cardKey:") {
+            sidecard.devKey(String(command.dropFirst("cardKey:".count)))
         } else if command == "grow" {
             sidecard.model.grow?()
         } else if command.hasPrefix("stack:") {
@@ -592,6 +648,12 @@ final class AppCoordinator {
     /// `slipsOnly`: a permission slip arrived while Ask was closed; it stands alone above the companion.
     func showAsk(prefill: String? = nil, focus: Bool = true, slipsOnly: Bool = false) {
         if let prefill { ask.text = prefill }
+        // Opened with nothing to say yet while something waits or comes up: Today first (D84); otherwise the
+        // conversation, where typing goes either way.
+        if !askPanel.isVisible || ask.compact {
+            let fresh = ask.text.isEmpty && ask.attachment == nil && !ask.hasResults && ask.pinnedEntries.isEmpty
+            ask.tab = fresh && (waitingCount > 0 || !ask.glance.isEmpty) && !slipsOnly ? .today : .ask
+        }
         // One panel at a time: the game is kept and comes back as it was (D75); a card folds into what Ask shows.
         playPanel.hide()
         if !slipsOnly { sidecard.yieldToAsk() }
@@ -604,6 +666,8 @@ final class AppCoordinator {
     /// An agent saved or set something through Sidefolk: say so, briefly, and credit it.
     private func creditExternal(_ activity: ToolActivity, ok: Bool) {
         guard ok, activity.mutates, case .external(let client) = activity.caller, let card = activity.card else { return }
+        // Only in Today or Off for this agent (D88): what it saved shows in Today and History, not on the desktop.
+        guard runtime.settings.current.interruptions.level(for: .agent(InterruptSource.agentName(client))) >= .whisper else { return }
         let name = AgentFacingTools.displayName(client)
         let item = AttentionItem(level: .gentle, source: "external:\(client)",
                                  title: String(localized: "\(name): \(card.title)",
@@ -774,6 +838,7 @@ final class AppCoordinator {
             onboarding.respond(action: action)
             return
         }
+        if action == SidecardItemCard.undo, item.refKind == Self.levelChanged { return undoLevel(item.id) }
         if item.source == Self.ownVoice { return }
         if action == SidecardItemCard.undo, item.refKind == "credit", let id = item.refId { return undoFromWhisper(id) }
         if action == "open", item.source == "summary" { openHome() }

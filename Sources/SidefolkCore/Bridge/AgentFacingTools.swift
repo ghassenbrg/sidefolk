@@ -62,6 +62,13 @@ struct NotifyUserTool: Tool {
                                                          title: title.clipped(120), body: input.string("body")?.clipped(600),
                                                          actions: actions, refKind: "notify"))
         // Saying so keeps a caller from sending it again, louder, because it seemed to go nowhere.
+        switch item.state {
+        case .kept:
+            return ToolResult(text: "Kept in the user's Today list: they chose to see your notices there, not on the desktop. Don't send it again.")
+        case .acknowledged:
+            return ToolResult(text: "Not shown: the user turned off notices from you; it is kept in their History. Don't send it again.")
+        default: break
+        }
         if await attention.isHeld(item.id) {
             return ToolResult(text: "Held for now: the user is busy, away or in quiet mode, or other notices came first. "
                 + "Sidefolk shows it when it can; don't send it again.")

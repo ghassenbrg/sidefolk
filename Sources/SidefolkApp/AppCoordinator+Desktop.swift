@@ -6,6 +6,7 @@ import SidefolkCore
 extension AppCoordinator {
     func installSidecard() {
         sidecard.anchorProvider = { [weak self] in self?.anchor() }
+        sidecard.badgeProvider = { [weak self] in self?.companion.badgeOnScreen }
         sidecard.onRespond = { [weak self] item, action in self?.respond(to: item, action: action) }
         sidecard.onAutoDismiss = { [weak self] item in
             guard let self, item.source != Onboarding.source, item.source != Self.ownVoice else { return }
@@ -16,6 +17,8 @@ extension AppCoordinator {
             return await runtime.attention.open().filter { $0.level >= .attention }.sorted { $0.createdAt < $1.createdAt }
         }
         sidecard.onOpenStack = { [weak self] in self?.showAsk() }
+        sidecard.remarksShown = { [weak self] in self?.ownRemarksShown ?? true }
+        sidecard.onLowerSource = { [weak self] _, source, level in self?.lowerSource(source, to: level) }
         sidecard.onChange = { [weak self] in self?.renderLight() }
         sidecard.onFold = { [weak self] item in
             self?.mood.quietAlert(id: item.id)
@@ -35,6 +38,7 @@ extension AppCoordinator {
         let quiet = settings.isQuiet(at: now), focus = settings.isFocused(at: now)
         sidecard.setWaiting(waiting)
         ask.waiting = waiting
+        applyCardKeys()
         guard focus else {
             return companion.setLight(DesktopLight.of(pose: pose, waiting: waiting, cardOut: cardOut, quiet: quiet))
         }

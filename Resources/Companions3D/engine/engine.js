@@ -296,8 +296,10 @@ export class Companion {
 
   /** A one-shot move by name (wave, bow, hop, jump, cheer, dance, nod, shake, giggle, flip…). */
   play(name) {
-    const clip = this.C.actions?.[name] || ACTIONS[name];
-    if (!clip || (this.C.skip || []).includes(name)) return false;
+    const full = this.C.actions?.[name] || ACTIONS[name];
+    if (!full || (this.C.skip || []).includes(name)) return false;
+    // Reduce Motion ('still'): a move that has a still version plays it instead, short and in place.
+    const clip = this.opts.liveliness === 'still' && full.still ? { dur: full.stillDur ?? 0.9, fn: full.still } : full;
     for (const a of this.actions) a.fading ??= a.t;
     this.actions.push({ name, clip, t: 0 });
     this.queue = [];

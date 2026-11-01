@@ -76,6 +76,17 @@ enum UISnapshots {
             // On duty in the same state as Today, so their counts can be read side by side.
             full.selection = .onDuty
             try await homeShot("onduty")
+            // A watch's own page (D87): its change inline and side by side, a watch in trouble, and a narrow window.
+            for (id, name) in [("w-pricing", "watch"), ("w-staging", "watch-trouble")] {
+                full.selection = .watch(id)
+                await full.watch.show(id)
+                try await homeShot(name)
+            }
+            full.watch.sideBySide = true
+            await full.watch.show("w-pricing")
+            try await homeShot("watch-sidebyside")
+            try await homeShot("watch-small", size: CGSize(width: 860, height: 560))
+            full.watch.sideBySide = false
             full.selection = .now
             // The Say bar (⌘K) with words in it: what Return does, in plain words, with or without AI, and what they find.
             for (name, words) in [("say", "remind me tomorrow at 9 to send the deck to Acme"), ("say-ai", "plan my afternoon around the design review"),
@@ -152,6 +163,17 @@ enum UISnapshots {
             full.settingsHost.gallery.showSample(catalog: try SampleCompanions.catalog(), companions: SampleCompanions.installed)
             try await homeShot("gallery")
             try await homeShot("gallery-wide", size: CGSize(width: 1600, height: 1000))
+            // Add-on updates (D89): the Gallery's Updates halfway through Update all, then Today's one row and the sidebar's marks.
+            if let catalog = full.settingsHost.gallery.catalog {
+                SampleAddonUpdates.show(in: full.services.updates, catalog: catalog)
+                try await homeShot("gallery-updates")
+                full.services.updates.addonSummary = AddonUpdateReport.summary(installed: 3, review: 1, failed: 0)
+                SampleExtensionPage.showPages(in: full.pages)
+                full.selection = .now
+                try await homeShot("today-updates")
+                full.pages.showSample([], summaries: [:])
+                SampleAddonUpdates.clear(full.services.updates)
+            }
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             full.selection = .now
@@ -252,6 +274,14 @@ enum UISnapshots {
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
+            // Its update waiting (D89): the page's strip, and Settings › Add-ons' rows with their new versions.
+            SampleAddonUpdates.show(in: fixtures.updates, catalog: try SampleCompanions.catalog(), halfway: false)
+            let clipboardUpdate = SampleExtensionPage.clipboard()
+            clipboardUpdate.updates = fixtures.updates
+            try await page("page-extension-clipboard-update", ExtensionPageView(model: clipboardUpdate), width: 980)
+            try await page("page-extension-clipboard-update-narrow", ExtensionPageView(model: clipboardUpdate), width: 640)
+            try await page("page-settings-addons-updates", SettingsTabContent(tab: .addons, model: settings), width: 690)
+            SampleAddonUpdates.clear(fixtures.updates)
             // Miraya in each of its states (D74): a hero with the one thing to do, TVs beside, pictures to pick from.
             for state in ["notv", "ready", "window", "area", "norecord", "pairing", "authorizing", "sharing", "paused", "playing", "problem"] {
                 try await page("page-extension-miraya-\(state)", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 1180)
@@ -270,6 +300,20 @@ enum UISnapshots {
             await full.now.reload()
             try await page("page-today-full-access", TodayView(model: full), width: 1100)
             try await full.services.runtime.permissions.setPolicy(homePolicy)
+            await full.now.reload()
+            // Claude Code set to Only in Today (D88): its notices wait under Needs you, never on the desktop.
+            let homeAttention = full.services.runtime.attention
+            await homeAttention.update { $0.interruptions = Interruptions([.agent("claude-code"): .today]) }
+            let kept = [
+                await homeAttention.post(AttentionRequest(level: .gentle, source: "session:claude-code:snap-1", title: "Claude finished in sidefolk",
+                                                          body: "Tidy the attention tests", refKind: "session", refId: "snap-1")),
+                await homeAttention.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Deploy to staging finished",
+                                                          body: "All checks passed.", refKind: "notify")),
+            ]
+            await full.now.reload()
+            try await page("page-today-kept", TodayView(model: full), width: 1100)
+            for item in kept { await homeAttention.respond(id: item.id, actionId: nil) }
+            await homeAttention.update { $0.interruptions = Interruptions() }
             await full.now.reload()
             let width: CGFloat = 690
             for tab in SettingsTab.allCases {
@@ -317,6 +361,20 @@ enum UISnapshots {
             settings.update { $0.quietHours.on = false }
             settings.setAttention(.open, until: nil)
             await settings.services.runtime.attention.update { $0.quiet = false }
+            // What may interrupt you, changed (D88): Claude Code only in Today, Codex in whispers, one watch set apart,
+            // an app that called once, the game's lines off.
+            let watch = try await settings.services.runtime.watcherStore.all().first
+            settings.update { s in
+                s.interruptions.set(.today, for: .agent("claude-code"))
+                s.interruptions.set(.whisper, for: .agent("codex"))
+                s.interruptions.set(.whisper, for: .agent("cursor"))
+                s.interruptions.set(.off, for: .games)
+                if let watch { s.interruptions.set(.today, for: .watch(watch.id)) }
+            }
+            await settings.loadNoticeSources()
+            try await page("page-settings-attention-sources", SettingsTabContent(tab: .attention, model: settings), width: width)
+            settings.update { $0.interruptions = Interruptions() }
+            await settings.loadNoticeSources()
             // The companion chooser with Spark chosen, then Spark in 2D, coral with a scarf.
             settings.update { $0.choose(.spark) }
             try await page("page-settings-companion-spark", SettingsTabContent(tab: .companion, model: settings), width: width)
@@ -420,17 +478,34 @@ enum UISnapshots {
             glancing.glance = Glance(
                 decisions: [AttentionItem(level: .attention, source: "watcher", title: "Pricing changed: Pro went from $12 to $15.",
                                           actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)])],
-                sessions: [AgentSession(id: "cc-1", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou)],
+                sessions: AgentSessionGroup.of([AgentSession(id: "cc-1", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou),
+                                                AgentSession(id: "cc-2", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou)]),
                 next: [Glance.Next(title: "Stretch", at: Date().addingTimeInterval(25 * 60), event: false),
-                       Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)],
-                working: ["Codex in pockito"])
-            let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
+                       Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)])
+            glancing.waiting = 2
+            glancing.tab = .today
+            // Miraya installed: a video link plays on the TV (D84). Ask holds its actions weakly, so they're kept here.
+            let tvActions = FixtureAskActions()
+            tvActions.canPlayOnTV = true
+            // Today's tab with nothing in it (D84).
+            let calmDay = AskModel()
+            calmDay.actions = actions
+            calmDay.tab = .today
+            let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask-today-empty", calmDay), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
                           ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
                           ("desktop-ask-internet", sampleAskInternet()), ("desktop-ask-outside", sampleAskOutside()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
+                          ("desktop-ask-tidied", tidiedAsk()),
                           ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
+                          ("desktop-ask-drop-file", dropped(.file(URL(fileURLWithPath: NSHomeDirectory() + "/Documents/Invoice April.pdf")),
+                                                            "Invoice April.pdf", actions)),
+                          ("desktop-ask-drop-folder", dropped(.file(FileManager.default.temporaryDirectory), "Downloads", actions)),
+                          ("desktop-ask-drop-text", dropped(.text, "“Ask Priya about the venue deposit”", actions,
+                                                            text: "Ask Priya about the venue deposit")),
+                          ("desktop-ask-drop-video", dropped(.url(URL(string: "https://cdn.example.com/films/trip.mp4")!), "cdn.example.com",
+                                                             tvActions)),
                           ("desktop-ask-now", sampleAskNow())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
@@ -756,6 +831,24 @@ enum UISnapshots {
             with at least three people, and adds shared folders, single sign-on and an admin console. Annual billing takes 20% \
             off every paid plan. Do you want me to watch the page for the next change?
             """, canThinkHarder: true, tainted: true), caption: "what does example.com/pricing say?")
+        return ask
+    }
+
+    /// Ask after some results went by themselves (D90): a pinned value kept, the quiet line to History.
+    private static func tidiedAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .reading, title: "Battery: 82%, charging", subtitle: nil), activityId: nil, undo: false),
+                caption: "how much is my battery")
+        if let request = ask.requests.first { ask.togglePin(request) }
+        ask.tidied = true
+        return ask
+    }
+
+    /// Something just dropped on the companion, nothing typed: the drop card (D84).
+    private static func dropped(_ kind: Attachment.Kind, _ label: String, _ actions: FixtureAskActions, text: String? = nil) -> AskModel {
+        let ask = AskModel()
+        ask.actions = actions
+        ask.attachment = Attachment(kind: kind, label: label, text: text)
         return ask
     }
 
