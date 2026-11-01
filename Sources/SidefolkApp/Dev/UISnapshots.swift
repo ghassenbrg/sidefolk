@@ -323,6 +323,12 @@ enum UISnapshots {
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // Connections in a copy on another data folder (D86): the cards name its stand-ins.
+            fixtures.devCopy = true
+            await settings.refresh()
+            try await page("page-settings-connections-dev-copy", SettingsTabContent(tab: .connections, model: settings), width: width)
+            fixtures.devCopy = false
+            await settings.refresh()
             // Settings › General with a version waiting (D46).
             fixtures.updates.phase = .available(UpdateController.sampleOffer)
             try await page("page-settings-general-update", SettingsTabContent(tab: .general, model: settings), width: width)

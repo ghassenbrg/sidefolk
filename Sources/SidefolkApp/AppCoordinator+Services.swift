@@ -54,7 +54,9 @@ extension AppCoordinator {
                                  claudeHooksInstalled: installed(.claudeHooks), codexFound: available(.codexMCP),
                                  codexMCPInstalled: installed(.codexMCP), codexSkillInstalled: installed(.codexSkill),
                                  codexSkillNote: skillNote(.codexSkill), codexHooksInstalled: installed(.codexHooks),
-                                 cliLinked: commandLineToolInstalled, helperPath: stableHelperPath)
+                                 cliLinked: commandLineToolInstalled, helperPath: stableHelperPath,
+                                 places: integrations.locations.shownPlaces(commandLineTool: URL(fileURLWithPath: commandLineToolPath))
+                                    .map { IntegrationStatus.ShownPlace(usual: $0.usual, shown: $0.shown) })
     }
 
     /// Connect brings the agent to what the card shows: tools and skill in, session updates in or out.

@@ -128,6 +128,18 @@ struct IntegrationStatus: Hashable {
     var codexHooksInstalled: Bool
     var cliLinked: Bool
     var helperPath: String
+    /// Where this copy really writes each place Connect's words name (D86): stand-ins in a dev or QA copy.
+    var places: [ShownPlace] = []
+
+    struct ShownPlace: Hashable {
+        var usual: String
+        var shown: String
+    }
+
+    /// A card's line with each usual place ("~/.claude.json") as where this copy writes it.
+    func shown(_ line: String) -> String {
+        IntegrationLocations.shown(line, places: places.map { ($0.usual, $0.shown) })
+    }
 }
 
 /// Counts and locations for the Privacy page.

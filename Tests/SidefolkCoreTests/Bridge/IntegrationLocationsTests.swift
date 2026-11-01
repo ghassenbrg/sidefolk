@@ -43,6 +43,26 @@ import Testing
         }
     }
 
+    /// Connect's cards name where a copy really writes: the usual places for the person's own folder, the stand-ins in
+    /// a dev copy.
+    @Test func theCardsNameWhereThisCopyWrites() {
+        let me = NSHomeDirectory()
+        let line = "Adds a “sidefolk” MCP server to ~/.claude.json, then ~/.codex/hooks.json and ~/.local/bin/sidefolk."
+        let own = SidefolkPaths(home: SidefolkPaths.defaultHome)
+        let ownPlaces = IntegrationLocations.forApp(paths: own, home: me, environment: [:])
+            .shownPlaces(commandLineTool: IntegrationLocations.commandLineTool(paths: own, home: me))
+        #expect(IntegrationLocations.shown(line, places: ownPlaces) == line)
+
+        let dev = SidefolkPaths(home: URL(fileURLWithPath: me + "/qa/build/dev-1", isDirectory: true))
+        let devPlaces = IntegrationLocations.forApp(paths: dev, home: me, environment: [:])
+            .shownPlaces(commandLineTool: IntegrationLocations.commandLineTool(paths: dev, home: me))
+        let shown = IntegrationLocations.shown(line, places: devPlaces)
+        #expect(shown.contains("~/qa/build/dev-1/agent-configs/claude/.claude.json"))
+        #expect(shown.contains("~/qa/build/dev-1/agent-configs/codex/hooks.json"))
+        #expect(shown.contains("~/qa/build/dev-1/agent-configs/.local/bin/sidefolk"))
+        #expect(!shown.contains(" ~/.claude.json") && !shown.contains(" ~/.local/bin"))
+    }
+
     /// Every file under a folder with its contents, to show nothing in it changed.
     static func snapshot(_ root: URL) throws -> [String: Data] {
         let fm = FileManager.default

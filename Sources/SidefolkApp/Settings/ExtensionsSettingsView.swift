@@ -534,9 +534,10 @@ struct AgentsGroup: View {
                 : String(localized: "Not connected"),
             connected: s.claudeMCPInstalled,
             found: s.claudeCodeFound,
-            changes: [String(localized: "Adds a “sidefolk” MCP server to ~/.claude.json, so Claude Code can save notes, set reminders, watch and notify.")]
+            changes: ([String(localized: "Adds a “sidefolk” MCP server to ~/.claude.json, so Claude Code can save notes, set reminders, watch and notify.")]
                 + (s.claudeSkillNote == nil ? [String(localized: "Adds the Sidefolk skill to ~/.claude/skills, so Claude Code knows when and how to use it.")] : [])
-                + (hooks ? [String(localized: "Adds hooks to ~/.claude/settings.json, so I notice when a session needs you or finishes.")] : []),
+                + (hooks ? [String(localized: "Adds hooks to ~/.claude/settings.json, so I notice when a session needs you or finishes.")] : []))
+                .map(s.shown),
             busy: model.integrationBusy,
             connect: { Task { await model.connectClaudeCode(hooks: hooks) } },
             disconnect: { Task { await model.disconnectClaudeCode() } }
@@ -554,7 +555,7 @@ struct AgentsGroup: View {
             status: s.cliLinked ? String(localized: "Installed") : String(localized: "Not installed"),
             connected: s.cliLinked,
             found: true,
-            changes: [String(localized: "Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends.")],
+            changes: [s.shown(String(localized: "Adds ~/.local/bin/sidefolk, so “sidefolk run -- npm test” tells you when a command ends."))],
             busy: model.integrationBusy,
             connect: { Task { await model.installCommandLineTool() } },
             disconnect: { Task { await model.removeCommandLineTool() } }
@@ -571,9 +572,10 @@ struct AgentsGroup: View {
                 : String(localized: "Not connected"),
             connected: s.codexMCPInstalled,
             found: s.codexFound,
-            changes: [String(localized: "Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools.")]
+            changes: ([String(localized: "Adds a [mcp_servers.sidefolk] entry to ~/.codex/config.toml, so Codex can use Sidefolk's tools.")]
                 + (s.codexSkillNote == nil ? [String(localized: "Adds the Sidefolk skill to ~/.codex/skills, so Codex knows when and how to use it.")] : [])
-                + (codexHooks ? [String(localized: "Adds hooks to ~/.codex/hooks.json, so I notice when a session needs you or finishes. Codex asks you to trust them once.")] : []),
+                + (codexHooks ? [String(localized: "Adds hooks to ~/.codex/hooks.json, so I notice when a session needs you or finishes. Codex asks you to trust them once.")] : []))
+                .map(s.shown),
             busy: model.integrationBusy,
             connect: { Task { await model.connectCodex(hooks: codexHooks) } },
             disconnect: { Task { await model.disconnectCodex() } }

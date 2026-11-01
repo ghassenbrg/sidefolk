@@ -289,11 +289,21 @@ final class FixtureServices: AppServices {
 
     // MARK: Integrations
 
+    /// A copy on another data folder (D86): its stand-ins, where the cards say Connect writes.
+    var devCopy = false
+
     func integrationStatus() async -> IntegrationStatus {
         // Claude Code connected with everything; Codex connected before the skill shipped, so its card offers the update.
-        IntegrationStatus(claudeCodeFound: true, claudeMCPInstalled: true, claudeSkillInstalled: true, claudeHooksInstalled: true,
-                          codexFound: true, codexMCPInstalled: true, codexSkillInstalled: false, codexHooksInstalled: false,
-                          cliLinked: true, helperPath: "~/Library/Application Support/Sidefolk/bin/sidefolk")
+        // A dev copy: nothing connected yet, and every place inside its folder.
+        let home = NSHomeDirectory() + "/sidefolk/build/qa-1"
+        let places = devCopy
+            ? IntegrationLocations.forApp(paths: SidefolkPaths(home: URL(fileURLWithPath: home, isDirectory: true)))
+                .shownPlaces(commandLineTool: URL(fileURLWithPath: home + "/agent-configs/.local/bin/sidefolk"))
+                .map { IntegrationStatus.ShownPlace(usual: $0.usual, shown: $0.shown) }
+            : []
+        return IntegrationStatus(claudeCodeFound: true, claudeMCPInstalled: !devCopy, claudeSkillInstalled: !devCopy, claudeHooksInstalled: !devCopy,
+                                 codexFound: true, codexMCPInstalled: !devCopy, codexSkillInstalled: false, codexHooksInstalled: false,
+                                 cliLinked: !devCopy, helperPath: "~/Library/Application Support/Sidefolk/bin/sidefolk", places: places)
     }
 
     func connectClaudeCode(hooks: Bool) async -> UserFacingError? { nil }
