@@ -2,12 +2,13 @@
 import AppKit
 import SidefolkCore
 
-/// The dev channel's Calendar commands (D95), so the page's gestures can be tried and filmed without hands:
+/// The dev channel's Calendar commands (D97), so the page's gestures can be tried and filmed without hands:
 ///   calendar:swipe:-160[:film]      two fingers sideways (the events the trackpad sends, fed to the page's handler)
 ///   calendar:scroll:300[:film]      two fingers down the month (positive is later), with momentum and settling
 ///   calendar:drag:x1,y1:x2,y2[:film] a mouse drag in Home's window (points from its top left), queued as the mouse's
 ///   calendar:type:<words> (into the field that has the keyboard) | calendar:dclick:x,y | calendar:click:x,y | calendar:key:left|right|up|down|return|delete|escape|cmdleft|cmdright|cmdt
 ///   calendar:select:<entry id> | calendar:inspect:<entry id> | calendar:hide:<calendar id> | calendar:show:<calendar id>
+///   calendar:crowd:<count>         more sample events (SIDEFOLK_SAMPLE_CALENDAR), with how long a reload took in the log
 ///   calendar:hour:<points>          the hour's height, as a pinch leaves it
 /// A film is the Home window, 30 frames a second, in $SIDEFOLK_HOME/snapshots/film-<stamp>/.
 extension AppCoordinator {
@@ -40,6 +41,15 @@ extension AppCoordinator {
         case "select": model.selection = parts.dropFirst(2).joined(separator: ":")
         case "inspect": model.inspecting = parts.dropFirst(2).joined(separator: ":")
         case "hide", "show": if parts.count > 2 { model.setHidden(parts[2], parts[1] == "hide") }
+        case "crowd":
+            // calendar:crowd:3000 — that many more sample events, then how long reading and indexing them takes.
+            guard parts.count > 2, let count = Int(parts[2]), let sample = SampleCalendar.live else { return true }
+            sample.crowd(count)
+            Task {
+                let start = ContinuousClock.now
+                await model.reload()
+                Log.shared.info("dev", "calendar reload", ["things": "\(model.entries.count)", "took": "\(ContinuousClock.now - start)"])
+            }
         case "hour": if parts.count > 2, let h = Double(parts[2]) { model.setHourHeight(h); model.keepHourHeight() }
         default: return false
         }

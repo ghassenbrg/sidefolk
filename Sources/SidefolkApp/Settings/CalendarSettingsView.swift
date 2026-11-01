@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// Settings › Trust › Your calendar (D57, D95): whether Today, the morning brief and the AI may read it, and whether
+/// Settings › Trust › Your calendar (D57, D97): whether Today, the morning brief and the AI may read it, and whether
 /// Sidefolk may change its events. Both off until the person chooses.
 struct CalendarGroup: View {
     var model: SettingsModel

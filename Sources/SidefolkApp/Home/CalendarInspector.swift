@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// A thing's details beside it (D95): its title in its colour, its calendar or kind, when (and its repeat), where with
+/// A thing's details beside it (D97): its title in its colour, its calendar or kind, when (and its repeat), where with
 /// a way to Maps, a web link, the people invited (read only) and the notes. Then what can be done: a reminder is done,
 /// edited or taken off the calendar; an event Sidefolk may change is edited or deleted, any event opens in Calendar.
 /// Text from an invitation is shown as it is and never acted on.
@@ -256,7 +256,7 @@ struct CalendarInspector: View {
     }
 }
 
-/// An event's fields to change (D95): title, all day, start and end, its calendar, where, notes. Saving is
+/// An event's fields to change (D97): title, all day, start and end, its calendar, where, notes. Saving is
 /// `calendar.update`, with ⌘Z.
 struct CalendarEventForm: View {
     var event: CalendarEvent

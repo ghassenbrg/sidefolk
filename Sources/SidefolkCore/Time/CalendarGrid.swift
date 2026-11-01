@@ -31,7 +31,7 @@ public enum CalendarGrid {
         return (0..<12).compactMap { calendar.date(byAdding: .month, value: $0, to: year.start) }
     }
 
-    /// `count` whole weeks from the week `date` is in: the continuous month's rows (D95).
+    /// `count` whole weeks from the week `date` is in: the continuous month's rows (D97).
     public static func weeks(from date: Date, count: Int, calendar: Calendar) -> [Date] {
         let start = weekStart(of: date, calendar: calendar)
         return (0..<max(0, count) * 7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
@@ -46,7 +46,7 @@ public enum CalendarGrid {
         return counts.max { a, b in a.value != b.value ? a.value < b.value : a.key > b.key }?.key  // a tie: the earlier
     }
 
-    /// Rows for a week's all-day band (D95): each span covers days `first...last` of the week (clipped by the caller);
+    /// Rows for a week's all-day band (D97): each span covers days `first...last` of the week (clipped by the caller);
     /// longer ones first, each in the first row free across all its days, as Calendar stacks them.
     public static func lanes(_ spans: [(first: Int, last: Int)]) -> [Int] {
         let order = spans.indices.sorted {

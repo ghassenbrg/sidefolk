@@ -1,6 +1,6 @@
 import Foundation
 
-/// A calendar's own colour (EKCalendar's), as sRGB: kept as data so the Calendar page and its contrast check (D95)
+/// A calendar's own colour (EKCalendar's), as sRGB: kept as data so the Calendar page and its contrast check (D97)
 /// work without AppKit.
 public struct CalendarColor: Sendable, Hashable, Codable {
     public var hex: UInt32
@@ -14,7 +14,7 @@ public struct CalendarColor: Sendable, Hashable, Codable {
     }
 }
 
-/// One of the person's calendars ("Work" on iCloud), as the Calendar page's list shows it (D95).
+/// One of the person's calendars ("Work" on iCloud), as the Calendar page's list shows it (D97).
 public struct CalendarInfo: Sendable, Hashable, Identifiable {
     public var id: String
     public var title: String
@@ -36,7 +36,7 @@ public struct CalendarInfo: Sendable, Hashable, Identifiable {
     }
 }
 
-/// Someone invited to an event, read only: Sidefolk never changes an event other people are invited to (D95).
+/// Someone invited to an event, read only: Sidefolk never changes an event other people are invited to (D97).
 public struct CalendarAttendee: Sendable, Hashable {
     public enum Answer: String, Sendable, Hashable { case accepted, declined, tentative, pending, unknown }
     public var name: String
@@ -72,7 +72,7 @@ public struct CalendarEvent: Sendable, Hashable, Identifiable {
     public var attendees: [CalendarAttendee]
     /// One time of a series.
     public var repeats: Bool
-    /// Its calendar takes changes (D95); whether Sidefolk will make them is `changeable`.
+    /// Its calendar takes changes (D97); whether Sidefolk will make them is `changeable`.
     public var writable: Bool
     /// Its alerts, as seconds from its start (negative is before), kept so an Undo puts it back with them.
     public var alarms: [Double]
@@ -98,7 +98,7 @@ public struct CalendarEvent: Sendable, Hashable, Identifiable {
         self.alarms = alarms
     }
 
-    /// Sidefolk may move, change or delete it (D95): its calendar takes changes and nobody else is invited (changing a
+    /// Sidefolk may move, change or delete it (D97): its calendar takes changes and nobody else is invited (changing a
     /// meeting tells the people in it, so that stays in Calendar, where the person sees who is told).
     public var changeable: Bool { writable && attendees.isEmpty }
 
@@ -109,7 +109,7 @@ public struct CalendarEvent: Sendable, Hashable, Identifiable {
     }
 }
 
-/// An event to add, or what an event becomes (D95).
+/// An event to add, or what an event becomes (D97).
 public struct CalendarDraft: Sendable, Hashable, Codable {
     public var title: String
     public var start: Date
@@ -138,7 +138,7 @@ public struct CalendarDraft: Sendable, Hashable, Codable {
 
 /// The person's calendar, read only while they show it (D57): off by default, and nothing is read until they turn
 /// it on in Settings or from Today, which is also when macOS asks them. Calendars the person hid in the Calendar's
-/// list (D95) are left out everywhere: Today, the brief and the AI see what the Calendar shows.
+/// list (D97) are left out everywhere: Today, the brief and the AI see what the Calendar shows.
 public struct CalendarReader: Sendable {
     let platform: any PlatformBridge
     let settings: SettingsStore
@@ -151,7 +151,7 @@ public struct CalendarReader: Sendable {
     /// Whether the person chose to show their calendar (macOS may still not allow it).
     public var isOn: Bool { settings.current.showCalendar }
 
-    /// Whether Sidefolk may change the person's calendars (D95): shown, and changes allowed.
+    /// Whether Sidefolk may change the person's calendars (D97): shown, and changes allowed.
     public var writesOn: Bool { isOn && settings.current.calendarPage.writes }
 
     /// Events overlapping the range, in start order; nil while the calendar is off or macOS doesn't allow it.

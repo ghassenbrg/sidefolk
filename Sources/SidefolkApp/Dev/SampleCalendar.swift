@@ -3,7 +3,7 @@ import Foundation
 import SidefolkCore
 import Synchronization
 
-/// A Mac calendar as snapshots and a debug app see it (D95), with the colours of iCloud's own calendars, a
+/// A Mac calendar as snapshots and a debug app see it (D97), with the colours of iCloud's own calendars, a
 /// subscription and birthdays that can't be changed, an invitation with people in it, a repeating standup, a trip
 /// over three days and a busy hour with more than a week's column has room for side by side. It takes changes in
 /// memory, so the Calendar's dragging and editing can be tried without anyone's real calendar
@@ -54,6 +54,18 @@ nonisolated final class SampleCalendar: Sendable {
 
     func delete(id: String) throws {
         events.withLock { $0.removeAll { $0.id == id } }
+        changed()
+    }
+
+    /// A busy person's calendar: `count` more events over the next weeks, to see the page stay fast.
+    func crowd(_ count: Int, from day: Date = Calendar.current.startOfDay(for: Date())) {
+        let extra = (0..<count).map { i -> CalendarEvent in
+            let info = Self.calendars[i % 4]
+            let start = day.addingTimeInterval(Double(i % 42) * 86400 + Double(7 + i % 12) * 3600 + Double(i % 4) * 900)
+            return CalendarEvent(id: "crowd-\(i)", title: "Busy \(i)", start: start, end: start.addingTimeInterval(Double(30 + i % 4 * 15) * 60),
+                                 calendar: info.title, calendarId: info.id, color: info.color, writable: info.writable)
+        }
+        events.withLock { $0 += extra }
         changed()
     }
 

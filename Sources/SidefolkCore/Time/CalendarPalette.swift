@@ -1,6 +1,6 @@
 import Foundation
 
-/// A calendar's colour made readable on Lantern's surfaces (D95): a tinted fill, a strong edge, text in the
+/// A calendar's colour made readable on Lantern's surfaces (D97): a tinted fill, a strong edge, text in the
 /// calendar's own colour, and the solid look of a selected event. Only lightness moves (HSL, hue and saturation
 /// kept), until text reads at 4.5:1 on its fill and the edge stands out at 3:1 from the surface, in light and in dark.
 public enum CalendarPalette {

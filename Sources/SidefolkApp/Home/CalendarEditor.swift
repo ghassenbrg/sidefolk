@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The editor a new thing opens where it was placed (D95): its title first, then what it is (a reminder, a task in a
+/// The editor a new thing opens where it was placed (D97): its title first, then what it is (a reminder, a task in a
 /// collection, or an event in one of the person's calendars), and when. Return adds it, Escape lets it go. Reminders
 /// and tasks take the when field's words ("every monday 9"); an event takes a start and an end.
 struct CalendarEditor: View {
@@ -176,7 +176,7 @@ enum CalendarDot {
     }
 }
 
-/// The first change to the Mac's calendar asks once (D95): what Sidefolk will and won't do, then Allow or Not now.
+/// The first change to the Mac's calendar asks once (D97): what Sidefolk will and won't do, then Allow or Not now.
 struct CalendarWritesSheet: View {
     var model: CalendarModel
 

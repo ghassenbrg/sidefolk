@@ -1,6 +1,6 @@
 import Foundation
 
-/// Adding, changing and deleting events in the person's Mac calendars (D95). Every change, the person's own drag in
+/// Adding, changing and deleting events in the person's Mac calendars (D97). Every change, the person's own drag in
 /// the Calendar included, goes through Guard and History with an Undo. Never offered while the person hasn't allowed
 /// changes; never a whole series (one time of it), and never an event other people are invited to (changing it would
 /// tell them), nor one on a calendar that can't be changed.

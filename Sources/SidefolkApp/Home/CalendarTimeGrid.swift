@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Calendar's Day and Week (D66, D95): a column a day under the hours, each thing at its time and as long as it
+/// The Calendar's Day and Week (D66, D97): a column a day under the hours, each thing at its time and as long as it
 /// lasts, saying as much as its size has room for (`CalendarBlock`); overlaps side by side and, past what a column has
 /// room for, counted in a "+N" that opens the day (D84); all-day and multi-day events as bars in a band above; a line
 /// at the present. It opens at the working hours (or an hour before now), pinching changes the hour's height, a drag

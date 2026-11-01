@@ -7,7 +7,7 @@ enum CalendarAccess: Equatable {
     case allowed, notAsked, denied
 }
 
-/// The person's calendar through EventKit (D57), asked for only when they choose to show it. Writing (D95) happens
+/// The person's calendar through EventKit (D57), asked for only when they choose to show it. Writing (D97) happens
 /// only from `calendar.create`, `.update` and `.delete`, through Guard, and only to one time of an event on a
 /// calendar that takes changes with nobody else invited; the tools check that before calling here.
 @MainActor

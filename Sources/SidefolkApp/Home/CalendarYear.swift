@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Calendar's year (D95): twelve small months, today circled, each day with something on it shaded by how busy it
+/// The Calendar's year (D97): twelve small months, today circled, each day with something on it shaded by how busy it
 /// is (in the accent, its count in words for VoiceOver). A click opens that day; a month's name opens the month.
 struct CalendarYear: View {
     var model: CalendarModel

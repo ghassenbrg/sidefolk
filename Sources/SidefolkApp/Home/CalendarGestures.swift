@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// The trackpad on the Calendar (D95): two fingers sideways turn the day, week, month or year, the page following the
+/// The trackpad on the Calendar (D97): two fingers sideways turn the day, week, month or year, the page following the
 /// fingers until it lets go; two fingers up and down scroll the month on, row by row, and it settles on a whole week
 /// when the momentum ends. Vertical scrolling elsewhere is the scroll views' own. Only scroll events over the page are
 /// read, and only while it is on screen (a local monitor, gone with the view).

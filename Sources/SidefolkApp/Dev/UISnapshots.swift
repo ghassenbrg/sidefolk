@@ -114,7 +114,7 @@ enum UISnapshots {
             try await homeShot("today-quiet")
             await full.services.runtime.settings.update { $0.quietUntil = nil }
             await full.now.reload()
-            // The Calendar (D66, D84, D95): Agenda first, then the day, the week, the month and the year; a selected event,
+            // The Calendar (D66, D84, D97): Agenda first, then the day, the week, the month and the year; a selected event,
             // the sidebar hidden, a wide window.
             full.selection = .calendar
             for mode in CalendarModel.Mode.allCases {
@@ -610,7 +610,7 @@ enum UISnapshots {
             let next = WhenPicker.nextHour(.autoupdatingCurrent)
             try await page("sheet-calendar-new-reminder", CalendarEditor(model: full.calendar, draft: CalendarNewDraft(start: next, end: next.addingTimeInterval(3600))),
                            width: 320)
-            // The Calendar's details beside a thing (D95): an event with its place and notes, a meeting with people
+            // The Calendar's details beside a thing (D97): an event with its place and notes, a meeting with people
             // invited (read only), a reminder; the new event's editor; the sheet the first change asks.
             full.calendar.mode = .week
             await full.calendar.reload()

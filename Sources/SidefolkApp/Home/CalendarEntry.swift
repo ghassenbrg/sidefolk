@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// One thing on the Calendar (D66, D95): a time a reminder comes due, one done or told, or an event of the Mac's.
+/// One thing on the Calendar (D66, D97): a time a reminder comes due, one done or told, or an event of the Mac's.
 enum CalendarEntry: Identifiable, Hashable {
     /// A time a pending reminder comes due.
     case reminder(ReminderOccurrence)
@@ -9,7 +9,7 @@ enum CalendarEntry: Identifiable, Hashable {
     case finished(Reminder, at: Date)
     case event(CalendarEvent)
 
-    /// What it is, for its colour and the list that shows or hides it (D95).
+    /// What it is, for its colour and the list that shows or hides it (D97).
     enum Kind: String, CaseIterable {
         case reminder, task, routine, event
 
@@ -86,7 +86,7 @@ enum CalendarEntry: Identifiable, Hashable {
     var event: CalendarEvent? { if case .event(let e) = self { e } else { nil } }
 
     /// Its next time: the only one of a reminder that can be dragged elsewhere (a series' later times are where it
-    /// will fall); an event Sidefolk may change (D95).
+    /// will fall); an event Sidefolk may change (D97).
     var movable: Bool {
         switch self {
         case .reminder(let o): o.isNext
@@ -130,7 +130,7 @@ enum CalendarEntry: Identifiable, Hashable {
     }
 }
 
-/// A colour of the Calendar's, made readable on this theme's cards in light and dark (`CalendarPalette`, D95).
+/// A colour of the Calendar's, made readable on this theme's cards in light and dark (`CalendarPalette`, D97).
 struct CalendarTint {
     var fill, edge, text, selectedFill, onSelected: Color
 

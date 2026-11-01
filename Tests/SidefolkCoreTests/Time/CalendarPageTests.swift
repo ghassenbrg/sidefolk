@@ -3,7 +3,7 @@ import Synchronization
 import Testing
 @testable import SidefolkCore
 
-/// The Calendar page's arithmetic and colours (D95): stacked all-day bars, the continuous month's weeks and title,
+/// The Calendar page's arithmetic and colours (D97): stacked all-day bars, the continuous month's weeks and title,
 /// the year's months, and calendar colours made readable in light and dark without changing their hue.
 @Suite struct CalendarPageTests {
     var calendar: Calendar {
@@ -67,7 +67,7 @@ import Testing
     }
 }
 
-/// Changing the Mac's calendar (D95): only once the person allowed it, through Guard with an Undo, never an event
+/// Changing the Mac's calendar (D97): only once the person allowed it, through Guard with an Undo, never an event
 /// with people invited or on a calendar that can't change; the AI is offered it only then, and a turn that read
 /// outside content never changes it without the person, even in Full access.
 @Suite struct CalendarWriteTests {

@@ -345,7 +345,7 @@ public actor AgentRuntime {
     }
 
     /// Tools an extension's author left to commands (D50) never reach the model, nor the calendar while it's hidden
-    /// (D57), nor changing it while the person hasn't allowed changes (D95): a card asking for something that can't be
+    /// (D57), nor changing it while the person hasn't allowed changes (D97): a card asking for something that can't be
     /// done would only puzzle the person.
     private func offeredTools() -> [ToolSpec] {
         let current = settings()

@@ -24,15 +24,15 @@ public protocol PlatformBridge: Sendable {
     /// Brings a running app to the front (by pid, else by bundle id). Returns false if it isn't running.
     func activateApplication(pid: Int?, bundleId: String?) async -> Bool
     func calendarEvents(from: Date, to: Date) async -> [CalendarEvent]?
-    /// The person's calendars with their colours (D95); nil where macOS doesn't allow reading them.
+    /// The person's calendars with their colours (D97); nil where macOS doesn't allow reading them.
     func calendars() async -> [CalendarInfo]?
     /// One event by its occurrence id, as it is now.
     func calendarEvent(id: String) async -> CalendarEvent?
-    /// Adds an event to the person's calendar (D95). Only `calendar.create` calls it, through Guard.
+    /// Adds an event to the person's calendar (D97). Only `calendar.create` calls it, through Guard.
     func createCalendarEvent(_ draft: CalendarDraft) async throws -> CalendarEvent
-    /// Changes one occurrence of an event (never a whole series) (D95). Only `calendar.update` calls it.
+    /// Changes one occurrence of an event (never a whole series) (D97). Only `calendar.update` calls it.
     func updateCalendarEvent(id: String, to draft: CalendarDraft) async throws -> CalendarEvent
-    /// Deletes one occurrence of an event (never a whole series) (D95). Only `calendar.delete` calls it.
+    /// Deletes one occurrence of an event (never a whole series) (D97). Only `calendar.delete` calls it.
     func deleteCalendarEvent(id: String) async throws
 }
 

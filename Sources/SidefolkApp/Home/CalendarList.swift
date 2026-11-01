@@ -4,7 +4,7 @@ import SwiftUI
 /// The Calendar's Agenda (D66, D84): the next two weeks as a list, each day with what's on it in time order (events
 /// with their end and place, in their calendar's colour, reminders, routines and what was done), a line at now, and a
 /// way to add something that day. Days with nothing are left out, but today always shows. A click opens a thing's
-/// details (D95).
+/// details (D97).
 struct CalendarList: View {
     var model: CalendarModel
 

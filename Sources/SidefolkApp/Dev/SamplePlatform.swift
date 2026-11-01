@@ -2,7 +2,7 @@
 import Foundation
 import SidefolkCore
 
-/// The Mac as snapshots see it: nothing to open or copy, and a calendar (`SampleCalendar`, D95) read only while the
+/// The Mac as snapshots see it: nothing to open or copy, and a calendar (`SampleCalendar`, D97) read only while the
 /// sample shows the calendar, as on a real Mac.
 struct SamplePlatform: PlatformBridge {
     let calendar = SampleCalendar()

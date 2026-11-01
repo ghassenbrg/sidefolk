@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Calendar's month (D66, D95): whole weeks from the person's first weekday that scroll on, a row at a time, with
+/// The Calendar's month (D66, D97): whole weeks from the person's first weekday that scroll on, a row at a time, with
 /// two fingers (the title follows the month most on screen) and step a month with ⌘← ⌘→. Each day shows as many lines
 /// as fit and "+ N more" to its Day; a narrow day shows its things as dots. Days outside the month in view are dimmer;
 /// today's number is circled; the 1st says its month.

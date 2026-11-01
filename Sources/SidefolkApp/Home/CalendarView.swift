@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// Home › Calendar (D66, D95), as a Mac calendar works: its own sidebar (a month to jump with, the calendars shown or
+/// Home › Calendar (D66, D97), as a Mac calendar works: its own sidebar (a month to jump with, the calendars shown or
 /// hidden), the Agenda, a Day, a Week, a Month that scrolls on and a Year. ⌘← ⌘→ (the chevrons, or two fingers
 /// sideways) step back and ahead, ⌘T comes back to today; the arrows move the selection, Return opens it, Delete
 /// removes it with ⌘Z. A double-click or a drag over empty time adds something there; things are dragged to move

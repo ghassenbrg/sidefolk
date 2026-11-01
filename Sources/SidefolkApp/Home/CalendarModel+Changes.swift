@@ -1,7 +1,7 @@
 import AppKit
 import SidefolkCore
 
-/// What the Calendar changes (D66, D95), each through the path the rest of the app uses: a reminder's time is
+/// What the Calendar changes (D66, D97), each through the path the rest of the app uses: a reminder's time is
 /// `moveReminder`; adding, removing and every change to the Mac's calendar run as the person's own calls through
 /// ToolExecutor, so Guard sees them, History lists them and ⌘Z takes them back.
 extension CalendarModel {
@@ -67,7 +67,7 @@ extension CalendarModel {
         change(event, to: draft, undo: undo, action: String(localized: "Change Event Length"))
     }
 
-    // MARK: The Mac's events (D95)
+    // MARK: The Mac's events (D97)
 
     /// An event changed as the editor or a drag says, once the person allowed changes.
     func change(_ event: CalendarEvent, to draft: CalendarDraft, undo: UndoManager?, action: String = String(localized: "Change Event")) {
@@ -94,7 +94,7 @@ extension CalendarModel {
 
     /// Adds what the editor describes: a reminder (`reminders.create`) or a task in a collection with its time
     /// (`notes.save` with `remind`), at the when field's words (a repeat included); or an event in one of the person's
-    /// calendars (`calendar.create`, D95) from `start` to `end`.
+    /// calendars (`calendar.create`, D97) from `start` to `end`.
     func add(_ kind: NewKind, title: String, when: String, start: Date, end: Date, allDay: Bool, calendarId: String?,
              collection: String?, location: String?, undo: UndoManager?) async -> UserFacingError? {
         let words = title.trimmingCharacters(in: .whitespacesAndNewlines)

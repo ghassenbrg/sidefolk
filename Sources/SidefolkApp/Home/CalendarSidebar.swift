@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Calendar's own sidebar (D95): a month to jump with (today circled, the chosen day filled, a dot where something
+/// The Calendar's own sidebar (D97): a month to jump with (today circled, the chosen day filled, a dot where something
 /// is), then the calendars, Sidefolk's own first, each with its colour and a box that shows or hides it, remembered.
 struct CalendarSidebar: View {
     var model: CalendarModel

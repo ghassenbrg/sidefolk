@@ -2,15 +2,15 @@ import Foundation
 import Observation
 import SidefolkCore
 
-/// Home › Calendar (D66, D95): everything with a time as a day, a week, a month that scrolls on, a year, or the Agenda.
+/// Home › Calendar (D66, D97): everything with a time as a day, a week, a month that scrolls on, a year, or the Agenda.
 /// Your reminders (a repeating one at every time it will fire), the notes and tasks they belong to (D49), what was done
 /// or told you on past days, and the Mac calendar's events in their calendars' colours once you show it (D57). Changes
 /// go through the same paths as Today's: moving a reminder is `moveReminder`, adding is `reminders.create` or
 /// `notes.save` through ToolExecutor; the Mac's events change only through `calendar.create`, `.update` and `.delete`
-/// (D95), and only once the person allowed it.
+/// (D97), and only once the person allowed it.
 @MainActor @Observable
 final class CalendarModel {
-    /// Agenda first (D84), then the four a calendar has (D95).
+    /// Agenda first (D84), then the four a calendar has (D97).
     enum Mode: String, CaseIterable, Identifiable {
         case agenda, day, week, month, year
         var id: Self { self }
@@ -47,7 +47,7 @@ final class CalendarModel {
     }
     /// The day in view: the day, the week or year it's in, the Agenda's first day, the month's first.
     private(set) var anchor = Date()
-    /// The continuous month's first row: the week it starts from, and how far it has scrolled into it (D95).
+    /// The continuous month's first row: the week it starts from, and how far it has scrolled into it (D97).
     private(set) var monthTop = CalendarGrid.weekStart(of: Date(), calendar: .autoupdatingCurrent)
     var monthScroll: CGFloat = 0
     /// Which way the last step went, so the new period slides in from that side.
@@ -60,7 +60,7 @@ final class CalendarModel {
     private(set) var byDay: [Date: [Entry]] = [:]
     /// The notes and tasks the shown reminders belong to (D49), by id.
     private(set) var items: [String: NotebookItem] = [:]
-    /// The person's calendars, for the list and the editor (D95); empty while the calendar is off.
+    /// The person's calendars, for the list and the editor (D97); empty while the calendar is off.
     private(set) var calendars: [CalendarInfo] = []
     /// The Notebook's collections, for a new task.
     private(set) var collections: [NotebookCollection] = []
@@ -71,7 +71,7 @@ final class CalendarModel {
     var inspecting: String?
     /// A new thing being placed: the time dragged or double-clicked, before its editor adds it.
     var draft: CalendarNewDraft?
-    /// The first change to the Mac's calendar waits for the person's yes (D95).
+    /// The first change to the Mac's calendar waits for the person's yes (D97).
     var asksForWrites = false
     private var afterWrites: (() async -> Void)?
     /// What the last change couldn't do.
@@ -387,7 +387,7 @@ final class CalendarModel {
         await reload()
     }
 
-    // MARK: Asking before the first change to the Mac's calendar (D95)
+    // MARK: Asking before the first change to the Mac's calendar (D97)
 
     /// Runs a change to the Mac's calendar now if the person allowed changes, else after they say yes in the sheet.
     func whenWritesAllowed(_ change: @escaping () async -> Void) {

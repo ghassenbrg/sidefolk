@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-// What the Calendar's views share (D66, D95): a thing as a block (Day and Week), a bar (all day), a line (Month), its
+// What the Calendar's views share (D66, D97): a thing as a block (Day and Week), a bar (all day), a line (Month), its
 // menu, and its details beside it.
 
 /// A thing in the Day or Week, saying as much as it has room for: its title, then its time, then where, then its

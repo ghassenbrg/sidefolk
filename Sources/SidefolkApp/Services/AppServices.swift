@@ -196,7 +196,7 @@ protocol AppServices: AnyObject {
     func showCalendar(_ on: Bool) async
     /// System Settings › Privacy & Security › Calendars.
     func openCalendarSettings()
-    /// Lets Sidefolk add, move, change and delete events in the person's writable calendars, or stops it (D95).
+    /// Lets Sidefolk add, move, change and delete events in the person's writable calendars, or stops it (D97).
     func allowCalendarChanges(_ on: Bool) async
 
     // The one bar (D58)
