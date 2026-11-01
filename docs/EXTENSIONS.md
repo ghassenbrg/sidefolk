@@ -710,7 +710,8 @@ Activity row when the game ends.
   `score` (`you`, `companion`, `streak`, `best`, `rounds` to win, `companion_picked` for its sealed card), `result`
   (`figure`, `line`, `ribbon`, `tone` good, bad or neutral, `facts`, up to three `actions`), `timer` (`id`, `seconds`:
   Sidefolk counts and sends `{timeout: true}`), `reveal` (`kind` coin, dice or hands), `note`, `facts`, `button`
-  (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board), `choice`
+  (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board; `companion: true`
+  makes the companion in the scene the button: clicking it presses it, no button is drawn, its key still works), `choice`
   (`name`, `style` cards or segmented, `options`, `selected`). Unknown parts are skipped; `"over": true` ends the game.
   A tile may carry its own `key` (a letter, a digit or `?`); a 3 × 3 `board` with `"keys": "numpad"` takes the digits
   as a number pad does.
@@ -811,9 +812,11 @@ else: the manifest is the English of the rest):
   ("تطبيقان"). `other` is required; a form the language doesn't have is refused.
 - **Numbers, sizes, durations, dates** are formatted with the person's language, never by hand; times on a 24-hour
   clock, as Sidefolk writes them.
-- **No direction marks.** Sidefolk removes them (they can disguise a name or a path). When it lays out right to left, it
-  keeps a value that is only numbers and signs ("3024 × 1964", "12 %") and paths, addresses and sizes inside a sentence
-  ("~/Desktop/qr.png") left to right itself.
+- **No direction marks.** Sidefolk removes them (they can disguise a name or a path), except a first-strong isolate
+  (U+2068 … U+2069) in pairs, in what it shows: the Kit's `L` puts one around each value it fills in, so "{name} counts…"
+  in Arabic still reads right to left with the name first. From Python or Node, do the same around a filled-in value.
+  When it lays out right to left, Sidefolk keeps a value that is only numbers and signs ("3024 × 1964", "12 %") and
+  paths, addresses and sizes inside a sentence ("~/Desktop/qr.png") left to right itself.
 - **Sentences people type stay English**: an `ask` button's sentence, an example in a note (“keep me active for an
   hour”). Its label is translated.
 

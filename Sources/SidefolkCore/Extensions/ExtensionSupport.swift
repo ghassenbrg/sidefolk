@@ -41,10 +41,41 @@ enum ExtensionText {
         cap(clean(text).trimmingCharacters(in: .whitespacesAndNewlines), bytes: bytes)
     }
 
-    /// One cleaned line (titles, summaries) of at most `characters` characters.
-    static func line(_ text: String, characters: Int) -> String {
-        let flat = clean(text).replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\t", with: " ")
-        return flat.clipped(characters)
+    /// One cleaned line (titles, summaries) of at most `characters` characters; with `isolates`, words people read
+    /// on a page or a board keep the Kit's isolates (`shown`).
+    static func line(_ text: String, characters: Int, isolates: Bool = false) -> String {
+        let cleaned = isolates ? shown(text) : clean(text)
+        return clip(cleaned.replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\t", with: " "), characters)
+    }
+
+    /// Text shown to people, never passed on: hidden characters removed, except first-strong isolates (FSI … PDI) that
+    /// pair up. The Kit's `L` puts one around each value it fills in, so a name or a number keeps its own direction in
+    /// a sentence of the other (an Arabic sentence that begins with "Mochi" still reads right to left). An isolate
+    /// can't reorder what is inside it, and an unpaired one is dropped, so it can't reach past its value (D76 amended,
+    /// T13). Everything else that reorders text (overrides, embeddings, LRI, RLI, marks) is still removed.
+    static func shown(_ text: String) -> String {
+        var scalars = Array(text.unicodeScalars)
+        var keep = scalars.map { !isHidden($0) }
+        var open: [Int] = []
+        for (i, s) in scalars.enumerated() {
+            if s == fsi { open.append(i) }
+            if s == pdi, let start = open.popLast() { (keep[start], keep[i]) = (true, true) }
+        }
+        scalars = scalars.indices.filter { keep[$0] }.map { scalars[$0] }
+        var out = String.UnicodeScalarView()
+        out.append(contentsOf: scalars)
+        return String(out)
+    }
+
+    private static let fsi: Unicode.Scalar = "\u{2068}", pdi: Unicode.Scalar = "\u{2069}"
+
+    /// `clipped`, counting only what shows: a value's isolates don't use up the room. A line too long loses them with
+    /// its end, so none is left open.
+    static func clip(_ text: String, _ characters: Int) -> String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isolate = { (c: Character) in c == Character(fsi) || c == Character(pdi) }
+        guard t.count - t.filter(isolate).count > characters else { return t }
+        return t.filter { !isolate($0) }.clipped(characters)
     }
 
     /// True when the string holds characters that make a path or name ambiguous to read.

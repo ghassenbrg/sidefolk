@@ -57,6 +57,7 @@ extension AppCoordinator {
                 self?.statusItem.closePocket()
                 Task { await self?.palettes.toggle(id) }
             },
+            openGames: { [weak self] in self?.pocketClosing { $0.openPlayMenu(focus: true) } },
             quit: { NSApp.terminate(nil) })
         statusItem.setCompanionHidden(!companion.isVisible)
     }

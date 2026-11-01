@@ -14,8 +14,9 @@ public struct GameRequest: Sendable, Hashable {
     }
 }
 
-/// `games.open`: opens a game in the Play panel beside the companion. Opening a game only shows a panel, so it needs no
-/// approval; it is a tool so the person's words, the Play menu and the AI reach it the same way, audited.
+/// `games.open`: opens a game in the Play panel beside the companion, or, without a game (or `"game": "menu"`), the
+/// panel's menu of every game (D79 amended). Either only shows a panel, so it needs no approval; it is a tool so the
+/// person's words, the Play menu and the AI reach it the same way, audited.
 struct GamesOpenTool: Tool {
     let events: EventBus
     let shelf: GameShelf
@@ -29,19 +30,28 @@ struct GamesOpenTool: Tool {
             description: """
                 Opens a game the user plays against you in the Play panel beside the companion, offline and without you: \
                 the game runs itself once open. Use it when the user wants to play, or for a break ("want a round of \
-                trivia?"). Games: \(games.joined(separator: "; ")).
+                trivia?"). Without a game (or with "game": "menu") it opens the panel's menu of every game: do that when \
+                the user asks what games there are, to see them, or wants to play without naming one, rather than listing \
+                them in words. Games: \(games.joined(separator: "; ")).
                 """,
             inputSchema: Schema.object([
                 "extension": Schema.string("Who the game belongs to: the part before the slash above (sidefolk for the companion's own)."),
-                "game": Schema.string("The game's name: the part after the slash."),
+                "game": Schema.string("The game's name: the part after the slash. Leave both out, or say \"menu\", for the menu of every game."),
                 "level": Schema.string("One of the game's levels, if it has them."),
-            ], required: ["extension", "game"]),
+            ], required: []),
             risk: .low, capabilities: [.system], category: .system, mutates: false)
     }
 
     func summary(for input: JSONValue) -> String {
-        find(input).map { String(localized: "Play \($0.title)", comment: "Opening a game in the Play panel: “Play Trivia”") }
+        if Self.wantsMenu(input) { return String(localized: "Show the games", comment: "Opening the Play panel's menu of every game") }
+        return find(input).map { String(localized: "Play \($0.title)", comment: "Opening a game in the Play panel: “Play Trivia”") }
             ?? String(localized: "Open a game")
+    }
+
+    /// No game named (an extension alone is no game either), or the word "menu".
+    static func wantsMenu(_ input: JSONValue) -> Bool {
+        guard let game = input.string("game"), !game.isEmpty else { return true }
+        return game == "menu"
     }
 
     func scope(for input: JSONValue) -> ToolScope { ToolScope() }
@@ -53,6 +63,13 @@ struct GamesOpenTool: Tool {
     }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        if Self.wantsMenu(input) {
+            events.publish(.gamesMenu(focus: context.caller == .user))
+            let titles = ([GameInfo.handsMatch] + shelf.all).map(\.title)
+            return ToolResult(text: "Opened the Play panel's menu of games beside the companion: \(titles.joined(separator: ", ")). "
+                                  + "The user picks one there. Say it in a few words; don't list them.",
+                              card: ResultCard(kind: .info, title: String(localized: "Show the games", comment: "Opening the Play panel's menu of every game")))
+        }
         guard let info = find(input) else {
             throw ToolError.invalidInput(String(localized: "There's no such game. Games are listed in this tool's description."))
         }

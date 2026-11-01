@@ -339,6 +339,13 @@ enum UISnapshots {
             await settings.setPolicy { $0 = policy }
             // What Full access means, and when it ends (D84).
             try await page("sheet-full-access", FullAccessSheet(model: settings), width: Theme.Size.sheet + 40)
+            // Back up and restore (D91): the two sheets, then Your data after a restore, add-ons coming back.
+            try await page("sheet-backup", BackupSheet(model: settings), width: Theme.Size.sheet + 40)
+            try await page("sheet-backup-keys", BackupSheet(model: settings, keys: true), width: Theme.Size.sheet + 40)
+            try await page("sheet-restore", RestoreSheet(model: settings, candidate: SampleBackup.candidate), width: Theme.Size.sheet + 40)
+            SampleBackup.show(in: fixtures.restore)
+            try await page("page-settings-trust-restored", SettingsTabContent(tab: .trust, model: settings), width: width)
+            SampleBackup.clear(fixtures.restore)
             // The menu bar's Pocket in the states that read differently (D84).
             for (name, content) in SamplePocket.states(name: settings.settings.companionName) {
                 let pocket = PocketModel()

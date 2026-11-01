@@ -259,6 +259,18 @@ protocol AppServices: AnyObject {
     func revealDataFolder()
     func exportDiagnostics(to url: URL) async -> UserFacingError?
 
+    // Back up and restore (D91)
+    var restore: RestoreModel { get }
+    /// Writes a backup to `url`; with a password, the keys go too, sealed with it.
+    func backUp(to url: URL, password: String?) async -> UserFacingError?
+    /// Opens and checks a backup for the restore sheet.
+    func openBackup(_ url: URL) async -> Result<OpenedBackup, UserFacingError>
+    /// Saves its keys (with the password), stages it and relaunches; nothing is replaced before the relaunch.
+    func restore(_ backup: OpenedBackup, password: String?) async -> UserFacingError?
+    func undoRestore() -> UserFacingError?
+    /// The install sheet of an extension from the backup, or the question for a companion from a folder.
+    func reviewRestored(_ item: RestoreFollowUp.ReviewItem)
+
     // App
     var openAtLogin: Bool { get }
     func setOpenAtLogin(_ on: Bool) -> UserFacingError?

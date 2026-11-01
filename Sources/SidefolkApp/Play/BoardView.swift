@@ -35,6 +35,8 @@ struct BoardView: View {
             // The end card holds the level picker itself, so they don't stack.
             if ended, case .choice(let c) = part, c.style == .segmented { continue }
             if case .button(let b) = part {
+                // A button the companion stands for is clicked on the companion in the scene (GameStage).
+                if b.companion { continue }
                 if case .buttons(let at, let row)? = out.last { out[out.count - 1] = .buttons(at, row + [b]) } else { out.append(.buttons(i, [b])) }
             } else if case .score = part {
                 continue // on the score bar
@@ -453,6 +455,15 @@ struct GameResultView: View {
         }
     }
 
+    /// The figure in a fixed order. "7 / 10" reads left to right in every language. "3 – 2" (the person's, then the
+    /// companion's) follows the "You vs" bar's sides, which follow the layout: isolated left to right or right to left
+    /// with it, so the text's own direction (Arabic's) never puts the companion's number on the person's side.
+    static func figure(_ figure: String, _ direction: LayoutDirection) -> String {
+        if figure.contains("/") { return "\u{2066}\(figure)\u{2069}" }
+        guard figure.contains(" – ") else { return figure }
+        return (direction == .rightToLeft ? "\u{2067}" : "\u{2066}") + figure + "\u{2069}"
+    }
+
     /// Who won, in Sidefolk's words: said only for a win or a loss (a draw's card speaks for itself).
     private var title: String? {
         switch verdict {
@@ -496,8 +507,7 @@ struct GameResultView: View {
                 Image(systemName: Self.symbol(verdict)).font(.system(size: 24, weight: .bold)).foregroundStyle(GameColors.color(verdict))
                     .opacity(shown ? 1 : 0)
             }
-            // "7 / 10" is a score read left to right in every language: isolated so Arabic doesn't turn it round.
-            Text(verbatim: result.figure.contains("/") ? "\u{2066}\(result.figure)\u{2069}" : result.figure)
+            Text(verbatim: Self.figure(result.figure, layoutDirection))
                 .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(verdict == .draw ? Theme.ink : GameColors.color(verdict))
                 .scaleEffect(shown ? 1 : 0.6)

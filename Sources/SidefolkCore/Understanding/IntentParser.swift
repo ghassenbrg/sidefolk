@@ -56,7 +56,7 @@ public struct IntentParser: Sendable {
         let ctx = Context(now: now, known: knownCollections, watching: watching)
         // In two parts: one chain of eleven is more than the type checker will take in reasonable time. An extension's
         // command comes after every one of Sidefolk's own (D50).
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? game(p.command)
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? gamesMenu(p.command) ?? game(p.command)
         return quick ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
             ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx) ?? extensionCommand(p.command)
     }

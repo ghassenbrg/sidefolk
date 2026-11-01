@@ -185,6 +185,9 @@ final class PlayModel {
     }
 
     #if DEBUG
+    /// Where the companion that can be clicked is in the panel (top-left origin), for the debug app's `click:companion`.
+    var catchFrame: CGRect?
+
     /// Keeps the build-up on screen, for the UI snapshots that show it.
     func holdBuildUp() { staging?.cancel() }
 
@@ -274,7 +277,8 @@ final class PlayModel {
         for button in board?.buttons ?? [] where button.key != nil && !button.disabled {
             parts.append("\(button.key!.uppercased()): \(button.label)")
         }
-        parts.append(String(localized: "Esc to close", comment: "Keys in the Play panel"))
+        // While a plot is drawn from the keyboard, Esc lets the plot go (the hint above says so), not the panel.
+        if !self.parts.dragByKeys { parts.append(String(localized: "Esc to close", comment: "Keys in the Play panel")) }
         return parts.joined(separator: " · ")
     }
 }

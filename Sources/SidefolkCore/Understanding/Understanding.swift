@@ -112,7 +112,7 @@ extension ParsedIntent {
             return String(localized: "I'll ask what to watch.")
         case .needsPlace:
             return String(localized: "I'll ask where you are.")
-        case .companion, .chance, .game:
+        case .companion, .chance, .game, .gamesMenu:
             return String(localized: "Let's play.")
         case .newConversation:
             return String(localized: "Your next question starts a new conversation.")
@@ -136,7 +136,7 @@ extension ParsedIntent {
         case .aboutMe: "person.text.rectangle"
         case .watch, .stopWatch, .needsTarget: "binoculars"
         case .report, .read, .needsPlace: "gauge.with.dots.needle.33percent"
-        case .companion, .chance, .game: "gamecontroller"
+        case .companion, .chance, .game, .gamesMenu: "gamecontroller"
         case .quiet, .quietOff: "moon"
         case .find: "magnifyingglass"
         case .newConversation: "square.and.pencil"

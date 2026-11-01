@@ -15,7 +15,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     case provider, lastRequest, voiceInput, spokenReplies, voice, speechModel
     // Trust
     case approvalMode, internet, folders, alwaysAllowed, unanswered, capabilities, agentAccess, location, calendar,
-         keeps, history, exportData, diagnostics, debugLogging, deleteAll
+         keeps, history, backUp, restore, exportData, diagnostics, debugLogging, deleteAll
     // Connections
     case claudeCode, codex, commandLine, otherApps
     // Add-ons
@@ -31,7 +31,7 @@ enum SettingKey: String, CaseIterable, Hashable {
             .attention
         case .provider, .lastRequest, .voiceInput, .spokenReplies, .voice, .speechModel: .brain
         case .approvalMode, .internet, .folders, .alwaysAllowed, .unanswered, .capabilities, .agentAccess, .location, .calendar,
-             .keeps, .history, .exportData, .diagnostics, .debugLogging, .deleteAll: .trust
+             .keeps, .history, .backUp, .restore, .exportData, .diagnostics, .debugLogging, .deleteAll: .trust
         case .claudeCode, .codex, .commandLine, .otherApps: .connections
         case .addons, .addFolder, .skills: .addons
         case .theme, .lightOrDark, .density, .homeIcons, .makeTheme: .appearance
@@ -61,7 +61,7 @@ enum SettingKey: String, CaseIterable, Hashable {
             String(localized: "What Sidefolk may do")
         case .agentAccess: String(localized: "What other agents may do", comment: "Settings › Trust: a group")
         case .location, .calendar: String(localized: "What Sidefolk can see", comment: "Settings › Trust: location and calendar")
-        case .keeps, .history, .exportData, .diagnostics, .debugLogging, .deleteAll: String(localized: "Your data")
+        case .keeps, .history, .backUp, .restore, .exportData, .diagnostics, .debugLogging, .deleteAll: String(localized: "Your data")
         case .claudeCode, .codex, .commandLine, .otherApps: String(localized: "Connect your agents")
         case .addons, .addFolder, .skills: String(localized: "Your add-ons", comment: "Settings › Add-ons: the title of the page")
         case .theme, .makeTheme: String(localized: "Theme")
@@ -114,6 +114,8 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .calendar: String(localized: "Your calendar")
         case .keeps: String(localized: "What Sidefolk keeps")
         case .history: String(localized: "Keep conversations for")
+        case .backUp: String(localized: "Back up everything", comment: "Settings › Trust › Your data: one file to move Sidefolk to another Mac (D91)")
+        case .restore: String(localized: "Restore from a backup", comment: "Settings › Trust › Your data (D91)")
         case .exportData: String(localized: "Export data")
         case .diagnostics: String(localized: "Diagnostics")
         case .debugLogging: String(localized: "Debug logging")
@@ -186,6 +188,8 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .calendar: String(localized: "Today, the morning brief and the AI may read your calendar.", comment: "Settings › Trust: search")
         case .keeps: String(localized: "Everything stays on this Mac. It's encrypted at rest by FileVault when FileVault is on.")
         case .history: String(localized: "Conversations with the AI, kept so you can follow up, then deleted.", comment: "Settings › Trust: search")
+        case .backUp: String(localized: "One file with your notes, reminders, watches, history, settings and add-ons, to move to another Mac or to start fresh and come back. Keys only if you choose, with a password.")
+        case .restore: String(localized: "Replaces your data with a backup's. What's here now is kept aside for 7 days, so you can undo.")
         case .exportData: String(localized: "Notes, reminders, watches with their history, and settings as one JSON file. No keys.")
         case .diagnostics: String(localized: "Logs and versions for a bug report, without your notes or messages.")
         case .debugLogging: String(localized: "More detail in the local log. Turn it off when you're done.")

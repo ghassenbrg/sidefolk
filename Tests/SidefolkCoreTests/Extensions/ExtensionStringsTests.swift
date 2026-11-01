@@ -183,5 +183,43 @@ struct BidiTextTests {
         #expect(BidiText.shown("افتح https://example.com/a?b=1", rightToLeft: true) == "افتح \(lri)https://example.com/a?b=1\(pdi)")
         // A Latin sentence in an Arabic layout already reads left to right.
         #expect(BidiText.shown("Saved to ~/Desktop", rightToLeft: true) == "Saved to ~/Desktop")
+        // A path the Kit isolated as a value: Sidefolk's run goes inside it, never across its edge.
+        #expect(BidiText.shown("حُفظ في \u{2068}~/Desktop/qr.png\u{2069}.", rightToLeft: true)
+                == "حُفظ في \u{2068}\(lri)~/Desktop/qr.png\(pdi)\u{2069}.")
+    }
+}
+
+/// The Kit's isolates around a filled-in value (FSI … PDI) survive in what Sidefolk shows, paired; every other direction
+/// control is removed, and nothing is passed on with them (D76 amended, T13).
+struct ExtensionTextIsolatesTests {
+    let fsi = "\u{2068}", pdi = "\u{2069}"
+
+    @Test func pairedIsolatesAreKeptAndEverythingElseGoes() {
+        let sentence = "\(fsi)Mochi\(pdi) يعدّ… بقي \(fsi)1\(pdi)."
+        #expect(ExtensionText.shown(sentence) == sentence)
+        #expect(ExtensionText.shown("\(fsi)a \(fsi)b\(pdi) c\(pdi)") == "\(fsi)a \(fsi)b\(pdi) c\(pdi)", "nested pairs")
+        #expect(ExtensionText.shown("\(fsi)open to the end") == "open to the end", "an isolate left open is dropped")
+        #expect(ExtensionText.shown("closed\(pdi) early \(fsi)x\(pdi)") == "closed early \(fsi)x\(pdi)")
+        #expect(ExtensionText.shown("\u{202E}gnp.exe \u{2066}a\u{2069} \u{200F}b") == "gnp.exe a b", "overrides, LRI and marks go")
+        // What is passed on (tool results, names, the validator's checks) has none.
+        #expect(ExtensionText.clean(sentence) == "Mochi يعدّ… بقي 1.")
+        #expect(ExtensionText.untrusted(sentence, bytes: 100) == "Mochi يعدّ… بقي 1.")
+    }
+
+    @Test func isolatesDontUseUpTheRoom() {
+        let label = "Check \(fsi)Mochi\(pdi)'s paw"
+        #expect(ExtensionText.line(label, characters: 20, isolates: true) == label, "20 characters show")
+        #expect(ExtensionText.line(label, characters: 10, isolates: true) == "Check Moc…", "clipped: none left open")
+        #expect(ExtensionText.line(label, characters: 30) == "Check Mochi's paw")
+    }
+
+    @Test func pagesAndBoardsShowThem() throws {
+        let b = try GameBoardTests.board("""
+            {"parts": [{"type": "prompt", "text": "\\u2068Mochi\\u2069 يعدّ… بقي \\u20681\\u2069.", "eyebrow": "\\u2068Nori\\u2069"},
+                       {"type": "button", "label": "Check \\u2068Mochi\\u2069's paw", "move": "accuse"}]}
+            """)
+        guard case .prompt(let p) = b.parts[0] else { Issue.record("\(b.parts)"); return }
+        #expect(p.text == "\(fsi)Mochi\(pdi) يعدّ… بقي \(fsi)1\(pdi)." && p.eyebrow == "\(fsi)Nori\(pdi)")
+        #expect(b.buttons.first?.label == "Check \(fsi)Mochi\(pdi)'s paw")
     }
 }

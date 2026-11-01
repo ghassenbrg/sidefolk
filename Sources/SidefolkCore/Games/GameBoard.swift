@@ -167,6 +167,9 @@ public struct GameBoard: Sendable, Hashable {
         /// A letter key that presses it as well ("h" for a hint).
         public var key: String?
         public var disabled: Bool
+        /// Clicking the companion in the game's scene presses it (Which Cup?'s "Check its paw"): Sidefolk draws no
+        /// button for it, its key and VoiceOver still press it. A Sidefolk from before this draws it as a button.
+        public var companion: Bool = false
     }
 
     /// One of a few options (topics, lengths); picking sends `{choice: {name, value}}`.
@@ -226,6 +229,9 @@ extension GameBoard {
             }
         }
     }
+
+    /// The button clicking the companion presses, while it can be pressed.
+    public var companionButton: Button? { buttons.first { $0.companion && !$0.disabled } }
 
     /// The primary button, which Return presses.
     public var primary: Button? {
@@ -344,7 +350,8 @@ extension GameBoard {
         guard let label = line(j["label"], 30), let move = token(j["move"]) else { return nil }
         let key = j["key"]?.stringValue.flatMap { $0.count == 1 && $0.first!.isLetter ? $0.lowercased() : nil }
         return Button(label: label, move: move, style: j["style"]?.stringValue.flatMap(Button.Style.init) ?? .secondary,
-                      symbol: ExtensionPage.symbol(j["symbol"]), key: key, disabled: j["disabled"]?.boolValue ?? false)
+                      symbol: ExtensionPage.symbol(j["symbol"]), key: key, disabled: j["disabled"]?.boolValue ?? false,
+                      companion: j["companion"]?.boolValue ?? false)
     }
 
     static func facts(_ j: JSONValue?) -> [Fact] {
@@ -359,7 +366,7 @@ extension GameBoard {
     /// Text that may hold a line break or two (a question, a fact), cleaned and capped.
     static func longText(_ j: JSONValue?, _ characters: Int) -> String? {
         guard let raw = j?.stringValue else { return nil }
-        let text = ExtensionText.clean(raw).replacingOccurrences(of: "\t", with: " ").trimmingCharacters(in: .whitespacesAndNewlines).clipped(characters)
+        let text = ExtensionText.clip(ExtensionText.shown(raw).replacingOccurrences(of: "\t", with: " "), characters)
         return text.isEmpty ? nil : text
     }
 

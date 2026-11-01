@@ -5,6 +5,9 @@ import SwiftUI
 final class FloatingPanel: NSPanel {
     var allowsKey = true
     var onCancel: (() -> Void)?
+    /// The first click while the panel isn't key acts as well as taking the keyboard (the Play panel: a tile or a cup
+    /// clicked once, not twice). The panel doesn't activate Sidefolk, so the person's app stays frontmost either way.
+    var firstClickActs = false
 
     init(size: NSSize = NSSize(width: 380, height: 120)) {
         super.init(contentRect: NSRect(origin: .zero, size: size),
@@ -27,6 +30,12 @@ final class FloatingPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 
     override func cancelOperation(_ sender: Any?) { onCancel?() }
+
+    override func sendEvent(_ event: NSEvent) {
+        // SwiftUI's views don't accept the first mouse: a click on a panel that isn't key would only make it key.
+        if firstClickActs, allowsKey, !isKeyWindow, event.type == .leftMouseDown { makeKey() }
+        super.sendEvent(event)
+    }
 }
 
 /// Hosts SwiftUI content in a FloatingPanel that resizes to fit it.

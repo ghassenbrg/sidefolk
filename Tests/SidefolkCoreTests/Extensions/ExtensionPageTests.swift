@@ -140,7 +140,7 @@ struct ExtensionPageTests {
         // Free space as System Settings counts it (what macOS can clear counts as free), read inside the sandbox.
         let settings = try URL(fileURLWithPath: "/").resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
             .volumeAvailableCapacityForImportantUsage.map { Double($0) / 1e9 } ?? 0
-        let shown = disk.flatMap { Double($0.value.split(separator: " ").first ?? "") } ?? 0
+        let shown = disk.flatMap { Double($0.value.seen.split(separator: " ").first ?? "") } ?? 0
         #expect(abs(shown - settings) < max(2, settings * 0.05), "page \(shown) GB, macOS \(settings) GB")
         #expect(page.samples.keys.contains("cpu/total") && page.samples.keys.contains("memory/used"))
         let kept = await h.host.pageHistory.points(extensionId: info.id, page: "mac", key: "cpu/total", window: 600, now: Date())

@@ -193,6 +193,69 @@ struct GameChannelTests {
         #expect(match?.info == .handsMatch && match?.focus == true)
     }
 
+    @Test func theMenuOfGamesIsADestination() async throws {
+        let ttt = GameInfo(extensionId: "dev.sidefolk.playtime", extensionName: "Playtime", game: "tictactoe", title: "Tic-tac-toe",
+                           say: ["let's play tic-tac-toe", "tic tac toe", "jouons au morpion"])
+        let parser = IntentParser(when: TimeTest.parser(), home: "/Users/test", games: [ttt])
+        let menu = ["Show me the games", "what games do you have?", "Let's play!", "I want to play something", "games", "play",
+                    "please show me all the games", "montre-moi les jeux", "¿Qué juegos tienes?", "Zeig mir die Spiele", "giochiamo",
+                    "quais jogos você tem", "ゲームを見せて", "게임 보여줘", "有什么游戏？", "أرني الألعاب", "لنلعب"]
+        for sentence in menu {
+            #expect(parser.parse(sentence, now: TimeTest.wednesday10)?.intent == .gamesMenu, "\(sentence)")
+        }
+        #expect(parser.parse("let's play tic-tac-toe", now: TimeTest.wednesday10)?.intent == .game(extensionId: "dev.sidefolk.playtime", game: "tictactoe"))
+        #expect(parser.parse("jouons au morpion", now: TimeTest.wednesday10)?.intent == .game(extensionId: "dev.sidefolk.playtime", game: "tictactoe"))
+        #expect(parser.parse("rock paper scissors", now: TimeTest.wednesday10)?.intent == .chance(ChanceIntent(.rockPaperScissors)))
+        for other in ["play this on the TV", "play some music", "show me the games I played yesterday", "games night on friday"] {
+            #expect(parser.parse(other, now: TimeTest.wednesday10)?.intent != .gamesMenu, "\(other)")
+        }
+
+        // The tool without a game, or with "menu", opens the menu; the AI's waits for a click.
+        let env = try TestEnv()
+        let shelf = GameShelf()
+        shelf.set([ttt])
+        env.registry.register(GamesOpenTool(events: env.events, shelf: shelf))
+        #expect(env.registry.tool(named: "games.open")?.spec.description.contains("menu of every game") == true)
+        func open(_ input: JSONValue, caller: Caller) async -> (ToolOutcome, Bool?) {
+            let stream = env.events.stream()
+            let out = await env.executor.execute(name: "games.open", input: input, caller: caller)
+            let heard = await withTaskGroup(of: Bool?.self) { group in
+                group.addTask {
+                    for await event in stream { if case .gamesMenu(let focus) = event { return focus } }
+                    return nil
+                }
+                group.addTask {
+                    try? await Task.sleep(for: .seconds(out.isOK ? 5 : 0.2))
+                    return nil
+                }
+                let first = await group.next() ?? nil
+                group.cancelAll()
+                return first
+            }
+            return (out, heard)
+        }
+        let (mine, focus) = await open([:], caller: .user)
+        #expect(mine.isOK && focus == true && mine.activity.decision == .auto && mine.text.contains("Tic-tac-toe"), "\(mine.text)")
+        let (ai, waits) = await open(["game": "menu"], caller: .agent(runId: "r1"))
+        #expect(ai.isOK && waits == false)
+    }
+
+    @Test func goingBackToTheMenuIsAlwaysAllowed() throws {
+        // ⌘[ goes back whatever the board: none yet or the game stopped, a turn, a build-up, a wait, the end card.
+        let tiles = try GameBoardTests.board(#"{"parts": [{"type": "answers", "items": [{"label": "A"}, {"label": "B"}]}]}"#)
+        let waiting = try GameBoardTests.board(#"{"parts": [{"type": "prompt", "text": "Hmm…"}], "after_ms": 1200}"#)
+        let over = try GameBoardTests.board(#"{"parts": [{"type": "result", "figure": "3 – 2", "tone": "good"}], "over": true}"#)
+        let spelling = try GameBoardTests.board(#"{"parts": [{"type": "keys", "mode": "spell", "length": 5, "locked": true, "pages": [{"label": "a", "rows": [[{"key": "a"}, {"key": "b"}]]}]}]}"#)
+        let buildUp = GameSuspense.withheld(over, tiles)
+        for board in [nil, tiles, waiting, over, spelling, buildUp] as [GameBoard?] {
+            #expect(PlayBack.goesBack("[", command: true, board: board))
+        }
+        // ⌫ too, unless a part types with it (even locked, mid-flip).
+        #expect(PlayBack.goesBack("delete", command: false, board: tiles) && PlayBack.goesBack("delete", command: false, board: nil))
+        #expect(spelling.keys != nil && spelling.typesWithDelete && !PlayBack.goesBack("delete", command: false, board: spelling))
+        #expect(!PlayBack.goesBack("[", command: false, board: tiles) && !PlayBack.goesBack("delete", command: true, board: tiles))
+    }
+
     // MARK: The companion's own match
 
     final class Script: Sendable {

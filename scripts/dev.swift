@@ -40,6 +40,10 @@
 //   swift scripts/dev.swift game:dev.sidefolk.playtime/which_cup | move:{"cell":[0,1]} | key:1 | closeGame | playMenu   (D75, D79)
 //                           | cue:sulk | cue:tease | cue:accent:wave   (a game cue's move, as an open game's board plays it)
 //   swift scripts/dev.swift drag:0,0,1,2   (a puzzle's plot dragged corner to corner, cell by cell, then let go)
+//   swift scripts/dev.swift askTab:play   (Ask open, then its Play tab: the Play panel's menu of games)
+//   swift scripts/dev.swift click:companion | click:200,300   (a mouse click on the companion in the Play panel's scene,
+//                           Which Cup?'s paw, or at a point of the panel from its top left)
+//   swift scripts/dev.swift key:space | key:right | key:return | key:escape   (Garden Plots drawn from the keyboard)
 //   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
 //   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed
 //                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
@@ -53,6 +57,8 @@
 //   swift scripts/dev.swift addons:updates | addons:nudge   (D89: the Gallery's Updates halfway through Update all, the whisper)
 //   swift scripts/dev.swift addons:auto:off | addons:get:<id> | addons:check | addons:updateAll   (D89, with SIDEFOLK_ADDONS=<local gallery>:
 //                           the switch, an add-on installed from it as from the Gallery, Update all)
+//   swift scripts/dev.swift backup:/path/x.sidefolkbackup | restoreFile:/path/x.sidefolkbackup | restoreConfirm | restoreNow:/path/x.sidefolkbackup
+//                           | undoRestore   (D91: a backup written; its restore sheet and its Replace; restored at once, with a relaunch; undone)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {

@@ -35,6 +35,9 @@ Agents can't see the screen. To check the running debug app:
 - Voice without a microphone or speakers: `say -o /tmp/x.aiff "remind me at 5 to stretch"`, then
   `swift run SidefolkApp --voice-transcribe /tmp/x.aiff`, `--voice-say "<answer>" out.caf`, or
   `swift scripts/dev.swift voice:file:/tmp/x.aiff` in the debug app (ARCHITECTURE › Voice).
+- `--ui-snapshots --language <x>` runs in several languages at once are safe from each other's catalogs now (each run
+  stages its own folder), but an Arabic run beside others has still come out laid out left to right (cause unknown):
+  render Arabic on its own when you review right to left.
 - When a test run seems stuck, run it through `script -q log.txt swift test --no-parallel < /dev/null`:
   plain redirection buffers the output, so the last lines lie about where it stopped.
 

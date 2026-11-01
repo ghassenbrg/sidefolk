@@ -51,6 +51,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Extension drafts (written by Sidefolk's AI, D39) | `~/Library/Application Support/Sidefolk/ExtensionDrafts/local.<name>/` |
 | Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/<folder>/` (manifest, icon, `bin/ext-<folder>`) with `catalog.json`; sources in `extensions/<folder>/Sources`, on `extensions/Kit` |
 | Skills | `~/Library/Application Support/Sidefolk/Skills/<name>/SKILL.md` |
+| Restore (D91) | `<home>/.restore-pending/` (staged until the relaunch), `Restore-undo-<date>/` (kept 7 days), `Restore-review/` (extensions and companions from a folder waiting for a look) |
 | Agent config stand-ins (D86) | `<SIDEFOLK_HOME>/agent-configs/` (`claude/`, `codex/`, `.local/bin/sidefolk`): what Connect and the command link change in a copy on any data folder but the default one |
 | Skill for other agents (D42) | `Sidefolk.app/Contents/Resources/AgentSkills/sidefolk` (repo: `skills/sidefolk`); Connect copies it to `~/.claude/skills/sidefolk`, `~/.codex/skills/sidefolk` |
 | Socket | `~/Library/Application Support/Sidefolk/run/sidefolk.sock` (dir 0700, socket 0600) |

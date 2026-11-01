@@ -33,6 +33,9 @@ public final class AppDatabase: Sendable {
         return try AppDatabase(DatabaseQueue(configuration: config))
     }
 
+    /// Every migration this copy knows: a backup whose database ran one more was made by a newer Sidefolk (D91).
+    public static var migrationIdentifiers: Set<String> { Set(migrator.migrations) }
+
     static var migrator: DatabaseMigrator {
         var m = DatabaseMigrator()
         m.registerMigration("v1") { db in
