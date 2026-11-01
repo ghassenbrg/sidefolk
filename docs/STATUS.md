@@ -42,12 +42,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   own colour (contrast-checked fill, edge and text, lightness only), Sidefolk's reminders, tasks and routines as
   calendars of their own, a sidebar with a month and the calendars to show or hide (remembered, and hidden everywhere);
   Agenda, Day, Week, a Month that scrolls on row by row, Year; events say what their size has room for, all-day bars
-  across days, overlaps side by side with "+N"; ⌘← ⌘→ ⌘T, two-finger swipes, pinch for the hour's height, arrows,
+  across days, reminders as one-line pills (a reminder repeating through the day once in the Week, "· every 30 min"),
+  overlaps side by side never under 60 pt with "+N" listing the rest (snapshots `window-home-calendar-{week,day}-crowded`); ⌘← ⌘→ ⌘T, two-finger swipes, pinch for the hour's height, arrows,
   Return and Delete; a double-click or a drag over empty time opens an editor (reminder, task in a collection, or
   event); dragging moves, an event's edge resizes, ⌘Z undoes; a details popover (Maps, people invited, notes, Open in
   Calendar). The Mac's events change through `calendar.create`, `.update` and `.delete` once the person allows it (a
   sheet, or Settings › Trust › Your calendar), never meetings with people, read-only calendars or whole series
-  (SECURITY T34). Verified: `make test` (1720 + 38) with a clean add-ons clone, `CalendarPageTests` and
+  (SECURITY T34). Verified: `make test` (1721 + 38) with a clean add-ons clone, `CalendarPageTests` and
   `CalendarWriteTests`, UI snapshots (calendar views, details, editor, sheet) in light, dark, de and ar, and the debug
   app on `SIDEFOLK_SAMPLE_CALENDAR=1` driven by the new `calendar:` dev commands: drag-create with typing and Return,
   moving an event (the sheet, then ⌘Z), keyboard selection and details, Delete and ⌘Z, a swipe and a month scroll

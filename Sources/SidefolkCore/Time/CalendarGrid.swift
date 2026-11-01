@@ -68,6 +68,19 @@ public enum CalendarGrid {
         return result
     }
 
+    /// A day's things with what comes back through the day kept once (D97: the Week's reminder every 30 minutes is one
+    /// pill): each thing's place in the list and how many times its series is there that day. A thing with no series
+    /// (`nil`) stays as it is; of a series, the first time still to come is kept, or the first when all have passed.
+    public static func oncePerDay(series: [String?], starts: [Date], now: Date) -> [(index: Int, count: Int)] {
+        var times: [String: [Int]] = [:]
+        for (i, key) in series.enumerated() { if let key { times[key, default: []].append(i) } }
+        return series.indices.compactMap { i in
+            guard let key = series[i], let all = times[key], all.count > 1 else { return (i, 1) }
+            let kept = all.first { starts[$0] >= now } ?? all[0]
+            return kept == i ? (i, all.count) : nil
+        }
+    }
+
     public static func weekStart(of date: Date, calendar: Calendar) -> Date {
         let day = calendar.startOfDay(for: date)
         let back = (calendar.component(.weekday, from: day) - calendar.firstWeekday + 7) % 7
@@ -104,18 +117,30 @@ public enum CalendarGrid {
         return result
     }
 
-    /// Things that didn't fit across a day's column, counted at a place of their own: the "+N" that opens the day.
+    /// Things that didn't fit across a day's column, counted at a place of their own: the "+N" that lists them.
     public struct More: Sendable, Equatable {
         /// The earliest of them: where the count goes down the column.
         public var start: Date
         public var count: Int
         public var column: Int
         public var of: Int
+        /// Which of the spans they are, in time order.
+        public var items: [Int]
+
+        public init(start: Date, count: Int, column: Int, of: Int, items: [Int] = []) {
+            self.start = start
+            self.count = count
+            self.column = column
+            self.of = of
+            self.items = items
+        }
     }
 
-    /// `columns`, for a day's column that has room for `maxColumns` across: where an overlap needs more, its first
-    /// `maxColumns - 1` columns show, each a `maxColumns`th of the width, and what is beyond them is counted in a "+N"
-    /// in the last one. Each thing's place, or nil when it is counted instead.
+    /// `columns`, for a day's column that has room for `maxColumns` across (D97: never narrower than a readable
+    /// minimum): where an overlap needs more, its first `maxColumns - 1` columns show, each a `maxColumns`th of the
+    /// width, and what is beyond them is counted in a "+N" in the last one. With room for one only, the first column's
+    /// things keep the whole width and the rest are counted on it (`of` 1). Each thing's place, or nil when it is
+    /// counted instead.
     public static func fit(_ spans: [(start: Date, end: Date)], maxColumns: Int) -> (placed: [(column: Int, of: Int)?], more: [More]) {
         let all = columns(spans)
         let k = max(1, maxColumns)
@@ -127,9 +152,12 @@ public enum CalendarGrid {
         func close() {
             defer { group = [] }
             guard let first = group.first, all[first].of > k else { return }
-            let hidden = group.filter { all[$0].column >= k - 1 }
-            for i in group { placed[i] = all[i].column < k - 1 ? (all[i].column, k) : nil }
-            more.append(More(start: hidden.map { spans[$0].start }.min() ?? spans[first].start, count: hidden.count, column: k - 1, of: k))
+            let kept = k == 1 ? 1 : k - 1
+            let hidden = group.filter { all[$0].column >= kept }
+                .sorted { (spans[$0].start, spans[$0].end, $0) < (spans[$1].start, spans[$1].end, $1) }
+            for i in group { placed[i] = all[i].column < kept ? (all[i].column, k) : nil }
+            more.append(More(start: hidden.map { spans[$0].start }.min() ?? spans[first].start, count: hidden.count,
+                             column: k == 1 ? 0 : k - 1, of: k, items: hidden))
         }
         for i in order {
             if spans[i].start >= groupEnd { close() }

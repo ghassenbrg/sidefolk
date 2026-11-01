@@ -3005,9 +3005,13 @@ night-studio,marshmallow}`; the `sidefolk-theme` skill names the four as what a 
 - **Views.** Agenda (first, D84), Day, Week, a Month that scrolls on row by row (its title follows the month most on
   screen) and a Year (twelve small months shaded by how busy each day is). Day and Week open at the working hours or
   an hour before now, shade the night, draw now as a line with its time in the gutter, put all-day and multi-day events
-  as bars across their days (`CalendarGrid.lanes`), and show as much of an event as its size has room for: title, then
-  time, then place, then notes; a narrow one is its colour, a busy hour "+N". The view, the hour's height and the
-  sidebar are remembered.
+  as bars across their days (`CalendarGrid.lanes`), and show as much of an event as its size has room for: up to two
+  lines of title, then time, then place, then notes. A reminder is a moment, not a slab of time: a one-line pill at its
+  time; in the Week one that comes back through the day (every 30 minutes) is one pill at its next time saying how
+  often (`CalendarGrid.oncePerDay`), the Day shows every time. Things that overlap sit side by side, never narrower than
+  60 points (110 in the Day), so a title is never a letter; past that a "+N" lists the rest and opens their details
+  (`CalendarGrid.fit`: with room for one, the first keeps the width and the count sits beside or on it). The view, the
+  hour's height and the sidebar are remembered.
 - **Moving through time.** ⌘← ⌘→ and the chevrons step (in Arabic the next period is on the left), ⌘T or T is today;
   two fingers sideways turn the period, the page following them until it lets go, then sliding in; two fingers down
   the month scroll it on and it settles on a week; pinching Day or Week changes the hour's height. Only scroll events

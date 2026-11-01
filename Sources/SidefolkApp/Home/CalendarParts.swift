@@ -23,10 +23,10 @@ struct CalendarBlock: View {
                 if height < 34 || entry.reminder != nil {
                     line(ink: ink)
                 } else {
+                    // As much title as two lines hold before the time (the rest in its help and details).
                     Text(verbatim: entry.title).font(Theme.Font.captionStrong).foregroundStyle(ink)
                         .strikethrough(entry.struck)
-                        // A narrow block keeps its title to a line rather than breaking words across several.
-                        .lineLimit(width < 90 ? 1 : max(1, Int((height - (height >= 48 ? 30 : 14)) / 15)))
+                        .lineLimit(height >= 52 ? 2 : 1)
                     Text(verbatim: span).font(Theme.Font.caption.monospacedDigit()).foregroundStyle(ink.opacity(0.85)).lineLimit(1)
                     if let place = entry.event?.location, height >= 62 {
                         Label { Text(verbatim: place).lineLimit(1) } icon: { Image(systemName: "mappin").imageScale(.small) }
@@ -79,6 +79,102 @@ struct CalendarBlock: View {
         let cal = model.calendar
         return entry.end > entry.start ? CalendarEntry.span(entry.start, entry.end, calendar: cal)
             : TimeFormat.clock(entry.start, calendar: cal)
+    }
+}
+
+/// A reminder in Day and Week (D97): a moment, so a one-line pill at its time rather than a slab of time; its picture
+/// in its colour, its title, and, for one that comes back several times that day, how often.
+struct CalendarPill: View {
+    var entry: CalendarEntry
+    var model: CalendarModel
+    var every: String?
+    var selected: Bool
+
+    var body: some View {
+        let tint = model.tint(entry)
+        let ink = selected ? tint.onSelected : tint.text
+        HStack(spacing: 4) {
+            Image(systemName: entry.symbol(item: entry.reminder.flatMap(model.item))).imageScale(.small)
+                .foregroundStyle(selected ? ink : tint.edge)
+            Text(verbatim: entry.title).font(Theme.Font.captionStrong).foregroundStyle(ink).strikethrough(entry.struck)
+                .lineLimit(1).layoutPriority(1)
+            if let every {
+                Text(verbatim: "· " + every).font(Theme.Font.caption).foregroundStyle(ink.opacity(0.8)).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 5)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(selected ? tint.selectedFill : tint.fill, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+        .overlay {
+            if entry.late { RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(Theme.warning, lineWidth: 1) }
+        }
+        .opacity(entry.struck ? 0.6 : 1)
+        .help(Text(verbatim: entry.spoken + (every.map { " · " + $0 } ?? "")))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: entry.spoken + (every.map { ", " + $0 } ?? "")))
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+    }
+}
+
+/// "+3": what didn't fit across a day's column at that time (D97). A click lists them; a click on one shows its
+/// details there.
+struct MoreChip: View {
+    var entries: [CalendarEntry]
+    var model: CalendarModel
+    @State private var open = false
+    @State private var chosen: CalendarEntry?
+
+    var body: some View {
+        Button { chosen = nil; open = true } label: {
+            Text(verbatim: "\u{2066}+\(entries.count.formatted())\u{2069}")
+                .font(Theme.Font.captionStrong).monospacedDigit().foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: 18)
+                .background(Theme.well, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.line))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(Text("\(entries.count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click lists them"))
+        .accessibilityLabel(Text("\(entries.count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click lists them"))
+        .popover(isPresented: $open, arrowEdge: .trailing) {
+            if let chosen {
+                VStack(alignment: .leading, spacing: 0) {
+                    Button { self.chosen = nil } label: { Label("Back", systemImage: "chevron.backward") }
+                        .buttonStyle(.sf(.plain)).padding([.top, .horizontal], Theme.Space.m)
+                    CalendarInspector(entry: chosen, model: model)
+                }
+            } else {
+                list
+            }
+        }
+    }
+
+    private var list: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(entries) { entry in
+                Button {
+                    model.selection = entry.id
+                    chosen = entry
+                } label: {
+                    HStack(spacing: Theme.Space.s) {
+                        Circle().fill(model.tint(entry).edge).frame(width: 8, height: 8)
+                        Text(verbatim: TimeFormat.clock(entry.start, calendar: model.calendar)).monospacedDigit().foregroundStyle(Theme.inkMuted)
+                        Text(verbatim: entry.title).foregroundStyle(Theme.ink).lineLimit(1)
+                        Spacer(minLength: 0)
+                    }
+                    .font(Theme.Font.body)
+                    .padding(.horizontal, Theme.Space.s)
+                    .frame(minHeight: Theme.Size.compactRow)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(verbatim: entry.spoken))
+            }
+        }
+        .padding(Theme.Space.s)
+        .frame(width: 280)
     }
 }
 

@@ -202,6 +202,18 @@ enum UISnapshots {
                 await full.calendar.reload()
                 try await homeShot("calendar-\(mode.rawValue)-small", size: small)
             }
+            // A crowded calendar (D97): reminders as pills, a repeating one once a day in the week, overlaps never
+            // narrower than a readable width, the rest in "+N".
+            if let crowd = (full.services.runtime.platform as? SamplePlatform)?.calendar {
+                crowd.crowd(300)
+                for mode in [CalendarModel.Mode.week, .day] {
+                    full.calendar.mode = mode
+                    await full.calendar.reload()
+                    try await homeShot("calendar-\(mode.rawValue)-crowded")
+                    try await homeShot("calendar-\(mode.rawValue)-crowded-small", size: small)
+                }
+                crowd.uncrowd()
+            }
             full.calendar.mode = .agenda
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook-small", size: small)

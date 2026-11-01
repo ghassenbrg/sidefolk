@@ -1,12 +1,13 @@
 import SidefolkCore
 import SwiftUI
 
-/// The Calendar's Day and Week (D66, D97): a column a day under the hours, each thing at its time and as long as it
-/// lasts, saying as much as its size has room for (`CalendarBlock`); overlaps side by side and, past what a column has
-/// room for, counted in a "+N" that opens the day (D84); all-day and multi-day events as bars in a band above; a line
-/// at the present. It opens at the working hours (or an hour before now), pinching changes the hour's height, a drag
-/// over empty time or a double-click places something new, a thing is dragged to move it and an event's bottom edge to
-/// change its length, all to the quarter hour.
+/// The Calendar's Day and Week (D66, D97): a column a day under the hours, each event at its time and as long as it
+/// lasts, saying as much as its size has room for (`CalendarBlock`); a reminder is a one-line pill at its time, and in
+/// the Week one that comes back through the day is one pill saying how often. Overlaps sit side by side, never narrower
+/// than a readable width; past that a "+N" lists the rest (D84). All-day and multi-day events are bars in a band above,
+/// and a line marks the present. It opens at the working hours (or an hour before now), pinching changes the hour's
+/// height, a drag over empty time or a double-click places something new, a thing is dragged to move it and an event's
+/// bottom edge to change its length, all to the quarter hour.
 struct CalendarTimeGrid: View {
     var model: CalendarModel
     var days: [Date]
@@ -18,10 +19,11 @@ struct CalendarTimeGrid: View {
 
     private var hour: CGFloat { model.hourHeight }
     private static let gutter: CGFloat = 52
-    /// The narrowest a block may be (its colour alone, or "+3"): past that, an overlap's rest is counted.
-    private static let narrowest: CGFloat = 34
-    /// A reminder is a moment: one line tall, whatever the hour's height.
-    private static let momentHeight: CGFloat = 22
+    /// The narrowest a block may be, so a title is never cut to a letter: past that, an overlap's rest is counted in
+    /// a "+N" that lists it. A day alone has room to be roomier.
+    private var narrowest: CGFloat { days.count == 1 ? 110 : 60 }
+    /// A reminder is a moment, not a slab of time: a pill one line tall at its time, whatever the hour's height.
+    private static let momentHeight: CGFloat = 18
     private static let quarter: TimeInterval = 15 * 60
 
     var body: some View {
@@ -142,7 +144,7 @@ struct CalendarTimeGrid: View {
                         let more = all.indices.filter { lanes[$0] >= rows && spans[$0].first <= index && spans[$0].last >= index }.count
                         if more > 0 {
                             Button { model.show(day: day) } label: {
-                                Text(verbatim: "+\(more.formatted())").font(Theme.Font.captionStrong).foregroundStyle(Theme.link)
+                                Text(verbatim: "\u{2066}+\(more.formatted())\u{2069}").font(Theme.Font.captionStrong).foregroundStyle(Theme.link)
                             }
                             .buttonStyle(.plain)
                             .frame(width: width - 4, alignment: .trailing)
@@ -188,32 +190,66 @@ struct CalendarTimeGrid: View {
         }
     }
 
+    /// A day's timed things as they are drawn: in the Week a reminder that comes back several times that day (every 30
+    /// minutes) is one pill at its next time there, saying how often; the Day shows every time.
+    private func shown(on day: Date) -> [(entry: CalendarEntry, every: String?)] {
+        let timed = model.entries(on: day).filter { !$0.allDay }
+        guard days.count > 1 else { return timed.map { ($0, nil) } }
+        let series = timed.map { entry -> String? in if case .reminder(let o) = entry { o.reminder.id } else { nil } }
+        return CalendarGrid.oncePerDay(series: series, starts: timed.map(\.start), now: Date()).map { kept in
+            let entry = timed[kept.index]
+            guard kept.count > 1, let reminder = entry.reminder else { return (entry, nil) }
+            return (entry, reminder.recurrence.map(Self.often)
+                ?? String(localized: "\(kept.count) times", comment: "The Calendar's week: how often a reminder comes back that day"))
+        }
+    }
+
+    /// "every 30 min": how often a reminder that repeats within a day comes back.
+    private static func often(_ rule: Recurrence) -> String {
+        switch rule.frequency {
+        case .minutely: Describe.interval(Double(rule.interval) * 60)
+        case .hourly: Describe.interval(Double(rule.interval) * 3600)
+        default: Describe.recurrence(rule)
+        }
+    }
+
     private func column(_ day: Date) -> some View {
         let start = model.calendar.startOfDay(for: day)
-        let timed = model.entries(on: day).filter { !$0.allDay }
-        let spans = timed.map { entry in
-            (start: entry.start, end: max(entry.end, entry.start.addingTimeInterval(Double(Self.momentHeight / hour) * 3600)))
+        let timed = shown(on: day)
+        let moment = Double(Self.momentHeight / hour) * 3600
+        let spans = timed.map { item in
+            // An event is at least a pill's height; a reminder is exactly one.
+            (start: item.entry.start, end: item.entry.reminder == nil ? max(item.entry.end, item.entry.start.addingTimeInterval(moment))
+                : item.entry.start.addingTimeInterval(moment))
         }
         return GeometryReader { geo in
-            let fitted = CalendarGrid.fit(spans, maxColumns: Int(geo.size.width / Self.narrowest))
+            let fitted = CalendarGrid.fit(spans, maxColumns: Int(geo.size.width / narrowest))
             ZStack(alignment: .topLeading) {
                 background(day: start)
-                ForEach(Array(timed.enumerated()), id: \.element.id) { i, entry in
+                ForEach(Array(timed.enumerated()), id: \.element.entry.id) { i, item in
                     if let place = fitted.placed[i] {
                         let width = geo.size.width / CGFloat(place.of)
-                        let moving = drag?.entry?.id == entry.id
-                        block(entry, width: max(width - 3, 10), height: max(height(spans[i]) - 1, entry.reminder == nil ? 18 : Self.momentHeight - 1))
+                        let moving = drag?.entry?.id == item.entry.id
+                        // A thing alone in a column that also carries a count leaves room for its badge when it stays
+                        // readable beside it; otherwise the badge sits over its trailing corner.
+                        let counted = place.of == 1 && fitted.more.contains { $0.of == 1 && overlaps(spans[i], $0, spans) }
+                        let room = width - 3 - (counted && width - Self.badge - 5 >= narrowest ? Self.badge + 2 : 0)
+                        block(item.entry, every: item.every, width: max(room, 10),
+                              height: max(height(spans[i]) - 1, Self.momentHeight - 1))
                             .opacity(moving ? 0.35 : 1)
                             .padding(.leading, CGFloat(place.column) * width + 1)
-                            .padding(.top, y(entry.start, from: start))
+                            .padding(.top, y(item.entry.start, from: start))
                     }
                 }
                 ForEach(Array(fitted.more.enumerated()), id: \.offset) { _, more in
                     let width = geo.size.width / CGFloat(more.of)
-                    moreChip(more.count, on: day)
-                        .frame(width: max(width - 3, 10))
-                        .padding(.leading, CGFloat(more.column) * width + 1)
-                        .padding(.top, y(more.start, from: start))
+                    // In a column of its own, or as a badge beside the one thing that keeps the width; where there is no
+                    // room beside it, over its corner under its title's first line.
+                    let over = more.of == 1 && geo.size.width - Self.badge - 5 < narrowest
+                    MoreChip(entries: more.items.map { timed[$0].entry }, model: model)
+                        .frame(width: more.of == 1 ? Self.badge : max(width - 3, 10))
+                        .padding(.leading, more.of == 1 ? geo.size.width - Self.badge - 2 : CGFloat(more.column) * width + 1)
+                        .padding(.top, y(more.start, from: start) + (over ? Self.momentHeight : 0))
                 }
                 preview(on: start, width: geo.size.width)
                 newDraft(on: start, width: geo.size.width)
@@ -262,12 +298,26 @@ struct CalendarTimeGrid: View {
         }
     }
 
-    /// A thing as a block, with its gestures: a click selects, a double-click (or Return) opens its details, a drag
-    /// moves it, an event's bottom edge changes its length.
-    private func block(_ entry: CalendarEntry, width: CGFloat, height: CGFloat) -> some View {
+    private static let badge: CGFloat = 36
+
+    /// Whether a span shares its time with the things a "+N" counts.
+    private func overlaps(_ span: (start: Date, end: Date), _ more: CalendarGrid.More, _ spans: [(start: Date, end: Date)]) -> Bool {
+        more.items.contains { spans[$0].start < span.end && span.start < spans[$0].end }
+    }
+
+    /// A thing as a block (an event) or a pill (a reminder), with its gestures: a click selects, a double-click (or
+    /// Return) opens its details, a drag moves it, an event's bottom edge changes its length.
+    private func block(_ entry: CalendarEntry, every: String?, width: CGFloat, height: CGFloat) -> some View {
         let selected = model.selection == entry.id
-        return CalendarBlock(entry: entry, model: model, width: width, height: height, selected: selected)
-            .frame(width: width, height: height)
+        return Group {
+            if entry.reminder != nil {
+                CalendarPill(entry: entry, model: model, every: every, selected: selected)
+                    .frame(width: width, height: Self.momentHeight)
+            } else {
+                CalendarBlock(entry: entry, model: model, width: width, height: height, selected: selected)
+                    .frame(width: width, height: height)
+            }
+        }
             .contentShape(Rectangle())
             .onTapGesture(count: 2) { model.inspecting = entry.id }
             .simultaneousGesture(TapGesture().onEnded { model.selection = entry.id })
@@ -362,23 +412,6 @@ struct CalendarTimeGrid: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-    }
-
-    /// "+2": what didn't fit across the column at that time; a click opens the day, where there is room.
-    private func moreChip(_ count: Int, on day: Date) -> some View {
-        Button { model.show(day: day) } label: {
-            Text(verbatim: "+\(count.formatted())")
-                .font(Theme.Font.captionStrong).monospacedDigit().foregroundStyle(Theme.ink)
-                .lineLimit(1).minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity, minHeight: 18)
-                .background(Theme.well, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.line))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(Text("\(count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click shows the day"))
-        .accessibilityLabel(Text("\(count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click shows the day"))
-        .accessibilityHint(Text("Show this day"))
     }
 
     // MARK: Time and place

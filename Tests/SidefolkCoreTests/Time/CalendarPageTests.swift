@@ -36,6 +36,18 @@ import Testing
         #expect(CalendarGrid.mainMonth(of: later, calendar: calendar).map { calendar.component(.month, from: $0) } == 12)
     }
 
+    /// The Week's reminder every 30 minutes is one pill: its next time that day, with how many times it comes.
+    @Test func whatComesBackThroughTheDayIsKeptOnce() {
+        let at = { (h: Double) in self.day("2026-11-01").addingTimeInterval((h - 12) * 3600) }
+        let series: [String?] = ["water", nil, "water", "water", "stretch", "water"]
+        let starts = [at(9), at(10), at(9.5), at(14), at(15), at(14.5)]
+        let kept = CalendarGrid.oncePerDay(series: series, starts: starts, now: at(13))
+        #expect(kept.map(\.index) == [1, 3, 4])
+        #expect(kept.map(\.count) == [1, 4, 1])
+        // All passed: the first is kept.
+        #expect(CalendarGrid.oncePerDay(series: series, starts: starts, now: at(20)).map(\.index) == [0, 1, 4])
+    }
+
     @Test func aYearIsTwelveMonths() {
         let months = CalendarGrid.yearMonths(of: day("2026-11-01"), calendar: calendar)
         #expect(months.count == 12)

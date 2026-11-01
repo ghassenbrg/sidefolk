@@ -69,6 +69,12 @@ nonisolated final class SampleCalendar: Sendable {
         changed()
     }
 
+    /// Takes the crowd away again.
+    func uncrowd() {
+        events.withLock { $0.removeAll { $0.id.hasPrefix("crowd-") } }
+        changed()
+    }
+
     /// As EventKit says a change happened.
     private func changed() {
         Task { @MainActor in NotificationCenter.default.post(name: MacCalendar.changed, object: nil) }
