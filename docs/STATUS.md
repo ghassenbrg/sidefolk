@@ -40,6 +40,17 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
+- **Desktop polish** (branch `team/desktop-polish`, not merged): cards answer from the keyboard (⌃⌥Space), Ask's
+  tabs and "Open in History", the drop card, the stack's arc and the voice's light, VoiceOver on the companion's
+  corner (D84's note); Ask tidies itself by each result's weight, agents grouped by folder (D90). Verified with
+  `make test`, UI snapshots (light, dark, de, ar) and the debug app. Next: merge; try ⌃⌥Space on a Mac whose input
+  sources don't take it, and VoiceOver by hand (an AX client this Mac's tools aren't allowed to be).
+- **Safety and correctness** (branch `team/safety`, not merged): a copy on any `SIDEFOLK_HOME` writes agent-config
+  stand-ins in `<home>/agent-configs/`, never the person's Claude Code, Codex or `~/.local/bin/sidefolk` (D86, ported
+  from a branch that never reached main); `connect:`/`disconnect:` dev commands; the audit's F12 rule (links open only
+  as web pages) on release notes and extension errors; the QA branch's last four tests. Verified: full suite green
+  (1626 + 38 tests), and a debug app on `build/safety-1` connected and disconnected both agents and the command
+  while the real files kept their mtime and SHA-256. Next: merge.
 - **Add-on updates in sight** (branch `team/addon-updates`, not merged, D89): the Gallery's Updates with Update all
   (per-item progress, "3 updated, 1 needs your review", widening ones stay with Review…), an extension page's
   "Update available" strip with What's new, Settings › Add-ons inline "New version · Update" and an Update all card,
@@ -64,6 +75,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
   click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
 
+- **The companions' reaction moves** (branch `team/reactions`, not merged; D75 amended): sulk, shrug, tease, ready,
+  wince, gasp and the quick accents are each a real move now, in 3D for all ten companions (shared in
+  `engine/moves.js`, a still version under Reduce Motion) and in 2D (`Antics`). Verified: every move filmed for every
+  3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
+  debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
+  no gallery companion changes.
+
 - **Back up and restore** (branch `team/backup`, not merged, D91; it carries `team/addon-updates`, which carries
   `team/watch-history` and `team/interrupts`): Settings › Trust › Your data and the app menu write one
   `.sidefolkbackup` (database via `VACUUM INTO`, ExtensionData, drafts, skills, companions as data, folder extensions
@@ -71,18 +89,18 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   with 7 days of Undo restore, swapped at the relaunch, gallery add-ons fetched again, folder code reviewed, MCP
   servers off. Verified: `BackupTests` (6), full suite, snapshots in light, dark, de and ar, and the debug app: a
   backup from `build/bk-1` restored into a fresh `build/bk-2` through the sheet (same notes, reminders and skill,
-  History's line), then undone. Next: merge after `team/addon-updates`.
+  History's line), then undone. Next: merge.
 
-Nothing else is on a branch: every team branch is merged into main in both repositories.
+**Integration:** `team/desktop-polish` carries origin/main (D86), `team/addon-updates` (with watch history and the
+interrupt levels, D87–D89) and `team/reactions`, merged and tested together; `team/backup` and `team/games-items`
+merge last.
 
 ## Next
 
 1. **The founder plays the puzzles** (Garden Plots, Seesaw, Sudoku, Blossoms) and the games in snapshot 661.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
-   choice card for drops, the stack's arc animation, voice's level-reactive pool, answering cards from the keyboard
-   outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
-   "+1" overlaps.
+   Week view's "read only" note and "+1" overlaps.
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
    dragging a plot from the keyboard, a hint that plays its move, a daily board per level.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence

@@ -127,13 +127,13 @@ extension AppCoordinator {
     static func restoreNotice(_ report: RestoreFollowUp.Report, review: Int) -> AttentionRequest {
         var lines: [String] = []
         if !report.installed.isEmpty {
-            lines.append(String(localized: "\(report.installed.count) add-ons are back.", comment: "After a restore: “4 add-ons are back.”"))
+            lines.append(String(localized: "\(report.installed.count) add-ons are back.", locale: Wording.locale, comment: "After a restore: “4 add-ons are back.”"))
         }
         if !report.failed.isEmpty {
             lines.append(String(localized: "Not back: \(Wording.list(report.failed.map(\.name))).", comment: "After a restore: “Not back: Miraya.”"))
         }
         if review > 0 {
-            lines.append(String(localized: "\(review) from a folder wait for your look in Settings.",
+            lines.append(String(localized: "\(review) from a folder wait for your look in Settings.", locale: Wording.locale,
                                 comment: "After a restore: extensions or companions from a folder, not installed until reviewed"))
         }
         return AttentionRequest(level: .gentle, source: "companion", title: String(localized: "Your backup is restored"),

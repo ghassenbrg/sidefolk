@@ -92,7 +92,8 @@ struct BackupRows: View {
         }
         if restore.running {
             SettingsRow(title: Text("Installing your add-ons again…", comment: "After a restore (D91)"),
-                        detail: Text("\(restore.done) of \(restore.total)", comment: "After a restore: “2 of 5” add-ons")) {
+                        detail: Text(verbatim: String(localized: "\(restore.done) of \(restore.total)", locale: Wording.locale,
+                                                     comment: "After a restore: “2 of 5” add-ons"))) {
                 ProgressView(value: Double(restore.done), total: Double(max(restore.total, 1))).frame(width: 120)
             }
         } else if let report = restore.report, !report.failed.isEmpty {
@@ -255,16 +256,17 @@ struct RestoreSheet: View {
         .frame(width: Theme.Size.sheet)
     }
 
-    /// "1,240 notes · 32 reminders · 6 watches · 4 add-ons · 2 skills", only what it has.
+    /// "1,240 notes · 32 reminders · 6 watches · 4 add-ons · 2 skills", only what it has; numbers as the app's language
+    /// writes them ("1.240 Notizen").
     static func counts(_ m: BackupManifest) -> String {
         let c = m.counts
         let parts: [String?] = [
-            c.notes > 0 ? String(localized: "\(c.notes) notes", comment: "What a backup holds") : nil,
-            c.reminders > 0 ? String(localized: "\(c.reminders) reminders", comment: "What a backup holds") : nil,
-            c.watchers > 0 ? String(localized: "\(c.watchers) watches", comment: "What a backup holds") : nil,
-            c.conversations > 0 ? String(localized: "\(c.conversations) conversations", comment: "What a backup holds") : nil,
-            c.addons + c.extensions > 0 ? String(localized: "\(c.addons + c.extensions) add-ons", comment: "What a backup holds") : nil,
-            c.skills > 0 ? String(localized: "\(c.skills) skills", comment: "What a backup holds") : nil,
+            c.notes > 0 ? String(localized: "\(c.notes) notes", locale: Wording.locale, comment: "What a backup holds") : nil,
+            c.reminders > 0 ? String(localized: "\(c.reminders) reminders", locale: Wording.locale, comment: "What a backup holds") : nil,
+            c.watchers > 0 ? String(localized: "\(c.watchers) watches", locale: Wording.locale, comment: "What a backup holds") : nil,
+            c.conversations > 0 ? String(localized: "\(c.conversations) conversations", locale: Wording.locale, comment: "What a backup holds") : nil,
+            c.addons + c.extensions > 0 ? String(localized: "\(c.addons + c.extensions) add-ons", locale: Wording.locale, comment: "What a backup holds") : nil,
+            c.skills > 0 ? String(localized: "\(c.skills) skills", locale: Wording.locale, comment: "What a backup holds") : nil,
         ]
         let shown = parts.compactMap { $0 }
         return shown.isEmpty ? String(localized: "Settings only", comment: "A backup with no notes, reminders or add-ons") : shown.joined(separator: " · ")

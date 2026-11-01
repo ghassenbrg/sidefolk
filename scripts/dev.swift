@@ -7,6 +7,7 @@
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:trust | find:milk | drop:https://example.com
+//                           | drop:text:<words>   (D84: dropped text) | dropChoice:save|watch|ask|openWith|remind|copy|playOnTV
 //   swift scripts/dev.swift settings:search:quiet | settings:jump:quietHours | settings:full-access   (D84: Settings' search,
 //                           a jump to a setting by its SettingKey, the Full access sheet)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
@@ -32,8 +33,12 @@
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
 //                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)
+//   swift scripts/dev.swift ax   (D84: every visible window's accessibility tree, as VoiceOver walks it, in $SIDEFOLK_HOME/snapshots)
+//   swift scripts/dev.swift cardKeys | cardKey:return|cmdReturn|escape|left|right|tab|backtab|up|down   (D84: the card
+//                           shortcut, then keys on the card or the held cards it fanned)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
 //   swift scripts/dev.swift game:dev.sidefolk.playtime/which_cup | move:{"cell":[0,1]} | key:1 | closeGame | playMenu   (D75, D79)
+//                           | cue:sulk | cue:tease | cue:accent:wave   (a game cue's move, as an open game's board plays it)
 //   swift scripts/dev.swift drag:0,0,1,2   (a puzzle's plot dragged corner to corner, cell by cell, then let go)
 //   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
 //   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed

@@ -133,8 +133,9 @@ struct OnDutyView: View {
     private func byte(_ duty: OnDuty, background: [ExtensionPageInfo]) -> some View {
         FolkCard(folk: "byte", title: Text(verbatim: "Byte"), role: Text("Agents and add-ons at work"),
                  count: duty.sessions.count + duty.jobs.count + background.count) {
-            ForEach(duty.sessions) { s in
-                ListRow(title: Text(verbatim: Describe.session(s)), meta: Text(verbatim: sessionMeta(s))) {
+            ForEach(AgentSessionGroup.of(duty.sessions)) { g in
+                let s = g.session
+                ListRow(title: Text(verbatim: Describe.session(g)), meta: Text(verbatim: sessionMeta(s))) {
                     rowIcon("terminal")
                 } trailing: {
                     if s.state == .needsYou {
@@ -338,8 +339,9 @@ struct OnDutyGlance: View {
             if !duty.sessions.isEmpty || !duty.jobs.isEmpty {
                 Text("Agents at work").font(Theme.Font.headline).foregroundStyle(Theme.ink).padding(.top, Theme.Space.xs)
                 RowsCard {
-                    ForEach(duty.sessions) { s in
-                        ListRow(title: Text(verbatim: Describe.session(s)),
+                    ForEach(AgentSessionGroup.of(duty.sessions)) { g in
+                        let s = g.session
+                        ListRow(title: Text(verbatim: Describe.session(g)),
                                 meta: Text(verbatim: [TimeText.span(Date().timeIntervalSince(s.startedAt)),
                                                       now.lastCalls[s.agent].map { String(localized: "last: \($0.summary)", comment: "An agent's last call to Sidefolk") }]
                                     .compactMap { $0 }.joined(separator: " · "))) {

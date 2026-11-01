@@ -320,6 +320,7 @@ extension AppCoordinator: AppServices {
         applyTheme()
         updater.settingsChanged()
         addonUpdater.settingsChanged()
+        applyCardKeys()
     }
 
     /// Light or dark for every window, or nil to follow the Mac. Theme's colours follow it.

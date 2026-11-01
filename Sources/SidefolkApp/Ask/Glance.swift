@@ -1,9 +1,9 @@
 import SidefolkCore
 import SwiftUI
 
-/// Today at a glance, in the Ask panel while nothing is typed (D58): a click on the companion opens it. What needs you
-/// (answered here as on Today, a watch's notice among them), the next two things in your day, who's working, and the
-/// way to Today.
+/// Today at a glance, Ask's Today tab (D58, D90): what needs you (answered here as on Today, a watch's notice among
+/// them), the next two things in your day, and the way to Today. Who's working isn't listed: the agents' faces beside
+/// the companion, On duty and the Pocket already show them.
 struct Glance: Equatable {
     struct Next: Equatable {
         var title: String
@@ -12,11 +12,11 @@ struct Glance: Equatable {
     }
 
     var decisions: [AttentionItem] = []
-    var sessions: [AgentSession] = []
+    /// Sessions waiting for the person, one line per agent and folder.
+    var sessions: [AgentSessionGroup] = []
     var next: [Next] = []
-    var working: [String] = []
 
-    var isEmpty: Bool { decisions.isEmpty && sessions.isEmpty && next.isEmpty && working.isEmpty }
+    var isEmpty: Bool { decisions.isEmpty && sessions.isEmpty && next.isEmpty }
 
     /// How many each part shows, so the panel stays small.
     static let decisionsShown = 3
@@ -40,9 +40,9 @@ struct GlanceView: View {
                     Spacer()
                     Button(action: openToday) { Text("Open Today") }.buttonStyle(.sf(.quiet, size: .small))
                 }
-                ForEach(glance.sessions.prefix(Glance.decisionsShown)) { session in
-                    row(Text(Describe.session(session)), avatar: "byte") {
-                        Button("Open session") { openSession(session) }.buttonStyle(.sf(.secondary, size: .small)).fixedSize()
+                ForEach(glance.sessions.prefix(Glance.decisionsShown)) { group in
+                    row(Text(Describe.session(group)), avatar: "byte") {
+                        Button("Open session") { openSession(group.session) }.buttonStyle(.sf(.secondary, size: .small)).fixedSize()
                     }
                 }
                 ForEach(glance.decisions.prefix(max(0, Glance.decisionsShown - glance.sessions.count))) { item in
@@ -64,12 +64,6 @@ struct GlanceView: View {
                         Text(verbatim: "\(TimeFormat.clock(next.at, calendar: .current)) · \(TimeText.relative(next.at))")
                             .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).monospacedDigit()
                     }
-                }
-            }
-            if !glance.working.isEmpty {
-                Eyebrow(Text("Working", comment: "Ask's resting state: agents and commands running now")).padding(.top, Theme.Space.s)
-                ForEach(glance.working, id: \.self) { title in
-                    row(Text(verbatim: title), avatar: "byte") { EmptyView() }
                 }
             }
         }

@@ -244,6 +244,16 @@ enum Antics {
         case .flick: flick
         case .roll: roll
         case .pump: pump
+        case .sulk: sulk
+        case .shrug: shrug
+        case .tease: tease
+        case .ready: ready
+        case .wince: wince
+        case .gasp: gasp
+        case .waveQuick: waveQuick
+        case .hopQuick: hopQuick
+        case .spinQuick: spinQuick
+        case .bowQuick: bowQuick
         }
     }
 
@@ -505,4 +515,90 @@ enum Antics {
         Track(.head, [.rest, .rest, .nudge(0, -1.5), .rest, .nudge(0, -1.5), .rest, .nudge(0, -2), .rest, .rest],
               at: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.88, 1]),
     ], faces: [(0.05, .curious), (0.7, .joy), (0.95, nil)], snappy: true)
+}
+
+// MARK: Games' reactions
+
+extension Antics {
+    /// "Hmph": a small huff, then it turns its shoulder on you, head away and down, arms hanging, ears drooping; a
+    /// glance back at the end to see if you noticed.
+    static let sulk = Antic(duration: 1.6, tracks: [
+        Track(.body, [.rest, .squash(0.97, 1.03, up: 1), Key(sx: 1.02, sy: 0.97, dx: -3, turn: -0.04),
+                      Key(sx: 1.02, sy: 0.97, dx: -3, turn: -0.04), .rest], at: [0, 0.1, 0.3, 0.75, 1]),
+        Track(.head, [.rest, .rest, Key(dx: -2, dy: -2, turn: -0.1), Key(dx: -2, dy: -2, turn: -0.1), .rest], at: [0, 0.1, 0.3, 0.75, 1]),
+    ] + arms([0, 0.1, -0.3, -0.3, 0], at: [0, 0.1, 0.3, 0.75, 1])
+      + ears([0, -0.05, 0.32, 0.32, 0], at: [0, 0.1, 0.3, 0.75, 1]),
+    // Open eyes looking away say "not talking to you"; shut ones read as sleepy.
+    looks: [(0.15, CGVector(dx: -0.9, dy: -0.4)), (0.68, CGVector(dx: 0.3, dy: 0)), (0.9, nil)], snappy: true)
+
+    /// "Eh, who knows?" Shoulders up, both paws out, head tipped to one side, then let drop.
+    static let shrug = Antic(duration: 1.2, tracks: [
+        Track(.body, [.rest, .squash(0.97, 1.04, up: 2), .squash(0.97, 1.04, up: 2), .squash(1.02, 0.98), .rest], at: [0, 0.25, 0.65, 0.85, 1]),
+        Track(.head, [.rest, Key(dy: -1, turn: 0.09), Key(dy: -1, turn: 0.09), .rest], at: [0, 0.25, 0.65, 1]),
+    ] + arms([0, 0.95, 0.95, 0], at: [0, 0.25, 0.65, 1])
+      + ears([0, -0.08, 0.18, 0], at: [0, 0.25, 0.65, 1], swing: true),
+    faces: [(0.1, .curious), (0.9, nil)], snappy: true)
+
+    /// "Ooh, bold": a paw up by its cheek, a lean toward you with one eye squeezed shut, a little wiggle.
+    static let tease = Antic(duration: 1.4, tracks: [
+        Track(.body, [.rest, .turn(0.05), .turn(0.02), .turn(0.06), .turn(0.02), .turn(0.05), .rest], at: [0, 0.18, 0.32, 0.46, 0.6, 0.75, 1]),
+        Track(.head, [.rest, .turn(0.08), .turn(0.08), .rest], at: [0, 0.18, 0.75, 1]),
+        // Up by the cheek, not over the face: further, a fin or paw crosses the eye.
+        Track(.armR, [.rest, .turn(-0.75), .turn(-0.8), .rest], at: [0, 0.18, 0.75, 1]),
+    ] + ears([0, -0.1, 0.08, -0.08, 0], at: [0, 0.18, 0.4, 0.6, 1], swing: true),
+    faces: [(0.15, .wince), (0.55, .joy), (0.92, nil)], snappy: true)
+
+    /// "Bring it on": down into a crouch, paws up, two bounces on its toes, then up.
+    static let ready = Antic(duration: 1.2, tracks: [
+        Track(.body, [.rest, .squash(1.07, 0.9), .squash(1.03, 0.95, up: 3), .squash(1.07, 0.9), .squash(1.03, 0.95, up: 3), .squash(1.06, 0.91), .rest],
+              at: [0, 0.18, 0.34, 0.5, 0.64, 0.8, 1]),
+        Track(.head, [.rest, .nudge(0, -1), .nudge(0, -1), .rest], at: [0, 0.18, 0.8, 1]),
+    ] + arms([0, 0.7, 0.7, 0], at: [0, 0.18, 0.8, 1])
+      + ears([0, 0.18, 0.18, 0], at: [0, 0.18, 0.8, 1]),
+    looks: [(0.1, CGVector(dx: 0, dy: 0)), (0.9, nil)], snappy: true)
+
+    /// Ouch: a flinch down, eyes squeezed, ears flat.
+    static let wince = Antic(duration: 1.0, tracks: [
+        Track(.body, [.rest, .squash(1.07, 0.91), .squash(1.05, 0.93), .rest], at: [0, 0.1, 0.6, 1]),
+        Track(.head, [.rest, Key(dy: -2, turn: 0.06), Key(dy: -2, turn: 0.06), .rest], at: [0, 0.1, 0.6, 1]),
+    ] + arms([0, 0.4, 0.35, 0], at: [0, 0.1, 0.6, 1])
+      + ears([0, 0.35, 0.3, 0], at: [0, 0.12, 0.6, 1]),
+    faces: [(0.05, .squeeze), (0.85, nil)], snappy: true)
+
+    /// Oh! A small jolt, tall and wide-eyed: smaller than a notification's startle.
+    static let gasp = Antic(duration: 1.0, tracks: [
+        Track(.body, [.rest, .squash(0.95, 1.05, up: 2), .squash(0.97, 1.03, up: 1), .rest], at: [0, 0.1, 0.55, 1]),
+    ] + arms([0, 0.6, 0.5, 0], at: [0, 0.1, 0.55, 1])
+      + ears([0, -0.22, -0.18, 0], at: [0, 0.1, 0.55, 1]),
+    faces: [(0, .surprised), (0.85, nil)], snappy: true)
+
+    // Accents: the short versions fast games (Copy Me) use, under a second each.
+
+    static let waveQuick = Antic(duration: 0.9, tracks: [
+        Track(.armR, [.rest, .turn(2.2), .turn(2.55), .turn(2.1), .turn(2.5), .rest], at: [0, 0.2, 0.38, 0.56, 0.74, 1]),
+        Track(.head, [.rest, .turn(-0.06), .turn(-0.06), .rest], at: [0, 0.2, 0.74, 1]),
+    ] + ears([0, -0.1, 0.05, -0.08, 0], at: [0, 0.2, 0.4, 0.7, 1]),
+    faces: [(0.05, .joy), (0.9, nil)], snappy: true)
+
+    static let hopQuick = Antic(duration: 0.55, tracks: [
+        Track(.body, [.rest, .squash(1.06, 0.92), .squash(0.98, 1.02, up: 7), .squash(1.05, 0.94), .rest], at: [0, 0.15, 0.45, 0.75, 1]),
+    ] + arms([0, -0.1, 0.45, 0, 0], at: [0, 0.15, 0.45, 0.75, 1])
+      + ears([0, -0.08, -0.05, 0.3, 0], at: [0, 0.15, 0.45, 0.75, 1]),
+    faces: [(0.05, .joy), (0.9, nil)], snappy: true)
+
+    /// A twirl on the spot, as a flat body can: it narrows as if turning edge-on twice (never to a line, never
+    /// mirrored), lifted a little, arms out, ears swinging.
+    static let spinQuick = Antic(duration: 0.9, tracks: [
+        Track(.body, [.rest, Key(sx: 0.62, sy: 1.02, dy: 4), Key(sx: 1, sy: 1, dy: 5), Key(sx: 0.62, sy: 1.02, dy: 4), .rest],
+              at: [0, 0.25, 0.5, 0.75, 1]),
+    ] + arms([0, 0.6, 0.6, 0.6, 0], at: [0, 0.25, 0.5, 0.75, 1])
+      + ears([0, 0.15, -0.15, 0.15, 0], at: [0, 0.25, 0.5, 0.75, 1], swing: true),
+    faces: [(0.05, .joy), (0.9, nil)], snappy: true)
+
+    static let bowQuick = Antic(duration: 0.9, tracks: [
+        Track(.body, [.rest, .squash(1.05, 0.89), .squash(1.05, 0.89), .rest], at: [0, 0.35, 0.6, 1]),
+        Track(.head, [.rest, .nudge(0, -5), .nudge(0, -5), .rest], at: [0, 0.35, 0.6, 1]),
+        Track(.face, [.rest, .nudge(0, -3), .nudge(0, -3), .rest], at: [0, 0.35, 0.6, 1]),
+    ] + arms([0, -0.25, -0.25, 0], at: [0, 0.35, 0.6, 1]),
+    faces: [(0.1, .joy), (0.9, nil)], snappy: true)
 }

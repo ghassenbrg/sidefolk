@@ -36,7 +36,15 @@ final class FixtureAskActions: AskActions {
     var whenParser: WhenParser { WhenParser() }
     func remindPending(at date: Date, in model: AskModel) {}
     func answer(question: AttentionItem, actionId: String) {}
-    func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel) {}
+    func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel) {}
+    /// Miraya is there to play a video link on the TV (D84's drop card).
+    var canPlayOnTV = false
+    func dropChoices(for attachment: Attachment) -> [DropChoice] {
+        guard case .url(let url) = attachment.kind else { return DropChoices.choices(for: attachment.dropKind) }
+        return DropChoices.choices(for: .link, link: url, canPlayOnTV: canPlayOnTV)
+    }
+    func open(_ attachment: Attachment, with app: URL, in model: AskModel) {}
+    func openPlay() {}
     func retry(_ text: String, in model: AskModel) {}
     func openSettings(tab: SettingsTab?) {}
     func openHome() {}

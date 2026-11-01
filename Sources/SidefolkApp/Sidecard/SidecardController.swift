@@ -8,7 +8,7 @@ import SwiftUI
 /// shoulder after half a minute. Hovering that count fans out what waits; clicking it opens Ask on top of them.
 final class SidecardController {
     let model = SidecardModel()
-    private let hosted: HostedPanel<SidecardView>
+    let hosted: HostedPanel<SidecardView>
     /// Whispers waiting for the card or whisper in front of them to go.
     private var queue: [(AttentionItem, AttentionPresentation)] = []
     private var timer: Task<Void, Never>?
@@ -27,6 +27,26 @@ final class SidecardController {
     var onChange: (() -> Void)?
     /// A card folded into the stack: the companion stops looking alarmed; the count says it waits.
     var onFold: ((AttentionItem) -> Void)?
+    /// Where the count on the companion's shoulder is on screen, for the stack's arc (D84).
+    var badgeProvider: (() -> NSPoint?)?
+    /// The stack folding back into the shoulder before it goes.
+    var foldBack: Task<Void, Never>?
+    /// The keyboard, while its shortcut gave it to the Sidecard (D84): the held cards it moves through, and from when
+    /// keys count after a card came to the front (a key held down or meant for the card before can't answer it).
+    var holdsKeys = false
+    var deckItems: [AttentionItem] = []
+    var armedAt = Date.distantPast
+    /// Between one card and the next the panel may lose the keyboard for a moment; that isn't the person leaving.
+    var passingKeys = false
+    /// Dev commands arrive without a key press, and macOS gives the keyboard only after one: the dev path keeps the keys
+    /// it was handed (`cardKeys`), so the rest can be checked by hand.
+    #if DEBUG
+    var devKeys = false
+    #else
+    var devKeys: Bool { get { false } set {} }
+    #endif
+    var keyMonitor: Any?
+    var keyObserver: NSObjectProtocol?
     /// "Fewer like this" or "Show these as whispers" on a card (D88).
     var onLowerSource: ((AttentionItem, InterruptSource, InterruptLevel) -> Void)?
 
@@ -35,6 +55,8 @@ final class SidecardController {
         hosted.panel.level = .floating
         // The glass draws its own shadow; a window shadow would be traced from its faint pixels as a grey outline.
         hosted.panel.hasShadow = false
+        // VoiceOver's window list names it (D84).
+        hosted.panel.setAccessibilityTitle(String(localized: "Sidefolk card", comment: "VoiceOver: the window of the card above the companion"))
         hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
             self?.close(id: item.id)
@@ -50,6 +72,7 @@ final class SidecardController {
             self?.hideStack()
             self?.onOpenStack?()
         }
+        installKeys()
     }
 
     /// The stack was clicked: Ask opens on top of it.
@@ -126,7 +149,9 @@ final class SidecardController {
             break
         }
         appear()
-        // The panel never takes the keyboard, so VoiceOver hears a new moment rather than finding it: what it is, and
+        // With the keyboard on the Sidecard, it follows whatever card comes to the front; a whisper gives it back.
+        if holdsKeys { if card { focusKeys(on: item) } else { releaseKeys() } }
+        // The panel takes the keyboard only from its shortcut, so VoiceOver hears a new moment rather than finding it: what it is, and
         // for a card that it waits for an answer.
         let words = card ? String(localized: "\(item.title). It waits for your answer beside \(model.companionName).",
                                   comment: "VoiceOver, when a card appears beside the companion: its title, then that it waits")
@@ -137,11 +162,11 @@ final class SidecardController {
     }
 
     /// Only what the attention center keeps waits in the stack; the companion's own lines (onboarding) stay out.
-    private static func folds(_ item: AttentionItem) -> Bool {
+    static func folds(_ item: AttentionItem) -> Bool {
         item.source != Onboarding.source && item.source != AppCoordinator.ownVoice
     }
 
-    private func appear() {
+    func appear() {
         guard let (anchor, screen) = anchorProvider?() else { return }
         // Sized to this moment first: a visible panel keeps its size when placed.
         hosted.panel.setContentSize(hosted.fittingSize)
@@ -193,7 +218,7 @@ final class SidecardController {
         }
     }
 
-    private func growWhisper() {
+    func growWhisper() {
         guard let item = model.item, model.shape == .whisper else { return }
         timer?.cancel()
         model.shape = .card
@@ -208,12 +233,12 @@ final class SidecardController {
         timer = Task { [weak self] in
             try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled, let self else { return }
-            // Hovering keeps it open; look again shortly.
-            if self.model.hovering { self.schedule(after: 2, action) } else { action() }
+            // Hovering keeps it open, and so does the keyboard on it; look again shortly.
+            if self.model.hovering || self.model.keys != nil { self.schedule(after: 2, action) } else { action() }
         }
     }
 
-    private func autoDismiss(id: String) {
+    func autoDismiss(id: String) {
         guard let item = model.item, item.id == id else { return }
         // A card its source turned into a whisper (D88) still needs its answer: it folds into the stack, as a card does.
         if item.level >= .attention, Self.folds(item) {
@@ -226,7 +251,7 @@ final class SidecardController {
     }
 
     /// Nobody answered in time: the card shrinks into the count on the shoulder, where it still waits.
-    private func foldCurrent(id: String) {
+    func foldCurrent(id: String) {
         guard let item = model.item, item.id == id, model.shape == .card else { return }
         fold(item)
         hide()
@@ -236,6 +261,7 @@ final class SidecardController {
     private func fold(_ item: AttentionItem) {
         // The companion's own lines (onboarding) wait nowhere: they give way, and never make an "All clear".
         guard Self.folds(item) else { return }
+        flyToShoulder(item)
         folded.insert(item.id)
         onFold?(item)
     }
@@ -256,6 +282,7 @@ final class SidecardController {
 
     private func hide() {
         model.item = nil
+        model.keys = nil
         hosted.panel.orderOut(nil)
         onChange?()
     }
@@ -299,12 +326,20 @@ final class SidecardController {
         fanEnd?.cancel()
         if show {
             guard !hosted.panel.isVisible || model.shape == .stack else { return }
+            // Back on the count while the cards fold away: they come out again.
+            if foldBack != nil {
+                foldBack?.cancel()
+                foldBack = nil
+                model.stackOut = true
+                return
+            }
             Task { [weak self] in
                 guard let self, let items = await self.waitingItems?(), !items.isEmpty else { return }
                 self.model.stack = items
                 self.model.item = nil
                 self.model.shape = .stack
                 self.appear()
+                self.fanOut()
             }
         } else if model.shape == .stack {
             fanEnd = Task { [weak self] in
@@ -315,10 +350,26 @@ final class SidecardController {
         }
     }
 
-    private func hideStack() {
+    func hideStack() {
         guard model.shape == .stack else { return }
+        model.stackFocus = nil
+        // The held cards fold back into the shoulder along their arc, then the panel goes (D84).
+        guard model.fanFrom != nil, hosted.panel.isVisible, foldBack == nil else { return putStackAway() }
+        model.stackOut = false
+        foldBack = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(240))
+            guard !Task.isCancelled, let self else { return }
+            self.foldBack = nil
+            if self.model.shape == .stack, !self.model.stackOut { self.putStackAway() }
+        }
+    }
+
+    private func putStackAway() {
+        foldBack?.cancel()
+        foldBack = nil
         model.stack = []
         model.shape = .whisper
+        model.stackOut = true
         hosted.panel.orderOut(nil)
         next()
     }
