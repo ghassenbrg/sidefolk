@@ -10,7 +10,8 @@ import Foundation
 /// beside a link to the executable and its resource bundles, and the copy runs from there; the folder goes after.
 /// So runs in several languages at once never share or remove each other's folders (they used to: one run's
 /// cleanup took another's `ar.lproj`, which then rendered left to right or not at all). Inside an app bundle its
-/// own folders are used.
+/// own folders are used. The layout's direction is given the same way (`-AppleTextDirection`), never stored: every
+/// run shares the `SidefolkApp` defaults, and an English run removing what an Arabic one stored mirrored it back.
 enum SnapshotLanguage {
     /// Nil when this copy should render; otherwise the exit status of the copy that rendered.
     static func relaunchIfNeeded(_ args: [String]) -> Int32? {
@@ -27,7 +28,10 @@ enum SnapshotLanguage {
             }
             let child = Process()
             child.executableURL = executable
-            child.arguments = Array(args.dropFirst()) + ["-AppleLanguages", "(\(language))"]
+            // The direction goes on the command line too, in this run's own argument domain: stored in the defaults
+            // every `SidefolkApp` run shares, a run in another language beside this one could change it under it.
+            let rtl = Locale.Language(identifier: language).characterDirection == .rightToLeft
+            child.arguments = Array(args.dropFirst()) + ["-AppleLanguages", "(\(language))", "-AppleTextDirection", rtl ? "YES" : "NO"]
             try child.run()
             child.waitUntilExit()
             return child.terminationStatus

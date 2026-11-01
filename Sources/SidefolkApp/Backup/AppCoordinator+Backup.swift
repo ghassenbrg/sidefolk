@@ -15,7 +15,8 @@ extension AppCoordinator {
                 let servers = await runtime.extensions.extensions().filter { $0.kind == .mcp }.map(\.id)
                 keys = BackupKeys.collect(from: secrets, mcpServers: servers)
             }
-            try await BackupWriter(runtime: runtime).write(to: url, keys: keys, password: password)
+            let defaults = UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? "") ?? [:]
+            try await BackupWriter(runtime: runtime).write(to: url, keys: keys, password: password, preferences: BackupPreferences.pick(defaults))
             return nil
         } catch {
             return Self.userFacing(error, fallback: String(localized: "I couldn't back up your data."))
@@ -30,13 +31,16 @@ extension AppCoordinator {
         }
     }
 
-    /// The keys are opened first (a wrong password changes nothing), the backup is staged, then the keys are saved and
-    /// Sidefolk relaunches; the swap happens before the database opens again.
+    /// The keys are opened first (a wrong password changes nothing), the backup is staged, then the keys are saved (what
+    /// they replace kept for Undo restore) and Sidefolk relaunches; the swap happens before the database opens again.
     func restore(_ backup: OpenedBackup, password: String?) async -> UserFacingError? {
         do {
             let keys = try password.flatMap { $0.isEmpty || !backup.hasKeys ? nil : try backup.keys(password: $0) }
-            try BackupRestore(paths: runtime.paths).stage(backup)
-            if let keys { try BackupKeys.save(keys, to: secrets) }
+            let restore = BackupRestore(paths: runtime.paths)
+            try restore.stage(backup)
+            if let keys {
+                do { try restore.saveKeys(keys, to: secrets) } catch { restore.cancelStaged(secrets: secrets); throw error }
+            }
             backup.discard()
         } catch {
             return Self.userFacing(error, fallback: String(localized: "That backup couldn't be restored."))

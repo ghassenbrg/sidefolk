@@ -1180,6 +1180,12 @@ for sound effects later. Not shown in 3D yet: working props (laptop, notepad…)
 companion's still is one pose.
 D43's "3D, dropped" is superseded for these five companions.
 
+*Amended 2026-11-01 (team/leftovers):* in Sidefolk's window (`frame('sidefolk')`) a hop's rise and the stretch before
+and after it ease into the room above the body (`roomAbove()`: its modelled top, standing, against the frame's top),
+after `hopScale`, so a tall companion hops less instead of leaving the window: Mochi's ears, Kiko's hair, Ember and
+Spark reached the top on hop, jump and flip (the playground's `edges()` and the debug app's snaps). Arms raised over the
+head (Kiko's cheer) still reach it. The playground's other framings are unchanged.
+
 ### D52 — Other agents change and delete notes; appearance, how much is said, releases by default (2026-10-30)
 **Decision:** *amends D42 and D46.* Claude Code, Codex and other MCP clients may change a note (`notes.update`:
 text, collection that exists, done, tags, reminder) and move it to the Trash (`notes.trash`) by id, without a
@@ -2543,7 +2549,10 @@ to it. **Retired** (one layout per place): the theme layouts' rail, pills, ribbo
 (console, planner, board, stage), the Activity table/log/diary styles and the Markdown editor with tabs; the keys still
 decode, so themes keep working, and `ThemeCheck` still reads them. A reminder's Activity line reads its time as a date,
 not ISO. Not done: the permission slip on Today's cards (phase 2's `ApprovalCard`), the Week view's "read only" note and
-"+1" overlaps, a watch's detail page (A9: no check log or page versions are kept), Focus in the sidebar's pill.
+"+1" overlaps, a watch's detail page (A9: no check log or page versions are kept), Focus in the sidebar's pill. *(The
+Week view's two were built later, team/leftovers: a "+N" in a column's last place when an overlap needs more columns
+than fit at 34 points each, which opens the day, `CalendarGrid.fit`; and a line under a week with the Mac calendar's
+events saying they are read only here.)*
 
 **Why:** the founder found the app inconsistent: nothing showed how much something mattered, the main button read as
 disabled, the desktop's five surfaces looked like five designs, and safety screens spoke engineer. One look, one layout
@@ -2702,6 +2711,11 @@ stand-in's place in dev copies. To try a dev copy's Connect with a real agent, r
 `IntegrationLocationsTests` checks a non-default folder never resolves to the real paths, even when the
 environment names them, and that installing and removing all six connections there leaves every byte of
 the person's folders as it was.
+*Amended the same day (team/leftovers):* Connections' cards name where the copy really writes
+(`IntegrationLocations.shownPlaces`, `IntegrationStatus.places`): the stand-ins in a dev or QA copy, the folders
+`CLAUDE_CONFIG_DIR` and `CODEX_HOME` name otherwise. The command's dialog in such a copy names its stand-in and gives
+`export PATH="<home>/agent-configs/.local/bin:$PATH" SIDEFOLK_HOME="<home>"` instead of a line for `~/.zshrc`. Snapshot
+`page-settings-connections-dev-copy`.
 
 ### D87 — A watch keeps its history: every check, the latest change's two versions, and its own page in Home (2026-11-01)
 **Decision:** *amends D84 (a watch's detail page, left out for want of a history) and D58 (the page change kept for
@@ -2843,6 +2857,13 @@ dev commands `addons:updates|nudge|auto:off|get:<id>|check|updateAll`; snapshots
 `window-home-today-updates`, `page-extension-clipboard-update`, `page-settings-addons-updates`,
 `panel-pocket-addon-updates`. Tests: `AddonUpdateAllTests`.
 
+*Amended the same day (team/leftovers):* the Gallery's Updates shows under every filter and while searching, only the
+updates that filter or search shows, and its Update all updates those (`AddonUpdateActions.update(_ entries:)`). An
+update that Update all left for review, then reviewed and installed, says Updated. Checked live: a signed local gallery
+whose QA Net 1.1.0 asks for the network; Update all updated QA Notes and left QA Net with Review…, whose install sheet
+said "New permission: Can use the internet" and installed 1.1.0 on Update (dev commands `addons:review:<id>`,
+`installSheet:continue|install`). Snapshots `page-home-gallery-updates-extensions`, `page-home-gallery-updates-search`.
+
 ### D90 — Ask tidies itself by each result's weight; agents' sessions in one folder are one line (2026-11-01)
 **Decision:** *amends D5 and D84.* Results in Ask go by themselves, each by its weight (`ResultLifetime`):
 - **Quick** (a value read now, a lookup, a calculation, chance, a notice): about two minutes after it was first seen
@@ -2893,6 +2914,16 @@ backup…**; onboarding's first bubble offers "Restoring from another Mac?".
   from a folder and companions from a folder are listed with **Review…**: the install sheet, or D60's question. MCP
   servers come back switched off (their command runs with the person's permissions). Keys saved before the relaunch
   replace those with the same names; Undo restore doesn't take them back.
+  *Amended the same day (team/leftovers):* the values they replace are kept for Undo restore, sealed (AES-GCM) in the
+  undo folder under a random key kept in the Keychain (`BackupRestore.saveKeys`, `BackupKeys.keepBefore`), so Undo
+  restore puts the old keys back and deletes those the backup added; the sealing key goes with the undo copy (and
+  when it expires). A restore that fails at launch puts the keys back too.
+- **The app's conveniences** (amended the same day): `preferences.json` carries what the app keeps in its defaults
+  rather than its database, from an allow list (`BackupPreferences`): Home's and Settings' window frames, the
+  companion's place on each display, the person's keyboard shortcuts, where each palette opens, the extension list's
+  filter, Catch Me's best and which folks were introduced; plain values only, any other name ignored. A restore sets
+  them at launch and keeps what they replaced for Undo restore. Not carried: the language chosen in Settings (it would
+  take another relaunch) and macOS's own keys. There is no "last tab" to carry: Home opens on Today, Settings on General.
 
 **Why:** the founder: export here, import on a new Mac; or export, reinstall fresh, import. One file, honest about what
 it can't carry (agents' configs, keys without a password), and a restore that can be taken back.

@@ -122,6 +122,8 @@ export class Companion {
   frame(kind) {
     const c = this.camera;
     const F = this.C.frame || {};
+    this.frameKind = kind;
+    this.room = null;
     if (kind === 'sidefolk') {
       const h = F.sidefolk ?? 2.3, dist = h / (2 * Math.tan(c.fov * D2R / 2));
       c.position.set(0, 0.4 * h, dist);
@@ -429,10 +431,31 @@ export class Companion {
     this.renderer.render(this.scene, this.camera);
   }
 
+  /** How far the body's top (as modelled, standing) may rise before it reaches the frame's top, less a small margin;
+   *  measured once per framing. */
+  roomAbove() {
+    if (this.room != null) return this.room;
+    const g = this.body.geometry;
+    if (!g.boundingBox) g.computeBoundingBox();
+    // The model's box where it stands: in the mover's space, then at the pivot.
+    this.root.updateMatrixWorld(true);
+    const inMover = this.mover.matrixWorld.clone().invert().multiply(this.body.matrixWorld);
+    const box = g.boundingBox.clone().applyMatrix4(inMover);
+    const top = new THREE.Vector3(this.pivot.x, this.pivot.y + box.max.y, this.pivot.z + box.max.z);
+    // Its height above the floor, where squash and stretch scale from.
+    this.restTop = top.y;
+    this.camera.updateMatrixWorld();
+    const at = (dy) => top.clone().add(new THREE.Vector3(0, dy, 0)).project(this.camera).y;
+    const y0 = at(0), perUnit = at(1) - y0;
+    this.room = perUnit > 0 ? Math.max(0, (0.99 - y0) / perUnit) : 0;
+    return this.room;
+  }
+
   resize() {
     const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
+    this.room = null;
     this.camera.updateProjectionMatrix();
   }
 
@@ -578,11 +601,23 @@ export class Companion {
     const R = P.root;
     // A small window has little headroom: jumps stay lower there (the ears would leave it).
     if (R.py > 0 && this.opts.hopScale) R.py *= this.opts.hopScale;
+    let sq = this.squashS.step(P.squash, dt);
+    // And in Sidefolk's window the top of the body rises (a hop, the stretch before and after it) no higher than the
+    // room above it: the rise eases into that ceiling, rise and stretch alike, so a tall companion (Mochi's ears,
+    // Kiko's hair) hops less instead of leaving the window at the top.
+    if (this.frameKind === 'sidefolk') {
+      const room = this.roomAbove(), stretch = Math.max(0, sq - 1) * this.restTop;
+      const rise = Math.max(0, R.py) + stretch;
+      if (rise > 0) {
+        const k = room > 0 ? room * Math.tanh(rise / room) / rise : 0;
+        if (R.py > 0) R.py *= k;
+        if (sq > 1) sq = 1 + (sq - 1) * k;
+      }
+    }
     // Floating characters hover above their shadow, bobbing.
     const hover = this.C.hover ? this.C.hover(t, lying) : 0;
     this.mover.position.set(this.pivot.x + R.px, this.pivot.y + R.py + hover, this.pivot.z + R.pz);
     this.mover.rotation.set(R.rx * D2R, R.ry * D2R, R.rz * D2R, 'YXZ');
-    const sq = this.squashS.step(P.squash, dt);
     this.squashG.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
     const air = clamp((R.py + hover) / 0.6);
     this.blob.scale.setScalar(1 - 0.55 * air + 0.25 * lying);

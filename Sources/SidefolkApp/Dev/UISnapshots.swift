@@ -167,6 +167,10 @@ enum UISnapshots {
             if let catalog = full.settingsHost.gallery.catalog {
                 SampleAddonUpdates.show(in: full.services.updates, catalog: catalog)
                 try await homeShot("gallery-updates")
+                // Under a filter and while searching, only the updates shown there.
+                try await page("page-home-gallery-updates-extensions", HomeGalleryView(settings: full.settingsHost, shelf: .extensions), width: 1100)
+                try await page("page-home-gallery-updates-search", HomeGalleryView(settings: full.settingsHost, search: "clip"), width: 1100)
+                full.settingsHost.chooser.browse.text = ""
                 full.services.updates.addonSummary = AddonUpdateReport.summary(installed: 3, review: 1, failed: 0)
                 SampleExtensionPage.showPages(in: full.pages)
                 full.selection = .now
@@ -271,6 +275,7 @@ enum UISnapshots {
             try await page("page-extension-mac-narrow", ExtensionPageView(model: SampleExtensionPage.model()), width: 640)
             // Switches and buttons on a page, and a palette (D63).
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
+            try await page("page-extension-error", ExtensionPageView(model: SampleExtensionPage.failed()), width: 980)
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
@@ -319,6 +324,12 @@ enum UISnapshots {
             for tab in SettingsTab.allCases {
                 try await page("page-settings-\(tab.rawValue)", SettingsTabContent(tab: tab, model: settings), width: width)
             }
+            // Connections in a copy on another data folder (D86): the cards name its stand-ins.
+            fixtures.devCopy = true
+            await settings.refresh()
+            try await page("page-settings-connections-dev-copy", SettingsTabContent(tab: .connections, model: settings), width: width)
+            fixtures.devCopy = false
+            await settings.refresh()
             // Settings › General with a version waiting (D46).
             fixtures.updates.phase = .available(UpdateController.sampleOffer)
             try await page("page-settings-general-update", SettingsTabContent(tab: .general, model: settings), width: width)

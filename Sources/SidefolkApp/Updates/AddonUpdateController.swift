@@ -88,6 +88,10 @@ final class AddonUpdateController: AddonUpdateActions {
         Task { await updateAll() }
     }
 
+    func update(_ entries: [AddonEntry]) {
+        Task { await updateAll(entries, summarize: true) }
+    }
+
     func update(_ entry: AddonEntry) {
         if model.addonNeedsReview(entry.id) { return review(entry) }
         Task {
@@ -137,9 +141,10 @@ final class AddonUpdateController: AddonUpdateActions {
         await nudge(automatic: s.addons)
     }
 
-    /// Update all (D89), or one add-on's Update: each in turn, its row following along, then a summary. With nothing
-    /// chosen, every waiting update that isn't known to ask for more, looked for first if none is known yet.
-    private func updateAll(_ chosen: [AddonEntry]? = nil) async {
+    /// Update all (D89), or one add-on's Update: each in turn, its row following along, then a summary (for one add-on
+    /// its row says it all). With nothing chosen, every waiting update that isn't known to ask for more, looked for first
+    /// if none is known yet.
+    private func updateAll(_ chosen: [AddonEntry]? = nil, summarize: Bool? = nil) async {
         if chosen == nil, model.addonInstallable.isEmpty { await look() }
         let entries = chosen ?? model.addonInstallable
         guard !model.addonsBusy, !entries.isEmpty else { return }
@@ -155,7 +160,7 @@ final class AddonUpdateController: AddonUpdateActions {
         let done = Set(report.companions.map(\.id) + report.themes.map(\.id) + report.extensions.map(\.id) + report.review.map(\.id))
         model.addonWaiting.removeAll { done.contains($0.id) }
         model.addonReview += report.review.filter { entry in !model.addonReview.contains { $0.id == entry.id } }
-        if chosen == nil { model.addonSummary = report.summary }
+        if summarize ?? (chosen == nil) { model.addonSummary = report.summary }
     }
 
     /// What installed: companions and themes drawn again, the names for Settings › Updates.
@@ -221,7 +226,7 @@ final class AddonUpdateController: AddonUpdateActions {
     /// `addons:review | waiting | updates | nudge | clear` from scripts/dev.swift: Settings › Updates and the heads-up with
     /// made-up gallery entries, without a gallery. With a gallery (`SIDEFOLK_ADDONS`, D89): `addons:auto:on|off` sets
     /// "Update add-ons automatically", `addons:get:<id>` installs that add-on from it as Get and the install sheet would,
-    /// `addons:check` looks at it now, `addons:updateAll` is Update all.
+    /// `addons:check` looks at it now, `addons:updateAll` is Update all, `addons:review:<id>` a waiting update's Review….
     func dev(_ command: String) {
         if command.hasPrefix("auto:") {
             let on = command == "auto:on"
@@ -229,6 +234,10 @@ final class AddonUpdateController: AddonUpdateActions {
             return
         }
         if command == "updateAll" { return updateAddonsNow() }
+        // The Gallery's Review… on a waiting update (one that would let an extension do more).
+        if command.hasPrefix("review:"), let entry = model.addonPending.first(where: { $0.id == command.dropFirst(7) }) {
+            return review(entry)
+        }
         if command == "check" { return checkNow() }
         if command.hasPrefix("get:") {
             let id = String(command.dropFirst(4))
@@ -293,5 +302,9 @@ final class AddonUpdateController: AddonUpdateActions {
         }
         model.addonReview = model.addonReview.filter(waits)
         model.addonWaiting = model.addonWaiting.filter(waits)
+        // One Update all left for review, then reviewed and installed: its row says Updated, not Review… again.
+        for entry in model.addonRecent where model.addonSteps[entry.id] == .needsReview && installed[entry.id] == entry.version {
+            model.addonSteps[entry.id] = .updated
+        }
     }
 }

@@ -35,13 +35,16 @@ enum DebugSnapshots {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let stamp = Int(Date().timeIntervalSince1970)
         for (i, window) in NSApp.windows.enumerated() where window.isVisible {
-            guard let view = window.contentView, view.bounds.width > 1 else { continue }
+            // The window's frame view, as UI snapshots take it: Home's toolbar is drawn there, over the content, and
+            // the content view alone left a white band where it is.
+            guard let content = window.contentView, content.bounds.width > 1 else { continue }
+            let view = content.superview ?? content
             guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { continue }
             view.cacheDisplay(in: view.bounds, to: rep)
             let name = "\(stamp)-\(i)-\(type(of: window))-\(Int(window.frame.minX))x\(Int(window.frame.minY)).png"
             try? rep.representation(using: .png, properties: [:])?.write(to: dir.appendingPathComponent(name))
             // Content that outgrew its window shows as cut at the top; the sizes say so without a picture.
-            Log.shared.info("dev", "window", ["name": name, "frame": "\(window.frame)", "content": "\(view.frame)",
+            Log.shared.info("dev", "window", ["name": name, "frame": "\(window.frame)", "content": "\(content.frame)",
                                                "minimum": "\(window.contentMinSize)"])
         }
         Log.shared.info("dev", "snapshots written", ["dir": dir.path])

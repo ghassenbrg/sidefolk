@@ -59,10 +59,73 @@ public enum BackupKeys {
 
     /// Puts the keys in the Keychain, replacing those with the same names; only names Sidefolk uses.
     public static func save(_ keys: [String: String], to store: any SecretStore) throws {
-        let allowed = Set(SecretKey.providerKeys.flatMap { [$0, ProviderKeys.bindingKey($0)] })
-        for (account, value) in keys where allowed.contains(account) || account.hasPrefix("mcp.") {
-            try store.set(account, Secret(value))
+        for (account, value) in restorable(keys) { try store.set(account, Secret(value)) }
+    }
+
+    /// The keys among these that a restore may write: only names Sidefolk uses.
+    static func restorable(_ keys: [String: String]) -> [String: String] { keys.filter { isRestorable($0.key) } }
+
+    static func isRestorable(_ account: String) -> Bool {
+        SecretKey.providerKeys.contains { account == $0 || account == ProviderKeys.bindingKey($0) } || account.hasPrefix("mcp.")
+    }
+
+    // MARK: What a restore replaced (Undo restore)
+
+    /// The values a restore's keys replaced, so Undo restore can put them back (D91 amended). Sealed with a random key
+    /// kept in the Keychain, never in the data folder: the undo folder alone gives nothing, and the Keychain item goes
+    /// with it. A value that wasn't there is nil (Undo deletes the key the backup added).
+    struct Before: Codable {
+        /// The Keychain item holding the sealing key.
+        var account: String
+        var box: String
+    }
+
+    static let undoAccountPrefix = "backup.undo."
+
+    /// Seals the current values of the accounts `keys` would replace into `file`.
+    static func keepBefore(_ keys: [String: String], from store: any SecretStore, to file: URL) throws {
+        let accounts = restorable(keys).keys
+        guard !accounts.isEmpty else { return }
+        var old: [String: String?] = [:]
+        // `updateValue`: assigning a missing key's nil through the subscript would leave the name out.
+        for account in accounts { old.updateValue(try store.get(account)?.reveal(), forKey: account) }
+        let key = SymmetricKey(size: .bits256)
+        let account = undoAccountPrefix + UUID().uuidString
+        try store.set(account, Secret(key.withUnsafeBytes { Data($0) }.base64EncodedString()))
+        guard let combined = try AES.GCM.seal(try JSONEncoder().encode(old), using: key, authenticating: context).combined else {
+            try? store.delete(account)
+            throw UserFacingError("Your keys couldn't be sealed.")
         }
+        try JSONEncoder().encode(Before(account: account, box: combined.base64EncodedString())).write(to: file, options: .atomic)
+    }
+
+    /// Puts back the values `file` kept (deleting keys that weren't there), then forgets them. False when they can't be
+    /// read (the Keychain item is gone): the keys are left as they are.
+    @discardableResult
+    static func putBack(from file: URL, to store: any SecretStore) -> Bool {
+        guard let data = FileManager.default.contents(atPath: file.path),
+              let before = try? JSONDecoder().decode(Before.self, from: data) else { return false }
+        defer { forget(file, store: store) }
+        guard let raw = try? store.get(before.account)?.reveal(), let keyData = Data(base64Encoded: raw),
+              let combined = Data(base64Encoded: before.box), let box = try? AES.GCM.SealedBox(combined: combined),
+              let plain = try? AES.GCM.open(box, using: SymmetricKey(data: keyData), authenticating: context),
+              let old = try? JSONDecoder().decode([String: String?].self, from: plain) else {
+            Log.shared.warning("backup", "the keys from before the restore couldn't be read")
+            return false
+        }
+        for (account, value) in old where isRestorable(account) {
+            if let value { try? store.set(account, Secret(value)) } else { try? store.delete(account) }
+        }
+        return true
+    }
+
+    /// Deletes the kept values and their sealing key.
+    static func forget(_ file: URL, store: any SecretStore) {
+        if let data = FileManager.default.contents(atPath: file.path), let before = try? JSONDecoder().decode(Before.self, from: data),
+           before.account.hasPrefix(undoAccountPrefix) {
+            try? store.delete(before.account)
+        }
+        try? FileManager.default.removeItem(at: file)
     }
 
     private static func derive(_ password: String, salt: Data, rounds: UInt32) throws -> SymmetricKey {

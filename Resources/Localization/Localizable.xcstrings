@@ -19132,6 +19132,65 @@
         }
       }
     },
+    "%lld more at this time" : {
+      "comment" : "The Calendar's week: things that didn't fit side by side; a click shows the day",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld أخرى في هذا الوقت"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld weitere um diese Zeit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld más a esta hora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld autres à cette heure"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "altri %lld a quest'ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この時間にほか%lld件"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 시간에 %lld개 더"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mais %lld neste horário"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此时另有 %lld 项"
+          }
+        }
+      }
+    },
     "%lld more can wait: %@" : {
       "comment" : "Today's queue, folded: “4 more can wait: Read the clipboard, Skipped, a reminder”",
       "localizations" : {
@@ -34907,7 +34966,66 @@
         }
       }
     },
+    "Adds a link at ~/.local/bin/sidefolk so you can type “sidefolk run -- npm test” in a terminal." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يضيف رابطًا في ~/.local/bin/sidefolk لتتمكن من كتابة «sidefolk run -- npm test» في Terminal."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legt unter ~/.local/bin/sidefolk einen Link an, damit du „sidefolk run -- npm test“ im Terminal eingeben kannst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade un enlace en ~/.local/bin/sidefolk para que puedas escribir “sidefolk run -- npm test” en un terminal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute un lien dans ~/.local/bin/sidefolk pour que vous puissiez taper « sidefolk run -- npm test » dans un terminal."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiunge un link in ~/.local/bin/sidefolk, così puoi digitare “sidefolk run -- npm test” in un terminale."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/.local/bin/sidefolkにリンクを追加し、ターミナルで「sidefolk run -- npm test」と入力できるようにします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/.local/bin/sidefolk에 링크를 추가해서 터미널에서 “sidefolk run -- npm test”를 입력할 수 있게 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adiciona um link em ~/.local/bin/sidefolk para você digitar “sidefolk run -- npm test” num terminal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 ~/.local/bin/sidefolk 添加一个链接，这样你就可以在终端里输入“sidefolk run -- npm test”。"
+          }
+        }
+      }
+    },
     "Adds a link at ~/.local/bin/sidefolk so you can type “sidefolk run -- npm test” in a terminal. Nothing else changes. If ~/.local/bin isn't on your PATH, add this line to ~/.zshrc:" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -73257,6 +73375,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "晚上好。都处理完了。"
+          }
+        }
+      }
+    },
+    "Events from your Mac's calendar are read only here. Change them in Calendar." : {
+      "comment" : "Under the Calendar's week, when it shows the Mac calendar's events",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أحداث تقويم Mac للقراءة فقط هنا. غيّرها في تطبيق التقويم."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termine aus dem Kalender deines Macs kannst du hier nur ansehen. Ändere sie in Kalender."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los eventos del calendario de tu Mac son de solo lectura aquí. Cámbialos en Calendario."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les événements du calendrier de votre Mac sont en lecture seule ici. Modifiez-les dans Calendrier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli eventi del calendario del tuo Mac qui sono di sola lettura. Modificali in Calendario."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macのカレンダーの予定はここでは閲覧のみです。変更はカレンダーで行ってください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac 캘린더의 일정은 여기서 읽기만 할 수 있어요. 캘린더에서 바꾸세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os eventos do calendário do seu Mac são somente leitura aqui. Altere-os no Calendário."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你 Mac 日历中的日程在这里只能查看。请在“日历”中修改。"
           }
         }
       }
@@ -126414,6 +126591,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有即将到来的事"
+          }
+        }
+      }
+    },
+    "Nothing else changes. If ~/.local/bin isn't on your PATH, add this line to ~/.zshrc:" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يتغيّر شيء آخر. إذا لم يكن ~/.local/bin ضمن PATH لديك، فأضف هذا السطر إلى ~/.zshrc:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonst ändert sich nichts. Wenn ~/.local/bin nicht in deinem PATH ist, füge diese Zeile zu ~/.zshrc hinzu:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No cambia nada más. Si ~/.local/bin no está en tu PATH, añade esta línea a ~/.zshrc:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien d’autre ne change. Si ~/.local/bin n’est pas dans votre PATH, ajoutez cette ligne à ~/.zshrc :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nient'altro cambia. Se ~/.local/bin non è nel tuo PATH, aggiungi questa riga a ~/.zshrc:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかには何も変更しません。~/.local/binがPATHに含まれていない場合は、次の行を~/.zshrcに追加してください："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 것은 바뀌지 않아요. ~/.local/bin이 PATH에 없으면 ~/.zshrc에 다음 줄을 추가하세요:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada mais muda. Se ~/.local/bin não estiver no seu PATH, adicione esta linha ao ~/.zshrc:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他都不会改变。如果 ~/.local/bin 不在你的 PATH 中，请把下面这一行添加到 ~/.zshrc："
           }
         }
       }
@@ -199906,6 +200141,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这份 Sidefolk 运行在无法修改的磁盘上，比如它所在的磁盘映像。"
+          }
+        }
+      }
+    },
+    "This copy uses its own data folder, so the link is there too. To try it, run this in a terminal:" : {
+      "comment" : "Installing the sidefolk command in a copy on another data folder (a dev or test copy)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تستخدم هذه النسخة مجلد بيانات خاصًا بها، لذا الرابط هناك أيضًا. لتجربته، شغّل هذا في Terminal:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Kopie nutzt einen eigenen Datenordner, also liegt der Link auch dort. Zum Ausprobieren führe das im Terminal aus:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta copia usa su propia carpeta de datos, así que el enlace también está allí. Para probarlo, ejecuta esto en un terminal:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette copie utilise son propre dossier de données, donc le lien y est aussi. Pour l’essayer, lancez ceci dans un terminal :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa copia usa una sua cartella di dati, quindi anche il link è lì. Per provarlo, esegui questo in un terminale:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このコピーは専用のデータフォルダを使うため、リンクもそこに置かれます。試すには、ターミナルで次を実行してください："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 사본은 자체 데이터 폴더를 쓰기 때문에 링크도 그곳에 있어요. 사용해 보려면 터미널에서 다음을 실행하세요:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cópia usa sua própria pasta de dados, então o link fica lá também. Para testar, execute isto num terminal:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个副本使用自己的数据文件夹，所以链接也在那里。要试用，请在终端里运行："
           }
         }
       }

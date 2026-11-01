@@ -3,7 +3,8 @@ import Foundation
 /// What a backup holds (D91), its first file. A backup is a zip (`.sidefolkbackup`): this manifest, `data/` (the
 /// database copied with `VACUUM INTO`, ExtensionData, ExtensionDrafts, Skills and companions made as data),
 /// `review/` (what is code or checked again before it is used: extensions and companions added from a folder, themes
-/// of the person's own), and, only when the person chose it, `keys.json`, sealed with their password.
+/// of the person's own), `preferences.json` (the app's conveniences from its defaults, `BackupPreferences`), and, only
+/// when the person chose it, `keys.json`, sealed with their password.
 /// Gallery add-ons are named here, never copied: a restore fetches them again from the gallery, signatures checked.
 public struct BackupManifest: Codable, Sendable, Equatable {
     /// The layout this copy writes and reads. A backup in a higher one was made by a newer Sidefolk.

@@ -110,6 +110,15 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   Also: the check holds success and chips' words to 4.5:1 and soft fills to their hue (D78 amended; kept copies only
   warn), the nook art is drawn again, `TodayHeader.swift` is gone, snapshot language runs work under Swift Build's
   linked `.build/debug`. Next: merge both branches together, then publish the add-ons (the founder).
+- **Leftovers** (branch `team/leftovers` in both repositories, not merged): the Gallery's Updates under every filter and
+  search, and a reviewed update says Updated (D89, checked live on a signed local gallery); Undo restore puts back the
+  keys and the app's conveniences a restore replaced, which a backup now carries (D91); the Week view's "+N" and
+  read-only note (D84); Connections name a dev copy's stand-ins (D86); a hop's rise eases into the window's headroom
+  (D51 amended); Iris's tease, ready, waveQuick and spinQuick keep her arms in (add-ons, `companions/iris`); snapshot
+  runs get their layout direction on their own command line (Arabic beside other runs came out left to right), the dev
+  `snap` takes the toolbar (its white band), an extension page's error state. Verified: `make test`, the add-ons'
+  checks, UI snapshots (light, dark, de, ar), films of Iris's four moves at 0°, 40° and 90°, `edges()` for every 3D
+  companion, and the debug app. Next: merge; the gallery's next build gives Iris a new snapshot by itself.
 
 **Integration:** `team/desktop-polish` carries origin/main (D86), `team/addon-updates` (with watch history and the
 interrupt levels, D87–D89) and `team/reactions`, merged and tested together; `team/backup` and `team/games-items`
@@ -119,8 +128,7 @@ merge last.
 
 1. **The founder plays the puzzles** (Garden Plots, Seesaw, Sudoku, Blossoms) and the games in snapshot 661.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
-3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
-   Week view's "read only" note and "+1" overlaps.
+3. **What D84 left out** (it needs something real first; AGENTS.md: no fake features): the evening wrap.
 4. **Games not built** (D79): AI trivia packs, Connect Four.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence
    ([research/licence.md](research/licence.md)), the name and domain, a privacy policy and support contact,

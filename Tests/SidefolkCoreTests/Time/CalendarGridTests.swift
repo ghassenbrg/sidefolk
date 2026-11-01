@@ -37,6 +37,22 @@ import Testing
         #expect(columns.map(\.of) == [2, 2, 2, 1])
     }
 
+    @Test func whatDoesntFitAcrossIsCountedInItsLastColumn() {
+        let at = { (h: Double) in TimeTest.date(2026, 10, 31).addingTimeInterval(h * 3600) }
+        // Four things at 9 (one through 11), then one alone at 12.
+        let spans = [(at(9), at(11)), (at(9), at(10)), (at(9.25), at(10)), (at(9.5), at(10.5)), (at(12), at(13))]
+        let roomy = CalendarGrid.fit(spans, maxColumns: 4)
+        #expect(roomy.more.isEmpty && roomy.placed.allSatisfy { $0 != nil })
+        let narrow = CalendarGrid.fit(spans, maxColumns: 3)
+        #expect(narrow.placed.map { $0?.column } == [1, 0, nil, nil, 0])
+        #expect(narrow.placed.map { $0?.of } == [3, 3, nil, nil, 1])
+        #expect(narrow.more == [CalendarGrid.More(start: at(9.25), count: 2, column: 2, of: 3)])
+        // No room for two: everything that overlaps is the count.
+        let one = CalendarGrid.fit(spans, maxColumns: 1)
+        #expect(one.placed.map { $0?.column } == [nil, nil, nil, nil, 0])
+        #expect(one.more.map(\.count) == [4])
+    }
+
     @Test func aRepeatingReminderShowsEveryTimeInRange() async throws {
         let t = try await SchedulerEnv()
         // Wednesday 22 October 2025, 10:00.

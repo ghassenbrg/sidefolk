@@ -59,6 +59,21 @@ public struct IntegrationLocations: Sendable, Equatable {
         URL(fileURLWithPath: (paths.isDefaultHome ? home : paths.agentConfigs.path) + "/.local/bin/sidefolk")
     }
 
+    /// Connect's words name the usual places ("~/.claude.json"); these are where this copy really writes each, as the
+    /// person reads a path: the stand-ins in a dev or QA copy (D86), the folders `CLAUDE_CONFIG_DIR` and `CODEX_HOME`
+    /// name, or the same words when they are the usual places.
+    public func shownPlaces(commandLineTool: URL) -> [(usual: String, shown: String)] {
+        [("~/.claude.json", claudeConfig), ("~/.claude/settings.json", claudeSettings), ("~/.claude/skills", claudeSkills),
+         ("~/.codex/config.toml", codexConfig), ("~/.codex/skills", codexSkills), ("~/.codex/hooks.json", codexHooks),
+         ("~/.local/bin/sidefolk", commandLineTool)]
+            .map { ($0.0, FolderAccess.displayPath($0.1.path)) }
+    }
+
+    /// `text` with each usual place replaced by where it really is.
+    public static func shown(_ text: String, places: [(usual: String, shown: String)]) -> String {
+        places.reduce(text) { $0.replacingOccurrences(of: $1.usual, with: $1.shown) }
+    }
+
     /// Starts the stand-ins off as this Mac's agents are: Connect never sets up an agent that isn't there,
     /// so empty stand-ins would leave nothing to connect in a dev copy. Only checks that the real files exist.
     public static func prepareStandIns(paths: SidefolkPaths, home: String = NSHomeDirectory(),
