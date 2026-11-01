@@ -39,7 +39,12 @@ fi
 
 # Tests must pass before anything is signed.
 phase "Running the tests"
-swift test --no-parallel
+# A test process that dies leaves no line saying why: show the newest crash report before failing.
+if ! swift test --no-parallel; then
+  report=$(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -1)
+  [[ -n "$report" ]] && { echo "== Newest crash report: $report"; head -c 12000 "$report"; }
+  fail "the tests failed."
+fi
 
 APP="build/Sidefolk.app"
 phase "Building and signing $APP"
