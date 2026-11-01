@@ -6,10 +6,10 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest is **snapshot 724** (2026-11-01, signed and notarized, on GitHub Releases),
+until the founder releases it. The latest is **snapshot 779** (2026-11-01, signed and notarized, on GitHub Releases),
 with the Lantern revamp (D84), the games look and the four puzzles (D79 amended), and D86–D91 (safety, watch
 history, interrupts, add-on updates, Ask lifetimes, backup). Main also carries the four themes (D92), the leftovers
-and the CI fix; `team/final` adds the games v2 (D79 look v2, D93, D95, D96), the Calendar v2 (D97) and the voice fix.
+and the CI fix, games v2 (D79 look v2, D93, D95, D96), Calendar v2 (D97) and the voice fix.
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -39,6 +39,14 @@ snapshots. **Playtime 1.0.0-snapshot.5** needs Sidefolk snapshot 661 (its puzzle
 they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, D81).
 
 ## In progress
+
+- **Calendar input fix, ready for snapshot 780:** ported the viewport containment fix to Calendar v2 on current
+  main. The hidden buffer week reproduced the reported failure immediately: double-clicking the header opened
+  its day's editor. Both the month viewport and the page now bound hit testing, and the header stays above them.
+  Verified: the permanent `--check-calendar-input` fails before the fix and passes afterward (normal/small
+  windows, initial/partial scroll, header and weekday double-clicks, Day/Week switching, overflow and visible-cell
+  clicks); full tests with a clean gallery checkout (1746 core + 38 character). Next: push main and publish the
+  signed snapshot; then confirm the update in the founder's original setup. Release checkout: `/tmp/sf-cal-release`.
 
 - **CI's silent test deaths, fixed** (2026-11-01): from about snapshot 724 the core test process died on GitHub's
   runners about two minutes in, with no failing test (release runs 41267300489 to 41270779706, and CI). The kernel
@@ -188,6 +196,9 @@ Released or on main since snapshot 661 (D86–D92, the leftovers, the docs clean
   behind main fails the gallery, words and game tests.
 - In the add-ons repository: `swift test`, `python3 scripts/build.py --unsigned`, `SIDEFOLK_APP=../sidefolk
   scripts/check.sh`, and `../sidefolk/scripts/extension-strings.py check`.
+- Calendar input regression: `SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots
+  build/calendar-input --check-calendar-input --language en` uses an offscreen fixture to check that hidden
+  month weeks cannot catch header clicks, and visible cells and view buttons still work (default Harbor theme).
 - UI: `SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots <dir>` (add `--language de|ar|ja`,
   `--theme <id>` or `--only <prefix>`, e.g. `window-home`, `window-settings`, `desktop`, `panel-pocket`,
   `design-system`, `a11y`), read in light and dark against [DESIGN.md](DESIGN.md).

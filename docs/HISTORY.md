@@ -6,6 +6,19 @@ and Agents (now Brain, Trust, Add-ons and Connections), the Ask panel, bubbles a
 Conversations and Activity (now Today, On duty and History), theme layouts (retired by D84). Branches named here are
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
+## 2026-11-01: calendar input fix
+
+- **Calendar month controls receive clicks:** the continuous month's extra, hidden week was visually clipped
+  but still took header double-clicks, opening a draft for a previous-month day and blocking the view controls.
+  Both the month rows and the page content now constrain hit testing to their visible viewports; the header keeps
+  its height and sits above the content. The first containment commit was made on an older checkout (before D97);
+  this integration preserves current main's Calendar v2 and verifies the reported failure on that implementation.
+  *Checked:* permanent native mouse regression (`--ui-snapshots build/calendar-input --check-calendar-input
+  --language en`) fails before the fix and passes afterward: initial/partial scrolling, header/weekday
+  double-clicks, Day/Week/Month switching, overflow links, and a visible empty day's double-click. Normal and small
+  window captures are in `build/calendar-input-*`; full tests with a clean gallery checkout: 1746 core + 38
+  character, all green. Prepared for snapshot 780; publication pending.
+
 ## 2026-11-01: released in snapshots 673 to 724, or on main after it
 
 These were STATUS's "In progress" until the release review; D92 (themes), the leftovers and the CI fix are on main
