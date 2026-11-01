@@ -78,6 +78,9 @@ final class AppCoordinator {
     /// The Ask shortcut's press silenced the companion; its release doesn't toggle the panel too.
     var askKeySilenced = false
     var talkKeysInstalled = false
+    /// The card shortcut (D88): installed, and registered right now.
+    var cardKeysInstalled = false
+    var cardKeysOn = false
     /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
     var attentionTimer: Task<Void, Never>?
     var fullAccessTimer: Task<Void, Never>?
@@ -104,6 +107,7 @@ final class AppCoordinator {
                 self?.sidecard.askClosed()
             }
             self?.renderMood()
+            self?.applyCardKeys()
         }
 
         agent = makeAgentRuntime()
@@ -138,7 +142,10 @@ final class AppCoordinator {
         #else
         let hotkey = true
         #endif
-        if hotkey { installTalkKeys() }
+        if hotkey {
+            installTalkKeys()
+            installCardKeys()
+        }
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
@@ -543,6 +550,12 @@ final class AppCoordinator {
         } else if command == "dismiss", let item = sidecard.model.item {
             respond(to: item, action: nil)
             sidecard.withdraw(id: item.id)
+        } else if command == "cardKeys" {
+            // The card shortcut (D88), which debug copies don't register unless SIDEFOLK_DEV_HOTKEY=1.
+            sidecard.devKeys = true
+            focusFrontCard()
+        } else if command.hasPrefix("cardKey:") {
+            sidecard.devKey(String(command.dropFirst("cardKey:".count)))
         } else if command == "grow" {
             sidecard.model.grow?()
         } else if command.hasPrefix("stack:") {

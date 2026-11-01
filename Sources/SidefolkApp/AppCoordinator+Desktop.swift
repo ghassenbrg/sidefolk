@@ -35,6 +35,7 @@ extension AppCoordinator {
         let quiet = settings.isQuiet(at: now), focus = settings.isFocused(at: now)
         sidecard.setWaiting(waiting)
         ask.waiting = waiting
+        applyCardKeys()
         guard focus else {
             return companion.setLight(DesktopLight.of(pose: pose, waiting: waiting, cardOut: cardOut, quiet: quiet))
         }

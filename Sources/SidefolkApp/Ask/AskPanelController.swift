@@ -57,6 +57,12 @@ final class AskPanelController {
         onVisibilityChange?(true)
     }
 
+    /// The card shortcut (D88): a slip standing alone, or Ask, takes the keyboard it didn't take when it appeared.
+    func focus() {
+        hosted.panel.makeKey()
+        model.focusRequest += 1
+    }
+
     /// Keeps the panel attached as the companion moves or the content grows.
     func reposition(beside anchor: NSRect, on screen: NSScreen) {
         guard isVisible else { return }

@@ -8,7 +8,7 @@ import SwiftUI
 /// shoulder after half a minute. Hovering that count fans out what waits; clicking it opens Ask on top of them.
 final class SidecardController {
     let model = SidecardModel()
-    private let hosted: HostedPanel<SidecardView>
+    let hosted: HostedPanel<SidecardView>
     /// Whispers waiting for the card or whisper in front of them to go.
     private var queue: [(AttentionItem, AttentionPresentation)] = []
     private var timer: Task<Void, Never>?
@@ -27,6 +27,22 @@ final class SidecardController {
     var onChange: (() -> Void)?
     /// A card folded into the stack: the companion stops looking alarmed; the count says it waits.
     var onFold: ((AttentionItem) -> Void)?
+    /// The keyboard, while its shortcut gave it to the Sidecard (D88): the held cards it moves through, and from when
+    /// keys count after a card came to the front (a key held down or meant for the card before can't answer it).
+    var holdsKeys = false
+    var deckItems: [AttentionItem] = []
+    var armedAt = Date.distantPast
+    /// Between one card and the next the panel may lose the keyboard for a moment; that isn't the person leaving.
+    var passingKeys = false
+    /// Dev commands arrive without a key press, and macOS gives the keyboard only after one: the dev path keeps the keys
+    /// it was handed (`cardKeys`), so the rest can be checked by hand.
+    #if DEBUG
+    var devKeys = false
+    #else
+    var devKeys: Bool { get { false } set {} }
+    #endif
+    var keyMonitor: Any?
+    var keyObserver: NSObjectProtocol?
 
     init() {
         hosted = HostedPanel(rootView: SidecardView(model: model), allowsKey: false)
@@ -43,6 +59,7 @@ final class SidecardController {
             self?.hideStack()
             self?.onOpenStack?()
         }
+        installKeys()
     }
 
     /// The stack was clicked: Ask opens on top of it.
@@ -119,7 +136,9 @@ final class SidecardController {
             break
         }
         appear()
-        // The panel never takes the keyboard, so VoiceOver hears a new moment rather than finding it: what it is, and
+        // With the keyboard on the Sidecard, it follows whatever card comes to the front; a whisper gives it back.
+        if holdsKeys { if card { focusKeys(on: item) } else { releaseKeys() } }
+        // The panel takes the keyboard only from its shortcut, so VoiceOver hears a new moment rather than finding it: what it is, and
         // for a card that it waits for an answer.
         let words = card ? String(localized: "\(item.title). It waits for your answer beside \(model.companionName).",
                                   comment: "VoiceOver, when a card appears beside the companion: its title, then that it waits")
@@ -130,11 +149,11 @@ final class SidecardController {
     }
 
     /// Only what the attention center keeps waits in the stack; the companion's own lines (onboarding) stay out.
-    private static func folds(_ item: AttentionItem) -> Bool {
+    static func folds(_ item: AttentionItem) -> Bool {
         item.source != Onboarding.source && item.source != AppCoordinator.ownVoice
     }
 
-    private func appear() {
+    func appear() {
         guard let (anchor, screen) = anchorProvider?() else { return }
         // Sized to this moment first: a visible panel keeps its size when placed.
         hosted.panel.setContentSize(hosted.fittingSize)
@@ -186,7 +205,7 @@ final class SidecardController {
         }
     }
 
-    private func growWhisper() {
+    func growWhisper() {
         guard let item = model.item, model.shape == .whisper else { return }
         timer?.cancel()
         model.shape = .card
@@ -201,19 +220,19 @@ final class SidecardController {
         timer = Task { [weak self] in
             try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled, let self else { return }
-            // Hovering keeps it open; look again shortly.
-            if self.model.hovering { self.schedule(after: 2, action) } else { action() }
+            // Hovering keeps it open, and so does the keyboard on it; look again shortly.
+            if self.model.hovering || self.model.keys != nil { self.schedule(after: 2, action) } else { action() }
         }
     }
 
-    private func autoDismiss(id: String) {
+    func autoDismiss(id: String) {
         guard let item = model.item, item.id == id else { return }
         close(id: id)
         onAutoDismiss?(item)
     }
 
     /// Nobody answered in time: the card shrinks into the count on the shoulder, where it still waits.
-    private func foldCurrent(id: String) {
+    func foldCurrent(id: String) {
         guard let item = model.item, item.id == id, model.shape == .card else { return }
         fold(item)
         hide()
@@ -243,6 +262,7 @@ final class SidecardController {
 
     private func hide() {
         model.item = nil
+        model.keys = nil
         hosted.panel.orderOut(nil)
         onChange?()
     }
@@ -302,9 +322,10 @@ final class SidecardController {
         }
     }
 
-    private func hideStack() {
+    func hideStack() {
         guard model.shape == .stack else { return }
         model.stack = []
+        model.stackFocus = nil
         model.shape = .whisper
         hosted.panel.orderOut(nil)
         next()

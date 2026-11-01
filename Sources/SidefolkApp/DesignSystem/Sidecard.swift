@@ -266,6 +266,8 @@ struct SidecardStack: View {
     }
 
     var items: [Item]
+    /// The one the keyboard is on (D88), ringed.
+    var selected: String?
 
     var body: some View {
         let shown = Array(items.prefix(3))
@@ -284,6 +286,8 @@ struct SidecardStack: View {
                     .padding(.horizontal, Theme.Space.m)
                     .padding(.vertical, Theme.Space.s + 2)
                 }
+                .keyFocusRing(item.id == selected, radius: Theme.Radius.panel - 3)
+                .accessibilityAddTraits(item.id == selected ? .isSelected : [])
                 // The ones behind sit back a little: narrower and further in.
                 .padding(.horizontal, depth * 8)
                 .zIndex(Double(index))
@@ -291,5 +295,17 @@ struct SidecardStack: View {
         }
         .frame(width: Theme.Size.sidecardMin)
         .accessibilityElement(children: .contain)
+    }
+}
+
+extension View {
+    /// The keyboard's ring on the answer that Return would press (D88): the accent, 2 pt, just outside the button.
+    func keyFocusRing(_ on: Bool, radius: CGFloat = Theme.Radius.control) -> some View {
+        overlay {
+            RoundedRectangle(cornerRadius: radius + 3, style: .continuous)
+                .strokeBorder(Theme.accent, lineWidth: on ? 2 : 0)
+                .padding(-3)
+                .allowsHitTesting(false)
+        }
     }
 }

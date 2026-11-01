@@ -6,7 +6,7 @@ import SwiftUI
 /// never disagree; `.settingAnchor(_:)` marks where a jump lands.
 enum SettingKey: String, CaseIterable, Hashable {
     // General
-    case openAtLogin, askShortcut, language, appUpdates, addonUpdates, channel, timesOfDay, welcome
+    case openAtLogin, askShortcut, cardShortcut, language, appUpdates, addonUpdates, channel, timesOfDay, welcome
     // Companion
     case chooseCompanion, presence, size, eyesFollow, folks, liveliness, sleep, gameTone, gameSounds
     // Attention
@@ -25,7 +25,7 @@ enum SettingKey: String, CaseIterable, Hashable {
 
     var tab: SettingsTab {
         switch self {
-        case .openAtLogin, .askShortcut, .language, .appUpdates, .addonUpdates, .channel, .timesOfDay, .welcome: .general
+        case .openAtLogin, .askShortcut, .cardShortcut, .language, .appUpdates, .addonUpdates, .channel, .timesOfDay, .welcome: .general
         case .chooseCompanion, .presence, .size, .eyesFollow, .folks, .liveliness, .sleep, .gameTone, .gameSounds: .companion
         case .attentionMode, .quietHours, .fullScreen, .sounds, .systemNotifications, .hiddenNotifications, .morningBrief: .attention
         case .provider, .lastRequest, .voiceInput, .spokenReplies, .voice, .speechModel: .brain
@@ -40,7 +40,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     /// The eyebrow of the group the row sits in.
     var section: String {
         switch self {
-        case .openAtLogin, .askShortcut, .language: String(localized: "Start", comment: "Settings › General: a group")
+        case .openAtLogin, .askShortcut, .cardShortcut, .language: String(localized: "Start", comment: "Settings › General: a group")
         case .appUpdates, .addonUpdates, .channel: String(localized: "Updates")
         case .timesOfDay, .welcome: String(localized: "Words for times", comment: "Settings › General: what morning, afternoon, evening mean")
         case .chooseCompanion: String(localized: "Choose a companion", comment: "Settings › Companion: a group")
@@ -71,6 +71,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         switch self {
         case .openAtLogin: String(localized: "Open at login")
         case .askShortcut: String(localized: "Ask shortcut")
+        case .cardShortcut: String(localized: "Answer cards from the keyboard", comment: "Settings › General: the shortcut that brings the card beside the companion to the keyboard")
         case .language: String(localized: "Language")
         case .appUpdates: String(localized: "New versions of Sidefolk", comment: "Settings › Updates: what Sidefolk does about its own updates")
         case .addonUpdates: String(localized: "Update add-ons automatically")
@@ -134,6 +135,8 @@ enum SettingKey: String, CaseIterable, Hashable {
         switch self {
         case .openAtLogin: String(localized: "Sidefolk starts quietly when you log in.")
         case .askShortcut: String(localized: "Opens the Ask panel from any app.")
+        case .cardShortcut: String(localized: "Only while a card waits beside the companion: ↩ answers, ⎋ puts it away, ↑↓ moves through the held ones.",
+                                   comment: "Settings › General: what the card shortcut does")
         case .language: String(localized: "Typed requests are understood in English without AI; with AI, in any language.")
         case .appUpdates: String(localized: "A minute after Sidefolk starts and then once a day. It always asks before installing.")
         case .addonUpdates:

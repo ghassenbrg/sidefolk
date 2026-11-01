@@ -24,6 +24,7 @@ struct GeneralSettingsView: View {
                     KeyboardShortcuts.Recorder(for: .ask) { _ in model.services.settingsChanged() }
                         .accessibilityLabel("Ask shortcut")
                 }
+                CardShortcutRow(model: model)
                 LanguageRow()
             }
 
@@ -221,5 +222,30 @@ private struct LanguageRow: View {
         (chosen ?? AppLanguage.system) == running
             ? Text("Typed requests are understood in English without AI; with AI, in any language.")
             : Text("Sidefolk switches language when it restarts.")
+    }
+}
+
+/// The card shortcut (D88), with why it is off when macOS or another Sidefolk shortcut already has its keys.
+private struct CardShortcutRow: View {
+    var model: SettingsModel
+    @State private var conflict = CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .answerCard))
+
+    var body: some View {
+        SettingsRow(.cardShortcut) {
+            KeyboardShortcuts.Recorder(for: .answerCard) { shortcut in
+                conflict = CardShortcut.conflict(shortcut)
+                model.services.settingsChanged()
+            }
+            .accessibilityLabel(Text(verbatim: SettingKey.cardShortcut.title))
+        }
+        if let conflict {
+            Label { Text(verbatim: CardShortcut.explanation(conflict)).fixedSize(horizontal: false, vertical: true) } icon: {
+                Image(systemName: "exclamationmark.triangle.fill")
+            }
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.warning)
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.bottom, Theme.Space.s)
+        }
     }
 }
