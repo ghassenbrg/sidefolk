@@ -575,6 +575,12 @@ final class AppCoordinator {
             }
             return
         }
+        if command == "askTab:play" {
+            // Ask's Play tab, as a click on it does (`AskHeader.choose`): the Play panel's menu of games.
+            showAsk()
+            ask.actions?.openPlay()
+            return
+        }
         if command.hasPrefix("ask:") {
             showAsk()
             ask.text = String(command.dropFirst(4))
@@ -760,6 +766,8 @@ final class AppCoordinator {
             player.play(act)
         case .game(let request):
             openGame(request)
+        case .gamesMenu(let focus):
+            openPlayMenu(focus: focus)
         case .toss(let toss):
             // The result belongs on the desktop: hidden, the companion comes out for the moment and goes again after.
             if !companion.isVisible {

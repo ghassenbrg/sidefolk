@@ -78,5 +78,7 @@ struct PocketActions {
     var checkForUpdates: () -> Void = {}
     var about: () -> Void = {}
     var openPalette: (String) -> Void = { _ in }
+    /// The Play panel's menu of games (`AppCoordinator.openPlayMenu`).
+    var openGames: () -> Void = {}
     var quit: () -> Void = {}
 }

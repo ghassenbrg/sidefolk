@@ -11,6 +11,7 @@ final class PlayPanelController {
     private lazy var hosted: HostedPanel<PlayRoot> = {
         let hosted = HostedPanel(rootView: PlayRoot(holder: holder), allowsKey: true)
         hosted.panel.onCancel = { [weak self] in self?.hide() }
+        hosted.panel.firstClickActs = true
         return hosted
     }()
     private var keyMonitor: Any?
@@ -63,11 +64,18 @@ final class PlayPanelController {
                 guard let self, event.window === self.hosted.panel else { return event }
                 // A text field being typed in (an idiom through the input method, an animal's name) keeps its keys.
                 if self.hosted.panel.firstResponder is NSTextView { return event }
-                guard !event.modifierFlags.contains(.command), let key = Self.key(event) else { return event }
+                guard let key = Self.key(event) else { return event }
+                let command = event.modifierFlags.contains(.command)
                 if self.holder.showingMenu, let menu = self.holder.menu {
-                    return menu.press(key) ? nil : event
+                    return !command && menu.press(key) ? nil : event
                 }
                 guard let model = self.holder.model else { return event }
+                // ⌘[ (and ⌫ where the board doesn't type with it) goes back to the menu, at any moment (`PlayBack`).
+                if let back = model.onBack, PlayBack.goesBack(key, command: command, board: model.board) {
+                    back()
+                    return nil
+                }
+                guard !command else { return event }
                 // Return and Space are the board's alone: never a press of whichever header button has the focus.
                 return model.press(key, at: event.timestamp) || key == "return" || key == "space" ? nil : event
             }
@@ -96,6 +104,21 @@ final class PlayPanelController {
         }
     }
 
+    #if DEBUG
+    /// A click of the mouse at `point` in the panel (top-left origin), through AppKit as a real one arrives: for the
+    /// debug app's `click:companion`.
+    func click(at point: CGPoint) {
+        let panel = hosted.panel
+        NSLog("play panel: click at %@, key before: %@", NSStringFromPoint(point), panel.isKeyWindow ? "yes" : "no")
+        let location = NSPoint(x: point.x, y: (panel.contentView?.bounds.height ?? 0) - point.y)
+        for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+            guard let event = NSEvent.mouseEvent(with: type, location: location, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                 windowNumber: panel.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) else { continue }
+            panel.sendEvent(event)
+        }
+    }
+    #endif
+
     /// Forgets the game kept (another one is opening, or it ended).
     func drop() {
         expiry?.cancel()
@@ -108,6 +131,9 @@ final class PlayPanelController {
         case 36, 76: return "return"
         case 49: return "space"
         case 51: return "delete"
+        case 33: return "["
+        // Esc is the board's only while it is using it (a plot drawn from the keyboard); otherwise it closes the panel.
+        case 53: return "escape"
         case 123: return "left"
         case 124: return "right"
         case 125: return "down"

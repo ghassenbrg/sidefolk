@@ -2107,6 +2107,17 @@ extension, every key, every language), add-ons `LanguagesTests`. An extension's 
 now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
 Commands and `ask` sentences stay English (GLOSSARY rule 1), except a sentence that only opens a game (D79). `zh-Hant`
 reads `zh-Hans` in both layers since D79.
+**Amended (2026-11-01), values keep their own direction:** the Kit's `L` wraps each value it fills in in a first-strong
+isolate (FSI … PDI, invisible). An Arabic sentence that begins with a name in Latin letters ("{name} counts… {n}
+left.") took its direction from the name and read left to right; the isolate is skipped when the paragraph's direction
+is found, so the sentence reads right to left and the name keeps its own order, in every language. Sidefolk keeps only
+these isolates, and only in pairs, in what it shows (`ExtensionText.shown`: page and board text, `ExtensionPage.text`,
+`GameBoard.longText`; an unpaired one is dropped, so it can't reach past its value); everything else that reorders
+text (overrides, embeddings, LRI, RLI, marks) is still removed, and nothing passed on keeps them (tool results, names,
+the validator's checks, what reaches a model: `clean`, `untrusted`, `UntrustedText`). `BidiText`'s runs nest inside
+an isolate rather than crossing it, and clipping counts only what shows. The Kit chose isolating at the source over
+the app guessing where a value starts and ends, which it can't know. `L` is for words people read, never a file name or
+an argument; older packs keep their words without isolates.
 
 ### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
 *Amended by D84:* the chooser's Gallery page moved to Home's Gallery.
@@ -2322,6 +2333,51 @@ alike, `=` and `×` between cells), **Sudoku** (6 × 6 with 2 × 3 boxes on Easy
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
+**Amended (2026-11-01), the games' items (the founder's plan, D14 and D15):** what the puzzles and Which Cup? left out.
+- **Catching the companion:** a board button may say `"companion": true`; Sidefolk then draws no button and the
+  companion in the scene is it (`GameBoard.companionButton`, `CatchableFigure`): a small badge with the button's symbol
+  on its shoulder, the pointing hand, the button's words as the tooltip and for VoiceOver, its key (C) still pressing
+  it. Which Cup? on Sneaky says so in the companion's words ("Think I'm hiding it? Click me."), checks once a round (then
+  the companion isn't clickable: "Nothing in my paw! It's under a cup."), during the shuffle or before the lift; a board
+  of the same round carries the shuffle on rather than starting it again (`PartsState.shuffled`). A Sidefolk from
+  before this draws the button as before, so its "Click me" would be untrue there: Playtime's `minimum_sidefolk` must
+  name the snapshot that ships this.
+- **Garden Plots from the keyboard:** the arrows move the cursor; Space or Return starts a plot there, the arrows
+  stretch it in the pointer's dashed preview, Return (or Space) plants it (on one square: a click there, clearing a plot
+  or planting a one-square one), Esc lets it go and only then doesn't close the panel. The hint row says which.
+- **A daily board per level:** Easy, Fair and Hard each have a board of the day, the same for everyone (seeded by
+  puzzle, level and day; Fair keeps its earlier seed so that day's board didn't change; each level fingerprinted),
+  kept as far as played per level. A puzzle opens on today's board at the level asked for, else the level last
+  picked, else Fair; once that one is solved, practice at it. The end card names the boards still open today ("Today's
+  Easy and Hard boards are still waiting."), and a level picked there opens its board of the day while it's open;
+  "Play another" is practice. One streak: a day counts when any of its boards is solved. Home rows list today's
+  boards solved with their times and how many are left; the Today tile counts the puzzles' boards solved today ("3 of
+  12"). An older record's one daily board reads as Fair's (`PuzzleRecord.days`), its kept board too.
+- **A hint that plays its move:** after a hint, the Hint button becomes "Do it" (H again) and plays the hinted move;
+  it was counted as a hint when asked, so a best time stays out of reach.
+- **The menu is a destination:** "show me the games", "what games do you have", "let's play", "I want to play
+  something", "games", "play" and their likes in the ten languages (`IntentParser.gamesMenuSentences`, whole
+  sentences, after Sidefolk's own and before a game's) open the Play panel's menu without AI; `games.open` without a
+  game (or `"game": "menu"`) opens it for the AI, whose description says to do that rather than list the games in
+  words, and answers with the games' names. "play trivia" still opens the game, "play this on the TV" stays Miraya's.
+  `AppCoordinator.openPlayMenu(focus:)` is the one way to open it (`EventBus.gamesMenu`), for Ask's Play tab and the
+  Pocket too.
+- **Back always works:** the back arrow is shown on every game and never refused (`PlayBack`): at the start, mid-move,
+  during a build-up, while the companion thinks, on the end card or after the game stopped, it puts the game away (to
+  resume from the menu for ten minutes) and shows the menu at once; ⌘[ does the same, and ⌫ too where no part types
+  with it (a word, a number, Sudoku's digits, a text field). It "sometimes didn't work" for two reasons, both fixed:
+  the scene's picture fills the space behind the board, and over a short board (cups, rock, paper, scissors) it
+  overflowed upward under the header, hidden by `clipped` but still taking the clicks, so back, the speaker and ✕ were
+  dead there (the scene and table pictures no longer take clicks); and SwiftUI's views don't take the first mouse, so a
+  click on the panel while it wasn't key only made it key. The Play panel now acts on that first click
+  (`FloatingPanel.firstClickActs`), without activating Sidefolk, so the person's app stays in front. Checked in a debug
+  app on ten games' states (a start, a shuffle, a build-up, the companion thinking, a word half typed, a reveal), eight
+  of them as the first click on a panel that wasn't key.
+- **Fixes:** Korean Daily Word rows keep every tile in its column, a syllable's pad drawn behind its jamo, so played,
+  typed and empty rows are one width; Last Stick's taken sticks go entirely once none is left (the faded one stayed
+  through the build-up before the end card); an end card's "3 – 2" (the person's, then the companion's) is isolated in
+  the layout's direction, so in Arabic the person's number is on the "You" side of the bar whichever way the text runs
+  ("7 / 10" stays left to right).
 
 ### D80 — A copy from before the renumbering gets the gallery's version (2026-10-31)
 **Decision:** *amends D65.* An installed add-on from the gallery (an extension, companion or theme) is offered the

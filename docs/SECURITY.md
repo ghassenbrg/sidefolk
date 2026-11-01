@@ -785,7 +785,8 @@ have (D44). Mitigations:
   the one game open, at most 20 a second; a board's buttons send moves, never tools, so anything that acts on the
   world stays a tool behind Guard. The program runs in the same sandbox with the permissions its sheet named
   (Playtime: none). Options carry the tone, Sneaky and the companion's name, nothing about the person.
-- *Its words stay its own:* board text is cleaned (bidi, zero-width, control characters) and clipped, drawn under the
+- *Its words stay its own:* board text is cleaned (bidi, zero-width, control characters; only the Kit's paired FSI … PDI
+  isolates around a value survive, D76 amended) and clipped, drawn under the
   extension's badge in a panel that can't pass for an approval card, and never reaches a model. A late (2 s) or large
   (64 KB) answer ends the game.
 - *Cues are names from fixed lists* (`GameCue`): a move, an effect, a prop, a line key, a sound, a look. The companion

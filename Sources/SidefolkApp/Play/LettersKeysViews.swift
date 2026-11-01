@@ -28,7 +28,7 @@ struct LettersView: View {
     /// Tiles as large as the row allows: up to 37 pt, smaller for long words.
     static func side(_ l: GameBoard.Letters) -> CGFloat {
         let widest = max(l.length, l.rows.map(\.count).max() ?? 0)
-        let room = PlayView.inner - 16 - CGFloat(max(0, widest - 1)) * 5
+        let room = PlayView.inner - 16 - CGFloat(max(0, widest - 1)) * (l.script == .hangul ? hangulGap : 5)
         return min(l.style == .slots ? 34 : 37, room / CGFloat(max(widest, 1)))
     }
 
@@ -48,24 +48,31 @@ struct LettersView: View {
         }
     }
 
-    /// One row, letters of one group close together (a Korean syllable, a pinyin syllable, a word).
+    /// One row, letters of one group close together (a pinyin syllable, a word). Korean rows keep every tile in its
+    /// column instead, the jamo of a syllable joined by a pad drawn behind them, so a played, typed or empty row is
+    /// always the same width.
     private func tiles(_ row: [GameBoard.Letters.Tile], side: CGFloat, flipping: Bool, draft: Bool = false) -> some View {
         let groups = Dictionary(grouping: row.indices, by: { row[$0].group }).sorted { $0.key < $1.key }
-        let tight = letters.script == .hangul || letters.style == .slots
-        return HStack(spacing: tight ? 10 : 5) {
+        let hangul = letters.script == .hangul
+        let tight = letters.style == .slots
+        return HStack(spacing: hangul ? Self.hangulGap : tight ? 10 : 5) {
             ForEach(groups, id: \.key) { _, members in
-                HStack(spacing: tight ? 2 : 5) {
+                HStack(spacing: hangul ? Self.hangulGap : tight ? 2 : 5) {
                     ForEach(members, id: \.self) { i in
                         LetterTileView(tile: row[i], side: side, slot: letters.style == .slots, draft: draft,
                                        delay: flipping ? Double(i) * 0.22 : nil)
                     }
                 }
-                .padding(letters.script == .hangul && members.count > 1 ? 3 : 0)
-                .background(letters.script == .hangul && members.count > 1
-                            ? RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.surfaceSunken.opacity(0.7)) : nil)
+                // The pad reaches into the gaps around its syllable, not the layout: two pads stay apart by a hair.
+                .background(hangul && members.count > 1
+                            ? RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Theme.surfaceSunken.opacity(0.7))
+                                .padding(-(Self.hangulGap / 2 - 1)) : nil)
             }
         }
     }
+
+    /// The space between Korean tiles, the same inside a syllable and between syllables.
+    static let hangulGap: CGFloat = 7
 }
 
 /// A letter in its place: its mark's colour with a symbol (● right, ◐ elsewhere), never colour alone.

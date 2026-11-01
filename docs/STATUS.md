@@ -81,6 +81,14 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
   debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
   no gallery companion changes.
+- **Game items** (branch `team/games-items` in both repositories, not merged; D79 amended, the games' items):
+  catching the companion in Which Cup? by clicking it, Garden Plots from the keyboard, a daily board per puzzle level,
+  "Do it" after a hint, Korean rows one width, no faded stick on Last Stick's last board, scores in the bar's order in
+  Arabic; then the Kit isolating `L`'s values (Arabic sentences that begin with a name), the Play panel acting on its
+  first click, the menu of games opened by words in ten languages and by `games.open` without a game, the back arrow
+  that always works (⌘[), and snapshot runs in several languages kept apart; carries origin/main. Next: merge, then
+  set Playtime's `minimum_sidefolk` to the snapshot that ships it (the board button's `companion` key). Verified with UI snapshots (en, ar, ko, ja, light and dark), films in a debug app, `make test`
+  and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`.
 
 - **Back up and restore** (branch `team/backup`, not merged, D91; it carries `team/addon-updates`, which carries
   `team/watch-history` and `team/interrupts`): Settings › Trust › Your data and the app menu write one
@@ -101,8 +109,7 @@ merge last.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
    Week view's "read only" note and "+1" overlaps.
-4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
-   dragging a plot from the keyboard, a hint that plays its move, a daily board per level.
+4. **Games not built** (D79): AI trivia packs, Connect Four.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence
    ([research/licence.md](research/licence.md)), the name and domain, a privacy policy and support contact,
    Open-Meteo's terms if Sidefolk is paid, Anthropic's and OpenAI's approval of their logos, curated release notes,

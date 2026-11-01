@@ -42015,6 +42015,65 @@
         }
       }
     },
+    "Arrows stretch the plot · Return plants it · Esc lets it go" : {
+      "comment" : "Keys in the Play panel: Garden Plots, while a plot is being drawn with the keyboard",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأسهم تمدّ القطعة · الإدخال يزرعها · Esc يلغيها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pfeile ziehen die Parzelle auf · Return pflanzt sie · Esc verwirft sie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flechas para estirar la parcela · Retorno para plantarla · Esc para soltarla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flèches pour étirer la parcelle · Retour pour la planter · Échap pour l'annuler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frecce per allargare il lotto · Invio per piantarlo · Esc per lasciarlo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矢印で区画を広げる · Returnで植える · Escでやめる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화살표로 구획 늘리기 · Return으로 심기 · Esc로 취소"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setas esticam o lote · Return planta · Esc desiste"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "方向键拉伸地块 · 回车种下 · Esc 放弃"
+          }
+        }
+      }
+    },
     "Arrows to choose · Return to play · Esc to close" : {
       "comment" : "Keys on the Play panel's menu",
       "localizations" : {
@@ -70549,8 +70608,68 @@
         }
       }
     },
+    "Drag corner to corner, or Space and the arrows · Click a plot to clear it" : {
+      "comment" : "Keys in the Play panel: Garden Plots, drawing rectangles with the pointer or the keyboard",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب من زاوية إلى أخرى، أو المسافة والأسهم · انقر قطعة لإزالتها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von Ecke zu Ecke ziehen oder Leertaste und Pfeile · Parzelle anklicken zum Entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra de esquina a esquina, o Espacio y las flechas · Haz clic en una parcela para quitarla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glissez d'un coin à l'autre, ou Espace et les flèches · Cliquez sur une parcelle pour l'effacer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina da angolo ad angolo, o Spazio e le frecce · Fai clic su un lotto per toglierlo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "角から角へドラッグ、またはスペースと矢印 · 区画をクリックで消す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모서리에서 모서리로 드래그 또는 Space와 화살표 · 구획을 클릭하면 지우기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste de canto a canto, ou Espaço e as setas · Clique num lote para tirá-lo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从一角拖到对角，或按空格和方向键 · 点一块地来去掉"
+          }
+        }
+      }
+    },
     "Drag from corner to corner, click a plot to clear it" : {
       "comment" : "Keys in the Play panel: Garden Plots, drawing rectangles",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -81619,6 +81738,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "和伙伴一起玩游戏和谜题，还有随机抽选"
+          }
+        }
+      }
+    },
+    "Games…" : {
+      "comment" : "The Pocket's ⋯ menu: opens the Play panel's menu of games",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الألعاب…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juegos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeux…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giochi…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲーム…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogos…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "游戏…"
           }
         }
       }
@@ -167268,6 +167446,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示扩展草稿“%@”以供查看"
+          }
+        }
+      }
+    },
+    "Show the games" : {
+      "comment" : "Opening the Play panel's menu of every game",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اعرض الألعاب"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele zeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver los juegos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les jeux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra i giochi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲームを見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar os jogos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看游戏"
           }
         }
       }

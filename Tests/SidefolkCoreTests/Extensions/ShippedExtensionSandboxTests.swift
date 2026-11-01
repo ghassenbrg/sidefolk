@@ -113,7 +113,7 @@ struct ShippedExtensionSandboxTests {
         let (session, setup) = try await h.host.startGame(extensionId: info.id, game: "trivia",
                                                           setup: GameSetup(language: "de", options: ["companion": "Nori"]))
         guard case .prompt(let p) = setup.parts.first else { Issue.record("\(setup.parts)"); return }
-        #expect(p.eyebrow == "Ein Quiz mit Nori" && setup.primary?.label == "Starten" && setup.cue?.line == .hello)
+        #expect(p.eyebrow?.seen == "Ein Quiz mit Nori" && setup.primary?.label == "Starten" && setup.cue?.line == .hello)
         let question = try await h.host.moveGame(extensionId: info.id, game: "trivia", session: session, move: .button("start"))
         #expect(question.score?.companionPicked == true && question.answers?.tiles.count == 4 && question.answers?.locked == false)
         let answered = try await h.host.moveGame(extensionId: info.id, game: "trivia", session: session, move: .answer(1))
