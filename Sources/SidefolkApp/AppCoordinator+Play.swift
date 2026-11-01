@@ -158,8 +158,9 @@ extension AppCoordinator {
     #if DEBUG
     /// `game:<extension>/<game>[:level]` opens a game as the AI would, waiting for a click rather than taking the keyboard
     /// (a debug run must never catch the keys of someone typing elsewhere); `move:<json>` sends a move as a click on the
-    /// board would (only one it offers); `drag:r,c,r2,c2` drags a puzzle's plot cell by cell, then lets go; `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu` opens
-    /// the panel's menu of games.
+    /// board would (only one it offers); `drag:r,c,r2,c2` drags a puzzle's plot cell by cell, then lets go; `click:companion`
+    /// clicks the companion in the scene; `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu`
+    /// opens the panel's menu of games.
     func devGame(_ command: String) -> Bool {
         if command.hasPrefix("game:") {
             let parts = command.dropFirst(5).split(separator: ":").map(String.init)
@@ -190,6 +191,11 @@ extension AppCoordinator {
                 model.parts.drag = nil
                 model.send(.area(row: n[0], column: n[1], toRow: n[2], toColumn: n[3]))
             }
+            return true
+        }
+        if command == "click:companion" {
+            // A click on the companion in the scene, where it is a button (Which Cup?'s paw on Sneaky).
+            if let frame = playPanel.model?.catchFrame { playPanel.click(at: CGPoint(x: frame.midX, y: frame.midY)) }
             return true
         }
         if command.hasPrefix("key:") {

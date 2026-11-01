@@ -96,6 +96,9 @@ struct CatchableFigure: View {
         }
         .onDisappear { if hovered { NSCursor.pop() } }
         .help(button.label)
+        #if DEBUG
+        .background(GeometryReader { g in Color.clear.onAppear { model.catchFrame = g.frame(in: .global) } })
+        #endif
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: button.label))
         .accessibilityAddTraits(.isButton)

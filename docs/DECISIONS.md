@@ -2298,6 +2298,33 @@ alike, `=` and `×` between cells), **Sudoku** (6 × 6 with 2 × 3 boxes on Easy
 **Implications:** older Playtime boards still open (unknown parts are skipped); a snapshot from before games still refuses
 Playtime's `games`. New companion moves still borrow the nearest moment (D75). **Not built:** catching the companion by
 clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (phase 3 extra), Connect Four.
+**Amended (2026-11-01), the games' items (the founder's plan, D14 and D15):** what the puzzles and Which Cup? left out.
+- **Catching the companion:** a board button may say `"companion": true`; Sidefolk then draws no button and the
+  companion in the scene is it (`GameBoard.companionButton`, `CatchableFigure`): a small badge with the button's symbol
+  on its shoulder, the pointing hand, the button's words as the tooltip and for VoiceOver, its key (C) still pressing
+  it. Which Cup? on Sneaky says so in the companion's words ("Think I'm hiding it? Click me."), checks once a round (then
+  the companion isn't clickable: "Nothing in my paw! It's under a cup."), during the shuffle or before the lift; a board
+  of the same round carries the shuffle on rather than starting it again (`PartsState.shuffled`). A Sidefolk from
+  before this draws the button as before, so its "Click me" would be untrue there: Playtime's `minimum_sidefolk` must
+  name the snapshot that ships this.
+- **Garden Plots from the keyboard:** the arrows move the cursor; Space or Return starts a plot there, the arrows
+  stretch it in the pointer's dashed preview, Return (or Space) plants it (on one square: a click there, clearing a plot
+  or planting a one-square one), Esc lets it go and only then doesn't close the panel. The hint row says which.
+- **A daily board per level:** Easy, Fair and Hard each have a board of the day, the same for everyone (seeded by
+  puzzle, level and day; Fair keeps its earlier seed so that day's board didn't change; each level fingerprinted),
+  kept as far as played per level. A puzzle opens on today's board at the level asked for, else the level last
+  picked, else Fair; once that one is solved, practice at it. The end card names the boards still open today ("Today's
+  Easy and Hard boards are still waiting."), and a level picked there opens its board of the day while it's open;
+  "Play another" is practice. One streak: a day counts when any of its boards is solved. Home rows list today's
+  boards solved with their times and how many are left; the Today tile counts the puzzles' boards solved today ("3 of
+  12"). An older record's one daily board reads as Fair's (`PuzzleRecord.days`), its kept board too.
+- **A hint that plays its move:** after a hint, the Hint button becomes "Do it" (H again) and plays the hinted move;
+  it was counted as a hint when asked, so a best time stays out of reach.
+- **Fixes:** Korean Daily Word rows keep every tile in its column, a syllable's pad drawn behind its jamo, so played,
+  typed and empty rows are one width; Last Stick's taken sticks go entirely once none is left (the faded one stayed
+  through the build-up before the end card); an end card's "3 – 2" (the person's, then the companion's) is isolated in
+  the layout's direction, so in Arabic the person's number is on the "You" side of the bar whichever way the text runs
+  ("7 / 10" stays left to right).
 
 ### D80 — A copy from before the renumbering gets the gallery's version (2026-10-31)
 **Decision:** *amends D65.* An installed add-on from the gallery (an extension, companion or theme) is offered the

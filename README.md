@@ -91,7 +91,7 @@ companion to save it, watch it or ask about it.
 
 With Playtime from the gallery, the companion plays with you in a small panel beside it: Tic-tac-toe, Copy Me, Quick
 Paws, Which Cup?, Higher or Lower, Guess My Animal, Balloon Words, Last Stick, Memory Pairs, Daily Word and trivia,
-and four puzzles to solve alone (Garden Plots, Seesaw, Sudoku, Blossoms) with a daily board, hints and best times.
+and four puzzles to solve alone (Garden Plots, Seesaw, Sudoku, Blossoms) with a daily board for each level, hints and best times.
 No AI, in all ten languages.
 
 <p align="center"><img src="docs/screenshots/play-menu-light.png" width="380" alt="The Play panel's menu: Mochi asks which game, with wins, streak and games played"></p>

@@ -40,6 +40,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
+- **Game items** (branch `team/games-items` in both repositories, not merged; D79 amended, the games' items):
+  catching the companion in Which Cup? by clicking it, Garden Plots from the keyboard, a daily board per puzzle level,
+  "Do it" after a hint, Korean rows one width, no faded stick on Last Stick's last board, scores in the bar's order in
+  Arabic. Next: merge, then set Playtime's `minimum_sidefolk` to the snapshot that ships it (the board button's
+  `companion` key). Verified with UI snapshots (en, ar, ko, ja, light and dark), films in a debug app, `make test`
+  and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
@@ -51,8 +58,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
    outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
    "+1" overlaps, a watch's detail page (no check log or page versions are kept), a per-source "what may interrupt
    you" table (no source has a level of its own).
-4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
-   dragging a plot from the keyboard, a hint that plays its move, a daily board per level.
+4. **Games not built** (D79): AI trivia packs, Connect Four.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence
    ([research/licence.md](research/licence.md)), the name and domain, a privacy policy and support contact,
    Open-Meteo's terms if Sidefolk is paid, Anthropic's and OpenAI's approval of their logos, curated release notes,

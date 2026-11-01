@@ -185,6 +185,9 @@ final class PlayModel {
     }
 
     #if DEBUG
+    /// Where the companion that can be clicked is in the panel (top-left origin), for the debug app's `click:companion`.
+    var catchFrame: CGRect?
+
     /// Keeps the build-up on screen, for the UI snapshots that show it.
     func holdBuildUp() { staging?.cancel() }
 

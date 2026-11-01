@@ -96,6 +96,20 @@ final class PlayPanelController {
         }
     }
 
+    #if DEBUG
+    /// A click of the mouse at `point` in the panel (top-left origin), through AppKit as a real one arrives: for the
+    /// debug app's `click:companion`.
+    func click(at point: CGPoint) {
+        let panel = hosted.panel
+        let location = NSPoint(x: point.x, y: (panel.contentView?.bounds.height ?? 0) - point.y)
+        for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+            guard let event = NSEvent.mouseEvent(with: type, location: location, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                 windowNumber: panel.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) else { continue }
+            panel.sendEvent(event)
+        }
+    }
+    #endif
+
     /// Forgets the game kept (another one is opening, or it ended).
     func drop() {
         expiry?.cancel()
