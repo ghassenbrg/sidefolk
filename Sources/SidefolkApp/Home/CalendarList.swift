@@ -2,13 +2,11 @@ import SidefolkCore
 import SwiftUI
 
 /// The Calendar's Agenda (D66, D84): the next two weeks as a list, each day with what's on it in time order (events
-/// with their end, reminders, routines and what was done), a line at now, and a way to add a reminder that day. Days
-/// with nothing are left out, but today always shows. Mac calendar events are read only; only reminders move.
+/// with their end and place, in their calendar's colour, reminders, routines and what was done), a line at now, and a
+/// way to add something that day. Days with nothing are left out, but today always shows. A click opens a thing's
+/// details (D95).
 struct CalendarList: View {
     var model: CalendarModel
-    var open: (CalendarModel.Entry) -> Void
-    var edit: (Reminder) -> Void
-    var add: (Date) -> Void
 
     var body: some View {
         let days = model.days.filter { Calendar.current.isDateInToday($0) || !model.entries(on: $0).isEmpty }
@@ -18,7 +16,7 @@ struct CalendarList: View {
                     EmptyState(title: Text("Nothing in the next two weeks"),
                                message: Text("Reminders, routines and your Mac calendar's events show here, by day."),
                                systemImage: "calendar", folk: "tempo", actionTitle: Text("New reminder")) {
-                        add(model.newTime(on: Date()))
+                        model.startNew(at: model.newTime(on: Date()))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, Theme.Space.xl)
@@ -32,9 +30,9 @@ struct CalendarList: View {
 
     /// A reminder that comes back several times a day (every 30 minutes) shows once, at its next time that day, with
     /// how many more times follow, so it doesn't fill the day.
-    private func folded(_ entries: [CalendarModel.Entry]) -> (entries: [CalendarModel.Entry], more: [String: Int]) {
+    private func folded(_ entries: [CalendarEntry]) -> (entries: [CalendarEntry], more: [String: Int]) {
         var seen: [String: Int] = [:]
-        var kept: [CalendarModel.Entry] = []
+        var kept: [CalendarEntry] = []
         for entry in entries {
             if case .reminder(let o) = entry {
                 if seen[o.reminder.id] != nil {
@@ -59,9 +57,10 @@ struct CalendarList: View {
                 Text(verbatim: ([day.formatted(.dateTime.weekday(.wide).day().month(.wide))] + counts(entries)).joined(separator: " · "))
                     .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
                 Spacer(minLength: Theme.Space.s)
-                Button { add(model.newTime(on: day)) } label: { Label("New reminder", systemImage: "plus").labelStyle(.iconOnly) }
+                Button { model.startNew(at: model.newTime(on: day)) } label: { Label("New reminder", systemImage: "plus").labelStyle(.iconOnly) }
                     .buttonStyle(.sf(.quiet))
                     .help(Text("Add a reminder this day"))
+                    .popover(item: draftBinding(day), arrowEdge: .bottom) { CalendarEditor(model: model, draft: $0) }
             }
             RowsCard {
                 if entries.isEmpty {
@@ -76,7 +75,7 @@ struct CalendarList: View {
     }
 
     /// "4 events, 4 reminders".
-    private func counts(_ entries: [CalendarModel.Entry]) -> [String] {
+    private func counts(_ entries: [CalendarEntry]) -> [String] {
         let events = entries.filter { if case .event = $0 { true } else { false } }.count
         let reminders = entries.count - events
         var parts: [String] = []
@@ -86,13 +85,13 @@ struct CalendarList: View {
     }
 
     /// The now line goes above the first thing still to come today.
-    private func showsNowLine(before index: Int, in entries: [CalendarModel.Entry]) -> Bool {
+    private func showsNowLine(before index: Int, in entries: [CalendarEntry]) -> Bool {
         let now = Date()
         guard let first = entries.firstIndex(where: { !$0.allDay && $0.start >= now && !$0.struck }) else { return false }
         return first == index && index > 0
     }
 
-    private func row(_ entry: CalendarModel.Entry, more: Int, nowLineAbove: Bool) -> some View {
+    private func row(_ entry: CalendarEntry, more: Int, nowLineAbove: Bool) -> some View {
         let item = entry.reminder.flatMap(model.item)
         return VStack(spacing: 0) {
             if nowLineAbove {
@@ -119,7 +118,7 @@ struct CalendarList: View {
                 }
                 .font(Theme.Font.body.monospacedDigit())
                 .frame(width: 56, alignment: .leading)
-                RoundedRectangle(cornerRadius: 1.5).fill(entry.tint.opacity(entry.struck ? 0.4 : 1)).frame(width: 3).frame(minHeight: 30)
+                RoundedRectangle(cornerRadius: 1.5).fill(model.tint(entry).edge.opacity(entry.struck ? 0.4 : 1)).frame(width: 3).frame(minHeight: 30)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         if entry.reminder?.recurrence != nil { Image(systemName: "repeat").font(.system(size: 11)).foregroundStyle(Theme.link) }
@@ -134,21 +133,26 @@ struct CalendarList: View {
                 trailing(entry)
             }
             .padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s + 2)
-            .background(isNext(entry) ? Theme.accentSoft.opacity(0.4) : .clear)
+            .background(model.selection == entry.id ? Theme.accentSoft : isNext(entry) ? Theme.accentSoft.opacity(0.4) : .clear)
             .contentShape(Rectangle())
-            .onTapGesture { open(entry) }
-            .contextMenu { CalendarMenu(entry: entry, model: model, edit: edit) }
+            .onTapGesture {
+                model.selection = entry.id
+                model.inspecting = entry.id
+            }
+            .contextMenu { CalendarMenu(entry: entry, model: model) }
+            .calendarInspector(entry, model: model)
             .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
         }
     }
 
     /// The next event still to come today stands out, with how long until it.
-    private func isNext(_ entry: CalendarModel.Entry) -> Bool {
+    private func isNext(_ entry: CalendarEntry) -> Bool {
         guard case .event(let e) = entry, Calendar.current.isDateInToday(e.start), e.start > Date() else { return false }
         return model.entries.first { if case .event(let x) = $0 { x.start > Date() && !x.allDay } else { false } }?.id == entry.id
     }
 
-    @ViewBuilder private func trailing(_ entry: CalendarModel.Entry) -> some View {
+    @ViewBuilder private func trailing(_ entry: CalendarEntry) -> some View {
         switch entry {
         case .finished(let r, _) where r.state == .done:
             Chip(verbatim: String(localized: "state.done", defaultValue: "Done", comment: "Checkbox and status: the task or reminder is finished"), tone: .success, systemImage: "checkmark")
@@ -171,7 +175,7 @@ struct CalendarList: View {
 
     /// What it is beyond its title: the note or task it belongs to, its repeat, who set it; the calendar an event is
     /// on; how a past one ended.
-    private func detail(_ entry: CalendarModel.Entry, item: NotebookItem?, more: Int) -> String? {
+    private func detail(_ entry: CalendarEntry, item: NotebookItem?, more: Int) -> String? {
         var parts: [String] = []
         if more > 0 { parts.append(String(localized: "\(more) more times this day", comment: "The Agenda: a reminder that repeats within the day")) }
         switch entry {
@@ -191,8 +195,14 @@ struct CalendarList: View {
                          ? String(localized: "Done at \(TimeFormat.clock(at, calendar: .current))", comment: "The Agenda: when a reminder was done")
                          : String(localized: "Reminded you"))
         case .event(let e):
+            if let place = e.location { parts.append(place) }
             if !e.calendar.isEmpty { parts.append(e.calendar) }
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// The editor of a new thing added from a day's +.
+    private func draftBinding(_ day: Date) -> Binding<CalendarNewDraft?> {
+        Binding(get: { model.draft.flatMap { Calendar.current.isDate($0.start, inSameDayAs: day) && !$0.fromButton ? $0 : nil } }, set: { model.draft = $0 })
     }
 }

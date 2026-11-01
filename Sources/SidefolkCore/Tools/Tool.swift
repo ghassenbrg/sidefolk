@@ -21,6 +21,8 @@ public enum Capability: String, Codable, Sendable, CaseIterable {
     case macApps = "mac.apps"
     /// Reading the person's calendar, while they show it (D57).
     case calendar
+    /// Adding, changing and deleting events in it, once the person allowed changes (D95).
+    case calendarWrite = "calendar.write"
 }
 
 /// Drives which prop the companion holds and which folk may cameo.

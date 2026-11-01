@@ -1,153 +1,206 @@
 import SidefolkCore
 import SwiftUI
 
-// What the Calendar's three views share (D66): how a thing looks, what a click on it does, its menu, and the sheet
-// that adds a reminder at a time.
+// What the Calendar's views share (D66, D95): a thing as a block (Day and Week), a bar (all day), a line (Month), its
+// menu, and its details beside it.
 
-extension CalendarModel.Entry {
-    /// Its picture: the note or task it belongs to, an alarm, a tick when done, a bell when it told you, a calendar.
-    func symbol(item: NotebookItem?) -> String {
-        switch self {
-        case .reminder: item.map { ItemKindStyle.symbol($0.kind) } ?? "alarm"
-        case .finished(let r, _): r.state == .done ? "checkmark" : "bell"
-        case .event: "calendar"
+/// A thing in the Day or Week, saying as much as it has room for: its title, then its time, then where, then its
+/// notes, each only when the block is tall and wide enough; a reminder is one line with its picture. In its
+/// calendar's colour: a tinted fill with a strong edge, solid while selected.
+struct CalendarBlock: View {
+    var entry: CalendarEntry
+    var model: CalendarModel
+    var width: CGFloat
+    var height: CGFloat
+    var selected: Bool
+
+    var body: some View {
+        let tint = model.tint(entry)
+        let ink = selected ? tint.onSelected : tint.text
+        let words = width >= 28
+        VStack(alignment: .leading, spacing: 1) {
+            if words {
+                if height < 34 || entry.reminder != nil {
+                    line(ink: ink)
+                } else {
+                    Text(verbatim: entry.title).font(Theme.Font.captionStrong).foregroundStyle(ink)
+                        .strikethrough(entry.struck)
+                        // A narrow block keeps its title to a line rather than breaking words across several.
+                        .lineLimit(width < 90 ? 1 : max(1, Int((height - (height >= 48 ? 30 : 14)) / 15)))
+                    Text(verbatim: span).font(Theme.Font.caption.monospacedDigit()).foregroundStyle(ink.opacity(0.85)).lineLimit(1)
+                    if let place = entry.event?.location, height >= 62 {
+                        Label { Text(verbatim: place).lineLimit(1) } icon: { Image(systemName: "mappin").imageScale(.small) }
+                            .labelStyle(.titleAndIcon).font(Theme.Font.caption).foregroundStyle(ink.opacity(0.85))
+                    }
+                    if let notes = entry.event?.notes, height >= 96, width >= 120 {
+                        Text(verbatim: notes).font(Theme.Font.caption).foregroundStyle(ink.opacity(0.75))
+                            .lineLimit(max(1, Int((height - 76) / 15)))
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.leading, words ? 7 : 3)
+        .padding(.trailing, 3)
+        .padding(.vertical, height < 26 ? 2 : 3)
+        .frame(width: width, height: height, alignment: .topLeading)
+        .background(selected ? tint.selectedFill : tint.fill, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+        .overlay(alignment: .leading) { Rectangle().fill(tint.edge).frame(width: 3) }
+        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+        .overlay {
+            if entry.late {
+                RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.warning, lineWidth: 1)
+            }
+        }
+        .opacity(entry.struck ? 0.6 : 1)
+        .help(Text(verbatim: entry.spoken))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: entry.spoken))
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+    }
+
+    /// One line: a reminder's picture and title, or a short event's title and, where wide, its time.
+    private func line(ink: Color) -> some View {
+        HStack(spacing: 4) {
+            if entry.reminder != nil {
+                Image(systemName: entry.symbol(item: entry.reminder.flatMap(model.item))).imageScale(.small)
+                    .foregroundStyle(selected ? ink : model.tint(entry).edge)
+            }
+            Text(verbatim: entry.title).font(Theme.Font.captionStrong).foregroundStyle(ink).strikethrough(entry.struck).lineLimit(1)
+            if width >= 120 {
+                Text(verbatim: TimeFormat.clock(entry.start, calendar: model.calendar)).font(Theme.Font.caption.monospacedDigit())
+                    .foregroundStyle(ink.opacity(0.85)).lineLimit(1).fixedSize()
+            }
         }
     }
 
-    /// Its colour: Tempo's for what's to come, amber once late (it waits, it didn't fail), green when done, faint when
-    /// it already told you, the theme's accent for the calendar's events (as on Today's line).
-    var tint: Color {
-        switch self {
-        case .reminder(let o): o.at < Date() ? Theme.warning : Theme.folkColor("tempo")
-        case .finished(let r, _): r.state == .done ? Theme.success : Theme.inkFaint
-        case .event: Theme.accent
-        }
-    }
-
-    var struck: Bool { if case .finished(let r, _) = self { r.state == .done } else { false } }
-
-    /// "15:00 Call mom", for help and VoiceOver.
-    var spoken: String {
-        let time = allDay ? String(localized: "All day") : TimeFormat.clock(start, calendar: .current)
-        switch self {
-        case .finished(let r, _) where r.state == .done: return String(localized: "Done: \(title)") + ", " + time
-        default: return "\(time) \(title)"
-        }
+    /// "10:00–11:30".
+    private var span: String {
+        let cal = model.calendar
+        return entry.end > entry.start ? TimeFormat.clock(entry.start, calendar: cal) + "–" + TimeFormat.clock(entry.end, calendar: cal)
+            : TimeFormat.clock(entry.start, calendar: cal)
     }
 }
 
-/// One thing as a small chip: its picture in its colour, the time, the title. A click opens it; Control-click has
-/// what Today's menu has; a reminder's next time can be dragged to another day or time.
-struct CalendarChip: View {
-    var entry: CalendarModel.Entry
+/// An all-day or multi-day event as a filled bar in its calendar's colour.
+struct CalendarBar: View {
+    var entry: CalendarEntry
     var model: CalendarModel
-    /// Where a chip is narrow, its place says its time and the title gets the room.
-    var showsTime = true
-    /// Too narrow for words (a busy hour in the week): the picture alone, its words in its help.
-    var showsTitle = true
-    var open: (CalendarModel.Entry) -> Void
-    var edit: (Reminder) -> Void
 
     var body: some View {
+        let tint = model.tint(entry)
+        let selected = model.selection == entry.id
+        Text(verbatim: entry.title)
+            .font(Theme.Font.captionStrong).lineLimit(1)
+            .foregroundStyle(selected ? tint.onSelected : tint.text)
+            .padding(.horizontal, 6)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .background(selected ? tint.selectedFill : tint.fill, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .overlay(alignment: .leading) { Rectangle().fill(tint.edge).frame(width: 3) }
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) { model.inspecting = entry.id }
+            .simultaneousGesture(TapGesture().onEnded { model.selection = entry.id })
+            .contextMenu { CalendarMenu(entry: entry, model: model) }
+            .calendarInspector(entry, model: model)
+            .help(Text(verbatim: entry.spoken))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: entry.spoken))
+            .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// One thing as a single line, as a month shows it: an all-day event as a filled bar; a timed one as its colour's
+/// dot, its time and title; a reminder with its picture. A click selects, a double-click opens its details; a
+/// movable one can be dragged to another day.
+struct CalendarChip: View {
+    var entry: CalendarEntry
+    var model: CalendarModel
+    /// Where a chip is narrow, the title gets the room.
+    var showsTime = true
+
+    var body: some View {
+        let tint = model.tint(entry)
+        let selected = model.selection == entry.id
+        let ink = selected ? tint.onSelected : (entry.allDay ? tint.text : Theme.ink)
         let chip = HStack(spacing: 4) {
-            Image(systemName: entry.symbol(item: entry.reminder.flatMap(model.item))).imageScale(.small).foregroundStyle(entry.tint)
+            if entry.reminder != nil {
+                Image(systemName: entry.symbol(item: entry.reminder.flatMap(model.item))).imageScale(.small)
+                    .foregroundStyle(selected ? ink : tint.edge)
+            } else if !entry.allDay {
+                Circle().fill(selected ? ink : tint.edge).frame(width: 7, height: 7)
+            }
             if showsTime, !entry.allDay {
-                Text(verbatim: TimeFormat.clock(entry.start, calendar: .current)).monospacedDigit().foregroundStyle(Theme.inkMuted)
-                    .fixedSize()
+                Text(verbatim: TimeFormat.clock(entry.start, calendar: .current)).monospacedDigit()
+                    .foregroundStyle(selected ? ink : Theme.inkMuted).fixedSize()
             }
-            if showsTitle {
-                Text(verbatim: entry.title).strikethrough(entry.struck)
-                    .foregroundStyle(entry.struck ? Theme.inkFaint : Theme.ink).lineLimit(1)
-            }
+            Text(verbatim: entry.title).strikethrough(entry.struck)
+                .foregroundStyle(entry.struck && !selected ? Theme.inkFaint : ink).lineLimit(1)
             Spacer(minLength: 0)
         }
         .font(Theme.Font.caption)
         .padding(.horizontal, 5).padding(.vertical, 2)
-        .background(entry.tint.opacity(entry.allDay ? 0.28 : 0.12), in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+        .background {
+            if selected {
+                RoundedRectangle(cornerRadius: 4, style: .continuous).fill(tint.selectedFill)
+            } else if entry.allDay {
+                RoundedRectangle(cornerRadius: 4, style: .continuous).fill(tint.fill)
+            }
+        }
         .contentShape(Rectangle())
-        .onTapGesture { open(entry) }
-        .contextMenu { CalendarMenu(entry: entry, model: model, edit: edit) }
+        .onTapGesture(count: 2) { model.inspecting = entry.id }
+        .simultaneousGesture(TapGesture().onEnded { model.selection = entry.id })
+        .contextMenu { CalendarMenu(entry: entry, model: model) }
+        .calendarInspector(entry, model: model)
         .help(Text(verbatim: entry.spoken))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: entry.spoken))
         .accessibilityAddTraits(.isButton)
-        if entry.movable, let reminder = entry.reminder {
-            chip.draggable(reminder.id) { chip.frame(width: 160) }
+        if entry.movable {
+            chip.draggable(entry.id) { chip.frame(width: 160) }
         } else {
             chip
         }
     }
 }
 
-/// A thing's menu: a reminder's next time has all of Today's (ReminderMenu); a later time of a series edits the series
-/// or opens its note; the calendar's events and what's past have nothing to change.
+/// A thing's menu: Get Info, then a reminder's next time has all of Today's (ReminderMenu); a later time of a series
+/// edits the series or opens its note; an event Sidefolk may change can be deleted, and any opens in Calendar.
 struct CalendarMenu: View {
-    var entry: CalendarModel.Entry
+    var entry: CalendarEntry
     var model: CalendarModel
-    var edit: (Reminder) -> Void
+    @Environment(\.undoManager) private var undo
 
     var body: some View {
-        if case .reminder(let o) = entry {
+        Button("Get Info") { model.inspecting = entry.id }
+        Divider()
+        switch entry {
+        case .reminder(let o):
             if o.isNext {
-                ReminderMenu(reminder: o.reminder, model: model.now, edit: edit)
-            } else {
-                if let item = model.item(of: o.reminder) { Button(ItemLink.openTitle(item.kind)) { model.now.open(item) } }
-                Button("Edit…") { edit(o.reminder) }
+                ReminderMenu(reminder: o.reminder, model: model.now, edit: { _ in model.inspecting = entry.id })
+            } else if let item = model.item(of: o.reminder) {
+                Button(ItemLink.openTitle(item.kind)) { model.now.open(item) }
             }
-        } else if let reminder = entry.reminder, let item = model.item(of: reminder) {
-            Button(ItemLink.openTitle(item.kind)) { model.now.open(item) }
+            Divider()
+            Button("Remove from Calendar") { model.delete(entry, undo: undo) }
+        case .finished(let r, _):
+            if let item = model.item(of: r) { Button(ItemLink.openTitle(item.kind)) { model.now.open(item) } }
+        case .event(let e):
+            Button("Open in Calendar") { model.openInCalendar(e) }
+            if e.changeable {
+                Divider()
+                Button("Delete Event") { model.delete(entry, undo: undo) }
+            }
         }
     }
 }
 
-/// A new reminder at a time chosen on the calendar: what to be reminded of, then Add. It's added through Guard, as
-/// from the one bar.
-struct NewReminderSheet: View {
-    var at: Date
-    var model: CalendarModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var title = ""
-    @State private var when = ""
-    @State private var error: UserFacingError?
-    @State private var adding = false
-    @FocusState private var whenFocused: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.m) {
-            Text("New reminder").font(Theme.Font.heading).foregroundStyle(Theme.ink)
-            TextField("What", text: $title, prompt: Text("New reminder")).lanternField()
-                .onSubmit(add)
-            // The time clicked on, written as the field writes a picked time; type over it to change it.
-            WhenField(text: $when, prompt: Text("When, like “tomorrow 9:00”"), parser: model.now.whenParser, focus: $whenFocused,
-                      boxed: true, submit: add)
-            if let error { InlineError(error: error) }
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }.buttonStyle(.sf(.secondary)).keyboardShortcut(.cancelAction)
-                Button("Add reminder", action: add)
-                    .buttonStyle(.sf(.primary))
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(adding || title.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-        }
-        .padding(Theme.Space.xl)
-        .frame(width: 400)
-        .onAppear { when = WhenText.phrase(for: at) }
-    }
-
-    private func add() {
-        guard !adding, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        adding = true
-        Task {
-            error = await model.add(title, when: when)
-            adding = false
-            if error == nil { dismiss() }
+extension View {
+    /// A thing's details beside it while it is the one being inspected (a double-click, Return, Get Info).
+    func calendarInspector(_ entry: CalendarEntry, model: CalendarModel) -> some View {
+        popover(isPresented: Binding(get: { model.inspecting == entry.id }, set: { if !$0, model.inspecting == entry.id { model.inspecting = nil } }),
+                arrowEdge: .trailing) {
+            CalendarInspector(entry: entry, model: model)
         }
     }
-}
-
-/// A time to add a reminder at, as a sheet's item.
-struct NewReminderTime: Identifiable {
-    var at: Date
-    var id: Date { at }
 }

@@ -24,6 +24,16 @@ public protocol PlatformBridge: Sendable {
     /// Brings a running app to the front (by pid, else by bundle id). Returns false if it isn't running.
     func activateApplication(pid: Int?, bundleId: String?) async -> Bool
     func calendarEvents(from: Date, to: Date) async -> [CalendarEvent]?
+    /// The person's calendars with their colours (D95); nil where macOS doesn't allow reading them.
+    func calendars() async -> [CalendarInfo]?
+    /// One event by its occurrence id, as it is now.
+    func calendarEvent(id: String) async -> CalendarEvent?
+    /// Adds an event to the person's calendar (D95). Only `calendar.create` calls it, through Guard.
+    func createCalendarEvent(_ draft: CalendarDraft) async throws -> CalendarEvent
+    /// Changes one occurrence of an event (never a whole series) (D95). Only `calendar.update` calls it.
+    func updateCalendarEvent(id: String, to draft: CalendarDraft) async throws -> CalendarEvent
+    /// Deletes one occurrence of an event (never a whole series) (D95). Only `calendar.delete` calls it.
+    func deleteCalendarEvent(id: String) async throws
 }
 
 public extension PlatformBridge {
@@ -31,7 +41,15 @@ public extension PlatformBridge {
     /// The person's calendar events overlapping the range (D57); nil where there is none, or macOS doesn't allow it.
     /// Never asks macOS: only the person's own choice does, in the app.
     func calendarEvents(from: Date, to: Date) async -> [CalendarEvent]? { nil }
+    func calendars() async -> [CalendarInfo]? { nil }
+    func calendarEvent(id: String) async -> CalendarEvent? { nil }
+    func createCalendarEvent(_ draft: CalendarDraft) async throws -> CalendarEvent { throw PlatformCalendarError.unavailable }
+    func updateCalendarEvent(id: String, to draft: CalendarDraft) async throws -> CalendarEvent { throw PlatformCalendarError.unavailable }
+    func deleteCalendarEvent(id: String) async throws { throw PlatformCalendarError.unavailable }
 }
+
+/// Where a platform has no calendar to change.
+public enum PlatformCalendarError: Error, Sendable { case unavailable }
 
 /// A platform that does nothing; used in tests and command-line contexts.
 public struct NullPlatform: PlatformBridge {

@@ -25,6 +25,49 @@ public enum CalendarGrid {
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
     }
 
+    /// The first day of each month of the year a date is in.
+    public static func yearMonths(of date: Date, calendar: Calendar) -> [Date] {
+        guard let year = calendar.dateInterval(of: .year, for: date) else { return [] }
+        return (0..<12).compactMap { calendar.date(byAdding: .month, value: $0, to: year.start) }
+    }
+
+    /// `count` whole weeks from the week `date` is in: the continuous month's rows (D95).
+    public static func weeks(from date: Date, count: Int, calendar: Calendar) -> [Date] {
+        let start = weekStart(of: date, calendar: calendar)
+        return (0..<max(0, count) * 7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+    }
+
+    /// The month most of these days are in: what a continuous month's title names while it scrolls.
+    public static func mainMonth(of days: [Date], calendar: Calendar) -> Date? {
+        var counts: [Date: Int] = [:]
+        for day in days {
+            if let month = calendar.dateInterval(of: .month, for: day)?.start { counts[month, default: 0] += 1 }
+        }
+        return counts.max { a, b in a.value != b.value ? a.value < b.value : a.key > b.key }?.key  // a tie: the earlier
+    }
+
+    /// Rows for a week's all-day band (D95): each span covers days `first...last` of the week (clipped by the caller);
+    /// longer ones first, each in the first row free across all its days, as Calendar stacks them.
+    public static func lanes(_ spans: [(first: Int, last: Int)]) -> [Int] {
+        let order = spans.indices.sorted {
+            let a = spans[$0], b = spans[$1]
+            return (a.first, b.last - b.first, $0) < (b.first, a.last - a.first, $1)
+        }
+        var rows: [[ClosedRange<Int>]] = []
+        var result = Array(repeating: 0, count: spans.count)
+        for i in order {
+            let range = spans[i].first...max(spans[i].first, spans[i].last)
+            if let free = rows.firstIndex(where: { $0.allSatisfy { !$0.overlaps(range) } }) {
+                rows[free].append(range)
+                result[i] = free
+            } else {
+                result[i] = rows.count
+                rows.append([range])
+            }
+        }
+        return result
+    }
+
     public static func weekStart(of date: Date, calendar: Calendar) -> Date {
         let day = calendar.startOfDay(for: date)
         let back = (calendar.component(.weekday, from: day) - calendar.firstWeekday + 7) % 7

@@ -6,7 +6,45 @@ final class MacPlatform: PlatformBridge {
     nonisolated init() {}
 
     nonisolated func calendarEvents(from: Date, to: Date) async -> [CalendarEvent]? {
-        await MainActor.run { MacCalendar.events(from: from, to: to) }
+        #if DEBUG
+        if let sample = SampleCalendar.live { return sample.list(from: from, to: to) }
+        #endif
+        return await MainActor.run { MacCalendar.events(from: from, to: to) }
+    }
+
+    nonisolated func calendars() async -> [CalendarInfo]? {
+        #if DEBUG
+        if SampleCalendar.live != nil { return SampleCalendar.calendars }
+        #endif
+        return await MainActor.run { MacCalendar.calendars() }
+    }
+
+    nonisolated func calendarEvent(id: String) async -> CalendarEvent? {
+        #if DEBUG
+        if let sample = SampleCalendar.live { return sample.event(id: id) }
+        #endif
+        return await MainActor.run { MacCalendar.event(id: id) }
+    }
+
+    nonisolated func createCalendarEvent(_ draft: CalendarDraft) async throws -> CalendarEvent {
+        #if DEBUG
+        if let sample = SampleCalendar.live { return try sample.create(draft) }
+        #endif
+        return try await MainActor.run { try MacCalendar.create(draft) }
+    }
+
+    nonisolated func updateCalendarEvent(id: String, to draft: CalendarDraft) async throws -> CalendarEvent {
+        #if DEBUG
+        if let sample = SampleCalendar.live { return try sample.update(id: id, to: draft) }
+        #endif
+        return try await MainActor.run { try MacCalendar.update(id: id, to: draft) }
+    }
+
+    nonisolated func deleteCalendarEvent(id: String) async throws {
+        #if DEBUG
+        if let sample = SampleCalendar.live { return try sample.delete(id: id) }
+        #endif
+        try await MainActor.run { try MacCalendar.delete(id: id) }
     }
 
     nonisolated func clipboardText() async -> String? {
