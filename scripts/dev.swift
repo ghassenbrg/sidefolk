@@ -14,7 +14,12 @@
 //   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
 //   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:games:default   (D88)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
-//   swift scripts/dev.swift calendar | calendar:agenda | calendar:week:2026-11-03 | calendar:month   (D66, D84)
+//   swift scripts/dev.swift calendar | calendar:agenda | calendar:day | calendar:week:2026-11-03 | calendar:month | calendar:year
+//                           (D66, D84, D97) | calendar:swipe:-160[:film] | calendar:scroll:300[:film] | calendar:drag:x1,y1:x2,y2[:film]
+//                           | calendar:click:x,y | calendar:dclick:x,y | calendar:key:right|return|delete|cmdz|cmdt
+//                           | calendar:type:<words> | calendar:select:<id> | calendar:inspect:<id> | calendar:crowd:3000
+//                           (the Calendar's gestures fed and filmed: Sources/SidefolkApp/Dev/CalendarDev.swift; launch the
+//                           debug app with SIDEFOLK_SAMPLE_CALENDAR=1 to use a sample calendar instead of the person's)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
