@@ -42,6 +42,7 @@ enum QA {
         case .extensionCommand(let call): return "command \(call.tool) \(call.input.jsonString)"
         case .game(let id, let game): return "game \(id)/\(game)"
         case .gamesMenu: return "gamesMenu"
+        case .gameCommand(let c): return "gameCommand \(c)"
         }
     }
 

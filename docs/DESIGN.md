@@ -124,6 +124,8 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
 | `AddonUpdatesSection`, `AddonUpdateButton`, `AddonUpdateInline`, `AddonUpdateStrip`, `AddonUpdatesTodayRow`, `AddonUpdateDot` | `Updates/AddonUpdateViews.swift` | add-on updates wherever add-ons appear (D89): the Gallery's Updates with Update all, a row's "New version · Update", an extension page's calm strip, Today's one row, the sidebar's accent dot |
 | `CheckTicks` (+ `CheckWords`), `CheckRow` | `WatchChecks.swift` | a watch's last checks as ticks, oldest to newest, in `StatusTone.check`'s colours with their counts said for VoiceOver (On duty's rows, 24; the watch's page, 48); one run on its timeline (D87) |
+| `.homePageTitle()`, `HomeTitleTracker`, `.clipsUnderToolbar()` | `HomeTitle.swift`, `DesignSystem/Components.swift` | a place's own title (large) hides the toolbar's small one until it scrolls under the toolbar; a page's scroll view is cut at the toolbar's edge (D93) |
+| `GameCenterView`, `GameCenterHero`, `GameStatsStrip`, `DailyCard`, `GameCenterCard`, `GameRecordsSection`, `BadgeTile`, `GameSettingsSection` | `GameCenter*.swift` | a game extension's page (D93), on the Play panel's shared parts (`GameArtTile`, `GameSectionHeader`, `.gameCard()`) |
 | `WatchChangeLines`, `WatchChangeColumns`, `DiffLineView` | `WatchChangeView.swift` | "what changed" from `LineDiff`, inline or side by side: − struck in muted ink, + on the news tint, folded lines as a count; never red or green |
 
 ## Not built yet (phases 2 and 5)

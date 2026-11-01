@@ -120,7 +120,9 @@ struct ShippedExtensionSandboxTests {
         #expect(answered.answers?.locked == true && answered.answers?.tiles.filter(\.companion).count == 1 && answered.primary?.move == "next")
         await h.host.endGame(extensionId: info.id, game: "trivia", session: session, reason: .closed)
         let page = try await h.host.renderPage(extensionId: info.id, page: "playtime", language: "fr")
-        #expect(page.hero?.eyebrow == "Récré", "Playtime's page in French")
+        // The Game Center's records (D93) and the Today tile, in French.
+        #expect(page.summary?.title.seen.hasPrefix("Le mot du jour") == true, "\(String(describing: page.summary?.title))")
+        #expect(page.sections.isEmpty && page.games?.records["daily_word"]?.today?.done == false && page.games?.records["sudoku"]?.today != nil)
         await h.host.shutdown()
     }
 

@@ -48,6 +48,7 @@ struct WatchDetailView: View {
                 VStack(alignment: .leading, spacing: Theme.Space.xs) {
                     Text(verbatim: w.title).font(Theme.Font.title1).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
+                        .homePageTitle()
                     if let target = Describe.watcherTarget(w), target != w.title {
                         // An address or a path reads left to right in every language.
                         Text(verbatim: "\u{2066}\(target)\u{2069}").font(Theme.Font.mono).foregroundStyle(Theme.inkMuted)

@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-// The toy feel shared by the games' parts: raised faces with a lip and a gloss, a squash when pressed, and the
-// celebrations of an end card (a burst of confetti and stars for a win). Motion follows Reduce Motion.
+// The toy feel shared by the games' parts: raised faces with a lip and a gloss, and a squash when pressed. Motion
+// follows Reduce Motion. (The end card's confetti and rays went with the reward card's review: its mark appears once.)
 
 enum GameMotion {
     static var reduced: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
@@ -39,117 +39,5 @@ struct GamePressStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed && !GameMotion.reduced ? 0.95 : 1)
             .animation(.spring(duration: 0.15, bounce: 0.5), value: configuration.isPressed)
-    }
-}
-
-/// Confetti and stars bursting sideways from the middle once, for the person's win, inside the frame it is given (the
-/// trophy's row, so it never covers words or buttons): shown only with its verdict (D75), never with Reduce Motion, and
-/// in the snapshots drawn mid-flight.
-struct Celebration: View {
-    var seed: Int = 7
-    @State private var start = Date()
-    /// The burst has landed: its clock stops, so an end card left open draws nothing.
-    @State private var done = false
-    @Environment(\.revealProgress) private var fixed
-
-    private static let colors: [Color] = [Theme.sun, Theme.coral, Color(hex: 0x3E7BFA), Color(hex: 0x2FA36B), Color(hex: 0x8B5CF6), Color(hex: 0x5AC8D8)]
-
-    var body: some View {
-        if GameMotion.reduced {
-            EmptyView()
-        } else {
-            TimelineView(.animation(minimumInterval: 1 / 60, paused: fixed != nil || done)) { t in
-                let elapsed = fixed != nil ? 0.45 : t.date.timeIntervalSince(start)
-                Canvas { context, size in
-                    guard elapsed < 2.4 else { return }
-                    var rng = SplitMix(seed: UInt64(seed))
-                    let origin = CGPoint(x: size.width / 2, y: size.height * 0.5)
-                    for i in 0..<36 {
-                        let angle = Double(rng.next() % 360) * .pi / 180
-                        let speed = 120 + Double(rng.next() % 160)
-                        let spin = Double(rng.next() % 720) - 360
-                        let x = origin.x + cos(angle) * speed * elapsed
-                        let y = origin.y + sin(angle) * speed * elapsed * 0.3 + 40 * elapsed * elapsed
-                        let fade = max(0, 1 - elapsed / 2.4)
-                        var piece = context
-                        piece.opacity = fade
-                        piece.translateBy(x: x, y: y)
-                        piece.rotate(by: .degrees(spin * elapsed))
-                        let color = Self.colors[i % Self.colors.count]
-                        if i % 5 == 0 {
-                            piece.fill(StarShape().path(in: CGRect(x: -6, y: -6, width: 12, height: 12)), with: .color(Theme.sun))
-                        } else {
-                            piece.fill(Path(roundedRect: CGRect(x: -4, y: -2, width: 8, height: 4.5), cornerRadius: 1), with: .color(color))
-                        }
-                    }
-                }
-            }
-            .task {
-                try? await Task.sleep(for: .seconds(2.5))
-                done = true
-            }
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-        }
-    }
-}
-
-/// Soft rays of sunlight behind the trophy of a win: they open once with it (scaling up and fading in, 400 ms), then
-/// stay still. Nothing turns for ever.
-struct TrophyRays: View {
-    @State private var open = false
-
-    var body: some View {
-        Canvas { context, size in
-            let c = CGPoint(x: size.width / 2, y: size.height / 2), r = min(size.width, size.height) / 2
-            for i in 0..<12 {
-                let a = Double(i) * .pi / 6
-                var ray = Path()
-                ray.move(to: c)
-                ray.addLine(to: CGPoint(x: c.x + cos(a - 0.11) * r, y: c.y + sin(a - 0.11) * r))
-                ray.addLine(to: CGPoint(x: c.x + cos(a + 0.11) * r, y: c.y + sin(a + 0.11) * r))
-                ray.closeSubpath()
-                context.fill(ray, with: .radialGradient(Gradient(colors: [Theme.sun.opacity(0.45), Theme.sun.opacity(0)]), center: c,
-                                                        startRadius: 0, endRadius: r))
-            }
-        }
-        .scaleEffect(open ? 1 : 0.6)
-        .rotationEffect(.degrees(open ? 0 : -15))
-        .opacity(open ? 1 : 0)
-        .onAppear {
-            withAnimation(GameMotion.reduced ? nil : .easeOut(duration: 0.4)) { open = true }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
-
-/// Five points, for the confetti's stars and the stickers.
-nonisolated struct StarShape: Shape {
-    var inner: CGFloat = 0.45
-
-    func path(in r: CGRect) -> Path {
-        Path { p in
-            for i in 0..<10 {
-                let angle = Double(i) * .pi / 5 - .pi / 2
-                let radius = (i.isMultiple(of: 2) ? 0.5 : 0.5 * inner) * min(r.width, r.height)
-                let point = CGPoint(x: r.midX + cos(angle) * radius, y: r.midY + sin(angle) * radius)
-                if i == 0 { p.move(to: point) } else { p.addLine(to: point) }
-            }
-            p.closeSubpath()
-        }
-    }
-}
-
-/// A small fixed sequence for the confetti, the same burst every time.
-struct SplitMix {
-    var state: UInt64
-    init(seed: UInt64) { state = seed }
-    mutating func next() -> UInt64 {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        return z ^ (z >> 31)
     }
 }

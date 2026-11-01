@@ -85,9 +85,9 @@ struct BoardView: View {
         case .prompt: EmptyView()
         case .answers(let a): AnswersView(answers: a, model: model)
         case .board(let g): GameGridView(grid: g, model: model)
-        case .result(let r): GameResultView(result: r, model: model, style: style, said: prompt?.text, choices: endChoices)
+        case .result(let r): GameResultView(result: r, model: model, said: prompt?.text, choices: endChoices)
         case .reveal(let r): RevealView(reveal: r, companionName: model.companionName, start: model.revealStart).frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface.opacity(0.9)))
+            .gameCard(opacity: 0.92)
         case .note(let n): GameNoteView(note: n)
         case .facts(let f): GameFactsView(facts: f)
         case .choice(let c): GameChoiceView(choice: c, model: model)
@@ -98,7 +98,7 @@ struct BoardView: View {
         case .pads(let p): PadsView(pads: p, model: model).modifier(OnTable(style: style))
         case .cups(let c): CupsView(cups: c, model: model).modifier(OnTable(style: style))
         case .reflex(let r): ReflexView(reflex: r, model: model, style: style).modifier(OnTable(style: style))
-        case .meter(let m): MeterView(meter: m).padding(10).background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.92)))
+        case .meter(let m): MeterView(meter: m).padding(10).gameCard(corner: 16, opacity: 0.94)
         case .number(let n): NumberFieldView(field: n, model: model)
         case .letters(let l): LettersView(letters: l, model: model, largest: (board.keys?.pages.map(\.rows.count).max() ?? 0) > 3 ? 24 : 37)
         case .keys(let k): KeyboardView(keys: k, model: model)
@@ -227,7 +227,7 @@ struct AnswerTile: View {
 
     private var fill: Color {
         if let verdict { return GameColors.fill(verdict) }
-        return Theme.surface
+        return GamePaint.card
     }
 
     private var ink: Color { verdict.map(GameColors.ink) ?? Theme.ink }
@@ -263,11 +263,14 @@ struct AnswerTile: View {
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: tile.art == nil ? 70 : 112)
             // A raised tile on a darker lip, as the other toys.
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill).brightness(-0.1).offset(y: 4))
+            .background {
+                if verdict == nil { RoundedRectangle(cornerRadius: 16, style: .continuous).fill(GamePaint.lip).offset(y: 4) }
+                else { RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill).brightness(-0.1).offset(y: 4) }
+            }
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(outlined ? Theme.ink.opacity(0.7) : verdict == .loss ? GameColors.lost.opacity(0.6) : Theme.line,
+                    .strokeBorder(outlined ? Theme.ink.opacity(0.7) : verdict == .loss ? GameColors.lost.opacity(0.6) : GamePaint.edge,
                                   lineWidth: outlined || verdict == .loss ? 2 : 1)
             }
             .scaleEffect(pending ? 0.96 : tile.state == .right ? 1.03 : hovered && !locked ? 1.02 : 1)
@@ -334,6 +337,8 @@ struct Shake: GeometryEffect {
 struct GameButtonRow: View {
     var buttons: [GameBoard.Button]
     var model: PlayModel
+    /// Flat, as on the end card, where the result is the one thing that stands up.
+    var flat = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -345,7 +350,7 @@ struct GameButtonRow: View {
                     }
                     .frame(maxWidth: b.style == .plain ? nil : .infinity)
                 }
-                .buttonStyle(ChunkyButtonStyle(kind: b.style))
+                .buttonStyle(ChunkyButtonStyle(kind: b.style, flat: flat))
                 // A plain button's words are measured first; the wide buttons beside it take the room left.
                 .layoutPriority(b.style == .plain ? 1 : 0)
                 .disabled(b.disabled || model.pending != nil)
@@ -355,36 +360,43 @@ struct GameButtonRow: View {
 }
 
 /// A game's button as a toy: a raised face on a darker lip that sinks when pressed. The primary is the app's accent
-/// (a game's colour is decoration, never what a button means), the secondary white, the plain one a soft pill.
+/// (a game's colour is decoration, never what a button means), the secondary the games' card on its blue lip, the plain
+/// one a soft pill. `flat` drops the lip (the end card's buttons sit under its result, not beside it as equals).
 struct ChunkyButtonStyle: ButtonStyle {
     var kind: GameBoard.Button.Style
+    var flat = false
     @Environment(\.isEnabled) private var enabled
 
     func makeBody(configuration: Configuration) -> some View {
-        let pressed = configuration.isPressed && !GameMotion.reduced
-        let fill: Color = kind == .primary ? Theme.accent : Theme.surface
+        let pressed = configuration.isPressed && !GameMotion.reduced && !flat
+        let fill: Color = kind == .primary ? Theme.accent : GamePaint.card
         let ink: Color = kind == .primary ? Theme.onAccent : Theme.ink
-        let corner: CGFloat = kind == .plain ? 20 : 16
+        let corner: CGFloat = kind == .plain ? 20 : flat ? 14 : 16
+        let depth: CGFloat = flat ? 0 : kind == .plain ? 2 : 4
         configuration.label
-            .font(.system(size: kind == .plain ? 13 : 16, weight: .heavy, design: .rounded))
+            .font(.system(size: kind == .plain ? 13 : flat ? 15 : 16, weight: flat ? .bold : .heavy, design: .rounded))
             .lineLimit(1).minimumScaleFactor(0.65)
             .foregroundStyle(ink)
             .padding(.horizontal, kind == .plain ? 14 : 16)
-            .frame(minHeight: kind == .plain ? 34 : 46)
+            .frame(minHeight: kind == .plain ? 34 : flat ? 42 : 46)
             .background {
                 ZStack {
-                    RoundedRectangle(cornerRadius: corner, style: .continuous).fill(kind == .primary ? fill : Theme.line).brightness(kind == .primary ? -0.14 : 0)
-                        .offset(y: kind == .plain ? 2 : 4)
+                    if depth > 0 {
+                        RoundedRectangle(cornerRadius: corner, style: .continuous).fill(kind == .primary ? fill : GamePaint.lip)
+                            .brightness(kind == .primary ? -0.14 : 0)
+                            .offset(y: depth)
+                    }
                     RoundedRectangle(cornerRadius: corner, style: .continuous).fill(fill)
                         .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous)
-                            .fill(LinearGradient(colors: [.white.opacity(kind == .primary ? 0.25 : 0.0), .clear], startPoint: .top, endPoint: .center)))
-                        .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(kind == .primary ? .clear : Theme.line, lineWidth: 1))
-                        .offset(y: pressed ? (kind == .plain ? 2 : 3) : 0)
+                            .fill(LinearGradient(colors: [.white.opacity(kind == .primary && !flat ? 0.25 : 0.0), .clear], startPoint: .top, endPoint: .center)))
+                        .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(kind == .primary ? .clear : GamePaint.edge, lineWidth: 1))
+                        .offset(y: pressed ? depth - 1 : 0)
                 }
             }
-            .offset(y: pressed ? (kind == .plain ? 2 : 3) : 0)
-            .padding(.bottom, kind == .plain ? 2 : 4)
+            .offset(y: pressed ? depth - 1 : 0)
+            .padding(.bottom, depth)
             .opacity(enabled ? 1 : 0.5)
+            .scaleEffect(configuration.isPressed && flat && !GameMotion.reduced ? 0.97 : 1)
             .animation(.spring(duration: 0.15, bounce: 0.5), value: configuration.isPressed)
             .contentShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
     }
@@ -404,8 +416,9 @@ struct GameNoteView: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.surface.opacity(0.95))
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(GamePaint.card.opacity(0.96))
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.sun.opacity(0.14))))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(GamePaint.edge, lineWidth: 1))
         .accessibilityElement(children: .combine)
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
@@ -424,19 +437,19 @@ struct GameFactsView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surfaceSunken))
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(GamePaint.inset))
                 .accessibilityElement(children: .combine)
             }
         }
     }
 }
 
-/// The end card: who won in words and a trophy with confetti for the person's win (a thumbs-up or an = otherwise), the
-/// big figure, the game's line, a ribbon, facts, what to do next, and back to the menu.
+/// The end card: the result as one unit (an award mark beside the score, who won in words, the game's line), a small
+/// new-best chip, facts, what to do next with "Back to games" beside it, and the level for the next game. Calm and
+/// flat (the founder's review of the reward card): the mark is the only picture, and it appears once.
 struct GameResultView: View {
     var result: GameBoard.Result
     var model: PlayModel
-    var style: GameStyle = .of(nil)
     /// What the companion's bubble already says, not repeated under the score.
     var said: String?
     /// The level for the next game, at the card's foot.
@@ -475,71 +488,100 @@ struct GameResultView: View {
         }
     }
 
+    /// The award mark: Sidefolk's trophy for the person's win (with the crown that goes with the colour), else the
+    /// verdict's symbol, on a soft tile of its colour.
+    private var mark: some View {
+        let tint = verdict == .win ? Theme.sun : GameColors.color(verdict)
+        return ZStack {
+            RoundedRectangle(cornerRadius: 15, style: .continuous).fill(tint.opacity(0.18))
+            if verdict == .win, GameArt.trophy.image != nil {
+                GameArt.trophy.view(height: 42)
+                    .overlay(alignment: .topTrailing) {
+                        Image(systemName: Self.symbol(verdict)).font(.system(size: 10, weight: .bold)).foregroundStyle(GameColors.color(verdict))
+                            .padding(3).background(Circle().fill(GamePaint.card)).offset(x: 6, y: -3)
+                    }
+            } else if result.tone == .info {
+                // Two people (D96): a winner is named with a trophy in neutral ink, so no colour says whose loss it was.
+                Image(systemName: "trophy.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(Theme.ink)
+            } else {
+                Image(systemName: Self.symbol(verdict)).font(.system(size: 24, weight: .bold)).foregroundStyle(GameColors.color(verdict))
+            }
+        }
+        .frame(width: 58, height: 58)
+        .scaleEffect(shown ? 1 : 0.6)
+        .accessibilityHidden(true)
+    }
+
+    private var hero: some View {
+        HStack(spacing: 12) {
+            mark
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: Self.figure(result.figure, layoutDirection))
+                    .font(.system(size: 30, weight: .black, design: .rounded))
+                    .foregroundStyle(verdict == .draw ? Theme.ink : GameColors.color(verdict))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                if let title {
+                    Text(verbatim: title).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
+                        .lineLimit(2).minimumScaleFactor(0.8)
+                }
+                if let line = result.line, line != said {
+                    Text(verbatim: line).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Theme.inkMuted)
+                        .lineLimit(3).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .opacity(shown ? 1 : 0)
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(GamePaint.inset))
+    }
+
+    /// Back to the menu, beside what to do next: a square with the menu's grid.
+    @ViewBuilder private var backToGames: some View {
+        if let back = model.onBack {
+            let words = String(localized: "Back to games", comment: "A game's end card: back to the Play panel's menu")
+            Button(action: back) { Image(systemName: "square.grid.2x2.fill").frame(width: 22) }
+                .buttonStyle(ChunkyButtonStyle(kind: .secondary, flat: true))
+                .help(words)
+                .accessibilityLabel(words)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             if let ribbon = result.ribbon {
-                // A new best: a sticker slapped on the card.
-                Label { Text(verbatim: ribbon) } icon: { Image(systemName: "star.fill") }
-                    .font(Theme.Font.captionStrong).foregroundStyle(Theme.navy)
+                // A new best: a small chip in the sun's colour, above the result it crowns.
+                Label { Text(verbatim: ribbon) } icon: { Image(systemName: "star.fill").foregroundStyle(Theme.sun) }
+                    .font(Theme.Font.captionStrong).foregroundStyle(Theme.ink)
                     .padding(.horizontal, 12).padding(.vertical, 5)
-                    .background(Capsule().fill(Theme.sun))
-                    .overlay(Capsule().strokeBorder(.white, lineWidth: 2.5))
-                    .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
-                    .rotationEffect(.degrees(shown ? -4 : -14))
-                    .scaleEffect(shown ? 1 : 1.6)
+                    .background(Capsule().fill(Theme.sun.opacity(0.18)))
+                    .overlay(Capsule().strokeBorder(Theme.sun.opacity(0.45), lineWidth: 1))
                     .opacity(shown ? 1 : 0)
             }
-            if verdict == .win, GameArt.trophy.image != nil {
-                // The person's win: a trophy (a crown in it, the symbol that goes with the colour), bouncing in.
-                GameArt.trophy.view(height: 54)
-                    .overlay(alignment: .topTrailing) {
-                        Image(systemName: "crown.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(GameColors.color(verdict))
-                            .padding(4).background(Circle().fill(Theme.surface)).offset(x: 8, y: -4)
-                    }
-                    .scaleEffect(shown ? 1 : 0.3, anchor: .bottom)
-                    .rotationEffect(.degrees(shown ? 0 : -12))
-                    .opacity(shown ? 1 : 0)
-                    // Confetti bursts around the trophy, in its own row: never over the words or the buttons.
-                    .frame(maxWidth: .infinity, minHeight: 60)
-                    .background { TrophyRays().frame(width: 124, height: 124).opacity(shown ? 1 : 0) }
-                    .background { Celebration().clipped() }
-            } else {
-                Image(systemName: Self.symbol(verdict)).font(.system(size: 24, weight: .bold)).foregroundStyle(GameColors.color(verdict))
-                    .opacity(shown ? 1 : 0)
-            }
-            Text(verbatim: Self.figure(result.figure, layoutDirection))
-                .font(.system(size: 38, weight: .black, design: .rounded))
-                .foregroundStyle(verdict == .draw ? Theme.ink : GameColors.color(verdict))
-                .scaleEffect(shown ? 1 : 0.6)
-                .opacity(shown ? 1 : 0)
-            if let title {
-                Text(verbatim: title).font(.system(size: 21, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
-                    .multilineTextAlignment(.center)
-            }
-            if let line = result.line, line != said {
-                Text(verbatim: line).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(Theme.inkMuted)
-                    .multilineTextAlignment(.center)
-            }
+            hero
             if !result.facts.isEmpty { GameFactsView(facts: result.facts) }
-            HStack(spacing: 8) {
-                if !result.actions.isEmpty { GameButtonRow(buttons: result.actions, model: model) }
-                if let back = model.onBack {
-                    // Back to the menu, beside what to do next: a square with the menu's grid.
-                    let words = String(localized: "Back to games", comment: "A game's end card: back to the Play panel's menu")
-                    Button(action: back) { Image(systemName: "square.grid.2x2.fill").frame(width: 22) }
-                        .buttonStyle(ChunkyButtonStyle(kind: .secondary))
-                        .help(words)
-                        .accessibilityLabel(words)
+            // What to do next in one row; when its words don't fit there (Higher or Lower's "Switch: Mochi guesses"
+            // beside Play again), the first action takes its own row, never cut to "Pla…".
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    if !result.actions.isEmpty { GameButtonRow(buttons: result.actions, model: model, flat: true) }
+                    backToGames
+                }
+                VStack(spacing: 6) {
+                    GameButtonRow(buttons: Array(result.actions.prefix(1)), model: model, flat: true)
+                    HStack(spacing: 8) {
+                        GameButtonRow(buttons: Array(result.actions.dropFirst()), model: model, flat: true)
+                        backToGames
+                    }
                 }
             }
             ForEach(Array(choices.enumerated()), id: \.offset) { _, c in GameChoiceView(choice: c, model: model, compact: true) }
         }
         .frame(maxWidth: .infinity)
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.surface.opacity(0.96))
-            .shadow(color: .black.opacity(0.1), radius: 8, y: 3))
+        .gameCard(corner: 22, opacity: 0.98)
         .onAppear {
-            withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .spring(duration: 0.4, bounce: 0.25)) { shown = true }
+            withAnimation(GameMotion.reduced ? nil : .spring(duration: 0.4, bounce: 0.25)) { shown = true }
         }
         .accessibilityElement(children: .contain)
     }
@@ -557,12 +599,12 @@ struct GameChoiceView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let label = choice.label, !compact {
                 Text(verbatim: label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-                    .padding(.horizontal, 8).padding(.vertical, 2).background(Capsule().fill(Theme.surface.opacity(0.9)))
+                    .padding(.horizontal, 8).padding(.vertical, 2).background(Capsule().fill(GamePaint.card.opacity(0.94)))
             }
             switch choice.style {
             case .cards:
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8)], spacing: 8) {
-                    ForEach(Array(choice.options.enumerated()), id: \.offset) { _, o in card(o) }
+                    ForEach(Array(choice.options.enumerated()), id: \.offset) { i, o in card(o, tint: i) }
                 }
             case .segmented:
                 HStack(spacing: 6) {
@@ -573,7 +615,8 @@ struct GameChoiceView: View {
                         ForEach(Array(choice.options.enumerated()), id: \.offset) { _, o in segment(o) }
                     }
                     .padding(3)
-                    .background(Capsule().fill(compact ? Theme.surfaceSunken : Theme.surface.opacity(0.95)))
+                    .background(Capsule().fill(compact ? GamePaint.inset : GamePaint.card.opacity(0.96)))
+                    .overlay(Capsule().strokeBorder(GamePaint.edge, lineWidth: compact ? 0 : 1))
                 }
             }
         }
@@ -581,7 +624,8 @@ struct GameChoiceView: View {
 
     private func pick(_ o: GameBoard.Choice.Option) { model.send(.choice(name: choice.name, value: o.value)) }
 
-    private func card(_ o: GameBoard.Choice.Option) -> some View {
+    /// A choice card, each in its own soft pastel (a topic's, the beds' palette) so a grid of them reads at a glance.
+    private func card(_ o: GameBoard.Choice.Option, tint: Int) -> some View {
         let selected = choice.selected == o.value
         return Button { pick(o) } label: {
             VStack(spacing: 4) {
@@ -601,13 +645,14 @@ struct GameChoiceView: View {
                     Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
                 }
             }
-            .padding(.vertical, 7).padding(.horizontal, 4)
-            .frame(maxWidth: .infinity, minHeight: 64)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(selected ? Theme.accentSoft : Theme.surface)
+            .padding(.vertical, 6).padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, minHeight: 60)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(selected ? Theme.accentSoft : GamePaint.card)
+                .overlay { if !selected { RoundedRectangle(cornerRadius: 14, style: .continuous).fill(PuzzleColors.region(tint).opacity(0.4)) } }
                 .shadow(color: .black.opacity(0.08), radius: 2, y: 2))
             .overlay {
                 // A choice is a selection, not a result: the app's accent, as everywhere else.
-                RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(selected ? Theme.accent : Theme.line, lineWidth: selected ? 2 : 1)
+                RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(selected ? Theme.accent : GamePaint.edge, lineWidth: selected ? 2.5 : 1)
             }
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
@@ -663,15 +708,22 @@ struct GameGridView: View {
     var grid: GameBoard.Grid
     var model: PlayModel
 
+    /// Marks played on a board (Tic-tac-toe's X and O) sit in the cells of one card; cards that are their own pictures
+    /// (Memory Pairs) lie straight on the scene.
+    private var onBoard: Bool { !grid.cells.contains { $0.mark == .cardBack || $0.mark == .symbol } }
+
     var body: some View {
-        let side = min(76, (PlayView.inner - CGFloat(grid.columns - 1) * 8) / CGFloat(grid.columns))
-        VStack(spacing: 8) {
+        let gap: CGFloat = 8, frame: CGFloat = onBoard ? 10 : 0
+        let side = min(76, (PlayView.inner - 2 * frame - CGFloat(grid.columns - 1) * gap) / CGFloat(grid.columns))
+        VStack(spacing: gap) {
             ForEach(0..<grid.rows, id: \.self) { r in
-                HStack(spacing: 8) {
+                HStack(spacing: gap) {
                     ForEach(0..<grid.columns, id: \.self) { c in cell(grid.cells[r * grid.columns + c], r, c, side) }
                 }
             }
         }
+        .padding(frame)
+        .background { if onBoard { RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.clear).gameCard(corner: 20) } }
         .frame(maxWidth: .infinity)
     }
 
@@ -682,12 +734,13 @@ struct GameGridView: View {
             ZStack(alignment: .topLeading) {
                 // A white tile raised on its lip; a card face down is its own picture, so it gets no tile.
                 if cell.mark != .cardBack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surface).brightness(-0.12).offset(y: 3)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(GamePaint.lip).offset(y: 3)
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         // A winning line is the person's win or loss by whose marks it holds.
                         .fill(cell.state == .win ? GameColors.fill(cell.companion ? .loss : .win).opacity(cell.companion ? 1 : 0.35)
-                              : cell.state == .hint ? Theme.sun.opacity(0.35) : Theme.surface)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surface))
+                              : cell.state == .hint ? Theme.sun.opacity(0.35) : GamePaint.inset)
+                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(GamePaint.inset))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(GamePaint.edge, lineWidth: 1))
                 }
                 mark(cell, side).frame(maxWidth: .infinity, maxHeight: .infinity)
                     .modifier(CellArrival(animate: cell.animate, key: "\(index)\(cell.mark.rawValue)\(cell.value ?? "")"))

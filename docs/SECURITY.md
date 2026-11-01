@@ -803,6 +803,9 @@ have (D44). Mitigations:
   sequence, like a reveal). A typed `text` move is cleaned (bidi, control characters), one line, at most 120 characters,
   sent only to the game's own entry and never to a model; the panel's keys go to that field only while it is being
   typed in.
+- *Two people (D96):* a two-player score's names are lines of at most 24 characters, shown only in the panel and the
+  Activity row and kept in settings for the next game; a two-key reflex takes only two different letters, by key
+  position, and only while the panel has the keys; its moves are offered only for those keys.
 *Residual:* a game decides its own outcomes and could make the companion react unkindly within the fixed moods;
 the panel can take the keyboard when the person opened it, like Ask, so keys typed meanwhile go to the game.
 
@@ -818,6 +821,19 @@ extension's own promise about when to ask. If the helper or an output cannot res
 does not grant another lease while restoration remains uncertain. The helper was also checked against the Mac's actual
 default output: its original state was restored on normal closure and after killing the parent process.
 
+
+**T39 Trivia from the person's AI, for an extension (M/L), D95.** A new reach: an extension can make Sidefolk spend
+the person's AI quota on its behalf. Mitigations: only Sidefolk's own extensions, switched on, one request at a time,
+only while the person's switch is on and a provider is set up; one typed notice (`sidefolk/trivia.request`: a UUID, a
+topic of one line and at most 60 characters, 10–20 questions, a known level and language), never a prompt. Sidefolk
+writes the prompt itself (`TriviaPrompt`), sends the request's fields only (no memory, notes, conversation, live state
+or tools: an empty toolbox, so a CLI brain's tool calls are refused), through `games.trivia_questions` (Guard, the
+approval mode, History) as `Caller.extension`; the tool is never offered to a model or to other agents. The answer is
+read strictly (`TriviaPackParser`: the JSON shape, four distinct choices, lengths, no links, markup or hidden
+characters) and goes back as data the board draws, never to a model; Playtime checks the shape again. At most 20 calls a
+day, packs cached by topic for the day. *Residual:* the topic is the person's own words and steers the model's
+answer, within a family-quiz prompt and the checks; facts may be wrong, so they are labelled as made by the AI and not
+checked.
 
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by

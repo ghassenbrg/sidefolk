@@ -144,7 +144,7 @@ enum SamplePlayBoards {
                                   tagline: json["tagline"]?.stringValue, look: json["look"]?.stringValue.flatMap(GameLook.init(rawValue:)))
         }
         let order = ["daily_word", "trivia", "tictactoe", "copy_me", "quick_paws", "which_cup", "higher_lower", "guess_animal", "balloon_words",
-                     "last_stick", "memory_pairs"]
+                     "last_stick", "memory_pairs", "plots", "seesaw", "sudoku", "blossoms"]
         let games = [GameInfo.handsMatch] + order.compactMap { seen[$0] }
         var stats = GameStats()
         (stats.played, stats.wins, stats.streak, stats.bestStreak) = (23, 12, 3, 5)

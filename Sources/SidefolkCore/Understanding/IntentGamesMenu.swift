@@ -1,6 +1,6 @@
 import Foundation
 
-/// "show me the games", "what games do you have", "let's play", "games": the Play panel's menu of every game (D79
+/// "show me the games", "what games do you have", "let's play", "games", "back to the games": the Play panel's menu of every game (D79
 /// amended), right away and without AI, in the ten languages Sidefolk speaks (an exception to D76's English commands,
 /// like a game's own sentences). Whole sentences only: "play trivia" is the game, "play this on the TV" an extension's.
 extension IntentParser {
@@ -13,6 +13,11 @@ extension IntentParser {
         "open the games", "open games", "game menu", "the game menu", "list the games", "list your games",
         "what games do you have", "what games are there", "what games can we play", "what games can i play", "what are the games",
         "what are all the games", "what are your games", "which games do you have", "which games are there", "what can we play",
+        // Back to the games (D93), in every language
+        "back to the games", "back to games", "go back to the games", "back to the game menu", "back to the game list",
+        "retour aux jeux", "reviens aux jeux", "volver a los juegos", "vuelve a los juegos", "zurück zu den spielen", "zurück zur spieleliste",
+        "torna ai giochi", "tornare ai giochi", "voltar aos jogos", "volta aos jogos", "ゲーム一覧に戻って", "ゲーム一覧に戻る", "게임 목록으로",
+        "게임 목록으로 돌아가", "回到游戏列表", "返回游戏列表", "العودة إلى الألعاب", "ارجع إلى الألعاب",
         // French
         "jeux", "les jeux", "jouer", "on joue", "jouons", "jouons à quelque chose", "on joue à un jeu", "je veux jouer",
         "je veux jouer à quelque chose", "montre-moi les jeux", "montre moi les jeux", "montre les jeux", "quels jeux as-tu",

@@ -12,7 +12,10 @@ public enum PlayPart {
               locked: Bool = false)
     /// A reflex button: `wait` for `afterMs` (300–10000), then `go`; Sidefolk times the press (`.press(milliseconds:)`),
     /// says `early` and sends `.early` before the signal, `.timeout` after `windowMs`. `shows` replaces it once played.
-    case reflex(afterMs: Int?, windowMs: Int = 1500, wait: String, go: String, early: String, shows: String? = nil)
+    /// `keys` (two letters, the left player's first): two people share it, each on their own key, and the first key
+    /// decides (`.pressKey`, or `.earlyKey` before the signal); clicks don't count then. A Sidefolk from before this
+    /// takes Space and clicks only.
+    case reflex(afterMs: Int?, windowMs: Int = 1500, wait: String, go: String, early: String, shows: String? = nil, keys: [String]? = nil)
     /// A thermometer, 0 cold to 1 warm, with words at either end.
     case meter(Double, label: String? = nil, low: String? = nil, high: String? = nil)
     /// A number field with a digit pad; Return sends `.number(n)`. `history`: earlier guesses, each `higher`, `lower` or `right`.
@@ -50,8 +53,9 @@ public enum PlayPart {
             // A lifted set says where the gem was, `null` for under none.
             if revealed { out["gem"] = gem.map { $0 as Any } ?? NSNull() }
             return out
-        case .reflex(let after, let window, let wait, let go, let early, let shows):
-            return drop(["type": "reflex", "after_ms": after, "window_ms": window, "wait": wait, "go": go, "early": early, "shows": shows])
+        case .reflex(let after, let window, let wait, let go, let early, let shows, let keys):
+            return drop(["type": "reflex", "after_ms": after, "window_ms": window, "wait": wait, "go": go, "early": early, "shows": shows,
+                         "keys": keys])
         case .meter(let value, let label, let low, let high):
             return drop(["type": "meter", "value": value, "label": label, "low": low, "high": high])
         case .number(let min, let max, let label, let history, let locked):

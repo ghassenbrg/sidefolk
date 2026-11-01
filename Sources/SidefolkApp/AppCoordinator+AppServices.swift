@@ -334,6 +334,7 @@ extension AppCoordinator: AppServices {
     }
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }
+    func openPlayMenu() { openPlayMenu(focus: true) }
 
     func understands(_ text: String) -> Bool {
         runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,

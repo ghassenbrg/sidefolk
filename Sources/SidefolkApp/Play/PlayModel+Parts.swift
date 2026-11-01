@@ -150,17 +150,20 @@ extension PlayModel {
 
     /// The reflex button, clicked or pressed: before the signal "Too soon!" at once, after it the time since it showed.
     /// - Parameter time: the event's timestamp (seconds since boot, the clock the signal was stamped with).
-    func boop(at time: TimeInterval? = nil) {
-        guard let board, board.reflex?.armed == true, pending == nil else { return }
+    /// - Parameter key: on a reflex two players share (its `keys`, D96), whose key it was; a click (no key) doesn't count there.
+    func boop(at time: TimeInterval? = nil, key: String? = nil) {
+        guard let board, let reflex = board.reflex, reflex.armed, pending == nil else { return }
+        if let keys = reflex.keys { guard let key, keys.contains(key) else { return } }
         guard let signal = parts.signal else {
             partsTask?.cancel()
             parts.early = true
-            send(.early)
+            send(key.map(GameMove.earlyKey) ?? .early)
             return
         }
         let at = time ?? NSApp.currentEvent?.timestamp ?? ProcessInfo.processInfo.systemUptime
         partsTask?.cancel()
-        send(.press(milliseconds: max(0, Int(((at - signal) * 1000).rounded()))))
+        let ms = max(0, Int(((at - signal) * 1000).rounded()))
+        send(key.map { .pressKey(milliseconds: ms, key: $0) } ?? .press(milliseconds: ms))
     }
 
     /// A pad pressed: lit a moment, its note, then the move.
@@ -209,9 +212,15 @@ extension PlayModel {
     /// A key on a part, before the board's own keys (tiles, buttons, Return for the main button). True when used.
     func pressPart(_ k: String, at time: TimeInterval?) -> Bool {
         guard let board else { return false }
-        if board.reflex?.armed == true, k == "space" || k == "return" {
-            boop(at: time)
-            return true
+        if let reflex = board.reflex, reflex.armed {
+            if let keys = reflex.keys, keys.contains(k.lowercased()) {
+                boop(at: time, key: k.lowercased())
+                return true
+            }
+            if reflex.keys == nil, k == "space" || k == "return" {
+                boop(at: time)
+                return true
+            }
         }
         if let pads = board.pads, !pads.locked, let n = Int(k), pads.pads.indices.contains(n - 1) {
             pressPad(n - 1)
@@ -328,6 +337,10 @@ extension PlayModel {
     var partsFooter: String? {
         guard let board else { return nil }
         if let r = board.reflex, r.armed {
+            if let keys = r.keys, let names = board.score?.players {
+                return String(localized: "\(names[0]): \(keys[0].uppercased()) · \(names[1]): \(keys[1].uppercased())",
+                              comment: "Keys in the Play panel: two players share a reflex button, each name then its key")
+            }
             return String(localized: "Space: \(r.go)", comment: "Keys in the Play panel: press Space when the game's word (“Boop!”) shows")
         }
         if let p = board.pads, !p.locked {

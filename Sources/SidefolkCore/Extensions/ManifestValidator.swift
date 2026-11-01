@@ -576,7 +576,7 @@ extension ManifestValidator {
     /// Games (D75): a title, a symbol, levels, and sentences that follow the command rules (D50) with no slots, since
     /// a sentence only opens the game.
     func checkGames(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
-        if m.games.count > 16 { issues.append(ValidationIssue(field: "games", message: "can declare at most 16 games.")) }
+        if m.games.count > 32 { issues.append(ValidationIssue(field: "games", message: "can declare at most 32 games.")) }
         var seen: [String: String] = [:]
         for name in m.games.keys.sorted() {
             let field = "games.\(name)"

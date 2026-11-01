@@ -82,12 +82,17 @@ public struct ExtensionPageInfo: Sendable, Hashable, Identifiable {
     public var needsAccessibility: Bool
     /// The extension's one line, for its card in All Extensions (D67).
     public var tagline: String?
+    /// The extension declares games and this is its first page: Sidefolk draws it as the Game Center (D93), its own
+    /// screen fed by the page's records, rather than from page parts.
+    public var gameCenter: Bool
 
     public var id: String { "\(extensionId)/\(page)" }
 
     public init(extensionId: String, extensionName: String, page: String, title: String, symbol: String? = nil, refresh: Int = 5,
-                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false, tagline: String? = nil) {
+                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false, tagline: String? = nil,
+                gameCenter: Bool = false) {
         self.tagline = tagline
+        self.gameCenter = gameCenter
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.page = page

@@ -57,6 +57,8 @@ public enum MCPClientEvent: Sendable {
     case clipboardSource
     /// The extension requests a temporary default-output mute under its install permission.
     case outputMute(request: String, enabled: Bool, sequence: Int)
+    /// `sidefolk/trivia.request`: a game asks for trivia questions made by the person's AI (D95); the host decides.
+    case triviaRequest(request: String, params: JSONValue)
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -309,6 +311,9 @@ public final class MCPClient: Sendable {
                       let enabled = message["params"]?["enabled"]?.boolValue,
                       let sequence = message["params"]?["sequence"]?.intValue, sequence > 0 {
                 onEvent(.outputMute(request: request, enabled: enabled, sequence: sequence))
+            } else if method == "sidefolk/trivia.request", let params = message["params"],
+                      let request = params["request"]?.stringValue, UUID(uuidString: request) != nil {
+                onEvent(.triviaRequest(request: request, params: params))
             }
             return
         }

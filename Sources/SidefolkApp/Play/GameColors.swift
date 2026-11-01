@@ -12,6 +12,10 @@ enum GameColors {
     /// Chance itself (a card about a coin or dice), the d20's violet: never Play's red, which would read as a result.
     static let chance = Color(hex: 0x7C5CE0)
 
+    /// Two players on one Mac (D96): a colour each that says who, never how it went: a calm blue and a warm violet,
+    /// neither green nor red.
+    static let players = [Color(light: 0x3B7DD8, dark: 0x7FB2FF), Color(light: 0x8A55D6, dark: 0xC09BFF)]
+
     static func color(_ verdict: GameVerdict) -> Color {
         switch verdict.role {
         case .success: Theme.success

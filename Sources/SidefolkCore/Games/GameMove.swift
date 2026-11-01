@@ -16,6 +16,10 @@ public enum GameMove: Sendable, Hashable {
     /// A reflex press, timed by Sidefolk (stdin can't time a screen).
     case press(milliseconds: Int)
     case early
+    /// Two players on one reflex (its `keys`, D96): the key that pressed first after the signal, and when; or the key
+    /// pressed before it.
+    case pressKey(milliseconds: Int, key: String)
+    case earlyKey(String)
     /// The board's `after` time passed: the game's next board (the companion's move after it thought).
     case next
     /// What was typed in an `entry` of kind `text` (an animal's name, a question).
@@ -38,6 +42,8 @@ public enum GameMove: Sendable, Hashable {
         case .pad(let p): ["pad": .number(Double(p))]
         case .press(let ms): ["press": ["ms": .number(Double(ms))]]
         case .early: ["early": true]
+        case .pressKey(let ms, let key): ["press": ["ms": .number(Double(ms)), "key": .string(key)]]
+        case .earlyKey(let key): ["early": ["key": .string(key)]]
         case .next: ["next": true]
         case .text(let name, let value): ["text": ["name": .string(name), "value": .string(value)]]
         case .area(let r, let c, let r2, let c2): ["area": [.number(Double(r)), .number(Double(c)), .number(Double(r2)), .number(Double(c2))]]
@@ -75,8 +81,13 @@ public enum GameMove: Sendable, Hashable {
             return .word(s.lowercased())
         case "number": return value.intValue.flatMap { abs($0) <= 1_000_000 ? .number($0) : nil }
         case "pad": return value.intValue.flatMap { (0..<8).contains($0) ? .pad($0) : nil }
-        case "press": return value["ms"]?.intValue.flatMap { (0...60_000).contains($0) ? .press(milliseconds: $0) : nil }
-        case "early": return value.boolValue == true ? .early : nil
+        case "press":
+            guard let ms = value["ms"]?.intValue, (0...60_000).contains(ms) else { return nil }
+            guard let key = value["key"] else { return .press(milliseconds: ms) }
+            return GameBoard.Reflex.key(key).map { .pressKey(milliseconds: ms, key: $0) }
+        case "early":
+            if value.boolValue == true { return .early }
+            return GameBoard.Reflex.key(value["key"]).map(GameMove.earlyKey)
         case "next": return value.boolValue == true ? .next : nil
         case "text":
             guard let name = GameBoard.token(value["name"]), let raw = value["value"]?.stringValue else { return nil }
@@ -119,7 +130,8 @@ public enum GameMove: Sendable, Hashable {
             if let sticks = board.sticks, !sticks.locked { return (1...min(sticks.take, sticks.left)).contains(n) }
             return false
         case .pad(let i): return board.pads.map { !$0.locked && $0.pads.indices.contains(i) } ?? false
-        case .press, .early: return board.reflex?.armed == true
+        case .press, .early: return board.reflex.map { $0.armed && $0.keys == nil } ?? false
+        case .pressKey(_, let key), .earlyKey(let key): return board.reflex.map { $0.armed && $0.keys?.contains(key) == true } ?? false
         case .next: return board.after != nil
         case .text(let name, let value):
             guard let entry = board.entry, entry.kind == .text, !entry.locked else { return false }

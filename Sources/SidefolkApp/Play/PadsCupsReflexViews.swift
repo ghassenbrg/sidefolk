@@ -299,7 +299,13 @@ struct ReflexView: View {
                         if early { Image(systemName: "xmark.circle.fill").foregroundStyle(GameColors.lost) }
                         Text(verbatim: words).font(.system(size: reflex.shows != nil && !early ? 16 : 20, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white).multilineTextAlignment(.center).minimumScaleFactor(0.6)
-                        if reflex.armed && !early { GameKeyCap(text: "Space", light: true) }
+                        if reflex.armed && !early {
+                            if let keys = reflex.keys {
+                                ForEach(keys, id: \.self) { GameKeyCap(text: $0.uppercased(), light: true) }
+                            } else {
+                                GameKeyCap(text: "Space", light: true)
+                            }
+                        }
                     }
                     .padding(.horizontal, 16).padding(.vertical, 9)
                     .frame(maxWidth: .infinity)
