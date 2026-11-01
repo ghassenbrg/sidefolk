@@ -296,6 +296,10 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var toolWarnings: [String] = []
     /// The extension that does all this one does and is on, so this one rests (D67): its name.
     public var restingFor: String? = nil
+    /// The settings it declares, as the person's language words them (D100).
+    public var settings: [ExtensionSettingRow] = []
+    /// Its use of the person's AI, when it declares one (D100).
+    public var ai: ExtensionAIStatus? = nil
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

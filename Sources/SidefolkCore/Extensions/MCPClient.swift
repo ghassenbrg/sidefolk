@@ -59,6 +59,12 @@ public enum MCPClientEvent: Sendable {
     case outputMute(request: String, enabled: Bool, sequence: Int)
     /// `sidefolk/trivia.request`: a game asks for trivia questions made by the person's AI (D95); the host decides.
     case triviaRequest(request: String, params: JSONValue)
+    /// `sidefolk/ai.request`: the extension asks the person's AI to write something (D100); the host decides.
+    case aiRequest(request: String, params: JSONValue)
+    /// `sidefolk/activity.add`: one row for History (D100).
+    case activity(JSONValue)
+    /// `sidefolk/settings.set`: the extension changes one of its own settings (D100).
+    case settingSet(JSONValue)
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -90,11 +96,14 @@ public final class MCPClient: Sendable {
     /// The person's language, added as `language` to every tool call and `sidefolk/` request, so a Sidefolk extension
     /// answers in it (D76). Nil for a plain MCP server, which gets requests exactly as MCP has them.
     private let language: (@Sendable () -> String)?
+    /// What else goes with those requests: the extension's settings, and the AI's name while it may ask (D100).
+    private let extras: (@Sendable () -> [String: JSONValue])?
 
-    public init(process: ExtensionProcess, language: (@Sendable () -> String)? = nil,
+    public init(process: ExtensionProcess, language: (@Sendable () -> String)? = nil, extras: (@Sendable () -> [String: JSONValue])? = nil,
                 onEvent: @escaping @Sendable (MCPClientEvent) -> Void = { _ in }) {
         self.process = process
         self.language = language
+        self.extras = extras
         self.onEvent = onEvent
     }
 
@@ -219,6 +228,7 @@ public final class MCPClient: Sendable {
         if let language, method == "tools/call" || method.hasPrefix("sidefolk/"), var object = params?.objectValue ?? (params == nil ? [:] : nil),
            object["language"] == nil {
             object["language"] = .string(language())
+            for (key, value) in extras?() ?? [:] where object[key] == nil { object[key] = value }
             message["params"] = .object(object)
         }
         let line = Data((JSONValue.object(message).jsonString + "\n").utf8)
@@ -314,6 +324,13 @@ public final class MCPClient: Sendable {
             } else if method == "sidefolk/trivia.request", let params = message["params"],
                       let request = params["request"]?.stringValue, UUID(uuidString: request) != nil {
                 onEvent(.triviaRequest(request: request, params: params))
+            } else if method == "sidefolk/ai.request", let params = message["params"],
+                      let request = params["request"]?.stringValue, UUID(uuidString: request) != nil {
+                onEvent(.aiRequest(request: request, params: params))
+            } else if method == "sidefolk/activity.add", let params = message["params"] {
+                onEvent(.activity(params))
+            } else if method == "sidefolk/settings.set", let params = message["params"] {
+                onEvent(.settingSet(params))
             }
             return
         }

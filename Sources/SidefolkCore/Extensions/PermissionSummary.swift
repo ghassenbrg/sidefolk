@@ -24,11 +24,14 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var udp: Bool
     /// What the extension says it uses the network for (`permissions.network_purpose`, D69): one cleaned line.
     public var networkPurpose: String?
+    /// Asking the person's AI to write something (`permissions.ai`, D100).
+    public var ai: ExtensionAIAccess?
 
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
                 clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil,
-                outputMute: Bool = false) {
+                outputMute: Bool = false, ai: ExtensionAIAccess? = nil) {
+        self.ai = ai
         self.network = network
         self.read = read
         self.write = write
@@ -60,6 +63,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         outputMute = try c.decodeIfPresent(Bool.self, forKey: .outputMute) ?? false
         udp = try c.decodeIfPresent(Bool.self, forKey: .udp) ?? false
         networkPurpose = try c.decodeIfPresent(String.self, forKey: .networkPurpose)
+        ai = try c.decodeIfPresent(ExtensionAIAccess.self, forKey: .ai)
     }
 
     /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …). Programs named
@@ -85,11 +89,22 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     }
 }
 
+/// What `permissions.ai` grants, as pinned at install (D100): the author's purpose, and the most requests a day.
+public struct ExtensionAIAccess: Codable, Sendable, Hashable {
+    public var purpose: String
+    public var dailyCap: Int
+
+    public init(purpose: String, dailyCap: Int) {
+        self.purpose = purpose
+        self.dailyCap = dailyCap
+    }
+}
+
 /// Plain-language permission lines for the install sheet, plus warnings about dangerous combinations
 /// (SECURITY T13, T16). Deterministic: built from the manifest, never from model text.
 public struct PermissionSummary: Sendable, Hashable {
     public struct Line: Sendable, Hashable {
-        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, none, unsandboxed }
+        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, ai, none, unsandboxed }
         public var kind: Kind
         public var text: String
         /// Worth drawing attention to on the install sheet.
@@ -175,6 +190,13 @@ public struct PermissionSummary: Sendable, Hashable {
         if p.udp {
             lines.append(Line(kind: .udp, text: String(localized: "Can receive live audio and video traffic (UDP) from any device that can reach your Mac"),
                               caution: true))
+        }
+        if let ai = p.ai {
+            // Sidefolk's guards, all enforced by the host: the frame, no tools, the cap, the switch, History (D100, T44).
+            lines.append(Line(kind: .ai, text: String(localized: "Can ask your AI to write something, up to \(ai.dailyCap) times a day. It says it uses it \(ai.purpose).",
+                                                      comment: "Install sheet: permissions.ai; the daily limit, then the author's purpose, “to write quiz questions”"),
+                              caution: true,
+                              note: String(localized: "It counts toward your AI's usage. The AI gets only the words the extension sends: no tools, nothing of yours. Each request is in History, and a switch in Settings › Add-ons turns it off.")))
         }
         if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))

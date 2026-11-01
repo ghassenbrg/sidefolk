@@ -176,32 +176,12 @@ enum GameCommandWords {
         "شغل أصوات اللعبة", "شغّل أصوات اللعبة", "ألغ كتم صوت اللعبة", "فعّل أصوات اللعبة",
     ])
 
-    /// How a sentence is compared: lowercased, its last punctuation gone, accents off Latin letters (so "mas dificil"
-    /// is "más difícil"), Arabic-Indic digits as 0–9, and no spaces (Korean and Japanese are spaced either way).
-    static func key(_ text: String) -> String {
-        let trimmed = digits(text.lowercased()).trimmingCharacters(in: CharacterSet(charactersIn: " !.?？！。؟,،"))
-        return latinFolded(trimmed).filter { !$0.isWhitespace }
-    }
+    /// How a sentence is compared (`CommandText`, since D100 the same for extensions' commands).
+    static func key(_ text: String) -> String { CommandText.key(text) }
 
     static func keys(_ sentences: [String]) -> Set<String> { Set(sentences.map(key)) }
 
-    /// Accents off Latin letters only: folding everything would turn Japanese が into か.
-    static func latinFolded(_ text: String) -> String {
-        String(text.map { ch -> Character in
-            guard let s = ch.unicodeScalars.first, s.value >= 0xC0, s.value < 0x250 else { return ch }
-            return String(ch).folding(options: .diacriticInsensitive, locale: nil).first ?? ch
-        })
-    }
+    static func latinFolded(_ text: String) -> String { CommandText.latinFolded(text) }
 
-    /// Arabic-Indic and Persian digits as 0–9, so "١٠ أسئلة" counts ten.
-    static func digits(_ text: String) -> String {
-        String(text.unicodeScalars.map { s -> Character in
-            switch s.value {
-            case 0x660...0x669: Character(UnicodeScalar(s.value - 0x660 + 0x30)!)
-            case 0x6F0...0x6F9: Character(UnicodeScalar(s.value - 0x6F0 + 0x30)!)
-            case 0xFF10...0xFF19: Character(UnicodeScalar(s.value - 0xFF10 + 0x30)!)
-            default: Character(s)
-            }
-        })
-    }
+    static func digits(_ text: String) -> String { CommandText.digits(text) }
 }

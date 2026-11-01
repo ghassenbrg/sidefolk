@@ -181,6 +181,7 @@ struct InstallPermissionRow: View {
         case .power: "bolt"
         case .screen: "rectangle.on.rectangle"
         case .outputMute: "speaker.slash"
+        case .ai: "sparkles"
         case .udp: "dot.radiowaves.left.and.right"
         case .none: "lock"
         case .unsandboxed: "exclamationmark.triangle"

@@ -34,6 +34,24 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var palettes: [String: PaletteMeta]
     /// Games played in the Play panel beside the companion, over `sidefolk/game.*` (D75).
     public var games: [String: GameMeta]
+    /// The folder of pictures its pages draw from, relative to the pack (D99 reads sounds and scenes from it too).
+    public var assets: String?
+    /// Enums its commands' slots can take, by value: `{level:level}` with `"level": {"hard": ["hard", "expert"]}` gives
+    /// the tool `hard`, in whichever language it was said (D100).
+    public var choices: [String: [String: [String]]]
+    /// Parts commands share (`with`), that may come anywhere around a name (D100).
+    public var parts: [String: PartMeta]
+    /// Words that only carry a command's sentence (D100).
+    public var carry: CarryMeta
+    /// Settings the host keeps for it and shows (D100), in the order they are shown.
+    public var settings: [SettingMeta]
+    /// Items in the companion's menu and the Pocket, and a tab in Ask (D100).
+    public var entries: [EntryMeta]
+    /// What it offers to do with something dropped on the companion (D100).
+    public var drops: [DropMeta]
+    /// A section of settings Sidefolk used to keep for what this extension does now: given to it once (D100). Honoured
+    /// for Sidefolk's own extensions only.
+    public var settingsFrom: String?
 
     public struct Run: Sendable, Hashable, Decodable {
         /// `python3`, `node`, `sh`, or a program inside the folder (`bin/server`).
@@ -75,9 +93,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         /// What the network is for, in the author's words ("to find and stream to TVs on your local network"). The
         /// sandbox can't fence off the internet, so the sheet still says it can reach it, and adds this (D69).
         public var networkPurpose: String?
+        /// Asking the person's AI to write something, for a stated purpose, a few times a day (D100).
+        public var ai: AIMeta?
 
         public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
-                    power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false) {
+                    power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false,
+                    ai: AIMeta? = nil) {
+            self.ai = ai
             self.network = network
             self.networkPurpose = networkPurpose
             self.files = files
@@ -91,7 +113,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
@@ -103,6 +125,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             outputMute = try c.decodeIfPresent(Bool.self, forKey: "output_mute") ?? false
             udp = try c.decodeIfPresent(Bool.self, forKey: "udp") ?? false
             networkPurpose = try c.decodeIfPresent(String.self, forKey: "network_purpose")
+            ai = try c.decodeIfPresent(AIMeta.self, forKey: "ai")
         }
     }
 
@@ -342,7 +365,9 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
                 tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
                 pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:],
-                games: [String: GameMeta] = [:]) {
+                games: [String: GameMeta] = [:], choices: [String: [String: [String]]] = [:], parts: [String: PartMeta] = [:],
+                carry: CarryMeta = CarryMeta(), settings: [SettingMeta] = [], entries: [EntryMeta] = [], drops: [DropMeta] = [],
+                settingsFrom: String? = nil, assets: String? = nil) {
         self.id = id
         self.name = name
         self.version = version
@@ -361,11 +386,20 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.background = background
         self.palettes = palettes
         self.games = games
+        self.choices = choices
+        self.parts = parts
+        self.carry = carry
+        self.settings = settings
+        self.entries = entries
+        self.drops = drops
+        self.settingsFrom = settingsFrom
+        self.assets = assets
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games"])
+                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games",
+                                       "choices", "parts", "carry", "settings", "entries", "drops", "settings_from", "assets"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -385,6 +419,14 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         background = try c.decodeIfPresent(Bool.self, forKey: "background") ?? false
         palettes = try c.decodeIfPresent([String: PaletteMeta].self, forKey: "palettes") ?? [:]
         games = try c.decodeIfPresent([String: GameMeta].self, forKey: "games") ?? [:]
+        choices = try c.decodeIfPresent([String: [String: [String]]].self, forKey: "choices") ?? [:]
+        parts = try c.decodeIfPresent([String: PartMeta].self, forKey: "parts") ?? [:]
+        carry = try c.decodeIfPresent(CarryMeta.self, forKey: "carry") ?? CarryMeta()
+        settings = try c.decodeIfPresent([SettingMeta].self, forKey: "settings") ?? []
+        entries = try c.decodeIfPresent([EntryMeta].self, forKey: "entries") ?? []
+        drops = try c.decodeIfPresent([DropMeta].self, forKey: "drops") ?? []
+        settingsFrom = try c.decodeIfPresent(String.self, forKey: "settings_from")
+        assets = try c.decodeIfPresent(String.self, forKey: "assets")
     }
 
     /// The last part of the id (`dev.sidefolk.system-vitals` → `system-vitals`), used in tool names.
