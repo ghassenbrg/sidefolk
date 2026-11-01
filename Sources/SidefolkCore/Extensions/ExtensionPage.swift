@@ -496,7 +496,7 @@ public struct ExtensionPage: Sendable, Hashable {
 
     static func text(_ j: JSONValue?, _ characters: Int) -> String? {
         guard let raw = j?.stringValue else { return nil }
-        let line = ExtensionText.line(raw, characters: characters).trimmingCharacters(in: .whitespaces)
+        let line = ExtensionText.line(raw, characters: characters, isolates: true).trimmingCharacters(in: .whitespaces)
         return line.isEmpty ? nil : line
     }
 

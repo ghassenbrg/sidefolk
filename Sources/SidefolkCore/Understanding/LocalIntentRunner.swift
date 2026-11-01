@@ -139,6 +139,8 @@ public struct LocalIntentRunner: Sendable {
             return await execute("watch.read", .object(Self.input(for: source)))
         case .game(let id, let game):
             return await execute("games.open", ["extension": .string(id), "game": .string(game)])
+        case .gamesMenu:
+            return await execute("games.open", [:])
         case .chance(let c):
             var input: [String: JSONValue] = ["kind": .string(c.kind.rawValue), "count": .number(Double(c.count))]
             if c.kind == .dice { input["sides"] = .number(Double(c.sides)); input["modifier"] = .number(Double(c.modifier)) }

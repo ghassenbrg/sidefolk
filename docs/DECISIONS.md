@@ -2083,6 +2083,17 @@ extension, every key, every language), add-ons `LanguagesTests`. An extension's 
 now formats it ("1 hr, 30 min", "51 GB"). `BuiltInExtensionWords` can go once no installed pack predates `strings/`.
 Commands and `ask` sentences stay English (GLOSSARY rule 1), except a sentence that only opens a game (D79). `zh-Hant`
 reads `zh-Hans` in both layers since D79.
+**Amended (2026-11-01), values keep their own direction:** the Kit's `L` wraps each value it fills in in a first-strong
+isolate (FSI … PDI, invisible). An Arabic sentence that begins with a name in Latin letters ("{name} counts… {n}
+left.") took its direction from the name and read left to right; the isolate is skipped when the paragraph's direction
+is found, so the sentence reads right to left and the name keeps its own order, in every language. Sidefolk keeps only
+these isolates, and only in pairs, in what it shows (`ExtensionText.shown`: page and board text, `ExtensionPage.text`,
+`GameBoard.longText`; an unpaired one is dropped, so it can't reach past its value); everything else that reorders
+text (overrides, embeddings, LRI, RLI, marks) is still removed, and nothing passed on keeps them (tool results, names,
+the validator's checks, what reaches a model: `clean`, `untrusted`, `UntrustedText`). `BidiText`'s runs nest inside
+an isolate rather than crossing it, and clipping counts only what shows. The Kit chose isolating at the source over
+the app guessing where a value starts and ends, which it can't know. `L` is for words people read, never a file name or
+an argument; older packs keep their words without isolates.
 
 ### D77 — The companion chooser: every companion of yours in one grid, visible actions, and a gallery to browse (2026-10-31)
 *Amended by D84:* the chooser's Gallery page moved to Home's Gallery.
@@ -2320,6 +2331,19 @@ clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (p
   12"). An older record's one daily board reads as Fair's (`PuzzleRecord.days`), its kept board too.
 - **A hint that plays its move:** after a hint, the Hint button becomes "Do it" (H again) and plays the hinted move;
   it was counted as a hint when asked, so a best time stays out of reach.
+- **The menu is a destination:** "show me the games", "what games do you have", "let's play", "I want to play
+  something", "games", "play" and their likes in the ten languages (`IntentParser.gamesMenuSentences`, whole
+  sentences, after Sidefolk's own and before a game's) open the Play panel's menu without AI; `games.open` without a
+  game (or `"game": "menu"`) opens it for the AI, whose description says to do that rather than list the games in
+  words, and answers with the games' names. "play trivia" still opens the game, "play this on the TV" stays Miraya's.
+  `AppCoordinator.openPlayMenu(focus:)` is the one way to open it (`EventBus.gamesMenu`), for Ask's Play tab and the
+  Pocket too.
+- **Back always works:** the back arrow is shown on every game and never refused (`PlayBack`): at the start, mid-move,
+  during a build-up, while the companion thinks, on the end card or after the game stopped, it puts the game away (to
+  resume from the menu for ten minutes) and shows the menu at once; ⌘[ does the same, and ⌫ too where no part types
+  with it (a word, a number, Sudoku's digits, a text field). It "sometimes didn't work" because SwiftUI's views don't
+  take the first mouse: a click on the panel while it wasn't key only made it key. The Play panel now acts on that
+  first click (`FloatingPanel.firstClickActs`), without activating Sidefolk, so the person's app stays in front.
 - **Fixes:** Korean Daily Word rows keep every tile in its column, a syllable's pad drawn behind its jamo, so played,
   typed and empty rows are one width; Last Stick's taken sticks go entirely once none is left (the faded one stayed
   through the build-up before the end card); an end card's "3 – 2" (the person's, then the companion's) is isolated in

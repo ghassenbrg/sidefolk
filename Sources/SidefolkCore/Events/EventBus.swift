@@ -69,6 +69,9 @@ public enum AppEvent: Sendable {
     case toss(Toss)
     /// A game to open in the Play panel (D75), from the person's words, the Play menu or the AI.
     case game(GameRequest)
+    /// The Play panel's menu of every game (D79 amended): "show me the games", or `games.open` without a game. `focus`
+    /// as for a game: the person's own words take the keyboard, the AI's wait for a click.
+    case gamesMenu(focus: Bool)
     /// An extension with the power permission asked that apps see the person as active (D63): the app moves the
     /// pointer by nothing.
     case nudge

@@ -43,7 +43,9 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Game items** (branch `team/games-items` in both repositories, not merged; D79 amended, the games' items):
   catching the companion in Which Cup? by clicking it, Garden Plots from the keyboard, a daily board per puzzle level,
   "Do it" after a hint, Korean rows one width, no faded stick on Last Stick's last board, scores in the bar's order in
-  Arabic. Next: merge, then set Playtime's `minimum_sidefolk` to the snapshot that ships it (the board button's
+  Arabic; then the Kit isolating `L`'s values (Arabic sentences that begin with a name), the Play panel acting on its
+  first click, the menu of games opened by words in ten languages and by `games.open` without a game, the back arrow
+  that always works (⌘[), and snapshot runs in several languages kept apart. Next: merge, then set Playtime's `minimum_sidefolk` to the snapshot that ships it (the board button's
   `companion` key). Verified with UI snapshots (en, ar, ko, ja, light and dark), films in a debug app, `make test`
   and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`.
 

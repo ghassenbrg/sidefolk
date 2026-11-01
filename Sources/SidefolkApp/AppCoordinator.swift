@@ -691,6 +691,8 @@ final class AppCoordinator {
             player.play(act)
         case .game(let request):
             openGame(request)
+        case .gamesMenu(let focus):
+            openPlayMenu(focus: focus)
         case .toss(let toss):
             // The result belongs on the desktop: hidden, the companion comes out for the moment and goes again after.
             if !companion.isVisible {

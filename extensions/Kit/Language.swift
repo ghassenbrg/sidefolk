@@ -115,7 +115,10 @@ public enum Language {
 }
 
 /// `key` (its English) in the person's language, with `{name}` placeholders filled from `values`: a string as it is,
-/// a whole number in the language's digits. Format other numbers, sizes and dates with `Format` first.
+/// a whole number in the language's digits. Format other numbers, sizes and dates with `Format` first. Each value is
+/// isolated (FSI … PDI, invisible), so it keeps its own direction in a sentence of the other: an Arabic sentence that
+/// begins with a name in Latin letters still reads right to left. Sidefolk keeps these isolates in what it shows and
+/// removes them from what it passes on (D76): use `L` for words people read, never for a file name or an argument.
 public func L(_ key: String, _ values: [String: Any] = [:]) -> String {
     let text: String
     switch Language.entry(key) {
@@ -151,7 +154,7 @@ private func fill(_ text: String, _ values: [String: Any]) -> String {
         case let s as String: shown = s
         default: shown = String(describing: value)
         }
-        out = out.replacingOccurrences(of: "{\(name)}", with: shown)
+        out = out.replacingOccurrences(of: "{\(name)}", with: "\u{2068}" + shown + "\u{2069}")
     }
     return out
 }

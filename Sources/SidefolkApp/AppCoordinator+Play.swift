@@ -88,8 +88,9 @@ extension AppCoordinator {
     }
 
     /// The Play panel's menu of games (its home): every game with its look, the person's stats from Activity, and the
-    /// game put away, to resume. Opened from the Play menu or a game's back button; a game opens from it as the person's
-    /// own choice, through the tool like every way in.
+    /// game put away, to resume. The one way to open it: the Play menu, a game's back button, "show me the games" and
+    /// `games.open` without a game (`.gamesMenu`), Ask's Play tab and the Pocket all call this. A game opens from it as
+    /// the person's own choice, through the tool like every way in.
     func openPlayMenu(focus: Bool) {
         askPanel.hide()
         if !companion.isVisible { showCompanion(true) }
@@ -159,7 +160,7 @@ extension AppCoordinator {
     /// `game:<extension>/<game>[:level]` opens a game as the AI would, waiting for a click rather than taking the keyboard
     /// (a debug run must never catch the keys of someone typing elsewhere); `move:<json>` sends a move as a click on the
     /// board would (only one it offers); `drag:r,c,r2,c2` drags a puzzle's plot cell by cell, then lets go; `click:companion`
-    /// clicks the companion in the scene; `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu`
+    /// clicks the companion in the scene, `click:x,y` a point of the panel; `key:<k>` presses a key in the panel; `closeGame` puts it away (D75); `playMenu`
     /// opens the panel's menu of games.
     func devGame(_ command: String) -> Bool {
         if command.hasPrefix("game:") {
@@ -196,6 +197,12 @@ extension AppCoordinator {
         if command == "click:companion" {
             // A click on the companion in the scene, where it is a button (Which Cup?'s paw on Sneaky).
             if let frame = playPanel.model?.catchFrame { playPanel.click(at: CGPoint(x: frame.midX, y: frame.midY)) }
+            return true
+        }
+        if command.hasPrefix("click:") {
+            // `click:x,y`: a click at that point of the panel (points from its top left), as the mouse would.
+            let n = command.dropFirst(6).split(separator: ",").compactMap { Double($0) }
+            if n.count == 2 { playPanel.click(at: CGPoint(x: n[0], y: n[1])) }
             return true
         }
         if command.hasPrefix("key:") {

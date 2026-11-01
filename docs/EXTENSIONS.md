@@ -812,9 +812,11 @@ else: the manifest is the English of the rest):
   ("تطبيقان"). `other` is required; a form the language doesn't have is refused.
 - **Numbers, sizes, durations, dates** are formatted with the person's language, never by hand; times on a 24-hour
   clock, as Sidefolk writes them.
-- **No direction marks.** Sidefolk removes them (they can disguise a name or a path). When it lays out right to left, it
-  keeps a value that is only numbers and signs ("3024 × 1964", "12 %") and paths, addresses and sizes inside a sentence
-  ("~/Desktop/qr.png") left to right itself.
+- **No direction marks.** Sidefolk removes them (they can disguise a name or a path), except a first-strong isolate
+  (U+2068 … U+2069) in pairs, in what it shows: the Kit's `L` puts one around each value it fills in, so "{name} counts…"
+  in Arabic still reads right to left with the name first. From Python or Node, do the same around a filled-in value.
+  When it lays out right to left, Sidefolk keeps a value that is only numbers and signs ("3024 × 1964", "12 %") and
+  paths, addresses and sizes inside a sentence ("~/Desktop/qr.png") left to right itself.
 - **Sentences people type stay English**: an `ask` button's sentence, an example in a note (“keep me active for an
   hour”). Its label is translated.
 

@@ -366,7 +366,7 @@ extension GameBoard {
     /// Text that may hold a line break or two (a question, a fact), cleaned and capped.
     static func longText(_ j: JSONValue?, _ characters: Int) -> String? {
         guard let raw = j?.stringValue else { return nil }
-        let text = ExtensionText.clean(raw).replacingOccurrences(of: "\t", with: " ").trimmingCharacters(in: .whitespacesAndNewlines).clipped(characters)
+        let text = ExtensionText.clip(ExtensionText.shown(raw).replacingOccurrences(of: "\t", with: " "), characters)
         return text.isEmpty ? nil : text
     }
 

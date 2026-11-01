@@ -1,8 +1,8 @@
 import Foundation
 
 /// Text an extension sent, made to read the right way round when Sidefolk lays out right to left (D76). Sidefolk strips
-/// every direction control from extension text (they can disguise a name or a path, T13), so it adds its own here, at
-/// drawing, where it knows the layout: "3024 × 1964" alone, or "~/Desktop/qr.png" and "https://…" inside an Arabic
+/// every direction control from extension text (they can disguise a name or a path, T13) but the Kit's paired isolates
+/// around a filled-in value (`ExtensionText.shown`), so it adds its own here, at drawing, where it knows the layout: "3024 × 1964" alone, or "~/Desktop/qr.png" and "https://…" inside an Arabic
 /// sentence, are isolated left to right instead of being reordered by the sentence around them.
 public enum BidiText {
     private static let lri: Character = "\u{2066}", pdi: Character = "\u{2069}"
@@ -25,9 +25,9 @@ public enum BidiText {
     }
 
     /// `~/…`, `/…/…`, `https://…`, and numbers joined by × : / - (sizes, times, ratios, dates). Text with a space inside
-    /// ends the run, so the sentence's own words never move.
+    /// ends the run, so the sentence's own words never move; so does an isolate's edge, so runs and isolates nest.
     nonisolated(unsafe) private static let runs =
-        /(?:~\/|\/[^\s\/]+\/|https?:\/\/)[^\s]*[^\s.,;:!?)»”"']|\d+(?:[.,]\d+)?(?:\s?[×x:\/\-]\s?\d+(?:[.,]\d+)?)+/
+        /(?:~\/|\/[^\s\/\u2066-\u2069]+\/|https?:\/\/)[^\s\u2066-\u2069]*[^\s.,;:!?)»”"'\u2066-\u2069]|\d+(?:[.,]\d+)?(?:\s?[×x:\/\-]\s?\d+(?:[.,]\d+)?)+/
 
     private static func isStrong(_ s: Unicode.Scalar) -> Bool {
         s.properties.isAlphabetic && s.properties.numericType == nil

@@ -6,21 +6,27 @@ import Foundation
 /// catalog too, so plurals read as they do in the app ("1 request", not "1 requests"). macOS picks the
 /// language once, at launch, from `AppleLanguages` and the bundle's `.lproj` folders, so this runs a second
 /// copy with `-AppleLanguages (fr)` and waits for it. A plain `swift run` has no `.lproj` folders: the catalog
-/// (or the copy `--catalog` names, such as scripts/pseudo-l10n.py's) is compiled next to the
-/// executable for that run and removed after it. Inside an app bundle its own folders are used.
+/// (or the copy `--catalog` names, such as scripts/pseudo-l10n.py's) is compiled into a folder of the run's own,
+/// beside a link to the executable and its resource bundles, and the copy runs from there; the folder goes after.
+/// So runs in several languages at once never share or remove each other's folders (they used to: one run's
+/// cleanup took another's `ar.lproj`, which then rendered left to right or not at all). Inside an app bundle its
+/// own folders are used.
 enum SnapshotLanguage {
     /// Nil when this copy should render; otherwise the exit status of the copy that rendered.
     static func relaunchIfNeeded(_ args: [String]) -> Int32? {
         guard !args.contains("-AppleLanguages") else { return nil }
         let language = value(after: "--language", in: args) ?? "en"
-        var installed: [URL] = []
-        defer { installed.forEach { try? FileManager.default.removeItem(at: $0) } }
+        var stage: URL?
+        defer { stage.map { try? FileManager.default.removeItem(at: $0) } }
         do {
+            var executable = Bundle.main.executableURL
             if Bundle.main.bundleURL.pathExtension != "app" {
-                installed = try install(catalog: value(after: "--catalog", in: args).map { URL(fileURLWithPath: $0) } ?? repositoryCatalog)
+                let folder = try self.stage(catalog: value(after: "--catalog", in: args).map { URL(fileURLWithPath: $0) } ?? repositoryCatalog)
+                stage = folder
+                executable = folder.appendingPathComponent(Bundle.main.executableURL?.lastPathComponent ?? "SidefolkApp")
             }
             let child = Process()
-            child.executableURL = Bundle.main.executableURL
+            child.executableURL = executable
             child.arguments = Array(args.dropFirst()) + ["-AppleLanguages", "(\(language))"]
             try child.run()
             child.waitUntilExit()
@@ -42,30 +48,32 @@ enum SnapshotLanguage {
             .deletingLastPathComponent().appendingPathComponent("Resources/Localization/Localizable.xcstrings")
     }
 
-    /// Compiles `catalog` and moves its `<language>.lproj` folders beside the executable.
-    private static func install(catalog: URL) throws -> [URL] {
+    /// A folder for this run: `catalog` compiled into its `<language>.lproj` folders, the executable linked in (a copy
+    /// if it can't be), and the resource bundles beside it linked, so the copy finds everything it reads.
+    private static func stage(catalog: URL) throws -> URL {
         let fm = FileManager.default
-        let work = fm.temporaryDirectory.appendingPathComponent("sidefolk-lproj-\(UUID().uuidString)", isDirectory: true)
-        defer { try? fm.removeItem(at: work) }
+        let folder = fm.temporaryDirectory.appendingPathComponent("sidefolk-snapshots-\(UUID().uuidString)", isDirectory: true)
+        let work = folder.appendingPathComponent(".catalog", isDirectory: true)
         try fm.createDirectory(at: work, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: work) }
         // The compiled table takes the file's name, and the app reads "Localizable".
         let source = work.appendingPathComponent("Localizable.xcstrings")
         try fm.copyItem(at: catalog, to: source)
-        let compiled = work.appendingPathComponent("out", isDirectory: true)
         let tool = Process()
         tool.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
-        tool.arguments = ["xcstringstool", "compile", source.path, "--output-directory", compiled.path]
+        tool.arguments = ["xcstringstool", "compile", source.path, "--output-directory", folder.path]
         try tool.run()
         tool.waitUntilExit()
         guard tool.terminationStatus == 0 else { throw CocoaError(.fileReadCorruptFile, userInfo: [NSFilePathErrorKey: catalog.path]) }
-        var installed: [URL] = []
-        for folder in try fm.contentsOfDirectory(at: compiled, includingPropertiesForKeys: nil) where folder.pathExtension == "lproj" {
-            let target = Bundle.main.bundleURL.appendingPathComponent(folder.lastPathComponent, isDirectory: true)
-            try? fm.removeItem(at: target)
-            try fm.moveItem(at: folder, to: target)
-            installed.append(target)
+        let home = Bundle.main.bundleURL
+        if let executable = Bundle.main.executableURL {
+            let target = folder.appendingPathComponent(executable.lastPathComponent)
+            if (try? fm.linkItem(at: executable, to: target)) == nil { try fm.copyItem(at: executable, to: target) }
         }
-        return installed
+        for bundle in try fm.contentsOfDirectory(at: home, includingPropertiesForKeys: nil) where bundle.pathExtension == "bundle" {
+            try fm.createSymbolicLink(at: folder.appendingPathComponent(bundle.lastPathComponent), withDestinationURL: bundle)
+        }
+        return folder
     }
 }
 #endif

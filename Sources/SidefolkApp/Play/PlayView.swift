@@ -77,6 +77,8 @@ struct HeaderButton: View {
     var symbol: String
     var label: String
     var style: GameStyle
+    /// Its key, in the tooltip.
+    var shortcut: String? = nil
     var action: () -> Void
 
     var body: some View {
@@ -88,7 +90,7 @@ struct HeaderButton: View {
         }
         .buttonStyle(GamePressStyle())
         .focusable(false)
-        .help(label)
+        .help(shortcut.map { "\(label) (\u{2066}\($0)\u{2069})" } ?? label)
         .accessibilityLabel(label)
     }
 }
@@ -102,8 +104,9 @@ struct PlayHeader: View {
     var body: some View {
         HStack(spacing: 10) {
             if let back = model.onBack {
+                // Never disabled: whatever the game is doing, it is put away and the menu shows (`PlayBack`).
                 HeaderButton(symbol: "chevron.backward", label: String(localized: "All games", comment: "Play panel: back to the menu of games"),
-                             style: style, action: back)
+                             style: style, shortcut: "⌘[", action: back)
             }
             GameIconTile(info: model.info, style: style, side: 38)
             VStack(alignment: .leading, spacing: 3) {
