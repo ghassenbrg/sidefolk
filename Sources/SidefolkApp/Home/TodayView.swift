@@ -226,8 +226,10 @@ struct DayCard: View {
             WrapRow(minimum: 160, spacing: Theme.Space.s) {
                 Text("Your day").font(Theme.Font.headline).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
                 HStack(spacing: Theme.Space.m) {
-                    if model.calendarOn { legend(Text("Calendar"), Theme.folkColor("tempo")) }
-                    legend(Text("Reminders"), Theme.folkColor("byte"))
+                    // The colours the line draws them in, the Calendar's (D97): each calendar's own, and the
+                    // reminders' blue.
+                    if model.calendarOn { legend(Text("Calendar"), Self.calendarColors(model.events(on: .today))) }
+                    legend(Text("Reminders"), [CalendarTint.of(CalendarEntry.Kind.reminder.hex).edge])
                     Button("Open Calendar", action: openCalendar).buttonStyle(.sf(.quiet))
                 }
             }
@@ -247,11 +249,23 @@ struct DayCard: View {
         .cardSurface()
     }
 
-    private func legend(_ title: Text, _ color: Color) -> some View {
+    private func legend(_ title: Text, _ colors: [Color]) -> some View {
         HStack(spacing: 5) {
-            RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 9, height: 9)
-            title.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+            HStack(spacing: 2) {
+                ForEach(Array(colors.enumerated()), id: \.offset) { _, color in
+                    RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 9, height: 9)
+                }
+            }
+            // Whole, never "Calend…": the row wraps instead (WrapRow).
+            title.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1).fixedSize()
         }
+    }
+
+    /// Up to three of today's calendars' colours, in the order they come; a grey one when none has a colour.
+    private static func calendarColors(_ events: [CalendarEvent]) -> [Color] {
+        var seen: [UInt32] = []
+        for hex in events.compactMap({ $0.color?.hex }) where !seen.contains(hex) && seen.count < 3 { seen.append(hex) }
+        return (seen.isEmpty ? [DayRail.noCalendarColor] : seen).map { CalendarTint.of($0).edge }
     }
 }
 

@@ -603,7 +603,12 @@ struct GameChoiceView: View {
             }
             switch choice.style {
             case .cards:
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8)], spacing: 8) {
+                // Three or fewer share the row (Higher or Lower's two ways to play), rather than sitting in the
+                // left half of a grid laid out for four.
+                let columns = choice.options.count < 4
+                    ? Array(repeating: GridItem(.flexible(), spacing: 8), count: max(choice.options.count, 1))
+                    : [GridItem(.adaptive(minimum: 72), spacing: 8)]
+                LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(Array(choice.options.enumerated()), id: \.offset) { i, o in card(o, tint: i) }
                 }
             case .segmented:

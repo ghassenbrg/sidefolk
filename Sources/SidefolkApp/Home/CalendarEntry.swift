@@ -154,7 +154,7 @@ struct CalendarTint {
 extension CalendarModel {
     /// The colour a thing is drawn in: its calendar's, or its kind's for Sidefolk's own.
     func tint(_ entry: CalendarEntry) -> CalendarTint {
-        if case .event(let e) = entry { return CalendarTint.of(e.color?.hex ?? 0x8E8E93) }
+        if case .event(let e) = entry { return CalendarTint.of(e.color?.hex ?? DayRail.noCalendarColor) }
         return CalendarTint.of(entry.kind(item: entry.reminder.flatMap(item)).hex)
     }
 }

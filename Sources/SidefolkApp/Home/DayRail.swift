@@ -6,6 +6,8 @@ import SwiftUI
 /// empty time to add a reminder there. What's done today stays on it, struck through; a reminder's menu (Control-click)
 /// ticks, snoozes and edits it.
 struct DayRail: View {
+    /// An event whose calendar has no colour: the Calendar's grey.
+    static let noCalendarColor: UInt32 = 0x8E8E93
     var reminders: [Reminder]
     var done: [Reminder] = []
     var events: [CalendarEvent]
@@ -163,6 +165,8 @@ struct DayRail: View {
         let chipWidth = max(CGFloat(place.width) - 3, 20)
         switch item {
         case .event(let event):
+            // In its calendar's colour, made readable on this theme, as the Calendar draws it (D97).
+            let tint = CalendarTint.of(event.color?.hex ?? Self.noCalendarColor)
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: event.title).font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).lineLimit(1)
                 Text(verbatim: "\(TimeFormat.clock(event.start, calendar: .current)) · \(String(localized: "Calendar"))")
@@ -170,13 +174,13 @@ struct DayRail: View {
             }
                 .padding(.horizontal, 7)
                 .frame(width: chipWidth, height: Self.lane - 6, alignment: .leading)
-                .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .background(tint.fill, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .overlay(alignment: .bottomLeading) {
-                    Rectangle().fill(Theme.accent).frame(width: min(max(CGFloat(place.length), 2), chipWidth), height: 3)
+                    Rectangle().fill(tint.edge).frame(width: min(max(CGFloat(place.length), 2), chipWidth), height: 3)
                 }
-                .overlay(alignment: place.endsAtTime ? .trailing : .leading) { TimeEdge(color: Theme.accent) }
+                .overlay(alignment: place.endsAtTime ? .trailing : .leading) { TimeEdge(color: tint.edge) }
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Theme.accent.opacity(0.5)))
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(tint.edge.opacity(0.5)))
                 .help(Text(verbatim: "\(TimeFormat.clock(event.start, calendar: .current))–\(TimeFormat.clock(event.end, calendar: .current)) \(event.title)"))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text(verbatim: "\(TimeFormat.clock(event.start, calendar: .current)) \(event.title)"))
@@ -242,6 +246,8 @@ private final class UndoBox: NSObject {
 
 /// A reminder on the rail: drag it along, or ← → on it a quarter hour at a time; VoiceOver adjusts it the same way.
 private struct ReminderChip: View {
+    /// The reminders' calendar colour (D97), as on the Calendar and the legend; the keyboard's ring stays the accent.
+    @MainActor static var blue: Color { CalendarTint.of(CalendarEntry.Kind.reminder.hex).edge }
     var reminder: Reminder
     var due: Date
     var late: Bool
@@ -269,9 +275,9 @@ private struct ReminderChip: View {
         .padding(.horizontal, 8)
         .frame(width: width, height: 38, alignment: .leading)
         .background(late ? Theme.warningSoft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(alignment: endsAtTime ? .trailing : .leading) { TimeEdge(color: late ? Theme.warning : Theme.accent) }
+        .overlay(alignment: endsAtTime ? .trailing : .leading) { TimeEdge(color: late ? Theme.warning : Self.blue) }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(focused ? Theme.accent : Theme.accent.opacity(0.45), lineWidth: focused ? 2 : 1))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(focused ? Theme.accent : Self.blue.opacity(0.45), lineWidth: focused ? 2 : 1))
         .shadow(color: .black.opacity(drag == 0 ? 0 : 0.15), radius: 6, y: 2)
         .offset(x: drag)
         .gesture(DragGesture(minimumDistance: 3)

@@ -102,7 +102,7 @@ struct GameCenterCard: View {
                     Text(verbatim: tagline).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                record.font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(2)
+                if let record { record.font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(2) }
                 if let last = entry.last {
                     Text("Played \(last.formatted(.relative(presentation: .named)))", comment: "Game Center: when a game was last played")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
@@ -150,9 +150,13 @@ struct GameCenterCard: View {
     }
 
     /// Its record in plain words: the game's own best, then wins of games played (a puzzle's solves), or not yet played.
-    private var record: Text {
+    /// Nothing when a game was opened but none finished (or only played by two people): "Played 3 minutes ago" says it,
+    /// and "Not played yet" beside it would contradict it.
+    private var record: Text? {
         let r = entry.record
-        guard r.played > 0 else { return Text("Not played yet", comment: "Game Center: a game never played") }
+        guard r.played > 0 else {
+            return entry.last == nil ? Text("Not played yet", comment: "Game Center: a game never played") : nil
+        }
         var parts: [String] = []
         if let best = r.best { parts.append(best) }
         if entry.solo {
