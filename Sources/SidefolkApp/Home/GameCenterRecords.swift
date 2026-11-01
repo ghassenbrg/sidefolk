@@ -31,7 +31,7 @@ struct GameRecordsSection: View {
         let entry = center.entry(for: game)
         let verdict = game.outcome.verdict
         return HStack(spacing: Theme.Space.m) {
-            if let entry { GameCenterTile(info: entry.info, side: 28) }
+            if let entry { GameArtTile(look: entry.info.look, symbol: entry.info.symbol, corner: 6).frame(width: 28, height: 28) }
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: entry?.info.title ?? game.game).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
                 Text(ext: [outcome(game), game.text].compactMap { $0 }.joined(separator: " · "))

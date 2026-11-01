@@ -58,7 +58,7 @@ struct GameSettingsSection: View {
     /// A game's level: the game's own pick ("Default", a puzzle's last one) or one the person chose.
     private func level(_ game: GameInfo) -> some View {
         HStack(spacing: Theme.Space.m) {
-            GameCenterTile(info: game, side: 30)
+            GameArtTile(look: game.look, symbol: game.symbol, corner: 6).frame(width: 30, height: 30)
             Text(verbatim: game.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
             Spacer(minLength: Theme.Space.s)
             Picker(selection: Binding(get: { model.level(of: game) ?? "" },

@@ -38,7 +38,8 @@ enum SampleGameCenter {
         let shelf = GameCenterModel.games(for: id, shelf: games)
         return GameCenterModel(page: pageModel, games: shelf, rows: empty ? [] : rows(now: now), kept: empty ? nil : shelf.first { $0.game == "which_cup" },
                                settings: settings, companionName: "Mochi",
-                               figure: SamplePlayBoards.figure ?? CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220))
+                               figure: SamplePlayBoards.figure ?? CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220),
+                               avatar: CompanionArt.avatar(for: AppSettings(), side: 40))
     }
 
     /// Playtime's games from its manifest, titles and taglines in the snapshot's language.

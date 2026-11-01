@@ -17,6 +17,8 @@ final class GameCenterModel {
     private(set) var settings: GameSettings
     let companionName: String
     let figure: NSImage?
+    /// Its face beside "Play against …", as on the Play menu.
+    let avatar: NSImage?
     /// Whether the extension's records came (an older extension sends none: everything is counted from Activity).
     var center: GameCenter {
         GameCenter(games: games, extensionId: page.info.extensionId, records: page.page?.games, rows: rows)
@@ -29,13 +31,15 @@ final class GameCenterModel {
         settings = s.games
         companionName = s.companionName
         figure = CompanionArt.portrait(for: s, state: .listening, side: 220)
+        avatar = CompanionArt.avatar(for: s, side: 40)
         games = Self.games(for: page.info.extensionId, shelf: services.runtime.extensions.gameShelf.all)
     }
 
     /// A center with nothing behind it, for UI snapshots.
     init(page: ExtensionPageModel, games: [GameInfo], rows: [ActivityEntry], kept: GameInfo?, settings: GameSettings, companionName: String,
-         figure: NSImage?) {
+         figure: NSImage?, avatar: NSImage?) {
         self.page = page
+        self.avatar = avatar
         services = nil
         self.games = games
         self.rows = rows

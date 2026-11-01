@@ -1,30 +1,6 @@
 import SidefolkCore
 import SwiftUI
 
-/// A game's picture on a tile in its colour: the Play menu's art for its look (`GameStyle`, `GameArt`), its symbol
-/// when the look has no icon. Never a picture from the game (D75). The games look v2 (team/games-look-v2) brings the
-/// same tile shared with the menu (`GameArtTile` in Play/GameCards.swift): once both are in, this one goes for it.
-struct GameCenterTile: View {
-    var info: GameInfo
-    var side: CGFloat
-
-    var body: some View {
-        let style = GameStyle.of(info.look)
-        ZStack {
-            style.gradient
-            LinearGradient(colors: [.white.opacity(0.25), .clear], startPoint: .top, endPoint: .center)
-            if let icon = style.icon, icon.image != nil {
-                icon.view(fitting: side * 0.82).shadow(color: .black.opacity(0.18), radius: 3, y: 2)
-            } else {
-                Image(systemName: info.symbol ?? "gamecontroller.fill").font(.system(size: side * 0.4, weight: .bold)).foregroundStyle(style.onColor)
-            }
-        }
-        .frame(width: side, height: side)
-        .clipShape(RoundedRectangle(cornerRadius: side * 0.22, style: .continuous))
-        .accessibilityHidden(true)
-    }
-}
-
 /// Wins, puzzles solved, the best run of wins and games played, as the Play menu's strip.
 struct GameStatsStrip: View {
     var totals: GameCenter.Totals
@@ -38,7 +14,7 @@ struct GameStatsStrip: View {
             stat(totals.played, Text("Played", comment: "Game Center: games played to the end"), "gamecontroller.fill", Theme.accent)
         }
         .padding(Theme.Space.s)
-        .cardSurface(radius: Theme.Radius.panel)
+        .gameCard(corner: Theme.Radius.panel, opacity: 1)
     }
 
     private func stat(_ value: Int, _ label: Text, _ symbol: String, _ color: Color) -> some View {
@@ -67,7 +43,7 @@ struct DailyCard: View {
         let today = entry.record.today
         Button(action: play) {
             HStack(spacing: Theme.Space.m) {
-                GameCenterTile(info: entry.info, side: 56)
+                GameArtTile(look: entry.info.look, symbol: entry.info.symbol, corner: 12).frame(width: 56, height: 56)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(verbatim: entry.info.title).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
                     if let today { Text(ext: today.text).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(2) }
@@ -87,7 +63,7 @@ struct DailyCard: View {
             }
             .padding(Theme.Space.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .cardSurface(radius: Theme.Radius.panel)
+            .gameCard(corner: Theme.Radius.panel, opacity: 1)
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
         }
         .buttonStyle(GamePressStyle())
@@ -108,13 +84,17 @@ struct GameCenterCard: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.m) {
-            Button { play(nil) } label: { GameCenterTile(info: entry.info, side: 84) }
+            Button { play(nil) } label: { GameArtTile(look: entry.info.look, symbol: entry.info.symbol, corner: 18).frame(width: 84, height: 84) }
                 .buttonStyle(GamePressStyle())
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: Theme.Space.xs) {
                     Text(verbatim: entry.info.title).font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink).lineLimit(1)
-                    if let level { Chip(text: Text(verbatim: GameLevels.name(level))) }
+                    if let level {
+                        Text(verbatim: GameLevels.name(level)).font(Theme.Font.caption.weight(.bold)).foregroundStyle(GameStyle.of(entry.info.look).onColor)
+                            .padding(.horizontal, 7).padding(.vertical, 2)
+                            .background(Capsule().fill(GameStyle.of(entry.info.look).levelChip))
+                    }
                 }
                 if let tagline = entry.info.tagline {
                     Text(verbatim: tagline).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(2)
@@ -152,9 +132,8 @@ struct GameCenterCard: View {
         }
         .padding(Theme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous).fill(Theme.surfaceRaised)
-            .shadow(color: GameStyle.of(entry.info.look).bottom.opacity(0.3), radius: 0, y: 3))
-        .elevation(hovered ? .e2 : .e1, radius: Theme.Radius.panel)
+        .gameCard(corner: Theme.Radius.panel, opacity: 1)
+        .shadow(color: .black.opacity(hovered ? 0.1 : 0), radius: 8, y: 4)
         .onHover { hovered = $0 }
         .animation(Theme.Motion.micro, value: hovered)
         .accessibilityElement(children: .contain)

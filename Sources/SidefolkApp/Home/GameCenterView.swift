@@ -37,8 +37,8 @@ struct GameCenterView: View {
 
     private func today(_ center: GameCenter) -> some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
-            GameBand(title: Text("Today", comment: "Game Center: today's boards and words"), symbol: "sun.max.fill", tint: Theme.sun,
-                     line: Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide))))
+            SectionHeader(title: Text("Today", comment: "Game Center: today's boards and words"),
+                          detail: Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide)))) { EmptyView() }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 270), spacing: Theme.Space.m)], spacing: Theme.Space.m) {
                 ForEach(center.dailies) { entry in DailyCard(entry: entry) { model.play(entry.info) } }
             }
@@ -47,14 +47,14 @@ struct GameCenterView: View {
 
     private func games(_ group: GameCenter.Group, _ entries: [GameCenter.Entry]) -> some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
+            // The Play panel's menu's own headers, so Home and the menu read as one.
             switch group {
             case .versus:
-                GameBand(title: Text("Play against \(model.companionName)", comment: "Game Center: the games played against the companion"),
-                         symbol: "person.2.fill", tint: GameStyle.of(.dance).bottom,
-                         line: Text("Face off in these games", comment: "Game Center: under the games against the companion"))
+                GameSectionHeader(title: String(localized: "Play against \(model.companionName)",
+                                                comment: "Play panel's menu: the games played against the companion"),
+                                  solo: false, portrait: model.avatar)
             case .puzzles:
-                GameBand(title: Text("Puzzles", comment: "Game Center: the games played alone"), symbol: "puzzlepiece.fill",
-                         tint: GameStyle.of(.sudoku).bottom, line: Text("Relax and challenge your brain", comment: "Game Center: under the puzzles"))
+                GameSectionHeader(title: String(localized: "Puzzles", comment: "Play panel's menu: the games played alone"), solo: true, portrait: nil)
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 400), spacing: Theme.Space.m)], spacing: Theme.Space.m) {
                 ForEach(entries) { entry in
@@ -95,10 +95,11 @@ struct GameCenterHero: View {
             LinearGradient(colors: [style.top.opacity(0.10), style.bottom.opacity(scheme == .dark ? 0.22 : 0.16)], startPoint: .top, endPoint: .bottom)
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
-                if let scene = style.scene?.image {
+                // The same room at night in dark mode (the games look v2's paintings).
+                if let scene = (scheme == .dark ? style.scene?.atNight?.image : nil) ?? style.scene?.image {
                     Image(nsImage: scene).resizable().interpolation(.high).aspectRatio(contentMode: .fill)
                         .frame(width: 420, height: 230, alignment: .bottom).clipped()
-                        .overlay { if scheme == .dark { Color.black.opacity(0.45) } }
+                        .overlay { if scheme == .dark { Color.black.opacity(0.2) } }
                         .mask(LinearGradient(colors: [.clear, .black, .black], startPoint: .leading, endPoint: .trailing)
                             .environment(\.layoutDirection, .leftToRight).flipsForRightToLeftLayoutDirection(true))
                 }
@@ -157,23 +158,3 @@ struct GameCenterHero: View {
     }
 }
 
-/// A group's band: its symbol on a tinted tile, its title and one line, as the Play menu's sections.
-struct GameBand: View {
-    var title: Text
-    var symbol: String
-    var tint: Color
-    var line: Text
-
-    var body: some View {
-        HStack(spacing: Theme.Space.m) {
-            Image(systemName: symbol).font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
-                .frame(width: 30, height: 30).background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(tint))
-                .accessibilityHidden(true)
-            title.font(.system(size: 19, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-            Spacer(minLength: Theme.Space.s)
-            line.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
-        }
-        .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
-        .background(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).fill(tint.opacity(0.12)))
-    }
-}
