@@ -1,8 +1,9 @@
 import SidefolkCore
 import SwiftUI
 
-/// A logic puzzle's grid (D79, the puzzles): one calm card of cells with the game's marks (Sidefolk's own heart, star
-/// and blossom pictures, numbers, pencil notes, dots), coloured beds with heavier lines between them, Sudoku's boxes,
+/// A logic puzzle's grid (D79, the puzzles; dressed in the look v2): a board in its frame (a pale blue card, Garden
+/// Plots' soil in a wooden one) with the game's marks (Sidefolk's own heart, star and blossom pictures, numbers, pencil
+/// notes, dots), Blossoms' coloured beds as rounded tiles with a gutter and heavier lines between them, Sudoku's boxes,
 /// `=` and `×` between cells, plots dragged corner to corner, and where a rule breaks (the calm loss tone with a !,
 /// never red) or what a hint points at. The clock counts on above it; Sudoku's digit pad sits under it. A puzzle is
 /// the same picture in every language, so it is laid out left to right even in Arabic.
@@ -10,19 +11,27 @@ struct PuzzleView: View {
     var puzzle: GameBoard.Puzzle
     var model: PlayModel
 
-    /// Room for the grid, so a 9 × 9 Sudoku with its pad keeps the panel under 720 pt.
-    static func side(_ p: GameBoard.Puzzle) -> CGFloat {
+    /// Room for the grid, so a 9 × 9 Sudoku with its pad keeps the panel under 720 pt; `gap` is the gutter between
+    /// Blossoms' bed tiles.
+    static func side(_ p: GameBoard.Puzzle, gap: CGFloat = 0) -> CGFloat {
         let tall: CGFloat = p.input == .digits ? 300 : 324
-        return floor(min(54, (PlayView.inner - 12) / CGFloat(p.columns), tall / CGFloat(p.rows)))
+        let across = gap * CGFloat(p.columns - 1), down = gap * CGFloat(p.rows - 1)
+        return floor(min(54, (PlayView.inner - 16 - across) / CGFloat(p.columns), (tall - down) / CGFloat(p.rows)))
     }
 
+    /// Beds read as a garden of separate plots, not a wall of squares: a small gutter between rounded tiles lets a
+    /// bed's cells gather while rows and columns stay easy to follow.
+    static func gap(_ p: GameBoard.Puzzle) -> CGFloat { p.cells.contains { $0.region != nil } ? 3 : 0 }
+
     var body: some View {
-        let side = Self.side(puzzle)
+        let gap = Self.gap(puzzle), side = Self.side(puzzle, gap: gap)
+        let skin = PuzzleSkin.of(model.info.look)
         VStack(spacing: 8) {
-            PuzzleGrid(puzzle: puzzle, model: model, side: side)
-                .padding(6)
-                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface)
-                    .shadow(color: .black.opacity(0.12), radius: 6, y: 3))
+            PuzzleGrid(puzzle: puzzle, model: model, side: side, gap: gap, skin: skin)
+                .padding(5)
+                .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(skin.board)
+                    .shadow(color: .black.opacity(0.14), radius: 6, y: 3))
+                .overlay(RoundedRectangle(cornerRadius: 17, style: .continuous).strokeBorder(skin.frame, lineWidth: 3.5))
                 .environment(\.layoutDirection, .leftToRight)
             if puzzle.input == .digits, let digits = puzzle.digits {
                 DigitPad(digits: digits, model: model, puzzle: puzzle)
@@ -37,19 +46,24 @@ struct PuzzleGrid: View {
     var puzzle: GameBoard.Puzzle
     var model: PlayModel
     var side: CGFloat
+    var gap: CGFloat = 0
+    var skin = PuzzleSkin.of(nil)
 
-    private var size: CGSize { CGSize(width: side * CGFloat(puzzle.columns), height: side * CGFloat(puzzle.rows)) }
+    private var size: CGSize {
+        CGSize(width: side * CGFloat(puzzle.columns) + gap * CGFloat(puzzle.columns - 1),
+               height: side * CGFloat(puzzle.rows) + gap * CGFloat(puzzle.rows - 1))
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VStack(spacing: 0) {
+            VStack(spacing: gap) {
                 ForEach(0..<puzzle.rows, id: \.self) { r in
-                    HStack(spacing: 0) {
+                    HStack(spacing: gap) {
                         ForEach(0..<puzzle.columns, id: \.self) { c in cell(r, c) }
                     }
                 }
             }
-            PuzzleLines(puzzle: puzzle, side: side).allowsHitTesting(false)
+            PuzzleLines(puzzle: puzzle, side: side, gap: gap, skin: skin).allowsHitTesting(false)
             ForEach(Array(puzzle.plots.enumerated()), id: \.offset) { _, plot in PlotShape(plot: plot, side: side).allowsHitTesting(false) }
             if let drag = model.parts.drag {
                 let (a, b) = (drag.from, drag.to)
@@ -68,7 +82,8 @@ struct PuzzleGrid: View {
     }
 
     private func index(at point: CGPoint) -> Int {
-        let r = min(max(Int(point.y / side), 0), puzzle.rows - 1), c = min(max(Int(point.x / side), 0), puzzle.columns - 1)
+        let stride = side + gap
+        let r = min(max(Int(point.y / stride), 0), puzzle.rows - 1), c = min(max(Int(point.x / stride), 0), puzzle.columns - 1)
         return r * puzzle.columns + c
     }
 
@@ -91,7 +106,7 @@ struct PuzzleGrid: View {
     @ViewBuilder private func cell(_ r: Int, _ c: Int) -> some View {
         let i = r * puzzle.columns + c
         let content = PuzzleCellView(cell: puzzle.cells[i], side: side, digits: puzzle.digits ?? 9, model: model,
-                                     selected: model.parts.cursor == i && !puzzle.locked)
+                                     selected: model.parts.cursor == i && !puzzle.locked, skin: skin)
         switch puzzle.input {
         case .drag:
             content
@@ -112,12 +127,17 @@ struct PuzzleCellView: View {
     var digits: Int
     var model: PlayModel
     var selected: Bool
+    var skin = PuzzleSkin.of(nil)
+
+    /// A bed's cell is a rounded tile; a plain cell a square of the board.
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: cell.region != nil ? 6 : 0, style: .continuous) }
 
     var body: some View {
         ZStack {
-            Rectangle().fill(background)
-            if cell.state == .hint || cell.state == .target { Rectangle().fill(Theme.sun.opacity(0.3)) }
-            if selected { Rectangle().fill(Theme.accent.opacity(0.14)) }
+            shape.fill(background)
+            if cell.region != nil { shape.strokeBorder(.white.opacity(0.35), lineWidth: 1) }
+            if cell.state == .hint || cell.state == .target { shape.fill(Theme.sun.opacity(0.3)) }
+            if selected { shape.fill(Theme.accent.opacity(0.14)) }
             mark.opacity(cell.state == .target ? 0.45 : 1)
                 .modifier(Settle(fresh: cell.fresh, key: "\(cell.symbol?.rawValue ?? "")\(cell.text ?? "")"))
             if cell.text == nil, cell.symbol == nil, !cell.notes.isEmpty { notes }
@@ -135,7 +155,7 @@ struct PuzzleCellView: View {
     private var background: Color {
         if cell.state == .conflict { return GameColors.lostSoft }
         if let region = cell.region { return PuzzleColors.region(region) }
-        return Theme.surface
+        return skin.cell
     }
 
     @ViewBuilder private var mark: some View {
@@ -149,7 +169,8 @@ struct PuzzleCellView: View {
         } else if let text = cell.text {
             // A given is printed; a number the person put is in the accent's ink.
             Text(verbatim: text).font(.system(size: side * 0.52, weight: cell.given ? .heavy : .semibold, design: .rounded))
-                .foregroundStyle(cell.given ? Theme.ink : Theme.accent)
+                .foregroundStyle(cell.given ? skin.given : Theme.accent)
+                .shadow(color: .black.opacity(skin.soil ? 0.35 : 0), radius: 0, y: 1.5)
                 .minimumScaleFactor(0.5)
         }
     }
@@ -214,11 +235,35 @@ struct Settle: ViewModifier {
 struct PuzzleLines: View {
     var puzzle: GameBoard.Puzzle
     var side: CGFloat
+    var gap: CGFloat = 0
+    var skin = PuzzleSkin.of(nil)
 
     var body: some View {
         Canvas { context, size in
-            let thin = Theme.line, heavy = Theme.ink.opacity(0.55)
+            let thin = skin.thin, heavy = skin.heavy
             func region(_ r: Int, _ c: Int) -> Int? { puzzle.cell(row: r, column: c)?.region }
+            if gap > 0 {
+                // Bed tiles with a gutter: only where two beds meet, a heavier line runs down the gutter.
+                let stride = side + gap, bed = Theme.ink.opacity(0.5)
+                for r in 0..<puzzle.rows {
+                    for c in 0..<puzzle.columns {
+                        let x = CGFloat(c) * stride, y = CGFloat(r) * stride
+                        if c < puzzle.columns - 1, region(r, c) != region(r, c + 1) {
+                            var p = Path()
+                            p.move(to: CGPoint(x: x + side + gap / 2, y: y - gap / 2))
+                            p.addLine(to: CGPoint(x: x + side + gap / 2, y: y + side + gap / 2))
+                            context.stroke(p, with: .color(bed), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                        }
+                        if r < puzzle.rows - 1, region(r, c) != region(r + 1, c) {
+                            var p = Path()
+                            p.move(to: CGPoint(x: x - gap / 2, y: y + side + gap / 2))
+                            p.addLine(to: CGPoint(x: x + side + gap / 2, y: y + side + gap / 2))
+                            context.stroke(p, with: .color(bed), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                        }
+                    }
+                }
+                return
+            }
             for r in 0..<puzzle.rows {
                 for c in 0..<puzzle.columns {
                     let x = CGFloat(c) * side, y = CGFloat(r) * side
@@ -241,7 +286,7 @@ struct PuzzleLines: View {
                     }
                 }
             }
-            context.stroke(Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 1, dy: 1), cornerRadius: 9), with: .color(heavy), lineWidth: 2)
+            context.stroke(Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 1, dy: 1), cornerRadius: 9), with: .color(heavy.opacity(0.6)), lineWidth: 2)
         }
     }
 }
@@ -282,7 +327,7 @@ struct EdgeClue: View {
         Text(verbatim: edge.clue == .same ? "=" : "×")
             .font(.system(size: d * 0.78, weight: .black, design: .rounded)).foregroundStyle(Theme.ink)
             .frame(width: d, height: d)
-            .background(Circle().fill(Theme.surface).overlay(Circle().strokeBorder(Theme.ink.opacity(0.45), lineWidth: 1.5))
+            .background(Circle().fill(GamePaint.card).overlay(Circle().strokeBorder(Theme.ink.opacity(0.45), lineWidth: 1.5))
                 .shadow(color: .black.opacity(0.12), radius: 1, y: 1))
             .offset(x: center.x - d / 2, y: center.y - d / 2)
             .accessibilityHidden(true)
@@ -304,7 +349,8 @@ struct PuzzleClock: View {
             }
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 10).padding(.vertical, 4)
-            .background(Capsule().fill(Theme.surface.opacity(0.94)).shadow(color: .black.opacity(0.08), radius: 3, y: 1))
+            .background(Capsule().fill(GamePaint.card.opacity(0.96)).shadow(color: .black.opacity(0.08), radius: 3, y: 1))
+            .overlay(Capsule().strokeBorder(GamePaint.edge, lineWidth: 1))
             .accessibilityElement(children: .combine)
         }
     }
@@ -328,7 +374,8 @@ struct NotesSwitch: View {
             }
             .foregroundStyle(model.parts.notes ? Theme.onAccent : Theme.ink)
             .padding(.horizontal, 10).padding(.vertical, 4)
-            .background(Capsule().fill(model.parts.notes ? Theme.accent : Theme.surface.opacity(0.94)))
+            .background(Capsule().fill(model.parts.notes ? Theme.accent : GamePaint.card.opacity(0.96)))
+            .overlay(Capsule().strokeBorder(model.parts.notes ? .clear : GamePaint.edge, lineWidth: 1))
         }
         .buttonStyle(GamePressStyle())
         .focusable(false)
@@ -371,9 +418,9 @@ struct DigitKeyStyle: ButtonStyle {
             .frame(height: 34)
             .background {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.line).offset(y: 3)
-                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.surface)
-                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(GamePaint.lip).offset(y: 3)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(GamePaint.card)
+                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(GamePaint.edge, lineWidth: 1))
                         .offset(y: pressed ? 2 : 0)
                 }
             }
@@ -392,4 +439,22 @@ enum PuzzleColors {
 
     static func region(_ i: Int) -> Color { Color(light: light[i % light.count], dark: dark[i % dark.count]) }
     static func plot(_ i: Int) -> Color { Color(hex: plots[i % plots.count]) }
+}
+
+/// How a puzzle's board is dressed: a card in a pale blue frame, its boxes in the frame's blue; Garden Plots is soil in
+/// a wooden frame with its numbers in white, as in a vegetable patch.
+struct PuzzleSkin {
+    var soil = false
+
+    static func of(_ look: GameLook?) -> PuzzleSkin { PuzzleSkin(soil: look == .plots) }
+
+    /// Behind the cells, inside the frame.
+    var board: Color { soil ? Color(light: 0x7A4E31, dark: 0x4E321F) : GamePaint.card }
+    var cell: Color { soil ? Color(light: 0x8A5A3A, dark: 0x5A3A25) : GamePaint.card }
+    var frame: Color { soil ? Color(light: 0xD39A5C, dark: 0x9C6A3C) : Color(light: 0xBFD3EE, dark: 0x3B5994) }
+    var thin: Color { soil ? .white.opacity(0.16) : Theme.line }
+    /// Sudoku's boxes and the board's edge.
+    var heavy: Color { soil ? Color(light: 0xD39A5C, dark: 0x9C6A3C) : Color(light: 0x5D86C6, dark: 0x6F95DA) }
+    /// A given number.
+    var given: Color { soil ? .white : Theme.ink }
 }
