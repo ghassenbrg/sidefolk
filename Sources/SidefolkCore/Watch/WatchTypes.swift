@@ -317,3 +317,12 @@ extension String {
         return String(out).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
     }
 }
+
+extension Watcher {
+    /// Who its notices are from: an extension's watch is that extension's ("extension:<id>"), so Settings › Attention
+    /// can set it apart (D88); every other watch is "watcher". The card still reads as Scout's watch (`refKind`).
+    public var noticeSource: String {
+        guard kind == "extension", let id = config.string("extension"), !id.isEmpty else { return "watcher" }
+        return "extension:\(id)"
+    }
+}

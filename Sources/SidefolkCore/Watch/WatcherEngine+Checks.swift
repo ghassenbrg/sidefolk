@@ -127,7 +127,7 @@ extension WatcherEngine {
             let shortReason = reason.trimmingCharacters(in: CharacterSet(charactersIn: ". ")).lowercasedFirst
             // Something the person asked to be told about has stopped working: that deserves more than a 6 s whisper.
             await attention.post(AttentionRequest(
-                level: .attention, source: "watcher", title: String(localized: "I can't check \(w.title): \(shortReason)"),
+                level: .attention, source: w.noticeSource, title: String(localized: "I can't check \(w.title): \(shortReason)"),
                 body: String(localized: "I'll keep trying, a little less often each time."),
                 actions: [AttentionAction(id: "stop", title: String(localized: "Stop watching"))], refKind: "watcher", refId: w.id))
         }
@@ -160,7 +160,7 @@ extension WatcherEngine {
         let body = result.detail?.components(separatedBy: "\n").map(\.displaySafe).filter { !$0.isEmpty }
             .joined(separator: "\n").clipped(WatchLimits.summaryLimit)
         await attention.post(AttentionRequest(
-            level: result.level ?? w.level, source: "watcher", title: title.isEmpty ? w.title : title,
+            level: result.level ?? w.level, source: w.noticeSource, title: title.isEmpty ? w.title : title,
             body: body?.isEmpty == false ? body : nil, actions: actions, refKind: "watcher", refId: w.id))
     }
 
@@ -177,7 +177,7 @@ extension WatcherEngine {
             // Reports end by design (an hour, a day, or when they were told to): say so quietly, offer more.
             let end = TimeFormat.clock(w.expiresAt ?? now, calendar: .autoupdatingCurrent)
             await attention.post(AttentionRequest(
-                level: .gentle, source: "watcher", title: String(localized: "I stopped showing \(w.title)"),
+                level: .gentle, source: w.noticeSource, title: String(localized: "I stopped showing \(w.title)"),
                 body: String(localized: "It was set to stop at \(end)."),
                 actions: [AttentionAction(id: "keep", title: String(localized: "Keep going"), isPrimary: true),
                           AttentionAction(id: "stop", title: String(localized: "Remove"))],
@@ -186,7 +186,7 @@ extension WatcherEngine {
         }
         let days = max(1, Int(((w.expiresAt ?? now).timeIntervalSince(w.createdAt) / 86400).rounded()))
         await attention.post(AttentionRequest(
-            level: .gentle, source: "watcher", title: String(localized: "I stopped watching \(w.title)"),
+            level: .gentle, source: w.noticeSource, title: String(localized: "I stopped watching \(w.title)"),
             body: String(localized: "It's been \(days) days. I can start again if you still want it."),
             actions: [AttentionAction(id: "keep", title: String(localized: "Watch again"), isPrimary: true),
                       AttentionAction(id: "stop", title: String(localized: "Remove"))],

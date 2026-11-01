@@ -10,7 +10,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     // Companion
     case chooseCompanion, presence, size, eyesFollow, folks, liveliness, sleep, gameTone, gameSounds
     // Attention
-    case attentionMode, quietHours, fullScreen, sounds, systemNotifications, hiddenNotifications, morningBrief
+    case attentionMode, interruptions, quietHours, fullScreen, sounds, systemNotifications, hiddenNotifications, morningBrief
     // Brain
     case provider, lastRequest, voiceInput, spokenReplies, voice, speechModel
     // Trust
@@ -27,7 +27,8 @@ enum SettingKey: String, CaseIterable, Hashable {
         switch self {
         case .openAtLogin, .askShortcut, .language, .appUpdates, .addonUpdates, .channel, .timesOfDay, .welcome: .general
         case .chooseCompanion, .presence, .size, .eyesFollow, .folks, .liveliness, .sleep, .gameTone, .gameSounds: .companion
-        case .attentionMode, .quietHours, .fullScreen, .sounds, .systemNotifications, .hiddenNotifications, .morningBrief: .attention
+        case .attentionMode, .interruptions, .quietHours, .fullScreen, .sounds, .systemNotifications, .hiddenNotifications, .morningBrief:
+            .attention
         case .provider, .lastRequest, .voiceInput, .spokenReplies, .voice, .speechModel: .brain
         case .approvalMode, .internet, .folders, .alwaysAllowed, .unanswered, .capabilities, .agentAccess, .location, .calendar,
              .keeps, .history, .exportData, .diagnostics, .debugLogging, .deleteAll: .trust
@@ -49,6 +50,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .liveliness, .sleep: String(localized: "How it behaves", comment: "Settings › Companion: a group")
         case .gameTone, .gameSounds: String(localized: "Games")
         case .attentionMode: String(localized: "Right now", comment: "Settings › Attention: Open, Focus or Quiet at this moment")
+        case .interruptions: String(localized: "What may interrupt you", comment: "Settings › Attention: a group, how far each source may go")
         case .quietHours, .fullScreen: String(localized: "Quiet on its own", comment: "Settings › Attention: quiet hours and full-screen apps")
         case .sounds, .systemNotifications, .hiddenNotifications, .morningBrief:
             String(localized: "How things reach you", comment: "Settings › Attention: sounds, notifications, the morning brief")
@@ -87,6 +89,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .gameTone: String(localized: "When it wins")
         case .gameSounds: String(localized: "Game sounds")
         case .attentionMode: String(localized: "Open, Focus or Quiet", comment: "Settings › Attention: the three ways things reach you")
+        case .interruptions: String(localized: "What may interrupt you", comment: "Settings › Attention: a group, how far each source may go")
         case .quietHours: String(localized: "Quiet hours", comment: "Settings › Attention: quiet every night between two times")
         case .fullScreen: String(localized: "When an app is full screen", comment: "Settings › Attention")
         case .sounds: String(localized: "Sounds")
@@ -153,6 +156,9 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .gameSounds: String(localized: "Soft sounds in games. Each game's speaker button turns its own on or off.")
         case .attentionMode: String(localized: "Focus holds whispers until it ends; Quiet lets through only what can't wait.",
                                     comment: "Settings › Attention")
+        case .interruptions:
+            String(localized: "Reminders, watches, commands, Claude Code, Codex, other apps, extensions, games and the companion: a card, a whisper, only in Today or off.",
+                   comment: "Settings › Attention: search")
         case .quietHours: String(localized: "Every night. Reminders still come, silently; whispers wait for the morning.",
                                  comment: "Settings › Attention › Quiet hours")
         case .fullScreen: String(localized: "Presentations, games and video calls.", comment: "Settings › Attention › When an app is full screen")
