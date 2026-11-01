@@ -14,13 +14,21 @@ public struct SidefolkPaths: Sendable {
         if let custom = environment["SIDEFOLK_HOME"], !custom.isEmpty {
             return SidefolkPaths(home: URL(fileURLWithPath: (custom as NSString).expandingTildeInPath, isDirectory: true))
         }
-        let fm = FileManager.default
-        let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let library = fm.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-        return SidefolkPaths(
-            home: support.appendingPathComponent("Sidefolk", isDirectory: true),
-            logs: library.appendingPathComponent("Logs/Sidefolk", isDirectory: true)
-        )
+        let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
+        return SidefolkPaths(home: defaultHome, logs: library.appendingPathComponent("Logs/Sidefolk", isDirectory: true))
+    }
+
+    /// The person's own data folder, used when `SIDEFOLK_HOME` isn't set.
+    static var defaultHome: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Sidefolk", isDirectory: true)
+    }
+
+    /// False for a `SIDEFOLK_HOME` anywhere else (tests, `make dev`, QA runs): such a copy changes nothing
+    /// outside its own folder that the person's agents or shell rely on (D86).
+    public var isDefaultHome: Bool {
+        func place(_ url: URL) -> String { url.standardizedFileURL.resolvingSymlinksInPath().path }
+        return place(home) == place(Self.defaultHome)
     }
 
     public var database: URL { home.appendingPathComponent("sidefolk.sqlite") }
@@ -32,6 +40,8 @@ public struct SidefolkPaths: Sendable {
     public var run: URL { home.appendingPathComponent("run", isDirectory: true) }
     public var socket: URL { run.appendingPathComponent("sidefolk.sock") }
     public var brainWorkdir: URL { home.appendingPathComponent("brain", isDirectory: true) }
+    /// Stand-ins for the agent configs and `~/.local/bin` that a copy on another data folder edits instead (D86).
+    public var agentConfigs: URL { home.appendingPathComponent("agent-configs", isDirectory: true) }
     /// A new version's disk image while it is downloaded and checked (D46); emptied at launch.
     public var updates: URL { home.appendingPathComponent("Updates", isDirectory: true) }
     /// Companions and the catalog from the add-on gallery (D55).

@@ -81,6 +81,10 @@ final class AppCoordinator {
     /// Looks again when Focus or Quiet ends, quiet hours start or end, or Full access runs out (D84).
     var attentionTimer: Task<Void, Never>?
     var fullAccessTimer: Task<Void, Never>?
+    #if DEBUG
+    /// Set by the `connect:` dev command so a QA copy's Connect can run without a click (D86).
+    var devAcceptsNextConfirmation = false
+    #endif
 
     init(runtime: SidefolkRuntime) {
         self.runtime = runtime
@@ -182,6 +186,7 @@ final class AppCoordinator {
             Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
         }
         installHelperLink()
+        IntegrationLocations.prepareStandIns(paths: runtime.paths)
         // Extension pages' charts reach back a day, and Today's tiles stay current (D62).
         await runtime.extensions.startPageSampling()
         await palettes.refresh()
@@ -357,6 +362,7 @@ final class AppCoordinator {
             return
         }
         if command == "about" { showAbout(); return }
+        if devConnect(command) { return }
         if command == "calendar" || command.hasPrefix("calendar:") {
             let parts = command.split(separator: ":").dropFirst().map(String.init)
             let day = parts.count > 1 ? try? Date(parts[1] + "T12:00:00Z", strategy: .iso8601) : nil

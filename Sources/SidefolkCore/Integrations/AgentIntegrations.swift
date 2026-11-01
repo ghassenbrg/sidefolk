@@ -1,46 +1,5 @@
 import Foundation
 
-/// Where other agents keep their configuration. Injected everywhere: tests use temp files, and the
-/// app passes `.standard()` only after the user clicked and confirmed.
-public struct IntegrationLocations: Sendable, Equatable {
-    /// Claude Code's global config with user-scope `mcpServers` (`~/.claude.json`).
-    public var claudeConfig: URL
-    /// Claude Code's user settings with `hooks` (`~/.claude/settings.json`).
-    public var claudeSettings: URL
-    /// Codex's config (`~/.codex/config.toml`).
-    public var codexConfig: URL
-    /// Claude Code's user skills (`~/.claude/skills`), one folder per skill with a SKILL.md.
-    public var claudeSkills: URL
-    /// Codex's user skills (`~/.codex/skills`; Codex also reads `~/.agents/skills`).
-    public var codexSkills: URL
-    /// Codex's user hooks (`~/.codex/hooks.json`), in Claude Code's format.
-    public var codexHooks: URL
-
-    /// The skills folders and Codex's hooks file default to their places beside the given configs.
-    public init(claudeConfig: URL, claudeSettings: URL, codexConfig: URL, claudeSkills: URL? = nil, codexSkills: URL? = nil,
-                codexHooks: URL? = nil) {
-        self.claudeConfig = claudeConfig
-        self.claudeSettings = claudeSettings
-        self.codexConfig = codexConfig
-        let claudeDir = claudeSettings.deletingLastPathComponent(), codexDir = codexConfig.deletingLastPathComponent()
-        self.claudeSkills = claudeSkills ?? claudeDir.appendingPathComponent("skills", isDirectory: true)
-        self.codexSkills = codexSkills ?? codexDir.appendingPathComponent("skills", isDirectory: true)
-        self.codexHooks = codexHooks ?? codexDir.appendingPathComponent("hooks.json")
-    }
-
-    /// The real locations, honouring `CLAUDE_CONFIG_DIR` and `CODEX_HOME` (checked against Claude Code 2.1
-    /// and Codex 0.160: each reads user skills from `<its folder>/skills/<name>/SKILL.md`).
-    public static func standard(home: String = NSHomeDirectory(),
-                                environment: [String: String] = ProcessInfo.processInfo.environment) -> IntegrationLocations {
-        let claudeDir = environment["CLAUDE_CONFIG_DIR"].flatMap { $0.isEmpty ? nil : $0 }
-        let codexDir = environment["CODEX_HOME"].flatMap { $0.isEmpty ? nil : $0 } ?? home + "/.codex"
-        return IntegrationLocations(
-            claudeConfig: URL(fileURLWithPath: (claudeDir ?? home) + "/.claude.json"),
-            claudeSettings: URL(fileURLWithPath: (claudeDir ?? home + "/.claude") + "/settings.json"),
-            codexConfig: URL(fileURLWithPath: codexDir + "/config.toml"))
-    }
-}
-
 public enum AgentIntegration: String, Sendable, CaseIterable {
     /// Sidefolk's tools in Claude Code (user-scope MCP server "sidefolk").
     case claudeMCP

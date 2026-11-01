@@ -179,6 +179,7 @@ struct ReleaseNotesView: View {
         .foregroundStyle(Theme.ink)
         .frame(maxWidth: .infinity, alignment: .leading)
         .textSelection(.enabled)
+        .webLinksOnly()
     }
 
     /// The first few bullet lines of the notes, for a short "what's new" (Settings › General, the update window).
