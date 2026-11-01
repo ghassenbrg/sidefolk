@@ -103,9 +103,11 @@ public struct ElevenLabs: Sendable {
     /// `text` said by `voice`, streamed as it is made. Tries `models` in order until one is accepted.
     public func speech(_ text: String, voice: String, models: [String], rate: Double, language: String) -> AsyncThrowingStream<VoiceAudio, Error> {
         let session = self.session
-        // Models turned down earlier in this session aren't tried again (the last one always is).
+        // Models turned down earlier in this session for this language aren't tried again (the last one always is).
+        // By language: a model that refuses Japanese may still speak English, and must not be dropped for it.
+        let code = Self.code(language)
         let skipped = Self.turnedDown.withLock { $0 }
-        let usable = models.filter { !skipped.contains($0) }
+        let usable = models.filter { !skipped.contains(Self.refusal($0, code)) }
         let tried = usable.isEmpty ? Array(models.suffix(1)) : usable
         let requests = tried.map { (model: $0, request: request(text, voice: voice, model: $0, rate: rate, language: language)) }
         return AsyncThrowingStream { continuation in
@@ -117,8 +119,9 @@ public struct ElevenLabs: Sendable {
                             continuation.finish()
                             return
                         } catch ModelRejected.rejected(let error) where index < requests.count - 1 {
-                            Self.turnedDown.withLock { _ = $0.insert(attempt.model) }
-                            Log.shared.info("voice", "ElevenLabs turned down a model; trying the next", ["detail": error.detail ?? ""])
+                            Self.turnedDown.withLock { _ = $0.insert(Self.refusal(attempt.model, code)) }
+                            Log.shared.info("voice", "ElevenLabs turned down a model; trying the next",
+                                            ["model": attempt.model, "language": code, "detail": error.detail ?? ""])
                         } catch ModelRejected.rejected(let error) {
                             throw error
                         }
@@ -145,14 +148,18 @@ public struct ElevenLabs: Sendable {
             "voice_settings": ["stability": .number(0.5), "similarity_boost": .number(0.75), "speed": .number(min(max(rate, 0.7), 1.2))],
         ]
         // Multilingual v2 refuses a language code; the newer models use it to avoid guessing.
-        let code = String(language.prefix { $0 != "-" && $0 != "_" }).lowercased()
+        let code = Self.code(language)
         if model != "eleven_multilingual_v2", code.count == 2 { body["language_code"] = .string(code) }
         request.httpBody = try? JSONEncoder().encode(JSONValue.object(body))
         return request
     }
 
     private enum ModelRejected: Error { case rejected(UserFacingError) }
+    /// "model|language" pairs ElevenLabs refused in this session.
     static let turnedDown = Mutex<Set<String>>([])
+    static func refusal(_ model: String, _ code: String) -> String { "\(model)|\(code)" }
+    /// ISO 639-1, as ElevenLabs takes it: "ja" for "ja-JP", "zh" for "zh-Hans".
+    static func code(_ language: String) -> String { String(language.prefix { $0 != "-" && $0 != "_" }).lowercased() }
 
     private static func stream(_ request: URLRequest, session: URLSession,
                                into continuation: AsyncThrowingStream<VoiceAudio, Error>.Continuation) async throws {

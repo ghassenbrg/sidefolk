@@ -88,6 +88,16 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   only; no live call was made. Next: merge into main; set Playtime's `minimum_sidefolk` to the snapshot that carries
   D93, D95 and D96.
 
+- **Spoken replies muted by Siri's listener** (branch `team/voice-ja`, not merged; D34 amended): the founder heard
+  nothing after switching to Japanese. Not the language: Playtime's sounds had left an audio engine running, so
+  macOS's Siri voice trigger (corespeechd) kept the microphone on, and it counted as "another app is recording". Now
+  macOS's own listeners don't count, game sounds let the hardware go after 3 s, and every reply decision and playback
+  is logged (`voice` › `reply …`). Debug `brain:scripted:<answer>` answers without a network. Reproduced and verified
+  in a debug app in Japanese on `build/vj-1`: before, a game sound then a spoken request logged `reply muted
+  why=micInUse`; after, `reply speak` with `mic_listening=corespeechd` while another app played, Kyoko for Japanese
+  lines with Samantha chosen, `reply played`; Japanese, Chinese, Korean and Arabic voices all synthesize. Tests:
+  `VoicePolicyTests`, `SpokenLineTests`, `ElevenLabsTests`, `SpeechPlayerTests`. Next: merge, then the founder
+  tries Japanese with a game played first and music playing, with the snapshot that carries it.
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 

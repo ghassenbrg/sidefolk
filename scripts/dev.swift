@@ -30,6 +30,8 @@
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
 //   swift scripts/dev.swift theme:harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
+//   swift scripts/dev.swift "brain:scripted:<answer>" | brain:scripted:off   (every AI request gets that fixed answer,
+//                           no network; only on a SIDEFOLK_HOME)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
 //                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)

@@ -437,6 +437,17 @@ voices off the Mac for short commands); wake word and always-on listening (the s
 **Implications:** the microphone usage string and the hardened runtime's audio-input entitlement;
 the speech-recognition usage string for macOS 15; microphone permission resets with ad-hoc builds,
 so testers need the Apple Development or Developer ID signature.
+**Amended (2026-11-01, the founder heard nothing in Japanese):** "while another app records" means an app recording
+(a call, a voice memo, a screen recording with sound), not macOS's own background listeners. Siri's voice trigger
+(corespeechd, in /System/Library) runs the microphone whenever any audio plays, to hear past it; counting it muted
+every reply while music, a video or a game's sounds played. The founder's session had played Playtime with sounds
+on, and the game sounds' engine never stopped, so every reply after it was muted, in any language, with Apple's
+voice or ElevenLabs, until the relaunch; it now lets the hardware go 3 s after its last sound. Programs in
+/System/Library outside an app bundle don't count; apps (Apple's too), avconferenced (FaceTime's calls) and anything
+unknown still do. Every spoken-reply decision is logged at info level without the words (`voice` › `reply speak`,
+`reply muted` with `why` and who has the microphone, `reply saying` with the engine, the voice that really speaks and
+its language and the output, then `reply played`, `cut off`, `made no audio` or `failed`), so the next report reads
+from the log. A refused ElevenLabs model is remembered per language, and a full answer keeps its own ？！؟.
 
 ### D35 — Reports: a value told every few seconds or minutes, live and in place; reminders down to a minute (2026-10-26)
 **Decision:** a watcher can be a *report* (`Watcher.Mode.report`): at every check it tells the current value

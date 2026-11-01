@@ -1,6 +1,5 @@
 import AppKit
 import AVFoundation
-import NaturalLanguage
 import SidefolkCore
 
 /// What the voice side needs from the rest of the app.
@@ -334,12 +333,18 @@ final class VoiceController {
 
     /// The reply to a request: said aloud when the rules allow it, shown in any case (D34).
     func reply(_ line: String, to context: ReplyContext, in model: AskModel) {
-        guard context.generation == generation else { return }
-        if context.spoken { awaitingSpokenReply = false }
         let settings = host.currentSettings
+        guard context.generation == generation else {
+            // The talk key, Esc, a click on the companion or Stop came after the request.
+            return ReplyLog.decided("interrupted", line: line, context: context, voice: settings.voice)
+        }
+        if context.spoken { awaitingSpokenReply = false }
+        let typing = typing(since: context)
+        let microphone = AudioDevices.microphoneUsers()
         let decision = VoicePolicy.reply(spokenRequest: context.spoken, replies: settings.voice.replies, quiet: settings.isQuiet(at: Date()),
-                                         micInUseElsewhere: AudioDevices.inputInUseElsewhere(), typedSince: typedSince(context),
+                                         micInUseElsewhere: !microphone.recording.isEmpty, typedSince: typing.typed,
                                          voiceOver: NSWorkspace.shared.isVoiceOverEnabled)
+        ReplyLog.decided(decision, line: line, context: context, voice: settings.voice, typing: typing, microphone: microphone)
         switch decision {
         case .none:
             return
@@ -367,12 +372,20 @@ final class VoiceController {
 
     func say(_ line: String, with settings: VoiceSettings, done: (@MainActor (Error?) -> Void)? = nil) {
         guard let engine = engine(for: settings) else {
-            done?(UserFacingError("Spoken replies need your ElevenLabs key and a voice.", recovery: "Add them in Settings › Brain."))
+            let error = UserFacingError("Spoken replies need your ElevenLabs key and a voice.", recovery: "Add them in Settings › Brain.")
+            Log.shared.error("voice", "reply failed", ["error": "no ElevenLabs key or voice"])
+            done?(error)
             return
         }
         let voice = settings.engine == .apple ? settings.appleVoice : settings.elevenLabsVoice
         let style = VoiceStyle(voice: voice, language: Self.language(of: line), rate: settings.rate)
-        player.say(line, with: engine, style: style, volume: Float(settings.volume), done: done)
+        ReplyLog.saying(line, engine: settings.engine, style: style, models: elevenLabsModels ?? ElevenLabs.preferredModels,
+                        volume: settings.volume)
+        let started = Date()
+        player.say(line, with: engine, style: style, volume: Float(settings.volume)) { [player] error in
+            ReplyLog.ended(error, player: player, started: started)
+            done?(error)
+        }
     }
 
     func engine(for settings: VoiceSettings) -> (any SpeechOutput)? {
@@ -390,14 +403,17 @@ final class VoiceController {
     }
 
     /// The person typed after asking (a key down since the request, or words in the box).
-    private func typedSince(_ context: ReplyContext) -> Bool {
-        let sinceRequest = Date().timeIntervalSince(context.at)
-        return !host.ask.text.isEmpty || EnvironmentMonitor.secondsSinceKey < sinceRequest - 0.25
+    private func typing(since context: ReplyContext) -> ReplyLog.Typing {
+        let asked = Date().timeIntervalSince(context.at)
+        let key = EnvironmentMonitor.secondsSinceKey
+        let box = !host.ask.text.isEmpty
+        return ReplyLog.Typing(typed: VoicePolicy.typedSince(boxHasWords: box, secondsSinceKey: key, secondsSinceRequest: asked),
+                               boxHasWords: box, keyAgo: key, askedAgo: asked)
     }
 
     /// The line's own language, so a French answer gets a French voice; else the app's.
     static func language(of line: String) -> String {
-        NLLanguageRecognizer.dominantLanguage(for: line)?.rawValue ?? AppLanguage.current
+        SpokenLine.language(of: line, fallback: AppLanguage.current)
     }
 
     /// A dozen or more levels a second while audio plays: the mouth moves only on a visible change.

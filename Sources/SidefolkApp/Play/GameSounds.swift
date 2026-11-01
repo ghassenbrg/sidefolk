@@ -12,8 +12,13 @@ final class GameSounds {
     private let player = AVAudioPlayerNode()
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
     private var made: [GameSound: AVAudioPCMBuffer] = [:]
-    private var started = false
+    private var wired = false
+    /// When everything scheduled has played.
+    private var busyUntil = Date.distantPast
+    private var idle: Task<Void, Never>?
     static let volume: Float = 0.35
+    /// How long the engine stays up after the last sound, so a game's next tap doesn't wait for it to start.
+    static let linger: Duration = .seconds(3)
 
     /// Whether the Mac allows interface sounds at all (System Settings › Sound › Play user interface sound effects).
     static var interfaceSoundsOn: Bool {
@@ -24,7 +29,7 @@ final class GameSounds {
         guard start() else { return }
         let buffer = made[sound] ?? make(notes(sound))
         made[sound] = buffer
-        player.scheduleBuffer(buffer, at: nil, options: [])
+        schedule(buffer)
     }
 
     /// A pad's note in Copy Me: a pentatonic step each (C, E, G, A, high C), so any sequence sounds like a tune.
@@ -33,22 +38,38 @@ final class GameSounds {
         let hz = [523.25, 659.25, 783.99, 880.0, 1_046.5][min(max(pad, 0), 4)]
         let buffer = pads[pad] ?? make([Note(at: 0, hz: hz, length: 0.32, decay: 9), Note(at: 0, hz: hz * 2, length: 0.2, decay: 16, level: 0.25)])
         pads[pad] = buffer
-        player.scheduleBuffer(buffer, at: nil, options: [])
+        schedule(buffer)
     }
 
     private var pads: [Int: AVAudioPCMBuffer] = [:]
 
     private func start() -> Bool {
         guard Self.interfaceSoundsOn else { return false }
-        if !started {
+        if !wired {
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: format)
             engine.mainMixerNode.outputVolume = Self.volume
-            guard (try? engine.start()) != nil else { return false }
-            player.play()
-            started = true
+            wired = true
         }
+        if !engine.isRunning { guard (try? engine.start()) != nil else { return false } }
+        if !player.isPlaying { player.play() }
         return true
+    }
+
+    /// Plays `buffer` after what is queued, and lets the audio hardware go a moment after the last sound. An engine
+    /// left running keeps the output busy for good, and while anything plays macOS's Siri listener runs the
+    /// microphone, which read as "another app is recording" and silenced every spoken reply (D34).
+    private func schedule(_ buffer: AVAudioPCMBuffer) {
+        player.scheduleBuffer(buffer, at: nil, options: [])
+        busyUntil = max(busyUntil, Date()).addingTimeInterval(Double(buffer.frameLength) / format.sampleRate)
+        idle?.cancel()
+        let wait = busyUntil.timeIntervalSinceNow
+        idle = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(wait) + Self.linger)
+            guard !Task.isCancelled, let self else { return }
+            self.player.stop()
+            self.engine.stop()
+        }
     }
 
     /// A note: its pitch (Hz, gliding to `to`), length, how hard it starts and how fast it fades, with a little noise.

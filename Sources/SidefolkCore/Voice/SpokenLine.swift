@@ -44,7 +44,7 @@ public enum SpokenLine {
             for sentence in Sentences.split(speakable(listItem(line) ?? line)) {
                 var said = speakable(sentence)
                 guard says(said) else { continue }
-                if !said.hasSuffix(".") && !said.hasSuffix("!") && !said.hasSuffix("?") && !said.hasSuffix("。") { said += "." }
+                if let last = said.last, !Self.sentenceEnds.contains(last) { said += unspaced(last) ? "。" : "." }
                 if length + said.count > maxFullCharacters, !spoken.isEmpty {
                     spoken.append(String(localized: "The rest is on the screen.", comment: "Said aloud after reading a long answer as far as it goes"))
                     return spoken.joined(separator: " ")
@@ -54,6 +54,16 @@ public enum SpokenLine {
             }
         }
         return spoken.isEmpty ? onScreen : spoken.joined(separator: " ")
+    }
+
+    /// What ends a sentence in the app's languages: a line without one gets a full stop (。 after Chinese or Japanese),
+    /// and one that has its own (？, ！, ؟) keeps it rather than gaining a "." the voice would read as a pause or a word.
+    static let sentenceEnds: Set<Character> = [".", "!", "?", "…", "。", "！", "？", "؟"]
+
+    /// The language a line is said in ("ja", "zh-Hans", "en"), so a Japanese answer gets a Japanese voice whatever voice
+    /// was chosen; `fallback` (the app's language) when it can't be told.
+    public static func language(of line: String, fallback: String) -> String {
+        NLLanguageRecognizer.dominantLanguage(for: line)?.rawValue ?? fallback
     }
 
     /// The first sentence that still says something once made speakable (links go first: their
@@ -161,9 +171,12 @@ public enum SpokenLine {
     /// site's name alone is not an answer).
     private static func says(_ text: String) -> Bool {
         let words = text.split(whereSeparator: \.isWhitespace).filter { $0.contains { $0.isLetter || $0.isNumber } }.count
-        let unspaced = text.unicodeScalars.filter { $0.properties.isIdeographic || (0x3040...0x30FF).contains($0.value)
-            || (0x0E00...0x0E7F).contains($0.value) }.count
-        return words >= 2 || unspaced >= 2
+        return words >= 2 || text.filter(unspaced).count >= 2
+    }
+
+    /// A letter of a script written without spaces: Chinese, Japanese, Thai.
+    private static func unspaced(_ character: Character) -> Bool {
+        character.unicodeScalars.contains { $0.properties.isIdeographic || (0x3040...0x30FF).contains($0.value) || (0x0E00...0x0E7F).contains($0.value) }
     }
 
     /// One breath: up to `maxWords`, cut at a comma or semicolon when there is one late enough.
