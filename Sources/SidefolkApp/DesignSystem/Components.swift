@@ -501,6 +501,7 @@ struct PageScroll<Content: View>: View {
         } else {
             ScrollView { column.frame(maxWidth: .infinity) }
                 .scrollContentBackground(.hidden)
+                .clipsUnderToolbar()
                 .background { PageBackground() }
         }
     }
@@ -510,6 +511,28 @@ struct PageScroll<Content: View>: View {
             .frame(maxWidth: maxWidth, alignment: .leading)
             .padding(.horizontal, padding)
             .padding(.vertical, Theme.Space.xl)
+    }
+}
+
+extension View {
+    /// A page's scroll view ends at the toolbar's edge (D93's fix): what scrolls up is cut there rather than sliding
+    /// under the toolbar's title and the Say bar, while the page's background still runs under the toolbar. Only in
+    /// Home, which says where its toolbar ends (`HomeTitleTracker`).
+    func clipsUnderToolbar() -> some View { modifier(ClipsUnderToolbar()) }
+}
+
+private struct ClipsUnderToolbar: ViewModifier {
+    @Environment(HomeTitleTracker.self) private var tracker: HomeTitleTracker?
+    @State private var top: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        if let tracker {
+            content
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { top = $0 }
+                .mask { Rectangle().padding(.top, max(0, tracker.toolbarBottom - top)) }
+        } else {
+            content
+        }
     }
 }
 

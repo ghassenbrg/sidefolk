@@ -50,6 +50,7 @@ struct ExtensionPageView: View {
             PageIcon(info: model.info, size: 40)
             VStack(alignment: .leading, spacing: 3) {
                 Text(ext: model.info.title).font(Theme.Font.title).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                    .homePageTitle()
                 Text(subtitle).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: 0)
@@ -148,7 +149,7 @@ private struct SummaryBanner: View {
 // MARK: Sections
 
 /// A section lays its parts out by kind: numbers side by side, cards in columns, notes and buttons across.
-private struct SectionView: View {
+struct SectionView: View {
     var section: ExtensionPage.Section
     var model: ExtensionPageModel
 

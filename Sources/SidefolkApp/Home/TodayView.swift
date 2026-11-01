@@ -58,6 +58,7 @@ struct TodayView: View {
                     .font(Theme.Font.display).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
+                    .homePageTitle()
                 (Text(verbatim: DayBrief.lead(needsYou: now.needsYouCount)).fontWeight(.semibold).foregroundStyle(Theme.ink)
                     + Text(verbatim: " " + DayBrief.detail(next: now.nextUp, changed: now.changedWatches)).foregroundStyle(Theme.inkMuted))
                     .font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale))

@@ -17,6 +17,7 @@ final class ExtensionPagesModel {
     /// Today's tiles follow what changed here; set by Home.
     var changed: (() -> Void)?
     private var models: [String: ExtensionPageModel] = [:]
+    private var centers: [String: GameCenterModel] = [:]
 
     init(services: AppServices) {
         self.services = services
@@ -46,6 +47,7 @@ final class ExtensionPagesModel {
         layout = services.runtime.settings.current.homePages
         let ids = Set(list.map(\.id))
         models = models.filter { ids.contains($0.key) }
+        centers = centers.filter { ids.contains($0.key) }
         await refreshSummaries()
     }
 
@@ -72,6 +74,21 @@ final class ExtensionPagesModel {
         models[info.id] = m
         return m
     }
+
+    /// The Game Center of a page whose extension has games (D93), on the page's own model.
+    func center(_ info: ExtensionPageInfo) -> GameCenterModel {
+        if let c = centers[info.id] { return c }
+        let c = GameCenterModel(page: model(info), services: services)
+        centers[info.id] = c
+        return c
+    }
+
+    #if DEBUG
+    /// A sample center for the UI snapshots, shown for its page.
+    func showSample(center: GameCenterModel) { centers[center.page.info.id] = center }
+    /// A sample page's model for the UI snapshots' window.
+    func showSample(page: ExtensionPageModel) { models[page.info.id] = page }
+    #endif
 
     /// While Home is open: the background readings (once a minute, D62) reach the sidebar's switches and Today's tiles,
     /// so "25 min left" counts down without a click.

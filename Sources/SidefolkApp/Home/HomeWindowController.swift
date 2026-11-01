@@ -7,6 +7,8 @@ import SwiftUI
 final class HomeWindowController: NSObject, NSWindowDelegate {
     enum Section {
         case now, calendar, notebook, onDuty, history, gallery
+        /// An extension's page (`ExtensionPageInfo.id`): the Game Center (D93).
+        case page(String)
     }
 
     private let model: HomeModel
@@ -27,6 +29,11 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         case .history: model.selection = .history
         case .gallery: model.selection = .gallery
         case .notebook: Task { await model.showNotebook() }
+        case .page(let id):
+            Task {
+                await model.pages.reload()
+                model.selection = .page(id)
+            }
         case nil: break
         }
         present()

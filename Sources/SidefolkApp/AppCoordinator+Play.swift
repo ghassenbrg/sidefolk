@@ -43,7 +43,7 @@ extension AppCoordinator {
         if !companion.isVisible { showCompanion(true) }
         tossRevealed = false
         guard let (frame, screen) = anchor() else { return }
-        if let kept = playPanel.kept(request.info) {
+        if !request.fresh, let kept = playPanel.kept(request.info) {
             playPanel.show(kept, beside: frame, on: screen, focus: request.focus)
             return
         }
@@ -82,9 +82,10 @@ extension AppCoordinator {
         }
         model.onClose = { [weak self] in self?.playPanel.hide() }
         playPanel.show(model, beside: frame, on: screen, focus: request.focus)
-        // The companion's name lets a game word its buttons ("Ask Mochi"); nothing else about the person is passed.
-        let options: [String: JSONValue] = ["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky),
-                                            "companion": .string(s.companionName)]
+        // The companion's name lets a game word its buttons ("Ask Mochi"); nothing else about the person is passed but
+        // what they said about this game (D93: a topic, a count, a range, who guesses), checked by `GameSlots`.
+        var options = request.slots.options
+        options.merge(["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky), "companion": .string(s.companionName)]) { _, own in own }
         Task { await model.start(GameSetup(level: request.level, language: AppLanguage.current, options: options)) }
     }
 
@@ -136,6 +137,33 @@ extension AppCoordinator {
             _ = try? await activity.log(entry)
             events.changed(.activity)
         }
+    }
+
+    /// "pause the game" (D93): the panel puts its game away, to resume from the menu, the Game Center or "resume".
+    func putGameAway() {
+        guard playPanel.isVisible, playPanel.model != nil else { return }
+        playPanel.hide()
+    }
+
+    /// The Game Center (D93): the page in Home of the first extension with games; the Play menu when none has a page.
+    func openGameCenter() {
+        Task { @MainActor in
+            guard let page = await runtime.extensions.pages().first(where: \.gameCenter) else { return openPlayMenu(focus: true) }
+            home.show(section: .page(page.id))
+        }
+    }
+
+    /// Settings changed (the Game Center, Settings, `games.settings`): the open game's sounds follow.
+    func followGameSettings() {
+        guard let model = playPanel.model else { return }
+        let on = runtime.settings.current.games.soundsOn(model.info.id)
+        if model.soundsOn != on { model.soundsOn = on }
+    }
+
+    /// The game put away in the panel, to resume from the Game Center's Continue.
+    var keptGame: GameInfo? {
+        guard let model = playPanel.model, !playPanel.shows(model) else { return nil }
+        return playPanel.kept(model.info)?.info
     }
 
     /// The speaker in the panel's header: this game's sounds on or off, remembered.
