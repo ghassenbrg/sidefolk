@@ -218,9 +218,36 @@ final class AddonUpdateController: AddonUpdateActions {
     }
 
     #if DEBUG
-    /// `addons:review | waiting | updates | nudge | clear` from scripts/dev.swift: Settings › Updates and the heads-up with made-up
-    /// gallery entries, without a gallery.
+    /// `addons:review | waiting | updates | nudge | clear` from scripts/dev.swift: Settings › Updates and the heads-up with
+    /// made-up gallery entries, without a gallery. With a gallery (`SIDEFOLK_ADDONS`, D89): `addons:auto:on|off` sets
+    /// "Update add-ons automatically", `addons:get:<id>` installs that add-on from it as Get and the install sheet would,
+    /// `addons:check` looks at it now, `addons:updateAll` is Update all.
     func dev(_ command: String) {
+        if command.hasPrefix("auto:") {
+            let on = command == "auto:on"
+            Task { await runtime.settings.update { $0.updates.addons = on } }
+            return
+        }
+        if command == "updateAll" { return updateAddonsNow() }
+        if command == "check" { return checkNow() }
+        if command.hasPrefix("get:") {
+            let id = String(command.dropFirst(4))
+            Task {
+                do {
+                    guard let entry = try await runtime.addons.catalog(refresh: true).entry(id) else { return }
+                    switch entry.kind {
+                    case .companion: try await runtime.addons.install(companion: entry)
+                    case .theme: break
+                    case .extension:
+                        try await runtime.extensions.install(from: try await runtime.addons.fetch(entry), origin: .official)
+                        await runtime.addons.discard(entry)
+                    }
+                } catch {
+                    Log.shared.warning("dev", "addons:get failed", ["id": id, "error": String(describing: error)])
+                }
+            }
+            return
+        }
         func entry(_ id: String, _ name: String, _ kind: AddonEntry.Kind) -> AddonEntry {
             let json = ["id": id, "kind": kind.rawValue, "name": name, "tagline": "", "description": "", "author": "Sidefolk",
                         "version": "1.0.0-snapshot.3", "file": "x.zip", "bytes": 1, "sha256": String(repeating: "0", count: 64)] as [String: Any]

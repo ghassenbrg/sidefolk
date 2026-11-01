@@ -80,6 +80,8 @@ final class SettingsModel {
                 case .settings:
                     settings = runtime.settings.current
                     integration = await services.integrationStatus()
+                    // A companion may have been updated by Update all or by itself (D89): its card no longer offers one.
+                    await gallery.readInstalled()
                 case .permissions: await loadPermissions()
                 case .attention: await refreshHeld()
                 case .extensions:

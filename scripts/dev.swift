@@ -40,6 +40,9 @@
 //                           moment, and the note the new copy gives)
 //   swift scripts/dev.swift addons:review | addons:waiting | addons:clear   (D70: Settings › Updates and the heads-up
 //                           with made-up add-on updates)
+//   swift scripts/dev.swift addons:updates | addons:nudge   (D89: the Gallery's Updates halfway through Update all, the whisper)
+//   swift scripts/dev.swift addons:auto:off | addons:get:<id> | addons:check | addons:updateAll   (D89, with SIDEFOLK_ADDONS=<local gallery>:
+//                           the switch, an add-on installed from it as from the Gallery, Update all)
 import Foundation
 
 guard let argument = CommandLine.arguments.dropFirst().first else {
