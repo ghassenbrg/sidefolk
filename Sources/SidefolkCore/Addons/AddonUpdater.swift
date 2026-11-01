@@ -38,14 +38,16 @@ public struct AddonUpdateReport: Sendable {
     public var installed: Int { companions.count + themes.count + extensions.count }
 
     /// What Update all did in a few words: "3 updated, 1 needs your review". Nil when it did nothing at all.
-    public var summary: String? {
+    public var summary: String? { Self.summary(installed: installed, review: review.count, failed: failed.count) }
+
+    public static func summary(installed: Int, review: Int, failed: Int) -> String? {
         var parts: [String] = []
         if installed > 0 { parts.append(String(localized: "\(installed) updated", comment: "Update all's summary: “3 updated”")) }
-        if !review.isEmpty {
-            parts.append(String(localized: "\(review.count) needs your review", comment: "Update all's summary: “1 needs your review”"))
+        if review > 0 {
+            parts.append(String(localized: "\(review) needs your review", comment: "Update all's summary: “1 needs your review”"))
         }
-        if !failed.isEmpty {
-            parts.append(String(localized: "\(failed.count) couldn't update", comment: "Update all's summary: “1 couldn't update”"))
+        if failed > 0 {
+            parts.append(String(localized: "\(failed) couldn't update", comment: "Update all's summary: “1 couldn't update”"))
         }
         guard !parts.isEmpty else { return nil }
         return parts.joined(separator: String(localized: ", ", comment: "Between the parts of Update all's summary: “3 updated, 1 needs your review”"))

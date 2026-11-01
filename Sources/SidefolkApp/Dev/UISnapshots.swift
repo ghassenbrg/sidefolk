@@ -156,7 +156,7 @@ enum UISnapshots {
             if let catalog = full.settingsHost.gallery.catalog {
                 SampleAddonUpdates.show(in: full.services.updates, catalog: catalog)
                 try await homeShot("gallery-updates")
-                full.services.updates.addonSummary = "3 updated, 1 needs your review"
+                full.services.updates.addonSummary = AddonUpdateReport.summary(installed: 3, review: 1, failed: 0)
                 SampleExtensionPage.showPages(in: full.pages)
                 full.selection = .now
                 try await homeShot("today-updates")
