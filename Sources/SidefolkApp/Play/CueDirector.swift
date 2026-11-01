@@ -89,24 +89,31 @@ final class CueDirector {
         }
     }
 
-    /// The companion's moves for each cue: its own moments and states, which every 2D and 3D companion has. Moves
-    /// still to be made for every companion (sulk, shrug, tease, ready) borrow the nearest one meanwhile.
+    /// The companion's moves for each cue: moments every 2D and 3D companion has, its own sulk, shrug, tease and
+    /// ready among them, and the short accents for fast games.
     static func moment(_ move: GameCue.Move) -> CharacterAntic? {
         switch move {
         case .cheer: .cheer
-        case .bow, .accentBow: .bow
+        case .bow: .bow
         case .nod: .nod
-        case .shrug, .sweat: .scratch
+        case .sweat: .scratch
+        case .shrug: .shrug
+        case .sulk: .sulk
         case .giggle: .giggle
-        case .wince, .gasp: .startle
-        case .tease: .wiggle
+        case .wince: .wince
+        case .gasp: .gasp
+        case .tease: .tease
         case .dizzy: .dizzy
-        case .ready: .peek
+        case .ready: .ready
         case .shuffle, .dance: .dance
-        case .hop, .accentHop: .hop
-        case .spin, .accentSpin: .spin
-        case .wave, .accentWave: .wave
-        case .think, .celebrate, .sulk: nil
+        case .hop: .hop
+        case .spin: .spin
+        case .wave: .wave
+        case .accentWave: .waveQuick
+        case .accentHop: .hopQuick
+        case .accentSpin: .spinQuick
+        case .accentBow: .bowQuick
+        case .think, .celebrate: nil
         }
     }
 
@@ -115,7 +122,6 @@ final class CueDirector {
         switch move {
         case .think: (.thinking, 2.4)
         case .celebrate: (.celebrating, 2.2)
-        case .sulk: (.error, 1.6)
         default: nil
         }
     }

@@ -552,6 +552,163 @@ Object.assign(ACTIONS, {
   },
 });
 
+/**
+ * Game reactions (D75, built in D88's batch): sulk, shrug, tease, ready, and the short accents fast games use. Each is
+ * short, reads from across the room and comes back to rest by itself. `still` is what Reduce Motion plays instead: the
+ * face and a small turn of the head, nothing that travels.
+ */
+Object.assign(ACTIONS, {
+  sulk: {
+    dur: 1.6,
+    fn(t, P) {
+      // "Hmph." A small huff up, then it turns its shoulder on you: the body away, the head further away and down,
+      // arms hanging back, ears drooping; a breath, and back with a glance to see if you noticed.
+      const huff = curve([[0, 0], [0.12, 1], [0.3, 0]], t);
+      const away = curve([[0, 0], [0.12, -0.15], [0.42, 1], [1.12, 1], [1.45, 0.15], [1.6, 0]], t);
+      const glance = win(t, 1.0, 1.15, 1.3, 1.5);
+      P.squash *= 1 + 0.035 * huff - 0.03 * away;
+      P.root.ry -= 24 * away;
+      // The head turns rather than droops: a big head tipped far reads as a hurt neck.
+      add(P, 'head', 8 * away - 5 * huff, -18 * away + 26 * glance, -4 * away);
+      lean(P, 6 * away - 3 * huff, 2 * away);
+      for (const s of ['L', 'R']) { raise(P, s, -20 * away); fwd(P, s, -12 * away); handBend(P, s, -10 * away); }
+      ears(P, 30 * away, 14 * away);
+      P.look *= 1 - 0.85 * away * (1 - glance);
+      P.gaze = [-0.7, -0.45];
+      face(P, { mood: 'pout' });
+    },
+    still(t, P) {
+      const on = win(t, 0, 0.2, 0.7, 0.9);
+      add(P, 'head', 8 * on, -10 * on, -4 * on); ears(P, 14 * on, 6 * on); P.look *= 1 - 0.6 * on;
+      face(P, { mood: 'pout' });
+    },
+  },
+
+  shrug: {
+    dur: 1.2,
+    fn(t, P) {
+      // "Eh, who knows?" Shoulders up, both paws out and open, the head tipping to one side; it lets them drop.
+      const up = curve([[0, 0], [0.1, -0.15], [0.3, 1], [0.78, 0.95], [1.02, 0], [1.2, 0]], t);
+      P.root.py += 0.018 * Math.max(0, up);
+      P.squash *= 1 + 0.04 * up;
+      for (const s of ['L', 'R']) { raise(P, s, 50 * up); fwd(P, s, 26 * up); handBend(P, s, -30 * up); }
+      add(P, 'chest', -3 * up, 0, 4 * up);
+      add(P, 'head', -4 * up, 0, 15 * up);
+      ears(P, -4 * up, 12 * up);
+      face(P, { mood: 'confused', smile: 0.2, browRaise: 0.7 });
+    },
+    still(t, P) {
+      const on = win(t, 0, 0.2, 0.6, 0.8);
+      add(P, 'head', 0, 0, 10 * on); face(P, { mood: 'confused', smile: 0.2, browRaise: 0.7 });
+    },
+  },
+
+  tease: {
+    dur: 1.4,
+    fn(t, P) {
+      // "Ooh, bold." A paw up by its cheek, a lean toward you with a wink, and a little waggle of the hips.
+      const on = win(t, 0, 0.22, 1.05, 1.4);
+      const wag = Math.sin((t - 0.25) * Math.PI * 2 * 2.6) * win(t, 0.25, 0.4, 0.9, 1.1);
+      fwd(P, 'R', 58 * on); raise(P, 'R', 44 * on); handBend(P, 'R', 32 * on);
+      raise(P, 'L', -6 * on); fwd(P, 'L', 10 * on);
+      lean(P, 7 * on, 7 * on);
+      add(P, 'hips', 0, 9 * wag, 4 * wag);
+      add(P, 'head', 4 * on, 5 * on - 4 * wag, 12 * on);
+      ear(P, 'R', -6 * on, 10 * on); ear(P, 'L', 6 * on, 4 * on);
+      // The wink is short: on a one-eyed body (Iris) a long one reads as eyes shut.
+      face(P, t > 0.25 && t < 0.75 ? { mood: 'wink' } : { mood: 'happy' });
+    },
+    still(t, P) {
+      const on = win(t, 0, 0.2, 0.7, 0.9);
+      add(P, 'head', 0, 0, 10 * on); face(P, { mood: 'wink' });
+    },
+  },
+
+  ready: {
+    dur: 1.2,
+    fn(t, P) {
+      // "Bring it on." It drops into a crouch with both paws up in front, gives two bounces on its toes, stands.
+      const set = curve([[0, 0], [0.22, 1], [0.86, 1], [1.2, 0]], t);
+      const bounce = Math.abs(Math.sin((t - 0.3) * Math.PI * 2 * 1.6)) * win(t, 0.3, 0.38, 0.84, 0.92);
+      P.root.py += 0.024 * bounce - 0.03 * set;
+      P.squash *= 1 - 0.08 * set + 0.03 * bounce;
+      for (const s of ['L', 'R']) {
+        // Paws up in front but apart: further forward, long arms (Kiko's) cross in front of the body.
+        fwd(P, s, 32 * set); raise(P, s, 42 * set); handBend(P, s, 26 * set);
+        add(P, 'thigh' + s, -22 * set); add(P, 'foot' + s, 22 * set);
+      }
+      lean(P, 12 * set);
+      add(P, 'head', -7 * set);
+      ears(P, -10 * set, -4 * set);
+      P.look *= 1 + 0.2 * set;
+      face(P, { mood: 'determined' });
+    },
+    still(t, P) {
+      const on = win(t, 0, 0.2, 0.6, 0.8);
+      add(P, 'head', -5 * on); face(P, { mood: 'determined' });
+    },
+  },
+
+  // Accents: the short versions fast games (Copy Me) use, under a second each.
+  waveQuick: {
+    dur: 1.0,
+    fn(t, P) {
+      const up = curve([[0, 0], [0.18, 100], [0.72, 96], [1.0, 0]], t);
+      const front = win(t, 0.05, 0.2, 0.7, 0.95);
+      raise(P, 'R', up); fwd(P, 'R', 44 * front); add(P, 'armR', -22 * front);
+      handBend(P, 'R', Math.sin((t - 0.2) * Math.PI * 2 * 2.4) * 30 * win(t, 0.2, 0.28, 0.62, 0.72) - 18 * front);
+      add(P, 'head', 0, 5 * front, 10 * front);
+      lean(P, 0, -4 * front);
+      face(P, { mood: 'excited' });
+    },
+    still(t, P) { face(P, { mood: 'happy' }); },
+  },
+
+  hopQuick: {
+    dur: 0.7,
+    fn(t, P) {
+      const crouch = curve([[0, 0], [0.1, 1], [0.16, -0.3], [0.46, -0.2], [0.52, 0.8], [0.62, -0.05], [0.7, 0]], t);
+      P.root.py += hopY(t, 0.15, 0.5, 0.14) - 0.018 * Math.max(0, crouch);
+      P.squash *= 1 - 0.1 * crouch;
+      for (const s of ['L', 'R']) {
+        add(P, 'thigh' + s, -12 * Math.max(0, crouch) - 14 * win(t, 0.15, 0.22, 0.42, 0.5)); add(P, 'foot' + s, 12 * Math.max(0, crouch));
+        raise(P, s, 36 * win(t, 0.14, 0.22, 0.42, 0.52));
+      }
+      face(P, { mood: 'excited' });
+    },
+    still(t, P) { add(P, 'head', -4 * win(t, 0, 0.15, 0.35, 0.5)); face(P, { mood: 'happy' }); },
+  },
+
+  spinQuick: {
+    dur: 1.0,
+    fn(t, P) {
+      P.root.ry += 360 * smooth((t - 0.1) / 0.72);
+      P.root.py += hopY(t, 0.08, 0.86, 0.06);
+      const out = win(t, 0.05, 0.2, 0.7, 0.92);
+      for (const s of ['L', 'R']) { raise(P, s, 48 * out); handBend(P, s, 16 * out); }
+      P.squash *= 1 - 0.05 * win(t, 0.82, 0.88, 0.9, 0.98);
+      P.look *= 1 - out;
+      face(P, { mood: 'excited' });
+    },
+    still(t, P) { add(P, 'head', 0, 0, 8 * win(t, 0, 0.2, 0.5, 0.7)); face(P, { mood: 'happy' }); },
+  },
+
+  bowQuick: {
+    dur: 0.95,
+    fn(t, P) {
+      const bend = curve([[0, 0], [0.12, -3], [0.4, 26], [0.55, 27], [0.82, -2], [0.95, 0]], t);
+      add(P, 'hips', bend * 0.4); add(P, 'spine', bend * 0.3); add(P, 'chest', bend * 0.2); add(P, 'head', bend * 0.3);
+      const hands = win(t, 0.05, 0.25, 0.6, 0.85);
+      for (const s of ['L', 'R']) { fwd(P, s, 45 * hands); raise(P, s, -18 * hands); }
+      ears(P, 16 * win(t, 0.25, 0.4, 0.55, 0.75));
+      P.look *= 1 - win(t, 0.15, 0.35, 0.55, 0.75);
+      // Eyes stay open: a fast game shows the next thing right after.
+      face(P, { mood: 'smile' });
+    },
+    still(t, P) { add(P, 'head', 10 * win(t, 0, 0.2, 0.4, 0.6)); face(P, { mood: 'smile' }); },
+  },
+});
+
 /** The 3D-only moments a companion may start on its own in Balanced and Lively. */
 export const MOMENTS_3D = ['turnAround', 'twirl', 'peekBehind', 'shuffle', 'lookUp', 'sway'];
 
