@@ -533,6 +533,17 @@ struct GameResultView: View {
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(GamePaint.inset))
     }
 
+    /// Back to the menu, beside what to do next: a square with the menu's grid.
+    @ViewBuilder private var backToGames: some View {
+        if let back = model.onBack {
+            let words = String(localized: "Back to games", comment: "A game's end card: back to the Play panel's menu")
+            Button(action: back) { Image(systemName: "square.grid.2x2.fill").frame(width: 22) }
+                .buttonStyle(ChunkyButtonStyle(kind: .secondary, flat: true))
+                .help(words)
+                .accessibilityLabel(words)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             if let ribbon = result.ribbon {
@@ -546,15 +557,19 @@ struct GameResultView: View {
             }
             hero
             if !result.facts.isEmpty { GameFactsView(facts: result.facts) }
-            HStack(spacing: 8) {
-                if !result.actions.isEmpty { GameButtonRow(buttons: result.actions, model: model, flat: true) }
-                if let back = model.onBack {
-                    // Back to the menu, beside what to do next: a square with the menu's grid.
-                    let words = String(localized: "Back to games", comment: "A game's end card: back to the Play panel's menu")
-                    Button(action: back) { Image(systemName: "square.grid.2x2.fill").frame(width: 22) }
-                        .buttonStyle(ChunkyButtonStyle(kind: .secondary, flat: true))
-                        .help(words)
-                        .accessibilityLabel(words)
+            // What to do next in one row; when its words don't fit there (Higher or Lower's "Switch: Mochi guesses"
+            // beside Play again), the first action takes its own row, never cut to "Pla…".
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    if !result.actions.isEmpty { GameButtonRow(buttons: result.actions, model: model, flat: true) }
+                    backToGames
+                }
+                VStack(spacing: 6) {
+                    GameButtonRow(buttons: Array(result.actions.prefix(1)), model: model, flat: true)
+                    HStack(spacing: 8) {
+                        GameButtonRow(buttons: Array(result.actions.dropFirst()), model: model, flat: true)
+                        backToGames
+                    }
                 }
             }
             ForEach(Array(choices.enumerated()), id: \.offset) { _, c in GameChoiceView(choice: c, model: model, compact: true) }

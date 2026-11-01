@@ -2386,6 +2386,51 @@ clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (p
   the layout's direction, so in Arabic the person's number is on the "You" side of the bar whichever way the text runs
   ("7 / 10" stays left to right).
 
+**Amended (2026-11-01), the games look v2 (`team/games-look-v2`):** the founder's "Imagine Skin" concepts (34, light and
+dark, every game and the menu) set the direction, warmer and more illustrated, not a spec; read beside the app as it
+was and the reviewed reward card. Adopted, adjusted where the rules say so:
+- **One panel over one scene:** the game's scene now fills the whole panel, header included, and **dark mode is the same
+  place at night** (14 night paintings of the day scenes, made from them with Codex image generation so the table a
+  prop stands on is cut from the same rows; the arcade is night already), not the day dimmed. The header is a card of
+  the panel's own surface over the scene (back, icon tile, title, whose game it is, speaker, ✕): the game's colour
+  stays on its icon tile and the menu card, so the words read the same in every game.
+- **Cards on the games' own surfaces** (`GamePaint`): the theme's raised card with a pale blue hairline by day and a
+  moonlit navy one at night, a cool inset for the score's halves, a blue lip under raised tiles and buttons. "You vs"
+  is one card with bigger faces (36 pt), a bigger score and still sparks at the VS; the round chip is bigger; the hint
+  is a card whose first keys are in ink; the companion beside its bubble is 70 pt (56 over a puzzle, keyboard,
+  letters or answers, for room). Trivia's topic cards each wear a pastel of the beds' palette.
+- **A level chip is never red** (the concepts' red "Fair" is not taken): `GameStyle.levelChip` is the game's colour,
+  or a neighbour where that colour is red or pink (Which Cup? and Quick Paws blue, Memory Pairs violet, Blossoms leaf
+  green, Higher or Lower sky blue).
+- **The menu** keeps its order and keys; each card puts the picture tile beside the title and tagline (three short
+  lines in German, never cut), so more games show at once; the two groups get tinted heading bands (the companion's
+  face, a puzzle piece); Wins, Streak and Played share one card. `GameArtTile`, `GameCard` and `GameSectionHeader`
+  (Play/GameCards.swift) and `GameStyle.of(look)` are the one source for a game's picture and colours, for Playtime's
+  page in Home too.
+- **The reward card is the reviewed one** (the founder's flatter revision, ported): the result as one unit (an award mark
+  beside the score: Sidefolk's trophy for the person's win, the verdict's symbol otherwise, on a soft tile of its
+  colour), who won in words, the game's line, a small new-best chip, facts, flat actions with "Back to games", the
+  level for the next game. The confetti and the trophy's rays are gone; the card springs in once. When the actions'
+  words don't fit one row, the first takes its own (Higher or Lower's "Play again" was cut to "Pla…" beside "Switch:
+  Mochi guesses").
+- **Puzzles in a frame:** a pale blue frame around the board, Sudoku's boxes in its blue; Garden Plots is soil in a
+  wooden frame with white numbers; the clock, the level and Sudoku's Notes switch sit side by side (a German level
+  ran under the switch); Blossoms' beds are rounded tiles with a 3 pt gutter and the bed lines in it (ported
+  from the same revision). Seesaw keeps its heart and star: the revision's blue crescent and sun are LinkedIn Tango's
+  pieces, which this decision rules out ("no sun and moon"), and the concepts kept hearts and stars; switching is the
+  founder's call (a `crescent` and `sun` symbol in Core, Playtime sending them, and its `minimum_sidefolk`).
+- **Not taken:** a person's face invented for "You" (real data only: the Mac account's picture or the stand-in), the
+  companion drawn big in every header, a Rock, Paper, Scissors screen redone as Playtime's look, decorative leaves
+  and petals around boards (one focal point a screen). Higher or Lower keeps the thermometer (its cards in the concept
+  are another game); Memory Pairs keeps its raspberry backs.
+- **Art:** 14 night scenes (HEIC 768 × 1024, 19–51 KB) and two icons in the set's style (Guess My Animal a puppy,
+  Seesaw a heart and a star on a toy seesaw; WebP); the folder is about 1.5 MB (`GameArtFilesTests` holds every look
+  to a day and night scene of the same frame, an icon, and the budget).
+- **Room and motion:** every board stays under 720 pt in English, German, Arabic and Japanese (the tallest, German
+  trivia's set-up, about 715). Nothing new moves: the sparks are still, the scenes are pictures; the cups still pass in
+  front of each other. Measured in a debug app: about 2–3 % CPU with the menu, a game or a puzzle with its clock idle
+  in the panel, as with it closed.
+
 ### D80 — A copy from before the renumbering gets the gallery's version (2026-10-31)
 **Decision:** *amends D65.* An installed add-on from the gallery (an extension, companion or theme) is offered the
 gallery's version on the person's channel when that version is newer, as before, or when the installed version is a

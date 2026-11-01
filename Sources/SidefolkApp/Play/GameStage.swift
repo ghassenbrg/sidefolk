@@ -40,18 +40,17 @@ struct GameStage: View {
     var body: some View {
         VStack(spacing: 6) {
             if let eyebrow = prompt?.eyebrow, !(board.over && board.result != nil) {
-                RoundChip(text: eyebrow, style: style)
-                    .frame(maxWidth: .infinity)
-                    .overlay {
-                        // A puzzle's clock and Sudoku's notes switch share the eyebrow's row, so a 9 × 9 board keeps its room.
-                        if let puzzle = board.puzzle, let seconds = puzzle.seconds {
-                            HStack {
-                                PuzzleClock(seconds: seconds, running: puzzle.running, since: model.parts.puzzleShown)
-                                Spacer(minLength: 0)
-                                if puzzle.input == .digits, !puzzle.locked { NotesSwitch(model: model) }
-                            }
-                        }
+                if let puzzle = board.puzzle, let seconds = puzzle.seconds {
+                    // A puzzle's clock and Sudoku's notes switch share the eyebrow's row, so a 9 × 9 board keeps its
+                    // room; side by side, so a long German level never runs under the switch.
+                    HStack(spacing: 6) {
+                        PuzzleClock(seconds: seconds, running: puzzle.running, since: model.parts.puzzleShown).fixedSize()
+                        RoundChip(text: eyebrow, style: style).frame(maxWidth: .infinity)
+                        if puzzle.input == .digits, !puzzle.locked { NotesSwitch(model: model).fixedSize() }
                     }
+                } else {
+                    RoundChip(text: eyebrow, style: style).frame(maxWidth: .infinity)
+                }
             }
             HStack(alignment: peeking ? .top : .bottom, spacing: 6) {
                 let figure = CompanionFigure(picture: pose, size: peeking ? CGSize(width: 104, height: 100) : CGSize(width: side, height: side),
@@ -122,6 +121,7 @@ struct RoundChip: View {
         let parts = text.components(separatedBy: " · ")
         HStack(spacing: 6) {
             Text(verbatim: parts[0]).font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
+                .minimumScaleFactor(0.75)
             if parts.count > 1 {
                 Text(verbatim: parts.dropFirst().joined(separator: " · ")).font(.system(size: 12, weight: .heavy, design: .rounded))
                     .foregroundStyle(style.onColor)
