@@ -66,22 +66,26 @@ enum UISnapshots {
             // Home, as a real window (D84): every place, at the mockups' 1280 × 800, in a wide and a narrow window, and empty.
             let home = SnapshotWindow()
             HomeWindowController.configure(home, model: full)
-            func homeShot(_ name: String, size: CGSize = CGSize(width: 1280, height: 800)) async throws {
-                try await capture(home, size: size, dark: dark, to: file("window-home-\(name)"))
+            func homeShot(_ name: String, size: CGSize = CGSize(width: 1280, height: 800), scroll: CGFloat = 0) async throws {
+                try await capture(home, size: size, dark: dark, scroll: scroll, to: file("window-home-\(name)"))
             }
             full.selection = .now
             try await homeShot("today")
+            // Scrolled up: the page's own title under the toolbar, the toolbar's small one in its place (D93's fix).
+            try await homeShot("today-scrolled", scroll: 220)
             try await homeShot("today-wide", size: CGSize(width: 1600, height: 1000))
             try await homeShot("today-narrow", size: CGSize(width: 900, height: 720))
             // On duty in the same state as Today, so their counts can be read side by side.
             full.selection = .onDuty
             try await homeShot("onduty")
+            try await homeShot("onduty-scrolled", size: CGSize(width: 1280, height: 600), scroll: 160)
             // A watch's own page (D87): its change inline and side by side, a watch in trouble, and a narrow window.
             for (id, name) in [("w-pricing", "watch"), ("w-staging", "watch-trouble")] {
                 full.selection = .watch(id)
                 await full.watch.show(id)
                 try await homeShot(name)
             }
+            try await homeShot("watch-scrolled", scroll: 160)
             full.watch.sideBySide = true
             await full.watch.show("w-pricing")
             try await homeShot("watch-sidebyside")
@@ -102,6 +106,17 @@ enum UISnapshots {
             try await homeShot("today-extensions", size: CGSize(width: 1280, height: 1000))
             full.selection = .onDuty
             try await homeShot("onduty-extensions")
+            // An extension's page and the Game Center in the window, at the top and scrolled (D93).
+            full.pages.showSample([SampleExtensionPage.info, SampleGameCenter.info], summaries: [:])
+            full.pages.showSample(center: SampleGameCenter.model())
+            full.pages.showSample(page: SampleExtensionPage.model())
+            full.selection = .page(SampleGameCenter.info.id)
+            try await homeShot("gamecenter")
+            try await homeShot("gamecenter-scrolled", scroll: 260)
+            full.selection = .page(SampleExtensionPage.info.id)
+            try await homeShot("extension-page")
+            try await homeShot("extension-page-scrolled", scroll: 140)
+            SampleExtensionPage.showPages(in: full.pages)
             ThemeStore.shared.setIcons(.colorful)
             full.selection = .now
             try await homeShot("today-colorful")
@@ -276,6 +291,11 @@ enum UISnapshots {
             // Switches and buttons on a page, and a palette (D63).
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
             try await page("page-extension-error", ExtensionPageView(model: SampleExtensionPage.failed()), width: 980)
+            // The Game Center (D93): Playtime's page, with many games, before any game, and narrow.
+            try await page("page-game-center", GameCenterView(model: SampleGameCenter.model()), width: 1180)
+            try await page("page-game-center-many", GameCenterView(model: SampleGameCenter.model(many: true)), width: 1180)
+            try await page("page-game-center-empty", GameCenterView(model: SampleGameCenter.model(empty: true)), width: 1180)
+            try await page("page-game-center-narrow", GameCenterView(model: SampleGameCenter.model()), width: 700)
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
@@ -1060,16 +1080,30 @@ enum UISnapshots {
     }
 
     /// The whole window, titlebar and toolbar included.
-    private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, to url: URL) async throws {
+    private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, scroll: CGFloat = 0, to url: URL) async throws {
         guard wanted(url) else { return }
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         window.setContentSize(size)
         window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
         window.orderFrontRegardless()
         try await Task.sleep(for: .milliseconds(400))
+        if let view = window.contentView { scrollPages(in: view, by: scroll) }
+        if scroll != 0 { try await Task.sleep(for: .milliseconds(300)) }
         window.makeFirstResponder(nil) // no field focused, as when Settings opens
         guard let frame = window.contentView?.superview else { throw SnapshotError.render(url.lastPathComponent) }
         try write(frame, to: url)
+    }
+
+    /// The page's scroll views (wider than the sidebar, on either side), down by `offset` points from the top; back to the top at 0.
+    private static func scrollPages(in view: NSView, by offset: CGFloat) {
+        for sub in view.subviews { scrollPages(in: sub, by: offset) }
+        guard let scroll = view as? NSScrollView, let document = scroll.documentView,
+              document.frame.height > scroll.contentView.bounds.height + 1,
+              scroll.bounds.width > 400 else { return }
+        let top = document.isFlipped ? -scroll.contentInsets.top : document.frame.height - scroll.contentView.bounds.height + scroll.contentInsets.top
+        let y = document.isFlipped ? top + offset : top - offset
+        scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX, y: y))
+        scroll.reflectScrolledClipView(scroll.contentView)
     }
 
     /// A view at its full height in a borderless window.

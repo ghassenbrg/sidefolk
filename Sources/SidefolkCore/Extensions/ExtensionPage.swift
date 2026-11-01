@@ -7,10 +7,13 @@ import Foundation
 public struct ExtensionPage: Sendable, Hashable {
     public var summary: Summary?
     public var sections: [Section]
+    /// A game extension's records for its Game Center (D93); nil on any other page.
+    public var games: GameCenterRecords?
 
-    public init(summary: Summary? = nil, sections: [Section] = []) {
+    public init(summary: Summary? = nil, sections: [Section] = [], games: GameCenterRecords? = nil) {
         self.summary = summary
         self.sections = sections
+        self.games = games
     }
 
     public enum Tone: String, Sendable, Hashable, CaseIterable {
@@ -304,7 +307,7 @@ public struct ExtensionPage: Sendable, Hashable {
     static let maxItems = 24
     static let maxSeries = 4
 
-    /// Reads `{summary, sections}`. Throws only when it isn't a page at all; a bad part is left out.
+    /// Reads `{summary, sections, games}`. Throws only when it isn't a page at all; a bad part is left out.
     public static func parse(_ json: JSONValue) throws -> ExtensionPage {
         guard json.jsonString.utf8.count <= maxBytes else { throw UserFacingError("The page is larger than 128 KB.") }
         guard let object = json.objectValue, object["sections"]?.arrayValue != nil || object["summary"] != nil else {
@@ -317,7 +320,7 @@ public struct ExtensionPage: Sendable, Hashable {
                                                   collapsed: title == nil ? nil : s["collapsed"]?.boolValue,
                                                   detail: title == nil ? nil : text(s["detail"], 160))
         }
-        var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections)
+        var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections, games: GameCenterRecords.parse(object["games"]))
         page.keepOnePrimary()
         return page
     }

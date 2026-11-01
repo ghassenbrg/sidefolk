@@ -103,7 +103,9 @@ struct HomeView: View {
             }
             .animation(reduceMotion ? nil : Theme.Motion.micro, value: showsPanel)
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
+            // Where the toolbar ends, for the places' own titles (`homePageTitle`).
             .environment(model.pages)
+            .environment(model.title)
     }
 
     private var showsPanel: Bool { !model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -128,7 +130,11 @@ struct HomeView: View {
             WatchDetailView(home: model, model: model.watch)
         case .page(let id):
             if let info = model.pages.info(id) {
-                ExtensionPageView(model: model.pages.model(info))
+                if info.gameCenter {
+                    GameCenterView(model: model.pages.center(info))
+                } else {
+                    ExtensionPageView(model: model.pages.model(info))
+                }
             } else {
                 Theme.surfaceSunken
             }
@@ -148,6 +154,9 @@ private struct PlaceTitle: View {
     var model: HomeModel
 
     var body: some View {
+        // Out of the way while the page's own title is in sight, as a large title does on macOS: the same words
+        // twice, one over the other, read as a mistake.
+        let hidden = model.title.pageTitleShown
         VStack(alignment: .leading, spacing: 0) {
             Text(verbatim: title).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
             if let subtitle {
@@ -156,8 +165,11 @@ private struct PlaceTitle: View {
         }
         .fixedSize()
         .padding(.leading, Theme.Space.s)
+        .opacity(hidden ? 0 : 1)
+        .animation(Theme.Motion.micro, value: hidden)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+        .accessibilityHidden(hidden)
     }
 
     private var title: String {
@@ -200,7 +212,8 @@ private struct PlaceTitle: View {
         case .gallery:
             return String(localized: "Companions, extensions and themes", comment: "Under the Gallery's title")
         case .page(let id):
-            return model.pages.info(id).map(\.extensionName)
+            // "Playtime" over "Playtime" says nothing: the extension only when the page has another name.
+            return model.pages.info(id).flatMap { $0.extensionName == $0.title ? nil : $0.extensionName }
         case .collection(let id):
             let n = model.notebook.counts[id] ?? 0
             return String(localized: "Notebook · \(n) items", comment: "Under a collection's title")

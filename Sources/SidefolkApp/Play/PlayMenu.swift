@@ -61,28 +61,26 @@ private extension Int {
 struct PlayMenuView: View {
     var menu: PlayMenuModel
 
+    /// The menu's room: the playroom with its table (Copy Me's), by day or at night.
     private var style: GameStyle { .of(.dance) }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             header
-            ZStack(alignment: .top) {
-                GameSceneBackground(style: style)
-                VStack(spacing: 12) {
-                    HStack(alignment: .bottom, spacing: 4) {
-                        CompanionFigure(picture: menu.figure ?? menu.portrait, size: CGSize(width: 58, height: 60))
-                        SpeechBubble(text: String(localized: "Pick a game! Can you beat me?", comment: "The companion on the Play panel's menu"),
-                                     clock: nil, tail: .leading)
-                    }
-                    stats
-                    cards
-                    HintRow(text: String(localized: "Arrows to choose · Return to play · Esc to close", comment: "Keys on the Play panel's menu"))
-                }
-                .padding(PlayView.pad)
+            HStack(alignment: .bottom, spacing: 4) {
+                CompanionFigure(picture: menu.figure ?? menu.portrait, size: CGSize(width: 64, height: 64))
+                SpeechBubble(text: String(localized: "Pick a game! Can you beat me?", comment: "The companion on the Play panel's menu"),
+                             clock: nil, tail: .leading)
             }
+            .padding(.horizontal, PlayView.pad)
+            stats.padding(.horizontal, PlayView.pad)
+            cards
+            HintRow(text: String(localized: "Arrows to choose · Return to play · Esc to close", comment: "Keys on the Play panel's menu"))
+                .padding(.horizontal, PlayView.pad)
         }
+        .padding(.top, 7).padding(.bottom, 10)
         .frame(width: PlayView.width)
-        .background(Theme.surface)
+        .background(GameSceneBackground(style: style))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay { RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.line, lineWidth: 1) }
         .accessibilityElement(children: .contain)
@@ -92,61 +90,64 @@ struct PlayMenuView: View {
     private var header: some View {
         HStack(spacing: 10) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white)
-                Image(systemName: "gamecontroller.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(style.bottom)
+                RoundedRectangle(cornerRadius: 13, style: .continuous).fill(style.bottom).brightness(-0.12).offset(y: 2.5)
+                RoundedRectangle(cornerRadius: 13, style: .continuous).fill(style.gradient)
+                Image(systemName: "gamecontroller.fill").font(.system(size: 21, weight: .bold)).foregroundStyle(.white)
             }
-            .frame(width: 42, height: 42)
+            .frame(width: 44, height: 44)
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: menu.title).font(.system(size: 21, weight: .heavy, design: .rounded)).foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.18), radius: 1, y: 1)
+                Text(verbatim: menu.title).font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
                 Text(String(localized: "Quick games against \(menu.companionName)", comment: "Under the title of the Play panel's menu"))
-                    .font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.9)).lineLimit(1)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
             Spacer(minLength: 4)
-            HeaderButton(symbol: "xmark", label: String(localized: "Close", comment: "Closes the Play panel"), style: style) { menu.onClose?() }
+            HeaderButton(symbol: "xmark", label: String(localized: "Close", comment: "Closes the Play panel")) { menu.onClose?() }
         }
-        .padding(.horizontal, 14).padding(.vertical, 12)
-        .background(style.gradient)
+        .padding(.horizontal, 10).padding(.vertical, 7)
+        .gameCard(corner: 20, opacity: 0.97)
+        .padding(.horizontal, 7)
     }
 
-    /// Wins, the current run of wins, and games played.
+    /// Wins, the current run of wins, and games played, on one card.
     private var stats: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 0) {
             stat(Toss.number(menu.stats.wins), String(localized: "Wins", comment: "Play panel's menu: games the person won"), "trophy.fill", Theme.sun)
+            Rectangle().fill(GamePaint.edge).frame(width: 1, height: 30)
             stat(Toss.number(menu.stats.streak), String(localized: "Streak", comment: "Play panel's menu: wins in a row now"), "flame.fill",
                  GameColors.color(.win))
+            Rectangle().fill(GamePaint.edge).frame(width: 1, height: 30)
             stat(Toss.number(menu.stats.played), String(localized: "Played", comment: "Play panel's menu: games played to the end"),
                  "gamecontroller.fill", Theme.accent)
         }
-        .padding(8)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface.opacity(0.95)).shadow(color: .black.opacity(0.1), radius: 6, y: 3))
+        .padding(.vertical, 8).padding(.horizontal, 4)
+        .gameCard(corner: 18)
     }
 
     private func stat(_ value: String, _ label: String, _ symbol: String, _ color: Color) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 15, weight: .bold)).foregroundStyle(color)
+            Image(systemName: symbol).font(.system(size: 16, weight: .bold)).foregroundStyle(color)
+                .frame(width: 32, height: 32).background(Circle().fill(color.opacity(0.16)))
             VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: value).font(.system(size: 20, weight: .heavy, design: .rounded)).monospacedDigit().foregroundStyle(Theme.ink)
+                Text(verbatim: value).font(.system(size: 20, weight: .black, design: .rounded)).monospacedDigit().foregroundStyle(Theme.ink)
                 Text(verbatim: label).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10).padding(.vertical, 6)
+        .padding(.horizontal, 8)
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surfaceSunken.opacity(0.7)))
         .accessibilityElement(children: .combine)
     }
 
     /// The games against the companion, then the puzzles played alone (`GameLook.solo`), each a grid of cards.
-    private var groups: [(title: String, games: [(Int, GameInfo)])] {
+    private var groups: [(title: String, solo: Bool, games: [(Int, GameInfo)])] {
         let all = Array(menu.games.enumerated())
         let versus = all.filter { !($0.element.look?.solo ?? false) }, solo = all.filter { $0.element.look?.solo ?? false }
-        var out: [(String, [(Int, GameInfo)])] = []
+        var out: [(String, Bool, [(Int, GameInfo)])] = []
         if !versus.isEmpty {
-            out.append((String(localized: "Play against \(menu.companionName)", comment: "Play panel's menu: the games played against the companion"), versus))
+            out.append((String(localized: "Play against \(menu.companionName)", comment: "Play panel's menu: the games played against the companion"), false, versus))
         }
-        if !solo.isEmpty { out.append((String(localized: "Puzzles", comment: "Play panel's menu: the games played alone"), solo)) }
+        if !solo.isEmpty { out.append((String(localized: "Puzzles", comment: "Play panel's menu: the games played alone"), true, solo)) }
         return out
     }
 
@@ -154,78 +155,18 @@ struct PlayMenuView: View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(groups, id: \.title) { group in
-                    Text(verbatim: group.title).font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink)
-                        .padding(.horizontal, 10).padding(.vertical, 3)
-                        .background(Capsule().fill(Theme.surface.opacity(0.92)))
-                        .accessibilityAddTraits(.isHeader)
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    GameSectionHeader(title: group.title, solo: group.solo, portrait: menu.portrait)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
                         ForEach(group.games, id: \.1.id) { i, game in
                             GameCard(info: game, selected: menu.selected == i, resume: menu.kept == game) { menu.onOpen?(game) }
                         }
                     }
+                    .padding(.bottom, 4)
                 }
             }
-            .padding(.vertical, 2).padding(.bottom, 4)
+            .padding(.horizontal, PlayView.pad).padding(.vertical, 2).padding(.bottom, 4)
         }
-        .frame(maxHeight: 400)
+        .frame(maxHeight: 420)
         .fixedSize(horizontal: false, vertical: true)
-    }
-}
-
-/// A game on the menu: its picture on a tile in its colour, its title and tagline, "Resume" when it was put away.
-struct GameCard: View {
-    var info: GameInfo
-    var selected: Bool
-    var resume: Bool
-    var action: () -> Void
-    @State private var hovered = false
-
-    var body: some View {
-        let style = GameStyle.of(info.look)
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 6) {
-                ZStack {
-                    style.gradient
-                    LinearGradient(colors: [.white.opacity(0.25), .clear], startPoint: .top, endPoint: .center)
-                    if let icon = style.icon, icon.image != nil {
-                        icon.view(fitting: 56).shadow(color: .black.opacity(0.2), radius: 3, y: 2)
-                            .scaleEffect(hovered ? 1.08 : 1).rotationEffect(.degrees(hovered ? -4 : 0))
-                    } else {
-                        Image(systemName: info.symbol ?? "gamecontroller.fill").font(.system(size: 30, weight: .bold)).foregroundStyle(style.onColor)
-                    }
-                }
-                .frame(height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(alignment: .topTrailing) {
-                    if resume {
-                        Label(String(localized: "Resume", comment: "Play panel's menu: a game put away, opened where it was"), systemImage: "play.fill")
-                            .font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(Theme.navy)
-                            .padding(.horizontal, 7).padding(.vertical, 3)
-                            .background(Capsule().fill(.white)).padding(6)
-                    }
-                }
-                Text(verbatim: info.title).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink).lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                if let tagline = info.tagline {
-                    Text(verbatim: tagline).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.inkMuted)
-                        .lineLimit(2, reservesSpace: true).fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(7)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface)
-                .shadow(color: style.bottom.opacity(0.35), radius: 0, y: 3)
-                .shadow(color: .black.opacity(hovered ? 0.16 : 0.08), radius: hovered ? 8 : 4, y: 3))
-            .overlay {
-                // The keyboard's choice: the app's accent, as any selection.
-                RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(selected ? Theme.accent : .clear, lineWidth: 2.5)
-            }
-            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        }
-        .buttonStyle(GamePressStyle())
-        .onHover { hovered = $0 }
-        .animation(.spring(duration: 0.25, bounce: 0.4), value: hovered)
-        .accessibilityLabel(Text(verbatim: [info.title, info.tagline].compactMap { $0 }.joined(separator: ", ")))
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

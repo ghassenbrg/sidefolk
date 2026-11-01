@@ -304,6 +304,12 @@ protocol AppServices: AnyObject {
     /// Opens the Ask panel with the start of a sentence typed in, for the user to finish; with an
     /// empty one, as it was left.
     func openAsk(prefill: String)
+
+    // Games (D93)
+    /// The game put away in the Play panel, which Continue resumes.
+    var keptGame: GameInfo? { get }
+    /// The Play panel's menu of every game.
+    func openPlayMenu()
 }
 
 extension ExtensionInfo {

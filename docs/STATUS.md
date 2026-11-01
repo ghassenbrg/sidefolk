@@ -38,6 +38,34 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 
 ## In progress
 
+- **Games look v2** (branch `team/games-look-v2`, not merged; D79 amended, the games look v2): every game's Play
+  panel, the All Games menu and the reward card reskinned along the founder's Imagine Skin concepts: the scene behind
+  the whole panel with night paintings for dark mode, header, score, hint and tiles as cards on the games' own
+  surfaces, a level chip never red, the menu's cards side by side (`GameCards.swift`, shared with Playtime's page in
+  Home), the reviewed flat reward card, puzzle boards in frames (Garden Plots' soil, Blossoms' rounded beds); 14
+  night scenes and two icons (Art about 1.5 MB). Verified: `make test` with an add-ons clone, `GameArtFilesTests`,
+  UI snapshots of every game and moment in light and dark, en, ar, ja and de (all under 720 pt), a debug app with
+  Playtime from a local build (the cups' shuffle and an end card filmed, idle CPU 2–3 %). Next: merge; the founder's
+  call on Seesaw's pieces (the revision's crescent and sun versus D79's "no sun and moon").
+
+- **Game Center and game commands** (branch `team/game-center` in both repositories, not merged; D93; carries
+  `team/games-look-v2`): Playtime's page in Home is a Game Center Sidefolk draws from Playtime's records (a hero with
+  the companion and Continue / today's daily / Surprise me, the day's boards, every game as a card in its group with
+  its best, record and last played, Wins / Solved / Best streak / Played, last games, badges from the records, and the
+  games' settings: tone, sounds, Sneaky, a level per game); games steered without AI in ten languages ("rematch",
+  "make it harder", "trivia about space, hard, 10 questions", "guess a number between 1 and 1000", "you guess my
+  number up to 500", "pause the game", "resume the game", "show my stats", "turn game sounds off", "back to the
+  games"), `games.open`'s last/again/random/center and relative levels, a new `games.settings`; Sneaky in Settings ›
+  Companion; and Home's large titles (the toolbar's title only once the page's own has scrolled away, content cut at
+  the toolbar, no "Playtime / Playtime"). Verified: `GameCommandsTests`, `GameCenterTests`, full `make test` (1718 + 38) and
+  the add-ons' `swift test` (120), `build.py`, `check.sh`; UI snapshots `page-game-center*` and
+  `window-home-*` (scrolled too) in light, dark, de and ar; a debug app on `build/gc-1` with Playtime from a local
+  build: "play tic-tac-toe on hard" (Hard), "make it easier" (Fair), "pause the game", "resume the game",
+  "Spielgeräusche an", "guess a number between 1 and 1000", "jouons au morpion difficile", "더 쉽게 해줘", "show my
+  stats" (Home on the center, Continue Tic-tac-toe), scrolled pages cut at the toolbar. Next: merge with
+  `team/gameplay-ai` (conflicts expected in `GameSettings`, `SettingsCatalog`, the coordinator's game options and
+  Playtime's `strings/`: rerun `extension-strings.py sync`), then add D95's AI trivia switch as one row in
+  `GameSettingsSection`; set Playtime's `minimum_sidefolk` to the snapshot that ships D93.
 - **Games v2, gameplay and AI** (branch `team/gameplay-ai` in both repositories, not merged; D95, D96): the companion
   plays like a person at every level (no more 50, 75, 88; Hard tic-tac-toe never loses, Hard Last Stick wins every
   winning position, memory that fades, reflexes that lean late), Higher or Lower on 10, 100, 1,000, a million or any

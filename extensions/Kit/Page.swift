@@ -12,16 +12,83 @@ import Foundation
 public struct Page {
     public var summary: Summary?
     public var sections: [Section]
+    /// A game extension's records, for Sidefolk's Game Center (D93): it draws the page itself from these.
+    public var games: GameRecords?
 
-    public init(summary: Summary? = nil, sections: [Section] = []) {
+    public init(summary: Summary? = nil, sections: [Section] = [], games: GameRecords? = nil) {
         self.summary = summary
         self.sections = sections
+        self.games = games
     }
 
     var json: [String: Any] {
         var out: [String: Any] = ["sections": sections.filter { !$0.blocks.isEmpty }.map(\.json)]
         if let summary { out["summary"] = summary.json }
+        if let games { out["games"] = games.json }
         return out
+    }
+}
+
+/// What a game extension says of its games for the Game Center (D93): each game's tallies, its best in its own words
+/// and its board or word of the day, by the game's name in the manifest, and its last games. Numbers and short text:
+/// Sidefolk lays the center out and draws every picture from its own art by the game's look.
+public struct GameRecords {
+    public struct Record {
+        public var played, won, lost, drawn, streak, bestStreak: Int
+        /// "Best: 9 moves", "Fair 3:12".
+        public var best: String?
+        /// The day's board or word: what to say of it, whether it is done, the days in a row.
+        public var today: (text: String, done: Bool, streak: Int)?
+
+        public init(played: Int = 0, won: Int = 0, lost: Int = 0, drawn: Int = 0, streak: Int = 0, bestStreak: Int = 0, best: String? = nil,
+                    today: (text: String, done: Bool, streak: Int)? = nil) {
+            (self.played, self.won, self.lost, self.drawn, self.streak, self.bestStreak) = (played, won, lost, drawn, streak, bestStreak)
+            self.best = best
+            self.today = today
+        }
+
+        var json: [String: Any] {
+            var out: [String: Any] = ["played": played, "won": won, "lost": lost, "drawn": drawn, "streak": streak, "best_streak": bestStreak]
+            if let best { out["best"] = best }
+            if let today { out["today"] = ["text": today.text, "done": today.done, "streak": today.streak] as [String: Any] }
+            return out
+        }
+    }
+
+    public enum Outcome: String { case won, lost, draw, solved }
+
+    /// A game played to the end: its name (or a tally of its own under it, `higher_lower_yours`), when, how it went,
+    /// and the score or time in its words.
+    public struct Recent {
+        public var game: String
+        public var at: Date
+        public var outcome: Outcome
+        public var text: String?
+
+        public init(game: String, at: Date, outcome: Outcome, text: String? = nil) {
+            self.game = game
+            self.at = at
+            self.outcome = outcome
+            self.text = text
+        }
+    }
+
+    public var records: [String: Record]
+    public var recent: [Recent]
+
+    public init(records: [String: Record] = [:], recent: [Recent] = []) {
+        self.records = records
+        self.recent = recent
+    }
+
+    var json: [String: Any] {
+        let iso = ISO8601DateFormatter()
+        return ["records": records.mapValues(\.json),
+                "recent": recent.map { r -> [String: Any] in
+                    var out: [String: Any] = ["game": r.game, "at": iso.string(from: r.at), "outcome": r.outcome.rawValue]
+                    if let text = r.text { out["text"] = text }
+                    return out
+                }]
     }
 }
 

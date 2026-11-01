@@ -6,7 +6,7 @@ import SwiftUI
 /// amended): each game look's scene, the menu's icons, Copy Me's moves, the memory cards' faces, trivia's topics and
 /// the props (cup, gem, balloon, trophy, the Boop button, a card back). Drawn where a part's own data asks for that
 /// thing (a cup, a pad's `art`, a card's symbol), never a file from a game (D75). A missing picture falls back to the
-/// part's drawing in code. About 1 MB in all: scenes are HEIC, the rest WebP with transparency.
+/// part's drawing in code. About 1.5 MB in all: scenes (by day and at night) are HEIC, the rest WebP with transparency.
 enum GameArt: String, CaseIterable {
     case cup = "game-cup", gem = "game-gem", balloon = "game-balloon", trophy = "game-trophy"
     case boop = "game-boop", bulb = "game-bulb", cardBack = "game-card-back", magnifier = "game-magnifier"
@@ -15,6 +15,13 @@ enum GameArt: String, CaseIterable {
     case sceneCups = "game-bg-cups", sceneNumbers = "game-bg-numbers", sceneAnimals = "game-bg-animals"
     case sceneBalloons = "game-bg-balloons", sceneSticks = "game-bg-sticks", sceneCards = "game-bg-cards", sceneWords = "game-bg-words"
     case scenePlots = "game-bg-plots", sceneSeesaw = "game-bg-seesaw", sceneSudoku = "game-bg-sudoku", sceneBlossoms = "game-bg-blossoms"
+
+    // The same places at night, for dark mode (the arcade is night already).
+    case sceneQuizNight = "game-bg-quiz-night", sceneGridNight = "game-bg-grid-night", sceneDanceNight = "game-bg-dance-night"
+    case sceneCupsNight = "game-bg-cups-night", sceneNumbersNight = "game-bg-numbers-night", sceneAnimalsNight = "game-bg-animals-night"
+    case sceneBalloonsNight = "game-bg-balloons-night", sceneSticksNight = "game-bg-sticks-night", sceneCardsNight = "game-bg-cards-night"
+    case sceneWordsNight = "game-bg-words-night", scenePlotsNight = "game-bg-plots-night", sceneSeesawNight = "game-bg-seesaw-night"
+    case sceneSudokuNight = "game-bg-sudoku-night", sceneBlossomsNight = "game-bg-blossoms-night"
 
     case iconQuiz = "game-icon-quiz", iconGrid = "game-icon-grid", iconDance = "game-icon-dance", iconArcade = "game-icon-arcade"
     case iconCups = "game-icon-cups", iconNumbers = "game-icon-numbers", iconAnimals = "game-icon-animals"
@@ -45,6 +52,9 @@ enum GameArt: String, CaseIterable {
         }
         return nil
     }
+
+    /// A scene's night version, if it has one.
+    var atNight: GameArt? { GameArt(rawValue: rawValue + "-night") }
 
     /// A scene's table: its last part, where the props stand.
     var table: NSImage? {

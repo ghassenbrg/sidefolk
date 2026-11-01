@@ -54,6 +54,7 @@ struct OnDutyView: View {
                     }
                 }
                 .font(Theme.Font.title1).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                .homePageTitle()
                 Text(verbatim: summary(duty)).font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale)).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 640, alignment: .leading)

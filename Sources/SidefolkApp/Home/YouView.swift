@@ -44,6 +44,7 @@ struct YouView: View {
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
                     Text(verbatim: NSFullUserName().isEmpty ? String(localized: "You") : NSFullUserName().split(separator: " ").first.map(String.init) ?? "")
                         .font(Theme.Font.display).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                        .homePageTitle()
                     summary.font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale)).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: 560, alignment: .leading)

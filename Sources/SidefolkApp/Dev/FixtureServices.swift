@@ -198,6 +198,9 @@ final class FixtureServices: AppServices {
     func showAbout() {}
     func openGallery() {}
     func openAsk(prefill: String) {}
+    /// The Game Center's Continue in snapshots: a game put away.
+    var keptGame: GameInfo?
+    func openPlayMenu() {}
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? { nil }
     func moveReminder(_ id: String, to date: Date) async -> UserFacingError? {
         _ = try? await runtime.scheduler.snooze(id: id, until: date)

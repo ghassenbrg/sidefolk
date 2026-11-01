@@ -68,6 +68,8 @@ final class HomeModel {
     let find: FindModel
     /// The watch open on its own page (D87).
     let watch: WatchDetailModel
+    /// Whether the place's own title is in sight, so the toolbar's stays out of the way (`homePageTitle`).
+    let title = HomeTitleTracker()
     /// The Gallery in Home (D84) is Settings' own gallery models, with their install previews and downloads.
     @ObservationIgnored private(set) lazy var settingsHost = SettingsModel(services: services)
 

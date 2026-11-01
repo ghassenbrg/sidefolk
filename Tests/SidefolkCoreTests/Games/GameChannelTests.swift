@@ -142,7 +142,8 @@ struct GameChannelTests {
         let env = try TestEnv()
         let shelf = GameShelf()
         shelf.set([quiz])
-        env.registry.register(GamesOpenTool(events: env.events, shelf: shelf))
+        env.registry.register(GamesOpenTool(events: env.events, shelf: shelf, settings: await SettingsStore(db: env.db, events: env.events),
+                                            activity: env.activity))
         #expect(env.registry.tool(named: "games.open")?.spec.description.contains("dev.test.games/quiz (Quiz)") == true)
         #expect(env.registry.tool(named: "games.open")?.spec.description.contains("sidefolk/rock_paper_scissors") == true)
 
@@ -214,7 +215,8 @@ struct GameChannelTests {
         let env = try TestEnv()
         let shelf = GameShelf()
         shelf.set([ttt])
-        env.registry.register(GamesOpenTool(events: env.events, shelf: shelf))
+        env.registry.register(GamesOpenTool(events: env.events, shelf: shelf, settings: await SettingsStore(db: env.db, events: env.events),
+                                            activity: env.activity))
         #expect(env.registry.tool(named: "games.open")?.spec.description.contains("menu of every game") == true)
         func open(_ input: JSONValue, caller: Caller) async -> (ToolOutcome, Bool?) {
             let stream = env.events.stream()

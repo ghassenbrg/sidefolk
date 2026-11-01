@@ -626,6 +626,13 @@ ext.page("mac") { args in
   cleaned of hidden characters and clipped. A page is your text: it is never shown to a model.
 - Pages came during 0.1.0's snapshots: a snapshot from before them (489 and older) refuses the manifest, because it doesn't
   know `pages`. Write `"sidefolk": ">=0.1"` as usual.
+- **A game extension's page is its Game Center** (D93). The first page of an extension that declares `games` is drawn
+  by Sidefolk: the companion, today's dailies, every game as a card with its art, the person's numbers, last games,
+  badges and the games' settings. Send the `summary` as usual (the Today tile) and, beside it, what only you know:
+  `"games": {"records": {"<game>": {"played", "won", "lost", "drawn", "streak", "best_streak", "best": "Best: 9 moves",
+  "today": {"text": "Solved in 4", "done": true, "streak": 3}}}, "recent": [{"game", "at": "<ISO 8601>", "outcome":
+  "won|lost|draw|solved", "text": "You 7 · Mochi 6"}]}` (the Kit: `Page(summary:games:)` with `GameRecords`). Any
+  `sections` are drawn under the center. A game without a record is counted from Sidefolk's own Activity.
 
 ## Running in the background, palettes and nudges
 
@@ -698,9 +705,14 @@ Activity row when the game ends.
 - **The channel:** `sidefolk/game.start {game, level, language, options}` answers `{session, board}`;
   `sidefolk/game.move {game, session, move}` answers `{board}`; `sidefolk/game.end {game, session, reason}` (`closed`,
   `timeout`, `finished`) needs no answer. `options` holds `tone` (gentle, cheeky, competitive), `sneaky` and
-  `companion` (its name); `players` (2) and `names` (the two names last played under) when two people play each other
-  on this Mac (D96); `ai_trivia` (the AI's name) while the person lets their AI make trivia questions (D95); and what
-  the person said about the game (`topic`, `count`, `min`, `max`, `mode`, D93). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
+  `companion` (its name), and what the person said about the game when they did (D93, Sidefolk's own sentences in ten
+  languages, or the AI through `games.open`): `topic` (a quiz's subject, 40 characters) and `count` (1–50) for a game
+  whose look is `quiz`, `min`, `max` (a range up to 1,000,000) and `mode` (`mine`: the person guesses; `yours`: the
+  companion guesses) for `numbers`. Use what you know and ignore the rest. Sidefolk also steers every game without
+  your help: "rematch", "make it harder", "play tic-tac-toe on hard", "pause the game", "show my stats"; a level the
+  person picks is sent each time the game opens. With two people playing each other on this Mac (D96), `players` (2)
+  and `names` (the two names last played under); while the person lets their AI make trivia questions (D95),
+  `ai_trivia` (the AI's name). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
   for a part the board on screen offered, at most 20 a second: `{answer: i}`, `{cell: [r, c]}`, `{button: "next"}`,
   `{choice: {name, value}}`, `{timeout: true}`, `{letter: "e"}`, `{word: "crane"}`, `{number: 42}`, `{pad: 2}`,
   `{press: {ms: 243}}`, `{early: true}` (with a two-key reflex, `{press: {ms, key}}` and `{early: {key}}`),

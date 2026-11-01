@@ -775,6 +775,10 @@ final class AppCoordinator {
             openGame(request)
         case .gamesMenu(let focus):
             openPlayMenu(focus: focus)
+        case .gameCenter:
+            openGameCenter()
+        case .gamesAway:
+            putGameAway()
         case .toss(let toss):
             // The result belongs on the desktop: hidden, the companion comes out for the moment and goes again after.
             if !companion.isVisible {
@@ -797,6 +801,7 @@ final class AppCoordinator {
             if domain == .watchers { refreshReadouts() }
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {
+                followGameSettings()
                 applyCompanionSettings()
                 applyAttention()
                 Task { await runtime.rearm() }

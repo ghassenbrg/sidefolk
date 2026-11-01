@@ -16,6 +16,9 @@ public struct GameSettings: Codable, Sendable, Equatable {
     public var players: [String] = []
     /// Trivia may ask the person's AI for fresh questions on any topic (D95); nil follows whether a provider is set up.
     public var aiTrivia: Bool?
+    /// The level each game opens at, by `extension/game`, when the person chose one (the Game Center, "play tic-tac-toe on
+    /// hard", "make it harder", D93); a game without one picks its own.
+    public var levels: [String: String] = [:]
 
     public init() {}
 
@@ -34,5 +37,6 @@ public struct GameSettings: Codable, Sendable, Equatable {
         read(.sneaky, &sneaky)
         read(.players, &players)
         read(.aiTrivia, &aiTrivia)
+        read(.levels, &levels)
     }
 }
