@@ -38,11 +38,16 @@ what to check by hand. Decisions that aren't code (licence, name, website, prici
 
 ## GitHub Actions
 
-Two workflows in `.github/workflows/`, both on a macOS runner.
+Three workflows in `.github/workflows/`, all on a macOS runner.
 
 - **CI** (`ci.yml`) runs on every push to `main` and every pull request into `main` (and `master`, if the
   branch is ever renamed), nothing else: `swift build`, the full serial test suite, a translations report (a
   warning, not a failure, when a language misses strings) and `scripts/build-app.sh release`, ad hoc signed.
+- **CI tests (diagnostics)** (`ci-tests.yml`), by hand (Actions › Run workflow, with an optional filter, skip and
+  the add-ons) or on any push to a `ci-debug/…` branch: the test bundles only, each run through the toolchain's
+  `swiftpm-testing-helper` on a terminal (`scripts/ci/run-test-bundles.sh`), so no line is lost to a buffer and
+  the log says how the process ended (exit status, or the signal). After a failure it shows the system log,
+  crash reports (kept as an artifact), limits, memory and disk. For a test run that dies without a word.
 - **Release** (`release.yml`) makes either:
   - a **production** release: the version in `Version.swift`, tagged `v<version>`, signed with Developer ID,
     notarized, with `docs/RELEASE-NOTES.md` as its notes. Push the tag (`git tag v0.1.0 && git push origin

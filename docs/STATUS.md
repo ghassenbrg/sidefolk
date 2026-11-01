@@ -38,6 +38,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 
 ## In progress
 
+- **CI's silent test deaths, fixed** (2026-11-01): from about snapshot 724 the core test process died on GitHub's
+  runners about two minutes in, with no failing test (release runs 41267300489 to 41270779706, and CI). The kernel
+  killed it (EXC_GUARD: an NSPipe closed a guarded descriptor). Cause: `childSeesOnlyStandardDescriptors` did
+  `dup2(…, 77)`, silently closing an NSPipe descriptor SystemTool (Backup's zipinfo and ditto, hdiutil) still held
+  until its delayed release; the pipe then closed 77 again after a guarded descriptor had it. The test now takes a
+  free number (`F_DUPFD`). Found with `ci-tests.yml` (docs/RELEASE.md) and a close()/pipe() interposer locally.
+
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
