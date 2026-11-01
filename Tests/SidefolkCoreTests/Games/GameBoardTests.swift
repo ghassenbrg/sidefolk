@@ -42,6 +42,20 @@ struct GameBoardTests {
         #expect(b.said == nil, "an extension's board can't give the companion words")
     }
 
+    @Test func aButtonCanBeTheCompanionInTheScene() throws {
+        // Which Cup?'s "Check its paw" on Sneaky: clicking the companion presses it, its key too; once disabled, neither.
+        let b = try Self.board("""
+            {"parts": [{"type": "button", "label": "Check Mochi's paw", "move": "accuse", "key": "c", "companion": true},
+                       {"type": "button", "label": "Hint", "move": "hint"}]}
+            """)
+        #expect(b.companionButton?.move == "accuse" && b.companionButton?.key == "c" && b.buttons.filter(\.companion).count == 1)
+        #expect(GameMove.button("accuse").offered(by: b))
+        let used = try Self.board("""
+            {"parts": [{"type": "button", "label": "Check Mochi's paw", "move": "accuse", "companion": true, "disabled": true}]}
+            """)
+        #expect(used.companionButton == nil)
+    }
+
     @Test func aBoardIsCappedAndCleaned() throws {
         let long = String(repeating: "word ", count: 200)
         let b = try Self.board("""
