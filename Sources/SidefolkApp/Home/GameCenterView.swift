@@ -124,13 +124,10 @@ struct GameCenterHero: View {
                                 .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                         }
                     }
-                    HStack(spacing: Theme.Space.s) {
-                        Button(action: action.run) { Label { action.title } icon: { Image(systemName: action.symbol) } }
-                            .buttonStyle(.sf(.primary, size: .large))
-                        Button { model.showMenu() } label: {
-                            Label { Text("All games", comment: "Game Center: open the Play panel's menu") } icon: { Image(systemName: "square.grid.2x2.fill") }
-                        }
-                        .buttonStyle(.sf(.secondary, size: .large))
+                    // Side by side, or one over the other where a long game's name needs the room (German, narrow).
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: Theme.Space.s) { actions(action) }
+                        VStack(alignment: .leading, spacing: Theme.Space.s) { actions(action) }
                     }
                 }
                 .padding(Theme.Space.xl)
@@ -146,6 +143,15 @@ struct GameCenterHero: View {
         .frame(minHeight: 230)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
         .elevation(.e1, radius: Theme.Radius.panel)
+    }
+
+    @ViewBuilder private func actions(_ action: (title: Text, symbol: String, run: () -> Void)) -> some View {
+        Button(action: action.run) { Label { action.title } icon: { Image(systemName: action.symbol) } }
+            .buttonStyle(.sf(.primary, size: .large))
+        Button { model.showMenu() } label: {
+            Label { Text("All games", comment: "Game Center: open the Play panel's menu") } icon: { Image(systemName: "square.grid.2x2.fill") }
+        }
+        .buttonStyle(.sf(.secondary, size: .large))
     }
 
     /// The companion's invitation: about the game put away, the day's boards, or a challenge.
