@@ -118,16 +118,11 @@ struct AskView: View {
                         .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
                         .accessibilityLabel("Remove attachment")
                 }
-                if model.text.isEmpty, !model.busy {
-                    // Drops work without AI: the common things are one click away.
-                    ButtonRow {
-                        Button("Save") { model.actions?.perform(.save, with: attachment, in: model) }.buttonStyle(.sf(.primary))
-                        Button("Remind me…") { model.actions?.perform(.remind, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
-                        if canWatch(attachment) {
-                            Button("Watch") { model.actions?.perform(.watch, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
-                        }
-                        Button("Ask about it…") { model.actions?.perform(.ask, with: attachment, in: model) }.buttonStyle(.sf(.secondary))
-                    }
+                if model.text.isEmpty, !model.busy, let actions = model.actions {
+                    // Drops work without AI: the likely things, one click or Return away (D88).
+                    DropCard(attachment: attachment, choices: actions.dropChoices(for: attachment),
+                             choose: { actions.perform($0, with: attachment, in: model) },
+                             openWith: { actions.open(attachment, with: $0, in: model) })
                 }
             }
             if let target = model.replyingTo {
@@ -264,17 +259,11 @@ struct AskView: View {
         return String(localized: "Type something, or drop a file or link on me")
     }
 
-    private func canWatch(_ a: Attachment) -> Bool {
-        switch a.kind {
-        case .url, .file: true
-        case .text: false
-        }
-    }
-
     private func icon(for a: Attachment) -> String {
-        switch a.kind {
+        switch a.dropKind {
         case .file: "doc"
-        case .url: "link"
+        case .folder: "folder"
+        case .link: "link"
         case .text: "text.quote"
         }
     }

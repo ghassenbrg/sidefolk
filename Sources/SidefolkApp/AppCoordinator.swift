@@ -391,9 +391,20 @@ final class AppCoordinator {
             Task { await runtime.settings.update { $0.voice.volume = min(max(volume, 0), 1) } }
             return
         }
+        if command.hasPrefix("dropChoice:") {
+            // One of the drop card's choices, as a click on it (D88).
+            if let choice = DropChoice(rawValue: String(command.dropFirst("dropChoice:".count))), let attachment = ask.attachment {
+                perform(choice, with: attachment, in: ask)
+            }
+            return
+        }
         if command.hasPrefix("drop:") {
             let value = String(command.dropFirst(5))
-            if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
+            if value.hasPrefix("text:") {
+                // Dropped words, as the companion takes them from another app (D88's drop card for text).
+                let text = String(value.dropFirst(5))
+                companionReceived(Attachment(kind: .text, label: "“\(text.clipped(40))”", text: text))
+            } else if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
                 companionReceived(Attachment(kind: .url(url), label: url.host ?? value, text: value))
             } else {
                 let file = URL(fileURLWithPath: value)

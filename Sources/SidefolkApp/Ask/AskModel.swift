@@ -19,9 +19,6 @@ struct ReminderGuess: Equatable {
     var label: String
 }
 
-/// Quick things to do with something dropped on the companion.
-enum DropAction { case save, remind, watch, ask }
-
 /// A request that needed AI while none was chosen: what works without it, and a way to send it again.
 struct NoAIRequest: Equatable {
     /// The words with the dropped item's text, for the actions that keep them as a task or a note.
@@ -119,7 +116,12 @@ protocol AskActions: AnyObject {
     /// Sets the reminder that was waiting for its time.
     func remindPending(at date: Date, in model: AskModel)
     func answer(question: AttentionItem, actionId: String)
-    func perform(_ action: DropAction, with attachment: Attachment, in model: AskModel)
+    /// Something dropped on the companion: one of its drop card's choices (D88).
+    func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel)
+    /// The drop card's four choices for what was dropped, the first what Return does.
+    func dropChoices(for attachment: Attachment) -> [DropChoice]
+    /// The drop card's Open with…: the dropped file in the app the person picked.
+    func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
     func openSettings(tab: SettingsTab?)
     func openHome()
@@ -321,6 +323,11 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
+        // Nothing typed with something dropped: Return is the drop card's first choice (D88).
+        if trimmed.isEmpty, let attachment, let first = actions?.dropChoices(for: attachment).first {
+            actions?.perform(first, with: attachment, in: self)
+            return
+        }
         let followUp = replyingTo?.thread
         replyingTo = nil
         // Shown as the request's caption and sent with the item; the model answers in any language.

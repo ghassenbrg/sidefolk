@@ -426,6 +426,9 @@ enum UISnapshots {
                 working: ["Codex in pockito"])
             glancing.waiting = 2
             glancing.tab = .today
+            // Miraya installed: a video link plays on the TV (D88). Ask holds its actions weakly, so they're kept here.
+            let tvActions = FixtureAskActions()
+            tvActions.canPlayOnTV = true
             // Today's tab with nothing in it (D88).
             let calmDay = AskModel()
             calmDay.actions = actions
@@ -437,6 +440,13 @@ enum UISnapshots {
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
                           ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
+                          ("desktop-ask-drop-file", dropped(.file(URL(fileURLWithPath: NSHomeDirectory() + "/Documents/Invoice April.pdf")),
+                                                            "Invoice April.pdf", actions)),
+                          ("desktop-ask-drop-folder", dropped(.file(FileManager.default.temporaryDirectory), "Downloads", actions)),
+                          ("desktop-ask-drop-text", dropped(.text, "“Ask Priya about the venue deposit”", actions,
+                                                            text: "Ask Priya about the venue deposit")),
+                          ("desktop-ask-drop-video", dropped(.url(URL(string: "https://cdn.example.com/films/trip.mp4")!), "cdn.example.com",
+                                                             tvActions)),
                           ("desktop-ask-now", sampleAskNow())]
                 + voiceAsks(actions).map { ("desktop-ask-\($0.0)", $0.1) }
             for (name, ask) in panels {
@@ -762,6 +772,14 @@ enum UISnapshots {
             with at least three people, and adds shared folders, single sign-on and an admin console. Annual billing takes 20% \
             off every paid plan. Do you want me to watch the page for the next change?
             """, canThinkHarder: true, tainted: true), caption: "what does example.com/pricing say?")
+        return ask
+    }
+
+    /// Something just dropped on the companion, nothing typed: the drop card (D88).
+    private static func dropped(_ kind: Attachment.Kind, _ label: String, _ actions: FixtureAskActions, text: String? = nil) -> AskModel {
+        let ask = AskModel()
+        ask.actions = actions
+        ask.attachment = Attachment(kind: kind, label: label, text: text)
         return ask
     }
 

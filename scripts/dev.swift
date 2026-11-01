@@ -7,6 +7,7 @@
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:trust | find:milk | drop:https://example.com
+//                           | drop:text:<words>   (D88: dropped text) | dropChoice:save|watch|ask|openWith|remind|copy|playOnTV
 //   swift scripts/dev.swift settings:search:quiet | settings:jump:quietHours | settings:full-access   (D84: Settings' search,
 //                           a jump to a setting by its SettingKey, the Full access sheet)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
