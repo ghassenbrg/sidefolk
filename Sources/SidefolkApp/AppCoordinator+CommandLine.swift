@@ -29,7 +29,7 @@ extension AppCoordinator {
             .replacingOccurrences(of: "~/.local/bin/sidefolk", with: FolderAccess.displayPath(target))
         alert.addButton(withTitle: String(localized: "Install"))
         alert.addButton(withTitle: String(localized: "Cancel"))
-        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        guard confirmed(alert) else { return nil }
         do {
             try fm.createDirectory(atPath: (target as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
             if existingLink != nil { try fm.removeItem(atPath: target) }
