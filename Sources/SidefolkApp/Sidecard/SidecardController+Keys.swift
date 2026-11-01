@@ -55,7 +55,9 @@ extension SidecardController {
     /// The card in front gets the focus on its main answer, among the held cards for ↑/↓.
     func focusKeys(on item: AttentionItem) {
         let (menu, buttons) = SidecardItemCard.arrange(item.actions)
-        let answers = (menu.isEmpty ? [] : [Self.moreAnswers]) + buttons.map(\.id)
+        // ⋯ holds the other answers and D88's "Fewer like this": one stop when either is there.
+        let more = !menu.isEmpty || !SidecardItemCard.fewer(item, model.interruptions).isEmpty
+        let answers = (more ? [Self.moreAnswers] : []) + buttons.map(\.id)
         let rtl = NSApp.userInterfaceLayoutDirection == .rightToLeft
         model.keys = CardKeys(answers: answers, main: buttons.last?.id, takesReturn: item.takesReturn,
                               deck: deckItems.map(\.id), current: item.id, rightToLeft: rtl)
@@ -173,13 +175,18 @@ extension SidecardController {
         }
     }
 
-    /// The answers behind ⋯, as a menu the arrow keys move through.
+    /// The answers behind ⋯ (and "Fewer like this"), as a menu the arrow keys move through.
     private func showMoreAnswers(_ item: AttentionItem) {
         let (menu, _) = SidecardItemCard.arrange(item.actions)
-        guard !menu.isEmpty, let view = hosted.panel.contentView else { return }
+        let fewer = SidecardItemCard.fewer(item, model.interruptions)
+        guard !menu.isEmpty || !fewer.isEmpty, let view = hosted.panel.contentView else { return }
         let popup = NSMenu()
         for action in menu {
             popup.addItem(ClosureTarget.item(action.title) { [weak self] in self?.answer(item, action.id) })
+        }
+        if !menu.isEmpty, !fewer.isEmpty { popup.addItem(.separator()) }
+        for choice in fewer {
+            popup.addItem(ClosureTarget.item(choice.title) { [weak self] in self?.model.lowerSource?(item, choice.source, choice.level) })
         }
         let margin = SidecardView.margin
         popup.popUp(positioning: nil, at: NSPoint(x: margin.leading + 16, y: margin.bottom + 40), in: view)
