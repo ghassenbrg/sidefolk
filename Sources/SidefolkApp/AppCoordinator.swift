@@ -421,6 +421,18 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("interrupt:") {
+            // interrupt:<source key>:<card|whisper|today|off> ("interrupt:agent:claude-code:today"), as Settings › Attention's
+            // table does (D88); "default" clears it.
+            let rest = command.dropFirst("interrupt:".count)
+            guard let cut = rest.lastIndex(of: ":"), let source = InterruptSource(key: String(rest[..<cut])) else { return }
+            let level = InterruptLevel(rawValue: String(rest[rest.index(after: cut)...]))
+            Task {
+                await runtime.settings.update { $0.interruptions.set(level, for: source) }
+                settingsChanged()
+            }
+            return
+        }
         if command.hasPrefix("scroll:"), let fraction = Double(command.dropFirst(7)) {
             // scroll:<0…1>: the tallest scroll view on screen that far down, so `snap` sees below the fold.
             DebugSnapshots.scroll(to: fraction)

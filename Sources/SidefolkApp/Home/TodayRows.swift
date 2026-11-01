@@ -453,7 +453,8 @@ struct AttentionRow: View {
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 // Wrapping, so a narrow column never cuts "Done · 10 min · Tomorrow" to "… 1… T…".
                 ButtonRow(spacing: 6) {
-                    ForEach(item.actions, id: \.id) { action in
+                    // The row has its own Dismiss; an item's "dismiss" answer would show it twice.
+                    ForEach(item.actions.filter { $0.id != "dismiss" }, id: \.id) { action in
                         Button { respond(action.id) } label: { Text(verbatim: action.title) }
                             .buttonStyle(.sf(action.isPrimary ? .primary : .secondary))
                     }

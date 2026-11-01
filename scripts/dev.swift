@@ -11,6 +11,7 @@
 //                           a jump to a setting by its SettingKey, the Full access sheet)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
 //   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
+//   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:games:default   (D88)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:agenda | calendar:week:2026-11-03 | calendar:month   (D66, D84)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)

@@ -40,6 +40,14 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
+- **What may interrupt you** (branch `team/interrupts`, not merged; D88): a level per source (Card, Whisper, Only in
+  Today, Off) in Settings › Attention, applied before Focus and Quiet; "Fewer like this" and "Show these as whispers"
+  in a card's ⋯ with Undo; Today's Kept for Today; "done today" counts only what changed something. Built, tested
+  (`InterruptionsTests`, `InterruptionsCenterTests`, `DoneTodayTests`), snapshots read (`page-settings-attention-sources`,
+  `page-today-kept`, light, dark, de, ar) and checked live (Claude Code at Only in Today, a `sidefolk hook` Stop: no
+  desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
+  click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
@@ -49,8 +57,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
    choice card for drops, the stack's arc animation, voice's level-reactive pool, answering cards from the keyboard
    outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
-   "+1" overlaps, a watch's detail page (no check log or page versions are kept), a per-source "what may interrupt
-   you" table (no source has a level of its own).
+   "+1" overlaps, a watch's detail page (no check log or page versions are kept).
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
    dragging a plot from the keyboard, a hint that plays its move, a daily board per level.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence
@@ -65,8 +72,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
 
 ## Known gaps
 
-- **Small things seen in phase 5:** "done today" on Today counts other agents' reads; the greeting says "Good
-  evening" after midnight.
+- **Small things seen in phase 5:** the greeting says "Good evening" after midnight.
 - **Not yet tried by hand with the real thing:** the microphone (permission prompt, hold to talk, AirPods), a live
   ElevenLabs voice, Location Services naming the town, an update's swap and reopen between two published snapshots,
   Apple Notes on a large real library, Claude Code hooks and Codex's hook trust dialog in a real session, "Connect…"

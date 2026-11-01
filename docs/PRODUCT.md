@@ -255,6 +255,12 @@ level without sound; Quiet and fullscreen-frontmost hold everything but critical
 becomes a system notification), Focus holds whispers; what was held comes back as one "While you were…" card; away (5 min idle or locked) queues and shows one summary on return;
 one re-nudge after 10 minutes, then it waits in the badge; celebrate only waits longer than 2 min.
 
+Per source (D88, Settings › Attention › What may interrupt you): reminders, watches (and one watch set apart),
+commands, each agent, each extension with watches, games and the companion may each be capped at Card, Whisper,
+Only in Today (kept in Today, never on the desktop) or Off (History only). A notice gets the lower of its own level
+and that cap, then Focus or Quiet; questions and an agent waiting for an approval are never turned down. A card's ⋯
+has "Show these as whispers" and "Fewer like this", with Undo.
+
 ## 12. Failure model
 
 Every failure shown to the user says what failed, whether anything changed, and what they can do.
