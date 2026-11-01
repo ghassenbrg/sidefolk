@@ -44,6 +44,9 @@ public enum CharacterAntic: String, CaseIterable, Sendable {
     // Chance, played for the person (D44, amended): a coin flicked up, dice shaken and thrown, a fist pumped for rock,
     // paper, scissors.
     case flick, roll, pump
+    // Games' reactions (D75, built later): a huff turned away, a shrug, a playful tease, a crouch ready to play, a
+    // wince, a gasp; and the short accents fast games use.
+    case sulk, shrug, tease, ready, wince, gasp, waveQuick, hopQuick, spinQuick, bowQuick
 
     /// The ones the idle scheduler may pick.
     public static let idle: [CharacterAntic] = [.earTwitch, .stretch, .yawn, .scratch, .hop, .wiggle, .peek, .glance, .sneeze,

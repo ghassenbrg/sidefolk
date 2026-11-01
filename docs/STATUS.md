@@ -75,14 +75,23 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
   click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
 
-Nothing else is on a branch: every team branch is merged into main in both repositories.
+- **The companions' reaction moves** (branch `team/reactions`, not merged; D75 amended): sulk, shrug, tease, ready,
+  wince, gasp and the quick accents are each a real move now, in 3D for all ten companions (shared in
+  `engine/moves.js`, a still version under Reduce Motion) and in 2D (`Antics`). Verified: every move filmed for every
+  3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
+  debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
+  no gallery companion changes.
+
+**Integration:** `team/desktop-polish` carries origin/main (D86), `team/addon-updates` (with watch history and the
+interrupt levels, D87–D89) and `team/reactions`, merged and tested together; `team/backup` and `team/games-items`
+merge last.
 
 ## Next
 
 1. **The founder plays the puzzles** (Garden Plots, Seesaw, Sudoku, Blossoms) and the games in snapshot 661.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
-   companions' own reactions, the Week view's "read only" note and "+1" overlaps.
+   Week view's "read only" note and "+1" overlaps.
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
    dragging a plot from the keyboard, a hint that plays its move, a daily board per level.
 5. **Before 0.1.0 is released** (the founder; docs/launch/CHECKLIST.md, docs/RELEASE.md): a licence

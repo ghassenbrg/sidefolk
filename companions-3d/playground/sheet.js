@@ -81,6 +81,35 @@ export async function filmstrip(m, move, { frames = 12, yaw = 0, size = 300, col
   return blob.size;
 }
 
+/** Several moves at several angles in one picture: a row per move and yaw, `frames` across each move's length,
+ *  labelled. Moves the body can't do are skipped. Saved as build/companions-3d/reel-<id>-<name>/00001.jpg. */
+export async function reel(m, moves, { name = 'moves', yaws = [0, 40, 90], frames = 8, size = 180 } = {}) {
+  m.pause(); m.nextFidget = 1e9;
+  const rows = [];
+  for (const move of moves) for (const yaw of yaws) rows.push([move, yaw]);
+  const label = 120, out = document.createElement('canvas');
+  out.width = label + frames * size; out.height = rows.length * size;
+  const g = out.getContext('2d'); g.fillStyle = '#eef1f6'; g.fillRect(0, 0, out.width, out.height);
+  g.font = '600 18px -apple-system, sans-serif'; g.fillStyle = '#223';
+  const canvas = m.renderer.domElement;
+  rows.forEach(([move, yaw], r) => {
+    m.actions = []; m.setState('idle'); m.setMood('neutral'); m.setPosture('stand'); m.speech = null;
+    m.look.target = null; m.lookAt(0, 0.1); m.step(2.5);
+    m.root.rotation.y = -yaw * Math.PI / 180;
+    g.fillStyle = '#223'; g.fillText(move, 8, r * size + size / 2); g.fillText(`${yaw}°`, 8, r * size + size / 2 + 22);
+    if (!m.play(move)) { g.fillText('skipped', 8, r * size + size / 2 + 44); return; }
+    const dur = m.actions.at(-1).clip.dur, s = Math.min(canvas.width, canvas.height);
+    for (let i = 0; i < frames; i++) {
+      m.step(dur / frames);
+      g.drawImage(canvas, (canvas.width - s) / 2, (canvas.height - s) / 2, s, s, label + i * size, r * size, size, size);
+    }
+  });
+  m.root.rotation.y = 0;
+  const blob = await new Promise((res) => out.toBlob(res, 'image/jpeg', 0.88));
+  await fetch(`/frame/reel-${m.C.id}-${name}/1.jpg`, { method: 'POST', body: blob });
+  return blob.size;
+}
+
 /** Close-ups to judge the surface (fur, seams, colour borders) beside a sheet: `shots` are
  *  [yaw degrees, centre height, view height] in world units, each a 900 px square, side by side.
  *  Saved as build/companions-3d/close-<name>/00001.jpg. */
@@ -193,7 +222,7 @@ export async function restFilm(m, kind, { tag = '', yaws = [0, 90], every = 0.5,
  *  and lists, per cue, how many pixels of each edge the character touched: anything listed is cut off on the desktop.
  *  A big head that leans, a tall leap or a whole-body turn about a low pivot are what leave it. Returns {} when
  *  nothing does. */
-export async function edges(m, { size = 400, seconds = 4 } = {}) {
+export async function edges(m, { size = 400, seconds = 4, only = null } = {}) {
   const { ACTIONS } = await import('./engine/moves.js');
   m.pause(); m.nextFidget = 1e9;
   m.canvas.style.cssText = `position:fixed;left:0;top:0;width:${size}px;height:${size}px`;
@@ -217,6 +246,12 @@ export async function edges(m, { size = 400, seconds = 4 } = {}) {
     m.speech = null; m.root.rotation.y = 0; m.step(2);
   };
   const run = (label, secs) => { for (let t = 0; t < secs; t += 0.05) { m.step(0.05); check(label); } };
+  // `only`: just these moves (a new move checked on its own), nothing else.
+  if (only) {
+    for (const name of only) { reset(); if (m.play(name)) run(name, (m.actions.at(-1)?.clip?.dur ?? 3) + 0.6); }
+    reset();
+    return hits;
+  }
   reset(); run('idle', seconds);
   for (const x of [1, -1, 0.3]) {
     reset(); m.pet.active = true; m.pet.x = x; run(`pet ${x}`, seconds + 1);
