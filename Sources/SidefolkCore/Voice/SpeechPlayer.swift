@@ -12,6 +12,14 @@ public final class SpeechPlayer {
     /// Bumped by every `say` and `stop`, so a line that was cut off never reports twice.
     private var generation = 0
     public private(set) var isSpeaking = false
+    /// What the line being said (or last said) has handed to the speakers so far: for the log, so a
+    /// report of "no voice" says whether any audio was made at all.
+    public private(set) var scheduled = Scheduled()
+
+    public struct Scheduled: Sendable, Equatable {
+        public var pieces = 0
+        public var seconds = 0.0
+    }
     /// The mouth follows this: 0...1 while audio plays, nil when it stops.
     public var onLevel: ((Float?) -> Void)?
 
@@ -32,6 +40,7 @@ public final class SpeechPlayer {
         }
         let mine = generation
         isSpeaking = true
+        scheduled = Scheduled()
         self.done = done
         let sink = self.sink
         current = Task { [weak self] in
@@ -40,6 +49,8 @@ public final class SpeechPlayer {
                     for try await piece in engine.audio(for: sentence, style: style) {
                         try Task.checkCancellation()
                         sink.schedule(piece, volume: volume)
+                        self?.scheduled.pieces += 1
+                        self?.scheduled.seconds += piece.duration
                     }
                 }
                 try Task.checkCancellation()

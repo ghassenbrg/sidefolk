@@ -35,6 +35,37 @@ import Testing
         #expect(decide(replies: .off, quiet: true) == VoicePolicy.Decision.none)
     }
 
+    /// The founder's Japanese session (2026-11-01): a game's sounds kept the audio output running, so Siri's voice
+    /// trigger (corespeechd) ran the microphone, and every reply was muted as if a call were on. macOS's own background
+    /// listeners don't count; apps, Apple's included, and the FaceTime call service do, and so does anything unknown.
+    @Test func onlySomeoneRecordingKeepsItSilentNotMacOSListeners() {
+        #expect(!VoicePolicy.recordsElsewhere(executable: "/System/Library/PrivateFrameworks/CoreSpeech.framework/corespeechd"))
+        #expect(VoicePolicy.recordsElsewhere(executable: "/System/Applications/FaceTime.app/Contents/MacOS/FaceTime"))
+        #expect(VoicePolicy.recordsElsewhere(executable: "/System/Applications/VoiceMemos.app/Contents/MacOS/VoiceMemos"))
+        #expect(VoicePolicy.recordsElsewhere(executable: "/usr/libexec/avconferenced"))
+        #expect(VoicePolicy.recordsElsewhere(executable: "/Applications/zoom.us.app/Contents/MacOS/zoom.us"))
+        #expect(VoicePolicy.recordsElsewhere(executable: "/System/Library/CoreServices/screencaptureui.app/Contents/MacOS/screencaptureui"))
+        #expect(VoicePolicy.recordsElsewhere(executable: nil))
+    }
+
+    /// A spoken request: the talk key went down 3 s before it was sent and repeated while held; the answer came 5 s
+    /// later. Only a key pressed after the request (back to work elsewhere) or words in the box count as typing.
+    @Test func theTalkKeyAndItsRepeatsAreNeverTyping() {
+        func typed(keyAgo: TimeInterval, askedAgo: TimeInterval = 5, box: Bool = false) -> Bool {
+            VoicePolicy.typedSince(boxHasWords: box, secondsSinceKey: keyAgo, secondsSinceRequest: askedAgo)
+        }
+        #expect(!typed(keyAgo: 8))
+        // The last repeat of the held talk key, just before the release that sent it.
+        #expect(!typed(keyAgo: 5.05))
+        // Stamped a moment after the key that sent it (Return for a typed request): within the slack.
+        #expect(!typed(keyAgo: 4.9))
+        #expect(typed(keyAgo: 4))
+        #expect(typed(keyAgo: 0.5))
+        #expect(typed(keyAgo: 60, box: true))
+        // No key since the Mac started (the founder's Mac idle for minutes in the reproduction).
+        #expect(!typed(keyAgo: 1_600))
+    }
+
     @Test func voiceOverReadsItInsteadOfTalkingOverIt() {
         #expect(decide(voiceOver: true) == .announce)
         #expect(decide(quiet: true, voiceOver: true) == .muted(.quiet))

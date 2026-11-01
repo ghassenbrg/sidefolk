@@ -73,6 +73,12 @@ struct CountingEngine: SpeechOutput {
         #expect(endedCleanly(outcome))
         // The mouth followed the audio and closed at the end.
         #expect(levels.count == 3 && levels.last == .some(nil))
+        // What reached the speakers, for the log's "reply played" (two pieces of 2 samples at 24 kHz).
+        #expect(player.scheduled == SpeechPlayer.Scheduled(pieces: 2, seconds: 4.0 / 24_000))
+        // The next line counts afresh.
+        player.say("Done.", with: CountingEngine(), style: style, volume: 1)
+        await player.finished()
+        #expect(player.scheduled.pieces == 1)
     }
 
     @Test func stoppingCutsItOffAtOnceAndSaysSo() async {

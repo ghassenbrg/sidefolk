@@ -121,10 +121,35 @@ final class ElevenLabsStub: URLProtocol, @unchecked Sendable {
         }
         // Both were tried, the first is remembered as refused.
         #expect(ElevenLabsStub.requests(path).compactMap { $0.body?["model_id"]?.stringValue } == ["model-a", "model-b"])
-        #expect(ElevenLabs.turnedDown.withLock { $0.contains("model-a") })
+        #expect(ElevenLabs.turnedDown.withLock { $0.contains(ElevenLabs.refusal("model-a", "en")) })
         ElevenLabsStub.set(path, .init(pieces: [pcm([100])]))
         _ = try await collect(client.speech("Hi.", voice: "v-fallback", models: ["model-a", "model-b"], rate: 1, language: "en"))
         #expect(ElevenLabsStub.requests(path).last?.body?["model_id"]?.stringValue == "model-b")
+    }
+
+    /// Japanese (and Chinese, Korean, Arabic) need a multilingual model: every preferred model is one, none of the
+    /// English-only ones (Flash v2, Turbo v2, Monolingual v1), Multilingual v2 last, and the line's language goes along.
+    @Test func everyPreferredModelSpeaksJapanese() {
+        let englishOnly: Set = ["eleven_flash_v2", "eleven_turbo_v2", "eleven_monolingual_v1"]
+        #expect(ElevenLabs.preferredModels.allSatisfy { !englishOnly.contains($0) })
+        #expect(ElevenLabs.preferredModels.last == "eleven_multilingual_v2")
+        for (language, code) in [("ja", "ja"), ("ja-JP", "ja"), ("zh-Hans", "zh"), ("ko", "ko"), ("ar", "ar")] {
+            let request = client.request("こんにちは。", voice: "v", model: "eleven_flash_v2_5", rate: 1, language: language)
+            #expect(request.httpBody.flatMap { try? JSONValue.parse($0) }?["language_code"]?.stringValue == code)
+        }
+    }
+
+    /// A model that refuses one language is skipped for that language only: English still gets it.
+    @Test func aModelRefusedForJapaneseIsStillTriedForEnglish() async throws {
+        let path = "/v1/text-to-speech/v-lang/stream"
+        ElevenLabsStub.set(path, .init(status: 400, pieces: [json(#"{"detail": {"status": "unsupported_language", "message": "no"}}"#)]))
+        _ = try? await collect(client.speech("こんにちは。", voice: "v-lang", models: ["model-ja-x", "model-ja-y"], rate: 1, language: "ja"))
+        #expect(ElevenLabs.turnedDown.withLock { $0.contains(ElevenLabs.refusal("model-ja-x", "ja")) })
+        ElevenLabsStub.set(path, .init(pieces: [pcm([100])]))
+        _ = try await collect(client.speech("Hi.", voice: "v-lang", models: ["model-ja-x", "model-ja-y"], rate: 1, language: "en"))
+        #expect(ElevenLabsStub.requests(path).last?.body?["model_id"]?.stringValue == "model-ja-x")
+        _ = try await collect(client.speech("はい。", voice: "v-lang", models: ["model-ja-x", "model-ja-y"], rate: 1, language: "ja"))
+        #expect(ElevenLabsStub.requests(path).last?.body?["model_id"]?.stringValue == "model-ja-y")
     }
 
     @Test func multilingualV2GetsNoLanguageCode() {

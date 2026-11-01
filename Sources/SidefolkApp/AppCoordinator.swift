@@ -408,6 +408,11 @@ final class AppCoordinator {
             return
         }
         if command == "voice:stop" { _ = voice.cancel(); return }
+        if command.hasPrefix("brain:scripted:") {
+            let value = String(command.dropFirst("brain:scripted:".count))
+            Task { await DevBrain.set(value, paths: runtime.paths, settings: runtime.settings) }
+            return
+        }
         if command.hasPrefix("play:"), let act = CompanionAct(rawValue: String(command.dropFirst(5))) { runtime.events.publish(.companion(act)); return }
         if command == "click" { companionClicked(); return }
         if command.hasPrefix("tip:") || command.hasPrefix("recede:") { companion.devFloor(command); return }

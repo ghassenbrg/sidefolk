@@ -62,6 +62,29 @@ import Testing
         #expect(SpokenLine.answer("明日の九時に銀行に電話します。") == "明日の九時に銀行に電話します。")
     }
 
+    /// Answers in Japanese, Chinese, Korean and Arabic are said, whatever the app's language: their first sentence, or
+    /// all of it, with their own sentence ends kept (no "." after ？ or ؟), and the line's language picks the voice.
+    @Test func answersInOtherScriptsAreSaidInTheirOwnLanguage() {
+        let japanese = "福岡の今週の天気は、今日は概ね晴れますが、明日は雨の予報です。火曜日は再び晴れ、気温は13度から23度の間になるでしょう。"
+        #expect(SpokenLine.answer(japanese) == "福岡の今週の天気は、今日は概ね晴れますが、明日は雨の予報です。")
+        #expect(SpokenLine.full(japanese) == "福岡の今週の天気は、今日は概ね晴れますが、明日は雨の予報です。 火曜日は再び晴れ、気温は13度から23度の間になるでしょう。")
+        #expect(SpokenLine.full("明日は雨ですか？") == "明日は雨ですか？")
+        #expect(SpokenLine.full("明日は雨です") == "明日は雨です。")
+        let chinese = "今天福冈天气晴朗，明天有雨。周二又是晴天！"
+        #expect(SpokenLine.answer(chinese) == "今天福冈天气晴朗，明天有雨。")
+        #expect(SpokenLine.full(chinese) == "今天福冈天气晴朗，明天有雨。 周二又是晴天！")
+        let korean = "오늘 후쿠오카는 맑고 내일은 비가 옵니다. 화요일에는 다시 맑겠습니다."
+        #expect(SpokenLine.answer(korean) == "오늘 후쿠오카는 맑고 내일은 비가 옵니다.")
+        #expect(SpokenLine.full(korean) == korean)
+        let arabic = "الطقس في فوكوكا مشمس اليوم وممطر غدا. هل تريد التفاصيل؟"
+        #expect(SpokenLine.answer(arabic) == "الطقس في فوكوكا مشمس اليوم وممطر غدا.")
+        #expect(SpokenLine.full(arabic) == arabic)
+        for (line, language) in [(japanese, "ja"), (chinese, "zh"), (korean, "ko"), (arabic, "ar"), ("I love you!", "en")] {
+            #expect(SpokenLine.language(of: line, fallback: "ja").hasPrefix(language))
+        }
+        #expect(SpokenLine.language(of: "", fallback: "ja") == "ja")
+    }
+
     @Test func cardsSayWhatHappenedAndWhenForReminders() {
         #expect(SpokenLine.card(ResultCard(kind: .reminder, title: "Stretch", subtitle: "Today 17:00")) == "Stretch, Today 17:00")
         #expect(SpokenLine.card(ResultCard(kind: .note, title: "Saved to Inbox", subtitle: "the whole note text")) == "Saved to Inbox")
