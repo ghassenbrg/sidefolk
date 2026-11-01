@@ -177,7 +177,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .calendar: String(localized: "Today, the morning brief and the AI may read your calendar.", comment: "Settings › Trust: search")
         case .keeps: String(localized: "Everything stays on this Mac. It's encrypted at rest by FileVault when FileVault is on.")
         case .history: String(localized: "Conversations with the AI, kept so you can follow up, then deleted.", comment: "Settings › Trust: search")
-        case .exportData: String(localized: "Notes, reminders, watches and settings as one JSON file. No keys.")
+        case .exportData: String(localized: "Notes, reminders, watches with their history, and settings as one JSON file. No keys.")
         case .diagnostics: String(localized: "Logs and versions for a bug report, without your notes or messages.")
         case .debugLogging: String(localized: "More detail in the local log. Turn it off when you're done.")
         case .deleteAll: String(localized: "Notes, reminders, watches, history, logs and saved keys. This can't be undone.")

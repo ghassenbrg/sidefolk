@@ -76,18 +76,24 @@ enum CheckWords {
         }
     }
 
-    /// When: "Today 10:02"; for a run "Today 09:00 – 10:30", or "Yesterday 22:00 – Today 06:00" across midnight.
+    /// When: "Today 10:02"; for a run "Today 09:00 – 10:30", or "Yesterday 22:00 – Today 06:00" across midnight. The
+    /// times are isolated, so a range keeps its order in a right-to-left language.
     static func when(_ check: WatchCheck, now: Date = Date()) -> String {
-        let last = TimeText.short(check.lastAt, now: now)
-        guard check.count > 1, check.firstAt < check.lastAt else { return last }
-        let end = Calendar.current.isDate(check.firstAt, inSameDayAs: check.lastAt)
-            ? TimeFormat.clock(check.lastAt, calendar: .autoupdatingCurrent) : last
-        return "\(TimeText.short(check.firstAt, now: now)) – \(end)"
+        let calendar = Calendar.autoupdatingCurrent
+        guard check.count > 1, check.firstAt < check.lastAt else { return TimeText.short(check.lastAt, now: now) }
+        if calendar.isDate(check.firstAt, inSameDayAs: check.lastAt) {
+            let day = TimeFormat.day(check.firstAt, now: now, calendar: calendar)
+            return "\(day) \u{2066}\(TimeFormat.clock(check.firstAt, calendar: calendar)) – \(TimeFormat.clock(check.lastAt, calendar: calendar))\u{2069}"
+        }
+        return "\u{2068}\(TimeText.short(check.firstAt, now: now))\u{2069} – \u{2068}\(TimeText.short(check.lastAt, now: now))\u{2069}"
     }
 
-    /// "120 ms", "2.4 s": how long the check took.
+    /// "120 ms", "2.4 s" in the app's language: how long the check took.
     static func took(_ ms: Int) -> String {
-        ms < 1000 ? String(localized: "\(ms) ms", comment: "How long a check took") : (Double(ms) / 1000).formatted(.number.precision(.fractionLength(1))) + " s"
+        let style = Measurement<UnitDuration>.FormatStyle(width: .abbreviated, locale: Wording.locale,
+                                                          numberFormatStyle: .number.precision(.fractionLength(ms < 1000 ? 0 : 1)))
+        return ms < 1000 ? Measurement(value: Double(ms), unit: UnitDuration.milliseconds).formatted(style)
+            : Measurement(value: Double(ms) / 1000, unit: UnitDuration.seconds).formatted(style)
     }
 }
 

@@ -13092,6 +13092,65 @@
         }
       }
     },
+    "%lld changed" : {
+      "comment" : "A watch's bar of checks: checks that saw a change",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld تغيّرت"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld geändert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld con cambios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld modifiées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld con modifiche"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更 %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경 %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld com mudanças"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 次有变化"
+          }
+        }
+      }
+    },
     "%lld characters" : {
       "localizations" : {
         "ar" : {
@@ -15059,6 +15118,65 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld failed" : {
+      "comment" : "A watch's bar of checks: checks that couldn't look",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld فشلت"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fehlgeschlagen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fallidas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld échouées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fallite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "失敗 %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실패 %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld com falha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 次失败"
           }
         }
       }
@@ -17318,6 +17436,66 @@
         }
       }
     },
+    "%lld ms" : {
+      "comment" : "How long a check took",
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ملي ث"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ms"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 毫秒"
+          }
+        }
+      }
+    },
     "%lld new files in %@" : {
       "localizations" : {
         "ar" : {
@@ -18590,7 +18768,7 @@
       }
     },
     "%lld paused" : {
-      "comment" : "Under On duty's title",
+      "comment" : "A watch's bar of checks: times it was paused\nUnder On duty's title",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -21936,6 +22114,197 @@
         }
       }
     },
+    "%lld unchanged lines" : {
+      "comment" : "Lines folded away between changes",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld أسطر دون تغيير"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld سطرًا دون تغيير"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سطر واحد دون تغيير"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld سطر دون تغيير"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سطران دون تغيير"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا أسطر دون تغيير"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld unveränderte Zeile"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld unveränderte Zeilen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld unchanged line"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld unchanged lines"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld línea sin cambios"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld líneas sin cambios"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ligne inchangée"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld lignes inchangées"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld riga invariata"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld righe invariate"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "変更のない %lld 行"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "변경 없는 줄 %lld개"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld linha sem mudança"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld linhas sem mudança"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 行未变"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld upcoming reminders" : {
       "localizations" : {
         "ar" : {
@@ -22947,6 +23316,65 @@
         }
       }
     },
+    "%lld with no change" : {
+      "comment" : "A watch's bar of checks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld دون تغيير"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ohne Änderung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sin cambios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sans changement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld senza modifiche"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変化なし %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변화 없음 %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sem mudança"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 次无变化"
+          }
+        }
+      }
+    },
     "+ %lld more" : {
       "localizations" : {
         "ar" : {
@@ -23177,6 +23605,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "，已触发 %lld 次"
+          }
+        }
+      }
+    },
+    ", last changed %@ ago" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "، آخر تغيير قبل %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", zuletzt geändert vor %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", último cambio hace %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", modifiée il y a %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", ultima modifica %@ fa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "、最後の変更は %@前"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", 마지막 변경 %@ 전"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", última mudança há %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "，上次变化在 %@前"
           }
         }
       }
@@ -30610,6 +31096,65 @@
         }
       }
     },
+    "Added: %@" : {
+      "comment" : "A line that came to a watched page or file",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُضيف: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzugefügt: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadida: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutée : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiunta: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추가됨: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionada: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增：%@"
+          }
+        }
+      }
+    },
     "Adding…" : {
       "localizations" : {
         "ar" : {
@@ -32048,6 +32593,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装之后"
+          }
+        }
+      }
+    },
+    "After · %@" : {
+      "comment" : "What changed: the newer version and when it was read",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعد · %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachher · %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Después · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après · %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dopo · %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更後 · %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이후 · %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depois · %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "之后 · %@"
           }
         }
       }
@@ -40834,6 +41438,64 @@
         }
       }
     },
+    "Back to On duty" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العودة إلى في الخدمة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zu Im Einsatz"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a De servicio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour à En service"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Torna a In servizio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稼働中に戻る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "작동 중으로 돌아가기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltar para Em serviço"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回在岗"
+          }
+        }
+      }
+    },
     "Back to games" : {
       "comment" : "A game's end card: back to the Play panel's menu",
       "localizations" : {
@@ -41707,6 +42369,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在任何改动之前"
+          }
+        }
+      }
+    },
+    "Before · %@" : {
+      "comment" : "What changed: the older version and when it was read",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قبل · %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorher · %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antes · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avant · %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prima · %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更前 · %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 · %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antes · %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "之前 · %@"
           }
         }
       }
@@ -48790,6 +49511,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "核对清单（⇧⌘L）"
+          }
+        }
+      }
+    },
+    "Checks" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفحوص"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobaciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifications"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlli"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인 기록"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificações"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查记录"
           }
         }
       }
@@ -58766,6 +59545,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "珊瑚色"
+          }
+        }
+      }
+    },
+    "Couldn't check" : {
+      "comment" : "A watch's timeline: a failed check",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الفحص"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfung fehlgeschlagen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo comprobar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification impossible"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controllo non riuscito"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認できませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인하지 못함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível verificar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法检查"
+          }
+        }
+      }
+    },
+    "Couldn't check, %lld times" : {
+      "comment" : "A watch's timeline: failed checks in a row",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الفحص، %lld مرات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfung fehlgeschlagen, %lld-mal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo comprobar, %lld veces"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification impossible, %lld fois"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controllo non riuscito, %lld volte"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認できませんでした(%lld回)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인하지 못함, %lld번"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível verificar, %lld vezes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法检查，%lld 次"
           }
         }
       }
@@ -91697,6 +92594,65 @@
         }
       }
     },
+    "Inline" : {
+      "comment" : "What changed: one column",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في عمود واحد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untereinander"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En línea"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En ligne"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In linea"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1列"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "한 줄로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em linha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合并显示"
+          }
+        }
+      }
+    },
     "Install" : {
       "localizations" : {
         "ar" : {
@@ -95302,6 +96258,64 @@
         }
       }
     },
+    "It was stopped, and its history went with it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُوقفت، وذهب سجلها معها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie wurde beendet, und ihr Verlauf mit ihr."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se detuvo y su historial se fue con ella."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle a été arrêtée, et son historique avec elle."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "È stata fermata, e la sua cronologia con lei."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止され、履歴も一緒に削除されました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중단되어 기록도 함께 삭제되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ele foi parado, e o histórico foi junto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它已停止，记录也一并删除。"
+          }
+        }
+      }
+    },
     "It will be able to" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -95897,6 +96911,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "斜体（⌘I）"
+          }
+        }
+      }
+    },
+    "Its checks and the text it kept are deleted with it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحذف فحوصها والنص الذي احتفظت به معها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Prüfungen und der gespeicherte Text werden mit ihr gelöscht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus comprobaciones y el texto que guardó se borran con ella."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses vérifications et le texte gardé sont supprimés avec elle."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I suoi controlli e il testo conservato vengono eliminati con lei."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認の記録と保存したテキストも一緒に削除されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인 기록과 저장한 텍스트도 함께 삭제됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As verificações e o texto guardado são apagados junto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的检查记录和保存的文本会一并删除。"
           }
         }
       }
@@ -99063,6 +100135,197 @@
         }
       }
     },
+    "Last %lld checks: %@" : {
+      "comment" : "A watch's bar of checks, read aloud",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آخر %1$lld فحوص: %2$@"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آخر %1$lld فحصًا: %2$@"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آخر فحص: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آخر %1$lld فحص: %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آخر فحصين: %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا فحوص بعد: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Letzte Prüfung: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Letzte %1$lld Prüfungen: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Last %1$lld check: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Last %1$lld checks: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Última comprobación: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Últimas %1$lld comprobaciones: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dernière vérification : %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld dernières vérifications : %2$@"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ultimo controllo: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ultimi %1$lld controlli: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "直近 %1$lld 回の確認: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "최근 확인 %1$lld번: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Última verificação: %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Últimas %1$lld verificações: %2$@"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "最近 %1$lld 次检查：%2$@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Last 7 days" : {
       "localizations" : {
         "ar" : {
@@ -102202,6 +103465,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实时数值"
+          }
+        }
+      }
+    },
+    "Live values aren't logged: they read every few seconds." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القيم المباشرة لا تُسجَّل: فهي تُقرأ كل بضع ثوانٍ."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Werte werden nicht protokolliert: Sie werden alle paar Sekunden gelesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los valores en vivo no se registran: se leen cada pocos segundos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les valeurs en direct ne sont pas consignées : elles se lisent toutes les quelques secondes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I valori dal vivo non vengono registrati: si leggono ogni pochi secondi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライブ値は記録されません。数秒ごとに読み取るためです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실시간 값은 몇 초마다 읽기 때문에 기록하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valores ao vivo não são registrados: são lidos a cada poucos segundos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实时数值不做记录：它们每隔几秒读取一次。"
           }
         }
       }
@@ -113593,6 +114914,124 @@
         }
       }
     },
+    "No change" : {
+      "comment" : "A watch's timeline: one quiet check",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تغيير"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Änderung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin cambios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun changement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuna modifica"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変化なし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변화 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem mudança"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无变化"
+          }
+        }
+      }
+    },
+    "No change in %lld checks" : {
+      "comment" : "A watch's timeline: a run of quiet checks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تغيير في %lld فحوص"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Änderung in %lld Prüfungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin cambios en %lld comprobaciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun changement en %lld vérifications"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuna modifica in %lld controlli"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld回の確認で変化なし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld번 확인, 변화 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem mudança em %lld verificações"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 次检查无变化"
+          }
+        }
+      }
+    },
     "No collections yet" : {
       "localizations" : {
         "ar" : {
@@ -115744,6 +117183,181 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未经 Sidefolk 检查：只有在你信任作者时才安装。"
+          }
+        }
+      }
+    },
+    "Not checked yet" : {
+      "comment" : "A watch's bar of checks, before the first",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُفحص بعد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht geprüft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún sin comprobar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore vérifiée"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ancora controllata"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 확인 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não verificado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未检查"
+          }
+        }
+      }
+    },
+    "Not checked yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُفحص بعد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht geprüft."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún sin comprobar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore vérifiée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ancora controllata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未確認です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 확인하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não verificado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未检查。"
+          }
+        }
+      }
+    },
+    "Not checked yet. Scout looks soon, or press Check now." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُفحص بعد. سيلقي Scout نظرة قريبًا، أو اضغط بحث الآن."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht geprüft. Scout schaut bald nach, oder klicke auf „Jetzt suchen“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún sin comprobar. Scout mirará pronto, o pulsa Comprobar ahora."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore vérifiée. Scout regarde bientôt, ou cliquez sur Vérifier maintenant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ancora controllata. Scout guarda a breve, oppure premi Controlla ora."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未確認です。Scoutがまもなく確認します。今すぐ確認を押すこともできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 확인하지 않았습니다. Scout가 곧 확인하며, 지금 확인을 눌러도 됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não verificado. Scout olha em breve, ou clique em Buscar Agora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未检查。Scout 很快会查看，也可以点按“立即检查”。"
           }
         }
       }
@@ -118000,6 +119614,7 @@
       }
     },
     "Notes, reminders, watches and settings as one JSON file. No keys." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -118053,6 +119668,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将笔记、提醒、监视和设置导出为一个 JSON 文件。不含密钥。"
+          }
+        }
+      }
+    },
+    "Notes, reminders, watches with their history, and settings as one JSON file. No keys." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملاحظات والتذكيرات والمراقبات مع سجلها والإعدادات في ملف JSON واحد. دون مفاتيح."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen, Erinnerungen, Beobachtungen mit ihrem Verlauf und Einstellungen als eine JSON-Datei. Ohne Schlüssel."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas, recordatorios, vigilancias con su historial y ajustes en un solo archivo JSON. Sin claves."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes, rappels, surveillances avec leur historique, et réglages dans un seul fichier JSON. Sans clés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note, promemoria, osservazioni con la loro cronologia e impostazioni in un unico file JSON. Senza chiavi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモ、リマインダー、監視とその履歴、設定を1つのJSONファイルに。キーは含みません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모, 미리 알림, 지켜보기와 그 기록, 설정을 하나의 JSON 파일로. 키는 포함하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas, lembretes, monitoramentos com o histórico e ajustes em um único arquivo JSON. Sem chaves."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "笔记、提醒事项、监视及其记录和设置，导出为一个 JSON 文件。不含密钥。"
           }
         }
       }
@@ -129727,6 +131400,7 @@
       }
     },
     "Paused" : {
+      "comment" : "A watch's timeline: the person paused it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -143261,6 +144935,65 @@
         }
       }
     },
+    "Removed: %@" : {
+      "comment" : "A line that went from a watched page or file",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُزيل: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernt: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitada: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirée : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimossa: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "삭제됨: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removida: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除：%@"
+          }
+        }
+      }
+    },
     "Removes Sidefolk's hooks from Claude Code. Your other hooks stay." : {
       "localizations" : {
         "ar" : {
@@ -152055,6 +153788,122 @@
         }
       }
     },
+    "Scout keeps what it read. The next change shows here, line by line." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتفظ Scout بما قرأه. سيظهر التغيير التالي هنا، سطرًا سطرًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout behält, was es gelesen hat. Die nächste Änderung erscheint hier, Zeile für Zeile."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout guarda lo que leyó. El próximo cambio aparecerá aquí, línea por línea."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout garde ce qu’il a lu. Le prochain changement s’affichera ici, ligne par ligne."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout conserva ciò che ha letto. La prossima modifica appare qui, riga per riga."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scoutは読んだ内容を保存しています。次の変更はここに1行ずつ表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout가 읽은 내용을 보관합니다. 다음 변경 사항이 여기에 한 줄씩 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout guarda o que leu. A próxima mudança aparece aqui, linha por linha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout 保存了读到的内容。下次变化会在这里逐行显示。"
+          }
+        }
+      }
+    },
+    "Scout keeps what it reads from now on. The next change shows here, line by line." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتفظ Scout بما يقرؤه من الآن. سيظهر التغيير التالي هنا، سطرًا سطرًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout behält ab jetzt, was es liest. Die nächste Änderung erscheint hier, Zeile für Zeile."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout guarda lo que lea a partir de ahora. El próximo cambio aparecerá aquí, línea por línea."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout garde ce qu’il lit à partir de maintenant. Le prochain changement s’affichera ici, ligne par ligne."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout conserva ciò che legge da ora in poi. La prossima modifica appare qui, riga per riga."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scoutはこれから読む内容を保存します。次の変更はここに1行ずつ表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout가 지금부터 읽는 내용을 보관합니다. 다음 변경 사항이 여기에 한 줄씩 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout guarda o que ler daqui em diante. A próxima mudança aparece aqui, linha por linha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout 从现在起保存读到的内容。下次变化会在这里逐行显示。"
+          }
+        }
+      }
+    },
     "Scout stays out while I'm watching something for you." : {
       "localizations" : {
         "ar" : {
@@ -152168,6 +154017,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scout 监视 %lld 项"
+          }
+        }
+      }
+    },
+    "Scout watches it" : {
+      "comment" : "A watch's page: the folk who does the watching",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يراقبها Scout"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout beobachtet sie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout la vigila"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout la surveille"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout la tiene d’occhio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scoutが監視"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout가 지켜봄"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scout monitora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由 Scout 监视"
           }
         }
       }
@@ -153764,6 +155672,7 @@
       }
     },
     "See the change" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -153875,6 +155784,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在设置中查看规则…"
+          }
+        }
+      }
+    },
+    "See what changed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض ما تغيّر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderung ansehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver qué cambió"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir ce qui a changé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedi cosa è cambiato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更を見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경 사항 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver o que mudou"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看变化"
           }
         }
       }
@@ -156225,7 +158192,7 @@
       }
     },
     "Show all %lld" : {
-      "comment" : "Today's queue, folded: shows every card",
+      "comment" : "A watch's timeline: show older checks\nToday's queue, folded: shows every card",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -156975,6 +158942,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示快照版"
+          }
+        }
+      }
+    },
+    "Show the change" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض التغيير"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderung zeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar el cambio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le changement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra la modifica"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更の表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경 사항 표시"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar a mudança"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示变化"
           }
         }
       }
@@ -158684,6 +160709,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "洗牌中…"
+          }
+        }
+      }
+    },
+    "Side by side" : {
+      "comment" : "What changed: before and after in two columns",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جنبًا إلى جنب"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nebeneinander"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lado a lado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Côte à côte"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affiancate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左右に並べる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나란히"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lado a lado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "并排"
           }
         }
       }
@@ -163170,6 +165254,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "简洁的字形，或带有各扩展自身图标的彩色磁贴。"
+          }
+        }
+      }
+    },
+    "Since %@" : {
+      "comment" : "A watch's page: when it started",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "منذ %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seit %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desde %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depuis %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dal %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@から"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@부터"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desde %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自 %@起"
           }
         }
       }
@@ -168657,6 +170800,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止监视“%@”"
+          }
+        }
+      }
+    },
+    "Stop watching “%@”?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مراقبة «%@»؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ nicht mehr beobachten?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Dejar de vigilar «%@»?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter de surveiller « %@ » ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smettere di tenere d’occhio “%@”?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の監視を停止しますか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” 지켜보기를 중단할까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de monitorar “%@”?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止监视“%@”？"
           }
         }
       }
@@ -188075,6 +190276,64 @@
         }
       }
     },
+    "This file isn't plain text, so Scout compares its size and time only." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الملف ليس نصًا عاديًا، لذا يقارن Scout حجمه ووقته فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist kein reiner Text, deshalb vergleicht Scout nur Größe und Zeit."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este archivo no es texto plano, así que Scout solo compara su tamaño y su fecha."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier n’est pas du texte brut : Scout ne compare que sa taille et sa date."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo file non è testo semplice, quindi Scout confronta solo dimensione e data."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このファイルはプレーンテキストではないため、Scoutはサイズと日時だけを比較します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 파일은 일반 텍스트가 아니어서 Scout가 크기와 시간만 비교합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este arquivo não é texto simples, então Scout compara só o tamanho e a data."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此文件不是纯文本，所以 Scout 只比较大小和时间。"
+          }
+        }
+      }
+    },
     "This hands what it's given to an extension, so I check with you first." : {
       "localizations" : {
         "ar" : {
@@ -189291,6 +191550,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 无法安全地运行这个版本的 Codex。"
+          }
+        }
+      }
+    },
+    "This watch is gone" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تعد هذه المراقبة موجودة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Beobachtung gibt es nicht mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta vigilancia ya no existe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette surveillance n’existe plus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa osservazione non c’è più"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この監視はもうありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 지켜보기는 더 이상 없습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este monitoramento não existe mais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此监视已不存在"
           }
         }
       }
@@ -194608,6 +196925,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消归档"
+          }
+        }
+      }
+    },
+    "Unchanged: %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دون تغيير: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unverändert: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin cambios: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inchangée : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invariata: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更なし: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경 없음: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem mudança: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未变：%@"
           }
         }
       }
@@ -204557,6 +206932,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 发送的内容"
+          }
+        }
+      }
+    },
+    "What changed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما الذي تغيّر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was sich geändert hat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué cambió"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui a changé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa è cambiato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更内容"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경 사항"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que mudou"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "变化内容"
           }
         }
       }
@@ -216311,6 +218744,65 @@
         }
       }
     },
+    "at %@, only the lines that changed" : {
+      "comment" : "What changed, for a watch older than its history",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في %@، الأسطر التي تغيّرت فقط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "um %@, nur die geänderten Zeilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a las %@, solo las líneas que cambiaron"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "à %@, seulement les lignes modifiées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "alle %@, solo le righe cambiate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@、変更された行のみ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, 변경된 줄만"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "às %@, só as linhas que mudaram"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@，仅变化的行"
+          }
+        }
+      }
+    },
     "attention.open" : {
       "comment" : "Attention: everything arrives as set (Open, Focus or Quiet)",
       "extractionState" : "extracted_with_value",
@@ -216433,6 +218925,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动"
+          }
+        }
+      }
+    },
+    "between %@ and %@" : {
+      "comment" : "What changed: the two times compared",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بين %1$@ و%2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zwischen %1$@ und %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "between %1$@ and %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "entre %1$@ y %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "entre %1$@ et %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tra %1$@ e %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ から %2$@ まで"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@부터 %2$@까지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "entre %1$@ e %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 至 %2$@"
           }
         }
       }
@@ -225453,6 +228010,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "让我的 Mac 保持唤醒 2 小时"
+          }
+        }
+      }
+    },
+    "kept for %lld days, only on this Mac" : {
+      "comment" : "A watch's checks: how long they're kept",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحفظ %lld يومًا، على هذا الـMac فقط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Tage aufbewahrt, nur auf diesem Mac"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "se guardan %lld días, solo en este Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gardées %lld jours, seulement sur ce Mac"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "conservati %lld giorni, solo su questo Mac"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld日間、このMacにのみ保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld일 동안 이 Mac에만 보관"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "guardadas por %lld dias, só neste Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留 %lld 天，仅在这台 Mac 上"
           }
         }
       }

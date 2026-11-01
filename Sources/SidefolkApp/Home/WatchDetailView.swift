@@ -145,18 +145,19 @@ struct WatchDetailView: View {
                     InlineEmpty(text: emptyChange(w), systemImage: "text.magnifyingglass")
                 } else if model.sideBySide, let change = model.change {
                     WatchChangeColumns(rows: model.rows,
-                                       beforeTitle: Text("Before · \(TimeText.short(change.before.at))", comment: "What changed: the older version and when it was read"),
-                                       afterTitle: Text("After · \(TimeText.short(change.after.at))", comment: "What changed: the newer version and when it was read"))
+                                       beforeTitle: Text("Before · \(TimeText.clock(change.before.at))", comment: "What changed: the older version and when it was read"),
+                                       afterTitle: Text("After · \(TimeText.clock(change.after.at))", comment: "What changed: the newer version and when it was read"))
                 } else {
                     WatchChangeLines(lines: model.lines)
                 }
             }
+            .environment(\.layoutDirection, model.textDirection)
         }
     }
 
     private var changeDetail: Text? {
         if let change = model.change {
-            return Text("between \(TimeText.short(change.before.at)) and \(TimeText.short(change.after.at))", comment: "What changed: the two times compared")
+            return Text("between \(TimeText.clock(change.before.at)) and \(TimeText.clock(change.after.at))", comment: "What changed: the two times compared")
         }
         if let page = model.watcher?.lastPageChange, !model.lines.isEmpty {
             return Text("at \(TimeText.short(page.at)), only the lines that changed", comment: "What changed, for a watch older than its history")

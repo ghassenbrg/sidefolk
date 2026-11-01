@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 import SidefolkCore
 
 /// The watch open on its detail page (D87): the watcher as the engine has it, its checks (runs, newest first) and the two
@@ -80,6 +81,23 @@ final class WatchDetailModel {
         }
         await reload()
         working = nil
+    }
+
+    /// Which way the kept text reads: a page in Arabic right to left, a page in English left to right, whatever the app's
+    /// language (the text is the page's or file's, not the app's).
+    var textDirection: LayoutDirection {
+        let text = versions.last?.text ?? lines.lazy.compactMap { line -> String? in
+            if case .added(let t) = line { return t }
+            if case .removed(let t) = line { return t }
+            return nil
+        }.first ?? ""
+        for scalar in text.unicodeScalars where scalar.properties.isAlphabetic {
+            switch scalar.value {
+            case 0x0590...0x08FF, 0xFB1D...0xFDFF, 0xFE70...0xFEFF: return .rightToLeft
+            default: return .leftToRight
+            }
+        }
+        return .leftToRight
     }
 
     /// The newest version and the one before, when the watch kept both.
