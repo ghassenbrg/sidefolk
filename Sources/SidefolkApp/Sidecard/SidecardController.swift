@@ -53,6 +53,8 @@ final class SidecardController {
         hosted.panel.level = .floating
         // The glass draws its own shadow; a window shadow would be traced from its faint pixels as a grey outline.
         hosted.panel.hasShadow = false
+        // VoiceOver's window list names it (D88).
+        hosted.panel.setAccessibilityTitle(String(localized: "Sidefolk card", comment: "VoiceOver: the window of the card above the companion"))
         hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
             self?.close(id: item.id)

@@ -39,6 +39,23 @@ extension AppCoordinator {
     }
 }
 
+extension AppCoordinator {
+    /// What VoiceOver hears above the companion's head (D88): the slip standing alone, the card or whisper, or the
+    /// held cards fanned out.
+    func companionSays() -> String? {
+        if askPanel.isVisible, ask.compact, let slip = ask.pinnedEntries.first, case .approval(let request) = slip.content {
+            return String(localized: "Permission request: \(request.title)")
+        }
+        guard sidecard.showsSomething else { return nil }
+        if sidecard.model.shape == .stack {
+            return String(localized: "\(sidecard.model.stack.count) held cards", comment: "VoiceOver: the held cards fanned above the companion")
+        }
+        return sidecard.model.item.map { String(localized: "Card: \($0.title)", comment: "VoiceOver: the card above the companion, then its title") }
+    }
+
+    func companionFocusCard() { focusFrontCard() }
+}
+
 /// Whether a shortcut for the card would take keys something else already has.
 enum CardShortcut {
     enum Conflict: Equatable { case macOS, ask, talk }

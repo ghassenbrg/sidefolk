@@ -46,6 +46,10 @@ protocol CompanionDelegate: AnyObject {
     var companionCanTalk: Bool { get }
     func companionHoldBegan()
     func companionHoldEnded()
+    /// What the companion is saying above its head (a card, the held cards, a permission slip), for VoiceOver (D88).
+    func companionSays() -> String?
+    /// VoiceOver pressed it: the card takes the keyboard, as its shortcut does.
+    func companionFocusCard()
 }
 
 final class CompanionWindowController {
@@ -69,7 +73,9 @@ final class CompanionWindowController {
     private let overlay: FloorHostView<FloorOverlay>
     /// The extras' column (pins and agents) as measured, and where each one stands in the window.
     private var extrasSize = NSSize.zero
-    private var extras: [(item: FloorItem, rect: NSRect)] = []
+    private(set) var extras: [(item: FloorItem, rect: NSRect)] = []
+    /// VoiceOver's elements for the corner, by what they stand for (D88).
+    var axElements: [String: FloorElement] = [:]
     private var badgeHovered = false
     /// The item the pointer rests on, whose tip shows.
     private var tipFor: FloorItem?
@@ -151,8 +157,6 @@ final class CompanionWindowController {
     func apply(look: CharacterLook, name: String) {
         character.look = look
         character.displayName = name
-        container.setAccessibilityLabel(name)
-        container.setAccessibilityHelp(String(localized: "Press to talk to \(name)."))
         let before = windowSize
         show3D(look.custom == nil && look.threeD ? look.character3D ?? look.species.rawValue : nil)
         // Grow or shrink about the feet: the companion stays standing where it was.
@@ -567,6 +571,8 @@ final class CompanionWindowController {
     /// The folks standing beside the companion now.
     var folksShown: [DutyFolk] { folkOrder }
 
+    func folkFrame(_ folk: DutyFolk) -> NSRect? { folkViews[folk]?.frame }
+
     func folk(at point: NSPoint) -> DutyFolk? {
         folkViews.first { $0.value.frame.contains(point) }?.key
     }
@@ -820,10 +826,13 @@ final class CompanionContainerView: NSView {
         super.init(frame: .zero)
         addSubview(character)
         registerForDraggedTypes([.fileURL, .URL, .string])
-        setAccessibilityRole(.button)
-        setAccessibilityLabel("Sidefolk")
-        setAccessibilityHelp(String(localized: "Press to talk to \("Sidefolk")."))
+        // One group VoiceOver enters (D88): the companion and everything in its corner, in a sensible order.
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel(String(localized: "Sidefolk companion", comment: "VoiceOver: the group holding the companion, its count, pins, agents and folks"))
     }
+
+    override func accessibilityChildren() -> [Any]? { owner?.accessibleParts(of: self) }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }
 

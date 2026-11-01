@@ -31,6 +31,7 @@
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
 //   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
 //                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)
+//   swift scripts/dev.swift ax   (D88: every visible window's accessibility tree, as VoiceOver walks it, in $SIDEFOLK_HOME/snapshots)
 //   swift scripts/dev.swift cardKeys | cardKey:return|cmdReturn|escape|left|right|tab|backtab|up|down   (D88: the card
 //                           shortcut, then keys on the card or the held cards it fanned)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)

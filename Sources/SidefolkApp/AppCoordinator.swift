@@ -561,6 +561,9 @@ final class AppCoordinator {
         } else if command == "dismiss", let item = sidecard.model.item {
             respond(to: item, action: nil)
             sidecard.withdraw(id: item.id)
+        } else if command == "ax", let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"] {
+            // The accessibility tree of every visible window, beside the snapshots (D88).
+            AccessibilityDump.write(to: URL(fileURLWithPath: home).appendingPathComponent("snapshots", isDirectory: true))
         } else if command == "cardKeys" {
             // The card shortcut (D88), which debug copies don't register unless SIDEFOLK_DEV_HOTKEY=1.
             sidecard.devKeys = true
