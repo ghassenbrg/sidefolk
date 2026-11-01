@@ -29,13 +29,14 @@ enum AddonUpdateWords {
     }
 
     /// The line under an update's name: its version, why it waits for a look, or what went wrong.
-    @MainActor static func meta(_ entry: AddonEntry, _ updates: UpdateModel) -> Text {
+    /// `kind` names what it is ("Theme · Version 1.1.0") where rows of every kind sit together.
+    @MainActor static func meta(_ entry: AddonEntry, _ updates: UpdateModel, kind showsKind: Bool = true) -> Text {
         if case .failed(let why)? = updates.addonSteps[entry.id] { return Text(verbatim: why).foregroundStyle(Theme.danger) }
         if updates.addonNeedsReview(entry.id) {
             return Text("\(version(entry)) asks for more. Review shows what's new.",
                         comment: "An extension update waiting for review: “Version 1.1.0 asks for more. Review shows what's new.”")
         }
-        return Text(verbatim: kind(entry) + " · " + version(entry))
+        return Text(verbatim: showsKind ? kind(entry) + " · " + version(entry) : version(entry))
     }
 
     /// "2 add-on updates": Today's row, the Pocket's.
@@ -98,8 +99,7 @@ struct AddonUpdatesSection: View {
                 }
             }
             RowsCard {
-                ForEach(Array(rows.enumerated()), id: \.element.id) { index, entry in
-                    if index > 0 { Divider().padding(.leading, Theme.Space.l + 32 + Theme.Space.m) }
+                ForEach(rows) { entry in
                     ListRow(title: Text(verbatim: entry.shownName), meta: AddonUpdateWords.meta(entry, updates)) {
                         AddonUpdateIcon(url: gallery.preview(entry), kind: entry.kind, size: 32)
                     } trailing: {
@@ -167,7 +167,7 @@ struct AddonUpdateStrip: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Update available", comment: "An extension's page: a newer version is in the gallery")
                         .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                    AddonUpdateWords.meta(entry, updates).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                    AddonUpdateWords.meta(entry, updates, kind: false).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -152,6 +152,17 @@ enum UISnapshots {
             full.settingsHost.gallery.showSample(catalog: try SampleCompanions.catalog(), companions: SampleCompanions.installed)
             try await homeShot("gallery")
             try await homeShot("gallery-wide", size: CGSize(width: 1600, height: 1000))
+            // Add-on updates (D89): the Gallery's Updates halfway through Update all, then Today's one row and the sidebar's marks.
+            if let catalog = full.settingsHost.gallery.catalog {
+                SampleAddonUpdates.show(in: full.services.updates, catalog: catalog)
+                try await homeShot("gallery-updates")
+                full.services.updates.addonSummary = "3 updated, 1 needs your review"
+                SampleExtensionPage.showPages(in: full.pages)
+                full.selection = .now
+                try await homeShot("today-updates")
+                full.pages.showSample([], summaries: [:])
+                SampleAddonUpdates.clear(full.services.updates)
+            }
             // The smallest window Home allows, to catch clipping and overflow.
             let small = CGSize(width: 860, height: 560)
             full.selection = .now
@@ -252,6 +263,14 @@ enum UISnapshots {
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
+            // Its update waiting (D89): the page's strip, and Settings › Add-ons' rows with their new versions.
+            SampleAddonUpdates.show(in: fixtures.updates, catalog: try SampleCompanions.catalog(), halfway: false)
+            let clipboardUpdate = SampleExtensionPage.clipboard()
+            clipboardUpdate.updates = fixtures.updates
+            try await page("page-extension-clipboard-update", ExtensionPageView(model: clipboardUpdate), width: 980)
+            try await page("page-extension-clipboard-update-narrow", ExtensionPageView(model: clipboardUpdate), width: 640)
+            try await page("page-settings-addons-updates", SettingsTabContent(tab: .addons, model: settings), width: 690)
+            SampleAddonUpdates.clear(fixtures.updates)
             // Miraya in each of its states (D74): a hero with the one thing to do, TVs beside, pictures to pick from.
             for state in ["notv", "ready", "window", "area", "norecord", "pairing", "authorizing", "sharing", "paused", "playing", "problem"] {
                 try await page("page-extension-miraya-\(state)", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 1180)

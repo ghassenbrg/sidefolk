@@ -23,6 +23,7 @@ struct TodayView: View {
             }
             brief
             DayCard(model: now, edit: { editing = $0 }) { model.selection = .calendar }
+            AddonUpdatesTodayRow(updates: model.services.updates)
             if firstDay {
                 Starters { words in model.find.query = words }
             } else {
@@ -34,7 +35,6 @@ struct TodayView: View {
                     }
                 }
             }
-            AddonUpdatesTodayRow(updates: model.services.updates)
             if !now.captured.isEmpty { captured }
         }
         .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: now) }

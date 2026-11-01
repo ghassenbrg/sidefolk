@@ -696,7 +696,8 @@ private struct AddonsNeedYou: View {
 
     var body: some View {
         let changed = model.extensions.filter { !$0.pendingTools.isEmpty }
-        if !updates.addonReview.isEmpty || !changed.isEmpty {
+        let installable = updates.addonInstallable
+        if !updates.addonReview.isEmpty || !changed.isEmpty || !installable.isEmpty {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: Theme.Space.m, alignment: .top)], spacing: Theme.Space.m) {
                 ForEach(updates.addonReview, id: \.id) { entry in
                     card(title: Text("\(entry.shownName) \(ReleaseVersion(entry.version)?.shown ?? entry.version) needs a look",
@@ -704,6 +705,13 @@ private struct AddonsNeedYou: View {
                          detail: Text("Its new version would be allowed to do more. Review shows what's new."),
                          action: Text("Review update", comment: "Settings › Add-ons: opens an extension update's install sheet")) {
                         updates.addonActions?.review(entry)
+                    }
+                }
+                if !installable.isEmpty {
+                    card(title: Text("\(installable.count) add-on updates are ready", comment: "Settings › Updates, while add-ons don't update by themselves"),
+                         detail: Text(verbatim: Wording.list(installable.map(\.shownName))),
+                         action: Text("Update all")) {
+                        updates.addonActions?.updateAddonsNow()
                     }
                 }
                 ForEach(changed) { ext in
