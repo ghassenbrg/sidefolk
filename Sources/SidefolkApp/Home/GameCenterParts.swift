@@ -80,6 +80,8 @@ struct GameCenterCard: View {
     /// The level it opens at, when the person chose one.
     var level: String?
     var play: (String?) -> Void
+    /// "2 players", for a game two people can play each other on this Mac (D96).
+    var playTwo: (() -> Void)?
     @State private var hovered = false
 
     var body: some View {
@@ -116,6 +118,13 @@ struct GameCenterCard: View {
                     }
                 }
                 .buttonStyle(.sf(kept ? .primary : .secondary, size: .regular))
+                if let playTwo {
+                    Button(action: playTwo) {
+                        Label { Text("2 players", comment: "Two people play each other on this Mac") } icon: { Image(systemName: "person.2.fill") }
+                    }
+                    .buttonStyle(.sf(.secondary, size: .small))
+                    .help(Text("Play against a friend on this Mac", comment: "Game Center: the 2 players button's tooltip"))
+                }
                 if entry.info.levels.count > 1 {
                     Menu {
                         ForEach(entry.info.levels, id: \.self) { l in

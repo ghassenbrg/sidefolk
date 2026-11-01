@@ -17,13 +17,16 @@ public struct GameSlots: Sendable, Hashable {
     public var min: Int?
     public var max: Int?
     public var mode: Mode?
+    /// Two people play each other on this Mac (D96): "play tic-tac-toe with my friend", "two players"; 2 or nothing.
+    public var players: Int?
 
-    public init(topic: String? = nil, count: Int? = nil, min: Int? = nil, max: Int? = nil, mode: Mode? = nil) {
+    public init(topic: String? = nil, count: Int? = nil, min: Int? = nil, max: Int? = nil, mode: Mode? = nil, players: Int? = nil) {
         self.topic = topic
         self.count = count
         self.min = min
         self.max = max
         self.mode = mode
+        self.players = players
     }
 
     public static let maxTopic = 40
@@ -48,6 +51,7 @@ public struct GameSlots: Sendable, Hashable {
             max = high
         }
         mode = input.string("mode").flatMap(Mode.init(rawValue:))
+        if input["players"]?.intValue == 2 { players = 2 }
     }
 
     /// As `game.start`'s options take them, and `games.open`'s input.
@@ -60,6 +64,7 @@ public struct GameSlots: Sendable, Hashable {
             out["max"] = .number(Double(max))
         }
         if let mode { out["mode"] = .string(mode.rawValue) }
+        if let players { out["players"] = .number(Double(players)) }
         return out
     }
 }

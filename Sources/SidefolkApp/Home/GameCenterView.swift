@@ -59,7 +59,8 @@ struct GameCenterView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 400), spacing: Theme.Space.m)], spacing: Theme.Space.m) {
                 ForEach(entries) { entry in
                     GameCenterCard(entry: entry, kept: model.kept == entry.info, companionName: model.companionName, level: model.level(of: entry.info),
-                                   play: { model.play(entry.info, level: $0) })
+                                   play: { model.play(entry.info, level: $0) },
+                                   playTwo: model.center.twoPlayers.contains(entry.info.id) ? { model.playTwo(entry.info) } : nil)
                 }
             }
         }

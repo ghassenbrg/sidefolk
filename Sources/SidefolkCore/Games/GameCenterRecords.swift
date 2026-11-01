@@ -68,12 +68,32 @@ public struct GameCenterRecords: Sendable, Hashable {
         }
     }
 
+    /// Two people's head-to-head in a game (D96): two names, each one's wins, the draws.
+    public struct Duel: Sendable, Hashable {
+        public var game: String
+        public var names: [String]
+        public var wins: [Int]
+        public var draws: Int
+
+        public init(game: String, names: [String], wins: [Int], draws: Int = 0) {
+            self.game = game
+            self.names = names
+            self.wins = wins
+            self.draws = draws
+        }
+    }
+
     public var records: [String: Record]
     public var recent: [Recent]
+    /// The games two people can play each other on this Mac (D96), by name.
+    public var twoPlayers: Set<String>
+    public var duels: [Duel]
 
-    public init(records: [String: Record] = [:], recent: [Recent] = []) {
+    public init(records: [String: Record] = [:], recent: [Recent] = [], twoPlayers: Set<String> = [], duels: [Duel] = []) {
         self.records = records
         self.recent = recent
+        self.twoPlayers = twoPlayers
+        self.duels = duels
     }
 
     static let maxGames = 64
@@ -94,7 +114,15 @@ public struct GameCenterRecords: Sendable, Hashable {
                   let outcome = j["outcome"]?.stringValue.flatMap(Outcome.init(rawValue:)) else { return nil }
             return Recent(game: game, at: at, outcome: outcome, text: ExtensionPage.text(j["text"], 60))
         }
-        return GameCenterRecords(records: records, recent: recent)
+        let two = Set((object["two_players"]?.arrayValue ?? []).prefix(maxGames).compactMap(\.stringValue).filter(isName))
+        let duels = (object["duels"]?.arrayValue ?? []).prefix(maxRecent).compactMap { j -> Duel? in
+            guard let game = j["game"]?.stringValue, isName(game) else { return nil }
+            let names = (j["names"]?.arrayValue ?? []).compactMap { ExtensionPage.text($0, 24) }
+            let wins = (j["wins"]?.arrayValue ?? []).compactMap(\.intValue).map { Swift.min(maxCount, Swift.max(0, $0)) }
+            guard names.count == 2, wins.count == 2 else { return nil }
+            return Duel(game: game, names: names, wins: wins, draws: Swift.min(maxCount, Swift.max(0, j["draws"]?.intValue ?? 0)))
+        }
+        return GameCenterRecords(records: records, recent: recent, twoPlayers: two, duels: Array(duels))
     }
 
     /// A game's name as the manifest has it, or a tally of its own under it (`higher_lower_yours`).

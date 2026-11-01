@@ -9,8 +9,32 @@ struct GameRecordsSection: View {
 
     var body: some View {
         SectionColumns(minWidth: 380, maxColumns: 2, spacing: Theme.Space.xl) {
-            recent
+            VStack(alignment: .leading, spacing: Theme.Space.xl) {
+                recent
+                if !center.duels.isEmpty { headToHead }
+            }
             badges
+        }
+    }
+
+    /// Two people's games against each other (D96): who played, each one's wins, never mixed with the person's own.
+    private var headToHead: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
+            SectionHeader(title: Text("Head to head", comment: "Game Center: two people's games against each other on this Mac")) { EmptyView() }
+            RowsCard {
+                ForEach(Array(center.duels.enumerated()), id: \.offset) { _, duel in
+                    let entry = center.entries.first { $0.info.game == duel.game }
+                    HStack(spacing: Theme.Space.m) {
+                        if let entry { GameArtTile(look: entry.info.look, symbol: entry.info.symbol, corner: 6).frame(width: 28, height: 28) }
+                        Text(verbatim: entry?.info.title ?? duel.game).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
+                        Spacer(minLength: Theme.Space.s)
+                        Text(verbatim: "\(duel.names[0]) \(Toss.number(duel.wins[0])) · \(duel.names[1]) \(Toss.number(duel.wins[1]))")
+                            .font(Theme.Font.callout.monospacedDigit()).foregroundStyle(Theme.ink).lineLimit(1)
+                    }
+                    .padding(.horizontal, Theme.Space.m).frame(minHeight: Theme.Size.row)
+                    .accessibilityElement(children: .combine)
+                }
+            }
         }
     }
 

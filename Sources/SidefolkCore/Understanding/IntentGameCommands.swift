@@ -53,6 +53,7 @@ extension IntentParser {
             byMode = games.first { $0.look == .numbers }
             guard byMode != nil else { return nil }
         }
+        if Self.take(Self.twoPattern, from: &text) != nil { slots.players = 2 }
         if let m = Self.capture(Self.rangePatterns, in: &text), let low = Int(m[0]), let high = Int(m[1]) {
             slots.min = low
             slots.max = high
@@ -76,6 +77,8 @@ extension IntentParser {
         // Slots only where they mean something: a topic and a count for a quiz, a range and who guesses for numbers.
         let quiz = game.look == .quiz, numbers = game.look == .numbers
         if (!quiz && (slots.topic != nil || slots.count != nil)) || (!numbers && (slots.min != nil || slots.mode != nil)) { return nil }
+        // Two people need a game two can play: not a puzzle, and not Guess My Animal, where the companion is the one guessing.
+        if slots.players != nil, game.look?.solo == true || game.look == .animals { return nil }
         let checked = GameSlots(.object(slots.options))
         guard checked == slots else { return nil }
         let chosen = level.flatMap { GameLevels.match($0, in: game.levels) }
@@ -150,6 +153,7 @@ extension IntentParser {
     private static let levelOf = Dictionary(GameSlotWords.levels.map { ($0.0, $0.1) }, uniquingKeysWith: { a, _ in a })
     private static let modePattern = alternation(GameSlotWords.modes.map(\.0))
     private static let levelPattern = alternation(GameSlotWords.levels.map(\.0))
+    private static let twoPattern = alternation(GameSlotWords.twoPlayers)
     private static let rangePatterns = compile(GameSlotWords.range)
     private static let upToPatterns = compile(GameSlotWords.upTo)
     private static let countPatterns = compile(GameSlotWords.count)

@@ -78,6 +78,25 @@ enum GameSlotWords {
         ("خمن رقمي", .yours), ("حاول تخمين رقمي", .yours), ("سأفكر في رقم", .yours),
     ]
 
+    /// Two people on this Mac (D96): "with my friend", "two players"; the game must be one two can play.
+    static let twoPlayers = [
+        "with my friend", "with a friend", "with my friends", "with friends", "with a friend of mine", "two players", "2 players", "two player",
+        "2 player", "two-player", "2-player", "for two", "against my friend", "against a friend",
+        "avec mon ami", "avec mon amie", "avec un ami", "avec une amie", "avec mes amis", "contre mon ami", "contre mon amie", "à deux",
+        "deux joueurs", "2 joueurs",
+        "con mi amigo", "con mi amiga", "con un amigo", "con una amiga", "con mis amigos", "contra mi amigo", "dos jugadores", "2 jugadores",
+        "mit meinem freund", "mit meiner freundin", "mit einem freund", "mit einer freundin", "mit freunden", "gegen meinen freund", "zu zweit",
+        "zwei spieler", "2 spieler",
+        "con il mio amico", "con la mia amica", "con un amico", "con un'amica", "con i miei amici", "contro il mio amico", "in due",
+        "due giocatori", "2 giocatori",
+        "com meu amigo", "com minha amiga", "com o meu amigo", "com a minha amiga", "com um amigo", "com uma amiga", "contra meu amigo",
+        "a dois", "dois jogadores", "2 jogadores",
+        "友だちと", "友達と", "ともだちと", "ふたりで", "二人で", "2人で", "二人用", "2人用",
+        "친구랑", "친구와", "친구하고", "둘이서", "둘이", "2인용", "두 명이서", "2명이서",
+        "和朋友", "跟朋友", "和我朋友", "跟我朋友", "双人", "两个人", "两人", "2人",
+        "مع صديقي", "مع صديق", "مع صديقتي", "ضد صديقي", "لاعبان", "لاعبين", "لشخصين",
+    ]
+
     /// Words that only carry the sentence, between spaces: dropped from the person's words and from games' names alike,
     /// so "let's play a game of tic-tac-toe on hard" and "jouons au morpion" come down to the game's name.
     static let fillers: Set<String> = [

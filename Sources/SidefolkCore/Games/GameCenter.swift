@@ -39,12 +39,19 @@ public struct GameCenter: Sendable {
     public var entries: [Entry]
     public var recent: [GameCenterRecords.Recent]
     public var totals: Totals
+    /// The games two people can play each other on this Mac (D96), by `GameInfo.id`: Sidefolk's own match and those
+    /// the extension names.
+    public var twoPlayers: Set<String>
+    /// Two people's head-to-heads the extension keeps.
+    public var duels: [GameCenterRecords.Duel]
 
     /// - Parameters:
     ///   - games: every game shown, in the menu's order.
     ///   - extensionId: the extension whose page this is: its records count for its games.
     ///   - rows: `games.play` Activity rows, newest first.
     public init(games: [GameInfo], extensionId: String, records: GameCenterRecords?, rows: [ActivityEntry]) {
+        twoPlayers = Set([GameInfo.handsMatch.id] + (records?.twoPlayers ?? []).map { "\(extensionId)/\($0)" })
+        duels = records?.duels ?? []
         let plays = rows.filter { $0.tool == "games.play" }
         func key(_ row: ActivityEntry) -> String? {
             guard let ext = row.args?["extension"]?.stringValue, let game = row.args?["game"]?.stringValue else { return nil }

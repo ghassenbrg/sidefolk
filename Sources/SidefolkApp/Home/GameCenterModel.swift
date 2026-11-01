@@ -15,6 +15,8 @@ final class GameCenterModel {
     /// The game put away in the Play panel, to continue.
     private(set) var kept: GameInfo?
     private(set) var settings: GameSettings
+    /// Whether an AI is set up, for the AI trivia switch (D95).
+    private(set) var providerSet: Bool
     let companionName: String
     let figure: NSImage?
     /// Its face beside "Play against …", as on the Play menu.
@@ -29,6 +31,7 @@ final class GameCenterModel {
         self.services = services
         let s = services.runtime.settings.current
         settings = s.games
+        providerSet = s.provider.kind != .none
         companionName = s.companionName
         figure = CompanionArt.portrait(for: s, state: .listening, side: 220)
         avatar = CompanionArt.avatar(for: s, side: 40)
@@ -37,7 +40,8 @@ final class GameCenterModel {
 
     /// A center with nothing behind it, for UI snapshots.
     init(page: ExtensionPageModel, games: [GameInfo], rows: [ActivityEntry], kept: GameInfo?, settings: GameSettings, companionName: String,
-         figure: NSImage?, avatar: NSImage?) {
+         figure: NSImage?, avatar: NSImage?, providerSet: Bool = true) {
+        self.providerSet = providerSet
         self.page = page
         self.avatar = avatar
         services = nil
@@ -74,6 +78,7 @@ final class GameCenterModel {
         rows = (try? await services.runtime.activity.recent(limit: 1000, tool: "games.play")) ?? rows
         kept = services.keptGame
         settings = services.runtime.settings.current.games
+        providerSet = services.runtime.settings.current.provider.kind != .none
     }
 
     // MARK: Playing
@@ -83,6 +88,11 @@ final class GameCenterModel {
         var input: [String: JSONValue] = ["extension": .string(game.extensionId), "game": .string(game.game)]
         if let level { input["level"] = .string(level) }
         open(.object(input))
+    }
+
+    /// A game for two people on this Mac (D96): it opens on their names.
+    func playTwo(_ game: GameInfo) {
+        open(["extension": .string(game.extensionId), "game": .string(game.game), "players": 2])
     }
 
     func surprise() { open(["game": "random"]) }

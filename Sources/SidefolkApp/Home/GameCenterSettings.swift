@@ -29,6 +29,17 @@ struct GameSettingsSection: View {
                     }
                     .toggleStyle(.switch).labelsHidden()
                 }
+                // Off and greyed while no AI is set up: nothing would make the questions (D95).
+                row(Text("Make new trivia questions with AI", comment: "Settings › Companion › Games: a switch (D95)"),
+                    detail: Text("Trivia on any topic you name, in your language. Each new topic is one short request to your AI; the questions aren't checked.",
+                                 comment: "Settings › Companion › Games: what the AI trivia switch does and what it costs")) {
+                    Toggle(isOn: Binding(get: { model.settings.aiTriviaOn(providerSet: model.providerSet) },
+                                         set: { on in model.change { $0.aiTrivia = on } })) {
+                        Text("Make new trivia questions with AI", comment: "Settings › Companion › Games: a switch (D95)")
+                    }
+                    .toggleStyle(.switch).labelsHidden()
+                    .disabled(!model.providerSet)
+                }
             }
             let leveled = model.games.filter { $0.levels.count > 1 }
             if !leveled.isEmpty {

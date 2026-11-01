@@ -43,7 +43,8 @@ extension AppCoordinator {
         if !companion.isVisible { showCompanion(true) }
         tossRevealed = false
         guard let (frame, screen) = anchor() else { return }
-        if !request.fresh, let kept = playPanel.kept(request.info) {
+        // What the person said about it (two players, a range, a topic) asks for a new game rather than the one put away.
+        if !request.fresh, request.slots.isEmpty, let kept = playPanel.kept(request.info) {
             playPanel.show(kept, beside: frame, on: screen, focus: request.focus)
             return
         }

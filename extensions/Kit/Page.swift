@@ -73,22 +73,47 @@ public struct GameRecords {
         }
     }
 
+    /// Two people's head-to-head in a game (D96): their names, each one's wins, the draws.
+    public struct Duel {
+        public var game: String
+        public var names: [String]
+        public var wins: [Int]
+        public var draws: Int
+
+        public init(game: String, names: [String], wins: [Int], draws: Int = 0) {
+            self.game = game
+            self.names = names
+            self.wins = wins
+            self.draws = draws
+        }
+    }
+
     public var records: [String: Record]
     public var recent: [Recent]
+    /// The games two people can play each other on one Mac (D96), by name: Sidefolk offers "2 players" for them.
+    public var twoPlayers: [String]
+    public var duels: [Duel]
 
-    public init(records: [String: Record] = [:], recent: [Recent] = []) {
+    public init(records: [String: Record] = [:], recent: [Recent] = [], twoPlayers: [String] = [], duels: [Duel] = []) {
         self.records = records
         self.recent = recent
+        self.twoPlayers = twoPlayers
+        self.duels = duels
     }
 
     var json: [String: Any] {
         let iso = ISO8601DateFormatter()
-        return ["records": records.mapValues(\.json),
-                "recent": recent.map { r -> [String: Any] in
-                    var out: [String: Any] = ["game": r.game, "at": iso.string(from: r.at), "outcome": r.outcome.rawValue]
-                    if let text = r.text { out["text"] = text }
-                    return out
-                }]
+        var out: [String: Any] = ["records": records.mapValues(\.json),
+                                  "recent": recent.map { r -> [String: Any] in
+                                      var out: [String: Any] = ["game": r.game, "at": iso.string(from: r.at), "outcome": r.outcome.rawValue]
+                                      if let text = r.text { out["text"] = text }
+                                      return out
+                                  }]
+        if !twoPlayers.isEmpty { out["two_players"] = twoPlayers }
+        if !duels.isEmpty {
+            out["duels"] = duels.map { ["game": $0.game, "names": $0.names, "wins": $0.wins, "draws": $0.draws] as [String: Any] }
+        }
+        return out
     }
 }
 

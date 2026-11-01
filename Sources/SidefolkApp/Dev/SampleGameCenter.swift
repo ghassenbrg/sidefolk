@@ -91,7 +91,12 @@ enum SampleGameCenter {
             .init(game: "copy_me", at: now - 27 * 60 * minute, outcome: .lost, text: "11 moves"),
             .init(game: "plots", at: now - 28 * 60 * minute, outcome: .solved, text: "Solved in 1:12"),
         ]
-        return GameCenterRecords(records: r, recent: recent)
+        // Two people on this Mac (D96): the games two can play, and two pairs' head-to-heads.
+        let two: Set<String> = ["tictactoe", "last_stick", "memory_pairs", "copy_me", "trivia", "quick_paws", "which_cup", "higher_lower",
+                                "balloon_words"]
+        let duels = [GameCenterRecords.Duel(game: "tictactoe", names: ["Ana", "Sam"], wins: [3, 2], draws: 1),
+                     GameCenterRecords.Duel(game: "quick_paws", names: ["Lina", "Omar"], wins: [1, 4])]
+        return GameCenterRecords(records: r, recent: recent, twoPlayers: two, duels: duels)
     }
 
     /// Sidefolk's own best of three, and the last time each game was played.

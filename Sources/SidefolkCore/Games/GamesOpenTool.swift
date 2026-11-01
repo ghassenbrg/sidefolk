@@ -49,7 +49,7 @@ struct GamesOpenTool: Tool {
                 them in words. "game" may also be "last" (resume the game put away, or open the last one played), "again" \
                 (a new round of the last one: a rematch), "random" (you pick one), or "center" (the Game Center in Home: \
                 the user's scores, records, badges and game settings). "level" may be "harder" or "easier" (one step from \
-                the last). A quiz takes "topic" and "count"; a number game "min", "max" and "mode" (mine: the user \
+                the last). "players": 2 opens it for the user and a friend on this Mac. A quiz takes "topic" and "count"; a number game "min", "max" and "mode" (mine: the user \
                 guesses your number; yours: you guess theirs). Games: \(games.joined(separator: "; ")).
                 """,
             inputSchema: Schema.object([
@@ -61,6 +61,8 @@ struct GamesOpenTool: Tool {
                 "min": Schema.integer("A number game's lowest number.", minimum: GameSlots.range.lowerBound, maximum: GameSlots.range.upperBound),
                 "max": Schema.integer("A number game's highest number.", minimum: GameSlots.range.lowerBound, maximum: GameSlots.range.upperBound),
                 "mode": Schema.string("A number game: who guesses.", enum: GameSlots.Mode.allCases.map(\.rawValue)),
+                "players": Schema.integer("2 when the user plays a friend on this Mac rather than you (any game but the puzzles and Guess My Animal).",
+                                          minimum: 1, maximum: 2),
             ], required: []),
             risk: .low, capabilities: [.system], category: .system, mutates: false)
     }
@@ -162,8 +164,11 @@ struct GamesOpenTool: Tool {
             await settings.update { $0.games.levels[id] = level }
         }
         let opened = level ?? chosen
+        var slots = GameSlots(input)
+        // Two people only where two can play (D96): not the puzzles, not Guess My Animal.
+        if info.look?.solo == true || info.look == .animals { slots.players = nil }
         shelf.opened(info, level: opened)
-        events.publish(.game(GameRequest(info: info, level: opened, focus: focus, fresh: fresh, slots: GameSlots(input))))
+        events.publish(.game(GameRequest(info: info, level: opened, focus: focus, fresh: fresh, slots: slots)))
         let title = opened.map { String(localized: "Play \(info.title) · \(GameLevels.name($0))", comment: "Opening a game at a level: “Play Trivia · Hard”") }
             ?? String(localized: "Play \(info.title)", comment: "Opening a game in the Play panel: “Play Trivia”")
         return ToolResult(text: "Opened \(info.title)\(opened.map { " (\($0))" } ?? "") in the Play panel beside the companion; the user plays it there. "
