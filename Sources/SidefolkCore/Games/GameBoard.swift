@@ -120,6 +120,9 @@ public struct GameBoard: Sendable, Hashable {
         public var rounds: Int?
         /// The companion has made its pick and keeps it hidden: a sealed card with its face in the header.
         public var companionPicked: Bool
+        /// Two people playing each other on this Mac (D96), first and second: `you` is the first's points, `companion`
+        /// the second's, and the companion only referees. Nil: the person against the companion.
+        public var players: [String]? = nil
     }
 
     /// The end card: a big figure, a line, a ribbon, facts and what to do next.
@@ -298,7 +301,7 @@ extension GameBoard {
         case "score":
             return .score(Score(you: count(j["you"]) ?? 0, companion: count(j["companion"]) ?? 0, streak: count(j["streak"]),
                                 best: count(j["best"]), rounds: count(j["rounds"]).flatMap { (1...9).contains($0) ? $0 : nil },
-                                companionPicked: j["companion_picked"]?.boolValue ?? false))
+                                companionPicked: j["companion_picked"]?.boolValue ?? false, players: players(j["players"])))
         case "result":
             guard let figure = line(j["figure"], 24) else { return nil }
             return .result(Result(figure: figure, line: line(j["line"], 120), ribbon: line(j["ribbon"], 30), tone: tone(j["tone"]),
@@ -377,6 +380,12 @@ extension GameBoard {
     }
 
     static func count(_ j: JSONValue?) -> Int? { j?.intValue.map { min(max($0, 0), 99_999) } }
+
+    /// Two players' names, each a line of up to 24 characters; nil for anything else.
+    static func players(_ j: JSONValue?) -> [String]? {
+        let names = (j?.arrayValue ?? []).compactMap { line($0, 24) }
+        return names.count == 2 && j?.arrayValue?.count == 2 ? names : nil
+    }
 
     static func tone(_ j: JSONValue?) -> Tone { j?.stringValue.flatMap(Tone.init(rawValue:)) ?? .neutral }
 }

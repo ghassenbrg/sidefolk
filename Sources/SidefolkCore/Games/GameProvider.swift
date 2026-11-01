@@ -105,6 +105,14 @@ public enum GameRecord {
     public static func entry(_ info: GameInfo, last board: GameBoard?, companionName: String, at: Date) -> ActivityEntry {
         let with = info.isSidefolk ? companionName : info.extensionName
         var summary = String(localized: "Played \(info.title) with \(with)", comment: "Activity: a game played in the Play panel, then who with")
+        // Two people played each other (D96): their names and points, and no result, so the person's record against
+        // the companion (`GameStats`) stays theirs alone.
+        if let s = board?.score, let players = s.players {
+            summary = String(localized: "Played \(info.title): \(players[0]) \(s.you) · \(players[1]) \(s.companion)",
+                             comment: "Activity: two people played a game against each other on this Mac, each name then its points")
+            return ActivityEntry(at: at, caller: "user", tool: "games.play", risk: Risk.low.rawValue, decision: .auto, summary: summary,
+                                 args: ["extension": .string(info.extensionId), "game": .string(info.game), "players": 2])
+        }
         if let s = board?.score {
             summary += " · " + String(localized: "You \(s.you) · \(companionName) \(s.companion)",
                                       comment: "A game's score: the person's, then the companion's (named)")

@@ -120,6 +120,7 @@ final class AppCoordinator {
         }
 
         agent = makeAgentRuntime()
+        installTriviaHelp()
         onboarding = Onboarding(coordinator: self)
         companion.delegate = self
         applyCompanionSettings()

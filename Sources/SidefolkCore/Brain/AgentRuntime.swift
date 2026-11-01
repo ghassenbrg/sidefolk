@@ -220,6 +220,42 @@ public actor AgentRuntime {
         }
     }
 
+    /// One request to the person's AI for a feature, not a conversation (D95: a game's trivia questions): Sidefolk's
+    /// fixed `system` words and `prompt`, no tools, no memory or context, nothing kept but the run's record, so it counts
+    /// toward the person's usage like any other. Throws when no AI is set up or the call fails.
+    public func oneShot(system: String, prompt: String, purpose: String, seconds: TimeInterval = 90) async throws -> (text: String, provider: String) {
+        let choice = try factory.make(settings().provider, thinkHarder: false)
+        let start = clock.now
+        let runId = Identifier.make(now: start)
+        let provider = choice.backend.providerName
+        var record = AgentRun(id: runId, threadId: purpose + "-" + runId, provider: provider, model: choice.model.isEmpty ? "default" : choice.model,
+                              now: start)
+        let task = BrainTask(runId: runId, threadId: record.threadId, system: system, messages: [ChatMessage(role: .user, text: prompt)],
+                             model: choice.model, effort: choice.effort, maxSteps: 1, deadline: start.addingTimeInterval(seconds))
+        let toolbox = BrainToolbox(runId: runId, specs: [], executor: executor, emit: { _ in })
+        let runs = self.runs
+        defer {
+            let usage = (choice.backend as? any BrainUsageReporting)?.takeUsage(runId: runId)
+            record.endedAt = clock.now
+            record.steps = usage?.steps ?? 0
+            record.inputTokens = usage?.inputTokens ?? 0
+            record.outputTokens = usage?.outputTokens ?? 0
+            let closed = record
+            Task.detached { try? await runs.save(closed) }
+            events.changed(.runs)
+        }
+        do {
+            let reply = try await choice.backend.run(task, toolbox: toolbox, emit: { _ in })
+            await toolbox.close()
+            record.outcome = "ok"
+            return (reply.text, provider)
+        } catch {
+            await toolbox.close()
+            record.outcome = error is CancellationError ? "cancelled" : "failed"
+            throw Self.userFacing(error, changed: false, provider: provider)
+        }
+    }
+
     /// Deletes conversation history older than `historyDays`. Call it at launch and once a day.
     @discardableResult
     public func purgeHistory() async -> Int {

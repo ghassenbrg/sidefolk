@@ -70,6 +70,11 @@ final class PlayPanelController {
                     return !command && menu.press(key) ? nil : event
                 }
                 guard let model = self.holder.model else { return event }
+                // Two players' reflex keys go by where they sit (A and L on any layout), so an Arabic or Japanese
+                // keyboard plays the same.
+                if let keys = model.board?.reflex?.keys, let seat = Self.seat(event), keys.contains(seat), !command {
+                    return model.press(seat, at: event.timestamp) ? nil : event
+                }
                 // ⌘[ (and ⌫ where the board doesn't type with it) goes back to the menu, at any moment (`PlayBack`).
                 if let back = model.onBack, PlayBack.goesBack(key, command: command, board: model.board) {
                     back()
@@ -123,6 +128,12 @@ final class PlayPanelController {
     func drop() {
         expiry?.cancel()
         holder.model = nil
+    }
+
+    /// The Latin letter printed where a key sits on a US keyboard, for keys chosen by position (two players' A and L).
+    static func seat(_ event: NSEvent) -> String? {
+        let letters: [UInt16: String] = [0: "a", 1: "s", 2: "d", 3: "f", 37: "l", 40: "k", 38: "j"]
+        return letters[event.keyCode]
     }
 
     /// The board's name for a key: a letter or digit, `return` or `space`.

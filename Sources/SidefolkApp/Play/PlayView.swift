@@ -170,16 +170,16 @@ struct ScoreBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            side(name: String(localized: "You", comment: "The person, on a game's score"), points: score?.you, won: .win, mine: true) {
-                PlayerAvatar(picture: you, size: 32)
-            }
-            Text(String(localized: "VS", comment: "Between the person and the companion on a game's score bar"))
-                .font(.system(size: 15, weight: .black, design: .rounded)).italic()
-                .foregroundStyle(style.night ? Color(hex: 0x7A4FE0) : style.bottom)
-                .accessibilityHidden(true)
-            side(name: companionName, points: score?.companion, won: .loss, mine: false) {
-                GameAvatar(portrait: portrait, size: 32).overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                    .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+            if let players = score?.players {
+                // Two people playing each other (D96): each name with a colour of its own; the companion only referees.
+                ForEach(0..<2, id: \.self) { i in
+                    if i == 1 { versus }
+                    side(name: players[i], points: i == 0 ? score?.you : score?.companion, tint: GameColors.players[i], mine: false) {
+                        PlayerInitial(name: players[i], color: GameColors.players[i], size: 32)
+                    }
+                }
+            } else {
+                companionMatch
             }
         }
         .padding(5)
@@ -188,12 +188,34 @@ struct ScoreBar: View {
         .foregroundStyle(Theme.ink)
     }
 
+    private var versus: some View {
+        Text(String(localized: "VS", comment: "Between the person and the companion on a game's score bar"))
+            .font(.system(size: 15, weight: .black, design: .rounded)).italic()
+            .foregroundStyle(style.night ? Color(hex: 0x7A4FE0) : style.bottom)
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var companionMatch: some View {
+            side(name: String(localized: "You", comment: "The person, on a game's score"), points: score?.you, won: .win, mine: true) {
+                PlayerAvatar(picture: you, size: 32)
+            }
+            versus
+            side(name: companionName, points: score?.companion, won: .loss, mine: false) {
+                GameAvatar(portrait: portrait, size: 32).overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+            }
+    }
+
     private func side<Face: View>(name: String, points: Int?, won: GameVerdict, mine: Bool, @ViewBuilder face: () -> Face) -> some View {
+        side(name: name, points: points, tint: GameColors.color(won), mine: mine, face: face)
+    }
+
+    private func side<Face: View>(name: String, points: Int?, tint: Color, mine: Bool, @ViewBuilder face: () -> Face) -> some View {
         HStack(spacing: 8) {
             face()
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: name).font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(Theme.inkMuted).lineLimit(1)
-                if let points { tally(points, won: won) }
+                if let points { tally(points, tint: tint) }
             }
             Spacer(minLength: 0)
             if mine, let streak = score?.streak, streak >= 2 {
@@ -219,11 +241,11 @@ struct ScoreBar: View {
     }
 
     /// Rounds won, as pips: the person's in the win colour, the companion's (the person's losses) in the calm loss tone.
-    @ViewBuilder private func tally(_ n: Int, won: GameVerdict) -> some View {
+    @ViewBuilder private func tally(_ n: Int, tint: Color) -> some View {
         if let rounds = score?.rounds {
             HStack(spacing: 4) {
                 ForEach(0..<rounds, id: \.self) { i in
-                    Circle().fill(i < n ? GameColors.color(won) : Theme.line).frame(width: 10, height: 10)
+                    Circle().fill(i < n ? tint : Theme.line).frame(width: 10, height: 10)
                         .overlay(Circle().strokeBorder(.white.opacity(0.6), lineWidth: i < n ? 1.5 : 0))
                 }
             }
@@ -233,6 +255,22 @@ struct ScoreBar: View {
             Text(verbatim: Toss.number(n)).font(.system(size: 20, weight: .heavy, design: .rounded)).monospacedDigit()
                 .contentTransition(.numericText())
         }
+    }
+}
+
+/// A player's first letter on a disc of their colour, for two people playing each other (no picture of either).
+struct PlayerInitial: View {
+    var name: String
+    var color: Color
+    var size: CGFloat
+
+    var body: some View {
+        Text(verbatim: name.first.map { String($0).uppercased() } ?? "?")
+            .font(.system(size: size * 0.48, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(Circle().fill(color))
+            .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+            .accessibilityHidden(true)
     }
 }
 

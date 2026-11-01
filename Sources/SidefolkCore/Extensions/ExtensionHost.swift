@@ -74,6 +74,10 @@ public actor ExtensionHost {
     public nonisolated let gameShelf = GameShelf()
     /// The one game open in the Play panel, with its recent moves for the rate limit (ExtensionHost+Games).
     var openGame: OpenGame?
+    /// Makes a trivia pack for a game that asks (D95): the app sets it once the person's AI can be reached.
+    var triviaHelp: (@Sendable (_ extensionId: String, _ request: String, _ params: JSONValue) async -> JSONValue)?
+    /// Extensions with a trivia request under way: one at a time each.
+    var triviaAsking: Set<String> = []
 
     /// - Parameter secrets: environment values for an MCP server, by server id (from the Keychain).
     ///   Only the keys the server was added with are used.
@@ -1181,6 +1185,20 @@ public actor ExtensionHost {
                 await client.notify("sidefolk/output_mute.result", params: ["request": .string(request), "ok": false,
                     "message": .string((error as? UserFacingError)?.message ?? error.localizedDescription)])
             }
+        case .triviaRequest(let request, let params):
+            // Only Sidefolk's own extensions, switched on, and one request at a time (D95, SECURITY T17).
+            guard rt.pin.origin?.firstParty == true, rt.record.enabled, let client = rt.client, let help = triviaHelp,
+                  !triviaAsking.contains(id) else {
+                Log.shared.warning("extensions", "trivia request refused", ["id": id])
+                await rt.client?.notify("sidefolk/trivia.pack", params: ["request": .string(request), "ok": false, "reason": "off"])
+                return
+            }
+            triviaAsking.insert(id)
+            Task {
+                let reply = await help(id, request, params)
+                await self.triviaAnswered(id)
+                await client.notify("sidefolk/trivia.pack", params: reply)
+            }
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:
@@ -1192,6 +1210,13 @@ public actor ExtensionHost {
                 Log.shared.warning("extensions", "tools/list failed after a change", ["id": id, "error": String(describing: error)])
             }
         }
+    }
+
+    private func triviaAnswered(_ id: String) { triviaAsking.remove(id) }
+
+    /// The app hands over how trivia packs are made once its AI runtime exists (D95).
+    public func setTriviaHelp(_ help: @escaping @Sendable (_ extensionId: String, _ request: String, _ params: JSONValue) async -> JSONValue) {
+        triviaHelp = help
     }
 
     private func outputMuteFailed(id: String, generation: Int, sequence: Int, reason: String) async {

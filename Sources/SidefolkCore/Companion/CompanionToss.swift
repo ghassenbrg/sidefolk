@@ -126,6 +126,7 @@ actor HandsScore {
 
     static let key = "companion.handsScore"
     private let kv: KVStore?
+    var kvStore: KVStore? { kv }
     private var kept = Score()
 
     init(kv: KVStore? = nil) { self.kv = kv }

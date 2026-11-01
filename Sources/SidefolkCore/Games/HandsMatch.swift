@@ -4,8 +4,13 @@ import Synchronization
 /// Rock, paper, scissors as a best of three in the Play panel (D75), Sidefolk's own game on the same board model as
 /// an extension's. Fairness stays core's (D44): the companion's hand is drawn with the system's generator as each round
 /// begins, before the person picks, and kept sealed (its card in the header) until both show; nothing reads the
-/// person's hand to choose it. Now and then it bluffs before a round ("I'm going rock…"), naming a hand drawn apart
-/// from the one it holds, so the bluff is true about a third of the time, as a real one would be.
+/// person's hand to choose it. Like a person, it never throws one hand three times running (D96): the third draw is
+/// between the other two. Now and then it bluffs before a round ("I'm going rock…"), naming a hand drawn apart from the
+/// one it holds, so the bluff is true about a third of the time, as a real one would be.
+///
+/// Two people can play each other on this Mac instead (D96, `options.players` 2): the first picks while the second
+/// looks away, a cover asks to pass the Mac over, the second picks, and only then both hands show. The companion
+/// referees; the head-to-head tally per pair of names is kept apart from its own score.
 public final class HandsMatch: GameProvider {
     public let info = GameInfo.handsMatch
     /// Rounds to win the match.
@@ -20,22 +25,34 @@ public final class HandsMatch: GameProvider {
         var last: (you: Hand, companion: Hand)?
         /// The companion's hand for the round under way, drawn when it began and sealed until the person picks.
         var sealed: Hand?
+        /// The companion's hands so far, for its "not three in a row".
+        var thrown: [Hand] = []
+        /// Two people playing each other (D96): their names, first and second; nil against the companion.
+        var players: [String]?
+        /// Which player's name is being typed (0 or 1) before the match; nil once it is under way.
+        var naming: Int?
+        /// The first player's hand this round, in and hidden until the second has picked.
+        var firstHand: Hand?
+        /// The Mac was passed to the second player (the first looks away).
+        var handedOver = false
         var over: Bool { you >= HandsMatch.toWin || companion >= HandsMatch.toWin }
 
-        public init(round: Int = 1, you: Int = 0, companion: Int = 0, last: (you: Hand, companion: Hand)? = nil, sealed: Hand? = nil) {
+        public init(round: Int = 1, you: Int = 0, companion: Int = 0, last: (you: Hand, companion: Hand)? = nil, sealed: Hand? = nil,
+                    players: [String]? = nil) {
             self.round = round
             self.you = you
             self.companion = companion
             self.last = last
             self.sealed = sealed
+            self.players = players
         }
     }
 
-    private let state = Mutex(State())
-    private let score: HandsScore
-    private let companionName: String
+    let state = Mutex(State())
+    let score: HandsScore
+    let companionName: String
     /// A whole number in the range: the system's generator, or a script in tests.
-    private let random: @Sendable (ClosedRange<Int>) -> Int
+    let random: @Sendable (ClosedRange<Int>) -> Int
 
     init(score: HandsScore, companionName: String, random: @escaping @Sendable (ClosedRange<Int>) -> Int = { Int.random(in: $0) }) {
         self.score = score
@@ -49,22 +66,38 @@ public final class HandsMatch: GameProvider {
     }
 
     public func start(_ setup: GameSetup) async throws -> GameBoard {
-        let sealed = draw()
+        if setup.options["players"]?.intValue == 2 {
+            let names = TwoPlayers.names(setup.options["names"])
+            let s = state.withLock { s -> State in
+                s = State(players: names)
+                s.naming = 0
+                return s
+            }
+            return board(s, cue: GameCue(move: .ready, line: .hello, look: .panel))
+        }
+        let sealed = draw([])
         let s = state.withLock { s -> State in
             s = State(sealed: sealed)
+            s.thrown = [sealed]
             return s
         }
         return board(s, cue: GameCue(move: .ready, line: .hello, look: .panel))
     }
 
-    /// The companion's hand for a round: uniform, from the system's generator (a script in tests), never looking at
-    /// the person's.
-    private func draw() -> Hand { Hand.allCases[random(0...2)] }
+    /// The companion's hand for a round: from the system's generator (a script in tests), never looking at the
+    /// person's; any of the three, except that after two of a kind it picks between the other two, as people do.
+    private func draw(_ thrown: [Hand]) -> Hand {
+        guard thrown.count >= 2, thrown[thrown.count - 1] == thrown[thrown.count - 2] else { return Hand.allCases[random(0...2)] }
+        let others = Hand.allCases.filter { $0 != thrown.last }
+        return others[random(0...1)]
+    }
 
     /// The hand the companion holds for the round under way, sealed (tests check it is fixed before the move).
     var sealedHand: Hand? { state.withLock { $0.sealed } }
 
     public func move(_ move: GameMove) async throws -> GameBoard {
+        if case .choice("opponent", let who) = move { return opponent(who == "two") }
+        if state.withLock({ $0.players != nil }) { return await duel(move) }
         switch move {
         case .answer(let i) where Hand.allCases.indices.contains(i):
             guard let mine = state.withLock({ $0.last == nil && !$0.over ? $0.sealed : nil }) else { return current() }
@@ -79,13 +112,14 @@ public final class HandsMatch: GameProvider {
             return board(s, cue: reaction(s, you: you, mine: mine))
         case .button("next"):
             guard state.withLock({ $0.last != nil && !$0.over }) else { return current() }
-            let sealed = draw()
+            let sealed = draw(state.withLock { $0.thrown })
             // A bluff now and then, before the count: a wink and a hand named at random, apart from the one it holds.
             let bluff: Hand? = random(0...2) == 0 ? Hand.allCases[random(0...2)] : nil
             let s = state.withLock { s -> State in
                 s.last = nil
                 s.round += 1
                 s.sealed = sealed
+                s.thrown = Array((s.thrown + [sealed]).suffix(2))
                 return s
             }
             var next = board(s, cue: bluff == nil ? GameCue(move: .ready, look: .panel) : GameCue(move: .tease, look: .you))
@@ -113,6 +147,7 @@ public final class HandsMatch: GameProvider {
     }
 
     public func board(_ s: State, cue: GameCue?) -> GameBoard {
+        if let players = s.players { return duelBoard(s, players: players, cue: cue) }
         var parts: [GameBoard.Part] = [.score(GameBoard.Score(you: s.you, companion: s.companion, streak: nil, best: nil, rounds: Self.toWin,
                                                               companionPicked: s.sealed != nil))]
         let tiles = Hand.allCases.map { hand -> GameBoard.Answers.Tile in
@@ -133,6 +168,8 @@ public final class HandsMatch: GameProvider {
                                                   eyebrow: Self.roundTitle(s.round), chip: nil)))
         }
         parts.append(.answers(GameBoard.Answers(tiles: tiles, layout: .row, locked: s.last != nil)))
+        // Before the first throw: against the companion, or two people on this Mac (D96).
+        if s.round == 1, s.last == nil { parts.append(.choice(opponents(companionName, two: false))) }
         if s.over {
             let won = s.you > s.companion
             parts.append(.result(GameBoard.Result(

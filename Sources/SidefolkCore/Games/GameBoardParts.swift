@@ -75,7 +75,16 @@ extension GameBoard {
         public var go: String
         public var early: String
         public var shows: String?
+        /// Two players share it (D96): each presses their own key (the left player's first), the first key decides,
+        /// and a click can't say whose it was. Nil: one person, Space or a click.
+        public var keys: [String]?
         public var armed: Bool { after != nil && shows == nil }
+
+        /// One lowercase Latin letter, as a player's key.
+        static func key(_ j: JSONValue?) -> String? {
+            guard let s = j?.stringValue?.lowercased(), s.count == 1, let c = s.unicodeScalars.first, ("a"..."z").contains(c) else { return nil }
+            return s
+        }
     }
 
     /// A thermometer from cold to warm, 0–1, with words: never a colour alone.
@@ -206,7 +215,10 @@ extension GameBoard {
             guard let wait = words.0, let go = words.1, let early = words.2 else { return nil }
             let after = j["after_ms"]?.doubleValue.flatMap { (300...10_000).contains($0) ? $0 / 1000 : nil }
             let window = min(max(j["window_ms"]?.doubleValue ?? 1500, 300), 5000) / 1000
-            return .reflex(Reflex(after: after, window: window, wait: wait, go: go, early: early, shows: line(j["shows"], 40)))
+            // Two different keys, or none: anything else is one person's reflex.
+            let keys = (j["keys"]?.arrayValue ?? []).compactMap(Reflex.key)
+            return .reflex(Reflex(after: after, window: window, wait: wait, go: go, early: early, shows: line(j["shows"], 40),
+                                  keys: keys.count == 2 && keys[0] != keys[1] ? keys : nil))
         case "meter":
             guard let v = j["value"]?.doubleValue, v.isFinite else { return nil }
             return .meter(Meter(value: min(max(v, 0), 1), label: line(j["label"], 30), low: line(j["low"], 20), high: line(j["high"], 20)))

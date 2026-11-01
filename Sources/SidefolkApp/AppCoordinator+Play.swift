@@ -61,7 +61,12 @@ extension AppCoordinator {
         // Cues act only while the panel shows this game.
         func showing(_ model: PlayModel?) -> Bool { playPanel.shows(model) }
         model.onCue = { [weak self, weak model] board in
-            guard let self, let model, showing(model) else { return }
+            guard let self, let model else { return }
+            // Two people's names, as they typed them in a game, for the next game they play each other (D96).
+            if let players = board.score?.players, players != self.runtime.settings.current.games.players {
+                Task { await self.runtime.settings.update { $0.games.players = players } }
+            }
+            guard showing(model) else { return }
             self.cues.play(board, tone: self.runtime.settings.current.games.tone, sounds: model.soundsOn)
         }
         model.onReveal = { [weak self, weak model] reveal in
@@ -83,8 +88,12 @@ extension AppCoordinator {
         model.onClose = { [weak self] in self?.playPanel.hide() }
         playPanel.show(model, beside: frame, on: screen, focus: request.focus)
         // The companion's name lets a game word its buttons ("Ask Mochi"); nothing else about the person is passed.
-        let options: [String: JSONValue] = ["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky),
+        var options: [String: JSONValue] = ["tone": .string(s.games.tone.rawValue), "sneaky": .bool(s.games.sneaky),
                                             "companion": .string(s.companionName)]
+        // The names two people last played each other under (D96), shown only in the panel.
+        if s.games.players.count == 2 { options["names"] = .array(s.games.players.map(JSONValue.string)) }
+        // Which AI makes new trivia questions when the person allows it (D95): its name only, for the board's label.
+        if let maker = s.provider.shortName, s.games.aiTriviaOn(providerSet: true) { options["ai_trivia"] = .string(maker) }
         Task { await model.start(GameSetup(level: request.level, language: AppLanguage.current, options: options)) }
     }
 
@@ -116,6 +125,22 @@ extension AppCoordinator {
     func openGameFromMenu(_ info: GameInfo) {
         Task { _ = await runtime.executor.execute(name: "games.open", input: ["extension": .string(info.extensionId), "game": .string(info.game)],
                                                   caller: .user) }
+    }
+
+    /// Trivia questions made by the person's AI for Playtime (D95): one call through the agent runtime with the fixed
+    /// prompt, when their setting and a provider allow it, behind `games.trivia_questions` (Guard, History).
+    func installTriviaHelp() {
+        let agent = self.agent!, settings = runtime.settings, executor = runtime.executor
+        let maker = TriviaMaker(ask: { system, prompt in try await agent.oneShot(system: system, prompt: prompt, purpose: "trivia") },
+                                allowed: { settings.current.games.aiTriviaOn(providerSet: settings.current.provider.kind != .none) })
+        let tool = TriviaQuestionsTool(maker: maker)
+        runtime.registry.register(tool)
+        let host = runtime.extensions
+        Task {
+            await host.setTriviaHelp { id, request, params in
+                await TriviaHelp.answer(extensionId: id, request: request, params: params, executor: executor, tool: tool)
+            }
+        }
     }
 
     /// The game ends for good: the game hears why, and a game that was played and never said it was over still gets its row.

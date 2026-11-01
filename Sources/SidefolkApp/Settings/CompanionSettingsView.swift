@@ -44,6 +44,10 @@ struct CompanionSettingsView: View {
                 ])
             }
             SettingsToggle(.gameSounds, isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
+            // Off and greyed while no AI is set up: nothing would make the questions (D95).
+            SettingsToggle(.gameAITrivia, isOn: Binding(get: { model.settings.games.aiTriviaOn(providerSet: model.settings.provider.kind != .none) },
+                                                        set: { on in model.update { $0.games.aiTrivia = on } }))
+                .disabled(model.settings.provider.kind == .none)
         }
 
         SettingsGroup(title: "Look") {

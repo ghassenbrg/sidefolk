@@ -67,13 +67,17 @@ struct NumberFieldView: View {
         VStack(spacing: 10) {
             if !field.history.isEmpty {
                 HStack(spacing: 5) {
-                    ForEach(Array(field.history.suffix(8).enumerated()), id: \.offset) { _, g in chip(g) }
+                    // Fewer of them on a wide range (up to a million, D96), so the row stays one line.
+                    ForEach(Array(field.history.suffix(field.max >= 100_000 ? 4 : field.max >= 1000 ? 6 : 8).enumerated()), id: \.offset) { _, g in
+                        chip(g)
+                    }
                 }
                 .environment(\.layoutDirection, .leftToRight)
             }
             HStack(spacing: 12) {
-                Text(verbatim: model.parts.draft.isEmpty ? "?" : model.parts.draft)
+                Text(verbatim: model.parts.draft.isEmpty ? "?" : Int(model.parts.draft).map(Self.grouped) ?? model.parts.draft)
                     .font(.system(size: 40, weight: .heavy, design: .rounded)).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.5).padding(.horizontal, 8)
                     .foregroundStyle(model.parts.draft.isEmpty ? Theme.inkFaint : Theme.ink)
                     .frame(minWidth: 110, minHeight: 64)
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.surfaceSunken))
@@ -88,6 +92,9 @@ struct NumberFieldView: View {
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface.opacity(0.9)))
         .disabled(field.locked)
     }
+
+    /// A number as the person's language groups it ("1,000,000", "1 000 000"), in its digits.
+    static func grouped(_ n: Int) -> String { n.formatted(.number.locale(Wording.locale)) }
 
     /// 1–9, then ⌫ 0 ↵, laid out left to right in every language, as a phone's pad is.
     private var pad: some View {
@@ -125,7 +132,7 @@ struct NumberFieldView: View {
         case .right: "checkmark"
         }
         return HStack(spacing: 2) {
-            Text(verbatim: "\(g.value)").monospacedDigit()
+            Text(verbatim: Self.grouped(g.value)).monospacedDigit()
             Image(systemName: symbol)
         }
         .font(Theme.Font.captionStrong)

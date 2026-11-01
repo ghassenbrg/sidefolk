@@ -59,6 +59,9 @@ public enum Move: Equatable {
     case pad(Int)
     case press(milliseconds: Int)
     case early
+    /// Two players on one reflex (its `keys`): which key pressed first, and when; or which pressed before the signal.
+    case pressKey(milliseconds: Int, key: String)
+    case earlyKey(String)
     /// The board's `afterMs` passed: answer with the next board (the companion's move once it has thought).
     case next
     /// What was typed in a text `entry`.
@@ -79,8 +82,11 @@ public enum Move: Equatable {
         else if let w = json["word"] as? String { self = .word(w) }
         else if let n = json["number"] as? Int { self = .number(n) }
         else if let p = json["pad"] as? Int { self = .pad(p) }
-        else if let p = json["press"] as? [String: Any], let ms = p["ms"] as? Int { self = .press(milliseconds: ms) }
+        else if let p = json["press"] as? [String: Any], let ms = p["ms"] as? Int {
+            self = (p["key"] as? String).map { .pressKey(milliseconds: ms, key: $0) } ?? .press(milliseconds: ms)
+        }
         else if json["early"] as? Bool == true { self = .early }
+        else if let e = json["early"] as? [String: Any], let key = e["key"] as? String { self = .earlyKey(key) }
         else if json["next"] as? Bool == true { self = .next }
         else if let t = json["text"] as? [String: Any], let n = t["name"] as? String, let v = t["value"] as? String { self = .text(name: n, value: v) }
         else if let a = json["area"] as? [Int], a.count == 4 { self = .area(row: a[0], column: a[1], toRow: a[2], toColumn: a[3]) }
@@ -124,8 +130,12 @@ public enum BoardPart {
     /// Cells up to 8 × 8, row by row; a click is `.cell(row:column:)`. `numpad`: a 3 × 3 board's cells take the digits
     /// as on a number pad (7 8 9 on top).
     case board(rows: Int, columns: Int, cells: [Cell], locked: Bool = false, numpad: Bool = false)
-    /// The header's pills: you against the companion, a streak, round pips (`rounds` to win), its sealed pick.
-    case score(you: Int, companion: Int, streak: Int? = nil, best: Int? = nil, rounds: Int? = nil, companionPicked: Bool = false)
+    /// The header's pills: you against the companion, a streak, round pips (`rounds` to win), its sealed pick. With
+    /// `players` (two names), two people play each other on one Mac: `you` is the first's points, `companion` the
+    /// second's, each drawn with their name and a colour of their own, and the companion only referees. A Sidefolk from
+    /// before this shows "You" and the companion.
+    case score(you: Int, companion: Int, streak: Int? = nil, best: Int? = nil, rounds: Int? = nil, companionPicked: Bool = false,
+               players: [String]? = nil)
     /// The end card: a big figure, a line, a ribbon, up to four facts and three buttons.
     case result(figure: String, line: String? = nil, ribbon: String? = nil, tone: Tone = .neutral, facts: [(String, String)] = [],
                 actions: [GameButton] = [])
@@ -152,9 +162,9 @@ public enum BoardPart {
         case .board(let rows, let columns, let cells, let locked, let numpad):
             return drop(["type": "board", "rows": rows, "columns": columns, "cells": cells.map(\.json), "locked": locked,
                          "keys": numpad ? "numpad" : nil])
-        case .score(let you, let companion, let streak, let best, let rounds, let picked):
+        case .score(let you, let companion, let streak, let best, let rounds, let picked, let players):
             return drop(["type": "score", "you": you, "companion": companion, "streak": streak, "best": best, "rounds": rounds,
-                         "companion_picked": picked ? true : nil])
+                         "companion_picked": picked ? true : nil, "players": players])
         case .result(let figure, let line, let ribbon, let tone, let facts, let actions):
             return drop(["type": "result", "figure": figure, "line": line, "ribbon": ribbon, "tone": tone.rawValue,
                          "facts": facts.map { ["label": $0.0, "value": $0.1] }, "actions": actions.map(\.json)])
