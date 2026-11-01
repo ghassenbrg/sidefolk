@@ -568,7 +568,9 @@ checked: entries that would leave the folder are refused before unpacking (`zipi
 refused, every file must match the manifest's SHA-256 and no other file may be there, and a database whose migrations
 this copy doesn't know is refused. What can act is never restored as is: gallery add-ons are fetched again and their
 signatures checked (T33); extensions and companions from a folder wait for the install sheet or D60's question; MCP
-servers come back switched off; only key names Sidefolk uses are written to the Keychain. Skills and notes come back as
+servers come back switched off; only key names Sidefolk uses are written to the Keychain, and the values they replace
+wait for Undo restore sealed in the undo folder under a random key kept in the Keychain, never in the clear; only an
+allow list of the app's own defaults is set (`BackupPreferences`), never its language or macOS's keys. Skills and notes come back as
 data, so the sheet says "Restore only a backup you made yourself" (a stranger's backup is a stranger's text in prompts,
 T2). The swap happens before the database opens, and what it replaced is kept 7 days for Undo restore; agent configs
 are never touched (D86).
