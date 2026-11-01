@@ -6,10 +6,97 @@ and Agents (now Brain, Trust, Add-ons and Connections), the Ask panel, bubbles a
 Conversations and Activity (now Today, On duty and History), theme layouts (retired by D84). Branches named here are
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
+## 2026-11-01: released in snapshots 673 to 724, or on main after it
+
+These were STATUS's "In progress" until the release review; D92 (themes), the leftovers and the CI fix are on main
+for the next snapshot. Their "Next: merge" is done.
+
+- **Docs cleanup** (branch `team/docs-cleanup` in both repositories): every doc, README and skill
+  brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
+
+- **Desktop polish** (branch `team/desktop-polish`): cards answer from the keyboard (⌃⌥Space), Ask's
+  tabs and "Open in History", the drop card, the stack's arc and the voice's light, VoiceOver on the companion's
+  corner (D84's note); Ask tidies itself by each result's weight, agents grouped by folder (D90). Verified with
+  `make test`, UI snapshots (light, dark, de, ar) and the debug app. Next: merge; try ⌃⌥Space on a Mac whose input
+  sources don't take it, and VoiceOver by hand (an AX client this Mac's tools aren't allowed to be).
+- **Safety and correctness** (branch `team/safety`): a copy on any `SIDEFOLK_HOME` writes agent-config
+  stand-ins in `<home>/agent-configs/`, never the person's Claude Code, Codex or `~/.local/bin/sidefolk` (D86, ported
+  from a branch that never reached main); `connect:`/`disconnect:` dev commands; the audit's F12 rule (links open only
+  as web pages) on release notes and extension errors; the QA branch's last four tests. Verified: full suite green
+  (1626 + 38 tests), and a debug app on `build/safety-1` connected and disconnected both agents and the command
+  while the real files kept their mtime and SHA-256. Next: merge.
+- **Add-on updates in sight** (branch `team/addon-updates`, D89): the Gallery's Updates with Update all
+  (per-item progress, "3 updated, 1 needs your review", widening ones stay with Review…), an extension page's
+  "Update available" strip with What's new, Settings › Add-ons inline "New version · Update" and an Update all card,
+  Home's sidebar dot and count, Today's one row, the Pocket's Needs you, a whisper after a day with the switch off.
+  Verified: `AddonUpdateAllTests` (5), full suite, snapshots in light, dark, de and ar, and a debug app on a signed
+  local gallery (two extensions and a companion, one widening): Update all updated two and left one for review.
+  Next: merge.
+- **Watch history** (branch `team/watch-history`, D87): every check of a watch logged as runs, the last
+  two versions of a page's or file's text, the watch's own page in Home (what changed inline or side by side, its
+  timeline, Check now, Pause or Resume, Stop) and On duty's bars of the last 24 checks; `watch.list` says when each
+  last changed. Verified with tests (migration, runs, versions, pruning, Your data), snapshots `window-home-watch*`
+  and `window-home-onduty*` in light, dark, de and ar, and the debug app with a local file changed twice and a page
+  on `python3 -m http.server` edited once. The branch also carries origin/main (snapshot 673, D86) and
+  `team/interrupts` (D88, below), merged and tested together; the watch's Check now has its own key
+  (`watch.checkNow`: "Jetzt prüfen", not Updates' "Jetzt suchen"). Next: merge into main.
+
+- **What may interrupt you** (branch `team/interrupts`; D88): a level per source (Card, Whisper, Only in
+  Today, Off) in Settings › Attention, applied before Focus and Quiet; "Fewer like this" and "Show these as whispers"
+  in a card's ⋯ with Undo; Today's Kept for Today; "done today" counts only what changed something. Built, tested
+  (`InterruptionsTests`, `InterruptionsCenterTests`, `DoneTodayTests`), snapshots read (`page-settings-attention-sources`,
+  `page-today-kept`, light, dark, de, ar) and checked live (Claude Code at Only in Today, a `sidefolk hook` Stop: no
+  desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
+  click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
+
+- **The companions' reaction moves** (branch `team/reactions`; D75 amended): sulk, shrug, tease, ready,
+  wince, gasp and the quick accents are each a real move now, in 3D for all ten companions (shared in
+  `engine/moves.js`, a still version under Reduce Motion) and in 2D (`Antics`). Verified: every move filmed for every
+  3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
+  debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
+  no gallery companion changes.
+- **Game items** (branch `team/games-items` in both repositories; D79 amended, the games' items):
+  catching the companion in Which Cup? by clicking it, Garden Plots from the keyboard, a daily board per puzzle level,
+  "Do it" after a hint, Korean rows one width, no faded stick on Last Stick's last board, scores in the bar's order in
+  Arabic; then the Kit isolating `L`'s values (Arabic sentences that begin with a name), the Play panel acting on its
+  first click, the menu of games opened by words in ten languages and by `games.open` without a game, the back arrow
+  that always works (⌘[), and snapshot runs in several languages kept apart; carries origin/main. Next: merge, then
+  set Playtime's `minimum_sidefolk` to the snapshot that ships it (the board button's `companion` key). Verified with UI snapshots (en, ar, ko, ja, light and dark), films in a debug app, `make test`
+  and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`.
+
+- **Back up and restore** (branch `team/backup`, D91; it carries `team/addon-updates`, which carries
+  `team/watch-history` and `team/interrupts`): Settings › Trust › Your data and the app menu write one
+  `.sidefolkbackup` (database via `VACUUM INTO`, ExtensionData, drafts, skills, companions as data, folder extensions
+  and themes for review, gallery add-ons by name, keys only sealed with a password) and restore it: checked, Replace
+  with 7 days of Undo restore, swapped at the relaunch, gallery add-ons fetched again, folder code reviewed, MCP
+  servers off. Verified: `BackupTests` (6), full suite, snapshots in light, dark, de and ar, and the debug app: a
+  backup from `build/bk-1` restored into a fresh `build/bk-2` through the sheet (same notes, reminders and skill,
+  History's line), then undone. Next: merge.
+
+- **Themes, fewer and finished** (branch `team/theme-skill` in both repositories; D92): the
+  `sidefolk-theme` skill (`.claude/skills/`, `.agents/skills/`, a public copy in `skills/`); the set cut from seven
+  to four built-ins, each its own atmosphere: Harbor, Paper Garden (Field Notes, Paper Garden and the skill's Tea House
+  merged), Night Studio (Night Studio and Night Shift merged) and Marshmallow (its stage as a wash and nook). Field
+  Notes and Night Shift move to their successor at launch with a whisper (Night Shift's people keep compact
+  spacing); Daylight, gone from the gallery, stays where installed and offers Harbor once (`ThemeSuccession`). The
+  add-ons carry no themes now (publish.sh drops their packs); Tea House's branch `team/tea-house` is superseded.
+  Also: the check holds success and chips' words to 4.5:1 and soft fills to their hue (D78 amended; kept copies only
+  warn), the nook art is drawn again, `TodayHeader.swift` is gone, snapshot language runs work under Swift Build's
+  linked `.build/debug`. Next: merge both branches together, then publish the add-ons (the founder).
+- **Leftovers** (branch `team/leftovers` in both repositories): the Gallery's Updates under every filter and
+  search, and a reviewed update says Updated (D89, checked live on a signed local gallery); Undo restore puts back the
+  keys and the app's conveniences a restore replaced, which a backup now carries (D91); the Week view's "+N" and
+  read-only note (D84); Connections name a dev copy's stand-ins (D86); a hop's rise eases into the window's headroom
+  (D51 amended); Iris's tease, ready, waveQuick and spinQuick keep her arms in (add-ons, `companions/iris`); snapshot
+  runs get their layout direction on their own command line (Arabic beside other runs came out left to right), the dev
+  `snap` takes the toolbar (its white band), an extension page's error state. Verified: `make test`, the add-ons'
+  checks, UI snapshots (light, dark, de, ar), films of Iris's four moves at 0°, 40° and 90°, `edges()` for every 3D
+  companion, and the debug app. Next: merge; the gallery's next build gives Iris a new snapshot by itself.
+
 ## 2026-10-31 to 2026-11-01
 
 - **Four puzzles in the Play panel (D79 amended, the puzzles; branches `team/puzzles-b` in both repositories, on
-  origin/main with the games look and Lantern, not merged):** Garden Plots (Shikaku), Seesaw (Takuzu with hearts and stars), Sudoku (6 × 6, 9 × 9
+  origin/main with the games look and Lantern):** Garden Plots (Shikaku), Seesaw (Takuzu with hearts and stars), Sudoku (6 × 6, 9 × 9
   on Hard) and Blossoms (Star Battle), our own names and look, nothing of LinkedIn's. Generators with unique solutions
   and logical hints (Playtime `Sources/Games/Puzzles`), a daily board per puzzle kept as far as played, then practice;
   best times, streaks, Home rows and the Today tile's streaks; a new checked `puzzle` part with `area` and `place` moves
@@ -22,7 +109,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   SIDEFOLK_HOME build/qp-1) with Playtime from the branch: a plot dragged cell by cell (`drag:` dev command) and the day's
   Garden Plots solved, filmed. *Next:* the founder plays them, then merge.
 
-- **The Lantern revamp, phase 5: polish (D84, branch `team/lantern-2`, not merged, not pushed):** the whole app walked
+- **The Lantern revamp, phase 5: polish (D84, branch `team/lantern-2`):** the whole app walked
   in the debug app (`build/qp-1`, `qm-*`) and fixed: the Calendar pushed Home's whole window under its toolbar (its
   least height), Today's reminder card lost Done, a card replacing a shorter one was cut at the top, onboarding made an
   "All clear", the Say field's ring had flat bars, empty On duty and You had two primaries, History/Today named another
@@ -40,7 +127,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   Ask's "Open in History" header, the companions' own reactions, the evening wrap and drop card; "done today" counts
   other agents' reads; the greeting says "Good evening" after midnight. *Next:* merge `team/lantern-2` to main and
   release a snapshot (the lead's call).
-- **The Lantern revamp, phase 2: the desktop (D84, branch `team/lantern-2`, not merged):** the companion stands on
+- **The Lantern revamp, phase 2: the desktop (D84, branch `team/lantern-2`):** the companion stands on
   its light pool (idle, working, waiting with the count on its shoulder, alert while a card is out, failed, Quiet's moon)
   driven by `DesktopLight`; bubbles became the Sidecard (`Sidecard/`: whisper with its 6 s line, Undo for an agent's
   undoable change, click to grow; cards with ≤ 3 answers and ⋯; cards fold into the shoulder's count after 30 s; hover
@@ -64,7 +151,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   voice's level-reactive pool, keyboard answering of cards outside Ask; the 3D companion's own reactions (phase 5).
   Other teammates' debug apps receive `scripts/dev.swift` commands sent without SIDEFOLK_HOME: set it, or a stray
   `approve` reaches yours. *Next:* phase 5 (polish), or the items above.
-- **The Lantern revamp, phase 4: Settings, the menu bar Pocket, sheets (D84, branch `team/lantern-4`, not merged):**
+- **The Lantern revamp, phase 4: Settings, the menu bar Pocket, sheets (D84, branch `team/lantern-4`):**
   Settings is a sidebar window with search and eight tabs (General, Companion, Attention, Brain, Trust, Connections,
   Add-ons, Appearance); every setting kept a home and the old tab names still open the right place; every
   "Settings › AI/Privacy/Extensions/Voice/Agents" sentence (errors, notices, the install sheet, the AI's context)
@@ -93,7 +180,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   Reduce Transparency/Contrast versions are phase 5. Merged with phase 3 (`team/lantern-merge`): "Get Add-ons" and the
   Companion tab's "Get more" open Home's Gallery (`AppServices.openGallery()`); Home's sidebar pill offers Open, Focus
   and Quiet with their ends. *Next:* merge phase 2, then the phase 5 polish.
-- **The Lantern revamp, phase 3: Home (D84, branch `team/lantern-3`, not merged):** one layout in every theme. A new
+- **The Lantern revamp, phase 3: Home (D84, branch `team/lantern-3`):** one layout in every theme. A new
   sidebar (the companion live in its nook on its light, in the desktop's state and pose; Today ⌘1, Calendar ⌘2, Notebook
   ⌘3, On duty ⌘4, History ⌘5; You, collections and the Trash in the Notebook; extension pages arranged by drag with "Get
   add-ons"; Quiet at the foot), the Say bar (⌘K) in the toolbar with its panel (plain sentence, chips, AI or not, ↩ ⌘↩ ⌥↩,
@@ -114,7 +201,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   approval cards are phase 2's `ApprovalCard` until the permission slip lands; Focus in the sidebar's pill waits for phase
   4's Attention; the Week view's "read only" note and "+1" overlaps; a watch's detail page (A9) needs a check log that
   isn't kept. The Trash shows days left (amber in the last three).
-- **The games look like games (D79 amended, branch `team/games-look` in both repositories, not merged):** after the
+- **The games look like games (D79 amended, branch `team/games-look` in both repositories):** after the
   founder's two direction boards, every game in the Play panel has its own colour, illustrated scene and icon (a
   manifest `look`, with a translated `tagline`), "You vs <companion>" with both faces (the Mac account's picture when it
   has one), the person's own companion standing whole in the scene saying the prompt, chunky toy buttons and tiles, Copy Me's
@@ -150,7 +237,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
   queues 128 connections (the default 5 reset module fetches). *Checked:* a companion added from a folder using
   them, in the playground and a debug app; every move, posture and state kept inside the app's square framing.
 
-- **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`, not merged):** the founder approved the
+- **The Lantern revamp, phase 1: foundations (D84, branch `team/lantern-1`):** the founder approved the
   revamp (Lantern; themes dress, one layout per place; firm cards never take Return; History, Brain, Trash in the
   Notebook; the Gallery in Home; half circle = Focus, moon = Quiet; Full access with an end time; Latin companion names
   in Arabic; only what exists is shown). Built: Harbor is Lantern (navy ink, neutral canvas and cards, the deep aqua

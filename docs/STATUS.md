@@ -6,8 +6,10 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest is **snapshot 661** (2026-11-01, signed and notarized, on GitHub Releases),
-with the Lantern revamp (D84, all five phases), the games look and the four puzzles (D79 amended).
+until the founder releases it. The latest is **snapshot 724** (2026-11-01, signed and notarized, on GitHub Releases),
+with the Lantern revamp (D84), the games look and the four puzzles (D79 amended), and D86–D91 (safety, watch
+history, interrupts, add-on updates, Ask lifetimes, backup). Main also carries the four themes (D92), the leftovers
+and the CI fix; `team/final` adds the games v2 (D79 look v2, D93, D95, D96), the Calendar v2 (D97) and the voice fix.
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -44,17 +46,17 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   `dup2(…, 77)`, silently closing an NSPipe descriptor SystemTool (Backup's zipinfo and ditto, hdiutil) still held
   until its delayed release; the pipe then closed 77 again after a guarded descriptor had it. The test now takes a
   free number (`F_DUPFD`). Found with `ci-tests.yml` (docs/RELEASE.md) and a close()/pipe() interposer locally.
-- **Games look v2** (branch `team/games-look-v2`, not merged; D79 amended, the games look v2): every game's Play
+- **Games look v2** (branch `team/games-look-v2`, merged on `team/final` for the next snapshot; D79 amended, the games look v2): every game's Play
   panel, the All Games menu and the reward card reskinned along the founder's Imagine Skin concepts: the scene behind
   the whole panel with night paintings for dark mode, header, score, hint and tiles as cards on the games' own
   surfaces, a level chip never red, the menu's cards side by side (`GameCards.swift`, shared with Playtime's page in
   Home), the reviewed flat reward card, puzzle boards in frames (Garden Plots' soil, Blossoms' rounded beds); 14
   night scenes and two icons (Art about 1.5 MB). Verified: `make test` with an add-ons clone, `GameArtFilesTests`,
   UI snapshots of every game and moment in light and dark, en, ar, ja and de (all under 720 pt), a debug app with
-  Playtime from a local build (the cups' shuffle and an end card filmed, idle CPU 2–3 %). Next: merge; the founder's
+  Playtime from a local build (the cups' shuffle and an end card filmed, idle CPU 2–3 %). Next: the founder's
   call on Seesaw's pieces (the revision's crescent and sun versus D79's "no sun and moon").
 
-- **Game Center and game commands** (branch `team/game-center` in both repositories, not merged; D93; carries
+- **Game Center and game commands** (branch `team/game-center` in both repositories, merged on `team/final` and `team/gameplay-ai`; D93; carries
   `team/games-look-v2`): Playtime's page in Home is a Game Center Sidefolk draws from Playtime's records (a hero with
   the companion and Continue / today's daily / Surprise me, the day's boards, every game as a card in its group with
   its best, record and last played, Wins / Solved / Best streak / Played, last games, badges from the records, and the
@@ -68,11 +70,10 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   `window-home-*` (scrolled too) in light, dark, de and ar; a debug app on `build/gc-1` with Playtime from a local
   build: "play tic-tac-toe on hard" (Hard), "make it easier" (Fair), "pause the game", "resume the game",
   "Spielgeräusche an", "guess a number between 1 and 1000", "jouons au morpion difficile", "더 쉽게 해줘", "show my
-  stats" (Home on the center, Continue Tic-tac-toe), scrolled pages cut at the toolbar. Next: merge with
-  `team/gameplay-ai` (conflicts expected in `GameSettings`, `SettingsCatalog`, the coordinator's game options and
-  Playtime's `strings/`: rerun `extension-strings.py sync`), then add D95's AI trivia switch as one row in
-  `GameSettingsSection`; set Playtime's `minimum_sidefolk` to the snapshot that ships D93.
-- **Games v2, gameplay and AI** (branch `team/gameplay-ai` in both repositories, not merged; D95, D96; carries
+  stats" (Home on the center, Continue Tic-tac-toe), scrolled pages cut at the toolbar. Merged with `team/gameplay-ai`; D95's AI trivia switch is a row of
+  `GameSettingsSection`. Playtime's `minimum_sidefolk` names the snapshot that ships D93 (the lead sets it).
+
+- **Games v2, gameplay and AI** (branch `team/gameplay-ai` in both repositories, merged on `team/final`; D95, D96; carries
   `team/game-center` and `team/games-look-v2`, merged with origin/main): the companion plays like a person at every
   level (Hard tic-tac-toe never loses, Hard Last Stick wins every winning position, memory that fades, reflexes that
   lean late, round numbers whenever the numbers are big), Higher or Lower on 10, 100, 1,000, a million or any top, two
@@ -85,10 +86,10 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   `build.py --unsigned` and `check.sh`; snapshots of the Game Center and of every two-player and AI-trivia board in
   light, dark, de and ar (each within 720 pt); a debug app: "play tic-tac-toe with my friend" opened it on the names,
   "guess a number up to 1000" straight into a game on 1 to 1,000 (par 10). AI trivia is tested with scripted models
-  only; no live call was made. Next: merge into main; set Playtime's `minimum_sidefolk` to the snapshot that carries
-  D93, D95 and D96.
+  only; no live call was made. Next: Playtime's `minimum_sidefolk` set to the snapshot that carries
+  D93, D95 and D96 (the lead).
 
-- **Spoken replies muted by Siri's listener** (branch `team/voice-ja`, not merged; D34 amended): the founder heard
+- **Spoken replies muted by Siri's listener** (branch `team/voice-ja`, merged on `team/final`; D34 amended): the founder heard
   nothing after switching to Japanese. Not the language: Playtime's sounds had left an audio engine running, so
   macOS's Siri voice trigger (corespeechd) kept the microphone on, and it counted as "another app is recording". Now
   macOS's own listeners don't count, game sounds let the hardware go after 3 s, and every reply decision and playback
@@ -96,10 +97,10 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   in a debug app in Japanese on `build/vj-1`: before, a game sound then a spoken request logged `reply muted
   why=micInUse`; after, `reply speak` with `mic_listening=corespeechd` while another app played, Kyoko for Japanese
   lines with Samantha chosen, `reply played`; Japanese, Chinese, Korean and Arabic voices all synthesize. Tests:
-  `VoicePolicyTests`, `SpokenLineTests`, `ElevenLabsTests`, `SpeechPlayerTests`. Next: merge, then the founder
+  `VoicePolicyTests`, `SpokenLineTests`, `ElevenLabsTests`, `SpeechPlayerTests`. Next: the founder
   tries Japanese with a game played first and music playing, with the snapshot that carries it.
 
-- **Calendar v2** (branch `team/calendar-v2`, not merged; D97): the Calendar works like a Mac calendar. Each calendar's
+- **Calendar v2** (branch `team/calendar-v2`, merged on `team/final`; D97): the Calendar works like a Mac calendar. Each calendar's
   own colour (contrast-checked fill, edge and text, lightness only), Sidefolk's reminders, tasks and routines as
   calendars of their own, a sidebar with a month and the calendars to show or hide (remembered, and hidden everywhere);
   Agenda, Day, Week, a Month that scrolls on row by row, Year; events say what their size has room for, all-day bars
@@ -114,97 +115,32 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   app on `SIDEFOLK_SAMPLE_CALENDAR=1` driven by the new `calendar:` dev commands: drag-create with typing and Return,
   moving an event (the sheet, then ⌘Z), keyboard selection and details, Delete and ⌘Z, a swipe and a month scroll
   filmed, 3,000 extra events (a week of 522 read in 4 ms, idle CPU unchanged). Not tried: a real trackpad and pinch by
-  hand, and the person's own EventKit data (the debug build has no calendar access; it ran on the sample). Next: merge.
+  hand, and the person's own EventKit data (the debug build has no calendar access; it ran on the sample). Next: the founder tries it on a real trackpad and his own calendars.
 
-- **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
-  brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
+- **The release review** (2026-11-01, `team/final` and the add-ons' `team/gameplay-ai`): everything above walked in a
+  debug app (`build/fr-1`, `SIDEFOLK_SAMPLE_CALENDAR=1`, Playtime from a signed local gallery of the add-ons branch,
+  `brain:scripted:` answers, no live call): the menu by words, every game and puzzle, tic-tac-toe and Quick Paws for
+  two, Higher or Lower to 1,000, back, rematch, harder, pause and resume, the Game Center top to bottom, AI trivia on
+  Any topic (a scripted pack played, an unusable answer falling back to the bank), each Calendar view, drag-create,
+  a sample Mac event moved through the permission sheet and undone, details, 3,000 crowded events, a swipe and the
+  month's scroll, spoken requests in English and Japanese after a game with sounds on (`reply played` both times),
+  Today, On duty, History, a watch, Settings' tabs and search, the Pocket, the Gallery's Update all, the backup and
+  restore sheets, the four themes, a reminder card. Fixed on the way: Today's day line and legend in the calendars'
+  own colours (D97; every event was the accent while the legend promised another colour); the legend's words never
+  cut (Arabic's "التقو…"); a Game Center card no longer says "Not played yet" beside "Played 3 minutes ago"; two or
+  three choice cards share their row (Higher or Lower's two ways sat in its left half); in Playtime, the thermometer's
+  word follows its colour (a half-full tube said "Freezing"), a Quick Paws round for two that nobody took is played
+  again under its number (it counted on to "Round 9"), "your AI" starts a sentence with a capital, and why no AI
+  questions came is the companion's line rather than a note that pushed the two-player choice off the panel.
+  Verified: `make test` with the add-ons branch, the add-ons' `swift test`, `build.py --unsigned` and `check.sh`,
+  `make strings` complete in ten languages.
 
-- **Desktop polish** (branch `team/desktop-polish`, not merged): cards answer from the keyboard (⌃⌥Space), Ask's
-  tabs and "Open in History", the drop card, the stack's arc and the voice's light, VoiceOver on the companion's
-  corner (D84's note); Ask tidies itself by each result's weight, agents grouped by folder (D90). Verified with
-  `make test`, UI snapshots (light, dark, de, ar) and the debug app. Next: merge; try ⌃⌥Space on a Mac whose input
-  sources don't take it, and VoiceOver by hand (an AX client this Mac's tools aren't allowed to be).
-- **Safety and correctness** (branch `team/safety`, not merged): a copy on any `SIDEFOLK_HOME` writes agent-config
-  stand-ins in `<home>/agent-configs/`, never the person's Claude Code, Codex or `~/.local/bin/sidefolk` (D86, ported
-  from a branch that never reached main); `connect:`/`disconnect:` dev commands; the audit's F12 rule (links open only
-  as web pages) on release notes and extension errors; the QA branch's last four tests. Verified: full suite green
-  (1626 + 38 tests), and a debug app on `build/safety-1` connected and disconnected both agents and the command
-  while the real files kept their mtime and SHA-256. Next: merge.
-- **Add-on updates in sight** (branch `team/addon-updates`, not merged, D89): the Gallery's Updates with Update all
-  (per-item progress, "3 updated, 1 needs your review", widening ones stay with Review…), an extension page's
-  "Update available" strip with What's new, Settings › Add-ons inline "New version · Update" and an Update all card,
-  Home's sidebar dot and count, Today's one row, the Pocket's Needs you, a whisper after a day with the switch off.
-  Verified: `AddonUpdateAllTests` (5), full suite, snapshots in light, dark, de and ar, and a debug app on a signed
-  local gallery (two extensions and a companion, one widening): Update all updated two and left one for review.
-  Next: merge.
-- **Watch history** (branch `team/watch-history`, not merged, D87): every check of a watch logged as runs, the last
-  two versions of a page's or file's text, the watch's own page in Home (what changed inline or side by side, its
-  timeline, Check now, Pause or Resume, Stop) and On duty's bars of the last 24 checks; `watch.list` says when each
-  last changed. Verified with tests (migration, runs, versions, pruning, Your data), snapshots `window-home-watch*`
-  and `window-home-onduty*` in light, dark, de and ar, and the debug app with a local file changed twice and a page
-  on `python3 -m http.server` edited once. The branch also carries origin/main (snapshot 673, D86) and
-  `team/interrupts` (D88, below), merged and tested together; the watch's Check now has its own key
-  (`watch.checkNow`: "Jetzt prüfen", not Updates' "Jetzt suchen"). Next: merge into main.
 
-- **What may interrupt you** (branch `team/interrupts`, not merged; D88): a level per source (Card, Whisper, Only in
-  Today, Off) in Settings › Attention, applied before Focus and Quiet; "Fewer like this" and "Show these as whispers"
-  in a card's ⋯ with Undo; Today's Kept for Today; "done today" counts only what changed something. Built, tested
-  (`InterruptionsTests`, `InterruptionsCenterTests`, `DoneTodayTests`), snapshots read (`page-settings-attention-sources`,
-  `page-today-kept`, light, dark, de, ar) and checked live (Claude Code at Only in Today, a `sidefolk hook` Stop: no
-  desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
-  click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
-
-- **The companions' reaction moves** (branch `team/reactions`, not merged; D75 amended): sulk, shrug, tease, ready,
-  wince, gasp and the quick accents are each a real move now, in 3D for all ten companions (shared in
-  `engine/moves.js`, a still version under Reduce Motion) and in 2D (`Antics`). Verified: every move filmed for every
-  3D companion at 0°, 40° and 90° and tuned from the films; the 2D sheets read; character tests green; live in the
-  debug app (Playtime's tic-tac-toe open, `cue:sulk`, `cue:tease` on Mochi 3D, `cue:shrug` on Mochi 2D). Next: merge;
-  no gallery companion changes.
-- **Game items** (branch `team/games-items` in both repositories, not merged; D79 amended, the games' items):
-  catching the companion in Which Cup? by clicking it, Garden Plots from the keyboard, a daily board per puzzle level,
-  "Do it" after a hint, Korean rows one width, no faded stick on Last Stick's last board, scores in the bar's order in
-  Arabic; then the Kit isolating `L`'s values (Arabic sentences that begin with a name), the Play panel acting on its
-  first click, the menu of games opened by words in ten languages and by `games.open` without a game, the back arrow
-  that always works (⌘[), and snapshot runs in several languages kept apart; carries origin/main. Next: merge, then
-  set Playtime's `minimum_sidefolk` to the snapshot that ships it (the board button's `companion` key). Verified with UI snapshots (en, ar, ko, ja, light and dark), films in a debug app, `make test`
-  and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`.
-
-- **Back up and restore** (branch `team/backup`, not merged, D91; it carries `team/addon-updates`, which carries
-  `team/watch-history` and `team/interrupts`): Settings › Trust › Your data and the app menu write one
-  `.sidefolkbackup` (database via `VACUUM INTO`, ExtensionData, drafts, skills, companions as data, folder extensions
-  and themes for review, gallery add-ons by name, keys only sealed with a password) and restore it: checked, Replace
-  with 7 days of Undo restore, swapped at the relaunch, gallery add-ons fetched again, folder code reviewed, MCP
-  servers off. Verified: `BackupTests` (6), full suite, snapshots in light, dark, de and ar, and the debug app: a
-  backup from `build/bk-1` restored into a fresh `build/bk-2` through the sheet (same notes, reminders and skill,
-  History's line), then undone. Next: merge.
-
-- **Themes, fewer and finished** (branch `team/theme-skill` in both repositories, not merged; D92): the
-  `sidefolk-theme` skill (`.claude/skills/`, `.agents/skills/`, a public copy in `skills/`); the set cut from seven
-  to four built-ins, each its own atmosphere: Harbor, Paper Garden (Field Notes, Paper Garden and the skill's Tea House
-  merged), Night Studio (Night Studio and Night Shift merged) and Marshmallow (its stage as a wash and nook). Field
-  Notes and Night Shift move to their successor at launch with a whisper (Night Shift's people keep compact
-  spacing); Daylight, gone from the gallery, stays where installed and offers Harbor once (`ThemeSuccession`). The
-  add-ons carry no themes now (publish.sh drops their packs); Tea House's branch `team/tea-house` is superseded.
-  Also: the check holds success and chips' words to 4.5:1 and soft fills to their hue (D78 amended; kept copies only
-  warn), the nook art is drawn again, `TodayHeader.swift` is gone, snapshot language runs work under Swift Build's
-  linked `.build/debug`. Next: merge both branches together, then publish the add-ons (the founder).
-- **Leftovers** (branch `team/leftovers` in both repositories, not merged): the Gallery's Updates under every filter and
-  search, and a reviewed update says Updated (D89, checked live on a signed local gallery); Undo restore puts back the
-  keys and the app's conveniences a restore replaced, which a backup now carries (D91); the Week view's "+N" and
-  read-only note (D84); Connections name a dev copy's stand-ins (D86); a hop's rise eases into the window's headroom
-  (D51 amended); Iris's tease, ready, waveQuick and spinQuick keep her arms in (add-ons, `companions/iris`); snapshot
-  runs get their layout direction on their own command line (Arabic beside other runs came out left to right), the dev
-  `snap` takes the toolbar (its white band), an extension page's error state. Verified: `make test`, the add-ons'
-  checks, UI snapshots (light, dark, de, ar), films of Iris's four moves at 0°, 40° and 90°, `edges()` for every 3D
-  companion, and the debug app. Next: merge; the gallery's next build gives Iris a new snapshot by itself.
-
-**Integration:** `team/desktop-polish` carries origin/main (D86), `team/addon-updates` (with watch history and the
-interrupt levels, D87–D89) and `team/reactions`, merged and tested together; `team/backup` and `team/games-items`
-merge last.
+Released or on main since snapshot 661 (D86–D92, the leftovers, the docs cleanup) is in [HISTORY.md](HISTORY.md).
 
 ## Next
 
-1. **The founder plays the puzzles** (Garden Plots, Seesaw, Sudoku, Blossoms) and the games in snapshot 661.
+1. **The founder plays the games v2** (the Game Center, two players, AI trivia) and the Calendar v2 in the next snapshot.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (it needs something real first; AGENTS.md: no fake features): the evening wrap.
 4. **Games not built** (D79): Connect Four.
