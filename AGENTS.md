@@ -42,7 +42,9 @@ Agents can't see the screen. To check the running debug app:
 
 - Tests and dev runs never touch the user's real data or agent configs: use `SIDEFOLK_HOME`, temp
   folders, and pass paths explicitly. Never edit `~/.claude*`, `~/.codex` yourself; the app may
-  change them only when the user clicks, after confirmation and a backup.
+  change them only when the user clicks, after confirmation and a backup, and only the copy on the
+  user's own data folder: on any other `SIDEFOLK_HOME`, Connect and the `sidefolk` command link write
+  stand-ins in `$SIDEFOLK_HOME/agent-configs/` (`IntegrationLocations.forApp`, D86). Keep it that way.
 - Live model calls cost the user's quota: keep them rare and tiny; tests use scripted models.
 - Every tool runs through `ToolExecutor` (Guard + audit). No side doors.
 - No fake features: nothing shown as working unless it works.

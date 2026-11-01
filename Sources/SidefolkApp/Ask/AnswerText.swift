@@ -9,15 +9,22 @@ struct AnswerText: View {
         Text(markdown).font(Theme.Font.body).foregroundStyle(Theme.ink)
             .textSelection(.enabled)
             .fixedSize(horizontal: false, vertical: true)
-            // Anything else (file:, app schemes) is ignored.
-            .environment(\.openURL, OpenURLAction { url in
-                guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.user == nil else { return .discarded }
-                return .systemAction
-            })
+            .webLinksOnly()
     }
 
     private var markdown: AttributedString {
         (try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(text)
+    }
+}
+
+extension View {
+    /// Markdown links inside open only as web pages. `AttributedString(markdown:)` keeps any scheme, so a
+    /// `[Continue](file:///…/run.command)` or `shortcuts://` link would otherwise run on a click (audit F12).
+    func webLinksOnly() -> some View {
+        environment(\.openURL, OpenURLAction { url in
+            guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.user == nil else { return .discarded }
+            return .systemAction
+        })
     }
 }
 

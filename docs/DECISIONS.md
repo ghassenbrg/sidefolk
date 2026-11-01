@@ -118,6 +118,8 @@ later update path is safe.
 atomic replace, exact removal) instead of shelling out to `claude mcp add`. Only on the user's click,
 after a dialog that lists every change and the backup path.
 **Why:** predictable and testable, no CLI on PATH needed, same backup/removal semantics everywhere.
+*Amended by D86:* only the copy on the person's own data folder edits these files; any other `SIDEFOLK_HOME`
+edits stand-ins inside itself.
 
 ### D17 — Proprietary license until the founder decides (2026-10-26)
 **Decision:** LICENSE reserves all rights. Dependencies (GRDB, KeyboardShortcuts) are MIT and listed in
@@ -916,6 +918,8 @@ symlink at it (macOS resolves a bundle through its path, and Finder and Launch S
 
 ### D42 — Other agents drive Sidefolk: a skill installed by Connect, the tools they were missing, Codex hooks (2026-10-27)
 **Decision:** what someone asks Codex or Claude Code about Sidefolk works from that agent, within T4.
+*Amended by D86:* Connect installs the skill and hooks into the person's agents only from the copy on
+their own data folder; any other `SIDEFOLK_HOME` writes stand-ins inside itself.
 - **Tools other agents were missing**, each safe under T4 and run through `ExternalToolGateway` (Guard,
   audit, quotas): `reminders.cancel` for the reminders that agent set (`ReminderTools.canManage`: another
   agent's or the user's read as not found), `watch.report` for this Mac's metrics only (cpu, memory,
@@ -2592,6 +2596,34 @@ entries for one character, and no Look switch).
 companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
 `docs/research/lively-companions.md` documents the keys.
 
+### D86 — Only the copy on the person's own data folder changes their agents' configs (2026-11-01)
+**Decision:** *amends D16 and D42.* `IntegrationLocations.forApp(paths:)` gives the app the real `~/.claude.json`,
+`~/.claude/settings.json`, `~/.claude/skills`, `~/.codex/config.toml`, `~/.codex/hooks.json` and
+`~/.codex/skills` (honouring `CLAUDE_CONFIG_DIR` and `CODEX_HOME`) only when `SidefolkPaths.isDefaultHome`,
+and `commandLineTool(paths:)` gives it `~/.local/bin/sidefolk` on the same condition. A copy on any other
+data folder (`SIDEFOLK_HOME`: `make dev`, agents' QA runs, a release build pointed elsewhere) gets stand-ins
+in `<home>/agent-configs/`: `claude/` and `codex/` laid out as `CLAUDE_CONFIG_DIR` and `CODEX_HOME` folders
+(whatever the environment says, since an agent's shell can name the real ones), and `.local/bin/sidefolk`.
+At launch `prepareStandIns` starts them as this Mac's agents are (an empty `.claude.json` and the folders
+where the real ones exist; it only checks that they exist), so Connect, its dialog, backups and
+Disconnect work in a dev copy exactly as for the person, on files nobody else reads. The helper's
+environment carries `SIDEFOLK_HOME` whenever the folder isn't the default one, not only in debug builds.
+**Why:** on 2026-10-26 a QA run (home `build/qv1` in an agent worktree) clicked Connect. The locations
+were the real ones, so the founder's Claude Code and Codex were pointed at `<worktree>/build/qv1/bin/sidefolk`;
+the worktree was deleted, and both failed on every start ("ENOENT … bin/sidefolk"), hooks included.
+AGENTS.md already said dev runs must not touch agent configs, but nothing enforced it. The fix was first
+written on 2026-10-27 (as a "D44" on a branch that never reached main, whose number main has since used for
+companion play) and is ported here onto today's code.
+**Alternatives:** *refusing Connect unless an opt-in variable is set*: safe, but Connect could no longer
+be tried in a dev copy, and the opt-in is one `export` away from the same accident. *Honouring
+`CLAUDE_CONFIG_DIR`/`CODEX_HOME` in dev copies*: an agent's own shell may set them to the real folders.
+*Keying on `#if DEBUG`*: a release build on a QA folder would still write the real files.
+**Implications:** `SidefolkPaths.isDefaultHome` and `agentConfigs`; the command link's dialog names the
+stand-in's place in dev copies. To try a dev copy's Connect with a real agent, run that agent with
+`CLAUDE_CONFIG_DIR=<home>/agent-configs/claude` or `CODEX_HOME=<home>/agent-configs/codex`.
+`IntegrationLocationsTests` checks a non-default folder never resolves to the real paths, even when the
+environment names them, and that installing and removing all six connections there leaves every byte of
+the person's folders as it was.
 ### D90 — Ask tidies itself by each result's weight; agents' sessions in one folder are one line (2026-11-01)
 **Decision:** *amends D5 and D84.* Results in Ask go by themselves, each by its weight (`ResultLifetime`):
 - **Quick** (a value read now, a lookup, a calculation, chance, a notice): about two minutes after it was first seen

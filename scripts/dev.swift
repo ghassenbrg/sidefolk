@@ -42,6 +42,9 @@
 //                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
 //   swift scripts/dev.swift update:ready | update:updated   (D70: installing by itself: the window waiting for a calm
 //                           moment, and the note the new copy gives)
+//   swift scripts/dev.swift connect:claude[:hooks] | connect:codex[:hooks] | connect:cli | disconnect:claude|codex|cli
+//                           (D86: Connections' cards with their dialog accepted, logged; only on a SIDEFOLK_HOME, where
+//                           they write the stand-ins in agent-configs/, never the person's agents)
 //   swift scripts/dev.swift addons:review | addons:waiting | addons:clear   (D70: Settings › Updates and the heads-up
 //                           with made-up add-on updates)
 import Foundation

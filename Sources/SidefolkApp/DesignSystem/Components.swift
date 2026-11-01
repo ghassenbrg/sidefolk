@@ -410,10 +410,23 @@ struct RowsCard<Content: View>: View {
 /// the same line (a separate row under it read as a second, unrelated item); in a narrow column the
 /// step goes under the words rather than squeezing them (WrapRow).
 struct InlineEmpty: View {
-    var text: LocalizedStringKey
+    var label: Text
     var systemImage: String?
     var actionTitle: LocalizedStringKey?
     var action: () -> Void = {}
+
+    init(text: LocalizedStringKey, systemImage: String? = nil, actionTitle: LocalizedStringKey? = nil, action: @escaping () -> Void = {}) {
+        self.init(label: Text(text), systemImage: systemImage, actionTitle: actionTitle, action: action)
+    }
+
+    /// `Text(ext:)` for words that aren't Sidefolk's own: a `LocalizedStringKey` made from them would read their
+    /// Markdown, and a `[link](file:…)` in an extension's error would open whatever it names on a click.
+    init(label: Text, systemImage: String? = nil, actionTitle: LocalizedStringKey? = nil, action: @escaping () -> Void = {}) {
+        self.label = label
+        self.systemImage = systemImage
+        self.actionTitle = actionTitle
+        self.action = action
+    }
 
     var body: some View {
         // The picture stays beside the first line of the words; a button that goes under them lines up with the words.
@@ -422,7 +435,7 @@ struct InlineEmpty: View {
                 if let systemImage {
                     Image(systemName: systemImage).font(Theme.Font.body).foregroundStyle(Theme.inkFaint).frame(width: 18)
                 }
-                Text(text).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                label.font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -750,6 +763,10 @@ struct PageBackground: View {
             }
         }
         .ignoresSafeArea()
+        // The wash is scaled to fill: unclipped it spread over the Settings sidebar beside the page and took its
+        // clicks (Daylight, Paper Garden).
+        .clipped()
+        .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 }

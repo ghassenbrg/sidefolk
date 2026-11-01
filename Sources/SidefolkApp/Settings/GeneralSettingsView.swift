@@ -99,7 +99,7 @@ struct UpdateHero: View {
                                 HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
                                     Circle().fill(Theme.accent).frame(width: 5, height: 5).alignmentGuide(.firstTextBaseline) { $0.height + 1 }
                                     Text(line).font(Theme.Font.body).foregroundStyle(Theme.ink)
-                                        .fixedSize(horizontal: false, vertical: true)
+                                        .fixedSize(horizontal: false, vertical: true).webLinksOnly()
                                 }
                             }
                         }
