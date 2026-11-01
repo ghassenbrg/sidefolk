@@ -55,7 +55,28 @@ struct InstallPreviewSheet: View {
             try? await Task.sleep(for: .milliseconds(800))
             armed = true
         }
+        #if DEBUG
+        // `installSheet:continue | install` from scripts/dev.swift: Continue, then Install or Update, as clicks would
+        // (Install only once armed).
+        .onReceive(NotificationCenter.default.publisher(for: Self.devPress)) { note in
+            switch (note.object as? String, step) {
+            case ("continue", .who): go(.touch)
+            case ("install", .touch) where armed && !installing:
+                installing = true
+                Task {
+                    error = await model.install(preview)
+                    installing = false
+                    if error == nil { finish() }
+                }
+            default: break
+            }
+        }
+        #endif
     }
+
+    #if DEBUG
+    static let devPress = Notification.Name("sidefolk.dev.installSheet")
+    #endif
 
     // MARK: Header
 

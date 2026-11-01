@@ -226,7 +226,7 @@ final class AddonUpdateController: AddonUpdateActions {
     /// `addons:review | waiting | updates | nudge | clear` from scripts/dev.swift: Settings › Updates and the heads-up with
     /// made-up gallery entries, without a gallery. With a gallery (`SIDEFOLK_ADDONS`, D89): `addons:auto:on|off` sets
     /// "Update add-ons automatically", `addons:get:<id>` installs that add-on from it as Get and the install sheet would,
-    /// `addons:check` looks at it now, `addons:updateAll` is Update all.
+    /// `addons:check` looks at it now, `addons:updateAll` is Update all, `addons:review:<id>` a waiting update's Review….
     func dev(_ command: String) {
         if command.hasPrefix("auto:") {
             let on = command == "auto:on"
@@ -234,6 +234,10 @@ final class AddonUpdateController: AddonUpdateActions {
             return
         }
         if command == "updateAll" { return updateAddonsNow() }
+        // The Gallery's Review… on a waiting update (one that would let an extension do more).
+        if command.hasPrefix("review:"), let entry = model.addonPending.first(where: { $0.id == command.dropFirst(7) }) {
+            return review(entry)
+        }
         if command == "check" { return checkNow() }
         if command.hasPrefix("get:") {
             let id = String(command.dropFirst(4))

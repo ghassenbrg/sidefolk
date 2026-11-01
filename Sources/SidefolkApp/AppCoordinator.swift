@@ -389,6 +389,10 @@ final class AppCoordinator {
         }
         if command.hasPrefix("update:") { updater.dev(String(command.dropFirst(7))); return }
         if command.hasPrefix("addons:") { addonUpdater.dev(String(command.dropFirst(7))); return }
+        if command.hasPrefix("installSheet:") {
+            NotificationCenter.default.post(name: InstallPreviewSheet.devPress, object: String(command.dropFirst(13)))
+            return
+        }
         if command.hasPrefix("language:") {
             let code = String(command.dropFirst(9))
             AppLanguage.chosen = code == "system" ? nil : code
