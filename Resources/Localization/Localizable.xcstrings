@@ -12652,6 +12652,65 @@
         }
       }
     },
+    "%@: only in Today from now on" : {
+      "comment" : "A whisper after “Fewer like this”: “Claude Code: only in Today from now on”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: في «اليوم» فقط من الآن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: ab jetzt nur in Heute"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: solo en Hoy a partir de ahora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : seulement dans Aujourd’hui désormais"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: d’ora in poi solo in Oggi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：これからは「今日」だけに"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: 이제부터 오늘에만"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: só em Hoje a partir de agora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：从现在起仅在“今天”中"
+          }
+        }
+      }
+    },
     "%@: the output changed" : {
       "localizations" : {
         "ar" : {
@@ -12706,6 +12765,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@：输出有变化"
+          }
+        }
+      }
+    },
+    "%@: whispers from now on" : {
+      "comment" : "A whisper after “Show these as whispers”: “Claude Code: whispers from now on”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: همسات من الآن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: ab jetzt als leise Hinweise"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: en susurros a partir de ahora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : en murmures désormais"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: d’ora in poi in sussurri"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：これからはささやきで"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: 이제부터 속삭임으로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: em sussurros a partir de agora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：从现在起以轻声提示出现"
           }
         }
       }
@@ -40307,6 +40425,65 @@
         }
       }
     },
+    "At the time you chose. They may come quieter, never not at all." : {
+      "comment" : "Settings › Attention › Reminders",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في الوقت الذي اخترته. قد تأتي بهدوء أكبر، لكنها لا تُلغى أبدًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zur gewählten Zeit. Sie können leiser kommen, aber nie gar nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A la hora que elegiste. Pueden llegar más discretos, nunca no llegar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À l’heure choisie. Ils peuvent arriver plus discrètement, jamais pas du tout."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All’ora che hai scelto. Possono arrivare più discreti, mai non arrivare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選んだ時刻に届きます。控えめにはできますが、なしにはできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "고른 시간에 와요. 더 조용히 올 수는 있지만 안 올 수는 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na hora que você escolheu. Podem chegar mais discretos, nunca deixar de chegar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你选定的时间送达。可以更安静，但不能不来。"
+          }
+        }
+      }
+    },
     "Attachments left in Apple Notes: %@" : {
       "localizations" : {
         "ar" : {
@@ -45057,6 +45234,124 @@
         }
       }
     },
+    "Card" : {
+      "comment" : "Settings › Attention: a source may step forward with a card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بطاقة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karte"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjeta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scheda"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "카드"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片"
+          }
+        }
+      }
+    },
+    "Card: may step forward and wait for you. Whisper: comes gently; if it needs an answer it waits in the stack. Only in Today: never on the desktop, in Today until you look. Off: in History only." : {
+      "comment" : "Settings › Attention: under What may interrupt you, what each choice means",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بطاقة: قد تتقدّم وتنتظر ردّك. همسة: تأتي بلطف؛ وإن احتاجت إلى إجابة تنتظر في الكومة. في «اليوم» فقط: لا تظهر على سطح المكتب أبدًا، وتبقى في «اليوم» حتى تنظر. إيقاف: في السجل فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karte: darf nach vorn kommen und auf dich warten. Leiser Hinweis: kommt sanft; braucht er eine Antwort, wartet er im Stapel. Nur in Heute: nie auf dem Schreibtisch, in Heute, bis du nachsiehst. Aus: nur im Verlauf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjeta: puede adelantarse y esperar tu respuesta. Susurro: llega con suavidad; si necesita respuesta, espera en la pila. Solo en Hoy: nunca en el escritorio, en Hoy hasta que lo mires. Desactivado: solo en el Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte : peut s’avancer et attendre votre réponse. Murmure : arrive en douceur ; s’il attend une réponse, il rejoint la pile. Seulement dans Aujourd’hui : jamais sur le bureau, dans Aujourd’hui jusqu’à ce que vous regardiez. Désactivé : dans l’Historique seulement."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scheda: può farsi avanti e aspettarti. Sussurro: arriva con delicatezza; se chiede una risposta aspetta nella pila. Solo in Oggi: mai sulla scrivania, in Oggi finché non guardi. Disattivato: solo nella Cronologia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カード：前に出てきて返事を待ちます。ささやき：そっと届き、返事が必要ならスタックで待ちます。「今日」だけ：デスクトップには出さず、見るまで「今日」に残ります。オフ：履歴にだけ残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "카드: 앞으로 나와 답을 기다려요. 속삭임: 살며시 오고, 답이 필요하면 스택에서 기다려요. 오늘에만: 데스크톱에는 나오지 않고, 볼 때까지 오늘에 있어요. 끔: 기록에만 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartão: pode se adiantar e esperar sua resposta. Sussurro: chega com suavidade; se precisar de resposta, espera na pilha. Só em Hoje: nunca na mesa, em Hoje até você olhar. Desativado: só no Histórico."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片：可以走上前来等你回应。轻声提示：轻轻出现；如需回答，会在堆叠中等待。仅在“今天”：从不出现在桌面上，留在“今天”直到你查看。关闭：只记在历史记录里。"
+          }
+        }
+      }
+    },
     "Cards that need an answer still come. Whispers wait and arrive as one card when it ends." : {
       "comment" : "Settings › Attention › Focus",
       "localizations" : {
@@ -45412,6 +45707,7 @@
       }
     },
     "Change" : {
+      "comment" : "Opens Settings › Attention from Today",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -55087,6 +55383,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "命令"
+          }
+        }
+      }
+    },
+    "Commands" : {
+      "comment" : "Settings › Attention: commands started with `sidefolk run`",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأوامر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Befehle"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commandes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コマンド"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandos"
           }
         },
         "zh-Hans" : {
@@ -70907,6 +71262,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "获取网页和检查网站。"
+          }
+        }
+      }
+    },
+    "Fewer like this" : {
+      "comment" : "A card's ⋯ menu: notices from this source show only in Today from now on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أقل من هذا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger davon"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos como este"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moins de ce genre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meno di questi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これを減らす"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이런 건 줄이기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos como este"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "减少这类"
           }
         }
       }
@@ -95901,6 +96315,65 @@
         }
       }
     },
+    "Its AI's notices, routines and its own remarks. Its questions always come." : {
+      "comment" : "Settings › Attention: under the companion's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنبيهات ذكائه الاصطناعي وروتيناته وملاحظاته الخاصة. أسئلته تصل دائمًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinweise seiner KI, Routinen und eigene Bemerkungen. Seine Fragen kommen immer."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los avisos de su IA, sus rutinas y sus propios comentarios. Sus preguntas siempre llegan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notifications de son IA, ses routines et ses propres remarques. Ses questions arrivent toujours."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli avvisi della sua IA, le routine e le sue osservazioni. Le sue domande arrivano sempre."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI のお知らせ、ルーティン、自分からのひとこと。質問はいつも届きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI의 알림, 루틴, 스스로 하는 말. 질문은 늘 와요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os avisos da IA dele, as rotinas e os próprios comentários. As perguntas dele sempre chegam."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的 AI 通知、例行任务和它自己的话。它的问题总会送达。"
+          }
+        }
+      }
+    },
     "Its disk image goes to your Downloads folder." : {
       "localizations" : {
         "ar" : {
@@ -96538,6 +97011,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它的新版本获准做更多事。“查看”会显示有哪些变化。"
+          }
+        }
+      }
+    },
+    "Its notices and what it saves. Its questions and approvals always come as a card." : {
+      "comment" : "Settings › Attention: under an agent such as Claude Code",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنبيهاته وما يحفظه. أسئلته وطلبات الموافقة تصل دائمًا كبطاقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seine Hinweise und was es speichert. Fragen und Freigaben kommen immer als Karte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus avisos y lo que guarda. Sus preguntas y solicitudes de permiso siempre llegan como tarjeta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses notifications et ce qu’il enregistre. Ses questions et demandes d’accord arrivent toujours en carte."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I suoi avvisi e ciò che salva. Domande e richieste di permesso arrivano sempre come scheda."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お知らせと保存したもの。質問と承認の依頼はいつもカードで届きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림과 저장한 것. 질문과 승인 요청은 늘 카드로 와요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os avisos e o que ele salva. Perguntas e pedidos de permissão sempre chegam como cartão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的通知和它保存的内容。它的问题和审批请求总以卡片送达。"
           }
         }
       }
@@ -98772,6 +99304,65 @@
         }
       }
     },
+    "Kept for Today" : {
+      "comment" : "Today: notices Settings › Attention keeps off the desktop",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محفوظ في «اليوم»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für Heute aufbewahrt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado para Hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardé pour Aujourd’hui"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tenuto per Oggi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「今日」に保管中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘에 보관됨"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado para Hoje"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "留在“今天”"
+          }
+        }
+      }
+    },
     "Key saved" : {
       "localizations" : {
         "ar" : {
@@ -100575,6 +101166,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "对 Mac 最轻量。"
+          }
+        }
+      }
+    },
+    "Like the others" : {
+      "comment" : "Settings › Attention: one watch goes back to the level all watches have",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مثل البقية"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie die anderen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como las demás"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comme les autres"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come le altre"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかと同じに"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 것과 같게"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como os outros"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与其他相同"
           }
         }
       }
@@ -123086,6 +123736,65 @@
         }
       }
     },
+    "Only in Today" : {
+      "comment" : "Settings › Attention: a source never shows on the desktop, only in Home › Today",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في «اليوم» فقط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur in Heute"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo en Hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement dans Aujourd’hui"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo in Oggi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「今日」だけ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘에만"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só em Hoje"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅在“今天”"
+          }
+        }
+      }
+    },
     "Only notes already copied into the notebook can be removed from Apple Notes. Copy them first." : {
       "localizations" : {
         "ar" : {
@@ -128557,6 +129266,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主页中的页面：%@，每分钟在后台读取一次，用于图表和“今天”的磁贴"
+          }
+        }
+      }
+    },
+    "Pages, sites, files and programs you watch." : {
+      "comment" : "Settings › Attention › Watches",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحات والمواقع والملفات والبرامج التي تراقبها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seiten, Websites, Dateien und Programme, die du beobachtest."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Páginas, sitios, archivos y programas que vigilas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pages, sites, fichiers et programmes que vous surveillez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pagine, siti, file e programmi che osservi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "監視しているページ、サイト、ファイル、プログラム。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지켜보는 페이지, 사이트, 파일, 프로그램."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Páginas, sites, arquivos e programas que você monitora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在监视的网页、网站、文件和程序。"
           }
         }
       }
@@ -141675,6 +142443,65 @@
         }
       }
     },
+    "Reminders, watches, commands, Claude Code, Codex, other apps, extensions, games and the companion: a card, a whisper, only in Today or off." : {
+      "comment" : "Settings › Attention: search",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التذكيرات والمراقبات والأوامر وClaude Code وCodex والتطبيقات الأخرى والإضافات والألعاب والرفيق: بطاقة أو همسة أو في «اليوم» فقط أو إيقاف."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnerungen, Beobachtungen, Befehle, Claude Code, Codex, andere Apps, Erweiterungen, Spiele und der Begleiter: als Karte, leiser Hinweis, nur in Heute oder aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorios, vigilancias, comandos, Claude Code, Codex, otras apps, extensiones, juegos y el compañero: una tarjeta, un susurro, solo en Hoy o desactivado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappels, surveillances, commandes, Claude Code, Codex, autres apps, extensions, jeux et le compagnon : une carte, un murmure, seulement dans Aujourd’hui ou désactivé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promemoria, osservazioni, comandi, Claude Code, Codex, altre app, estensioni, giochi e il compagno: una scheda, un sussurro, solo in Oggi o disattivato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リマインダー、監視、コマンド、Claude Code、Codex、ほかのアプリ、拡張機能、ゲーム、コンパニオン：カード、ささやき、「今日」だけ、またはオフ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리 알림, 지켜보기, 명령, Claude Code, Codex, 다른 앱, 확장 프로그램, 게임, 동반자: 카드, 속삭임, 오늘에만 또는 끔."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lembretes, monitoramentos, comandos, Claude Code, Codex, outros apps, extensões, jogos e o companheiro: um cartão, um sussurro, só em Hoje ou desativado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒、监视、命令、Claude Code、Codex、其他应用、扩展、游戏和伙伴：卡片、轻声提示、仅在“今天”或关闭。"
+          }
+        }
+      }
+    },
     "Reminder…" : {
       "localizations" : {
         "ar" : {
@@ -154588,6 +155415,65 @@
         }
       }
     },
+    "Set apart from your other watches" : {
+      "comment" : "Settings › Attention: under one watch with a level of its own",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "منفصلة عن مراقباتك الأخرى"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getrennt von deinen anderen Beobachtungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparte de tus otras vigilancias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À part de vos autres surveillances"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A parte rispetto alle altre osservazioni"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかの監視とは別の設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 지켜보기와 따로"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separado dos seus outros monitoramentos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与其他监视分开设置"
+          }
+        }
+      }
+    },
     "Set it" : {
       "comment" : "The Say bar's Return: set the reminder",
       "localizations" : {
@@ -155049,6 +155935,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置（⌘,）"
+          }
+        }
+      }
+    },
+    "Settings › Attention keeps these off the desktop." : {
+      "comment" : "Under Today's Kept for Today",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإعدادات › الانتباه تُبقيها بعيدًا عن سطح المكتب."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen › Aufmerksamkeit hält sie vom Schreibtisch fern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes › Atención los mantiene fuera del escritorio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Attention les garde hors du bureau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni › Attenzione li tiene fuori dalla scrivania."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定 › 集中と通知がデスクトップに出さないようにしています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 › 집중과 알림이 데스크톱에 나오지 않게 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes › Atenção os mantém fora da mesa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“设置 › 专注与通知”让它们不出现在桌面上。"
           }
         }
       }
@@ -157615,6 +158560,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示"
+          }
+        }
+      }
+    },
+    "Show these as whispers" : {
+      "comment" : "A card's ⋯ menu: notices from this source come as whispers from now on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اعرضها كهمسات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als leise Hinweise zeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar como susurros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher en murmures"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra come sussurri"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ささやきで表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속삭임으로 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar como sussurros"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以轻声提示显示"
           }
         }
       }
@@ -179098,6 +180102,65 @@
         }
       }
     },
+    "The companion's lines while you play." : {
+      "comment" : "Settings › Attention › Games",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عبارات الرفيق أثناء اللعب."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sätze des Begleiters, während du spielst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las frases del compañero mientras juegas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les répliques du compagnon pendant que vous jouez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le battute del compagno mentre giochi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゲーム中のコンパニオンのセリフ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "게임하는 동안 동반자가 하는 말."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As falas do companheiro enquanto você joga."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你玩游戏时伙伴说的话。"
+          }
+        }
+      }
+    },
     "The connection dropped." : {
       "localizations" : {
         "ar" : {
@@ -189295,6 +190358,65 @@
         }
       }
     },
+    "This watch" : {
+      "comment" : "The Sidecard: one watch set apart, “This watch: whispers from now on”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه المراقبة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Beobachtung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta vigilancia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette surveillance"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa osservazione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この監視"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 지켜보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este monitoramento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此监视"
+          }
+        }
+      }
+    },
     "This watcher has no command." : {
       "localizations" : {
         "ar" : {
@@ -195017,6 +196139,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已撤销：%@。"
+          }
+        }
+      }
+    },
+    "Undone: notices come as before." : {
+      "comment" : "A whisper after undoing “Fewer like this”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التراجع: تصل التنبيهات كما كانت."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückgängig: Hinweise kommen wie zuvor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deshecho: los avisos llegan como antes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulé : les notifications arrivent comme avant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annullato: gli avvisi arrivano come prima."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元に戻しました：お知らせは以前どおり届きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "되돌림: 알림이 예전처럼 와요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfeito: os avisos chegam como antes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已撤销：通知照旧送达。"
           }
         }
       }
@@ -202187,7 +203368,6 @@
       }
     },
     "Watches" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -204796,6 +205976,124 @@
         }
       }
     },
+    "What its watches notice." : {
+      "comment" : "Settings › Attention: under an extension",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما تلاحظه مراقباتها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was seine Beobachtungen bemerken."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que notan sus vigilancias."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que ses surveillances remarquent."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciò che notano le sue osservazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その拡張機能の監視が気づいたこと。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램의 지켜보기가 알아챈 것."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que os monitoramentos dela notam."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的监视注意到的事。"
+          }
+        }
+      }
+    },
+    "What may interrupt you" : {
+      "comment" : "Settings › Attention: a group, how far each source may go",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما يمكنه مقاطعتك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was dich unterbrechen darf"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué puede interrumpirte"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui peut vous interrompre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa può interromperti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "割り込んでいいもの"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "끼어들어도 되는 것"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que pode interromper você"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以打扰你的内容"
+          }
+        }
+      }
+    },
     "What other agents may do" : {
       "comment" : "Settings › Trust: a group",
       "localizations" : {
@@ -206081,6 +207379,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 为你交办的事等你同意时适用。其他智能体的提问，两分钟后按“拒绝”处理。"
+          }
+        }
+      }
+    },
+    "When `sidefolk run` finishes or fails." : {
+      "comment" : "Settings › Attention › Commands; keep `sidefolk run` as it is",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عندما ينتهي `sidefolk run` أو يفشل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn `sidefolk run` fertig ist oder fehlschlägt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando `sidefolk run` termina o falla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand `sidefolk run` se termine ou échoue."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando `sidefolk run` finisce o non riesce."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "`sidefolk run` が終わったときや失敗したとき。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "`sidefolk run`이 끝나거나 실패할 때."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando `sidefolk run` termina ou falha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当 `sidefolk run` 完成或失败时。"
           }
         }
       }
@@ -207706,6 +209063,65 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Whisper" : {
+      "comment" : "Settings › Attention: a source comes as a gentle whisper",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "همسة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leiser Hinweis"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susurro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Murmure"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sussurro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ささやき"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속삭임"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sussurro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轻声提示"
           }
         }
       }
@@ -225335,6 +226751,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在词里，位置不对"
+          }
+        }
+      }
+    },
+    "interrupt.off" : {
+      "comment" : "Settings › Attention: a source's notices are kept in History only",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Off"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "끔"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
           }
         }
       }

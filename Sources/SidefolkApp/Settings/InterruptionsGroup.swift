@@ -118,6 +118,8 @@ struct InterruptLevelMenu: View {
             ForEach(source.choices, id: \.self) { level in Text(verbatim: level.word).tag(level) }
         } label: { Text(verbatim: label) }
         .labelsHidden()
+        // One width down the column, so the choices line up whatever is chosen.
+        .frame(minWidth: 150, alignment: .trailing)
         .fixedSize()
     }
 }
@@ -141,7 +143,7 @@ extension InterruptSource {
         case .watches: String(localized: "Watches")
         case .watch: String(localized: "This watch", comment: "The Sidecard: one watch set apart, “This watch: whispers from now on”")
         case .commands: String(localized: "Commands", comment: "Settings › Attention: commands started with `sidefolk run`")
-        case .agent(let name): AgentFacingTools.displayName(name)
+        case .agent(let name): Describe.agentName(name)
         case .extension(let id): look?.name ?? extensions[id] ?? id
         case .games: String(localized: "Games")
         case .companion: companion

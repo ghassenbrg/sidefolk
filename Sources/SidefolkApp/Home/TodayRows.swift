@@ -449,7 +449,8 @@ struct AttentionRow: View {
                 if let body = item.body, !body.isEmpty {
                     Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
-                Text(TimeText.short(item.createdAt)).font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                Text(verbatim: ([Self.who(item)].compactMap { $0 } + [TimeText.short(item.createdAt)]).joined(separator: " · "))
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 // Wrapping, so a narrow column never cuts "Done · 10 min · Tomorrow" to "… 1… T…".
                 ButtonRow(spacing: 6) {
                     ForEach(item.actions, id: \.id) { action in
@@ -466,7 +467,18 @@ struct AttentionRow: View {
         .accessibilityElement(children: .contain)
     }
 
-    private var kind: String { item.refKind ?? String(item.source.split(separator: ":").first ?? "") }
+    private var kind: String {
+        // An agent's notice reads as the agent's, whatever it was about.
+        if item.refKind == "notify" || item.refKind == nil { return String(item.source.split(separator: ":").first ?? "") }
+        return item.refKind ?? ""
+    }
+
+    /// Another app's notice says whose it is: "Claude Code · Today 09:11".
+    static func who(_ item: AttentionItem) -> String? {
+        let parts = item.source.split(separator: ":").map(String.init)
+        guard parts.count >= 2, parts[0] == "external" || (parts[0] == "session" && parts.count == 3) else { return nil }
+        return Describe.agentName(parts[1])
+    }
 
     private var symbol: String {
         switch kind {
