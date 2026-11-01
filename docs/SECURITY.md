@@ -597,7 +597,7 @@ paths and queries are dropped, hosts stay.
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
 | Clipboard | T12 |
-| Calendar events | T34 |
+| Calendar events (read, and written once allowed) | T34 |
 | Writes into synced folders | Ask when tainted |
 | Command watchers | T9 |
 | Logs and diagnostics | T20 |
@@ -736,17 +736,30 @@ of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed a
 *Residual:* the catalog's text (names, taglines, descriptions) is shown in Settings; only official entries' words
 reach the model, as one line each.
 
-**T34 The person's calendar (M/M), D57.** Off until the person chooses "Show my calendar" (Settings › Trust ›
+**T34 The person's calendar (M/M), D57, D97.** Off until the person chooses "Show my calendar" (Settings › Trust ›
 Your calendar, or Today); until then nothing is read, the AI isn't offered `calendar.today`, and macOS is never
 asked. Choosing it asks macOS once for full access (`NSCalendarsFullAccessUsageDescription`, and the hardened
 runtime's `com.apple.security.personal-information.calendars`); reading the state never asks.
-- *Read-only.* EventKit is only queried; nothing in Sidefolk can create, change or delete an event.
+- *Changes only once allowed (D97).* Until the person allows changes (a sheet at the first change, or Settings ›
+  Trust › Your calendar), EventKit is only queried. Then `calendar.create` (medium), `calendar.update` (medium) and
+  `calendar.delete` (high, asked every time, never "always"), capability `calendar.write`, are the only code that
+  writes, through `ToolExecutor`, for the person's own drags and clicks too: Guard decides, History logs, Undo puts it
+  back (a deleted event is recreated from its kept copy). They refuse an event with attendees (a change sends notices
+  to other people), a calendar that can't be changed, and anything but one time of a series; Sidefolk never adds
+  attendees, so no change of its own invites or tells anyone.
+- *The AI.* Offered the write tools only while changes are allowed. After outside content (an invitation's title is
+  outside content) no mode answers for the person: `calendar.write` is in `couldCarryOut`, because a calendar syncs to
+  the person's accounts and may be shared, so an event's title or notes can carry words out. Other agents get none of
+  these tools (`external: false`).
+- *Hidden calendars* are left out of everything that reads (Today, the brief, `calendar.today`).
 - *Where events go.* Today and the morning brief, on this Mac. Attention items, where the brief lands, never reach
   the model's context.
 - *What the AI hears.* Only through `calendar.today`: medium risk, "Reads private data", through Guard like any
   tool, so the person is asked (once per kind unless they choose otherwise). The result is untrusted (T2): an
   invitation's title is written by whoever sent it. Other agents get no tool that reads it (`external: false`).
-*Residual:* once allowed for good, the AI may read the day's events in any later clean turn.
+*Residual:* once allowed for good, the AI may read the day's events in any later clean turn, and add or move events
+in a clean turn; a calendar someone else shares with the person and lets them edit is changeable like their own (its
+owner sees the change, as with Calendar).
 
 **T35 Themes (L/M), D58, D64, D84.** A theme is data: `theme.json` (64 KB at most) and PNGs (2 MB and 2048 px at most,
 inside its folder, decoded and written again by Sidefolk before use), never code, never words shown as the app's.
@@ -1031,6 +1044,11 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     (`agenda.today` denied reads nothing). Connect's skill: installed once, a foreign file backed up and
     never removed, a linked folder left alone, removed with its empty folder; Codex hooks merged beside the
     person's own, removed exactly, nothing written to Codex's trust state.
+16. **The calendar's changes (T34, D97, `CalendarWriteTests`):** nothing is written until the person allows
+    changes; an event with attendees, a read-only calendar and a calendar that can't take changes are refused;
+    create, update and delete each undo (a deleted event comes back with its alerts) and each is in History; the AI
+    is offered the write tools only once changes are allowed; a tainted turn in Full access still asks; hidden
+    calendars are left out of every read.
 16. **Crashes and fail-closed (T29):** huge numbers typed, sent by another agent or stored in a row never trap;
     a stopped task's call is refused with every capability still off and nothing done, and is in Activity; a
     policy that can't be read is never replaced by the default; a seeded fuzz of the time and report syntax
@@ -1064,7 +1082,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   for Notes and Reminders, driven by fixed scripts (T25). Location Services only once the person chose
   their Mac's location, and never coordinates to an AI (T30).
 - Never removes anything from another app unless its whole copy is in the notebook and the person
-  approved that removal (T25).
+  approved that removal (T25), or it is a calendar event the person deleted or approved deleting, whose copy Undo
+  puts back (T34).
 - Never offers MCP sampling, roots or elicitation to extensions; never downloads extension code except
   Sidefolk's signed add-ons when the person clicks Get or Update (T33), and never updates one by itself.
 - Never edits `~/.claude`, `~/.claude.json` or `~/.codex` without a click, a confirmation and a

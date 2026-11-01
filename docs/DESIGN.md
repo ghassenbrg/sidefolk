@@ -125,6 +125,10 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `AddonUpdatesSection`, `AddonUpdateButton`, `AddonUpdateInline`, `AddonUpdateStrip`, `AddonUpdatesTodayRow`, `AddonUpdateDot` | `Updates/AddonUpdateViews.swift` | add-on updates wherever add-ons appear (D89): the Gallery's Updates with Update all, a row's "New version · Update", an extension page's calm strip, Today's one row, the sidebar's accent dot |
 | `CheckTicks` (+ `CheckWords`), `CheckRow` | `WatchChecks.swift` | a watch's last checks as ticks, oldest to newest, in `StatusTone.check`'s colours with their counts said for VoiceOver (On duty's rows, 24; the watch's page, 48); one run on its timeline (D87) |
 | `WatchChangeLines`, `WatchChangeColumns`, `DiffLineView` | `WatchChangeView.swift` | "what changed" from `LineDiff`, inline or side by side: − struck in muted ink, + on the news tint, folded lines as a count; never red or green |
+| `CalendarTint.of(hex)` (fill, edge, text, selectedFill, onSelected) | `CalendarEntry.swift` | a calendar's or kind's colour made readable on the card in light and dark (`CalendarPalette`, D97: lightness only); identity, never status |
+| `CalendarBlock`, `CalendarBar`, `CalendarChip`, `CalendarMenu`, `.calendarInspector(_:model:)` | `CalendarParts.swift` | a thing in Day and Week saying what its size has room for; an all-day bar; a month's line (dot, time, title); its menu; its details popover |
+| `CalendarSidebar`, `CalendarMiniMonth` | `CalendarSidebar.swift` | the Calendar's own sidebar: a month to jump with, the calendars by account with coloured boxes |
+| `CalendarEditor`, `CalendarPickerMenu`, `CalendarWritesSheet` | `CalendarEditor.swift` | a new thing's editor where it was placed; a calendar menu with colour dots; the one-time sheet before the first change to the Mac's calendars |
 
 ## Not built yet (phases 2 and 5)
 
