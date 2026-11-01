@@ -561,6 +561,18 @@ relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over
 extension pins, command watchers and the Guard policy (the approval mode, D37), so tampered rows are
 ignored.
 
+*Backups (D91).* A `.sidefolkbackup` holds the person's data in the clear (like the JSON export): it is written 0600
+and the sheet says what it holds. Keys are left out unless the person chooses a password: then AES-GCM under
+PBKDF2-SHA256 (600,000 rounds, random salt), and Sidefolk never stores the password. A restore trusts nothing it hasn't
+checked: entries that would leave the folder are refused before unpacking (`zipinfo`), links and special files are
+refused, every file must match the manifest's SHA-256 and no other file may be there, and a database whose migrations
+this copy doesn't know is refused. What can act is never restored as is: gallery add-ons are fetched again and their
+signatures checked (T33); extensions and companions from a folder wait for the install sheet or D60's question; MCP
+servers come back switched off; only key names Sidefolk uses are written to the Keychain. Skills and notes come back as
+data, so the sheet says "Restore only a backup you made yourself" (a stranger's backup is a stranger's text in prompts,
+T2). The swap happens before the database opens, and what it replaced is kept 7 days for Undo restore; agent configs
+are never touched (D86).
+
 **T20 Logging leaks (H/M).** `os.Logger` values are `.private`; messages are fixed text and
 anything that came from outside (extension ids, methods, tool and skill names) goes in fields. A
 JSONL `Redactor` catches `sk-ant-`, `sk-`, `Bearer `, `gh[pousr]_`, `github_pat_`, `xox[abpr]-`,

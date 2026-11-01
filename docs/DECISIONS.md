@@ -2737,3 +2737,49 @@ companions). App: `UpdateModel.addonSteps/addonSummary/addonRecent/addonPending/
 dev commands `addons:updates|nudge|auto:off|get:<id>|check|updateAll`; snapshots `window-home-gallery-updates`,
 `window-home-today-updates`, `page-extension-clipboard-update`, `page-settings-addons-updates`,
 `panel-pocket-addon-updates`. Tests: `AddonUpdateAllTests`.
+
+### D91 — Back up everything to one file, restore it on another Mac or after starting fresh (2026-11-01)
+**Decision:** Settings › Trust › Your data (and the app menu) gains **Back up everything…** and **Restore from a
+backup…**; onboarding's first bubble offers "Restoring from another Mac?".
+- **The file** (`Sidefolk Backup <date>.sidefolkbackup`, a zip, 0600): `manifest.json` (format 1, app version and
+  snapshot, when, which Mac, the database's migrations, counts, every other file's SHA-256), `data/` (the database copied
+  with `VACUUM INTO`, never the live file; ExtensionData, ExtensionDrafts, Skills, companions made as data), `review/`
+  (extensions installed from a folder or written for the person, companions added from a folder, themes of their own)
+  and, only when chosen, `keys.json`. Gallery add-ons are only named (id, version, on or off): a restore fetches them
+  from the gallery again, signatures checked (D55); their signed files are never copied. Left out: logs, caches,
+  downloads, the sandbox profiles, chart history, and Claude Code's and Codex's configs (connect again, D86).
+- **Keys** only with "Include my keys, protected by a password": the providers' keys with their host bindings and the
+  MCP servers' secrets, sealed with AES-GCM under a key from PBKDF2-SHA256 (600,000 rounds, random salt). Sidefolk
+  doesn't keep the password; a wrong one is refused in the restore sheet before anything changes; left empty, the
+  restore goes without the keys.
+- **Restore** opens and checks first (`BackupReader`): no entry may leave the folder (`zipinfo` before unpacking), no
+  links, exactly the files the manifest lists with their digests, a format and migrations this copy knows (a newer
+  Sidefolk's backup is refused, saying to update; an older database migrates when it opens). The sheet shows what it
+  holds ("1,240 notes · 32 reminders…", made on, which Mac, which Sidefolk). **Replace only:** the backup is staged
+  beside the data, Sidefolk relaunches, and the swap happens before the database opens (`BackupRestore.applyAtLaunch`);
+  what was there goes to `Restore-undo-<date>`, and **Undo restore** puts it back for 7 days. A swap that fails half
+  way is rolled back. History says "Restored from a backup made on …" (or that it was undone).
+- **After the relaunch** (`RestoreFollowUp`): the gallery's extensions, companions and themes are installed again in the
+  background, each with its switch as it was, with progress in Your data and a whisper at the end naming what isn't
+  back; built-ins get their switch back; the person's themes are checked again as any theme from a folder. Extensions
+  from a folder and companions from a folder are listed with **Review…**: the install sheet, or D60's question. MCP
+  servers come back switched off (their command runs with the person's permissions). Keys saved before the relaunch
+  replace those with the same names; Undo restore doesn't take them back.
+
+**Why:** the founder: export here, import on a new Mac; or export, reinstall fresh, import. One file, honest about what
+it can't carry (agents' configs, keys without a password), and a restore that can be taken back.
+
+**Alternatives:** *Merge* (left out): notes, reminders and settings made apart can't be matched without guessing, ids
+collide, and a half-merged notebook is worse than either; Replace with Undo is safe and simple. *A hot copy of the
+database file* (torn by WAL; `VACUUM INTO` is consistent while running). *Copying the gallery's signed packs* (a backup
+would carry code past the gallery's checks; fetching again checks it). *Keys in the clear*, or in the Keychain's own
+export (another Mac's Keychain can't open it; a password the person chooses can). *Swapping while running* (open
+database handles, running extensions).
+
+**Implications:** Core `Backup/`: `BackupManifest`, `BackupWriter`, `BackupReader`/`OpenedBackup`, `BackupKeys`,
+`BackupRestore`, `RestoreFollowUp`; `AppDatabase.migrationIdentifiers`. App: `RestoreModel`, `AppCoordinator+Backup`
+(`resumeRestore` at launch), `BackupSettings.swift` (`BackupRows`, `BackupSheet`, `RestoreSheet`), `SettingKey.backUp`
+and `.restore`, the menu's Back Up Everything… and Restore from a Backup…; dev commands `backup:`, `restoreFile:`,
+`restoreConfirm`, `restoreNow:`, `undoRestore`; snapshots `sheet-backup`, `sheet-backup-keys`, `sheet-restore`,
+`page-settings-trust-restored`. Tests: `BackupTests`. SECURITY T19.
+

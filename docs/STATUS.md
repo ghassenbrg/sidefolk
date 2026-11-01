@@ -64,6 +64,15 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   desktop notice, Today's Kept for Today showed it). Not tried by hand: the ⋯ menu's two choices and their Undo (no
   click from the dev script; `interrupt:<key>:<level>` sets a level). Next: merge.
 
+- **Back up and restore** (branch `team/backup`, not merged, D91; it carries `team/addon-updates`, which carries
+  `team/watch-history` and `team/interrupts`): Settings › Trust › Your data and the app menu write one
+  `.sidefolkbackup` (database via `VACUUM INTO`, ExtensionData, drafts, skills, companions as data, folder extensions
+  and themes for review, gallery add-ons by name, keys only sealed with a password) and restore it: checked, Replace
+  with 7 days of Undo restore, swapped at the relaunch, gallery add-ons fetched again, folder code reviewed, MCP
+  servers off. Verified: `BackupTests` (6), full suite, snapshots in light, dark, de and ar, and the debug app: a
+  backup from `build/bk-1` restored into a fresh `build/bk-2` through the sheet (same notes, reminders and skill,
+  History's line), then undone. Next: merge after `team/addon-updates`.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
