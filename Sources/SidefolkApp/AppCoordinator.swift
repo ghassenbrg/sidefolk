@@ -570,6 +570,12 @@ final class AppCoordinator {
             }
             return
         }
+        if command == "askTab:play" {
+            // Ask's Play tab, as a click on it does (`AskHeader.choose`): the Play panel's menu of games.
+            showAsk()
+            ask.actions?.openPlay()
+            return
+        }
         if command.hasPrefix("ask:") {
             showAsk()
             ask.text = String(command.dropFirst(4))
