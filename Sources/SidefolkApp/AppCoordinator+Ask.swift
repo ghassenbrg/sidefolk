@@ -461,8 +461,9 @@ extension AppCoordinator: AskActions {
         var glance = Glance()
         let now = Date()
         let live = (try? await runtime.sessions.live()) ?? []
-        glance.sessions = live.filter { $0.state == .needsYou }
-        let asking = Set(glance.sessions.map(\.id))
+        let waiting = live.filter { $0.state == .needsYou }
+        glance.sessions = AgentSessionGroup.of(waiting)
+        let asking = Set(waiting.map(\.id))
         // As on Today: things that need a decision, a session's own notice shown once, as the session.
         glance.decisions = await runtime.attention.open()
             .filter { $0.level >= .attention && !($0.refKind == "session" && asking.contains($0.refId ?? "")) }
@@ -474,8 +475,6 @@ extension AppCoordinator: AskActions {
         let events = (await runtime.calendarReader.events(from: now, to: soon) ?? []).filter { !$0.allDay && $0.start > now }
             .map { Glance.Next(title: $0.title, at: $0.start, event: true) }
         glance.next = Array((reminders + events).sorted { $0.at < $1.at }.prefix(Glance.nextShown))
-        glance.working = live.filter { $0.state == .working }.map(Describe.session)
-            + ((try? await runtime.jobs.running()) ?? []).map(\.title)
         return glance
     }
 

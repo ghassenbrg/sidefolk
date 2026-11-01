@@ -60,6 +60,20 @@ struct AskEntry: Identifiable, Equatable {
     var createdAt = Date()
     /// A notice that needs nothing from anyone ("Undone", a word about talking) goes away on its own then.
     var fadesAt: Date?
+    /// When it was first on screen in Ask: a quick result's lifetime starts there (D90).
+    var seenAt: Date?
+
+    /// How long it stays in Ask (D90): what still needs the person stays, values and lookups go soon after they were
+    /// read, answers and things made after half an hour or with the day.
+    var weight: ResultLifetime.Weight {
+        switch content {
+        case .approval, .question: .needsYou
+        case .error(_, let retryable): retryable ? .needsYou : .normal
+        case .result(let card, _, _): ResultLifetime.weight(of: card.kind)
+        case .info, .spoken: .quick
+        case .answer, .list, .needsBrain, .doneWithoutAsking, .skipped: .normal
+        }
+    }
 
     static func == (a: AskEntry, b: AskEntry) -> Bool { a.id == b.id && a.content == b.content && a.caption == b.caption }
 
@@ -215,6 +229,13 @@ final class AskModel {
     var swipe: (id: UUID, offset: CGFloat)?
     /// The request under the pointer, the one a two-finger swipe moves.
     var hoveredRequest: UUID?
+    /// Results the person pinned: they stay until removed (D90).
+    var pinnedRequests: Set<UUID> = []
+    /// Results went on their own since Ask was cleared: a quiet line says they are in History.
+    var tidied = false
+    /// Ask is on screen, and has the keyboard: nothing is tidied away while someone may be reading.
+    var visible = false
+    var focused = false
     /// The tallest the results may grow before they scroll: the panel stays on screen.
     var resultsMaxHeight: CGFloat = 520
     private var fading: Task<Void, Never>?
@@ -282,6 +303,8 @@ final class AskModel {
     /// a follow-up shouldn't lean on answers the person just cleared away (D45).
     func clearResults() {
         entries.removeAll { !$0.isPinned }
+        pinnedRequests = []
+        tidied = false
         replyingTo = nil
         actions?.startFresh(in: self, announce: false)
     }
@@ -351,6 +374,7 @@ final class AskModel {
     func add(_ content: AskEntry.Content, caption: String? = nil, fades: Bool = false) {
         entries.append(AskEntry(caption: caption, content: content, fadesAt: fades ? Date().addingTimeInterval(Self.noticeSeconds) : nil))
         if entries.count > Self.keptEntries { entries.removeFirst(entries.count - Self.keptEntries) }
+        if visible { entries[entries.count - 1].seenAt = Date() }
         if fades { fadeLater() }
         // Something new shows where it can be seen: the conversation (D88).
         tab = .ask
@@ -403,9 +427,37 @@ final class AskModel {
     /// Clears old results when the panel opens after a while, so it starts clean.
     func freshenIfStale(after seconds: TimeInterval = 600) {
         guard !busy, let last = entries.last, Date().timeIntervalSince(last.createdAt) > seconds else { return }
-        entries.removeAll()
-        // The runtime's conversation went quiet as long ago; nothing is left to follow up.
+        // The runtime's conversation went quiet as long ago: the next request starts a new one. The results themselves
+        // go by their own lifetimes (`tidy`).
         thread = nil
         replyingTo = nil
+    }
+
+    /// Ask came on screen: what is past its time goes, and what shows now counts as seen (D90).
+    func opened(at now: Date = Date()) {
+        visible = true
+        tidy(at: now, force: true)
+        for i in entries.indices where entries[i].seenAt == nil { entries[i].seenAt = now }
+    }
+
+    /// Takes away the requests whose every result is past its lifetime, never a pinned one, never while the person may
+    /// be reading (the pointer on Ask, or the keyboard in it) unless Ask is only now opening.
+    func tidy(at now: Date = Date(), force: Bool = false) {
+        guard force || (!hovering && !focused), !busy else { return }
+        var gone = Set<UUID>()
+        for request in requests where !pinnedRequests.contains(request.id) {
+            let done = request.entries.allSatisfy {
+                ResultLifetime.expired($0.weight, createdAt: $0.createdAt, seenAt: $0.seenAt, pinned: false, now: now)
+            }
+            if done { gone.formUnion(request.entries.map(\.id)) }
+        }
+        guard !gone.isEmpty else { return }
+        entries.removeAll { gone.contains($0.id) }
+        if replyingTo.map({ gone.contains($0.entry) }) == true { replyingTo = nil }
+        tidied = true
+    }
+
+    func togglePin(_ request: Request) {
+        if pinnedRequests.remove(request.id) == nil { pinnedRequests.insert(request.id) }
     }
 }

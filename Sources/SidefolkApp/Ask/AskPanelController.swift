@@ -11,6 +11,7 @@ final class AskPanelController {
     /// The two-finger gesture under way: which way it was read, and how far it went sideways.
     private var gesture: (sideways: Bool?, x: CGFloat, y: CGFloat) = (nil, 0, 0)
     var onVisibilityChange: ((Bool) -> Void)?
+    private var tidying: Task<Void, Never>?
     /// Esc goes here first (talking, speaking); true when it was handled there.
     var onEscape: (() -> Bool)?
 
@@ -45,6 +46,8 @@ final class AskPanelController {
     /// `slipsOnly`: a permission slip opened it while it was closed; it shows only that until the person opens Ask.
     func show(beside anchor: NSRect, on screen: NSScreen, focus: Bool = true, slipsOnly: Bool = false) {
         model.freshenIfStale()
+        if !isVisible { model.opened() }
+        tidyWhileOpen()
         model.compact = slipsOnly && (!isVisible || model.compact)
         fit(on: screen)
         hosted.panel.setContentSize(hosted.fittingSize)
@@ -152,8 +155,24 @@ final class AskPanelController {
     }
     #endif
 
+    /// Looks every quarter minute while Ask is open for results past their time (D90); nothing runs once it closes.
+    private func tidyWhileOpen() {
+        guard tidying == nil else { return }
+        tidying = Task { [weak self] in
+            while let self, self.isVisible, !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(15))
+                self.model.focused = self.hosted.panel.isKeyWindow
+                withAnimation(.easeOut(duration: 0.4)) { self.model.tidy() }
+            }
+            self?.tidying = nil
+        }
+    }
+
     func hide() {
         guard isVisible else { return }
+        model.visible = false
+        tidying?.cancel()
+        tidying = nil
         hosted.panel.orderOut(nil)
         onVisibilityChange?(false)
     }

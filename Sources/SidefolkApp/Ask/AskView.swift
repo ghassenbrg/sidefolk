@@ -38,9 +38,12 @@ struct AskView: View {
                             AskTodayTab(model: model)
                                 .padding(.horizontal, Theme.Space.l)
                                 .padding(.bottom, Theme.Space.l)
-                        } else if !model.entries.isEmpty || model.busy {
-                            if clearable { clearAll }
-                            results
+                        } else {
+                            if !model.entries.isEmpty || model.busy {
+                                if clearable { clearAll }
+                                results
+                            }
+                            if model.tidied { olderInHistory }
                         }
                     }
                     .frame(width: Theme.Size.sidecardAsk)
@@ -64,6 +67,18 @@ struct AskView: View {
     }
 
     private var clearable: Bool { model.hasResults && !model.busy }
+
+    /// Results went by themselves (D90): said once, quietly, with the way to them.
+    private var olderInHistory: some View {
+        Button { model.actions?.openConversation(nil) } label: {
+            Text("Older answers are in History", comment: "Ask, under the results after some went by themselves")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.bottom, Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
     /// Above the results, as Notification Center has it, rather than in the header: there, in German, it left the
     /// companion's name no room.
@@ -285,6 +300,19 @@ private struct RequestView: View {
                         .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
                 Spacer(minLength: 0)
+                // Kept past its time (D90): shown while hovering, and always once pinned.
+                let pinned = model.pinnedRequests.contains(request.id)
+                Button { model.togglePin(request) } label: {
+                    Image(systemName: pinned ? "pin.fill" : "pin").font(.system(size: 10, weight: .bold))
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(Theme.line.opacity(hovering ? 0.8 : 0)))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain).foregroundStyle(pinned ? Theme.link : Theme.inkMuted)
+                .opacity(hovering || pinned ? 1 : 0)
+                .help(pinned ? Text("Unpin", comment: "Ask: lets a pinned result go by itself again") : Text("Pin: keep it here", comment: "Ask: keeps a result past its time"))
+                .accessibilityLabel(pinned ? Text("Unpin", comment: "Ask: lets a pinned result go by itself again") : Text("Pin", comment: "Ask: keeps a result past its time"))
+                .accessibilityAddTraits(pinned ? .isSelected : [])
                 // A target the size of a fingertip, not of the glyph.
                 Button { model.dismiss(request.id, toward: 1) } label: {
                     Image(systemName: "xmark").font(.system(size: 10, weight: .bold))

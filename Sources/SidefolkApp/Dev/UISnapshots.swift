@@ -420,10 +420,10 @@ enum UISnapshots {
             glancing.glance = Glance(
                 decisions: [AttentionItem(level: .attention, source: "watcher", title: "Pricing changed: Pro went from $12 to $15.",
                                           actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)])],
-                sessions: [AgentSession(id: "cc-1", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou)],
+                sessions: AgentSessionGroup.of([AgentSession(id: "cc-1", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou),
+                                                AgentSession(id: "cc-2", agent: "claude-code", cwd: NSHomeDirectory() + "/git/sidefolk", state: .needsYou)]),
                 next: [Glance.Next(title: "Stretch", at: Date().addingTimeInterval(25 * 60), event: false),
-                       Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)],
-                working: ["Codex in pockito"])
+                       Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)])
             glancing.waiting = 2
             glancing.tab = .today
             // Miraya installed: a video link plays on the TV (D88). Ask holds its actions weakly, so they're kept here.
@@ -439,6 +439,7 @@ enum UISnapshots {
                           ("desktop-ask-internet", sampleAskInternet()), ("desktop-ask-outside", sampleAskOutside()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
+                          ("desktop-ask-tidied", tidiedAsk()),
                           ("desktop-ask-drop", dropAsk(actions)), ("desktop-ask-which-place", whichPlaceAsk()),
                           ("desktop-ask-drop-file", dropped(.file(URL(fileURLWithPath: NSHomeDirectory() + "/Documents/Invoice April.pdf")),
                                                             "Invoice April.pdf", actions)),
@@ -772,6 +773,16 @@ enum UISnapshots {
             with at least three people, and adds shared folders, single sign-on and an admin console. Annual billing takes 20% \
             off every paid plan. Do you want me to watch the page for the next change?
             """, canThinkHarder: true, tainted: true), caption: "what does example.com/pricing say?")
+        return ask
+    }
+
+    /// Ask after some results went by themselves (D90): a pinned value kept, the quiet line to History.
+    private static func tidiedAsk() -> AskModel {
+        let ask = AskModel()
+        ask.add(.result(ResultCard(kind: .reading, title: "Battery: 82%, charging", subtitle: nil), activityId: nil, undo: false),
+                caption: "how much is my battery")
+        if let request = ask.requests.first { ask.togglePin(request) }
+        ask.tidied = true
         return ask
     }
 
