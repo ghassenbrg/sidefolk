@@ -71,6 +71,9 @@ struct GameSceneBackground: View {
                     .frame(height: 70)
             }
         }
+        // Only a picture: `clipped` hides the room where it overflows (above a short board, over the header) but would
+        // still take its clicks there, and the header's back, speaker and ✕ went dead over a short board.
+        .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 }
@@ -92,6 +95,7 @@ struct GameTableStrip: View {
             // Its back edge softened, so the companion behind it sinks into the table rather than being cut.
             LinearGradient(colors: [.black.opacity(0.12), .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
         }
+        .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 }

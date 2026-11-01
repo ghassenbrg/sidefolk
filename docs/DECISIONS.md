@@ -2341,9 +2341,14 @@ clicking it in Which Cup? (a "Check its paw" button does it), AI trivia packs (p
 - **Back always works:** the back arrow is shown on every game and never refused (`PlayBack`): at the start, mid-move,
   during a build-up, while the companion thinks, on the end card or after the game stopped, it puts the game away (to
   resume from the menu for ten minutes) and shows the menu at once; ⌘[ does the same, and ⌫ too where no part types
-  with it (a word, a number, Sudoku's digits, a text field). It "sometimes didn't work" because SwiftUI's views don't
-  take the first mouse: a click on the panel while it wasn't key only made it key. The Play panel now acts on that
-  first click (`FloatingPanel.firstClickActs`), without activating Sidefolk, so the person's app stays in front.
+  with it (a word, a number, Sudoku's digits, a text field). It "sometimes didn't work" for two reasons, both fixed:
+  the scene's picture fills the space behind the board, and over a short board (cups, rock, paper, scissors) it
+  overflowed upward under the header, hidden by `clipped` but still taking the clicks, so back, the speaker and ✕ were
+  dead there (the scene and table pictures no longer take clicks); and SwiftUI's views don't take the first mouse, so a
+  click on the panel while it wasn't key only made it key. The Play panel now acts on that first click
+  (`FloatingPanel.firstClickActs`), without activating Sidefolk, so the person's app stays in front. Checked in a debug
+  app on ten games' states (a start, a shuffle, a build-up, the companion thinking, a word half typed, a reveal), eight
+  of them as the first click on a panel that wasn't key.
 - **Fixes:** Korean Daily Word rows keep every tile in its column, a syllable's pad drawn behind its jamo, so played,
   typed and empty rows are one width; Last Stick's taken sticks go entirely once none is left (the faded one stayed
   through the build-up before the end card); an end card's "3 – 2" (the person's, then the companion's) is isolated in
