@@ -302,5 +302,9 @@ final class AddonUpdateController: AddonUpdateActions {
         }
         model.addonReview = model.addonReview.filter(waits)
         model.addonWaiting = model.addonWaiting.filter(waits)
+        // One Update all left for review, then reviewed and installed: its row says Updated, not Review… again.
+        for entry in model.addonRecent where model.addonSteps[entry.id] == .needsReview && installed[entry.id] == entry.version {
+            model.addonSteps[entry.id] = .updated
+        }
     }
 }
