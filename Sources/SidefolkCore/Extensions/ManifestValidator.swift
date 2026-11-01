@@ -83,6 +83,8 @@ public struct ValidationReport: Sendable {
                 .joined(separator: ", "))
         }
         if let m = manifest, !m.games.isEmpty { out.append("Games: " + m.games.keys.sorted().compactMap { m.games[$0]?.title }.joined(separator: ", ")) }
+        if let m = manifest, !m.surfaces.isEmpty { out.append("Surfaces: " + m.surfaces.keys.sorted().compactMap { m.surfaces[$0]?.title }.joined(separator: ", ")) }
+        if let m = manifest, let assets = m.assets { out.append("Assets: \(assets)") }
         if manifest?.background == true { out.append("Keeps running while it's on") }
         if let strings, !strings.tables.isEmpty {
             out.append("Languages: " + ExtensionStrings.languages.filter { strings.tables[$0] != nil || $0 == "en" }.joined(separator: ", "))
@@ -180,6 +182,8 @@ public struct ManifestValidator: Sendable {
         checkPages(manifest, issues: &issues)
         checkPalettes(manifest, issues: &issues)
         checkGames(manifest, issues: &issues)
+        checkAssets(manifest, folder: dir, issues: &issues)
+        checkSurfaces(manifest, issues: &issues)
         report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues

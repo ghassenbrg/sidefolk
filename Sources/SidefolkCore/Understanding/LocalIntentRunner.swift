@@ -139,6 +139,8 @@ public struct LocalIntentRunner: Sendable {
             return await execute("watch.read", .object(Self.input(for: source)))
         case .game(let id, let game):
             return await execute("games.open", ["extension": .string(id), "game": .string(game)])
+        case .surface(let id):
+            return await execute("surfaces.open", ["surface": .string(id)])
         case .gamesMenu:
             return await execute("games.open", [:])
         case .gameCommand(let command):

@@ -18,7 +18,10 @@ extension AppCoordinator {
 
     func makeCueDirector() -> CueDirector {
         let cues = CueDirector(companion: companion, caption: player.caption)
-        cues.panelFrame = { [weak self] in self?.playPanel.isVisible == true ? self?.playPanel.frame : nil }
+        cues.panelFrame = { [weak self] in
+            guard let self else { return nil }
+            return self.playPanel.isVisible ? self.playPanel.frame : self.surfacePanel.isVisible ? self.surfacePanel.frame : self.surfaceOverlay.isVisible ? self.surfaceOverlay.frame : nil
+        }
         cues.restoreMood = { [weak self] in self?.renderMood() }
         cues.linesShown = { [weak self] in self?.runtime.settings.current.interruptions.level(for: .games) != .off }
         cues.soundsAllowed = { [weak self] in
@@ -40,6 +43,7 @@ extension AppCoordinator {
     /// Opens a game, or brings back the one kept if it is the same.
     func openGame(_ request: GameRequest) {
         askPanel.hide()
+        surfacePanel.hide()
         if !companion.isVisible { showCompanion(true) }
         tossRevealed = false
         guard let (frame, screen) = anchor() else { return }
@@ -106,6 +110,7 @@ extension AppCoordinator {
     /// the person's own choice, through the tool like every way in.
     func openPlayMenu(focus: Bool) {
         askPanel.hide()
+        surfacePanel.hide()
         if !companion.isVisible { showCompanion(true) }
         guard let (frame, screen) = anchor() else { return }
         cues.reset()

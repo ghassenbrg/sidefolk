@@ -60,6 +60,25 @@ final class CueDirector {
         if sounds, soundsAllowed(), limiter.sound(at: Date()) { GameSounds.shared.play(.tick) }
     }
 
+    /// A surface's reaction (D99): the same lists and pacing as a board's cue, with no words and no sound of Sidefolk's.
+    func react(_ reaction: SceneReaction) {
+        var cue = GameCue(effect: reaction.effect, prop: reaction.prop, look: reaction.look.map { look in
+            switch look {
+            case .panel: .panel
+            case .you: .you
+            case .away: .away
+            }
+        })
+        switch reaction.move {
+        case .cue(let move)?: cue.move = move
+        case .pump?: companion.character.perform(.pump)
+        case .flick?: companion.character.perform(.flick)
+        case .roll?: companion.character.perform(.roll)
+        case nil: break
+        }
+        act(cue, said: nil, tone: .gentle, sounds: false)
+    }
+
     private func act(_ cue: GameCue, said: String?, tone: GameTone, sounds: Bool) {
         let now = Date()
         if let look = cue.look { self.look(look) }
