@@ -750,6 +750,10 @@ struct PageBackground: View {
             }
         }
         .ignoresSafeArea()
+        // The wash is scaled to fill: unclipped it spread over the Settings sidebar beside the page and took its
+        // clicks (Daylight, Paper Garden).
+        .clipped()
+        .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 }

@@ -113,6 +113,11 @@ final class AppCoordinator {
         applyAppearance()
         applyTheme()
         restoreCompanionAddon()
+        // The Mac switching Light/Dark: the menu bar icon follows it even when Sidefolk's own look is fixed.
+        DistributedNotificationCenter.default().addObserver(forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
+                                                            object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyAppearance() }
+        }
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
                                                           object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyCompanionSettings() }

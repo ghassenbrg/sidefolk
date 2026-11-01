@@ -59,6 +59,19 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         updateLabel()
     }
 
+    /// The icon follows the menu bar, never the app's own Light or Dark choice (Settings › Appearance): NSApp's
+    /// appearance reaches the status item's window too, and a Light choice drew a black icon on a dark menu bar.
+    /// The Pocket keeps the app's choice. Called again when the Mac's appearance changes.
+    func followMenuBar(app: NSAppearance?) {
+        popover.appearance = app
+        guard app != nil else {
+            item.button?.appearance = nil
+            return
+        }
+        let dark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
+        item.button?.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+    }
+
     /// In Full access the menu bar icon turns orange, like the Mac's own "in use" dots, so the mode is visible even
     /// with the companion and the Ask panel hidden (D37); VoiceOver says when it ends.
     func setMode(_ mode: GuardMode, ends: Date? = nil) {
