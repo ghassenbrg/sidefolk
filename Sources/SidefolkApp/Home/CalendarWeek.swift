@@ -2,8 +2,10 @@ import SidefolkCore
 import SwiftUI
 
 /// The Calendar's week (D66): a column a day under the hours, each thing at its time and as long as it lasts (a
-/// reminder, a moment, gets a short block), things that overlap side by side (CalendarGrid.columns), all-day events in
-/// a row above, and a line at the present today. It opens at the morning, or an hour before now.
+/// reminder, a moment, gets a short block), things that overlap side by side (CalendarGrid.columns) and, past what a
+/// column has room for, counted in a "+N" that opens the day (D84), all-day events in a row above, and a line at the
+/// present today. It opens at the morning, or an hour before now. A week with the Mac calendar's events says, under
+/// it, that they are read only here.
 struct CalendarWeek: View {
     var model: CalendarModel
     var open: (CalendarModel.Entry) -> Void
@@ -15,6 +17,8 @@ struct CalendarWeek: View {
     private static let gutter: CGFloat = 44
     /// A reminder's block: a moment, drawn half an hour long so its words fit.
     private static let moment: TimeInterval = 30 * 60
+    /// The narrowest a block may be (its picture alone, or "+3"): past that, an overlap's rest is counted.
+    private static let narrowest: CGFloat = 34
 
     var body: some View {
         let days = model.days
@@ -52,10 +56,31 @@ struct CalendarWeek: View {
                     proxy.scrollTo(max(0, min(hour - 1, 7)), anchor: .top)
                 }
             }
+            if days.contains(where: { day in model.entries(on: day).contains { if case .event = $0 { true } else { false } } }) {
+                readOnlyNote
+            }
         }
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.line))
+    }
+
+    /// The Mac calendar's events can't be moved or changed here (D57): said once, under the week, not on each block.
+    private var readOnlyNote: some View {
+        VStack(spacing: 0) {
+            Divider()
+            Label {
+                Text("Events from your Mac's calendar are read only here. Change them in Calendar.",
+                     comment: "Under the Calendar's week, when it shows the Mac calendar's events")
+            } icon: {
+                Image(systemName: "lock")
+            }
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.inkMuted)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.s)
+        }
     }
 
     private func dayHeader(_ day: Date) -> some View {
@@ -93,8 +118,8 @@ struct CalendarWeek: View {
         let start = model.calendar.startOfDay(for: day)
         let timed = model.entries(on: day).filter { !$0.allDay }
         let spans = timed.map { (start: $0.start, end: max($0.end, $0.start.addingTimeInterval(Self.moment))) }
-        let columns = CalendarGrid.columns(spans)
         return GeometryReader { geo in
+            let fitted = CalendarGrid.fit(spans, maxColumns: Int(geo.size.width / Self.narrowest))
             ZStack(alignment: .topLeading) {
                 // The hour lines, and a double-click on an empty time adds a reminder there (to the quarter hour).
                 VStack(spacing: 0) {
@@ -110,10 +135,18 @@ struct CalendarWeek: View {
                     return true
                 }
                 ForEach(Array(timed.enumerated()), id: \.element.id) { i, entry in
-                    let width = geo.size.width / CGFloat(columns[i].of)
-                    block(entry, height: CGFloat(spans[i].end.timeIntervalSince(spans[i].start) / 3600) * Self.hour, wide: width >= 120, words: width >= 64)
+                    if let place = fitted.placed[i] {
+                        let width = geo.size.width / CGFloat(place.of)
+                        block(entry, height: CGFloat(spans[i].end.timeIntervalSince(spans[i].start) / 3600) * Self.hour, wide: width >= 120, words: width >= 64)
+                            .frame(width: max(width - 3, 10))
+                            .offset(x: CGFloat(place.column) * width + 1, y: y(entry.start, from: start))
+                    }
+                }
+                ForEach(Array(fitted.more.enumerated()), id: \.offset) { _, more in
+                    let width = geo.size.width / CGFloat(more.of)
+                    moreChip(more.count, on: day)
                         .frame(width: max(width - 3, 10))
-                        .offset(x: CGFloat(columns[i].column) * width + 1, y: y(entry.start, from: start))
+                        .offset(x: CGFloat(more.column) * width + 1, y: y(more.start, from: start))
                 }
                 if model.calendar.isDateInToday(day) {
                     // The present is a time marker, not an alarm.
@@ -128,6 +161,23 @@ struct CalendarWeek: View {
         .overlay(alignment: .leading) { Rectangle().fill(Theme.line).frame(width: 1) }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text(verbatim: day.formatted(.dateTime.weekday(.wide).day().month(.wide))))
+    }
+
+    /// "+2": what didn't fit across the column at that time; a click opens the day, where everything is listed.
+    private func moreChip(_ count: Int, on day: Date) -> some View {
+        Button { model.show(day: day) } label: {
+            Text(verbatim: "+\(count.formatted())")
+                .font(Theme.Font.captionStrong).monospacedDigit().foregroundStyle(Theme.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, minHeight: 18)
+                .background(Theme.well, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.line))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(Text("\(count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click shows the day"))
+        .accessibilityLabel(Text("\(count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click shows the day"))
+        .accessibilityHint(Text("Show this day"))
     }
 
     /// A thing as a block: its words at the top, its colour down the edge at its start.

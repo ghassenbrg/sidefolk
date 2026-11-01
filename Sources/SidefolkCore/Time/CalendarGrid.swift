@@ -60,4 +60,40 @@ public enum CalendarGrid {
         close()
         return result
     }
+
+    /// Things that didn't fit across a day's column, counted at a place of their own: the "+N" that opens the day.
+    public struct More: Sendable, Equatable {
+        /// The earliest of them: where the count goes down the column.
+        public var start: Date
+        public var count: Int
+        public var column: Int
+        public var of: Int
+    }
+
+    /// `columns`, for a day's column that has room for `maxColumns` across: where an overlap needs more, its first
+    /// `maxColumns - 1` columns show, each a `maxColumns`th of the width, and what is beyond them is counted in a "+N"
+    /// in the last one. Each thing's place, or nil when it is counted instead.
+    public static func fit(_ spans: [(start: Date, end: Date)], maxColumns: Int) -> (placed: [(column: Int, of: Int)?], more: [More]) {
+        let all = columns(spans)
+        let k = max(1, maxColumns)
+        var placed: [(column: Int, of: Int)?] = all.map { $0 }
+        var more: [More] = []
+        // The things that overlap, as `columns` grouped them: in time order, a group ends where the next starts after it.
+        let order = spans.indices.sorted { (spans[$0].start, spans[$0].end) < (spans[$1].start, spans[$1].end) }
+        var group: [Int] = [], groupEnd = Date.distantPast
+        func close() {
+            defer { group = [] }
+            guard let first = group.first, all[first].of > k else { return }
+            let hidden = group.filter { all[$0].column >= k - 1 }
+            for i in group { placed[i] = all[i].column < k - 1 ? (all[i].column, k) : nil }
+            more.append(More(start: hidden.map { spans[$0].start }.min() ?? spans[first].start, count: hidden.count, column: k - 1, of: k))
+        }
+        for i in order {
+            if spans[i].start >= groupEnd { close() }
+            groupEnd = group.isEmpty ? spans[i].end : max(groupEnd, spans[i].end)
+            group.append(i)
+        }
+        close()
+        return (placed, more)
+    }
 }
