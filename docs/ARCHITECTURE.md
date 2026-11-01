@@ -123,6 +123,10 @@ user folders or agent configs.
   the app shows it as a pin beside the companion and a live row on On duty. `watch.read` takes one value now
   (`WatcherEngine.readNow`): the kind's probe looks once at a watcher that is never added, rates over a fresh
   half second (`WatchContext.isReadingNow`); "what's my CPU usage" reaches it from the parser without AI.
+  Every check of a watch that isn't a report is logged (D87, `WatcherEngine+History`): runs of the same outcome as
+  one row in `watch_checks`, a run that only grew saved with the routine saves; page and file watches keep the
+  last two versions of the text they compared (`ProbeResult.compared` → `watch_versions`), shown line by line on
+  the watch's page in Home (`LineDiff`). 30 days, 500 rows a watch, deleted with the watch.
 - `Companion/` — play (D44): `companion.play` publishes `AppEvent.companion` for a trick or a game;
   `companion.toss` draws coins, dice or a rock-paper-scissors hand with the system's generator (the score in
   `kv`) and publishes `AppEvent.toss`. The app's `CompanionPlayer` plays both: a moment (`flick`, `roll`,
@@ -203,6 +207,9 @@ agent_runs(id TEXT PK, thread_id, provider, model, started_at, ended_at, steps, 
            output_tokens, outcome, error)
 attention(id TEXT PK, level, source, title, body, actions JSON, state[pending|shown|acknowledged|
           expired], created_at, shown_at, acknowledged_at, renudged)
+watch_checks(id INTEGER PK, watcher_id → watchers ON DELETE CASCADE, result[unchanged|changed|failed|paused],
+             first_at, last_at, count, reason, duration_ms)   -- runs of checks, 30 days, 500 a watch (D87)
+watch_versions(id INTEGER PK, watcher_id → watchers ON DELETE CASCADE, at, text, hash)   -- the newest two (D87)
 kv(key TEXT PK, value JSON)   -- domain settings that must live with the data; applenotes.copied (D38)
 ```
 

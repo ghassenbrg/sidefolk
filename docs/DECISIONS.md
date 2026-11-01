@@ -2364,6 +2364,7 @@ they don't. Miraya's `addon.json` names 593.
 
 
 ### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+*Amended by D87:* a watch has its own page in Home and On duty's rows a bar of its checks, now that a history is kept.
 **Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
 design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
 1. **Lantern is the direction:** native macOS surfaces, neutral, so the companion and its light are the warm things on
@@ -2560,3 +2561,59 @@ entries for one character, and no Look switch).
 `mouthGlow`; `AddonStore.checkLocalFiles` allows `2d/`, `InstalledCompanion.twoD`; `OwnedCompanion.looks` for a folder
 companion; `AppSettings.dimension(forLocal:)`; `CompanionArt.localForm`, the Look switch and stills for it;
 `docs/research/lively-companions.md` documents the keys.
+
+### D87 — A watch keeps its history: every check, the latest change's two versions, and its own page in Home (2026-11-01)
+**Decision:** *amends D84 (a watch's detail page, left out for want of a history) and D58 (the page change kept for
+Today's tile).* Every watch that isn't a live value (D35) keeps a record of its checks and, for a page or a file, the text
+it compared, and has its own page in Home.
+- **The check log** (`watch_checks`, migration `v6-watch-history`): each check is unchanged, changed (with the notice's
+  words), failed (with the reason, the same words as `lastError`) or paused, with how long it took. Checks in a row that
+  found the same thing are one row with a count and their first and last times, so a watch looking every 30 s writes a
+  row only when the outcome changes; a run that only grew reaches the database with the watcher's routine saves (every
+  5 minutes, `WatcherEngine.routineSaveInterval`) and on quit (`flushHistory`), and readers ask the engine, which has it
+  as it stands. Waiting for a busy site or the network (`ProbeError.deferred`, `.offline`) isn't a check. Reports keep
+  no log: they read every few seconds and keep their own line of values in memory (D58).
+- **Versions** (`watch_versions`): the extracted text the probe compared, never the HTML: a page's readable lines
+  (`PageText`), a plain text file's lines (`FileText`: an allow list of text kinds, 512 KB at most, UTF-8, read only on
+  the first look and when the file changed, invisible and bidirectional controls removed, SECURITY T2). The first look
+  is kept, then each change with what it was before (`ComparedText`); only the newest two stay, each cut at 32,000
+  characters on a line, and the same text twice is kept once. A file that isn't text keeps none: its size and time are
+  what it compares.
+- **Kept small:** checks older than 30 days go at the daily tidy (`SidefolkRuntime.housekeeping`), and at most 500 rows
+  per watch whatever their age. The two versions stay while the watch does (the newer is what the next change is
+  compared with). Both tables reference `watchers` with a cascade, so stopping a watch deletes its history; "Your
+  data" exports both (`watchChecks`, `watchVersions`) and "Delete all data" empties both. Nothing leaves the Mac.
+- **The watch's page** (`HomeSelection.watch`, `WatchDetailView`), opened from On duty's rows, Today's watch tiles (the
+  popover they had is gone) and a changed-watch card on Today ("See what changed", a link, so the card keeps its three
+  buttons): what it watches, how often, Scout, since when and until when; Check now (the one primary while it watches)
+  or Resume (when it doesn't), Pause and Stop watching (confirmed: its history goes with it), through the same
+  `AppServices` calls On duty uses; "What changed" for page and file watches, inline or side by side (`LineDiff`: every
+  line that differs, in reading order, two lines of context, at most 600 lines), in the text's own direction; and the
+  timeline of runs under a bar of the last 48 checks. A page watch from before this shows the changed lines D58 kept.
+- **On duty's bars:** each watch row has its last 24 checks as ticks (`CheckTicks`), with their counts in words for
+  VoiceOver; "Watching" is no longer a chip there (the bar says it), other states still are.
+- **Colours (D78, `StatusTone.check`):** a change is news (the accent), a failed check amber; red stays for a watch that
+  stopped (`StatusTone.watch(.error)`). In "What changed", removed lines are struck through in muted ink and added ones
+  sit on the news tint, marked − and +.
+- **For agents:** `watch.list` adds ", last changed 2 h ago" to each watch that changed, with the notice's words in
+  brackets only for kinds whose summary is made from the watch's own settings (`url_change`, `site_status`,
+  `file_changes`, `file_appears`); a folder's new file names, a program's or an extension's words are outside content
+  (T2), so for those only the time is said. No tool's input schema changed, so MCP clients see the same tools.
+
+**Why:** the founder: a watch only kept its latest state, so the app couldn't say when it last changed, what changed,
+or that it had been failing all night; D84 left the watch page and On duty's bars out rather than fake them. A run-length
+log keeps a month of a 30-second watch in a few rows, and keeping the compared text (not the page) is what makes "what
+changed" possible at a size that doesn't matter (two versions of 32,000 characters, 50 watches at most).
+
+**Alternatives:** a row per check (2,880 a day for one file watch, and a write every 30 s against the routine-save rule);
+keeping the fetched HTML (big, and not what was compared); a diff stored at change time instead of the two versions (no
+side-by-side view, and nothing to compare the next change with for files); reading a file's text at every check (it
+compares size and time; reading only on a change costs nothing while nothing changes); putting the change summary in
+`watch.list` for every kind (it would make the list outside content whenever a folder watch fired).
+
+**Implications:** `WatchCheck`, `WatchVersion`, `WatchHistoryStore`, `WatchHistoryLimits` (Storage); `ProbeResult.compared`,
+`FileText`, `LineDiff`, `WatcherEngine+History` (`note`, `keep`, `checks(for:)`, `recentTicks`, `versions(for:)`,
+`lastChanges`, `flushHistory`); `StatusTone.check`; `DataPorter`; the app's `WatchDetailModel`, `WatchDetailView`,
+`WatchChecks.swift` (`CheckTicks`, `CheckRow`, `CheckWords`), `WatchChangeView.swift`; `NowModel.ticks` and
+`openWatch`; `WatchTile` and `ChangeLines` removed; `swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]`;
+snapshots `window-home-watch*`.

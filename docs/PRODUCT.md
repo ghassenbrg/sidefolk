@@ -54,7 +54,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 | E2 | Capture | "Save this idea to Sidefolk: extensions could have their own folk" → Pip pops up, *Saved to Sidefolk › Ideas*, Undo. |
 | E3 | Recall | "What ideas did I save for Sidefolk?" → answered from the Notebook with links to the notes. |
 | E4 | Remind | "Remind me tomorrow morning to send the document" → persists, fires at 09:00 (configurable "morning"), even after relaunch; Done / Snooze / Open. |
-| E5 | Watch | "Tell me when example.com/pricing changes", "when report.pdf lands in Downloads", "when pid 4312 exits", "when the server is back up". |
+| E5 | Watch | "Tell me when example.com/pricing changes", "when report.pdf lands in Downloads", "when pid 4312 exits", "when the server is back up". Each watch has its page in Home: its checks for 30 days and what last changed, line by line (D87). |
 | E5b | Report | "Every 10 seconds tell me the CPU usage", "temperature in Fukuoka every minute", "show my battery every 5 minutes" → a live value beside the companion, updated in place, with Pause/Stop on On duty; "stop telling me the CPU" (D35). |
 | E6 | Act | Open apps/URLs, list/move/rename files in folders you granted, read/write clipboard, fetch a page, run a confirmed command. |
 | E7 | Routines | "Every weekday at 9, give me my open tasks" → a scheduled prompt the companion runs and presents. |

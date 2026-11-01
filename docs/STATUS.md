@@ -40,6 +40,13 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 - **Docs cleanup** (branch `team/docs-cleanup` in both repositories, not merged): every doc, README and skill
   brought to the app as it is after D84; this file split into STATUS and HISTORY; finished plans removed.
 
+- **Watch history** (branch `team/watch-history`, not merged, D87): every check of a watch logged as runs, the last
+  two versions of a page's or file's text, the watch's own page in Home (what changed inline or side by side, its
+  timeline, Check now, Pause or Resume, Stop) and On duty's bars of the last 24 checks; `watch.list` says when each
+  last changed. Verified with tests (migration, runs, versions, pruning, Your data), snapshots `window-home-watch*`
+  and `window-home-onduty*` in light, dark, de and ar, and the debug app with a local file changed twice and a page
+  on `python3 -m http.server` edited once. Next: merge.
+
 Nothing else is on a branch: every team branch is merged into main in both repositories.
 
 ## Next
@@ -49,7 +56,7 @@ Nothing else is on a branch: every team branch is merged into main in both repos
 3. **What D84 left out** (each needs something real first; AGENTS.md: no fake features): the evening wrap, the
    choice card for drops, the stack's arc animation, voice's level-reactive pool, answering cards from the keyboard
    outside Ask, Ask's "Open in History" header, the companions' own reactions, the Week view's "read only" note and
-   "+1" overlaps, a watch's detail page (no check log or page versions are kept), a per-source "what may interrupt
+   "+1" overlaps, a per-source "what may interrupt
    you" table (no source has a level of its own).
 4. **Games not built** (D79): catching the companion in Which Cup? by clicking it, AI trivia packs, Connect Four,
    dragging a plot from the keyboard, a hint that plays its move, a daily board per level.

@@ -117,6 +117,8 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `SayPanel`, `SayWords` | `SayPanel.swift` | what typed words will do, from `IntentPlan`: sentence, chips, AI chip, keys |
 | `PersonAvatar`, `CompanionAvatar` | `HistoryView.swift` | who did something, beside a sentence |
 | `GalleryArt` | `HomeGalleryView.swift` | a gallery picture filling a card's top |
+| `CheckTicks` (+ `CheckWords`), `CheckRow` | `WatchChecks.swift` | a watch's last checks as ticks, oldest to newest, in `StatusTone.check`'s colours with their counts said for VoiceOver (On duty's rows, 24; the watch's page, 48); one run on its timeline (D87) |
+| `WatchChangeLines`, `WatchChangeColumns`, `DiffLineView` | `WatchChangeView.swift` | "what changed" from `LineDiff`, inline or side by side: − struck in muted ink, + on the news tint, folded lines as a count; never red or green |
 
 ## Not built yet (phases 2 and 5)
 
