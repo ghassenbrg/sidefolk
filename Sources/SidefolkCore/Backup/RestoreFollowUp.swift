@@ -26,8 +26,12 @@ public struct RestoreFollowUp: Sendable {
     }
 
     let paths: SidefolkPaths
+    let builtInWait: TimeInterval
 
-    public init(paths: SidefolkPaths) { self.paths = paths }
+    public init(paths: SidefolkPaths, builtInWait: TimeInterval = 60) {
+        self.paths = paths
+        self.builtInWait = builtInWait
+    }
 
     private var file: URL { paths.home.appendingPathComponent(BackupRestore.followUp) }
     private var review: URL { paths.home.appendingPathComponent(BackupRestore.reviewFolder) }
@@ -41,7 +45,10 @@ public struct RestoreFollowUp: Sendable {
     public func run(_ plan: BackupRestore.Plan, store: AddonStore, host: ExtensionHost, themes: ThemeLibrary, channel: UpdateChannel,
                     step: @Sendable (String) async -> Void = { _ in }) async -> Report {
         var report = Report()
+        // The built-ins are installed at launch, beside this: each gets its switch back once it's there (a minute at most).
+        let deadline = Date().addingTimeInterval(builtInWait)
         for e in plan.extensions where e.source == .builtIn {
+            while await host.info(id: e.id) == nil, Date() < deadline { try? await Task.sleep(for: .milliseconds(300)) }
             if let info = await host.info(id: e.id), info.enabled != e.enabled { try? await host.setEnabled(e.enabled, id: e.id) }
         }
         let gallery = plan.extensions.filter { $0.source == .gallery }.map { ($0.id, $0.name, AddonEntry.Kind.extension, $0.enabled) }

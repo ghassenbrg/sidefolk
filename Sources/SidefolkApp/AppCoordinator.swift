@@ -83,6 +83,9 @@ final class AppCoordinator {
     /// What a "Fewer like this" changed, by the id of the whisper that offers Undo (D88).
     var levelUndo: [String: (source: InterruptSource, before: InterruptLevel?)] = [:]
     var fullAccessTimer: Task<Void, Never>?
+    /// What this launch's restore did, set before `start` (D91), and the restore's state for Settings.
+    var restoreOutcome: BackupRestore.Outcome?
+    let restoreModel = RestoreModel()
     #if DEBUG
     /// Set by the `connect:` dev command so a QA copy's Connect can run without a click (D86).
     var devAcceptsNextConfirmation = false
@@ -188,6 +191,7 @@ final class AppCoordinator {
             Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
         }
         installHelperLink()
+        await resumeRestore()
         IntegrationLocations.prepareStandIns(paths: runtime.paths)
         // Extension pages' charts reach back a day, and Today's tiles stay current (D62).
         await runtime.extensions.startPageSampling()
@@ -368,6 +372,7 @@ final class AppCoordinator {
             return
         }
         if command == "about" { showAbout(); return }
+        if devBackup(command) { return }
         if devConnect(command) { return }
         if command == "calendar" || command.hasPrefix("calendar:") {
             let parts = command.split(separator: ":").dropFirst().map(String.init)

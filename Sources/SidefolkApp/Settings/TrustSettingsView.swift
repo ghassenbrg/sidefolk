@@ -24,6 +24,8 @@ struct TrustSettingsView: View {
 
     var body: some View {
         page.sheet(isPresented: $confirmingDelete) { DeleteAllSheet(model: model) }
+            .sheet(isPresented: Binding(get: { model.backingUp }, set: { model.backingUp = $0 })) { BackupSheet(model: model) }
+            .sheet(item: Binding(get: { model.restoreCandidate }, set: { model.restoreCandidate = $0 })) { RestoreSheet(model: model, candidate: $0) }
     }
 
     private var page: some View {
@@ -225,6 +227,7 @@ struct TrustSettingsView: View {
 
     private var data: some View {
         SettingsGroup(title: "Your data") {
+            BackupRows(model: model)
             SettingsRow(.exportData) {
                 Button("Export data…") { save(name: String(localized: "Sidefolk Export"), type: .json) { await model.exportData(to: $0) } }
                     .buttonStyle(.sf(.secondary))

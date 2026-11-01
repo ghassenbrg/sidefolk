@@ -24,6 +24,8 @@ final class FixtureServices: AppServices {
         model.phase = .upToDate
         return model
     }()
+    /// Nothing restored; snapshots fill it to show a restore's follow-up.
+    let restore = RestoreModel()
     let location = FixtureLocationServices()
     var locationServices: any LocationServices { location }
 
@@ -329,6 +331,11 @@ final class FixtureServices: AppServices {
     func deleteAllData() async -> UserFacingError? { nil }
     func revealDataFolder() {}
     func exportDiagnostics(to url: URL) async -> UserFacingError? { nil }
+    func backUp(to url: URL, password: String?) async -> UserFacingError? { nil }
+    func openBackup(_ url: URL) async -> Result<OpenedBackup, UserFacingError> { .failure(UserFacingError("Not in snapshots.")) }
+    func restore(_ backup: OpenedBackup, password: String?) async -> UserFacingError? { nil }
+    func undoRestore() -> UserFacingError? { nil }
+    func reviewRestored(_ item: RestoreFollowUp.ReviewItem) {}
 
     // MARK: App
 

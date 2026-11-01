@@ -109,6 +109,21 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     }
     #endif
 
+    /// A companion from a restored backup's folder, asked about as any added from a folder (D60, D91).
+    func addRestoredCompanion(folder: URL) async { await model.gallery.add(companionFolder: folder) }
+
+    /// Settings › Trust › Your data with a backup to choose (D91): its Back up sheet, or the file picker for a restore.
+    func showBackup(restoring: Bool) {
+        show(tab: .trust)
+        if restoring { model.chooseBackup() } else { model.backingUp = true }
+    }
+
+    /// The restore sheet for this backup file, as if it were chosen.
+    func showRestore(of file: URL) {
+        show(tab: .trust)
+        Task { await model.open(backup: file) }
+    }
+
     /// The install preview of `folder` in its own window: Sidefolk's AI finished a draft, and the person
     /// decides there (D39). If it can't be previewed, Settings › Add-ons says why.
     func review(folder: URL) {

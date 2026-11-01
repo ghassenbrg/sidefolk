@@ -28,6 +28,10 @@ final class Onboarding {
         switch (step, action) {
         case (.hello, "skip"):
             finish()
+        case (.hello, "restore"):
+            // Someone moving from another Mac (D91): their backup brings their settings, this intro included.
+            finish()
+            coordinator.settingsWindow.showBackup(restoring: true)
         case (.hello, _):
             advance(to: .agents)
         case (.tryReminder, "show"):
@@ -100,7 +104,8 @@ final class Onboarding {
         switch step {
         case .hello:
             bubble("Hi, I'm \(name).", "I'll sit down here and keep track of things for you: notes, reminders, and things to watch.",
-                   [("hi", "Hi \(name)", true), ("skip", "Skip intro", false)], kind: welcome)
+                   [("hi", "Hi \(name)", true), ("restore", "Restoring from another Mac?", false), ("skip", "Skip intro", false)],
+                   kind: welcome)
         case .tryReminder:
             bubble("Give me something to remember.", "Click me or press \(hotkey). Try a reminder: no AI needed.",
                    [("show", "Show me", true), ("later", "Not now", false)])

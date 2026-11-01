@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func showAbout(_ sender: Any?) { coordinator?.showAbout() }
 
     @objc func openSettings(_ sender: Any?) { coordinator?.openSettings() }
+    @objc func backUp(_ sender: Any?) { coordinator?.settingsWindow.showBackup(restoring: false) }
+    @objc func restoreBackup(_ sender: Any?) { coordinator?.settingsWindow.showBackup(restoring: true) }
     @objc func openAsk(_ sender: Any?) { coordinator?.showAsk() }
 
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -37,6 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let paths = SidefolkPaths.standard()
         Log.shared.configure(directory: paths.logs, debug: false)
         Log.shared.info("app", "launch", ["version": SidefolkVersion.current, "home": paths.home.path])
+        // A restore staged before the relaunch (or its undo) swaps in now, before the database opens (D91).
+        let restored = BackupRestore(paths: paths).applyAtLaunch()
         Task {
             do {
                 let secrets = KeychainSecretStore()
@@ -48,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 DebugSnapshots.install(home: paths.home)
                 #endif
                 let coordinator = AppCoordinator(runtime: runtime)
+                coordinator.restoreOutcome = restored
                 self.coordinator = coordinator
                 await coordinator.start()
             } catch {
@@ -106,6 +111,9 @@ enum MainMenu {
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: String(localized: "Settings…"), action: #selector(AppDelegate.openSettings(_:)), keyEquivalent: ",")
         appMenu.addItem(withTitle: String(localized: "Ask Sidefolk…"), action: #selector(AppDelegate.openAsk(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: String(localized: "Back Up Everything…"), action: #selector(AppDelegate.backUp(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: String(localized: "Restore from a Backup…"), action: #selector(AppDelegate.restoreBackup(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: String(localized: "Hide Sidefolk"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(.separator())

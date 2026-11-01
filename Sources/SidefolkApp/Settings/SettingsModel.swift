@@ -44,6 +44,10 @@ final class SettingsModel {
     var confirmingFullAccess = false
     private(set) var folderError: UserFacingError?
     private(set) var dataMessage: Result<String, UserFacingError>?
+    // Back up and restore (D91): the Back up sheet, a backup chosen and checked for the restore sheet, and what happened.
+    var backingUp = false
+    var restoreCandidate: RestoreCandidate?
+    var backupMessage: Result<String, UserFacingError>?
 
     // Extensions
     private(set) var extensions: [ExtensionInfo] = []
