@@ -18,9 +18,13 @@ import Testing
 
     @Test func childSeesOnlyStandardDescriptors() async throws {
         // An inheritable descriptor in Sidefolk (like a database or socket) must not reach the child.
+        // F_DUPFD takes the first free number from 64 up. dup2 onto a fixed number silently closed whatever
+        // another test had left there (an NSPipe of SystemTool's awaiting its release), and the pipe closed
+        // that number again later, once something guarded had it: the kernel killed the run (EXC_GUARD).
         let fd = open("/dev/null", O_RDONLY)
-        let high = dup2(fd, 77)
+        let high = fcntl(fd, F_DUPFD, 64)
         close(fd)
+        try #require(high >= 64)
         defer { close(high) }
         #expect(fcntl(high, F_GETFD) & FD_CLOEXEC == 0)
         // `[ -e /dev/fd/N ]` opens nothing, so the loop lists exactly the descriptors the shell inherited.
