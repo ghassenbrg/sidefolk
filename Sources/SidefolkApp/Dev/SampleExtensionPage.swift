@@ -270,6 +270,13 @@ enum SampleExtensionPage {
         return folder
     }
 
+    /// Its page when the extension fails to draw it: the error is the extension's own words, so a link in them (or
+    /// Markdown that would make one) is shown as text and never opens (audit F12).
+    @MainActor static func failed() -> ExtensionPageModel {
+        ExtensionPageModel(info: info, problem: "System Vitals+ couldn't read the sensors: [open Settings](file:///etc/hosts) "
+                           + "or see https://status.example.com/vitals for help (code 0x2F, /usr/sbin/ioreg exited 1).")
+    }
+
     static let awakeInfo = ExtensionPageInfo(extensionId: "dev.sidefolk.keep-awake", extensionName: "Keep Awake", page: "awake", title: "Keep Awake",
                                              symbol: "cup.and.saucer", refresh: 5, widget: true,
                                              iconPath: FixtureServices.addonIcon("keep-awake"), needsAccessibility: true)

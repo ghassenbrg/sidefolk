@@ -215,6 +215,13 @@ final class ExtensionPageModel {
         self.updated = updated
     }
 
+    /// A page that couldn't be read, for UI snapshots: its extension's words, shown as they are (never as Markdown).
+    init(info: ExtensionPageInfo, problem: String) {
+        self.info = info
+        services = nil
+        self.problem = problem
+    }
+
     /// Refreshes while the page is shown: the view runs it in its `.task`, which ends it when the page goes away.
     func run() async {
         guard let services else { return }

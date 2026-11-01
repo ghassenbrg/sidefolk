@@ -32,6 +32,10 @@ enum AppLanguage {
     /// `NSApplication.shared`. Text keeps its natural direction; only the layout mirrors.
     static func applyLayoutDirection() {
         let key = "AppleTextDirection"
+        // Given on the command line (UI snapshot runs, SnapshotLanguage): it wins over the stored one, which stays
+        // as it is. Several runs share one defaults domain, so one run storing it while another removes it laid an
+        // Arabic run out left to right.
+        if UserDefaults.standard.volatileDomain(forName: UserDefaults.argumentDomain)[key] != nil { return }
         if Locale.Language(identifier: current).characterDirection == .rightToLeft {
             UserDefaults.standard.set(true, forKey: key)
         } else if UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? ProcessInfo.processInfo.processName)?[key] != nil {
