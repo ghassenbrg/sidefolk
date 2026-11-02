@@ -41,6 +41,8 @@ struct CalendarMonth: View {
                 }
                 .offset(y: -row - model.monthScroll)
                 .frame(height: row * CGFloat(rows), alignment: .top)
+                // The extra weeks scroll through this viewport; their hidden cells must not receive clicks.
+                .contentShape(Rectangle())
                 .clipped()
             }
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))

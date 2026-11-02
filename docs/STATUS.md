@@ -6,10 +6,11 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest is **snapshot 724** (2026-11-01, signed and notarized, on GitHub Releases),
+until the founder releases it. The latest is **snapshot 780** (2026-11-01, signed and notarized, on GitHub Releases),
 with the Lantern revamp (D84), the games look and the four puzzles (D79 amended), and D86–D91 (safety, watch
 history, interrupts, add-on updates, Ask lifetimes, backup). Main also carries the four themes (D92), the leftovers
-and the CI fix; `team/final` adds the games v2 (D79 look v2, D93, D95, D96), the Calendar v2 (D97) and the voice fix.
+and the CI fix, games v2 (D79 look v2, D93, D95, D96), Calendar v2 (D97) and the voice fix. Snapshot 780 fixes
+the month grid taking clicks over its view controls (hidden buffer weeks now have bounded hit areas).
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -140,7 +141,7 @@ Released or on main since snapshot 661 (D86–D92, the leftovers, the docs clean
 
 ## Next
 
-1. **The founder plays the games v2** (the Game Center, two players, AI trivia) and the Calendar v2 in the next snapshot.
+1. **The founder plays the games v2** (the Game Center, two players, AI trivia) and the Calendar v2 in snapshot 780, including switching out of Month in the originally affected setup.
 2. **Miraya on a real TV:** live screen and sound with the three sound choices (only an emulator paired so far, D81).
 3. **What D84 left out** (it needs something real first; AGENTS.md: no fake features): the evening wrap.
 4. **Games not built** (D79): Connect Four.
@@ -188,6 +189,9 @@ Released or on main since snapshot 661 (D86–D92, the leftovers, the docs clean
   behind main fails the gallery, words and game tests.
 - In the add-ons repository: `swift test`, `python3 scripts/build.py --unsigned`, `SIDEFOLK_APP=../sidefolk
   scripts/check.sh`, and `../sidefolk/scripts/extension-strings.py check`.
+- Calendar input regression: `SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots
+  build/calendar-input --check-calendar-input --language en` uses an offscreen fixture to check that hidden
+  month weeks cannot catch header clicks, and visible cells and view buttons still work (default Harbor theme).
 - UI: `SIDEFOLK_RESOURCES=$PWD/Resources swift run SidefolkApp --ui-snapshots <dir>` (add `--language de|ar|ja`,
   `--theme <id>` or `--only <prefix>`, e.g. `window-home`, `window-settings`, `desktop`, `panel-pocket`,
   `design-system`, `a11y`), read in light and dark against [DESIGN.md](DESIGN.md).

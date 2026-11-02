@@ -55,6 +55,10 @@ enum UISnapshots {
     private static func render(into dir: URL) async throws {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let (full, filled) = try await makeHome(empty: false)
+        if CommandLine.arguments.contains("--check-calendar-input") {
+            try await CalendarInputCheck.run(model: full, into: dir)
+            return
+        }
         let (empty, _) = try await makeHome(empty: true)
         let (settings, fixtures) = try await makeSettings()
         guard let sample = filled else { return }
