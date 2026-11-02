@@ -74,7 +74,7 @@ struct AskView: View {
             Text("Older answers are in History", comment: "Ask, under the results after some went by themselves")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .padding(.horizontal, Theme.Space.l)
         .padding(.bottom, Theme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -91,7 +91,7 @@ struct AskView: View {
                     .background(Capsule().fill(Theme.line.opacity(0.7)))
                     .contentShape(Capsule())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .fixedSize()
             .help("Remove every result below and start a new conversation")
         }
@@ -130,7 +130,7 @@ struct AskView: View {
                 HStack(spacing: 6) {
                     Chip(verbatim: attachment.label, tone: .accent, systemImage: icon(for: attachment))
                     Button { model.attachment = nil } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
+                        .buttonStyle(.sfIcon(side: 22)).foregroundStyle(Theme.inkFaint)
                         .accessibilityLabel("Remove attachment")
                 }
                 if model.text.isEmpty, !model.busy, let actions = model.actions {
@@ -146,7 +146,7 @@ struct AskView: View {
                 HStack(spacing: 6) {
                     Chip(verbatim: replyLabel(target), tone: .accent, systemImage: "arrowshape.turn.up.left")
                     Button { model.replyingTo = nil } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.inkFaint)
+                        .buttonStyle(.sfIcon(side: 22)).foregroundStyle(Theme.inkFaint)
                         .help("Don't reply")
                         .accessibilityLabel("Don't reply")
                 }
@@ -172,7 +172,7 @@ struct AskView: View {
                     Spacer(minLength: Theme.Space.s)
                     // Here rather than in the header: it says what continues, and the header has no room in longer languages.
                     Button(action: startFresh) { Label("New conversation", systemImage: "square.and.pencil") }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.sfBare)
                         .foregroundStyle(Theme.link)
                         .fixedSize()
                         .help(Text("\(String(localized: "New conversation")) (⌘N)", comment: "A button's name, then its shortcut"))
@@ -310,7 +310,7 @@ private struct RequestView: View {
                         .background(Circle().fill(Theme.line.opacity(hovering ? 0.8 : 0)))
                         .contentShape(Circle())
                 }
-                .buttonStyle(.plain).foregroundStyle(pinned ? Theme.link : Theme.inkMuted)
+                .buttonStyle(.sfBare).foregroundStyle(pinned ? Theme.link : Theme.inkMuted)
                 .opacity(hovering || pinned ? 1 : 0)
                 .help(pinned ? Text("Unpin", comment: "Ask: lets a pinned result go by itself again") : Text("Pin: keep it here", comment: "Ask: keeps a result past its time"))
                 .accessibilityLabel(pinned ? Text("Unpin", comment: "Ask: lets a pinned result go by itself again") : Text("Pin", comment: "Ask: keeps a result past its time"))
@@ -322,7 +322,7 @@ private struct RequestView: View {
                         .background(Circle().fill(Theme.line.opacity(hovering ? 0.8 : 0)))
                         .contentShape(Circle())
                 }
-                .buttonStyle(.plain).foregroundStyle(Theme.inkMuted)
+                .buttonStyle(.sfBare).foregroundStyle(Theme.inkMuted)
                 .opacity(hovering ? 1 : 0)
                 .help("Remove")
                 .accessibilityLabel(request.caption.map { Text("Remove “\($0)”") } ?? Text("Remove this result"))
@@ -392,7 +392,7 @@ private struct EntryView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.sfBare)
                     }
                 }
             }

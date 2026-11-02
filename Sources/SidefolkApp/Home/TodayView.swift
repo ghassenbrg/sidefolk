@@ -163,7 +163,7 @@ struct TodayView: View {
                         .overlay(Capsule().strokeBorder(Theme.line))
                         .frame(maxWidth: 320)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfBare)
                 }
             }
         }
@@ -206,7 +206,7 @@ private struct CountTile: View {
         .cardSurface()
         .accessibilityElement(children: .combine)
         if let action {
-            Button(action: action) { tile.contentShape(Rectangle()) }.buttonStyle(.plain)
+            Button(action: action) { tile.contentShape(Rectangle()) }.buttonStyle(.sfBare)
         } else {
             tile
         }

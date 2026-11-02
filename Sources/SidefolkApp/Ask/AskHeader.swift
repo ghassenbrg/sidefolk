@@ -79,7 +79,7 @@ struct AskHeader: View {
             .font(Theme.Font.callout)
             .lineLimit(1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .foregroundStyle(Theme.link)
         .help(Text("Open this conversation in History", comment: "Ask's header: the tooltip of Open in History"))
     }

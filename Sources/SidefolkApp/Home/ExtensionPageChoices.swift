@@ -99,7 +99,7 @@ private struct OptionCard: View {
                 .strokeBorder(picked ? Theme.accent : Theme.line, lineWidth: picked ? 2 : 1))
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .accessibilityLabel(Text(ext: [option.label, option.detail].compactMap { $0 }.joined(separator: ", ")))
         .accessibilityAddTraits(picked ? .isSelected : [])
     }
@@ -143,7 +143,7 @@ private struct OptionTile: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .accessibilityLabel(Text(ext: [option.label, option.detail, option.badge?.text].compactMap { $0 }.joined(separator: ", ")))
             .accessibilityAddTraits(picked ? .isSelected : [])
             if let action = option.action { PageButton(control: action, model: model) }
@@ -196,7 +196,7 @@ private struct OptionRow: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .accessibilityLabel(Text(ext: [option.label, option.detail, option.badge?.text].compactMap { $0 }.joined(separator: ", ")))
             .accessibilityAddTraits(picked ? .isSelected : [])
             if let action = option.action { PageButton(control: action, model: model) }

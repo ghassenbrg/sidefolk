@@ -23,7 +23,7 @@ struct SearchBox<Focus: Hashable>: View {
                 .onExitCommand { text = "" }
             if !text.isEmpty {
                 Button { text = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfIcon(side: 22))
                     .foregroundStyle(Theme.inkFaint)
                     .accessibilityLabel("Clear search")
             }

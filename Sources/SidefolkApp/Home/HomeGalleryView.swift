@@ -161,7 +161,7 @@ private struct CompanionGalleryCard: View {
                         if state == .wearing { badge(Text("In use", comment: "A Gallery companion: the one worn now")) }
                     }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .help(Text("Details of \(entry.name)", comment: "A companion card in the gallery: open its details"))
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {

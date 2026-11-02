@@ -93,7 +93,7 @@ private struct ChosenPlaceRows: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .accessibilityLabel(Text("Use \(place.fullName)", comment: "A button: “Use Portland, Oregon, United States”"))
             }
         }

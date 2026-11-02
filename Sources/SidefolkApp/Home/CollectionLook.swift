@@ -99,7 +99,7 @@ struct CollectionLookPicker: View {
                         Circle().fill(option.color).frame(width: 20, height: 20)
                             .overlay { if color == option.name { Circle().strokeBorder(Theme.ink.opacity(0.7), lineWidth: 2).padding(-3) } }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfBare)
                     .accessibilityLabel(Text(verbatim: option.name))
                     .accessibilityAddTraits(color == option.name ? .isSelected : [])
                 }
@@ -112,7 +112,7 @@ struct CollectionLookPicker: View {
                             .background(chosen(name) ? CollectionLook.color(preview).opacity(0.18) : Theme.surfaceSunken,
                                         in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfBare)
                     .accessibilityLabel(Text(verbatim: name))
                     .accessibilityAddTraits(chosen(name) ? .isSelected : [])
                 }

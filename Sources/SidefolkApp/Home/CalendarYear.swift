@@ -35,7 +35,7 @@ struct CalendarYear: View {
                 Text(verbatim: first.formatted(.dateTime.month(.wide))).font(Theme.Font.headline)
                     .foregroundStyle(cal.isDate(first, equalTo: Date(), toGranularity: .month) ? Theme.link : Theme.ink)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .accessibilityAddTraits(.isHeader)
             Grid(horizontalSpacing: 0, verticalSpacing: 2) {
                 GridRow {
@@ -73,7 +73,7 @@ struct CalendarYear: View {
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .help(Text(verbatim: day.formatted(.dateTime.weekday(.wide).day().month(.wide))))
         .accessibilityLabel(Text(verbatim: day.formatted(.dateTime.weekday(.wide).day().month(.wide))))
         .accessibilityValue(count > 0 ? Text("\(count) things", comment: "The Calendar's narrow month: how many things a day has") : Text(verbatim: ""))

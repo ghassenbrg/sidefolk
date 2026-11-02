@@ -13,12 +13,37 @@ struct HomeSidebar: View {
     private var now: NowModel { model.now }
 
     var body: some View {
-        List(selection: $model.selection) {
+        // Above the list, not in it: only the list scrolls, however many collections and pages it holds.
+        VStack(spacing: 0) {
             Button { model.selection = .now } label: { SidebarNook(model: now) }
-                .buttonStyle(.plain)
-                .selectionDisabled()
-                .listRowSeparator(.hidden)
-                .padding(.bottom, Theme.Space.s)
+                .buttonStyle(.sfBare)
+                .padding(.horizontal, Theme.Space.m)
+                .padding(.top, Theme.Space.s)
+                .padding(.bottom, Theme.Space.xs)
+            list
+        }
+        // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
+        .background(ThemeStore.shared.style.tokens.material.sidebar == .solid ? Theme.surface : .clear)
+        .alert("Delete “\(deleting?.name ?? "")”?", isPresented: Binding(
+            get: { deleting != nil }, set: { if !$0 { deleting = nil } }
+        ), presenting: deleting) { c in
+            Button("Delete collection", role: .destructive) {
+                if model.selection == .collection(c.id) { model.selection = .now }
+                Task { await notebook.delete(c) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { c in
+            let n = notebook.counts[c.id] ?? 0
+            if n == 0 {
+                Text("It's empty.")
+            } else {
+                Text("\(n) items in it move to the Trash for 30 days. Restored items go to the Inbox.")
+            }
+        }
+    }
+
+    private var list: some View {
+        List(selection: $model.selection) {
             Section {
                 ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
                     placeRow(place, index: i)
@@ -40,7 +65,7 @@ struct HomeSidebar: View {
                     Text("Notebook")
                     Spacer()
                     Button { model.collectionSheet = .create } label: { Image(systemName: "plus").font(.system(size: 11, weight: .semibold)) }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.sfIcon(side: 22))
                         .foregroundStyle(Theme.inkMuted)
                         .help("New collection")
                         .accessibilityLabel("New collection")
@@ -64,17 +89,15 @@ struct HomeSidebar: View {
         }
         .listStyle(.sidebar)
         .scrollContentBackground(.hidden)
-        // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
-        .background(ThemeStore.shared.style.tokens.material.sidebar == .solid ? Theme.surface : .clear)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 QuietPill(model: model)
                 Spacer(minLength: Theme.Space.xs)
                 // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window is in front.
                 Button { model.services.openSettings(tab: nil) } label: {
-                    Image(systemName: "gearshape").font(.system(size: 14)).frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget)
+                    Image(systemName: "gearshape").font(.system(size: 14))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfIcon)
                 .foregroundStyle(Theme.inkMuted)
                 .help("Settings (⌘,)")
                 .accessibilityLabel("Settings")
@@ -82,22 +105,6 @@ struct HomeSidebar: View {
             .padding(.horizontal, Theme.Space.m)
             .padding(.vertical, Theme.Space.s)
             .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 1).padding(.horizontal, Theme.Space.m) }
-        }
-        .alert("Delete “\(deleting?.name ?? "")”?", isPresented: Binding(
-            get: { deleting != nil }, set: { if !$0 { deleting = nil } }
-        ), presenting: deleting) { c in
-            Button("Delete collection", role: .destructive) {
-                if model.selection == .collection(c.id) { model.selection = .now }
-                Task { await notebook.delete(c) }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { c in
-            let n = notebook.counts[c.id] ?? 0
-            if n == 0 {
-                Text("It's empty.")
-            } else {
-                Text("\(n) items in it move to the Trash for 30 days. Restored items go to the Inbox.")
-            }
         }
     }
 

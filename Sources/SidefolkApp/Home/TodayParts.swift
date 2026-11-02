@@ -27,7 +27,7 @@ struct WatchCard: View {
             .lanternTile(bar: bar(waiting: waiting))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .contextMenu {
             Button { Task { await model.checkNow(watcher) } } label: { Text(verbatim: WatchWordsUI.checkNow) }.disabled(watcher.state == .paused)
             if watcher.state == .paused {
@@ -110,7 +110,7 @@ struct ReportCard: View {
             .lanternTile(bar: nil)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .popover(isPresented: $open, arrowEdge: .bottom) {
             ReportRow(report: report, reading: reading, model: model).frame(width: 380)
         }
@@ -173,7 +173,7 @@ struct TomorrowColumn: View {
             let more = max(0, rows.count - 4) + later.count
             if more > 0 {
                 Button("+ \(more) more") { showingLater = true }
-                    .buttonStyle(.plain).font(Theme.Font.caption).foregroundStyle(Theme.link)
+                    .buttonStyle(.sfBare).font(Theme.Font.caption).foregroundStyle(Theme.link)
                     .popover(isPresented: $showingLater, arrowEdge: .bottom) {
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(reminders + later) { r in ReminderRow(reminder: r, later: true, model: model) }

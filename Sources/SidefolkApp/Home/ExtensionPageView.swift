@@ -203,7 +203,7 @@ struct SectionView: View {
                     .cardSurface()
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityValue(open ? Text("Unfolded", comment: "Spoken state of a section of an extension page that folds: open now")
                                          : Text("Folded", comment: "Spoken state of a section of an extension page that folds: closed now"))

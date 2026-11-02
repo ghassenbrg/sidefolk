@@ -26,7 +26,7 @@ struct ConnectionsSettingsView: View {
                 } label: {
                     Text("Open Trust", comment: "Settings › Connections: opens Trust › What other agents may do").font(Theme.Font.captionStrong)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .foregroundStyle(Theme.link)
             }
         }

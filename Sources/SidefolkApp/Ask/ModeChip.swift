@@ -20,7 +20,7 @@ struct ModeChip: View {
             .background(background, in: Capsule())
             .contentShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .fixedSize()
         .help(Text(verbatim: mode.explanation))
         .accessibilityLabel(Text("Approval mode: \(mode.title)"))

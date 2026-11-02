@@ -215,7 +215,7 @@ struct PageCard: View {
     var body: some View {
         HStack(alignment: size == .large ? .top : .center, spacing: Theme.Space.m) {
             if let first = item.actions.first, !first.disabled {
-                Button { Task { await model.run(first, on: nil) } } label: { tile }.buttonStyle(.plain).accessibilityHidden(true)
+                Button { Task { await model.run(first, on: nil) } } label: { tile }.buttonStyle(.sfBare).accessibilityHidden(true)
             } else {
                 tile
             }

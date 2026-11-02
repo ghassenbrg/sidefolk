@@ -14,7 +14,7 @@ struct AddCompanionTile: View {
             ActionTileLabel(systemImage: "plus", title: Text("Add your own", comment: "The tile after the companions in Settings: add one you made"),
                             detail: Text("3D or 2D", comment: "Under Add Your Own: the kinds of companion you can add"))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .popover(isPresented: $chooser.adding, arrowEdge: .bottom) { AddCompanionOptions(model: model) }
         .accessibilityLabel(Text("Add your own companion", comment: "The Add Your Own tile, for VoiceOver"))
     }
@@ -91,7 +91,7 @@ struct MoreCompanionsTile: View {
                             detail: count > 0 ? Text("\(count) in the gallery", comment: "Under Get More: how many companions the gallery has that aren't here")
                                               : Text("Browse the gallery", comment: "Under Get More, when nothing new is known yet"))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
     }
 }
 

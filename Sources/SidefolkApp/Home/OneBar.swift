@@ -93,7 +93,7 @@ struct FoundList: View {
                 Eyebrow(Text(title))
                 ForEach(found) { item in
                     Button { open(item) } label: { FoundRow(found: item) }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.sfBare)
                 }
             }
         }
@@ -205,7 +205,7 @@ struct WillDo: View {
                 .background(Theme.accentSoft.opacity(0.7))
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             Text(verbatim: toolLine(plan, name: name))
                 .font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.inkMuted)
                 .padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s)
@@ -258,7 +258,7 @@ struct WillDo: View {
             .padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
     }
 }
 

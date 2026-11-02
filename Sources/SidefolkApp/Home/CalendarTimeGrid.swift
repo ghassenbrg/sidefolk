@@ -146,7 +146,7 @@ struct CalendarTimeGrid: View {
                             Button { model.show(day: day) } label: {
                                 Text(verbatim: "\u{2066}+\(more.formatted())\u{2069}").font(Theme.Font.captionStrong).foregroundStyle(Theme.link)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.sfBare)
                             .frame(width: width - 4, alignment: .trailing)
                             .padding(.leading, CGFloat(index) * width)
                             .padding(.top, CGFloat(rows) * row)

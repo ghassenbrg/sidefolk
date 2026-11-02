@@ -72,7 +72,7 @@ struct SegmentedPicker<Value: Hashable>: View {
                     }
                     .contentShape(inner)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .accessibilityAddTraits(chosen ? [.isButton, .isSelected] : .isButton)
             }
         }

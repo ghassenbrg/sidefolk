@@ -69,7 +69,7 @@ struct GeneralSettingsView: View {
             .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
         }
         .menuStyle(.button)
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .menuIndicator(.hidden)
         .fixedSize()
         .accessibilityLabel(Text("\(title) \(TimeText.hour(value))"))

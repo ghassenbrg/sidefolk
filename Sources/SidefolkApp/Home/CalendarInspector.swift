@@ -73,7 +73,7 @@ struct CalendarInspector: View {
                     Button { model.now.open(item) } label: {
                         Label { Text(ItemLink.openTitle(item.kind)) } icon: { Image(systemName: ItemKindStyle.symbol(item.kind)) }
                     }
-                    .buttonStyle(.plain).foregroundStyle(Theme.link).font(Theme.Font.body)
+                    .buttonStyle(.sfBare).foregroundStyle(Theme.link).font(Theme.Font.body)
                 }
                 if let who = Describe.source(reminder.source) { fact("person", String(localized: "from \(who)")) }
                 if let notes = reminder.notes, !notes.isEmpty { fact("text.alignleft", notes) }

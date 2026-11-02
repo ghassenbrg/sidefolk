@@ -679,7 +679,7 @@ struct ChoiceRow: View {
             .padding(.vertical, Theme.Space.m - 1)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }

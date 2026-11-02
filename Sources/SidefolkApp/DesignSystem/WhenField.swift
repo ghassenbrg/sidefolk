@@ -47,7 +47,7 @@ struct WhenField<Focus: Hashable>: View {
         Button { picking.toggle() } label: {
             Image(systemName: "calendar").foregroundStyle(picking ? Theme.link : Theme.inkMuted)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfIcon(side: 22))
         .keyboardShortcut(.downArrow, modifiers: .command)
         .help(Text("Pick a date and time (⌘↓)"))
         .accessibilityLabel(Text("Pick a date and time"))

@@ -304,7 +304,7 @@ private struct AccentSwatches: View {
                     .overlay(Circle().strokeBorder(accent == selected ? color(accent) : .clear, lineWidth: 2))
                     .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .help(name(accent))
                 .accessibilityLabel(name(accent))
                 .accessibilityAddTraits(accent == selected ? [.isButton, .isSelected] : .isButton)

@@ -271,7 +271,7 @@ private struct WatchDutyRow: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .accessibilityHint(Text("Shows the watch"))
     }
 

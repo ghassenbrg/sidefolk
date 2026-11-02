@@ -135,7 +135,7 @@ struct MoreChip: View {
                 .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.line))
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .help(Text("\(entries.count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click lists them"))
         .accessibilityLabel(Text("\(entries.count) more at this time", comment: "The Calendar's week: things that didn't fit side by side; a click lists them"))
         .popover(isPresented: $open, arrowEdge: .trailing) {
@@ -169,7 +169,7 @@ struct MoreChip: View {
                     .frame(minHeight: Theme.Size.compactRow)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .accessibilityLabel(Text(verbatim: entry.spoken))
             }
         }

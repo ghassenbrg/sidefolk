@@ -71,7 +71,7 @@ struct DropCard: View {
             DropChoiceLabel(symbol: offer.symbol ?? "puzzlepiece.extension", title: Text(ext: offer.title),
                             detail: Text(ext: offer.detail.map { "\($0) · \(offer.extensionName)" } ?? offer.extensionName), first: false)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
     }
 
     @ViewBuilder private func cell(_ choice: DropChoice, first: Bool) -> some View {
@@ -90,12 +90,12 @@ struct DropCard: View {
             }
             .menuStyle(.button)
             .menuIndicator(.hidden)
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
         } else {
             Button { choose(choice) } label: {
                 DropChoiceLabel(symbol: Self.symbol(choice, kind: attachment.dropKind), title: words.title, detail: words.detail, first: first)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
         }
     }
 

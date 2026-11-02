@@ -170,7 +170,7 @@ struct PocketView: View {
                     .fixedSize()
                     Spacer()
                     Button { actions.openAttentionSettings() } label: { Text("Attention settings…", comment: "The Pocket: opens Settings › Attention") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.link)
+                        .buttonStyle(.sfBare).foregroundStyle(Theme.link)
                 }
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
             } else if let hours = content.quietHours {
@@ -210,7 +210,7 @@ struct PocketView: View {
                     title.font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
                     Spacer()
                     if let trailing {
-                        Button(action: trailing.1) { trailing.0.font(Theme.Font.captionStrong) }.buttonStyle(.plain).foregroundStyle(Theme.link)
+                        Button(action: trailing.1) { trailing.0.font(Theme.Font.captionStrong) }.buttonStyle(.sfBare).foregroundStyle(Theme.link)
                     }
                 }
                 .padding(.horizontal, Theme.Space.xs)
@@ -278,7 +278,7 @@ private struct PocketRow: View {
             .background(hovering ? Theme.well : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .onHover { hovering = $0 }
         .accessibilityElement(children: .combine)
     }

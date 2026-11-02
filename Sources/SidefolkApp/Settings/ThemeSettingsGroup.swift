@@ -232,7 +232,7 @@ private struct ThemeCard: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: tokens.name))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
@@ -306,7 +306,7 @@ private struct GalleryThemeCard: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .disabled({ if case .working = state { true } else { false } }())
         .accessibilityLabel(Text(verbatim: "\(entry.name), \(entry.tagline)"))
         .accessibilityHint(Text("Downloads it and uses it"))

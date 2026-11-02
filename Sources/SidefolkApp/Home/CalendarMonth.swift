@@ -82,7 +82,7 @@ struct CalendarMonth: View {
                 }
                 if entries.count > shown {
                     Button("+ \(entries.count - shown) more") { model.show(day: day) }
-                        .buttonStyle(.plain).font(Theme.Font.caption).foregroundStyle(Theme.link)
+                        .buttonStyle(.sfBare).font(Theme.Font.caption).foregroundStyle(Theme.link)
                         .padding(.horizontal, 5)
                 }
             }

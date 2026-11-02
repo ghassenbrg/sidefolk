@@ -242,9 +242,9 @@ private struct FormatBar: View {
 
     private func button(_ symbol: String, _ help: Text, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 12.5, weight: .medium)).frame(width: 28, height: 24).contentShape(Rectangle())
+            Image(systemName: symbol).font(.system(size: 12.5, weight: .medium)).frame(width: 28, height: 24)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfIcon(side: 24))
         .help(help)
         .accessibilityLabel(help)
     }

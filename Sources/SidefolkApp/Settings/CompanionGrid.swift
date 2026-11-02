@@ -151,7 +151,7 @@ private struct CompanionTile: View {
                 .strokeBorder(wearing ? Theme.accent : Theme.line, lineWidth: wearing ? 2 : 1))
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .help(companion.tagline)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [companion.name, companion.tagline, CompanionWords.origin(companion.origin),
@@ -168,7 +168,7 @@ private struct CompanionTile: View {
                     .contentShape(Circle())
             }
             .menuStyle(.button)
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .menuIndicator(.hidden)
             .fixedSize()
             .padding(Theme.Space.xs)
@@ -180,7 +180,7 @@ private struct CompanionTile: View {
                 Button { perform(.update(version: update)) } label: {
                     Image(systemName: "arrow.down.circle.fill").font(.system(size: 15)).foregroundStyle(Theme.accent)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfIcon(side: 22))
                 .padding(Theme.Space.xs)
                 .help(Text("Update \(companion.name) to \(update)", comment: "A companion's menu: install the gallery's newer version"))
                 .accessibilityLabel(Text("Update \(companion.name) to \(update)", comment: "A companion's menu: install the gallery's newer version"))

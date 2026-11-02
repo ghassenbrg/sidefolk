@@ -51,7 +51,7 @@ struct CompactRow<Badge: View, Title: View, Subtitle: View, Trailing: View, Deta
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .focused(focus, equals: .row(id))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(label)

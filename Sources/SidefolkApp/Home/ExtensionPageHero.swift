@@ -32,7 +32,7 @@ struct PageButton: View {
             Image(systemName: control.symbol.map { $0.replacingOccurrences(of: ".fill", with: "") + ".circle.fill" } ?? "circle.fill")
                 .font(.system(size: 26)).foregroundStyle(Theme.accent)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .disabled(running || control.disabled)
         .help(control.detail.map { Text(ext: $0) } ?? Text(ext: control.label))
         .accessibilityLabel(Text(ext: control.label))
@@ -293,7 +293,7 @@ private struct RoundButton: View {
                 .overlay { if !primary { Circle().strokeBorder(Theme.line) } }
                 .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .opacity(running || control.disabled ? 0.45 : 1)
         .disabled(running || control.disabled)
         .help(Text(ext: control.label))

@@ -100,7 +100,7 @@ private struct ProviderOption: View {
                 .padding(.vertical, Theme.Space.m - 2)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
 

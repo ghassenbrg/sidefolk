@@ -152,9 +152,9 @@ struct SurfaceButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: side * 0.45, weight: .semibold)).foregroundStyle(Theme.inkMuted)
-                .frame(width: side, height: side).contentShape(Circle())
+                .frame(width: side, height: side)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfIcon(side: side))
         .focusable(false)
         .help(label)
         .accessibilityLabel(label)

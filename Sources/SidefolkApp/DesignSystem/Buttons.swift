@@ -124,6 +124,66 @@ struct SFButtonStyle: ButtonStyle {
     }
 }
 
+/// A button with no look of its own: a row, a tile, a card, words. SwiftUI's `.plain` takes a click only on what is
+/// drawn, the lines of a symbol and the letters of a word, whatever frame it has; this takes it anywhere in its frame.
+/// `ButtonHitAreaTests` keeps `.plain` out of the app (DESIGN.md › Buttons).
+struct SFBareButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Bare(configuration: configuration)
+    }
+
+    /// A view, so it can read whether the button is enabled (a ButtonStyle can't).
+    private struct Bare: View {
+        var configuration: Configuration
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .contentShape(Rectangle())
+                .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+        }
+    }
+}
+
+/// A button that is only a symbol: at least `side` square, all of it taking the click and showing the hover. The size
+/// has to be real layout: a shape or padding reaching past a view's frame takes no clicks, and where two overlap
+/// neither does (measured with synthetic clicks, 2026-11-03).
+struct SFIconButtonStyle: ButtonStyle {
+    var side: CGFloat = Theme.Size.hitTarget
+
+    func makeBody(configuration: Configuration) -> some View {
+        Icon(side: side, configuration: configuration)
+    }
+
+    private struct Icon: View {
+        var side: CGFloat
+        var configuration: Configuration
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var hovered = false
+
+        var body: some View {
+            let shape = RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+            configuration.label
+                .frame(minWidth: side, minHeight: side)
+                .background(Theme.ink.opacity(isEnabled ? (configuration.isPressed ? 0.12 : hovered ? 0.06 : 0) : 0), in: shape)
+                .contentShape(shape)
+                .opacity(isEnabled ? 1 : 0.4)
+                .onHover { hovered = $0 }
+                .animation(Theme.Motion.micro, value: configuration.isPressed)
+                .animation(Theme.Motion.micro, value: hovered)
+        }
+    }
+}
+
+extension ButtonStyle where Self == SFBareButtonStyle {
+    static var sfBare: SFBareButtonStyle { SFBareButtonStyle() }
+}
+
+extension ButtonStyle where Self == SFIconButtonStyle {
+    static var sfIcon: SFIconButtonStyle { SFIconButtonStyle() }
+    static func sfIcon(side: CGFloat) -> SFIconButtonStyle { SFIconButtonStyle(side: side) }
+}
+
 extension ButtonStyle where Self == SFButtonStyle {
     static var sfPrimary: SFButtonStyle { SFButtonStyle(kind: .primary) }
     static var sfSecondary: SFButtonStyle { SFButtonStyle(kind: .secondary) }

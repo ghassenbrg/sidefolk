@@ -67,7 +67,7 @@ struct ExtensionWidgetsSection: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .help(Text("Open \(w.info.title)", comment: "A Today tile for an extension's page; the page's title"))
             if let control = w.summary?.control {
                 QuickControl(info: w.info, control: control, pages: pages)

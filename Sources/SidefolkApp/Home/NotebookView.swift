@@ -148,11 +148,13 @@ private struct ItemList: View {
                 .accessibilityLabel(searchPrompt)
             if !model.query.isEmpty {
                 Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfIcon(side: 22))
                     .foregroundStyle(Theme.inkFaint)
                     .accessibilityLabel("Clear search")
             }
         }
+        // The clear button's height, so the box doesn't jump at the first letter.
+        .frame(minHeight: 22)
         .padding(.horizontal, Theme.Space.s)
         .padding(.vertical, 6)
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))

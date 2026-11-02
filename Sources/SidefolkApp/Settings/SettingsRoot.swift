@@ -159,7 +159,7 @@ private struct SidebarTab: View {
             .contentShape(Rectangle())
             .opacity(found == 0 ? 0.45 : 1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .onHover { hovering = $0 }
         .accessibilityLabel(Text(verbatim: tab.title))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
@@ -186,7 +186,7 @@ private struct SettingsSearchField: View {
                 .onChange(of: navigation.query) { navigation.highlighted = navigation.results.first }
             if !navigation.query.isEmpty {
                 Button { navigation.query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfIcon(side: 22))
                     .foregroundStyle(Theme.inkFaint)
                     .accessibilityLabel("Clear search")
             }
@@ -277,7 +277,7 @@ struct SettingsSearchResults: View {
                     .font(Theme.Font.captionStrong)
                     .foregroundStyle(Theme.link)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
             }
             RowsCard {
                 ForEach(keys, id: \.self) { key in
@@ -309,7 +309,7 @@ private struct SearchResultRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .accessibilityHint(Text("Opens it in \(key.tab.title)", comment: "VoiceOver: a Settings search result opens its tab"))
             SettingInlineControl(key: key, model: model)
         }

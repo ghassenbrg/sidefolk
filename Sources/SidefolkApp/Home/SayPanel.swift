@@ -75,7 +75,7 @@ struct SayPanel: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
     }
 }
 

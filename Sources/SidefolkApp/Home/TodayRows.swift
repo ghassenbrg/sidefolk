@@ -204,7 +204,7 @@ struct QueueRow: View {
                             Image(systemName: "chevron.forward").font(.system(size: 10, weight: .semibold))
                         }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfBare)
                     .font(Theme.Font.bodyStrong).foregroundStyle(Theme.link)
                 }
                 ButtonRow(spacing: Theme.Space.s) {
@@ -413,9 +413,8 @@ struct CheckCircle: View {
                 }
             }
             .frame(width: 18, height: 18)
-            .contentShape(Circle().inset(by: -4))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfIcon(side: 22))
         .accessibilityLabel(label)
         .accessibilityAddTraits(checked ? .isSelected : [])
     }
@@ -525,7 +524,7 @@ struct ItemLink: View {
             .font(Theme.Font.caption)
             .lineLimit(1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .foregroundStyle(Theme.link)
         .help(Text("Open “\(item.title.clipped(60))” in the Notebook"))
         .accessibilityLabel(Text("Open “\(item.title.clipped(60))” in the Notebook"))

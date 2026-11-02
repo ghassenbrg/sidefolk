@@ -112,7 +112,7 @@ enum SampleCompanions {
                     CompanionMenuItems(companion: companion, actions: chooser.actions(for: companion, worn: companion.wear == worn),
                                        perform: { _ in })
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.sfBare)
                 .labelStyle(.titleAndIcon)
                 .font(Theme.Font.body)
                 .padding(Theme.Space.s)

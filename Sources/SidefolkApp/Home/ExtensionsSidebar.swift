@@ -61,7 +61,7 @@ struct ExtensionsSidebarSection: View {
                 }
                 .foregroundStyle(Theme.link)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             .tag(HomeSelection.gallery)
             .help(Text("Companions, extensions and themes in the Gallery"))
         } header: {

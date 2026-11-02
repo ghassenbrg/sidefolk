@@ -75,7 +75,7 @@ struct CalendarSidebar: View {
             .frame(minHeight: Theme.Size.sidebarRow - 6)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .accessibilityLabel(Text(verbatim: title))
         .accessibilityValue(shown ? Text("Shown", comment: "A calendar in the list is shown") : Text("Hidden", comment: "A calendar in the list is hidden"))
         .accessibilityAddTraits(shown ? .isSelected : [])
@@ -139,7 +139,7 @@ struct CalendarMiniMonth: View {
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .accessibilityLabel(Text(verbatim: day.formatted(.dateTime.weekday(.wide).day().month(.wide))))
     }
 }

@@ -374,6 +374,7 @@ final class AppCoordinator {
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
         if command.hasPrefix("home:") { home.showPlace(String(command.dropFirst(5))); return }
+        if command == "homeSmall" { home.devWindow?.setContentSize(NSSize(width: 860, height: 612)); return }
         if command.hasPrefix("flip:") {
             // flip:<extension id>/<page>:on|off: the page's main switch, as from its sidebar row (D67).
             let rest = command.dropFirst(5)
