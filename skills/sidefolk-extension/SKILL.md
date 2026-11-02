@@ -154,3 +154,8 @@ job truly needs it.
 - [ ] It has an icon, a description of at most 300 characters, a `tagline` of one line (at most 60 characters,
   shown under its name in Settings), and an author.
 - [ ] Nothing it sends leaves for an address the person didn't ask about.
+
+## More an extension can declare (D100)
+
+Rich page parts (`stats`, `cards`, `tabs`, `badges`, `recent`, `settings`), commands in every language (`strings/` under `commands`, `parts`, `choices`, `carry`), `entries` in the companion's menu, the Pocket and Ask, `drops` for what is dropped on the companion, `settings` the host keeps, `permissions.ai` for the person's AI (a stated purpose and a daily cap; no tools, nothing of the person's; validate the answer), and one History row (`sidefolk/activity.add`). See `docs/EXTENSIONS.md` and the sample `extensions/hello-abilities`.
+

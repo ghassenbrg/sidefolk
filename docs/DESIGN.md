@@ -138,3 +138,6 @@ On the desktop: the evening wrap (the stack's arc, the drop card, voice's pool, 
 built in the desktop polish, D84's note). Home is built (phase 3, D84; its theme layouts are
 retired); Settings, the Pocket, Full access with an end and the install passport are phase 4 (above); phase 5 polished
 them, moved the last fields to the well and made the Reduce Transparency and Increase Contrast versions.
+
+**Extension page parts (D100):** `PageSceneHero` (scene fades into the card at the leading edge, figure and bubble at the trailing end, title 30 heavy rounded), `PageStatStrip`, `PageCard` (large 84-pt tile, small 56), `PageTabs` (`SegmentedPicker`), `PageBadges`, `PageRecent` (`RowsCard`; the tone always with its symbol, D78), `ExtensionSettingRowView` on `SettingsRow`. Extension look stays the extension's through pictures from its pack; the chrome is always Lantern's.
+

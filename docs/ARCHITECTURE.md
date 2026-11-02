@@ -408,3 +408,7 @@ program's `@executable_path/../lib` rpath: the sandbox already reads the extensi
 - `scripts/release.sh` — sign with Developer ID (hardened runtime, entitlements), notarize and staple the app,
   then the DMG. Fails clearly when `SIDEFOLK_SIGN_IDENTITY` / `SIDEFOLK_NOTARY_PROFILE` are missing. The
   checklist around it is docs/RELEASE.md.
+
+## What extensions declare (D100)
+
+`ExtensionManifest+Abilities` holds settings, entries, drops, parts, carry; `ExtensionAbilityRules` and `ExtensionCommandRules` check them. `ExtensionCommandFrame` compiles commands with names and parts across every language in `strings/`; `ToolCommands.input(for:)` tries a table of whole sentences, then sentences with slots, then frames, after every core intent. `ExtensionHost+Abilities` keeps `ExtensionPreferences` (one key per extension in the database), fills `ExtensionShelf` (read as menus and cards are shown; empty for what is off or gone), sends `settings` and `ai` with each request (`ExtensionRequestContext`), carries old settings once, and answers `sidefolk/ai.request` through `AIHelper` and `extensions.ai_help`. Three tools take what isn't a click on an extension's own tool: `extensions.setting`, `extensions.activity`, `extensions.ai_help`, all through `ToolExecutor`. The app draws: `ExtensionPageRich`, `ExtensionSettingRows`, `AppCoordinator+Entries`, `DropCard`'s offers.

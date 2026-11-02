@@ -238,7 +238,7 @@ public struct CommandSentence: Sendable {
 
     public static let maxSlots = 3
     /// The words someone answers an approval or a question with, in the languages Sidefolk speaks: a command can never
-    /// be one of them, so nothing typed in answer to Sidefolk lands in an extension (SECURITY T44).
+    /// be one of them, so nothing typed in answer to Sidefolk lands in an extension (SECURITY T41).
     static let approvalWords: Set<String> = [
         "approve", "approved", "deny", "denied", "allow", "allow once", "always allow", "don't allow", "do not allow", "reject", "refuse",
         "accept", "confirm", "yes please", "no thanks", "go ahead", "do it", "don't",

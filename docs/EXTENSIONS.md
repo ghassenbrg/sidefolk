@@ -36,6 +36,7 @@ Claude Code or Codex. You can also add any existing MCP server (see
 8. [Watchers](#watchers)
 9. [Pages](#pages)
 10. [Games](#games)
+10a. [Rich pages, commands in every language, entries, settings, AI help](#rich-pages-commands-in-every-language-entries-settings-ai-help)
 11. [Speaking the person's language](#speaking-the-persons-language)
 12. [Testing locally](#testing-locally)
 13. [Installing, updating, removing](#installing-updating-removing)
@@ -801,6 +802,112 @@ Playtime (sidefolk-addons `extensions/playtime`) is the example: its rules are p
 in the data folder so a game survives the program stopping while idle). A 0.1.0 snapshot from before games refuses a
 manifest with `games` at install (an unknown key), as with pages.
 
+## Rich pages, commands in every language, entries, settings, AI help
+
+What any extension can declare, and Sidefolk keeps or draws for it (D100). All of it goes when the extension goes.
+[`extensions/hello-abilities`](../extensions/hello-abilities) uses one of each in plain Python. A manifest with these keys needs a Sidefolk that knows
+them: name it in `addon.json`'s `minimum_sidefolk` (D83).
+
+### Richer page parts
+
+```json
+{"type": "hero", "title": "Bird Log", "detail": "…", "symbol": "bird", "scene": {"pack": "garden.png", "dark": "garden-night.png"},
+ "figure": {"companion": "full"}, "says": "Anything new today?", "actions": [{"type": "button", "label": "Log", "tool": "log", "style": "primary"}]}
+{"type": "stats", "items": [{"label": "Species", "value": "48", "symbol": "bird.fill", "tone": "good"}]}
+{"type": "cards", "size": "large", "items": [{"title": "Robin", "detail": "…", "meta": "Seen 212 times", "at": "2026-11-01T08:30:00Z",
+  "picture": {"pack": "robin.png"}, "badge": {"text": "Regular", "tone": "good"}, "done": false,
+  "actions": [{"type": "button", "label": "Log", "tool": "log"}], "menu": {"label": "Season", "items": [{"label": "Spring", "tool": "season"}]}}]}
+{"type": "tabs", "selected": "garden", "tabs": [{"id": "garden", "label": "Garden", "symbol": "leaf", "badge": "3", "sections": [ … ]}, { … }]}
+{"type": "badges", "title": "Milestones", "items": [{"title": "Fifty species", "symbol": "rosette", "earned": false, "value": 48, "goal": 50}]}
+{"type": "recent", "title": "Lately", "items": [{"title": "Robin at the feeder", "at": "2026-11-01T08:30:00Z", "tone": "good"}]}
+{"type": "settings", "title": "Settings", "keys": ["sounds", "region"], "ai": true}
+```
+
+Caps: 6 stats, 48 cards (3 buttons and a menu of 8 each), 2–6 tabs (no tabs inside; switching asks nothing of the program), 32 badges, 20 recent; a section
+may have a `picture` beside its title. A picture is addressed, never fetched: `{"pack": path, "dark": path}` in the folder the manifest's `assets` names
+(pinned at install), `{"data": name}` in the data folder, `{"companion": "face"|"full"}`, `{"person": true}` (Sidefolk places these; you never read them). A hero with a
+`scene` carries the page's title itself. In the Kit: `.stats`, `.cards`, `.tabs`, `.badges`, `.recent`, `.settings`, `Hero(scene:figure:says:)`, `Picture`.
+
+### Commands with slots, in every language
+
+```json
+"choices": {"level": {"easy": ["easy", "beginner"], "hard": ["hard", "expert"]}},
+"parts": {
+  "level": {"say": ["{level:level}", "on {level:level}"]},
+  "count": {"say": ["{count:integer:1-50} questions"]},
+  "topic": {"say": ["about {topic:text:40}"]},
+  "friend": {"say": ["with a friend", "two players"], "input": {"players": 2}}
+},
+"carry": {"words": ["let's", "play", "a", "the"], "lead": ["play", "let's"]},
+"tools": {"open": {"commands": [
+  {"name": "quiz", "names": ["quiz", "riddles"], "with": ["level", "count", "topic", "friend"], "input": {"what": "quiz"}},
+  {"name": "harder", "say": ["make it harder", "too easy"], "input": {"step": "harder"}}
+]}}
+```
+
+`strings/fr.json` holds the same in French, and Sidefolk matches every language you have, whatever the app's language is:
+
+```json
+{"commands": {"quiz": {"names": ["devinettes"]}, "harder": ["plus difficile", "trop facile"]},
+ "parts": {"count": ["{count:integer:1-50} questions"], "topic": ["sur {topic:text:40}"]},
+ "choices": {"level": {"hard": ["difficile"]}},
+ "carry": {"words": ["jouons", "au", "un"], "lead": ["jouons"], "inside": [], "endings": []}}
+```
+
+A whole sentence (`say`) matches as before (D50). A command with `names` takes its parts anywhere around the name, in any order: "play a quiz about the sea, hard, 10 questions" gives
+`{"what": "quiz", "level": "hard", "topic": "sea", "count": 10}`. Once the parts and carrying words are out, exactly its name must be left, and a bare name needs a `lead` word or a part, so another extension's word
+stays theirs. `inside` lists carrying words taken out wherever they are (Japanese, Chinese), `endings` those off a word's end (Korean particles). Two numbers in a phrase read low to high. Slots: every kind in
+[commands](#answering-without-the-ai-commands), bounds (`{n:integer:1-50}`, `{t:text:40}`), `{x:list}` from `words`, `{x:enum}` from `choices` (the tool gets the value). A part's slots fill the argument of their name; one left out is left out.
+The tool decides what "harder" means: Sidefolk keeps no state about it.
+
+**Who wins.** Sidefolk's own understanding comes first: `sidefolk ext validate` lists your sentences it answers (`Sidefolk's own sentences`). A word that answers an approval (yes, oui, はい…) can't be a command. A sentence two
+extensions claim goes to the AI, and the install sheet says so. Within one extension, the first tool in name order.
+
+### Entries and drop actions
+
+```json
+"entries": [
+  {"id": "log", "title": "Bird Log", "symbol": "bird", "places": ["companion", "pocket", "ask"], "page": "log"},
+  {"id": "quick", "title": "Quick log", "places": ["companion"], "items": [
+    {"id": "robin", "title": "Robin", "tool": "log", "input": {"bird": "robin"}}
+  ]}
+],
+"drops": [
+  {"id": "clip", "title": "Add a birdsong", "detail": "Keeps the clip with your log.", "symbol": "waveform", "kinds": ["link"],
+   "patterns": ["https://*.mp4", "https://*.m4a"], "tool": "add_clip", "input": {"url": "{value}"}}
+]
+```
+
+`places`: `companion` (its menu), `pocket` (the Pocket's ⋯ and the menu bar's right click), `ask` (a tab, one an extension; it opens a tool or a page). 8 entries, 32 items each, two levels. `kinds`: `file`, `folder`, `link`, `text`; `patterns` are globs on a link's address without its query, or a file's name; none means any of the kind. A file or
+folder goes under an argument the tool lists in `paths`. At most three offers show on the card, after Sidefolk's own, each with your name; a link's first offer takes its reminder's place. Words in `strings/`: `entries.<id>`, `drops.<id>.title|detail`. Everything runs your own tool as the person, through Guard.
+
+### Settings
+
+```json
+"settings": [
+  {"key": "sounds", "type": "switch", "title": "Birdsong", "detail": "Play a song when you log.", "default": false},
+  {"key": "region", "type": "choice", "title": "Region", "options": [{"value": "north", "title": "North"}, {"value": "south", "title": "South"}], "default": "north"},
+  {"key": "goal", "type": "number", "title": "Weekly goal", "minimum": 1, "maximum": 50, "step": 1, "default": 10},
+  {"key": "name", "type": "text", "title": "Name on your log", "length": 40}
+]
+```
+
+Up to 64. Sidefolk stores them, shows them under Settings › Add-ons and with a `settings` part on your page, finds them in Settings' search, backs them up, keeps them through updates, and removes them with the extension. Every `tools/call` and `sidefolk/` request carries `settings`, all of them, defaults filled; a change sends the notice `sidefolk/settings.changed`. Change one of your own with the notice `sidefolk/settings.set {key, value}` (a speaker button on your surface): it's checked and goes in History. The AI can't change them: offer a tool for that. Words: `settings.<key>.title|detail|options.<value>`. Kit: `ExtensionSettings.bool("sounds")`, `ExtensionSettings.set(…)`, `ext.settingsChanged`.
+
+`settings_from: "<section>"` (Sidefolk's own extensions only): once, Sidefolk's request `sidefolk/settings.carry {from, values}` gives what the app kept for this work, and your `{settings: {…}}` are stored. Kit: `ext.carry { section, values in … }`.
+
+### AI help
+
+```json
+"permissions": {"ai": {"purpose": "to write a line about a bird you name", "daily_cap": 10}}
+```
+
+Any extension may declare it. The person sees the purpose and the cap on the install sheet, has a switch per extension, and each request in History; it counts in their usage. The purpose starts with "to" or "for"; the cap is 1–200, 20 if you leave it out; raising it holds your update for review. The notice `sidefolk/ai.request {request: <uuid>, prompt, label, language}` (at most 8,000 characters, one at a time) is answered by one notice `sidefolk/ai.answer {request, ok, text, made_by}` or `{request, ok: false, reason}`: `off`, `busy`, `limit`, `unusable`, `failed`, `denied`. Requests carry `ai` (the AI's name) while you may ask. The AI has no tools and nothing of the person's; it gets your words marked as untrusted. **Validate the answer as anything from outside**, and say who wrote it. Identical words the same day cost nothing. Kit: `AI.available`, `await AI.ask(prompt, label:)`.
+
+### One row in History
+
+`sidefolk/activity.add {text, key, result}`: `text` up to 120 characters; `key` your own name for it; `result` `win`, `loss`, `draw` or `done`, to count later. At most one every five seconds. Kit: `Activity.add("Logged a robin", key: "robin", result: "done")`.
+
 ## Speaking the person's language
 
 Sidefolk speaks ten languages (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`), and so can your
@@ -828,7 +935,7 @@ Every field is optional and translates the manifest's own: a key the manifest do
 tagline it lacks) is an error, and so is any other key. Each must be plain text within the manifest's limit, or half as
 long again (languages run longer than English): a name up to 90 characters, a tagline 90, a description 450. Sidefolk
 shows the person's language, the closest one you have (`pt` finds `pt-BR`, `zh-CN` finds `zh-Hans`), else the
-manifest. Commands (`say`) stay English: Sidefolk's understanding without AI is English. Tool descriptions from
+manifest. Commands are translated with `commands`, `parts`, `choices` and `carry` (below, D100). Tool descriptions from
 `tools/list` stay as they are too (they're pinned at install; a description that changed with the language would put
 the tool on hold).
 

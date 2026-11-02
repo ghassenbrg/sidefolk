@@ -1242,7 +1242,7 @@ public actor ExtensionHost {
                 await client.notify("sidefolk/trivia.pack", params: reply)
             }
         case .aiRequest(let request, let params):
-            // One at a time each; the answer goes back to this program alone (D100, SECURITY T44).
+            // One at a time each; the answer goes back to this program alone (D100, SECURITY T41).
             guard rt.record.enabled, rt.client != nil, !rt.aiAsking else {
                 await rt.client?.notify("sidefolk/ai.answer", params: ["request": .string(request), "ok": false, "reason": .string(AIHelper.Refusal.busy.rawValue)])
                 return
