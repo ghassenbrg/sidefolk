@@ -176,6 +176,23 @@ struct SceneTests {
         #expect(r.times.last == 0.4)
     }
 
+    @Test func aPathStartsAtItsFirstKeyHoweverItStarts() throws {
+        let s = try scene([box, other], ["animations": [
+            ["target": "a", "keys": [["t": 0, "scale": 0.5], ["t": 1, "scale": 1]], "ms": 100, "ease": "linear"],
+            ["target": "b", "keys": [["t": 0, "opacity": 0], ["t": 1, "opacity": 1]], "ms": 100, "delay_ms": 200, "ease": "linear"],
+        ]])
+        // From the first frame: not from where the node rests, which is where it ends.
+        let a = try #require(curve(s, "a", .scale))
+        #expect(a.values == [1, 0.5, 1] && a.times[1] < 0.001 && a.times.last == 0.1)
+        // A delayed step rests until its moment, then starts where it says.
+        let b = try #require(curve(s, "b", .opacity))
+        #expect(b.values == [1, 1, 0, 1] && b.times[1] == 0.2 && b.times[2] < 0.201 && b.eases[2 - 1] == .step)
+        // Keys at the same moment never run backwards.
+        let same = try scene([box], ["animations": [["target": "a", "keys": [["t": 0, "scale": 0.5], ["t": 0, "scale": 0.5], ["t": 1, "scale": 1]], "ms": 100]]])
+        let times = try #require(curve(same, "a", .scale)).times
+        #expect(times == times.sorted())
+    }
+
     @Test func nothingRunsForEver() throws {
         // A repeat is capped, and the whole timeline, so a surface always comes to rest.
         let s = try scene([box], ["animations": [["target": "a", "to": ["x": 5], "ms": 100, "repeat": 100000]]])
