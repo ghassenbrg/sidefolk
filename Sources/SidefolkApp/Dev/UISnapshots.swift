@@ -315,7 +315,7 @@ enum UISnapshots {
             try await page("page-extension-mac-wide", ExtensionPageView(model: SampleExtensionPage.model()), width: 1560)
             try await page("page-extension-mac-narrow", ExtensionPageView(model: SampleExtensionPage.model()), width: 640)
             // Switches and buttons on a page, and a palette (D63).
-            try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
+            try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.stayUp()), width: 980)
             try await page("page-extension-error", ExtensionPageView(model: SampleExtensionPage.failed()), width: 980)
             try await page("page-extension-rich", ExtensionPageView(model: SampleRichPage.model()), width: 1180)
             try await page("page-extension-rich-narrow", ExtensionPageView(model: SampleRichPage.model()), width: 640)

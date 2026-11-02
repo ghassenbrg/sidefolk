@@ -181,7 +181,7 @@ public struct AddonUpdater: Sendable {
     }
 
     private func install(_ entry: AddonEntry, from folder: URL) async -> AddonUpdateOutcome {
-        let preview = await extensions.preview(folder: folder)
+        let preview = await extensions.preview(folder: folder, origin: .official)
         guard AddonUpdateRule.verdict(.extension, preview: preview) == .install else {
             Log.shared.info("addons", "extension update waits for review", [
                 "id": entry.id, "version": entry.version, "added": preview.update?.addedPermissions.joined(separator: "; ") ?? "",

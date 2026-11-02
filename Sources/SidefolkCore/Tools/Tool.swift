@@ -172,6 +172,8 @@ public struct ResultCard: Codable, Sendable, Hashable {
     public var url: String?
     /// For notebook items: note, idea, task or link, so the card can show the right icon.
     public var itemKind: NotebookItem.Kind?
+    /// How long the AI's words about this wait, so they don't give away what an animation is still showing (D100).
+    public var holdAnswer: TimeInterval?
 
     public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil,
                 itemKind: NotebookItem.Kind? = nil) {
@@ -204,6 +206,8 @@ public struct ToolResult: Sendable {
     /// The tool ran and reported a failure in its own words (an extension's `isError`). The text is
     /// still shown to the model, but the call doesn't count as done.
     public var isError: Bool
+    /// What an extension's program asked for with this reply: its own surface or page (D100). Nil for everyone else.
+    public var asks: ExtensionToolAsks?
 
     public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text

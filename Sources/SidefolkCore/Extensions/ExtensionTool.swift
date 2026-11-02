@@ -22,6 +22,8 @@ public struct ExtensionTool: Tool {
     /// Its calls reach only a device the person paired, which its program confirms (D72); nil for everyone but
     /// Sidefolk's own extensions, whatever their manifest says: the sandbox can't hold a program to its word.
     public let paired: PairedDevice?
+    /// Does what a reply asked for, knowing who made the call (D100).
+    private let asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
 
     /// A summary and its words in the person's language, as one tool's manifest and `strings/` have them.
@@ -48,6 +50,7 @@ public struct ExtensionTool: Tool {
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil,
+         asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)? = nil,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
         self.extensionId = extensionId
@@ -59,6 +62,7 @@ public struct ExtensionTool: Tool {
         self.paired = firstParty ? paired : nil
         self.sentence = firstParty ? sentence : nil
         self.service = firstParty ? service : nil
+        self.asking = asking
         self.invoke = invoke
     }
 
@@ -142,7 +146,9 @@ public struct ExtensionTool: Tool {
             grants.append(ExtensionFolderGrant(path: canon, write: write))
             input = input.setting(param, .string(canon))
         }
-        return try await invoke(input, grants)
+        let result = try await invoke(input, grants)
+        if let asks = result.asks { await asking?(asks, context.caller) }
+        return result
     }
 }
 

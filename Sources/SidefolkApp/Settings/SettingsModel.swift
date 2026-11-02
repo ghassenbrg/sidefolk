@@ -325,6 +325,8 @@ final class SettingsModel {
 
     /// What extensions that are on declare and a search finds (D100), best first.
     func addonSettings(matching query: String) -> [ExtensionSettingRow] {
+        // The shelf isn't observed. `extensions` is, and changes after every set, so a row found here redraws with its new value.
+        _ = extensions
         let all = services.runtime.extensions.shelf.settings
         return SettingsSearch.find(query, in: all.map(\.searchEntry)).compactMap { found in all.first { $0.id == found.id } }
     }

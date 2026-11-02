@@ -69,6 +69,16 @@ public struct ActivityStore: Sendable {
     }
 
     public func count() async throws -> Int { try await db.writer.read { db in try ActivityEntry.fetchCount(db) } }
+
+    /// Takes out a tool's rows about one extension: for rows in that extension's own words, when it goes.
+    @discardableResult
+    public func delete(tool: String, extensionId: String) async throws -> Int {
+        try await db.writer.write { db in
+            let rows = try ActivityEntry.filter(Column("tool") == tool).fetchAll(db).filter { $0.args?.string("extension") == extensionId }
+            for row in rows { try row.delete(db) }
+            return rows.count
+        }
+    }
 }
 
 /// Short-term conversation history (kept for a limited time).

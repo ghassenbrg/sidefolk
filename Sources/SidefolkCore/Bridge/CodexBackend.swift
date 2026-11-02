@@ -225,6 +225,18 @@ public final class CodexBackend: BrainBackend, BrainUsageReporting {
         and don't apply here. You can act only through Sidefolk's tools.
         """
 
+    /// Whether Codex would add such a file to any request. That is fine for the person's own conversation, which comes back to them,
+    /// but not for an extension's request: the answer goes to its program, and a model can be told to quote what it was given (T41).
+    /// Codex has no switch for it, so Sidefolk doesn't send those requests at all while a file is there.
+    static func hasUserInstructions(environment: [String: String] = ProcessInfo.processInfo.environment, home: String = NSHomeDirectory()) -> Bool {
+        let folder = environment["CODEX_HOME"].flatMap { $0.isEmpty ? nil : $0 } ?? (home as NSString).appendingPathComponent(".codex")
+        return ["AGENTS.md", "AGENTS.override.md"].contains { name in
+            let path = (folder as NSString).appendingPathComponent(name)
+            let size = (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? NSNumber)?.intValue ?? 0
+            return size > 0
+        }
+    }
+
     /// Everything about the spawn except the token, built without side effects so tests can check
     /// that argv carries neither the prompt nor the token.
     static func invocation(task: BrainTask, install: CodexInstall, runDir: String, helperPath: String, sidefolkHome: String,

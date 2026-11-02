@@ -17,6 +17,10 @@ public struct SurfaceScene: Sendable, Hashable {
     public var inputAfter: Double = 0
     /// Show this scene so long, then ask for the next (`next`): the extension never keeps time itself.
     public var after: Double?
+    /// The same wait under Reduce Motion, when the build-up it allows for doesn't play: nothing tells the program that setting.
+    public var afterStill: Double?
+    /// A switch among the extension's settings that the frame's speaker is while this scene shows (one surface, many choices).
+    public var speaker: String?
     /// The frame's second line, beside the extension's name.
     public var title: String?
     /// The frame shows Back, which sends `back`.
@@ -54,9 +58,14 @@ public struct SurfaceScene: Sendable, Hashable {
     public static let maxRuns = 32
     public static let maxSteps = 600
     public static let maxEvents = 200
+    /// Everything handed to the animator: the points of the curves, and what a flip's turning is sampled into.
     public static let maxPoints = 6000
+    /// What one scene's own bitmaps may take: words, gradients, symbols, figures and tinted pictures, drawn at twice their size,
+    /// and the pictures it decodes (`drawnBytes`). The node counts above count nodes, not pixels.
+    public static let maxDrawnBytes = 96 * 1024 * 1024
     public static let maxStyles = 48
-    public static let maxPeople = 4
+    /// Each is a cached picture of Sidefolk's; nothing about the person is at stake in how many times it is placed.
+    public static let maxPeople = 32
     public static let maxEntries = 2
     public static let maxClocks = 4
     public static let maxPathCommands = 240
@@ -83,6 +92,8 @@ public enum SceneColor: Sendable, Hashable {
     case rgba(UInt32)
     case token(Token)
     case adaptive(light: UInt32, dark: UInt32)
+    /// A theme colour made lighter or darker (-1…1) or see-through (0…1), as a lip under a key or a gradient to itself.
+    case tuned(Token, alpha: Double, brightness: Double)
 
     public enum Token: String, Sendable, Hashable, CaseIterable {
         case ink, inkMuted = "ink_muted", inkFaint = "ink_faint", surface, surfaceSunken = "surface_sunken", surfaceRaised = "surface_raised",
@@ -127,9 +138,11 @@ public struct SceneNode: Sendable, Hashable, Identifiable {
         /// the back, 2 the front again, in half turns.
         case flip(SceneFlip)
         /// The person's companion, drawn by Sidefolk: the extension places it and never gets its picture.
-        case companion(pose: SceneCompanionPose)
+        case companion(pose: SceneCompanionPose, look: SceneFigureLook)
         /// The person, by their Mac account's picture or a friendly stand-in: the same rule.
-        case person
+        case person(look: SceneFigureLook)
+        /// A clipped box whose children are taller than it: the wheel and the trackpad move them, in the app, with nothing sent.
+        case scroll(SceneScroll)
         case entry(SceneEntry)
         case clock(SceneClock)
     }
@@ -140,6 +153,28 @@ public struct SceneShadow: Sendable, Hashable {
     public var radius: Double
     public var dx: Double
     public var dy: Double
+}
+
+/// How a figure Sidefolk draws sits in its box. The picture stays Sidefolk's; the extension only says how to place it.
+public struct SceneFigureLook: Sendable, Hashable {
+    /// The profile picture rather than the whole figure. For the person there is only one.
+    public var face = false
+    /// Stands on the box's bottom edge rather than in its middle.
+    public var bottom = false
+    /// Drawn in shades of this colour (a face on a gold coin).
+    public var duotone: SceneColor?
+
+    public init(face: Bool = false, bottom: Bool = false, duotone: SceneColor? = nil) {
+        self.face = face
+        self.bottom = bottom
+        self.duotone = duotone
+    }
+}
+
+/// `height` is what the children take up. `to` keeps a node in view: the keyboard's selection, say, sent with a new scene.
+public struct SceneScroll: Sendable, Hashable {
+    public var contentHeight: Double
+    public var to: String?
 }
 
 public struct SceneImage: Sendable, Hashable {
@@ -154,8 +189,15 @@ public struct SceneImage: Sendable, Hashable {
 }
 
 public struct SceneText: Sendable, Hashable {
-    public enum Weight: String, Sendable, Hashable { case regular, medium, semibold, bold, heavy }
-    public enum Design: String, Sendable, Hashable { case standard = "default", rounded, serif, mono }
+    public enum Weight: String, Sendable, Hashable { case regular, medium, semibold, bold, heavy, black }
+    /// `theme` is the theme's own face at its own scale, whichever the person chose.
+    public enum Design: String, Sendable, Hashable { case standard = "default", rounded, serif, mono, theme }
+    /// Part of the words in its own colour or weight, in one wrapping line.
+    public struct Run: Sendable, Hashable {
+        public var text: String
+        public var color: SceneColor?
+        public var weight: Weight?
+    }
     public enum Align: String, Sendable, Hashable { case leading, center, trailing }
     public enum VAlign: String, Sendable, Hashable { case top, center, bottom }
     /// May hold `{companion}`, which Sidefolk fills in when it draws: an extension shows the name without knowing it.
@@ -168,6 +210,12 @@ public struct SceneText: Sendable, Hashable {
     public var vAlign: VAlign
     public var lines: Int
     public var minScale: Double
+    public var italic = false
+    /// Digits of one width, so a running number doesn't jitter.
+    public var tabular = false
+    public var strike = false
+    /// When any, these are the words, and `text` is them joined.
+    public var runs: [Run] = []
 }
 
 public struct SceneShape: Sendable, Hashable {
@@ -200,6 +248,11 @@ public struct SceneSymbol: Sendable, Hashable {
     /// An SF Symbol, by the rule pages use.
     public var name: String
     public var color: SceneColor
+    public var weight: SceneText.Weight = .semibold
+    /// One flat colour, rather than the system's lighter layers.
+    public var mono = false
+    /// A second colour for a symbol's second layer.
+    public var secondary: SceneColor?
 }
 
 public struct SceneFlip: Sendable, Hashable {
@@ -221,6 +274,12 @@ public struct SceneEntry: Sendable, Hashable {
     public var max: Int
     public var locked: Bool
     public var size: Double
+    /// Takes the keyboard when it appears, if the surface has the keyboard.
+    public var focus = false
+    /// No box of its own: the scene draws what it sits on.
+    public var plain = false
+    public var weight: SceneText.Weight = .regular
+    public var design: SceneText.Design = .standard
 }
 
 /// Time drawn in the text's style, once a second while `running`; a stopped clock costs nothing.
@@ -245,6 +304,10 @@ public struct SceneArea: Sendable, Hashable {
     public var press: SceneStyle?
     /// Other nodes that take `hover` while this one is under the pointer.
     public var highlight: [String] = []
+    /// Other nodes that take a look of their own while this one is under the pointer: lift one, reveal another.
+    public var looks: [String: SceneStyle] = [:]
+    /// Sends what is typed in this field of the scene, as Return does; takes no press while it is empty.
+    public var submits: String?
     /// A sound from the pack on the press itself, before the extension answers.
     public var sound: String?
     public var drag: SceneDrag?
@@ -265,6 +328,18 @@ public struct SceneStyle: Sendable, Hashable {
     public var dx: Double?
     public var dy: Double?
     public var opacity: Double?
+    public var rotate: Double?
+    /// `opacity` is the value itself, not a part of the node's own: a node at 0 can appear.
+    public var absolute = false
+
+    public init(scale: Double? = nil, dx: Double? = nil, dy: Double? = nil, opacity: Double? = nil, rotate: Double? = nil, absolute: Bool = false) {
+        self.scale = scale
+        self.dx = dx
+        self.dy = dy
+        self.opacity = opacity
+        self.rotate = rotate
+        self.absolute = absolute
+    }
 }
 
 /// Dragging on an area: over a grid (`from` and `to` are cells) or freely (points in the canvas, the node following).
@@ -276,6 +351,8 @@ public struct SceneDrag: Sendable, Hashable {
     public var mode: Mode
     /// A node of the scene stretched from the first cell to the one under the pointer, or moved with it.
     public var ghost: String?
+    /// How far the ghost stays inside the cells it covers.
+    public var inset: Double = 0
 }
 
 /// A key the scene takes while the surface has the keyboard. Command keys, Tab and the frame's own are never offered.

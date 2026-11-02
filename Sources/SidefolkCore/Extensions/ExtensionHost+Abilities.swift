@@ -19,6 +19,8 @@ extension ExtensionHost {
                     action = .tool(name: ExtensionTool.registryName(short: short, tool: tool), input: .object(e.input ?? [:]))
                 } else if let page = e.page {
                     action = .page(page)
+                } else if let surface = e.surface {
+                    action = .surface(id: "\(id)/\(surface)", arguments: .object(e.input ?? [:]))
                 } else {
                     action = .menu
                 }
@@ -132,24 +134,60 @@ extension ExtensionHost {
     /// Gives a Sidefolk extension, once, a section of settings the app used to keep for what it does now (`settings_from`). The
     /// program answers with the settings to store from it. Generic on purpose: the section's name comes from the signed
     /// manifest, and the host doesn't know what's in it.
+    ///
+    /// `carries` names the same way what else the app kept for that work: values of its store, and the rows History has of a tool
+    /// (when each was, its summary and arguments). Only copies: the rows stay History's, and the app's copy of a value stays for
+    /// as long as a build that still reads it can run.
     func deliverCarried(_ id: String) async {
-        guard let rt = runtimes[id], rt.pin.origin?.firstParty == true, let from = rt.manifest?.settingsFrom, !rt.preferences.carried.contains(from),
-              let client = rt.client else { return }
-        guard let values = await configuration.carriedSettings(from) else {
-            await updatePreferences(id) { $0.carried.append(from) }
+        guard let rt = runtimes[id], rt.pin.origin?.firstParty == true, let m = rt.manifest, let client = rt.client else { return }
+        let done = Set(rt.preferences.carried)
+        let section = m.settingsFrom.flatMap { done.contains($0) ? nil : $0 }
+        let storeNames = m.carries.store.filter { !done.contains("store:\($0)") }, historyNames = m.carries.history.filter { !done.contains("history:\($0)") }
+        guard section != nil || !storeNames.isEmpty || !historyNames.isEmpty else { return }
+        var params: [String: JSONValue] = [:], marks: [String] = []
+        if let section {
+            marks.append(section)
+            params["from"] = .string(section)
+            if let values = await configuration.carriedSettings(section) { params["values"] = values }
+        }
+        var store: [String: JSONValue] = [:]
+        for name in storeNames {
+            marks.append("store:\(name)")
+            if let value = await configuration.carriedStore(name) { store[name] = value }
+        }
+        if !store.isEmpty { params["store"] = .object(store) }
+        var history: [String: JSONValue] = [:]
+        for name in historyNames {
+            marks.append("history:\(name)")
+            let rows = await configuration.carriedHistory(name)
+            if !rows.isEmpty { history[name] = .array(rows.map(Self.carriedRow)) }
+        }
+        if !history.isEmpty { params["history"] = .object(history) }
+        // Nothing there to give: it needn't ask.
+        guard params["values"] != nil || !store.isEmpty || !history.isEmpty else {
+            await updatePreferences(id) { $0.carried += marks }
             return
         }
-        guard let reply = try? await client.request("sidefolk/settings.carry", params: ["from": .string(from), "values": values], timeout: 10) else { return }
-        guard let m = runtimes[id]?.manifest else { return }
+        guard let reply = try? await client.request("sidefolk/settings.carry", params: .object(params), timeout: 10) else { return }
+        guard let current = runtimes[id]?.manifest else { return }
         let given = reply["settings"]?.objectValue ?? [:]
+        // A "no" the person gave in the app stays a no; the program can't turn the AI on this way.
+        let aiOff = reply["ai"]?.boolValue == false
         await updatePreferences(id) { p in
-            for s in m.settings { if let value = s.checked(given[s.key]) { p.values[s.key] = value } }
-            p.carried.append(from)
+            for s in current.settings { if let value = s.checked(given[s.key]) { p.values[s.key] = value } }
+            if aiOff { p.aiOn = false }
+            p.carried += marks
         }
-        await configuration.forgetCarried(from)
+        if let section, params["values"] != nil { await configuration.forgetCarried(section) }
         await tellSettings(id)
         events.changed(.extensions)
-        Log.shared.info("extensions", "received its old settings", ["id": id, "section": from])
+        Log.shared.info("extensions", "received what the app kept for it", ["id": id, "section": section ?? ""])
+    }
+
+    private static func carriedRow(_ row: ActivityEntry) -> JSONValue {
+        var out: [String: JSONValue] = ["at": .number(row.at.timeIntervalSince1970), "summary": .string(ExtensionText.line(row.summary, characters: 200))]
+        if let args = row.args, args.jsonString.utf8.count <= 1024 { out["args"] = args }
+        return .object(out)
     }
 
     // MARK: One History row
@@ -160,7 +198,9 @@ extension ExtensionHost {
         guard let rt = runtimes[id], rt.record.enabled, rt.record.kind == .sidefolk, let run = configuration.runTool else { return }
         let now = Date()
         guard now.timeIntervalSince(rt.lastActivity) >= ExtensionAbilityLimits.activitySeconds,
-              let text = params["text"]?.stringValue.map({ ExtensionText.line($0, characters: 120) }), !text.isEmpty else { return }
+              // `{companion}` is filled in here, on Sidefolk's side: the program never reads the row, or the name.
+              let text = params["text"]?.stringValue.map({ ExtensionText.line($0.replacingOccurrences(of: "{companion}", with: configuration.companionName()), characters: 120) }),
+              !text.isEmpty else { return }
         runtimes[id]?.lastActivity = now
         var input: [String: JSONValue] = ["extension": .string(id), "text": .string(text)]
         if let key = params["key"]?.stringValue, key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil { input["key"] = .string(key) }
@@ -170,9 +210,34 @@ extension ExtensionHost {
 
     /// `sidefolk/settings.set`: the program changes one of its own settings (a speaker button on its surface). Through the same
     /// tool as the person's click.
-    func programSetsSetting(_ id: String, params: JSONValue) async {
-        guard let rt = runtimes[id], rt.record.enabled, let key = params["key"]?.stringValue, let value = params["value"], let run = configuration.runTool else { return }
-        _ = await run(ExtensionSettingTool.name, ["extension": .string(id), "key": .string(key), "value": value], .extension(id: id), 10)
+    ///
+    /// At most one a second per extension, the last value winning, and none for a value it already has: each is a row in History
+    /// and a write to disk, and a program could otherwise drown both.
+    func programSetsSetting(_ id: String, params: JSONValue, now: Date = Date()) async {
+        guard let rt = runtimes[id], rt.record.enabled, let key = params["key"]?.stringValue, let value = params["value"] else { return }
+        runtimes[id]?.settingsWaiting[key] = value
+        guard !rt.settingsFlushing else { return }
+        let wait = rt.lastSetting.addingTimeInterval(ExtensionAbilityLimits.settingSeconds).timeIntervalSince(now)
+        if wait <= 0 {
+            await flushProgramSettings(id, at: now)
+            return
+        }
+        runtimes[id]?.settingsFlushing = true
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(wait))
+            await self?.flushProgramSettings(id, at: Date())
+        }
+    }
+
+    private func flushProgramSettings(_ id: String, at now: Date) async {
+        guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest, let run = configuration.runTool else { return }
+        runtimes[id]?.settingsFlushing = false
+        runtimes[id]?.settingsWaiting = [:]
+        runtimes[id]?.lastSetting = now
+        let values = rt.preferences.resolved(m.settings)
+        for (key, value) in rt.settingsWaiting.sorted(by: { $0.key < $1.key }) where values[key] != value {
+            _ = await run(ExtensionSettingTool.name, ["extension": .string(id), "key": .string(key), "value": value], .extension(id: id), 10)
+        }
     }
 
     // MARK: AI help
@@ -192,7 +257,7 @@ extension ExtensionHost {
     func aiStatus(_ rt: Runtime) -> ExtensionAIStatus? {
         guard let ai = rt.pin.permissions?.ai else { return nil }
         return ExtensionAIStatus(purpose: words(rt)?.aiPurpose ?? ai.purpose, dailyCap: ai.dailyCap, usedToday: rt.preferences.calls(on: AIHelper.dayKey(Date())),
-                                 on: rt.preferences.aiOn != false)
+                                 on: rt.preferences.aiOn != false, heldBack: configuration.aiHeldBack())
     }
 
     /// `sidefolk/ai.request`: answered with one `sidefolk/ai.answer` notice, always, so the program never waits for nothing.
@@ -210,7 +275,7 @@ extension ExtensionHost {
         func refused(_ reason: AIHelper.Refusal) -> JSONValue { ["request": .string(request), "ok": false, "reason": .string(reason.rawValue)] }
         // The pin is what the person saw on the install sheet; the manifest of a running program can't widen it.
         guard let rt = runtimes[id], rt.record.enabled, let ai = rt.pin.permissions?.ai, let helper = aiHelper, let run = configuration.runTool else { return refused(.off) }
-        guard rt.preferences.aiOn != false, configuration.aiName() != nil else { return refused(.off) }
+        guard rt.preferences.aiOn != false, configuration.aiName() != nil, configuration.aiHeldBack() == nil else { return refused(.off) }
         guard let question = AIHelpQuestion(params: params, extensionId: id, purpose: ai.purpose) else { return refused(.unusable) }
         if let kept = await helper.kept(question) { return AIHelper.reply(request: request, kept) }
         let today = AIHelper.dayKey(Date())
@@ -235,6 +300,7 @@ extension ExtensionHost {
 /// The limits of what the program side can ask for (D100).
 enum ExtensionAbilityLimits {
     static let activitySeconds: TimeInterval = 5
+    static let settingSeconds: TimeInterval = 1
     /// How a row may say something ended, for a surface that counts its own rows.
     static let results: Set<String> = ["win", "loss", "draw", "done"]
 }

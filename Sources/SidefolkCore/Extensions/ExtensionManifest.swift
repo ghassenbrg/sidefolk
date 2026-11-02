@@ -60,6 +60,28 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     /// A section of settings Sidefolk used to keep for what this extension does now: given to it once (D100). Honoured
     /// for Sidefolk's own extensions only.
     public var settingsFrom: String?
+    /// What else the app kept for the work a Sidefolk extension does now, handed over once with `settings_from`.
+    public var carries: Carries = Carries()
+
+    /// Names, from the signed manifest: the host doesn't know what is in them. Honoured only for `origin.firstParty`.
+    public struct Carries: Sendable, Hashable, Decodable {
+        /// Values of the app's own store.
+        public var store: [String]
+        /// Tools whose rows in History it gets a copy of.
+        public var history: [String]
+
+        public init(store: [String] = [], history: [String] = []) {
+            self.store = store
+            self.history = history
+        }
+
+        public init(from decoder: Decoder) throws {
+            try decoder.rejectUnknownKeys(["store", "history"])
+            let c = try decoder.container(keyedBy: AnyKey.self)
+            store = try c.decodeIfPresent([String].self, forKey: "store") ?? []
+            history = try c.decodeIfPresent([String].self, forKey: "history") ?? []
+        }
+    }
 
     /// A surface (D99): what it's called, how it stands, the canvas it asks for, and the sentences that open it.
     public struct SurfaceMeta: Sendable, Hashable, Decodable {
@@ -70,9 +92,15 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var height: Double?
         public var say: [String]
         public var ai: Bool?
+        /// What the AI may pass when it opens this: each name with the values it may take. Nothing else reaches the program from a model.
+        public var arguments: [String: [String]]
+        /// A `switch` among its `settings` that the frame's speaker reads and writes, so its own sound setting and the frame agree.
+        public var speakerSetting: String?
+        /// False: the program writes its own History row, so Sidefolk writes no "Used …" row for this surface.
+        public var activity: Bool?
 
         public init(title: String, symbol: String? = nil, kind: SurfaceInfo.Presentation = .panel, width: Double? = nil, height: Double? = nil,
-                    say: [String] = [], ai: Bool? = nil) {
+                    say: [String] = [], ai: Bool? = nil, arguments: [String: [String]] = [:], speakerSetting: String? = nil, activity: Bool? = nil) {
             self.title = title
             self.symbol = symbol
             self.kind = kind
@@ -80,10 +108,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             self.height = height
             self.say = say
             self.ai = ai
+            self.arguments = arguments
+            self.speakerSetting = speakerSetting
+            self.activity = activity
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "symbol", "kind", "width", "height", "say", "ai"])
+            try decoder.rejectUnknownKeys(["title", "symbol", "kind", "width", "height", "say", "ai", "arguments", "speaker_setting", "activity"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decode(String.self, forKey: "title")
             symbol = try c.decodeIfPresent(String.self, forKey: "symbol")
@@ -92,6 +123,9 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             height = try c.decodeIfPresent(Double.self, forKey: "height")
             say = try c.decodeIfPresent([String].self, forKey: "say") ?? []
             ai = try c.decodeIfPresent(Bool.self, forKey: "ai")
+            arguments = try c.decodeIfPresent([String: [String]].self, forKey: "arguments") ?? [:]
+            speakerSetting = try c.decodeIfPresent(String.self, forKey: "speaker_setting")
+            activity = try c.decodeIfPresent(Bool.self, forKey: "activity")
         }
     }
 
@@ -452,7 +486,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
                                        "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games",
                                        "examples", "services", "replaces", "assets", "surfaces",
-                                       "choices", "parts", "carry", "settings", "entries", "drops", "settings_from"])
+                                       "choices", "parts", "carry", "settings", "entries", "drops", "settings_from", "carries"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -484,6 +518,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         entries = try c.decodeIfPresent([EntryMeta].self, forKey: "entries") ?? []
         drops = try c.decodeIfPresent([DropMeta].self, forKey: "drops") ?? []
         settingsFrom = try c.decodeIfPresent(String.self, forKey: "settings_from")
+        carries = try c.decodeIfPresent(Carries.self, forKey: "carries") ?? Carries()
     }
 
     /// The last part of the id (`dev.example.tea-timer` → `tea-timer`), used in tool names.

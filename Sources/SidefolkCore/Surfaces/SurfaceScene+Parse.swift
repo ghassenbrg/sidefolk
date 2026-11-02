@@ -28,6 +28,8 @@ extension SurfaceScene {
         scene.closeAfter = clamp(json["close_after_ms"]?.doubleValue, 0...30_000, 0) / 1000
         scene.inputAfter = clamp(json["input_after_ms"]?.doubleValue, 0...60_000, 0) / 1000
         scene.after = json["after_ms"]?.doubleValue.flatMap { (100...10_000).contains($0) ? $0 / 1000 : nil }
+        scene.afterStill = json["after_still_ms"]?.doubleValue.flatMap { (100...10_000).contains($0) ? $0 / 1000 : nil }
+        scene.speaker = json["speaker"]?.stringValue.flatMap { $0.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil ? $0 : nil }
         scene.transition = clamp(json["transition_ms"]?.doubleValue, 0...1000, 0) / 1000
         scene.mirrors = json["mirror"]?.boolValue ?? true
         scene.announce = GameBoard.line(json["announce"], 200)
@@ -49,6 +51,7 @@ extension SurfaceScene {
 
         scene.runs = try SceneTimeline.compile(json["animations"]?.arrayValue ?? [], react: json["react"], scene: scene, assets: assets)
         scene.keepOnlyKnownTargets()
+        guard scene.drawnBytes <= maxDrawnBytes else { throw refused("draws more than \(maxDrawnBytes / 1024 / 1024) MiB of pictures and words at once") }
         return scene
     }
 
@@ -68,6 +71,36 @@ extension SurfaceScene {
         }
         nodes.forEach(visit)
         return out
+    }
+
+    /// What the bitmaps of this scene take at twice their size, four bytes a pixel. A picture counts once, at its largest; tinted, it
+    /// is a copy per node. Counted from the sizes the scene asks for, on the reader's side, so a scene past it is simply refused.
+    public var drawnBytes: Int {
+        func bitmap(_ width: Double, _ height: Double) -> Double { width * height * 16 }
+        var total = 0.0
+        var pictures: [String: Double] = [:]
+        func picture(_ path: String, _ bytes: Double) { pictures[path] = max(pictures[path] ?? 0, bytes) }
+        func visit(_ node: SceneNode) {
+            let own = bitmap(node.width, node.height)
+            switch node.kind {
+            case .group, .flip, .entry, .scroll: break
+            case .text, .clock, .symbol, .companion, .person: total += own
+            case .shape(let shape): if shape.gradient != nil { total += own }
+            case .image(let image):
+                if image.tint != nil { total += own }
+                picture(image.path, own)
+                if let dark = image.dark { picture(dark, own) }
+            }
+            node.children.forEach(visit)
+        }
+        nodes.forEach(visit)
+        for run in runs {
+            for frames in run.frames {
+                let own = self.node(frames.target).map { bitmap($0.width, $0.height) } ?? 0
+                for path in frames.paths { picture(path, own) }
+            }
+        }
+        return Int(min(total + pictures.values.reduce(0, +), Double(Int.max / 2)))
     }
 
     public func node(_ id: String) -> SceneNode? {
@@ -152,6 +185,7 @@ struct SceneReader {
         let width = SurfaceScene.clamp(j["w"]?.doubleValue, 0...2000, 0), height = SurfaceScene.clamp(j["h"]?.doubleValue, 0...2000, 0)
         guard let kind = try kind(j, id: id, depth: depth, parent: parent) else { return nil }
         var node = SceneNode(id: id, kind: kind)
+        if case .scroll = kind { node.clips = true }
         node.width = width
         node.height = height
         // A plain group with no size is as large as its parent; a helper works its size out from what it holds.
@@ -168,7 +202,7 @@ struct SceneReader {
         node.rotate = SurfaceScene.clamp(j["rotate"]?.doubleValue, -36_000...36_000, 0)
         node.opacity = SurfaceScene.clamp(j["opacity"]?.doubleValue, 0...1, 1)
         node.z = SurfaceScene.clamp(j["z"]?.doubleValue, -1000...1000, 0)
-        node.clips = j["clip"]?.boolValue ?? false
+        node.clips = node.clips || j["clip"]?.boolValue == true
         node.corner = SurfaceScene.clamp(j["corner"]?.doubleValue, 0...1000, 0)
         node.ltr = j["ltr"]?.boolValue ?? false
         node.label = GameBoard.line(j["label"], 120)
@@ -178,7 +212,7 @@ struct SceneReader {
         }
         let box = SceneSize(width: node.width, height: node.height)
         switch j["type"]?.stringValue {
-        case "group", "image", "text", "shape", "symbol", "companion", "person", "clock", "entry", nil:
+        case "group", "image", "text", "shape", "symbol", "companion", "person", "clock", "entry", "scroll", nil:
             for (i, child) in (j["children"]?.arrayValue ?? []).enumerated() {
                 if let c = try self.node(child, path: "\(id).\(i)", depth: depth + 1, parent: box) { node.children.append(c) }
             }
@@ -228,25 +262,33 @@ struct SceneReader {
             return shape(j).map(SceneNode.Kind.shape)
         case "symbol":
             guard let name = ExtensionPage.symbol(j["name"]) else { return nil }
-            return .symbol(SceneSymbol(name: name, color: Self.color(j["color"]) ?? .token(.ink)))
+            return .symbol(SceneSymbol(name: name, color: Self.color(j["color"]) ?? .token(.ink), weight: Self.weight(j["weight"], .semibold, &notes),
+                                       mono: j["mode"]?.stringValue == "mono", secondary: Self.color(j["secondary"])))
         case "flip":
             return .flip(SceneFlip(axis: j["axis"]?.stringValue.flatMap(SceneFlip.Axis.init) ?? .y,
                                    turns: j["showing"]?.stringValue == "back" ? 1 : 0))
         case "companion", "person":
             people += 1
             guard people <= SurfaceScene.maxPeople else { throw SurfaceScene.refused("places the companion or the person more than \(SurfaceScene.maxPeople) times") }
-            if j["type"]?.stringValue == "person" { return .person }
-            return .companion(pose: j["pose"]?.stringValue.flatMap(SceneCompanionPose.init) ?? .idle)
+            let look = SceneFigureLook(face: j["figure"]?.stringValue == "face", bottom: j["align"]?.stringValue == "bottom", duotone: Self.color(j["duotone"]))
+            if j["type"]?.stringValue == "person" { return .person(look: look) }
+            return .companion(pose: j["pose"]?.stringValue.flatMap(SceneCompanionPose.init) ?? .idle, look: look)
+        case "scroll":
+            return .scroll(SceneScroll(contentHeight: SurfaceScene.clamp(j["content_h"]?.doubleValue, 0...8000, 0), to: Self.nodeId(j["scroll_to"])))
         case "entry":
             guard let name = GameBoard.token(j["name"]) else { return nil }
             entries += 1
             guard entries <= SurfaceScene.maxEntries else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxEntries) fields") }
             return .entry(SceneEntry(id: name, placeholder: GameBoard.line(j["placeholder"], 60), max: Int(SurfaceScene.clamp(j["max"]?.doubleValue, 1...120, 40)),
-                                     locked: j["locked"]?.boolValue ?? false, size: SurfaceScene.clamp(j["size"]?.doubleValue, 9...40, 15)))
+                                     locked: j["locked"]?.boolValue ?? false, size: SurfaceScene.clamp(j["size"]?.doubleValue, 9...40, 15),
+                                     focus: j["focus"]?.boolValue ?? false, plain: j["plain"]?.boolValue ?? false, weight: Self.weight(j["weight"], .regular, &notes),
+                                     design: j["design"]?.stringValue.flatMap(SceneText.Design.init) ?? .standard))
         case "clock":
             clocks += 1
             guard clocks <= SurfaceScene.maxClocks else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxClocks) clocks") }
-            guard let style = try textStyle(j, needsText: false) else { return nil }
+            guard var style = try textStyle(j, needsText: false) else { return nil }
+            // A running clock's digits shouldn't jitter, unless it says otherwise.
+            style.tabular = j["tabular"]?.boolValue ?? true
             return .clock(SceneClock(seconds: SurfaceScene.clamp(j["seconds"]?.doubleValue, 0...359_999, 0), running: j["running"]?.boolValue ?? false,
                                      down: j["down"]?.boolValue ?? false, style: style))
         default:
@@ -270,18 +312,35 @@ struct SceneReader {
 
     private mutating func textStyle(_ j: JSONValue, needsText: Bool) throws -> SceneText? {
         // Empty is a fine thing to say (a tile not typed in yet); no text at all, or not text, isn't.
-        let words = GameBoard.longText(j["text"], SurfaceScene.maxTextCharacters) ?? j["text"]?.stringValue.map { _ in "" }
+        var runs: [SceneText.Run] = []
+        var total = 0
+        for run in (j["runs"]?.arrayValue ?? []).prefix(16) {
+            // Not trimmed: the space between two runs is part of the words.
+            guard let words = run["text"]?.stringValue.map({ ExtensionText.withoutStacks(ExtensionText.clean($0)) }), total + words.count <= SurfaceScene.maxTextCharacters else { continue }
+            total += words.count
+            runs.append(SceneText.Run(text: words, color: Self.color(run["color"]), weight: run["weight"].map { Self.weight($0, .regular, &notes) }))
+        }
+        let words = runs.isEmpty ? GameBoard.longText(j["text"], SurfaceScene.maxTextCharacters) ?? j["text"]?.stringValue.map { _ in "" } : runs.map(\.text).joined()
         if needsText, words == nil { return nil }
         text += words?.count ?? 0
         guard text <= SurfaceScene.maxAllText else { throw SurfaceScene.refused("holds more than \(SurfaceScene.maxAllText) characters") }
         return SceneText(text: words ?? "", size: SurfaceScene.clamp(j["size"]?.doubleValue, 6...160, 14),
-                         weight: j["weight"]?.stringValue.flatMap(SceneText.Weight.init) ?? .regular,
+                         weight: Self.weight(j["weight"], .regular, &notes),
                          design: j["design"]?.stringValue.flatMap(SceneText.Design.init) ?? .standard,
                          color: Self.color(j["color"]) ?? .token(.ink),
                          align: j["align"]?.stringValue.flatMap(SceneText.Align.init) ?? .center,
                          vAlign: j["valign"]?.stringValue.flatMap(SceneText.VAlign.init) ?? .center,
                          lines: Int(SurfaceScene.clamp(j["lines"]?.doubleValue, 1...40, 1)),
-                         minScale: SurfaceScene.clamp(j["min_scale"]?.doubleValue, 0.4...1, 0.7))
+                         minScale: SurfaceScene.clamp(j["min_scale"]?.doubleValue, 0.4...1, 0.7),
+                         italic: j["italic"]?.boolValue ?? false, tabular: j["tabular"]?.boolValue ?? false, strike: j["strike"]?.boolValue ?? false, runs: runs)
+    }
+
+    /// A weight this version doesn't know is noted for the author, not silently another.
+    private static func weight(_ j: JSONValue?, _ fallback: SceneText.Weight, _ notes: inout [String]) -> SceneText.Weight {
+        guard let raw = j?.stringValue else { return fallback }
+        if let known = SceneText.Weight(rawValue: raw) { return known }
+        notes.append("“\(ExtensionText.clip(raw, 20))” isn't a weight this version knows.")
+        return fallback
     }
 
     private func shape(_ j: JSONValue) -> SceneShape? {
@@ -350,6 +409,9 @@ struct SceneReader {
             guard let l = hex(light.stringValue), let d = hex(dark.stringValue) else { return nil }
             return .adaptive(light: l, dark: d)
         }
+        if let token = j["token"]?.stringValue.flatMap(SceneColor.Token.init(rawValue:)) {
+            return .tuned(token, alpha: SurfaceScene.clamp(j["alpha"]?.doubleValue, 0...1, 1), brightness: SurfaceScene.clamp(j["brightness"]?.doubleValue, -1...1, 0))
+        }
         guard let s = j.stringValue else { return nil }
         if let value = hex(s) { return .rgba(value) }
         return SceneColor.Token(rawValue: s).map(SceneColor.token)
@@ -377,7 +439,15 @@ struct SceneReader {
         area.selected = j["selected"]?.boolValue ?? false
         area.hover = Self.style(j["hover"])
         area.press = Self.style(j["press"])
-        area.highlight = (j["highlight"]?.arrayValue ?? []).prefix(40).compactMap { Self.nodeId($0) }
+        for item in (j["highlight"]?.arrayValue ?? []).prefix(40) {
+            if let id = Self.nodeId(item) {
+                area.highlight.append(id)
+            } else if let id = Self.nodeId(item["id"]), var look = Self.style(item) {
+                look.absolute = look.opacity != nil
+                area.looks[id] = look
+            }
+        }
+        area.submits = GameBoard.token(j["submits"])
         area.sound = j["sound"]?.stringValue.flatMap { PackAssets.clean($0).flatMap { PackAssets.kind(of: $0) == .sound ? $0 : nil } }
         area.timedFrom = j["timed_from_ms"]?.doubleValue.flatMap { (0...60_000).contains($0) ? $0 / 1000 : nil }
         if let d = j["drag"] {
@@ -386,7 +456,7 @@ struct SceneReader {
                 guard let r = d["rows"]?.intValue, let c = d["columns"]?.intValue, (1...32).contains(r), (1...32).contains(c) else { return area }
                 mode = .grid(rows: r, columns: c)
             }
-            area.drag = SceneDrag(mode: mode, ghost: Self.nodeId(d["ghost"]))
+            area.drag = SceneDrag(mode: mode, ghost: Self.nodeId(d["ghost"]), inset: SurfaceScene.clamp(d["inset"]?.doubleValue, 0...40, 0))
         }
         if let k = j["key"], let key = Self.keyMatch(k.stringValue) {
             keys.append(SceneKey(match: key, id: id, area: id, value: area.value, bySeat: j["seat"]?.boolValue ?? false, timedFrom: area.timedFrom,
@@ -398,7 +468,8 @@ struct SceneReader {
     private static func style(_ j: JSONValue?) -> SceneStyle? {
         guard let j, j.objectValue != nil else { return nil }
         return SceneStyle(scale: j["scale"]?.doubleValue.map { SurfaceScene.clamp($0, 0...4, 1) }, dx: j["dx"]?.doubleValue.map { SurfaceScene.clamp($0, -200...200, 0) },
-                          dy: j["dy"]?.doubleValue.map { SurfaceScene.clamp($0, -200...200, 0) }, opacity: j["opacity"]?.doubleValue.map { SurfaceScene.clamp($0, 0...1, 1) })
+                          dy: j["dy"]?.doubleValue.map { SurfaceScene.clamp($0, -200...200, 0) }, opacity: j["opacity"]?.doubleValue.map { SurfaceScene.clamp($0, 0...1, 1) },
+                          rotate: j["rotate"]?.doubleValue.map { SurfaceScene.clamp($0, -360...360, 0) })
     }
 
     static func keyMatch(_ s: String?) -> SceneKey.Match? {

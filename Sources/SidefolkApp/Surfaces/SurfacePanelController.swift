@@ -115,6 +115,8 @@ final class SurfacePanelController {
                 return nil
             case .scene:
                 if key == "escape" { self.lastEscape = now }
+                // A key held down: a repeat adds nothing while the last press is still on its way.
+                if event.isARepeat, model.isBusy { return nil }
                 // Return and Space are the scene's alone: never a press of whichever frame button has the focus.
                 return model.press(key, seat: PlayPanelController.seat(event), timestamp: event.timestamp) || key == "return" || key == "space" ? nil : event
             }

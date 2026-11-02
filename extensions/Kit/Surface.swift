@@ -30,6 +30,41 @@ public struct SurfaceRequest {
     }
 }
 
+/// What a tool answers: its text for whoever called it, and what it asks of Sidefolk. Only ever for your own surfaces and pages as the
+/// manifest declares them; a person's click or words take the keyboard, the AI opens only a surface marked `ai`, and waits for a click.
+public struct ToolReply {
+    public var text: String
+    var asks: [String: Any] = [:]
+
+    public init(_ text: String) { self.text = text }
+
+    public func opening(surface: String, arguments: [String: Any] = [:]) -> ToolReply {
+        var copy = self
+        copy.asks["open_surface"] = ["surface": surface, "arguments": arguments] as [String: Any]
+        return copy
+    }
+
+    /// Puts it away, kept to come back to. No name: whichever of yours are open.
+    public func closingSurface(_ surface: String? = nil) -> ToolReply {
+        var copy = self
+        copy.asks["close_surface"] = surface.map { $0 as Any } ?? true
+        return copy
+    }
+
+    public func opening(page: String) -> ToolReply {
+        var copy = self
+        copy.asks["open_page"] = page
+        return copy
+    }
+
+    /// The AI's words about this wait so long, at most 5 s, so they don't give away what an animation is still showing.
+    public func holdingAnswer(ms: Int) -> ToolReply {
+        var copy = self
+        copy.asks["hold_answer_ms"] = ms
+        return copy
+    }
+}
+
 /// What opening a surface returns: the session Sidefolk sends back with every move (up to 64 letters, digits, `_`, `-`).
 public struct SurfaceReply {
     public var session: String

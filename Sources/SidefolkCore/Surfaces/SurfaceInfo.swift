@@ -3,7 +3,7 @@ import Synchronization
 
 /// A surface an extension declares (`surfaces` in its manifest, D99): the panel or overlay Sidefolk frames for it.
 public struct SurfaceInfo: Sendable, Hashable, Identifiable {
-    public enum Presentation: String, Sendable, Hashable, Decodable { case panel, overlay }
+    public enum Presentation: String, Sendable, Hashable, Decodable, CaseIterable { case panel, overlay }
 
     public var extensionId: String
     public var extensionName: String
@@ -19,10 +19,21 @@ public struct SurfaceInfo: Sendable, Hashable, Identifiable {
     /// Its pack has sounds, so the frame offers the speaker.
     public var sounds: Bool
     public var iconPath: String?
+    /// What the AI may pass when it opens this: names, each with the values it may take (`surfaces.<n>.arguments`).
+    public var arguments: [String: [String]]
+    /// The switch among its settings that the frame's speaker is (`speaker_setting`); nil keeps the choice for this surface alone.
+    public var speakerSetting: String?
+    /// Whether Sidefolk writes its "Used …" row; off when the program writes its own (`activity`).
+    public var activity: Bool
+    /// One of Sidefolk's own extensions, by its signed pack: anyone else's frame also says who it is from.
+    public var firstParty: Bool
+    /// Who made it, for the frame of anyone but Sidefolk's own.
+    public var author: String?
 
     public init(extensionId: String, extensionName: String, surface: String, title: String, symbol: String? = nil,
                 presentation: Presentation = .panel, width: Double = 400, height: Double = 480, say: [String] = [], ai: Bool = false,
-                sounds: Bool = false, iconPath: String? = nil) {
+                sounds: Bool = false, iconPath: String? = nil, arguments: [String: [String]] = [:], speakerSetting: String? = nil, activity: Bool = true,
+                firstParty: Bool = false, author: String? = nil) {
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.surface = surface
@@ -35,6 +46,11 @@ public struct SurfaceInfo: Sendable, Hashable, Identifiable {
         self.ai = ai
         self.sounds = sounds
         self.iconPath = iconPath
+        self.arguments = arguments
+        self.speakerSetting = speakerSetting
+        self.activity = activity
+        self.firstParty = firstParty
+        self.author = author
     }
 
     public var id: String { "\(extensionId)/\(surface)" }

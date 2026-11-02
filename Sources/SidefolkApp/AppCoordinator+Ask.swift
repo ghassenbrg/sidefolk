@@ -333,6 +333,8 @@ extension AppCoordinator: AskActions {
                         addResult(.result(card, activityId: activity.id, undo: activity.undoAvailable), card: card, to: model, caption: caption())
                         line = SpokenLine.card(card)
                         if card.kind == .chance { landing = Date().addingTimeInterval(player.untilLanded()) }
+                        // An extension's animation still showing the result: its reply says how long (D100).
+                        if let hold = card.holdAnswer { landing = Date().addingTimeInterval(hold) }
                     }
                     // What the mode answered for the person, and what nobody answered, always show (D37).
                     if ok, activity.actedWithoutAsking {

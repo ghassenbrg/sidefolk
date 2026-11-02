@@ -99,12 +99,19 @@ public enum GameSound: String, Sendable, Hashable, CaseIterable {
 /// How often cues may act (D75), so a game can't make the companion flail or chatter: a move every 0.8 s at most, a
 /// newer one replacing one still waiting; a line every 2 s; four sounds a second. Pure timing, so it is tested
 /// without a clock; the app asks it before acting on each part of a cue.
+extension GameCue.Move {
+    var isAccent: Bool { rawValue.hasPrefix("accent:") }
+}
+
 public struct CueLimiter: Sendable {
     public static let moveGap: TimeInterval = 0.8
     public static let lineGap: TimeInterval = 2
     public static let soundsPerSecond = 4
+    /// The short moves made for fast choreography (`accent:*`) go at the sounds' pace: a sequence being shown is the point, not a mood.
+    public static let accentGap: TimeInterval = 1 / Double(soundsPerSecond)
 
     private var lastMove: Date?
+    private var lastAccent: Date?
     private var lastLine: Date?
     private var sounds: [Date] = []
     /// A move that came too soon, played when its turn comes (a newer one takes its place).
@@ -119,6 +126,15 @@ public struct CueLimiter: Sendable {
     }
 
     public mutating func move(_ move: GameCue.Move, at now: Date) -> MoveVerdict {
+        if move.isAccent {
+            if let last = lastAccent, now.timeIntervalSince(last) < Self.accentGap {
+                waitingMove = move
+                return .after(Self.accentGap - now.timeIntervalSince(last))
+            }
+            lastAccent = now
+            waitingMove = nil
+            return .now
+        }
         if let last = lastMove, now.timeIntervalSince(last) < Self.moveGap {
             waitingMove = move
             return .after(Self.moveGap - now.timeIntervalSince(last))
@@ -132,7 +148,7 @@ public struct CueLimiter: Sendable {
     public mutating func takeWaiting(_ move: GameCue.Move, at now: Date) -> Bool {
         guard waitingMove == move else { return false }
         waitingMove = nil
-        lastMove = now
+        if move.isAccent { lastAccent = now } else { lastMove = now }
         return true
     }
 

@@ -100,30 +100,17 @@ public final class SeedPacks: Sendable {
         try? JSONEncoder().encode(Ledger(pending: pending)).write(to: file, options: .atomic)
     }
 
+    /// The person removed it, however it came: a seed still waiting its turn doesn't come back.
+    static func removed(_ id: String, paths: SidefolkPaths) {
+        let file = paths.addons.appendingPathComponent(ledgerFile)
+        guard let ledger = FileManager.default.contents(atPath: file.path).flatMap({ try? JSONDecoder().decode(Ledger.self, from: $0) }),
+              ledger.pending.contains(id) else { return }
+        write(ledger.pending.filter { $0 != id }, to: file)
+    }
+
     /// After a restore (D91) this Mac's add-ons are the backup's: of the seeds, only those it had come back, and any
     /// the person had removed there stay gone. The `Addons` folder was just swapped out, so this writes the ledger anew.
     static func restored(_ pending: [String], paths: SidefolkPaths) {
         write(pending, to: paths.addons.appendingPathComponent(ledgerFile))
-    }
-}
-
-/// Dotted extension versions (`1.2`, `1.2.3`, `1.2.3-beta.1`): numbers compared part by part, and a
-/// pre-release before its release.
-enum ExtensionVersion {
-    static func compare(_ a: String, _ b: String) -> ComparisonResult {
-        func parts(_ v: String) -> (numbers: [Int], pre: String?) {
-            let split = v.split(separator: "-", maxSplits: 1).map(String.init)
-            let core = split.first?.split(separator: "+").first.map(String.init) ?? v
-            let numbers = core.split(separator: ".").map { Int($0) ?? 0 }
-            return (numbers + Array(repeating: 0, count: max(0, 3 - numbers.count)), split.count > 1 ? split[1] : nil)
-        }
-        let (x, y) = (parts(a), parts(b))
-        for (p, q) in zip(x.numbers, y.numbers) where p != q { return p < q ? .orderedAscending : .orderedDescending }
-        switch (x.pre, y.pre) {
-        case (nil, nil): return .orderedSame
-        case (nil, _): return .orderedDescending
-        case (_, nil): return .orderedAscending
-        case let (p?, q?): return p == q ? .orderedSame : (p < q ? .orderedAscending : .orderedDescending)
-        }
     }
 }

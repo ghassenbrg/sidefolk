@@ -196,6 +196,8 @@ public struct ManifestValidator: Sendable {
         report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &issues)
         issues += ExtensionCommandRules.checkTranslations(manifest, strings: report.strings)
         if mode == .source { report.shadowed = ExtensionCommandRules.ownSentences(manifest, strings: report.strings) }
+        let replies = ExtensionCommandRules.replySentences(manifest, strings: report.strings)
+        if mode == .source { issues += replies } else { report.warnings += replies.map(\.description) }
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report

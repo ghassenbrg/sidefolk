@@ -103,8 +103,21 @@ public final class SidefolkRuntime: Sendable {
             await executor.execute(name: name, input: input, caller: caller, timeout: timeout)
         }
         hostConfiguration.aiName = { [settings] in settings.current.provider.shortName }
+        hostConfiguration.companionName = { [settings] in settings.current.companionName }
         hostConfiguration.carriedSettings = { [settings] section in settings.current.section(section) }
         hostConfiguration.forgetCarried = { [settings] section in await settings.update { $0.parked[section] = nil } }
+        hostConfiguration.carriedStore = { [db] name in try? await KVStore(db).get(name, as: JSONValue.self) }
+        hostConfiguration.carriedHistory = { [activity] tool in (try? await activity.recent(limit: 2000, tool: tool)) ?? [] }
+        hostConfiguration.aiHeldBack = { [settings] in
+            settings.current.provider.kind == .codex && CodexBackend.hasUserInstructions()
+                ? String(localized: "Not while you use Codex with your own AGENTS.md: Codex always reads that file, and the answer goes to the extension.",
+                         comment: "Under an extension's AI switch: why it can't use the person's AI now")
+                : nil
+        }
+        hostConfiguration.forgetGrants = { [permissions] id in
+            for grant in (try? await permissions.grants()) ?? [] where grant.scope.string("extension") == id { try? await permissions.revokeGrant(id: grant.id) }
+        }
+        hostConfiguration.forgetOwnRows = { [activity] id in _ = try? await activity.delete(tool: ExtensionActivityTool.name, extensionId: id) }
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, configuration: hostConfiguration,
                                    secrets: extensionSecrets)
         seedPacks = SeedPacks(directory: bundledResources?.appendingPathComponent("SeedPacks", isDirectory: true), paths: paths)

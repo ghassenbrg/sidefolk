@@ -155,7 +155,8 @@ enum SceneTimeline {
             if group.id == nil, let reaction = SceneReaction.parse(react) { compiler.events.append(SceneEvent(at: 0, react: reaction)) }
             guard end <= SurfaceScene.maxTimeline else { throw SurfaceScene.refused("animates for more than \(Int(SurfaceScene.maxTimeline)) seconds") }
             let curves = flatten(compiler.steps, scene: scene)
-            points += curves.reduce(0) { $0 + $1.times.count }
+            // A flip is handed over as the samples of its turning, not its points: count what is really built.
+            points += curves.reduce(0) { $0 + ($1.property == .flip ? SceneFlipKeys.samples($1) : $1.times.count) }
             guard points <= SurfaceScene.maxPoints else { throw SurfaceScene.refused("animates more than \(SurfaceScene.maxPoints) points") }
             guard !curves.isEmpty || !compiler.frames.isEmpty || !compiler.events.isEmpty else { continue }
             var run = SceneRun(id: group.id, curves: curves, frames: compiler.frames, events: compiler.events.sorted { $0.at < $1.at }, duration: end)
@@ -303,6 +304,13 @@ public struct SceneFlipKeys: Sendable {
     public static func state(_ turns: Double) -> (squash: Double, back: Bool) {
         let whole = Int((turns + 0.5).rounded(.down))
         return (abs(cos(turns * .pi)), !whole.isMultiple(of: 2))
+    }
+
+    /// How many keys a curve becomes. Its spans are checked before anything is built, so one turning for ever can't stall the app.
+    public static func samples(_ curve: SceneCurve) -> Int {
+        var total = 1
+        for i in 0..<max(curve.values.count - 1, 0) { total += max(Int(abs(curve.values[i + 1] - curve.values[i]) * 8), 1) }
+        return total
     }
 
     public init(_ curve: SceneCurve) {

@@ -131,6 +131,7 @@ extension SceneReader {
         case .rgba(let v): .string("#" + String(format: "%08X", v))
         case .token(let t): .string(t.rawValue)
         case .adaptive(let l, let d): .object(["light": .string("#" + String(format: "%08X", l)), "dark": .string("#" + String(format: "%08X", d))])
+        case .tuned(let t, let alpha, let brightness): .object(["token": .string(t.rawValue), "alpha": .number(alpha), "brightness": .number(brightness)])
         }
     }
 }
@@ -191,7 +192,8 @@ extension SurfaceScene {
         guard mirrors else { return false }
         func find(_ list: [SceneNode], _ active: Bool) -> Bool? {
             for node in list {
-                if node.id == id { return active }
+                // A node marked `ltr` keeps its own contents as they are: its columns and points too.
+                if node.id == id { return active && !node.ltr }
                 if let inner = find(node.children, active && !node.ltr) { return inner }
             }
             return nil

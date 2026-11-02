@@ -12,6 +12,9 @@ final class SurfaceSounds {
     private let player = AVAudioPlayerNode()
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
     private var buffers: [String: AVAudioPCMBuffer] = [:]
+    /// What decoded sounds may hold at once: past this the others are decoded again when next played.
+    private static let budget = 48 * 1024 * 1024
+    private var held = 0
     private var limiter = CueLimiter()
     private var wired = false
     private var busyUntil = Date.distantPast
@@ -21,7 +24,15 @@ final class SurfaceSounds {
         guard limiter.sound(at: Date()), GameSounds.interfaceSoundsOn else { return }
         let key = reader.root + "/" + path
         guard let buffer = buffers[key] ?? load(path, reader) else { return }
-        buffers[key] = buffer
+        if buffers[key] == nil {
+            let bytes = Int(buffer.frameLength) * Int(buffer.format.channelCount) * MemoryLayout<Float>.size
+            if held + bytes > Self.budget {
+                buffers = [:]
+                held = 0
+            }
+            buffers[key] = buffer
+            held += bytes
+        }
         if !wired {
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: format)
@@ -42,9 +53,10 @@ final class SurfaceSounds {
         }
     }
 
-    /// Forgets a pack's sounds when its surface closes.
+    /// Forgets a pack's sounds when its surface ends, or the extension is updated or goes.
     func forget(_ reader: PackAssetReader) {
         buffers = buffers.filter { !$0.key.hasPrefix(reader.root + "/") }
+        held = buffers.values.reduce(0) { $0 + Int($1.frameLength) * Int($1.format.channelCount) * MemoryLayout<Float>.size }
     }
 
     /// In the mixer's format, so one player takes every file; a file that can't be read plays nothing.

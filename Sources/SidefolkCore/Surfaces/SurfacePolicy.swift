@@ -59,6 +59,13 @@ public enum SurfacePolicy {
         return inside(candidates[0])
     }
 
+    /// Where a scene's text field may stand: inside the canvas, or nowhere. Only the layers clip themselves, and a field is a real view
+    /// that could otherwise draw over the frame that says whose this is (T40).
+    public static func fieldFrame(_ rect: CGRect, canvas: CGSize) -> CGRect? {
+        let inside = rect.intersection(CGRect(origin: .zero, size: canvas))
+        return inside.isNull || inside.width < 1 || inside.height < 1 ? nil : inside
+    }
+
     /// Whether a surface standing at `frame` may take input now. While an approval is waiting, nothing of an extension's
     /// takes a click or a key: it can't be used to catch a press meant for the card.
     public static func takesInput(approvalWaiting: Bool) -> Bool { !approvalWaiting }

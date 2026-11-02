@@ -51,7 +51,7 @@ extension FixtureServices {
     /// An official update that asks for more: shown prominently even though Sidefolk signed it.
     static let updatePreview = ExtensionInstallPreview(
         id: SampleAddons.codeMaker, name: "Code Maker", version: "1.1.0",
-        description: "Makes QR codes and reads them from pictures.",
+        description: "Makes square codes and reads them from pictures.",
         sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/code-maker"),
         review: {
             var review = InstallReview(id: SampleAddons.codeMaker, permissions: ExtensionPermissions(folders: .read, media: true), background: false,

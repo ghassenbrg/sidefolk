@@ -41,6 +41,20 @@ extension ManifestValidator {
                     issues.append(ValidationIssue(field: "\(field).\(key)", message: "must be between \(Int(SurfaceLimits.minSide)) and \(Int(most)) points."))
                 }
             }
+            // Names and values only: free text from a model must not reach the program by this road (T40).
+            if s.arguments.count > 12 { issues.append(ValidationIssue(field: "\(field).arguments", message: "can list at most 12 names.")) }
+            for key in s.arguments.keys.sorted() {
+                let values = s.arguments[key] ?? []
+                if key.range(of: Self.namePattern, options: .regularExpression) == nil {
+                    issues.append(ValidationIssue(field: "\(field).arguments.\(key)", message: "isn't a valid name (lowercase letters, digits and _)."))
+                }
+                if values.isEmpty || values.count > 32 || values.contains(where: { $0.isEmpty || $0.count > 40 || ExtensionText.clean($0) != $0 }) {
+                    issues.append(ValidationIssue(field: "\(field).arguments.\(key)", message: "must list 1–32 values of 1–40 characters of plain text."))
+                }
+            }
+            if let key = s.speakerSetting, m.settings.first(where: { $0.key == key })?.type != .switch {
+                issues.append(ValidationIssue(field: "\(field).speaker_setting", message: "“\(key)” isn't a switch among its settings."))
+            }
             if s.say.count > Self.maxGameSentences {
                 issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(Self.maxGameSentences) sentences."))
             }

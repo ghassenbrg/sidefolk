@@ -47,7 +47,7 @@ enum SampleSurface {
         let info = info(presentation)
         let session = SurfaceSession(info: info, host: nil, reduceMotion: true)
         let model = SurfaceModel(info: info, session: session, soundsOn: true)
-        model.view.figures = SceneFigures(companion: { _, side in
+        model.view.figures = SceneFigures(companion: { _, side, _ in
             var rect = CGRect(x: 0, y: 0, width: side * 2, height: side * 2)
             return companion?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
         }, companionName: "Mochi")

@@ -116,7 +116,7 @@ public struct SandboxProfile: Sendable, Hashable {
             sb += "\n;; clipboard (granted at install)\n(allow mach-lookup (global-name \"com.apple.pasteboard.1\"))\n"
         }
         if inputs.permissions.power {
-            sb += "\n;; power (granted at install): keep awake, declare activity\n(allow mach-lookup (global-name \"com.apple.PowerManagement.control\"))\n"
+            sb += "\n;; power (granted at install): hold off sleep, declare activity\n(allow mach-lookup (global-name \"com.apple.PowerManagement.control\"))\n"
         }
         if inputs.permissions.media {
             sb += mediaRules

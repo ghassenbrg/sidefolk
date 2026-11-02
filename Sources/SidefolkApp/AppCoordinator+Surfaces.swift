@@ -27,7 +27,8 @@ extension AppCoordinator {
             askPanel.hide()
             playPanel.hide()
         }
-        if !companion.isVisible { showCompanion(true) }
+        let wasHidden = !companion.isVisible
+        if wasHidden { showCompanion(true) }
         guard let (frame, screen) = anchor() else { return }
         let controller = surfaceController(info)
         if request.arguments.isEmpty, let kept = controller.kept(info) {
@@ -39,7 +40,14 @@ extension AppCoordinator {
         let s = runtime.settings.current
         let host = runtime.extensions
         let session = SurfaceSession(info: info, host: host, reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
-        let model = SurfaceModel(info: info, session: session, soundsOn: s.games.soundsOn(info.id))
+        let model = SurfaceModel(info: info, session: session, soundsOn: false)
+        // An overlay is a moment: a companion that came out for it goes again with it.
+        surfaceRevealedCompanion = wasHidden && info.presentation == .overlay ? ObjectIdentifier(model) : nil
+        model.readSpeaker = { [weak host] key in
+            // A declared switch can change from a page or the program, and the frame follows; the plain choice is only the frame's.
+            guard let key, host != nil else { return nil }
+            return host?.shelf.settings.first { $0.extensionId == info.extensionId && $0.key == key }?.value.boolValue
+        }
         model.view.figures = SceneFigures.live(settings: s)
         model.takesInput = mood.approvals.isEmpty
         model.fitScreen = { screen.visibleFrame }
@@ -58,6 +66,8 @@ extension AppCoordinator {
         }
         Task { @MainActor in
             let reader = await host.assetReader(extensionId: info.extensionId)
+            model.soundsOn = await host.surfaceSpeaker(info, key: info.speakerSetting)
+            model.reader = reader
             model.view.assets = SceneImages(reader: reader)
             model.onSound = { [weak self] path in
                 guard let self, let reader, self.cues.soundsAllowed() else { return }
@@ -78,19 +88,33 @@ extension AppCoordinator {
 
     /// It ends for good: the extension hears why, and a surface that was used and never said it was over still gets its row.
     func finish(_ model: SurfaceModel, reason: SurfaceCloseReason) {
+        // Hiding an overlay ends it, and comes back here: once is enough, with the reason this call has.
+        guard !model.finished else { return }
+        model.finished = true
         model.stop()
-        if model.used, !model.recorded { recordSurface(model, last: model.scene) }
+        if model.rowAtEnd() { recordSurface(model, last: model.scene) }
         let controller = surfaceController(model.info)
         if controller.model === model {
             controller.hide()
             controller.drop()
         }
-        model.view.assets.emptied()
+        release(model)
+        if surfaceRevealedCompanion == ObjectIdentifier(model) {
+            surfaceRevealedCompanion = nil
+            showCompanion(false)
+        }
         let session = model.session
         Task { await session.close(reason) }
     }
 
+    /// What it held in memory goes with it.
+    private func release(_ model: SurfaceModel) {
+        model.view.assets.emptied()
+        if let reader = model.reader { SurfaceSounds.shared.forget(reader) }
+    }
+
     private func recordSurface(_ model: SurfaceModel, last: SurfaceScene?) {
+        guard model.writesRows else { return }
         let entry = model.activityEntry(companionName: runtime.settings.current.companionName, last: last)
         let activity = runtime.activity, events = runtime.events
         Task {
@@ -101,18 +125,27 @@ extension AppCoordinator {
 
     private func toggleSurfaceSounds(_ model: SurfaceModel) {
         model.soundsOn.toggle()
-        let id = model.info.id, on = model.soundsOn
-        Task { await runtime.settings.update { $0.games.speakers[id] = on } }
+        let info = model.info, key = model.speakerKey, on = model.soundsOn, host = runtime.extensions
+        Task { await host.setSurfaceSpeaker(info, key: key, on: on) }
+    }
+
+    /// A tool's reply asked to put its surface away: kept, as ✕ keeps it.
+    func putSurfaceAway(of extensionId: String, surface: String?) {
+        for controller in [surfacePanel, surfaceOverlay] {
+            guard let model = controller.model, model.info.extensionId == extensionId, surface == nil || model.info.surface == surface else { continue }
+            controller.hide()
+        }
     }
 
     /// The extension was turned off or removed: its surface, kept or on screen, is gone at once.
     func dropSurfaces(of extensionId: String) {
         for controller in [surfacePanel, surfaceOverlay] {
             guard let model = controller.model, model.info.extensionId == extensionId else { continue }
+            model.finished = true
             model.stop()
             controller.hide()
             controller.drop()
-            model.view.assets.emptied()
+            release(model)
         }
     }
 

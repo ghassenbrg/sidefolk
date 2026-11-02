@@ -112,8 +112,10 @@ extension ParsedIntent {
             return String(localized: "I'll ask what to watch.")
         case .needsPlace:
             return String(localized: "I'll ask where you are.")
-        case .companion, .chance, .game, .gamesMenu, .gameCommand, .surface:
+        case .companion, .chance, .game, .gamesMenu, .gameCommand:
             return String(localized: "Let's play.")
+        case .surface:
+            return String(localized: "An extension shows this.", comment: "The Say bar, before Return: the sentence opens an extension's panel")
         case .newConversation:
             return String(localized: "Your next question starts a new conversation.")
         case .extensionCommand:
@@ -136,7 +138,8 @@ extension ParsedIntent {
         case .aboutMe: "person.text.rectangle"
         case .watch, .stopWatch, .needsTarget: "binoculars"
         case .report, .read, .needsPlace: "gauge.with.dots.needle.33percent"
-        case .companion, .chance, .game, .gamesMenu, .gameCommand, .surface: "gamecontroller"
+        case .companion, .chance, .game, .gamesMenu, .gameCommand: "gamecontroller"
+        case .surface: "puzzlepiece.extension"
         case .quiet, .quietOff: "moon"
         case .find: "magnifyingglass"
         case .newConversation: "square.and.pencil"

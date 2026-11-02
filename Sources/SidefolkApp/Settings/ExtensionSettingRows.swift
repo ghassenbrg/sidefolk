@@ -49,8 +49,9 @@ struct ExtensionAISwitchRow: View {
 
     var body: some View {
         SettingsToggle(title: Text("Let it use your AI", comment: "An extension's row: the person's switch for its use of their AI"),
-                       detail: Text("It says it uses it \(status.purpose). \(status.usedToday) of \(status.dailyCap) requests today.",
-                                    comment: "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit"),
+                       detail: status.heldBack.map { Text(verbatim: $0) }
+                           ?? Text("It says it uses it \(status.purpose). \(status.usedToday) of \(status.dailyCap) requests today.",
+                                   comment: "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit"),
                        isOn: Binding(get: { status.on }, set: change))
     }
 }

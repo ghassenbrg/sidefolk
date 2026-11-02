@@ -9,11 +9,16 @@
     {
       "why": "The seed list: the one data file naming the extensions a fresh Mac starts with.",
       "file": "Resources/SeedPacks/seed-packs.json",
-      "match": "dev\\.sidefolk\\."
+      "match": ".+"
     },
     {
       "why": "Themes are the app's own since D92: their ids, in the library and the succession.",
       "file": "Sources/SidefolkCore/Themes/*",
+      "match": "dev\\.sidefolk\\.theme"
+    },
+    {
+      "why": "Themes are the app's own since D92: the themes themselves.",
+      "file": "Resources/Themes/*",
       "match": "dev\\.sidefolk\\.theme"
     },
     {

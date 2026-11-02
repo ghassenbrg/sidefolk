@@ -11,7 +11,7 @@ extension ExtensionPage {
     /// Numbers or several cards, a hero, pictures or a column beside the main one: worth a wide window. A page of
     /// switches and buttons reads better narrow.
     public var isRich: Bool {
-        hasSide || sections.contains { $0.isWide && $0.blocks.contains { $0.isCard || $0.isMetric || ["hero", "tiles", "stats", "grid", "tabs", "badges", "recent"].contains($0.kind) } }
+        hasSide || sections.contains { $0.isWide && $0.blocks.contains { $0.isCard || $0.isMetric || ["hero", "tiles", "stats", "grid", "tabs", "badges", "recent", "scene"].contains($0.kind) } }
     }
 
     /// Some sections go in a column beside the others (D74).
@@ -44,7 +44,7 @@ extension ExtensionPage.Section {
     /// Across the page: numbers, two or more cards, a row of buttons or questions, or notes alone (heads-ups that
     /// read as one line). Anything else (one card with its note, a few switches) takes a column beside its neighbours.
     public var isWide: Bool {
-        if blocks.contains(where: { $0.isMetric || ["hero", "transport", "tiles", "cards", "stats", "grid", "tabs", "badges", "recent"].contains($0.kind) }) { return true }
+        if blocks.contains(where: { $0.isMetric || ["hero", "transport", "tiles", "cards", "stats", "grid", "tabs", "badges", "recent", "scene"].contains($0.kind) }) { return true }
         if blocks.filter(\.isCard).count >= 2 { return true }
         let kinds = Set(blocks.map(\.kind))
         return kinds == ["note"] || kinds.isSubset(of: ["ask", "button"])
@@ -74,6 +74,7 @@ extension ExtensionPage.Block {
         case .cards: "grid"
         case .tabs: "tabs"
         case .badges: "badges"
+        case .scene: "scene"
         case .recent: "recent"
         case .settings: "settings"
         }

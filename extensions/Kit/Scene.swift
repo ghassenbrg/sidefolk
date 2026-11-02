@@ -73,6 +73,10 @@ public struct Scene {
     public func withBack() -> Scene { with { $0.extra["back"] = true } }
     /// Show this scene so long (100–10000 ms), then Sidefolk asks for the next with `.next`. The extension keeps no clock.
     public func after(ms: Int) -> Scene { with { $0.extra["after_ms"] = ms } }
+    /// The same wait under Reduce Motion, when what it waits for doesn't play. You aren't told that setting; this is for it.
+    public func afterStill(ms: Int) -> Scene { with { $0.extra["after_still_ms"] = ms } }
+    /// A switch among your settings that the frame's speaker is while this scene shows.
+    public func speaker(_ key: String) -> Scene { with { $0.extra["speaker"] = key } }
     /// No moves for so long, besides areas marked `always`.
     public func inputAfter(ms: Int) -> Scene { with { $0.extra["input_after_ms"] = ms } }
     /// A node that changed since the last scene eases to its new place (up to 1000 ms).
@@ -125,6 +129,11 @@ public struct Color: @unchecked Sendable {
     /// `#RRGGBB` or `#RRGGBBAA`.
     public static func hex(_ value: String) -> Color { Color(json: value) }
     public static func adaptive(light: String, dark: String) -> Color { Color(json: ["light": light, "dark": dark]) }
+    /// A theme colour see-through (`alpha`) or lighter or darker (`brightness`, -1…1): a gradient to itself, a lip under a key.
+    public func tuned(alpha: Double = 1, brightness: Double = 0) -> Color {
+        guard let token = json as? String else { return self }
+        return Color(json: ["token": token, "alpha": alpha, "brightness": brightness])
+    }
 }
 
 /// One thing in a scene. Build with the statics, place with the modifiers.
@@ -217,6 +226,57 @@ public struct Node {
     /// The person's companion, drawn by Sidefolk in a pose: `idle`, `listening`, `thinking`, `waiting`, `success`, `alert`,
     /// `celebrating`. You place it; you can't read it.
     public static func companion(pose: String = "idle") -> Node { Node(["type": "companion", "pose": pose]) }
+    /// A figure's placing: its profile picture (`face`), standing on the bottom edge (`bottom`), in shades of one colour (`duotone`).
+    public func figure(face: Bool = false, bottom: Bool = false, duotone: Color? = nil) -> Node {
+        with {
+            if face { $0["figure"] = "face" }
+            if bottom { $0["align"] = "bottom" }
+            if let duotone { $0["duotone"] = duotone.json }
+        }
+    }
+    /// A clipped box whose children are taller than it. The wheel and the trackpad move them with nothing sent to you; `scrollTo`
+    /// keeps a node in view (the keyboard's selection, say).
+    public static func scroll(contentHeight: Double, scrollTo: String? = nil, @SceneBuilder _ children: () -> [Node]) -> Node {
+        var values: [String: Any] = ["type": "scroll", "content_h": contentHeight, "children": children().map(\.json)]
+        if let scrollTo { values["scroll_to"] = scrollTo }
+        return Node(values)
+    }
+    /// A text's or clock's look beyond its weight and design.
+    public func textLook(italic: Bool = false, tabular: Bool = false, strike: Bool = false) -> Node {
+        with {
+            if italic { $0["italic"] = true }
+            if tabular { $0["tabular"] = true }
+            if strike { $0["strike"] = true }
+        }
+    }
+    /// Words in parts, each its own colour or weight, wrapping as one.
+    public static func runs(_ parts: [(text: String, color: Color?, weight: String?)], size: Double = 14, weight: String = "regular", design: String = "default",
+                            color: Color = .ink, align: String = "center", lines: Int = 1) -> Node {
+        Node(["type": "text", "size": size, "weight": weight, "design": design, "color": color.json, "align": align, "lines": lines,
+              "runs": parts.map { part -> [String: Any] in
+                  var run: [String: Any] = ["text": part.text]
+                  if let c = part.color { run["color"] = c.json }
+                  if let w = part.weight { run["weight"] = w }
+                  return run
+              }])
+    }
+    /// A symbol's weight, one flat colour (`mono`), or a colour for its second layer.
+    public func symbolLook(weight: String = "semibold", mono: Bool = false, secondary: Color? = nil) -> Node {
+        with {
+            $0["weight"] = weight
+            if mono { $0["mode"] = "mono" }
+            if let secondary { $0["secondary"] = secondary.json }
+        }
+    }
+    /// A field's manners: takes the keyboard as it appears (if the surface has it), and drawn with no box of its own.
+    public func fieldLook(focus: Bool = false, plain: Bool = false, weight: String = "regular", design: String = "default") -> Node {
+        with {
+            if focus { $0["focus"] = true }
+            if plain { $0["plain"] = true }
+            $0["weight"] = weight
+            $0["design"] = design
+        }
+    }
     /// The person, by their Mac account's picture or a friendly stand-in. The same rule.
     public static func person() -> Node { Node(["type": "person"]) }
 
@@ -261,15 +321,22 @@ public struct Node {
     /// required: without words it isn't offered. `hover` and `press` are how it looks meanwhile; `highlight` are other nodes
     /// that take `hover` too; `always` works while an animation holds other moves; `key` is a key that presses it (`seat` by
     /// its place on the keyboard); `sound` plays on the press; `timedFromMs` times the press from a moment of the scene.
+    ///
+    /// `looks` gives other nodes a look of their own on hover (`opacity` there is the value itself, so a node at 0 can appear), while
+    /// the area stays still unless `hover` says otherwise. `submits` sends what is typed in that field, as Return does; it takes no
+    /// press while the field is empty. `selected` tells VoiceOver this is the current one.
     public func area(_ id: String, value: String? = nil, label: String, disabled: Bool = false, hover: AreaLook? = .init(scale: 1.03),
-                     press: AreaLook? = .init(scale: 0.97), highlight: [String] = [], always: Bool = false, key: String? = nil, seat: Bool = false,
-                     sound: String? = nil, timedFromMs: Double? = nil, drag: Drag? = nil) -> Node {
+                     press: AreaLook? = .init(scale: 0.97), highlight: [String] = [], looks: [String: AreaLook] = [:], submits: String? = nil, selected: Bool = false,
+                     always: Bool = false, key: String? = nil, seat: Bool = false, sound: String? = nil, timedFromMs: Double? = nil, drag: Drag? = nil) -> Node {
         with {
             var a: [String: Any] = ["id": id, "label": label, "disabled": disabled, "always": always]
             if let value { a["value"] = value }
             if let hover { a["hover"] = hover.json }
             if let press { a["press"] = press.json }
-            if !highlight.isEmpty { a["highlight"] = highlight }
+            let others: [Any] = highlight + looks.keys.sorted().map { key -> [String: Any] in (looks[key]?.json ?? [:]).merging(["id": key]) { own, _ in own } }
+            if !others.isEmpty { a["highlight"] = others }
+            if let submits { a["submits"] = submits }
+            if selected { a["selected"] = true }
             if let key { a["key"] = key }
             if seat { a["seat"] = true }
             if let sound { a["sound"] = sound }
@@ -282,12 +349,13 @@ public struct Node {
 
 /// How an area looks while hovered or pressed.
 public struct AreaLook {
-    public var scale: Double?, dx: Double?, dy: Double?, opacity: Double?
-    public init(scale: Double? = nil, dx: Double? = nil, dy: Double? = nil, opacity: Double? = nil) {
+    public var scale: Double?, dx: Double?, dy: Double?, opacity: Double?, rotate: Double?
+    public init(scale: Double? = nil, dx: Double? = nil, dy: Double? = nil, opacity: Double? = nil, rotate: Double? = nil) {
         self.scale = scale
         self.dx = dx
         self.dy = dy
         self.opacity = opacity
+        self.rotate = rotate
     }
     var json: [String: Any] {
         var out: [String: Any] = [:]
@@ -295,6 +363,7 @@ public struct AreaLook {
         if let dx { out["dx"] = dx }
         if let dy { out["dy"] = dy }
         if let opacity { out["opacity"] = opacity }
+        if let rotate { out["rotate"] = rotate }
         return out
     }
 }
@@ -304,8 +373,9 @@ public struct AreaLook {
 public struct Drag {
     var json: [String: Any]
     public static func free(ghost: String? = nil) -> Drag { Drag(json: ghost.map { ["mode": "free", "ghost": $0] } ?? ["mode": "free"]) }
-    public static func cells(rows: Int, columns: Int, ghost: String? = nil) -> Drag {
-        var j: [String: Any] = ["mode": "grid", "rows": rows, "columns": columns]
+    /// `inset`: how far the ghost stays inside the cells it covers.
+    public static func cells(rows: Int, columns: Int, ghost: String? = nil, inset: Double = 0) -> Drag {
+        var j: [String: Any] = ["mode": "grid", "rows": rows, "columns": columns, "inset": inset]
         if let ghost { j["ghost"] = ghost }
         return Drag(json: j)
     }

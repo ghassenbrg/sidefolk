@@ -11,6 +11,8 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
     public var aiDay: String?
     public var aiCalls = 0
     public var carried: [String] = []
+    /// The frame's speaker, by surface, when it isn't one of its settings. Goes with the extension.
+    public var speakers: [String: Bool] = [:]
 
     public init() {}
 
@@ -21,6 +23,7 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
         aiDay = try? c.decodeIfPresent(String.self, forKey: .aiDay)
         aiCalls = (try? c.decode(Int.self, forKey: .aiCalls)) ?? 0
         carried = (try? c.decode([String].self, forKey: .carried)) ?? []
+        speakers = (try? c.decode([String: Bool].self, forKey: .speakers)) ?? [:]
     }
 
     static func key(_ id: String) -> String { "extension.preferences.\(id)" }
@@ -103,12 +106,15 @@ public struct ExtensionAIStatus: Sendable, Hashable {
     public var usedToday: Int
     /// The person's switch.
     public var on: Bool
+    /// Why nothing will be asked for now, whatever the switch says.
+    public var heldBack: String?
 
-    public init(purpose: String, dailyCap: Int, usedToday: Int, on: Bool) {
+    public init(purpose: String, dailyCap: Int, usedToday: Int, on: Bool, heldBack: String? = nil) {
         self.purpose = purpose
         self.dailyCap = dailyCap
         self.usedToday = usedToday
         self.on = on
+        self.heldBack = heldBack
     }
 }
 
@@ -120,6 +126,8 @@ public struct ExtensionEntry: Sendable, Hashable, Identifiable {
         case tool(name: String, input: JSONValue)
         /// One of its own pages in Home.
         case page(String)
+        /// One of its own surfaces, opened through `surfaces.open` as the person.
+        case surface(id: String, arguments: JSONValue)
         /// A submenu of `items`.
         case menu
     }

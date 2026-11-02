@@ -105,6 +105,8 @@ public struct ExtensionPage: Sendable, Hashable {
         case recent(RecentList)
         /// The extension's own settings, as the host keeps and draws them (D100).
         case settings(SettingsRows)
+        /// A scene drawn inline, so a look no part offers stays entirely the extension's (D100).
+        case scene(PageScene)
     }
 
     /// A small label beside an option: "Paired", "New", "Off".
@@ -231,7 +233,7 @@ public struct ExtensionPage: Sendable, Hashable {
         public var kind: Kind
         public var label: String
         public var detail: String?
-        /// The tool's name in the extension (`keep_awake`), never another extension's.
+        /// The tool's name in the extension (`set_timer`), never another extension's.
         public var tool: String
         public var input: JSONValue
         public var symbol: String?

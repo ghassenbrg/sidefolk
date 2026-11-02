@@ -59,9 +59,11 @@ public struct IntentParser: Sendable {
         let ctx = Context(now: now, known: knownCollections, watching: watching)
         // In two parts: one chain of twelve is more than the type checker will take in reasonable time. An extension's
         // command comes after every one of Sidefolk's own (D50).
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? gamesMenu(p.command) ?? game(p.command) ?? surface(p.command)
-        return quick ?? gameCommand(p.command) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
-            ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx) ?? extensionCommand(p.command)
+        // So does a sentence that opens an extension's surface or game (T41).
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? gamesMenu(p.command)
+        let own = quick ?? gameCommand(p.command) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
+            ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
+        return own ?? game(p.command) ?? surface(p.command) ?? extensionCommand(p.command)
     }
 
     /// Whether Sidefolk's own understanding takes this sentence: an extension's command with the same words never reaches the

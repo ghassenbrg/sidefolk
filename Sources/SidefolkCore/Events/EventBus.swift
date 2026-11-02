@@ -73,6 +73,10 @@ public enum AppEvent: Sendable {
     case surface(SurfaceRequest)
     /// The extension was turned off or removed: its surface goes with it, kept or not.
     case surfaceGone(extensionId: String)
+    /// A tool's reply asked to put its surface away (`close_surface`, D100): kept, to come back to. Nil: whichever of its are open.
+    case surfaceAway(extensionId: String, surface: String?)
+    /// A tool's reply asked to show one of its pages in Home (`open_page`, D100): `<extension id>/<page>`.
+    case extensionPage(id: String)
     /// The Play panel's menu of every game (D79 amended): "show me the games", or `games.open` without a game. `focus`
     /// as for a game: the person's own words take the keyboard, the AI's wait for a click.
     case gamesMenu(focus: Bool)

@@ -56,7 +56,8 @@ struct AskHeader: View {
         return [.init(.ask, Text("Ask", comment: "Ask's tab: the conversation")),
                 .init(.today, today),
                 .init(.play, Text("Play", comment: "Ask's tab: opens the Play panel with its games"))]
-            + entries.map { .init(.entry($0.id), Text(ext: $0.title), symbol: $0.symbol) }
+            // Anyone but Sidefolk's own says whose it is, as in the menus (T41).
+            + entries.map { .init(.entry($0.id), Text(ext: $0.shownTitle), symbol: $0.symbol) }
     }
 
     /// Two at most: the row stays one row whichever extensions are on.

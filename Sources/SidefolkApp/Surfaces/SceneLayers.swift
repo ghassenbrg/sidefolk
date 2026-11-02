@@ -92,9 +92,9 @@ final class SceneLayers {
         main.position = CGPoint(x: base.x + w * main.anchorPoint.x + dx, y: base.y + h * main.anchorPoint.y + dy)
         let scale = CGFloat(look?.scale ?? 1)
         var t = CATransform3DMakeScale(base.sx * scale, base.sy * scale, 1)
-        t = CATransform3DRotate(t, base.rotate * .pi / 180, 0, 0, 1)
+        t = CATransform3DRotate(t, (base.rotate + CGFloat(look?.rotate ?? 0)) * .pi / 180, 0, 0, 1)
         main.transform = t
-        main.opacity = look?.opacity.map { Float($0) * base.opacity } ?? base.opacity
+        main.opacity = look?.opacity.map { look?.absolute == true ? Float($0) : Float($0) * base.opacity } ?? base.opacity
     }
 
     func look(_ style: SceneStyle?) {
@@ -102,12 +102,27 @@ final class SceneLayers {
         place()
     }
 
+    /// `shown` without this node's own hover or press look: an area's box stays where it rests, so a lift can't move it out from
+    /// under a still pointer and make the hover flicker.
+    func atRest(_ shown: CGRect) -> CGRect {
+        guard let look else { return shown }
+        let scale = CGFloat(abs(look.scale ?? 1))
+        guard scale > 0.01 else { return shown }
+        let width = shown.width / scale, height = shown.height / scale
+        return CGRect(x: shown.midX - CGFloat(look.dx ?? 0) - width / 2, y: shown.midY - CGFloat(look.dy ?? 0) - height / 2, width: width, height: height)
+    }
+
+    /// A scroll box's children, moved up by this many points.
+    func scroll(to offset: CGFloat) {
+        main.sublayerTransform = CATransform3DMakeTranslation(0, -offset, 0)
+    }
+
     // MARK: Drawing
 
     private func draw(_ node: SceneNode, in view: SceneView) {
         let dark = view.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
         switch node.kind {
-        case .group, .flip, .entry: main.contents = nil
+        case .group, .flip, .entry, .scroll: main.contents = nil
         case .image(let image):
             let path = dark ? (image.dark ?? image.path) : image.path
             let key: AnyHashable = [path, "\(node.width)x\(node.height)", "\(String(describing: image.tint))", image.fit.rawValue, "\(dark)"]
@@ -123,29 +138,37 @@ final class SceneLayers {
             }
             if image.fit == .cover { main.masksToBounds = true }
         case .text(let text):
-            setText(view.figures.fill(text.text), style: text, in: view)
+            var style = text
+            style.runs = text.runs.map { var run = $0; run.text = view.figures.fill(run.text); return run }
+            setText(view.figures.fill(text.text), style: style, in: view)
         case .clock(let clock):
             setClock(clock, elapsed: 0, in: view)
         case .symbol(let symbol):
-            let key: AnyHashable = [symbol.name, "\(node.width)x\(node.height)", "\(symbol.color)", "\(dark)"]
+            let key: AnyHashable = ["\(symbol)", "\(node.width)x\(node.height)", "\(dark)"]
             guard key != drawnKey else { return }
             drawnKey = key
-            main.contents = SceneDrawing.symbol(symbol.name, side: max(node.width, node.height), color: SceneColors.ns(symbol.color, appearance: view.effectiveAppearance))
+            let appearance = view.effectiveAppearance
+            main.contents = SceneDrawing.symbol(symbol, side: max(node.width, node.height), color: SceneColors.ns(symbol.color, appearance: appearance),
+                                                resolve: { SceneColors.ns($0, appearance: appearance) })
             main.contentsGravity = .resizeAspect
             main.contentsScale = 2
         case .shape(let form):
             drawShape(form, node, in: view)
-        case .companion(let pose):
-            let key: AnyHashable = ["companion", pose.rawValue, "\(node.width)x\(node.height)"]
+        case .companion(let pose, let look):
+            let key: AnyHashable = ["companion", pose.rawValue, "\(look)", "\(node.width)x\(node.height)", "\(dark)"]
             guard key != drawnKey else { return }
             drawnKey = key
-            main.contents = view.figures.companion(pose, Int(max(node.width, node.height)))
+            let picture = view.figures.companion(pose, Int(max(node.width, node.height)), look.face)
+            main.contents = picture.flatMap { SceneDrawing.figure($0, box: CGSize(width: node.width, height: node.height), look: look,
+                                                                  duotone: look.duotone.map { SceneColors.cg($0, appearance: view.effectiveAppearance) }) }
             main.contentsGravity = .resizeAspect
-        case .person:
-            let key: AnyHashable = ["person", "\(node.width)x\(node.height)"]
+        case .person(let look):
+            let key: AnyHashable = ["person", "\(look)", "\(node.width)x\(node.height)", "\(dark)"]
             guard key != drawnKey else { return }
             drawnKey = key
-            main.contents = view.figures.person(Int(max(node.width, node.height)))
+            let picture = view.figures.person(Int(max(node.width, node.height)))
+            main.contents = picture.flatMap { SceneDrawing.figure($0, box: CGSize(width: node.width, height: node.height), look: look,
+                                                                  duotone: look.duotone.map { SceneColors.cg($0, appearance: view.effectiveAppearance) }) }
             main.contentsGravity = .resizeAspectFill
             main.masksToBounds = true
         }
@@ -156,8 +179,9 @@ final class SceneLayers {
         let key: AnyHashable = [words, "\(style)", "\(node.width)x\(node.height)", "\(dark)"]
         guard key != drawnKey else { return }
         drawnKey = key
+        let appearance = view.effectiveAppearance
         main.contents = SceneDrawing.text(words, style: style, size: CGSize(width: node.width, height: node.height),
-                                          color: SceneColors.ns(style.color, appearance: view.effectiveAppearance))
+                                          color: SceneColors.ns(style.color, appearance: appearance), resolve: { SceneColors.ns($0, appearance: appearance) })
         main.contentsGravity = .resize
         main.contentsScale = 2
     }
@@ -165,7 +189,8 @@ final class SceneLayers {
     func setClock(_ clock: SceneClock, elapsed: TimeInterval, in view: SceneView) {
         let total = clock.running ? (clock.down ? max(clock.seconds - elapsed, 0) : clock.seconds + elapsed) : clock.seconds
         let whole = Int(total.rounded(clock.down ? .up : .down))
-        let words = String(format: "%d:%02d", whole / 60, whole % 60)
+        // Past an hour, hours: 1:15:12, not 75:12.
+        let words = whole >= 3600 ? String(format: "%d:%02d:%02d", whole / 3600, whole / 60 % 60, whole % 60) : String(format: "%d:%02d", whole / 60, whole % 60)
         var style = clock.style
         style.text = words
         setText(words, style: style, in: view)

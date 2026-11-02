@@ -79,10 +79,10 @@ enum SampleExtensionPage {
     }
 
     /// Stay Up holding for an hour, with its switches (D63).
-    @MainActor static func keepAwake(now: Date = Date()) -> ExtensionPageModel {
+    @MainActor static func stayUp(now: Date = Date()) -> ExtensionPageModel {
         let json = #"""
         {"summary": {"title": "Awake until 18:00", "detail": "1 h 25 min left · Screen on · showing you active (12× so far)", "tone": "good",
-                     "symbol": "cup.and.saucer.fill", "control": {"type": "switch", "label": "Keep awake", "on": true, "tool": "keep_awake"}},
+                     "symbol": "cup.and.saucer.fill", "control": {"type": "switch", "label": "Stay up", "on": true, "tool": "stay_up"}},
          "sections": [
           {"blocks": [{"type": "button", "label": "30 min more", "tool": "extend", "input": {"minutes": 30}, "symbol": "plus"},
                       {"type": "button", "label": "Stop", "tool": "stop_keeping_awake", "style": "destructive", "symbol": "stop.fill"}]},
@@ -283,7 +283,7 @@ enum SampleExtensionPage {
 
     /// Stay Up's tile, its main switch on it (D67).
     static func awakeWidget() -> ExtensionWidget {
-        let control = (try? ExtensionPage.parse(["summary": ["title": "x", "control": ["type": "switch", "label": "Keep awake", "on": true, "tool": "keep_awake"]]]))?
+        let control = (try? ExtensionPage.parse(["summary": ["title": "x", "control": ["type": "switch", "label": "Stay up", "on": true, "tool": "stay_up"]]]))?
             .summary?.control
         return ExtensionWidget(info: awakeInfo, summary: ExtensionPage.Summary(title: "Awake until 18:00", detail: "1 h 25 min left · Screen on",
                                                                                tone: .good, symbol: "cup.and.saucer.fill", control: control), at: Date())

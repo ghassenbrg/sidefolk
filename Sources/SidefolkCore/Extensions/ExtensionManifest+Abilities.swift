@@ -93,7 +93,9 @@ extension ExtensionManifest {
                 let from = minimum ?? 0
                 return .number(Swift.min(from + ((n - from) / step).rounded() * step, maximum ?? .infinity))
             case (.text, .string(let s)?):
-                guard s.count <= length ?? 200, ExtensionText.clean(s) == s, !s.contains(where: \.isNewline) else { return nil }
+                // Bytes as well as characters: marks stack without limit on one character, and each value is a row in History.
+                let most = length ?? 200
+                guard s.count <= most, s.utf8.count <= most * 8, ExtensionText.clean(s) == s, !s.contains(where: \.isNewline) else { return nil }
                 return .string(s)
             default: return nil
             }
@@ -112,10 +114,12 @@ extension ExtensionManifest {
         public var tool: String?
         public var input: [String: JSONValue]?
         public var page: String?
+        /// One of its surfaces, opened as the person's own click opens it; `input` is what it starts with.
+        public var surface: String?
         public var items: [EntryMeta]
 
         public init(id: String, title: String, symbol: String? = nil, places: [Place] = [], tool: String? = nil, input: [String: JSONValue]? = nil,
-                    page: String? = nil, items: [EntryMeta] = []) {
+                    page: String? = nil, surface: String? = nil, items: [EntryMeta] = []) {
             self.id = id
             self.title = title
             self.symbol = symbol
@@ -123,11 +127,12 @@ extension ExtensionManifest {
             self.tool = tool
             self.input = input
             self.page = page
+            self.surface = surface
             self.items = items
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["id", "title", "symbol", "places", "tool", "input", "page", "items"])
+            try decoder.rejectUnknownKeys(["id", "title", "symbol", "places", "tool", "input", "page", "surface", "items"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             id = try c.decode(String.self, forKey: "id")
             title = try c.decode(String.self, forKey: "title")
@@ -136,6 +141,7 @@ extension ExtensionManifest {
             tool = try c.decodeIfPresent(String.self, forKey: "tool")
             input = try c.decodeIfPresent([String: JSONValue].self, forKey: "input")
             page = try c.decodeIfPresent(String.self, forKey: "page")
+            surface = try c.decodeIfPresent(String.self, forKey: "surface")
             items = try c.decodeIfPresent([EntryMeta].self, forKey: "items") ?? []
         }
     }

@@ -5,6 +5,8 @@ import Synchronization
 /// marks them as untrusted; `asked` is what History shows of them.
 public struct AIHelpQuestion: Sendable, Hashable {
     public static let longest = 8_000
+    /// Characters alone don't bound what a request costs: combining marks stack without limit on one.
+    public static let longestBytes = 32_000
 
     public var extensionId: String
     public var prompt: String
@@ -17,7 +19,7 @@ public struct AIHelpQuestion: Sendable, Hashable {
     /// Nil for a request that can't be one: empty, or too long.
     init?(params: JSONValue, extensionId: String, purpose: String) {
         let text = ExtensionText.clean(params["prompt"]?.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, text.count <= Self.longest else { return nil }
+        guard !text.isEmpty, text.count <= Self.longest, text.utf8.count <= Self.longestBytes else { return nil }
         self.extensionId = extensionId
         prompt = text
         label = ExtensionText.line(params["label"]?.stringValue ?? purpose, characters: 60)

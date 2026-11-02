@@ -28,9 +28,20 @@ public actor ExtensionHost {
         public var runTool: (@Sendable (_ name: String, _ input: JSONValue, _ caller: Caller, _ timeout: TimeInterval) async -> ToolOutcome)?
         /// The person's AI by name, nil without one: what an extension's label says (D100).
         public var aiName: @Sendable () -> String? = { nil }
+        /// What the person calls their companion, for `{companion}` in the extension's words where Sidefolk writes them.
+        public var companionName: @Sendable () -> String = { "" }
         /// A section of Sidefolk's own settings by name, given once to the extension that does that work now (D100).
         public var carriedSettings: @Sendable (String) async -> JSONValue? = { _ in nil }
         public var forgetCarried: @Sendable (String) async -> Void = { _ in }
+        /// A value of the app's own store by name, and the rows History keeps of one tool, for the same one-time handover (`carries`).
+        public var carriedStore: @Sendable (String) async -> JSONValue? = { _ in nil }
+        public var carriedHistory: @Sendable (String) async -> [ActivityEntry] = { _ in [] }
+        /// Why the person's AI can't be used for extensions just now, in their language: nil when it can (T41).
+        public var aiHeldBack: @Sendable () -> String? = { nil }
+        /// Forgets every "always" the person gave an extension: it is no longer the one they gave it to.
+        public var forgetGrants: @Sendable (String) async -> Void = { _ in }
+        /// Takes rows in an extension's own words out of History when it goes (D100).
+        public var forgetOwnRows: @Sendable (String) async -> Void = { _ in }
         public init() {}
     }
 
@@ -61,6 +72,10 @@ public actor ExtensionHost {
         var preferences = ExtensionPreferences()
         var lastActivity = Date.distantPast
         var aiAsking = false
+        /// What its program last asked `sidefolk/settings.set`, waiting for the one-a-second limit (D100).
+        var settingsWaiting: [String: JSONValue] = [:]
+        var settingsFlushing = false
+        var lastSetting = Date.distantPast
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -89,6 +104,10 @@ public actor ExtensionHost {
     public nonisolated let surfaceShelf = SurfaceShelf()
     /// The surface open in each place (D99): one panel, one overlay.
     var openSurfaces: [SurfaceInfo.Presentation: OpenSurface] = [:]
+    /// The opening each place last started: a slower reply to an earlier one finds it isn't wanted any more.
+    var surfaceOpenings: [SurfaceInfo.Presentation: Int] = [:]
+    /// Being installed for the first time: not yet there for anyone asking, so nothing can switch it off halfway.
+    var installing: Set<String> = []
     /// What switched-on extensions put in Sidefolk's menus and offer for drops, read as menus open (D100).
     public nonisolated let shelf = ExtensionShelf()
     /// What goes with each request, beside the language (D100).
@@ -229,7 +248,7 @@ public actor ExtensionHost {
     public func info(id: String) -> ExtensionInfo? { makeInfo(id) }
 
     private func makeInfo(_ id: String) -> ExtensionInfo? {
-        guard let rt = runtimes[id] else { return nil }
+        guard let rt = runtimes[id], !installing.contains(id) else { return nil }
         let summary = rt.record.kind == .mcp
             ? PermissionSummary.forMCPServer(command: rt.pin.server?.command ?? "", arguments: rt.pin.server?.arguments ?? [])
             : PermissionSummary.forExtension(shown(rt.pin.permissions ?? ExtensionPermissions(), words(rt)))
@@ -311,10 +330,19 @@ public actor ExtensionHost {
     }
 
     /// What installing `folder` would do. Never runs the extension.
-    public func preview(folder: URL) -> InstallPreview {
+    /// - Parameter origin: who signed it, when it comes from the gallery: nil is anyone's folder.
+    public func preview(folder: URL, origin: ExtensionOrigin? = nil) -> InstallPreview {
         let report = validator.validate(folder: folder, mode: .source)
         var preview = InstallPreview(report: report)
         guard let manifest = report.manifest else { return preview }
+        if origin?.firstParty != true {
+            let reserved = ExtensionReservedNames.issues(manifest, strings: report.strings)
+            preview.report.errors += reserved
+            // Replacing Sidefolk's signed copy with anyone's: it starts afresh, and the sheet says so (T41).
+            if runtimes[manifest.id]?.pin.origin?.firstParty == true {
+                preview.report.warnings.append(String(localized: "This replaces Sidefolk's own \(manifest.name) with a copy Sidefolk didn't sign. Its settings and what you always allowed for it won't carry over.", comment: "Install sheet: an unsigned folder takes the place of a signed extension; its name"))
+            }
+        }
         preview.conflict = conflict(id: manifest.id, short: manifest.shortName, kind: .sidefolk)
         preview.report.warnings += commandClashes(manifest, strings: report.strings)
         if let old = runtimes[manifest.id], old.record.kind == .sidefolk {
@@ -359,9 +387,18 @@ public actor ExtensionHost {
         }
         let id = manifest.id
         if let why = conflict(id: id, short: manifest.shortName, kind: .sidefolk) { throw UserFacingError(verbatim: why) }
+        if origin?.firstParty != true, let reserved = ExtensionReservedNames.issues(manifest, strings: report.strings).first {
+            throw UserFacingError(verbatim: String(localized: "This extension can't be installed."), recovery: reserved.description)
+        }
 
         let previous = runtimes[id]
-        if previous != nil { await stop(id) }
+        if previous == nil { installing.insert(id) }
+        defer { installing.remove(id) }
+        if previous != nil {
+            // Its surface goes with the old program: the new one never opened that session, and the old pack's pictures are gone.
+            await forgetSurfaces(of: id)
+            await stop(id)
+        }
         registry.unregister(owner: id)
         shelveGames()
         let staged = try installer.stage(source: folder, id: id, quarantine: origin?.firstParty == true ? .none : .original)
@@ -382,6 +419,11 @@ public actor ExtensionHost {
             record.manifestHash = ExtensionFiles.aggregateHash(staged.pins)
             let pin = ExtensionPin(name: manifest.name, description: manifest.description, tagline: manifest.tagline, folk: manifest.folk,
                                    author: manifest.author, origin: origin, launch: start, permissions: permissions, files: staged.pins)
+            // Anyone's copy taking the place of Sidefolk's signed one isn't owed what the person gave that one.
+            if previous?.pin.origin?.firstParty == true, origin?.firstParty != true {
+                await forgetPreferences(id)
+                await config.forgetGrants(id)
+            }
             // What the host keeps survives an update, and comes back with a restored backup's install (D100).
             runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath, strings: final.strings,
                                    preferences: await loadPreferences(id))
@@ -400,6 +442,7 @@ public actor ExtensionHost {
             if enabled { touch(id) }
             Log.shared.info("extensions", "installed", ["id": id, "version": manifest.version])
             events.changed(.extensions)
+            installing.remove(id)
             guard let info = makeInfo(id) else { throw UserFacingError("The extension stopped while it was being installed.") }
             return info
         } catch {
@@ -426,6 +469,8 @@ public actor ExtensionHost {
         integrity.forget(id)
         await pageHistory.forget(extensionId: id)
         await forgetPreferences(id)
+        await config.forgetOwnRows(id)
+        SeedPacks.removed(id, paths: paths)
         try await store.delete(id: id)
         reconsiderResting(was: rt.manifest?.replaces ?? [])
         Log.shared.info("extensions", "uninstalled", ["id": id])
@@ -782,7 +827,8 @@ public actor ExtensionHost {
                 return SurfaceInfo(extensionId: id, extensionName: name, surface: surface, title: table?.surfaces[surface] ?? s.title, symbol: s.symbol,
                                    presentation: s.kind, width: min(s.width ?? (s.kind == .panel ? 400 : 240), mw),
                                    height: min(s.height ?? (s.kind == .panel ? 480 : 240), mh), say: s.say, ai: s.ai ?? false, sounds: hasSounds,
-                                   iconPath: rt.iconPath)
+                                   iconPath: rt.iconPath, arguments: s.arguments, speakerSetting: s.speakerSetting, activity: s.activity ?? true,
+                                   firstParty: rt.pin.origin?.firstParty == true, author: rt.pin.author)
             }
         }
     }
@@ -816,11 +862,12 @@ public actor ExtensionHost {
         defer { end(id) }
         let limit = timeout ?? config.callTimeout
         let text: String
+        var asked: JSONValue?
         do {
             if folders.isEmpty {
                 let client = try await ensureRunning(id)
                 try ensureApproved(id, remote, title)
-                text = try await client.callTool(name: remote, arguments: input, timeout: limit)
+                (text, asked) = try await client.callToolAsking(name: remote, arguments: input, timeout: limit)
             } else {
                 text = try await callInOwnProcess(id, remote: remote, title: title, input: input, folders: folders, timeout: limit)
             }
@@ -835,9 +882,14 @@ public actor ExtensionHost {
             throw userFacing(error, action: "“\(title)”", name: rt.pin.name)
         }
         let clean = ExtensionText.untrusted(text, bytes: 20_000)
-        return ToolResult(text: clean.isEmpty ? "(no output)" : clean,
-                          card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200), refId: id),
-                          untrusted: true)
+        var result = ToolResult(text: clean.isEmpty ? "(no output)" : clean,
+                                card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200), refId: id),
+                                untrusted: true)
+        if let m = rt.manifest, let asks = ExtensionToolAsks(asked, manifest: m) {
+            result.asks = asks
+            result.card?.holdAnswer = asks.holdAnswer
+        }
+        return result
     }
 
     /// Which paired device a call would reach, asked of the extension's running program, never through the model
@@ -1332,6 +1384,7 @@ public actor ExtensionHost {
         rt.client = nil
         rt.idleTask?.cancel()
         runtimes[id] = rt
+        await forgetSurfaces(of: id)
         registry.unregister(owner: id)
         shelveGames()
         try? await store.save(rt.record)
@@ -1435,7 +1488,8 @@ public actor ExtensionHost {
                              commands: meta.flatMap { commandsOf(rt, $0) },
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },
-                             service: Self.reachName(rt.manifest?.services ?? [])) { [weak self] input, folders in
+                             service: Self.reachName(rt.manifest?.services ?? []),
+                             asking: { [weak self] asks, caller in await self?.performAsks(id, asks, caller: caller) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)
         }

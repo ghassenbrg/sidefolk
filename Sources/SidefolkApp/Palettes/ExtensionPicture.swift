@@ -21,7 +21,9 @@ enum ExtensionPictures {
     static func load(_ name: String, in folder: URL, pixels: Int, limit: Int) async -> NSImage? {
         if let hit = cached(name, in: folder, pixels: pixels) { return hit }
         let made = await Task.detached(priority: .userInitiated) { () -> CGImage? in
-            guard let data = ExtensionDataFile.read(name, in: folder, limit: limit),
+            // Written by the program at any moment, with no signature in front of it: only the two plain types reach the
+            // decoders, not PDF, GIF or TIFF, whatever its name says (T40).
+            guard let data = ExtensionDataFile.read(name, in: folder, limit: limit), PackAssets.isPlainPicture(data),
                   let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
             let options: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceCreateThumbnailWithTransform: true,
                                             kCGImageSourceThumbnailMaxPixelSize: pixels, kCGImageSourceShouldCacheImmediately: true]

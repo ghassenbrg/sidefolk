@@ -32,9 +32,14 @@ final class SceneView: NSView {
     private var clockSince = Date()
     private var tracking: NSTrackingArea?
     private var axElements: [NSAccessibilityElement]?
+    /// How far each scroll box is moved, kept by node id across scenes; nothing about it reaches the extension.
+    private var scrolled: [String: CGFloat] = [:]
+    /// The last place each scroll box was told to keep in view: only a new one moves it.
+    private var scrollTargets: [String: String] = [:]
 
     override init(frame: NSRect) {
         super.init(frame: frame)
+        clipsToBounds = true
         wantsLayer = true
         layerContentsRedrawPolicy = .never
         canvas.anchorPoint = .zero
@@ -87,8 +92,10 @@ final class SceneView: NSView {
         }
         shownAt = ProcessInfo.processInfo.systemUptime
         start(drawn.runs)
+        applyScrolls(settled)
         layoutFields(settled)
         CATransaction.commit()
+        takeFocusIfAsked(settled)
         restyleHover()
         runClocks()
         NSAccessibility.post(element: self, notification: .layoutChanged)
@@ -144,6 +151,22 @@ final class SceneView: NSView {
         }
     }
 
+    /// Stops the animations where they are, on the same clock as Sidefolk's timers: put away with 5 s left, it comes back with 5 s left.
+    func setPaused(_ paused: Bool) {
+        guard (canvas.speed == 0) != paused else { return }
+        if paused {
+            let now = canvas.convertTime(CACurrentMediaTime(), from: nil)
+            canvas.speed = 0
+            canvas.timeOffset = now
+        } else {
+            let stopped = canvas.timeOffset
+            canvas.speed = 1
+            canvas.timeOffset = 0
+            canvas.beginTime = 0
+            canvas.beginTime = canvas.convertTime(CACurrentMediaTime(), from: nil) - stopped
+        }
+    }
+
     private func start(_ runs: [SceneRun]) {
         let kept = Set(runs.compactMap { run -> String? in
             guard let id = run.id, runningRuns[id]?.run == run else { return nil }
@@ -153,7 +176,7 @@ final class SceneView: NSView {
             for (layer, key) in running.keys { layer.removeAnimation(forKey: key) }
             runningRuns[id] = nil
         }
-        let now = CACurrentMediaTime()
+        let now = canvas.convertTime(CACurrentMediaTime(), from: nil)
         for run in runs {
             let name = run.id ?? "scene"
             guard !kept.contains(name) else { continue }
@@ -236,24 +259,79 @@ final class SceneView: NSView {
         var best: AreaHit?
         var bestZ = -Double.infinity
         var order = 0.0
-        func visit(_ node: SceneNode, _ z: Double) {
+        let canvasPoint = CGPoint(x: point.x / scale, y: point.y / scale)
+        let origin = canvas.presentation() ?? canvas
+        func visit(_ node: SceneNode, _ z: Double, inside: CGRect?) {
             guard let item = layers[node.id] else { return }
             let here = z + node.z * 1000
             order += 0.001
-            if let area = node.area, !area.disabled {
-                let shown = item.main.presentation() ?? item.main
-                let origin = canvas.presentation() ?? canvas
-                let frame = shown.convert(shown.bounds, to: origin)
-                let canvasPoint = CGPoint(x: point.x / scale, y: point.y / scale)
-                if frame.contains(canvasPoint), here + order >= bestZ, shown.opacity > 0.01 {
-                    best = AreaHit(id: node.id, area: area, frame: frame)
+            let shown = item.main.presentation() ?? item.main
+            let frame = shown.convert(shown.bounds, to: origin)
+            if let area = node.area, !area.disabled, area.submits.map({ fields[$0]?.stringValue.isEmpty == false }) ?? true {
+                // Where it rests, whatever its own hover look is doing; and only what a clipping parent lets show.
+                let rest = item.atRest(frame)
+                if rest.contains(canvasPoint), inside?.contains(canvasPoint) ?? true, here + order >= bestZ, shown.opacity > 0.01 {
+                    best = AreaHit(id: node.id, area: area, frame: rest)
                     bestZ = here + order
                 }
             }
-            for child in node.children { visit(child, here) }
+            let clip = node.clips ? (inside.map { $0.intersection(frame) } ?? frame) : inside
+            for child in node.children { visit(child, here, inside: clip) }
         }
-        scene.nodes.forEach { visit($0, 0) }
+        scene.nodes.forEach { visit($0, 0, inside: nil) }
         return best
+    }
+
+    // MARK: Scrolling
+
+    override func scrollWheel(with event: NSEvent) {
+        guard takesInput, let (node, box) = scrollBox(at: convert(event.locationInWindow, from: nil)) else { return super.scrollWheel(with: event) }
+        let step = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY : event.scrollingDeltaY * 10
+        let most = max(CGFloat(box.contentHeight - node.height), 0)
+        let next = min(max((scrolled[node.id] ?? 0) - step, 0), most)
+        guard next != scrolled[node.id] ?? 0 else { return }
+        scrolled[node.id] = next
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layers[node.id]?.scroll(to: next)
+        if let scene { layoutFields((mirrored ? scene.mirrored() : scene).settled()) }
+        CATransaction.commit()
+        setHover(hit(convert(event.locationInWindow, from: nil)))
+        axElements = nil
+    }
+
+    /// The innermost scroll box under the point.
+    private func scrollBox(at point: CGPoint) -> (SceneNode, SceneScroll)? {
+        guard let scene else { return nil }
+        let canvasPoint = CGPoint(x: point.x / scale, y: point.y / scale)
+        var found: (SceneNode, SceneScroll)?
+        func visit(_ node: SceneNode) {
+            if case .scroll(let box) = node.kind, let item = layers[node.id], item.main.convert(item.main.bounds, to: canvas).contains(canvasPoint) { found = (node, box) }
+            node.children.forEach(visit)
+        }
+        scene.nodes.forEach(visit)
+        return found
+    }
+
+    /// Each scroll box where it was, within what the new scene holds, moved only as far as a newly named node needs to be in view.
+    private func applyScrolls(_ settled: SurfaceScene) {
+        func visit(_ node: SceneNode) {
+            if case .scroll(let box) = node.kind, let item = layers[node.id] {
+                let most = max(CGFloat(box.contentHeight - node.height), 0)
+                var offset = min(scrolled[node.id] ?? 0, most)
+                if let to = box.to, scrollTargets[node.id] != to, let target = layers[to] {
+                    // In the box's own coordinates: where it is now, plus how far the box is already moved.
+                    let place = target.main.convert(target.main.bounds, to: item.main)
+                    if place.minY < offset { offset = place.minY } else if place.maxY > offset + CGFloat(node.height) { offset = place.maxY - CGFloat(node.height) }
+                    offset = min(max(offset, 0), most)
+                }
+                scrollTargets[node.id] = box.to
+                scrolled[node.id] = offset
+                item.scroll(to: offset)
+            }
+            node.children.forEach(visit)
+        }
+        settled.nodes.forEach(visit)
     }
 
     private func hitIsOpen(_ area: SceneArea) -> Bool { inputOpen?() != false || area.always }
@@ -283,6 +361,7 @@ final class SceneView: NSView {
         let look = on ? hit.area.hover : nil
         restyleNode(hit.id, look: look)
         for id in hit.area.highlight { restyleNode(id, look: look) }
+        for (id, own) in hit.area.looks { restyleNode(id, look: on ? own : nil) }
     }
 
     private func restyleHover() {
@@ -308,7 +387,7 @@ final class SceneView: NSView {
         let point = convert(event.locationInWindow, from: nil)
         guard let found = hit(point), hitIsOpen(found.area) else { return }
         pressed = found
-        restyleNode(found.id, look: found.area.press ?? found.area.hover)
+        restyleNode(found.id, look: pressLook(found.area))
         if let sound = found.area.sound { onPressSound?(sound) }
         if let drag = found.area.drag { dragging = DragState(drag: drag, startPoint: point, hit: found) }
         // A timed press counts when it goes down: it is a reaction, not a choice.
@@ -342,7 +421,20 @@ final class SceneView: NSView {
             return
         }
         guard let pressed, let up = hit(point), up.id == pressed.id else { return }
-        onMove?(.click(area: pressed.area.id, value: pressed.area.value, ms: nil))
+        if !submit(pressed.area) { onMove?(.click(area: pressed.area.id, value: pressed.area.value, ms: nil)) }
+    }
+
+    /// What a press looks like. Under Reduce Motion it dims rather than moves.
+    private func pressLook(_ area: SceneArea) -> SceneStyle? {
+        let look = area.press ?? area.hover
+        return reduceMotion ? look.map { SceneStyle(opacity: $0.opacity ?? 0.8) } : look
+    }
+
+    /// An area that sends a field's words: as Return would. True when it is one.
+    private func submit(_ area: SceneArea) -> Bool {
+        guard let name = area.submits else { return false }
+        if let field = fields[name] { field.onSubmit?(field.stringValue) }
+        return true
     }
 
     private func ms(_ timestamp: TimeInterval, from moment: Double) -> Int {
@@ -396,8 +488,9 @@ final class SceneView: NSView {
             let cw = s.hit.frame.width / CGFloat(columns), ch = s.hit.frame.height / CGFloat(rows)
             func x(_ c: Int) -> CGFloat { mirrored && scene?.isMirrored(s.hit.id) == true ? CGFloat(columns - 1 - c) : CGFloat(c) }
             let left = min(x(a.column), x(b.column)), right = max(x(a.column), x(b.column))
+            let inset = CGFloat(s.drag.inset)
             item.placeGhost(CGRect(x: s.hit.frame.minX + left * cw, y: s.hit.frame.minY + CGFloat(min(a.row, b.row)) * ch,
-                                   width: (right - left + 1) * cw, height: CGFloat(abs(a.row - b.row) + 1) * ch), in: canvas)
+                                   width: (right - left + 1) * cw, height: CGFloat(abs(a.row - b.row) + 1) * ch).insetBy(dx: inset, dy: inset), in: canvas)
         case .free:
             item.shiftGhost(dx: (end.x - s.startPoint.x) / scale, dy: (end.y - s.startPoint.y) / scale)
         }
@@ -419,12 +512,13 @@ final class SceneView: NSView {
         let timed = key.timedFrom.map { ms(timestamp, from: $0) }
         guard let id = key.area else { return .key(id: key.id, character: character, ms: timed) }
         guard let scene, let (nodeId, area) = areaNode(scene, id: id, value: key.value), !area.disabled else { return nil }
-        restyleNode(nodeId, look: area.press ?? area.hover)
+        restyleNode(nodeId, look: pressLook(area))
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(90))
             self?.restyleNode(nodeId, look: nil)
         }
         if let sound = area.sound { onPressSound?(sound) }
+        if submit(area) { return nil }
         return .click(area: area.id, value: area.value, ms: timed)
     }
 
@@ -442,12 +536,23 @@ final class SceneView: NSView {
 
     private func layoutFields(_ settled: SurfaceScene) {
         var wanted: [String: (SceneEntry, CGRect)] = [:]
-        func visit(_ node: SceneNode, _ origin: CGPoint) {
+        func visit(_ node: SceneNode, _ origin: CGPoint, inside: CGRect?) {
             let here = CGPoint(x: origin.x + node.x, y: origin.y + node.y)
-            if case .entry(let e) = node.kind { wanted[e.id] = (e, CGRect(origin: here, size: CGSize(width: node.width, height: node.height))) }
-            for child in node.children { visit(child, here) }
+            let box = CGRect(origin: here, size: CGSize(width: node.width, height: node.height))
+            if case .entry(let e) = node.kind {
+                let seen = inside.map { $0.intersection(box) } ?? box
+                // Inside the canvas or nowhere: only the frame's own words stand above it (T40).
+                if let frame = SurfacePolicy.fieldFrame(seen, canvas: CGSize(width: settled.size.width, height: settled.size.height)) { wanted[e.id] = (e, frame) }
+            }
+            var within = here
+            var clip = inside
+            if case .scroll = node.kind {
+                within.y -= scrolled[node.id] ?? 0
+                clip = inside.map { $0.intersection(box) } ?? box
+            }
+            for child in node.children { visit(child, within, inside: clip) }
         }
-        settled.nodes.forEach { visit($0, .zero) }
+        settled.nodes.forEach { visit($0, .zero, inside: nil) }
         for (id, field) in fields where wanted[id] == nil {
             field.removeFromSuperview()
             fields[id] = nil
@@ -464,7 +569,7 @@ final class SceneView: NSView {
                     field.stringValue = ""
                 }
             }
-            field.configure(entry)
+            field.configure(entry, placeholder: entry.placeholder.map(figures.fill))
             field.frame = CGRect(x: rect.minX * scale, y: rect.minY * scale, width: rect.width * scale, height: rect.height * scale)
         }
     }
@@ -472,6 +577,13 @@ final class SceneView: NSView {
     /// The keyboard's first stop, when the surface has it and the scene has a field.
     func focusField() {
         guard let field = fields.values.first(where: { $0.isEditable }) else { return }
+        window?.makeFirstResponder(field)
+    }
+
+    /// A field that asks for the keyboard as it appears. Only if this surface already has it: a scene can't take it from anywhere (D75).
+    private func takeFocusIfAsked(_ settled: SurfaceScene) {
+        guard takesInput, window?.isKeyWindow == true, let wanted = settled.entries.first(where: { $0.focus && !$0.locked }), let field = fields[wanted.id],
+              field.currentEditor() == nil else { return }
         window?.makeFirstResponder(field)
     }
 
@@ -484,7 +596,7 @@ final class SceneView: NSView {
         func visit(_ node: SceneNode) {
             let id = node.id
             if let area = node.area {
-                out.append(SceneAXElement(parent: self, role: .button, label: area.label, value: nil, enabled: !area.disabled,
+                out.append(SceneAXElement(parent: self, role: .button, label: figures.fill(area.label), value: nil, enabled: !area.disabled, selected: area.selected,
                                           place: { [weak self] in self?.screenFrame(of: id) ?? .zero },
                                           pressed: { [weak self] in self?.accessibilityPress(area) }))
             } else if let words = spoken(node) {
@@ -499,7 +611,7 @@ final class SceneView: NSView {
     }
 
     private func spoken(_ node: SceneNode) -> String? {
-        if let label = node.label { return label }
+        if let label = node.label { return figures.fill(label) }
         if case .text(let t) = node.kind { return figures.fill(t.text) }
         return nil
     }
@@ -512,7 +624,7 @@ final class SceneView: NSView {
     }
 
     func accessibilityPress(_ area: SceneArea) {
-        guard takesInput, hitIsOpen(area) else { return }
+        guard takesInput, hitIsOpen(area), !submit(area) else { return }
         onMove?(.click(area: area.id, value: area.value, ms: area.timedFrom.map { ms(ProcessInfo.processInfo.systemUptime, from: $0) }))
     }
 
@@ -544,7 +656,7 @@ nonisolated final class SceneAXElement: NSAccessibilityElement, @unchecked Senda
     nonisolated(unsafe) private let place: @MainActor () -> NSRect
     nonisolated(unsafe) private let pressed: (@MainActor () -> Void)?
 
-    nonisolated init(parent: Any, role: NSAccessibility.Role, label: String?, value: String?, enabled: Bool, place: @escaping @MainActor () -> NSRect, pressed: (@MainActor () -> Void)?) {
+    nonisolated init(parent: Any, role: NSAccessibility.Role, label: String?, value: String?, enabled: Bool, selected: Bool = false, place: @escaping @MainActor () -> NSRect, pressed: (@MainActor () -> Void)?) {
         self.place = place
         self.pressed = pressed
         super.init()
@@ -553,6 +665,7 @@ nonisolated final class SceneAXElement: NSAccessibilityElement, @unchecked Senda
         setAccessibilityLabel(label)
         setAccessibilityValue(value)
         setAccessibilityEnabled(enabled)
+        setAccessibilitySelected(selected)
     }
 
     nonisolated override func accessibilityFrame() -> NSRect {
@@ -588,12 +701,15 @@ final class SceneField: NSTextField, NSTextFieldDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
-    func configure(_ entry: SceneEntry) {
+    func configure(_ entry: SceneEntry, placeholder: String?) {
         max = entry.max
-        placeholderString = entry.placeholder
+        placeholderString = placeholder
         isEditable = !entry.locked
         isEnabled = !entry.locked
-        font = .systemFont(ofSize: entry.size)
+        font = SceneDrawing.font(weight: entry.weight, design: entry.design, points: entry.size)
+        isBezeled = !entry.plain
+        drawsBackground = !entry.plain
+        focusRingType = entry.plain ? .none : .exterior
     }
 
     func controlTextDidChange(_ note: Notification) {

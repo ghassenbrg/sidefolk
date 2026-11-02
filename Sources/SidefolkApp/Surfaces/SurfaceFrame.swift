@@ -22,6 +22,16 @@ struct SurfaceFrame: View {
         .accessibilityLabel(Text(verbatim: model.info.extensionName))
     }
 
+    /// Its name, and for anyone but Sidefolk's own, who made it: a name alone isn't proof of whose it is (T40).
+    private var whose: String {
+        let info = model.info
+        if info.firstParty { return info.extensionName }
+        if let author = info.author, !author.isEmpty {
+            return String(localized: "\(info.extensionName), by \(author)", comment: "The frame of an extension's panel: its name and its author")
+        }
+        return String(localized: "\(info.extensionName), not from Sidefolk", comment: "The frame of an extension's panel: its name, when it names no author")
+    }
+
     private var panel: some View {
         VStack(spacing: 0) {
             header
@@ -39,7 +49,7 @@ struct SurfaceFrame: View {
             canvas
             HStack(spacing: 6) {
                 SurfaceIcon(info: model.info, side: 16)
-                Text(verbatim: model.info.extensionName).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(verbatim: whose).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
                 SurfaceButton(symbol: "xmark", label: String(localized: "Close", comment: "Closes an extension's panel"), side: 18, action: onClose)
             }
             .padding(.leading, 8).padding(.trailing, 4)
@@ -57,8 +67,8 @@ struct SurfaceFrame: View {
             }
             SurfaceIcon(info: model.info, side: 24)
             VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: model.scene?.title ?? model.info.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
-                Text(verbatim: model.info.extensionName).font(.system(size: 10, weight: .medium)).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                Text(verbatim: model.scene?.title.map(model.view.figures.fill) ?? model.info.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(verbatim: whose).font(.system(size: 10, weight: .medium)).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
             Spacer(minLength: 0)
             if model.info.sounds {
@@ -86,6 +96,7 @@ struct SurfaceFrame: View {
         } else {
             SceneCanvas(view: model.view, themeKey: ThemeStore.shared.style.theme.id)
                 .frame(width: model.canvas.width, height: model.canvas.height)
+                .clipped()
                 .opacity(model.takesInput ? 1 : 0.55)
                 .allowsHitTesting(model.takesInput)
         }

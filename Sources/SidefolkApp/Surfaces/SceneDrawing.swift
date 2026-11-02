@@ -19,6 +19,11 @@ enum SceneColors {
                 resolved = (NSColor(themed(token)).usingColorSpace(.sRGB) ?? .clear)
             }
             return resolved
+        case .tuned(let token, let alpha, let brightness):
+            let base = ns(.token(token), appearance: appearance)
+            guard brightness != 0, let plain = base.usingColorSpace(.deviceRGB) else { return base.withAlphaComponent(base.alphaComponent * alpha) }
+            return NSColor(deviceHue: plain.hueComponent, saturation: plain.saturationComponent, brightness: min(max(plain.brightnessComponent + brightness, 0), 1),
+                           alpha: plain.alphaComponent * alpha)
         }
     }
 
@@ -58,7 +63,7 @@ enum SceneColors {
 enum SceneDrawing {
     /// The words as a bitmap, shrunk to fit their box down to `minScale`, then cut at their last line. Bitmaps rather
     /// than live text: the same shaping and bidi as everywhere in AppKit, and drawn once.
-    static func text(_ words: String, style: SceneText, size: CGSize, color: NSColor) -> CGImage? {
+    static func text(_ words: String, style: SceneText, size: CGSize, color: NSColor, resolve: (SceneColor) -> NSColor = { _ in .labelColor }) -> CGImage? {
         guard size.width >= 1, size.height >= 1 else { return nil }
         let scale: CGFloat = 2
         let w = Int(size.width * scale), h = Int(size.height * scale)
@@ -73,7 +78,24 @@ enum SceneDrawing {
         }
         paragraph.lineBreakMode = style.lines == 1 ? .byClipping : .byWordWrapping
         func attributed(_ points: CGFloat) -> NSAttributedString {
-            NSAttributedString(string: words, attributes: [.font: font(style, points), .foregroundColor: color, .paragraphStyle: paragraph])
+            var plain: [NSAttributedString.Key: Any] = [.font: font(style, points), .foregroundColor: color, .paragraphStyle: paragraph]
+            if style.strike {
+                plain[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+                plain[.strikethroughColor] = color
+            }
+            guard !style.runs.isEmpty else { return NSAttributedString(string: words, attributes: plain) }
+            let out = NSMutableAttributedString()
+            for run in style.runs {
+                var look = plain
+                if let c = run.color { look[.foregroundColor] = resolve(c) }
+                if let weight = run.weight {
+                    var own = style
+                    own.weight = weight
+                    look[.font] = font(own, points)
+                }
+                out.append(NSAttributedString(string: run.text, attributes: look))
+            }
+            return out
         }
         var points = CGFloat(style.size)
         let least = points * CGFloat(style.minScale)
@@ -107,21 +129,71 @@ enum SceneDrawing {
     }
 
     private static func font(_ style: SceneText, _ points: CGFloat) -> NSFont {
-        let weight: NSFont.Weight = switch style.weight {
+        font(weight: style.weight, design: style.design, points: points, italic: style.italic, tabular: style.tabular)
+    }
+
+    static func font(weight: SceneText.Weight, design: SceneText.Design, points: CGFloat, italic: Bool = false, tabular: Bool = false) -> NSFont {
+        let themed = design == .theme ? ThemeStore.shared.style.tokens.type : nil
+        let points = themed.map { points * CGFloat($0.scale) } ?? points
+        let system = NSFont.systemFont(ofSize: points, weight: nsWeight(weight))
+        let face: NSFontDescriptor.SystemDesign = switch design {
+        case .standard: .default
+        case .rounded: .rounded
+        case .serif: .serif
+        case .mono: .monospaced
+        case .theme:
+            switch themed?.display {
+            case .rounded?: .rounded
+            case .serif?: .serif
+            default: .default
+            }
+        }
+        var descriptor = system.fontDescriptor.withDesign(face) ?? system.fontDescriptor
+        if italic { descriptor = descriptor.withSymbolicTraits(.italic) }
+        if tabular {
+            let digits: [NSFontDescriptor.FeatureKey: Int] = [.typeIdentifier: kNumberSpacingType, .selectorIdentifier: kMonospacedNumbersSelector]
+            descriptor = descriptor.addingAttributes([NSFontDescriptor.AttributeName.featureSettings: [digits]])
+        }
+        return NSFont(descriptor: descriptor, size: points) ?? system
+    }
+
+    static func nsWeight(_ weight: SceneText.Weight) -> NSFont.Weight {
+        switch weight {
         case .regular: .regular
         case .medium: .medium
         case .semibold: .semibold
         case .bold: .bold
         case .heavy: .heavy
+        case .black: .black
         }
-        let system = NSFont.systemFont(ofSize: points, weight: weight)
-        let design: NSFontDescriptor.SystemDesign = switch style.design {
-        case .standard: .default
-        case .rounded: .rounded
-        case .serif: .serif
-        case .mono: .monospaced
+    }
+
+    /// A figure in a box of its own: fitted whole, standing on the bottom edge if it should, in shades of one colour if it should.
+    static func figure(_ image: CGImage, box: CGSize, look: SceneFigureLook, duotone: CGColor?) -> CGImage? {
+        guard look.bottom || duotone != nil else { return image }
+        let scale: CGFloat = 2, side = CGSize(width: box.width * scale, height: box.height * scale)
+        guard side.width >= 1, side.height >= 1,
+              let context = CGContext(data: nil, width: Int(side.width), height: Int(side.height), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return image }
+        let fit = min(side.width / CGFloat(image.width), side.height / CGFloat(image.height))
+        let drawn = CGSize(width: CGFloat(image.width) * fit, height: CGFloat(image.height) * fit)
+        let place = CGRect(x: (side.width - drawn.width) / 2, y: look.bottom ? 0 : (side.height - drawn.height) / 2, width: drawn.width, height: drawn.height)
+        guard let duotone else {
+            context.draw(image, in: place)
+            return context.makeImage()
         }
-        return system.fontDescriptor.withDesign(design).flatMap { NSFont(descriptor: $0, size: points) } ?? system
+        // Grey first, then the colour multiplied over it, inside the picture's own shape.
+        let grey = CGContext(data: nil, width: image.width, height: image.height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceGray(),
+                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        grey?.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        context.draw(grey?.makeImage() ?? image, in: place)
+        context.saveGState()
+        context.clip(to: place, mask: image)
+        context.setBlendMode(.multiply)
+        context.setFillColor(duotone)
+        context.fill(place)
+        context.restoreGState()
+        return context.makeImage()
     }
 
     static func path(_ form: SceneShape.Form, box: CGRect, corner: Double) -> CGPath {
@@ -175,9 +247,16 @@ enum SceneDrawing {
         return context.makeImage()
     }
 
-    static func symbol(_ name: String, side: Double, color: NSColor) -> CGImage? {
-        guard side >= 1, let base = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
-        let image = base.withSymbolConfiguration(.init(pointSize: side * 0.8, weight: .semibold).applying(.init(hierarchicalColor: color))) ?? base
+    static func symbol(_ symbol: SceneSymbol, side: Double, color: NSColor, resolve: (SceneColor) -> NSColor) -> CGImage? {
+        guard side >= 1, let base = NSImage(systemSymbolName: symbol.name, accessibilityDescription: nil) else { return nil }
+        let colours: NSImage.SymbolConfiguration = if let second = symbol.secondary {
+            .init(paletteColors: [color, resolve(second)])
+        } else if symbol.mono {
+            .init(paletteColors: [color])
+        } else {
+            .init(hierarchicalColor: color)
+        }
+        let image = base.withSymbolConfiguration(.init(pointSize: side * 0.8, weight: nsWeight(symbol.weight)).applying(colours)) ?? base
         var rect = CGRect(origin: .zero, size: image.size)
         return image.cgImage(forProposedRect: &rect, context: nil, hints: [.ctm: AffineTransform(scale: 2)])
     }
@@ -252,15 +331,27 @@ final class SceneImages {
 
 /// The person's companion and the person, as Sidefolk draws them: a scene names them and gets back nothing.
 struct SceneFigures {
-    var companion: (SceneCompanionPose, Int) -> CGImage? = { _, _ in nil }
+    var companion: (SceneCompanionPose, Int, _ face: Bool) -> CGImage? = { _, _, _ in nil }
     var person: (Int) -> CGImage? = { _ in nil }
     var companionName = ""
 
     /// `{companion}` in an extension's words, filled in only where they are drawn.
     func fill(_ words: String) -> String { words.replacingOccurrences(of: "{companion}", with: companionName) }
 
+    /// The friendly stand-in for someone with no account picture, as Sidefolk's own places draw it.
+    @MainActor
+    static func standIn(side: CGFloat) -> CGImage? {
+        let renderer = ImageRenderer(content: PlayerAvatar(picture: nil, size: side))
+        renderer.scale = 2
+        return renderer.cgImage
+    }
+
     static func live(settings: AppSettings) -> SceneFigures {
-        SceneFigures(companion: { pose, side in
+        SceneFigures(companion: { pose, side, face in
+            if face {
+                var rect = CGRect(x: 0, y: 0, width: side * 2, height: side * 2)
+                return CompanionArt.avatar(for: settings, side: CGFloat(side)).cgImage(forProposedRect: &rect, context: nil, hints: nil)
+            }
             let state: CharacterState = switch pose {
             case .idle: .idle
             case .listening: .listening
@@ -274,8 +365,8 @@ struct SceneFigures {
             return GameFigures.trim(CompanionArt.portrait(for: settings, state: state, side: CGFloat(side)))?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
         }, person: { side in
             var rect = CGRect(x: 0, y: 0, width: side * 2, height: side * 2)
-            let picture = AccountPicture.current ?? NSImage(systemSymbolName: "face.smiling.inverse", accessibilityDescription: nil)
-            return picture?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+            if let picture = AccountPicture.current { return picture.cgImage(forProposedRect: &rect, context: nil, hints: nil) }
+            return SceneFigures.standIn(side: CGFloat(side))
         }, companionName: settings.companionName)
     }
 }

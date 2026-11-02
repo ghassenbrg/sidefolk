@@ -157,6 +157,15 @@ extension ExtensionPage {
                                        picture: PagePicture.parse(i["picture"]))
             }
             return items.isEmpty ? nil : .recent(RecentList(title: text(j["title"], 60), items: items))
+        case "scene":
+            // The same reader, caps and budget as a surface's; pictures are checked against the pack's pins when they are drawn.
+            guard let json = j["scene"], let scene = try? SurfaceScene.parse(json, within: SceneSize(width: PageScene.maxWidth, height: PageScene.maxHeight)) else { return nil }
+            var actions: [String: PageScene.Action] = [:]
+            for (area, action) in j["actions"]?.objectValue ?? [:] {
+                guard let tool = toolName(action["tool"]), let input = smallInput(action["input"]) else { continue }
+                actions[area] = PageScene.Action(tool: tool, input: input)
+            }
+            return .scene(PageScene(scene: scene, actions: actions))
         case "settings":
             let keys = (j["keys"]?.arrayValue ?? []).prefix(ExtensionAbilityRules.maxSettings).compactMap { k -> String? in
                 k.stringValue.flatMap { $0.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil ? $0 : nil }
@@ -198,5 +207,27 @@ extension ExtensionPage {
 
     static func date(_ j: JSONValue?) -> Date? {
         j?.stringValue.flatMap { ISO8601DateFormatter().date(from: $0) }
+    }
+}
+
+/// A scene inside a page: `actions` says which of the extension's own tools each of its areas runs, as the person, through Guard. It
+/// has no session: nothing goes to the program but those tool calls, and a page's scene takes no keys and keeps no clocks of its own.
+public struct PageScene: Sendable, Hashable {
+    public static let maxWidth = 960.0
+    public static let maxHeight = 720.0
+
+    public struct Action: Sendable, Hashable {
+        public var tool: String
+        public var input: JSONValue
+    }
+
+    public var scene: SurfaceScene
+    public var actions: [String: Action]
+
+    /// What a click on an area runs: its tool, with the area's own value as `value`.
+    public func action(area: String, value: String?) -> (tool: String, input: JSONValue)? {
+        guard let action = actions[area] else { return nil }
+        guard let value else { return (action.tool, action.input) }
+        return (action.tool, action.input.setting("value", .string(value)))
     }
 }

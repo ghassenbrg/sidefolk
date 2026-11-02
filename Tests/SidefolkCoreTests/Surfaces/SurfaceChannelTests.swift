@@ -140,11 +140,12 @@ struct SurfaceChannelTests {
             try await h.host.moveSurface(info: board, session: session, move: .next)
         }
         let now = Date()
-        var refused = 0
+        var dropped = 0
         for i in 0..<25 {
-            do { _ = try await h.host.moveSurface(info: board, session: session, move: .timer("t"), now: now.addingTimeInterval(Double(i) * 0.001)) } catch { refused += 1 }
+            // Past the rate a move is dropped, never an error: a key held down mustn't end what is on screen.
+            if try await h.host.moveSurface(info: board, session: session, move: .timer("t"), now: now.addingTimeInterval(Double(i) * 0.001)) == nil { dropped += 1 }
         }
-        #expect(refused >= 5, "at most 20 a second: \(refused)")
+        #expect(dropped >= 5, "at most 20 a second: \(dropped)")
     }
 
     @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))

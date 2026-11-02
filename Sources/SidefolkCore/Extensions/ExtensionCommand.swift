@@ -229,6 +229,8 @@ public struct CommandSentence: Sendable {
     }
 
     public let written: String
+    /// A word anyone might type in answer to an approval: it never matches.
+    public let isReply: Bool
     public let slots: [Slot]
     /// As people see it in Settings, each slot as "…": "time in …".
     public let shown: String
@@ -288,9 +290,12 @@ public struct CommandSentence: Sendable {
                 throw CommandProblem(message: "needs a word between {\(x.name)} and {\(y.name)}.")
             }
         }
-        if slots.isEmpty, Self.reserved.union(Self.approvalWords).contains(Self.normalized(literal)) {
+        if slots.isEmpty, Self.reserved.contains(Self.normalized(literal)) {
             throw CommandProblem(message: "“\(text)” is a reply anyone might type; it can't be a command.")
         }
+        // Refused at install; a copy already here keeps working, this sentence just never matches (T41). The list may grow
+        // with an update, and that mustn't turn off an extension.
+        isReply = slots.isEmpty && Self.approvalWords.contains(Self.normalized(literal))
         self.written = text
         self.slots = slots
         shape = Self.normalized(pieces.map { piece in
@@ -310,6 +315,7 @@ public struct CommandSentence: Sendable {
 
     /// The slot values of `command`, or nil when it isn't this sentence.
     public func match(_ command: String) -> [String: JSONValue]? {
+        guard !isReply else { return nil }
         let whole = NSRange(command.startIndex..., in: command)
         guard let m = regex.firstMatch(in: command, options: [], range: whole) else { return nil }
         var values: [String: JSONValue] = [:]

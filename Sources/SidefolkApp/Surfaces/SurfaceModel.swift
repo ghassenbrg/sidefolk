@@ -20,10 +20,16 @@ final class SurfaceModel {
     var takesInput = true {
         didSet { view.takesInput = takesInput }
     }
-    private(set) var lastActive = Date()
-    /// A person's move was made: worth one Activity row.
-    private(set) var used = false
-    private(set) var recorded = false
+    /// Who is looking: what lets moves through, and writes rows (T40).
+    @ObservationIgnored private var attention = SurfaceAttention()
+    var lastActive: Date { attention.lastActive }
+    /// It ended for good: `finish` has run.
+    @ObservationIgnored var finished = false
+    /// What this surface's sounds are read from, to forget them when it goes.
+    @ObservationIgnored var reader: PackAssetReader?
+    /// The switch among its settings that the speaker is, by its scene or its manifest; nil keeps the choice for the surface.
+    private(set) var speakerKey: String?
+    @ObservationIgnored var readSpeaker: ((String?) -> Bool?)?
     @ObservationIgnored private var queue: [SurfaceMove] = []
     @ObservationIgnored private var sending = false
     @ObservationIgnored private var timers: [String: (task: Task<Void, Never>, ends: Date)] = [:]
@@ -32,10 +38,9 @@ final class SurfaceModel {
     @ObservationIgnored private var closeTask: Task<Void, Never>?
     @ObservationIgnored private var eventsTask: Task<Void, Never>?
     @ObservationIgnored private var playedRuns: [String: (run: SceneRun, start: Date)] = [:]
-    /// How many `next` in a row with no one touching it, so an extension can't keep a surface busy for ever.
-    @ObservationIgnored private var idleNexts = 0
-    static let maxIdleNexts = 600
     static let maxQueued = 16
+    /// A key held down adds nothing while the last press is still on its way: each repeat would only queue.
+    var isBusy: Bool { sending || !queue.isEmpty }
 
     @ObservationIgnored var fitScreen: () -> CGRect = { NSScreen.main?.visibleFrame ?? .zero }
     @ObservationIgnored var onClose: (() -> Void)?
@@ -52,6 +57,7 @@ final class SurfaceModel {
         self.info = info
         self.session = session
         self.soundsOn = soundsOn
+        speakerKey = info.speakerSetting
         view.onMove = { [weak self] move in self?.send(move) }
         view.onPressSound = { [weak self] path in self?.playSound(path) }
         view.inputOpen = { [weak self] in self?.session.inputOpen() ?? false }
@@ -67,14 +73,7 @@ final class SurfaceModel {
 
     /// The person's move or a clock's: sent in its turn, if the scene on screen still offers it then.
     func send(_ move: SurfaceMove) {
-        guard failure == nil, queue.count < Self.maxQueued else { return }
-        lastActive = Date()
-        switch move {
-        case .next, .timer: break
-        default:
-            used = true
-            idleNexts = 0
-        }
+        guard failure == nil, queue.count < Self.maxQueued, attention.admit(move) else { return }
         queue.append(move)
         pump()
     }
@@ -116,15 +115,14 @@ final class SurfaceModel {
         view.frame.size = fitted.size
         let still = reduceMotion()
         view.show(next, scale: fitted.scale, rtl: rtl(), reduceMotion: still)
-        schedule(next, still: still)
-        if next.over, !recorded {
-            recorded = true
-            onOver?(next)
-        } else if !next.over {
-            recorded = false
-        }
-        if let words = next.announce { announce(words) }
+        speakerKey = next.speaker ?? info.speakerSetting
+        if let on = readSpeaker?(speakerKey) { soundsOn = on }
         if resized { onResize?() }
+        if attention.rowForScene(over: next.over) { onOver?(next) }
+        // A reply that came after it was put away is what shows when it comes back; its clocks start then.
+        guard !attention.hidden else { return }
+        schedule(next, still: still)
+        if let words = next.announce { announce(words) }
     }
 
     /// What the scene needs of time: its clocks (one with the same id carries on), its `after`, its close and its events.
@@ -139,12 +137,11 @@ final class SurfaceModel {
 
         afterTask?.cancel()
         afterTask = nil
-        if let after = scene.after {
+        if let after = still ? (scene.afterStill ?? scene.after) : scene.after {
             afterTask = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(after))
-                guard !Task.isCancelled, let self else { return }
-                self.idleNexts += 1
-                if self.idleNexts <= Self.maxIdleNexts { self.send(.next) }
+                guard !Task.isCancelled else { return }
+                self?.send(.next)
             }
         }
         closeTask?.cancel()
@@ -184,7 +181,9 @@ final class SurfaceModel {
             if !name.isEmpty, let played = playedRuns[name], played.run == run {
                 start = played.start
             } else {
-                events += run.events.map { (start.addingTimeInterval($0.at), $0) }
+                // Under Reduce Motion the end of a run that doesn't play shows at once, so what it was building up to comes with it.
+                let skipped = still && !run.curves.contains(where: \.essential) && !run.frames.contains(where: \.essential)
+                events += run.events.map { (skipped ? start : start.addingTimeInterval($0.at), $0) }
             }
             fresh[name] = (run, start)
             opens = max(opens, start.addingTimeInterval(still ? run.stillBlocks : run.blocks))
@@ -214,13 +213,17 @@ final class SurfaceModel {
     }
 
     private func playSound(_ path: String) {
-        guard soundsOn else { return }
+        guard soundsOn, !attention.hidden else { return }
         onSound?(path)
     }
 
+    /// Named, paced and only while it is on screen: VoiceOver is a voice people trust, and its words are the extension's.
     private func announce(_ words: String) {
+        guard attention.mayAnnounce() else { return }
+        let filled = view.figures.fill(words), name = info.extensionName
+        let said = String(localized: "\(name) says: \(filled)", comment: "VoiceOver: what an extension's panel announces, always with the extension's name")
         NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
-                             userInfo: [.announcement: words, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+                             userInfo: [.announcement: said, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
     }
 
     private func fail(_ error: Error) {
@@ -228,8 +231,12 @@ final class SurfaceModel {
         failure = (error as? UserFacingError)?.message ?? String(localized: "This stopped.", comment: "An extension's panel ended by itself")
     }
 
-    /// Stops every clock, keeping how long each had left, for coming back.
+    /// Stops every clock, keeping how long each had left, for coming back. Moves not sent yet are dropped: they were for what was on
+    /// screen.
     func pause() {
+        attention.hide()
+        queue = []
+        view.setPaused(true)
         for (id, running) in timers {
             paused[id] = max(running.ends.timeIntervalSinceNow, 0.1)
             running.task.cancel()
@@ -241,7 +248,8 @@ final class SurfaceModel {
 
     /// Shown again: its clocks go on from where they were, and a scene that was waiting asks for its next.
     func resume() {
-        lastActive = Date()
+        attention.show()
+        view.setPaused(false)
         guard let scene else { return }
         schedule(scene, still: reduceMotion(), events: false)
     }
@@ -250,8 +258,11 @@ final class SurfaceModel {
         pause()
         paused = [:]
         closeTask?.cancel()
-        queue = []
     }
+
+    /// Whether what ended now writes its row, once.
+    func rowAtEnd() -> Bool { info.activity && attention.rowAtEnd() }
+    var writesRows: Bool { info.activity }
 
     /// A key on the surface: what the scene does with it. True when it took it.
     func press(_ key: String, seat: String?, timestamp: TimeInterval) -> Bool {
@@ -271,7 +282,9 @@ final class SurfaceModel {
 /// The one Activity row a surface leaves, in Sidefolk's words: an extension's own never reach History.
 extension SurfaceModel {
     func activityEntry(companionName: String, last: SurfaceScene?) -> ActivityEntry {
-        var summary = String(localized: "Used \(info.title) from \(info.extensionName)", comment: "Activity: an extension's panel was used, then whose")
+        // What it was showing, when its scene says: one surface can hold many things.
+        let what = last?.title.map(view.figures.fill) ?? info.title
+        var summary = String(localized: "Used \(what) from \(info.extensionName)", comment: "Activity: an extension's panel was used, then whose")
         var args: [String: JSONValue] = ["extension": .string(info.extensionId), "surface": .string(info.surface)]
         if let t = last?.tally {
             summary += " · " + String(localized: "You \(t[0]) · \(companionName) \(t[1])", comment: "A game's score: the person's, then the companion's (named)")

@@ -15,7 +15,7 @@ extension AppCoordinator {
 
     /// An entry as a menu item, a submenu when it holds items. Anyone but Sidefolk's own extensions shows its name (`shownTitle`).
     func menuItem(_ entry: ExtensionEntry) -> NSMenuItem {
-        let item = ClosureTarget.item(entry.shownTitle) { [weak self] in self?.run(entry) }
+        let item = ClosureTarget.item(ExtensionCompanionWords.fill(entry.shownTitle)) { [weak self] in self?.run(entry) }
         if let symbol = entry.symbol { item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) }
         item.toolTip = String(localized: "From \(entry.extensionName)", comment: "A menu item an extension added: its tooltip names the extension")
         if !entry.items.isEmpty {
@@ -39,6 +39,12 @@ extension AppCoordinator {
         case .page(let page):
             askPanel.hide()
             home.show(section: .page("\(entry.extensionId)/\(page)"))
+        case .surface(let id, let arguments):
+            askPanel.hide()
+            Task {
+                let outcome = await runtime.executor.execute(name: "surfaces.open", input: ["surface": .string(id), "arguments": arguments], caller: .user)
+                if let problem = outcome.problem { runtime.events.publish(.notice(problem.message)) }
+            }
         case .menu:
             break
         }

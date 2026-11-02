@@ -72,10 +72,26 @@ enum ExtensionText {
     /// `clipped`, counting only what shows: a value's isolates don't use up the room. A line too long loses them with
     /// its end, so none is left open.
     static func clip(_ text: String, _ characters: Int) -> String {
-        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let t = withoutStacks(text.trimmingCharacters(in: .whitespacesAndNewlines))
         let isolate = { (c: Character) in c == Character(fsi) || c == Character(pdi) }
         guard t.count - t.filter(isolate).count > characters else { return t }
         return t.filter { !isolate($0) }.clipped(characters)
+    }
+
+    /// The most marks one character keeps. Every language's real text fits, and a cap counted in characters then also
+    /// bounds bytes: one letter under 500,000 combining marks is one `Character` and a megabyte.
+    static let marksPerCharacter = 8
+
+    /// Takes off what a character carries past `marksPerCharacter`.
+    static func withoutStacks(_ text: String) -> String {
+        guard text.utf8.count > text.count * 4 else { return text }
+        var out = String.UnicodeScalarView()
+        var run = 0
+        for s in text.unicodeScalars {
+            run = s.properties.isGraphemeExtend ? run + 1 : 0
+            if run <= marksPerCharacter { out.append(s) }
+        }
+        return String(out)
     }
 
     /// True when the string holds characters that make a path or name ambiguous to read.

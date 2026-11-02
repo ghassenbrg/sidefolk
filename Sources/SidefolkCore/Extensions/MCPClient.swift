@@ -175,10 +175,15 @@ public final class MCPClient: Sendable {
 
     /// Text content of a tool result; `isError` results throw.
     public func callTool(name: String, arguments: JSONValue, timeout: TimeInterval = 30) async throws -> String {
+        try await callToolAsking(name: name, arguments: arguments, timeout: timeout).text
+    }
+
+    /// The same, with what a Sidefolk extension's reply asks for beside its text (`sidefolk`, D100). A plain MCP server's reply has none.
+    func callToolAsking(name: String, arguments: JSONValue, timeout: TimeInterval = 30) async throws -> (text: String, asks: JSONValue?) {
         let result = try await request("tools/call", params: ["name": .string(name), "arguments": arguments], timeout: timeout)
         let text = Self.text(of: result)
         if case .bool(true)? = result["isError"] { throw MCPError.toolFailed(text) }
-        return text
+        return (text, result["sidefolk"])
     }
 
     static func text(of result: JSONValue) -> String {
@@ -225,9 +230,9 @@ public final class MCPClient: Sendable {
         }
         var message: [String: JSONValue] = ["jsonrpc": "2.0", "id": .number(Double(id)), "method": .string(method)]
         if let params { message["params"] = params }
-        if let language, method == "tools/call" || method.hasPrefix("sidefolk/"), var object = params?.objectValue ?? (params == nil ? [:] : nil),
-           object["language"] == nil {
-            object["language"] = .string(language())
+        // A request naming its own language (a page, a surface) still gets what else goes with every request.
+        if let language, method == "tools/call" || method.hasPrefix("sidefolk/"), var object = params?.objectValue ?? (params == nil ? [:] : nil) {
+            if object["language"] == nil { object["language"] = .string(language()) }
             for (key, value) in extras?() ?? [:] where object[key] == nil { object[key] = value }
             message["params"] = .object(object)
         }

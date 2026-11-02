@@ -194,11 +194,4 @@ struct SeedPacksTests {
             #expect(FileManager.default.fileExists(atPath: ExtFixtures.source(folder).appendingPathComponent("addon.json").path), "\(id) isn't in the gallery")
         }
     }
-
-    @Test func versionsCompareNumberByNumberAndAPrereleaseComesFirst() {
-        #expect(ExtensionVersion.compare("1.10.0", "1.9.9") == .orderedDescending)
-        #expect(ExtensionVersion.compare("1.2", "1.2.0") == .orderedSame)
-        #expect(ExtensionVersion.compare("2.0.0-beta.1", "2.0.0") == .orderedAscending)
-        #expect(ExtensionVersion.compare("2.0.0-beta.2", "2.0.0-beta.1") == .orderedDescending)
-    }
 }

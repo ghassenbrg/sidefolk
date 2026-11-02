@@ -18,7 +18,7 @@ public final class Extension {
         let title: String
         let description: String
         let input: [String: Any]
-        let run: @MainActor (Arguments) async throws -> String
+        let run: @MainActor (Arguments) async throws -> ToolReply
     }
 
     private let name: String
@@ -32,7 +32,7 @@ public final class Extension {
     private var backgroundWork: (@MainActor () async -> Void)?
     private var notices: [String: @MainActor (Arguments) -> Void] = [:]
     private var pairedCheck: (@MainActor (_ tool: String, _ arguments: Arguments) async -> Paired)?
-    private var carried: (@MainActor (_ section: String, _ values: Arguments) -> [String: Any])?
+    private var carried: (@MainActor (String, Arguments, [String: Any], [String: [[String: Any]]]) -> [String: Any])?
     /// Called when a setting changed while the program runs; every request carries them anyway (`ExtensionSettings`).
     public var settingsChanged: (@MainActor () -> Void)?
     /// Games the manifest declares (Game.swift).
@@ -51,7 +51,14 @@ public final class Extension {
     /// something the person or the model can fix ("That folder isn't a Git repository."): it becomes an error result.
     public func tool(_ name: String, _ title: String, _ description: String, input: [String: Any] = Schema.none,
                      run: @escaping @MainActor (Arguments) async throws -> String) {
-        tools.append(Tool(name: name, title: title, description: description, input: input, run: run))
+        tools.append(Tool(name: name, title: title, description: description, input: input, run: { ToolReply(try await run($0)) }))
+    }
+
+    /// A tool whose reply also asks for something of Sidefolk's: one of your surfaces opened or put away, one of your pages shown
+    /// (`ToolReply`). This is how a menu item, a command or a page's button starts a surface.
+    public func tool(_ name: String, _ title: String, _ description: String, input: [String: Any] = Schema.none,
+                     reply: @escaping @MainActor (Arguments) async throws -> ToolReply) {
+        tools.append(Tool(name: name, title: title, description: description, input: input, run: reply))
     }
 
     /// A surface the manifest declares (`surfaces.<name>`): a panel or overlay Sidefolk frames, drawn from your `Scene`.
@@ -107,6 +114,12 @@ public final class Extension {
     /// What to keep from a section of settings the app used to hold for what this extension does now (`settings_from`, D100): given
     /// once; the settings it returns are stored as its own.
     public func carry(_ receive: @escaping @MainActor (_ section: String, _ values: Arguments) -> [String: Any]) {
+        carried = { from, values, _, _ in ["settings": receive(from, values)] }
+    }
+
+    /// The same, with what else the app kept (`carries`): `store` by name and `history` by tool, each row `at`, `summary` and `args`.
+    /// Answer with `settings`, and `"ai": false` if the person had said no to the AI for this.
+    public func carryAll(_ receive: @escaping @MainActor (_ section: String, _ values: Arguments, _ store: [String: Any], _ history: [String: [[String: Any]]]) -> [String: Any]) {
         carried = receive
     }
 
@@ -182,7 +195,10 @@ public final class Extension {
             let called = params["name"] as? String ?? ""
             guard let tool = tools.first(where: { $0.name == called }) else { return Self.text("Unknown tool: \(called)", error: true) }
             do {
-                return Self.text(try await tool.run(Arguments(params["arguments"] as? [String: Any] ?? [:])), error: false)
+                let reply = try await tool.run(Arguments(params["arguments"] as? [String: Any] ?? [:]))
+                var result = Self.text(reply.text, error: false)
+                if !reply.asks.isEmpty { result["sidefolk"] = reply.asks }
+                return result
             } catch let problem as Problem {
                 return Self.text(problem.message, error: true)
             }
@@ -237,7 +253,8 @@ public final class Extension {
             }
         case "sidefolk/settings.carry":
             guard let carried else { return ["settings": [String: Any]()] }
-            return ["settings": carried(params["from"] as? String ?? "", Arguments(params["values"] as? [String: Any] ?? [:]))]
+            return carried(params["from"] as? String ?? "", Arguments(params["values"] as? [String: Any] ?? [:]), params["store"] as? [String: Any] ?? [:],
+                           params["history"] as? [String: [[String: Any]]] ?? [:])
         case "sidefolk/paired.check":
             guard let check = pairedCheck else { return ["paired": false] }
             switch await check(params["tool"] as? String ?? "", Arguments(params["arguments"] as? [String: Any] ?? [:])) {

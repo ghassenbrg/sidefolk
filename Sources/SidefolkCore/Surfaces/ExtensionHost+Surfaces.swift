@@ -11,6 +11,8 @@ extension ExtensionHost {
 
     /// Opens a surface, ending what was open in its place: one panel, one overlay.
     public func openSurface(_ info: SurfaceInfo, language: String, arguments: [String: JSONValue] = [:]) async throws -> (session: String, scene: SurfaceScene) {
+        let opening = (surfaceOpenings[info.presentation] ?? 0) + 1
+        surfaceOpenings[info.presentation] = opening
         if let open = openSurfaces[info.presentation] { await closeSurface(info: open.info, session: open.session, reason: .closed) }
         let (client, name) = try await surfaceClient(info)
         begin(info.extensionId)
@@ -18,15 +20,22 @@ extension ExtensionHost {
         let reply = try await askSurface(client, "sidefolk/surface.open",
                                          ["surface": .string(info.surface), "language": .string(language), "arguments": .object(arguments)], name: name)
         guard let session = reply["session"]?.stringValue.flatMap(Self.sessionId) else { throw UserFacingError(verbatim: Self.surfaceNoAnswer(name)) }
+        // Another opening started in this place while the program thought, or the extension went: this one isn't wanted, and
+        // the program hears so rather than holding a session nothing will ever close.
+        guard surfaceOpenings[info.presentation] == opening else {
+            _ = try? await askSurface(client, "sidefolk/surface.close", ["surface": .string(info.surface), "session": .string(session), "reason": .string(SurfaceCloseReason.closed.rawValue)], name: name)
+            throw UserFacingError("That has closed.")
+        }
         let scene = try scene(reply, info: info, name: name)
         openSurfaces[info.presentation] = OpenSurface(info: info, session: session)
         return (session, scene)
     }
 
-    /// The person's move, sent only while that session is open, at most 20 a second.
-    public func moveSurface(info: SurfaceInfo, session: String, move: SurfaceMove, now: Date = Date()) async throws -> SurfaceScene {
+    /// The person's move, sent only while that session is open, at most 20 a second. Past that it is dropped, and nil says so: a
+    /// key held down must not end what is on screen.
+    public func moveSurface(info: SurfaceInfo, session: String, move: SurfaceMove, now: Date = Date()) async throws -> SurfaceScene? {
         guard var open = openSurfaces[info.presentation], open.info.id == info.id, open.session == session else { throw UserFacingError("That has closed.") }
-        guard open.allow(at: now) else { throw UserFacingError("That's faster than a surface takes moves.") }
+        guard open.allow(at: now) else { return nil }
         openSurfaces[info.presentation] = open
         let (client, name) = try await surfaceClient(info)
         begin(info.extensionId)
@@ -49,10 +58,35 @@ extension ExtensionHost {
 
     /// The extension is going: nothing of it stays open, and it isn't asked anything more.
     func forgetSurfaces(of id: String) async {
-        for (place, open) in openSurfaces where open.info.extensionId == id {
-            openSurfaces[place] = nil
-            events.publish(.surfaceGone(extensionId: id))
+        for place in SurfaceInfo.Presentation.allCases {
+            // One still being opened counts too.
+            surfaceOpenings[place, default: 0] += 1
         }
+        // What is kept, or still opening, on the app's side goes as well, whether or not this side has a session.
+        for (place, open) in openSurfaces where open.info.extensionId == id { openSurfaces[place] = nil }
+        events.publish(.surfaceGone(extensionId: id))
+    }
+
+    // MARK: The frame's speaker
+
+    /// Whether this surface's sounds are on. `key` is a switch among its settings (`speaker_setting`, or a scene's `speaker`); without
+    /// one the host keeps the choice for the surface. Off until the person says so.
+    public func surfaceSpeaker(_ info: SurfaceInfo, key: String?) -> Bool {
+        guard let rt = runtimes[info.extensionId] else { return false }
+        if let key, let setting = rt.manifest?.settings.first(where: { $0.key == key && $0.type == .switch }), let m = rt.manifest {
+            return rt.preferences.resolved(m.settings)[setting.key]?.boolValue ?? false
+        }
+        return rt.preferences.speakers[info.surface] ?? false
+    }
+
+    /// The person's click on the speaker. A declared setting goes through the tool every setting goes through, so History has it
+    /// and the program hears it; the plain choice is only the host's.
+    public func setSurfaceSpeaker(_ info: SurfaceInfo, key: String?, on: Bool) async {
+        if let key, let run = configuration.runTool, runtimes[info.extensionId]?.manifest?.settings.contains(where: { $0.key == key && $0.type == .switch }) == true {
+            _ = await run(ExtensionSettingTool.name, ["extension": .string(info.extensionId), "key": .string(key), "value": .bool(on)], .user, 10)
+            return
+        }
+        await updatePreferences(info.extensionId) { $0.speakers[info.surface] = on }
     }
 
     private func askSurface(_ client: MCPClient, _ method: String, _ params: [String: JSONValue], name: String) async throws -> JSONValue {
@@ -129,7 +163,7 @@ public final class SurfaceSession: Sendable {
             guard let scene = s.scene, move.offered(by: scene, inputOpen: now >= s.opensAt) else { return nil }
             return s.session
         }), let host else { return nil }
-        let scene = try await host.moveSurface(info: info, session: id, move: move, now: now)
+        guard let scene = try await host.moveSurface(info: info, session: id, move: move, now: now) else { return nil }
         state.withLock {
             $0.scene = scene
             $0.opensAt = Date().addingTimeInterval(scene.inputOpens(reduceMotion: reduceMotion))

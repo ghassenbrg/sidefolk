@@ -101,6 +101,8 @@ struct GamesOpenTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let focus = context.caller == .user
+        // A model's free words after it read outside content could carry anything to the game's program (T40).
+        let input = context.tainted && context.caller != .user ? input.setting("topic", .null) : input
         let step = input.string("level").flatMap(GameLevels.Step.init(rawValue:))
         switch Self.special(input) {
         case .menu:

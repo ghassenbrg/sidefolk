@@ -20,7 +20,7 @@ struct SceneSampleTests {
         #expect(shuffle.keys.map(\.match) == [.character("1"), .character("2"), .character("3")])
         #expect(shuffle.inputOpens(reduceMotion: false) > 2.5 && shuffle.inputOpens(reduceMotion: true) > 2.5, "the shuffle is the point: it plays under Reduce Motion")
         #expect(shuffle.runs.contains { $0.id == "round" && !$0.events.isEmpty })
-        #expect(shuffle.nodes.contains { $0.kind == .companion(pose: .thinking) } && shuffle.nodes.contains { $0.kind == .person })
+        #expect(shuffle.nodes.contains { $0.kind == .companion(pose: .thinking, look: SceneFigureLook()) } && shuffle.nodes.contains { $0.kind == .person(look: SceneFigureLook()) })
 
         var picked = Shuffle()
         picked.pick(1)

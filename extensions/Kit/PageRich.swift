@@ -170,3 +170,19 @@ public struct RecentItem {
         return out
     }
 }
+
+/// A scene drawn inside a page, for a look no other part offers. `actions` says which of your tools each area runs, with the area's
+/// value as `value`, as the person, through Guard. It takes no keys and has no clocks: anything that plays is a surface.
+public struct PageSceneBlock: @unchecked Sendable {
+    public var scene: Scene
+    public var actions: [String: (tool: String, input: [String: Any])]
+
+    public init(_ scene: Scene, actions: [String: (tool: String, input: [String: Any])] = [:]) {
+        self.scene = scene
+        self.actions = actions
+    }
+
+    public var json: [String: Any] {
+        ["type": "scene", "scene": scene.json, "actions": actions.mapValues { ["tool": $0.tool, "input": $0.input] as [String: Any] }]
+    }
+}

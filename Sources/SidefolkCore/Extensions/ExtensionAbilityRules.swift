@@ -87,12 +87,13 @@ enum ExtensionAbilityRules {
             if depth > 0, !entry.places.isEmpty { issues.append(ValidationIssue(field: "\(field).places", message: "is only for a top-level entry.")) }
             if depth >= 2, !entry.items.isEmpty { issues.append(ValidationIssue(field: "\(field).items", message: "goes two levels deep at most.")) }
             if entry.items.count > maxEntryItems { issues.append(ValidationIssue(field: "\(field).items", message: "can hold at most \(maxEntryItems) items.")) }
-            // Exactly one thing to do: its tool, its page, or a menu of items.
-            let does = [entry.tool != nil, entry.page != nil, !entry.items.isEmpty].filter { $0 }.count
-            if does != 1 { issues.append(ValidationIssue(field: field, message: "must have one of tool, page or items.")) }
+            // Exactly one thing to do: its tool, its page, its surface, or a menu of items.
+            let does = [entry.tool != nil, entry.page != nil, entry.surface != nil, !entry.items.isEmpty].filter { $0 }.count
+            if does != 1 { issues.append(ValidationIssue(field: field, message: "must have one of tool, page, surface or items.")) }
+            if let surface = entry.surface, m.surfaces[surface] == nil { issues.append(ValidationIssue(field: "\(field).surface", message: "“\(surface)” isn't one of its surfaces.")) }
             if let tool = entry.tool, m.tools[tool] == nil { issues.append(ValidationIssue(field: "\(field).tool", message: "“\(tool)” isn't one of its tools.")) }
             if let page = entry.page, m.pages[page] == nil { issues.append(ValidationIssue(field: "\(field).page", message: "“\(page)” isn't one of its pages.")) }
-            if entry.input != nil, entry.tool == nil { issues.append(ValidationIssue(field: "\(field).input", message: "is for a tool.")) }
+            if entry.input != nil, entry.tool == nil, entry.surface == nil { issues.append(ValidationIssue(field: "\(field).input", message: "is for a tool or a surface.")) }
             if let input = entry.input, JSONValue.object(input).jsonString.utf8.count > 4096 {
                 issues.append(ValidationIssue(field: "\(field).input", message: "is larger than 4 KB."))
             }
@@ -153,6 +154,14 @@ enum ExtensionAbilityRules {
         var issues: [ValidationIssue] = []
         if let from = m.settingsFrom, !isName(from) {
             issues.append(ValidationIssue(field: "settings_from", message: "isn't a valid name (lowercase letters, digits and _)."))
+        }
+        let names = #"^[A-Za-z0-9_.-]{1,64}$"#
+        if m.carries.store.count > 16 { issues.append(ValidationIssue(field: "carries.store", message: "can name at most 16 values.")) }
+        if m.carries.history.count > 8 { issues.append(ValidationIssue(field: "carries.history", message: "can name at most 8 tools.")) }
+        for (field, list) in [("carries.store", m.carries.store), ("carries.history", m.carries.history)] {
+            for name in list where name.range(of: names, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: field, message: "“\(name)” isn't a valid name."))
+            }
         }
         return issues
     }

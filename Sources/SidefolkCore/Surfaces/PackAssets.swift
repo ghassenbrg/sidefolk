@@ -54,6 +54,11 @@ public enum PackAssets {
 
     /// Nil when `data` is an image Sidefolk will draw, else what is wrong: its real type must match its name, one frame,
     /// within the caps. It reads the header alone, so a bomb is refused before any pixel is decoded.
+    /// PNG or JPEG by its first bytes, before anything parses it.
+    public static func isPlainPicture(_ data: Data) -> Bool {
+        data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) || data.starts(with: [0xFF, 0xD8, 0xFF])
+    }
+
     public static func imageProblem(_ data: Data, fileName: String) -> String? {
         guard data.count <= maxImageBytes else { return "is \(data.count / 1024) KiB; a picture can be at most \(maxImageBytes / 1024 / 1024) MiB." }
         let name = (fileName as NSString).pathExtension.lowercased()
@@ -126,7 +131,8 @@ public enum PackAssets {
         var report = Report()
         let entries: [ExtensionFiles.Entry]
         do {
-            entries = try ExtensionFiles.walk(folder)
+            // What Finder leaves behind isn't part of a pack: staging and pinning skip it too.
+            entries = try ExtensionFiles.walk(folder, skipping: ExtensionFiles.skippedNames)
         } catch {
             report.problems.append(("", (error as? UserFacingError)?.message ?? "couldn't be read."))
             return report

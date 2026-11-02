@@ -34,6 +34,8 @@ final class AppCoordinator {
     }()
     /// A toss brought the hidden companion out for the moment; it goes away again once the result has gone.
     var tossRevealed = false
+    /// The overlay that brought a hidden companion out, which goes again with it.
+    var surfaceRevealedCompanion: ObjectIdentifier?
     /// Games in the Play panel beside the companion (D75), and the companion's reactions to them.
     lazy var playPanel: PlayPanelController = makePlayPanel()
     lazy var surfacePanel: SurfacePanelController = makeSurfacePanel(.panel)
@@ -124,6 +126,7 @@ final class AppCoordinator {
         agent = makeAgentRuntime()
         installTriviaHelp()
         installAIHelp()
+        ExtensionCompanionWords.set(runtime.settings.current.companionName)
         onboarding = Onboarding(coordinator: self)
         companion.delegate = self
         applyCompanionSettings()
@@ -807,6 +810,10 @@ final class AppCoordinator {
             openSurface(request)
         case .surfaceGone(let id):
             dropSurfaces(of: id)
+        case .surfaceAway(let id, let surface):
+            putSurfaceAway(of: id, surface: surface)
+        case .extensionPage(let id):
+            home.show(section: .page(id))
         case .gamesMenu(let focus):
             openPlayMenu(focus: focus)
         case .gameCenter:

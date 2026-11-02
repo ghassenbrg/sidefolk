@@ -247,6 +247,8 @@ public enum Block {
     case action(Action)
     /// Numbers side by side in one strip (D100).
     case stats([StatItem])
+    /// A scene inside the page: `PageSceneBlock`.
+    case scene(PageSceneBlock)
     /// Cards in a grid, each with a picture from the pack, words, a badge and buttons (D100).
     case cards(size: CardSize = .large, [Card])
     /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
@@ -296,6 +298,8 @@ public enum Block {
             return hero.json
         case .transport(let transport):
             return transport.json
+        case .scene(let block):
+            return block.json
         case .stats(let items):
             return ["type": "stats", "items": items.map(\.json)]
         case .cards(let size, let items):

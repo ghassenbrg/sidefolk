@@ -285,7 +285,34 @@ enum ExtensionCommandRules {
                 if parser.claimsAsItsOwn(compiled.sample) { out.append(compiled.written) }
             }
         }
+        // The sentences that open its surfaces, which come after Sidefolk's own all the same (T41).
+        for sentence in m.surfaces.values.flatMap(\.say) {
+            guard let compiled = try? CommandSentence(sentence) else { continue }
+            if parser.claimsAsItsOwn(compiled.sample) { out.append(compiled.written) }
+        }
         return out.sorted()
+    }
+
+    /// Sentences that are a word anyone might type in answer to an approval. Never matched, whatever happens (T41); at install they
+    /// are refused, and a copy already here hears about it without being turned off.
+    static func replySentences(_ m: ExtensionManifest, strings: ExtensionStrings?) -> [ValidationIssue] {
+        let vocabulary = CommandVocabulary(manifest: m, strings: strings)
+        var out: [ValidationIssue] = []
+        func check(_ sentence: String, _ field: String) {
+            guard (try? CommandSentence(sentence, words: vocabulary.words, choices: vocabulary.choices))?.isReply == true else { return }
+            out.append(ValidationIssue(field: field, message: "“\(sentence)” is a reply anyone might type; it can't be a command."))
+        }
+        for tool in m.tools.keys.sorted() {
+            for (i, command) in (m.tools[tool]?.commands ?? []).enumerated() {
+                for (j, sentence) in command.say.enumerated() { check(sentence, "tools.\(tool).commands[\(i)].say[\(j)]") }
+                for (k, words) in (command.name.flatMap { vocabulary.translations[$0] } ?? []).enumerated() {
+                    for (j, sentence) in words.say.enumerated() { check(sentence, "tools.\(tool).commands[\(i)].translation[\(k)].say[\(j)]") }
+                }
+            }
+        }
+        for name in m.surfaces.keys.sorted() { for (j, sentence) in (m.surfaces[name]?.say ?? []).enumerated() { check(sentence, "surfaces.\(name).say[\(j)]") } }
+        for name in m.games.keys.sorted() { for (j, sentence) in (m.games[name]?.say ?? []).enumerated() { check(sentence, "games.\(name).say[\(j)]") } }
+        return out
     }
 
     /// Lists of plain words, named apart from Sidefolk's own slot kinds.

@@ -32,7 +32,7 @@ struct SceneTests {
         #expect(text.color == .rgba(0x112233FF))
         guard case .shape(let shape) = s.nodes[2].kind, case .path(let ops) = shape.form else { Issue.record("shape"); return }
         #expect(ops.count == 5 && shape.fill == .adaptive(light: 0x0000_00FF, dark: 0xFFFF_FFFF))
-        #expect(s.nodes[4].kind == .companion(pose: .thinking) && s.nodes[5].kind == .person)
+        #expect(s.nodes[4].kind == .companion(pose: .thinking, look: SceneFigureLook()) && s.nodes[5].kind == .person(look: SceneFigureLook()))
         guard case .entry(let entry) = s.nodes[7].kind else { Issue.record("entry"); return }
         #expect(entry.max == 120 && s.entries.map(\.id) == ["word"])
     }
