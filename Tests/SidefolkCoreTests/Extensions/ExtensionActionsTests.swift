@@ -130,6 +130,17 @@ import Testing
         #expect(!ExtensionActionPolicy.offers(sandboxed, to: "com.example.x"))
     }
 
+    @Test func noHostToolOfAnyExtensionsIsReachableThroughEitherGroup() throws {
+        let env = try TestEnv()
+        let internalTools = ["extensions.consent", "extensions.occurrences", "extensions.place_search", "extensions.plan", "extensions.plan_end", "extensions.setting", "extensions.ai_help", "extensions.activity"]
+        for name in internalTools {
+            env.registry.register(Probe(name: name, risk: .low, capabilities: [.extensions], mutates: true))
+            #expect(env.registry.tool(named: name).map { ExtensionActionPolicy.offers($0, to: "com.example.a") } == false, "\(name) through act")
+        }
+        let gateway = ExternalToolGateway(registry: env.registry, permissions: env.permissions, broker: env.broker, activity: env.activity, events: env.events, access: { AgentAccess() })
+        #expect(gateway.specs().isEmpty, "the group for other agents holds only tools an extension marked")
+    }
+
     @Test func withoutThePermissionNothingIsAnswered() async throws {
         let w = try await World()
         let tool = try await w.install(.object([:]), name: "plain")
