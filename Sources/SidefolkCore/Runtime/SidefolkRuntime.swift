@@ -128,6 +128,9 @@ public final class SidefolkRuntime: Sendable {
         hostConfiguration.forgetGrants = { [permissions] id in
             for grant in (try? await permissions.grants()) ?? [] where grant.scope.string("extension") == id { try? await permissions.revokeGrant(id: grant.id) }
         }
+        hostConfiguration.forgetWatches = { [watchers] id in
+            for watcher in await watchers.list() where watcher.source == "extension:\(id)" { _ = await watchers.remove(watcher.id) }
+        }
         hostConfiguration.forgetOwnRows = { [activity] id in _ = try? await activity.delete(tool: ExtensionActivityTool.name, extensionId: id) }
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, configuration: hostConfiguration,
                                    secrets: extensionSecrets)

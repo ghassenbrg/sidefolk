@@ -169,7 +169,7 @@ struct PageStepsView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityValue(Text(stateWords(item.state)))
+        .accessibilityValue(stateWords(item.state))
         .modifier(MovesWith(steps: steps, item: item, model: model))
     }
 
@@ -182,15 +182,15 @@ struct PageStepsView: View {
         }
     }
 
-    private func stateWords(_ state: ExtensionPage.Steps.Item.State) -> LocalizedStringKey {
+    private func stateWords(_ state: ExtensionPage.Steps.Item.State) -> Text {
         switch state {
-        case .done: "Done"
-        case .failed: "Failed"
-        case .waiting: "Waiting"
-        case .running: "Running"
-        case .pending: "Not run"
-        case .skipped: "Skipped"
-        case .none: ""
+        case .done: Text("Done", comment: "A step rail row's state, for VoiceOver")
+        case .failed: Text("Failed", comment: "A step rail row's state, for VoiceOver")
+        case .waiting: Text("Waiting", comment: "A step rail row's state, for VoiceOver")
+        case .running: Text("Running", comment: "A step rail row's state, for VoiceOver")
+        case .pending: Text("Not run", comment: "A step rail row's state, for VoiceOver")
+        case .skipped: Text("Skipped", comment: "A step rail row's state, for VoiceOver")
+        case .none: Text(verbatim: "")
         }
     }
 

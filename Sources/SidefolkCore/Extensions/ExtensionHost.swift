@@ -45,6 +45,8 @@ public actor ExtensionHost {
         public var aiHeldBack: @Sendable () -> String? = { nil }
         /// Forgets every "always" the person gave an extension: it is no longer the one they gave it to.
         public var forgetGrants: @Sendable (String) async -> Void = { _ in }
+        /// Removes the watches an extension made (D111), so none outlives it or tells a later pack under its id.
+        public var forgetWatches: @Sendable (String) async -> Void = { _ in }
         /// Takes rows in an extension's own words out of History when it goes (D100).
         public var forgetOwnRows: @Sendable (String) async -> Void = { _ in }
         /// Where the person is, as Sidefolk knows it (D106).
@@ -96,6 +98,8 @@ public actor ExtensionHost {
         /// When the person, or a clean request, last called one of its tools: what it may ask for a plan after (D110).
         var lastPersonCall = Date.distantPast
         var actionCalls: [Date] = []
+        /// A plan's card is up: the next waits, so what is saved is what was read.
+        var planAsking = false
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -476,6 +480,7 @@ public actor ExtensionHost {
             if previous?.pin.origin?.firstParty == true, origin?.firstParty != true {
                 await forgetPreferences(id)
                 await config.forgetGrants(id)
+                await config.forgetWatches(id)
             }
             // What the host keeps survives an update, and comes back with a restored backup's install (D100).
             runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath, strings: final.strings,
@@ -524,6 +529,7 @@ public actor ExtensionHost {
         await forgetPreferences(id)
         await occurrences?.forget(id)
         await config.forgetOwnRows(id)
+        await config.forgetWatches(id)
         SeedPacks.removed(id, paths: paths)
         try await store.delete(id: id)
         reconsiderResting(was: rt.manifest?.replaces ?? [])

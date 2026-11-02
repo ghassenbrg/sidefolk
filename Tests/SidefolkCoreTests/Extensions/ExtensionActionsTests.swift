@@ -358,4 +358,85 @@ import Testing
         let saved = try JSONDecoder().decode(AgentAccess.self, from: Data(#"{"extensions":"allow"}"#.utf8))
         #expect(saved.extensions == .ask, "Allow isn't a choice for them, however it got saved")
     }
+
+    // MARK: What a code review found (T43)
+
+    @Test func writtenMeansTheSameBytes() {
+        let two: JSONValue = ["url": "https://example.com/caf\u{e9}"], other: JSONValue = ["url": "https://example.com/cafe\u{301}"]
+        #expect(ExtensionPlanRules.matches(two, template: two, fillable: []))
+        #expect(!ExtensionPlanRules.matches(other, template: two, fillable: []), "canonically equal isn't the same address")
+        #expect(!ExtensionPlanRules.fits("cafe\u{301}: x", template: "caf\u{e9}: {{a}}"))
+        #expect(ExtensionPlanRules.fits("caf\u{e9}: x", template: "caf\u{e9}: {{a}}"))
+        #expect(ExtensionPlanRules.fits("a x b y c", template: "a {{p}} b {{q}} c"))
+        #expect(!ExtensionPlanRules.fits("a x c", template: "a {{p}} b {{q}} c"))
+        #expect(!ExtensionPlanRules.fits("ab", template: "ab{{p}}b"), "the written parts can't overlap")
+    }
+
+    @Test func whatTheCardCantShowCantStand() {
+        let probe = Probe(name: "web.fetch", risk: .medium, capabilities: [.network], mutates: false)
+        #expect(ExtensionPlanRules.standing(tool: probe, template: ["url": "https://example.com"]))
+        #expect(!ExtensionPlanRules.standing(tool: probe, template: ["url": "https://example.com/\u{200B}x"]), "hidden characters")
+        #expect(!ExtensionPlanRules.standing(tool: probe, template: ["url": .string(String(repeating: "x", count: 400))]), "past where the card stops")
+        #expect(!ExtensionPlanRules.standing(tool: probe, template: ["nested": ["a": .string(String(repeating: "x", count: 400))]]))
+    }
+
+    @Test func oneCardForAPlanAtATime() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        async let first = w.ask(tool, "sidefolk/plan.approve", ["plan": w.morning])
+        while await w.h.env.broker.pending().isEmpty { try await Task.sleep(for: .milliseconds(5)) }
+        // The program's own second notice, while the first card is up (the bridge above waits for one answer at a time).
+        await w.h.host.handleAction("com.example.actor", method: "sidefolk/plan.approve", params: ["request": .string(UUID().uuidString),
+            "plan": ["id": "other", "title": "Other", "steps": [["tool": "web.fetch", "input": ["url": "https://example.com"]]]]])
+        #expect(await w.h.env.broker.pending().count == 1, "what's saved is what the person read")
+        _ = await w.answerCard(.allowOnce)
+        #expect(await first["ok"]?.boolValue == true)
+        #expect(await w.h.host.info(id: "com.example.actor")?.plans.map(\.id) == ["morning"])
+    }
+
+    @Test func thePlansBudgetHoldsAcrossABurst() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        async let answer = w.ask(tool, "sidefolk/plan.approve", ["plan": ["id": "one", "title": "One", "per_day": 1, "steps": [["tool": "notes.save", "input": ["text": "x"]]]]])
+        _ = await w.answerCard(.allowOnce)
+        #expect(await answer["ok"]?.boolValue == true)
+        #expect(await w.ask(tool, "sidefolk/tools.call", ["tool": "notes.save", "plan": "one", "input": ["text": "x"]])["standing"]?.boolValue == true)
+        async let over = w.ask(tool, "sidefolk/tools.call", ["tool": "notes.save", "plan": "one", "input": ["text": "x"]])
+        #expect(await w.answerCard(.deny) != nil, "past its budget it asks")
+        _ = await over
+    }
+
+    @Test func aPlanThatEndsByItselfIsListedToo() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        async let answer = w.ask(tool, "sidefolk/plan.approve", ["plan": ["id": "soon", "title": "Soon", "ttl": 600, "steps": [["tool": "notes.save", "input": ["text": "x"]]]]])
+        _ = await w.answerCard(.allowOnce)
+        _ = await answer
+        #expect(await w.h.host.info(id: "com.example.actor")?.plans.first?.expiresAt != nil)
+    }
+
+    @Test func aNoticeSaysWhoItIsFrom() async throws {
+        let env = try TestEnv()
+        let store = AttentionStore(env.db), attention = AttentionCenter(store: store, events: env.events, clock: env.clock)
+        env.registry.register(AgentFacingTools.make(attention: attention))
+        AgentFacingTools.extensionNames.withLock { $0 = { _ in "Actor" } }
+        defer { AgentFacingTools.extensionNames.withLock { $0 = nil } }
+        let out = await env.executor.execute(name: "notify.user", input: ["title": "Sidefolk needs you"], caller: .extension(id: "com.example.actor"))
+        #expect(out.isOK)
+        #expect((try await store.recent()).first?.title == "Actor: Sidefolk needs you")
+    }
+
+    @Test func removingItRemovesItsWatches() async throws {
+        let gone = Gone()
+        let h = try HostEnv { $0.forgetWatches = { id in await gone.add(id) } }
+        let manifest: JSONValue = ["id": "com.example.w", "name": "W", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]]]
+        try await h.host.install(from: h.source("w", manifest: manifest))
+        try await h.host.uninstall(id: "com.example.w")
+        #expect(await gone.ids == ["com.example.w"])
+    }
+
+    actor Gone {
+        var ids: [String] = []
+        func add(_ id: String) { ids.append(id) }
+    }
 }

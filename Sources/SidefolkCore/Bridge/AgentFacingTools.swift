@@ -59,7 +59,9 @@ struct NotifyUserTool: Tool {
     func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        guard let title = input.string("title") else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
+        guard var title = input.string("title") else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
+        // An extension's words are named wherever they show, in Sidefolk's own bubble or a system notification: it can't pose as anyone (D110).
+        if case .extension(let id) = context.caller { title = "\(AgentFacingTools.extensionName(id) ?? id): \(title)" }
         // The schema only offers gentle and attention, so external agents stay capped at attention.
         let level: AttentionLevel = input.string("level") == "attention" ? .attention : .gentle
         let actions = level == .attention ? [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))] : []

@@ -141,7 +141,7 @@ extension ExtensionHost {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let permissions = (try? encoder.encode(rt.pin.permissions ?? ExtensionPermissions())) ?? Data()
-        return ExtensionHash.sha256(permissions + Data((rt.pin.origin?.firstParty == true ? "own" : "other").utf8))
+        return ExtensionHash.sha256(permissions + Data("\(rt.pin.origin.map { "\($0)" } ?? "none")".utf8))
     }
 
     private func livePlans(_ id: String, now: Date = Date()) -> [ExtensionPlan] {
@@ -152,7 +152,7 @@ extension ExtensionHost {
 
     /// The plans Settings › Add-ons lists.
     func planInfos(_ id: String) -> [ExtensionPlanInfo] {
-        livePlans(id).filter { $0.expiresAt == nil }.map {
+        livePlans(id).map {
             ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count, approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
         }
     }
@@ -171,17 +171,18 @@ extension ExtensionHost {
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
         let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
         let fits = saved.steps.contains { step in
-            step.standing && step.tool == tool.spec.name && step.definition == definition && step.reach == reach
+            step.standing && step.tool == tool.spec.name && step.definition == definition && ExtensionPlanRules.same(step.reach, reach)
                 && ExtensionPlanRules.matches(input, template: step.input, fillable: fillable)
         }
         guard fits else { return false }
         // "Ask each time" for the internet is the person's word for every page, whoever asks (D47).
         if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return false }
         guard counting else { return true }
-        let day = AIHelper.dayKey(Date()), used = rt.preferences.planCalls[plan]
+        // Read after the wait above, and kept: a burst, or a restart, doesn't buy a new budget.
+        let day = AIHelper.dayKey(Date()), used = runtimes[id]?.preferences.planCalls[plan]
         let count = used?.day == day ? used?.count ?? 0 : 0
         guard count < saved.perDay else { return false }
-        runtimes[id]?.preferences.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1)
+        await updatePreferences(id) { $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1) }
         return true
     }
 
@@ -190,6 +191,8 @@ extension ExtensionHost {
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
         }
         guard let rt = runtimes[id], let plan = params["plan"] else { return await refuse("unusable") }
+        // One card at a time for a plan: what the person is reading is what is saved.
+        guard !rt.planAsking else { return await refuse("busy") }
         guard Self.contained(rt.pin.permissions ?? ExtensionPermissions()) else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
         guard let planId = plan["id"]?.stringValue, planId.range(of: #"^[A-Za-z0-9._:-]{1,64}$"#, options: .regularExpression) != nil,
@@ -199,7 +202,8 @@ extension ExtensionHost {
         let perDay = plan["per_day"]?.intValue ?? ExtensionPlanRules.defaultPerDay
         guard ExtensionPlanRules.perDays.contains(perDay) else { return await refuse("unusable") }
 
-        let previous = rt.preferences.plans[planId]
+        let owner = owner(rt)
+        let previous = rt.preferences.plans[planId].flatMap { $0.live(at: Date(), owner: owner) ? $0 : nil }
         var steps: [ExtensionPlan.Step] = [], lines: [(text: String, standing: Bool, new: Bool)] = []
         for raw in rawSteps {
             guard let name = raw["tool"]?.stringValue, let input = raw["input"], input.objectValue != nil, let tool = gateway.tool(named: name, for: id) else {
@@ -218,6 +222,7 @@ extension ExtensionHost {
         let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl, revised: previous != nil)
         let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, body: body)
         let asker = asker(rt)
+        runtimes[id]?.planAsking = true
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: ["extension": .string(id), "plan": .string(planId)], extensionId: id, asker: asker)
             await self?.finishPlan(id, request: request, outcome: outcome, plan: ExtensionPlan(
@@ -227,6 +232,7 @@ extension ExtensionHost {
     }
 
     private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, plan: ExtensionPlan) async {
+        runtimes[id]?.planAsking = false
         guard outcome.isOK, let rt = runtimes[id] else {
             let reason = if case .unanswered = outcome.status { "unanswered" } else { "denied" }
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])

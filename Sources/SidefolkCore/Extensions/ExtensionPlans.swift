@@ -66,17 +66,31 @@ enum ExtensionPlanRules {
         return out
     }
 
-    /// Whether `text` is `template` with its slots filled in: the written parts unchanged and in order.
+    /// Whether two written values are the same bytes. Swift's `==` takes canonically equal strings as equal, and they aren't: `é` written two ways
+    /// is two addresses, and a program could say something by which it writes.
+    static func same(_ a: String, _ b: String) -> Bool { a.utf8.elementsEqual(b.utf8) }
+    static func same(_ a: JSONValue, _ b: JSONValue) -> Bool { same(a.jsonString, b.jsonString) }
+
+    /// Whether `text` is `template` with its slots filled in: the written parts unchanged, byte for byte, and in order.
     static func fits(_ text: String, template: String) -> Bool {
-        let parts = literals(template)
-        guard parts.count > 1 else { return text == template }
-        guard let first = parts.first, let last = parts.last, text.hasPrefix(first) else { return false }
-        var rest = Substring(text.dropFirst(first.count))
+        let parts = literals(template).map { Array($0.utf8) }, bytes = Array(text.utf8)
+        guard parts.count > 1 else { return same(text, template) }
+        guard let first = parts.first, let last = parts.last, bytes.starts(with: first), bytes.count >= first.count + last.count else { return false }
+        var from = first.count
+        let end = bytes.count - last.count
+        guard Array(bytes[end...]) == last else { return false }
         for part in parts.dropFirst().dropLast() where !part.isEmpty {
-            guard let found = rest.range(of: part) else { return false }
-            rest = rest[found.upperBound...]
+            guard let found = firstRange(of: part, in: bytes, from: from, to: end) else { return false }
+            from = found
         }
-        return rest.hasSuffix(last) && rest.count >= last.count
+        return from <= end
+    }
+
+    /// Where `part` ends, the first time it comes in `bytes` between these.
+    private static func firstRange(of part: [UInt8], in bytes: [UInt8], from: Int, to end: Int) -> Int? {
+        guard part.count <= end - from else { return nil }
+        for start in from...(end - part.count) where Array(bytes[start..<(start + part.count)]) == part { return start + part.count }
+        return nil
     }
 
     /// Whether a call is the step: the same keys, every written value equal, and words only where the plan left room.
@@ -88,7 +102,7 @@ enum ExtensionPlanRules {
                 guard fillable.contains(key), case .string(let s) = call else { return false }
                 return fits(s, template: t)
             }
-            return call == value
+            return same(call, value)
         }
     }
 
@@ -98,9 +112,21 @@ enum ExtensionPlanRules {
         let name = tool.spec.name
         guard tool.spec.risk != .high, !ExtensionActionPolicy.neverStanding.contains(name), let fields = template.objectValue else { return false }
         guard tool.scope(for: template).text == nil else { return false }
+        // What runs is what the card showed: nothing hidden in a written value, nothing past where the card stops.
+        guard written(template).allSatisfy({ same(ExtensionText.clean($0), $0) && $0.count <= ExtensionPlanWords.valueLimit }) else { return false }
         let fillable = ExtensionActionPolicy.fillable[name] ?? []
         return fields.allSatisfy { key, value in
             !hasSlot(key) && slotless(value, unless: fillable.contains(key))
+        }
+    }
+
+    /// Every string in a value, its keys too.
+    private static func written(_ value: JSONValue) -> [String] {
+        switch value {
+        case .string(let s): [s]
+        case .array(let items): items.flatMap(written)
+        case .object(let fields): fields.keys + fields.values.flatMap(written)
+        default: []
         }
     }
 
