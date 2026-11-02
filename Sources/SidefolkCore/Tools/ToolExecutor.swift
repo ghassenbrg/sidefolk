@@ -294,6 +294,7 @@ public final class ToolExecutor: Sendable {
         do {
             let result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
             act.card = result.card
+            if let row = result.rowSummary { act.summary = row }
             if let undo = result.undo {
                 await self.undo.register(undo, id: act.id)
                 act.undoAvailable = true
@@ -301,7 +302,7 @@ public final class ToolExecutor: Sendable {
             if result.isError {
                 act.error = "\(tool.spec.title) reported a problem"
                 await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: result.text.clipped(300))
-            } else {
+            } else if !tool.leavesNoRow(for: input, caller: caller) {
                 await log(tool.spec, act, caller: caller, input: input, decision: decision, outcome: result.card?.title ?? result.text.clipped(160),
                           error: nil, undoable: act.undoAvailable)
             }

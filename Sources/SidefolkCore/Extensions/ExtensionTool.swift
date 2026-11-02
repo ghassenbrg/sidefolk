@@ -22,6 +22,8 @@ public struct ExtensionTool: Tool {
     /// Its calls reach only a device the person paired, which its program confirms (D72); nil for everyone but
     /// Sidefolk's own extensions, whatever their manifest says: the sandbox can't hold a program to its word.
     public let paired: PairedDevice?
+    /// Arguments left out of a call from an AI that has read something from outside in this turn (`trusted_only`).
+    let trustedOnly: Set<String>
     /// Does what a reply asked for, knowing who made the call (D100).
     private let asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
@@ -49,7 +51,7 @@ public struct ExtensionTool: Tool {
 
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
-         paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil,
+         paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
          asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)? = nil,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
@@ -59,6 +61,7 @@ public struct ExtensionTool: Tool {
         self.folderParameters = folderParameters
         self.firstParty = firstParty
         self.commands = commands
+        self.trustedOnly = Set(trustedOnly)
         self.paired = firstParty ? paired : nil
         self.sentence = firstParty ? sentence : nil
         self.service = firstParty ? service : nil
@@ -134,6 +137,14 @@ public struct ExtensionTool: Tool {
     /// as the canonical path the sandbox opens (its `HOME` is its data folder, so `~` would mislead it).
     public func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         var input = input
+        if context.tainted, case .object(var fields) = input {
+            switch context.caller {
+            case .user, .command: break
+            default:
+                for name in trustedOnly { fields[name] = nil }
+                input = .object(fields)
+            }
+        }
         var grants: [ExtensionFolderGrant] = []
         for (param, use) in folderParameters.sorted(by: { $0.key < $1.key }) {
             guard let raw = input.string(param), !raw.isEmpty else { continue }

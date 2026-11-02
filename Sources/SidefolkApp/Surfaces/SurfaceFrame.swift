@@ -71,7 +71,7 @@ struct SurfaceFrame: View {
                 Text(verbatim: whose).font(.system(size: 10, weight: .medium)).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
             Spacer(minLength: 0)
-            if model.info.sounds {
+            if model.info.sounds, model.scene?.hidesSpeaker != true {
                 SurfaceButton(symbol: model.soundsOn ? "speaker.wave.2.fill" : "speaker.slash",
                               label: model.soundsOn ? String(localized: "Sound on", comment: "An extension's panel: the speaker")
                                                     : String(localized: "Sound off", comment: "An extension's panel: the speaker"),

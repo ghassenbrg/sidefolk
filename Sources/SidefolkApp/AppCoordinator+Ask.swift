@@ -229,8 +229,16 @@ extension AppCoordinator: AskActions {
             @MainActor func say(_ line: String) {
                 if let reply { voice.reply(line, to: reply, in: model) }
             }
+            // Nothing of a result while an extension's animation still builds up to it: not on the card, not aloud.
+            @MainActor func held(_ card: ResultCard) async {
+                var hold = AnswerHold()
+                hold.note(card)
+                let left = hold.remaining()
+                if left > 0 { try? await Task.sleep(for: .seconds(left)) }
+            }
             switch outcome {
             case .card(let card, let activityId, let undo):
+                await held(card)
                 addResult(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), card: card, to: model, caption: caption)
                 say(SpokenLine.card(card))
                 // Quick intents close the panel a moment after their card appears, once their words are said.
@@ -249,6 +257,7 @@ extension AppCoordinator: AskActions {
                 }
             case .answer(let card, let activityId):
                 // An answer is there to be read, so the panel stays until the person closes it (D50).
+                await held(card)
                 model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: false), caption: caption)
                 say(SpokenLine.line(card.detail ?? card.title))
             case .list(let title, let cards):
@@ -306,7 +315,7 @@ extension AppCoordinator: AskActions {
             // What may be said aloud once the run ends: the answer, else the last change, else the failure.
             var line: String?
             // When an extension's animation in this run comes to rest, which the answer waits for (D100).
-            var landing: Date?
+            var landing = AnswerHold()
             func caption() -> String? {
                 defer { captioned = true }
                 return captioned ? nil : text
@@ -320,6 +329,7 @@ extension AppCoordinator: AskActions {
                 case .phase(.waitingForApproval):
                     model.phase = String(localized: "Waiting for your OK…")
                 case .toolFinished(let activity, let ok):
+                    landing.note(activity.card)
                     // Read-only results feed the answer; only changes become cards (DECISIONS D5), and so
                     // does a way to the System Settings page where macOS needs the person's OK (D38).
                     if let card = activity.card,
@@ -327,8 +337,6 @@ extension AppCoordinator: AskActions {
                         shownCards.insert(card.title)
                         addResult(.result(card, activityId: activity.id, undo: activity.undoAvailable), card: card, to: model, caption: caption())
                         line = SpokenLine.card(card)
-                        // An extension's animation still showing the result: its reply says how long (D100).
-                        if let hold = card.holdAnswer { landing = Date().addingTimeInterval(hold) }
                     }
                     // What the mode answered for the person, and what nobody answered, always show (D37).
                     if ok, activity.actedWithoutAsking {
@@ -340,7 +348,7 @@ extension AppCoordinator: AskActions {
                 case .reply(let reply):
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     // The AI's words wait for it: no result while the animation still builds up to it.
-                    if let landing, landing > Date() { try? await Task.sleep(for: .seconds(landing.timeIntervalSinceNow)) }
+                    if landing.remaining() > 0 { try? await Task.sleep(for: .seconds(landing.remaining())) }
                     if !answer.isEmpty {
                         model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != "",
                                           tainted: reply.tainted, thread: handle.threadId),

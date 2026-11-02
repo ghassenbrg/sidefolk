@@ -213,7 +213,7 @@ final class SurfaceModel {
     }
 
     private func playSound(_ path: String) {
-        guard soundsOn, !attention.hidden else { return }
+        guard soundsOn, !attention.hidden, scene?.hidesSpeaker != true else { return }
         onSound?(path)
     }
 

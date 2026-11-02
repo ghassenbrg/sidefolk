@@ -23,8 +23,10 @@ extension IntentParser {
     /// extension the first tool in name order wins, so the author decides by how they write them.
     func extensionCommand(_ command: String) -> ParsedIntent? {
         var found: [(tool: ExtensionTool, input: JSONValue)] = []
+        // Calling it by name carries no meaning of its own, in any extension's sentence.
+        let companion = Set(names.flatMap { $0.split(whereSeparator: \.isWhitespace).map { CommandText.latinFolded(String($0)) } })
         for tool in commandTools.sorted(by: { $0.spec.name < $1.spec.name }) {
-            if let input = tool.commands?.input(for: command) { found.append((tool, Self.fitting(input, to: tool.spec.inputSchema))) }
+            if let input = tool.commands?.input(for: command, companion: companion) { found.append((tool, Self.fitting(input, to: tool.spec.inputSchema))) }
         }
         guard let first = found.first, Set(found.map(\.tool.extensionId)).count == 1 else { return nil }
         let tool = first.tool

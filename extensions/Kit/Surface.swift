@@ -57,6 +57,13 @@ public struct ToolReply {
         return copy
     }
 
+    /// What History says this call did, in place of the tool's title and arguments. Sidefolk believes it only of packs it signed.
+    public func row(_ words: String) -> ToolReply {
+        var copy = self
+        copy.asks["row"] = words
+        return copy
+    }
+
     /// The AI's words about this wait so long, at most 5 s, so they don't give away what an animation is still showing.
     public func holdingAnswer(ms: Int) -> ToolReply {
         var copy = self

@@ -39,10 +39,9 @@ extension AppCoordinator {
 
     func openSurface(_ request: SurfaceRequest) {
         let info = request.info
-        if info.presentation == .panel {
-            // One panel at a time: what else was out is kept and comes back as it was.
-            askPanel.hide()
-        }
+        // One panel at a time: what else was out is kept and comes back as it was. An overlay the person asked for from Ask takes Ask's place too: it stands over
+        // the companion, where its throw is, rather than wherever Ask leaves room. The AI's answer still needs Ask, so one it opened goes around it.
+        if info.presentation == .panel || request.focus { askPanel.hide() }
         let wasHidden = !companion.isVisible
         if wasHidden { showCompanion(true) }
         guard let (frame, screen) = anchor() else { return }

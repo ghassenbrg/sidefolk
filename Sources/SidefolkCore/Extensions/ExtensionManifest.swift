@@ -247,10 +247,14 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         /// The sentence for a call's approval card and Activity, from its exact arguments (D98). Only Sidefolk's own
         /// signed packs are believed.
         public var summary: ToolSummary?
+        /// Arguments of free words that do something by themselves: left out when the call comes from an AI that has read something from outside in this turn,
+        /// because such words may be whoever wrote that page's (T40). The person's own call and a clean turn keep them.
+        public var trustedOnly: [String]
 
         public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
                     paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = [],
-                    reach: Reach? = nil, device: String? = nil, summary: ToolSummary? = nil) {
+                    reach: Reach? = nil, device: String? = nil, summary: ToolSummary? = nil, trustedOnly: [String] = []) {
+            self.trustedOnly = trustedOnly
             self.title = title
             self.risk = risk
             self.category = category
@@ -268,7 +272,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var offeredToModel: Bool { ai ?? true }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary", "trusted_only"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
@@ -281,6 +285,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             reach = try c.decodeIfPresent(Reach.self, forKey: "reach")
             device = try c.decodeIfPresent(String.self, forKey: "device")
             summary = try c.decodeIfPresent(ToolSummary.self, forKey: "summary")
+            trustedOnly = try c.decodeIfPresent([String].self, forKey: "trusted_only") ?? []
         }
     }
 

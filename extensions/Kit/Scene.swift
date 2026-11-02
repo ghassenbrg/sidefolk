@@ -77,6 +77,8 @@ public struct Scene {
     public func afterStill(ms: Int) -> Scene { with { $0.extra["after_still_ms"] = ms } }
     /// A switch among your settings that the frame's speaker is while this scene shows.
     public func speaker(_ key: String) -> Scene { with { $0.extra["speaker"] = key } }
+    /// This scene has no sound: the frame shows no speaker.
+    public func noSpeaker() -> Scene { with { $0.extra["speaker"] = false } }
     /// No moves for so long, besides areas marked `always`.
     public func inputAfter(ms: Int) -> Scene { with { $0.extra["input_after_ms"] = ms } }
     /// A node that changed since the last scene eases to its new place (up to 1000 ms).

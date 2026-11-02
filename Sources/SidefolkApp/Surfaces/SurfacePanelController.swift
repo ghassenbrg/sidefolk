@@ -55,7 +55,7 @@ final class SurfacePanelController {
         expiry?.cancel()
         holder.model = model
         placed = (anchor, screen, cards)
-        model.onResize = { [weak self] in self?.place() }
+        model.onResize = { [weak self] in self?.place(resizing: true) }
         place()
         hosted.panel.orderFrontRegardless()
         if focus, presentation == .panel {
@@ -82,12 +82,15 @@ final class SurfacePanelController {
         }
     }
 
-    private func place() {
+    private func place(resizing: Bool = false) {
         guard let placed, let model = holder.model else { return }
         let header = presentation == .panel ? SurfacePolicy.headerHeight : SurfacePolicy.chipHeight
         let width = max(model.canvas.width, presentation == .panel ? 260 : 170)
         let size = CGSize(width: width, height: model.canvas.height + header)
-        let frame = SurfacePolicy.place(size: size, presentation: presentation, beside: placed.anchor, screen: placed.screen.visibleFrame, avoiding: placed.cards())
+        let screen = placed.screen.visibleFrame, cards = placed.cards()
+        let stays = resizing && presentation == .overlay && isVisible
+            ? SurfacePolicy.resized(hosted.panel.frame, to: size, beside: placed.anchor, screen: screen, avoiding: cards) : nil
+        let frame = stays ?? SurfacePolicy.place(size: size, presentation: presentation, beside: placed.anchor, screen: screen, avoiding: cards)
         hosted.panel.setFrame(frame, display: true)
     }
 

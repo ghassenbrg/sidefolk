@@ -34,7 +34,9 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
     /// What each declared setting holds now: its value, or its default for one never changed or no longer valid.
     func resolved(_ settings: [ExtensionManifest.SettingMeta]) -> [String: JSONValue] {
         var out: [String: JSONValue] = [:]
-        for s in settings { out[s.key] = s.checked(values[s.key]) ?? s.fallback }
+        for s in settings where s.follows == nil { out[s.key] = s.checked(values[s.key]) ?? s.fallback }
+        // One that follows reads what it follows until it has its own; the validator lets it follow only one that follows nothing.
+        for s in settings where s.follows != nil { out[s.key] = s.checked(values[s.key]) ?? s.checked(s.follows.flatMap { out[$0] }) ?? s.fallback }
         return out
     }
 }

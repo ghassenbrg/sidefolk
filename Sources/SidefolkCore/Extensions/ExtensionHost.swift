@@ -35,6 +35,7 @@ public actor ExtensionHost {
         public var forgetCarried: @Sendable (String) async -> Void = { _ in }
         /// A value of the app's own store by name, and the rows History keeps of one tool, for the same one-time handover (`carries`).
         public var carriedStore: @Sendable (String) async -> JSONValue? = { _ in nil }
+        public var forgetCarriedStore: @Sendable (String) async -> Void = { _ in }
         public var carriedHistory: @Sendable (String) async -> [ActivityEntry] = { _ in [] }
         /// Why the person's AI can't be used for extensions just now, in their language: nil when it can (T41).
         public var aiHeldBack: @Sendable () -> String? = { nil }
@@ -49,6 +50,9 @@ public actor ExtensionHost {
         var record: ExtensionRecord
         var pin: ExtensionPin
         var manifest: ExtensionManifest?
+        /// A tool's commands as compiled, and what they were compiled from: they last as long as this manifest does, since a new one is a new runtime.
+        var commandVocabulary: CommandVocabulary?
+        var compiledCommands: [String: ToolCommands?] = [:]
         /// This copy was made for an older Sidefolk (D101) and doesn't run: whether the person had it on. Its stored record stays as it was,
         /// so nothing is lost whichever way they go; off in memory, so nothing of it is offered, it stays listed with its page saying what to do.
         var outdatedWasOn: Bool?
@@ -259,7 +263,7 @@ public actor ExtensionHost {
             tools.append(ExtensionToolInfo(name: ExtensionTool.registryName(short: shortName(rt), tool: local),
                                            title: title(rt, def), risk: risk(rt, def.name),
                                            quarantined: rt.pin.pending[name] != nil,
-                                           commands: meta.flatMap { commandsOf(rt, $0) }?.shown(language: config.language()) ?? [],
+                                           commands: commandsOf(id, tool: def.name)?.shown(language: config.language()) ?? [],
                                            forAI: meta?.offeredToModel ?? true))
         }
         return ExtensionInfo(id: id, name: name(rt),
@@ -272,10 +276,16 @@ public actor ExtensionHost {
                              examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt), needsAnUpdate: rt.outdatedWasOn != nil)
     }
 
-    /// A tool's commands, in every language the extension has them in (D100).
-    private func commandsOf(_ rt: Runtime, _ meta: ExtensionManifest.ToolMeta) -> ToolCommands? {
-        guard let manifest = rt.manifest else { return nil }
-        return ToolCommands(meta.commands, vocabulary: CommandVocabulary(manifest: manifest, strings: rt.strings))
+    /// A tool's commands, in every language the extension has them in (D100). Compiled once a runtime: this is asked each time the extensions are
+    /// listed, which everything from an AI request to a backup does, and compiling a large extension's takes real time on the host's actor.
+    private func commandsOf(_ id: String, tool: String) -> ToolCommands? {
+        guard let rt = runtimes[id], let manifest = rt.manifest, let meta = manifest.tools[tool] else { return nil }
+        if let known = rt.compiledCommands[tool] { return known }
+        let vocabulary = rt.commandVocabulary ?? CommandVocabulary(manifest: manifest, strings: rt.strings)
+        let compiled = ToolCommands(meta.commands, vocabulary: vocabulary)
+        runtimes[id]?.commandVocabulary = vocabulary
+        runtimes[id]?.compiledCommands[tool] = .some(compiled)
+        return compiled
     }
 
     // MARK: Words (D76)
@@ -870,6 +880,7 @@ public actor ExtensionHost {
         if let m = rt.manifest, let asks = ExtensionToolAsks(asked, manifest: m) {
             result.asks = asks
             result.card?.holdAnswer = asks.holdAnswer
+            if rt.pin.origin?.firstParty == true, let row = asks.row, !row.isEmpty { result.rowSummary = row }
         }
         return result
     }
@@ -1446,10 +1457,10 @@ public actor ExtensionHost {
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote,
                              folderParameters: meta?.paths ?? [:], firstParty: firstParty,
-                             commands: meta.flatMap { commandsOf(rt, $0) },
+                             commands: commandsOf(id, tool: def.name),
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },
-                             service: Self.reachName(rt.manifest?.services ?? []),
+                             service: Self.reachName(rt.manifest?.services ?? []), trustedOnly: meta?.trustedOnly ?? [],
                              asking: { [weak self] asks, caller in await self?.performAsks(id, asks, caller: caller) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)

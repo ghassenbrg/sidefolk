@@ -168,8 +168,9 @@ public struct LocalIntentRunner: Sendable {
         }
         // A one-line answer is the card's title ("15% of 80 = 12"); a longer one is all there, under the tool's name.
         let short = !text.contains("\n") && text.count <= 100
-        let card = ResultCard(kind: .extensionResult, title: short ? text : tool.spec.title, subtitle: name,
+        var card = ResultCard(kind: .extensionResult, title: short ? text : tool.spec.title, subtitle: name,
                               detail: short ? nil : text.clipped(2_000), refId: tool.extensionId)
+        card.holdAnswer = result.card?.holdAnswer
         // What it opened is the answer: the panel steps aside, as for a quick intent, rather than staying to be read.
         if result.asks?.openSurface != nil || result.asks?.openPage != nil { return .card(card, activityId: out.activity.id, undo: false) }
         return .answer(card, activityId: out.activity.id)

@@ -213,6 +213,8 @@ public struct ToolResult: Sendable {
     public var isError: Bool
     /// What an extension's program asked for with this reply: its own surface or page (D100). Nil for everyone else.
     public var asks: ExtensionToolAsks?
+    /// What History says this call did, when that is better told afterwards than from its arguments (a signed extension's reply, D101).
+    public var rowSummary: String?
 
     public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text
@@ -283,9 +285,12 @@ public protocol Tool: Sendable {
     /// the person paired this way (D72); every other tool has nothing to add.
     func confirmReach(_ input: JSONValue, scope: ToolScope) async -> (scope: ToolScope, input: JSONValue)
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult
+    /// Whether a call that worked is already told in History by the call that made it: one thing done, one row.
+    func leavesNoRow(for input: JSONValue, caller: Caller) -> Bool
 }
 
 public extension Tool {
+    func leavesNoRow(for input: JSONValue, caller: Caller) -> Bool { false }
     func scope(for input: JSONValue) -> ToolScope { .none }
     func refusal(for input: JSONValue, context: ToolContext) -> String? { nil }
     func confirmReach(_ input: JSONValue, scope: ToolScope) async -> (scope: ToolScope, input: JSONValue) { (scope, input) }

@@ -41,12 +41,15 @@ extension ExtensionManifest {
         /// False: kept and passed like any other, but shown only where the extension names it (a `settings` part's `keys`, the frame's
         /// speaker), not under Settings › Add-ons or in its search. For what an extension holds per thing it has many of.
         public var listed: Bool
+        /// Another setting this one reads until it has a value of its own; a change to that one clears the value (one choice for all, and a change for one thing).
+        public var follows: String?
 
         public static let longestText = 500
 
         public init(key: String, type: Kind, title: String, detail: String? = nil, options: [Option] = [], minimum: Double? = nil,
-                    maximum: Double? = nil, step: Double? = nil, length: Int? = nil, default: JSONValue? = nil, listed: Bool = true) {
+                    maximum: Double? = nil, step: Double? = nil, length: Int? = nil, default: JSONValue? = nil, listed: Bool = true, follows: String? = nil) {
             self.listed = listed
+            self.follows = follows
             self.key = key
             self.type = type
             self.title = title
@@ -60,7 +63,7 @@ extension ExtensionManifest {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["key", "type", "title", "detail", "options", "minimum", "maximum", "step", "length", "default", "listed"])
+            try decoder.rejectUnknownKeys(["key", "type", "title", "detail", "options", "minimum", "maximum", "step", "length", "default", "listed", "follows"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             key = try c.decode(String.self, forKey: "key")
             type = try c.decode(Kind.self, forKey: "type")
@@ -73,6 +76,7 @@ extension ExtensionManifest {
             length = try c.decodeIfPresent(Int.self, forKey: "length")
             self.default = try c.decodeIfPresent(JSONValue.self, forKey: "default")
             listed = try c.decodeIfPresent(Bool.self, forKey: "listed") ?? true
+            follows = try c.decodeIfPresent(String.self, forKey: "follows")
         }
 
         /// What it holds until the person changes it.

@@ -12,6 +12,8 @@ public struct ExtensionToolAsks: Sendable, Hashable {
     public var openPage: String?
     /// The AI's words wait this long, so they don't give away what an animation is still showing.
     public var holdAnswer: TimeInterval?
+    /// What History says this call did, in place of the tool's title and arguments ("Heads!"). Believed only for packs Sidefolk signed, like `summary` (D98).
+    public var row: String?
 
     /// The longest an answer waits.
     public static let longestHold: TimeInterval = 5
@@ -31,8 +33,26 @@ public struct ExtensionToolAsks: Sendable, Hashable {
         }
         if let page = json["open_page"]?.stringValue, manifest.pages[page] != nil { openPage = page }
         if let ms = json["hold_answer_ms"]?.doubleValue, ms.isFinite, ms > 0 { holdAnswer = min(ms / 1000, Self.longestHold) }
-        guard openSurface != nil || closeSurface != nil || openPage != nil || holdAnswer != nil else { return nil }
+        if let said = json["row"]?.stringValue { row = ExtensionText.line(said, characters: 120) }
+        guard openSurface != nil || closeSurface != nil || openPage != nil || holdAnswer != nil || row != nil else { return nil }
     }
+}
+
+/// When what a tool said may be shown or said aloud, whichever road it came by: an extension's animation may still be building up to the result, and nothing
+/// gives that away early (D100, D101). A read-only tool's words reach the person through the AI's, so this reads every finished tool, not only those shown as cards.
+public struct AnswerHold: Sendable {
+    private var until: Date?
+
+    public init() {}
+
+    public mutating func note(_ card: ResultCard?, now: Date = Date()) {
+        guard let hold = card?.holdAnswer else { return }
+        let end = now.addingTimeInterval(hold)
+        if until.map({ end > $0 }) ?? true { until = end }
+    }
+
+    /// How long is left to wait.
+    public func remaining(now: Date = Date()) -> TimeInterval { until.map { max(0, $0.timeIntervalSince(now)) } ?? 0 }
 }
 
 extension ExtensionHost {

@@ -30,6 +30,7 @@ extension SurfaceScene {
         scene.after = json["after_ms"]?.doubleValue.flatMap { (100...10_000).contains($0) ? $0 / 1000 : nil }
         scene.afterStill = json["after_still_ms"]?.doubleValue.flatMap { (100...10_000).contains($0) ? $0 / 1000 : nil }
         scene.speaker = json["speaker"]?.stringValue.flatMap { $0.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil ? $0 : nil }
+        scene.hidesSpeaker = json["speaker"]?.boolValue == false
         scene.transition = clamp(json["transition_ms"]?.doubleValue, 0...1000, 0) / 1000
         scene.mirrors = json["mirror"]?.boolValue ?? true
         scene.announce = SceneReading.line(json["announce"], 200)

@@ -213,6 +213,7 @@ struct SectionView: View {
                         PagePictureView(picture: picture, model: model, side: 56).frame(width: 28, height: 28).clipShape(Circle())
                     }
                     if let title = section.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
+                    if let detail = section.detail { Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1) }
                     Spacer(minLength: Theme.Space.s)
                     if hasCharts { windowPicker }
                 }

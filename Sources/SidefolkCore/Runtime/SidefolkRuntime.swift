@@ -107,6 +107,7 @@ public final class SidefolkRuntime: Sendable {
         hostConfiguration.carriedSettings = { [settings] section in settings.current.section(section) }
         hostConfiguration.forgetCarried = { [settings] section in await settings.update { $0.parked[section] = nil } }
         hostConfiguration.carriedStore = { [db] name in try? await KVStore(db).get(name, as: JSONValue.self) }
+        hostConfiguration.forgetCarriedStore = { [db] name in try? await KVStore(db).remove(name) }
         hostConfiguration.carriedHistory = { [activity] tool in (try? await activity.recent(limit: 2000, tool: tool)) ?? [] }
         hostConfiguration.aiHeldBack = { [settings] in
             settings.current.provider.kind == .codex && CodexBackend.hasUserInstructions()

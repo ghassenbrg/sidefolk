@@ -53,6 +53,8 @@ public struct InstallReview: Sendable, Hashable {
     public var source: InstallSource
     public var tone: Tone
     public var lines: [PermissionSummary.Line]
+    /// How many of them grant something: "No access to your files" says the opposite, and isn't one.
+    public var granted: Int { lines.filter { $0.kind != .none }.count }
     /// Risky combinations, then what the checks noticed: worded the same for every source.
     public var cautions: [String]
     public var update: Update?

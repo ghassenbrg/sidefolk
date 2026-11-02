@@ -21,6 +21,8 @@ public struct SurfaceScene: Sendable, Hashable {
     public var afterStill: Double?
     /// A switch among the extension's settings that the frame's speaker is while this scene shows (one surface, many choices).
     public var speaker: String?
+    /// This scene has no sound and nothing a speaker could mean, so the frame shows none and no sound plays (`"speaker": false`).
+    public var hidesSpeaker = false
     /// The frame's second line, beside the extension's name.
     public var title: String?
     /// The frame shows Back, which sends `back`.

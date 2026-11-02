@@ -452,7 +452,7 @@ public struct ToolCommands: Sendable {
             let own = command.name.flatMap { vocabulary.translations[$0] }
             let allSay = command.say + (own?.flatMap(\.say) ?? [])
             let compiled = allSay.compactMap { try? CommandSentence($0, words: vocabulary.words, choices: vocabulary.choices) }
-            let frame = CommandFrame(command, vocabulary: vocabulary)
+            let frame = CommandFrame(command, vocabulary: vocabulary, sentences: compiled)
             guard !compiled.isEmpty || frame != nil else { continue }
             for sentence in compiled where sentence.slots.isEmpty {
                 let key = CommandText.key(sentence.written)
@@ -483,8 +483,8 @@ public struct ToolCommands: Sendable {
     public var shown: [String] { shown() }
 
     /// The arguments `command` gives the tool, from the first sentence it is. The same sentence in digits of another
-    /// script is the same sentence.
-    public func input(for command: String) -> JSONValue? {
+    /// script is the same sentence. `companion`: what the person calls the companion just now, which may stand anywhere in a sentence with a name.
+    public func input(for command: String, companion: Set<String> = []) -> JSONValue? {
         let said = CommandText.digits(command)
         if let index = literal[CommandText.key(said)], let built = Self.build(entries[index].input, [:]) { return built }
         for entry in entries {
@@ -494,7 +494,7 @@ public struct ToolCommands: Sendable {
             }
         }
         for entry in entries {
-            guard let values = entry.frame?.match(said) else { continue }
+            guard let values = entry.frame?.match(said, companion: companion) else { continue }
             if let built = Self.build(entry.input, values, optional: true) { return built }
         }
         return nil

@@ -39,6 +39,12 @@ struct SurfacesOpenTool: Tool {
 
     func scope(for input: JSONValue) -> ToolScope { ToolScope() }
 
+    /// An extension's own tool opened it in its reply: that tool's call is the row, arguments and all.
+    func leavesNoRow(for input: JSONValue, caller: Caller) -> Bool {
+        if case .extension(let id) = caller, let info = find(input) { return info.extensionId == id }
+        return false
+    }
+
     /// What goes to the extension with `surface.open`: at most twelve small plain values under small names; anything else stays out.
     static func arguments(_ j: JSONValue?) -> [String: JSONValue] {
         var out: [String: JSONValue] = [:]

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// How sentences are compared (D93, D100): lowercased, their last punctuation gone, accents off Latin letters (so "mas
 /// dificil" is "más difícil"), other scripts' digits as 0–9, and no spaces (Korean and Japanese are spaced either way).
@@ -44,12 +45,32 @@ public struct CommandVocabulary: Sendable {
 
     var translations: [String: [ExtensionStrings.CommandWords]] { translationsByLanguage.mapValues { Array($0.values) } }
 
+    /// Parts already compiled. Many commands name the same parts, and a part holds its phrases in every language; a regular expression
+    /// takes ICU a millisecond or more, so compiling each once is what keeps a large extension from costing seconds.
+    private let compiledParts = CompiledParts()
+
+    private final class CompiledParts: Sendable {
+        let parts = Mutex<[String: CommandPart]>([:])
+    }
+
     init(words: [String: [String]] = [:]) {
         self.words = words
         choices = [:]
         parts = [:]
         carry = CommandCarry()
         translationsByLanguage = [:]
+    }
+
+    /// The part of this name, compiled once for this vocabulary.
+    func compiledPart(_ name: String) -> CommandPart? {
+        if let known = compiledParts.parts.withLock({ $0[name] }) { return known }
+        guard let metas = parts[name] else { return nil }
+        // The same phrase in several languages ("{level:level}") is one phrase.
+        let phrases = Set(metas.flatMap(\.say)).compactMap { CommandPhrase($0, vocabulary: self) }.sorted { $0.length > $1.length }
+        guard !phrases.isEmpty else { return nil }
+        let part = CommandPart(name: name, phrases: phrases, fixed: metas.first?.input ?? [:], isFree: phrases.contains { $0.slots.contains { $0.isFree } })
+        compiledParts.parts.withLock { $0[name] = part }
+        return part
     }
 
     public init(manifest m: ExtensionManifest, strings: ExtensionStrings?) {
@@ -81,6 +102,8 @@ public struct CommandCarry: Sendable {
     let leadInside: [String]
     let inside: [String]
     let endings: [String]
+    /// Words that carry only this sentence: the companion's own name, which the extension can't know ("play trivia with mochi").
+    var also: Set<String> = []
 
     init(_ metas: [ExtensionManifest.CarryMeta] = []) {
         let all = metas.flatMap(\.words) + metas.flatMap(\.lead)
@@ -112,7 +135,7 @@ public struct CommandCarry: Sendable {
                !words.contains(w) {
                 w = String(w[w.index(after: quote)...])
             }
-            if words.contains(w) { return nil }
+            if words.contains(w) || also.contains(w) { return nil }
             for ending in endings where w.count > ending.count + 1 && w.hasSuffix(ending) {
                 w = String(w.dropLast(ending.count))
                 break
@@ -127,8 +150,12 @@ public struct CommandCarry: Sendable {
     /// Free words without carrying ones at their ends ("space with" is "space").
     func trimmed(_ raw: String) -> String? {
         var said = raw.split(whereSeparator: \.isWhitespace).map(String.init)
-        while let w = said.last, words.contains(CommandText.latinFolded(w.lowercased())) { said.removeLast() }
-        while let w = said.first, words.contains(CommandText.latinFolded(w.lowercased())) { said.removeFirst() }
+        func carries(_ word: String) -> Bool {
+            let folded = CommandText.latinFolded(word.lowercased())
+            return words.contains(folded) || also.contains(folded)
+        }
+        while let w = said.last, carries(w) { said.removeLast() }
+        while let w = said.first, carries(w) { said.removeFirst() }
         let kept = said.joined(separator: " ").trimmingCharacters(in: .punctuationCharacters)
         return kept.isEmpty ? nil : kept
     }
@@ -235,31 +262,33 @@ struct CommandPhrase: Sendable {
 /// A command said by its name with parts around it, in any order (D100): "a quiz about space, hard, 10 questions",
 /// "jouons au morpion difficile", "guess a number between 1 and 1000". Conservative like the rest of the parser (D4):
 /// once the parts and the carrying words are out, what remains must be exactly its name, and a bare name counts only with a
-/// word that says it is meant or a part, so another extension's command keeps it.
+/// word that says it is meant or a part, so another extension's command keeps it. Its whole sentences (`say`) may have the same
+/// parts around them: what remains is then compared as the sentence is, carrying words and all, so it stays as strict as saying it alone.
 struct CommandFrame: Sendable {
     let names: Set<String>
     let parts: [CommandPart]
     let carry: CommandCarry
+    /// Its whole sentences, for when parts stand around one: without a slot by `CommandText.key`, with one compiled.
+    let wholeSentences: Set<String>
+    let slottedSentences: [CommandSentence]
 
-    init?(_ command: ExtensionManifest.Command, vocabulary v: CommandVocabulary) {
+    init?(_ command: ExtensionManifest.Command, vocabulary v: CommandVocabulary, sentences: [CommandSentence] = []) {
         let translated = command.name.flatMap { v.translations[$0] }?.flatMap(\.names) ?? []
         carry = v.carry
         let carry = v.carry
         names = Set((command.names + translated).map { carry.residual($0) }.filter { !$0.isEmpty })
-        guard !names.isEmpty else { return nil }
-        let compiled = command.with.compactMap { name -> CommandPart? in
-            guard let metas = v.parts[name] else { return nil }
-            let phrases = metas.flatMap(\.say).compactMap { CommandPhrase($0, vocabulary: v) }.sorted { $0.length > $1.length }
-            guard !phrases.isEmpty else { return nil }
-            return CommandPart(name: name, phrases: phrases, fixed: metas.first?.input ?? [:],
-                               isFree: phrases.contains { $0.slots.contains { $0.isFree } })
-        }
+        let compiled = command.with.compactMap(v.compiledPart)
+        wholeSentences = compiled.isEmpty ? [] : Set(sentences.filter(\.slots.isEmpty).map { CommandText.key($0.written) })
+        slottedSentences = compiled.isEmpty ? [] : sentences.filter { !$0.slots.isEmpty }
+        guard !names.isEmpty || !wholeSentences.isEmpty || !slottedSentences.isEmpty else { return nil }
         // Numbers and enums come out first, free words last: "a quiz about space, hard" must not take "hard" as the topic.
         parts = compiled.filter { !$0.isFree } + compiled.filter(\.isFree)
     }
 
-    /// What the sentence says around the name, or nil when it isn't this command.
-    func match(_ command: String) -> [String: JSONValue]? {
+    /// What the sentence says around the name, or nil when it isn't this command. `companion`: its names just now, which only carry a sentence.
+    func match(_ command: String, companion: Set<String> = []) -> [String: JSONValue]? {
+        var carry = carry
+        carry.also = companion
         let meant = carry.leads(command)
         var text = " " + command.replacingOccurrences(of: "’", with: "'") + " "
         var values: [String: JSONValue] = [:]
@@ -272,15 +301,20 @@ struct CommandFrame: Sendable {
             values.merge(found) { own, _ in own }
             tookPart = true
         }
-        if !names.contains(carry.residual(text)) {
-            for part in parts where part.isFree {
-                guard let found = part.take(from: &text, carry: carry) else { continue }
-                values.merge(found) { own, _ in own }
-                tookPart = true
-                if names.contains(carry.residual(text)) { break }
-            }
+        func ends(_ text: String) -> [String: JSONValue]? {
+            if names.contains(carry.residual(text)), meant || tookPart { return [:] }
+            guard tookPart else { return nil }
+            if wholeSentences.contains(CommandText.key(text)) { return [:] }
+            let said = text.split(whereSeparator: \.isWhitespace).joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,;:-–—"))
+            return slottedSentences.lazy.compactMap { $0.match(said) }.first
         }
-        guard names.contains(carry.residual(text)), meant || tookPart else { return nil }
-        return values
+        if let rest = ends(text) { return values.merging(rest) { own, _ in own } }
+        for part in parts where part.isFree {
+            guard let found = part.take(from: &text, carry: carry) else { continue }
+            values.merge(found) { own, _ in own }
+            tookPart = true
+            if let rest = ends(text) { return values.merging(rest) { own, _ in own } }
+        }
+        return nil
     }
 }

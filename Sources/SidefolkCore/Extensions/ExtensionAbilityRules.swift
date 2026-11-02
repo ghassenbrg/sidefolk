@@ -63,6 +63,12 @@ enum ExtensionAbilityRules {
             if s.type != .number, s.minimum != nil || s.maximum != nil || s.step != nil { issues.append(ValidationIssue(field: field, message: "minimum, maximum and step are for a number.")) }
             if s.type != .text, s.length != nil { issues.append(ValidationIssue(field: "\(field).length", message: "is for a text.")) }
             if let value = s.default, s.checked(value) == nil { issues.append(ValidationIssue(field: "\(field).default", message: "isn't a value this setting can hold.")) }
+            if let key = s.follows {
+                let followed = m.settings.first { $0.key == key }
+                if followed == nil || followed?.key == s.key || followed?.type != s.type || followed?.follows != nil {
+                    issues.append(ValidationIssue(field: "\(field).follows", message: "must name another setting of the same type that follows nothing itself."))
+                }
+            }
         }
         return issues
     }

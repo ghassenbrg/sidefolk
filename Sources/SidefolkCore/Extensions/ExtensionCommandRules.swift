@@ -27,6 +27,9 @@ enum ExtensionCommandRules {
             if meta.ai == false, meta.commands.isEmpty {
                 issues.append(ValidationIssue(field: "\(field).ai", message: "is false and the tool has no commands, so nothing can reach it."))
             }
+            for argument in meta.trustedOnly where argument.range(of: ManifestValidator.namePattern, options: .regularExpression) == nil {
+                issues.append(ValidationIssue(field: "\(field).trusted_only", message: "“\(argument.prefix(40))” isn't an argument's name (lowercase letters, digits and _)."))
+            }
             if meta.commands.count > maxCommandsPerTool {
                 issues.append(ValidationIssue(field: "\(field).commands", message: "can have at most \(maxCommandsPerTool) commands."))
             }
@@ -83,9 +86,6 @@ enum ExtensionCommandRules {
                 }
                 if command.names.count > maxSentencesPerCommand {
                     issues.append(ValidationIssue(field: "\(cf).names", message: "can hold at most \(maxSentencesPerCommand) names."))
-                }
-                if !command.with.isEmpty, command.names.isEmpty {
-                    issues.append(ValidationIssue(field: "\(cf).with", message: "needs `names`: parts stand around a name."))
                 }
                 var optional: Set<String> = []
                 for part in command.with {

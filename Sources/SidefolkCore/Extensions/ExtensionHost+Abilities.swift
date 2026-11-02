@@ -83,7 +83,11 @@ extension ExtensionHost {
         guard let checked = meta.checked(value) else {
             throw ToolError.invalidInput(String(localized: "That isn't a value for “\(meta.title)”.", comment: "An extension's setting, by its title"))
         }
-        await updatePreferences(id) { $0.values[key] = checked }
+        let followers = rt.manifest?.settings.filter { $0.follows == key }.map(\.key) ?? []
+        await updatePreferences(id) { p in
+            p.values[key] = checked
+            for follower in followers { p.values[follower] = nil }
+        }
         await tellSettings(id)
         events.changed(.extensions)
         guard let row = runtimes[id].flatMap({ settingRows($0).first { $0.key == key } }) else {
@@ -110,8 +114,17 @@ extension ExtensionHost {
         (try? await KVStore(preferencesDatabase).get(ExtensionPreferences.key(id), as: ExtensionPreferences.self)) ?? ExtensionPreferences()
     }
 
+    /// Everything it kept goes, except which of the app's old values it already took: those aren't handed over twice, or a removed extension would come back
+    /// with numbers from before it was removed (`deliverCarried`).
     func forgetPreferences(_ id: String) async {
-        try? await KVStore(preferencesDatabase).remove(ExtensionPreferences.key(id))
+        let store = KVStore(preferencesDatabase), carried = await loadPreferences(id).carried
+        if carried.isEmpty {
+            try? await store.remove(ExtensionPreferences.key(id))
+        } else {
+            var left = ExtensionPreferences()
+            left.carried = carried
+            try? await store.set(ExtensionPreferences.key(id), left)
+        }
     }
 
     /// What goes with every request to the program, beside its language (D76, D100): its settings, and the AI's name while it may
@@ -178,7 +191,9 @@ extension ExtensionHost {
             if aiOff { p.aiOn = false }
             p.carried += marks
         }
+        // Given, so it is the extension's now: nothing is left of it in the app to come back. History's rows stay the person's record.
         if let section, params["values"] != nil { await configuration.forgetCarried(section) }
+        for name in store.keys { await configuration.forgetCarriedStore(name) }
         await tellSettings(id)
         events.changed(.extensions)
         Log.shared.info("extensions", "received what the app kept for it", ["id": id, "section": section ?? ""])

@@ -12,6 +12,7 @@ final class CueDirector {
     private var limiter = CueLimiter()
     private var waiting: Task<Void, Never>?
     private var held: Task<Void, Never>?
+    private var waitingProp: Task<Void, Never>?
     /// Where the panel is, for the companion to look at.
     var panelFrame: () -> NSRect? = { nil }
     /// Puts the companion back in the state its mood says once a held one (thinking, celebrating) is over.
@@ -39,13 +40,28 @@ final class CueDirector {
                     self.perform(move, toward: reaction.look)
                 }
             }
-        case .pump?: companion.character.perform(.pump)
-        case .flick?: companion.character.perform(.flick)
-        case .roll?: companion.character.perform(.roll)
+        case .pump?: if limiter.burst(at: now) { companion.character.perform(.pump) }
+        case .flick?: if limiter.burst(at: now) { companion.character.perform(.flick) }
+        case .roll?: if limiter.burst(at: now) { companion.character.perform(.roll) }
         case nil: break
         }
-        if let effect = reaction.effect { caption.flash(effect) }
-        if let prop = reaction.prop { caption.hold(prop) }
+        if let effect = reaction.effect, limiter.burst(at: now) { caption.flash(effect) }
+        if let prop = reaction.prop { hold(prop, at: now) }
+    }
+
+    private func hold(_ prop: CompanionCue.Prop, at now: Date) {
+        waitingProp?.cancel()
+        let wait = limiter.prop(at: now)
+        guard wait > 0 else {
+            caption.hold(prop)
+            return
+        }
+        waitingProp = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(wait))
+            guard !Task.isCancelled, let self else { return }
+            _ = self.limiter.prop(at: Date())
+            self.caption.hold(prop)
+        }
     }
 
     /// The companion's moves for each reaction: moments every 2D and 3D companion has, its own sulk, shrug, tease and
@@ -121,6 +137,7 @@ final class CueDirector {
     func reset() {
         waiting?.cancel()
         held?.cancel()
+        waitingProp?.cancel()
         caption.clear()
         companion.character.setGaze(nil)
         restoreMood()

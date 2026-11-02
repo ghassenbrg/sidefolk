@@ -146,8 +146,8 @@ struct InstallPreviewSheet: View {
             fact(Text("From", comment: "Install sheet: a fact, where it comes from"), sourceWord)
             Rectangle().fill(Theme.line).frame(width: 1)
             fact(Text("Asks for", comment: "Install sheet: a fact, how many permissions"),
-                 review.lines.isEmpty ? Text("Nothing", comment: "Install sheet: it asks for no permission")
-                     : Text("\(review.lines.count) permissions", comment: "Install sheet: “3 permissions”"))
+                 review.granted == 0 ? Text("Nothing", comment: "Install sheet: it asks for no permission")
+                     : Text("\(review.granted) permissions", comment: "Install sheet: “3 permissions”"))
         }
         .fixedSize(horizontal: false, vertical: true)
         .cardSurface()

@@ -59,6 +59,15 @@ public enum SurfacePolicy {
         return inside(candidates[0])
     }
 
+    /// Where an overlay on screen goes when its scene changes size: it stays where it is, grown from the edge nearest the companion, rather than being placed anew. A coin
+    /// that lands shouldn't jump across the screen, whatever else has come or gone since it was placed. Nil when that no longer fits: then it is placed as usual.
+    public static func resized(_ current: CGRect, to size: CGSize, beside anchor: CGRect, screen: CGRect, avoiding cards: [CGRect]) -> CGRect? {
+        let y = current.midY >= anchor.midY ? current.minY : current.maxY - size.height
+        let rect = CGRect(x: current.midX - size.width / 2, y: y, width: size.width, height: size.height)
+        guard screen.insetBy(dx: 8, dy: 8).contains(rect), !cards.contains(where: { $0.intersects(rect) }) else { return nil }
+        return rect
+    }
+
     /// Where a scene's text field may stand: inside the canvas, or nowhere. Only the layers clip themselves, and a field is a real view
     /// that could otherwise draw over the frame that says whose this is (T40).
     public static func fieldFrame(_ rect: CGRect, canvas: CGSize) -> CGRect? {

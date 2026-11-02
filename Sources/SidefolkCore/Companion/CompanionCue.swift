@@ -51,6 +51,8 @@ public struct CueLimiter: Sendable {
 
     private var lastMove: Date?
     private var lastAccent: Date?
+    private var lastBurst: Date?
+    private var lastProp: Date?
     private var sounds: [Date] = []
     /// A move that came too soon, played when its turn comes (a newer one takes its place).
     public private(set) var waitingMove: CompanionCue.Move?
@@ -88,6 +90,21 @@ public struct CueLimiter: Sendable {
         waitingMove = nil
         if move.isAccent { lastAccent = now } else { lastMove = now }
         return true
+    }
+
+    /// A short throw of the companion's (a fist pumped, a coin flicked) or an effect above it: at the sounds' pace, and one that comes too soon is dropped,
+    /// since a moment that has passed needs no playing late.
+    public mutating func burst(at now: Date) -> Bool {
+        if let last = lastBurst, now.timeIntervalSince(last) < Self.accentGap { return false }
+        lastBurst = now
+        return true
+    }
+
+    /// How long a prop must wait to change, so a stream of them doesn't flicker. The newest one wins when its turn comes, so what stands is what was last asked.
+    public mutating func prop(at now: Date) -> TimeInterval {
+        if let last = lastProp, now.timeIntervalSince(last) < Self.accentGap { return Self.accentGap - now.timeIntervalSince(last) }
+        lastProp = now
+        return 0
     }
 
     public mutating func sound(at now: Date) -> Bool {
