@@ -223,7 +223,7 @@ struct ExtensionPlanTool: Tool {
     let body: String
 
     var spec: ToolSpec {
-        ToolSpec(name: Self.name, title: String(localized: "Do this without asking", comment: "A tool, after “Sideflow wants to”: a plan the person reads, then it needs no more cards for exactly that"),
+        ToolSpec(name: Self.name, title: String(localized: "Do this without asking", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that"),
                  description: "Lets an extension run what the person read, without further cards.",
                  inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id.")], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)
