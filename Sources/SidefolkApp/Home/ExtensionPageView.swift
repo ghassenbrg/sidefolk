@@ -12,7 +12,8 @@ struct ExtensionPageView: View {
         // A page of numbers and charts may use a wide window; a page of switches stays a readable column. Either is
         // centred, so a wide window never leaves the page on one side.
         PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
-            header
+            // A hero with a scene carries the page's title itself (D100), large.
+            if model.page?.hero?.scene == nil { header }
             if let updates = model.updates, let entry = updates.addonUpdate(for: model.info.extensionId) {
                 AddonUpdateStrip(entry: entry, updates: updates)
             }

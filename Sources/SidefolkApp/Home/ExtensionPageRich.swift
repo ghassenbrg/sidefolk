@@ -95,6 +95,7 @@ struct PageSceneHero: View {
                     }
                 }
                 .padding(Theme.Space.xl)
+                .frame(maxHeight: .infinity)
                 Spacer(minLength: 0)
                 if let figure = hero.figure {
                     VStack(alignment: .trailing, spacing: Theme.Space.xs) {

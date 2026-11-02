@@ -56,7 +56,9 @@ enum SampleRichPage {
         model.settingRows = rows
         model.aiStatus = ExtensionAIStatus(purpose: "to write a line about a bird you name", dailyCap: 10, usedToday: 2, on: true)
         model.samplePicture = { picture in
-            if case .companion = picture { return CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220) }
+            if case .companion(let figure) = picture {
+                return figure == .face ? CompanionArt.avatar(for: AppSettings(), side: 56) : CompanionArt.portrait(for: AppSettings(), state: .listening, side: 220)
+            }
             return swatch(picture)
         }
         return model
