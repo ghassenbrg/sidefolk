@@ -49,8 +49,8 @@ enum ExtFixtures {
     /// An extension's folder in its repository.
     static func source(_ folder: String) -> URL { addonsRepo.appendingPathComponent("extensions/\(folder)", isDirectory: true) }
 
-    /// The gallery's extensions put together as sidefolk-addons' build.py packs them: each folder's manifest, icon, words
-    /// and program.
+    /// The gallery's extensions put together as sidefolk-addons' build.py packs them: each folder's manifest, icon, assets,
+    /// words and program.
     static let builtIns: URL = {
         let dir = try! tempDir("builtins")
         let fm = FileManager.default
@@ -60,6 +60,9 @@ enum ExtFixtures {
             for file in [ExtensionManifest.fileName, "icon.pdf"] {
                 try! fm.copyItem(at: ExtFixtures.source(folder).appendingPathComponent(file), to: to.appendingPathComponent(file))
             }
+            // Its pictures and sounds (D99).
+            let assets = ExtFixtures.source(folder).appendingPathComponent("assets")
+            if fm.fileExists(atPath: assets.path) { try! fm.copyItem(at: assets, to: to.appendingPathComponent("assets")) }
             // Its words in other languages (D76).
             let strings = ExtFixtures.source(folder).appendingPathComponent(ExtensionStrings.folder)
             if fm.fileExists(atPath: strings.path) { try! fm.copyItem(at: strings, to: to.appendingPathComponent(ExtensionStrings.folder)) }
