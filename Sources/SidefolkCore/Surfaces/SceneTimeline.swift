@@ -208,8 +208,16 @@ enum SceneTimeline {
                                 }
                                 continue
                             }
-                            if i == 0, track.times.last == at { continue }
-                            track.times.append(at + point.t * step.ms)
+                            // Its first key says where it starts, from wherever it rested until now.
+                            if i == 0, track.times.last == at {
+                                if track.values.last != point.v {
+                                    track.times.append(at + 0.0001)
+                                    track.values.append(point.v)
+                                    track.eases.append(.step)
+                                }
+                                continue
+                            }
+                            track.times.append(max(at + point.t * step.ms, track.times.last ?? 0))
                             track.values.append(point.v)
                             track.eases.append(property == .z ? .step : step.ease)
                         }

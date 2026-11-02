@@ -1054,7 +1054,7 @@ repeats and 120 seconds a timeline.
 ```
 
 - **A step** names a `target` and goes `to` values, or through `keys` (each with `t` from 0 to 1), in `ms`: `x`, `y`, `scale`, `sx`, `sy`,
-  `rotate`, `opacity`, `flip` (half turns: 11 lands on the back), `z`. It starts from wherever the last step left it. `ease`: `linear`,
+  `rotate`, `opacity`, `flip` (half turns: 11 lands on the back), `z`. It starts from wherever the last step left it, or from its first key if that has `t` 0. `ease`: `linear`,
   `in`, `out`, `in_out`, `spring`. `delay_ms`, `repeat`, `autoreverse`.
 - **Groups:** `sequence`, `together`, `stagger`, with `wait_ms`. **`frames`** swaps a picture from the pack, the last one staying.
 - **Events** at a point in a sequence: `sound`, `react`, `announce`.
