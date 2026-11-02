@@ -1,4 +1,5 @@
 import AppKit
+import SidefolkCore
 import SwiftUI
 
 /// A borderless, non-activating floating panel: typing into it never steals the frontmost app.
