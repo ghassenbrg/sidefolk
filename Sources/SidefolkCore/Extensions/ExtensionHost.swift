@@ -838,8 +838,8 @@ public actor ExtensionHost {
         }
         try await verifyFiles(id)
         let process = try ExtensionProcess(spec: try sandboxedSpec(id, folders: folders), limits: config.limits)
-        let context = requestContext
-        let client = MCPClient(process: process, language: config.language, extras: { context.extras(id) })
+        let context = requestContext, aiName = config.aiName
+        let client = MCPClient(process: process, language: config.language, extras: { context.extras(id, aiName: aiName) })
         let key = ObjectIdentifier(client)
         runtimes[id]?.oneShots[key] = client
         func finish() async {
@@ -934,9 +934,9 @@ public actor ExtensionHost {
         runtimes[id]?.outputMuteStarts = []
         let process = try ExtensionProcess(spec: spec, limits: config.limits)
         // Only Sidefolk's own protocol is told the person's language; a plain MCP server gets requests as MCP has them.
-        let context = requestContext
+        let context = requestContext, aiName = config.aiName
         var extras: (@Sendable () -> [String: JSONValue])?
-        if rt.record.kind == .sidefolk { extras = { @Sendable in context.extras(id) } }
+        if rt.record.kind == .sidefolk { extras = { @Sendable in context.extras(id, aiName: aiName) } }
         let client = MCPClient(process: process, language: rt.record.kind == .sidefolk ? config.language : nil, extras: extras) { [weak self, process] event in
             let stderr = if case .exited = event { process.stderrTail } else { "" }
             Task { await self?.handle(event, id: id, generation: generation, stderr: stderr) }

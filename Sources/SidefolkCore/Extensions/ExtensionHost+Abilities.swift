@@ -125,14 +125,15 @@ extension ExtensionHost {
     /// ask. Kept where the client can read it without waiting on this actor.
     func publishRequestContext() {
         var context: [String: [String: JSONValue]] = [:]
+        var asking: Set<String> = []
         for (id, rt) in runtimes {
             guard let m = rt.manifest else { continue }
             var extras: [String: JSONValue] = [:]
             if !m.settings.isEmpty { extras["settings"] = .object(rt.preferences.resolved(m.settings)) }
-            if m.permissions.ai != nil, rt.preferences.aiOn != false, aiHelper != nil, let name = configuration.aiName() { extras["ai"] = .string(name) }
+            if rt.pin.permissions?.ai != nil, rt.preferences.aiOn != false, aiHelper != nil { asking.insert(id) }
             if !extras.isEmpty { context[id] = extras }
         }
-        requestContext.set(context)
+        requestContext.set(context, mayAsk: asking)
     }
 
     // MARK: What it used to have in the app
@@ -205,7 +206,10 @@ extension ExtensionHost {
 
     /// `sidefolk/ai.request`: answered with one `sidefolk/ai.answer` notice, always, so the program never waits for nothing.
     func answerAI(_ id: String, request: String, params: JSONValue) async {
-        guard let rt = runtimes[id], let client = rt.client else { return }
+        guard let rt = runtimes[id], let client = rt.client else {
+            runtimes[id]?.aiAsking = false
+            return
+        }
         let reply = await aiReply(id, request: request, params: params)
         runtimes[id]?.aiAsking = false
         await client.notify("sidefolk/ai.answer", params: reply)
@@ -246,8 +250,14 @@ enum ExtensionAbilityLimits {
 
 /// What goes with each request of each extension, readable from the client's own thread.
 final class ExtensionRequestContext: Sendable {
-    private let values = Mutex<[String: [String: JSONValue]]>([:])
+    private let state = Mutex<(values: [String: [String: JSONValue]], mayAsk: Set<String>)>(([:], []))
 
-    func set(_ context: [String: [String: JSONValue]]) { values.withLock { $0 = context } }
-    func extras(_ id: String) -> [String: JSONValue] { values.withLock { $0[id] ?? [:] } }
+    func set(_ context: [String: [String: JSONValue]], mayAsk: Set<String>) { state.withLock { $0 = (context, mayAsk) } }
+
+    /// The AI's name is asked for at each request: the person may set one up, or turn it off, while the program runs.
+    func extras(_ id: String, aiName: () -> String?) -> [String: JSONValue] {
+        let (values, may) = state.withLock { ($0.values[id] ?? [:], $0.mayAsk.contains(id)) }
+        guard may, let name = aiName() else { return values }
+        return values.merging(["ai": .string(name)]) { own, _ in own }
+    }
 }

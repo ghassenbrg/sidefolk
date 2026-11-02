@@ -192,7 +192,7 @@ public struct PermissionSummary: Sendable, Hashable {
                               caution: true))
         }
         if let ai = p.ai {
-            // Sidefolk's guards, all enforced by the host: the frame, no tools, the cap, the switch, History (D100, T44).
+            // Sidefolk's guards, all enforced by the host: the frame, no tools, the cap, the switch, History (D100, T41).
             lines.append(Line(kind: .ai, text: String(localized: "Can ask your AI to write something, up to \(ai.dailyCap) times a day. It says it uses it \(ai.purpose).",
                                                       comment: "Install sheet: permissions.ai; the daily limit, then the author's purpose, “to write quiz questions”"),
                               caution: true,
