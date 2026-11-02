@@ -196,6 +196,8 @@ public enum Block {
     case cards(size: CardSize = .large, [Card])
     /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
     case tabs(selected: String? = nil, [PageTab])
+    /// Rows of controls under named columns (D108): one line for each thing that has several settings. A cell is `.text`, a `.draftToggle` or `.toggle`, or a `.draftChoice` or `.choice`.
+    case table(_ title: String? = nil, first: String? = nil, columns: [String], rows: [TableRow])
     /// Tabs that say where the page is (D105): picking one changes its state, and `sections` are what the program drew for the tab showing. `tint`: the picked tab's fill.
     case goTabs(selected: String, [PageTab], tint: PagePair? = nil, sections: [Section])
     /// Achievements, earned or on their way (D100).
@@ -254,6 +256,8 @@ public enum Block {
             var out: [String: Any] = ["type": "tabs", "tabs": tabs.map(\.json)]
             if let selected { out["selected"] = selected }
             return out
+        case .table(let title, let first, let columns, let rows):
+            return Self.dropNil(["type": "table", "title": title, "first": first, "columns": columns, "rows": rows.map(\.json)])
         case .goTabs(let selected, let tabs, let tint, let sections):
             var out: [String: Any] = ["type": "tabs", "selected": selected, "tabs": tabs.map(\.json), "sections": sections.filter { !$0.blocks.isEmpty }.map(\.json)]
             if let tint { out["tint"] = tint.json }
@@ -288,6 +292,40 @@ public enum Block {
     }
 
     private static func dropNil(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
+}
+
+/// One row of `.table`: what it is about, and a cell per column.
+public struct TableRow {
+    public enum Cell {
+        case text(String)
+        case control(Block)
+        case empty
+    }
+
+    public var label: String
+    public var detail: String?
+    public var symbol: String?
+    public var cells: [Cell]
+
+    public init(_ label: String, detail: String? = nil, symbol: String? = nil, cells: [Cell]) {
+        self.label = label
+        self.detail = detail
+        self.symbol = symbol
+        self.cells = cells
+    }
+
+    var json: [String: Any] {
+        var out: [String: Any] = ["label": label, "cells": cells.map { cell -> Any in
+            switch cell {
+            case .text(let words): words
+            case .control(let block): block.json
+            case .empty: ["type": "none"] as [String: Any]
+            }
+        }]
+        if let detail { out["detail"] = detail }
+        if let symbol { out["symbol"] = symbol }
+        return out
+    }
 }
 
 /// `primary` is the page's one main action (Sidefolk keeps only the first filled); `plain` is quiet text for what's
@@ -488,6 +526,8 @@ public struct Row {
     public var color: String?
     public var symbol: String?
     public var button: (label: String, tool: String, input: [String: Any], symbol: String?)?
+    /// A button that does something other than run a tool (D105), in place of `button`.
+    public var action: Action?
 
     public init(_ title: String, detail: String? = nil, image: String? = nil, color: String? = nil, symbol: String? = nil,
                 button: (label: String, tool: String, input: [String: Any], symbol: String?)? = nil) {
@@ -497,6 +537,11 @@ public struct Row {
         self.color = color
         self.symbol = symbol
         self.button = button
+    }
+
+    public init(_ title: String, detail: String? = nil, symbol: String? = nil, action: Action?) {
+        self.init(title, detail: detail, symbol: symbol)
+        self.action = action
     }
 
     var json: [String: Any] {
@@ -510,6 +555,7 @@ public struct Row {
             if let symbol = button.symbol { b["symbol"] = symbol }
             out["button"] = b
         }
+        if let action { out["button"] = action.json }
         return out
     }
 }

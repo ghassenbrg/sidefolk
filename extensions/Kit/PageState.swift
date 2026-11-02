@@ -65,11 +65,14 @@ public struct PageDress {
     public var ground: PagePair
     public var card: PagePair?
     public var line: PagePair?
+    /// Filled buttons and switches on the page; white goes on it, so it must be deep enough to hold white words.
+    public var accent: PagePair?
     public var picture: Picture?
     /// The picture repeats rather than filling the page.
     public var tile: Bool
 
-    public init(ground: PagePair, card: PagePair? = nil, line: PagePair? = nil, picture: Picture? = nil, tile: Bool = false) {
+    public init(ground: PagePair, card: PagePair? = nil, line: PagePair? = nil, accent: PagePair? = nil, picture: Picture? = nil, tile: Bool = false) {
+        self.accent = accent
         self.ground = ground
         self.card = card
         self.line = line
@@ -81,6 +84,7 @@ public struct PageDress {
         var out: [String: Any] = ["ground": ground.json]
         if let card { out["card"] = card.json }
         if let line { out["line"] = line.json }
+        if let accent { out["accent"] = accent.json }
         if let picture {
             var p = picture.json
             if tile { p["tile"] = true }

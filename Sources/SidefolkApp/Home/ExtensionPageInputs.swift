@@ -130,6 +130,10 @@ private struct PageFieldRow: View {
                     .lanternField()
                     .onSubmit(send)
                     .task(id: text) { await follow() }
+                    .onChange(of: field.value) { old, new in
+                        // Its state was taken away (a draft cancelled): the words go with it. Otherwise it follows what is typed, not the other way round.
+                        if field.live, new == nil, old != nil, !text.isEmpty { text = "" }
+                    }
                 // A live field has no need of a button to send, only one to clear (D105).
                 if !field.live {
                     Button(action: send) { Text(ext: field.button) }

@@ -315,11 +315,46 @@ func yourMac(_ c: CGContext) {
     dot(c, center, radius: 20, fill: navy)
 }
 
+/// Noor's mark: an eightfold rosette in gold on rich indigo, with a point of light in the middle. Few lines, drawn thick, so it holds at sidebar sizes.
+func noor(_ c: CGContext) {
+    background(c, top: 0x31206A, bottom: 0x15182F)
+    let center = CGPoint(x: side / 2, y: side / 2), radius = side * 0.41
+    c.setStrokeColor(rgb(0xE3C98D))
+    c.setLineWidth(side * 0.026)
+    c.setLineJoin(.round)
+    for k in 0..<8 {
+        let angle = CGFloat(k) * .pi / 4
+        let path = CGMutablePath()
+        let steps = 28
+        for side_ in [CGFloat(1), -1] {
+            for i in 0...steps {
+                let t = CGFloat(i) / CGFloat(steps), u = side_ > 0 ? t : 1 - t
+                let along = radius * (0.2 + 0.8 * u), across = side_ * radius * 0.27 * sin(.pi * u)
+                let p = CGPoint(x: center.x + along * cos(angle) - across * sin(angle), y: center.y + along * sin(angle) + across * cos(angle))
+                if i == 0, side_ > 0 { path.move(to: p) } else { path.addLine(to: p) }
+            }
+        }
+        path.closeSubpath()
+        c.addPath(path)
+        c.strokePath()
+    }
+    let star = CGMutablePath()
+    for i in 0..<16 {
+        let r = i % 2 == 0 ? radius * 0.28 : radius * 0.12, a = CGFloat(i) * .pi / 8
+        let p = CGPoint(x: center.x + r * cos(a), y: center.y + r * sin(a))
+        if i == 0 { star.move(to: p) } else { star.addLine(to: p) }
+    }
+    star.closeSubpath()
+    c.addPath(star)
+    c.setFillColor(rgb(0xF7E7B8))
+    c.fillPath()
+}
+
 let icons: [(folder: String, draw: (CGContext) -> Void)] = [
     ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk), ("weather", weather),
     ("calculator", calculator), ("currency", currency), ("playtime", playtime), ("images", images), ("pdf", pdf), ("qr-codes", qrCodes),
     ("archives", archives), ("dev-toolbox", devToolbox), ("feeds", feeds), ("clipboard", clipboard), ("keep-awake", keepAwake),
-    ("system-vitals-plus", yourMac),
+    ("system-vitals-plus", yourMac), ("prayer-times", noor),
 ]
 
 /// The extensions in the add-on gallery (D55) live in sidefolk-addons, beside this checkout or at $SIDEFOLK_ADDONS_REPO.

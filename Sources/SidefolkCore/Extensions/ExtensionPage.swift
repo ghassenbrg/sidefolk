@@ -120,6 +120,8 @@ public struct ExtensionPage: Sendable, Hashable {
         case settings(SettingsRows)
         /// A scene drawn inline, so a look no part offers stays entirely the extension's (D100).
         case scene(PageScene)
+        /// Rows of controls under named columns (D108): one line per thing that has several settings. Narrow, each row stacks.
+        case table(PageTable)
     }
 
     /// A small label beside an option: "Paired", "New", "Off".
@@ -209,6 +211,22 @@ public struct ExtensionPage: Sendable, Hashable {
     }
 
     public struct Field: Sendable, Hashable {
+        /// What a live field's state says isn't what it is: the part stays the same part as it follows the typing, so it keeps the keyboard (D105).
+        public static func == (a: Field, b: Field) -> Bool {
+            a.label == b.label && a.detail == b.detail && a.placeholder == b.placeholder && a.button == b.button && a.tool == b.tool
+                && a.input == b.input && a.key == b.key && a.go == b.go && a.live == b.live
+        }
+
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(label)
+            hasher.combine(detail)
+            hasher.combine(placeholder)
+            hasher.combine(button)
+            hasher.combine(tool)
+            hasher.combine(key)
+            hasher.combine(live)
+        }
+
         public var label: String
         public var detail: String?
         public var placeholder: String?

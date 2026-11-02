@@ -24,8 +24,9 @@ enum ExtensionCommandRules {
         for name in m.tools.keys.sorted() {
             guard let meta = m.tools[name] else { continue }
             let field = "tools.\(name)"
-            if meta.ai == false, meta.commands.isEmpty {
-                issues.append(ValidationIssue(field: "\(field).ai", message: "is false and the tool has no commands, so nothing can reach it."))
+            // A page's control reaches a tool as well as a sentence does (D105): what a person clicks needn't be offered to a model or typed.
+            if meta.ai == false, meta.commands.isEmpty, m.pages.isEmpty, m.surfaces.isEmpty {
+                issues.append(ValidationIssue(field: "\(field).ai", message: "is false and the tool has no commands, and there is no page or surface to reach it from."))
             }
             for argument in meta.trustedOnly where argument.range(of: ManifestValidator.namePattern, options: .regularExpression) == nil {
                 issues.append(ValidationIssue(field: "\(field).trusted_only", message: "“\(argument.prefix(40))” isn't an argument's name (lowercase letters, digits and _)."))

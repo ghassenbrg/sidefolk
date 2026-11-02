@@ -171,6 +171,21 @@ extension ExtensionPage {
                                        picture: PagePicture.parse(i["picture"]))
             }
             return items.isEmpty ? nil : .recent(RecentList(title: text(j["title"], 60), items: items))
+        case "table":
+            let columns = (j["columns"]?.arrayValue ?? []).prefix(6).compactMap { text($0, 30) }
+            let rows = (j["rows"]?.arrayValue ?? []).prefix(maxItems).compactMap { r -> PageTable.Row? in
+                guard let label = text(r["label"], 60) else { return nil }
+                let cells = (r["cells"]?.arrayValue ?? []).prefix(columns.count).map { c -> PageTable.Cell in
+                    if let words = c.stringValue { return .text(ExtensionText.line(words, characters: 60)) }
+                    switch block(c) {
+                    case .control(let control)?: return .control(control)
+                    case .choice(let choice)?: return .choice(choice)
+                    default: return .empty
+                    }
+                }
+                return PageTable.Row(label: label, detail: text(r["detail"], 120), symbol: symbol(r["symbol"]), cells: Array(cells))
+            }
+            return rows.isEmpty || columns.isEmpty ? nil : .table(PageTable(title: text(j["title"], 60), first: text(j["first"], 30), columns: Array(columns), rows: rows))
         case "scene":
             // The same reader, caps and budget as a surface's; pictures are checked against the pack's pins when they are drawn.
             guard let json = j["scene"], let scene = try? SurfaceScene.parse(json, within: SceneSize(width: PageScene.maxWidth, height: PageScene.maxHeight)) else { return nil }
@@ -235,6 +250,29 @@ extension ExtensionPage {
     static func date(_ j: JSONValue?) -> Date? {
         j?.stringValue.flatMap { ISO8601DateFormatter().date(from: $0) }
     }
+}
+
+/// Rows of controls under named columns (D108).
+public struct PageTable: Sendable, Hashable {
+    public enum Cell: Sendable, Hashable {
+        case control(ExtensionPage.Control)
+        case choice(ExtensionPage.Choice)
+        case text(String)
+        case empty
+    }
+
+    public struct Row: Sendable, Hashable {
+        public var label: String
+        public var detail: String?
+        public var symbol: String?
+        public var cells: [Cell]
+    }
+
+    public var title: String?
+    /// The first column's heading: what the rows are.
+    public var first: String?
+    public var columns: [String]
+    public var rows: [Row]
 }
 
 /// A scene inside a page: `actions` says which of the extension's own tools each of its areas runs, as the person, through Guard. It

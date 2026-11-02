@@ -133,13 +133,15 @@ public struct PageDress: Sendable, Hashable {
     public var ground: Pair
     public var card: Pair?
     public var line: Pair?
+    /// Filled buttons and switches on this page. White goes on it, so it has to hold white words.
+    public var accent: Pair?
     public var picture: PagePicture?
     /// The picture repeats rather than filling the page.
     public var tile = false
 
     static func parse(_ j: JSONValue?) -> PageDress? {
         guard let ground = Pair.parse(j?["ground"]), ground.readable else { return nil }
-        return PageDress(ground: ground, card: Pair.parse(j?["card"]).flatMap { $0.readable ? $0 : nil }, line: Pair.parse(j?["line"]), picture: PagePicture.parse(j?["picture"]),
+        return PageDress(ground: ground, card: Pair.parse(j?["card"]).flatMap { $0.readable ? $0 : nil }, line: Pair.parse(j?["line"]), accent: Pair.parse(j?["accent"]).flatMap { Pair.luminance($0.light) <= 0.35 && Pair.luminance($0.dark) <= 0.35 ? $0 : nil }, picture: PagePicture.parse(j?["picture"]),
                          tile: j?["picture"]?["tile"]?.boolValue ?? false)
     }
 }

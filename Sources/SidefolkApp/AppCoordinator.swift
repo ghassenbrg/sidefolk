@@ -522,6 +522,36 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("pageTool:") {
+            // pageTool:<extension id>/<page>:<tool>:<json>: that tool, run as the person, as a click on the page runs it (D105).
+            let rest = command.dropFirst("pageTool:".count).split(separator: ":", maxSplits: 2).map(String.init)
+            guard rest.count == 3, let input = try? JSONValue.parse(Data(rest[2].utf8)) else { return }
+            let extensionId = String(rest[0].split(separator: "/").first ?? ""), short = String(extensionId.split(separator: ".").last ?? "")
+            Task {
+                let outcome = await runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: rest[1]), input: input, caller: .user)
+                Log.shared.info("dev", "pageTool", ["tool": rest[1], "ok": "\(outcome.isOK)", "problem": outcome.problem?.message ?? ""])
+                await home.pageMoved(rest[0])
+            }
+            return
+        }
+        if command.hasPrefix("pageLook:") {
+            // pageLook:dark | light | system: this app's appearance alone, to see a page both ways without touching the Mac's setting.
+            switch command.dropFirst("pageLook:".count) {
+            case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+            case "light": NSApp.appearance = NSAppearance(named: .aqua)
+            default: NSApp.appearance = nil
+            }
+            return
+        }
+        if command.hasPrefix("pageWidth:") {
+            // pageWidth:<points>: the Home window this wide, to see a page at a narrower width.
+            if let width = Double(command.dropFirst("pageWidth:".count)), let window = NSApp.windows.first(where: { $0.title == "Sidefolk" || $0.contentView is NSVisualEffectView || $0.frame.width > 800 }) {
+                var frame = window.frame
+                frame.size.width = width
+                window.setFrame(frame, display: true)
+            }
+            return
+        }
         if command.hasPrefix("pageFile:") {
             // pageFile:<path>: the next page `file` panel takes this, there being no one to click in it (D105).
             PageFilePanel.choiceForTest = String(command.dropFirst("pageFile:".count))

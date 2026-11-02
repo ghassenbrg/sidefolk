@@ -21,6 +21,7 @@ struct RichBlockView: View {
         case .recent(let list): PageRecent(list: list, model: model)
         case .settings(let rows): PageSettings(rows: rows, model: model)
         case .scene(let scene): PageSceneBlock(block: scene, model: model)
+        case .table(let table): PageTableView(table: table, model: model)
         default: EmptyView()
         }
     }

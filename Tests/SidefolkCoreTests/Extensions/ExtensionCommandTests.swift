@@ -92,7 +92,7 @@ import Testing
         func issues(_ meta: ExtensionManifest.ToolMeta, words: [String: [String]] = [:]) -> [String] {
             ExtensionCommandRules.check(Self.manifest(["t": meta], words: words)).map(\.description)
         }
-        #expect(issues(.init(ai: false)).contains { $0.contains("tools.t.ai") && $0.contains("nothing can reach it") })
+        #expect(issues(.init(ai: false)).contains { $0.contains("tools.t.ai") && $0.contains("no page or surface") })
         #expect(issues(.init(commands: [.init(say: ["time in {place:place}", "clock {zone:word}"])]))
             .contains { $0.contains("same slots in every sentence") })
         #expect(issues(.init(commands: [.init(say: ["time in {place:place}"], input: ["places": ["{city}"]])]))

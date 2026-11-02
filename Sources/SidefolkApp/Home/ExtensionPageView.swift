@@ -70,8 +70,15 @@ struct ExtensionPageView: View {
             PageGround(dress: model.page?.dress, model: model)
         }
         .environment(\.cardDress, cardDress)
+        .environment(\.pageAccent, pageAccent)
+        .tint(pageAccent)
         .pageConsent(model: model)
         .task(id: model.info.id) { await model.run() }
+    }
+
+    /// A dressed page's filled buttons and switches (D108).
+    private var pageAccent: Color? {
+        model.page?.dress?.accent.flatMap { Color(extensionHex: scheme == .dark ? $0.dark : $0.light) }
     }
 
     /// A dressed page's cards (D108).
@@ -359,7 +366,7 @@ struct SectionView: View {
                 out.append(.hero(h))
             case .transport(let t):
                 out.append(.transport(t))
-            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene:
+            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table:
                 out.append(.rich(block))
             case .control(let c):
                 if case .toggle = c.kind {
@@ -387,7 +394,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table: EmptyView()
         }
     }
 }
