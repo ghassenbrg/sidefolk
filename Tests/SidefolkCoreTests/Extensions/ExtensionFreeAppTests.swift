@@ -6,8 +6,8 @@ import Testing
 /// written for it starts, and telling the two apart would need a parser for nothing gained. What may name one is
 /// `scripts/extension-free-allowlist.json`, the approved exceptions and only those.
 @Suite struct ExtensionFreeAppTests {
-    /// Flip to true when Playtime has moved (D101): game code and the drop action that waits for Entries (D100) then
-    /// fail like everything else, instead of being reported. Nothing else needs changing.
+    /// Flip to true when Playtime has moved (D101): game code then fails like everything else, instead of being
+    /// reported. Nothing else needs changing.
     static let transitionOver = false
 
     /// Ids and names of every extension Sidefolk has published. Companions aren't extensions (D55), so their
@@ -21,10 +21,6 @@ import Testing
     static var programs: Regex<Substring> { /\bext[-.](?:weather|world-clock|calculator|system-vitals(?:-plus)?|git|currency|images|pdf|qr-codes|archives|dev-toolbox|feeds|clipboard|keep-awake|miraya|playtime)\b/ }
     /// What Playtime is moving out (D101), and its name.
     static var gameCode: Regex<Substring> { /\bPlaytime\b|\b(?:Game|Games|Play|Puzzle|Trivia)[A-Z][A-Za-z]*|\b[A-Z][A-Za-z]*(?:Game|Games|Puzzle|Puzzles|Trivia)\b|\bBoardView\b|\bgames\.[a-z]+|\b(?:HandsMatch|HandsReveal|CompanionToss|TossStage|CoinFace|DiceTray|ChanceIntent)\b|\b(?:CompanionPlay(?:er)?|Petting)\b/ }
-    /// The drop action that waits for Entries (D100), where it is now.
-    static let awaitingEntries = ["Sources/SidefolkApp/AppCoordinator+Ask.swift", "Sources/SidefolkCore/Understanding/DropChoices.swift",
-                                  "Sources/SidefolkApp/Ask/DropCard.swift", "Sources/SidefolkApp/Dev/FixtureAskActions.swift",
-                                  "Sources/SidefolkApp/Dev/UISnapshots.swift"]
 
     struct Exception: Decodable {
         var why: String
@@ -53,13 +49,14 @@ import Testing
         return try JSONDecoder().decode(File.self, from: data).exceptions
     }
 
-    /// Every text file the rule is about, by its path in the repository.
+    /// Every text file the rule is about, by its path in the repository. Info.plist's words reach the person in the
+    /// system's own permission prompts, so they count as much as any screen.
     static func files() -> [String] {
-        ["Sources", "Resources/SeedPacks"].flatMap { folder -> [String] in
+        (["Sources", "Resources/SeedPacks"].flatMap { folder -> [String] in
             let base = root.appendingPathComponent(folder)
             let all = FileManager.default.enumerator(at: base, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
             return all.filter { ["swift", "json"].contains($0.pathExtension) }.map { folder + "/" + $0.path.dropFirst(base.path.count + 1) }
-        }.sorted()
+        } + ["Resources/Info.plist"]).sorted()
     }
 
     static func hits(_ pattern: Regex<Substring>, in lines: [(String, Int, Substring)]) -> [Hit] {
@@ -95,25 +92,22 @@ import Testing
         let detailsLeft = try Self.judged(details, exceptions)
         let gamesLeft = try Self.judged(games, exceptions)
 
-        // Playtime's own id, name and programs, and the drop action, are the two moves still under way.
+        // Playtime's own id, name and programs are the one move still under way.
         let isGameName: (Hit) -> Bool = { $0.found.hasSuffix("playtime") }
-        let isDropAction: (Hit) -> Bool = { $0.found.lowercased().hasSuffix("miraya") && Self.awaitingEntries.contains($0.file) }
-        let awaiting = detailsLeft.left.filter(isDropAction)
-        let mine = detailsLeft.left.filter { !isGameName($0) && !isDropAction($0) }
+        let mine = detailsLeft.left.filter { !isGameName($0) }
         #expect(mine.isEmpty, "Extension details in the app (D98):\n\(mine.map(\.description).joined(separator: "\n"))")
 
         let moving = detailsLeft.left.filter(isGameName) + gamesLeft.left
         if Self.transitionOver {
             #expect(moving.isEmpty, "Game code in the app (D101):\n\(moving.map(\.description).joined(separator: "\n"))")
-            #expect(awaiting.isEmpty, "The drop action is still in the app (D100):\n\(awaiting.map(\.description).joined(separator: "\n"))")
             // Stale only once nothing is moving: an exception's symbol may be renamed along the way.
             for index in exceptions.indices where !detailsLeft.used.contains(index) && !gamesLeft.used.contains(index) {
                 Issue.record("An exception no longer matches anything, so it should go: \(exceptions[index].file)")
             }
         } else {
             let perFile = Dictionary(grouping: moving, by: \.file).map { "\($0.value.count) \($0.key)" }.sorted()
-            print("ExtensionFreeAppTests (reported, not failing, until transitionOver): \(moving.count) lines of game code in \(perFile.count) files;",
-                  "\(awaiting.count) lines of the drop action in \(Set(awaiting.map(\.file)).count).\n  " + perFile.joined(separator: "\n  "))
+            print("ExtensionFreeAppTests (reported, not failing, until transitionOver): \(moving.count) lines of game code in \(perFile.count) files.\n  "
+                  + perFile.joined(separator: "\n  "))
         }
     }
 
