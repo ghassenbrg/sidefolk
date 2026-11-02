@@ -254,6 +254,65 @@ struct PlaytimeMoveReviewTests {
         #expect(waits > 0, "it waits, and the newest wins")
     }
 
+    // MARK: Page parts an extension dresses
+
+    @Test func pagePartsCarryWhatTheyAreGivenAndDropWhatIsOff() throws {
+        let json: JSONValue = ["sections": [
+            ["blocks": [["type": "hero", "title": "H", "symbol": "bird", "tile": ["#112233", "#445566", "#778899"], "wash": ["nope"], "figure": ["companion": "full"], "says": "Hi",
+                         "actions": [["type": "button", "label": "Go", "tool": "go", "style": "primary"]]]]],
+            ["title": "Banded", "detail": "A day", "banner": ["tint": "#112233", "symbol": "bird"], "wide": true, "blocks": [
+                ["type": "stats", "items": [["label": "L", "value": "1", "color": "#FFC93C"], ["label": "M", "value": "2", "color": "red"]]],
+                ["type": "cards", "items": [["title": "C", "actions": [["type": "button", "label": "Back to it", "tool": "go", "style": "accent"], ["type": "button", "label": "Run", "tool": "go", "symbol": "play.fill", "shape": "round"]]]]],
+                ["type": "settings", "keys": ["a", "b"], "grid": true, "pictures": ["a": ["pack": "art/a.png"], "z": ["pack": "art/z.png"]], "ai": true, "ai_title": "Own words", "ai_detail": "More"],
+            ]],
+            ["title": "No band", "banner": ["tint": "red"], "blocks": [["type": "note", "text": "x"]]],
+        ]]
+        let page = try ExtensionPage.parse(json)
+        guard case .hero(let hero)? = page.sections[0].blocks.first else { Issue.record("no hero"); return }
+        #expect(hero.tile == ["#112233", "#445566"] && hero.wash.isEmpty, "two at most, and what isn't a colour goes")
+        let banded = page.sections[1]
+        #expect(banded.banner?.tint == "#112233" && banded.wide && banded.detail == "A day")
+        #expect(page.sections[2].banner == nil && !page.sections[2].wide)
+        guard case .stats(let stats) = banded.blocks[0], case .cards(let cards) = banded.blocks[1], case .settings(let rows) = banded.blocks[2] else { Issue.record("parts"); return }
+        #expect(stats.items.map(\.color) == ["#FFC93C", nil])
+        #expect(cards.items[0].actions[0].style == .accent && cards.items[0].actions[1].round)
+        #expect(cards.items[0].actions[0].style != .primary, "it isn't the page's one primary, which stays the hero's")
+        guard case .hero(let kept)? = page.sections[0].blocks.first else { return }
+        #expect(kept.actions[0].style == .primary)
+        #expect(rows.grid && rows.pictures.keys.sorted() == ["a"] && rows.aiTitle == "Own words" && rows.aiDetail == "More")
+    }
+
+    @Test func aSectionWideByItsOwnSay() {
+        let plain = ExtensionPage.Section(title: "S", blocks: [.settings(ExtensionPage.SettingsRows(title: nil, keys: [], ai: false))])
+        #expect(!plain.isWide)
+        var wide = plain
+        wide.wide = true
+        #expect(wide.isWide)
+    }
+
+    @Test func aSegmentedSettingIsForAFewChoices() throws {
+        let h = try HostEnv()
+        func options(_ n: Int) -> JSONValue { .array((0..<n).map { ["value": .string("v\($0)"), "title": .string("V\($0)")] }) }
+        let good: JSONValue = [["key": "a", "type": "choice", "title": "A", "options": options(3), "segmented": true]]
+        let long: JSONValue = [["key": "a", "type": "choice", "title": "A", "options": options(6), "segmented": true], ["key": "b", "type": "switch", "title": "B", "segmented": true]]
+        func errors(_ settings: JSONValue, _ name: String) throws -> [String] {
+            let source = try h.source(name, manifest: ExtFixtures.manifest(id: "dev.test.\(name)", tools: ["spin": ["title": "Spin", "risk": "low"]], extra: ["settings": settings]), files: ["server.py": Self.program])
+            return ManifestValidator(paths: h.paths).validate(folder: source).errors.map(\.field).filter { $0.hasSuffix("segmented") }
+        }
+        #expect(try errors(good, "good").isEmpty)
+        #expect(try errors(long, "long").count == 2)
+    }
+
+    // MARK: The install sheet's count
+
+    @Test func aPermissionThatGrantsNothingIsntCounted() {
+        func review(_ p: ExtensionPermissions) -> InstallReview {
+            InstallReview(source: .folder, tone: .careful, lines: PermissionSummary.forExtension(p).lines, cautions: [], update: nil, next: [])
+        }
+        #expect(review(ExtensionPermissions()).granted == 0, "“No access to your files” is the opposite of a permission")
+        #expect(review(ExtensionPermissions(network: true)).granted == 1)
+    }
+
     // MARK: A card that settles
 
     /// Above, a card has its tail and is 8 points taller; under the companion it isn't. Near the screen's top, judged by its size just now, it flipped for ever and took the app down.

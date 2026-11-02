@@ -12,21 +12,21 @@ enum SampleRichPage {
     {"summary": {"title": "12 species this week", "tone": "good"},
      "sections": [
       {"blocks": [{"type": "hero", "title": "Bird Log", "detail": "What came to your garden, and what might come next", "symbol": "bird",
-                   "scene": {"pack": "art/garden.png", "dark": "art/garden-night.png"}, "figure": {"companion": "full"}, "says": "Anything new today?",
+                   "scene": {"pack": "art/garden.png", "dark": "art/garden-night.png"}, "figure": {"companion": "full"}, "says": "Anything new today?", "tile": ["#3C8D5A", "#2B6E45"], "wash": ["#3C8D5A", "#2B6E45"],
                    "actions": [{"type": "button", "label": "Log a sighting", "tool": "log", "style": "primary", "symbol": "plus"},
                                {"type": "button", "label": "All species", "tool": "list", "symbol": "square.grid.2x2.fill"}]}]},
       {"blocks": [{"type": "stats", "items": [
         {"label": "Species", "value": "48", "symbol": "bird.fill", "tone": "good"}, {"label": "This week", "value": "12", "symbol": "calendar", "tone": "info"},
-        {"label": "Best streak", "value": "9 days", "symbol": "flame.fill", "tone": "warn"}, {"label": "Sightings", "value": "1,204", "symbol": "binoculars.fill"}]}]},
-      {"title": "Today", "blocks": [{"type": "cards", "size": "small", "items": [
+        {"label": "Best streak", "value": "9 days", "symbol": "flame.fill", "color": "#E8691C"}, {"label": "Sightings", "value": "1,204", "symbol": "binoculars.fill"}]}]},
+      {"title": "Today", "detail": "Sunday, November 1", "blocks": [{"type": "cards", "size": "small", "items": [
         {"title": "Morning count", "detail": "14 birds before nine", "picture": {"pack": "art/robin.png"}, "done": true, "actions": []},
-        {"title": "Feeder check", "detail": "Not done yet", "symbol": "leaf.fill", "color": "#3C8D5A", "actions": [{"type": "button", "label": "Check", "tool": "feeder"}]}]}]},
+        {"title": "Feeder check", "detail": "Not done yet", "symbol": "leaf.fill", "color": "#3C8D5A", "actions": [{"type": "button", "label": "Check", "tool": "feeder", "symbol": "play.fill", "shape": "round"}]}]}]},
       {"blocks": [{"type": "tabs", "selected": "garden", "tabs": [
         {"id": "garden", "label": "Garden", "symbol": "leaf", "badge": "3", "sections": [
-          {"title": "In your garden", "picture": {"companion": "face"}, "blocks": [{"type": "cards", "items": [
+          {"title": "In your garden", "picture": {"companion": "face"}, "banner": {"tint": "#3C8D5A"}, "blocks": [{"type": "cards", "items": [
             {"title": "Robin", "detail": "Sings at dawn, unafraid of anyone", "meta": "Seen 212 times · last at the feeder", "at": "2026-11-01T08:30:00Z",
              "picture": {"pack": "art/robin.png"}, "badge": {"text": "Regular", "tone": "good"},
-             "actions": [{"type": "button", "label": "Log", "tool": "log", "symbol": "plus"}, {"type": "button", "label": "Listen", "tool": "listen", "style": "plain"}],
+             "actions": [{"type": "button", "label": "Log", "tool": "log", "symbol": "plus", "style": "accent"}, {"type": "button", "label": "Listen", "tool": "listen", "style": "plain"}],
              "menu": {"label": "Season", "items": [{"type": "button", "label": "Spring", "tool": "season"}, {"type": "button", "label": "Winter", "tool": "season"}]}},
             {"title": "Goldfinch", "detail": "Likes thistle seed", "meta": "Seen 37 times", "symbol": "bird.fill", "color": "#B98A1E",
              "actions": [{"type": "button", "label": "Log", "tool": "log", "symbol": "plus"}]}]}]}]},
@@ -39,13 +39,16 @@ enum SampleRichPage {
         {"title": "Robin at the feeder", "detail": "Pair, both feeding", "at": "2026-11-01T08:30:00Z", "tone": "good"},
         {"title": "Sparrowhawk", "detail": "Scattered everyone", "at": "2026-10-31T15:10:00Z", "tone": "warn"},
         {"title": "Missed the morning count", "at": "2026-10-30T09:00:00Z", "tone": "neutral", "symbol": "minus.circle"}]}]},
-      {"blocks": [{"type": "settings", "title": "Settings", "ai": true}]}]}
+      {"wide": true, "blocks": [{"type": "settings", "title": "Settings", "ai": true}]},
+      {"title": "Seen where", "wide": true, "blocks": [{"type": "settings", "keys": ["region", "patch"], "grid": true, "pictures": {"region": {"pack": "art/robin.png"}, "patch": {"pack": "art/garden.png"}}}]}]}
     """#
 
     static let rows: [ExtensionSettingRow] = [
         ExtensionSettingRow(extensionId: id, key: "sounds", type: .switch, title: "Birdsong", detail: "Play a song when you log a species.", value: .bool(true)),
         ExtensionSettingRow(extensionId: id, key: "region", type: .choice, title: "Region", options: [.init(value: "north", title: "Northern Europe"), .init(value: "south", title: "Southern Europe")],
                             value: .string("north")),
+        ExtensionSettingRow(extensionId: id, key: "patch", type: .choice, title: "Patch", options: [.init(value: "front", title: "Front"), .init(value: "back", title: "Back")],
+                            value: .string("front"), listed: false),
         ExtensionSettingRow(extensionId: id, key: "goal", type: .number, title: "Weekly goal", minimum: 1, maximum: 50, step: 1, value: .number(10)),
         ExtensionSettingRow(extensionId: id, key: "name", type: .text, title: "Name on your log", value: .string("Back garden")),
     ]

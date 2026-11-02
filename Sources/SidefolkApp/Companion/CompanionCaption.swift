@@ -36,7 +36,8 @@ final class CompanionCaption {
     /// What the companion holds (balloons, a crown), until the surface closes or it puts it away.
     func hold(_ prop: CompanionCue.Prop?) {
         model.prop = prop == CompanionCue.Prop.none ? nil : prop
-        present()
+        // Putting one away when none is out shows nothing: no empty window above the companion.
+        if model.isEmpty { hosted.panel.orderOut(nil) } else { present() }
     }
 
     /// A short mark above it (confetti, a "?"), gone after a moment.
