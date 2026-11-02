@@ -60,7 +60,7 @@ struct PageSceneBlock: View {
     }
 }
 
-private struct PageSceneCanvas: NSViewRepresentable {
+struct PageSceneCanvas: NSViewRepresentable {
     var view: SceneView
     func makeNSView(context: Context) -> SceneView { view }
     func updateNSView(_ view: SceneView, context: Context) {}

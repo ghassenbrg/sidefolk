@@ -1,3 +1,4 @@
+import AppKit
 import SidefolkCore
 import SwiftUI
 
@@ -5,6 +6,8 @@ import SwiftUI
 struct ExtensionWidget: Identifiable, Equatable {
     var info: ExtensionPageInfo
     var summary: ExtensionPage.Summary?
+    /// Its own drawing of the summary, across the column (D109).
+    var scene: SurfaceScene?
     var at: Date?
     var id: String { info.id }
 }
@@ -25,7 +28,7 @@ extension NowModel {
                let page = try? await host.renderPage(extensionId: info.extensionId, page: info.page, language: ExtensionPageModel.language) {
                 latest = (Date(), page)
             }
-            out.append(ExtensionWidget(info: info, summary: latest?.page.summary, at: latest?.at))
+            out.append(ExtensionWidget(info: info, summary: latest?.page.summary, scene: latest?.page.tile, at: latest?.at))
         }
         if out != widgets { widgets = out }
     }
@@ -39,9 +42,14 @@ struct ExtensionWidgetsSection: View {
     @Environment(ExtensionPagesModel.self) private var pages: ExtensionPagesModel?
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
-                  spacing: Theme.Space.m) {
-            ForEach(model.widgets) { w in tile(w) }
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
+            ForEach(model.widgets.filter { $0.scene != nil }) { w in
+                if let scene = w.scene { ExtensionTileScene(widget: w, scene: scene, model: model) }
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
+                      spacing: Theme.Space.m) {
+                ForEach(model.widgets.filter { $0.scene == nil }) { w in tile(w) }
+            }
         }
     }
 
@@ -132,5 +140,45 @@ struct QuickControl: View {
         case .destructive: .destructive
         case .secondary, .plain: .secondary
         }
+    }
+}
+
+/// A tile that draws itself (D109): only a picture of the page's summary, which is what VoiceOver reads, and a click opens the page.
+private struct ExtensionTileScene: View {
+    var widget: ExtensionWidget
+    var scene: SurfaceScene
+    var model: NowModel
+    @State private var view = SceneView()
+
+    var body: some View {
+        Button { model.openPage?(widget.id) } label: {
+            GeometryReader { geometry in
+                PageSceneCanvas(view: view)
+                    .allowsHitTesting(false)
+                    .task(id: Shown(scene: scene, width: geometry.size.width)) { await show(width: geometry.size.width) }
+            }
+            .aspectRatio(scene.size.width / scene.size.height, contentMode: .fit)
+            .frame(maxWidth: scene.size.width)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.sfBare)
+        .accessibilityLabel(Text(ext: [widget.info.title, widget.summary?.title, widget.summary?.detail].compactMap { $0 }.joined(separator: ", ")))
+        .help(Text("Open \(widget.info.title)", comment: "A Today tile for an extension's page; the page's title"))
+    }
+
+    private struct Shown: Hashable {
+        var scene: SurfaceScene
+        var width: CGFloat
+    }
+
+    private func show(width: CGFloat) async {
+        guard width > 0 else { return }
+        let scale = min(width / scene.size.width, 1), services = model.services
+        view.assets = SceneImages(reader: await services.runtime.extensions.assetReader(extensionId: widget.info.extensionId))
+        view.figures = SceneFigures.live(settings: services.runtime.settings.current)
+        await view.assets.preload(scene)
+        view.frame.size = CGSize(width: scene.size.width * scale, height: scene.size.height * scale)
+        view.show(scene, scale: scale, rtl: Locale.Language(identifier: AppLanguage.current).characterDirection == .rightToLeft,
+                  reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
     }
 }

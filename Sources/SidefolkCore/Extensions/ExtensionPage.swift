@@ -14,6 +14,9 @@ public struct ExtensionPage: Sendable, Hashable {
     /// The page lays itself out to the column's very edges, its margins its own (D109). Only a bare page may.
     public var bleed = false
     public var dress: PageDress?
+    /// What its Today tile draws instead of its summary (D109). A picture of the summary: no areas, a click opens the page.
+    public var tile: SurfaceScene?
+    public static let tileSize = SceneSize(width: 720, height: 300)
     /// How wide its column may grow (D108).
     public var maxWidth: Double?
 
@@ -405,6 +408,7 @@ public struct ExtensionPage: Sendable, Hashable {
         page.bare = object["bare"]?.boolValue ?? false
         page.bleed = page.bare && (object["bleed"]?.boolValue ?? false)
         page.dress = PageDress.parse(object["dress"])
+        page.tile = object["tile"].flatMap { try? SurfaceScene.parse($0, within: tileSize) }
         page.maxWidth = object["max_width"]?.doubleValue.flatMap { $0.isFinite ? min(1320, max(640, $0)) : nil }
         page.keepOnePrimary()
         return page
