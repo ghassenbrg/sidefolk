@@ -139,5 +139,7 @@ built in the desktop polish, D84's note). Home is built (phase 3, D84; its theme
 retired); Settings, the Pocket, Full access with an end and the install passport are phase 4 (above); phase 5 polished
 them, moved the last fields to the well and made the Reduce Transparency and Increase Contrast versions.
 
+**Rail and fields (D113):** `PageStepsView` (`steps`: the line, 26-pt tiles, a state mark, a result word at the trailing end, a selected row in `accentSoft`, folded output), `PageEditFieldRow` (`field` with `id`: in place, a well with `fieldChrome`, token chips), `PageMultiChoiceRow` (`multiple`: chips lit in the accent), in `Home/ExtensionPageSteps.swift`. The chip `TouchChip(.acts)` "Acts for you" is amber: a plan's card.
+
 **Extension page parts (D100):** `PageSceneHero` (scene fades into the card at the leading edge, figure and bubble at the trailing end, title 30 heavy rounded), `PageStatStrip`, `PageCard` (large 84-pt tile, small 56), `PageTabs` (`SegmentedPicker`), `PageBadges`, `PageRecent` (`RowsCard`; the tone always with its symbol, D78), `ExtensionSettingRowView` on `SettingsRow`. Extension look stays the extension's through pictures from its pack; the chrome is always Lantern's.
 
