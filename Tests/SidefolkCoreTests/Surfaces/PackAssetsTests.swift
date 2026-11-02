@@ -151,6 +151,9 @@ struct PackAssetsTests {
         #expect(reader.data("b.png") == nil, "not pinned")
         #expect(reader.data("gone.png") == nil)
         #expect(reader.data("../a.png") == nil && reader.data("/etc/hosts") == nil)
+        // A page may ask for pictures only, and an image is never decoded from anything else (D100).
+        #expect(PackAssets.picturePath("cards/a.webp") == "cards/a.webp")
+        for bad in ["a.wav", "main.py", "../a.png", ".a.png"] { #expect(PackAssets.picturePath(bad) == nil, "\(bad)") }
         // Changed after install: its bytes no longer match.
         try Self.encode(9, 9, type: .png).write(to: dir.appendingPathComponent("a.png"))
         #expect(reader.data("a.png") == nil)

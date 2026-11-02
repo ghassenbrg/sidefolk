@@ -4,8 +4,8 @@ extension ManifestValidator {
     /// `assets` names one folder directly in the pack; everything in it must be a picture or a sound within the caps.
     func checkAssets(_ m: ExtensionManifest, folder: String, issues: inout [ValidationIssue]) {
         guard let name = m.assets else { return }
-        guard name.range(of: #"^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$"#, options: .regularExpression) != nil else {
-            issues.append(ValidationIssue(field: "assets", message: "must be the name of one folder in the extension folder, like assets."))
+        guard name.range(of: #"^[a-z0-9][a-z0-9_-]{0,31}$"#, options: .regularExpression) != nil else {
+            issues.append(ValidationIssue(field: "assets", message: "must be the name of one folder in the extension folder (lowercase letters, digits, _ and -), like assets."))
             return
         }
         let path = folder + "/" + name

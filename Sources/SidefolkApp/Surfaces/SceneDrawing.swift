@@ -274,7 +274,7 @@ struct SceneFigures {
             return GameFigures.trim(CompanionArt.portrait(for: settings, state: state, side: CGFloat(side)))?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
         }, person: { side in
             var rect = CGRect(x: 0, y: 0, width: side * 2, height: side * 2)
-            let picture = GameFigures.accountPicture ?? NSImage(systemSymbolName: "face.smiling.inverse", accessibilityDescription: nil)
+            let picture = AccountPicture.current ?? NSImage(systemSymbolName: "face.smiling.inverse", accessibilityDescription: nil)
             return picture?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
         }, companionName: settings.companionName)
     }

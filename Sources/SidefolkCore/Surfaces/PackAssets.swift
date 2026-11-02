@@ -45,6 +45,11 @@ public enum PackAssets {
         return path
     }
 
+    /// A clean path that names a picture: what a page may ask for (D100), which never takes a sound or a program's file.
+    public static func picturePath(_ path: String) -> String? {
+        clean(path).flatMap { kind(of: $0) == .image ? $0 : nil }
+    }
+
     // MARK: Checking one file
 
     /// Nil when `data` is an image Sidefolk will draw, else what is wrong: its real type must match its name, one frame,
@@ -194,7 +199,8 @@ public struct PackAssetReader: Sendable {
     }
 
     public func image(_ path: String, maxSide: Int) -> CGImage? {
-        data(path).flatMap { PackAssets.decodeImage($0, fileName: path, maxSide: maxSide) }
+        guard PackAssets.picturePath(path) != nil else { return nil }
+        return data(path).flatMap { PackAssets.decodeImage($0, fileName: path, maxSide: maxSide) }
     }
 
     /// A checked sound, for AVFoundation to open: its pin matched and its limits held a moment ago.

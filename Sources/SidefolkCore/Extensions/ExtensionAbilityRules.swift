@@ -154,9 +154,6 @@ enum ExtensionAbilityRules {
         if let from = m.settingsFrom, !isName(from) {
             issues.append(ValidationIssue(field: "settings_from", message: "isn't a valid name (lowercase letters, digits and _)."))
         }
-        if let folder = m.assets, folder.range(of: #"^[a-z0-9_-]{1,40}$"#, options: .regularExpression) == nil {
-            issues.append(ValidationIssue(field: "assets", message: "must be the name of a folder in the pack (lowercase letters, digits, _ and -)."))
-        }
         return issues
     }
 }

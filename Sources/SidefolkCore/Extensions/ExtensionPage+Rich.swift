@@ -16,8 +16,8 @@ public enum PagePicture: Sendable, Hashable {
     /// bad one is left out, never the part it is on.
     static func parse(_ j: JSONValue?) -> PagePicture? {
         guard let j else { return nil }
-        if let path = j["pack"]?.stringValue, let clean = PagePictureReader.clean(path) {
-            return .pack(path: clean, dark: j["dark"]?.stringValue.flatMap(PagePictureReader.clean))
+        if let path = j["pack"]?.stringValue, let clean = PackAssets.picturePath(path) {
+            return .pack(path: clean, dark: j["dark"]?.stringValue.flatMap(PackAssets.picturePath))
         }
         if let name = j["data"]?.stringValue, ExtensionDataFile.isValidName(name) { return .data(name) }
         if let figure = j["companion"]?.stringValue.flatMap(Figure.init(rawValue:)) { return .companion(figure) }

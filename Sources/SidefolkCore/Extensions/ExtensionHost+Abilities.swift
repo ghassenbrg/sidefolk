@@ -37,15 +37,6 @@ extension ExtensionHost {
         publishRequestContext()
     }
 
-    // MARK: Pictures
-
-    /// What reads this extension's pack pictures, for its pages; nil when it has no `assets` folder (D100).
-    public func pictures(extensionId id: String) -> PagePictureReader? {
-        guard let rt = runtimes[id], let folder = rt.manifest?.assets else { return nil }
-        return PagePictureReader(root: installedFolder(id) + "/" + folder, prefix: folder,
-                                 pins: Dictionary(rt.pin.files.map { ($0.path, $0.sha256) }, uniquingKeysWith: { a, _ in a }))
-    }
-
     // MARK: Commands that meet (D100)
 
     /// Sentences this manifest and another extension that is on both claim. Neither gets them: whoever says one is answered by the

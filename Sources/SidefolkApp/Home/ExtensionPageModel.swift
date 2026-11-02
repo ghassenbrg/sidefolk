@@ -300,7 +300,7 @@ final class ExtensionPageModel {
         var made: NSImage?
         switch picture {
         case .pack(let path, let night):
-            guard let reader = await services?.runtime.extensions.pictures(extensionId: info.extensionId) else { return nil }
+            guard let reader = await services?.runtime.extensions.assetReader(extensionId: info.extensionId) else { return nil }
             let cg = await Task.detached { (dark ? night.flatMap { reader.image($0, maxSide: side) } : nil) ?? reader.image(path, maxSide: side) }.value
             made = cg.map { NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height)) }
         case .data(let name):

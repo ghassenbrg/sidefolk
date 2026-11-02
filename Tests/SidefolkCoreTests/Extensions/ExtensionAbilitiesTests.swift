@@ -387,13 +387,13 @@ import Testing
     @Test func aPackPictureIsWhatWasInstalled() async throws {
         let w = try await World()
         try await w.h.host.install(from: Self.sample)
-        let reader = try #require(await w.h.host.pictures(extensionId: Self.id))
+        let reader = try #require(await w.h.host.assetReader(extensionId: Self.id))
         #expect(reader.image("scene.png", maxSide: 16)?.width == 16)
         for bad in ["../sidefolk-extension.json", "/etc/hosts", "https://example.com/a.png", ".hidden.png", "main.py", "missing.png"] {
             #expect(reader.image(bad, maxSide: 16) == nil, "\(bad)")
         }
         // Anything but what was pinned draws nothing.
-        let tampered = PagePictureReader(root: reader.root, prefix: reader.prefix, pins: ["assets/scene.png": "0000"])
+        let tampered = PackAssetReader(root: reader.root, prefix: reader.prefix, pins: ["assets/scene.png": "0000"])
         #expect(tampered.image("scene.png", maxSide: 16) == nil)
     }
 

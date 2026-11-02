@@ -73,7 +73,6 @@ public actor ExtensionHost {
     var preferencesDatabase: AppDatabase { store.db }
     private let secrets: @Sendable (String) async -> [String: String]
     private let installer: ExtensionInstaller
-    func installedFolder(_ id: String) -> String { installer.installedFolder(id) }
     private let validator: ManifestValidator
     private let integrity = ExtensionIntegrity()
     private let outputMute: OutputMuteRouter
