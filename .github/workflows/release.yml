@@ -16,6 +16,10 @@ on:
         description: One binary for Apple silicon and Intel (untested on Intel)
         type: boolean
         default: false
+      seed_gallery:
+        description: Take the seed packs from this address, to prove the app before the gallery changes (docs/RELEASE.md)
+        type: string
+        default: ""
   push:
     tags: ["v*"]
 
@@ -68,12 +72,13 @@ jobs:
           SIGNING: ${{ steps.signing.outputs.signing }}
         run: scripts/ci/release-plan.sh | tee -a "$GITHUB_OUTPUT"
 
-      # Before the long part: a release can't go out without the packs a fresh Mac installs (D98), so the gallery that
-      # has them is published first. build-app.sh takes them again, and release.sh verifies what the app holds.
+      # Before the long part: a release can't go out without the packs a fresh Mac installs (D98). build-app.sh takes
+      # them again, and release.sh verifies what the app holds.
       - name: Check the seed packs
         env:
           SIDEFOLK_RELEASE: "1"
           SIDEFOLK_RELEASE_LABEL: ${{ steps.plan.outputs.label }}
+          SIDEFOLK_SEED_GALLERY: ${{ inputs.seed_gallery }}
         run: python3 -I scripts/seed-packs.py fetch "$RUNNER_TEMP/seed-packs" --required
 
       - name: Test, build, sign and notarize
@@ -83,12 +88,14 @@ jobs:
           SIDEFOLK_NOTARY_PROFILE: sidefolk-notary
           SIDEFOLK_NOTARY_KEYCHAIN: ${{ steps.signing.outputs.keychain }}
           SIDEFOLK_RELEASE_LABEL: ${{ steps.plan.outputs.label }}
+          SIDEFOLK_SEED_GALLERY: ${{ inputs.seed_gallery }}
         run: scripts/release.sh
 
       - name: Test and build (ad hoc signed)
         if: steps.signing.outputs.signing != 'yes'
         env:
           LABEL: ${{ steps.plan.outputs.label }}
+          SIDEFOLK_SEED_GALLERY: ${{ inputs.seed_gallery }}
         run: |
           swift test --no-parallel
           SIDEFOLK_RELEASE=1 SIDEFOLK_RELEASE_LABEL="$LABEL" scripts/build-app.sh release

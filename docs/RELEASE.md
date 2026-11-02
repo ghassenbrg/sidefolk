@@ -140,11 +140,13 @@ that meets it exists. There is no rollback but a revert and new snapshots, so th
       commit raises it), so `N` is that number plus the commit that sets it, and no other session may land between.
 - [ ] In sidefolk-addons, set every `minimum_sidefolk` that names a branch's placeholder (`0.1.0-snapshot.786`) to `0.1.0-snapshot.N`.
 - [ ] Build there, without publishing: `python3 scripts/build.py --sidefolk-build N`. It stops on the placeholder and on any number above `N`.
-- [ ] Here: `SIDEFOLK_SEED_GALLERY=<add-ons>/dist SIDEFOLK_RELEASE_LABEL=snapshot.<N> scripts/release.sh`, which carries those signed packs and
-      makes a real notary submission with them inside. **Never tried with packs inside before snapshot A:** wait for Accepted.
-- [ ] `sh scripts/extension-free-binary.sh build/Sidefolk.app <add-ons>`: read what it lists (`--strict` once D101 removes the game code).
-- [ ] Only now publish that same `dist/`: `scripts/publish.sh` there. Then run the Release workflow on that commit or a later one; its
-      `seed-packs.py` takes the packs from the gallery and stops if any is missing or needs a newer build.
+- [ ] Put that `dist/` in a holding release nobody reads: `gh release create gallery-next dist/*.zip --prerelease` in sidefolk-addons.
+- [ ] Run the Release workflow with `seed_gallery` set to `https://github.com/ghassenbrg/sidefolk-addons/releases/download/gallery-next`.
+      It carries those signed packs and makes the real notary submission with them inside. If Apple refuses them, no release appears and the
+      gallery hasn't changed. The new app reads the old gallery without trouble until the next step.
+- [ ] `sh scripts/extension-free-binary.sh build/Sidefolk.app <add-ons>` on the released app: read what it lists (`--strict` once D101 removes the game code).
+- [ ] Only now publish that same `dist/`: `scripts/publish.sh` there, then delete `gallery-next`. `python3 -I scripts/seed-packs.py fetch <temp> --required`
+      proves the published gallery has the packs, as every later release needs.
 
 **Before the build**
 - [ ] `git status` clean on `main`, merged and pushed; `swift build` and `swift test --no-parallel` pass.
