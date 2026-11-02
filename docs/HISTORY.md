@@ -6,6 +6,32 @@ and Agents (now Brain, Trust, Add-ons and Connections), the Ask panel, bubbles a
 Conversations and Activity (now Today, On duty and History), theme layouts (retired by D84). Branches named here are
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
+## 2026-11-02: extensions own everything, the abilities (D98, D99, D100)
+
+As each branch reported before they were merged on `team/ext-move`.
+
+- **Extensions own everything: the rule, guard, details, seed packs** (branch `team/ext-details` in both repositories; D98;
+  not merged). `ExtensionFreeAppTests` reads all of `Sources` against `scripts/extension-free-allowlist.json`: extension
+  details fail now, game code and Miraya's drop action are reported until `transitionOver` flips in D101's last step. Examples,
+  tool summaries, services and `replaces` moved to manifests, words to `strings/`; `BuiltInExtensionWords`, `BuiltInExamples`,
+  `BuiltInToolSummary`, `BuiltInServices`, `ExtensionOverlap` and `BundledExtensions` are gone. World Clock, System Vitals,
+  Weather and Calculator moved to sidefolk-addons as seed packs (`Resources/SeedPacks`, `scripts/seed-packs.py`); samples are
+  made-up extensions. Verified: `make test` and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`; a debug app
+  with packs signed locally: a fresh data folder with no gallery installs the four and World Clock answers; a data folder
+  from the old app keeps a switch and a data file, converts to `official`, and then updates from a local gallery by
+  itself; a removal stays gone after a relaunch; snapshots `sheet-install-services*`, `page-settings-trust`,
+  `page-settings-extensions*` in en, de, ar. **Before a release with this:** publish the gallery first (a release takes the
+  packs from it and stops without them) and raise `minimum_sidefolk` in the add-ons (now 786, for all but Miraya) to the
+  snapshot that ships this. Not tried: a real notarized build carrying the packs (Apple scans archives inside the app;
+  the packs are signed and timestamped with the hardened runtime, as it wants). Next: D100's Entries takes Miraya's drop
+  action; D101 flips the guard.
+- **Surfaces, Scene and pack assets** (branch `team/ext-scene` in both repositories, D99, SECURITY T40; first of the "extensions own
+  everything" abilities, snapshot A): an extension can open a framed panel or overlay drawn natively from data, with images and
+  sounds from its pack; the old Play panel is untouched. Verified: `make test`, `samples/scene-sample` in tests and the debug app (shuffle,
+  drags, keyboard, coin filmed with `surfaceFilm:`), snapshots `surface-*` in light, dark, German and Arabic, idle CPU flat. Next: Playtime on
+  it (D101), with D100's commands and settings; the gaps are at the end of D99.
+- **What any extension can declare** (branch `team/ext-abilities` in both repositories; D100, T41): richer page parts (hero with a scene, stat strip, card grid with pack pictures, tabs, badges, recent, settings rows), commands with slots in every language (names with parts, enums, carrying words, conflict rules), entries in the companion's menu, the Pocket and Ask, drop actions (Miraya's Play on TV moved to its manifest), extension settings with a one-time carry-over, AI help (`permissions.ai`, cap, switch, frame), a History row; the Kit in both repositories; sample `extensions/hello-abilities`. Verified: `ExtensionAbilitiesTests`, `ExtensionPageRichTests`, `CommandFrameTests`, a Kit program in the sandbox, `make test` with the add-ons worktree, add-ons `swift test`, `build.py --unsigned`, `check.sh`; snapshots `page-extension-rich*` in light, dark, de, ar; a debug app on the sample: install sheet, page, commands, a scripted AI request, a drop, Settings' search, History, Ask's tab, removal. Next: merge with `team/ext-scene` (D99: `PagePictureReader` becomes `PackAssetReader`, `assets` is the same key) and rebuild Playtime on it (D101). The old game code is untouched.
+
 ## 2026-11-01: calendar input fix
 
 - **Calendar month controls receive clicks:** the continuous month's extra, hidden week was visually clipped

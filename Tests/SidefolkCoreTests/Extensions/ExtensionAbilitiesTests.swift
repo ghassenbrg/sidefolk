@@ -335,6 +335,8 @@ import Testing
         var fields = (try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: Self.sample.appendingPathComponent(ExtensionManifest.fileName)))).objectValue ?? [:]
         fields["permissions"] = .object([:])
         fields["id"] = "dev.test.no-ai"
+        // Only its program is copied, and an `assets` key needs its folder (D99).
+        fields["assets"] = nil
         let copy = try w.h.source("no-ai", manifest: .object(fields), files: ["main.py": String(contentsOf: Self.sample.appendingPathComponent("main.py"), encoding: .utf8)])
         try await w.h.host.install(from: copy)
         #expect(w.text(await w.h.call("ext.no-ai.riddle", ["word": "a"])) == "No: off")

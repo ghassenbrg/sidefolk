@@ -160,6 +160,7 @@ job truly needs it.
 A panel or overlay beside the companion, drawn from data: images and sounds from your pack's `assets` folder, text, shapes,
 animations Sidefolk runs by itself, click areas, drags and keys that come back as typed moves. Declare `assets` and `surfaces` in
 the manifest and answer `sidefolk/surface.open`, `.move` and `.close`; the reference is docs/EXTENSIONS.md › Surfaces and scenes.
+
 ## More an extension can declare (D100)
 
 Rich page parts (`stats`, `cards`, `tabs`, `badges`, `recent`, `settings`), commands in every language (`strings/` under `commands`, `parts`, `choices`, `carry`), `entries` in the companion's menu, the Pocket and Ask, `drops` for what is dropped on the companion, `settings` the host keeps, `permissions.ai` for the person's AI (a stated purpose and a daily cap; no tools, nothing of the person's; validate the answer), and one History row (`sidefolk/activity.add`). See `docs/EXTENSIONS.md` and the sample `extensions/hello-abilities`.

@@ -1,9 +1,9 @@
 #!/usr/bin/env swift
-// Draws the icons of Sidefolk's own extensions, built in and in the add-on gallery (sidefolk-addons beside this
-// checkout, or $SIDEFOLK_ADDONS_REPO), as one-page square PDFs (vector, a few KB each):
+// Draws the icons of Sidefolk's own extensions in the add-on gallery (sidefolk-addons beside this checkout, or
+// $SIDEFOLK_ADDONS_REPO), as one-page square PDFs (vector, a few KB each):
 //   swift scripts/extension-icons.swift [--png <folder>] [extension folder names…]
 // Name the ones you changed: a PDF records when it was written, so redrawing the others would change
-// their files, and every Mac would reinstall them with the next app (BundledExtensions).
+// their files, and every Mac would see a new version of each in the gallery.
 // Each icon is full-bleed; Sidefolk rounds the corners where it shows one. Colours are the folks'
 // (Resources/Brand, Theme.folkColor). --png also writes 256 px previews for a look.
 import AppKit

@@ -1104,8 +1104,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     `..`, an icon and oversize content, and set id and author; drafting is refused in tainted turns and for
     every caller but the user and the agent; the trial can't read a folder the draft asks for; a folder
     named in a call is the only one its process can read, and only read for `"read"`; an unshared folder
-    asks the agent and a "no" runs nothing; built-in extensions follow the app, keep the person's choice,
-    come back off when they gain a permission, and refuse removal; icons are checked as images only.
+    asks the agent and a "no" runs nothing; seed packs install once and stay gone when removed (D98); icons
+    are checked as images only.
 15. **Other agents (T4, T28):** a fake MCP client over stdio against a whole Sidefolk sees exactly the
     exposed tools with their external schemas; can't set critical, create a collection, watch localhost,
     run a command watcher or read a web value; cancels only its own reminders; asks before every read
