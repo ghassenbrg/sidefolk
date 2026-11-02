@@ -256,6 +256,22 @@ enum ExtensionCommandRules {
         return issues
     }
 
+    /// What its commands claim, compared across extensions: each sentence's shape, and each name without its carrying words.
+    static func claims(_ m: ExtensionManifest, strings: ExtensionStrings?) -> Set<String> {
+        let vocabulary = CommandVocabulary(manifest: m, strings: strings)
+        var out: Set<String> = []
+        for command in m.tools.values.flatMap(\.commands) {
+            let translated = command.name.flatMap { vocabulary.translations[$0] } ?? []
+            for sentence in command.say + translated.flatMap(\.say) {
+                if let compiled = try? CommandSentence(sentence, words: vocabulary.words, choices: vocabulary.choices) { out.insert(compiled.shape) }
+            }
+            for name in command.names + translated.flatMap(\.names) {
+                out.insert(CommandSentence.normalized(name))
+            }
+        }
+        return out
+    }
+
     /// Sentences Sidefolk itself claims, so they never reach this extension: Sidefolk's own words come first (D50, D100). A
     /// warning, never a refusal: the app's words may grow with an update, and that mustn't turn off an extension already here.
     static func ownSentences(_ m: ExtensionManifest, strings: ExtensionStrings?) -> [String] {

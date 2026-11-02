@@ -73,6 +73,7 @@ public actor ExtensionHost {
     var preferencesDatabase: AppDatabase { store.db }
     private let secrets: @Sendable (String) async -> [String: String]
     private let installer: ExtensionInstaller
+    func installedFolder(_ id: String) -> String { installer.installedFolder(id) }
     private let validator: ManifestValidator
     private let integrity = ExtensionIntegrity()
     private let outputMute: OutputMuteRouter
@@ -313,6 +314,7 @@ public actor ExtensionHost {
         var preview = InstallPreview(report: report)
         guard let manifest = report.manifest else { return preview }
         preview.conflict = conflict(id: manifest.id, short: manifest.shortName, kind: .sidefolk)
+        preview.report.warnings += commandClashes(manifest, strings: report.strings)
         if let old = runtimes[manifest.id], old.record.kind == .sidefolk {
             let had = old.pin.permissions ?? ExtensionPermissions()
             let oldTools = old.manifest.map { Array($0.tools.keys) } ?? Array(old.pin.tools.keys)

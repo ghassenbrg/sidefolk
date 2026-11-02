@@ -29,6 +29,9 @@ public struct ValidationReport: Sendable {
     public var iconPath: String?
     /// Its words in other languages, from `strings/` (D76).
     public var strings: ExtensionStrings?
+    /// Command sentences Sidefolk itself answers, so they never reach this extension (D100): for its author, in `text`; nothing
+    /// a person installing it could act on.
+    public var shadowed: [String] = []
 
     public var isValid: Bool { errors.isEmpty && manifest != nil && launch != nil && permissions != nil }
 
@@ -91,6 +94,10 @@ public struct ValidationReport: Sendable {
         if !commands.isEmpty {
             out.append("Answers without AI (D50):")
             out += commands.map { "  - \($0)" }
+        }
+        if !shadowed.isEmpty {
+            out.append("Sidefolk's own sentences, which never reach this extension (D100):")
+            out += shadowed.map { "  - “\($0)”" }
         }
         let cautions = warnings + (summary?.warnings ?? [])
         if !cautions.isEmpty {
@@ -183,11 +190,7 @@ public struct ManifestValidator: Sendable {
         issues += ExtensionAbilityRules.check(manifest)
         report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &issues)
         issues += ExtensionCommandRules.checkTranslations(manifest, strings: report.strings)
-        if mode == .source {
-            report.warnings += ExtensionCommandRules.ownSentences(manifest, strings: report.strings).map {
-                "“\($0)” is one of Sidefolk's own sentences, so it never reaches this extension."
-            }
-        }
+        if mode == .source { report.shadowed = ExtensionCommandRules.ownSentences(manifest, strings: report.strings) }
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report

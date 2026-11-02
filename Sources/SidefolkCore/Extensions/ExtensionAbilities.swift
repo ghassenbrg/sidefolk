@@ -61,6 +61,8 @@ public struct ExtensionSettingRow: Sendable, Hashable, Identifiable {
     public var value: JSONValue
 
     public var id: String { "\(extensionId)/\(key)" }
+    /// The tool every change goes through (`ExtensionSettingTool`).
+    public static let tool = "extensions.setting"
 
     public init(extensionId: String, key: String, type: ExtensionManifest.SettingMeta.Kind, title: String, detail: String? = nil,
                 options: [Option] = [], minimum: Double? = nil, maximum: Double? = nil, step: Double? = nil, length: Int = 200, value: JSONValue) {

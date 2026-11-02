@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import SidefolkCore
@@ -209,6 +210,14 @@ final class ExtensionPageModel {
     var onControl: (() -> Void)?
     /// Folding sections the person opened or closed (D74), by title, while Home is open.
     private(set) var opened: Set<String> = []
+    /// Which tab each set of tabs shows (D100), while Home is open.
+    var tabChoices: [String: String] = [:]
+    /// The extension's settings and its use of the AI, as the host keeps them (D100).
+    var settingRows: [ExtensionSettingRow] = []
+    var aiStatus: ExtensionAIStatus?
+    /// Pictures from nothing behind them, for UI snapshots.
+    var samplePicture: (@MainActor (PagePicture) -> NSImage?)?
+    private var pictureCache: [String: NSImage] = [:]
     func toggleOpen(_ title: String) { if opened.contains(title) { opened.remove(title) } else { opened.insert(title) } }
     var window: Window = .tenMinutes {
         didSet { if window != oldValue { Task { await loadHistory() } } }
@@ -256,10 +265,55 @@ final class ExtensionPageModel {
             page = try await host.renderPage(extensionId: info.extensionId, page: info.page, language: Self.language)
             problem = nil
             updated = Date()
+            await loadSettings()
         } catch {
             problem = (error as? UserFacingError)?.message ?? String(localized: "The page couldn't be read.")
         }
         await loadHistory()
+    }
+
+    private func loadSettings() async {
+        guard let details = await services?.runtime.extensions.info(id: info.extensionId) else { return }
+        settingRows = details.settings
+        aiStatus = details.ai
+    }
+
+    /// A setting's row changed: through the same tool as any change to it, then the page again, which may depend on it.
+    func set(_ row: ExtensionSettingRow, to value: JSONValue) async {
+        guard let services else { return }
+        let outcome = await services.runtime.executor.execute(name: ExtensionSettingRow.tool, input: ["extension": .string(row.extensionId), "key": .string(row.key), "value": value],
+                                                              caller: .user)
+        await refresh()
+        if let why = outcome.problem?.message { problem = why }
+    }
+
+    func setAI(_ on: Bool) async {
+        await services?.runtime.extensions.setAIAllowed(extensionId: info.extensionId, on)
+        await refresh()
+    }
+
+    /// A picture the page names, decoded off the main thread, or nil: the part draws without it.
+    func image(_ picture: PagePicture, dark: Bool, side: Int) async -> NSImage? {
+        if let samplePicture { return samplePicture(picture) }
+        let key = "\(picture)|\(dark)|\(side)"
+        if let kept = pictureCache[key] { return kept }
+        var made: NSImage?
+        switch picture {
+        case .pack(let path, let night):
+            guard let reader = await services?.runtime.extensions.pictures(extensionId: info.extensionId) else { return nil }
+            let cg = await Task.detached { (dark ? night.flatMap { reader.image($0, maxSide: side) } : nil) ?? reader.image(path, maxSide: side) }.value
+            made = cg.map { NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height)) }
+        case .data(let name):
+            guard let folder else { return nil }
+            made = await ExtensionPictures.load(name, in: folder, pixels: side, limit: ExtensionDataFile.thumbnailLimit)
+        case .companion(let figure):
+            guard let s = services?.runtime.settings.current else { return nil }
+            made = figure == .face ? CompanionArt.avatar(for: s, side: CGFloat(side)) : CompanionArt.portrait(for: s, state: .listening, side: CGFloat(side))
+        case .person:
+            made = GameFigures.accountPicture
+        }
+        if let made { pictureCache[key] = made }
+        return made
     }
 
     func loadHistory() async {

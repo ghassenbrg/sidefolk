@@ -58,6 +58,7 @@ extension ExtensionPage {
                 case .control(let c): c.style == .primary
                 case .hero(let h): h.actions.contains { $0.style == .primary }
                 case .transport(let t): t.buttons.contains { $0.style == .primary }
+                case .cards(let grid): grid.items.contains { $0.actions.contains { $0.style == .primary } }
                 default: false
                 }
             }
@@ -74,7 +75,9 @@ struct HeroView: View {
     var model: ExtensionPageModel
 
     var body: some View {
-        if hero.code == nil && hero.facts.isEmpty && hero.image == nil && !hero.busy {
+        if hero.scene != nil || hero.figure != nil {
+            PageSceneHero(hero: hero, model: model)
+        } else if hero.code == nil && hero.facts.isEmpty && hero.image == nil && !hero.busy {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .center, spacing: Theme.Space.xl) {
                     words(showActions: false).frame(minWidth: 300, maxWidth: .infinity, alignment: .leading)

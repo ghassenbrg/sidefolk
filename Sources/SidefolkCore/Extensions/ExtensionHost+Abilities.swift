@@ -37,6 +37,34 @@ extension ExtensionHost {
         publishRequestContext()
     }
 
+    // MARK: Pictures
+
+    /// What reads this extension's pack pictures, for its pages; nil when it has no `assets` folder (D100).
+    public func pictures(extensionId id: String) -> PagePictureReader? {
+        guard let rt = runtimes[id], let folder = rt.manifest?.assets else { return nil }
+        return PagePictureReader(root: installedFolder(id) + "/" + folder, prefix: folder,
+                                 pins: Dictionary(rt.pin.files.map { ($0.path, $0.sha256) }, uniquingKeysWith: { a, _ in a }))
+    }
+
+    // MARK: Commands that meet (D100)
+
+    /// Sentences this manifest and another extension that is on both claim. Neither gets them: whoever says one is answered by the
+    /// AI, because guessing would hand their words to the wrong program (D50). The install sheet says so.
+    func commandClashes(_ manifest: ExtensionManifest, strings: ExtensionStrings?) -> [String] {
+        let mine = ExtensionCommandRules.claims(manifest, strings: strings)
+        guard !mine.isEmpty else { return [] }
+        var out: [String] = []
+        for id in runtimes.keys.sorted() where id != manifest.id {
+            guard let rt = runtimes[id], rt.record.enabled, let other = rt.manifest else { continue }
+            let shared = mine.intersection(ExtensionCommandRules.claims(other, strings: rt.strings))
+            guard let first = shared.sorted().first else { continue }
+            let name = self.name(rt), sentence = ExtensionText.line(first, characters: 60)
+            out.append(String(localized: "“\(sentence)” is also a sentence of \(name): when someone says it, the AI answers instead of either.",
+                              comment: "Install sheet: two extensions claim the same command sentence; the sentence, then the other extension's name"))
+        }
+        return out
+    }
+
     // MARK: Settings
 
     func settingRows(_ rt: Runtime) -> [ExtensionSettingRow] {

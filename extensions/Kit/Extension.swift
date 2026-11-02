@@ -32,6 +32,9 @@ public final class Extension {
     private var backgroundWork: (@MainActor () async -> Void)?
     private var notices: [String: @MainActor (Arguments) -> Void] = [:]
     private var pairedCheck: (@MainActor (_ tool: String, _ arguments: Arguments) async -> Paired)?
+    private var carried: (@MainActor (_ section: String, _ values: Arguments) -> [String: Any])?
+    /// Called when a setting changed while the program runs; every request carries them anyway (`ExtensionSettings`).
+    public var settingsChanged: (@MainActor () -> Void)?
     /// Games the manifest declares (Game.swift).
     var games: [String: (start: @MainActor (GameRequest) async throws -> GameReply, move: @MainActor (GameRequest) async throws -> Board,
                          end: @MainActor (GameRequest) async -> Void)] = [:]
@@ -91,8 +94,20 @@ public final class Extension {
         backgroundWork = work
     }
 
+    /// What to keep from a section of settings the app used to hold for what this extension does now (`settings_from`, D100): given
+    /// once; the settings it returns are stored as its own.
+    public func carry(_ receive: @escaping @MainActor (_ section: String, _ values: Arguments) -> [String: Any]) {
+        carried = receive
+    }
+
     /// Answers every message that has an id until Sidefolk closes stdin. Nothing else may reach stdout.
     public func serve() async {
+        ExtensionServices.send = { [weak self] method, params in self?.send(method, params) }
+        notices["sidefolk/ai.answer"] = { args in AI.receive(args) }
+        notices["sidefolk/settings.changed"] = { [weak self] args in
+            ExtensionSettings.use(args.values["settings"])
+            self?.settingsChanged?()
+        }
         if let work = backgroundWork, !Self.isOneCall { Task { await work() } }
         // Requests stay in order, but notices must be delivered while a long request awaits work:
         // a host response (such as audio routing) can otherwise wait behind the request that needs it.
@@ -143,6 +158,8 @@ public final class Extension {
     private func answer(_ method: String, _ params: [String: Any]) async throws -> [String: Any] {
         // Sidefolk says the person's language with each request (D76); what this request answers is in it.
         Language.use(params["language"] as? String)
+        ExtensionSettings.use(params["settings"])
+        AI.use(params["ai"] as? String, asked: method)
         switch method {
         case "initialize":
             return ["protocolVersion": params["protocolVersion"] as? String ?? "2025-06-18", "capabilities": ["tools": [:]],
@@ -194,6 +211,9 @@ public final class Extension {
                 await game.end(request)
                 return [:]
             }
+        case "sidefolk/settings.carry":
+            guard let carried else { return ["settings": [String: Any]()] }
+            return ["settings": carried(params["from"] as? String ?? "", Arguments(params["values"] as? [String: Any] ?? [:]))]
         case "sidefolk/paired.check":
             guard let check = pairedCheck else { return ["paired": false] }
             switch await check(params["tool"] as? String ?? "", Arguments(params["arguments"] as? [String: Any] ?? [:])) {

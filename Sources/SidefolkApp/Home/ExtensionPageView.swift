@@ -159,6 +159,8 @@ struct SectionView: View {
         /// Choices, fields and lists (D68), drawn in ExtensionPageInputs.swift.
         case inputs([ExtensionPage.Block])
         case hero(ExtensionPage.Hero), transport(ExtensionPage.Transport)
+        /// The richer parts (D100), each on its own, drawn in ExtensionPageRich.swift.
+        case rich(ExtensionPage.Block)
         var id: String {
             switch self {
             case .gauges(let b): "g\(b.count)\(b.hashValue)"
@@ -171,6 +173,7 @@ struct SectionView: View {
             case .inputs(let b): "i\(b.count)\(b.hashValue)"
             case .hero(let h): "h\(h.hashValue)"
             case .transport(let t): "t\(t.hashValue)"
+            case .rich(let b): "r\(b.hashValue)"
             }
         }
     }
@@ -205,6 +208,9 @@ struct SectionView: View {
                                          : Text("Folded", comment: "Spoken state of a section of an extension page that folds: closed now"))
             } else if section.title != nil || hasCharts {
                 HStack {
+                    if let picture = section.picture {
+                        PagePictureView(picture: picture, model: model, side: 56).frame(width: 28, height: 28).clipShape(Circle())
+                    }
                     if let title = section.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
                     Spacer(minLength: Theme.Space.s)
                     if hasCharts { windowPicker }
@@ -249,6 +255,8 @@ struct SectionView: View {
                 HeroView(hero: h, model: model)
             case .transport(let t):
                 TransportView(transport: t, model: model)
+            case .rich(let b):
+                RichBlockView(block: b, model: model)
             case .asks(let asks):
                 FlowRow(spacing: Theme.Space.s) {
                     ForEach(Array(asks.enumerated()), id: \.offset) { _, a in
@@ -293,6 +301,8 @@ struct SectionView: View {
                 out.append(.hero(h))
             case .transport(let t):
                 out.append(.transport(t))
+            case .stats, .cards, .tabs, .badges, .recent, .settings:
+                out.append(.rich(block))
             case .control(let c):
                 if case .toggle = c.kind {
                     if case .switches(let cs) = out.last { out[out.count - 1] = .switches(cs + [c]) } else { out.append(.switches([c])) }
@@ -319,7 +329,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list, .hero, .transport: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings: EmptyView()
         }
     }
 }
