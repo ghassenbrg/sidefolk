@@ -34,12 +34,29 @@ the month grid taking clicks over its view controls (hidden buffer weeks now hav
 - **Ten languages** for everything people read, extensions included (D28, D76).
 
 **The add-on gallery** (github.com/ghassenbrg/sidefolk-addons, release `gallery`): companions Ember, Kiko, Nimbo,
-Folio, Iris, Nori, Purl and Rune; extensions Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
+Folio, Iris, Nori, Purl and Rune; extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-details`, also a
+fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
 Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya; the three themes. Every add-on is in
 snapshots. **Playtime 1.0.0-snapshot.5** needs Sidefolk snapshot 661 (its puzzles; older copies keep the version
 they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, D81).
 
 ## In progress
+
+- **Extensions own everything: the rule, guard, details, seed packs** (branch `team/ext-details` in both repositories; D98;
+  not merged). `ExtensionFreeAppTests` reads all of `Sources` against `scripts/extension-free-allowlist.json`: extension
+  details fail now, game code and Miraya's drop action are reported until `transitionOver` flips in D101's last step. Examples,
+  tool summaries, services and `replaces` moved to manifests, words to `strings/`; `BuiltInExtensionWords`, `BuiltInExamples`,
+  `BuiltInToolSummary`, `BuiltInServices`, `ExtensionOverlap` and `BundledExtensions` are gone. World Clock, System Vitals,
+  Weather and Calculator moved to sidefolk-addons as seed packs (`Resources/SeedPacks`, `scripts/seed-packs.py`); samples are
+  made-up extensions. Verified: `make test` and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`; a debug app
+  with packs signed locally: a fresh data folder with no gallery installs the four and World Clock answers; a data folder
+  from the old app keeps a switch and a data file, converts to `official`, and then updates from a local gallery by
+  itself; a removal stays gone after a relaunch; snapshots `sheet-install-services*`, `page-settings-trust`,
+  `page-settings-extensions*` in en, de, ar. **Before a release with this:** publish the gallery first (a release takes the
+  packs from it and stops without them) and raise `minimum_sidefolk` in the add-ons (now 786, for all but Miraya) to the
+  snapshot that ships this. Not tried: a real notarized build carrying the packs (Apple scans archives inside the app;
+  the packs are signed and timestamped with the hardened runtime, as it wants). Next: D100's Entries takes Miraya's drop
+  action; D101 flips the guard.
 
 - **CI's silent test deaths, fixed** (2026-11-01): from about snapshot 724 the core test process died on GitHub's
   runners about two minutes in, with no failing test (release runs 41267300489 to 41270779706, and CI). The kernel

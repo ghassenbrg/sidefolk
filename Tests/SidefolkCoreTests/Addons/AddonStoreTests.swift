@@ -441,10 +441,17 @@ import Testing
         #expect(info.origin == .official && info.version == qr.version)
         await store.discard(qr)
 
-        // An extension with a page (D62): offered to 0.1.0 and its snapshots, and it draws its page.
+        // A seed from its signed pack, through the real check, as a fresh Mac installs it (D98).
+        let clock = try #require(catalog.entry("dev.sidefolk.world-clock"))
+        let seed = SeedPacks.Seed(id: clock.id, name: clock.name, version: clock.version, file: clock.file, bytes: clock.bytes, sha256: clock.sha256, on: true)
+        let seedFolder = try await store.unpack(seed: seed, from: Self.signedGallery)
+        #expect(await h.host.preview(folder: seedFolder).canInstall)
+        await store.discard(id: clock.id)
+
+        // An extension with a page (D62): offered from the snapshot that reads its manifest (D98), and it draws its page.
         if let vitals = catalog.entry("dev.sidefolk.system-vitals-plus") {
-            #expect(vitals.minimumSidefolk == "0.1.0")
-            #expect(AddonCatalog.fits(vitals, running: "0.1.0-snapshot.513") && AddonCatalog.fits(vitals, running: "0.1.0"))
+            #expect(!AddonCatalog.fits(vitals, running: "0.1.0-snapshot.513"), "an older copy would refuse its manifest")
+            #expect(AddonCatalog.fits(vitals, running: "0.1.0-snapshot.100000"))
             let folder = try await store.fetch(vitals)
             #expect(await h.host.preview(folder: folder).canInstall)
             let installed = try await h.host.install(from: folder, origin: .official)
