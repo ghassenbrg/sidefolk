@@ -25,7 +25,8 @@
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:<extension id>/<page>   (D62)
 //                           | pageState:<extension id>/<page>:<json> (D105) | pageFile:<path>   (a page's next file panel takes this)
-//                           | pageTool:<extension id>/<page>:<tool>:<json>   (that tool as the person, as a click runs it) | pageWidth:<points>
+//                           | pageTool:<extension id>/<page>:<tool>:<json>   (that tool as the person, as a click runs it) | pageWidth:<points> | pageLook:dark|light|system | pageKey:<scene>:focus|tab|backtab|press
+//                           | pageAsk:<extension id>/<page>:place|schedule | pageConsent:<extension id>:place|schedule:on|off   (D106, D107)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
 //                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
 //   swift scripts/dev.swift homeSmall   (Home at its smallest size)

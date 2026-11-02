@@ -60,7 +60,11 @@ final class EnvironmentMonitor {
 
     /// Seconds since the last keyboard or mouse input anywhere (no permission needed).
     nonisolated static var secondsSinceInput: TimeInterval {
-        CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
+        #if DEBUG
+        // A debug run nobody sits at can still say someone is here, to see what they would (SIDEFOLK_DEV_PRESENT=1).
+        if ProcessInfo.processInfo.environment["SIDEFOLK_DEV_PRESENT"] == "1" { return 1 }
+        #endif
+        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
     }
 
     nonisolated static var secondsSinceKey: TimeInterval {

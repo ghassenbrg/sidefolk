@@ -54,7 +54,8 @@ final class SceneView: NSView {
     required init?(coder: NSCoder) { fatalError() }
 
     override var isFlipped: Bool { true }
-    override var acceptsFirstResponder: Bool { false }
+    override var acceptsFirstResponder: Bool { tabsThroughAreas && !keyAreas.isEmpty }
+    override var canBecomeKeyView: Bool { acceptsFirstResponder }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override var wantsUpdateLayer: Bool { true }
 
@@ -100,6 +101,8 @@ final class SceneView: NSView {
         restyleHover()
         runClocks()
         NSAccessibility.post(element: self, notification: .layoutChanged)
+        // The ring stays with the keyboard through a new drawing, on the same place in the list.
+        if let keyFocus { moveKeyFocus(to: min(keyFocus, max(0, keyAreas.count - 1))) }
     }
 
     /// The theme or the appearance changed: the same scene in its new colours, without restarting anything.
@@ -616,6 +619,113 @@ final class SceneView: NSView {
               field.currentEditor() == nil else { return }
         window?.makeFirstResponder(field)
     }
+
+    // MARK: The keyboard (D105)
+
+    /// A page's scene has no session and takes no keys of its own, yet whoever works by keyboard must reach what it offers: Tab goes from area to area in reading
+    /// order and on out of the scene; Space or Return presses the one with the ring.
+    var tabsThroughAreas = false
+    private var keyFocus: Int?
+    private let keyRing = CAShapeLayer()
+
+    private var keyAreas: [(id: String, area: SceneArea)] {
+        guard let scene else { return [] }
+        var out: [(String, SceneArea)] = []
+        func visit(_ node: SceneNode) {
+            if let area = node.area, !area.disabled { out.append((node.id, area)) }
+            node.children.forEach(visit)
+        }
+        scene.nodes.forEach(visit)
+        return out
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        guard acceptsFirstResponder else { return false }
+        let backward = window?.currentEvent?.modifierFlags.contains(.shift) == true && window?.currentEvent?.type == .keyDown
+        moveKeyFocus(to: backward ? keyAreas.count - 1 : 0)
+        return true
+    }
+
+    override func resignFirstResponder() -> Bool {
+        keyFocus = nil
+        keyRing.removeFromSuperlayer()
+        return true
+    }
+
+    override func keyDown(with event: NSEvent) {
+        guard tabsThroughAreas, let at = keyFocus, takesInput else { return super.keyDown(with: event) }
+        switch event.keyCode {
+        case 48: // Tab
+            let next = at + (event.modifierFlags.contains(.shift) ? -1 : 1)
+            if keyAreas.indices.contains(next) {
+                moveKeyFocus(to: next)
+            } else if event.modifierFlags.contains(.shift) {
+                window?.selectPreviousKeyView(self)
+            } else {
+                window?.selectNextKeyView(self)
+            }
+        case 49, 36, 76: // Space, Return, Enter
+            if keyAreas.indices.contains(at) { accessibilityPress(keyAreas[at].area) }
+        default:
+            super.keyDown(with: event)
+        }
+    }
+
+    private func moveKeyFocus(to index: Int) {
+        let areas = keyAreas
+        guard areas.indices.contains(index) else { return }
+        keyFocus = index
+        showKeyRing(areas[index].id)
+    }
+
+    /// The system's own focus colour, around what would be pressed, and what scrolls brought into view.
+    private func showKeyRing(_ id: String) {
+        guard let item = layers[id] else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        scrollIntoView(id)
+        let box = item.main.convert(item.main.bounds, to: canvas).insetBy(dx: -3, dy: -3)
+        keyRing.path = CGPath(roundedRect: box, cornerWidth: 8, cornerHeight: 8, transform: nil)
+        keyRing.fillColor = nil
+        keyRing.strokeColor = NSColor.keyboardFocusIndicatorColor.cgColor
+        keyRing.lineWidth = 3
+        keyRing.zPosition = 100_000
+        if keyRing.superlayer == nil { canvas.addSublayer(keyRing) }
+        CATransaction.commit()
+    }
+
+    private func scrollIntoView(_ id: String) {
+        guard let scene else { return }
+        func visit(_ node: SceneNode, inside: (SceneNode, SceneScroll)?) {
+            var here = inside
+            if case .scroll(let box) = node.kind { here = (node, box) }
+            if node.id == id, let (box, content) = here, let item = layers[id] {
+                let top = item.main.frame.minY, bottom = item.main.frame.maxY
+                let now = scrolled[box.id] ?? 0
+                let most = max(CGFloat(content.contentHeight - box.height), 0)
+                var next = now
+                if top < now { next = top } else if bottom > now + CGFloat(box.height) { next = bottom - CGFloat(box.height) }
+                next = min(max(next, 0), most)
+                if next != now {
+                    scrolled[box.id] = next
+                    layers[box.id]?.scroll(to: next)
+                    axElements = nil
+                }
+            }
+            for child in node.children { visit(child, inside: here) }
+        }
+        scene.nodes.forEach { visit($0, inside: nil) }
+    }
+
+    #if DEBUG
+    /// Pressing keys in the debug app, where nobody sits: `pageKey` sends them here.
+    func devKey(_ code: UInt16, shift: Bool = false) {
+        if keyFocus == nil, window?.makeFirstResponder(self) != true { return }
+        guard code != 0, let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: shift ? .shift : [], timestamp: 0, windowNumber: window?.windowNumber ?? 0,
+                                                      context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) else { return }
+        keyDown(with: event)
+    }
+    #endif
 
     // MARK: VoiceOver
 

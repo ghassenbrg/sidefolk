@@ -528,9 +528,38 @@ final class AppCoordinator {
             guard rest.count == 3, let input = try? JSONValue.parse(Data(rest[2].utf8)) else { return }
             let extensionId = String(rest[0].split(separator: "/").first ?? ""), short = String(extensionId.split(separator: ".").last ?? "")
             Task {
-                let outcome = await runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: rest[1]), input: input, caller: .user)
+                let outcome = await runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: rest[1]), input: input, caller: .user, pickedFile: input.string("path"))
                 Log.shared.info("dev", "pageTool", ["tool": rest[1], "ok": "\(outcome.isOK)", "problem": outcome.problem?.message ?? ""])
                 await home.pageMoved(rest[0])
+            }
+            return
+        }
+        if command.hasPrefix("pageAsk:") {
+            // pageAsk:<extension id>/<page>:place|schedule: Sidefolk's question, as a page's `allow` shows it (D106, D107).
+            let rest = command.dropFirst("pageAsk:".count).split(separator: ":").map(String.init)
+            if rest.count == 2, let consent = PageConsent(rawValue: rest[1]) { home.pageAsks(rest[0], consent) }
+            return
+        }
+        if command.hasPrefix("pageConsent:") {
+            // pageConsent:<extension id>:place|schedule:on|off: the person's answer, through the tool that records it.
+            let rest = command.dropFirst("pageConsent:".count).split(separator: ":").map(String.init)
+            guard rest.count == 3 else { return }
+            Task {
+                let outcome = await runtime.executor.execute(name: "extensions.consent", input: ["extension": .string(rest[0]), "what": .string(rest[1]), "on": .bool(rest[2] == "on")], caller: .user)
+                Log.shared.info("dev", "pageConsent", ["ok": "\(outcome.isOK)", "problem": outcome.problem?.message ?? ""])
+            }
+            return
+        }
+        if command.hasPrefix("pageKey:") {
+            // pageKey:<scene index>:focus|tab|backtab|press: the keyboard in a page's scene, there being no one at it.
+            let rest = command.dropFirst("pageKey:".count).split(separator: ":").map(String.init)
+            let scenes = PageSceneBlock.shown.filter { $0.window != nil }.sorted { $0.convert(CGPoint.zero, to: nil).y > $1.convert(CGPoint.zero, to: nil).y }
+            guard rest.count == 2, let index = Int(rest[0]), scenes.indices.contains(index) else { return }
+            switch rest[1] {
+            case "tab": scenes[index].devKey(48)
+            case "backtab": scenes[index].devKey(48, shift: true)
+            case "press": scenes[index].devKey(49)
+            default: scenes[index].devKey(0)
             }
             return
         }

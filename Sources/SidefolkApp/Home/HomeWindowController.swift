@@ -30,6 +30,11 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     /// An extension's page was asked to show something else, and may be open already (D105).
     func pageMoved(_ id: String) async { await model.pages.moved(id) }
 
+    #if DEBUG
+    /// The question a page's `allow` shows, for the debug app.
+    func pageAsks(_ id: String, _ consent: PageConsent) { model.pages.asks(id, consent) }
+    #endif
+
     func show(section: Section? = nil) {
         switch section {
         case .now: model.selection = .now

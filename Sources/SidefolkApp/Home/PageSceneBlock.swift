@@ -26,11 +26,21 @@ struct PageSceneBlock: View {
         var width: CGFloat
     }
 
+    #if DEBUG
+    /// Every page scene on screen, for the debug app's keys.
+    @MainActor static var shown: [SceneView] { allViews.allObjects }
+    @MainActor private static let allViews = NSHashTable<SceneView>.weakObjects()
+    #endif
+
     private func show(width: CGFloat) async {
+        #if DEBUG
+        Self.allViews.add(view)
+        #endif
         guard width > 0 else { return }
         let scene = block.scene, scale = min(width / scene.size.width, 1)
         let services = model.services, id = model.info.extensionId
         let reader = await services?.runtime.extensions.assetReader(extensionId: id)
+        view.tabsThroughAreas = true
         view.assets = SceneImages(reader: reader)
         view.figures = SceneFigures.live(settings: services?.runtime.settings.current ?? AppSettings())
         await view.assets.preload(scene)

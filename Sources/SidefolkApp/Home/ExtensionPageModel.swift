@@ -79,6 +79,10 @@ final class ExtensionPagesModel {
     func moved(_ id: String) async { await models[id]?.refresh() }
 
     #if DEBUG
+    func asks(_ id: String, _ consent: PageConsent) { models[id]?.asking = consent }
+    #endif
+
+    #if DEBUG
     /// A sample page's model for the UI snapshots' window.
     func showSample(page: ExtensionPageModel) { models[page.info.id] = page }
     #endif
