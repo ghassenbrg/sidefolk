@@ -9,6 +9,10 @@ public struct ExtensionStrings: Sendable, Hashable {
     public static let folder = "strings"
     /// The languages Sidefolk ships (the app's `AppLanguage.supported`), English first.
     public static let languages = ["en", "fr", "es", "de", "it", "pt-BR", "ja", "ko", "zh-Hans", "ar"]
+    /// Each language's name in English, for what is written to a model.
+    public static let languageNames = ["en": "English", "fr": "French", "es": "Spanish", "de": "German", "it": "Italian",
+                                       "pt-BR": "Brazilian Portuguese", "ja": "Japanese", "ko": "Korean", "zh-Hans": "Simplified Chinese",
+                                       "ar": "Arabic"]
     public static let maxBytes = 256 * 1024
     public static let maxTexts = 2000
 
@@ -34,6 +38,22 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var surfaces: [String: String] = [:]
         /// The program's sentences by their English key: one text, or forms by count (`one`, `other`…).
         public var text: [String: Text] = [:]
+        /// A command's sentences and names in this language, by the command's `name` (D100).
+        public var commands: [String: CommandWords] = [:]
+        /// How each shared part of a sentence is said (D100).
+        public var parts: [String: [String]] = [:]
+        /// The words for an enum's values, by list and value (D100).
+        public var choices: [String: [String: [String]]] = [:]
+        /// The words that only carry a sentence (D100).
+        public var carry: ExtensionManifest.CarryMeta?
+        /// Settings' words, by key (D100).
+        public var settings: [String: SettingWords] = [:]
+        /// Titles of entries and their items, by id (D100).
+        public var entries: [String: String] = [:]
+        /// Drop actions' words, by id (D100).
+        public var drops: [String: Watcher] = [:]
+        /// `permissions.ai`'s purpose (D100).
+        public var aiPurpose: String?
 
         public init() {}
     }
@@ -46,6 +66,19 @@ public struct ExtensionStrings: Sendable, Hashable {
     public struct Palette: Sendable, Hashable {
         public var title: String?
         public var placeholder: String?
+    }
+
+    /// A command in another language (D100): its whole sentences, and its names when it is said with parts around it.
+    public struct CommandWords: Sendable, Hashable {
+        public var say: [String] = []
+        public var names: [String] = []
+    }
+
+    /// A setting in another language (D100): its title, the line under it and its options' titles by value.
+    public struct SettingWords: Sendable, Hashable {
+        public var title: String?
+        public var detail: String?
+        public var options: [String: String] = [:]
     }
 
     public enum Text: Sendable, Hashable {
@@ -160,7 +193,8 @@ extension ExtensionStrings {
         var w = Words()
         guard let o = any as? [String: Any] else { return w }
         let english = code == "en"
-        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "examples", "surfaces", "text"]
+        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "examples", "surfaces", "text",
+                                                                 "commands", "parts", "choices", "carry", "settings", "entries", "drops", "ai_purpose"]
         for key in o.keys.sorted() where !allowed.contains(key) {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
             issues.append(ValidationIssue(field: "\(file).\(key)", message: why))
@@ -236,6 +270,55 @@ extension ExtensionStrings {
             w.surfaces[name] = line(f["title"], "\(file).surfaces.\(name).title", max: 40, base: m.surfaces[name]?.title)
         }
         w.text = texts(o["text"], file: file, code: code, base: base, issues: &issues)
+        w.aiPurpose = line(o["ai_purpose"], "\(file).ai_purpose", max: 120, base: m.permissions.ai?.purpose)
+        let settingWords = object("settings", names: Set(m.settings.map(\.key)))
+        for setting in m.settings {
+            guard let value = settingWords[setting.key] else { continue }
+            let f = fields(value, "\(file).settings.\(setting.key)", ["title", "detail", "options"])
+            var words = SettingWords(title: line(f["title"], "\(file).settings.\(setting.key).title", max: 60, base: setting.title),
+                                     detail: line(f["detail"], "\(file).settings.\(setting.key).detail", max: 240, oneLine: false, base: setting.detail))
+            let options = fields(f["options"] ?? [String: Any](), "\(file).settings.\(setting.key).options", Set(setting.options.map(\.value)))
+            for option in setting.options {
+                words.options[option.value] = line(options[option.value], "\(file).settings.\(setting.key).options.\(option.value)", max: 30, base: option.title)
+            }
+            w.settings[setting.key] = words
+        }
+        for (id, value) in object("entries", names: Set(m.allEntries.map(\.id))) {
+            w.entries[id] = line(value, "\(file).entries.\(id)", max: 40, base: m.allEntries.first { $0.id == id }?.title)
+        }
+        for (id, value) in object("drops", names: Set(m.drops.map(\.id))) {
+            let f = fields(value, "\(file).drops.\(id)", ["title", "detail"])
+            let drop = m.drops.first { $0.id == id }
+            w.drops[id] = Watcher(title: line(f["title"], "\(file).drops.\(id).title", max: 30, base: drop?.title),
+                                  description: line(f["detail"], "\(file).drops.\(id).detail", max: 80, base: drop?.detail))
+        }
+        func sentences(_ any: Any?, _ field: String) -> [String] {
+            guard let any else { return [] }
+            guard let list = any as? [String] else {
+                issues.append(ValidationIssue(field: field, message: "should be a list of sentences."))
+                return []
+            }
+            return list
+        }
+        for (name, value) in object("commands", names: m.commandNames) {
+            if let say = value as? [String] {
+                w.commands[name] = CommandWords(say: say)
+            } else {
+                let f = fields(value, "\(file).commands.\(name)", ["say", "names"])
+                w.commands[name] = CommandWords(say: sentences(f["say"], "\(file).commands.\(name).say"),
+                                                names: sentences(f["names"], "\(file).commands.\(name).names"))
+            }
+        }
+        for (name, value) in object("parts", names: Set(m.parts.keys)) { w.parts[name] = sentences(value, "\(file).parts.\(name)") }
+        for (list, value) in object("choices", names: Set(m.choices.keys)) {
+            let values = fields(value, "\(file).choices.\(list)", Set(m.choices[list]?.keys.map { $0 } ?? []))
+            for (choice, spoken) in values { w.choices[list, default: [:]][choice] = sentences(spoken, "\(file).choices.\(list).\(choice)") }
+        }
+        if let carry = o["carry"] {
+            let f = fields(carry, "\(file).carry", ["words", "lead", "inside", "endings"])
+            w.carry = ExtensionManifest.CarryMeta(words: sentences(f["words"], "\(file).carry.words"), lead: sentences(f["lead"], "\(file).carry.lead"),
+                                                  inside: sentences(f["inside"], "\(file).carry.inside"), endings: sentences(f["endings"], "\(file).carry.endings"))
+        }
         return w
 
         /// A text for each of the manifest's examples, in its order; a list that doesn't line up is left out whole.
@@ -363,6 +446,7 @@ extension ValidationReport {
     public func shownPermissions(language: String = ExtensionStrings.current) -> ExtensionPermissions? {
         guard var p = permissions else { return nil }
         if p.networkPurpose != nil, let purpose = strings?.words(for: language)?.networkPurpose { p.networkPurpose = purpose }
+        if p.ai != nil, let purpose = strings?.words(for: language)?.aiPurpose { p.ai?.purpose = purpose }
         return p
     }
 }

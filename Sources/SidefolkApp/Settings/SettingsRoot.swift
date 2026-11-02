@@ -7,6 +7,7 @@ struct SettingsRoot: View {
     var model: SettingsModel
     @FocusState private var searchFocused: Bool
     private var navigation: SettingsNavigation { model.navigation }
+    private var addonResults: [ExtensionSettingRow] { model.addonSettings(matching: navigation.query) }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -40,7 +41,7 @@ struct SettingsRoot: View {
     private var header: some View {
         HStack(spacing: Theme.Space.m) {
             if navigation.searching {
-                let count = navigation.results.count
+                let count = navigation.results.count + addonResults.count
                 Text(count == 0 ? String(localized: "Nothing for “\(navigation.query)”", comment: "Settings search: no results")
                      : String(localized: "\(count) results for “\(navigation.query)”", comment: "Settings search: “6 results for “quiet””"))
                     .font(Theme.Font.title2).foregroundStyle(Theme.ink).lineLimit(1)
@@ -217,10 +218,11 @@ struct SettingsSearchResults: View {
 
     var body: some View {
         let results = navigation.results
+        let addons = model.addonSettings(matching: navigation.query)
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.xl) {
-                    if results.isEmpty {
+                    if results.isEmpty && addons.isEmpty {
                         EmptyState(title: Text("Nothing in Settings says that", comment: "Settings search: no results"),
                                    message: Text("Try another word, like “quiet”, “folder” or “voice”.", comment: "Settings search: no results"),
                                    systemImage: "magnifyingglass")
@@ -232,6 +234,15 @@ struct SettingsSearchResults: View {
                     // The tab with the best match first.
                     ForEach(results.map(\.tab).reduce(into: [SettingsTab]()) { tabs, tab in if !tabs.contains(tab) { tabs.append(tab) } }) { tab in
                         group(tab, keys: results.filter { $0.tab == tab })
+                    }
+                    // What extensions declare (D100): each the real setting, as in Settings › Add-ons.
+                    if !addons.isEmpty {
+                        VStack(alignment: .leading, spacing: Theme.Space.s) {
+                            Text("Add-ons' settings", comment: "Settings search: settings extensions declare").font(Theme.Font.headline).foregroundStyle(Theme.ink)
+                            RowsCard {
+                                ForEach(addons) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
+                            }
+                        }
                     }
                 }
                 .frame(maxWidth: 720, alignment: .leading)

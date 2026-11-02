@@ -245,6 +245,9 @@ struct InstallPreviewSheet: View {
                 Text(ExtensionWords.commands(preview.commands)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            ForEach(preview.additions, id: \.self) { line in
+                Text(ext: line).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

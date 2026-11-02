@@ -106,7 +106,8 @@ enum Describe {
     static func caller(_ raw: String, companion: String) -> String {
         let parts = raw.split(separator: ":", maxSplits: 1).map(String.init)
         switch parts.first ?? raw {
-        case "user": return String(localized: "You")
+        // A sentence the person typed or said, which an extension's command answered (D50): their own words.
+        case "user", "command": return String(localized: "You")
         case "agent": return companion
         case "routine": return String(localized: "Routine")
         case "external": return parts.count > 1 ? agentName(parts[1]) : String(localized: "Agent")

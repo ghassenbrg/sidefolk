@@ -7,9 +7,11 @@
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
 //   swift scripts/dev.swift respond:done | dismiss | approve | approveAlways | deny | hideAsk
 //   swift scripts/dev.swift home | about | settings:trust | find:milk | drop:https://example.com
-//                           | drop:text:<words>   (D84: dropped text) | dropChoice:save|watch|ask|openWith|remind|copy|playOnTV
+//                           | drop:text:<words>   (D84: dropped text) | dropChoice:save|watch|ask|openWith|remind|copy|<an extension's drop id>
 //   swift scripts/dev.swift settings:search:quiet | settings:jump:quietHours | settings:full-access   (D84: Settings' search,
 //                           a jump to a setting by its SettingKey, the Full access sheet)
+//   swift scripts/dev.swift entry:dev.sidefolk.hello-abilities/hello | uninstall:dev.sidefolk.hello-abilities   (D100: an extension's
+//                           menu item or tab, as a click on it; Remove in Settings › Add-ons, without its question)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
 //   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
 //   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:games:default   (D88)

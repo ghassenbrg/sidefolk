@@ -384,3 +384,15 @@ definitions are held until approved.
   `enabled` and increasing `sequence`; wait for `sidefolk/output_mute.result` before claiming success and handle
   `sidefolk/output_mute.failed` for the current sequence. Explain that TV-only sound affects all Mac apps. The Kit
   receives notices even while a tool request is awaiting. Validation trials cannot mute the person's output.
+
+## Rich pages, commands, entries, settings, AI (D100)
+
+Prefer these to asking for app changes: an extension owns its screens and words (D98). Full reference: docs/EXTENSIONS.md › Rich pages, commands in every language, entries, settings, AI help; `extensions/hello-abilities` has one of each.
+
+- **A page like an app's own screen:** `hero` with `scene`, `figure`, `says`; `stats`; `cards` with pack pictures; `tabs`; `badges`; `recent`; `settings`. Kit: `.stats`, `.cards`, `.tabs`, `.badges`, `.recent`, `.settings`.
+- **Commands that work without AI in the ten languages:** give each a `name`, translate under `commands.<name>` in `strings/`; say it by `names` with shared `parts` around it, `choices` for enums, `carry` for carrying words, bounds like `{n:integer:1-50}`. Run `sidefolk ext validate`: it lists sentences Sidefolk answers itself. Never a word that answers an approval.
+- **Places in Sidefolk:** `entries` (`companion`, `pocket`, `ask`), `drops` (`kinds`, `patterns`, `tool`, `input` with `{value}`).
+- **Settings:** declare `settings`; never keep your own store of what could be one. Read with `ExtensionSettings`; they come with every request.
+- **The person's AI:** `permissions.ai` with an honest `purpose` and a small `daily_cap`. `await AI.ask(...)`; validate the answer yourself; label who wrote it; have a way to work without it.
+- **History:** `Activity.add(...)` for what a surface or game finished, not for every step.
+- Any of these needs `minimum_sidefolk` in `addon.json` to name a snapshot that has it (D83).

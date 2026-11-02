@@ -1,0 +1,85 @@
+import SidefolkCore
+import SwiftUI
+
+/// A setting an extension declared (D100), drawn from its schema by Sidefolk, on the extension's page and in Settings › Add-ons alike.
+/// A change goes through `extensions.setting`, so Guard and History see it.
+struct ExtensionSettingRowView: View {
+    var row: ExtensionSettingRow
+    var change: (JSONValue) -> Void
+    @State private var draft: String?
+
+    var body: some View {
+        SettingsRow(title: Text(ext: row.title), detail: row.detail.map { Text(ext: $0) }) { control }
+    }
+
+    @ViewBuilder private var control: some View {
+        switch row.type {
+        case .switch:
+            Toggle(isOn: Binding(get: { row.value.boolValue ?? false }, set: { change(.bool($0)) })) { Text(ext: row.title) }
+                .toggleStyle(.switch).labelsHidden().tint(Theme.accent)
+        case .choice:
+            Picker(selection: Binding(get: { row.value.stringValue ?? "" }, set: { change(.string($0)) })) {
+                ForEach(row.options, id: \.value) { option in Text(ext: option.title).tag(option.value) }
+            } label: {
+                Text(ext: row.title)
+            }
+            .labelsHidden().fixedSize()
+        case .number:
+            HStack(spacing: Theme.Space.s) {
+                Text(verbatim: row.valueWords).font(Theme.Font.body).monospacedDigit().foregroundStyle(Theme.ink)
+                Stepper(value: Binding(get: { row.value.doubleValue ?? 0 }, set: { change(.number($0)) }),
+                        in: (row.minimum ?? 0)...(row.maximum ?? 0), step: row.step ?? 1) { Text(ext: row.title) }
+                    .labelsHidden()
+            }
+        case .text:
+            TextField(text: Binding(get: { draft ?? row.value.stringValue ?? "" }, set: { draft = String($0.prefix(row.length)) })) { Text(ext: row.title) }
+                .textFieldStyle(.roundedBorder).labelsHidden().frame(maxWidth: 220)
+                .onSubmit {
+                    if let draft { change(.string(draft.trimmingCharacters(in: .whitespaces))) }
+                    draft = nil
+                }
+        }
+    }
+}
+
+/// The person's switch for an extension's use of their AI (D100), with what it says it is for and how much it asked today.
+struct ExtensionAISwitchRow: View {
+    var status: ExtensionAIStatus
+    var change: (Bool) -> Void
+
+    var body: some View {
+        SettingsToggle(title: Text("Let it use your AI", comment: "An extension's row: the person's switch for its use of their AI"),
+                       detail: Text("It says it uses it \(status.purpose). \(status.usedToday) of \(status.dailyCap) requests today.",
+                                    comment: "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit"),
+                       isOn: Binding(get: { status.on }, set: change))
+    }
+}
+
+extension ExtensionWords {
+    /// What an install sheet says the extension adds to Sidefolk's own places, in the person's language (D100): nothing it adds is a
+    /// surprise, and all of it goes when it does.
+    static func additions(_ m: ExtensionManifest, strings: ExtensionStrings?) -> [String] {
+        let w = strings?.words(for: ExtensionStrings.current)
+        func titles(_ place: ExtensionManifest.EntryMeta.Place) -> String {
+            Wording.list(m.entries.filter { $0.places.contains(place) }.map { w?.entries[$0.id] ?? $0.title })
+        }
+        var out: [String] = []
+        if m.entries.contains(where: { $0.places.contains(.companion) }) {
+            out.append(String(localized: "In the companion's menu: \(titles(.companion))", comment: "Install sheet: items an extension adds; their titles"))
+        }
+        if m.entries.contains(where: { $0.places.contains(.pocket) }) {
+            out.append(String(localized: "In the menu bar's menu: \(titles(.pocket))", comment: "Install sheet: items an extension adds; their titles"))
+        }
+        if m.entries.contains(where: { $0.places.contains(.ask) }) {
+            out.append(String(localized: "A tab in Ask: \(titles(.ask))", comment: "Install sheet: a tab an extension adds; its title"))
+        }
+        if !m.drops.isEmpty {
+            let offered = Wording.list(m.drops.map { w?.drops[$0.id]?.title ?? $0.title })
+            out.append(String(localized: "When you drop something on the companion: \(offered)", comment: "Install sheet: what an extension offers for a drop; their titles"))
+        }
+        if !m.settings.isEmpty {
+            out.append(String(localized: "\(m.settings.count) settings, in Settings › Add-ons", comment: "Install sheet: how many settings an extension declares"))
+        }
+        return out
+    }
+}

@@ -1991,7 +1991,8 @@ own Home, as they would in Miraya's app; they stay in Miraya's data folder, roun
 
 ### D75 — Games beside the companion: the Play panel, a game channel, companion cues; trivia without AI; the four redesigned (2026-10-31)
 *Amended by D79:* ten more games, one trivia, and Playtime's words in `strings/`. *Amended by D99:* an extension may now draw
-pictures and play sounds of its own from its pack, in a surface; the game channel stays until snapshot B (D101).
+pictures and play sounds of its own from its pack, in a surface; the game channel stays until snapshot B (D101). *Amended by
+D100: pack pictures, settings and a History row are general abilities now.*
 **Decision:** games are played in a **Play panel** beside the companion, drawn by Sidefolk from data, with the companion
 as the opponent next to it (the approved plan, phase 1):
 - **`games` in the manifest** (`title`, `symbol`, `say`, `levels`, `ai`): `say` sentences follow the command rules
@@ -2075,6 +2076,7 @@ companions need no new version: they get the moves with the app. The playground 
 several angles in one picture) and `edges({ only })`; the debug app `cue:<move>`.
 
 ### D76 — Extensions speak the person's language: `strings/` beside the manifest, `language` with every request (2026-10-31)
+*Amended by D100: commands are translated too (`commands`, `parts`, `choices`, `carry` in `strings/`), and settings, entries, drop actions and the AI's purpose.*
 **Decision:** every extension can show all its words in Sidefolk's ten languages, and Sidefolk's own do.
 - **What the manifest shows people** (name, tagline, description, tool, watcher, page and palette titles, watcher
   descriptions, a palette's placeholder, `network_purpose`) is translated in `strings/<language>.json` beside the
@@ -2242,6 +2244,7 @@ roles; gallery themes pass as they are.
 
 ### D79 — Games, phases 2 and 3: the ten new games in the Play panel, their parts, one trivia, one way to speak (2026-10-31)
 *Amended by D99:* "a game never sends a picture" holds for the Play panel's boards only; a scene draws from the extension's pack.
+*Amended by D100: `say`'s exception for games goes with any extension's commands in `strings/`.*
 
 **Decision:** *amends D75 and D76.* All ten approved games are played in the Play panel from Playtime, on the engines written for them, with
 no AI: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower (both ways), Guess My Animal, Balloon Words, Last
@@ -3051,6 +3054,7 @@ both already a setting away).
 night-studio,marshmallow}`; the `sidefolk-theme` skill names the four as what a new theme must differ from.
 
 ### D93 — The Game Center: Playtime's page drawn by Sidefolk from records; games steered in the person's own words (2026-11-01)
+*Superseded in part by D100: every piece of it can now be an extension's own (D100's table); it stays until snapshot B.*
 **Decision:** *amends D62, D74, D75, D76 and D79.* A game extension's page in Home is a **Game Center** Sidefolk owns,
 and the common things people say about games work without AI in the ten languages.
 - **A native page, fed by records, not more page parts.** The first page of an extension that declares `games`
@@ -3122,6 +3126,7 @@ words that only the old page used were dropped from `strings/`. New: `GameCenter
 one row in `GameSettingsSection` once both are in), number words for counts ("ten questions": digits only), two
 players' commands (D96).
 ### D95 — Trivia questions made by the person's AI, through one narrow host request (2026-11-01)
+*Generalised by D100: `permissions.ai` for any extension, with the same safeguards and more; this path stays until snapshot B.*
 **Decision:** *builds on D75 and D79; a new reach for Sidefolk's own extensions (SECURITY T39).* With AI set up in
 Settings › Brain, trivia can play any topic the person names, or one the AI picks ("Surprise me"), in their language.
 Extensions still never call a model: Playtime sends the notice `sidefolk/trivia.request` (a UUID, a topic of at most
@@ -3403,3 +3408,34 @@ from `surfaceExportSounds`.
 Sneaky reach it through D100's settings, not `surface.open`; a coin's face embossed in gold has no form (a `companion` node can stand on the coin, untinted); Activity's row is
 `surfaces.use` ("Used X from Y"), so `GameStats` and the Play menu's numbers need Playtime's own records; opening with words beyond whole sentences needs D100's commands, which pass `arguments`.
 A flip is a 2D squash, as the toss has always been, not a 3D turn: `render(in:)`, which films and snapshots use, doesn't draw 3D transforms. Not verified: clicks through an overlay's clear pixels with a real pointer (AppKit's own rule); sound through real speakers.
+
+### D100 — What any extension can declare: rich pages, commands in every language, entries, settings, AI help, a History row (2026-11-02)
+**Decision:** *the founder's rule (D98): the app gives only general abilities. Amends D39, D50, D62, D74, D75, D76, D79, D84's drop card, D93, D95 (SECURITY T41).* These are
+general: nothing here names a game or an extension, and all of it can replace what the app does only for games (table below). The old game code keeps working untouched until snapshot B.
+- **Richer pages** (`ExtensionPage+Rich`): new parts `stats` (a strip of up to six numbers), `cards` (a grid of up to 48, `size` small or large: a picture, title, detail, a line of record, when, badge, a tick, up to three buttons, a small menu), `tabs` (2–6, each holding sections, no tabs inside; switching never asks the program), `badges` (earned or how far along), `recent` (up to 20 lines with tone and when), `settings` (the extension's rows, drawn by the host from its schema). `hero` gains `scene`, `figure` and `says`; a section gains `picture`. **Pictures are addressed, never fetched** (`PagePicture`): `{"pack": path, "dark": path}` in the pack's `assets` folder (D99's addressing, read through `PagePictureReader`, pinned, sized and one frame), `{"data": name}` as before, `{"companion": "face"|"full"}` and `{"person": true}`, which Sidefolk places and the extension never reads. One primary per page across cards and tabs too. Unknown parts stay skipped.
+- **Commands with slots** (amending D50, D76, D79): a command may have a `name`, under which `strings/<language>.json` holds its sentences (`commands.<name>`), so a sentence is matched in all the languages the extension has, whatever the app's language. Slots: D50's kinds, bounds (`{count:integer:1-50}`, `{topic:text:40}`), and enums (`choices`: `{level:level}` gives the value whatever word was said). **A name with parts**: `names` and `with` naming shared `parts` ("on {level:level}", "{count:integer} questions", "with a friend" → `{"players": 2}`) in any order around it, with `carry` words that only carry the sentence (`words`, `lead` saying a name is meant, `inside` for languages without spaces, `endings` for particles), per language. Conservative as ever: once parts and carrying words are out, exactly the name must remain, and a bare name needs a lead word or a part. Sentences without slots are compared through `CommandText.key` (a table, not a regular expression: a parse runs on every key). **Conflicts:** Sidefolk's own understanding always comes first and the validator tells the author what never arrives (`report.shadowed`, in `sidefolk ext validate`: a note, never a refusal, because the app's words may grow with an update); a sentence that answers an approval, in any of the ten languages, can't be a command; two extensions claiming a sentence get neither, it goes to the AI (D50), and the install sheet says so; a sentence runs as `Caller.command` through `ToolExecutor`, so Guard asks as usual. "make it harder" and "rematch" are plain commands the extension handles. This replaces D76's "commands stay English" and D79's and D93's exceptions, which go with the old code.
+- **Entries** (`entries`): up to 8 items for the companion's menu, the Pocket's ⋯ menu and a right click on the menu bar, and one tab in Ask (two extensions' at most in the row); each opens its own page, runs its own tool as the person through Guard, or holds a submenu. **Drop actions** (`drops`): `kinds`, glob `patterns` on a link's address without its query or a file's name, `title`, `detail`, `tool`, `input` with `{value}`; a file goes under an argument the tool lists in `paths`, so Guard checks it. Offers follow Sidefolk's own choices on the card (a link gives up its reminder for the first), at most three, each naming its extension. **Miraya's "Play on TV" moved** to its manifest; `DropChoice.playOnTV` and the app's Miraya constants are gone. Everything is read from the manifest through `ExtensionShelf` as it is shown, so an extension that is off or gone leaves nothing behind. An item from anyone but Sidefolk's own extensions carries its name; the install sheet lists what it adds.
+- **Extension settings** (`settings`, in order: `switch`, `choice`, `number`, `text`, each with a default): the host stores them per extension (`ExtensionPreferences`, in the database under a key of its own, so a backup carries them and an uninstall removes them, surviving updates), passes them with every request as `settings` beside `language` and sends `sidefolk/settings.changed`, draws their rows on the page and under Settings › Add-ons, and Settings' search finds them. Every change goes through **`extensions.setting`** (low risk, in History): the person's click, or the extension for itself (`sidefolk/settings.set`); never a model, another agent or another extension (their words are their author's, D24: an extension that wants the AI to change something offers its own tool).
+- **What it used to have:** `settings_from` names a section of Sidefolk's own settings; a signed Sidefolk extension receives it once (`sidefolk/settings.carry`) and returns the settings to keep. The mechanism knows no names: `AppSettings.parked` keeps sections this copy doesn't know, so a section the app retires stays until it is given, and `AppSettings.section` reads either. It is how D101 moves `GameSettings`.
+- **AI help** (`permissions.ai`: `purpose`, `daily_cap` 1–200, default 20): any installed extension may declare it. On the install sheet with its purpose and cap, a caution; more of it is a widening update (D70). `sidefolk/ai.request` {request, prompt ≤ 8,000 characters, label} is answered once by the notice `sidefolk/ai.answer`, to that program alone. One at a time each, the person's switch per extension (`setAIAllowed`, on its row and page), the same words again the same day cost nothing, the count kept in `ExtensionPreferences`, so a relaunch doesn't reset it. It runs through **`extensions.ai_help`** as `Caller.extension`, never offered to a model or another agent: History has a row ("Hello Abilities asked your AI: …"), `AgentRuntime.oneShot` makes the call with **no tools, no memory, no conversation**, a fixed system frame that says the request is untrusted, the extension's words inside marks they can't close, cleaned and capped answers. The extension validates what it gets; the Kit's `AI.ask` gives it `.answer(text, madeBy)` or `.refused(reason)`, `AI.available` the AI's name while it may ask. D95's narrow path stays beside this until snapshot B.
+- **Activity:** `sidefolk/activity.add` {text, key, result}: one row in History through **`extensions.activity`**, in the extension's words marked as its own, at most one every five seconds, only for itself.
+- **Kit** (both repositories, identical): `Block.stats/cards/tabs/badges/recent/settings`, `Picture`, `Card`, `PageTab`, `Achievement`, `RecentItem`, `Hero(scene:figure:says:)`; `ExtensionSettings`, `AI`, `Activity`, `Extension.carry`, `settingsChanged`. **Sample:** `extensions/hello-abilities`, plain Python, one of each; it doesn't ship.
+
+**What replaces the app's game-only code (snapshot B, D101):**
+
+| Today | Becomes |
+|---|---|
+| `GameCenterView`, `GameCenterParts`, `GameCenterRecords` (app and core), `GameCenter`, `GameBadge`, `ExtensionPage.games` | The extension's page: `hero` with `scene`, `figure`, `says`; `stats`; `cards`; `recent`; `badges`, worked out by the program from its own records |
+| `GameCenterSettings`, `GameSettings`, `GamesSettingsTool` | `settings`, `extensions.setting`; `settings_from` for what the person chose; a tool of its own for the AI |
+| `GamesOpenTool` | Tools of its own (with D99's surfaces): opening, `last`, `again`, `random`, the center as its page |
+| `GameLevels`, `GameSlots` | `choices`, slot bounds, the program's own stepping |
+| `IntentGameCommands`, `GameCommandWords`, `GameSlotWords` | Commands with `names`, `parts`, `choices`, `carry`, in `strings/`; proved sentence by sentence in `CommandFrameTests` |
+| `IntentGamesMenu`, `IntentGames`, `GameMeta.say` | Commands on a tool that opens its surface |
+| `TriviaMaker`, `TriviaPack`, `TriviaQuestionsTool`, `TriviaHelp`, `sidefolk/trivia.*` | `permissions.ai`, `AIHelper`, `extensions.ai_help`; the check of a pack moves into the program |
+| `GameRecord`, `games.play` rows, `GameStats` | `extensions.activity` with `key` and `result`; counted by the program |
+| AskHeader's Play tab, the Pocket's Games…, the companion's Play menu entries | `entries` with `places` |
+| The drop card's Play on TV | `drops` (moved now) |
+
+**Why:** the founder: everything of an extension's goes with it. The Game Center could only be drawn by the app because pages lacked its parts and the app held its settings, words and AI access (D93's reasoning, which no longer holds). **Alternatives:** per-game exceptions in the validator (a game name in the mechanism); declaring commands outside tools (D50's place is good, and a command with no tool has nothing to run); a web view for rich pages (D62, D98's first answer); settings the program stores itself (the host couldn't draw, search or back them up, nor keep an AI switch out of its reach); matching only the person's language (a person speaks what they speak; and today's games match all ten); refusing sentences Sidefolk's own words claim (an app update would then turn installed extensions off); letting the model change settings by name (an author's words in every run, D24).
+
+**Implications:** manifests with these keys need a Sidefolk that knows them: `minimum_sidefolk` (D83) on anything using them; Miraya's is set to the next snapshot, 781 (the lead confirms). `CommandFrameTests` reads the old word tables: at snapshot B they move into the test or into the extension. Reconciling with D99: `PagePictureReader` and D99's `PackAssetReader` read the same files by the same addresses; once both are in, the first's body is the second. **Not built:** dynamic entries (they are the manifest's, not the program's), settings shown only under a condition, a conflict shown in Settings after install (the install sheet says it).

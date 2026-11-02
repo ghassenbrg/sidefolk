@@ -29,6 +29,9 @@ public struct ValidationReport: Sendable {
     public var iconPath: String?
     /// Its words in other languages, from `strings/` (D76).
     public var strings: ExtensionStrings?
+    /// Command sentences Sidefolk itself answers, so they never reach this extension (D100): for its author, in `text`; nothing
+    /// a person installing it could act on.
+    public var shadowed: [String] = []
 
     public var isValid: Bool { errors.isEmpty && manifest != nil && launch != nil && permissions != nil }
 
@@ -93,6 +96,10 @@ public struct ValidationReport: Sendable {
         if !commands.isEmpty {
             out.append("Answers without AI (D50):")
             out += commands.map { "  - \($0)" }
+        }
+        if !shadowed.isEmpty {
+            out.append("Sidefolk's own sentences, which never reach this extension (D100):")
+            out += shadowed.map { "  - “\($0)”" }
         }
         let cautions = warnings + (summary?.warnings ?? [])
         if !cautions.isEmpty {
@@ -185,7 +192,10 @@ public struct ManifestValidator: Sendable {
         checkDetails(manifest, issues: &issues, warnings: &report.warnings)
         checkAssets(manifest, folder: dir, issues: &issues)
         checkSurfaces(manifest, issues: &issues)
+        issues += ExtensionAbilityRules.check(manifest)
         report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &issues)
+        issues += ExtensionCommandRules.checkTranslations(manifest, strings: report.strings)
+        if mode == .source { report.shadowed = ExtensionCommandRules.ownSentences(manifest, strings: report.strings) }
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues
         return report
@@ -376,7 +386,8 @@ public struct ManifestValidator: Sendable {
     func checkPermissions(_ p: ExtensionManifest.Permissions, folder: String, issues: inout [ValidationIssue],
                           warnings: inout [String]) -> ExtensionPermissions {
         var result = ExtensionPermissions(network: p.network, media: p.media, clipboard: p.clipboard, power: p.power, screen: p.screen,
-                                          udp: p.udp && p.network, outputMute: p.outputMute)
+                                          udp: p.udp && p.network, outputMute: p.outputMute,
+                                          ai: p.ai.map { ExtensionAIAccess(purpose: ExtensionText.line($0.purpose, characters: 120), dailyCap: $0.dailyCap ?? ExtensionManifest.AIMeta.defaultCap) })
         if let purpose = p.networkPurpose {
             let line = ExtensionText.line(purpose, characters: 120)
             if !p.network || line != purpose || !purpose.hasPrefix("for ") && !purpose.hasPrefix("to ") {

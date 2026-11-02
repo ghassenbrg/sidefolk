@@ -40,10 +40,26 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var services: [Service]
     /// Extensions this one does everything of: while this one is on, they rest. Only between Sidefolk's own (D67, D98).
     public var replaces: [String]
-    /// The folder of pictures and sounds its scenes draw from (D99), relative to the pack.
+    /// The folder of pictures and sounds its scenes and pages draw from (D99, D100), relative to the pack.
     public var assets: String?
     /// Panels and overlays Sidefolk frames for it (D99).
     public var surfaces: [String: SurfaceMeta]
+    /// Enums its commands' slots can take, by value: `{level:level}` with `"level": {"hard": ["hard", "expert"]}` gives
+    /// the tool `hard`, in whichever language it was said (D100).
+    public var choices: [String: [String: [String]]]
+    /// Parts commands share (`with`), that may come anywhere around a name (D100).
+    public var parts: [String: PartMeta]
+    /// Words that only carry a command's sentence (D100).
+    public var carry: CarryMeta
+    /// Settings the host keeps for it and shows (D100), in the order they are shown.
+    public var settings: [SettingMeta]
+    /// Items in the companion's menu and the Pocket, and a tab in Ask (D100).
+    public var entries: [EntryMeta]
+    /// What it offers to do with something dropped on the companion (D100).
+    public var drops: [DropMeta]
+    /// A section of settings Sidefolk used to keep for what this extension does now: given to it once (D100). Honoured
+    /// for Sidefolk's own extensions only.
+    public var settingsFrom: String?
 
     /// A surface (D99): what it's called, how it stands, the canvas it asks for, and the sentences that open it.
     public struct SurfaceMeta: Sendable, Hashable, Decodable {
@@ -119,9 +135,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         /// What the network is for, in the author's words ("to find and stream to TVs on your local network"). The
         /// sandbox can't fence off the internet, so the sheet still says it can reach it, and adds this (D69).
         public var networkPurpose: String?
+        /// Asking the person's AI to write something, for a stated purpose, a few times a day (D100).
+        public var ai: AIMeta?
 
         public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
-                    power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false) {
+                    power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false,
+                    ai: AIMeta? = nil) {
+            self.ai = ai
             self.network = network
             self.networkPurpose = networkPurpose
             self.files = files
@@ -135,7 +155,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
@@ -147,6 +167,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             outputMute = try c.decodeIfPresent(Bool.self, forKey: "output_mute") ?? false
             udp = try c.decodeIfPresent(Bool.self, forKey: "udp") ?? false
             networkPurpose = try c.decodeIfPresent(String.self, forKey: "network_purpose")
+            ai = try c.decodeIfPresent(AIMeta.self, forKey: "ai")
         }
     }
 
@@ -392,7 +413,9 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
                 pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:],
                 games: [String: GameMeta] = [:], examples: [String] = [], services: [Service] = [], replaces: [String] = [],
-                assets: String? = nil, surfaces: [String: SurfaceMeta] = [:]) {
+                assets: String? = nil, surfaces: [String: SurfaceMeta] = [:], choices: [String: [String: [String]]] = [:],
+                parts: [String: PartMeta] = [:], carry: CarryMeta = CarryMeta(), settings: [SettingMeta] = [], entries: [EntryMeta] = [],
+                drops: [DropMeta] = [], settingsFrom: String? = nil) {
         self.id = id
         self.name = name
         self.version = version
@@ -416,12 +439,20 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.replaces = replaces
         self.assets = assets
         self.surfaces = surfaces
+        self.choices = choices
+        self.parts = parts
+        self.carry = carry
+        self.settings = settings
+        self.entries = entries
+        self.drops = drops
+        self.settingsFrom = settingsFrom
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
                                        "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games",
-                                       "examples", "services", "replaces", "assets", "surfaces"])
+                                       "examples", "services", "replaces", "assets", "surfaces",
+                                       "choices", "parts", "carry", "settings", "entries", "drops", "settings_from"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -446,6 +477,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         replaces = try c.decodeIfPresent([String].self, forKey: "replaces") ?? []
         assets = try c.decodeIfPresent(String.self, forKey: "assets")
         surfaces = try c.decodeIfPresent([String: SurfaceMeta].self, forKey: "surfaces") ?? [:]
+        choices = try c.decodeIfPresent([String: [String: [String]]].self, forKey: "choices") ?? [:]
+        parts = try c.decodeIfPresent([String: PartMeta].self, forKey: "parts") ?? [:]
+        carry = try c.decodeIfPresent(CarryMeta.self, forKey: "carry") ?? CarryMeta()
+        settings = try c.decodeIfPresent([SettingMeta].self, forKey: "settings") ?? []
+        entries = try c.decodeIfPresent([EntryMeta].self, forKey: "entries") ?? []
+        drops = try c.decodeIfPresent([DropMeta].self, forKey: "drops") ?? []
+        settingsFrom = try c.decodeIfPresent(String.self, forKey: "settings_from")
     }
 
     /// The last part of the id (`dev.example.tea-timer` → `tea-timer`), used in tool names.

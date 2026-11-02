@@ -4,20 +4,40 @@ extension ExtensionManifest {
     /// Sentences that call one tool at once, without the AI (D50). `say` holds whole sentences with typed slots
     /// ("time in {place:place}"); `input` builds the tool's arguments from them (`"places": ["{place}"]`). Without
     /// `input`, each slot fills the argument of the same name.
+    ///
+    /// Since D100 a command may also have a `name`, under which `strings/<language>.json` holds its sentences in other
+    /// languages, and `names`: what it is called, with `with` naming parts of the sentence (`parts`) that may come anywhere
+    /// around it, in any order ("trivia about space, hard, 10 questions"). A part's slots fill the arguments of their names;
+    /// a slot `input` mentions and the sentence didn't fill is left out.
     public struct Command: Sendable, Hashable, Decodable {
+        public var name: String?
         public var say: [String]
+        public var names: [String]
+        public var with: [String]
         public var input: [String: JSONValue]?
 
-        public init(say: [String], input: [String: JSONValue]? = nil) {
+        public init(name: String? = nil, say: [String], names: [String] = [], with: [String] = [], input: [String: JSONValue]? = nil) {
+            self.name = name
             self.say = say
+            self.names = names
+            self.with = with
             self.input = input
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["say", "input"])
+            try decoder.rejectUnknownKeys(["name", "say", "names", "with", "input"])
             let c = try decoder.container(keyedBy: AnyKey.self)
-            // One sentence may be written on its own.
-            if let one = try? c.decode(String.self, forKey: "say") { say = [one] } else { say = try c.decode([String].self, forKey: "say") }
+            name = try c.decodeIfPresent(String.self, forKey: "name")
+            names = try c.decodeIfPresent([String].self, forKey: "names") ?? []
+            with = try c.decodeIfPresent([String].self, forKey: "with") ?? []
+            // One sentence may be written on its own; a command with `names` needs no whole sentence.
+            if let one = try? c.decode(String.self, forKey: "say") {
+                say = [one]
+            } else if names.isEmpty {
+                say = try c.decode([String].self, forKey: "say")
+            } else {
+                say = try c.decodeIfPresent([String].self, forKey: "say") ?? []
+            }
             input = try c.decodeIfPresent([String: JSONValue].self, forKey: "input")
         }
     }
@@ -49,6 +69,20 @@ public enum CommandSlotKind: String, Sendable, CaseIterable {
         switch self {
         case .text, .word, .place, .list: true
         case .number, .integer, .expression, .url, .date: false
+        }
+    }
+
+    /// Something a slot of this kind takes.
+    var sample: String {
+        switch self {
+        case .text: "garden gate"
+        case .word: "word"
+        case .number, .integer: "7"
+        case .expression: "1+1"
+        case .place: "Tokyo"
+        case .url: "example.com"
+        case .date: "2026-12-25"
+        case .list: "one, two"
         }
     }
 
@@ -147,12 +181,19 @@ public struct CommandSentence: Sendable {
         public let vocabulary: [String]?
         /// What it takes, as written after the colon: "place", or the name of the extension's list ("unit").
         let accepts: String
+        /// For an enum (`choices` in the manifest): each word, as compared, and the value the tool receives (D100).
+        let values: [String: String]?
+        /// A number's bounds, written `{count:integer:1-50}` (D100): anything else isn't this sentence.
+        let bounds: ClosedRange<Double>?
 
-        init(name: String, kind: CommandSlotKind, vocabulary: [String]? = nil, accepts: String? = nil) {
+        init(name: String, kind: CommandSlotKind, vocabulary: [String]? = nil, accepts: String? = nil, values: [String: String]? = nil,
+             bounds: ClosedRange<Double>? = nil) {
             self.name = name
             self.kind = kind
             self.vocabulary = vocabulary
             self.accepts = accepts ?? kind.rawValue
+            self.values = values
+            self.bounds = bounds
         }
 
         /// Takes any words: such a slot never starts a sentence or touches another.
@@ -168,9 +209,17 @@ public struct CommandSentence: Sendable {
         }
 
         func value(_ raw: String) -> JSONValue? {
-            guard vocabulary != nil else { return kind.value(raw) }
+            guard vocabulary != nil else {
+                guard let bounds else { return kind.value(raw) }
+                // Free words are bounded by how long they may be, a number by what it may be.
+                if kind == .text { return raw.count <= Int(bounds.upperBound) ? kind.value(raw) : nil }
+                guard case .number(let n)? = kind.value(raw), bounds.contains(n) else { return nil }
+                return .number(n)
+            }
             let word = raw.split(whereSeparator: \.isWhitespace).joined(separator: " ")
-            return word.isEmpty ? nil : .string(word)
+            guard !word.isEmpty else { return nil }
+            guard let values else { return .string(word) }
+            return values[word.lowercased()].map { .string($0) }
         }
     }
 
@@ -188,13 +237,24 @@ public struct CommandSentence: Sendable {
     private let regex: NSRegularExpression
 
     public static let maxSlots = 3
+    /// The words someone answers an approval or a question with, in the languages Sidefolk speaks: a command can never
+    /// be one of them, so nothing typed in answer to Sidefolk lands in an extension (SECURITY T41).
+    static let approvalWords: Set<String> = [
+        "approve", "approved", "deny", "denied", "allow", "allow once", "always allow", "don't allow", "do not allow", "reject", "refuse",
+        "accept", "confirm", "yes please", "no thanks", "go ahead", "do it", "don't",
+        "oui", "non", "autoriser", "refuser", "confirmer", "sí", "si", "permitir", "rechazar", "confirmar", "ja", "nein", "erlauben", "ablehnen",
+        "bestätigen", "sì", "consenti", "rifiuta", "conferma", "sim", "não", "nao", "permitir sempre", "recusar", "はい", "いいえ", "許可", "拒否",
+        "確認", "네", "예", "아니요", "아니오", "허용", "거부", "확인", "是", "否", "好", "不", "允许", "拒绝", "确认", "نعم", "لا", "موافق", "اسمح", "ارفض", "تأكيد",
+    ]
     public static let maxLength = 80
     /// Sentences that are someone's reply or a word to Sidefolk, never a command of their own.
     static let reserved: Set<String> = ["yes", "no", "ok", "okay", "sure", "thanks", "thank you", "stop", "cancel", "help", "undo",
                                         "hi", "hello", "hey", "what", "why", "how", "again", "more", "next", "done"]
 
-    /// - Parameter words: the extension's word lists (`words` in its manifest), for slots like `{from:unit}`.
-    public init(_ written: String, words: [String: [String]] = [:]) throws(CommandProblem) {
+    /// - Parameters:
+    ///   - words: the extension's word lists (`words` in its manifest), for slots like `{from:unit}`.
+    ///   - choices: its enums (`choices`), for slots like `{level:level}`.
+    public init(_ written: String, words: [String: [String]] = [:], choices: [String: [String: [String]]] = [:]) throws(CommandProblem) {
         let text = written.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty, text.count <= Self.maxLength else {
             throw CommandProblem(message: "must be 1–\(Self.maxLength) characters.")
@@ -202,7 +262,7 @@ public struct CommandSentence: Sendable {
         guard !text.unicodeScalars.contains(where: { $0.properties.generalCategory == .control }) else {
             throw CommandProblem(message: "can't contain line breaks or control characters.")
         }
-        let pieces = try Self.pieces(text, words: words)
+        let pieces = try Self.pieces(text, words: words, choices: choices)
         let slots = pieces.compactMap { if case .slot(let s) = $0 { s } else { nil } }
         guard slots.count <= Self.maxSlots else {
             throw CommandProblem(message: "can have at most \(Self.maxSlots) slots.")
@@ -212,7 +272,10 @@ public struct CommandSentence: Sendable {
         // A lone sum ("12*7") is the one sentence with no word of its own: an expression is never someone's words.
         let loneSum = slots.count == 1 && slots[0].kind == .expression && slots[0].vocabulary == nil
             && literal.trimmingCharacters(in: .whitespaces).isEmpty
-        guard loneSum || literal.range(of: #"\p{L}{2,}"#, options: .regularExpression) != nil else {
+        // Two letters at least, spaces aside: Korean spaces between syllables ("한 판 더").
+        let hangul = literal.unicodeScalars.contains { (0xAC00...0xD7A3).contains($0.value) }
+        let wording = hangul ? literal.filter { !$0.isWhitespace } : literal
+        guard loneSum || wording.range(of: #"\p{L}{2,}"#, options: .regularExpression) != nil else {
             throw CommandProblem(message: "needs at least one word of its own, like “time in {place:place}”.")
         }
         if case .slot(let first) = pieces.first, first.isFree {
@@ -225,7 +288,7 @@ public struct CommandSentence: Sendable {
                 throw CommandProblem(message: "needs a word between {\(x.name)} and {\(y.name)}.")
             }
         }
-        if slots.isEmpty, Self.reserved.contains(Self.normalized(literal)) {
+        if slots.isEmpty, Self.reserved.union(Self.approvalWords).contains(Self.normalized(literal)) {
             throw CommandProblem(message: "“\(text)” is a reply anyone might type; it can't be a command.")
         }
         self.written = text
@@ -257,12 +320,23 @@ public struct CommandSentence: Sendable {
         return values
     }
 
+    /// The sentence with each slot filled by something it takes, to see who claims it: Sidefolk's own words come first.
+    var sample: String {
+        var filled = written
+        for slot in slots {
+            let spoken = slot.vocabulary?.first ?? slot.kind.sample
+            let pattern = #"\{"# + NSRegularExpression.escapedPattern(for: slot.name) + #"(:[^}]*)?\}"#
+            filled = filled.replacingOccurrences(of: pattern, with: NSRegularExpression.escapedTemplate(for: spoken), options: .regularExpression)
+        }
+        return filled
+    }
+
     /// Lower-cased, single-spaced and without the punctuation at its ends, to compare sentences.
     static func normalized(_ s: String) -> String {
         s.lowercased().split(whereSeparator: \.isWhitespace).joined(separator: " ").trimmingCharacters(in: .punctuationCharacters)
     }
 
-    private static func pieces(_ text: String, words: [String: [String]]) throws(CommandProblem) -> [Piece] {
+    private static func pieces(_ text: String, words: [String: [String]], choices: [String: [String: [String]]]) throws(CommandProblem) -> [Piece] {
         var pieces: [Piece] = []
         var literal = ""
         var rest = Substring(text)
@@ -271,15 +345,24 @@ public struct CommandSentence: Sendable {
             literal += rest[..<open]
             guard let close = rest[open...].firstIndex(of: "}") else { throw CommandProblem(message: "has a “{” without its “}”.") }
             let inside = rest[rest.index(after: open)..<close]
-            let parts = inside.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+            let parts = inside.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
             let name = parts[0]
             guard name.range(of: #"^[a-z][a-z0-9_]{0,31}$"#, options: .regularExpression) != nil else {
                 throw CommandProblem(message: "has a slot “{\(inside)}” whose name isn't lowercase letters, digits and _.")
             }
             let kindName = parts.count > 1 ? parts[1] : CommandSlotKind.text.rawValue
             let slot: Slot
-            if let kind = CommandSlotKind(rawValue: kindName) {
+            if parts.count > 2 {
+                guard let kind = CommandSlotKind(rawValue: kindName), [.integer, .number, .text].contains(kind), let bounds = Self.bounds(parts[2], kind) else {
+                    throw CommandProblem(message: "has bounds on “{\(inside)}”; only integer, number and text take them, like {count:integer:1-50} or {topic:text:40}.")
+                }
+                slot = Slot(name: name, kind: kind, bounds: bounds)
+            } else if let kind = CommandSlotKind(rawValue: kindName) {
                 slot = Slot(name: name, kind: kind)
+            } else if let choice = choices[kindName], !choice.isEmpty {
+                var values: [String: String] = [:]
+                for (value, spoken) in choice { for word in spoken { values[word.lowercased()] = value } }
+                slot = Slot(name: name, kind: .word, vocabulary: spoken(choice), accepts: kindName, values: values)
             } else if let list = words[kindName], !list.isEmpty {
                 slot = Slot(name: name, kind: .word, vocabulary: list, accepts: kindName)
             } else {
@@ -295,6 +378,17 @@ public struct CommandSentence: Sendable {
         if !literal.isEmpty { pieces.append(.literal(literal)) }
         return pieces
     }
+
+    /// `1-50`: the lowest and highest a number slot takes; `40`: the most characters a text slot takes.
+    private static func bounds(_ written: String, _ kind: CommandSlotKind) -> ClosedRange<Double>? {
+        // A text's bound is its longest length.
+        if kind == .text { return Int(written).flatMap { $0 > 0 ? 0...Double($0) : nil } }
+        let ends = written.split(separator: "-").compactMap { Double($0) }
+        guard ends.count == 2, ends[0] <= ends[1] else { return nil }
+        return ends[0]...ends[1]
+    }
+
+    private static func spoken(_ choice: [String: [String]]) -> [String] { choice.values.flatMap { $0 } }
 
     /// Words match as words (any spacing, any case); after "," or ":" the space is optional.
     private static func pattern(_ pieces: [Piece]) -> String {
@@ -328,37 +422,83 @@ public struct ToolCommands: Sendable {
     struct Entry: Sendable {
         let sentences: [CommandSentence]
         let input: [String: JSONValue]?
+        /// A name with parts around it, when the command has `names` (D100).
+        let frame: CommandFrame?
+        /// Its sentences and names as people see them, by language.
+        let shown: [(language: String, sentences: [String])]
     }
 
     let entries: [Entry]
+    /// Sentences with no slot, by `CommandText.key`, to the entry they call: a parse runs on every key typed in Ask, and an
+    /// extension may hold hundreds in ten languages (D100).
+    private let literal: [String: Int]
 
     /// Sentences that don't compile are left out: the validator refused them at install, so only a manifest changed
     /// since could hold one.
     public init?(_ commands: [ExtensionManifest.Command], words: [String: [String]] = [:]) {
-        let entries = commands.map { command in
-            Entry(sentences: command.say.compactMap { try? CommandSentence($0, words: words) }, input: command.input)
-        }.filter { !$0.sentences.isEmpty }
-        guard !entries.isEmpty else { return nil }
-        self.entries = entries
+        self.init(commands, vocabulary: CommandVocabulary(words: words))
     }
 
-    /// Every sentence as people see it ("time in …"), for Settings and the install sheet.
-    public var shown: [String] { entries.flatMap { $0.sentences.map(\.shown) } }
+    public init?(_ commands: [ExtensionManifest.Command], vocabulary: CommandVocabulary) {
+        var literal: [String: Int] = [:]
+        var entries: [Entry] = []
+        for command in commands {
+            let own = command.name.flatMap { vocabulary.translations[$0] }
+            let allSay = command.say + (own?.flatMap(\.say) ?? [])
+            let compiled = allSay.compactMap { try? CommandSentence($0, words: vocabulary.words, choices: vocabulary.choices) }
+            let frame = CommandFrame(command, vocabulary: vocabulary)
+            guard !compiled.isEmpty || frame != nil else { continue }
+            for sentence in compiled where sentence.slots.isEmpty {
+                let key = CommandText.key(sentence.written)
+                if literal[key] == nil { literal[key] = entries.count }
+            }
+            // A name stands for itself; a slot reads as "…", and a sentence that doesn't compile isn't shown.
+            func read(_ written: [String]) -> [String] {
+                written.compactMap { $0.contains("{") ? (try? CommandSentence($0, words: vocabulary.words, choices: vocabulary.choices))?.shown : $0 }
+            }
+            var shown: [(language: String, sentences: [String])] = [("en", read(command.say + command.names))]
+            for (language, words) in vocabulary.translationsByLanguage[command.name ?? ""] ?? [:] { shown.append((language, read(words.say + words.names))) }
+            entries.append(Entry(sentences: compiled.filter { !$0.slots.isEmpty }, input: command.input, frame: frame, shown: shown))
+        }
+        guard !entries.isEmpty else { return nil }
+        self.entries = entries
+        self.literal = literal
+    }
 
-    /// The arguments `command` gives the tool, from the first sentence it is.
+    /// Every sentence as people see it ("time in …"), for Settings and the install sheet: in the person's language when
+    /// the extension has it, else as the manifest says it.
+    public func shown(language: String = "en") -> [String] {
+        entries.flatMap { entry -> [String] in
+            let code = ExtensionStrings.match(language, in: Set(entry.shown.map(\.language))) ?? "en"
+            return entry.shown.first { $0.language == code }?.sentences ?? entry.shown.first?.sentences ?? []
+        }
+    }
+
+    public var shown: [String] { shown() }
+
+    /// The arguments `command` gives the tool, from the first sentence it is. The same sentence in digits of another
+    /// script is the same sentence.
     public func input(for command: String) -> JSONValue? {
+        let said = CommandText.digits(command)
+        if let index = literal[CommandText.key(said)], let built = Self.build(entries[index].input, [:]) { return built }
         for entry in entries {
             for sentence in entry.sentences {
-                guard let values = sentence.match(command) else { continue }
+                guard let values = sentence.match(said) else { continue }
                 if let built = Self.build(entry.input, values) { return built }
             }
+        }
+        for entry in entries {
+            guard let values = entry.frame?.match(said) else { continue }
+            if let built = Self.build(entry.input, values, optional: true) { return built }
         }
         return nil
     }
 
     /// `template` with each "{slot}" replaced by its value (a list's items join the array they stand in); without a
     /// template, each slot is the argument of its name.
-    static func build(_ template: [String: JSONValue]?, _ values: [String: JSONValue]) -> JSONValue? {
+    /// With `optional` (a command with parts, D100) a slot the sentence left out drops its argument, and a slot the
+    /// template doesn't mention still reaches the tool under its own name.
+    static func build(_ template: [String: JSONValue]?, _ values: [String: JSONValue], optional: Bool = false) -> JSONValue? {
         guard let template else { return .object(values) }
         func fill(_ value: JSONValue) -> [JSONValue]? {
             if case .string(let s) = value, let name = slotReference(s) {
@@ -377,8 +517,15 @@ public struct ToolCommands: Sendable {
         }
         var out: [String: JSONValue] = [:]
         for (key, value) in template {
-            guard let filled = fill(value)?.first else { return nil }
+            guard let filled = fill(value)?.first else {
+                if optional { continue }
+                return nil
+            }
             out[key] = filled
+        }
+        if optional {
+            let used = Set(template.values.compactMap { $0.stringValue.flatMap(slotReference) })
+            for (key, value) in values where !used.contains(key) && out[key] == nil { out[key] = value }
         }
         return .object(out)
     }

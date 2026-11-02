@@ -19,6 +19,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     /// Gathers what the Pocket shows, each time it opens.
     var contentProvider: (() async -> PocketContent)?
     var palettes: () -> [ExtensionPaletteInfo] = { [] }
+    /// Items extensions put here (D100), as they are now.
+    var entries: () -> [ExtensionEntry] = { [] }
+    /// One of them, as an item of the menu.
+    var entryItem: (ExtensionEntry) -> NSMenuItem? = { _ in nil }
     /// The version waiting, for the ⋯ menu's "Update to Sidefolk …" (D46).
     var waitingUpdate: () -> String? = { nil }
     var actions: PocketActions {
@@ -127,6 +131,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         Task {
             pocket.content = await contentProvider()
             pocket.palettes = palettes()
+            pocket.entries = entries()
         }
     }
 
@@ -147,6 +152,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         Task {
             if let contentProvider { pocket.content = await contentProvider() }
             pocket.palettes = palettes()
+            pocket.entries = entries()
             // The Pocket takes the keyboard (its Ask field, the dial's keys), so Sidefolk comes forward while it's open.
             NSApp.activate()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
@@ -167,6 +173,11 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         }
         add(String(localized: "Open Sidefolk"), key: "o", a.openHome)
         add(String(localized: "Settings…"), key: ",", a.openSettings)
+        let entries = entries()
+        if !entries.isEmpty {
+            menu.addItem(.separator())
+            for entry in entries { if let item = entryItem(entry) { menu.addItem(item) } }
+        }
         let palettes = palettes()
         if !palettes.isEmpty {
             menu.addItem(.separator())

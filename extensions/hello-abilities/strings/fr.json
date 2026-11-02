@@ -1,0 +1,18 @@
+{
+  "name": "Bonjour Capacités",
+  "ai_purpose": "pour écrire une courte ligne sur un mot que vous lui donnez",
+  "settings": {
+    "loud": { "title": "Le dire fort", "detail": "Les salutations finissent par un point d'exclamation." },
+    "tone": { "title": "Ton", "options": { "warm": "Chaleureux", "plain": "Simple" } }
+  },
+  "commands": {
+    "greet": { "say": ["salue {who:word}"] },
+    "wave": { "names": ["bonjour"] },
+    "again": ["salue encore", "encore un bonjour"]
+  },
+  "parts": { "times": ["{times:integer:1-5} fois"], "about": ["sur {topic:text:40}"], "twice": ["deux fois"] },
+  "choices": { "tone": { "warm": ["chaleureux"], "plain": ["simple"] } },
+  "carry": { "words": ["dis", "un", "le"], "lead": ["dis"] },
+  "entries": { "hello": "Bonjour", "greetings": "Salutations", "greet_me": "Salue-moi", "greet_again": "Encore" },
+  "drops": { "keep_clip": { "title": "Garder ce clip", "detail": "Note l'adresse de la vidéo." } }
+}

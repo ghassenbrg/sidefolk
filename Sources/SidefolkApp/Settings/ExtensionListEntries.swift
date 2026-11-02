@@ -13,6 +13,8 @@ extension ExtensionInfo: ExtensionListEntry {
         if kind == .mcpServer { texts.append(String(localized: "MCP server")) }
         if fromDraft { texts.append(String(localized: "Written for you")) }
         if !pendingTools.isEmpty { texts.append(String(localized: "Needs review")) }
+        // Its settings' words too, so "sounds" finds the extension whose setting says it (D100).
+        texts += settingRows.flatMap { [$0.title, $0.detail ?? ""] + $0.options.map(\.title) }
         return texts + commands + hiddenSearchTexts + [command].compactMap { $0 }
     }
 

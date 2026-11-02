@@ -308,6 +308,10 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var examples: [String] = []
     /// The services it says it talks to (D98), believed only for Sidefolk's own (`origin.firstParty`).
     public var services: [ExtensionManifest.Service] = []
+    /// The settings it declares, as the person's language words them (D100).
+    public var settings: [ExtensionSettingRow] = []
+    /// Its use of the person's AI, when it declares one (D100).
+    public var ai: ExtensionAIStatus? = nil
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

@@ -98,7 +98,15 @@ public final class SidefolkRuntime: Sendable {
             _ = await platform.activateApplication(pid: host.pid, bundleId: host.bundleId)
         })
         jobTracker = JobTracker(store: jobs, attention: attention, events: events, clock: clock)
-        extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)
+        var hostConfiguration = ExtensionHost.Configuration()
+        hostConfiguration.runTool = { [executor] name, input, caller, timeout in
+            await executor.execute(name: name, input: input, caller: caller, timeout: timeout)
+        }
+        hostConfiguration.aiName = { [settings] in settings.current.provider.shortName }
+        hostConfiguration.carriedSettings = { [settings] section in settings.current.section(section) }
+        hostConfiguration.forgetCarried = { [settings] section in await settings.update { $0.parked[section] = nil } }
+        extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, configuration: hostConfiguration,
+                                   secrets: extensionSecrets)
         seedPacks = SeedPacks(directory: bundledResources?.appendingPathComponent("SeedPacks", isDirectory: true), paths: paths)
         extensionDrafts = ExtensionDrafts(paths: paths)
         addons = AddonStore(paths: paths)
@@ -126,6 +134,9 @@ public final class SidefolkRuntime: Sendable {
         registry.register([GamesOpenTool(events: events, shelf: extensions.gameShelf, settings: settings, activity: activity),
                            GamesSettingsTool(settings: settings, shelf: extensions.gameShelf)])
         registry.register(SurfacesOpenTool(events: events, shelf: extensions.surfaceShelf))
+        let host = extensions
+        registry.register(ExtensionSettingTool(host: host))
+        registry.register(ExtensionActivityTool(shelfName: { id in host.shelf.names[id] }))
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening",

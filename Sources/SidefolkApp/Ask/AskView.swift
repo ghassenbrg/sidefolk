@@ -136,7 +136,9 @@ struct AskView: View {
                 if model.text.isEmpty, !model.busy, let actions = model.actions {
                     // Drops work without AI: the likely things, one click or Return away (D84).
                     DropCard(attachment: attachment, choices: actions.dropChoices(for: attachment),
+                             offers: actions.extensionDrops(for: attachment),
                              choose: { actions.perform($0, with: attachment, in: model) },
+                             chooseOffer: { actions.perform($0, with: attachment, in: model) },
                              openWith: { actions.open(attachment, with: $0, in: model) })
                 }
             }

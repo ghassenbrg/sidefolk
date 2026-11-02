@@ -51,8 +51,11 @@ public struct ExtensionPage: Sendable, Hashable {
         /// Folded under its title until the person opens it (advanced settings, connection details); nil is always open.
         /// Needs a title to fold under.
         public var collapsed: Bool?
+        /// A small picture beside its title (D100): the person's companion beside "Play against …", say.
+        public var picture: PagePicture?
 
-        public init(title: String? = nil, blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil) {
+        public init(title: String? = nil, blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil, picture: PagePicture? = nil) {
+            self.picture = picture
             self.title = title
             self.detail = detail
             self.blocks = blocks
@@ -90,6 +93,18 @@ public struct ExtensionPage: Sendable, Hashable {
         case hero(Hero)
         /// Where a playing video or song is, and its play, pause and skip buttons (D74).
         case transport(Transport)
+        /// Numbers side by side in one strip (D100): "Wins 12", "Best streak 4".
+        case stats(StatStrip)
+        /// Cards in a grid, each with a picture from the pack, words, a badge and buttons (D100).
+        case cards(CardGrid)
+        /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
+        case tabs(Tabs)
+        /// Achievements, earned or on their way (D100).
+        case badges(BadgeList)
+        /// The last things that happened, newest first, with when (D100).
+        case recent(RecentList)
+        /// The extension's own settings, as the host keeps and draws them (D100).
+        case settings(SettingsRows)
     }
 
     /// A small label beside an option: "Paired", "New", "Off".
@@ -115,6 +130,11 @@ public struct ExtensionPage: Sendable, Hashable {
         public var facts: [Fact]
         /// Up to three buttons; Sidefolk draws them large, the primary one filled.
         public var actions: [Control]
+        /// A picture behind it at its trailing end, from the pack, in place of the plain card (D100).
+        public var scene: PagePicture?
+        /// A figure standing at its trailing end, with `says` beside it in a bubble inside this page (D100).
+        public var figure: PagePicture?
+        public var says: String?
     }
 
     public struct Transport: Sendable, Hashable {
@@ -313,16 +333,18 @@ public struct ExtensionPage: Sendable, Hashable {
         guard let object = json.objectValue, object["sections"]?.arrayValue != nil || object["summary"] != nil else {
             throw UserFacingError("That isn't a page.")
         }
-        let sections = (object["sections"]?.arrayValue ?? []).prefix(maxSections).compactMap { s -> Section? in
-            let blocks = (s["blocks"]?.arrayValue ?? []).prefix(maxBlocks).compactMap(block)
-            let title = text(s["title"], 60)
-            return blocks.isEmpty ? nil : Section(title: title, blocks: blocks, place: s["place"]?.stringValue.flatMap(Section.Place.init) ?? .main,
-                                                  collapsed: title == nil ? nil : s["collapsed"]?.boolValue,
-                                                  detail: title == nil ? nil : text(s["detail"], 160))
-        }
+        let sections = (object["sections"]?.arrayValue ?? []).prefix(maxSections).compactMap(section)
         var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections, games: GameCenterRecords.parse(object["games"]))
         page.keepOnePrimary()
         return page
+    }
+
+    static func section(_ s: JSONValue) -> Section? {
+        let blocks = (s["blocks"]?.arrayValue ?? []).prefix(maxBlocks).compactMap(block)
+        let title = text(s["title"], 60)
+        return blocks.isEmpty ? nil : Section(title: title, blocks: blocks, place: s["place"]?.stringValue.flatMap(Section.Place.init) ?? .main,
+                                              collapsed: title == nil ? nil : s["collapsed"]?.boolValue,
+                                              detail: title == nil ? nil : text(s["detail"], 160), picture: title == nil ? nil : PagePicture.parse(s["picture"]))
     }
 
     /// The hero leading the page, when its first section starts with one: drawn instead of the summary banner.
@@ -344,16 +366,25 @@ public struct ExtensionPage: Sendable, Hashable {
             keep(&control)
             summary?.control = control
         }
-        for s in sections.indices {
-            for b in sections[s].blocks.indices {
-                switch sections[s].blocks[b] {
-                case .control(var c): keep(&c); sections[s].blocks[b] = .control(c)
-                case .hero(var h): for i in h.actions.indices { keep(&h.actions[i]) }; sections[s].blocks[b] = .hero(h)
-                case .transport(var t): for i in t.buttons.indices { keep(&t.buttons[i]) }; sections[s].blocks[b] = .transport(t)
-                default: break
+        func visit(_ list: inout [Section]) {
+            for s in list.indices {
+                for b in list[s].blocks.indices {
+                    switch list[s].blocks[b] {
+                    case .control(var c): keep(&c); list[s].blocks[b] = .control(c)
+                    case .hero(var h): for i in h.actions.indices { keep(&h.actions[i]) }; list[s].blocks[b] = .hero(h)
+                    case .transport(var t): for i in t.buttons.indices { keep(&t.buttons[i]) }; list[s].blocks[b] = .transport(t)
+                    case .cards(var grid):
+                        for i in grid.items.indices { for a in grid.items[i].actions.indices { keep(&grid.items[i].actions[a]) } }
+                        list[s].blocks[b] = .cards(grid)
+                    case .tabs(var tabs):
+                        for i in tabs.tabs.indices { visit(&tabs.tabs[i].sections) }
+                        list[s].blocks[b] = .tabs(tabs)
+                    default: break
+                    }
                 }
             }
         }
+        visit(&sections)
     }
 
     static func summary(_ j: JSONValue) -> Summary? {
@@ -435,7 +466,8 @@ public struct ExtensionPage: Sendable, Hashable {
             let code = j["code"]?.stringValue.flatMap { $0.range(of: #"^[0-9A-Z][0-9A-Z \-]{0,11}$"#, options: .regularExpression) != nil ? $0 : nil }
             return .hero(Hero(eyebrow: text(j["eyebrow"], 30), title: title, detail: text(j["detail"], 300), tone: tone(j["tone"]),
                               symbol: symbol(j["symbol"]), code: code, image: dataFile(j["image"]), busy: j["busy"]?.boolValue ?? false,
-                              facts: facts, actions: (j["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) }))
+                              facts: facts, actions: (j["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) },
+                              scene: PagePicture.parse(j["scene"]), figure: PagePicture.parse(j["figure"]), says: text(j["says"], 80)))
         case "transport":
             // Every button is drawn as its symbol, its label read aloud and shown on hover.
             let buttons = (j["buttons"]?.arrayValue ?? []).prefix(5).compactMap { button($0, characters: 30) }.filter { $0.symbol != nil }
@@ -464,7 +496,7 @@ public struct ExtensionPage: Sendable, Hashable {
             guard !rows.isEmpty || j["title"] != nil else { return nil }
             return .list(List(title: text(j["title"], 60), caption: text(j["caption"], 120), rows: rows))
         default:
-            return nil
+            return richBlock(j)
         }
     }
 
@@ -518,11 +550,15 @@ public struct ExtensionPage: Sendable, Hashable {
     /// Every chart's series as `chart/key` and its value now, for the history.
     public var samples: [String: Double] {
         var out: [String: Double] = [:]
-        for section in sections {
-            for case .chart(let chart) in section.blocks {
-                for s in chart.series { out["\(chart.id)/\(s.key)"] = s.value }
+        func visit(_ list: [Section]) {
+            for section in list {
+                for block in section.blocks {
+                    if case .chart(let chart) = block { for s in chart.series { out["\(chart.id)/\(s.key)"] = s.value } }
+                    if case .tabs(let tabs) = block { for tab in tabs.tabs { visit(tab.sections) } }
+                }
             }
         }
+        visit(sections)
         return out
     }
 }

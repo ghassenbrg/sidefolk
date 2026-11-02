@@ -159,8 +159,11 @@ public struct Section {
     /// Folded under its title (`true`) or open (`false`) until the person opens or folds it: settings most people never
     /// change. nil: always open.
     public var collapsed: Bool?
+    /// A small picture beside its title.
+    public var picture: Picture?
 
-    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil) {
+    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil, picture: Picture? = nil) {
+        self.picture = picture
         self.title = title
         self.detail = detail
         self.blocks = blocks
@@ -174,6 +177,7 @@ public struct Section {
         if let detail { out["detail"] = detail }
         if place != .main { out["place"] = place.rawValue }
         if let collapsed { out["collapsed"] = collapsed }
+        if let picture { out["picture"] = picture.json }
         return out
     }
 }
@@ -241,6 +245,19 @@ public enum Block {
     case transport(Transport)
     /// A button with all its options: a line on hover, dimmed when it can't run yet.
     case action(Action)
+    /// Numbers side by side in one strip (D100).
+    case stats([StatItem])
+    /// Cards in a grid, each with a picture from the pack, words, a badge and buttons (D100).
+    case cards(size: CardSize = .large, [Card])
+    /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
+    case tabs(selected: String? = nil, [PageTab])
+    /// Achievements, earned or on their way (D100).
+    case badges(_ title: String? = nil, [Achievement])
+    /// The last things that happened, newest first (D100).
+    case recent(_ title: String? = nil, [RecentItem])
+    /// The extension's own settings, as the host keeps and draws them: the manifest's `settings`, these `keys` or all of them, and
+    /// with `ai` the person's switch for its use of the AI (D100).
+    case settings(_ title: String? = nil, keys: [String] = [], ai: Bool = false)
 
     var json: [String: Any] {
         switch self {
@@ -279,6 +296,26 @@ public enum Block {
             return hero.json
         case .transport(let transport):
             return transport.json
+        case .stats(let items):
+            return ["type": "stats", "items": items.map(\.json)]
+        case .cards(let size, let items):
+            return ["type": "cards", "size": size.rawValue, "items": items.map(\.json)]
+        case .tabs(let selected, let tabs):
+            var out: [String: Any] = ["type": "tabs", "tabs": tabs.map(\.json)]
+            if let selected { out["selected"] = selected }
+            return out
+        case .badges(let title, let items):
+            var out: [String: Any] = ["type": "badges", "items": items.map(\.json)]
+            if let title { out["title"] = title }
+            return out
+        case .recent(let title, let items):
+            var out: [String: Any] = ["type": "recent", "items": items.map(\.json)]
+            if let title { out["title"] = title }
+            return out
+        case .settings(let title, let keys, let ai):
+            var out: [String: Any] = ["type": "settings", "keys": keys, "ai": ai]
+            if let title { out["title"] = title }
+            return out
         case .action(let action):
             return action.json
         }
@@ -386,9 +423,18 @@ public struct Hero {
     public var busy: Bool
     public var facts: [(String, String)]
     public var actions: [Action]
+    /// A picture behind it at its trailing end, from the pack (D100).
+    public var scene: Picture?
+    /// A figure at its trailing end, `.companion(.full)` the person's own, with `says` in a bubble beside it, inside this page.
+    public var figure: Picture?
+    public var says: String?
 
     public init(_ title: String, eyebrow: String? = nil, detail: String? = nil, tone: Tone = .neutral, symbol: String? = nil, code: String? = nil,
-                image: String? = nil, busy: Bool = false, facts: [(String, String)] = [], actions: [Action] = []) {
+                image: String? = nil, busy: Bool = false, facts: [(String, String)] = [], actions: [Action] = [], scene: Picture? = nil,
+                figure: Picture? = nil, says: String? = nil) {
+        self.scene = scene
+        self.figure = figure
+        self.says = says
         self.title = title
         self.eyebrow = eyebrow
         self.detail = detail
@@ -409,6 +455,9 @@ public struct Hero {
         if let symbol { out["symbol"] = symbol }
         if let code { out["code"] = code }
         if let image { out["image"] = image }
+        if let scene { out["scene"] = scene.json }
+        if let figure { out["figure"] = figure.json }
+        if let says { out["says"] = says }
         return out
     }
 }

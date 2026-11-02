@@ -11,6 +11,8 @@ extension AppCoordinator {
             size: NSSize(width: 18, height: 18))
         statusItem.install(image: menuBarImage)
         statusItem.palettes = { [weak self] in self?.palettes.current ?? [] }
+        statusItem.entries = { [weak self] in self?.runtime.extensions.shelf.entries(in: .pocket) ?? [] }
+        statusItem.entryItem = { [weak self] entry in self?.menuItem(entry) }
         statusItem.contentProvider = { [weak self] in await self?.pocketContent() ?? PocketContent() }
         statusItem.actions = PocketActions(
             ask: { [weak self] text in
@@ -58,6 +60,7 @@ extension AppCoordinator {
                 Task { await self?.palettes.toggle(id) }
             },
             openGames: { [weak self] in self?.pocketClosing { $0.openPlayMenu(focus: true) } },
+            openEntry: { [weak self] entry in self?.pocketClosing { $0.run(entry) } },
             quit: { NSApp.terminate(nil) })
         statusItem.setCompanionHidden(!companion.isVisible)
     }

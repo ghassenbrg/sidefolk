@@ -24,10 +24,17 @@ public actor ExtensionHost {
         public var mcpSearchPath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         /// The person's language: which of an extension's words are shown, and what its program is told (D76).
         public var language: @Sendable () -> String = { ExtensionStrings.current }
+        /// Runs a tool as the extension asks for it (one History row, a setting, a request to the AI), through the executor (D100).
+        public var runTool: (@Sendable (_ name: String, _ input: JSONValue, _ caller: Caller, _ timeout: TimeInterval) async -> ToolOutcome)?
+        /// The person's AI by name, nil without one: what an extension's label says (D100).
+        public var aiName: @Sendable () -> String? = { nil }
+        /// A section of Sidefolk's own settings by name, given once to the extension that does that work now (D100).
+        public var carriedSettings: @Sendable (String) async -> JSONValue? = { _ in nil }
+        public var forgetCarried: @Sendable (String) async -> Void = { _ in }
         public init() {}
     }
 
-    private struct Runtime {
+    struct Runtime {
         var record: ExtensionRecord
         var pin: ExtensionPin
         var manifest: ExtensionManifest?
@@ -50,6 +57,10 @@ public actor ExtensionHost {
         var outputMuteStarts: [Date] = []
         /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
         var oneShots: [ObjectIdentifier: MCPClient] = [:]
+        /// What the host keeps for it: its settings, its AI switch and count (D100).
+        var preferences = ExtensionPreferences()
+        var lastActivity = Date.distantPast
+        var aiAsking = false
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -57,12 +68,16 @@ public actor ExtensionHost {
     private let registry: ToolRegistry
     nonisolated let events: EventBus
     private let config: Configuration
+    /// For what lives beside this file.
+    var configuration: Configuration { config }
+    var preferencesDatabase: AppDatabase { store.db }
     private let secrets: @Sendable (String) async -> [String: String]
     private let installer: ExtensionInstaller
+    func installedFolder(_ id: String) -> String { installer.installedFolder(id) }
     private let validator: ManifestValidator
     private let integrity = ExtensionIntegrity()
     private let outputMute: OutputMuteRouter
-    private var runtimes: [String: Runtime] = [:]
+    var runtimes: [String: Runtime] = [:]
     private var launches = 0
     /// What extension pages' charts said (D62).
     public nonisolated let pageHistory: ExtensionPageHistory
@@ -75,6 +90,12 @@ public actor ExtensionHost {
     public nonisolated let surfaceShelf = SurfaceShelf()
     /// The surface open in each place (D99): one panel, one overlay.
     var openSurfaces: [SurfaceInfo.Presentation: OpenSurface] = [:]
+    /// What switched-on extensions put in Sidefolk's menus and offer for drops, read as menus open (D100).
+    public nonisolated let shelf = ExtensionShelf()
+    /// What goes with each request, beside the language (D100).
+    let requestContext = ExtensionRequestContext()
+    /// Reaches the person's AI for an extension that asks (D100): the app sets it once its AI runtime exists.
+    var aiHelper: AIHelper?
     /// The one game open in the Play panel, with its recent moves for the rate limit (ExtensionHost+Games).
     var openGame: OpenGame?
     /// Makes a trivia pack for a game that asks (D95): the app sets it once the person's AI can be reached.
@@ -142,6 +163,7 @@ public actor ExtensionHost {
             rt.record.granted = granted
             try? await store.save(rt.record)
         }
+        rt.preferences = await loadPreferences(record.id)
         if record.kind == .sidefolk {
             restoreInterruptedUpdate(record.id, pins: pin.files)
             let folder = installer.installedFolder(record.id)
@@ -219,7 +241,7 @@ public actor ExtensionHost {
             tools.append(ExtensionToolInfo(name: ExtensionTool.registryName(short: shortName(rt), tool: local),
                                            title: title(rt, def), risk: risk(rt, def.name),
                                            quarantined: rt.pin.pending[name] != nil,
-                                           commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) }?.shown ?? [],
+                                           commands: meta.flatMap { commandsOf(rt, $0) }?.shown(language: config.language()) ?? [],
                                            forAI: meta?.offeredToModel ?? true))
         }
         return ExtensionInfo(id: id, name: name(rt),
@@ -229,16 +251,22 @@ public actor ExtensionHost {
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings, restingFor: restingFor(id),
-                             examples: examples(rt), services: rt.manifest?.services ?? [])
+                             examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt))
+    }
+
+    /// A tool's commands, in every language the extension has them in (D100).
+    private func commandsOf(_ rt: Runtime, _ meta: ExtensionManifest.ToolMeta) -> ToolCommands? {
+        guard let manifest = rt.manifest else { return nil }
+        return ToolCommands(meta.commands, vocabulary: CommandVocabulary(manifest: manifest, strings: rt.strings))
     }
 
     // MARK: Words (D76)
 
     /// The extension's own words in the person's language, when it has them.
-    private func words(_ rt: Runtime) -> ExtensionStrings.Words? { rt.strings?.words(for: config.language()) }
+    func words(_ rt: Runtime) -> ExtensionStrings.Words? { rt.strings?.words(for: config.language()) }
 
     /// Its own translation, then the manifest.
-    private func name(_ rt: Runtime) -> String {
+    func name(_ rt: Runtime) -> String {
         words(rt)?.name ?? rt.pin.name
     }
 
@@ -261,6 +289,7 @@ public actor ExtensionHost {
     private func shown(_ p: ExtensionPermissions, _ words: ExtensionStrings.Words?) -> ExtensionPermissions {
         var p = p
         if p.networkPurpose != nil, let purpose = words?.networkPurpose { p.networkPurpose = purpose }
+        if p.ai != nil, let purpose = words?.aiPurpose { p.ai?.purpose = purpose }
         return p
     }
 
@@ -288,6 +317,7 @@ public actor ExtensionHost {
         var preview = InstallPreview(report: report)
         guard let manifest = report.manifest else { return preview }
         preview.conflict = conflict(id: manifest.id, short: manifest.shortName, kind: .sidefolk)
+        preview.report.warnings += commandClashes(manifest, strings: report.strings)
         if let old = runtimes[manifest.id], old.record.kind == .sidefolk {
             let had = old.pin.permissions ?? ExtensionPermissions()
             let oldTools = old.manifest.map { Array($0.tools.keys) } ?? Array(old.pin.tools.keys)
@@ -353,7 +383,9 @@ public actor ExtensionHost {
             record.manifestHash = ExtensionFiles.aggregateHash(staged.pins)
             let pin = ExtensionPin(name: manifest.name, description: manifest.description, tagline: manifest.tagline, folk: manifest.folk,
                                    author: manifest.author, origin: origin, launch: start, permissions: permissions, files: staged.pins)
-            runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath, strings: final.strings)
+            // What the host keeps survives an update, and comes back with a restored backup's install (D100).
+            runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath, strings: final.strings,
+                                   preferences: await loadPreferences(id))
             _ = try await launch(id, approveAll: true)
             guard runtimes[id] != nil else { throw UserFacingError("The extension stopped while it was being installed.") }
             if !enabled {
@@ -394,6 +426,7 @@ public actor ExtensionHost {
         installer.remove(id: id)
         integrity.forget(id)
         await pageHistory.forget(extensionId: id)
+        await forgetPreferences(id)
         try await store.delete(id: id)
         reconsiderResting(was: rt.manifest?.replaces ?? [])
         Log.shared.info("extensions", "uninstalled", ["id": id])
@@ -725,6 +758,7 @@ public actor ExtensionHost {
     func shelveGames() {
         gameShelf.set(games())
         surfaceShelf.set(surfaces())
+        shelveAbilities()
     }
 
     /// The running process of an extension that declares `game`, and the extension's name for messages.
@@ -829,7 +863,8 @@ public actor ExtensionHost {
         }
         try await verifyFiles(id)
         let process = try ExtensionProcess(spec: try sandboxedSpec(id, folders: folders), limits: config.limits)
-        let client = MCPClient(process: process, language: config.language)
+        let context = requestContext, aiName = config.aiName
+        let client = MCPClient(process: process, language: config.language, extras: { context.extras(id, aiName: aiName) })
         let key = ObjectIdentifier(client)
         runtimes[id]?.oneShots[key] = client
         func finish() async {
@@ -924,7 +959,10 @@ public actor ExtensionHost {
         runtimes[id]?.outputMuteStarts = []
         let process = try ExtensionProcess(spec: spec, limits: config.limits)
         // Only Sidefolk's own protocol is told the person's language; a plain MCP server gets requests as MCP has them.
-        let client = MCPClient(process: process, language: rt.record.kind == .sidefolk ? config.language : nil) { [weak self, process] event in
+        let context = requestContext, aiName = config.aiName
+        var extras: (@Sendable () -> [String: JSONValue])?
+        if rt.record.kind == .sidefolk { extras = { @Sendable in context.extras(id, aiName: aiName) } }
+        let client = MCPClient(process: process, language: rt.record.kind == .sidefolk ? config.language : nil, extras: extras) { [weak self, process] event in
             let stderr = if case .exited = event { process.stderrTail } else { "" }
             Task { await self?.handle(event, id: id, generation: generation, stderr: stderr) }
         }
@@ -935,6 +973,7 @@ public actor ExtensionHost {
             let (tools, refused) = try await client.listTools(timeout: config.callTimeout)
             if rt.record.kind == .mcp, !server.version.isEmpty { runtimes[id]?.record.version = server.version }
             try await reconcile(id, tools: tools, refused: refused, approveAll: approveAll)
+            Task { await self.deliverCarried(id) }
         } catch {
             let exit = await client.shutdown()
             if runtimes[id]?.generation == generation { runtimes[id]?.client = nil }
@@ -1227,6 +1266,18 @@ public actor ExtensionHost {
                 await self.triviaAnswered(id)
                 await client.notify("sidefolk/trivia.pack", params: reply)
             }
+        case .aiRequest(let request, let params):
+            // One at a time each; the answer goes back to this program alone (D100, SECURITY T41).
+            guard rt.record.enabled, rt.client != nil, !rt.aiAsking else {
+                await rt.client?.notify("sidefolk/ai.answer", params: ["request": .string(request), "ok": false, "reason": .string(AIHelper.Refusal.busy.rawValue)])
+                return
+            }
+            runtimes[id]?.aiAsking = true
+            Task { await self.answerAI(id, request: request, params: params) }
+        case .activity(let params):
+            await addActivity(id, params: params)
+        case .settingSet(let params):
+            await programSetsSetting(id, params: params)
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:
@@ -1382,7 +1433,7 @@ public actor ExtensionHost {
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote,
                              folderParameters: meta?.paths ?? [:], firstParty: firstParty,
-                             commands: meta.flatMap { ToolCommands($0.commands, words: rt.manifest?.words ?? [:]) },
+                             commands: meta.flatMap { commandsOf(rt, $0) },
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },
                              service: Self.reachName(rt.manifest?.services ?? [])) { [weak self] input, folders in
@@ -1433,7 +1484,7 @@ public actor ExtensionHost {
         services.isEmpty ? nil : Wording.list(services.map(\.name))
     }
 
-    private func shortName(_ rt: Runtime) -> String {
+    func shortName(_ rt: Runtime) -> String {
         String(rt.record.id.split(separator: ".").last ?? Substring(rt.record.id))
     }
 

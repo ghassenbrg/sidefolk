@@ -53,11 +53,8 @@ enum GameFigures {
         return CGRect(x: minX, y: h - 1 - maxY, width: maxX - minX + 1, height: maxY - minY + 1)
     }
 
-    /// The Mac account's picture, read once from the local directory; nil when it has none.
-    @MainActor static let accountPicture: NSImage? = {
-        guard let identity = CBIdentity(name: NSUserName(), authority: CBIdentityAuthority.local()) as? CBUserIdentity else { return nil }
-        return identity.image
-    }()
+    /// The Mac account's picture (`AccountPicture`).
+    @MainActor static var accountPicture: NSImage? { AccountPicture.current }
 }
 
 /// The person on the score bar: their picture, or a friendly stand-in (a smiling face on a soft disc).

@@ -26,6 +26,9 @@ enum ExtFixtures {
         }
     }
 
+    /// Where `swift test` put the built products: the one program built here is the surfaces sample's (D99).
+    static let products = Bundle(for: ProductsMarker.self).bundleURL.deletingLastPathComponent()
+
     /// Every extension lives in the sidefolk-addons repository (D55, D98). Their tests here
     /// run them in this host's sandbox when a checkout of it sits beside this one ($SIDEFOLK_ADDONS_REPO moves it),
     /// built with `swift build`; without one they are skipped (`noAddons`).
@@ -210,6 +213,9 @@ enum ExtFixtures {
     """#
 }
 
+/// Its bundle sits among the built products.
+private final class ProductsMarker {}
+
 /// An isolated host over a temp Sidefolk home, removed when the test ends.
 final class HostEnv {
     let env: TestEnv
@@ -226,6 +232,8 @@ final class HostEnv {
         store = ExtensionStore(env.db)
         var config = ExtensionHost.Configuration()
         config.callTimeout = 10
+        let executor = env.executor
+        config.runTool = { name, input, caller, timeout in await executor.execute(name: name, input: input, caller: caller, timeout: timeout) }
         configure(&config)
         host = ExtensionHost(paths: paths, store: store, registry: env.registry, events: env.events, configuration: config)
     }

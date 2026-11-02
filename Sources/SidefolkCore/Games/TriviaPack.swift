@@ -130,9 +130,7 @@ public enum TriviaPackParser {
 /// The fixed words Sidefolk sends the model (D95): the rules and the JSON shape, then the request's own fields. The
 /// person's other data never goes: no memory, no notes, no conversation, no tools.
 public enum TriviaPrompt {
-    public static let languageNames = ["en": "English", "fr": "French", "es": "Spanish", "de": "German", "it": "Italian",
-                                       "pt-BR": "Brazilian Portuguese", "ja": "Japanese", "ko": "Korean", "zh-Hans": "Simplified Chinese",
-                                       "ar": "Arabic"]
+    public static let languageNames = ExtensionStrings.languageNames
 
     public static let system = """
         You write questions for a friendly multiple-choice trivia game. Reply with one JSON object and nothing else, \

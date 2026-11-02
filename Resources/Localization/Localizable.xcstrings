@@ -1407,6 +1407,71 @@
         }
       }
     },
+    "%@ asked your AI: %@" : {
+      "comment" : "History: an extension asked the person's AI to write something; its name, then what for, in its own words",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلب %1$@ من الذكاء الاصطناعي لديك: %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ hat deine KI gefragt: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ asked your AI: %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ le pidió a tu IA: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a demandé à votre IA : %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ha chiesto alla tua IA: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@がAIに依頼: %2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@이(가) AI에 요청: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ pediu à sua IA: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 请你的 AI：%2$@"
+          }
+        }
+      }
+    },
     "%@ asks" : {
       "comment" : "Above a decision card: the companion asks",
       "localizations" : {
@@ -24481,6 +24546,221 @@
         }
       }
     },
+    "%lld settings, in Settings › Add-ons" : {
+      "comment" : "Install sheet: how many settings an extension declares",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld إعدادات، في الإعدادات › الإضافات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld إعدادًا، في الإعدادات › الإضافات"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "إعداد واحد (%lld)، في الإعدادات › الإضافات"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld إعداد، في الإعدادات › الإضافات"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "إعدادان (%lld)، في الإعدادات › الإضافات"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld إعداد، في الإعدادات › الإضافات"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Einstellung, unter Einstellungen › Add-ons"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Einstellungen, unter Einstellungen › Add-ons"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld setting, in Settings › Add-ons"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld settings, in Settings › Add-ons"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ajustes, en Ajustes › Complementos"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ajuste, en Ajustes › Complementos"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ajustes, en Ajustes › Complementos"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglages, dans Réglages › Modules"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglage, dans Réglages › Modules"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglages, dans Réglages › Modules"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld impostazioni, in Impostazioni › Componenti"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld impostazione, in Impostazioni › Componenti"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld impostazioni, in Impostazioni › Componenti"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld個の設定（設定 › アドオン）"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "설정 %lld개, 설정 › 애드온에 있어요"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ajustes, em Ajustes › Complementos"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ajuste, em Ajustes › Complementos"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ajustes, em Ajustes › Complementos"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 项设置，在“设置 › 附加项”中"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld skills" : {
       "comment" : "What a backup holds",
       "localizations" : {
@@ -33184,6 +33464,65 @@
         }
       }
     },
+    "A tab in Ask: %@" : {
+      "comment" : "Install sheet: a tab an extension adds; its title",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "علامة تبويب في «اسأل»: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Tab in Fragen: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una pestaña en Preguntar: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un onglet dans Demander : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una scheda in Chiedi: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「質問」のタブ: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "질문의 탭: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma aba em Perguntar: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“询问”中的标签页：%@"
+          }
+        }
+      }
+    },
     "A theme changes colours, type, spacing and corners. It can't run anything." : {
       "localizations" : {
         "ar" : {
@@ -36916,6 +37255,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "附加组件已更新 %@"
+          }
+        }
+      }
+    },
+    "Add-ons' settings" : {
+      "comment" : "Settings search: settings extensions declare",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات الإضافات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen der Add-ons"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de complementos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages des modules"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni dei componenti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アドオンの設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "애드온 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes dos complementos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加项的设置"
           }
         }
       }
@@ -42234,6 +42632,65 @@
         }
       }
     },
+    "An extension" : {
+      "comment" : "History: when the extension's name isn't known",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إحدى الإضافات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Erweiterung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una extensión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une extension"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un’estensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma extensão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "某个扩展"
+          }
+        }
+      }
+    },
     "An extension Sidefolk hasn't checked is asking." : {
       "localizations" : {
         "ar" : {
@@ -46091,6 +46548,65 @@
         }
       }
     },
+    "Ask the AI for an extension" : {
+      "comment" : "A tool: an extension asks the person's AI to write something",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سؤال الذكاء الاصطناعي من أجل إضافة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die KI für eine Erweiterung fragen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preguntar a la IA para una extensión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander à l’IA pour une extension"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiedere all’IA per un’estensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能のためにAIに頼む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램을 위해 AI에 요청"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedir à IA para uma extensão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为扩展询问 AI"
+          }
+        }
+      }
+    },
     "Ask the user" : {
       "localizations" : {
         "ar" : {
@@ -49196,66 +49712,6 @@
         }
       }
     },
-    "Battery, disk and memory at a glance" : {
-      "comment" : "System Vitals: one line under its name",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "البطارية والقرص والذاكرة في لمحة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batterie, Speicherplatz und RAM im Blick"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batería, disco y memoria de un vistazo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batterie, disque et mémoire d’un coup d’œil"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batteria, disco e memoria a colpo d'occhio"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "バッテリー、ディスク、メモリをひと目で"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "배터리, 디스크, 메모리를 한눈에"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bateria, disco e memória de relance"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一眼查看电池、磁盘和内存"
-          }
-        }
-      }
-    },
     "Battery, disk and memory at a glance, and a nudge when the battery or the disk runs low." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -51319,6 +51775,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可以使用 Mac 通知吗？"
+          }
+        }
+      }
+    },
+    "Can ask your AI to write something, up to %lld times a day. It says it uses it %@." : {
+      "comment" : "Install sheet: permissions.ai; the daily limit, then the author's purpose, “to write quiz questions”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها أن تطلب من الذكاء الاصطناعي لديك كتابة شيء، حتى %1$lld مرة في اليوم. تقول إنها تستخدمه %2$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann deine KI etwas schreiben lassen, bis zu %1$lld-mal am Tag. Sie sagt, sie nutzt das %2$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can ask your AI to write something, up to %1$lld times a day. It says it uses it %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede pedirle a tu IA que escriba algo, hasta %1$lld veces al día. Dice que lo usa %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut demander à votre IA d’écrire quelque chose, jusqu’à %1$lld fois par jour. Elle dit s’en servir %2$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può chiedere alla tua IA di scrivere qualcosa, fino a %1$lld volte al giorno. Dice di usarla %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIに文章を書いてもらえます（1日%1$lld回まで）。用途の説明: %2$@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI에게 글을 써 달라고 요청할 수 있어요. 하루 최대 %1$lld번. 사용 목적: %2$@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode pedir à sua IA que escreva algo, até %1$lld vezes por dia. Diz que usa isso %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以请你的 AI 写点东西，每天最多 %1$lld 次。它说用途是：%2$@。"
           }
         }
       }
@@ -53834,6 +54355,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改你日历中的日程"
+          }
+        }
+      }
+    },
+    "Change an extension's setting" : {
+      "comment" : "A tool: a setting an extension declared",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير إعداد إضافة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Einstellung einer Erweiterung ändern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar un ajuste de una extensión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier un réglage d’extension"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiare un’impostazione di un’estensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能の設定を変更"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램 설정 변경"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar um ajuste de uma extensão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改扩展的设置"
           }
         }
       }
@@ -71561,6 +72141,7 @@
       }
     },
     "Done" : {
+      "comment" : "A card on an extension's page: what it is about is done for today",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -73725,66 +74306,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "推理强度"
-          }
-        }
-      }
-    },
-    "Eleven games with your companion, and random picks" : {
-      "comment" : "Playtime: one line under its name",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إحدى عشرة لعبة مع رفيقك، واختيار عشوائي"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elf Spiele mit deinem Begleiter und Zufallswahl"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Once juegos con tu compañero y elecciones al azar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Onze jeux avec votre compagnon, et des tirages au sort"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Undici giochi con il tuo compagno e scelte a caso"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "相棒と遊ぶ11のゲームとランダム選び"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "동반자와 하는 게임 11가지와 무작위 고르기"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Onze jogos com seu companheiro e sorteios"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "和伙伴一起玩的十一个游戏，还有随机挑选"
           }
         }
       }
@@ -82571,6 +83092,7 @@
       }
     },
     "From %@" : {
+      "comment" : "A menu item an extension added: its tooltip names the extension",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -100410,6 +100932,124 @@
         }
       }
     },
+    "In the companion's menu: %@" : {
+      "comment" : "Install sheet: items an extension adds; their titles",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في قائمة الرفيق: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Menü des Begleiters: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el menú del compañero: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans le menu du compagnon : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nel menu del compagno: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンのメニュー: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 메뉴: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No menu do companheiro: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在伙伴的菜单中：%@"
+          }
+        }
+      }
+    },
+    "In the menu bar's menu: %@" : {
+      "comment" : "Install sheet: items an extension adds; their titles",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في قائمة شريط القوائم: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Menü der Menüleiste: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el menú de la barra de menús: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans le menu de la barre des menus : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nel menu della barra dei menu: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーのメニュー: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴 막대 메뉴: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No menu da barra de menus: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在菜单栏的菜单中：%@"
+          }
+        }
+      }
+    },
     "In the sidebar" : {
       "comment" : "All Extensions: whether a page has a row in Home's sidebar",
       "extractionState" : "stale",
@@ -102808,6 +103448,64 @@
         }
       }
     },
+    "It counts toward your AI's usage. The AI gets only the words the extension sends: no tools, nothing of yours. Each request is in History, and a switch in Settings › Add-ons turns it off." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحتسب ذلك من استخدام الذكاء الاصطناعي لديك. لا يتلقى الذكاء الاصطناعي سوى الكلمات التي ترسلها الإضافة: بلا أدوات ولا شيء من بياناتك. كل طلب يظهر في السجل، ومفتاح في الإعدادات › الإضافات يوقفه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das zählt zur Nutzung deiner KI. Die KI bekommt nur die Worte, die die Erweiterung schickt: keine Werkzeuge, nichts von dir. Jede Anfrage steht im Verlauf, und ein Schalter unter Einstellungen › Add-ons schaltet das ab."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuenta en el uso de tu IA. La IA recibe solo las palabras que envía la extensión: sin herramientas, nada tuyo. Cada petición aparece en Historial, y un interruptor en Ajustes › Complementos lo desactiva."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela compte dans l’usage de votre IA. L’IA ne reçoit que les mots envoyés par l’extension : aucun outil, rien de vous. Chaque demande figure dans l’Historique, et un bouton dans Réglages › Modules la désactive."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conta nell’uso della tua IA. L’IA riceve solo le parole inviate dall’estensione: nessuno strumento, niente di tuo. Ogni richiesta è nella Cronologia, e un interruttore in Impostazioni › Componenti la disattiva."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIの利用量に含まれます。AIが受け取るのは拡張機能が送る言葉だけで、ツールもあなたの情報も渡りません。依頼はすべて履歴に残り、設定 › アドオンのスイッチでオフにできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량에 포함돼요. AI는 확장 프로그램이 보낸 말만 받아요. 도구도, 내 정보도 없어요. 모든 요청은 기록에 남고, 설정 › 애드온의 스위치로 끌 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conta no uso da sua IA. A IA recebe só as palavras que a extensão envia: nenhuma ferramenta, nada seu. Cada pedido aparece no Histórico, e um botão em Ajustes › Complementos desliga isso."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会计入你的 AI 用量。AI 只收到扩展发送的文字：没有工具，也没有你的任何内容。每次请求都记录在“历史”中，“设置 › 附加项”里的开关可以关闭它。"
+          }
+        }
+      }
+    },
     "It didn't ask Sidefolk for anything." : {
       "localizations" : {
         "ar" : {
@@ -103754,6 +104452,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它声称只与这些服务通信，但其沙盒允许访问任何网站。"
+          }
+        }
+      }
+    },
+    "It says it uses it %@. %lld of %lld requests today." : {
+      "comment" : "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقول إنها تستخدمه %1$@. %2$lld من %3$lld طلبًا اليوم."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie sagt, sie nutzt das %1$@. %2$lld von %3$lld Anfragen heute."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It says it uses it %1$@. %2$lld of %3$lld requests today."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dice que lo usa %1$@. %2$lld de %3$lld peticiones hoy."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle dit s’en servir %1$@. %2$lld demandes sur %3$lld aujourd’hui."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dice di usarla %1$@. %2$lld richieste su %3$lld oggi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用途の説明: %1$@。今日の依頼 %2$lld / %3$lld 回。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용 목적: %1$@. 오늘 요청 %2$lld/%3$lld번."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diz que usa isso %1$@. %2$lld de %3$lld pedidos hoje."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它说用途是：%1$@。今天已请求 %2$lld / %3$lld 次。"
           }
         }
       }
@@ -109488,6 +110251,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要让 Sidefolk 在 %@ 中工作吗？"
+          }
+        }
+      }
+    },
+    "Let it use your AI" : {
+      "comment" : "An extension's row: the person's switch for its use of their AI",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح لها باستخدام الذكاء الاصطناعي لديك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine KI nutzen lassen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar que use tu IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lui laisser utiliser votre IA"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia che usi la tua IA"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIの利用を許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 AI 사용 허용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar usar sua IA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许它使用你的 AI"
           }
         }
       }
@@ -127068,6 +127890,65 @@
         }
       }
     },
+    "Note in History" : {
+      "comment" : "A tool: an extension adds one row to History",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تدوين في السجل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Verlauf notieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotar en Historial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noter dans l’Historique"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annota nella Cronologia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "履歴に記録"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록에 남기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotar no Histórico"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记入历史"
+          }
+        }
+      }
+    },
     "Note: %@" : {
       "comment" : "Under a reminder: the note it belongs to",
       "localizations" : {
@@ -132130,7 +133011,7 @@
       }
     },
     "Off" : {
-      "comment" : "Reasoning effort: the model doesn't reason before answering",
+      "comment" : "An extension's setting: a switch that is off\nReasoning effort: the model doesn't reason before answering",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -132360,6 +133241,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "较早的回答在历史中"
+          }
+        }
+      }
+    },
+    "On" : {
+      "comment" : "An extension's setting: a switch that is on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "켬"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开"
           }
         }
       }
@@ -143524,64 +144464,6 @@
         }
       }
     },
-    "Play on TV" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "التشغيل على التلفاز"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auf dem TV abspielen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproducir en la TV"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lire sur la TV"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Riproduci sulla TV"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "TV で再生"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "TV에서 재생"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproduzir na TV"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在电视上播放"
-          }
-        }
-      }
-    },
     "Play rock, paper, scissors" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -144120,65 +145002,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "玩家2"
-          }
-        }
-      }
-    },
-    "Plays the video on your TV with Miraya." : {
-      "comment" : "The drop card: what Play on TV does; Miraya is an extension's name",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يشغّل الفيديو على التلفاز باستخدام Miraya."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spielt das Video mit Miraya auf deinem TV ab."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproduce el vídeo en tu TV con Miraya."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lit la vidéo sur votre TV avec Miraya."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Riproduce il video sulla tua TV con Miraya."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Miraya で動画を TV に再生します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Miraya로 TV에서 동영상을 재생해요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproduz o vídeo na sua TV com o Miraya."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用 Miraya 在电视上播放视频。"
           }
         }
       }
@@ -167996,7 +168819,7 @@
       }
     },
     "Show" : {
-      "comment" : "Ask's tabs, for VoiceOver: the conversation, Today or Play\nOpens Settings › Trust › Your data\nOpens the Gallery's Updates",
+      "comment" : "Ask's tabs, for VoiceOver: the conversation, Today or Play\nOpens Settings › Trust › Your data\nOpens the Gallery's Updates\nVoiceOver: tabs on an extension's page",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -183945,66 +184768,6 @@
         }
       }
     },
-    "System Vitals+" : {
-      "comment" : "A built-in extension: the whole Mac with live charts",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Vitals+"
-          }
-        }
-      }
-    },
     "System information" : {
       "localizations" : {
         "ar" : {
@@ -189086,6 +189849,65 @@
         }
       }
     },
+    "That isn't a value for “%@”." : {
+      "comment" : "An extension's setting, by its title",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه ليست قيمة لـ«%@»."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ist kein Wert für „%@“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eso no es un valor para «%@»."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n’est pas une valeur pour « %@ »."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è un valore per “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の値ではありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”에 맞는 값이 아니에요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isso não é um valor para “%@”."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这不是“%@”的有效值。"
+          }
+        }
+      }
+    },
     "That isn't a web address. Nothing was saved." : {
       "localizations" : {
         "ar" : {
@@ -191990,7 +192812,7 @@
       }
     },
     "The AI didn't answer." : {
-      "comment" : "Trivia questions couldn't be made: the call failed",
+      "comment" : "An extension's request to the AI failed\nTrivia questions couldn't be made: the call failed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -201149,6 +201971,64 @@
         }
       }
     },
+    "There's no such setting." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يوجد هذا الإعداد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Einstellung gibt es nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese ajuste no existe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce réglage n’existe pas."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa impostazione non esiste."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その設定はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그런 설정은 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esse ajuste não existe."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有这项设置。"
+          }
+        }
+      }
+    },
     "There's nothing for me to work on yet." : {
       "localizations" : {
         "ar" : {
@@ -206931,66 +207811,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "废纸篓"
-          }
-        }
-      }
-    },
-    "Trivia and random picks for a break" : {
-      "comment" : "Playtime: one line under its name",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مسابقة أسئلة واختيارات عشوائية للاستراحة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quiz und Zufallsauswahl für eine Pause"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trivial y azar para un descanso"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quiz et tirages au sort pour une pause"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quiz e scelte a caso per una pausa"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ひと休みにクイズとくじ引き"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "쉬어 갈 때 즐기는 퀴즈와 무작위 뽑기"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quiz e sorteios para uma pausa"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "休息时的问答游戏和随机挑选"
           }
         }
       }
@@ -223381,6 +224201,65 @@
         }
       }
     },
+    "When you drop something on the companion: %@" : {
+      "comment" : "Install sheet: what an extension offers for a drop; their titles",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عندما تُفلت شيئًا على الرفيق: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn du etwas auf den Begleiter ziehst: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando sueltas algo sobre el compañero: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand vous déposez quelque chose sur le compagnon : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando trascini qualcosa sul compagno: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンに何かをドロップしたとき: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언에 무언가를 놓으면: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando você solta algo no companheiro: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当你把东西拖到伙伴身上时：%@"
+          }
+        }
+      }
+    },
     "When — e.g. “tomorrow 9am” or “every 30 minutes”; leave empty to keep %@" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -226468,6 +227347,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在记下…"
+          }
+        }
+      }
+    },
+    "Written by %@" : {
+      "comment" : "History: text the person's AI wrote for an extension; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتبه %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschrieben von %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escrito por %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrit par %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scritto da %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ が作成"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 작성"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escrito por %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由 %@ 撰写"
           }
         }
       }
@@ -231449,66 +232387,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你所在的城市，来自定位服务。macOS 会询问你一次。"
-          }
-        }
-      }
-    },
-    "Your whole Mac at a glance, with live charts" : {
-      "comment" : "System Vitals+: one line under its name",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "جهاز Mac كله بنظرة واحدة، مع رسوم بيانية مباشرة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein ganzer Mac auf einen Blick, mit Live-Diagrammen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todo tu Mac de un vistazo, con gráficos en vivo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout votre Mac d’un coup d’œil, en graphiques"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutto il tuo Mac a colpo d'occhio, con grafici"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mac全体をひと目で、ライブグラフ付き"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "실시간 차트로 한눈에 보는 Mac 전체"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seu Mac inteiro num relance, com gráficos ao vivo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一眼看清整台 Mac，附实时图表"
           }
         }
       }
@@ -254300,6 +255178,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”已经是 Sidefolk 的伙伴之一。"
+          }
+        }
+      }
+    },
+    "“%@” is also a sentence of %@: when someone says it, the AI answers instead of either." : {
+      "comment" : "Install sheet: two extensions claim the same command sentence; the sentence, then the other extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%1$@» جملة لدى %2$@ أيضًا: عندما يقولها أحد، يجيب الذكاء الاصطناعي بدلًا من أيٍّ منهما."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%1$@“ ist auch ein Satz von %2$@: Wenn jemand ihn sagt, antwortet die KI statt einer der beiden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” is also a sentence of %2$@: when someone says it, the AI answers instead of either."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%1$@» también es una frase de %2$@: cuando alguien la dice, responde la IA en lugar de cualquiera de las dos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » est aussi une phrase de %2$@ : quand quelqu’un la dit, c’est l’IA qui répond, pas l’une des deux."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@” è anche una frase di %2$@: quando qualcuno la dice, risponde l’IA invece di una delle due."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」は%2$@の文でもあります。誰かがそう言うと、どちらでもなくAIが答えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@”은(는) %2$@의 문장이기도 해요. 누군가 이 말을 하면 둘 중 어느 쪽도 아닌 AI가 답해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@” também é uma frase de %2$@: quando alguém a diz, a IA responde em vez de qualquer uma das duas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@”也是 %2$@ 的句子：有人说这句话时，由 AI 回答，而不是它们中的任何一个。"
           }
         }
       }

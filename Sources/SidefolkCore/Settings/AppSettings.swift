@@ -293,6 +293,9 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var sidebarIcons: ThemeLayout.Icons?
     /// Games in the Play panel: the companion's tone, sounds, Sneaky (D75).
     public var games = GameSettings()
+    /// Sections this copy doesn't know, kept as they were (D100): a section the app retired stays here until the extension that
+    /// does that work now receives it, once (`settings_from`).
+    public var parked: [String: JSONValue] = [:]
 
     public init() {}
 
@@ -353,6 +356,17 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.homePages, &homePages)
         sidebarIcons = try? c.decodeIfPresent(ThemeLayout.Icons.self, forKey: .sidebarIcons)
         read(.games, &games)
+        read(.parked, &parked)
+        if let all = try? decoder.container(keyedBy: AnyKey.self) {
+            for key in all.allKeys where CodingKeys(stringValue: key.stringValue) == nil {
+                if let value = try? all.decode(JSONValue.self, forKey: key) { parked[key.stringValue] = value }
+            }
+        }
+    }
+
+    /// A section of these settings by its name, whether the app still reads it or retired it (D100); nil when there is none.
+    public func section(_ name: String) -> JSONValue? {
+        parked[name] ?? (try? JSONValue.from(self))?[name]
     }
 
 

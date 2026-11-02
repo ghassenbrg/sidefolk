@@ -134,6 +134,9 @@ protocol AskActions: AnyObject {
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel)
     /// The drop card's four choices for what was dropped, the first what Return does.
     func dropChoices(for attachment: Attachment) -> [DropChoice]
+    /// What extensions offer for it (D100).
+    func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction]
+    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel)
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
@@ -143,6 +146,7 @@ protocol AskActions: AnyObject {
     func openNow()
     /// The Play panel's menu of games, in Ask's place (D84).
     func openPlay()
+    func open(_ entry: ExtensionEntry)
 }
 
 /// The answer a reply follows up: its card, its conversation, and the words it answered.
@@ -176,6 +180,8 @@ final class AskModel {
     }
     /// The conversation or a compact Today under the field (D84).
     var tab: AskTab = .ask
+    /// Extensions' tabs beside Ask's own (D100), as they were when it opened.
+    var entryTabs: [ExtensionEntry] = []
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
     /// Today at a glance, shown while nothing is typed (D58): Ask's resting state, on top of the stack (D84).
