@@ -5,12 +5,13 @@ import Testing
 
 /// A companion that can't say what version it is feels broken (D120). The app's side is a seam here.
 @Suite struct SelfToolsTests {
-    final class App: SelfReporting, Sendable {
+    final class App: SelfReporting, @unchecked Sendable {
         let opened = Mutex<[SelfPlace]>([])
         let installs = Mutex(0)
         let look = Mutex((appearance: AppAppearance.system, theme: "harbor"))
         let updates: SelfUpdates
         let failing: Bool
+        var installing: SelfInstall = .nothingNewer
 
         init(updates: SelfUpdates = SelfUpdates(running: "0.1.0-snapshot.876", published: true, newest: nil, ready: false, addons: []), failing: Bool = false) {
             self.updates = updates
@@ -27,9 +28,9 @@ import Testing
             return updates
         }
 
-        func installUpdate() async -> String? {
+        func installUpdate() async -> SelfInstall {
             installs.withLock { $0 += 1 }
-            return updates.newest
+            return installing
         }
 
         func open(_ place: SelfPlace) async { opened.withLock { $0.append(place) } }
@@ -111,6 +112,32 @@ import Testing
         _ = await answered.value
         #expect(!denied.isOK)
         #expect(app.installs.withLock { $0 } == 0)
+    }
+
+    /// Each says what really happened: only one has started anything, and none has installed.
+    @Test(arguments: [(SelfInstall.downloading("2"), "isn't installed yet"), (.readyToRestart("2"), "clicks to restart"), (.underWay, "already under way"), (.nothingNewer, "no newer")])
+    func installingSaysWhatItCameTo(state: SelfInstall, words: String) async throws {
+        let app = App()
+        app.installing = state
+        let e = try env(app)
+        let answered = e.autoAnswer(.allowOnce)
+        let r = try result(await run(e, "sidefolk.install_update"))
+        _ = await answered.value
+        #expect(r.text.contains(words))
+    }
+
+    /// The gallery out of reach isn't "no add-on has a newer version".
+    @Test func addOnsNotCheckedSaySo() async throws {
+        let e = try env(App(updates: SelfUpdates(running: "a", published: true, newest: nil, ready: false, addons: nil)))
+        let r = try result(await run(e, "sidefolk.updates"))
+        #expect(r.text.contains("weren't checked"))
+        #expect(!r.text.contains("No add-on"))
+    }
+
+    /// Anything but its own "nothing new" isn't "up to date".
+    @Test func anUnexpectedAnswerFromMacOSIsAFailure() async throws {
+        let outcome = await run(try env(mac: "Software Update Tool\n\nFinding available software\nCan't connect to the server"), "mac.software_updates")
+        #expect(!outcome.isOK)
     }
 
     @Test func noneOfThisIsForOtherAgents() throws {

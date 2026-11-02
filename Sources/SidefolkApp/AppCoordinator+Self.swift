@@ -34,10 +34,20 @@ final class SelfService: SelfReporting {
                            ready: found.ready, addons: addons)
     }
 
-    func installUpdate() async -> String? {
-        guard updater.isPublished, let offer = try? await updater.lookNow().newest else { return nil }
+    func installUpdate() async -> SelfInstall {
+        guard updater.isPublished else { return .nothingNewer }
+        if updater.model.busy {
+            updater.showUpdates()
+            return .underWay
+        }
+        guard let found = try? await updater.lookNow(), let offer = found.newest else { return .nothingNewer }
+        // Downloaded already, `install` would restart at once, in the middle of this answer: that's the person's click.
+        if found.ready {
+            updater.showUpdates()
+            return .readyToRestart(offer.version.shown)
+        }
         updater.install(offer)
-        return offer.version.shown
+        return .downloading(offer.version.shown)
     }
 
     func open(_ place: SelfPlace) async {
@@ -63,6 +73,7 @@ final class SelfService: SelfReporting {
     func setAppearance(_ appearance: AppAppearance) async -> AppAppearance {
         let was = runtime.settings.current.appearance
         await runtime.settings.update { $0.appearance = appearance }
+        app.settingsChanged()
         return was
     }
 
@@ -70,7 +81,11 @@ final class SelfService: SelfReporting {
         let wanted = name.lowercased()
         guard let theme = ThemeLibrary.app(runtime.paths).all().first(where: { $0.tokens.name.lowercased() == wanted || $0.id == name }) else { return nil }
         let was = runtime.settings.current.theme
-        await runtime.settings.update { $0.theme = theme.id }
+        await runtime.settings.update {
+            $0.theme = theme.id
+            $0.themeFolder = nil
+        }
+        app.settingsChanged()
         return (theme.tokens.name, was)
     }
 }

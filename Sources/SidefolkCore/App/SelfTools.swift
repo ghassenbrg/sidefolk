@@ -36,16 +36,26 @@ public struct SelfUpdates: Sendable {
     public var newest: String?
     /// Downloaded and waiting to restart.
     public var ready: Bool
-    /// Add-ons with a newer version.
-    public var addons: [String]
+    /// Add-ons with a newer version; nil when the gallery couldn't be reached, which isn't none.
+    public var addons: [String]?
 
-    public init(running: String, published: Bool, newest: String?, ready: Bool, addons: [String]) {
+    public init(running: String, published: Bool, newest: String?, ready: Bool, addons: [String]?) {
         self.running = running
         self.published = published
         self.newest = newest
         self.ready = ready
         self.addons = addons
     }
+}
+
+/// What asking to install came to, each said as it is: only the first has started anything new.
+public enum SelfInstall: Sendable, Equatable {
+    case downloading(String)
+    /// Downloaded already: the window is showing, and restarting is the person's click.
+    case readyToRestart(String)
+    /// An update is already under way.
+    case underWay
+    case nothingNewer
 }
 
 /// Where the companion can take the person.
@@ -58,8 +68,8 @@ public enum SelfPlace: String, CaseIterable, Sendable {
 public protocol SelfReporting: Sendable {
     func about() async -> SelfAbout
     func lookForUpdates() async throws -> SelfUpdates
-    /// Starts installing the newest version, in the update window where the person sees it. Its version, or nil if there's none.
-    func installUpdate() async -> String?
+    /// Brings the newest version in, in the update window where the person sees it. Never restarts by itself.
+    func installUpdate() async -> SelfInstall
     func open(_ place: SelfPlace) async
     /// Sets the app's Light or Dark, or `system`; returns what it was.
     func setAppearance(_ appearance: AppAppearance) async -> AppAppearance
@@ -125,8 +135,12 @@ struct SelfUpdatesTool: Tool {
             text = "This is a development build (\(u.running)), which doesn't update itself."
             title = String(localized: "A development build doesn't update itself")
         }
-        text += u.addons.isEmpty ? " No add-on has a newer version." : " Add-ons with a newer version: \(u.addons.joined(separator: ", "))."
-        return ToolResult(text: text, card: ResultCard(kind: .info, title: title, subtitle: u.addons.isEmpty ? nil : Wording.list(u.addons)))
+        switch u.addons {
+        case nil: text += " The add-on gallery couldn't be reached, so add-ons weren't checked."
+        case let addons? where addons.isEmpty: text += " No add-on has a newer version."
+        case let addons?: text += " Add-ons with a newer version: \(addons.joined(separator: ", "))."
+        }
+        return ToolResult(text: text, card: ResultCard(kind: .info, title: title, subtitle: u.addons.flatMap { $0.isEmpty ? nil : Wording.list($0) }))
     }
 }
 
@@ -144,11 +158,19 @@ struct SelfInstallUpdateTool: Tool {
     func scope(for input: JSONValue) -> ToolScope { ToolScope(reach: .service("GitHub")) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        guard let version = await app.installUpdate() else {
+        switch await app.installUpdate() {
+        case .downloading(let version):
+            return ToolResult(text: "The update window is downloading Sidefolk \(version). It isn't installed yet: the user sees its progress there, and it asks before restarting.",
+                              card: ResultCard(kind: .info, title: String(localized: "Downloading Sidefolk \(version)")))
+        case .readyToRestart(let version):
+            return ToolResult(text: "Sidefolk \(version) is already downloaded. The update window is showing, and it installs when the user clicks to restart there.",
+                              card: ResultCard(kind: .info, title: String(localized: "Sidefolk \(version) is ready to restart into")))
+        case .underWay:
+            return ToolResult(text: "An update is already under way; the update window shows how far it has got.",
+                              card: ResultCard(kind: .info, title: String(localized: "An update is already under way")))
+        case .nothingNewer:
             return ToolResult(text: "There's no newer Sidefolk to install.", card: ResultCard(kind: .info, title: String(localized: "There's no newer Sidefolk")))
         }
-        return ToolResult(text: "The update window is downloading Sidefolk \(version). It isn't installed yet: the user sees its progress there, and it asks before restarting.",
-                          card: ResultCard(kind: .info, title: String(localized: "Downloading Sidefolk \(version)")))
     }
 }
 
@@ -240,8 +262,14 @@ public struct SoftwareUpdateTool: Tool {
     public func scope(for input: JSONValue) -> ToolScope { ToolScope(reach: .service("Apple")) }
 
     public func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let items = Self.parse(try await lister.list())
+        let output = try await lister.list()
+        let items = Self.parse(output)
         guard !items.isEmpty else {
+            // Offline, managed or anything else unexpected says something else: only this means there's nothing.
+            guard output.contains("No new software available") else {
+                throw UserFacingError("macOS didn't give me an answer about updates. Nothing was changed.", recovery: "System Settings › General › Software Update can look.",
+                                      detail: output.clipped(300))
+            }
             return ToolResult(text: "This Mac has no software updates waiting.", card: ResultCard(kind: .info, title: String(localized: "This Mac is up to date")))
         }
         // "macOS 27.2", whose title already says its version, not "macOS 27.2 27.2".
@@ -273,20 +301,36 @@ public struct SoftwareUpdateTool: Tool {
         public init() {}
 
         public func list() async throws -> String {
-            try await withCheckedThrowingContinuation { continuation in
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/usr/sbin/softwareupdate")
-                process.arguments = ["--list"]
-                let out = Pipe()
-                process.standardOutput = out
-                process.standardError = out
-                process.terminationHandler = { _ in
-                    continuation.resume(returning: String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/sbin/softwareupdate")
+            process.arguments = ["--list"]
+            let out = Pipe()
+            process.standardOutput = out
+            process.standardError = out
+            let running = RunningProcess(process)
+            return try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { continuation in
+                    // Read while it runs: a full pipe would stop it, and it would never end.
+                    DispatchQueue.global().async {
+                        do {
+                            try running.process.run()
+                            let data = out.fileHandleForReading.readDataToEndOfFile()
+                            running.process.waitUntilExit()
+                            continuation.resume(returning: String(decoding: data, as: UTF8.self))
+                        } catch {
+                            continuation.resume(throwing: UserFacingError("I couldn't look for Mac updates. Nothing was changed.", detail: String(describing: error)))
+                        }
+                    }
                 }
-                do { try process.run() } catch {
-                    continuation.resume(throwing: UserFacingError("I couldn't look for Mac updates. Nothing was changed.", detail: String(describing: error)))
-                }
+            } onCancel: {
+                if running.process.isRunning { running.process.terminate() }
             }
+        }
+
+        /// `Process` isn't Sendable; this one is started once on one queue and only asked to stop elsewhere.
+        private final class RunningProcess: @unchecked Sendable {
+            let process: Process
+            init(_ process: Process) { self.process = process }
         }
     }
 }

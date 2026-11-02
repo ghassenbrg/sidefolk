@@ -12789,24 +12789,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "لا تحديثات للـ Mac في الانتظار"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحديث واحد للـ Mac في الانتظار"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تحديثان للـ Mac في الانتظار"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -12819,10 +12801,28 @@
                   "value" : "%lld تحديثًا للـ Mac في الانتظار"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحديث واحد للـ Mac في الانتظار"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld تحديث للـ Mac في الانتظار"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحديثان للـ Mac في الانتظار"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تحديثات للـ Mac في الانتظار"
                 }
               }
             }
@@ -39995,6 +39995,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "扩展监视需要提供扩展名称和监视名称。"
+          }
+        }
+      }
+    },
+    "An update is already under way" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هناك تحديث جارٍ بالفعل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Update läuft bereits"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya hay una actualización en curso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une mise à jour est déjà en cours"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un aggiornamento è già in corso"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデートはすでに進行中です"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 업데이트가 진행 중이에요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já há uma atualização em andamento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新已在进行中"
           }
         }
       }
@@ -165456,6 +165514,64 @@
         }
       }
     },
+    "Shows in the Dock while Sidefolk is open. Finder and the menu bar keep Sidefolk's own." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تظهر في Dock ما دام Sidefolk مفتوحًا. يحتفظ Finder وشريط القوائم بأيقونة Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erscheint im Dock, solange Sidefolk geöffnet ist. Der Finder und die Menüleiste behalten das von Sidefolk."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se muestra en el Dock mientras Sidefolk está abierto. El Finder y la barra de menús conservan el de Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S’affiche dans le Dock tant que Sidefolk est ouvert. Le Finder et la barre des menus gardent celle de Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compare nel Dock finché Sidefolk è aperto. Il Finder e la barra dei menu mantengono quella di Sidefolk."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkを開いている間、Dockに表示されます。Finderとメニューバーは Sidefolk のアイコンのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk이 열려 있는 동안 Dock에 표시돼요. Finder와 메뉴 막대는 Sidefolk 아이콘을 유지해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparece no Dock enquanto o Sidefolk está aberto. O Finder e a barra de menus mantêm o do Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Sidefolk 打开时显示在程序坞中。访达和菜单栏仍使用 Sidefolk 自己的图标。"
+          }
+        }
+      }
+    },
     "Shows more" : {
       "comment" : "VoiceOver: clicking a whisper beside the companion grows it into a card",
       "localizations" : {
@@ -177113,6 +177229,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "系统设置 › 辅助功能 › 朗读内容 › 系统语音 › 管理语音"
+          }
+        }
+      }
+    },
+    "System Settings › General › Software Update can look." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكن التحقق من إعدادات النظام › عام › تحديث البرامج."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemeinstellungen › Allgemein › Softwareupdate kann nachsehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del Sistema › General › Actualización de software puede comprobarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Système › Général › Mise à jour de logiciels peut vérifier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni di Sistema › Generali › Aggiornamento Software può controllare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システム設定 › 一般 › ソフトウェアアップデートで確認できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정 › 일반 › 소프트웨어 업데이트에서 확인할 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes do Sistema › Geral › Atualização de Software pode verificar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可在系统设置 › 通用 › 软件更新中检查。"
           }
         }
       }
@@ -207114,6 +207288,64 @@
         }
       }
     },
+    "Use my companion as the app icon" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام رفيقي كأيقونة للتطبيق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meinen Begleiter als App-Symbol verwenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar mi compañero como icono de la app"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser mon compagnon comme icône de l’app"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa il mio compagno come icona dell’app"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンをアプリのアイコンにする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언을 앱 아이콘으로 사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar meu companheiro como ícone do app"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将我的伙伴用作应用图标"
+          }
+        }
+      }
+    },
     "Use my key with %@" : {
       "localizations" : {
         "ar" : {
@@ -232188,6 +232420,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你第一次按住快捷键时，macOS 会询问。"
+          }
+        }
+      }
+    },
+    "macOS didn't give me an answer about updates. Nothing was changed." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُجبني macOS بشأن التحديثات. لم يتغيّر شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS hat mir zu den Updates nicht geantwortet. Es wurde nichts geändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS no me ha respondido sobre las actualizaciones. No se ha cambiado nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS ne m’a pas répondu au sujet des mises à jour. Rien n’a été modifié."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS non mi ha risposto sugli aggiornamenti. Non è stato modificato nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSからアップデートについての応答がありませんでした。何も変更されていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS에서 업데이트에 대한 응답을 받지 못했어요. 아무것도 변경되지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O macOS não me respondeu sobre as atualizações. Nada foi alterado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 没有给出更新方面的回应。没有做任何更改。"
           }
         }
       }

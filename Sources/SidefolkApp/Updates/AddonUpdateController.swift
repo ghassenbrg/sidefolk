@@ -128,9 +128,11 @@ final class AddonUpdateController: AddonUpdateActions {
         Task { await look(refresh: true) }
     }
 
-    /// A look the companion was asked for (D120): the names of what has a newer version, after looking now.
-    func lookNow() async -> [String] {
-        await look(refresh: true)
+    /// A look the companion was asked for (D120): the names of what has a newer version after looking now, or nil when
+    /// the gallery couldn't be reached, which isn't the same as nothing new.
+    func lookNow() async -> [String]? {
+        guard (try? await runtime.addons.catalog(refresh: true)) != nil else { return nil }
+        await look()
         return model.addonPending.map(\.name)
     }
 
