@@ -318,6 +318,7 @@ enum UISnapshots {
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.stayUp()), width: 980)
             try await page("page-extension-error", ExtensionPageView(model: SampleExtensionPage.failed()), width: 980)
             try await page("page-extension-rich", ExtensionPageView(model: SampleRichPage.model()), width: 1180)
+            try await page("page-extension-scene", ExtensionPageView(model: SampleRichPage.sceneModel()), width: 980)
             try await page("page-extension-rich-narrow", ExtensionPageView(model: SampleRichPage.model()), width: 640)
             // The Game Center (D93): Playtime's page, with many games, before any game, and narrow.
             try await page("page-game-center", GameCenterView(model: SampleGameCenter.model()), width: 1180)

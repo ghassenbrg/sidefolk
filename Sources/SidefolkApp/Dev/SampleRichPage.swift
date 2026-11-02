@@ -50,6 +50,25 @@ enum SampleRichPage {
         ExtensionSettingRow(extensionId: id, key: "name", type: .text, title: "Name on your log", value: .string("Back garden")),
     ]
 
+    /// A page that draws its own look with a scene (D100), and a scroll box with text in today's styles.
+    static let sceneJSON = #"""
+    {"sections": [{"blocks": [{"type": "scene", "actions": {"open": {"tool": "open"}}, "scene": {"size": [640, 220], "nodes": [
+      {"type": "shape", "w": 640, "h": 220, "corner": 16, "gradient": {"colors": [{"token": "accent", "alpha": 0.35}, {"token": "accent", "alpha": 0.05}], "from": [0, 0], "to": [1, 1]}},
+      {"type": "text", "x": 24, "y": 18, "w": 400, "h": 44, "text": "A bird table for {companion}", "size": 26, "weight": "black", "italic": true, "align": "leading"},
+      {"type": "text", "x": 24, "y": 62, "w": 400, "h": 44, "lines": 2, "align": "leading", "size": 14, "runs": [{"text": "Twelve species ", "weight": "bold"}, {"text": "this week, and a new one on Tuesday.", "color": "ink_muted"}]},
+      {"type": "symbol", "x": 24, "y": 120, "w": 32, "h": 32, "name": "bird.fill", "weight": "black", "mode": "mono", "color": "accent"},
+      {"type": "clock", "x": 64, "y": 120, "w": 90, "h": 32, "seconds": 4512, "running": false, "size": 17, "weight": "bold", "align": "leading"},
+      {"type": "text", "x": 170, "y": 120, "w": 120, "h": 32, "text": "Old count", "strike": true, "color": "ink_muted"},
+      {"type": "companion", "x": 500, "y": 80, "w": 120, "h": 130, "align": "bottom"},
+      {"type": "group", "id": "open", "x": 24, "y": 166, "w": 150, "h": 40, "children": [{"type": "shape", "w": 150, "h": 40, "corner": 10, "fill": "accent"}, {"type": "text", "w": 150, "h": 40, "text": "Open the log", "weight": "semibold", "color": "on_accent"}],
+       "area": {"id": "open", "label": "Open the log"}}]}}]}]}
+    """#
+
+    @MainActor static func sceneModel() -> ExtensionPageModel {
+        let page = (try? ExtensionPage.parse((try? JSONDecoder().decode(JSONValue.self, from: Data(sceneJSON.utf8))) ?? .null)) ?? ExtensionPage()
+        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: Date())
+    }
+
     @MainActor static func model() -> ExtensionPageModel {
         let page = (try? ExtensionPage.parse((try? JSONDecoder().decode(JSONValue.self, from: Data(json.utf8))) ?? .null)) ?? ExtensionPage()
         let model = ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: Date())

@@ -31,7 +31,7 @@ struct PageSceneBlock: View {
         let services = model.services, id = model.info.extensionId
         let reader = await services?.runtime.extensions.assetReader(extensionId: id)
         view.assets = SceneImages(reader: reader)
-        if let settings = services?.runtime.settings.current { view.figures = SceneFigures.live(settings: settings) }
+        view.figures = SceneFigures.live(settings: services?.runtime.settings.current ?? AppSettings())
         await view.assets.preload(scene)
         view.frame.size = CGSize(width: scene.size.width * scale, height: scene.size.height * scale)
         let actions = block

@@ -149,12 +149,13 @@ enum SceneDrawing {
             }
         }
         var descriptor = system.fontDescriptor.withDesign(face) ?? system.fontDescriptor
-        if italic { descriptor = descriptor.withSymbolicTraits(.italic) }
         if tabular {
             let digits: [NSFontDescriptor.FeatureKey: Int] = [.typeIdentifier: kNumberSpacingType, .selectorIdentifier: kMonospacedNumbersSelector]
             descriptor = descriptor.addingAttributes([NSFontDescriptor.AttributeName.featureSettings: [digits]])
         }
-        return NSFont(descriptor: descriptor, size: points) ?? system
+        let made = NSFont(descriptor: descriptor, size: points) ?? system
+        // By the font manager: a descriptor asked for the slant gives back the regular weight.
+        return italic ? NSFontManager.shared.convert(made, toHaveTrait: .italicFontMask) : made
     }
 
     static func nsWeight(_ weight: SceneText.Weight) -> NSFont.Weight {

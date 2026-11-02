@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-01. What is true now, what is being worked on, what is missing, and how to check it. What was built
+Updated 2026-11-02. What is true now, what is being worked on, what is missing, and how to check it. What was built
 before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.md), newest first.
 
 ## Where Sidefolk is
@@ -34,35 +34,28 @@ the month grid taking clicks over its view controls (hidden buffer weeks now hav
 - **Ten languages** for everything people read, extensions included (D28, D76).
 
 **The add-on gallery** (github.com/ghassenbrg/sidefolk-addons, release `gallery`): companions Ember, Kiko, Nimbo,
-Folio, Iris, Nori, Purl and Rune; extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-details`, also a
+Folio, Iris, Nori, Purl and Rune; extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
 fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
-Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya; the three themes. Every add-on is in
-snapshots. **Playtime 1.0.0-snapshot.5** needs Sidefolk snapshot 661 (its puzzles; older copies keep the version
+Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes are the app's own (D92). Every add-on is in
+snapshots. **Playtime 1.0.0-snapshot.7** needs Sidefolk snapshot 779 (older copies keep the version
 they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, D81).
 
 ## In progress
 
-- **Extensions own everything: the rule, guard, details, seed packs** (branch `team/ext-details` in both repositories; D98;
-  not merged). `ExtensionFreeAppTests` reads all of `Sources` against `scripts/extension-free-allowlist.json`: extension
-  details fail now, game code and Miraya's drop action are reported until `transitionOver` flips in D101's last step. Examples,
-  tool summaries, services and `replaces` moved to manifests, words to `strings/`; `BuiltInExtensionWords`, `BuiltInExamples`,
-  `BuiltInToolSummary`, `BuiltInServices`, `ExtensionOverlap` and `BundledExtensions` are gone. World Clock, System Vitals,
-  Weather and Calculator moved to sidefolk-addons as seed packs (`Resources/SeedPacks`, `scripts/seed-packs.py`); samples are
-  made-up extensions. Verified: `make test` and the add-ons' `swift test`, `build.py --unsigned` and `check.sh`; a debug app
-  with packs signed locally: a fresh data folder with no gallery installs the four and World Clock answers; a data folder
-  from the old app keeps a switch and a data file, converts to `official`, and then updates from a local gallery by
-  itself; a removal stays gone after a relaunch; snapshots `sheet-install-services*`, `page-settings-trust`,
-  `page-settings-extensions*` in en, de, ar. **Before a release with this:** publish the gallery first (a release takes the
-  packs from it and stops without them) and raise `minimum_sidefolk` in the add-ons (now 786, for all but Miraya) to the
-  snapshot that ships this. Not tried: a real notarized build carrying the packs (Apple scans archives inside the app;
-  the packs are signed and timestamped with the hardened runtime, as it wants). Next: D100's Entries takes Miraya's drop
-  action; D101 flips the guard.
-- **Surfaces, Scene and pack assets** (branch `team/ext-scene` in both repositories, D99, SECURITY T40; first of the "extensions own
-  everything" abilities, snapshot A): an extension can open a framed panel or overlay drawn natively from data, with images and
-  sounds from its pack; the old Play panel is untouched. Verified: `make test`, `samples/scene-sample` in tests and the debug app (shuffle,
-  drags, keyboard, coin filmed with `surfaceFilm:`), snapshots `surface-*` in light, dark, German and Arabic, idle CPU flat. Next: Playtime on
-  it (D101), with D100's commands and settings; the gaps are at the end of D99.
-- **What any extension can declare** (branch `team/ext-abilities` in both repositories; D100, T41): richer page parts (hero with a scene, stat strip, card grid with pack pictures, tabs, badges, recent, settings rows), commands with slots in every language (names with parts, enums, carrying words, conflict rules), entries in the companion's menu, the Pocket and Ask, drop actions (Miraya's Play on TV moved to its manifest), extension settings with a one-time carry-over, AI help (`permissions.ai`, cap, switch, frame), a History row; the Kit in both repositories; sample `extensions/hello-abilities`. Verified: `ExtensionAbilitiesTests`, `ExtensionPageRichTests`, `CommandFrameTests`, a Kit program in the sandbox, `make test` with the add-ons worktree, add-ons `swift test`, `build.py --unsigned`, `check.sh`; snapshots `page-extension-rich*` in light, dark, de, ar; a debug app on the sample: install sheet, page, commands, a scripted AI request, a drop, Settings' search, History, Ask's tab, removal. Next: merge with `team/ext-scene` (D99: `PagePictureReader` becomes `PackAssetReader`, `assets` is the same key) and rebuild Playtime on it (D101). The old game code is untouched.
+- **Extensions own everything, snapshot A** (branch `team/ext-move` in both repositories, merging `team/ext-details`,
+  `team/ext-scene` and `team/ext-abilities`, plus a review's fixes; D98, D99, D100, SECURITY T40, T41; not on main): the rule and its
+  guard (`ExtensionFreeAppTests`, reading the add-ons' manifests; game code reported until `transitionOver` flips in D101), details in
+  manifests, four seed packs, pack assets, the Scene, surfaces, rich pages with an inline scene, commands with slots, entries, drops,
+  settings, AI help, a History row, and a tool's reply that opens its own surface or page. The old game code still runs beside them.
+  Verified: REVIEW_COUNTS. Live in a debug app on a probe extension: an overlay with a 5 s timer ended by `timeout` at 60 s; a panel
+  whose program takes 1.5 s, closed mid-move, got no more moves; a field at y=-44 is gone and a `focus` field took the keyboard; a scroll box
+  kept its `scroll_to` in view and a click at a scrolled place was the right row; a scene in a page with `{companion}`; snapshot
+  `page-extension-scene` in light, dark and Arabic. Not run: a page scene's click by a real pointer (its unit test covers the action);
+  VoiceOver heard live; Codex's refusal with a real file (its check is tested, no quota spent).
+  **Known gaps before a release:** never yet notarized with packs inside (RELEASE.md › Add-ons first proves it before the gallery changes);
+  every `minimum_sidefolk` is the placeholder 786 in all 17 add-ons until the lead sets the real number (`build.py --sidefolk-build N` stops on it).
+  **Next:** Playtime rebuilt on these (D101, with what D99's amendment says it accepts), then snapshot B removes the old code and flips the
+  guard, `extension-free-binary.sh --strict` with it, and adds a run with no extension installed asserting no games UI.
 
 - **CI's silent test deaths, fixed** (2026-11-01): from about snapshot 724 the core test process died on GitHub's
   runners about two minutes in, with no failing test (release runs 41267300489 to 41270779706, and CI). The kernel
