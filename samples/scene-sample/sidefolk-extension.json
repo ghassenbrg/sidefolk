@@ -1,0 +1,17 @@
+{
+  "id": "dev.sample.scenes",
+  "name": "Scene Sample",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "A sample of what a surface can do: pack images shuffled, a drag, a keyboard, and a coin beside the companion.",
+  "tagline": "Scenes, surfaces and pack assets at work",
+  "author": "Sidefolk samples",
+  "run": { "command": "bin/ext-scene-sample" },
+  "assets": "assets",
+  "surfaces": {
+    "shuffle": { "title": "Find the star", "symbol": "star.fill", "width": 420, "height": 380, "say": ["sample shuffle"], "ai": true },
+    "drag": { "title": "Drag things", "symbol": "hand.draw", "width": 420, "height": 380, "say": ["sample drag"], "ai": true },
+    "keys": { "title": "Spell a word", "symbol": "keyboard", "width": 460, "height": 420, "say": ["sample keys"], "ai": true },
+    "coin": { "title": "Flip a coin", "symbol": "circle.circle", "kind": "overlay", "width": 220, "height": 260, "say": ["sample coin"], "ai": true }
+  }
+}

@@ -13,6 +13,7 @@ let package = Package(
         .executable(name: "SidefolkApp", targets: ["SidefolkApp"]),
         .executable(name: "sidefolk", targets: ["sidefolk"]),
         .executable(name: "sidefolk-render", targets: ["sidefolk-render"]),
+        .executable(name: "ext-scene-sample", targets: ["ext-scene-sample"]),
     ] + builtInExtensions.map { .executable(name: "ext-\($0)", targets: ["ext-\($0)"]) },
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
@@ -40,7 +41,9 @@ let package = Package(
         .executableTarget(name: "sidefolk-render", dependencies: ["SidefolkCharacter"]),
         .target(name: "SidefolkExtensionKit", path: "extensions/Kit"),
         // The tests run the built programs in their sandbox, and read their logic directly.
-        .testTarget(name: "SidefolkCoreTests", dependencies: ["SidefolkCore"] + builtInExtensions.map { .target(name: "ext-\($0)") }),
+        // A sample of surfaces (D99), fictional and never shipped: the tests and the debug app run it.
+        .executableTarget(name: "ext-scene-sample", dependencies: ["SidefolkExtensionKit"], path: "samples/scene-sample/Sources"),
+        .testTarget(name: "SidefolkCoreTests", dependencies: ["SidefolkCore", "SidefolkExtensionKit", .target(name: "ext-scene-sample")] + builtInExtensions.map { .target(name: "ext-\($0)") }),
         .testTarget(name: "SidefolkCharacterTests", dependencies: ["SidefolkCharacter"]),
     ] + builtInExtensions.map { .executableTarget(name: "ext-\($0)", dependencies: ["SidefolkExtensionKit"], path: "extensions/\($0)/Sources") }
 )

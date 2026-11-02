@@ -176,7 +176,7 @@ enum SceneDrawing {
 
     static func symbol(_ name: String, side: Double, color: NSColor) -> CGImage? {
         guard side >= 1, let base = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
-        let image = base.withSymbolConfiguration(.init(pointSize: side * 0.8, weight: .semibold).applying(.init(paletteColors: [color]))) ?? base
+        let image = base.withSymbolConfiguration(.init(pointSize: side * 0.8, weight: .semibold).applying(.init(hierarchicalColor: color))) ?? base
         var rect = CGRect(origin: .zero, size: image.size)
         return image.cgImage(forProposedRect: &rect, context: nil, hints: [.ctm: AffineTransform(scale: 2)])
     }

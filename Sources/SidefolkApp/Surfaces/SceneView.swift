@@ -526,6 +526,8 @@ final class SceneView: NSView {
         let w = Int(bounds.width * s), h = Int(bounds.height * s)
         guard w > 0, h > 0, let c = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                                               bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        c.setFillColor(SceneColors.cg(.token(.surface), appearance: effectiveAppearance))
+        c.fill(CGRect(x: 0, y: 0, width: w, height: h))
         c.translateBy(x: 0, y: CGFloat(h))
         c.scaleBy(x: s, y: -s)
         source.render(in: c)
