@@ -598,6 +598,10 @@ final class SceneView: NSView {
         fields[name]?.stringValue = text
         dimEmptySubmits()
     }
+
+    func devSubmit(_ name: String) {
+        if let field = fields[name] { field.onSubmit?(field.stringValue) }
+    }
     #endif
 
     /// The keyboard's first stop, when the surface has it and the scene has a field.
