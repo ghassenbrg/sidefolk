@@ -234,7 +234,7 @@ image generation of real people: then a render, cut round by `sidefolk-private/p
 `companions-3d/references/avatars/mochi-avatar.webp` (framing and finish only), and the avatar style sentence
 and a backdrop colour of its own from `prompts.json` › avatars. Keep the source as
 `references/avatars/<id>-avatar.webp`, and save a round 256 px crop on the face (the face must read at 26 points;
-see how the six were cut) as `avatars/<id>.png` in its add-on folder. Ask, the Sidecard's cards, Today, History, the Pocket and the Play panel show it.
+see how the six were cut) as `avatars/<id>.png` in its add-on folder. Ask, the Sidecard's cards, Today, History and the Pocket show it.
 
 ## 7. Wire it into the app (a gallery companion)
 

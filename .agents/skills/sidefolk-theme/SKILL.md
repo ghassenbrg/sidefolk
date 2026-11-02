@@ -136,8 +136,7 @@ SIDEFOLK_RESOURCES=$PWD/Resources .build/debug/SidefolkApp --ui-snapshots $OUT -
 
 Read at least: `window-home-today-{light,dark}` (page wash, nook art, counts, cards, the sidebar), a few
 `desktop-sidecard-*` (the Sidecard's glass and buttons on a wallpaper), `window-settings-attention-*` (Settings'
-sidebar, the wash's top edge, selected cards), `game-menu-*` (the Play panel keeps its own art; check the accent's
-ring), `window-home-onduty-empty-*` (an empty page: `art.empty` replaces its folk), and the Arabic Today. Crop and zoom where something looks off
+sidebar, the wash's top edge, selected cards), `window-home-onduty-empty-*` (an empty page: `art.empty` replaces its folk), and the Arabic Today. Crop and zoom where something looks off
 (PIL `crop` then read the crop). Compare with the concept and references, write down what's wrong, change one
 thing, render again. Two or three rounds is normal.
 

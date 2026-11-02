@@ -315,18 +315,7 @@ definitions are held until approved.
 
 ## Newer features (D67, D68, D69, D74, D75, D76)
 
-- **Games in the Play panel (D75, D79).** `games.<name>` in the manifest (`title`, `symbol`, `say` up to
-  24 sentences, about two a language, `levels`, `ai`) and `ext.game(name, start:, move:, end:)` in the Kit
-  (extensions/Kit/Game.swift, GameParts.swift): answer `start` with a session and a `Board`, each `Move` with the next
-  board, within 2 s and 64 KB. Parts: prompt, answers (a tile's own `key`: Y, N, ?), board (`numpad`), score, result,
-  timer, reveal, note, facts, button (a move, never a tool), choice, and `.play(...)`: pads (Sidefolk plays the
-  sequence), cups (Sidefolk animates your swaps), reflex (Sidefolk times the press), meter, number, letters, keys (a
-  keyboard per script, `letter` or `spell`), entry (a text field for input methods), sticks, lives. `afterMs` on a board
-  is the companion thinking: Sidefolk waits, then sends `.next`. A board's `Cue` names a move, effect, prop, line key,
-  sound and look from Sidefolk's fixed lists. Send the verdict in the board: Sidefolk shows the build-up first (the old
-  score, words and keyboard, the cups down, the row flipping) and colours right/wrong/draw itself. Playtime
-  (sidefolk-addons `extensions/playtime`: `Sources/GameKit` with `EventCues`, `Sources/Screens`, `Sources/Trivia`) is
-  the example: eleven games and four puzzles (`Sources/Games/Puzzles`, the `puzzle` part); docs/EXTENSIONS.md › Games.
+- **Games (D101).** A game is a surface like any other: nothing of it is the app's. Playtime (sidefolk-addons `extensions/playtime`: `Sources/GameKit` and `Sources/Games` for the rules, `Sources/Screens` and `Sources/Board` for what each shows, `Sources/Stage` drawing it into scenes, `Sources/Table` keeping the session) is the example. Hold a verdict back through its build-up in your own scenes; a loss is never the danger red (D78).
 - **The person's language (D76 over D75).** One way: `strings/<language>.json` and `L("English {name}", [...])`,
   `L(one:other:count:)`, `Format`. The Kit's `Localized(language, tables)` (D75) is the lower layer `L` reads through
   (normalization: `zh-Hant` is `zh-Hans`, the nearest Sidefolk speaks; English fallback); use it directly only for a
@@ -394,5 +383,5 @@ Prefer these to asking for app changes: an extension owns its screens and words 
 - **Places in Sidefolk:** `entries` (`companion`, `pocket`, `ask`), `drops` (`kinds`, `patterns`, `tool`, `input` with `{value}`).
 - **Settings:** declare `settings`; never keep your own store of what could be one. Read with `ExtensionSettings`; they come with every request.
 - **The person's AI:** `permissions.ai` with an honest `purpose` and a small `daily_cap`. `await AI.ask(...)`; validate the answer yourself; label who wrote it; have a way to work without it.
-- **History:** `Activity.add(...)` for what a surface or game finished, not for every step.
+- **History:** `Activity.add(...)` for what a surface finished, not for every step.
 - Any of these needs `minimum_sidefolk` in `addon.json` to name a snapshot that has it (D83).

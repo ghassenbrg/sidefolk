@@ -1,8 +1,8 @@
 import SidefolkCore
 import SwiftUI
 
-/// What Ask shows under its field (D84): the conversation, or a compact Today. Play is the third tab, and opens the
-/// Play panel in Ask's place (one panel at a time), so it is never a state of its own here.
+/// What Ask shows under its field (D84): the conversation, or a compact Today. An extension's tab opens what it says in Ask's place
+/// (one panel at a time), so it is never a state of its own here.
 enum AskTab: Hashable {
     case ask, today
     /// A tab an extension declares (D100): it opens what the entry says, in Ask's place.

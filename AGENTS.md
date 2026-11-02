@@ -22,13 +22,13 @@ make test                        # core tests (Swift Testing), serially: swift t
 make dev                         # build + assemble build/Sidefolk-dev.app + launch with SIDEFOLK_HOME=build/dev-home
 make app                         # release build/Sidefolk.app (Apple Development identity if present, else ad hoc)
 swift run sidefolk-render out/   # character contact sheets for visual review
-swift run SidefolkApp --ui-snapshots out/   # Home, Settings, the Sidecard and Ask, the Pocket, games, light and dark, sample data
+swift run SidefolkApp --ui-snapshots out/   # Home, Settings, the Sidecard and Ask, the Pocket, surfaces, light and dark, sample data
 ```
 
 Agents can't see the screen. To check the running debug app:
 - `swift scripts/dev.swift snap` writes a PNG of every visible Sidefolk window to `$SIDEFOLK_HOME/snapshots/`
   (read them as images); `swift scripts/dev.swift "ask:…"`, `respond:<action>`, `dismiss`, `approve`, `deny`,
-  `home:<place>`, `settings:<tab>`, `pocket`, `find:<query>`, `drop:<url or path>`, `game:<id>/<game>` drive it (list at
+  `home:<place>`, `settings:<tab>`, `pocket`, `find:<query>`, `drop:<url or path>`, `surface:<extension>/<surface>` drive it (list at
   the top of the script).
 - Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
 - `SIDEFOLK_REDUCE_MOTION=1` in a debug run is Reduce Motion for surfaces, without touching the Mac's setting. `snap` draws a surface's final state and no SwiftUI filters: `surfaceFilm:<s>` shows what is moving, and `screencapture -l <window>` what the screen really shows.

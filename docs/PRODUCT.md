@@ -63,7 +63,7 @@ companion, its memory, its notebook, its jobs and its permissions persist.
 | E10 | Extend it | Install an extension folder (manifest + MCP-speaking executable), see its permissions, its tools and watchers become available; or ask the companion to write a skill. |
 | E11 | Drop things on it | Drag a file, URL or text onto the character → choose Save, Ask, Remind, Watch. |
 | E12 | Trust | History of every action, Settings › Trust for approvals and permissions, and Brain showing what was last sent to the AI. |
-| E13 | Play | Games and puzzles against the companion in the Play panel, without AI (Playtime, D75, D79). |
+| E13 | Play | The companion's tricks, catch-me and breathing are its own (D44). Games and puzzles come with the Playtime extension, on its own surface, without AI (D101). |
 
 ## 5. V1 scope
 
@@ -186,7 +186,7 @@ Companion (double-click) ──────► Home window
 The count on its shoulder ─────► the held cards, fanned; click for Ask on top of them
 Menu bar icon ─────────────────► the Pocket (right-click: Open Sidefolk, Settings, palettes, Hide, Updates, Quit)
 Whisper or card ───────────────► answers (Done, Snooze, Open, Allow/Deny, Dismiss; ⋯ for more)
-Play menu or a game's command ─► the Play panel
+An extension's sentence or menu ► its surface, framed by Sidefolk
 System notification ───────────► same actions when the companion is hidden/away
 External agent (MCP) ──────────► tools → Guard → companion reacts (cameo + whisper or card)
 ```
@@ -256,7 +256,7 @@ becomes a system notification), Focus holds whispers; what was held comes back a
 one re-nudge after 10 minutes, then it waits in the badge; celebrate only waits longer than 2 min.
 
 Per source (D88, Settings › Attention › What may interrupt you): reminders, watches (and one watch set apart),
-commands, each agent, each extension with watches, games and the companion may each be capped at Card, Whisper,
+commands, each agent, each extension with watches and the companion may each be capped at Card, Whisper,
 Only in Today (kept in Today, never on the desktop) or Off (History only). A notice gets the lower of its own level
 and that cap, then Focus or Quiet; questions and an agent waiting for an approval are never turned down. A card's ⋯
 has "Show these as whispers" and "Fewer like this", with Undo.

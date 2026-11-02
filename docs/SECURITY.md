@@ -795,34 +795,7 @@ prompt: it lists Sidefolk, off, in Screen & System Audio Recording, and the exte
 words. The TCC grant isn't per extension. In Auto and Full access, an injected instruction can show the screen on the
 person's own paired TV (D72).
 
-**T37 Games in the Play panel and companion cues (L/M), D75.** A game is an extension's program answering
-`sidefolk/game.*`; its boards show inside Sidefolk's panel and its cues reach the companion, a reach extensions didn't
-have (D44). Mitigations:
-- *Not a side door:* a move is typed and sent only when the board on screen offered it (`GameMove.offered`), only to
-  the one game open, at most 20 a second; a board's buttons send moves, never tools, so anything that acts on the
-  world stays a tool behind Guard. The program runs in the same sandbox with the permissions its sheet named
-  (Playtime: none). Options carry the tone, Sneaky and the companion's name, nothing about the person.
-- *Its words stay its own:* board text is cleaned (bidi, zero-width, control characters; only the Kit's paired FSI … PDI
-  isolates around a value survive, D76 amended) and clipped, drawn under the
-  extension's badge in a panel that can't pass for an approval card, and never reaches a model. A late (2 s) or large
-  (64 KB) answer ends the game.
-- *Cues are names from fixed lists* (`GameCue`): a move, an effect, a prop, a line key, a sound, a look. The companion
-  only ever says Sidefolk's own lines for a key, in the person's language, so a game can't make it say "type your
-  password here". Moves every 0.8 s, a line every 2 s, four sounds a second, only while the panel shows that game. A
-  cue can't move the companion's window, open a card or a notification, take focus or speak free text.
-- *Fair play:* the companion's throw in Sidefolk's own match is drawn by core with the system's generator before the
-  person picks and never reads their hand (tested for independence and distribution).
-- *The later parts (D79):* Sidefolk keeps every clock (a board's `after_ms` at most 6 s, a reflex window
-  at most 5 s, a sequence at most 64 steps of at least 0.25 s, at most 40 swaps), so a game can't hold the panel or the
-  companion busy; Copy Me's playback moves the companion with each pad (Sidefolk's own choreography of a bounded
-  sequence, like a reveal). A typed `text` move is cleaned (bidi, control characters), one line, at most 120 characters,
-  sent only to the game's own entry and never to a model; the panel's keys go to that field only while it is being
-  typed in.
-- *Two people (D96):* a two-player score's names are lines of at most 24 characters, shown only in the panel and the
-  Activity row and kept in settings for the next game; a two-key reflex takes only two different letters, by key
-  position, and only while the panel has the keys; its moves are offered only for those keys.
-*Residual:* a game decides its own outcomes and could make the companion react unkindly within the fixed moods;
-the panel can take the keyboard when the person opened it, like Ask, so keys typed meanwhile go to the game.
+**T37 Games in the Play panel (closed, D101).** The game channel and its panel are gone: everything Playtime shows is a surface (T40), its AI help T41, and the companion's reactions the fixed lists of `CompanionCue`, with no words. A cue's `line` had no form on a surface, so an extension can't make the companion speak on the desktop or aloud.
 
 **T38 Temporary output mute (M), D81.** An extension can request Sidefolk's device-wide output mute only when its
 pinned install permission `output_mute` is true; the install sheet names the effect on other apps and an update adding
@@ -837,18 +810,7 @@ does not grant another lease while restoration remains uncertain. The helper was
 default output: its original state was restored on normal closure and after killing the parent process.
 
 
-**T39 Trivia from the person's AI, for an extension (M/L), D95.** A new reach: an extension can make Sidefolk spend
-the person's AI quota on its behalf. Mitigations: only Sidefolk's own extensions, switched on, one request at a time,
-only while the person's switch is on and a provider is set up; one typed notice (`sidefolk/trivia.request`: a UUID, a
-topic of one line and at most 60 characters, 10–20 questions, a known level and language), never a prompt. Sidefolk
-writes the prompt itself (`TriviaPrompt`), sends the request's fields only (no memory, notes, conversation, live state
-or tools: an empty toolbox, so a CLI brain's tool calls are refused), through `games.trivia_questions` (Guard, the
-approval mode, History) as `Caller.extension`; the tool is never offered to a model or to other agents. The answer is
-read strictly (`TriviaPackParser`: the JSON shape, four distinct choices, lengths, no links, markup or hidden
-characters) and goes back as data the board draws, never to a model; Playtime checks the shape again. At most 20 calls a
-day, packs cached by topic for the day. *Residual:* the topic is the person's own words and steers the model's
-answer, within a family-quiz prompt and the checks; facts may be wrong, so they are labelled as made by the AI and not
-checked.
+**T39 Trivia from the person's AI (closed, D101).** The narrow path for one extension is gone; every extension's use of the AI is T41, and the program itself checks what comes back (Playtime: `TriviaPackCheck`).
 
 **T40 Extensions' surfaces, scenes and pack assets (M/M), D99.** An extension can now show its own pictures and words
 in a window beside the companion, play its own sounds and take clicks and keys there. Three things could go wrong.
@@ -933,7 +895,7 @@ regression suites (`NewSyntaxFuzzTests`, `CrashRegressionTests`, `FailClosedTest
 Extensions' and MCP servers' own crashes stay isolated in their processes (T15).
 
 **T41 What any extension declares: commands, entries, settings, a History row, the person's AI (M/M), D100.** New reach for every extension, so each has its limit.
-*Commands can't shadow Sidefolk or an approval.* Sidefolk's own understanding runs first, always; a command, a surface's sentence or a game's is only what is left, whole sentences only. A sentence that answers an approval, in any of the ten languages, is refused at install (`CommandSentence.approvalWords`), warned about in a copy already here, and never matched, so typing it never reaches an extension. A translation follows the same rules and may name only its English sentence's slots. A sentence two extensions claim goes to the AI, not to either. A free-text slot still can't start a sentence, a part must have words of its own beside anything but an enum, and a command runs as `Caller.command`: Guard asks as it does for Sidefolk's agent, and a command can't approve anything.
+*Commands can't shadow Sidefolk or an approval.* Sidefolk's own understanding runs first, always; a command or a surface's sentence is only what is left, whole sentences only. A sentence that answers an approval, in any of the ten languages, is refused at install (`CommandSentence.approvalWords`), warned about in a copy already here, and never matched, so typing it never reaches an extension. A translation follows the same rules and may name only its English sentence's slots. A sentence two extensions claim goes to the AI, not to either. A free-text slot still can't start a sentence, a part must have words of its own beside anything but an enum, and a command runs as `Caller.command`: Guard asks as it does for Sidefolk's agent, and a command can't approve anything.
 *Entries and drops can't pass for Sidefolk.* Titles are plain, clipped text in Sidefolk's own menus and Ask's tabs, and anyone but Sidefolk's own extensions shows its name beside them (`shownTitle`, a tooltip for all in the menus); the drop card names the extension. A click runs only that extension's own tool, as the person, through Guard; a file reaches it only through a parameter the tool lists in `paths`, so Guard checks it and the sandbox opens it for that call. Patterns are globs matched in linear time, never regular expressions.
 *Settings aren't a channel.* Values are checked against the schema, stored by the host where the extension can't write, given only to that extension. `extensions.setting` takes the person's click or the extension for itself; models and other agents are refused and never offered it, because keys and titles are author text (T2). `settings_from` and `carries` are honoured only for `origin.firstParty` (signing identity, D98): a section of Sidefolk's settings, a value of its store or a row of History is never given to anyone else. An unsigned copy taking a signed one's id starts with no settings and no grants, and the sheet says so.
 *The AI, cost:* `permissions.ai` is on the install sheet as a caution, with purpose and cap; a raised cap holds the update (D70). The host counts per day in its own store (a relaunch doesn't reset it, a failed call counts), one request at a time, a hard ceiling of 200 a day and 8,000 characters and 32,000 bytes each, identical words free for the day. The person's switch is per extension and every request is in History and in usage.

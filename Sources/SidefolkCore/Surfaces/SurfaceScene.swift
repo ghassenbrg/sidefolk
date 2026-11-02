@@ -262,7 +262,7 @@ public struct SceneFlip: Sendable, Hashable {
     public var turns: Double
 }
 
-/// The poses every companion is drawn in, as the Play panel uses them. Nothing else about it is reachable.
+/// The poses every companion is drawn in. Nothing else about it is reachable.
 public enum SceneCompanionPose: String, Sendable, Hashable, CaseIterable {
     case idle, listening, thinking, waiting, success, alert, celebrating
 }

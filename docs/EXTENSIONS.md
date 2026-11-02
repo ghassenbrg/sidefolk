@@ -15,7 +15,7 @@ Examples live in this repository:
 | sidefolk-addons [`extensions/git`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/git) | Folders named per call (`paths`), `git` found by name, the internet, a long `timeout`. |
 | sidefolk-addons [`extensions/images`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/images) | A file read and a folder written per call, and `media` for the graphics hardware. |
 | sidefolk-addons [`extensions/currency`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/currency) | The internet only, a cache in its data folder, and a watcher that fires once per crossing. |
-| sidefolk-addons `extensions/playtime`, `keep-awake`, `clipboard`, `miraya` | Games, pages, palettes and background work ([Pages](#pages), [Games](#games)). |
+| sidefolk-addons `extensions/playtime`, `keep-awake`, `clipboard`, `miraya` | Surfaces and scenes, pages, palettes and background work ([Pages](#pages), [Surfaces and scenes](#surfaces-and-scenes)). |
 | [`skills/sidefolk-extension/templates`](../skills/sidefolk-extension/templates) | Starting points in Python, Node and sh. |
 
 Sidefolk's own extensions are Swift programs on [`extensions/Kit`](../extensions/Kit), so they need nothing installed on
@@ -35,17 +35,16 @@ Claude Code or Codex. You can also add any existing MCP server (see
 7. [Answering without the AI: commands](#answering-without-the-ai-commands)
 8. [Watchers](#watchers)
 9. [Pages](#pages)
-10. [Games](#games)
-11. [Surfaces and scenes](#surfaces-and-scenes)
-12. [Rich pages, commands in every language, entries, settings, AI help](#rich-pages-commands-in-every-language-entries-settings-ai-help)
-13. [Speaking the person's language](#speaking-the-persons-language)
-14. [Testing locally](#testing-locally)
-15. [Installing, updating, removing](#installing-updating-removing)
-16. [Seed packs and the gallery](#seed-packs-and-the-gallery)
-17. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
-18. [Plain MCP servers](#plain-mcp-servers)
-19. [Troubleshooting](#troubleshooting)
-20. [Limits](#limits)
+10. [Surfaces and scenes](#surfaces-and-scenes)
+11. [Rich pages, commands in every language, entries, settings, AI help](#rich-pages-commands-in-every-language-entries-settings-ai-help)
+12. [Speaking the person's language](#speaking-the-persons-language)
+13. [Testing locally](#testing-locally)
+14. [Installing, updating, removing](#installing-updating-removing)
+15. [Seed packs and the gallery](#seed-packs-and-the-gallery)
+16. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+17. [Plain MCP servers](#plain-mcp-servers)
+18. [Troubleshooting](#troubleshooting)
+19. [Limits](#limits)
 
 ## Quick start
 
@@ -144,7 +143,7 @@ not listed on this page is an error**, so a typo never silently changes what an 
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 | `tools.<name>.summary` | no | The sentence for a call, with its arguments ([A call in one sentence](#a-call-in-one-sentence)); believed for Sidefolk's own. |
 | `permissions.ai` | no | `purpose` and `daily_cap`: the person's AI, for words only ([AI help](#ai-help)). |
-| `games` | no | Old, until Sidefolk snapshot B (D101): [Games](#games). |
+| `games` | no | Retired (D101): a pack naming it can't be installed. A copy already installed stays listed, doesn't run, and offers its update. |
 | `assets` | no | The name of one folder of pictures and sounds ([Pack assets](#pack-assets)). |
 | `surfaces` | no | Panels and overlays you draw ([The manifest](#the-manifest-1)). |
 | `choices`, `parts`, `carry` | no | What commands' sentences are made of ([Commands with slots](#commands-with-slots-in-every-language)). |
@@ -656,13 +655,6 @@ ext.page("mac") { args in
   cleaned of hidden characters and clipped. A page is your text: it is never shown to a model.
 - Pages came during 0.1.0's snapshots: a snapshot from before them (489 and older) refuses the manifest, because it doesn't
   know `pages`. Write `"sidefolk": ">=0.1"` as usual.
-- **A game extension's page is its Game Center** (D93). The first page of an extension that declares `games` is drawn
-  by Sidefolk: the companion, today's dailies, every game as a card with its art, the person's numbers, last games,
-  badges and the games' settings. Send the `summary` as usual (the Today tile) and, beside it, what only you know:
-  `"games": {"records": {"<game>": {"played", "won", "lost", "drawn", "streak", "best_streak", "best": "Best: 9 moves",
-  "today": {"text": "Solved in 4", "done": true, "streak": 3}}}, "recent": [{"game", "at": "<ISO 8601>", "outcome":
-  "won|lost|draw|solved", "text": "You 7 · Mochi 6"}]}` (the Kit: `Page(summary:games:)` with `GameRecords`). Any
-  `sections` are drawn under the center. A game without a record is counted from Sidefolk's own Activity.
 
 ## Running in the background, palettes and nudges
 
@@ -710,134 +702,15 @@ where it is, which resets macOS's idle time (what chat and meeting apps watch) w
 Only with `permissions.power`, at most one every 20 seconds whatever you send, and only once the person allowed
 Accessibility. (macOS's own "user is active" call doesn't reset the idle time those apps read.)
 
-## Games
-
-An extension can add games played in Sidefolk's **Play panel** beside the companion (D75). As for pages, you say what
-is on the board and Sidefolk draws it, keeps the time, plays the companion's reactions and the sounds, and writes one
-Activity row when the game ends.
-
-```json
-"games": {
-  "trivia": { "title": "Trivia", "symbol": "questionmark.bubble.fill", "levels": ["easy", "fair", "hard"],
-              "say": ["let's play trivia", "quiz me"], "ai": true, "look": "quiz", "tagline": "Questions on every topic" }
-}
-```
-
-- `say`: whole sentences that open the game at once, without the AI (the command rules, no slots). Every game is also
-  in the companion's Play menu and in `games.open`, the tool Sidefolk's AI uses to offer a round (`"ai": false` keeps
-  it from the AI). Up to 24 sentences, so a game can be opened in each of Sidefolk's ten languages ("let's play
-  tic-tac-toe", "jouons au morpion", "来玩井字棋"); the game's title is translated in `strings/` (`games.<name>.title`).
-  `levels`: up to five names, easiest first. `look` dresses the game in one of Sidefolk's looks (D79 amended: its
-  colour, illustrated scene and menu icon; `cups`, `dance`, `arcade`, `sticks`, `quiz`, `grid`, `numbers`, `animals`,
-  `balloons`, `cards`, `hands`, `words`, and the puzzles' `plots`, `seesaw`, `sudoku`, `blossoms`, listed under "Puzzles";
-  a game without one gets the plain look); `tagline` is one line (60 characters)
-  under its title on the Play panel's menu, translated as `games.<name>.tagline`. A game never sends a picture.
-- **The channel:** `sidefolk/game.start {game, level, language, options}` answers `{session, board}`;
-  `sidefolk/game.move {game, session, move}` answers `{board}`; `sidefolk/game.end {game, session, reason}` (`closed`,
-  `timeout`, `finished`) needs no answer. `options` holds `tone` (gentle, cheeky, competitive), `sneaky` and
-  `companion` (its name), and what the person said about the game when they did (D93, Sidefolk's own sentences in ten
-  languages, or the AI through `games.open`): `topic` (a quiz's subject, 40 characters) and `count` (1–50) for a game
-  whose look is `quiz`, `min`, `max` (a range up to 1,000,000) and `mode` (`mine`: the person guesses; `yours`: the
-  companion guesses) for `numbers`. Use what you know and ignore the rest. Sidefolk also steers every game without
-  your help: "rematch", "make it harder", "play tic-tac-toe on hard", "pause the game", "show my stats"; a level the
-  person picks is sent each time the game opens. With two people playing each other on this Mac (D96), `players` (2)
-  and `names` (the two names last played under); while the person lets their AI make trivia questions (D95),
-  `ai_trivia` (the AI's name). Answer within **2 seconds** and under **64 KB**, or Sidefolk ends the game. Moves come only
-  for a part the board on screen offered, at most 20 a second: `{answer: i}`, `{cell: [r, c]}`, `{button: "next"}`,
-  `{choice: {name, value}}`, `{timeout: true}`, `{letter: "e"}`, `{word: "crane"}`, `{number: 42}`, `{pad: 2}`,
-  `{press: {ms: 243}}`, `{early: true}` (with a two-key reflex, `{press: {ms, key}}` and `{early: {key}}`),
-  `{text: {name, value}}`, `{next: true}` (a board's `after_ms` passed), and on a
-  puzzle `{area: [r, c, r2, c2]}` (a rectangle dragged) and `{place: {cell: [r, c], value, note}}` (a number, 0 clears). Moves
-  are not tool calls: a game changes only its own state. Anything that acts on the world stays a tool behind Guard.
-- **Board parts:** `prompt` (text, `eyebrow`, `chip`), `answers` (2–4 `items` with `label`, `state` none, picked,
-  right, wrong or faded, `companion` for its pick, `art` rock, paper or scissors; `layout` grid, row or column;
-  `locked`), `board` (rows × columns ≤ 8 × 8 of `cells` with `mark`, `value`, `companion`, `state`, `label`, `animate`),
-  `score` (`you`, `companion`, `streak`, `best`, `rounds` to win, `companion_picked` for its sealed card; `players`, two
-  names, when two people play each other: `you` is the first's points and `companion` the second's, each drawn with
-  their name and a colour of their own, D96), `result`
-  (`figure`, `line`, `ribbon`, `tone` good, bad or neutral, `facts`, up to three `actions`), `timer` (`id`, `seconds`:
-  Sidefolk counts and sends `{timeout: true}`), `reveal` (`kind` coin, dice or hands), `note`, `facts`, `button`
-  (`label`, `move`, `style` primary, secondary or plain, `symbol`, `key` a letter; one primary a board; `companion: true`
-  makes the companion in the scene the button: clicking it presses it, no button is drawn, its key still works), `choice`
-  (`name`, `style` cards or segmented, `options`, `selected`). Unknown parts are skipped; `"over": true` ends the game.
-  A tile may carry its own `key` (a letter, a digit or `?`); a 3 × 3 `board` with `"keys": "numpad"` takes the digits
-  as a number pad does.
-- **Parts for the later games** (Sidefolk draws, times and takes the input; the Kit's `.play(...)`, GameParts.swift):
-  `pads` (2–5 `items` of `shape`, `color`, `label`, the companion's `move`, `art` Sidefolk's picture of the move: `wave`,
-  `hop`, `spin`, `bow`, `wave_both`, drawn instead of the shape; `play` a sequence of up to 64 that Sidefolk
-  shows first at `step_ms` 250–2000, a pad lit with its note and the companion's move, then `{pad: i}`), `cups` (2–5:
-  the gem under `hide`, then `swaps` of positions, up to 40, at `swap_ms`; a pick is `{cell: [0, i]}`; `gem` (or `null`
-  for none) lifts them), `reflex` (`wait`, `go`, `early` words, `after_ms` 300–10000, `window_ms`; Sidefolk shows the
-  signal and times the press from the key's own timestamp; `shows` once played; `keys`, two letters, when two people
-  share it: each presses their own key, found by where it sits on any layout, the first key decides, and clicks don't
-  count), `meter` (0–1, `label`, `low`, `high`),
-  `number` (`min`, `max`, `history` of `{value, mark}` higher, lower or right; Sidefolk's digit pad), `letters` (`rows` of
-  tiles `{text, mark, group}` marked right, elsewhere, absent or hidden; `style` rows or slots; `flip` the row just
-  played; `draft` shows what is typed in the next row), `keys` (`pages` of rows of single letters with marks; `mode`
-  letter or spell with `length`; `script` latin, kana, hangul or arabic, so Korean jamo typed group into syllables),
-  `entry` (a text field, so the input method types Chinese idioms; `kind` word or text, `max` up to 120), `sticks`
-  (`total`, `left`, `take`, `groups`, `hint`, the last `taken` and `taken_by`), `lives` (`total`, `left`, `symbol`
-  balloon or heart), `puzzle` (a logic puzzle's grid, 2–10 cells a side: `cells` with `symbol` heart, star, blossom or dot,
-  `text` a number of up to two characters, `given`, pencil `notes` 1–9, `region` 0–11 (coloured, heavier lines between),
-  `state` conflict (drawn in the calm loss tone with a !), hint or target (the move shown faintly), `fresh`, `label`;
-  `input` tap (`{cell}`), drag (`{area}`, a click alone `{cell}`) or digits with `digits` 1–9 (`{place}`, Sidefolk's pad,
-  N for notes); `box` [rows, columns] for Sudoku's thicker lines; `edges` of `{cell, down, clue}` same (=) or different
-  (×), up to 200; `plots` of `{row, column, height, width, state, tint}`, up to 100; `clock` `{seconds, running}`, which
-  Sidefolk counts on; drawn left to right in every language). **`after_ms`** (100–6000) on a board: Sidefolk shows it that long, then asks for the next with
-  `{next: true}`: the companion thinking before its move, two cards left face up. The game never keeps time.
-- **The companion's cue** (`"companion"` on a board), every value from a fixed list, anything else dropped: `move`
-  (think, cheer, celebrate, sulk, bow, nod, shrug, giggle, wince, gasp, tease, sweat, dizzy, ready, shuffle, hop, spin,
-  wave, dance, accent:wave/hop/spin/bow), `effect` (confetti, sparkles, hearts, question, exclaim, sweat, stars, frost,
-  flame), `prop` (balloons(1–9), hat, crown, magnifier, cards, sealed_card, gem, none), `line` (a **key**: hello,
-  your_turn, my_turn, thinking, close_one, you_win, i_win, draw, record, streak, encourage, tease, caught_cheating,
-  hint_intro, bye; Sidefolk says its own words for it), `sound` (tap, flip, rattle, pop, ding, boop, tick, whoosh,
-  stamp, shuffle, snap, cork, fanfare, trombone), `look` (panel, you, away, `[row, column]`). One cue a board; moves
-  0.8 s apart, a line every 2 s, four sounds a second.
-- **Suspense and colour are Sidefolk's:** send the board with its verdict in it (judged tiles, the companion's pick,
-  the new score, a cue); when it would give a result away Sidefolk shows a build-up first (the reveal playing, or the
-  pick pressed beside the sealed card) and the verdict after. Right is drawn in success green, wrong as a calm loss
-  tone, a draw neutral, each with its symbol: don't encode a result in your own words' colour.
-
-**Two people on one Mac** (D96): a game may offer "vs <companion>" or "2 players" on its first board. Then the
-companion only referees: use no `i_win` or `you_win` line, give the end card the `info` tone for a winner (neutral ink and a
-trophy: the winner is named, nobody's loss is coloured) or `neutral` for a draw, put both names in `score.players` (Sidefolk records the game apart from
-the person's results against the companion and remembers the names), and pass a secret with a cover board that holds
-nothing of it ("Pass the Mac to Sam. Ana, look away!" and a ready button) before the other person's turn.
-
-**Trivia from the person's AI** (D95, Sidefolk's own extensions only): send the notice `sidefolk/trivia.request` with
-`request` (a UUID), `topic` (up to 60 characters, empty for the AI's choice), `count` (10–20), `level` (easy, fair,
-hard) and `language`; Sidefolk answers with the notice `sidefolk/trivia.pack`: `request`, `ok`, then `topic`, `made_by`
-and `questions` (each `question`, four `choices`, `answer` the right one's index, `difficulty` 1–3, `fact`), or a
-`reason` (off, busy, limit, unusable, failed, denied). Ask only while `options.ai_trivia` is set, show who made the
-questions and that they aren't checked, keep the board's `after_ms` turning while you wait (the answer can take a
-minute), and fall back to your own questions when none come.
-
-In the Kit, `ext.game(name, start:, move:, end:)` with `Board`, `BoardPart`, `Tile`, `Cell`, `GameButton`,
-`ChoiceOption`, `Reveal`, `Cue` and `Move` (extensions/Kit/Game.swift):
-
-```swift
-ext.game("coin", start: { request in
-    GameReply(session: UUID().uuidString, board: Board([.prompt("Heads or tails?"), .answers([Tile("Heads"), Tile("Tails")])]))
-}, move: { request in
-    let heads = Bool.random(), right = request.move == .answer(heads ? 0 : 1)
-    return Board([.reveal(.coin(heads: heads)), .answers([Tile("Heads", state: heads ? .right : .wrong),
-                                                           Tile("Tails", state: heads ? .wrong : .right)], locked: true)],
-                 companion: Cue(move: right ? "sulk" : "tease", line: right ? "you_win" : "tease"), over: true)
-})
-```
-
-Playtime (sidefolk-addons `extensions/playtime`) is the example: its rules are pure engines (`Sources/GameKit`:
-`GameEngine` for the rules over a Codable state, `GameScreen` for the boards, `GameTable` keeping each session's state
-in the data folder so a game survives the program stopping while idle). A 0.1.0 snapshot from before games refuses a
-manifest with `games` at install (an unknown key), as with pages.
-
 ## Surfaces and scenes
 
 A **surface** is a panel or an overlay beside the companion that Sidefolk frames for your extension (D99); a **scene** is
 what it shows: pictures from your own pack, text and shapes, with animations Sidefolk runs by itself, areas and keys that
-send you typed moves. It is the general form of the Play panel: anything you could draw as a board you can draw as a
-scene, in your own look, and it ships with your extension alone. The game channel below it keeps working until snapshot
-B (D101), then only this remains.
+send you typed moves. It ships with your extension alone: a new screen, look or game needs no release of Sidefolk. Playtime
+(sidefolk-addons `extensions/playtime`) is the largest example, sixteen games and puzzles on one surface and an overlay: rules in pure engines
+(`Sources/GameKit`, `Sources/Games`), boards in the program's own model (`Sources/Board`, `Sources/Screens`), drawn into scenes by its stage
+(`Sources/Stage`), a session kept by `Sources/Table`, and its Game Center as its page. To add a game there: a catalog entry (`Stage/Looks.swift`), a driver (`GameTable.drivers`), its
+commands, sound and level settings in the manifest and `strings/`, the parts it needs, a line in its tests.
 
 A worked example is `samples/scene-sample/` (a shuffle of three pack images with a click to pick, a free drag and a grid
 drag, a keyboard, a coin flip overlay). To run it: `swift build --product ext-scene-sample`, copy its
@@ -896,7 +769,7 @@ with macOS's interface sounds off.
 
 Your `settings` and the AI's name go with these as with every request.
 
-The limits are the game channel's: an answer within 2 s and within 64 KB or the surface ends ("X didn't answer, so this
+The limits: an answer within 2 s and within 64 KB or the surface ends ("X didn't answer, so this
 closed"), at most 20 moves a second (past that a move is dropped, and a key held down adds nothing while the last press is still on
 its way), and only for the one surface open in its place (one panel, one overlay). You can't
 push a scene: you answer moves, and `after_ms` asks Sidefolk to come back for the next (600 times in a row with nobody
@@ -1212,7 +1085,6 @@ sidebar, heads-ups): put each language's words in `strings/<language>.json` besi
   "watchers": { "ended": { "title": "Wach halten beendet", "description": "…" } },
   "pages": { "awake": { "title": "Wach halten" } },
   "palettes": { "history": { "title": "Zwischenablage", "placeholder": "Kopiertes durchsuchen" } },
-  "games": { "trivia": { "title": "Quiz" } },
   "text": { "Keep awake": "Wach halten", "{count} apps": { "one": "{count} App", "other": "{count} Apps" } }
 }
 ```
@@ -1264,7 +1136,7 @@ words through the Kit's `Localized(language, tables)` (D75), the lower layer: on
 `pt-BR`, any Chinese, `zh-Hant` included, is `zh-Hans`, the nearest Sidefolk speaks, as for the manifest's words; an
 unknown language is English) and one English fallback. Reach for `Localized` yourself only for a table that isn't your
 extension's words; numbers go through `Format` (grouped as the language groups them), placeholders are named. Playtime's
-words, the games' phrases included, live in its `strings/`, a game's title under `games`.
+words, the games' phrases included, live in its `strings/`.
 From Python or Node, read the same files: `params.get("language")`, then `json.load(open("strings/%s.json" % lang))`.
 
 `scripts/extension-strings.py sync <folder>` writes `strings/en.json` from your `L("…")` calls (and drops texts no
@@ -1363,7 +1235,7 @@ would be the wrong answer.
 | Calculator | Gallery, seed pack, on | None | Exact sums and percentages, units, date maths |
 | Git | Gallery | The internet, `git`, a folder named per call | Clone, status, pull, log |
 | Currency | Gallery | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
-| Playtime | Gallery | None | Eleven games and four puzzles in the Play panel, trivia, a random number or pick (D75, D79) |
+| Playtime | Gallery | AI help (a daily cap, a switch) | Eleven games and five puzzles on its own surface, its Game Center page, the desktop's coin, dice and hands, a random number or pick (D101) |
 | Images | Gallery | A folder named per call, `media` | Photo details; copies converted, smaller or without location |
 | PDF Tools | Gallery | A folder named per call | Details, text, combine, take pages out |
 | QR Codes | Gallery | A folder named per call, `media` | Make a QR code picture, read one |

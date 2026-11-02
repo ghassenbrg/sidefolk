@@ -94,7 +94,7 @@ Paws, Which Cup?, Higher or Lower, Guess My Animal, Balloon Words, Last Stick, M
 and four puzzles to solve alone (Garden Plots, Seesaw, Sudoku, Blossoms) with a daily board for each level, hints and best times.
 No AI, in all ten languages.
 
-<p align="center"><img src="docs/screenshots/play-menu-light.png" width="380" alt="The Play panel's menu: Mochi asks which game, with wins, streak and games played"></p>
+<p align="center"><img src="docs/screenshots/play-menu-light.png" width="380" alt="Playtime's menu: Mochi asks which game, with wins, streak and games played"></p>
 
 ### More
 
@@ -286,7 +286,7 @@ snapshots). Read [AGENTS.md](AGENTS.md) before changing things. The plan and the
 |------|------------------|
 | `Sources/SidefolkCore/` | Everything that isn't UI: storage, Guard, tools, brain, time, watchers, attention, bridge, extensions, updates, voice, the Mac's own apps |
 | `Sources/SidefolkCharacter/` | The 2D rigs for every companion and folk, custom companions as data, the icon renderer |
-| `Sources/SidefolkApp/` | The app: the companion and its Sidecard, Ask, the Play panel, Home, Settings, the Pocket, onboarding, voice |
+| `Sources/SidefolkApp/` | The app: the companion and its Sidecard, Ask, extensions' surfaces, Home, Settings, the Pocket, onboarding, voice |
 | `Sources/sidefolk/` | The `sidefolk` command-line helper (mcp, run, hook, status, ext validate, theme) |
 | `Resources/Companions3D/` | The three.js engine and the built-in 3D companions; `companions-3d/` and `companions-2d/` hold the pipelines |
 | `extensions/` | The Kit extensions are written on (they live in sidefolk-addons) and a sample |

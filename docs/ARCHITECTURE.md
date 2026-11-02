@@ -129,12 +129,8 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   one row in `watch_checks`, a run that only grew saved with the routine saves; page and file watches keep the
   last two versions of the text they compared (`ProbeResult.compared` → `watch_versions`), shown line by line on
   the watch's page in Home (`LineDiff`). 30 days, 500 rows a watch, deleted with the watch.
-- `Companion/` — play (D44): `companion.play` publishes `AppEvent.companion` for a trick or a game;
-  `companion.toss` draws coins, dice or a rock-paper-scissors hand with the system's generator (the score in
-  `kv`) and publishes `AppEvent.toss`. The app's `CompanionPlayer` plays both: a moment (`flick`, `roll`,
-  `pump`), then `TossStage` draws the objects in the caption panel above the companion, landing on the result. Games (D75, D79)
-  are extensions with `games` in their manifest; the app's Play panel (`Sources/SidefolkApp/Play/`) draws their boards
-  from fixed parts and plays the companion's cues (docs/EXTENSIONS.md › Games). Surfaces (D99) are the general form:
+- `Companion/` — play (D44): `companion.play` publishes `AppEvent.companion` for a trick, catch-me or breathing, the companion's own life, which the app's
+  `CompanionPlayer` plays. Everything else on the desktop is an extension's surface (D99, D101; the app holds no games):
   `sidefolk/surface.*` answers with a `SurfaceScene` (Core `Surfaces/`, parsed and capped, its animations flattened to
   curves), which `SceneView` (App `Surfaces/`) draws as Core Animation layers inside Sidefolk's own `SurfaceFrame`; pictures and
   sounds come only from the pack's `assets` through `PackAssetReader`.
@@ -243,7 +239,7 @@ through `EventBus` streams consumed by `@MainActor @Observable` presenters. No l
 - The Sidecard (D84): whispers, cards, the stack and permission slips in child panels of the companion, positioned
   to stay on screen. Ask is its largest size: a non-activating `NSPanel` that can become key so typing never steals
   app activation.
-- The Play panel: a game's board beside the companion (400 pt wide, under about 720 pt tall), keys while it is open.
+- Surfaces: an extension's panel or overlay beside the companion (at most 720 × 676 of canvas under Sidefolk's 44 pt frame), keys only when the person opened it.
 - The menu bar's Pocket: an `NSPopover` from the status item; right-click for the short menu.
 - Home (Today, Calendar, Notebook with You and the Trash, On duty, History, extension pages, the Gallery) and
   Settings (eight tabs with search) are ordinary windows.
@@ -275,7 +271,7 @@ Colours say what happened, the same way on every screen and in every theme. The 
 
 - The accent is otherwise for the primary action, links, selection and focus, and for the present on a time line
   (the now line is a time marker, not an alarm).
-- Folk colours (`Theme.folkColor`) are identity, never status, and never the only signal: Play's red says "a game",
+- Folk colours (`Theme.folkColor`) are identity, never status, and never the only signal: a folk's red says "that folk",
   not "you lost".
 - Every status colour comes with a word or an icon ("late", "Having trouble", ✓); colour is never the only signal.
 - The theme check holds the roles to their meaning: danger must look red, warning amber, success green (hue and
