@@ -228,7 +228,7 @@ import Testing
 
         let offered = ExternalToolPolicy.all.map { $0.replacingOccurrences(of: ".", with: "_") }
         for tool in offered { #expect(text.contains(tool), "the skill explains \(tool)") }
-        let named = Set(text.matches(of: /`([a-z]+_[a-z]+)/).map { String($0.1) })
+        let named = Set(text.matches(of: /`([a-z]+(?:_[a-z]+)+)/).map { String($0.1) })
         let known = Set(offered)
         #expect(named.subtracting(known).isEmpty, "names no tool Sidefolk doesn't offer: \(named.subtracting(known))")
         #expect(AgentIntegrations.marked(text).hasPrefix(lines[0..<end + 1].joined(separator: "\n") + "\n\n<!-- Installed by Sidefolk"))

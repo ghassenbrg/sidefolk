@@ -36,6 +36,14 @@ public final class AppDatabase: Sendable {
     /// Every migration this copy knows: a backup whose database ran one more was made by a newer Sidefolk (D91).
     public static var migrationIdentifiers: Set<String> { Set(migrator.migrations) }
 
+    /// v7: the first three live values were what the corner showed; any more, which only Home ever showed, go quiet.
+    static let fourthLiveValueRunsQuietly = """
+        UPDATE watchers SET display = 'quiet'
+        WHERE mode = 'report' AND state IN ('active', 'paused') AND id NOT IN (
+            SELECT id FROM watchers WHERE mode = 'report' AND state IN ('active', 'paused')
+            ORDER BY created_at, id LIMIT 3)
+        """
+
     static var migrator: DatabaseMigrator {
         var m = DatabaseMigrator()
         m.registerMigration("v1") { db in
@@ -301,6 +309,18 @@ public final class AppDatabase: Sendable {
                 t.column("hash", .text).notNull()
             }
             try db.create(index: "watch_versions_watcher", on: "watch_versions", columns: ["watcher_id", "id"])
+        }
+        // Running apart from shown (D116): where a live value shows, its place in the list, and what stands around its
+        // value. What the corner showed stays there, in the order it was made, looking the same; a fourth, which
+        // only Home ever showed, runs quietly and can be found.
+        m.registerMigration("v7-watcher-display") { db in
+            try db.alter(table: "watchers") { t in
+                t.add(column: "display", .text).notNull().defaults(to: "beside")
+                t.add(column: "sort_order", .integer).notNull().defaults(to: 0)
+                t.add(column: "value_prefix", .text)
+                t.add(column: "value_suffix", .text)
+            }
+            try db.execute(sql: Self.fourthLiveValueRunsQuietly)
         }
         return m
     }

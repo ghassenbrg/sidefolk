@@ -11,7 +11,7 @@ public enum WatchTools {
         [
             WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser, here: here),
             WatchReadTool(engine: engine, here: here),
-            WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
+            WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchUpdateTool(engine: engine), WatchReorderTool(engine: engine), WatchMoreRoomTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
         ]
     }
 }
@@ -489,7 +489,7 @@ struct WatchListTool: Tool {
     func summary(for input: JSONValue) -> String { String(localized: "List what I'm watching") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let all = await engine.list().filter { WatchSource.canManage(caller: context.caller, watcherSource: $0.source) }
+        let all = await engine.arranged().filter { WatchSource.canManage(caller: context.caller, watcherSource: $0.source) }
         guard !all.isEmpty else {
             return ToolResult(text: "Nothing is being watched.", card: ResultCard(kind: .list, title: String(localized: "Nothing is being watched")))
         }
@@ -498,6 +498,7 @@ struct WatchListTool: Tool {
         let lines = listed.map { w in
             "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.stateForModel(w, now: context.now)), every \(WatchWords.everyForModel(w.intervalS))"
                 + (w.fireCount > 0 ? ", fired \(w.fireCount)×" : "") + Self.lastChange(changes[w.id], of: w, now: context.now)
+                + (w.mode == .report ? ", shows \(w.display.rawValue)" : "")
         }
         let shown = listed.map { w in
             var line = String(localized: "• \(w.title) (\(w.kind), id \(w.id)): \(WatchWords.state(w, now: context.now)), every \(WatchWords.every(w.intervalS))")
@@ -559,7 +560,7 @@ struct WatchPauseTool: Tool {
     var spec: ToolSpec {
         ToolSpec(name: "watch.pause", title: String(localized: "Pause a watcher"), description: "Pause a watcher without removing it. id is its id or its title.",
                  inputSchema: Schema.object(["id": Schema.string("The watcher's id (or its title).")], required: ["id"]),
-                 risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: false)
+                 risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: true)
     }
 
     func summary(for input: JSONValue) -> String { String(localized: "Pause “\((input.string("id") ?? "").clipped(60))”") }
@@ -582,7 +583,7 @@ struct WatchResumeTool: Tool {
         ToolSpec(name: "watch.resume", title: String(localized: "Resume a watcher"),
                  description: "Start a paused, finished or expired watcher again. id is its id or its title.",
                  inputSchema: Schema.object(["id": Schema.string("The watcher's id (or its title).")], required: ["id"]),
-                 risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: false)
+                 risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: true)
     }
 
     func summary(for input: JSONValue) -> String { String(localized: "Resume “\((input.string("id") ?? "").clipped(60))”") }
@@ -596,5 +597,109 @@ struct WatchResumeTool: Tool {
         return ToolResult(text: "Watching \(resumed.title) again.",
                           card: ResultCard(kind: .watcher, title: String(localized: "Watching \(resumed.title) again"), refId: resumed.id),
                           undo: undo, untrusted: !WatchSource.isUserSourced(resumed.source))
+    }
+}
+
+/// Where a live value shows and what stands around it (D116). It runs on whichever.
+struct WatchUpdateTool: Tool {
+    let engine: WatcherEngine
+
+    var spec: ToolSpec {
+        ToolSpec(name: "watch.update", title: String(localized: "Change how a live value shows"),
+                 description: """
+                 Change how a live value shows; it goes on running whichever. display: beside (always beside the companion, \
+                 \(WatchLimits.maxBeside) places in all), notify (hidden, appears for a moment at each reading, once a minute at most), quiet \
+                 (hidden; the person checks it from a menu). prefix and suffix stand around the value, like "$" or "GPU", \
+                 \(WatchLimits.maxAffix) characters at most; an empty string takes one away. id is its id or its title.
+                 """,
+                 inputSchema: Schema.object([
+                     "id": Schema.string("The watcher's id (or its title)."),
+                     "display": Schema.string("Where it shows.", enum: Watcher.Display.allCases.map(\.rawValue)),
+                     "prefix": Schema.string("Short text before the value."),
+                     "suffix": Schema.string("Short text after the value."),
+                 ], required: ["id"]),
+                 risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: true)
+    }
+
+    func summary(for input: JSONValue) -> String { String(localized: "Change how “\((input.string("id") ?? "").clipped(60))” shows") }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        let w = try await WatchInput.resolve(input.string("id") ?? "", caller: context.caller, engine: engine)
+        var changed = w
+        do {
+            if let raw = input.string("display") {
+                guard let display = Watcher.Display(rawValue: raw) else { throw ToolError.invalidInput(String(localized: "“display” must be beside, notify or quiet.")) }
+                changed = try await engine.setDisplay(w.id, display)
+            }
+            if input["prefix"] != nil || input["suffix"] != nil {
+                changed = try await engine.setValueAffixes(w.id, prefix: input["prefix"] == nil ? changed.valuePrefix : input.string("prefix"),
+                                                           suffix: input["suffix"] == nil ? changed.valueSuffix : input.string("suffix"))
+            }
+        } catch let error as WatchError { throw WatchInput.watchError(error) }
+        let engine = self.engine
+        let before = w
+        let undo = UndoAction(label: String(localized: "Changed how \(w.title) shows")) {
+            if before.mode == .report { try await engine.setDisplay(before.id, before.display) }
+            try await engine.setValueAffixes(before.id, prefix: before.valuePrefix, suffix: before.valueSuffix)
+        }
+        return ToolResult(text: "\(changed.title) now shows \(changed.display.rawValue), around its value: “\(changed.valuePrefix ?? "")” and “\(changed.valueSuffix ?? "")”.",
+                          card: ResultCard(kind: .watcher, title: String(localized: "Changed how \(changed.title) shows"), refId: changed.id),
+                          undo: undo, untrusted: !WatchSource.isUserSourced(changed.source))
+    }
+}
+
+/// Arranges watchers (D116). An agent can move only its own, in the places they hold.
+struct WatchReorderTool: Tool {
+    let engine: WatcherEngine
+
+    var spec: ToolSpec {
+        ToolSpec(name: "watch.reorder", title: String(localized: "Arrange watchers"),
+                 description: "Put watchers in this order, each given by id. Others keep their places. The first live values shown beside the companion come first.",
+                 inputSchema: Schema.object(["ids": .object(["type": "array", "items": ["type": "string"], "description": "Watcher ids in the new order."])], required: ["ids"]),
+                 risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: true)
+    }
+
+    func summary(for input: JSONValue) -> String { String(localized: "Arrange watchers") }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        guard case .array(let values)? = input["ids"], !values.isEmpty else { throw ToolError.invalidInput(String(localized: "“ids” must list the watchers in their new order.")) }
+        var ids: [String] = []
+        for value in values {
+            ids.append(try await WatchInput.resolve(value.stringValue ?? "", caller: context.caller, engine: engine).id)
+        }
+        let before = await engine.arranged().map(\.id)
+        await engine.reorder(ids)
+        let engine = self.engine
+        return ToolResult(text: "Arranged \(ids.count) watchers.", card: ResultCard(kind: .watcher, title: String(localized: "Arranged \(ids.count) watchers")),
+                          undo: UndoAction(label: String(localized: "Put them back")) { await engine.reorder(before) })
+    }
+}
+
+/// How other agents get past their shared room (T4): Guard asks the person, as for anything medium, and the tool does
+/// nothing but make room if they say yes. Kept out of the permission groups, so no setting makes it automatic.
+struct WatchMoreRoomTool: Tool {
+    let engine: WatcherEngine
+
+    var spec: ToolSpec {
+        ToolSpec(name: "watch.more_room", title: String(localized: "Let agents watch more"),
+                 description: "Ask the user to let other agents keep more watchers running together. Only when a watcher was refused for lack of room; ask once.",
+                 inputSchema: Schema.object([:]), risk: .medium, capabilities: [.watch], category: .watch, mutates: true, external: true,
+                 offeredToModel: false)
+    }
+
+    /// Auto and Full access answer for Sidefolk's own agent without asking, so it isn't one this tool will run for.
+    func refusal(for input: JSONValue, context: ToolContext) -> String? {
+        if case .external = context.caller { return nil }
+        return "Only another agent asks for this."
+    }
+
+    func summary(for input: JSONValue) -> String {
+        String(localized: "Let other agents keep \(WatchLimits.externalRoomStep) more watchers running")
+    }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        let room = await engine.allowMoreExternalRoom()
+        return ToolResult(text: "Other agents may now keep \(room) watchers running together.",
+                          card: ResultCard(kind: .watcher, title: String(localized: "Other agents may keep \(room) watchers running")))
     }
 }

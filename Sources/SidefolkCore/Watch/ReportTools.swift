@@ -60,8 +60,14 @@ enum Report {
     static func started(_ w: Watcher, requested: TimeInterval, look: FirstLook, engine: WatcherEngine, now: Date) -> ToolResult {
         let every = WatchWords.every(w.intervalS)
         let everyForModel = WatchWords.everyForModel(w.intervalS)
-        var text = "Showing \(w.title) every \(everyForModel), live beside the companion"
+        let place = switch w.display {
+        case .beside: "live beside the companion"
+        case .notify: "for a moment beside the companion at each reading"
+        case .quiet: "running quietly: the person checks it from a menu (it's hidden, usually because the places beside the companion are taken)"
+        }
+        var text = "Showing \(w.title) every \(everyForModel), \(place)"
         var lines: [String] = []
+        if w.display == .quiet { lines.append(String(localized: "Running quietly. It's in On duty and the menu.", comment: "A live value that isn't shown beside the companion")) }
         if let reading = look.reading {
             text += "; it reads \(reading.forModel) now"
         } else if let problem = look.problem ?? look.note {
@@ -136,6 +142,9 @@ struct WatchReportTool: Tool {
                 "metric": Schema.string("metric: which value of this Mac.", enum: Metric.allCases.map(\.rawValue)),
                 "place": Schema.string("weather: the place as the user said it, like \"Fukuoka\" or \"Paris, France\". Leave out for where the user is."),
                 "quantity": Schema.string("weather: what to show (default temperature).", enum: WeatherQuantity.allCases.map(\.rawValue)),
+                "display": Schema.string("Where it shows: beside the companion (default), notify (a moment at each reading) or quiet (from a menu).", enum: Watcher.Display.allCases.map(\.rawValue)),
+                "prefix": Schema.string("Short text before the value, like \"$\" or \"GPU\"."),
+                "suffix": Schema.string("Short text after the value."),
                 "url": Schema.string("web: the page or API address."),
                 "json_path": Schema.string("web: a path into a JSON reply, like current.temperature_2m or data[0].price."),
                 "selector": Schema.string("web: a simple CSS selector (tag, .class, #id or tag.class) whose text is the value."),
@@ -184,8 +193,11 @@ struct WatchReportTool: Tool {
 
         let requested = try Report.interval(input)
         let title = input.string("title") ?? Self.title(input.setting("place", config["place"])) ?? String(localized: "Value")
-        let watcher = Watcher(kind: kind, title: title, config: config, intervalS: requested, mode: .report, expiresAt: end,
+        var watcher = Watcher(kind: kind, title: title, config: config, intervalS: requested, mode: .report, expiresAt: end,
                               source: WatchSource.string(for: context), now: context.now)
+        watcher.display = input.string("display").flatMap(Watcher.Display.init(rawValue:)) ?? .beside
+        watcher.valuePrefix = input.string("prefix")
+        watcher.valueSuffix = input.string("suffix")
         return try await Report.start(watcher, requested: requested, engine: engine, context: context)
     }
 

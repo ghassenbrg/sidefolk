@@ -66,6 +66,9 @@ public actor WatcherEngine {
     public static let historyLength = 40
     /// Each watch's checks and kept versions (D87).
     let log: WatchHistoryStore
+    /// How many other agents may keep going together; the person's yes adds to it.
+    var externalRoom = WatchLimits.externalRoom
+    static let externalRoomKey = "watch.external.room"
     /// Each watch's newest run of checks, as it stands: a run that only grew is saved with the routine saves (see `note`).
     var openRuns: [String: OpenRun] = [:]
 
@@ -158,6 +161,12 @@ public actor WatcherEngine {
         return watchers.values.sorted { ($0.createdAt, $0.id) > ($1.createdAt, $1.id) }
     }
 
+    /// Every watcher in the person's order: their arrangement, and before any, the order they were made in.
+    public func arranged() async -> [Watcher] {
+        await ensureLoaded()
+        return watchers.values.sorted { ($0.sortOrder, $0.createdAt, $0.id) < ($1.sortOrder, $1.createdAt, $1.id) }
+    }
+
     public func watcher(id: String) async -> Watcher? {
         await ensureLoaded()
         return watchers[id]
@@ -199,6 +208,10 @@ public actor WatcherEngine {
         // From the quota check to the insert below there is no `await`, so the actor runs it as one step
         // and the slot is taken before any other add can look: parallel creations can't all see room.
         try checkRoom(for: w)
+        w = placed(w)
+        if w.sortOrder == 0 { w.sortOrder = (watchers.values.map(\.sortOrder).max() ?? 0) + 1 }
+        w.valuePrefix = WatchValue.affix(w.valuePrefix)
+        w.valueSuffix = WatchValue.affix(w.valueSuffix)
         w.state = .active
         w.nextCheckAt = now
         w.lastCheckedAt = nil
@@ -264,6 +277,7 @@ public actor WatcherEngine {
         guard w.state != .active else { return w }
         guard probes[w.kind] != nil else { throw WatchError.unknownKind(w.kind) }
         try checkRoom(for: w)
+        w = placed(w)
         let now = clock.now
         w.state = .active
         w.errorCount = 0
@@ -289,6 +303,73 @@ public actor WatcherEngine {
         return watchers[id]
     }
 
+    /// Puts `ids` in this order in the places they already hold, and leaves the others where they are: an agent
+    /// arranging its own moves nobody else's. Numbers everything, so a place holds from then on.
+    public func reorder(_ ids: [String]) async {
+        let all = await arranged()
+        var seen = Set<String>()
+        let wanted = ids.filter { watchers[$0] != nil && seen.insert($0).inserted }
+        var next = wanted.makeIterator()
+        for (place, w) in all.enumerated() {
+            guard let id = seen.contains(w.id) ? next.next() : w.id, var moved = watchers[id] else { continue }
+            guard moved.sortOrder != place + 1 else { continue }
+            moved.sortOrder = place + 1
+            watchers[id] = moved
+            await persist(moved)
+        }
+        events.changed(.watchers)
+    }
+
+    /// Changes where a live value shows. It runs on, and a place beside the companion must be free.
+    @discardableResult
+    public func setDisplay(_ id: String, _ display: Watcher.Display) async throws -> Watcher {
+        await ensureLoaded()
+        guard var w = watchers[id] else { throw WatchError.notFound(String(localized: "that watcher")) }
+        guard w.mode == .report else {
+            throw WatchError.limit(String(localized: "Only a live value has a place to show. A watch tells you when something changes."))
+        }
+        guard display != w.display else { return w }
+        if display == .beside, !hasRoomBeside(for: w) {
+            throw WatchError.limit(String(localized: "There's no more room beside me. Move another live value away first."))
+        }
+        w.display = display
+        w.updatedAt = clock.now
+        watchers[id] = w
+        restyleReading(w)
+        await persist(w)
+        return w
+    }
+
+    /// What stands around a live value. Nil or empty takes it away.
+    @discardableResult
+    public func setValueAffixes(_ id: String, prefix: String?, suffix: String?) async throws -> Watcher {
+        await ensureLoaded()
+        guard var w = watchers[id] else { throw WatchError.notFound(String(localized: "that watcher")) }
+        w.valuePrefix = WatchValue.affix(prefix)
+        w.valueSuffix = WatchValue.affix(suffix)
+        w.updatedAt = clock.now
+        watchers[id] = w
+        restyleReading(w)
+        await persist(w)
+        return w
+    }
+
+    /// The person said yes: other agents get more room (T4), up to a ceiling however often they're asked. Kept, so
+    /// they're asked only once for it.
+    public func allowMoreExternalRoom() async -> Int {
+        await ensureLoaded()
+        externalRoom = min(externalRoom + WatchLimits.externalRoomStep, WatchLimits.externalRoomMost)
+        try? await KVStore(store.db).set(Self.externalRoomKey, externalRoom)
+        return externalRoom
+    }
+
+    /// The value on show follows at once, not at the next check: the same reading, not a new one, so it reaches the app
+    /// with the watcher's change and draws no new point or notification.
+    private func restyleReading(_ w: Watcher) {
+        guard let reading = readings[w.id] else { return }
+        readings[w.id] = WatchReading(w, value: reading.plain, at: reading.at)
+    }
+
     // MARK: Limits
 
     /// How long a watcher lives (each time it is started), by mode. A report the person asked to keep "until I stop
@@ -307,34 +388,38 @@ public actor WatcherEngine {
         return min(own ?? WatchLimits.externalExpiry, WatchLimits.externalExpiry)
     }
 
-    /// At most 50 watchers going, 10 from external agents (all of them together: their names are
-    /// self-chosen), 5 command watchers (docs/SECURITY.md T4, T24). Call it in the same actor step that
-    /// makes the watcher active, so the count can't go stale.
+    /// The person's own, and Sidefolk's agent's for them, have no count (D116). Other agents together get `externalRoom`,
+    /// more when the person says so (T4), and what runs without the person's words (routines, extensions, a turn that
+    /// read outside content) keeps a ceiling. Call it in the same actor step that makes the watcher active, so the count
+    /// can't go stale.
     func checkRoom(for w: Watcher) throws {
-        let others = watchers.values.filter { $0.state == .active && $0.id != w.id }
-        if others.count >= WatchLimits.maxActive {
-            throw WatchError.limit(String(localized: "I'm already watching \(WatchLimits.maxActive) things. Stop one before starting another."))
-        }
+        guard !WatchSource.isUserSourced(w.source) else { return }
+        let others = watchers.values.filter { $0.state == .active && $0.id != w.id && !WatchSource.isUserSourced($0.source) }
         if WatchSource.isExternal(w.source) {
             let external = others.filter { WatchSource.isExternal($0.source) }
-            if external.filter({ $0.source == w.source }).count >= WatchLimits.maxActivePerExternalClient {
-                throw WatchError.limit(String(localized: "That app already has \(WatchLimits.maxActivePerExternalClient) watchers going. Stop one first."))
+            if external.count >= externalRoom {
+                throw WatchError.limit(String(localized: "Other agents already have \(external.count) watches running. Stop one first.")
+                    + " Or call watch_more_room once to ask the user for more room.")
             }
-            if external.count >= WatchLimits.maxActiveExternal {
-                throw WatchError.limit(String(localized: "Other agents already have \(external.count) watches running. Stop one first."))
-            }
-            // Live values share four places beside the companion: other agents never take more than half of them,
-            // so one steered by a hostile repo can't leave the person unable to show their own.
-            if w.mode == .report, external.filter({ $0.mode == .report }).count >= WatchLimits.maxActiveExternalReports {
-                throw WatchError.limit(String(localized: "Other agents already show \(WatchLimits.maxActiveExternalReports) live values. Stop one first."))
-            }
+        } else if others.filter({ !WatchSource.isExternal($0.source) }).count >= WatchLimits.maxUnattended {
+            throw WatchError.limit(String(localized: "I'm already watching \(WatchLimits.maxUnattended) things that nobody asked for directly. Stop one before starting another."))
         }
-        if w.kind == WatchKind.command, others.filter({ $0.kind == WatchKind.command }).count >= WatchLimits.maxActiveCommands {
-            throw WatchError.limit(String(localized: "\(WatchLimits.maxActiveCommands) command watchers are already running. Stop one first."))
-        }
-        if w.mode == .report, others.filter({ $0.mode == .report }).count >= WatchLimits.maxActiveReports {
-            throw WatchError.limit(String(localized: "I'm already showing \(WatchLimits.maxActiveReports) live values. Stop one first."))
-        }
+    }
+
+    /// Takes a live value out from beside the companion when there's no room left there, rather than refuse it: it goes
+    /// on running. Other agents never take the last place, so one steered by a hostile repo can't leave the person
+    /// unable to show their own (T29).
+    func placed(_ watcher: Watcher) -> Watcher {
+        guard watcher.mode == .report, watcher.display == .beside, !hasRoomBeside(for: watcher) else { return watcher }
+        var w = watcher
+        w.display = .quiet
+        return w
+    }
+
+    func hasRoomBeside(for w: Watcher) -> Bool {
+        let beside = watchers.values.filter { $0.id != w.id && $0.mode == .report && $0.display == .beside && ($0.state == .active || $0.state == .paused) }
+        if beside.count >= WatchLimits.maxBeside { return false }
+        return !WatchSource.isExternal(w.source) || beside.filter { WatchSource.isExternal($0.source) }.count < WatchLimits.maxExternalBeside
     }
 
     // MARK: Loading and saving
@@ -346,6 +431,7 @@ public actor WatcherEngine {
         guard !loaded else { return }
         loaded = true
         for w in all where watchers[w.id] == nil { watchers[w.id] = w }
+        if let room = try? await KVStore(store.db).get(Self.externalRoomKey, as: Int.self) { externalRoom = max(room, externalRoom) }
     }
 
     /// Saves a watcher. Routine checks (only the timing changed) reach the database at most every few
@@ -377,7 +463,8 @@ public actor WatcherEngine {
     static func materialFingerprint(_ w: Watcher) -> String {
         [w.state.rawValue, String(w.errorCount), String(w.fireCount), w.lastError ?? "", w.title, String(w.intervalS),
          w.mode.rawValue, w.level.rawValue, w.expiresAt.map { String($0.timeIntervalSince1970) } ?? "",
-         w.config.jsonString, w.condition.jsonString].joined(separator: "|")
+         w.config.jsonString, w.condition.jsonString, w.display.rawValue, String(w.sortOrder), w.valuePrefix ?? "", w.valueSuffix ?? ""]
+            .joined(separator: "|")
     }
 
     // MARK: Scheduling

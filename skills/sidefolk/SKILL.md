@@ -105,7 +105,7 @@ folders the user shared with Sidefolk. Addresses on this Mac or the local networ
 localhost:3000 is up"). `mode: repeat` keeps telling them after the first change; the default tells once.
 Your watches stop on their own after a day.
 
-### watch_report, watch_list, watch_stop
+### watch_report, watch_list, watch_stop, watch_pause, watch_resume, watch_update, watch_reorder, watch_more_room
 
 A live value of this Mac beside the companion, updated in place (not a notification):
 
@@ -117,7 +117,14 @@ A live value of this Mac beside the companion, updated in place (not a notificat
 Metrics are cpu, memory, battery, disk and network; 5 seconds is the fastest (a faster request is raised and
 the result says so; pass on what it says). A report faster than once a minute stops after an hour, others
 after a day, unless `until` is sooner. `watch_list` shows the watches and reports you started; `watch_stop
-{"id": "…"}` ends one. Weather and values on web pages are something the user sets up in Sidefolk.
+{"id": "…"}` ends one, `watch_pause` and `watch_resume` hold and restart it. Weather and values on web pages are
+something the user sets up in Sidefolk.
+
+Only a few values fit beside the companion; past that yours run on quietly, and the result says so.
+`watch_update {"id": "…", "display": "quiet"}` moves one (`beside`, `notify` for a moment at each reading, `quiet` for
+checking from a menu), and `prefix` and `suffix` put a short symbol or unit around its value (`"suffix": "GPU"`).
+`watch_reorder {"ids": ["…", "…"]}` arranges yours. If a watcher is refused for lack of room, call `watch_more_room`
+once: it asks the user. If they refuse, stop some of yours instead.
 
 ### notify_user
 

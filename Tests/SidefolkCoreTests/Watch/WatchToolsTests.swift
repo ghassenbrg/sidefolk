@@ -44,11 +44,13 @@ import Testing
 
     @Test func theToolboxIsWhatWasPromised() {
         let specs = Dictionary(uniqueKeysWithValues: WatchTools.make(engine: engine).map { ($0.spec.name, $0.spec) })
-        #expect(Set(specs.keys) == ["watch.create", "watch.command", "watch.report", "watch.read", "watch.list", "watch.stop", "watch.pause",
+        #expect(Set(specs.keys) == ["watch.create", "watch.command", "watch.report", "watch.read", "watch.list", "watch.stop", "watch.update", "watch.reorder", "watch.more_room", "watch.pause",
                                     "watch.resume"])
         // watch.report reaches other agents for this Mac's metrics only (ExternalToolPolicy, D42).
-        for name in ["watch.create", "watch.report", "watch.list", "watch.stop"] { #expect(specs[name]?.external == true, "\(name)") }
-        for name in ["watch.command", "watch.read", "watch.pause", "watch.resume"] { #expect(specs[name]?.external == false, "\(name)") }
+        for name in ["watch.create", "watch.report", "watch.list", "watch.stop", "watch.pause", "watch.resume", "watch.update", "watch.reorder", "watch.more_room"] {
+            #expect(specs[name]?.external == true, "\(name)")
+        }
+        for name in ["watch.command", "watch.read"] { #expect(specs[name]?.external == false, "\(name)") }
 
         let create = specs["watch.create"]!
         #expect(create.risk == .low)
@@ -603,25 +605,25 @@ import Testing
 
     @Test func watcherQuotaShowsAsAFriendlyFailure() async throws {
         let codex = Caller.external(client: "codex")
-        for n in 0..<WatchLimits.maxActivePerExternalClient {
+        for n in 0..<WatchLimits.externalRoom {
             #expect(await run("watch.create", ["kind": "url_change", "target": .string("example.com/\(n)")], as: codex).isOK)
         }
         let message = failure(await run("watch.create", ["kind": "url_change", "target": "example.com/one-more"], as: codex))
-        #expect(message?.contains("already has 10 watchers") == true)
+        #expect(message?.contains("watch_more_room") == true)
     }
 
-    /// T4: other agents together keep at most 10 watchers, even calling in parallel under fresh names.
+    /// T4: other agents together keep at most their room of watchers, even calling in parallel under fresh names.
     @Test func parallelExternalCallsShareOneQuota() async throws {
         let gateway = ExternalToolGateway(registry: env.base.registry, permissions: env.base.permissions, broker: env.base.broker,
                                           activity: env.base.activity, events: env.base.events, clock: env.clock)
         await withTaskGroup(of: Void.self) { group in
-            for n in 0..<(WatchLimits.maxActiveExternal + 6) {
+            for n in 0..<(WatchLimits.externalRoom + 6) {
                 group.addTask {
                     _ = await gateway.call("watch.create", input: ["kind": "url_change", "target": .string("example.com/\(n)")], client: "agent-\(n)")
                 }
             }
         }
-        #expect(await engine.list().count == WatchLimits.maxActiveExternal)
+        #expect(await engine.list().count == WatchLimits.externalRoom)
         #expect(await engine.list().allSatisfy { $0.expiresAt == $0.createdAt.addingTimeInterval(WatchLimits.externalExpiry) })
     }
 

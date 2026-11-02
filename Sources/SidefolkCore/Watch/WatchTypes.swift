@@ -78,6 +78,11 @@ public struct WatchReading: Sendable, Hashable {
     public var intervalS: TimeInterval
     /// The person asked for a notification with every reading.
     public var notify: Bool
+    /// The value as a pin shows it at rest (`PinValue`), with what is set around it.
+    public var atRest: String
+    /// The value alone, for reading a number from: "Q3" around it is no part of a line drawn from it.
+    public var plain: String
+    public var display: Watcher.Display = .beside
 
     public init(watcherId: String, title: String, label: String, value: String, at: Date, intervalS: TimeInterval, notify: Bool) {
         self.watcherId = watcherId
@@ -87,19 +92,51 @@ public struct WatchReading: Sendable, Hashable {
         self.at = at
         self.intervalS = intervalS
         self.notify = notify
+        atRest = PinValue.atRest(value)
+        plain = value
+    }
+
+    /// Whether a value set to come and go is due its moment beside the companion: at each reading, once a minute at most.
+    public func dueItsMoment(last: Date?) -> Bool {
+        guard display == .notify else { return false }
+        guard let last else { return true }
+        return at.timeIntervalSince(last) >= max(intervalS, WatchLimits.momentFloor)
     }
 
     /// Whether this value also goes out as a system notification (D35): when the person asked for one, or when
-    /// the companion is hidden and values come slower than once a minute. Never in quiet mode, which lets only
-    /// urgent things through: a value every few seconds or minutes never is, and the pill still shows it.
+    /// the companion is hidden and values come slower than once a minute, if it would have been showing beside it.
+    /// Never in quiet mode, which lets only urgent things through: a value every few seconds or minutes never is, and
+    /// the pill still shows it.
     public func notifies(companionVisible: Bool, quiet: Bool) -> Bool {
-        !quiet && (notify || (!companionVisible && intervalS > 60))
+        !quiet && (notify || (display == .beside && !companionVisible && intervalS > 60))
     }
 
     init(_ w: Watcher, value: String, at: Date) {
+        let plain = value.displaySafe.clipped(WatchLimits.readingLimit)
         self.init(watcherId: w.id, title: w.title, label: w.config.string("place")?.components(separatedBy: ",").first ?? w.title,
-                  value: value.displaySafe.clipped(WatchLimits.readingLimit), at: at, intervalS: w.intervalS,
+                  value: WatchValue.dressed(plain, w), at: at, intervalS: w.intervalS,
                   notify: w.config["notify"]?.boolValue == true)
+        atRest = WatchValue.dressed(PinValue.atRest(plain), w)
+        self.plain = plain
+        display = w.display
+    }
+}
+
+/// A value with what was set around it: "$45", "GPU 45 %". The value is isolated so its digits never reorder among
+/// words of another direction; in an Arabic window the prefix simply reads first, from the right. A value with neither
+/// stays exactly as it was. A word gets a space, a sign doesn't.
+enum WatchValue {
+    static func dressed(_ value: String, _ w: Watcher) -> String {
+        guard w.valuePrefix != nil || w.valueSuffix != nil else { return value }
+        let before = w.valuePrefix.map { $0 + (($0.last?.isLetter ?? false) ? " " : "") } ?? ""
+        let after = w.valueSuffix.map { (($0.first?.isLetter ?? false) ? " " : "") + $0 } ?? ""
+        return "\(before)\u{2068}\(value)\u{2069}\(after)"
+    }
+
+    /// What may be set: one short line, or nil for nothing.
+    static func affix(_ text: String?) -> String? {
+        let clean = (text ?? "").displaySafe.trimmingCharacters(in: .whitespacesAndNewlines)
+        return clean.isEmpty ? nil : String(clean.prefix(WatchLimits.maxAffix))
     }
 }
 
@@ -194,15 +231,23 @@ public enum ProbeError: Error, Sendable, Equatable, CustomStringConvertible {
 
 /// The numbers that keep watchers calm (docs/SECURITY.md T24).
 public enum WatchLimits {
-    public static let maxActive = 50
-    public static let maxActivePerExternalClient = 10
-    /// Every external agent together (T4): a new client name doesn't buy new room.
-    public static let maxActiveExternal = 10
-    public static let maxActiveCommands = 5
-    /// Live readouts at once: each is a pill beside the companion.
-    public static let maxActiveReports = 4
+    /// How many other agents may keep going together before the person is asked (T4): their names are self-chosen, so
+    /// a new client buys no new room. The person's own and Sidefolk's agent have no count, only the floors below (D116).
+    public static let externalRoom = 25
+    /// How much room the person's yes to `watch.more_room` adds, and the most it ever comes to.
+    public static let externalRoomStep = 25
+    public static let externalRoomMost = 200
+    /// What runs without the person's own words (routines, extensions, a turn that read outside content) together.
+    public static let maxUnattended = 50
+    /// Live values always beside the companion: the desktop's room is what is short, not the running of them (D116).
+    public static let maxBeside = 3
     /// Of those, what every external agent together may hold (T4, T29).
-    public static let maxActiveExternalReports = 2
+    public static let maxExternalBeside = 2
+    /// The longest "$" or "GPU" around a value.
+    public static let maxAffix = 8
+    /// However often a value is read, a moment beside the companion comes no more often than this, and lasts this long (D116).
+    public static let momentFloor: TimeInterval = 60
+    public static let momentLength: TimeInterval = 8
     public static let onceExpiry: TimeInterval = 7 * 86400
     public static let repeatExpiry: TimeInterval = 30 * 86400
     /// A report stops on its own unless the person said to keep going: after an hour when it reads more often

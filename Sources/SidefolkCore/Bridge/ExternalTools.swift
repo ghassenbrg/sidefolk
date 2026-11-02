@@ -9,10 +9,13 @@ public enum ExternalToolPolicy {
     /// Always offered and run without asking: they reach the user only through Sidefolk's own bubbles,
     /// and `status` only counts.
     public static let always: Set<String> = ["notify.user", "ask.user", "status"]
+    /// Always offered and always asked, whatever the settings say: it's how agents get past their shared room (D116).
+    public static let alwaysAsks: Set<String> = ["watch.more_room"]
     /// Adding to what the user has: `watch.list` shows an agent only its own watchers, `reminders.cancel`
-    /// reaches only its own reminders, `watch.report` reads only this Mac's load.
+    /// reaches only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
     public static let saving: Set<String> = [
         "notes.save", "reminders.create", "reminders.cancel", "watch.create", "watch.report", "watch.list", "watch.stop",
+        "watch.pause", "watch.resume", "watch.update", "watch.reorder",
     ]
     /// Reading the user's data (notes, reminders, today's plan).
     public static let reading: Set<String> = ["notes.search", "notes.list", "reminders.list", "agenda.today"]
@@ -20,11 +23,12 @@ public enum ExternalToolPolicy {
     /// Never deleting for good: only the user empties the Trash.
     public static let changing: Set<String> = ["notes.update", "notes.trash"]
 
-    public static var all: Set<String> { always.union(saving).union(reading).union(changing) }
+    public static var all: Set<String> { always.union(alwaysAsks).union(saving).union(reading).union(changing) }
 
     /// What `access` lets other agents do with the tool called `name`; nil for a tool they never get.
     public static func permission(_ name: String, access: AgentAccess) -> AgentPermission? {
         if always.contains(name) { return .allow }
+        if alwaysAsks.contains(name) { return .ask }
         if saving.contains(name) { return access.save }
         if reading.contains(name) { return access.read }
         if changing.contains(name) { return access.change }

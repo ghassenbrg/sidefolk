@@ -266,6 +266,9 @@ public struct Watcher: SidefolkRecord, Identifiable, Hashable {
     public enum State: String, Codable, Sendable { case active, paused, triggered, expired, error }
     /// once: tell once, then stop. repeat: tell every time it happens. report: tell the current value every check (D35).
     public enum Mode: String, Codable, Sendable { case once, `repeat`, report }
+    /// Where a live value shows, while it runs whichever (D116): always beside the companion, beside it for a moment at
+    /// each reading, or only when looked for. Says nothing of a watch for changes, which tells when something changes.
+    public enum Display: String, Codable, Sendable, CaseIterable { case beside, notify, quiet }
 
     public var id: String
     public var kind: String
@@ -286,6 +289,12 @@ public struct Watcher: SidefolkRecord, Identifiable, Hashable {
     public var source: String
     public var createdAt: Date
     public var updatedAt: Date
+    public var display: Display = .beside
+    /// Its place among all watchers, lowest first; 0, for those from before, falls back on when it was made.
+    public var sortOrder: Int = 0
+    /// What the person or an agent set around the value ("$", "GPU"): short, and nil for most (D116).
+    public var valuePrefix: String?
+    public var valueSuffix: String?
 
     public init(
         id: String = Identifier.make(), kind: String, title: String, config: JSONValue, condition: JSONValue = .object([:]),

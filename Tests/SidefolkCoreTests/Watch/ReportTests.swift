@@ -77,7 +77,7 @@ import Testing
         #expect(all["battery"]?.expiresAt == now.addingTimeInterval(7200))
         #expect(forever.text.contains("in 2 h"))
         let stopped = try ok(await run("watch.report", ["source": "metric", "metric": "cpu", "every_seconds": 30, "until_stopped": true]))
-        #expect(stopped.card?.detail == "Keeps going until you stop it")
+        #expect(stopped.card?.detail?.contains("Keeps going until you stop it") == true)
     }
 
     @Test func otherAgentsReportsStillEndWithinADay() async throws {
@@ -173,12 +173,16 @@ import Testing
         #expect(again.expiresAt == env.clock.now.addingTimeInterval(WatchLimits.fastReportLifetime))
     }
 
-    @Test func liveValuesAreFewAtATime() async throws {
-        for metric in ["cpu", "memory", "disk", "network"] {
+    /// Only so many stand beside the companion; the next one runs on quietly rather than being refused (D116).
+    @Test func liveValuesBesideTheCompanionAreFewAndTheRestRunQuietly() async throws {
+        for metric in ["cpu", "memory", "disk"] {
             _ = try ok(await run("watch.report", ["source": "metric", "metric": .string(metric), "every_seconds": 60]))
         }
-        let fifth = await run("watch.report", ["source": "metric", "metric": "battery", "every_seconds": 60])
-        #expect(failure(fifth) == "I'm already showing 4 live values. Stop one first.")
+        let fourth = try ok(await run("watch.report", ["source": "metric", "metric": "battery", "every_seconds": 60]))
+        #expect(fourth.text.contains("running quietly"))
+        let shown = await engine.list().filter { $0.display == .beside }
+        #expect(shown.count == WatchLimits.maxBeside)
+        #expect(await engine.list().filter { $0.display == .quiet && $0.state == .active }.count == 1)
     }
 
     @Test func stoppingAReportSaysShowing() async throws {

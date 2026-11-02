@@ -43,6 +43,9 @@ extension ExternalToolPolicy {
                 "every_seconds": Schema.number("Seconds between readings, as the user asked (5 at the fastest)."),
                 "until": Schema.string("When to stop, in the user's words (\"6pm\", \"in 2 hours\"). Leave out for the default end."),
                 "title": Schema.string("Short name (optional), like \"CPU\"."),
+                "display": Schema.string("Where it shows: beside the companion (default), notify (a moment at each reading) or quiet (from a menu).", enum: Watcher.Display.allCases.map(\.rawValue)),
+                "prefix": Schema.string("Short text before the value."),
+                "suffix": Schema.string("Short text after the value."),
             ], required: ["source", "metric"])
             // A value of this Mac reaches no server: what matters is whether watching and system information are on.
             spec.capabilities = [.watch, .system]
@@ -89,6 +92,19 @@ extension ExternalToolPolicy {
             """,
         "watch.list": "List the watchers and live values you started, with their ids and state. Other apps' and the user's don't show.",
         "watch.stop": "Stop one of your watchers or live values, by its id (or its title).",
+        "watch.pause": "Pause one of your watchers or live values without stopping it, by its id (or its title).",
+        "watch.resume": "Start one of your paused or finished watchers or live values again, by its id (or its title).",
+        "watch.update": """
+            Change how one of your live values shows; it goes on running whichever. display: beside (always beside the \
+            companion; other agents share \(WatchLimits.maxExternalBeside) places, and past that it runs quietly), notify (hidden, appears for a \
+            moment at each reading, once a minute at most), quiet (hidden; the user checks it from a menu). prefix and suffix \
+            stand around the value, like "$" or "GPU", \(WatchLimits.maxAffix) characters at most; an empty string takes one away.
+            """,
+        "watch.reorder": "Put your watchers in this order, each given by id. Others, the user's among them, keep their places.",
+        "watch.more_room": """
+            Ask the user to let other agents keep more watchers running together. Call it once, only after a watcher was \
+            refused for lack of room. It asks the user; if they refuse, stop some of your watchers instead.
+            """,
         "notify.user": """
             Show the user a short message on their desktop: a task finished, failed, or needs them. Use gentle (the default) \
             for news and attention only when they should look now. Sidefolk spaces notices out and holds them during quiet \

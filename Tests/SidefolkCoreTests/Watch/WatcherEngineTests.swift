@@ -459,28 +459,26 @@ import Testing
 
     // MARK: Quotas
 
-    @Test func atMostFiftyAreActive() async throws {
+    @Test func thePersonsOwnHaveNoCount() async throws {
         let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
-        for _ in 0..<WatchLimits.maxActive { _ = try await engine.add(.make("fake", interval: 600, now: now)) }
-        await #expect(throws: WatchError.self) { try await engine.add(.make("fake", interval: 600, now: now)) }
-        // A paused one makes room, and cannot be resumed into a full house.
-        let first = try #require(await engine.list().last)
-        _ = try await engine.pause(first.id)
-        let extra = try await engine.add(.make("fake", interval: 600, now: now))
-        await #expect(throws: WatchError.self) { try await engine.resume(first.id) }
-        _ = await engine.remove(extra.id)
-        _ = try await engine.resume(first.id)
+        for _ in 0..<120 { _ = try await engine.add(.make("fake", interval: 600, now: now)) }
+        #expect(await engine.list().count == 120)
     }
 
-    @Test func externalAppsShareTen() async throws {
+    @Test func externalAppsShareTheirRoom() async throws {
         let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
-        for _ in 0..<WatchLimits.maxActivePerExternalClient {
+        for _ in 0..<WatchLimits.externalRoom {
             _ = try await engine.add(.make("fake", interval: 600, source: "external:codex", now: now))
         }
         await #expect(throws: WatchError.self) { try await engine.add(.make("fake", interval: 600, source: "external:codex", now: now)) }
         // A new name doesn't buy new room: the cap is for all of them together.
         await #expect(throws: WatchError.self) { try await engine.add(.make("fake", interval: 600, source: "external:claude-code", now: now)) }
         _ = try await engine.add(.make("fake", interval: 600, source: "user", now: now))
+        // The person's yes makes room, and is remembered.
+        #expect(await engine.allowMoreExternalRoom() == WatchLimits.externalRoom + WatchLimits.externalRoomStep)
+        _ = try await engine.add(.make("fake", interval: 600, source: "external:codex", now: now))
+        let again = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
+        _ = try await again.add(.make("fake", interval: 600, source: "external:codex", now: now))
     }
 
     /// The slot is taken in the same actor step as the count, so parallel adds can't all see room.
@@ -488,12 +486,12 @@ import Testing
         let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:])) }])
         let now = self.now
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<(WatchLimits.maxActiveExternal + 8) {
+            for i in 0..<(WatchLimits.externalRoom + 8) {
                 group.addTask { _ = try? await engine.add(.make("fake", interval: 600, source: "external:agent-\(i)", now: now)) }
             }
         }
-        #expect(await engine.list().filter { $0.state == .active }.count == WatchLimits.maxActiveExternal)
-        #expect(try await env.store.active().count == WatchLimits.maxActiveExternal)
+        #expect(await engine.list().filter { $0.state == .active }.count == WatchLimits.externalRoom)
+        #expect(try await env.store.active().count == WatchLimits.externalRoom)
     }
 
     @Test func externalWatchersStopAfterADay() async throws {
@@ -510,16 +508,6 @@ import Testing
         // Everyone else keeps the usual lifetimes.
         let mine = try await engine.add(.make("fake", interval: 600, mode: .repeat, source: "user:agent", now: now))
         #expect(mine.expiresAt == now.addingTimeInterval(WatchLimits.repeatExpiry))
-    }
-
-    @Test func atMostFiveCommandWatchers() async throws {
-        let engine = env.engine()
-        for n in 0..<WatchLimits.maxActiveCommands {
-            _ = try await engine.add(.make(WatchKind.command, config: ["command": .string("echo \(n)")], condition: ["changed": true], now: now))
-        }
-        await #expect(throws: WatchError.self) {
-            try await engine.add(.make(WatchKind.command, config: ["command": "echo 6"], condition: ["changed": true], now: now))
-        }
     }
 
     @Test func commandsCannotBeAddedByExternalAppsAtAll() async throws {
