@@ -47,11 +47,11 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   guard (`ExtensionFreeAppTests`, reading the add-ons' manifests; game code reported until `transitionOver` flips in D101), details in
   manifests, four seed packs, pack assets, the Scene, surfaces, rich pages with an inline scene, commands with slots, entries, drops,
   settings, AI help, a History row, and a tool's reply that opens its own surface or page. The old game code still runs beside them.
-  Verified: REVIEW_COUNTS. Live in a debug app on a probe extension: an overlay with a 5 s timer ended by `timeout` at 60 s; a panel
+  Verified: `make test` with the add-ons worktree, 1881 tests in 254 suites and 38 character tests; the add-ons' `swift test`, 148 tests; `build.py --unsigned` and `check.sh`, 17 extensions ok; `swift build -c release --product SidefolkApp`; 3733 strings in all ten languages. Live in a debug app on a probe extension: an overlay with a 5 s timer ended by `timeout` at 60 s; a panel
   whose program takes 1.5 s, closed mid-move, got no more moves; a field at y=-44 is gone and a `focus` field took the keyboard; a scroll box
   kept its `scroll_to` in view and a click at a scrolled place was the right row; a scene in a page with `{companion}`; snapshot
-  `page-extension-scene` in light, dark and Arabic. Not run: a page scene's click by a real pointer (its unit test covers the action);
-  VoiceOver heard live; Codex's refusal with a real file (its check is tested, no quota spent).
+  `page-extension-scene` in light, dark and Arabic. Not run: a page scene's click by a real pointer (its unit test covers the action); a scene's stand-in for someone with no account picture;
+  the input-method path of `submits`; VoiceOver heard live; Codex's refusal with a real file (its check is tested, no quota spent).
   **Known gaps before a release:** never yet notarized with packs inside (RELEASE.md › Add-ons first proves it before the gallery changes);
   every `minimum_sidefolk` is the placeholder 786 in all 17 add-ons until the lead sets the real number (`build.py --sidefolk-build N` stops on it).
   **Next:** Playtime rebuilt on these (D101, with what D99's amendment says it accepts), then snapshot B removes the old code and flips the

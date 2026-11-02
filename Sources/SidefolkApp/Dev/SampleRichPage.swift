@@ -63,7 +63,6 @@ enum SampleRichPage {
       {"type": "group", "x": 420, "y": 20, "w": 64, "h": 64, "corner": 32, "clip": true, "children": [
         {"type": "shape", "shape": "ellipse", "w": 64, "h": 64, "fill": "#F0C040"},
         {"type": "companion", "x": 8, "y": 8, "w": 48, "h": 48, "figure": "face", "duotone": "#F0C040"}]},
-      {"type": "person", "x": 500, "y": 20, "w": 44, "h": 44, "corner": 22},
       {"type": "group", "id": "open", "x": 24, "y": 166, "w": 150, "h": 40, "children": [{"type": "shape", "w": 150, "h": 40, "corner": 10, "fill": "accent"}, {"type": "text", "w": 150, "h": 40, "text": "Open the log", "weight": "semibold", "color": "on_accent"}],
        "area": {"id": "open", "label": "Open the log"}}]}}]}]}
     """#
