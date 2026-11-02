@@ -60,8 +60,10 @@ enum DebugSnapshots {
         let all = NSApp.windows.filter(\.isVisible).compactMap(\.contentView).flatMap(scrollViews)
         guard let scroll = all.max(by: { ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0) }),
               let document = scroll.documentView else { return }
-        let room = max(document.frame.height - scroll.contentView.bounds.height, 0)
-        let y = document.isFlipped ? room * fraction : room * (1 - fraction)
+        // The window's toolbar is an inset: the very top of a page rests below it.
+        let top = scroll.contentView.contentInsets.top, bottom = scroll.contentView.contentInsets.bottom
+        let room = max(document.frame.height + top + bottom - scroll.contentView.bounds.height, 0)
+        let y = document.isFlipped ? room * fraction - top : room * (1 - fraction) - bottom
         scroll.contentView.scroll(to: NSPoint(x: 0, y: y))
         scroll.reflectScrolledClipView(scroll.contentView)
     }

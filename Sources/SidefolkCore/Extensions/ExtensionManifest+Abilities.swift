@@ -205,7 +205,7 @@ extension ExtensionManifest {
 
     /// `permissions.ai` (D100): the extension may ask the person's AI to write something, for this purpose and at most this
     /// many times a day. It gets words back and nothing else: no tools, none of the person's data.
-    /// `{"purpose": "to show prayer times for your place"}`, what the person is told it is for (D106, D107).
+    /// `{"purpose": "to show the weather where you are"}`, what the person is told it is for (D106, D107).
     public struct PurposeMeta: Sendable, Hashable, Decodable {
         public var purpose: String
 

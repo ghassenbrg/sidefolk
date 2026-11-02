@@ -516,14 +516,17 @@ struct PageTitle: View {
 struct PageScroll<Content: View, Ground: View>: View {
     var maxWidth: CGFloat = 760
     var padding: CGFloat = Theme.Space.xxl
+    /// Nothing around or between its parts: what it holds keeps its own margins (D109).
+    var bleed = false
     @ViewBuilder var content: Content
     /// A dressed page's own (D108).
     @ViewBuilder var ground: Ground
     @Environment(\.rendersFullPage) private var fullPage
 
-    init(maxWidth: CGFloat = 760, padding: CGFloat = Theme.Space.xxl, @ViewBuilder content: () -> Content, @ViewBuilder ground: () -> Ground) {
+    init(maxWidth: CGFloat = 760, padding: CGFloat = Theme.Space.xxl, bleed: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder ground: () -> Ground) {
         self.maxWidth = maxWidth
-        self.padding = padding
+        self.padding = bleed ? 0 : padding
+        self.bleed = bleed
         self.content = content()
         self.ground = ground()
     }
@@ -540,10 +543,10 @@ struct PageScroll<Content: View, Ground: View>: View {
     }
 
     private var column: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.xl) { content }
+        VStack(alignment: .leading, spacing: bleed ? 0 : Theme.Space.xl) { content }
             .frame(maxWidth: maxWidth, alignment: .leading)
             .padding(.horizontal, padding)
-            .padding(.vertical, Theme.Space.xl)
+            .padding(.vertical, bleed ? 0 : Theme.Space.xl)
     }
 }
 

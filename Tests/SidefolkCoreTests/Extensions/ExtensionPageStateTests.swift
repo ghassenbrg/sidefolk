@@ -134,4 +134,17 @@ struct ExtensionPageStateTests {
         #expect(big.scene.size.width == 1320 && big.scene.size.height == 1600)
         #expect(over.scene.size.width <= 1320, "held to the page's limit")
     }
+
+    @Test func aSceneMayHoldNativeControlsWithinItself() throws {
+        let scene: JSONValue = ["size": ["width": 400, "height": 200], "children": []]
+        func page(_ inlays: JSONValue) -> ExtensionPage? {
+            ExtensionPage.parse(["sections": [["blocks": [["type": "scene", "scene": scene, "inlays": inlays]]]]])
+        }
+        let field: JSONValue = ["type": "field", "label": "Search", "button": "Clear", "key": "q", "go": ["set": [:]], "live": true]
+        let parsed = page([["x": 10, "y": 10, "w": 200, "h": 30, "part": field],
+                           ["x": 390, "y": 10, "w": 200, "h": 30, "part": field],
+                           ["x": 10, "y": 10, "w": 200, "h": 30, "part": ["type": "note", "text": "not a control"]]])
+        guard case .scene(let block)? = parsed?.sections.first?.blocks.first else { Issue.record("no scene"); return }
+        #expect(block.inlays.count == 1, "only a control, and only inside the scene")
+    }
 }

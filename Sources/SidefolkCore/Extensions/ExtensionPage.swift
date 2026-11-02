@@ -11,6 +11,8 @@ public struct ExtensionPage: Sendable, Hashable {
     public var back: String?
     /// The page draws its own head: no title row or summary on it (D105). Its summary still reaches Today and the sidebar.
     public var bare = false
+    /// The page lays itself out to the column's very edges, its margins its own (D109). Only a bare page may.
+    public var bleed = false
     public var dress: PageDress?
     /// How wide its column may grow (D108).
     public var maxWidth: Double?
@@ -401,6 +403,7 @@ public struct ExtensionPage: Sendable, Hashable {
         var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections)
         page.back = text(object["back"], 40)
         page.bare = object["bare"]?.boolValue ?? false
+        page.bleed = page.bare && (object["bleed"]?.boolValue ?? false)
         page.dress = PageDress.parse(object["dress"])
         page.maxWidth = object["max_width"]?.doubleValue.flatMap { $0.isFinite ? min(1320, max(640, $0)) : nil }
         page.keepOnePrimary()

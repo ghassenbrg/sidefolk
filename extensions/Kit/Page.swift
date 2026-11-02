@@ -17,15 +17,18 @@ public struct Page {
     public var back: String?
     /// The page draws its own head: no title row or summary on it. The summary still reaches Today and the sidebar (D105).
     public var bare: Bool
+    /// Bare, and out to the column's edges: the scenes keep their own margins, and draw their own way back (D109).
+    public var bleed: Bool
     public var dress: PageDress?
     /// How wide its column may grow, 640–1320 (D108).
     public var maxWidth: Double?
 
-    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, dress: PageDress? = nil, maxWidth: Double? = nil) {
+    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, maxWidth: Double? = nil) {
         self.summary = summary
         self.sections = sections
         self.back = back
-        self.bare = bare
+        self.bare = bare || bleed
+        self.bleed = bleed
         self.dress = dress
         self.maxWidth = maxWidth
     }
@@ -35,6 +38,7 @@ public struct Page {
         if let summary { out["summary"] = summary.json }
         if let back { out["back"] = back }
         if bare { out["bare"] = true }
+        if bleed { out["bleed"] = true }
         if let dress { out["dress"] = dress.json }
         if let maxWidth { out["max_width"] = maxWidth }
         return out

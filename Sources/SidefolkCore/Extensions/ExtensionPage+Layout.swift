@@ -43,6 +43,11 @@ extension ExtensionPage {
 extension ExtensionPage.Section {
     /// Across the page: numbers, two or more cards, a row of buttons or questions, or notes alone (heads-ups that
     /// read as one line). Anything else (one card with its note, a few switches) takes a column beside its neighbours.
+    /// Nothing in it but scenes, which keep their own margins on a page out to its edges (D109).
+    public var isOnlyScenes: Bool {
+        title == nil && !blocks.isEmpty && blocks.allSatisfy { if case .scene = $0 { true } else { false } }
+    }
+
     public var isWide: Bool {
         if wide { return true }
         if blocks.contains(where: { $0.isMetric || ["hero", "transport", "tiles", "cards", "stats", "grid", "tabs", "badges", "recent", "scene", "table"].contains($0.kind) }) { return true }

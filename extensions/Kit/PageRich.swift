@@ -190,11 +190,14 @@ public struct PageSceneBlock: @unchecked Sendable {
     public var actions: [String: (tool: String, input: [String: Any])]
     /// Areas that do something other than run a tool (D105).
     public var acts: [String: PageAct]
+    /// Native controls laid over the scene (D109).
+    public var inlays: [PageInlay]
 
-    public init(_ scene: Scene, actions: [String: (tool: String, input: [String: Any])] = [:], acts: [String: PageAct] = [:]) {
+    public init(_ scene: Scene, actions: [String: (tool: String, input: [String: Any])] = [:], acts: [String: PageAct] = [:], inlays: [PageInlay] = []) {
         self.scene = scene
         self.actions = actions
         self.acts = acts
+        self.inlays = inlays
     }
 
     public var json: [String: Any] {
@@ -204,6 +207,20 @@ public struct PageSceneBlock: @unchecked Sendable {
             act.fill(&one)
             out[area] = one
         }
-        return ["type": "scene", "scene": scene.json, "actions": out]
+        var json: [String: Any] = ["type": "scene", "scene": scene.json, "actions": out]
+        if !inlays.isEmpty { json["inlays"] = inlays.map(\.json) }
+        return json
     }
+}
+
+/// A field, a choice or a switch at a place in a scene (D109): the scene draws its look, the system does the typing and the choosing.
+public struct PageInlay: @unchecked Sendable {
+    public var x: Double, y: Double, w: Double, h: Double
+    public var part: Block
+
+    public init(x: Double, y: Double, w: Double, h: Double, _ part: Block) {
+        (self.x, self.y, self.w, self.h, self.part) = (x, y, w, h, part)
+    }
+
+    var json: [String: Any] { ["x": x, "y": y, "w": w, "h": h, "part": part.json] }
 }

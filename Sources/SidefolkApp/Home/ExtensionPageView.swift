@@ -12,7 +12,7 @@ struct ExtensionPageView: View {
     var body: some View {
         // A page of numbers and charts may use a wide window; a page of switches stays a readable column. Either is
         // centred, so a wide window never leaves the page on one side.
-        PageScroll(maxWidth: model.page?.maxWidth.map { CGFloat($0) } ?? (model.page?.isRich == true ? 1320 : 860)) {
+        PageScroll(maxWidth: model.page?.maxWidth.map { CGFloat($0) } ?? (model.page?.isRich == true ? 1320 : 860), bleed: model.page?.bleed == true) {
             // Told to the program, which may draw to it (D105): the column it fills, wherever the window puts it.
             Color.clear.frame(height: 0).frame(maxWidth: .infinity)
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { model.setWidth($0) }
@@ -32,6 +32,9 @@ struct ExtensionPageView: View {
                 }
                 .buttonStyle(.sf(.quiet))
                 .keyboardShortcut("[", modifiers: .command)
+                // A page out to its edges draws its own way back: this keeps the key and VoiceOver's name for it.
+                .frame(height: model.page?.bleed == true ? 0 : nil)
+                .opacity(model.page?.bleed == true ? 0 : 1)
             }
             if let updates = model.updates, let entry = updates.addonUpdate(for: model.info.extensionId) {
                 AddonUpdateStrip(entry: entry, updates: updates)
@@ -40,7 +43,7 @@ struct ExtensionPageView: View {
                 // A hero leading the page says what the summary would, larger and with its actions (D74).
                 if let summary = page.summary, page.hero == nil, !page.bare { SummaryBanner(summary: summary, model: model) }
                 if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
-                PageRegions(spacing: Theme.Space.xl) {
+                PageRegions(spacing: page.bleed ? 0 : Theme.Space.xl) {
                     ForEach(Array(page.regions.enumerated()), id: \.offset) { _, part in
                         Group {
                             if part.sections.count == 1, let section = part.sections.first, section.isWide || part.region != .main {
@@ -53,6 +56,8 @@ struct ExtensionPageView: View {
                             }
                         }
                         .pageRegion(part.region)
+                        // On a page out to its edges a scene keeps its own margins; what Sidefolk draws keeps Sidefolk's.
+                        .padding(page.bleed && !part.sections.allSatisfy(\.isOnlyScenes) ? Theme.Space.xl : 0)
                     }
                 }
                 if !model.alerts.isEmpty { HeadsUps(model: model) }
@@ -60,6 +65,7 @@ struct ExtensionPageView: View {
                 if page.bare {
                     Text("Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                        .padding(page.bleed ? Theme.Space.l : 0)
                 }
             } else if let problem = model.problem {
                 RowsCard { InlineEmpty(label: Text(ext: problem), systemImage: "exclamationmark.triangle") }

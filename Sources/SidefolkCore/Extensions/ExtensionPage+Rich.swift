@@ -199,7 +199,19 @@ extension ExtensionPage {
                     actions[area] = PageScene.Action(tool: tool, input: input)
                 }
             }
-            return .scene(PageScene(scene: scene, actions: actions))
+            let inlays = (j["inlays"]?.arrayValue ?? []).prefix(PageScene.maxInlays).compactMap { one -> PageScene.Inlay? in
+                guard let x = one["x"]?.doubleValue, let y = one["y"]?.doubleValue, let w = one["w"]?.doubleValue, let h = one["h"]?.doubleValue,
+                      [x, y, w, h].allSatisfy(\.isFinite), x >= 0, y >= 0, w > 0, h > 0, x + w <= scene.size.width, y + h <= scene.size.height,
+                      let json = one["part"], let part = block(json) else { return nil }
+                switch part {
+                case .field, .choice: return PageScene.Inlay(x: x, y: y, w: w, h: h, part: part)
+                case .control(let control):
+                    if case .toggle = control.kind { return PageScene.Inlay(x: x, y: y, w: w, h: h, part: part) }
+                    return nil
+                default: return nil
+                }
+            }
+            return .scene(PageScene(scene: scene, actions: actions, inlays: inlays))
         case "settings":
             let keys = (j["keys"]?.arrayValue ?? []).prefix(ExtensionAbilityRules.maxSettings).compactMap { k -> String? in
                 k.stringValue.flatMap { $0.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil ? $0 : nil }
@@ -289,8 +301,19 @@ public struct PageScene: Sendable, Hashable {
         public var act: PageAct?
     }
 
+    /// A native control laid over the scene at a place in it (D109): typing and choosing stay the system's, with its keyboard and
+    /// its VoiceOver, while the scene draws everything around them.
+    public struct Inlay: Sendable, Hashable {
+        public var x: Double, y: Double, w: Double, h: Double
+        /// A field, a choice or a switch. Anything else isn't drawn.
+        public var part: ExtensionPage.Block
+    }
+
+    public static let maxInlays = 24
+
     public var scene: SurfaceScene
     public var actions: [String: Action]
+    public var inlays: [Inlay] = []
 
     /// What a click on an area runs: its tool, with the area's own value as `value`.
     public func action(area: String, value: String?) -> (tool: String, input: JSONValue)? {

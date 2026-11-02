@@ -18,7 +18,8 @@ import Testing
         for file in files {
             let text = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
             for m in text.matches(of: /\bL\(\s*one:\s*"(?:[^"\\\n]|\\.)*"\s*,\s*other:\s*"((?:[^"\\\n]|\\.)*)"/) { keys.insert(unescape(String(m.1))) }
-            for m in text.matches(of: /\bL\(\s*"((?:[^"\\\n]|\\.)*)"/) { keys.insert(unescape(String(m.1))) }
+            // `L("N", context: "compass")` is kept as "compass|N", so the same letter can say something else elsewhere.
+            for m in text.matches(of: /\bL\(\s*"((?:[^"\\\n]|\\.)*)"(?:\s*,\s*context:\s*"([^"\n]*)")?/) { keys.insert(unescape(m.2.map { "\($0)|\(m.1)" } ?? String(m.1))) }
         }
         return keys
     }

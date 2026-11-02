@@ -215,14 +215,14 @@ public struct PermissionSummary: Sendable, Hashable {
         }
         if let place = p.place {
             lines.append(Line(kind: .place, text: String(localized: "Can ask for your place. It says it uses it \(place.purpose).",
-                                                         comment: "Install sheet: permissions.place; the author's purpose, “to show prayer times for your place”"),
+                                                         comment: "Install sheet: permissions.place; the author's purpose, “to show the weather where you are”"),
                               caution: false,
                               note: p.network ? String(localized: "Off until you say yes. With its internet access it could send your town and coordinates anywhere. A switch in Settings › Add-ons takes it back.")
                                   : String(localized: "Off until you say yes. A switch in Settings › Add-ons takes it back.")))
         }
         if let schedule = p.schedule {
             lines.append(Line(kind: .schedule, text: String(localized: "Can ask to send you reminders at moments it plans. It says it uses them \(schedule.purpose).",
-                                                            comment: "Install sheet: permissions.schedule; the author's purpose, “to remind you of prayer times you choose”"),
+                                                            comment: "Install sheet: permissions.schedule; the author's purpose, “to remind you of the moments you choose”"),
                               caution: false,
                               note: String(localized: "Off until you say yes. They follow your Focus, Quiet and Attention settings. A switch in Settings › Add-ons takes it back.")))
         }

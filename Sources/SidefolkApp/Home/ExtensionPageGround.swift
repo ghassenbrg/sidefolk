@@ -162,7 +162,7 @@ struct PageTableView: View {
     }
 }
 
-private struct PageTableCell: View {
+struct PageTableCell: View {
     var cell: PageTable.Cell
     /// Row and column: a control on its own in a grid says neither.
     var spoken: String
