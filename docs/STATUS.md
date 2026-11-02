@@ -6,7 +6,7 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest is **snapshot 827** (snapshot A: seed packs, surfaces and D100's abilities beside the old game code, D98–D100), with the gallery published for it. Snapshot B (below) is what takes the game code out.
+until the founder releases it. The latest is **snapshot 867** (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -34,11 +34,12 @@ Folio, Iris, Nori, Purl, Rune and Piko (a robot cat in Spark's colours, 3D only,
 snapshot 1 needs Sidefolk snapshot 779; its pipeline isn't in this repository); extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
 fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
 Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes are the app's own (D92). Every add-on is in
-snapshots. **Playtime 1.0.0-snapshot.8** needs Sidefolk snapshot 827; the next, on this branch, snapshot B, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, D81).
+snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.5** needs snapshot 827.
 
 ## In progress
 
-- **Extensions own everything, snapshot B** (branch `team/playtime-move` in both repositories; D101 and its amendment from comparing it with the old games; not on main): Playtime runs entirely from its pack and the app has no games left. **Next, the lead:** merge both branches; set `minimum_sidefolk` from the placeholder to snapshot B's number in every add-on naming it (RELEASE.md › Add-ons first); prove and publish in that order. Checks and what wasn't run: HISTORY's top entry. **For the founder:** the reaction props the app still draws (D101's "Left for the founder"); in two-player rock, paper, scissors the reveal still says "You" and the companion's name with a winner's glow, as the old code did, against D96. **Open, small:** with a surface panel open `snap` lists a 40×40 fully transparent `FloatingPanel` near the companion; not identified. **For other branches:** `Sources/SidefolkApp/Play/` and `Sources/SidefolkCore/Games/` are gone, so a branch from before this that touches them will conflict: its game changes go into Playtime in the add-ons instead.
+- **For the founder, from snapshot B (D101):** the reaction props the app still draws (D101's "Left for the founder"); in two-player rock, paper, scissors the reveal still says "You" and the companion's name with a winner's glow, as the old code did, against D96. Checks and what wasn't run: HISTORY's top entry. **Open, small:** with a surface panel open `snap` lists a 40×40 fully transparent `FloatingPanel` near the companion; not identified.
+- **For other branches:** `Sources/SidefolkApp/Play/` and `Sources/SidefolkCore/Games/` are gone, so a branch from before snapshot B that touches them will conflict: its game changes go into Playtime in the add-ons instead.
 
 ## Next
 
