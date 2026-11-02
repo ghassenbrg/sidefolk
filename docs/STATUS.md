@@ -38,7 +38,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## In progress
 
-- **Dev ideas (`sandbox/sidefolk-dev-ideas.md`), for the founder to look at:** batches 1 to 3 are done (HISTORY's top entries). D115 keeps D49's return of a reminder when its task reopens, where the handover recommended it stay cancelled.
+- **Dev ideas (`sandbox/sidefolk-dev-ideas.md`), for the founder to look at:** batches 1 to 4 are done (HISTORY's top entries). **For the founder:** [the notebook proposal](research/notebook-proposal.md) needs a choice. D115 keeps D49's return of a reminder when its task reopens, where the handover recommended it stay cancelled.
 - **For the founder, from snapshot B (D101):** the reaction props the app still draws (D101's "Left for the founder"); in two-player rock, paper, scissors the reveal still says "You" and the companion's name with a winner's glow, as the old code did, against D96. Checks and what wasn't run: HISTORY's top entry. **Open, small:** with a surface panel open `snap` lists a 40×40 fully transparent `FloatingPanel` near the companion; not identified.
 - **For other branches:** `Sources/SidefolkApp/Play/` and `Sources/SidefolkCore/Games/` are gone, so a branch from before snapshot B that touches them will conflict: its game changes go into Playtime in the add-ons instead.
 

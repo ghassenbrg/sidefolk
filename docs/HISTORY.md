@@ -7,6 +7,12 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Dev ideas, batch 4: notebooks arranged and dressed, tasks due on the Calendar, and a proposal (items 8, 9, 10; D117)
+
+Decisions and limits in D117; the direction for item 10 is `docs/research/notebook-proposal.md`, waiting for the founder.
+
+Verified: `swift test` against a clean add-ons checkout, with `NotebookGapsTests`. All 90 icon names exist on this Mac (`NSImage(systemSymbolName:)`). In the debug app with collections and due tasks seeded: a synthetic drag in the sidebar moved a collection and the order saved; `#ff00aa`, `#101010` and `#ffee00` read on their tiles; Week showed all-day and timed due tasks, the late one marked. A review found the sidebar re-sorted alphabetically, undoing a drag on screen though the database held it (my own check had read only the database); a search for "about" returned every fact in About you; a bad due date left a new collection behind; agents could rename collections unasked; and Undo overwrote what had changed since. All fixed. Not run: a person's hand on the drag, the colour panel by hand (its conversion is clamped), and another time zone.
+
 ## 2026-11-03: Dev ideas, batch 3: watchers run apart from where they show (items 6, 7; D116)
 
 Display modes, order, All watchers, value formatting, agent tools, and no count for the person; other agents ask past 25. The founder's question took the handover's recommended answer.
