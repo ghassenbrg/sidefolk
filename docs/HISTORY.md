@@ -6,6 +6,11 @@ and Agents (now Brain, Trust, Add-ons and Connections), the Ask panel, bubbles a
 Conversations and Activity (now Today, On duty and History), theme layouts (retired by D84). Branches named here are
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
+
+## 2026-11-03: Snapshot B compared with the old games, game by game (D101's amendment)
+
+Every finding from running the old and new side by side. Blockers: a result before the build-up on Ask's card, aloud and in the AI's words; every listing of extensions costing about 4 s with Playtime (AI requests, launch). Majors: 190 menu sentences and 82 of 84 who-guesses sentences lost; a toss from Ask flying far from the companion; Continue gone after ✕; props left on the menu; 17 rows and a minute for "game sounds on"; the Game Center's look; a model starting AI trivia on free text; old scores back after a reinstall; a crash that looked like catch-me's and was the Sidecard's (`CardPlacement`). Live in a debug app with the unsigned pack: sentences, the coin in the air and landed, Back to the menu, the Game Center in English and Arabic, History rows, launch CPU. Catch-me loop: 0 of 32 died after the fix, 3–6 of 20–30 before. **Not checked:** sound through real speakers; VoiceOver heard; a real pointer on the overlay; Reduce Motion live on every game; the signed frame and signed-only words (`row`, `ai_title`: tests only, debug installs aren't signed); the Update button through a real signed gallery to the end; AI answers with a live model (the hold and `trusted_only` by tests); the companion's menu only by reading its code, since a snap can't open it.
+
 ## 2026-11-03: what STATUS carried until snapshot B (snapshot A, Playtime's move, games v2, Calendar v2)
 
 As each stood; the branches named are merged, or part of `team/playtime-move`.
