@@ -66,6 +66,7 @@
 //   swift scripts/dev.swift addons:updates | addons:nudge   (D89: the Gallery's Updates halfway through Update all, the whisper)
 //   swift scripts/dev.swift addons:auto:off | addons:get:<id> | addons:check | addons:updateAll   (D89, with SIDEFOLK_ADDONS=<local gallery>:
 //                           the switch, an add-on installed from it as from the Gallery, Update all)
+//   swift scripts/dev.swift addons:outOfDate:<id>   (D101: the Update on a copy made for an older Sidefolk)
 //   swift scripts/dev.swift addons:review:<id> | installSheet:continue | installSheet:install   (a waiting update's Review…,
 //                           then the install sheet's Continue and Install or Update, as clicks would)
 //   swift scripts/dev.swift backup:/path/x.sidefolkbackup | restoreFile:/path/x.sidefolkbackup | restoreConfirm | restoreNow:/path/x.sidefolkbackup

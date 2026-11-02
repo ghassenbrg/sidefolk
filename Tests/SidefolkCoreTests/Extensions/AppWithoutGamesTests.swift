@@ -181,6 +181,23 @@ struct AppWithoutGamesTests {
         #expect(await h.host.info(id: Self.id)?.ai?.on == false)
     }
 
+    /// The real next version over the real old one: everything is back, on a host that never restarted.
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func theRealUpdateBringsItAllBack() async throws {
+        let h = try HostEnv()
+        try await olderCopy(h)
+        await h.host.start()
+        #expect(h.host.surfaceShelf.all.isEmpty)
+        let updated = try await h.host.install(from: ExtFixtures.builtIn("playtime"), origin: .official)
+        #expect(!updated.needsAnUpdate && updated.enabled)
+        #expect(h.host.surfaceShelf.all.map(\.surface).sorted() == ["play", "toss"])
+        #expect(!h.host.shelf.entries(in: .companion).isEmpty)
+        let page = try #require(await h.host.pages().first)
+        #expect(!page.needsAnUpdate && page.extensionId == Self.id)
+        let drawn = try await h.host.renderPage(extensionId: Self.id, page: page.page, language: "en")
+        #expect(!drawn.sections.isEmpty)
+    }
+
     // MARK: Installing and removing
 
     @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))

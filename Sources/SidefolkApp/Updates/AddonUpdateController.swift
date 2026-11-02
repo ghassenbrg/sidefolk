@@ -107,11 +107,18 @@ final class AddonUpdateController: AddonUpdateActions {
         Task {
             model.addonNoneYet.remove(id)
             let have = await runtime.extensions.info(id: id)?.version
-            guard let catalog = try? await runtime.addons.catalog(refresh: true), let entry = catalog.entry(id), entry.kind == .extension, entry.version != have else {
-                model.addonNoneYet.insert(id)
-                return
+            do {
+                let catalog = try await runtime.addons.catalog(refresh: true)
+                guard let entry = catalog.entry(id), entry.kind == .extension, let have, catalog.offers(entry, over: have, on: .snapshots) else {
+                    model.addonNoneYet.insert(id)
+                    return
+                }
+                model.addonSteps[id] = nil
+                update(entry)
+            } catch {
+                // The gallery couldn't be reached or read: that isn't the same as nothing newer, and the button says why on hover.
+                model.addonSteps[id] = .failed((error as? UserFacingError)?.message ?? error.localizedDescription)
             }
-            update(entry)
         }
     }
 
@@ -246,6 +253,8 @@ final class AddonUpdateController: AddonUpdateActions {
             return
         }
         if command == "updateAll" { return updateAddonsNow() }
+        // An out-of-date copy's Update, as a click on it (D101).
+        if command.hasPrefix("outOfDate:") { return updateOutOfDate(String(command.dropFirst(10))) }
         // The Gallery's Review… on a waiting update (one that would let an extension do more).
         if command.hasPrefix("review:"), let entry = model.addonPending.first(where: { $0.id == command.dropFirst(7) }) {
             return review(entry)
