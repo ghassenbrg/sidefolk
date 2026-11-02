@@ -16,7 +16,7 @@ extension ExtensionHost {
         let request = params["request"] ?? .null
         switch method {
         case "sidefolk/tools.list":
-            let tools = gateway.specs(for: id).map(Self.listed)
+            let tools = gateway.tools(for: id).map(Self.listed)
             await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
         case "sidefolk/tools.check":
             guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
@@ -99,8 +99,9 @@ extension ExtensionHost {
         }
     }
 
-    private static func listed(_ spec: ToolSpec) -> JSONValue {
-        var out: [String: JSONValue] = ["name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description), "schema": spec.inputSchema,
+    private static func listed(_ tool: any Tool) -> JSONValue {
+        let spec = tool.spec
+        var out: [String: JSONValue] = ["reads_only": .bool(ExtensionActionPolicy.readsOnly(tool)), "name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description), "schema": spec.inputSchema,
                                         "risk": .string(spec.risk.rawValue), "mutates": .bool(spec.mutates), "category": .string(spec.category.rawValue)]
         if spec.name.hasPrefix("ext.") { out["extension"] = .string(String(spec.name.dropFirst(4).prefix { $0 != "." })) }
         return .object(out)

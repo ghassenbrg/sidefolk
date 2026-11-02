@@ -1,6 +1,6 @@
 import Foundation
 
-/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, SECURITY T42). The list is by name
+/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, SECURITY T43). The list is by name
 /// and closed, as `ExternalToolPolicy` is for other agents: what the person's data, their folders and the network can be reached
 /// with stays behind Guard, and what could widen an extension's own reach (other extensions' settings, skills, memory, programs,
 /// plain MCP servers, which run unsandboxed) simply doesn't exist for it.
@@ -22,7 +22,7 @@ public enum ExtensionActionPolicy {
 
     /// The only places a plan may leave for filling in at run time. Each holds words that stay inside Sidefolk and are shown as the
     /// extension's: a note's text, a reminder's title, a notice, a question. Anything parsed as a time or a selector, anything that
-    /// could pick a target or carry words off the Mac, is written out in the plan or gets a card each time (T42).
+    /// could pick a target or carry words off the Mac, is written out in the plan or gets a card each time (T43).
     static let fillable: [String: Set<String>] = [
         "notes.save": ["text"],
         "reminders.create": ["title", "notes"],
@@ -37,6 +37,15 @@ public enum ExtensionActionPolicy {
         guard tool.spec.capabilities.isDisjoint(with: [.shell]) else { return false }
         if let ext = tool as? ExtensionTool { return ext.sandboxed && ext.extensionId != id }
         return builtIn.contains(tool.spec.name)
+    }
+
+    /// Whether Sidefolk itself says a tool changes nothing: its own word for its own tools, and its signed extensions'. Anyone else's manifest
+    /// saying so isn't taken (D71), because a practice run or a retry rests on it.
+    static func readsOnly(_ tool: any Tool) -> Bool {
+        let base = (tool as? ExternalFacade)?.base ?? tool
+        guard !base.spec.mutates else { return false }
+        if let ext = base as? ExtensionTool { return ext.firstParty }
+        return true
     }
 
     /// The tool as this caller gets it: at least medium, so it asks, unless a plan the person read covers the call.
@@ -91,8 +100,8 @@ public final class ExtensionActionGateway: Sendable {
     }
 
     /// What `id` may ask for, with the words each tool's author may show a model (D24): an extension gets the same specs.
-    func specs(for id: String) -> [ToolSpec] {
-        source.all.filter { ExtensionActionPolicy.offers($0, to: id) }.map { ExtensionActionPolicy.spec($0.spec) }
+    func tools(for id: String) -> [any Tool] {
+        source.all.filter { ExtensionActionPolicy.offers($0, to: id) }.map { ExternalFacade(base: $0, spec: ExtensionActionPolicy.spec($0.spec)) }
     }
 
     /// - Parameter standing: the call fits a plan the person read and allowed.

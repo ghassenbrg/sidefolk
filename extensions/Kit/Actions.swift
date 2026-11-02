@@ -23,13 +23,32 @@ import Foundation
         public var risk: String
         public var mutates: Bool
         public var category: String
+        /// Sidefolk itself says it changes nothing: one of its own tools, or one of its signed extensions'. An author's word alone isn't this.
+        public var readsOnly: Bool
         /// The last part of the id of the extension it comes from; nil for Sidefolk's own.
         public var extensionName: String?
+
+        public init(name: String, title: String, description: String = "", schema: String = "{}", risk: String = "medium", mutates: Bool = true, category: String = "", readsOnly: Bool = false, extensionName: String? = nil) {
+            self.name = name
+            self.title = title
+            self.description = description
+            self.schema = schema
+            self.risk = risk
+            self.mutates = mutates
+            self.category = category
+            self.readsOnly = readsOnly
+            self.extensionName = extensionName
+        }
     }
 
     public struct Listing: Sendable {
         public var tools: [Tool]
         public var plans: [Plans.Standing]
+
+        public init(tools: [Tool], plans: [Plans.Standing] = []) {
+            self.tools = tools
+            self.plans = plans
+        }
     }
 
     /// What Guard would do now, with nothing run or shown.
@@ -41,6 +60,14 @@ import Foundation
         public var mutates: Bool
         /// It fits a plan, so no card.
         public var standing: Bool
+
+        public init(decision: Decision, why: String? = nil, summary: String, mutates: Bool, standing: Bool) {
+            self.decision = decision
+            self.why = why
+            self.summary = summary
+            self.mutates = mutates
+            self.standing = standing
+        }
     }
 
     public struct Outcome: Sendable, Hashable {
@@ -66,6 +93,14 @@ import Foundation
         public var untrusted: Bool
         /// It fit a plan.
         public var standing: Bool
+
+        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false) {
+            self.status = status
+            self.text = text
+            self.summary = summary
+            self.untrusted = untrusted
+            self.standing = standing
+        }
 
         public var ok: Bool { status == .ok }
     }
@@ -125,7 +160,7 @@ import Foundation
             let schema = (try? JSONSerialization.data(withJSONObject: t["schema"] ?? [:], options: [.sortedKeys])).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
             return Tool(name: name, title: t["title"] as? String ?? name, description: t["description"] as? String ?? "", schema: schema,
                         risk: t["risk"] as? String ?? "medium", mutates: t["mutates"] as? Bool ?? true, category: t["category"] as? String ?? "",
-                        extensionName: t["extension"] as? String)
+                        readsOnly: t["reads_only"] as? Bool ?? false, extensionName: t["extension"] as? String)
         }
         let plans = (args.values["plans"] as? [[String: Any]] ?? []).compactMap { p -> Plans.Standing? in
             guard let id = p["id"] as? String else { return nil }

@@ -2,7 +2,7 @@ import Foundation
 @testable import SidefolkCore
 import Testing
 
-/// An extension using Sidefolk's tools (D110, SECURITY T42): what it can reach, what asks, and what a plan the person read lets through.
+/// An extension using Sidefolk's tools (D110, SECURITY T43): what it can reach, what asks, and what a plan the person read lets through.
 @Suite struct ExtensionActionsTests {
     /// Passes a notice to the host and returns its first reply, so a test can speak the program's side of the protocol.
     static let bridge = """
