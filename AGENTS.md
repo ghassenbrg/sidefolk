@@ -64,6 +64,8 @@ Project skills, in `.claude/skills/` (Claude Code) and mirrored in `.agents/skil
   stand-ins in `$SIDEFOLK_HOME/agent-configs/` (`IntegrationLocations.forApp`, D86). Keep it that way.
 - Live model calls cost the user's quota: keep them rare and tiny; tests use scripted models.
 - Every tool runs through `ToolExecutor` (Guard + audit). No side doors.
+- Nothing that belongs to an extension is ever built into the app: when an extension hits a limit, add a general
+  ability every extension can use, or leave the feature out and say so (the `sidefolk-extension` skill, section 0).
 - No fake features: nothing shown as working unless it works.
 - Match the surrounding code: small files, comments that explain why, no dead code.
 - Commit in coherent milestones without Co-Authored-By trailers.

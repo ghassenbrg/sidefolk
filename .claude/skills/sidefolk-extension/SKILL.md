@@ -50,6 +50,29 @@ Where it will live:
   removed, and opens the install preview with `extensions.review` (`Resources/Skills/build-extension/SKILL.md`,
   `ExtensionDrafts.swift`, D39). You don't write drafts by hand; `swift scripts/dev.swift review:<name>` opens one.
 
+### When the app can't do what the extension needs
+
+Never build anything that belongs to an extension into the app, however small and however close the release: no screen,
+overlay, pop-up, game, art, sound, word, command, setting, or a check for one extension's id. Everything an extension
+shows or says comes with its pack, and is gone when it is removed. This holds for Sidefolk's own extensions too.
+
+When you hit a limit, in this order:
+
+1. **Do it with what the app already offers.** Read `docs/EXTENSIONS.md` first; the limit may not be real.
+2. **Otherwise make the app better for every extension.** Add a general ability or connector: a manifest key, a page part,
+   a surface, a permission. Name it for what it does, not for who asked. It goes through the validator, the install sheet's
+   permission lines, `ToolExecutor` and `docs/EXTENSIONS.md` like everything else, and it is proven with a small sample
+   extension. A pack that uses it names the snapshot in `addon.json`'s `minimum_sidefolk` (D83).
+3. **If that isn't possible yet, leave the feature out and say so.** Tell the founder what is missing and which ability
+   would allow it. A special case in the app is never the way around.
+
+Check an app change with three questions. A "no" to any of them means it belongs in the extension, or needs to be more
+general:
+
+- Could a different extension use this, unchanged?
+- If this extension is removed, does nothing of it stay in the app?
+- Can its next version ship with an extension update alone, with no app release?
+
 ## 1. Decide the shape, then the least reach
 
 Write it down before any code: each feature, which part carries it, and what that part needs.
