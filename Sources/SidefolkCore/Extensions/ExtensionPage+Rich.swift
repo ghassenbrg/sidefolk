@@ -204,10 +204,7 @@ extension ExtensionPage {
                       [x, y, w, h].allSatisfy(\.isFinite), x >= 0, y >= 0, w > 0, h > 0, x + w <= scene.size.width, y + h <= scene.size.height,
                       let json = one["part"], let part = block(json) else { return nil }
                 switch part {
-                case .field, .choice: return PageScene.Inlay(x: x, y: y, w: w, h: h, part: part)
-                case .control(let control):
-                    if case .toggle = control.kind { return PageScene.Inlay(x: x, y: y, w: w, h: h, part: part) }
-                    return nil
+                case .field, .choice, .control: return PageScene.Inlay(x: x, y: y, w: w, h: h, part: part)
                 default: return nil
                 }
             }
@@ -305,7 +302,7 @@ public struct PageScene: Sendable, Hashable {
     /// its VoiceOver, while the scene draws everything around them.
     public struct Inlay: Sendable, Hashable {
         public var x: Double, y: Double, w: Double, h: Double
-        /// A field, a choice or a switch. Anything else isn't drawn.
+        /// A field, a choice, a switch or a button. Anything else isn't drawn. A button says its own words, so it may do what an area may not: copy (D105).
         public var part: ExtensionPage.Block
     }
 

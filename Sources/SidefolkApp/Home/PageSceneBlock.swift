@@ -98,8 +98,12 @@ private struct PageInlayView: View {
         case .field(let field): PageInlaidField(field: field, model: model)
         case .choice(let choice): PageInlaidMenu(choice: choice, model: model)
         case .control(let control):
-            PageTableCell(cell: .control(control), spoken: control.label, model: model)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if case .toggle = control.kind {
+                PageTableCell(cell: .control(control), spoken: control.label, model: model)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                PageInlaidButton(control: control, model: model)
+            }
         default: EmptyView()
         }
     }
@@ -174,5 +178,36 @@ private struct PageInlaidMenu: View {
         Task {
             if let go = choice.go(picking: value) { await model.go(go) } else { await model.run(tool: choice.tool, input: choice.input(picking: value)) }
         }
+    }
+}
+
+/// Its own words and symbol, on the pill the scene draws under it.
+private struct PageInlaidButton: View {
+    var control: ExtensionPage.Control
+    var model: ExtensionPageModel
+    @State private var running = false
+
+    var body: some View {
+        Button {
+            running = true
+            Task {
+                await model.run(control, on: nil)
+                running = false
+            }
+        } label: {
+            GeometryReader { geometry in
+                HStack(spacing: geometry.size.height * 0.2) {
+                    if let symbol = control.symbol { Image(systemName: symbol) }
+                    Text(ext: control.label).lineLimit(1).minimumScaleFactor(0.7)
+                }
+                .font(.system(size: max(11, geometry.size.height * 0.36), weight: .medium))
+                .foregroundStyle(control.style == .primary ? Color.white : Theme.ink)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.sfBare)
+        .disabled(running || control.disabled)
+        .help(control.detail.map { Text(ext: $0) } ?? Text(ext: control.label))
     }
 }
