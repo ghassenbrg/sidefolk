@@ -43,5 +43,6 @@ find "$app" -type f -perm -u+x | while read -r binary; do
     file "$binary" | grep -q 'Mach-O' || continue
     strings -a "$binary" | report "$binary"
 done
-find "$app" | sed 's|.*/||' | report "names in the bundle"
+# The seed list and its packs are the approved exception (D98): the one place a fresh Mac's extensions are named.
+find "$app" -not -path '*/Contents/Resources/SeedPacks/*' | sed 's|.*/||' | report "names in the bundle"
 if [ "$strict" = 1 ] && [ -s "$found" ]; then exit 1; fi
