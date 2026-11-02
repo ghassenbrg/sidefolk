@@ -34,7 +34,8 @@ import Testing
         return card.detail ?? card.title
     }
 
-    @Test func calculatorAnswersSumsUnitsAndDays() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func calculatorAnswersSumsUnitsAndDays() async throws {
         try await install("calculator")
         #expect(await answer("what's 12*7") == "12*7 = 84")
         #expect(await answer("15% of 80") == "15% of 80 = 12")
@@ -63,7 +64,8 @@ import Testing
         await runtime.extensions.shutdown()
     }
 
-    @Test func aPlaceTheClockDoesntKnowGoesToTheAI() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func aPlaceTheClockDoesntKnowGoesToTheAI() async throws {
         try await install("world-clock")
         let parsed = try #require(await runner.parse("what time is it in my head"))
         guard case .declined(let error) = await runner.run(parsed.intent) else { Issue.record("expected the AI to take it"); return }
@@ -71,7 +73,8 @@ import Testing
         await runtime.extensions.shutdown()
     }
 
-    @Test func aSwitchedOffExtensionAnswersNothing() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func aSwitchedOffExtensionAnswersNothing() async throws {
         try await install("calculator")
         #expect(await runner.parse("what's 12*7") != nil)
         try await runtime.extensions.setEnabled(false, id: "dev.sidefolk.calculator")
@@ -95,7 +98,8 @@ import Testing
         await runtime.extensions.shutdown()
     }
 
-    @Test func theDetailsListTheCommandsAndWhatTheAISees() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func theDetailsListTheCommandsAndWhatTheAISees() async throws {
         try await install("world-clock")
         let info = try #require(await runtime.extensions.info(id: "dev.sidefolk.world-clock"))
         let now = try #require(info.tools.first { $0.name == "ext.world-clock.current_time" })

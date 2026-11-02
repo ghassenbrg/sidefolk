@@ -229,12 +229,12 @@ enum SampleData {
             (1, "agent", "files.rename", "medium", .autoMode, "Rename “Scan 0412.pdf” to “Invoice April.pdf”", "Renamed", nil),
             (2, "agent", "notebook.search", "low", .auto, "Search the notebook for “sidefolk ideas”", "Found 4 items", nil),
             (6, "external:claude-code", "shell.run", "high", .denied, "Run “git push origin main” in ~/git/sidefolk", nil, "You said not now."),
-            (15, "agent", "ext.miraya.share_screen", "medium", .fullAccessPaired, "Share the screen to Living Room TV",
+            (15, "agent", "ext.cast-along.share_screen", "medium", .fullAccessPaired, "Share the screen to Living Room TV",
              "Sharing Built-in display on Living Room TV", nil),
             (35, "external:claude-code", "notebook.add", "low", .auto, "Save an idea to Inbox", "Saved “Folks could have their own sounds”", nil),
             (52, "agent", "web.fetch", "medium", .allowed, "Fetch example.com/pricing", "Read 12 KB", nil),
             (61, "agent", "files.move", "medium", .always, "Move 12 PDFs from Downloads to Invoices", "Moved 12 files", nil),
-            (75, "extension:app.sidefolk.system-vitals", "vitals_cpu", "low", .auto, "Read CPU load", "CPU 34%", nil),
+            (75, "extension:dev.example.mac-pulse", "vitals_cpu", "low", .auto, "Read CPU load", "CPU 34%", nil),
             (90, "external:codex", "watch.create", "low", .auto, "Watch “npm test” in ~/git/pockito", "Watching", nil),
             (130, "agent", "files.trash", "medium", .blocked, "Move 3 files in ~/Desktop to the Trash", nil,
              "That folder hasn't been shared with Sidefolk."),
@@ -284,7 +284,7 @@ enum SampleData {
                        error: "That folder hasn't been shared with Sidefolk.")
         try await said("c-rename", .event, "Stopped. Nothing was changed.", 60 * 26 - 1, run: "r-rename")
         try await said("c-rain", .user, "Will it rain in Fukuoka tomorrow?", 60 * 5, spoken: true)
-        try await step("r-rain", 60 * 5 - 0.2, "ext.weather.forecast", "Weather forecast for Fukuoka")
+        try await step("r-rain", 60 * 5 - 0.2, "ext.sky-watch.forecast", "Weather forecast for Fukuoka")
         try await said("c-rain", .assistant, "Light rain is likely tomorrow morning in Fukuoka (70%), clearing after noon. Highs around 19 °C.",
                        60 * 5 - 0.4, run: "r-rain")
         try await said("c-karim", .user, "Save Karim's new address: 12 rue Oberkampf, 75011 Paris", 60 * 26 + 0.2)
@@ -310,7 +310,7 @@ enum SampleData {
         var docs = Grant(tool: "web.fetch", scope: ["host": "docs.swift.org"], callerKind: "agent", now: ago(60 * 24 * 2))
         docs.lastUsedAt = ago(20)
         try await rt.permissions.addGrant(docs)
-        try await rt.permissions.addGrant(Grant(tool: "ext.weather.forecast", scope: ["extension": "dev.sidefolk.weather"],
+        try await rt.permissions.addGrant(Grant(tool: "ext.sky-watch.forecast", scope: ["extension": .string(SampleAddons.skyWatch)],
                                                 callerKind: "agent", now: ago(60 * 5)))
         try await rt.permissions.setPolicy(GuardPolicy(mode: .askOncePerKind, disabled: [.clipboard]))
 

@@ -2,16 +2,24 @@ import Foundation
 
 /// Where an installed extension came from. Nil (not stored) means a folder the person chose, or an MCP server.
 public enum ExtensionOrigin: String, Codable, Sendable, Hashable {
-    /// Shipped inside Sidefolk and installed by it: first-party code, updated with the app (D39).
-    case bundled
     /// Written by Sidefolk's AI for the person in the drafts folder, installed once they approved it (D39).
     case draft
-    /// Sidefolk's own, from the add-on gallery: signed by Sidefolk's developer, checked, and installed once the
-    /// person approved it (D55). First-party like a built-in, but theirs to remove.
+    /// Sidefolk's own, from a signed pack: the add-on gallery's, once the person approved it (D55), or one of the
+    /// packs the app carries for a fresh Mac (D98). Always theirs to remove.
     case official
 
-    /// Sidefolk's own code: its descriptions and translated words are used, and its services trusted (D39, D47).
-    public var firstParty: Bool { self == .bundled || self == .official }
+    /// Signed by Sidefolk's developer: its descriptions may reach the model, its summaries and services are believed.
+    public var firstParty: Bool { self == .official }
+
+    /// Copies the app used to ship (`bundled`, before D98) came from Sidefolk's own signature too, and from now on the
+    /// gallery updates them: read as gallery copies, their data and switch untouched.
+    public init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        guard let origin = raw == "bundled" ? .official : ExtensionOrigin(rawValue: raw) else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Unknown origin \(raw)"))
+        }
+        self = origin
+    }
 }
 
 /// What Sidefolk pinned when the user installed an extension or added an MCP server. Stored as JSON in
@@ -258,7 +266,7 @@ public struct ExtensionWatcherKind: Sendable, Hashable {
 }
 
 public struct ExtensionToolInfo: Sendable, Hashable {
-    /// Name in the tool registry, e.g. `ext.system-vitals.battery`.
+    /// Name in the tool registry, e.g. `ext.tea-timer.brew`.
     public var name: String
     public var title: String
     public var risk: Risk
@@ -296,6 +304,10 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var toolWarnings: [String] = []
     /// The extension that does all this one does and is on, so this one rests (D67): its name.
     public var restingFor: String? = nil
+    /// Requests to try, in the person's language (D98).
+    public var examples: [String] = []
+    /// The services it says it talks to (D98), believed only for Sidefolk's own (`origin.firstParty`).
+    public var services: [ExtensionManifest.Service] = []
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

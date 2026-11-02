@@ -206,6 +206,7 @@ struct InstallPreviewSheet: View {
                     ForEach(review.lines, id: \.self) { InstallPermissionRow(line: $0) }
                 }
             }
+            if !preview.services.isEmpty { InstallServicesBox(services: preview.services, vouched: review.tone == .goodToKnow) }
             if !review.cautions.isEmpty, review.tone == .goodToKnow { InstallCautionBox(cautions: review.cautions, tone: .goodToKnow) }
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 Text("After you install").font(Theme.Font.headline).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
@@ -317,6 +318,40 @@ struct InstallPreviewSheet: View {
         // A gallery download sits in a temporary folder whose path means nothing; a folder's path says which one.
         guard review.source == .folder else { return Text("Version \(preview.version)") }
         return Text("Version \(preview.version) · from \(FolderAccess.displayPath(preview.sourceFolder.path))")
+    }
+}
+
+/// The services and hosts a manifest names (D98). Sidefolk's own signed packs are taken at their word; anyone else's
+/// is only what they say, since the sandbox can't hold a program to host names (SECURITY §3).
+private struct InstallServicesBox: View {
+    var services: [ExtensionManifest.Service]
+    var vouched: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Text("Where it connects", comment: "Install sheet: the services an extension talks to").font(Theme.Font.headline).foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            Group {
+                if vouched {
+                    Text("Sidefolk signed this, so it takes its word: it talks only to these.", comment: "Install sheet: services named by Sidefolk's own extension")
+                } else {
+                    Text("It says it talks only to these, but its sandbox lets it reach any site.", comment: "Install sheet: services named by someone else's extension")
+                }
+            }
+            .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+            RowsCard {
+                ForEach(services, id: \.self) { service in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(verbatim: service.name).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                        Text(verbatim: service.hosts.joined(separator: ", ")).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Theme.Space.l)
+                    .padding(.vertical, Theme.Space.s + 2)
+                }
+            }
+        }
     }
 }
 

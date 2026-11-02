@@ -48,9 +48,9 @@ import Testing
         #expect(report.strings?.words(for: "fr")?.text["Hi {name}"] == .plain("Salut {name}"))
         #expect(report.text.contains("Languages: en, fr, ar"))
         // The install sheet's words, in the person's language, with the manifest's for what isn't translated.
-        let shown = report.shownWords(language: "ar", official: false)
+        let shown = report.shownWords(language: "ar")
         #expect(shown?.name == "مثال" && shown?.description == "Says back what it hears." && shown?.tools == ["Echo"])
-        #expect(report.shownWords(language: "fr", official: false)?.pages == ["Exemple"])
+        #expect(report.shownWords(language: "fr")?.pages == ["Exemple"])
     }
 
     @Test func onlyLanguagesSidefolkSpeaks() throws {

@@ -189,7 +189,8 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test func worldClockAnswersWithoutAnyPermission() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func worldClockAnswersWithoutAnyPermission() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("world-clock"))
         #expect(info.summary.texts == ["No access to your files or the internet"])
@@ -207,7 +208,7 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test(.enabled(if: ExtFixtures.liveNetwork, "set SIDEFOLK_LIVE_NETWORK=1 to ask Open-Meteo"))
+    @Test(.enabled(if: ExtFixtures.liveNetwork && ExtFixtures.hasAddons, "set SIDEFOLK_LIVE_NETWORK=1 to ask Open-Meteo"))
     func weatherReachesOpenMeteoFromItsSandbox() async throws {
         let h = try HostEnv()
         try await h.host.install(from: ExtFixtures.builtIn("weather"))
@@ -223,28 +224,21 @@ struct BuiltInExtensionTests {
         await h.host.shutdown()
     }
 
-    @Test func theShippedCatalogInstallsAsFirstParty() async throws {
+    /// A signed pack's own descriptions and schema reach the model: first-party text (D39), unlike D24's rule. It is the
+    /// person's to remove like any other (D98).
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func aSeedInstallsAsFirstPartyAndCanBeRemoved() async throws {
         let h = try HostEnv()
-        let bundled = BundledExtensions(directory: ExtFixtures.builtIns)
-        // The rest are in the add-on gallery (D55).
-        let ids = ["world-clock", "system-vitals", "weather", "calculator"].map { "dev.sidefolk." + $0 }
-        #expect(bundled.entries().map(\.id) == ids)
-        let on = Set(ids)
-        #expect(bundled.entries().map(\.on) == ids.map(on.contains))
-        #expect(Set(ExtFixtures.builtInFolders) == Set(bundled.entries().map(\.folder.lastPathComponent)), "every program ships, and only those")
-        #expect(Set(bundled.samples().map(\.lastPathComponent)) == Set(ExtFixtures.addonFolders),
-                "the Python sample stays in the repository (the gallery's extensions sit beside the built-ins in these tests)")
-        await bundled.install(into: h.host)
-        #expect(bundled.unavailable.isEmpty, "\(bundled.unavailable)")
-        let installed = await h.host.extensions()
-        #expect(installed.map(\.id).sorted() == ids.sorted())
-        #expect(installed.allSatisfy { $0.origin == .bundled && $0.iconPath != nil })
-        #expect(Set(installed.filter(\.enabled).map(\.id)) == on, "the catalog decides what starts on")
-        // Their own descriptions and schema reach the model: first-party text from the app (D39), unlike D24's rule.
+        let info = try await h.host.install(from: ExtFixtures.builtIn("world-clock"), origin: .official)
+        #expect(info.origin == .official && info.iconPath != nil && info.enabled)
+        #expect(info.examples == ["what time is it in Tokyo?"])
         let time = try #require(h.env.registry.tool(named: "ext.world-clock.current_time")?.spec)
         #expect(time.description.contains("Sidefolk's own extension “World Clock”"), "\(time.description)")
         #expect(time.inputSchema["properties"]?["places"]?["description"] != nil)
-        await #expect(throws: UserFacingError.self) { try await h.host.uninstall(id: "dev.sidefolk.world-clock") }
+        let tool = try #require(h.env.registry.tool(named: "ext.world-clock.convert_time") as? ExtensionTool)
+        #expect(tool.summary(for: ["time": "9am", "from": "Paris", "to": ["Tokyo"]]) == "Convert 9am in Paris to the time in Tokyo")
+        try await h.host.uninstall(id: "dev.sidefolk.world-clock")
+        #expect(await h.host.info(id: "dev.sidefolk.world-clock") == nil)
         await h.host.shutdown()
     }
 }

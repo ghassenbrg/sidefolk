@@ -7,7 +7,7 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
     /// Themes are data (D58, D64); a copy of Sidefolk from before them skips their entries.
     public enum Kind: String, Codable, Sendable { case companion, `extension`, theme }
 
-    /// Reverse DNS: `dev.sidefolk.companions.ember`, `dev.sidefolk.git`. The pack's signature names it too.
+    /// Reverse DNS: `dev.sidefolk.companions.ember`, `dev.example.tea-timer`. The pack's signature names it too.
     public var id: String
     public var kind: Kind
     public var name: String
@@ -42,7 +42,8 @@ public struct AddonEntry: Codable, Sendable, Hashable, Identifiable {
     /// Made by Sidefolk. Only Sidefolk signs packs and catalogs (D55), and review refuses this prefix to anyone
     /// else, so the id is enough.
     public var official: Bool { Self.isOfficial(id: id) }
-    public static func isOfficial(id: String) -> Bool { id.hasPrefix("dev.sidefolk.") }
+    public static func isOfficial(id: String) -> Bool { id.hasPrefix(officialPrefix) }
+    public static let officialPrefix = "dev.sidefolk."
 
     enum CodingKeys: String, CodingKey {
         case id, kind, name, tagline, description, author, version, file, bytes, sha256, preview, companion, engine, license, category, localized
@@ -226,13 +227,11 @@ extension AddonEntry {
         return text.split(whereSeparator: \.isWhitespace).allSatisfy { haystack.contains(fold(String($0))) }
     }
 
-    /// In the person's language: the entry's own translation (D76), then for Sidefolk's own extensions the app's
-    /// string catalog (D28), then as published.
-    private var translated: Bool { official && kind == .extension }
+    /// In the person's language: the entry's own translation (D76), then as published.
     private var words: AddonWords.Words? { localized?.words(for: ExtensionStrings.current) }
-    public var shownName: String { words?.name ?? (translated ? BuiltInExtensionWords.name(id) : nil) ?? name }
-    public var shownTagline: String { words?.tagline ?? (translated ? BuiltInExtensionWords.tagline(id) : nil) ?? tagline }
-    public var shownDescription: String { words?.description ?? (translated ? BuiltInExtensionWords.description(id) : nil) ?? description }
+    public var shownName: String { words?.name ?? name }
+    public var shownTagline: String { words?.tagline ?? tagline }
+    public var shownDescription: String { words?.description ?? description }
 }
 
 /// A gallery entry's words in other languages (D76). Read leniently: a language or a field that isn't plain text within

@@ -137,6 +137,7 @@ public struct BackupRestore: Sendable {
             try BackupManifest.encoder.encode(plan).write(to: undo.appendingPathComponent(Self.planFile))
             try swap(out: home, aside: undo, in: [pending.appendingPathComponent(BackupLayout.data), pending])
             try BackupManifest.encoder.encode(plan).write(to: url(Self.followUp))
+            SeedPacks.restored(plan.extensions.filter { $0.source == .builtIn || $0.source == .gallery }.map(\.id), paths: paths)
         } catch {
             Log.shared.error("backup", "restore failed; data left as it was", ["error": String(describing: error)])
             ExtensionFiles.removeTree(undo.path)

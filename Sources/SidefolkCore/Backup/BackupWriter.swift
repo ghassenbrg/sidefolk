@@ -33,7 +33,6 @@ public struct BackupWriter: Sendable {
         for info in await runtime.extensions.extensions() {
             let source: BackupManifest.Source = switch (info.kind, info.origin) {
             case (.mcp, _): .mcp
-            case (_, .bundled?): .builtIn
             case (_, .official?): .gallery
             default: .folder
             }

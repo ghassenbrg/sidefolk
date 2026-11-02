@@ -7,7 +7,7 @@ import Testing
 /// sentences included; and they answer in the person's language when Sidefolk says it.
 @Suite(.serialized) struct ExtensionLanguagesTests {
     /// Playtime localizes itself on its own branch (team/play); hello-folk is a sample for developers.
-    static let folders = (ExtFixtures.builtInFolders + ExtFixtures.addonFolders).filter { $0 != "playtime" }
+    static let folders = ExtFixtures.addonFolders.filter { $0 != "playtime" }
     static let languages = ExtensionStrings.languages.filter { $0 != "en" }
 
     /// `L("…")` and `L(one: "…", other: "…")` in a program's sources, as scripts/extension-strings.py reads them.
@@ -53,6 +53,8 @@ import Testing
             for (name, palette) in m.palettes {
                 #expect(w.palettes[name]?.title != nil && (w.palettes[name]?.placeholder != nil) == (palette.placeholder != nil), "\(at) palette \(name)")
             }
+            #expect(w.examples.count == m.examples.count, "\(at) examples")
+            #expect(Set(w.toolSummaries.keys) == Set(m.tools.filter { $0.value.summary != nil }.keys), "\(at) tool summaries")
             // Every text, its placeholders kept (the validator refused the file otherwise), nothing left empty.
             let missing = Set(english.text.keys).subtracting(w.text.keys)
             #expect(missing.isEmpty, "\(at): \(missing.sorted().prefix(5))")
@@ -60,7 +62,8 @@ import Testing
     }
 
     /// Sidefolk says the person's language with the call, and the program answers in it.
-    @Test func builtInsAnswerInThePersonsLanguage() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func builtInsAnswerInThePersonsLanguage() async throws {
         let h = try HostEnv { $0.language = { "fr" } }
         _ = try await h.host.install(from: ExtFixtures.builtIn("world-clock"))
         let now = try #require(await h.call("ext.world-clock.current_time", ["places": ["UTC", "Narnia"]]).okText)

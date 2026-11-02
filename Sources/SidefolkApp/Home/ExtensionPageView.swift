@@ -58,7 +58,7 @@ struct ExtensionPageView: View {
     }
 
     private var subtitle: String {
-        // "Your Mac, added by Your Mac" says nothing: the extension is named only when the page has another name.
+        // "Tea Timer, added by Tea Timer" says nothing: the extension is named only when the page has another name.
         let from = model.info.extensionName == model.info.title ? nil
             : String(localized: "Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
         var parts = [from].compactMap { $0 }

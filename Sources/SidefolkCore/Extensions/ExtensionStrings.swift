@@ -2,7 +2,7 @@ import Foundation
 
 /// An extension's words in the languages Sidefolk speaks (D76): `strings/<language>.json` beside the manifest. A
 /// language's file may translate what the manifest shows people (name, tagline, description, tool, watcher, page and
-/// palette and game titles, the network's purpose) and carries the program's own sentences under `text`, which `strings/en.json`
+/// palette and game titles, the network's purpose, examples and tool summaries) and carries the program's own sentences under `text`, which `strings/en.json`
 /// lists in English. Files of their own rather than a manifest key, because older copies of Sidefolk refuse a manifest
 /// with a key they don't know (T13), and ignore a folder they don't read.
 public struct ExtensionStrings: Sendable, Hashable {
@@ -26,6 +26,10 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var games: [String: String] = [:]
         /// Game taglines, under the title on the Play panel's menu card.
         public var gameTaglines: [String: String] = [:]
+        /// Requests to try (D98), in the manifest's order.
+        public var examples: [String] = []
+        /// Each tool's summary (D98): one text for each of the manifest's forms, in order.
+        public var toolSummaries: [String: [String]] = [:]
         /// The program's sentences by their English key: one text, or forms by count (`one`, `other`…).
         public var text: [String: Text] = [:]
 
@@ -154,7 +158,7 @@ extension ExtensionStrings {
         var w = Words()
         guard let o = any as? [String: Any] else { return w }
         let english = code == "en"
-        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "text"]
+        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "examples", "text"]
         for key in o.keys.sorted() where !allowed.contains(key) {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
             issues.append(ValidationIssue(field: "\(file).\(key)", message: why))
@@ -199,8 +203,9 @@ extension ExtensionStrings {
         w.description = line(o["description"], "\(file).description", max: 300, oneLine: false, base: m.description)
         w.networkPurpose = line(o["network_purpose"], "\(file).network_purpose", max: 120, base: m.permissions.networkPurpose)
         for (name, value) in object("tools", names: Set(m.tools.keys)) {
-            let f = fields(value, "\(file).tools.\(name)", ["title"])
+            let f = fields(value, "\(file).tools.\(name)", ["title", "summary"])
             w.tools[name] = line(f["title"], "\(file).tools.\(name).title", max: 80, base: m.tools[name]?.title ?? name)
+            w.toolSummaries[name] = summary(f["summary"], "\(file).tools.\(name).summary", of: m.tools[name]?.summary)
         }
         for (name, value) in object("watchers", names: Set(m.watchers.keys)) {
             let f = fields(value, "\(file).watchers.\(name)", ["title", "description"])
@@ -223,8 +228,48 @@ extension ExtensionStrings {
             w.games[name] = line(f["title"], "\(file).games.\(name).title", max: 40, base: m.games[name]?.title)
             w.gameTaglines[name] = line(f["tagline"], "\(file).games.\(name).tagline", max: 60, base: m.games[name]?.tagline)
         }
+        w.examples = examples(o["examples"], "\(file).examples", of: m.examples)
         w.text = texts(o["text"], file: file, code: code, base: base, issues: &issues)
         return w
+
+        /// A text for each of the manifest's examples, in its order; a list that doesn't line up is left out whole.
+        func examples(_ value: Any?, _ field: String, of source: [String]) -> [String] {
+            guard let value else { return [] }
+            guard let list = value as? [Any], list.count == source.count else {
+                issues.append(ValidationIssue(field: field, message: "must have one text for each of the manifest's \(source.count) examples."))
+                return []
+            }
+            let lines = list.enumerated().map { line($0.element, "\(field)[\($0.offset)]", max: 120, base: source[$0.offset]) }
+            return lines.contains { $0 == nil } ? [] : lines.compactMap { $0 }
+        }
+
+        /// A text for each of the summary's forms, with the same parameters: a translation can't ask for another argument.
+        func summary(_ value: Any?, _ field: String, of source: ToolSummary?) -> [String]? {
+            guard let value else { return nil }
+            guard let source else {
+                issues.append(ValidationIssue(field: field, message: "translates something the manifest doesn't have."))
+                return nil
+            }
+            let list = (value as? [Any]) ?? [value]
+            guard list.count == source.forms.count, let texts = list as? [String] else {
+                issues.append(ValidationIssue(field: field, message: "must have one text for each of the manifest's \(source.forms.count) forms."))
+                return nil
+            }
+            var ok = true
+            for (index, text) in texts.enumerated() {
+                let at = texts.count > 1 ? "\(field)[\(index)]" : field
+                if let problem = ToolSummary.problem(with: text, maxCharacters: ToolSummary.maxCharacters * 3 / 2) {
+                    issues.append(ValidationIssue(field: at, message: problem))
+                    ok = false
+                }
+                let wanted = Set(ToolSummary.placeholders(in: source.forms[index].text))
+                if Set(ToolSummary.placeholders(in: text)) != wanted {
+                    issues.append(ValidationIssue(field: at, message: "must use the same parameters as the manifest: \(wanted.sorted().map { "{\($0)}" }.joined(separator: " "))."))
+                    ok = false
+                }
+            }
+            return ok ? texts : nil
+        }
     }
 
     private static func texts(_ any: Any?, file: String, code: String, base: [String: Text], issues: inout [ValidationIssue]) -> [String: Text] {
@@ -285,8 +330,7 @@ extension ExtensionStrings {
 
 // MARK: An install sheet's words
 
-/// What an install sheet names, in the person's language (D76): the extension's own translation, then for Sidefolk's own
-/// from the gallery the app's catalog (packs from before `strings/`), then the manifest.
+/// What an install sheet names, in the person's language (D76): the extension's own translation, then the manifest.
 public struct ExtensionShownWords: Sendable, Hashable {
     public var name: String
     public var description: String
@@ -297,16 +341,15 @@ public struct ExtensionShownWords: Sendable, Hashable {
 }
 
 extension ValidationReport {
-    public func shownWords(language: String = ExtensionStrings.current, official: Bool) -> ExtensionShownWords? {
+    public func shownWords(language: String = ExtensionStrings.current) -> ExtensionShownWords? {
         guard let m = manifest else { return nil }
         let w = strings?.words(for: language)
-        let id = m.id
         return ExtensionShownWords(
-            name: w?.name ?? (official ? BuiltInExtensionWords.name(id) : nil) ?? m.name,
-            description: w?.description ?? (official ? BuiltInExtensionWords.description(id) : nil) ?? m.description ?? "",
-            tools: m.tools.keys.sorted().map { w?.tools[$0] ?? (official ? BuiltInExtensionWords.tool(id, $0) : nil) ?? m.tools[$0]?.title ?? $0 },
-            watchers: m.watchers.keys.sorted().map { w?.watchers[$0]?.title ?? (official ? BuiltInExtensionWords.watcher(id, $0) : nil) ?? m.watchers[$0]?.title ?? $0 },
-            pages: m.pages.keys.sorted().compactMap { w?.pages[$0] ?? (official ? BuiltInExtensionWords.page(id, $0) : nil) ?? m.pages[$0]?.title })
+            name: w?.name ?? m.name,
+            description: w?.description ?? m.description ?? "",
+            tools: m.tools.keys.sorted().map { w?.tools[$0] ?? m.tools[$0]?.title ?? $0 },
+            watchers: m.watchers.keys.sorted().map { w?.watchers[$0]?.title ?? m.watchers[$0]?.title ?? $0 },
+            pages: m.pages.keys.sorted().compactMap { w?.pages[$0] ?? m.pages[$0]?.title })
     }
 
     /// The permissions as the sheet words them: the network's purpose in the person's language when the extension

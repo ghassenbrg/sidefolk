@@ -32,7 +32,7 @@ final class ExtensionPagesModel {
     /// Pages the person put out of the sidebar (D67): one menu row lists them, with the way back.
     var hidden: [ExtensionPageInfo] { all.filter { !layout.inSidebar($0.id) } }
 
-    /// Extensions working in the background now: a page whose main switch is on (Keep Awake), for On duty (D84).
+    /// Extensions working in the background now: a page whose main switch is on, for On duty (D84).
     var background: [ExtensionPageInfo] { all.filter { isOn($0.id) == true } }
     var backgroundCount: Int { background.count }
 

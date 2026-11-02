@@ -417,24 +417,6 @@ import Testing
 
     // MARK: Extensions
 
-    /// Built-ins this version no longer ships became add-ons: they keep working, and the person may remove them.
-    @Test func aBuiltInThatMovedToTheGalleryBecomesAnAddon() async throws {
-        let h = try HostEnv()
-        try await h.host.install(from: ExtFixtures.builtIn("calculator"), origin: .bundled)
-        let catalog = try ExtFixtures.tempDir("catalog")
-        try FileManager.default.copyItem(at: ExtFixtures.builtIn("world-clock"), to: catalog.appendingPathComponent("world-clock"))
-        try Data(#"{"extensions": [{ "folder": "world-clock", "on": true }]}"#.utf8).write(to: catalog.appendingPathComponent("catalog.json"))
-        await BundledExtensions(directory: catalog).install(into: h.host)
-        let calculator = try #require(await h.host.info(id: "dev.sidefolk.calculator"))
-        #expect(calculator.origin == .official && calculator.enabled)
-        // Still first-party: its own words reach the model.
-        #expect(h.env.registry.tool(named: "ext.calculator.calculate")?.spec.description.contains("Sidefolk's own extension") == true)
-        try await h.host.uninstall(id: "dev.sidefolk.calculator")
-        #expect(await h.host.info(id: "dev.sidefolk.calculator") == nil)
-        await h.host.shutdown()
-        try? FileManager.default.removeItem(at: catalog)
-    }
-
     /// The packs scripts/build.py signed in a sidefolk-addons checkout beside this one, through the real signature check:
     /// a companion installs, and an extension's checked folder previews and installs as Sidefolk's own.
     static let signedGallery = ExtFixtures.addonsRepo.appendingPathComponent("dist", isDirectory: true)

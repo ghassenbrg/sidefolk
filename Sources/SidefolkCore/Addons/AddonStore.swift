@@ -164,6 +164,25 @@ public actor AddonStore {
         }
     }
 
+    /// A pack the app carries (D98), checked as a download is: its size and digest against the app's list, its signature
+    /// against the gallery's team. Returns the folder of its files, which `discard(id:)` removes. Needs no network.
+    public func unpack(seed: SeedPacks.Seed, from directory: URL?) async throws -> URL {
+        guard let source, let directory else { throw UserFacingError("This copy of Sidefolk has no add-on gallery.") }
+        guard !seed.file.contains("/"), !seed.id.contains("/"), !seed.file.hasPrefix(".") else { throw UserFacingError("The download isn't a Sidefolk add-on.") }
+        let zip = directory.appendingPathComponent(seed.file)
+        let size = (try? FileManager.default.attributesOfItem(atPath: zip.path)[.size] as? NSNumber)?.int64Value
+        guard size == seed.bytes, try FileDigest.sha256(zip) == seed.sha256 else {
+            throw UserFacingError("\(seed.name) isn't the pack this copy of Sidefolk should carry, so it wasn't installed.")
+        }
+        let work = try fresh(downloads.appendingPathComponent(seed.id, isDirectory: true))
+        do {
+            return try await unpack(zip, into: work.appendingPathComponent("unpacked", isDirectory: true), id: seed.id, version: seed.version, source: source)
+        } catch {
+            try? FileManager.default.removeItem(at: work)
+            throw error
+        }
+    }
+
     /// Removes what `fetch` left for `entry`.
     public func discard(_ entry: AddonEntry) { discard(id: entry.id) }
 

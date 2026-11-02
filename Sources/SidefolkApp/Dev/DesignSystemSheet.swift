@@ -92,7 +92,7 @@ private struct DSFoundations: View {
         let rows: [(String, Font, String, String)] = [
             ("display", Theme.Font.display, "Good afternoon, Ghassen.", "30 semibold, theme face"),
             ("title1", Theme.Font.title1, "On duty", "22 semibold, theme face"),
-            ("title2", Theme.Font.title2, "Install Miraya?", "17 semibold"),
+            ("title2", Theme.Font.title2, "Install Cast Along?", "17 semibold"),
             ("headline", Theme.Font.headline, "Move 12 PDFs to Invoices", "14 semibold"),
             ("body", Theme.Font.body, "Sidefolk starts quietly when you log in.", "13"),
             ("callout", Theme.Font.callout, "2 checks failed · 1 min ago", "12, ink 2 or 3"),
@@ -384,14 +384,14 @@ private struct DSControls: View {
 
     private var rows: some View {
         RowsCard {
-            ListRow(title: Text(verbatim: "Your Mac"), meta: Text(verbatim: "Default · a title and one meta line"),
+            ListRow(title: Text(verbatim: "Mac Pulse"), meta: Text(verbatim: "Default · a title and one meta line"),
                     leading: { IconTile(symbol: "desktopcomputer", folk: "byte", size: Theme.Size.rowIcon) }, trailing: { RowChevron() })
-            ListRow(title: Text(verbatim: "Clipboard"), meta: Text(verbatim: "Selected · accent soft, link title"), selected: true,
+            ListRow(title: Text(verbatim: "Paste Shelf"), meta: Text(verbatim: "Selected · accent soft, link title"), selected: true,
                     leading: { IconTile(symbol: "doc.on.clipboard", folk: "guard", size: Theme.Size.rowIcon) }, trailing: { KeyHint("⇧⌘C") })
-            ListRow(title: Text(verbatim: "Keep Awake"), meta: Text(verbatim: "With a switch"),
+            ListRow(title: Text(verbatim: "Stay Up"), meta: Text(verbatim: "With a switch"),
                     leading: { IconTile(symbol: "bolt", folk: "scout", size: Theme.Size.rowIcon) },
-                    trailing: { Toggle(isOn: $on) { Text(verbatim: "Keep Awake") }.toggleStyle(.switch).labelsHidden().tint(Theme.accent) })
-            ListRow(title: Text(verbatim: "World Clock"), meta: Text(verbatim: "With a state"),
+                    trailing: { Toggle(isOn: $on) { Text(verbatim: "Stay Up") }.toggleStyle(.switch).labelsHidden().tint(Theme.accent) })
+            ListRow(title: Text(verbatim: "Time Zones"), meta: Text(verbatim: "With a state"),
                     leading: { IconTile(symbol: "clock", folk: "tempo", size: Theme.Size.rowIcon) },
                     trailing: { StatusBadge(Text(verbatim: "Stopped after crashing"), state: .tone(.danger)) })
             ListRow(title: Text(verbatim: "Compact row, 32"), compact: true) { Text(verbatim: "09:00").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted) }

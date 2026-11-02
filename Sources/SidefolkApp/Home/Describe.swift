@@ -115,7 +115,7 @@ enum Describe {
         }
     }
 
-    /// "app.sidefolk.system-vitals" → "System Vitals" (the id's last part, made readable).
+    /// "dev.example.tea-timer" → "Tea Timer" (the id's last part, made readable).
     static func extensionName(_ id: String) -> String {
         let last = id.split(separator: ".").last.map(String.init) ?? id
         return last.replacingOccurrences(of: "-", with: " ").replacingOccurrences(of: "_", with: " ").capitalized

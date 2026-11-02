@@ -104,8 +104,7 @@ struct ExtensionsSettingsView: View {
         return items.filter { query.includes($0) || kept.contains($0.id) }
     }
 
-    private var builtIns: [ExtensionInfo] { visible(model.extensions.filter(\.bundled)) }
-    private var added: [ExtensionInfo] { visible(model.extensions.filter { !$0.bundled }) }
+    private var added: [ExtensionInfo] { visible(model.extensions) }
     private var unavailable: [UnavailableExtension] { query.filter(model.unavailable) }
     /// Drafts and skills are neither on nor off: they are listed under All only, and searched there.
     private var drafts: [ExtensionDraftInfo] { show == .all ? model.drafts.filter { query.matches($0.searchTexts) } : [] }
@@ -114,11 +113,11 @@ struct ExtensionsSettingsView: View {
 
     /// The rows the keyboard moves through, top to bottom.
     private var rowIds: [String] {
-        builtIns.map(\.id) + added.map(\.id) + drafts.map(DraftRow.rowId) + skills.map(SkillRow.rowId)
+        added.map(\.id) + drafts.map(DraftRow.rowId) + skills.map(SkillRow.rowId)
     }
 
     private var nothingShown: Bool {
-        builtIns.isEmpty && unavailable.isEmpty && added.isEmpty && drafts.isEmpty && skills.isEmpty
+        unavailable.isEmpty && added.isEmpty && drafts.isEmpty && skills.isEmpty
     }
 
     /// Changed tools wait for the person, so that row starts open.
@@ -211,8 +210,7 @@ struct ExtensionsSettingsView: View {
         if query.isNarrowed, nothingShown {
             noMatch
         }
-        if !builtIns.isEmpty || !unavailable.isEmpty { builtIn }
-        if !query.isNarrowed || !added.isEmpty { installed }
+        if !query.isNarrowed || !added.isEmpty || !unavailable.isEmpty { installed }
         if !drafts.isEmpty { draftGroup }
         if show == .all, !query.isSearching || !skills.isEmpty { skillGroup }
     }
@@ -258,55 +256,27 @@ struct ExtensionsSettingsView: View {
     }
 
     /// Extensions answer requests in your own words, so without an AI they have nothing to answer.
-    private var builtInFooter: LocalizedStringKey {
+    private var installedFooter: LocalizedStringKey {
         if model.settings.provider.kind == .none {
-            return "These come with Sidefolk and are updated with it, each in its own sandbox. They answer through your AI, so choose one in Settings › Brain first."
+            return "Extensions answer through your AI, so choose one in Settings › Brain first. Each runs in a sandbox limited to what it asked for at install; MCP servers run with your full permissions."
         }
-        return "These come with Sidefolk and are updated with it. Each runs in its own sandbox; switch off any you don't want."
+        return "Extensions run in a sandbox limited to what they asked for at install. MCP servers run with your full permissions."
     }
 
-    // MARK: Built in
-
-    private var builtIn: some View {
-        SettingsGroup(title: "Built in", footer: builtInFooter) {
-            ForEach(builtIns) { ext in
-                row(ext, uninstall: nil)
-            }
-            ForEach(unavailable) { item in
-                UnavailableExtensionRow(item: item) { Task { await model.retryBuiltIns() } }
-            }
-        }
-    }
-
-    // MARK: Added by you
+    // MARK: Installed
 
     /// While the list is narrowed, only what matches; the ways to add one are under All with nothing searched.
     private var installed: some View {
-        SettingsGroup(title: "Added by you",
-                      footer: "Extensions run in a sandbox limited to what they asked for at install. MCP servers run with your full permissions.") {
-            if added.isEmpty {
+        SettingsGroup(title: "Installed", footer: installedFooter) {
+            if added.isEmpty, unavailable.isEmpty {
                 InlineEmpty(text: "Nothing added yet. Get one from the Gallery, install one from a folder, add an MCP server, or ask Sidefolk to build one.",
                             systemImage: "puzzlepiece.extension")
             }
             ForEach(added) { ext in
                 row(ext) { uninstalling = ext }
             }
-            // The ways to add one are at the top of the page; samples stay here.
-            if !query.isNarrowed, !model.samples.isEmpty {
-                HStack(spacing: Theme.Space.s) {
-                    Text("Try a sample:").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    ForEach(model.samples, id: \.folder) { sample in
-                        Button {
-                            model.clearExtensionError()
-                            Task { model.installPreview = await model.preview(folder: sample.folder) }
-                        } label: {
-                            Text(verbatim: "\(sample.name)…")
-                        }
-                        .buttonStyle(.sf(.plain))
-                    }
-                }
-                .padding(.horizontal, Theme.Space.l)
-                .padding(.vertical, Theme.Space.m)
+            ForEach(unavailable) { item in
+                UnavailableExtensionRow(item: item) { Task { await model.retrySeedPacks() } }
             }
         }
     }

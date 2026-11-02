@@ -103,12 +103,13 @@ extension AppCoordinator {
 
     private func runFollowUp(_ plan: BackupRestore.Plan) async {
         let model = restoreModel
-        model.total = plan.addons.count + plan.extensions.filter { $0.source == .gallery }.count
+        let seeds = Set(runtime.seedPacks.seeds().map(\.id))
+        model.total = plan.addons.count + plan.extensions.filter { ($0.source == .gallery || $0.source == .builtIn) && !seeds.contains($0.id) }.count
         model.done = 0
         model.running = true
         let report = await RestoreFollowUp(paths: runtime.paths).run(
             plan, store: runtime.addons, host: runtime.extensions, themes: ThemeLibrary.app(runtime.paths),
-            channel: runtime.settings.current.updates.effectiveChannel) { _ in await MainActor.run { model.done += 1 } }
+            channel: runtime.settings.current.updates.effectiveChannel, seeds: seeds) { _ in await MainActor.run { model.done += 1 } }
         model.running = false
         model.report = report
         companionsUpdated([])
@@ -134,7 +135,7 @@ extension AppCoordinator {
             lines.append(String(localized: "\(report.installed.count) add-ons are back.", locale: Wording.locale, comment: "After a restore: “4 add-ons are back.”"))
         }
         if !report.failed.isEmpty {
-            lines.append(String(localized: "Not back: \(Wording.list(report.failed.map(\.name))).", comment: "After a restore: “Not back: Miraya.”"))
+            lines.append(String(localized: "Not back: \(Wording.list(report.failed.map(\.name))).", comment: "After a restore: “Not back: Tea Timer.”"))
         }
         if review > 0 {
             lines.append(String(localized: "\(review) from a folder wait for your look in Settings.", locale: Wording.locale,

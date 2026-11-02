@@ -158,8 +158,8 @@ struct TrustSettingsView: View {
     // MARK: Always allowed
 
     private var grants: some View {
-        // Sites and built-in services are listed under "Using the internet" (D47).
-        let others = model.grants.filter { !InternetGrants.isInternet($0) }
+        // Sites and extensions' services are listed under "Using the internet" (D47).
+        let others = model.grants.filter { !InternetGrants.isInternet($0, extensions: model.extensions) }
         return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.", anchor: .alwaysAllowed) {
             if others.isEmpty {
                 InlineEmpty(text: "Nothing yet. When you choose “Always allow”, it's listed here.", systemImage: "checkmark.shield")

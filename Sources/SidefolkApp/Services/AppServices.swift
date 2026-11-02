@@ -22,8 +22,6 @@ struct ExtensionInfo: Identifiable, Hashable {
     var warnings: [String]
     var sandboxed: Bool
     var lastError: String?
-    /// Ships with Sidefolk (D39): it can be switched off, not uninstalled.
-    var bundled: Bool
     /// Tools that changed or appeared since the user approved the extension; on hold until approved again.
     var pendingTools: [String] = []
     var iconPath: String?
@@ -40,6 +38,12 @@ struct ExtensionInfo: Identifiable, Hashable {
     var commands: [String] = []
     /// The extension that does all this one does and is on, so this one rests (D67).
     var restingFor: String?
+    /// Requests to try, from its manifest, in the person's language (D98).
+    var examples: [String] = []
+    /// The services its manifest says it talks to (D98).
+    var services: [ExtensionManifest.Service] = []
+    /// From a pack Sidefolk signed, so what `services` says is believed (D47, D98).
+    var signedBySidefolk = false
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }
@@ -62,6 +66,8 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var pagesInBackground = false
     var folk: String?
     var iconPath: String?
+    /// The services its manifest says it talks to (D98); `review.tone` decides how that is said.
+    var services: [ExtensionManifest.Service] = []
 
     var isUpdate: Bool { review.update != nil }
     /// A draft Sidefolk's AI wrote at the person's request (D39), not a folder from elsewhere.
@@ -220,12 +226,10 @@ protocol AppServices: AnyObject {
     /// Lets the changed tools of an extension run (after the user read what changed).
     func approveToolChanges(_ id: String) async -> UserFacingError?
     func addMCPServer(name: String, command: String, arguments: [String]) async -> UserFacingError?
-    /// Sample extensions shipped with the app that aren't installed yet.
-    func sampleExtensions() async -> [(name: String, folder: URL)]
-    /// Built-in extensions this Mac can't run yet, and why.
+    /// Seed packs this Mac couldn't install (D98), and why.
     func unavailableExtensions() async -> [UnavailableExtension]
-    /// Tries the built-in extensions again (after installing git, say).
-    func retryBuiltInExtensions() async
+    /// Tries the seed packs again.
+    func retrySeedPacks() async
     /// Drafts Sidefolk's AI wrote, newest first.
     func extensionDrafts() async -> [ExtensionDraftInfo]
     /// Moves a draft to the Trash.

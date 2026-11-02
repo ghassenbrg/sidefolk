@@ -108,8 +108,8 @@ import Testing
     }
 
     @Test func everyShippedManifestsCommandsAreValid() throws {
-        for folder in ExtFixtures.builtInFolders {
-            let data = try Data(contentsOf: ExtFixtures.repoRoot.appendingPathComponent("extensions/\(folder)/sidefolk-extension.json"))
+        for folder in ExtFixtures.addonFolders {
+            let data = try Data(contentsOf: ExtFixtures.source(folder).appendingPathComponent("sidefolk-extension.json"))
             let manifest = try ExtensionManifest.decode(data)
             #expect(ExtensionCommandRules.check(manifest).isEmpty, "\(folder): \(ExtensionCommandRules.check(manifest))")
         }

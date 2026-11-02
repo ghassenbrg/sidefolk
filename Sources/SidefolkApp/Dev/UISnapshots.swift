@@ -100,7 +100,7 @@ enum UISnapshots {
                 try await homeShot(name)
             }
             full.find.query = ""
-            // Extensions' pages in the sidebar with Keep Awake's switch, their tiles on Today (D67), and On duty with them.
+            // Extensions' pages in the sidebar with Stay Up's switch, their tiles on Today (D67), and On duty with them.
             SampleExtensionPage.showPages(in: full.pages)
             full.now.widgets = [SampleExtensionPage.widget(), SampleExtensionPage.awakeWidget()]
             try await homeShot("today-extensions", size: CGSize(width: 1280, height: 1000))
@@ -320,27 +320,27 @@ enum UISnapshots {
             try await page("page-game-center-narrow", GameCenterView(model: SampleGameCenter.model()), width: 700)
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
-            try await page("page-extension-clipboard", ExtensionPageView(model: SampleExtensionPage.clipboard()), width: 980)
+            try await page("page-extension-shelf", ExtensionPageView(model: SampleExtensionPage.shelf()), width: 980)
             // Its update waiting (D89): the page's strip, and Settings › Add-ons' rows with their new versions.
             SampleAddonUpdates.show(in: fixtures.updates, catalog: try SampleCompanions.catalog(), halfway: false)
-            let clipboardUpdate = SampleExtensionPage.clipboard()
-            clipboardUpdate.updates = fixtures.updates
-            try await page("page-extension-clipboard-update", ExtensionPageView(model: clipboardUpdate), width: 980)
-            try await page("page-extension-clipboard-update-narrow", ExtensionPageView(model: clipboardUpdate), width: 640)
+            let shelfUpdate = SampleExtensionPage.shelf()
+            shelfUpdate.updates = fixtures.updates
+            try await page("page-extension-shelf-update", ExtensionPageView(model: shelfUpdate), width: 980)
+            try await page("page-extension-shelf-update-narrow", ExtensionPageView(model: shelfUpdate), width: 640)
             try await page("page-settings-addons-updates", SettingsTabContent(tab: .addons, model: settings), width: 690)
             SampleAddonUpdates.clear(fixtures.updates)
-            // Miraya in each of its states (D74): a hero with the one thing to do, TVs beside, pictures to pick from.
+            // Cast Along in each of its states (D74): a hero with the one thing to do, TVs beside, pictures to pick from.
             for state in ["notv", "ready", "window", "area", "norecord", "pairing", "authorizing", "sharing", "paused", "playing", "problem"] {
-                try await page("page-extension-miraya-\(state)", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 1180)
+                try await page("page-extension-cast-\(state)", ExtensionPageView(model: SampleExtensionPage.cast(state)), width: 1180)
             }
-            try await page("page-extension-miraya-ready-narrow", ExtensionPageView(model: SampleExtensionPage.miraya("ready")), width: 640)
-            try await page("page-extension-miraya-ready-wide", ExtensionPageView(model: SampleExtensionPage.miraya("ready")), width: 1560)
+            try await page("page-extension-cast-ready-narrow", ExtensionPageView(model: SampleExtensionPage.cast("ready")), width: 640)
+            try await page("page-extension-cast-ready-wide", ExtensionPageView(model: SampleExtensionPage.cast("ready")), width: 1560)
             for state in ["sharing", "paused", "pairing", "area", "window"] {
-                try await page("page-extension-miraya-\(state)-narrow", ExtensionPageView(model: SampleExtensionPage.miraya(state)), width: 640)
+                try await page("page-extension-cast-\(state)-narrow", ExtensionPageView(model: SampleExtensionPage.cast(state)), width: 640)
             }
-            let audioPage = SampleExtensionPage.miraya("ready")
+            let audioPage = SampleExtensionPage.cast("ready")
             audioPage.toggleOpen("Picture & sound")
-            try await page("page-extension-miraya-audio-narrow", ExtensionPageView(model: audioPage), width: 640)
+            try await page("page-extension-cast-audio-narrow", ExtensionPageView(model: audioPage), width: 640)
             // With Full access on, Today leads with it (D37).
             let homePolicy = try await full.services.runtime.permissions.policy()
             try await full.services.runtime.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
@@ -510,13 +510,13 @@ enum UISnapshots {
             // The list kept short (D39): one row open, only those switched off, a search that finds rows by their
             // permissions and tools, and one that finds nothing switched on.
             let listStates: [(String, ExtensionListQuery, Set<String>)] = [
-                ("expanded", ExtensionListQuery(), ["dev.sidefolk.git", "mcp.github"]),
+                ("expanded", ExtensionListQuery(), [SampleAddons.repoPal, "mcp.github"]),
                 ("off", ExtensionListQuery(show: .off), []),
                 ("search", ExtensionListQuery(text: "internet"), []),
                 ("search-tool", ExtensionListQuery(text: "pull"), []),
                 ("no-match", ExtensionListQuery(text: "spreadsheet", show: .on), []),
                 // The sentences an extension answers without the AI (D50).
-                ("commands", ExtensionListQuery(text: "what time"), ["dev.sidefolk.world-clock"]),
+                ("commands", ExtensionListQuery(text: "what time"), [SampleAddons.timeZones]),
             ]
             for (name, query, open) in listStates {
                 try await page("page-settings-extensions-\(name)", ExtensionsSettingsView(model: settings, query: query, expanded: open),
@@ -577,7 +577,7 @@ enum UISnapshots {
             // Permission slips alone above the companion (D84): calm from your own words, firm from another app or
             // after outside content, with the exact request unfolded.
             for (name, request, exact) in DesktopScenes.slips() {
-                let slip = PermissionSlip(request: request, look: request.extensionId.map { ExtensionLook(name: $0.hasSuffix("miraya") ? "Miraya" : $0) },
+                let slip = PermissionSlip(request: request, look: request.extensionId.map { ExtensionLook(name: $0.hasSuffix("cast-along") ? "Cast Along" : $0) },
                                           companionName: "Mochi", tail: SidecardTail(edge: .bottom, at: 0.8), standalone: true, exactOpen: exact,
                                           decide: { _ in }, changeMode: {})
                 try await page("desktop-slip-\(name)", slip.padding(AskView.margin).frame(maxWidth: .infinity).background(Wallpaper()),
@@ -973,20 +973,20 @@ enum UISnapshots {
         return ask
     }
 
-    /// The founder's case (D39): cloning into ~/git with the Git extension, after a World Clock answer.
+    /// The founder's case (D39): cloning into ~/git with an extension, after a Time Zones answer.
     private static func sampleAskExtensions() -> AskModel {
         let ask = AskModel()
-        let git = FixtureServices.git
-        ask.extensionLooks = [git.id: git.look,
-                              "dev.sidefolk.world-clock": ExtensionLook(name: "World Clock", iconPath: FixtureServices.icon("world-clock"), folk: "tempo")]
-        ask.add(.result(ResultCard(kind: .extensionResult, title: "Time around the world", subtitle: "World Clock",
+        let repos = FixtureServices.repoPal
+        ask.extensionLooks = [repos.id: repos.look,
+                              SampleAddons.timeZones: ExtensionLook(name: "Time Zones", iconPath: FixtureServices.sampleIcon, folk: "tempo")]
+        ask.add(.result(ResultCard(kind: .extensionResult, title: "Time around the world", subtitle: "Time Zones",
                                    detail: "It is Tuesday 27 October, 09:12 in Tokyo (JST, UTC+9), 8 hours ahead of you.",
-                                   refId: "dev.sidefolk.world-clock"), activityId: nil, undo: false),
+                                   refId: SampleAddons.timeZones), activityId: nil, undo: false),
                 caption: "what time is it in Tokyo?")
-        ask.add(.approval(ApprovalRequest(tool: "ext.git.clone", title: "Clone a repository",
+        ask.add(.approval(ApprovalRequest(tool: "ext.repo-pal.clone", title: "Clone a repository",
                                           summary: "Clone https://github.com/octocat/Hello-World into ~/git/Hello-World",
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),
-                                          canAlways: true, extensionId: git.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
+                                          canAlways: true, extensionId: repos.id)), caption: "please clone https://github.com/octocat/Hello-World under ~/git")
         return ask
     }
 
@@ -1036,7 +1036,7 @@ enum UISnapshots {
     /// Using the internet (D47): a page Sidefolk chose, a built-in service, and a new site after reading a page.
     private static func sampleAskInternet() -> AskModel {
         let ask = AskModel()
-        ask.extensionLooks = ["dev.sidefolk.weather": ExtensionLook(name: "Weather", iconPath: FixtureServices.icon("weather"), folk: "scout")]
+        ask.extensionLooks = [SampleAddons.skyWatch: ExtensionLook(name: "Sky Watch", iconPath: nil, folk: "scout")]
         ask.add(.approval(ApprovalRequest(tool: "web.fetch", title: String(localized: "Read a web page"),
                                           summary: "Read the web page https://forum.example.net/thread/42", risk: .medium,
                                           caller: .agent(runId: "r"), details: .url("https://forum.example.net/thread/42"), canAlways: false,
@@ -1047,26 +1047,26 @@ enum UISnapshots {
                                           caller: .agent(runId: "r"), details: .url("https://docs.swift.org/swift-book/"), canAlways: true,
                                           effect: .usesInternet, site: "docs.swift.org")),
                 caption: "what's new in the Swift book?")
-        ask.add(.approval(ApprovalRequest(tool: "ext.weather.forecast", title: "Forecast",
+        ask.add(.approval(ApprovalRequest(tool: "ext.sky-watch.forecast", title: "Forecast",
                                           summary: "Get the weather forecast for Fukuoka for the next 3 days", risk: .medium,
                                           caller: .agent(runId: "r"), details: .none, canAlways: true, effect: .usesInternet,
-                                          extensionId: "dev.sidefolk.weather", service: "Open-Meteo")),
+                                          extensionId: SampleAddons.skyWatch, service: "Open-Meteo")),
                 caption: "and the weather there this weekend?")
         return ask
     }
 
     /// Cards after outside content (D71): the founder's "mirror my screen to the living room TV" in Full access, after
-    /// Miraya's own list of TVs (calm), and someone else's extension after a web page (strong). Arguments in words.
+    /// Cast Along's own list of TVs (calm), and someone else's extension after a web page (strong). Arguments in words.
     private static func sampleAskOutside() -> AskModel {
         let ask = AskModel()
-        ask.extensionLooks = ["dev.sidefolk.miraya": ExtensionLook(name: "Miraya", iconPath: nil, folk: "byte"),
+        ask.extensionLooks = [SampleAddons.castAlong: ExtensionLook(name: "Cast Along", iconPath: nil, folk: "byte"),
                               "com.example.uploader": ExtensionLook(name: "Uploader", iconPath: nil, folk: nil)]
-        var mirror = ApprovalRequest(tool: "ext.miraya.share_screen", title: "Share screen to TV",
-                                     summary: "Share screen to TV (Miraya) · " + ArgumentWords.line(["tv": "living room"], schema: .object([:])),
+        var mirror = ApprovalRequest(tool: "ext.cast-along.share_screen", title: "Share screen to TV",
+                                     summary: "Share screen to TV (Cast Along) · " + ArgumentWords.line(["tv": "living room"], schema: .object([:])),
                                      risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: false, tainted: true,
-                                     effect: .usesInternet, extensionId: "dev.sidefolk.miraya")
+                                     effect: .usesInternet, extensionId: SampleAddons.castAlong)
         mirror.input = JSONValue.object(["tv": "living room"]).prettyString
-        mirror.taintedBy = .extension(name: "Miraya", official: true)
+        mirror.taintedBy = .extension(name: "Cast Along", official: true)
         mirror.mode = .fullAccess
         ask.add(.approval(mirror), caption: "mirror my screen to the living room TV")
         let input: JSONValue = ["file": .string(NSHomeDirectory() + "/Documents/Taxes 2025.pdf"), "public": true]
@@ -1085,7 +1085,7 @@ enum UISnapshots {
     /// The update window's states (D46): file name, phase, and how this copy would install it.
     /// Gallery entries for Settings › Updates' add-on rows (D70).
     private static var sampleAddons: [AddonEntry] {
-        [("dev.sidefolk.git", "Git", "extension"), ("dev.sidefolk.companions.kiko", "Kiko", "companion")].compactMap { id, name, kind in
+        [(SampleAddons.repoPal, "Repo Pal", "extension"), ("dev.sidefolk.companions.kiko", "Kiko", "companion")].compactMap { id, name, kind in
             let json: [String: Any] = ["id": id, "kind": kind, "name": name, "tagline": "", "description": "", "author": "Sidefolk",
                                        "version": "1.0.0-snapshot.3", "file": "x.zip", "bytes": 1, "sha256": String(repeating: "0", count: 64)]
             return (try? JSONSerialization.data(withJSONObject: json)).flatMap { try? JSONDecoder().decode(AddonEntry.self, from: $0) }

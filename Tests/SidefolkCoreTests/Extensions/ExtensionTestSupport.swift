@@ -26,16 +26,7 @@ enum ExtFixtures {
         }
     }
 
-    /// Where `swift test` put the built products, the extension programs among them.
-    static let products = Bundle(for: ProductsMarker.self).bundleURL.deletingLastPathComponent()
-
-    /// The extensions Sidefolk ships: the folders in `extensions/` that hold a program's sources.
-    static let builtInFolders: [String] = {
-        let all = (try? FileManager.default.contentsOfDirectory(atPath: repoRoot.appendingPathComponent("extensions").path)) ?? []
-        return all.filter { FileManager.default.fileExists(atPath: repoRoot.appendingPathComponent("extensions/\($0)/Sources").path) }.sorted()
-    }()
-
-    /// Sidefolk's extensions in the add-on gallery (D55) live in the sidefolk-addons repository. Their tests here
+    /// Every extension lives in the sidefolk-addons repository (D55, D98). Their tests here
     /// run them in this host's sandbox when a checkout of it sits beside this one ($SIDEFOLK_ADDONS_REPO moves it),
     /// built with `swift build`; without one they are skipped (`noAddons`).
     static let addonsRepo: URL = ProcessInfo.processInfo.environment["SIDEFOLK_ADDONS_REPO"].map { URL(fileURLWithPath: $0, isDirectory: true) }
@@ -52,36 +43,29 @@ enum ExtFixtures {
     static var hasAddons: Bool { !addonFolders.isEmpty }
     static let noAddons: Comment = "no built sidefolk-addons checkout beside this one (run swift build there); skipping its extensions"
 
-    /// An extension's folder in its repository: the app's own, or the gallery's.
-    static func source(_ folder: String) -> URL {
-        builtInFolders.contains(folder) ? repoRoot.appendingPathComponent("extensions/\(folder)", isDirectory: true)
-            : addonsRepo.appendingPathComponent("extensions/\(folder)", isDirectory: true)
-    }
+    /// An extension's folder in its repository.
+    static func source(_ folder: String) -> URL { addonsRepo.appendingPathComponent("extensions/\(folder)", isDirectory: true) }
 
-    /// The built-ins put together the way scripts/build-app.sh puts them in the app: the catalog, and each folder's
-    /// manifest, icon and program (built with the tests, which depend on them).
+    /// The gallery's extensions put together as sidefolk-addons' build.py packs them: each folder's manifest, icon, words
+    /// and program.
     static let builtIns: URL = {
         let dir = try! tempDir("builtins")
-        let source = repoRoot.appendingPathComponent("extensions")
         let fm = FileManager.default
-        try! fm.copyItem(at: source.appendingPathComponent(BundledExtensions.catalogFile), to: dir.appendingPathComponent(BundledExtensions.catalogFile))
-        // The gallery's are put together the same way, beside them but outside the catalog, as an add-on is installed.
-        for folder in builtInFolders + addonFolders {
+        for folder in addonFolders {
             let to = dir.appendingPathComponent(folder, isDirectory: true)
             try! fm.createDirectory(at: to.appendingPathComponent("bin"), withIntermediateDirectories: true)
             for file in [ExtensionManifest.fileName, "icon.pdf"] {
                 try! fm.copyItem(at: ExtFixtures.source(folder).appendingPathComponent(file), to: to.appendingPathComponent(file))
             }
-            // Its words in other languages, as build-app.sh and the gallery's build.py copy them (D76).
+            // Its words in other languages (D76).
             let strings = ExtFixtures.source(folder).appendingPathComponent(ExtensionStrings.folder)
             if fm.fileExists(atPath: strings.path) { try! fm.copyItem(at: strings, to: to.appendingPathComponent(ExtensionStrings.folder)) }
-            let built = builtInFolders.contains(folder) ? products : addonProducts
-            try! fm.copyItem(at: built.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
+            try! fm.copyItem(at: addonProducts.appendingPathComponent("ext-\(folder)"), to: to.appendingPathComponent("bin/ext-\(folder)"))
             // Frameworks it links (Miraya's WebRTC) go to lib/, one plain file each, as sidefolk-addons' build.py packs them.
-            for name in linkedFrameworks(built.appendingPathComponent("ext-\(folder)")) {
+            for name in linkedFrameworks(addonProducts.appendingPathComponent("ext-\(folder)")) {
                 let lib = to.appendingPathComponent("lib/\(name).framework", isDirectory: true)
                 try! fm.createDirectory(at: lib, withIntermediateDirectories: true)
-                try! fm.copyItem(at: built.appendingPathComponent("\(name).framework/\(name)").resolvingSymlinksInPath(), to: lib.appendingPathComponent(name))
+                try! fm.copyItem(at: addonProducts.appendingPathComponent("\(name).framework/\(name)").resolvingSymlinksInPath(), to: lib.appendingPathComponent(name))
             }
         }
         return dir
@@ -225,9 +209,6 @@ enum ExtFixtures {
         send({"jsonrpc": "2.0", "id": msg["id"], "result": result})
     """#
 }
-
-/// Its bundle sits among the built products.
-private final class ProductsMarker {}
 
 /// An isolated host over a temp Sidefolk home, removed when the test ends.
 final class HostEnv {

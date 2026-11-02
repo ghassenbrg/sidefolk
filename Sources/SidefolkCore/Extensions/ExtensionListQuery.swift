@@ -12,7 +12,7 @@ public protocol ExtensionListEntry {
 /// What Settings › Extensions shows of what is installed (D39): some words to look for, and which state to show.
 /// With many extensions the list needs both. Every word must appear in something the row says or holds (its name,
 /// description, a tool, a permission, the request to try), ignoring case, accents and width, so "zip" finds
-/// Archives by its tools, "meteo" finds Météo and "internet" finds what can reach it.
+/// a zip tool's extension, "meteo" finds Météo and "internet" finds what can reach it.
 public struct ExtensionListQuery: Sendable, Hashable {
     public enum Show: String, CaseIterable, Sendable { case all, on, off }
 

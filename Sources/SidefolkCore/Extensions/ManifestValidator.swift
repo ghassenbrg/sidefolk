@@ -180,6 +180,7 @@ public struct ManifestValidator: Sendable {
         checkPages(manifest, issues: &issues)
         checkPalettes(manifest, issues: &issues)
         checkGames(manifest, issues: &issues)
+        checkDetails(manifest, issues: &issues, warnings: &report.warnings)
         report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &issues)
         report.summary = PermissionSummary.forExtension(permissions)
         report.errors = issues

@@ -34,6 +34,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var palettes: [String: PaletteMeta]
     /// Games played in the Play panel beside the companion, over `sidefolk/game.*` (D75).
     public var games: [String: GameMeta]
+    /// Requests to try, as the person would say them, in Settings under its name (D98). `strings/` translates them.
+    public var examples: [String]
+    /// The public services the program talks to, shown on the install sheet and in Settings › Trust (D98).
+    public var services: [Service]
+    /// Extensions this one does everything of: while this one is on, they rest. Only between Sidefolk's own (D67, D98).
+    public var replaces: [String]
 
     public struct Run: Sendable, Hashable, Decodable {
         /// `python3`, `node`, `sh`, or a program inside the folder (`bin/server`).
@@ -145,10 +151,13 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var reach: Reach?
         /// With `reach`: the parameter naming the device; missing means the device in use now.
         public var device: String?
+        /// The sentence for a call's approval card and Activity, from its exact arguments (D98). Only Sidefolk's own
+        /// signed packs are believed.
+        public var summary: ToolSummary?
 
         public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
                     paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = [],
-                    reach: Reach? = nil, device: String? = nil) {
+                    reach: Reach? = nil, device: String? = nil, summary: ToolSummary? = nil) {
             self.title = title
             self.risk = risk
             self.category = category
@@ -159,13 +168,14 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             self.commands = commands
             self.reach = reach
             self.device = device
+            self.summary = summary
         }
 
         /// What the AI is offered: everything, unless the author said only commands reach it.
         public var offeredToModel: Bool { ai ?? true }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
@@ -177,6 +187,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             commands = try c.decodeIfPresent([Command].self, forKey: "commands") ?? []
             reach = try c.decodeIfPresent(Reach.self, forKey: "reach")
             device = try c.decodeIfPresent(String.self, forKey: "device")
+            summary = try c.decodeIfPresent(ToolSummary.self, forKey: "summary")
         }
     }
 
@@ -342,7 +353,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
                 tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
                 pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:],
-                games: [String: GameMeta] = [:]) {
+                games: [String: GameMeta] = [:], examples: [String] = [], services: [Service] = [], replaces: [String] = []) {
         self.id = id
         self.name = name
         self.version = version
@@ -361,11 +372,15 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.background = background
         self.palettes = palettes
         self.games = games
+        self.examples = examples
+        self.services = services
+        self.replaces = replaces
     }
 
     public init(from decoder: Decoder) throws {
         try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games"])
+                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games",
+                                       "examples", "services", "replaces"])
         let c = try decoder.container(keyedBy: AnyKey.self)
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
@@ -385,9 +400,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         background = try c.decodeIfPresent(Bool.self, forKey: "background") ?? false
         palettes = try c.decodeIfPresent([String: PaletteMeta].self, forKey: "palettes") ?? [:]
         games = try c.decodeIfPresent([String: GameMeta].self, forKey: "games") ?? [:]
+        examples = try c.decodeIfPresent([String].self, forKey: "examples") ?? []
+        services = try c.decodeIfPresent([Service].self, forKey: "services") ?? []
+        replaces = try c.decodeIfPresent([String].self, forKey: "replaces") ?? []
     }
 
-    /// The last part of the id (`dev.sidefolk.system-vitals` → `system-vitals`), used in tool names.
+    /// The last part of the id (`dev.example.tea-timer` → `tea-timer`), used in tool names.
     public var shortName: String { String(id.split(separator: ".").last ?? Substring(id)) }
 
     /// Decodes manifest bytes, turning decoding failures into a message that names the field.

@@ -181,7 +181,7 @@ public struct LocalIntentRunner: Sendable {
         let out = await runtime.executor.execute(name: call.tool, input: call.input, caller: .command(extensionId: call.extensionId),
                                                  mentions: UserMentions(text: call.said))
         guard case .ok(let result) = out.status else { return .failed(out.problem!) }
-        let name = (tool.firstParty ? BuiltInExtensionWords.name(tool.extensionId) : nil) ?? tool.extensionName
+        let name = tool.extensionName
         let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !result.isError else {
             return .declined(UserFacingError(verbatim: String(localized: "\(name) couldn't answer that: \(text.clipped(300))",

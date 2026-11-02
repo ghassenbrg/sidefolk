@@ -1,0 +1,9 @@
+{
+  "about": "The extensions a fresh Mac starts with (DECISIONS D98): the only list of them in the app. scripts/seed-packs.py fetches each one's signed pack from the gallery when the app is built and writes the app's own copy of this file, with each pack's version, file, size and digest. They are installed once and belong to the gallery from then on. \"on\" says whether one starts switched on.",
+  "seeds": [
+    { "id": "dev.sidefolk.world-clock", "on": true },
+    { "id": "dev.sidefolk.system-vitals", "on": true },
+    { "id": "dev.sidefolk.weather", "on": true },
+    { "id": "dev.sidefolk.calculator", "on": true }
+  ]
+}
