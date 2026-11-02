@@ -87,17 +87,15 @@ import Testing
         }
     }
 
-    /// The built-ins and the gallery's extensions as installed, found by the words a person would try.
+    /// Sidefolk's extensions as installed, found by the words a person would try.
     @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
-    func theShippedBuiltInsAreFoundByTheirToolsAndPermissions() async throws {
+    func sidefolksOwnAreFoundByTheirToolsAndPermissions() async throws {
         struct Row: ExtensionListEntry {
             var info: ExtensionInfo
             var isOn: Bool { info.enabled }
             var searchTexts: [String] { ExtensionListQuery.texts(for: info) }
         }
         let h = try HostEnv()
-        let bundled = BundledExtensions(directory: ExtFixtures.builtIns)
-        await bundled.install(into: h.host)
         for folder in ExtFixtures.addonFolders {
             try await h.host.install(from: ExtFixtures.builtIn(folder), origin: .official, enabled: !["pdf", "qr-codes", "archives", "dev-toolbox", "feeds"].contains(folder))
         }

@@ -152,7 +152,7 @@ struct PermissionSlip: View {
     private var asker: String {
         switch request.caller {
         case .external(let client): AgentFacingTools.displayName(client)
-        // An extension's tool, whoever started it, is the extension acting ("Miraya wants to").
+        // An extension's tool, whoever started it, is the extension acting ("Tea Timer wants to").
         case .extension, .command, .user, .agent, .routine: look?.name ?? companionName
         }
     }

@@ -11,14 +11,29 @@ public struct ExtensionTool: Tool {
     /// Parameters naming a folder the person chooses (`tools.<name>.paths`): Guard checks them like any
     /// file tool's paths, and the sandbox opens exactly those for this call.
     public let folderParameters: [String: ExtensionManifest.FolderUse]
-    /// One of Sidefolk's own extensions (D39): its approval cards may say what a call does in a sentence.
+    /// One of Sidefolk's own extensions, by its signed pack (D39, D98): its summaries and its service are believed.
     public let firstParty: Bool
+    /// The manifest's sentence for a call, with its words in the person's language (D98); only for Sidefolk's own.
+    public let sentence: ToolSentence?
+    /// Where its calls go, as its signed manifest says (D47, D98); only for Sidefolk's own.
+    public let service: String?
     /// Sentences its manifest says call it without the AI (D50); nil when there are none.
     public let commands: ToolCommands?
     /// Its calls reach only a device the person paired, which its program confirms (D72); nil for everyone but
     /// Sidefolk's own extensions, whatever their manifest says: the sandbox can't hold a program to its word.
     public let paired: PairedDevice?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
+
+    /// A summary and its words in the person's language, as one tool's manifest and `strings/` have them.
+    public struct ToolSentence: Sendable {
+        public var summary: ToolSummary
+        public var texts: [String]?
+
+        public init(summary: ToolSummary, texts: [String]? = nil) {
+            self.summary = summary
+            self.texts = texts
+        }
+    }
 
     /// A tool whose calls go to a device the person paired: the parameter that names it (nil: the device in use now),
     /// and how to ask the program which paired device a call would reach (`sidefolk/paired.check`).
@@ -32,7 +47,8 @@ public struct ExtensionTool: Tool {
 
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
-         paired: PairedDevice? = nil, invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
+         paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil,
+         invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
         self.extensionId = extensionId
         self.extensionName = extensionName
@@ -41,6 +57,8 @@ public struct ExtensionTool: Tool {
         self.firstParty = firstParty
         self.commands = commands
         self.paired = firstParty ? paired : nil
+        self.sentence = firstParty ? sentence : nil
+        self.service = firstParty ? service : nil
         self.invoke = invoke
     }
 
@@ -56,11 +74,11 @@ public struct ExtensionTool: Tool {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    /// A built-in's call as a sentence (BuiltInToolSummary); anyone else's as its title and its exact arguments in
-    /// words (T1, D71), the whole request a click away on the card.
+    /// Sidefolk's own extension's call as its sentence (`ToolSummary`); anyone else's as its title and its exact
+    /// arguments in words (T1, D71), the whole request a click away on the card.
     public func summary(for input: JSONValue) -> String {
-        if firstParty, let sentence = BuiltInToolSummary.sentence(extensionId: extensionId, tool: remoteName, input: input) {
-            return sentence
+        if let sentence, let line = sentence.summary.sentence(for: input, texts: sentence.texts, folders: Set(folderParameters.keys)) {
+            return line
         }
         let args = ArgumentWords.line(input, schema: spec.inputSchema)
         return args.isEmpty ? "\(spec.title) (\(extensionName))" : "\(spec.title) (\(extensionName)) · \(args)"
@@ -69,7 +87,7 @@ public struct ExtensionTool: Tool {
     public func scope(for input: JSONValue) -> ToolScope {
         var scope = ToolScope(extensionId: extensionId)
         // Only Sidefolk's own programs are taken at their word about where they go (D47).
-        if firstParty, let service = BuiltInServices.byExtension[extensionId] { scope.reach = .service(service.name) }
+        if let service { scope.reach = .service(service) }
         for (param, use) in folderParameters.sorted(by: { $0.key < $1.key }) {
             guard let raw = input.string(param), !raw.isEmpty else { continue }
             let path = (raw as NSString).expandingTildeInPath

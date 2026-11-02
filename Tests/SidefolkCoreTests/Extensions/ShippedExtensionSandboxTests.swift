@@ -47,7 +47,8 @@ struct ShippedExtensionSandboxTests {
         context.closePDF()
     }
 
-    @Test func systemVitalsRunsInTheSandbox() async throws {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func systemVitalsRunsInTheSandbox() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("system-vitals"))
         #expect(info.tools.map(\.name) == ["ext.system-vitals.about", "ext.system-vitals.battery", "ext.system-vitals.disk",

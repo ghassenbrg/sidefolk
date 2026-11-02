@@ -109,7 +109,7 @@ public enum Caller: Sendable, Hashable, CustomStringConvertible {
     public var runId: String? { if case .agent(let id) = self { return id } else { return nil } }
 
     /// Whose "Always allow" this caller uses and leaves: a command acts for Sidefolk's own agent (D50), so allowing
-    /// Currency once covers the AI and the typed command alike.
+    /// an extension once covers the AI and the typed command alike.
     public var grantKind: String { if case .command = self { return "agent" } else { return kind } }
 }
 
@@ -144,7 +144,7 @@ public struct ToolScope: Sendable, Hashable {
 }
 
 /// Where a call reaches on the network, as Sidefolk's own code knows it (D47). Only Sidefolk's code says so: a
-/// tool's scope, or the list of built-in extensions that talk to one service (`BuiltInServices`).
+/// tool's scope, or the signed manifest of one of its own extensions (`services`, D98).
 public enum NetworkReach: Sendable, Hashable {
     /// Nothing beyond this Mac, though the tool can reach the network for other inputs (a CPU report).
     case nowhere

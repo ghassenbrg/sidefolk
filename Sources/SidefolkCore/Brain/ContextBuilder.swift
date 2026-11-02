@@ -206,7 +206,7 @@ public struct ContextBuilder: Sendable {
             "- Only what your tools do. Opening an app only opens it or brings it forward: you can't see, read or change anything in it.",
         ]
         if !apps.isEmpty { lines.append("- In the Mac's own apps: " + apps.joined(separator: " and ") + ". Nothing else in them.") }
-        // Extension tools (Git, World Clock, what the person installed) are tools like any other; when nothing fits,
+        // Extension tools are tools like any other; when nothing fits,
         // Sidefolk may offer to build one, but only once the build-extension skill is loaded and the person agreed (D39).
         let missing = names.contains("extensions.draft")
             ? "say so in one sentence and offer what you can do instead, including building a small extension for it (load the "

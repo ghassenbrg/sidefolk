@@ -65,9 +65,9 @@ enum SampleCompanions {
         }
         // A few extensions and themes beside them, for Home's Gallery (D84).
         let others: [(id: String, kind: String, name: String, tagline: String, author: String, category: String?)] = [
-            ("dev.sidefolk.feeds", "extension", "Feeds", "Follow blogs and news; hear what's new once a day", "Sidefolk", "everyday"),
-            ("dev.sidefolk.git", "extension", "Git", "Your repos at a glance, and a tile on Today", "Sidefolk", "developer"),
-            ("dev.sidefolk.clipboard", "extension", "Clipboard", "Everything you copied, searchable with ⇧⌘C", "Sidefolk", "everyday"),
+            (SampleAddons.newsstand, "extension", "Newsstand", "Follow blogs and news; hear what's new once a day", "Sidefolk", "everyday"),
+            (SampleAddons.repoPal, "extension", "Repo Pal", "Your repos at a glance, and a tile on Today", "Sidefolk", "developer"),
+            (SampleAddons.pasteShelf, "extension", "Paste Shelf", "Everything you copied, searchable with ⇧⌘C", "Sidefolk", "everyday"),
             ("io.github.studiokumo.pomodoro", "extension", "Pomodoro", "Focus in 25-minute rounds with a soft bell", "Studio Kumo", "everyday"),
             ("dev.sidefolk.themes.field-journal", "theme", "Field Journal", "Paper, ink and a pencil's warmth", "Sidefolk", nil),
             ("dev.sidefolk.themes.playroom", "theme", "Playroom", "Bright, round and toy-like", "Sidefolk", nil),

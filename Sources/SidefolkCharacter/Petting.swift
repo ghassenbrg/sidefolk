@@ -11,7 +11,7 @@ public struct PettingDetector: Sendable {
 
     public init() {}
 
-    /// Feeds one pointer position (any coordinates); true when this one completes a pet.
+    /// Takes one pointer position (any coordinates); true when this one completes a pet.
     public mutating func add(_ point: CGPoint, inside: Bool, at time: TimeInterval) -> Bool {
         guard inside else {
             self = PettingDetector()

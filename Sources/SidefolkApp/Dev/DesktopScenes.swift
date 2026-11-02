@@ -145,9 +145,9 @@ enum DesktopScenes {
                                         caller: .external(client: "codex"), details: .none, canAlways: false, tainted: true, effect: .readsPrivateData)
         clipboard.expiresAt = now.addingTimeInterval(15 * 60)
         clipboard.input = "Read the clipboard\nasked by Codex · session in ~/git/pockito\ngets the last text you copied (212 characters)"
-        var share = ApprovalRequest(tool: "ext.miraya.share_screen", title: "Share your screen to the living room TV",
+        var share = ApprovalRequest(tool: "ext.cast-along.share_screen", title: "Share your screen to the living room TV",
                                     summary: "Until you stop it", risk: .medium, caller: .agent(runId: "r"), details: .none, canAlways: false,
-                                    tainted: true, effect: .usesInternet, extensionId: "dev.sidefolk.miraya")
+                                    tainted: true, effect: .usesInternet, extensionId: SampleAddons.castAlong)
         share.taintedBy = .web
         share.expiresAt = now.addingTimeInterval(20 * 60)
         let remove = ApprovalRequest(tool: "applenotes.remove", title: "Remove 2 notes from Apple Notes",

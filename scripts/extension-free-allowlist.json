@@ -1,0 +1,35 @@
+{
+  "about": "The only places the app may name a specific extension (DECISIONS D98): the founder's approved exceptions, nothing else. ExtensionFreeAppTests reads this file and fails on anything outside it, and on an entry that no longer matches. Adding to it needs the founder's yes.",
+  "exceptions": [
+    {
+      "why": "The publisher check: official means the signing identity, and the signed catalog is the app's way to read it, not an extension.",
+      "file": "Sources/SidefolkCore/Addons/AddonCatalog.swift",
+      "match": "dev\\.sidefolk\\.addons"
+    },
+    {
+      "why": "The seed list: the one data file naming the extensions a fresh Mac starts with.",
+      "file": "Resources/SeedPacks/seed-packs.json",
+      "match": "dev\\.sidefolk\\."
+    },
+    {
+      "why": "Themes are the app's own since D92: their ids, in the library and the succession.",
+      "file": "Sources/SidefolkCore/Themes/*",
+      "match": "dev\\.sidefolk\\.theme"
+    },
+    {
+      "why": "Themes are the app's own since D92: the debug samples that wear them.",
+      "file": "Sources/SidefolkApp/Dev/*",
+      "match": "dev\\.sidefolk\\.theme"
+    },
+    {
+      "why": "Themes are the app's own since D92: the debug sample of a theme's update.",
+      "file": "Sources/SidefolkApp/Updates/AddonUpdateController.swift",
+      "match": "dev\\.sidefolk\\.theme"
+    },
+    {
+      "why": "Catch-me and petting stay: the companion's own life, not an extension's.",
+      "file": "Sources/*",
+      "match": "\\bCompanionPlay(?:er)?\\b|\\bPetting\\b"
+    }
+  ]
+}

@@ -44,7 +44,8 @@ public struct InstallReview: Sendable, Hashable {
                           : String(localized: "Updates \(diff.fromVersion) to \(diff.toVersion).", comment: "Two version numbers"),
                       added: diff.addedPermissions
                           + diff.riskierTools.map { String(localized: "Riskier now: \($0)", comment: "A tool's name") }
-                          + (diff.startsInBackground ? [String(localized: "Keeps running in the background now")] : []),
+                          + (diff.startsInBackground ? [String(localized: "Keeps running in the background now")] : [])
+                          + diff.addedHosts.map { String(localized: "Connects to \($0) now", comment: "A host name, in an update's list of what is new") },
                       removed: diff.removedPermissions)
         }
     }

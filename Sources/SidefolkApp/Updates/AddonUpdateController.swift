@@ -206,8 +206,8 @@ final class AddonUpdateController: AddonUpdateActions {
         return AttentionRequest(
             level: .gentle, source: "addons",
             title: entries.count == 1
-                ? String(localized: "\(names) has an update to look at", comment: "An extension's update waits for review: “Git has an update to look at”")
-                : String(localized: "\(names) have updates to look at", comment: "Extensions' updates wait for review: “Git and Feeds have updates to look at”"),
+                ? String(localized: "\(names) has an update to look at", comment: "An extension's update waits for review: “Tea Timer has an update to look at”")
+                : String(localized: "\(names) have updates to look at", comment: "Extensions' updates wait for review: “Tea Timer and Moss have updates to look at”"),
             body: String(localized: "The new version would be allowed to do more, so it waits until you've seen what's new."),
             actions: [AttentionAction(id: "review", title: String(localized: "Review"), isPrimary: true),
                       AttentionAction(id: "later", title: String(localized: "Later"))],
@@ -264,19 +264,19 @@ final class AddonUpdateController: AddonUpdateActions {
         }
         switch command {
         case "review":
-            model.addonReview = [entry("dev.sidefolk.git", "Git", .extension)]
+            model.addonReview = [entry(SampleAddons.repoPal, "Repo Pal", .extension)]
             Task { _ = await runtime.attention.post(Self.notice(model.addonReview)) }
         case "waiting":
-            model.addonWaiting = [entry("dev.sidefolk.companions.kiko", "Kiko", .companion), entry("dev.sidefolk.feeds", "Feeds", .extension)]
+            model.addonWaiting = [entry("dev.sidefolk.companions.kiko", "Kiko", .companion), entry(SampleAddons.newsstand, "Newsstand", .extension)]
         case "updates":
             // The Gallery's Updates mid-way through Update all, as the D89 snapshots show it.
-            model.addonWaiting = [entry("dev.sidefolk.playtime", "Playtime", .extension), entry("dev.sidefolk.feeds", "Feeds", .extension),
+            model.addonWaiting = [entry(SampleAddons.macPulsePlus, "Mac Pulse+", .extension), entry(SampleAddons.newsstand, "Newsstand", .extension),
                                   entry("dev.sidefolk.companions.kiko", "Kiko", .companion), entry("dev.sidefolk.theme.daylight", "Daylight", .theme)]
-            model.addonReview = [entry("dev.sidefolk.miraya", "Miraya", .extension)]
-            model.addonRecent = [entry("dev.sidefolk.git", "Git", .extension)]
-            model.addonSteps = ["dev.sidefolk.git": .updated, "dev.sidefolk.feeds": .updating]
+            model.addonReview = [entry(SampleAddons.castAlong, "Cast Along", .extension)]
+            model.addonRecent = [entry(SampleAddons.repoPal, "Repo Pal", .extension)]
+            model.addonSteps = [SampleAddons.repoPal: .updated, SampleAddons.newsstand: .updating]
         case "nudge":
-            model.addonWaiting = [entry("dev.sidefolk.playtime", "Playtime", .extension), entry("dev.sidefolk.feeds", "Feeds", .extension)]
+            model.addonWaiting = [entry(SampleAddons.macPulsePlus, "Mac Pulse+", .extension), entry(SampleAddons.newsstand, "Newsstand", .extension)]
             Task { _ = await runtime.attention.post(Self.waitingNotice(model.addonPending, installable: true)) }
         case "clear":
             model.addonReview = []

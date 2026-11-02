@@ -14,9 +14,20 @@ extension FixtureServices {
         sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Downloads/trip-planner"),
         review: InstallReview(id: "dev.example.trip-planner", permissions: ExtensionPermissions(network: true, read: [home + "/Documents/Travel"]),
                               background: false, toolRisks: [.medium, .medium], update: nil, source: .folder),
-        toolNames: ["plan_day", "packing_list"], watcherNames: [], folk: "scout")
+        toolNames: ["plan_day", "packing_list"], watcherNames: [], folk: "scout",
+        services: [.init(name: "Open Trips", hosts: ["api.opentrips.example.com"])])
 
-    /// Miraya's permissions from someone else's folder: the same facts as the gallery's, said as a warning.
+    /// Sidefolk's own from the gallery, naming the service it talks to (D98): the sheet takes its word.
+    static let servicePreview = ExtensionInstallPreview(
+        id: SampleAddons.skyWatch, name: "Sky Watch", version: "1.3.0-snapshot.1",
+        description: "Today's weather and the week ahead for any place, and a heads-up before rain, from Open-Meteo. Only the place you ask about leaves your Mac.",
+        sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/sky-watch"),
+        review: InstallReview(id: SampleAddons.skyWatch, permissions: ExtensionPermissions(network: true), background: false,
+                              toolRisks: [.medium, .medium], update: nil, source: .gallery),
+        toolNames: ["Weather forecast", "Sunrise, sunset and the moon"], watcherNames: ["Rain soon"], folk: "scout",
+        services: [.init(name: "Open-Meteo", hosts: ["api.open-meteo.com", "geocoding-api.open-meteo.com"])])
+
+    /// Cast Along's permissions from someone else's folder: the same facts as the gallery's, said as a warning.
     static let unknownMirrorPreview = ExtensionInstallPreview(
         id: "com.example.screen-share", name: "Screen Share", version: "0.3.0",
         description: "Shows your screen on a TV in the same room.",
@@ -25,25 +36,25 @@ extension FixtureServices {
                               toolRisks: [.medium, .medium, .medium], update: nil, source: .folder),
         toolNames: ["Share screen", "Play a file", "Stop"], watcherNames: [])
 
-    /// Sidefolk's own Miraya from the gallery (D69): the founder's case, calm and complete.
+    /// Sidefolk's own Cast Along from the gallery (D69): the founder's case, calm and complete.
     static let galleryPreview = ExtensionInstallPreview(
-        id: "dev.sidefolk.miraya", name: "Miraya", version: "1.0.0-snapshot.1",
-        description: "Shows your Mac's screen, one window or part of it, with its sound, on an Android TV running the Miraya app, "
+        id: SampleAddons.castAlong, name: "Cast Along", version: "1.0.0-snapshot.1",
+        description: "Shows your Mac's screen, one window or part of it, with its sound, on an Android TV running a companion app, "
             + "over an encrypted direct connection on your network, or plays a video file or link on the TV.",
-        sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/miraya"),
-        review: InstallReview(id: "dev.sidefolk.miraya", permissions: mirrorPermissions, background: true,
+        sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/cast-along"),
+        review: InstallReview(id: SampleAddons.castAlong, permissions: mirrorPermissions, background: true,
                               toolRisks: Array(repeating: .medium, count: 15), update: nil, source: .gallery),
         toolNames: ["TVs around", "Share screen to TV", "Play on TV", "Stop sharing", "Pair with a TV"],
         watcherNames: ["A paired TV is on", "Sharing to the TV ended"], commands: ["mirror my screen", "stop sharing"],
-        pageNames: ["Miraya"], folk: "byte")
+        pageNames: ["Cast Along"], folk: "byte")
 
     /// An official update that asks for more: shown prominently even though Sidefolk signed it.
     static let updatePreview = ExtensionInstallPreview(
-        id: "dev.sidefolk.qr-codes", name: "QR Codes", version: "1.1.0",
+        id: SampleAddons.codeMaker, name: "Code Maker", version: "1.1.0",
         description: "Makes QR codes and reads them from pictures.",
-        sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/qr-codes"),
+        sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/code-maker"),
         review: {
-            var review = InstallReview(id: "dev.sidefolk.qr-codes", permissions: ExtensionPermissions(folders: .read, media: true), background: false,
+            var review = InstallReview(id: SampleAddons.codeMaker, permissions: ExtensionPermissions(folders: .read, media: true), background: false,
                                        toolRisks: [.low, .medium], update: nil, source: .gallery)
             review.update = .init(line: String(localized: "Updates \("1.0.0") to \("1.1.0").", comment: "Two version numbers"),
                                   added: [String(localized: "Can read a folder you name, for that request only")], removed: [])

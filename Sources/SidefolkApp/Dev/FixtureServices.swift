@@ -107,24 +107,22 @@ final class FixtureServices: AppServices {
 
     // MARK: Extensions and skills
 
-    /// An icon shipped in the repository's extensions folder (snapshots run from the repository).
-    static func icon(_ folder: String) -> String {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().appendingPathComponent("extensions/\(folder)/icon.pdf").path
-    }
+    /// The developer sample's icon in the repository, standing in for an extension's own (snapshots run from the repository).
+    static let sampleIcon = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().appendingPathComponent("extensions/hello-folk/icon.pdf").path
 
-    /// An icon in a sidefolk-addons checkout beside this one, for the gallery's extensions (D55).
+    /// An icon in a sidefolk-addons checkout beside this one, for the game fixtures until Playtime's move (D101).
     static func addonIcon(_ folder: String) -> String {
         if let repo = ProcessInfo.processInfo.environment["SIDEFOLK_ADDONS_REPO"] {
             return URL(fileURLWithPath: repo).appendingPathComponent("extensions/\(folder)/icon.pdf").path
         }
-        return URL(fileURLWithPath: icon(folder)).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        return URL(fileURLWithPath: sampleIcon).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("sidefolk-addons/extensions/\(folder)/icon.pdf").path
     }
 
     /// From the add-on gallery (D55).
-    static let git = ExtensionInfo(
-        id: "dev.sidefolk.git", name: "Git", version: "1.0.0",
+    static let repoPal = ExtensionInfo(
+        id: SampleAddons.repoPal, name: "Repo Pal", version: "1.0.0",
         description: "Clone public repositories into a folder you choose, and check, update and read the history of the ones you have.",
         tagline: "Clone, update and check your repositories",
         kind: .sidefolk, enabled: true, folk: "byte",
@@ -132,46 +130,51 @@ final class FixtureServices: AppServices {
         permissionLines: ["Can use the internet", "Can read and change files in a folder you name, for that request only",
                           "Can run git (/Applications/Xcode.app/Contents/Developer/usr/bin/git)"],
         warnings: ["It can use the internet while it works in a folder you name, so it could upload what's in that folder."],
-        sandboxed: true, lastError: nil, bundled: false, iconPath: addonIcon("git"), fromGallery: true)
+        sandboxed: true, lastError: nil, iconPath: sampleIcon, fromGallery: true,
+        examples: ["clone https://github.com/octocat/Hello-World into ~/Downloads"], signedBySidefolk: true)
 
     func extensions() async -> [ExtensionInfo] {
-        ([Self.git] + [
-            ExtensionInfo(id: "dev.sidefolk.world-clock", name: "World Clock", version: "1.0.0",
+        ([Self.repoPal] + [
+            ExtensionInfo(id: SampleAddons.timeZones, name: "Time Zones", version: "1.0.0",
                           description: "The time anywhere in the world, and a time converted between places, with daylight saving worked out exactly.",
                           tagline: "The time anywhere, and times between places",
                           kind: .sidefolk, enabled: true, folk: "tempo", toolNames: ["Convert a time between places", "Time around the world"],
                           watcherNames: [], permissionLines: ["No access to your files or the internet"],
-                          warnings: [], sandboxed: true, lastError: nil, bundled: true, iconPath: Self.icon("world-clock"),
-                          commands: ["time in …", "what time is it in …", "what's the time in …", "current time in …"]),
-            ExtensionInfo(id: "dev.sidefolk.system-vitals", name: "System Vitals", version: "1.0.0",
-                          description: "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low. For a page with live charts, add Your Mac from the gallery.",
+                          warnings: [], sandboxed: true, lastError: nil, iconPath: Self.sampleIcon, fromGallery: true,
+                          commands: ["time in …", "what time is it in …", "what's the time in …", "current time in …"],
+                          examples: ["what time is it in Tokyo?"], signedBySidefolk: true),
+            ExtensionInfo(id: SampleAddons.macPulse, name: "Mac Pulse", version: "1.0.0",
+                          description: "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low. For a page with live charts, add Mac Pulse+ from the gallery.",
                           tagline: "Quick answers on battery, disk and memory",
                           kind: .sidefolk, enabled: true, folk: "byte", toolNames: ["Battery status", "Disk space", "Memory use"],
                           watcherNames: ["Battery low", "Disk space low"],
                           permissionLines: ["Can run /usr/bin/pmset", "Can run /usr/bin/vm_stat", "Can run /usr/sbin/sysctl",
                                             "No access to your files or the internet"],
-                          warnings: [], sandboxed: true, lastError: nil, bundled: true, iconPath: Self.icon("system-vitals")),
-            ExtensionInfo(id: "dev.sidefolk.weather", name: "Weather", version: "1.0.0",
+                          warnings: [], sandboxed: true, lastError: nil, iconPath: nil, fromGallery: true,
+                          examples: ["how much disk space do I have left?"], signedBySidefolk: true),
+            ExtensionInfo(id: SampleAddons.skyWatch, name: "Sky Watch", version: "1.0.0",
                           description: "Today's weather and the week ahead for any place, and a heads-up before rain, from Open-Meteo. Only the place you ask about leaves your Mac.",
                           tagline: "Today's weather and the week ahead",
                           kind: .sidefolk, enabled: false, folk: "scout", toolNames: ["Weather forecast"], watcherNames: ["Rain soon"],
-                          permissionLines: ["Can use the internet"], warnings: [], sandboxed: true, lastError: nil, bundled: true,
-                          iconPath: Self.icon("weather")),
+                          permissionLines: ["Can use the internet"], warnings: [], sandboxed: true, lastError: nil,
+                          iconPath: nil, fromGallery: true, examples: ["will it rain in Lisbon this week?"],
+                          services: [.init(name: "Open-Meteo", hosts: ["api.open-meteo.com", "geocoding-api.open-meteo.com"])], signedBySidefolk: true),
             ExtensionInfo(id: "local.hacker-news", name: "Hacker News", version: "0.1.0",
                           description: "The top stories on Hacker News, with their scores and links.",
                           kind: .sidefolk, enabled: true, folk: nil, toolNames: ["Top stories", "Story comments"], watcherNames: [],
                           permissionLines: ["Can use the internet"],
                           warnings: ["Some tools changed since you installed it; they're on hold until you approve the change."],
-                          sandboxed: true, lastError: nil, bundled: false, pendingTools: ["Story comments"], fromDraft: true),
+                          sandboxed: true, lastError: nil, pendingTools: ["Story comments"], fromDraft: true),
             ExtensionInfo(id: "dev.example.air-quality", name: "Air Quality", version: "0.4.2",
                           description: "Air quality and pollen for any place, from Open-Meteo.",
                           kind: .sidefolk, enabled: false, folk: "seed", toolNames: ["air_quality", "pollen"], watcherNames: [],
                           permissionLines: ["Can use the internet"],
                           warnings: [], sandboxed: true,
-                          lastError: "It crashed 3 times in 5 minutes, so I turned it off. Nothing else was affected.", bundled: false),
+                          lastError: "It crashed 3 times in 5 minutes, so I turned it off. Nothing else was affected.",
+                          services: [.init(name: "Open-Meteo", hosts: ["air-quality-api.open-meteo.com"])]),
             ExtensionInfo(id: "mcp.github", name: "GitHub", version: "", description: "",
                           kind: .mcpServer, enabled: true, folk: "byte", toolNames: ["create_issue", "list_pull_requests", "search_code"],
-                          watcherNames: [], permissionLines: [], warnings: [], sandboxed: false, lastError: nil, bundled: false,
+                          watcherNames: [], permissionLines: [], warnings: [], sandboxed: false, lastError: nil,
                           command: "npx -y @modelcontextprotocol/server-github@2025.4.8"),
         ]).map(Self.searchable)
     }
@@ -212,11 +215,9 @@ final class FixtureServices: AppServices {
     func allowCalendarChanges(_ on: Bool) async { await runtime.settings.update { $0.calendarPage.writes = on } }
     func removeCommandLineTool() async -> UserFacingError? { nil }
 
-    func sampleExtensions() async -> [(name: String, folder: URL)] { [("Hello Folk", URL(fileURLWithPath: "/tmp/hello-folk"))] }
-
     func unavailableExtensions() async -> [UnavailableExtension] { [] }
 
-    func retryBuiltInExtensions() async {}
+    func retrySeedPacks() async {}
 
     func extensionDrafts() async -> [ExtensionDraftInfo] {
         [ExtensionDraftInfo(id: "local.pomodoro-log", name: "pomodoro-log", title: "Pomodoro Log", version: "0.1.0",

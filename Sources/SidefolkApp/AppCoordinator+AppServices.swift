@@ -100,12 +100,7 @@ extension AppCoordinator: AppServices {
     // MARK: Extensions and skills
 
     func extensions() async -> [ExtensionInfo] {
-        // Built-ins in the catalog's order rather than by name, so the list reads as the catalog intends.
-        let order = Dictionary(runtime.bundledExtensions.entries().enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
-        let infos = await runtime.extensions.extensions().map(Self.info)
-        return infos.enumerated().sorted { a, b in
-            (order[a.element.id] ?? Int.max, a.offset) < (order[b.element.id] ?? Int.max, b.offset)
-        }.map(\.element)
+        await runtime.extensions.extensions().map(Self.info)
     }
 
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
@@ -128,7 +123,7 @@ extension AppCoordinator: AppServices {
             return .failure(UserFacingError(verbatim: String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
         }
         // In the person's language, as the extension will be named everywhere once installed (D76).
-        guard let words = preview.report.shownWords(official: source == .gallery && AddonEntry.isOfficial(id: manifest.id)) else {
+        guard let words = preview.report.shownWords() else {
             return .failure(UserFacingError(verbatim: String(localized: "That extension has problems."), recovery: preview.report.text.clipped(400)))
         }
         return .success(ExtensionInstallPreview(
@@ -140,7 +135,7 @@ extension AppCoordinator: AppServices {
             commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
             pageNames: words.pages,
             pagesInBackground: manifest.pages.values.contains { $0.history == true || $0.widget == true },
-            folk: manifest.folk, iconPath: preview.report.iconPath))
+            folk: manifest.folk, iconPath: preview.report.iconPath, services: manifest.services))
     }
 
     /// A folder the add-on gallery downloaded and checked (`AddonStore.fetch`): Sidefolk's own extension (D55).
@@ -191,26 +186,14 @@ extension AppCoordinator: AppServices {
         }
     }
 
-    func sampleExtensions() async -> [(name: String, folder: URL)] {
-        let installed = Set(await runtime.extensions.extensions().map(\.id))
-        return runtime.bundledExtensions.samples().compactMap { folder in
-            guard let manifest = Self.manifest(in: folder), !installed.contains(manifest.id) else { return nil }
-            return (manifest.name, folder)
-        }
-    }
-
     func unavailableExtensions() async -> [UnavailableExtension] {
-        let folders = Dictionary(runtime.bundledExtensions.entries().map { ($0.id, $0.folder) }, uniquingKeysWith: { a, _ in a })
-        return runtime.bundledExtensions.unavailable.map { problem in
-            // The app's own copy, signed with the app: its icon is drawn as shipped.
-            let manifest = folders[problem.id].flatMap(Self.manifest)
-            let icon = folders[problem.id].flatMap { folder in manifest?.icon.map { folder.appendingPathComponent($0).path } }
-            return UnavailableExtension(id: problem.id, name: problem.name, message: problem.message,
-                                        look: ExtensionLook(name: problem.name, iconPath: icon, folk: manifest?.folk))
+        runtime.seedPacks.unavailable.map { problem in
+            UnavailableExtension(id: problem.id, name: problem.name, message: problem.message,
+                                 look: ExtensionLook(name: problem.name, iconPath: nil, folk: nil))
         }
     }
 
-    func retryBuiltInExtensions() async { await runtime.bundledExtensions.install(into: runtime.extensions) }
+    func retrySeedPacks() async { await runtime.seedPacks.install(into: runtime.extensions, store: runtime.addons) }
 
     func extensionDrafts() async -> [ExtensionDraftInfo] {
         runtime.extensionDrafts.list().map {
@@ -398,15 +381,11 @@ extension AppCoordinator: AppServices {
             permissionLines: e.summary.lines.map(\.text), warnings: e.summary.warnings + (e.hasPendingToolChanges
                 ? [String(localized: "Some tools changed since you installed it; they're on hold until you approve the change.")] : [])
                 + e.toolWarnings,
-            sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
+            sandboxed: e.summary.sandboxed, lastError: e.lastError,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
             iconPath: e.iconPath, fromDraft: e.origin == .draft, fromGallery: e.origin == .official, command: e.command, author: e.author,
-            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor)
+            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor,
+            examples: e.examples, services: e.services, signedBySidefolk: e.origin?.firstParty == true)
     }
 
-    /// The manifest of an extension folder shipped inside the app, or nil.
-    static func manifest(in folder: URL) -> ExtensionManifest? {
-        FileManager.default.contents(atPath: folder.appendingPathComponent(ExtensionManifest.fileName).path)
-            .flatMap { try? ExtensionManifest.decode($0) }
-    }
 }

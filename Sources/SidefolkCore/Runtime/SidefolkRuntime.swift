@@ -36,7 +36,7 @@ public final class SidefolkRuntime: Sendable {
     public let jobTracker: JobTracker
     public let extensions: ExtensionHost
     /// Extensions Sidefolk ships, installed and updated with the app (D39).
-    public let bundledExtensions: BundledExtensions
+    public let seedPacks: SeedPacks
     /// The add-on gallery: companions and extensions downloaded on demand (D55).
     public let addons: AddonStore
     /// Extensions Sidefolk's AI wrote for the person, waiting for review (D39).
@@ -99,7 +99,7 @@ public final class SidefolkRuntime: Sendable {
         })
         jobTracker = JobTracker(store: jobs, attention: attention, events: events, clock: clock)
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, secrets: extensionSecrets)
-        bundledExtensions = BundledExtensions(directory: bundledResources?.appendingPathComponent("Extensions", isDirectory: true))
+        seedPacks = SeedPacks(directory: bundledResources?.appendingPathComponent("SeedPacks", isDirectory: true), paths: paths)
         extensionDrafts = ExtensionDrafts(paths: paths)
         addons = AddonStore(paths: paths)
         skills = SkillLibrary(userDirectory: paths.skills, bundledDirectory: bundledResources?.appendingPathComponent("Skills", isDirectory: true),
@@ -150,9 +150,9 @@ public final class SidefolkRuntime: Sendable {
         }
         await scheduler.start()
         await extensions.start()
-        // Off the launch path: the first launch installs each built-in extension (a short start of each).
-        let bundled = bundledExtensions, host = extensions
-        Task { await bundled.install(into: host) }
+        // Off the launch path: a fresh Mac's first launch installs each seed pack (a short start of each, D98).
+        let seeds = seedPacks, host = extensions, store = addons
+        Task { await seeds.install(into: host, store: store) }
         await addons.tidy()
         await watchers.register(ExtensionWatcherProbe(host: extensions))
         await watchers.start()

@@ -2,7 +2,7 @@ import Foundation
 
 /// A sentence that matched one extension's command (D50), ready to run without the AI.
 public struct ExtensionCommandCall: Sendable, Hashable {
-    /// The tool's name in the registry (`ext.world-clock.current_time`).
+    /// The tool's name in the registry (`ext.tea-timer.brew`).
     public var tool: String
     public var input: JSONValue
     public var extensionId: String
@@ -28,8 +28,8 @@ extension IntentParser {
         }
         guard let first = found.first, Set(found.map(\.tool.extensionId)).count == 1 else { return nil }
         let tool = first.tool
-        let name = (tool.firstParty ? BuiltInExtensionWords.name(tool.extensionId) : nil) ?? tool.extensionName
-        // A built-in says what it will do ("The time in Tokyo"); anyone else's tool is named by its title.
+        let name = tool.extensionName
+        // Sidefolk's own says what it will do ("The time in Tokyo"); anyone else's tool is named by its title.
         let what = tool.firstParty ? tool.summary(for: first.input) : tool.spec.title
         let call = ExtensionCommandCall(tool: tool.spec.name, input: first.input, extensionId: tool.extensionId, said: command)
         return ParsedIntent(intent: .extensionCommand(call), hint: ParsedIntent.hint(ExtensionText.line(name, characters: 40), what.clipped(60)))

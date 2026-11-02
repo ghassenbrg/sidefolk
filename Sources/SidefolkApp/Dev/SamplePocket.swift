@@ -51,7 +51,7 @@ enum SamplePocket {
 
         // Add-on updates are one row, however many (D89).
         var addons = empty
-        addons.needsYou = [.init(id: "addon-updates", title: AddonUpdateWords.count(3), detail: "Feeds, Clipboard and Night Shift",
+        addons.needsYou = [.init(id: "addon-updates", title: AddonUpdateWords.count(3), detail: "Newsstand, Paste Shelf and Night Shift",
                                  symbol: "arrow.down.circle", open: {})]
         return [("waiting", base), ("quiet", quiet), ("update", update), ("hidden", hidden), ("full-access", full), ("empty", empty),
                 ("addon-updates", addons)]

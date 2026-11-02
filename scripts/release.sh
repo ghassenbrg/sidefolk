@@ -18,7 +18,7 @@ fail() { echo "release: $*" >&2; exit 1; }
 # The CI log shows the script's own lines too, so a long quiet stretch says what it is waiting on.
 phase() { printf '\n== %s\n' "$*"; }
 # Signs with Apple's secure timestamp. Its server is now and then out of reach for a moment ("The timestamp
-# service is not available", run 40541043721), and there are fifteen programs to sign, so each is tried again.
+# service is not available", run 40541043721), and each signature can miss it, so each is tried again.
 sign() {
   local attempt
   for attempt in 1 2 3 4 5; do
@@ -51,11 +51,10 @@ phase "Building and signing $APP"
 SIDEFOLK_RELEASE=1 SIDEFOLK_SIGN_IDENTITY="$SIDEFOLK_SIGN_IDENTITY" scripts/build-app.sh release
 # Re-sign with a secure timestamp (build-app.sh uses --timestamp=none for speed), inside out.
 sign --options runtime "$APP/Contents/Helpers/sidefolk"
-for program in "$APP"/Contents/Resources/Extensions/*/bin/*; do
-  sign --options runtime "$program"
-done
 sign --options runtime --entitlements Resources/Sidefolk.entitlements "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
+# The packs a fresh Mac installs (D98), as the gallery's team signed them.
+python3 -I scripts/seed-packs.py verify "$APP/Contents/Resources/SeedPacks"
 # No debug entitlement may ship (it lets other processes attach to Sidefolk).
 if codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q "get-task-allow"; then fail "get-task-allow is in the signature."; fi
 

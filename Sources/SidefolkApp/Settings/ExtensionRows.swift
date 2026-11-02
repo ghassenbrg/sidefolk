@@ -12,7 +12,7 @@ enum ExtensionListFocus: Hashable {
     case row(String)
 }
 
-/// A row in Settings › Extensions: one line to tell it apart, its details a click away (D39). With a dozen built-ins
+/// A row in Settings › Extensions: one line to tell it apart, its details a click away (D39). With a dozen installeds
 /// and more added, every row open at once was a wall of permissions. The header is one button (a click, Space or
 /// Return opens it; → and ← open and close; ↑ and ↓ move between rows); the trailing control, a switch or Review…,
 /// stays outside it so it never opens the row by accident.
@@ -191,15 +191,17 @@ struct ExtensionRow: View {
             Label(error, systemImage: "exclamationmark.circle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
         }
-        if ext.bundled || ext.fromGallery, ext.enabled, let example = BuiltInExamples.request(for: ext.id) {
+        if ext.enabled {
             // What to say to use it, one click from the Ask panel; nothing is sent until Return.
-            Button { model.services.openAsk(prefill: example) } label: {
-                Label { Text("Try “\(example)”", comment: "A button under a built-in extension: opens the Ask panel with these words") }
-                    icon: { Image(systemName: "text.bubble") }
+            ForEach(ext.examples, id: \.self) { example in
+                Button { model.services.openAsk(prefill: example) } label: {
+                    Label { Text("Try “\(example)”", comment: "A button under an extension: opens the Ask panel with these words") }
+                        icon: { Image(systemName: "text.bubble") }
+                }
+                .buttonStyle(.sf(.secondary))
+                .padding(.top, 2)
+                .help("Opens the Ask panel with these words, ready to send")
             }
-            .buttonStyle(.sf(.secondary))
-            .padding(.top, 2)
-            .help("Opens the Ask panel with these words, ready to send")
         }
         if !ext.pendingTools.isEmpty || uninstall != nil {
             HStack(spacing: Theme.Space.s) {
@@ -217,9 +219,7 @@ struct ExtensionRow: View {
 
     /// Its version and where it came from, in one line.
     private var origin: String {
-        let source = if ext.bundled {
-            String(localized: "Comes with Sidefolk", comment: "Where an extension came from, under its name in Settings")
-        } else if ext.fromGallery {
+        let source = if ext.fromGallery {
             String(localized: "From Sidefolk's add-on gallery", comment: "Where an extension came from, under its name in Settings")
         } else if ext.fromDraft {
             String(localized: "Written by Sidefolk at your request", comment: "Where an extension came from, under its name in Settings")
@@ -230,7 +230,7 @@ struct ExtensionRow: View {
         }
         var parts = [source]
         if !ext.version.isEmpty { parts.insert(String(localized: "Version \(ext.version)", comment: "An extension's version: “Version 1.1.0”"), at: 0) }
-        if let author = ext.author, !author.isEmpty, !ext.bundled, !ext.fromGallery {
+        if let author = ext.author, !author.isEmpty, !ext.fromGallery {
             parts.append(String(localized: "by \(author)", comment: "Who wrote an extension: “by Jane Doe”"))
         }
         return parts.joined(separator: " · ")
@@ -244,7 +244,7 @@ struct ExtensionRow: View {
     }
 }
 
-/// A built-in extension this Mac can't run yet: the reason stays in sight, it is what the person can act on.
+/// A seed pack this Mac couldn't install (D98): the reason stays in sight, it is what the person can act on.
 struct UnavailableExtensionRow: View {
     var item: UnavailableExtension
     var retry: () -> Void

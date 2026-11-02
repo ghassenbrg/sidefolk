@@ -23,7 +23,7 @@ else
 fi
 [[ "${SIDEFOLK_UNIVERSAL:-}" == "1" ]] && SWIFT_FLAGS+=(--arch arm64 --arch x86_64)
 
-# Every product: the app, its helper, and the programs of the extensions it ships.
+# Every product: the app and its helper. Extensions are built and signed in sidefolk-addons (D55, D98).
 swift build "${SWIFT_FLAGS[@]}"
 BIN="$(swift build "${SWIFT_FLAGS[@]}" --show-bin-path)"
 
@@ -62,19 +62,9 @@ fi
 [[ -f Resources/Localization/Localizable.xcstrings ]] && \
   xcrun xcstringstool compile Resources/Localization/Localizable.xcstrings --output-directory "$STAGE/Contents/Resources" > /dev/null
 cp THIRD_PARTY_NOTICES.md LICENSE "$STAGE/Contents/Resources/" 2>/dev/null || true
-# The extensions Sidefolk ships (extensions/catalog.json): each one's manifest and icon, and the program it runs,
-# built above, so none needs anything installed on the Mac. Samples for developers stay in the repository.
-mkdir -p "$STAGE/Contents/Resources/Extensions"
-cp extensions/catalog.json "$STAGE/Contents/Resources/Extensions/"
-for source in extensions/*/Sources; do
-  name="$(basename "$(dirname "$source")")"
-  dest="$STAGE/Contents/Resources/Extensions/$name"
-  mkdir -p "$dest/bin"
-  cp "extensions/$name/sidefolk-extension.json" "extensions/$name/icon.pdf" "$dest/"
-  # Its words in Sidefolk's other languages (D76).
-  [[ -d "extensions/$name/strings" ]] && cp -R "extensions/$name/strings" "$dest/strings"
-  cp "$BIN/ext-$name" "$dest/bin/ext-$name"
-done
+# The seed packs for a fresh Mac (D98): signed gallery packs, checked here and again at install. A published build must
+# carry them; any other build goes without when the gallery can't be reached.
+python3 -I scripts/seed-packs.py fetch "$STAGE/Contents/Resources/SeedPacks" ${SIDEFOLK_RELEASE:+--required}
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.
 for b in "$BIN"/*.bundle; do [[ -e "$b" ]] && cp -R "$b" "$STAGE/Contents/Resources/"; done
 find "$STAGE/Contents/Resources" -name '.DS_Store' -delete
@@ -85,11 +75,8 @@ if [[ -z "$IDENTITY" ]]; then
 fi
 [[ -z "$IDENTITY" ]] && IDENTITY="-"
 
-# Inside out: helper and extension programs first, then the app (signing the app first invalidates nested code).
+# Inside out: the helper first, then the app (signing the app first invalidates nested code).
 codesign --force --options runtime --timestamp=none --sign "$IDENTITY" "$STAGE/Contents/Helpers/sidefolk"
-for program in "$STAGE"/Contents/Resources/Extensions/*/bin/*; do
-  codesign --force --options runtime --timestamp=none --sign "$IDENTITY" "$program"
-done
 codesign --force --options runtime --timestamp=none --entitlements Resources/Sidefolk.entitlements \
   --sign "$IDENTITY" "$STAGE"
 codesign --verify --deep --strict "$STAGE"

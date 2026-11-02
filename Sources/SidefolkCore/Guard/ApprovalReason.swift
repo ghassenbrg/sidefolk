@@ -13,8 +13,7 @@ public enum TaintSource: Sendable, Hashable {
     static func of(_ tool: any Tool) -> TaintSource {
         let base = (tool as? ExternalFacade)?.base ?? tool
         if let ext = base as? ExtensionTool {
-            let name = (ext.firstParty ? BuiltInExtensionWords.name(ext.extensionId) : nil) ?? ext.extensionName
-            return .extension(name: ToolFormat.oneLine(ExtensionText.clean(name), 40), official: ext.firstParty)
+            return .extension(name: ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40), official: ext.firstParty)
         }
         switch base.spec.category {
         case .web: return .web

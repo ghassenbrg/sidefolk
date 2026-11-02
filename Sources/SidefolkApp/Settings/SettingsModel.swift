@@ -52,7 +52,6 @@ final class SettingsModel {
     // Extensions
     private(set) var extensions: [ExtensionInfo] = []
     /// Samples shipped with the app, not installed yet ("Try Hello Folk").
-    private(set) var samples: [(name: String, folder: URL)] = []
     /// Built-in extensions this Mac can't run yet.
     private(set) var unavailable: [UnavailableExtension] = []
     /// Extensions Sidefolk's AI wrote, waiting for review (D39).
@@ -290,7 +289,6 @@ final class SettingsModel {
 
     func loadExtensions() async {
         extensions = await services.extensions()
-        samples = await services.sampleExtensions()
         unavailable = await services.unavailableExtensions()
         drafts = await services.extensionDrafts()
     }
@@ -300,8 +298,8 @@ final class SettingsModel {
         installPreview = await preview(folder: folder)
     }
 
-    func retryBuiltIns() async {
-        await services.retryBuiltInExtensions()
+    func retrySeedPacks() async {
+        await services.retrySeedPacks()
         await loadExtensions()
     }
 

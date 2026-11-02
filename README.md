@@ -196,7 +196,7 @@ extension is a folder with a manifest and a small program that speaks [MCP](http
 Sidefolk runs it in a macOS sandbox built from what the manifest asks for, and shows you those permissions in plain
 words before you install it.
 
-- **Built in:** World Clock, Calculator, System Vitals and Weather (only the place you ask about goes to Open-Meteo).
+- **To start with:** World Clock, Calculator, System Vitals and Weather (only the place you ask about goes to Open-Meteo), installed once from packs in the app and yours to remove.
 - **Install one from a folder:** Settings › Add-ons › Install from folder…, or drop the folder on the companion.
 - **Add an MCP server you already use:** Settings › Add-ons › Add MCP Server…. It runs outside the sandbox and is
   labelled that way.
@@ -289,7 +289,7 @@ snapshots). Read [AGENTS.md](AGENTS.md) before changing things. The plan and the
 | `Sources/SidefolkApp/` | The app: the companion and its Sidecard, Ask, the Play panel, Home, Settings, the Pocket, onboarding, voice |
 | `Sources/sidefolk/` | The `sidefolk` command-line helper (mcp, run, hook, status, ext validate, theme) |
 | `Resources/Companions3D/` | The three.js engine and the built-in 3D companions; `companions-3d/` and `companions-2d/` hold the pipelines |
-| `extensions/` | The built-in extensions, a sample, and the Kit they are written on |
+| `extensions/` | The Kit extensions are written on (they live in sidefolk-addons) and a sample |
 | `skills/` | The skill Connect gives other agents, and the public `sidefolk-extension` and `sidefolk-theme` skills |
 | `scripts/` | `build-app.sh`, `release.sh`, `dev.swift` (drive the debug app), strings and brand tools |
 

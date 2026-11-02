@@ -1,8 +1,8 @@
 import Foundation
 
 /// What a restore leaves for after the relaunch (D91): the gallery's add-ons installed again from the gallery
-/// (signatures and digests checked as for any install), the built-in extensions switched as they were, the person's
-/// own themes checked and installed again, and what is code from a folder listed for the person to look at first.
+/// (signatures and digests checked as for any install), what the app carries as seed packs from there (D98), the
+/// person's own themes checked and installed again, and what is code from a folder listed for the person to look at first.
 public struct RestoreFollowUp: Sendable {
     public struct Failure: Sendable, Equatable, Identifiable {
         public var name: String
@@ -30,11 +30,11 @@ public struct RestoreFollowUp: Sendable {
     }
 
     let paths: SidefolkPaths
-    let builtInWait: TimeInterval
+    let seedWait: TimeInterval
 
-    public init(paths: SidefolkPaths, builtInWait: TimeInterval = 60) {
+    public init(paths: SidefolkPaths, seedWait: TimeInterval = 60) {
         self.paths = paths
-        self.builtInWait = builtInWait
+        self.seedWait = seedWait
     }
 
     private var file: URL { paths.home.appendingPathComponent(BackupRestore.followUp) }
@@ -46,16 +46,25 @@ public struct RestoreFollowUp: Sendable {
     }
 
     /// Installs again what the restore names, each in turn; `step` hears each name once it's done (or failed).
+    /// - Parameter seeds: the extensions this copy carries as seed packs (`SeedPacks`), which come back without the gallery.
     public func run(_ plan: BackupRestore.Plan, store: AddonStore, host: ExtensionHost, themes: ThemeLibrary, channel: UpdateChannel,
-                    step: @Sendable (String) async -> Void = { _ in }) async -> Report {
+                    seeds: Set<String> = [], step: @Sendable (String) async -> Void = { _ in }) async -> Report {
         var report = Report()
-        // The built-ins are installed at launch, beside this: each gets its switch back once it's there (a minute at most).
-        let deadline = Date().addingTimeInterval(builtInWait)
-        for e in plan.extensions where e.source == .builtIn {
-            while await host.info(id: e.id) == nil, Date() < deadline { try? await Task.sleep(for: .milliseconds(300)) }
-            if let info = await host.info(id: e.id), info.enabled != e.enabled { try? await host.setEnabled(e.enabled, id: e.id) }
+        // Seed packs are installed at launch, beside this: each gets its switch back once it's there (a minute at most).
+        // One that didn't come, or that this copy doesn't carry, comes from the gallery like the rest.
+        let deadline = Date().addingTimeInterval(seedWait)
+        var fromGallery: [BackupManifest.Extension] = []
+        for e in plan.extensions where e.source == .builtIn || e.source == .gallery {
+            if seeds.contains(e.id) {
+                while await host.info(id: e.id) == nil, Date() < deadline { try? await Task.sleep(for: .milliseconds(300)) }
+            }
+            if seeds.contains(e.id), let info = await host.info(id: e.id) {
+                if info.enabled != e.enabled { try? await host.setEnabled(e.enabled, id: e.id) }
+            } else {
+                fromGallery.append(e)
+            }
         }
-        let gallery = plan.extensions.filter { $0.source == .gallery }.map { ($0.id, $0.name, AddonEntry.Kind.extension, $0.enabled) }
+        let gallery = fromGallery.map { ($0.id, $0.name, AddonEntry.Kind.extension, $0.enabled) }
             + plan.addons.map { ($0.id, $0.name, $0.kind, true) }
         if !gallery.isEmpty {
             let catalog: AddonCatalog?

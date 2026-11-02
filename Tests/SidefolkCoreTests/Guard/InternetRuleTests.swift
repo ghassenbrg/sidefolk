@@ -15,7 +15,7 @@ import Testing
     static let report = ToolSpec(name: "watch.report", title: "Report", description: "", inputSchema: .object([:]),
                                  risk: .low, capabilities: [.watch, .network], category: .watch, mutates: true)
     /// Weather's forecast: a built-in extension that only talks to Open-Meteo.
-    static let forecast = ToolSpec(name: "ext.weather.forecast", title: "Forecast", description: "", inputSchema: .object([:]),
+    static let forecast = ToolSpec(name: "ext.sky-watch.forecast", title: "Forecast", description: "", inputSchema: .object([:]),
                                    risk: .medium, capabilities: [.extensions, .network], category: .extensions, mutates: false)
     /// Someone else's extension with the network: it may post anything anywhere.
     static let poster = ToolSpec(name: "ext.poster.post", title: "Post", description: "", inputSchema: .object([:]),
@@ -24,7 +24,7 @@ import Testing
     static let page = "https://docs.example.com/guide"
     static let weather = ToolScope(extensionId: "dev.sidefolk.weather", reach: .service("Open-Meteo"))
     static let siteGrant = Grant(tool: "web.fetch", scope: ["host": "docs.example.com"], callerKind: "agent")
-    static let weatherGrant = Grant(tool: "ext.weather.forecast", scope: ["extension": "dev.sidefolk.weather"], callerKind: "agent")
+    static let weatherGrant = Grant(tool: "ext.sky-watch.forecast", scope: ["extension": "dev.sidefolk.weather"], callerKind: "agent")
 
     func decide(_ spec: ToolSpec = Self.fetch, url: String? = Self.page, scope: ToolScope? = nil, caller: Caller = .agent(runId: "r"),
                 tainted: Bool = false, rule: InternetRule = .oncePerSite, mode: GuardMode = .askOncePerKind,
@@ -111,7 +111,7 @@ import Testing
         _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .fullAccess))
         _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .auto))
         // A grant for the tool with no service in it never stands for one.
-        let unscoped = Grant(tool: "ext.weather.forecast", callerKind: "agent")
+        let unscoped = Grant(tool: "ext.sky-watch.forecast", callerKind: "agent")
         _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, grants: [unscoped]))
     }
 
@@ -255,37 +255,5 @@ import Testing
         let out = await env.executor.execute(name: "web.fetch", input: ["url": .string(InternetRuleTests.page)], caller: .agent(runId: "r"))
         #expect(out.isOK)
         #expect(try await env.activity.recent()[0].decision == .webSetting)
-    }
-}
-
-/// Sidefolk's word for its own programs (`BuiltInServices`) is checked against their code.
-@Suite struct BuiltInServicesTests {
-    @Test func eachServiceProgramReachesOnlyItsListedHosts() throws {
-        for (id, service) in BuiltInServices.byExtension {
-            // Currency is in the add-on gallery (D55): read when a checkout of it is beside this one.
-            let folder = ExtFixtures.source(String(id.split(separator: ".").last!)).appendingPathComponent("Sources")
-            guard FileManager.default.fileExists(atPath: folder.path) else { continue }
-            let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil).filter { $0.pathExtension == "swift" }
-            #expect(!files.isEmpty, "\(id) has no sources at \(folder.path)")
-            var found: Set<String> = []
-            for file in files {
-                let text = try String(contentsOf: file, encoding: .utf8)
-                for match in text.matches(of: /[a-zA-Z][a-zA-Z0-9+.-]*:\/\/([^\/"\s:?#]+)/) { found.insert(String(match.1).lowercased()) }
-                // Nothing reaches the network but through the kit's helpers, which take whole addresses.
-                #expect(!text.contains("URLComponents(") || !text.contains(".host ="), "\(file.lastPathComponent) builds a host")
-            }
-            #expect(!found.isEmpty, "\(id) names no address")
-            #expect(found.isSubset(of: Set(service.hosts)), "\(id) reaches \(found.subtracting(service.hosts).sorted())")
-        }
-    }
-
-    @Test func onlyTheAppsOwnCopyIsTakenAtItsWord() {
-        let spec = InternetRuleTests.forecast
-        let bundled = ExtensionTool(spec: spec, extensionId: "dev.sidefolk.weather", extensionName: "Weather", remoteName: "forecast",
-                                    firstParty: true) { _, _ in ToolResult(text: "") }
-        let installed = ExtensionTool(spec: spec, extensionId: "dev.sidefolk.weather", extensionName: "Weather", remoteName: "forecast",
-                                      firstParty: false) { _, _ in ToolResult(text: "") }
-        #expect(bundled.scope(for: .object([:])).reach == .service("Open-Meteo"))
-        #expect(installed.scope(for: .object([:])).reach == nil)
     }
 }

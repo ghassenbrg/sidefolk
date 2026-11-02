@@ -28,9 +28,9 @@ public struct BackupManifest: Codable, Sendable, Equatable {
 
     /// Where an extension came from, which decides how it comes back.
     public enum Source: String, Codable, Sendable {
-        /// Comes with Sidefolk: only whether it was on.
+        /// Came with Sidefolk, in a backup from before D98: now a seed pack or a gallery extension.
         case builtIn = "built-in"
-        /// From the gallery: installed again from it.
+        /// From the gallery (seed packs included, D98): installed again.
         case gallery
         /// From a folder, or written for the person: its files are in `review/extensions/<id>`, installed again only
         /// after the person looks at it.

@@ -2,7 +2,6 @@ import Foundation
 import Synchronization
 import Testing
 @testable import SidefolkCore
-@testable import ext_weather
 
 /// Requests that need a place and name none (D48): the person's own place when they share it, else a question with a
 /// way to Settings, never a guess.
@@ -125,17 +124,5 @@ import Testing
         #expect(result.card?.url == SettingsLink.yourLocation.rawValue)
         #expect(await f.engine.list().isEmpty)
         #expect(f.env.fetcher.requests.isEmpty)
-    }
-
-    // MARK: The Weather extension
-
-    @Test func theWeatherExtensionReadsTheWayThePlaceIsWritten() {
-        let paris: [[String: Any]] = [["name": "Paris", "admin1": "Texas", "country": "United States", "country_code": "US"],
-                                      ["name": "Paris", "admin1": "Île-de-France", "country": "France", "country_code": "FR"]]
-        #expect(Weather.pick(paris, within: nil)?["admin1"] as? String == "Texas")
-        #expect(Weather.pick(paris, within: "France")?["admin1"] as? String == "Île-de-France")
-        #expect(Weather.pick(paris, within: "Texas, United States")?["admin1"] as? String == "Texas")
-        #expect(Weather.pick(paris, within: "fr")?["country"] as? String == "France")
-        #expect(Weather.pick(paris, within: "Japan") == nil, "never another country's town of that name")
     }
 }

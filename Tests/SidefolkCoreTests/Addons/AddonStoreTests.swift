@@ -417,24 +417,6 @@ import Testing
 
     // MARK: Extensions
 
-    /// Built-ins this version no longer ships became add-ons: they keep working, and the person may remove them.
-    @Test func aBuiltInThatMovedToTheGalleryBecomesAnAddon() async throws {
-        let h = try HostEnv()
-        try await h.host.install(from: ExtFixtures.builtIn("calculator"), origin: .bundled)
-        let catalog = try ExtFixtures.tempDir("catalog")
-        try FileManager.default.copyItem(at: ExtFixtures.builtIn("world-clock"), to: catalog.appendingPathComponent("world-clock"))
-        try Data(#"{"extensions": [{ "folder": "world-clock", "on": true }]}"#.utf8).write(to: catalog.appendingPathComponent("catalog.json"))
-        await BundledExtensions(directory: catalog).install(into: h.host)
-        let calculator = try #require(await h.host.info(id: "dev.sidefolk.calculator"))
-        #expect(calculator.origin == .official && calculator.enabled)
-        // Still first-party: its own words reach the model.
-        #expect(h.env.registry.tool(named: "ext.calculator.calculate")?.spec.description.contains("Sidefolk's own extension") == true)
-        try await h.host.uninstall(id: "dev.sidefolk.calculator")
-        #expect(await h.host.info(id: "dev.sidefolk.calculator") == nil)
-        await h.host.shutdown()
-        try? FileManager.default.removeItem(at: catalog)
-    }
-
     /// The packs scripts/build.py signed in a sidefolk-addons checkout beside this one, through the real signature check:
     /// a companion installs, and an extension's checked folder previews and installs as Sidefolk's own.
     static let signedGallery = ExtFixtures.addonsRepo.appendingPathComponent("dist", isDirectory: true)
@@ -459,10 +441,17 @@ import Testing
         #expect(info.origin == .official && info.version == qr.version)
         await store.discard(qr)
 
-        // An extension with a page (D62): offered to 0.1.0 and its snapshots, and it draws its page.
+        // A seed from its signed pack, through the real check, as a fresh Mac installs it (D98).
+        let clock = try #require(catalog.entry("dev.sidefolk.world-clock"))
+        let seed = SeedPacks.Seed(id: clock.id, name: clock.name, version: clock.version, file: clock.file, bytes: clock.bytes, sha256: clock.sha256, on: true)
+        let seedFolder = try await store.unpack(seed: seed, from: Self.signedGallery)
+        #expect(await h.host.preview(folder: seedFolder).canInstall)
+        await store.discard(id: clock.id)
+
+        // An extension with a page (D62): offered from the snapshot that reads its manifest (D98), and it draws its page.
         if let vitals = catalog.entry("dev.sidefolk.system-vitals-plus") {
-            #expect(vitals.minimumSidefolk == "0.1.0")
-            #expect(AddonCatalog.fits(vitals, running: "0.1.0-snapshot.513") && AddonCatalog.fits(vitals, running: "0.1.0"))
+            #expect(!AddonCatalog.fits(vitals, running: "0.1.0-snapshot.513"), "an older copy would refuse its manifest")
+            #expect(AddonCatalog.fits(vitals, running: "0.1.0-snapshot.100000"))
             let folder = try await store.fetch(vitals)
             #expect(await h.host.preview(folder: folder).canInstall)
             let installed = try await h.host.install(from: folder, origin: .official)

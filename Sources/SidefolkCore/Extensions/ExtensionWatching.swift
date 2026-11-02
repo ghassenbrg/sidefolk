@@ -52,7 +52,7 @@ public struct ExtensionWatchTool: Tool {
             description: "Start a watcher provided by an installed extension (see the extension watchers listed in context). "
                 + "`settings` must match that watcher's fields.",
             inputSchema: Schema.object([
-                "extension": Schema.string("The extension id, e.g. dev.sidefolk.system-vitals."),
+                "extension": Schema.string("The extension id, e.g. dev.example.tea-timer."),
                 "watcher": Schema.string("The watcher's name in that extension, e.g. disk_low."),
                 "settings": .object(["type": "object", "description": "The watcher's settings."]),
                 "title": Schema.string("Optional short title."),
@@ -96,15 +96,15 @@ public struct ExtensionWatchTool: Tool {
 /// Context lines about what extension watchers exist, for the agent. Only identifiers appear: titles
 /// and descriptions are the extension author's words and would reach every system prompt (SECURITY T2).
 public enum ExtensionContext {
-    /// "PDF Tools (A PDF's details and text, …)" for each built-in that is installed but off. Their words ship in the
-    /// signed app (D39), so they may reach the model; anyone else's extension never appears here.
+    /// "Tea Timer (Timers for every kind of tea, …)" for each of Sidefolk's own that is installed but off. Their words come
+    /// in a pack Sidefolk signed (D39, D98), so they may reach the model; anyone else's extension never appears here.
     public static func switchedOff(_ installed: [ExtensionInfo]) -> [String] {
         installed.filter { $0.origin?.firstParty == true && !$0.enabled }.sorted { $0.name < $1.name }.map { e in
             "\(ExtensionText.line(e.name, characters: 40))" + (e.description.map { " (\(ExtensionText.line($0, characters: 110)))" } ?? "")
         }
     }
 
-    /// "Currency (Money in 30 currencies at today's rates)" for each of Sidefolk's own extensions in the gallery that
+    /// "Tea Timer (Timers for every kind of tea)" for each of Sidefolk's own extensions in the gallery that
     /// isn't installed (D55), as the gallery shows them on `channel` (D65). Only official entries: their words are
     /// Sidefolk's, from the signed catalog.
     public static func inGallery(_ catalog: AddonCatalog?, installed: [ExtensionInfo], channel: UpdateChannel) -> [String] {

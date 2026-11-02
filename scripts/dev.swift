@@ -21,7 +21,7 @@
 //                           (the Calendar's gestures fed and filmed: Sources/SidefolkApp/Dev/CalendarDev.swift; launch the
 //                           debug app with SIDEFOLK_SAMPLE_CALENDAR=1 to use a sample calendar instead of the person's)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
-//   swift scripts/dev.swift installFolder:/path/to/extension | page:dev.sidefolk.system-vitals-plus/mac   (D62)
+//   swift scripts/dev.swift installFolder:/path/to/extension | page:<extension id>/<page>   (D62)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
 //                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
 //   swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]   (D87: a watch's page, its Check now, its change in two columns)

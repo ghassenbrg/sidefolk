@@ -18,6 +18,9 @@ public struct ExtensionUpdateDiff: Sendable, Hashable {
     public var widensPermissions: Bool
     /// It starts to keep running in the background (D63).
     public var startsInBackground: Bool
+    /// Hosts it names now beyond the list it had (D98). A first list isn't one: naming hosts where it named none says
+    /// less than it could do before, and it is how every network extension moved its service out of the app.
+    public var addedHosts: [String]
 
     /// One side of an update: the installed copy as it was pinned, or the folder about to replace it.
     public struct Side: Sendable {
@@ -28,13 +31,17 @@ public struct ExtensionUpdateDiff: Sendable, Hashable {
         /// Each tool the manifest describes, at the risk it runs at.
         public var tools: [String: Risk]
         public var background: Bool
+        /// Every host its `services` names.
+        public var hosts: Set<String>
 
-        public init(version: String, permissions: ExtensionPermissions, lines: [String], tools: [String: Risk], background: Bool) {
+        public init(version: String, permissions: ExtensionPermissions, lines: [String], tools: [String: Risk], background: Bool,
+                    hosts: Set<String> = []) {
             self.version = version
             self.permissions = permissions
             self.lines = lines
             self.tools = tools
             self.background = background
+            self.hosts = hosts
         }
     }
 
@@ -55,6 +62,7 @@ public struct ExtensionUpdateDiff: Sendable, Hashable {
         }.sorted()
         widensPermissions = new.permissions.widens(old.permissions)
         startsInBackground = new.background && !old.background
+        addedHosts = old.hosts.isEmpty ? [] : new.hosts.subtracting(old.hosts).sorted()
     }
 
     public var changesPermissions: Bool { !addedPermissions.isEmpty || !removedPermissions.isEmpty }
@@ -62,7 +70,7 @@ public struct ExtensionUpdateDiff: Sendable, Hashable {
     /// It could do more after the update than before, so the person looks at it first (D70). Judged on the permissions
     /// themselves, which every sheet line comes from: a line can be new without anything more allowed ("No access to
     /// your files or the internet" once it gives up the network, or the author's reason for using it).
-    public var widens: Bool { widensPermissions || !riskierTools.isEmpty || startsInBackground }
+    public var widens: Bool { widensPermissions || !riskierTools.isEmpty || startsInBackground || !addedHosts.isEmpty }
 }
 
 extension ExtensionPermissions {

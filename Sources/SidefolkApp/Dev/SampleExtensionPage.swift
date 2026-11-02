@@ -2,12 +2,12 @@
 import AppKit
 import SidefolkCore
 
-/// System Vitals+'s page as it reads on a typical afternoon, with ten minutes of history: what the UI snapshots show
+/// Mac Pulse+'s page as it reads on a typical afternoon, with ten minutes of history: what the UI snapshots show
 /// for extension pages (D62) without running the extension.
 enum SampleExtensionPage {
-    static let info = ExtensionPageInfo(extensionId: "dev.sidefolk.system-vitals-plus", extensionName: "System Vitals+", page: "mac",
-                                        title: "Your Mac", symbol: "gauge.with.dots.needle.67percent", refresh: 3, history: true, widget: true,
-                                        iconPath: FixtureServices.addonIcon("system-vitals-plus"))
+    static let info = ExtensionPageInfo(extensionId: SampleAddons.macPulsePlus, extensionName: "Mac Pulse+", page: "mac",
+                                        title: "Mac Pulse", symbol: "gauge.with.dots.needle.67percent", refresh: 3, history: true, widget: true,
+                                        iconPath: FixtureServices.sampleIcon)
 
     static let json = #"""
     {"summary": {"title": "Your Mac is doing fine", "detail": "CPU 18% · Memory 62% · 214 GB free · Battery 84%", "tone": "good", "symbol": "checkmark.seal.fill"},
@@ -78,7 +78,7 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: info, page: page, history: history, alerts: alerts, updated: now)
     }
 
-    /// Keep Awake holding for an hour, with its switches (D63).
+    /// Stay Up holding for an hour, with its switches (D63).
     @MainActor static func keepAwake(now: Date = Date()) -> ExtensionPageModel {
         let json = #"""
         {"summary": {"title": "Awake until 18:00", "detail": "1 h 25 min left · Screen on · showing you active (12× so far)", "tone": "good",
@@ -97,16 +97,16 @@ enum SampleExtensionPage {
         return ExtensionPageModel(info: awakeInfo, page: page, history: [:], alerts: [], updated: now)
     }
 
-    /// Clipboard's palette with a few copies (D63), pins in their own section, a screenshot's picture and the picked
+    /// Paste Shelf's palette with a few copies (D63), pins in their own section, a screenshot's picture and the picked
     /// copy in full beside the list (D68).
     @MainActor static func palette(host: ExtensionHost) -> PaletteModel {
-        let info = ExtensionPaletteInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", palette: "history", title: "Clipboard",
+        let info = ExtensionPaletteInfo(extensionId: SampleAddons.pasteShelf, extensionName: "Paste Shelf", palette: "history", title: "Paste Shelf",
                                         hotkey: "shift+cmd+c", placeholder: "Search what you copied")
         let all = ["plain", "alternate", "pin", "delete"]
         let items: [ExtensionPaletteList.Item] = [
             .init(id: "2", title: "https://github.com/ghassenbrg/sidefolk/pull/2", detail: "Safari · 3 min ago · copied 2×", kind: .link, pinned: true,
                   actions: all, section: "Pinned"),
-            .init(id: "1", title: "Meeting notes: ship System Vitals+ on Friday", detail: "Notes · just now", kind: .text, actions: all, section: "Recent"),
+            .init(id: "1", title: "Meeting notes: ship Mac Pulse+ on Friday", detail: "Notes · just now", kind: .text, actions: all, section: "Recent"),
             .init(id: "6", title: "Screenshot 1440 × 900", detail: "Screenshot · 2 min ago", kind: .image, actions: all, image: "thumbs/sample.png",
                   section: "Recent"),
             .init(id: "3", title: "func hello() {", detail: "Xcode · 12 min ago · 3 lines", kind: .code, actions: all, section: "Recent"),
@@ -114,8 +114,8 @@ enum SampleExtensionPage {
             .init(id: "5", title: "#2ED4D9", detail: "1 h ago", kind: .color, actions: all, color: "#2ED4D9", section: "Recent"),
             .init(id: "7", title: "report.pdf, budget.xlsx", detail: "Finder · 2 days ago", kind: .file, actions: all, section: "Recent"),
         ]
-        let preview = ExtensionPalettePreview(title: nil, text: "Meeting notes: ship System Vitals+ on Friday\n\n- Charts reach back a day\n"
-                                                + "- Heads-ups for memory and heat\n- Clipboard: pictures, previews and pins", facts: [
+        let preview = ExtensionPalettePreview(title: nil, text: "Meeting notes: ship Mac Pulse+ on Friday\n\n- Charts reach back a day\n"
+                                                + "- Heads-ups for memory and heat\n- Paste Shelf: pictures, previews and pins", facts: [
                                                     .init(label: "From", value: "Notes"), .init(label: "Copied", value: "Today 14:02"),
                                                     .init(label: "First copied", value: "Today 13:40"), .init(label: "Copies", value: "1")])
         let model = PaletteModel(info: info, folder: pictureFolder(), list: ExtensionPaletteList(items: items, note: "312 copies · ↩ pastes, ⌥↩ copies",
@@ -125,9 +125,9 @@ enum SampleExtensionPage {
         return model
     }
 
-    /// Clipboard's page (D68): its switches, the latest copies with their pictures, and Maccy's settings as choices,
+    /// Paste Shelf's page (D68): its switches, the latest copies with their pictures, and Maccy's settings as choices,
     /// switches, fields and a list, as the extension sends them.
-    @MainActor static func clipboard(now: Date = Date()) -> ExtensionPageModel {
+    @MainActor static func shelf(now: Date = Date()) -> ExtensionPageModel {
         let json = #"""
         {"summary": {"title": "Keeping your copies", "detail": "312 kept · 41 today · open them from any app with the shortcut below", "tone": "good", "symbol": "doc.on.clipboard.fill"},
          "sections": [
@@ -165,24 +165,24 @@ enum SampleExtensionPage {
          ]}
         """#
         let page = (try? JSONDecoder().decode(JSONValue.self, from: Data(json.utf8))).flatMap { try? ExtensionPage.parse($0) } ?? ExtensionPage()
-        let info = ExtensionPageInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", page: "clipboard", title: "Clipboard",
+        let info = ExtensionPageInfo(extensionId: SampleAddons.pasteShelf, extensionName: "Paste Shelf", page: "shelf", title: "Paste Shelf",
                                      symbol: "doc.on.clipboard", refresh: 3, needsAccessibility: true)
         return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: pictureFolder())
     }
 
-    /// Miraya's page in one of its states (D74), with made-up pictures of two displays, three windows and the parts of
-    /// a screen, as Miraya keeps them in its data folder.
-    @MainActor static func miraya(_ state: String, now: Date = Date()) -> ExtensionPageModel {
-        let page = SampleMirayaPages.json[state].flatMap { try? JSONDecoder().decode(JSONValue.self, from: Data($0.utf8)) }
+    /// Cast Along's page in one of its states (D74), with made-up pictures of two displays, three windows and the parts of
+    /// a screen, as Cast Along keeps them in its data folder.
+    @MainActor static func cast(_ state: String, now: Date = Date()) -> ExtensionPageModel {
+        let page = SampleCastPages.json[state].flatMap { try? JSONDecoder().decode(JSONValue.self, from: Data($0.utf8)) }
             .flatMap { try? ExtensionPage.parse($0) } ?? ExtensionPage()
-        let info = ExtensionPageInfo(extensionId: "dev.sidefolk.miraya", extensionName: "Miraya", page: "miraya", title: "Miraya", symbol: "tv",
-                                     refresh: 2, widget: true, iconPath: FixtureServices.addonIcon("miraya"))
-        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: mirayaFolder())
+        let info = ExtensionPageInfo(extensionId: SampleAddons.castAlong, extensionName: "Cast Along", page: "cast", title: "Cast Along", symbol: "tv",
+                                     refresh: 2, widget: true, iconPath: FixtureServices.sampleIcon)
+        return ExtensionPageModel(info: info, page: page, history: [:], alerts: [], updated: now, folder: castFolder())
     }
 
     /// Screens and windows drawn as small pictures: a desktop with windows on it, a page in a browser, slides, a player.
-    @MainActor static func mirayaFolder() -> URL {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-miraya", isDirectory: true)
+    @MainActor static func castFolder() -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-cast", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder.appendingPathComponent("shots"), withIntermediateDirectories: true)
         func save(_ name: String, width: CGFloat = 480, height: CGFloat = 300, _ draw: @escaping (NSRect) -> Void) {
             let image = NSImage(size: NSSize(width: width, height: height), flipped: true) { rect in draw(rect); return true }
@@ -252,9 +252,9 @@ enum SampleExtensionPage {
         return folder
     }
 
-    /// A made-up screenshot's thumbnail in a temporary folder, as Clipboard keeps one in its data folder.
+    /// A made-up screenshot's thumbnail in a temporary folder, as Paste Shelf keeps one in its data folder.
     @MainActor static func pictureFolder() -> URL {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-clipboard", isDirectory: true)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-sample-shelf", isDirectory: true)
         let file = folder.appendingPathComponent("thumbs/sample.png")
         try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         let image = NSImage(size: NSSize(width: 240, height: 150), flipped: false) { rect in
@@ -273,15 +273,15 @@ enum SampleExtensionPage {
     /// Its page when the extension fails to draw it: the error is the extension's own words, so a link in them (or
     /// Markdown that would make one) is shown as text and never opens (audit F12).
     @MainActor static func failed() -> ExtensionPageModel {
-        ExtensionPageModel(info: info, problem: "System Vitals+ couldn't read the sensors: [open Settings](file:///etc/hosts) "
+        ExtensionPageModel(info: info, problem: "Mac Pulse+ couldn't read the sensors: [open Settings](file:///etc/hosts) "
                            + "or see https://status.example.com/vitals for help (code 0x2F, /usr/sbin/ioreg exited 1).")
     }
 
-    static let awakeInfo = ExtensionPageInfo(extensionId: "dev.sidefolk.keep-awake", extensionName: "Keep Awake", page: "awake", title: "Keep Awake",
+    static let awakeInfo = ExtensionPageInfo(extensionId: SampleAddons.stayUp, extensionName: "Stay Up", page: "awake", title: "Stay Up",
                                              symbol: "cup.and.saucer", refresh: 5, widget: true,
-                                             iconPath: FixtureServices.addonIcon("keep-awake"), needsAccessibility: true)
+                                             iconPath: FixtureServices.sampleIcon, needsAccessibility: true)
 
-    /// Keep Awake's tile, its main switch on it (D67).
+    /// Stay Up's tile, its main switch on it (D67).
     static func awakeWidget() -> ExtensionWidget {
         let control = (try? ExtensionPage.parse(["summary": ["title": "x", "control": ["type": "switch", "label": "Keep awake", "on": true, "tool": "keep_awake"]]]))?
             .summary?.control
@@ -289,18 +289,18 @@ enum SampleExtensionPage {
                                                                                tone: .good, symbol: "cup.and.saucer.fill", control: control), at: Date())
     }
 
-    static let clipboardInfo = ExtensionPageInfo(extensionId: "dev.sidefolk.clipboard", extensionName: "Clipboard", page: "clipboard",
-                                                 title: "Clipboard", symbol: "doc.on.clipboard", refresh: 3,
-                                                 iconPath: FixtureServices.addonIcon("clipboard"), needsAccessibility: true, tagline: "Everything you copy, a shortcut away")
+    static let shelfInfo = ExtensionPageInfo(extensionId: SampleAddons.pasteShelf, extensionName: "Paste Shelf", page: "shelf",
+                                                 title: "Paste Shelf", symbol: "doc.on.clipboard", refresh: 3,
+                                                 iconPath: FixtureServices.sampleIcon, needsAccessibility: true, tagline: "Everything you copy, a shortcut away")
 
-    /// Home with three extension pages, Keep Awake's switch on, for the sidebar and All Extensions (D67).
+    /// Home with three extension pages, Stay Up's switch on, for the sidebar and All Extensions (D67).
     @MainActor static func showPages(in pages: ExtensionPagesModel) {
         var mac = info
-        mac.extensionName = "Your Mac"
+        mac.extensionName = "Mac Pulse"
         mac.tagline = "This Mac, live: charts, a Today tile and heads-ups"
         var awake = awakeInfo
         awake.tagline = "Your Mac awake and you active, for as long as you say"
-        pages.showSample([clipboardInfo, awake, mac], summaries: [awake.id: awakeWidget().summary!, mac.id: widget().summary!])
+        pages.showSample([shelfInfo, awake, mac], summaries: [awake.id: awakeWidget().summary!, mac.id: widget().summary!])
     }
 
     static func widget() -> ExtensionWidget {

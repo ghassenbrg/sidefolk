@@ -163,12 +163,6 @@ enum ExtensionFiles {
         let lines = pins.map { "\($0.path)\t\(String($0.mode, radix: 8))\t\($0.size)\t\($0.sha256)" }
         return ExtensionHash.sha256(Data(lines.joined(separator: "\n").utf8))
     }
-
-    /// One hash over the files' names and contents only: a source folder and its locked installed copy
-    /// differ in modes, never in this.
-    static func contentHash(_ pins: [ExtensionFilePin]) -> String {
-        ExtensionHash.sha256(Data(pins.map { "\($0.path)\t\($0.sha256)" }.joined(separator: "\n").utf8))
-    }
 }
 
 /// Verifies installed files against their pins before every spawn. Files whose inode, mtime, size and
