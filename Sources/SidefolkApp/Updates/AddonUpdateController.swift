@@ -128,6 +128,12 @@ final class AddonUpdateController: AddonUpdateActions {
         Task { await look(refresh: true) }
     }
 
+    /// A look the companion was asked for (D120): the names of what has a newer version, after looking now.
+    func lookNow() async -> [String] {
+        await look(refresh: true)
+        return model.addonPending.map(\.name)
+    }
+
     func review(_ entry: AddonEntry) {
         Task {
             do {

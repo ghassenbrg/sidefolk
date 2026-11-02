@@ -10,6 +10,7 @@ extension AppCoordinator {
         let agent = self.agent!, host = runtime.extensions
         let helper = AIHelper(ask: { system, prompt in try await agent.oneShot(system: system, prompt: prompt, purpose: "extension") })
         runtime.registry.register(AIHelpTool(helper: helper, extensionName: { host.shelf.names[$0] }))
+        installSelfTools()
         Task { await host.setAIHelper(helper) }
     }
 

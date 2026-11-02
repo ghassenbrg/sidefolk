@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: The companion can answer for Sidefolk (D120)
+
+Six built-in tools: what it's running, updates for it and for the Mac, opening a place, its look. Verified: `SelfToolsTests` with the app's side as a seam (looking, failing, a development build, install asking first, Undo, none offered to other agents, the model told); the parser against this Mac's real `softwareupdate --list`, which listed macOS 27.2 and Command Line Tools. Not run: a live model calling them, and a real update found this way (only a published copy can).
+
 ## 2026-11-03: The menu bar icon follows the menu bar, at full strength (the founder, in passing)
 
 *Amends D84's fading mark.* It was half-faded when the companion was hidden (`appearsDisabled`), on purpose, and it looked broken; it no longer fades. It also ignored the bar: with Appearance on Light or Dark, 6468e79c told the button a look from the Mac's Light or Dark, but the bar's own colour comes from the wallpaper and from a full-screen app, so it stayed dark on a black bar. Now it's never told one.

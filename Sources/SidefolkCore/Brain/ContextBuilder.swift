@@ -212,6 +212,12 @@ public struct ContextBuilder: Sendable {
             ? "say so in one sentence and offer what you can do instead, including building a small extension for it (load the "
                 + "build-extension skill first; never write one before the user agrees)."
             : "say so in one sentence and offer what you can do instead; an extension or MCP server (Settings › Add-ons) could add it."
+        // You are part of Sidefolk: what it is and whether it's up to date are its own to answer (D120).
+        if names.contains("sidefolk.about") {
+            lines.append("- Sidefolk itself is yours to answer for: sidefolk_about (its version, your companion, the AI, what's installed), "
+                + "sidefolk_updates (a newer Sidefolk or add-ons), mac_software_updates (this Mac's updates), sidefolk_open (Settings or a "
+                + "place in Home), sidefolk_look (its appearance and theme). Use them, and never offer to build an extension for these.")
+        }
         lines += [
             "- Nothing else on this Mac unless one of your tools does it: not other apps' content (Mail, Messages, Calendar, Contacts, "
                 + "Photos, browsers), the screen, or online accounts. Extension tools (ext.<extension>.<tool>) are your tools too.",

@@ -141,6 +141,20 @@ final class UpdateController: UpdateActions {
         }
     }
 
+    /// Whether this copy is one that was published, and so can update itself.
+    var isPublished: Bool { app.release != nil }
+
+    /// A look the companion was asked for (D120): what's newest, shown in the menu and Settings as any look's is, with
+    /// no window of its own and no bubble. A failed one is the caller's to say.
+    func lookNow() async throws -> (newest: UpdateOffer?, ready: Bool) {
+        if case .ready(let offer) = model.phase { return (offer, true) }
+        let offers = try await checker.check()
+        model.lastCheck = await checker.state().lastCheck
+        let offer = newest(in: offers)
+        if !model.busy { model.phase = offer.map(UpdateModel.Phase.available) ?? .upToDate }
+        return (offer, false)
+    }
+
     private func newest(in offers: [UpdateOffer]) -> UpdateOffer? {
         let s = runtime.settings.current.updates
         return ReleaseFeed.newest(offers, channel: s.effectiveChannel, after: app.version, skipping: s.skipped)

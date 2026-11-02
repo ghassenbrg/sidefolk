@@ -3554,3 +3554,15 @@ general: nothing here names a game or an extension, and all of it can replace wh
 **Why:** the founder's notes. Tasks and reminders stay two things because they are: most due dates want no nudge.
 **Alternatives:** the due date as a kind of reminder (a nudge nobody asked for); a separate `calendar` of Sidefolk's in Apple Calendar (the founder's real calendars); free-form custom colours as they are (one dark or pale would vanish on a card).
 **Not done:** dragging a due task on the Calendar; "by friday" in typed quick notes (the AI takes `due`, the local parser doesn't yet).
+
+### D120 — The companion can answer for Sidefolk itself (2026-11-03)
+**Decision:** *the founder, showing a companion offering to "build a small extension" to find out whether Sidefolk had an update.* Built-in tools, for Sidefolk's own AI and not other agents, which have `status`:
+- **`sidefolk.about`:** version, companion, AI, theme, appearance, language, extensions on and off.
+- **`sidefolk.updates`:** looks now for a newer Sidefolk and add-ons, through the same `UpdateChecker` and report as the menu's Check for Updates, with no window of its own. A failed look is a failure, never "up to date". A development build says it doesn't update itself. Add-ons follow the person's own automatic setting, as any look does.
+- **`sidefolk.install_update`:** medium, so Guard asks; it opens the update window, which checks the signature and asks before restarting. It says it has started, not that it's installed.
+- **`sidefolk.open`:** the update window, a page of Settings or a place in Home. **`sidefolk.look`:** appearance and theme by name, with Undo.
+- **`mac.software_updates`:** `softwareupdate --list`, read-only; installing stays in System Settings. It reaches Apple, so it can take a minute and has a longer limit.
+- **`ContextBuilder.reach`** tells the model these are its own, and never to offer an extension for them.
+**Why:** it can do a lot, so not knowing its own version reads as broken. The app always knew; nothing let the AI ask. By the founder's rule (D98) this isn't an extension's: it's the app's own.
+**Alternatives:** a prompt line with the version (no updates, stale in a long conversation); typed sentences without AI (a later addition: the menu has Check for Updates).
+**Not done:** switching companion in words (gallery companions must be installed first); these answer through the AI only, so with no AI set up it's the menu.
