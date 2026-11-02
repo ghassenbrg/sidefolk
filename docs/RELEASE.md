@@ -141,7 +141,8 @@ that meets it exists. There is no rollback but a revert and new snapshots, so th
 - [ ] In sidefolk-addons, set every `minimum_sidefolk` that names a branch's placeholder (`0.1.0-snapshot.786`) to `0.1.0-snapshot.N`.
 - [ ] Build there, without publishing: `python3 scripts/build.py --sidefolk-build N`. It stops on the placeholder and on any number above `N`.
 - [ ] Put that `dist/` in a holding release nobody reads: `gh release create gallery-next dist/*.zip --prerelease` in sidefolk-addons.
-- [ ] Run the Release workflow with `seed_gallery` set to `https://github.com/ghassenbrg/sidefolk-addons/releases/download/gallery-next`.
+- [ ] Push that add-ons branch, unmerged, so the tests read the packs this app goes with: until the gallery is published its `main` still holds the old ones.
+- [ ] Run the Release workflow with `seed_gallery` set to `https://github.com/ghassenbrg/sidefolk-addons/releases/download/gallery-next` and `addons_ref` to that branch.
       It carries those signed packs and makes the real notary submission with them inside. If Apple refuses them, no release appears and the
       gallery hasn't changed. The new app reads the old gallery without trouble until the next step.
 - [ ] `scripts/release.sh` has already run `extension-free-binary.sh --strict` on the app (D101); `sh scripts/extension-free-binary.sh --strict build/Sidefolk.app <add-ons>` runs it by hand.

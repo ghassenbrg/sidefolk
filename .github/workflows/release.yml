@@ -20,6 +20,10 @@ on:
         description: Take the seed packs from this address, to prove the app before the gallery changes (docs/RELEASE.md)
         type: string
         default: ""
+      addons_ref:
+        description: The add-ons branch to test against, when their gallery follows this release (docs/RELEASE.md)
+        type: string
+        default: ""
   push:
     tags: ["v*"]
 
@@ -49,6 +53,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: ghassenbrg/sidefolk-addons
+          ref: ${{ inputs.addons_ref }}
           path: .addons
 
       - name: Select Xcode
