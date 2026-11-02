@@ -8,6 +8,7 @@ import SwiftUI
 final class PocketModel {
     var content = PocketContent()
     var palettes: [ExtensionPaletteInfo] = []
+    var entries: [ExtensionEntry] = []
     @ObservationIgnored var actions = PocketActions()
 }
 
@@ -85,6 +86,10 @@ struct PocketView: View {
             Button("Open Sidefolk", action: actions.openHome).keyboardShortcut("o")
             Button(String(localized: "Games…", comment: "The Pocket's ⋯ menu: opens the Play panel's menu of games"), action: actions.openGames)
             Button("Settings…", action: actions.openSettings).keyboardShortcut(",")
+            if !model.entries.isEmpty {
+                Divider()
+                ForEach(model.entries) { entry in PocketEntry(entry: entry, open: actions.openEntry) }
+            }
             if !model.palettes.isEmpty {
                 Divider()
                 ForEach(model.palettes, id: \.id) { info in
@@ -277,5 +282,27 @@ private struct PocketRow: View {
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// An item an extension put in the Pocket's ⋯ menu (D100), a submenu when it holds items.
+private struct PocketEntry: View {
+    var entry: ExtensionEntry
+    var open: (ExtensionEntry) -> Void
+
+    var body: some View {
+        if entry.items.isEmpty {
+            Button { open(entry) } label: { title }
+        } else {
+            Menu { ForEach(entry.items) { child in PocketEntry(entry: child, open: open) } } label: { title }
+        }
+    }
+
+    @ViewBuilder private var title: some View {
+        if let symbol = entry.symbol {
+            Label { Text(verbatim: entry.shownTitle) } icon: { Image(systemName: symbol) }
+        } else {
+            Text(verbatim: entry.shownTitle)
+        }
     }
 }

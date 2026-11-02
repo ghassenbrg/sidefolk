@@ -54,3 +54,32 @@ struct ExtensionAISwitchRow: View {
                        isOn: Binding(get: { status.on }, set: change))
     }
 }
+
+extension ExtensionWords {
+    /// What an install sheet says the extension adds to Sidefolk's own places, in the person's language (D100): nothing it adds is a
+    /// surprise, and all of it goes when it does.
+    static func additions(_ m: ExtensionManifest, strings: ExtensionStrings?) -> [String] {
+        let w = strings?.words(for: ExtensionStrings.current)
+        func titles(_ place: ExtensionManifest.EntryMeta.Place) -> String {
+            Wording.list(m.entries.filter { $0.places.contains(place) }.map { w?.entries[$0.id] ?? $0.title })
+        }
+        var out: [String] = []
+        if m.entries.contains(where: { $0.places.contains(.companion) }) {
+            out.append(String(localized: "In the companion's menu: \(titles(.companion))", comment: "Install sheet: items an extension adds; their titles"))
+        }
+        if m.entries.contains(where: { $0.places.contains(.pocket) }) {
+            out.append(String(localized: "In the menu bar's menu: \(titles(.pocket))", comment: "Install sheet: items an extension adds; their titles"))
+        }
+        if m.entries.contains(where: { $0.places.contains(.ask) }) {
+            out.append(String(localized: "A tab in Ask: \(titles(.ask))", comment: "Install sheet: a tab an extension adds; its title"))
+        }
+        if !m.drops.isEmpty {
+            let offered = Wording.list(m.drops.map { w?.drops[$0.id]?.title ?? $0.title })
+            out.append(String(localized: "When you drop something on the companion: \(offered)", comment: "Install sheet: what an extension offers for a drop; their titles"))
+        }
+        if !m.settings.isEmpty {
+            out.append(String(localized: "\(m.settings.count) settings, in Settings › Add-ons", comment: "Install sheet: how many settings an extension declares"))
+        }
+        return out
+    }
+}

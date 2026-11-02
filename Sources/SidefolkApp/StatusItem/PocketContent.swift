@@ -80,5 +80,7 @@ struct PocketActions {
     var openPalette: (String) -> Void = { _ in }
     /// The Play panel's menu of games (`AppCoordinator.openPlayMenu`).
     var openGames: () -> Void = {}
+    /// An item an extension put here (D100).
+    var openEntry: (ExtensionEntry) -> Void = { _ in }
     var quit: () -> Void = {}
 }

@@ -182,6 +182,16 @@ struct ExtensionRow: View {
             Label(ExtensionWords.commands(ext.commands), systemImage: "bolt")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
         }
+        // The settings it declares, and the person's switch for its use of their AI (D100).
+        if !ext.settingRows.isEmpty || ext.aiStatus != nil {
+            RowsCard {
+                ForEach(ext.settingRows) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
+                if let ai = ext.aiStatus {
+                    ExtensionAISwitchRow(status: ai) { on in Task { await model.setAI(on, extensionId: ext.id) } }
+                }
+            }
+            .padding(.top, Theme.Space.xs)
+        }
         // Tools on hold for approval, or a manifest and program that disagree: worth knowing, not errors.
         ForEach(ext.warnings, id: \.self) { warning in
             Label(warning, systemImage: "exclamationmark.triangle")

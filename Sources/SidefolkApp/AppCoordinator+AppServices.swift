@@ -137,7 +137,9 @@ extension AppCoordinator: AppServices {
             // Titles, as the person will see the tools everywhere else.
             toolNames: words.tools,
             watcherNames: words.watchers,
-            commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], words: manifest.words)?.shown ?? [] },
+            commands: manifest.tools.keys.sorted().flatMap { ToolCommands(manifest.tools[$0]?.commands ?? [], vocabulary: CommandVocabulary(manifest: manifest, strings: preview.report.strings))?
+                .shown(language: ExtensionStrings.current) ?? [] },
+            additions: ExtensionWords.additions(manifest, strings: preview.report.strings),
             pageNames: words.pages,
             pagesInBackground: manifest.pages.values.contains { $0.history == true || $0.widget == true },
             folk: manifest.folk, iconPath: preview.report.iconPath))
@@ -401,7 +403,8 @@ extension AppCoordinator: AppServices {
             sandboxed: e.summary.sandboxed, lastError: e.lastError, bundled: e.origin == .bundled,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
             iconPath: e.iconPath, fromDraft: e.origin == .draft, fromGallery: e.origin == .official, command: e.command, author: e.author,
-            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor)
+            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor,
+            settingRows: e.settings, aiStatus: e.ai)
     }
 
     /// The manifest of an extension folder shipped inside the app, or nil.

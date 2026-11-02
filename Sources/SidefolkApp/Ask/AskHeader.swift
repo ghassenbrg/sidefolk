@@ -3,7 +3,11 @@ import SwiftUI
 
 /// What Ask shows under its field (D84): the conversation, or a compact Today. Play is the third tab, and opens the
 /// Play panel in Ask's place (one panel at a time), so it is never a state of its own here.
-enum AskTab: Hashable { case ask, today, play }
+enum AskTab: Hashable {
+    case ask, today, play
+    /// A tab an extension declares (D100): it opens what the entry says, in Ask's place, as Play does.
+    case entry(String)
+}
 
 /// Ask's header (D84): who you talk to, how much Sidefolk asks, the way home and to Settings; under it the tabs,
 /// and for an AI conversation when it happened with the way to it in History.
@@ -52,14 +56,18 @@ struct AskHeader: View {
         return [.init(.ask, Text("Ask", comment: "Ask's tab: the conversation")),
                 .init(.today, today),
                 .init(.play, Text("Play", comment: "Ask's tab: opens the Play panel with its games"))]
+            + entries.map { .init(.entry($0.id), Text(ext: $0.title), symbol: $0.symbol) }
     }
 
+    /// Two at most: the row stays one row whichever extensions are on.
+    private var entries: [ExtensionEntry] { Array((model.actions?.askEntries ?? []).prefix(2)) }
+
     private func choose(_ tab: AskTab) {
-        guard tab != .play else {
-            model.actions?.openPlay()
-            return
+        switch tab {
+        case .play: model.actions?.openPlay()
+        case .entry(let id): entries.first { $0.id == id }.map { model.actions?.open($0) }
+        case .ask, .today: model.tab = tab
         }
-        model.tab = tab
     }
 
     /// "Just now · Open in History": when the AI last answered in this conversation, and the way to all of it.

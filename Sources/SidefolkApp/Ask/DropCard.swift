@@ -19,6 +19,15 @@ extension Attachment {
             return FileManager.default.fileExists(atPath: url.path, isDirectory: &folder) && folder.boolValue ? .folder : .file
         }
     }
+
+    /// What was dropped as an extension's drop action receives it (D100): the address, the path or the words.
+    var dropValue: String {
+        switch kind {
+        case .url(let url): url.absoluteString
+        case .file(let url): url.path
+        case .text: text ?? label
+        }
+    }
 }
 
 /// The drop card (D84): something dropped on the companion, and four likely things to do with it in a 2×2 grid, each
@@ -27,21 +36,42 @@ extension Attachment {
 struct DropCard: View {
     var attachment: Attachment
     var choices: [DropChoice]
+    /// What extensions offer for it (D100), after Sidefolk's own.
+    var offers: [ExtensionDropAction] = []
     var choose: (DropChoice) -> Void
+    var chooseOffer: (ExtensionDropAction) -> Void = { _ in }
     var openWith: (URL) -> Void
 
     var body: some View {
+        let cells = choices.map(Cell.own) + offers.map(Cell.offer)
         Grid(horizontalSpacing: Theme.Space.s, verticalSpacing: Theme.Space.s) {
-            ForEach(Array(stride(from: 0, to: choices.count, by: 2)), id: \.self) { row in
+            ForEach(Array(stride(from: 0, to: cells.count, by: 2)), id: \.self) { row in
                 GridRow {
-                    ForEach(choices[row..<min(row + 2, choices.count)], id: \.self) { choice in
-                        cell(choice, first: choice == choices.first)
+                    ForEach(cells[row..<min(row + 2, cells.count)], id: \.self) { item in
+                        switch item {
+                        case .own(let choice): cell(choice, first: choice == choices.first)
+                        case .offer(let offer): offerCell(offer)
+                        }
                     }
                 }
             }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("What to do with \(attachment.label)", comment: "VoiceOver: the drop card's four choices"))
+    }
+
+    private enum Cell: Hashable {
+        case own(DropChoice)
+        case offer(ExtensionDropAction)
+    }
+
+    /// An extension's offer: its words, and its name under them so it can't pass for Sidefolk's own.
+    private func offerCell(_ offer: ExtensionDropAction) -> some View {
+        Button { chooseOffer(offer) } label: {
+            DropChoiceLabel(symbol: offer.symbol ?? "puzzlepiece.extension", title: Text(ext: offer.title),
+                            detail: Text(ext: offer.detail.map { "\($0) · \(offer.extensionName)" } ?? offer.extensionName), first: false)
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder private func cell(_ choice: DropChoice, first: Bool) -> some View {
@@ -84,7 +114,6 @@ struct DropCard: View {
         case .openWith: "arrow.up.forward.app"
         case .remind: "alarm"
         case .copy: "doc.on.doc"
-        case .playOnTV: "tv"
         }
     }
 
@@ -125,8 +154,6 @@ struct DropCard: View {
             (Text("Remind me"), Text("Asks when, then reminds you to look at it.", comment: "The drop card: what Remind me does with a link"))
         case (.copy, _):
             (Text("Copy"), Text("Puts the text on the clipboard.", comment: "The drop card: what Copy does"))
-        case (.playOnTV, _):
-            (Text("Play on TV"), Text("Plays the video on your TV with Miraya.", comment: "The drop card: what Play on TV does; Miraya is an extension's name"))
         }
     }
 }

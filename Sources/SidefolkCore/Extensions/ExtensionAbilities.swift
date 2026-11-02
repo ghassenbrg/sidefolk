@@ -79,6 +79,11 @@ public struct ExtensionSettingRow: Sendable, Hashable, Identifiable {
         self.value = value
     }
 
+    /// What Settings' search reads of it.
+    public var searchEntry: SettingsSearch.Entry {
+        SettingsSearch.Entry(id: id, title: title, detail: detail ?? "", section: options.map(\.title).joined(separator: " "))
+    }
+
     /// The value in words, for History and a search: the option's title, on or off, the number, the text.
     public var valueWords: String {
         switch value {

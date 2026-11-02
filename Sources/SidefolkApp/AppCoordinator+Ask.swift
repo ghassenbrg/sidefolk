@@ -160,6 +160,10 @@ extension AppCoordinator: AskActions {
 
     func openPlay() { openPlayMenu(focus: true) }
 
+    var askEntries: [ExtensionEntry] { runtime.extensions.shelf.entries(in: .ask) }
+
+    func open(_ entry: ExtensionEntry) { run(entry) }
+
     func openConversation(_ thread: String?) {
         askPanel.hide()
         home.show(conversation: thread)
@@ -540,13 +544,6 @@ extension AppCoordinator: AskActions {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(attachment.text ?? attachment.label, forType: .string)
             model.add(.info(String(localized: "Copied.", comment: "Ask, after the drop card's Copy")), caption: attachment.caption, fades: true)
-        case (.playOnTV, .url(let url)):
-            // Miraya's own tool, as its sentence "play … on the tv" runs it: Guard asks as it always does.
-            runLocal(.extensionCommand(ExtensionCommandCall(tool: Self.playOnTV, input: ["url": .string(url.absoluteString)],
-                                                            extensionId: Self.miraya, said: url.absoluteString)),
-                     caption: attachment.caption, into: model)
-        case (.playOnTV, _):
-            break
         case (.save, .url(let url)):
             runLocal(.note(kind: .link, text: (url.host ?? url.absoluteString) + "\n" + url.absoluteString, collection: nil),
                      caption: attachment.caption, into: model)
@@ -580,13 +577,8 @@ extension AppCoordinator: AskActions {
         }
     }
 
-    static let miraya = "dev.sidefolk.miraya"
-    static let playOnTV = "ext.miraya.play_on_tv"
-
     func dropChoices(for attachment: Attachment) -> [DropChoice] {
-        guard case .url(let url) = attachment.kind else { return DropChoices.choices(for: attachment.dropKind) }
-        let tv = (runtime.registry.tool(named: Self.playOnTV) as? ExtensionTool)?.extensionId == Self.miraya
-        return DropChoices.choices(for: .link, link: url, canPlayOnTV: tv)
+        DropChoices.choices(for: attachment.dropKind, offers: extensionDrops(for: attachment).count)
     }
 
     func open(_ attachment: Attachment, with app: URL, in model: AskModel) {

@@ -134,6 +134,9 @@ protocol AskActions: AnyObject {
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel)
     /// The drop card's four choices for what was dropped, the first what Return does.
     func dropChoices(for attachment: Attachment) -> [DropChoice]
+    /// What extensions offer for it (D100).
+    func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction]
+    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel)
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
@@ -143,6 +146,9 @@ protocol AskActions: AnyObject {
     func openNow()
     /// The Play panel's menu of games, in Ask's place (D84).
     func openPlay()
+    /// Extensions' tabs beside Ask's own (D100).
+    var askEntries: [ExtensionEntry] { get }
+    func open(_ entry: ExtensionEntry)
 }
 
 /// The answer a reply follows up: its card, its conversation, and the words it answered.

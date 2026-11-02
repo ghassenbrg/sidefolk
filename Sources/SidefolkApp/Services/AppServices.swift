@@ -40,6 +40,9 @@ struct ExtensionInfo: Identifiable, Hashable {
     var commands: [String] = []
     /// The extension that does all this one does and is on, so this one rests (D67).
     var restingFor: String?
+    /// The settings it declares, and its use of the person's AI (D100).
+    var settingRows: [ExtensionSettingRow] = []
+    var aiStatus: ExtensionAIStatus?
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }
@@ -57,6 +60,8 @@ struct ExtensionInstallPreview: Identifiable, Hashable {
     var watcherNames: [String]
     /// Sentences it will answer without the AI, as "time in …" (D50).
     var commands: [String] = []
+    /// What it adds to Sidefolk's own places: menu items, a tab in Ask, what it offers for a drop (D100).
+    var additions: [String] = []
     /// Pages it adds to Home, and whether any is read in the background (D62).
     var pageNames: [String] = []
     var pagesInBackground = false

@@ -317,6 +317,20 @@ final class SettingsModel {
         extensions = await services.extensions()
     }
 
+    /// A setting an extension declared (D100): through the same tool as any change to it.
+    func set(_ row: ExtensionSettingRow, to value: JSONValue) async {
+        let outcome = await services.runtime.executor.execute(name: ExtensionSettingRow.tool, input: ["extension": .string(row.extensionId), "key": .string(row.key), "value": value],
+                                                              caller: .user)
+        extensionError = outcome.problem.map { UserFacingError(verbatim: $0.message) } ?? nil
+        extensions = await services.extensions()
+    }
+
+    /// The person's switch for an extension's use of their AI (D100).
+    func setAI(_ on: Bool, extensionId id: String) async {
+        await services.runtime.extensions.setAIAllowed(extensionId: id, on)
+        extensions = await services.extensions()
+    }
+
     /// Asks before letting changed tools run: they can do things the user never agreed to.
     func reviewToolChanges(_ ext: ExtensionInfo) async {
         let alert = NSAlert()

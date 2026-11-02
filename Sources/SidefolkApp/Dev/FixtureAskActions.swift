@@ -37,12 +37,18 @@ final class FixtureAskActions: AskActions {
     func remindPending(at date: Date, in model: AskModel) {}
     func answer(question: AttentionItem, actionId: String) {}
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel) {}
-    /// Miraya is there to play a video link on the TV (D84's drop card).
-    var canPlayOnTV = false
+    /// What a fictional extension offers for a drop (D100's drop actions).
+    var drops: [ExtensionDropAction] = []
+    var entries: [ExtensionEntry] = []
     func dropChoices(for attachment: Attachment) -> [DropChoice] {
-        guard case .url(let url) = attachment.kind else { return DropChoices.choices(for: attachment.dropKind) }
-        return DropChoices.choices(for: .link, link: url, canPlayOnTV: canPlayOnTV)
+        DropChoices.choices(for: attachment.dropKind, offers: extensionDrops(for: attachment).count)
     }
+    func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction] {
+        DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
+    }
+    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel) {}
+    var askEntries: [ExtensionEntry] { entries }
+    func open(_ entry: ExtensionEntry) {}
     func open(_ attachment: Attachment, with app: URL, in model: AskModel) {}
     func openPlay() {}
     func retry(_ text: String, in model: AskModel) {}

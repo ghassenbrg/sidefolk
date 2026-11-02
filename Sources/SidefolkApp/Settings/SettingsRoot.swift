@@ -217,10 +217,12 @@ struct SettingsSearchResults: View {
 
     var body: some View {
         let results = navigation.results
+        let addons = SettingsSearch.find(navigation.query, in: model.services.runtime.extensions.shelf.settings.map(\.searchEntry))
+            .compactMap { found in model.services.runtime.extensions.shelf.settings.first { $0.id == found.id } }
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.xl) {
-                    if results.isEmpty {
+                    if results.isEmpty && addons.isEmpty {
                         EmptyState(title: Text("Nothing in Settings says that", comment: "Settings search: no results"),
                                    message: Text("Try another word, like “quiet”, “folder” or “voice”.", comment: "Settings search: no results"),
                                    systemImage: "magnifyingglass")
@@ -232,6 +234,15 @@ struct SettingsSearchResults: View {
                     // The tab with the best match first.
                     ForEach(results.map(\.tab).reduce(into: [SettingsTab]()) { tabs, tab in if !tabs.contains(tab) { tabs.append(tab) } }) { tab in
                         group(tab, keys: results.filter { $0.tab == tab })
+                    }
+                    // What extensions declare (D100): each the real setting, as in Settings › Add-ons.
+                    if !addons.isEmpty {
+                        VStack(alignment: .leading, spacing: Theme.Space.s) {
+                            Text("Add-ons' settings", comment: "Settings search: settings extensions declare").font(Theme.Font.headline).foregroundStyle(Theme.ink)
+                            RowsCard {
+                                ForEach(addons) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
+                            }
+                        }
                     }
                 }
                 .frame(maxWidth: 720, alignment: .leading)

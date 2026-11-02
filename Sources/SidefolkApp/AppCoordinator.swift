@@ -121,6 +121,7 @@ final class AppCoordinator {
 
         agent = makeAgentRuntime()
         installTriviaHelp()
+        installAIHelp()
         onboarding = Onboarding(coordinator: self)
         companion.delegate = self
         applyCompanionSettings()
@@ -937,6 +938,7 @@ extension AppCoordinator: CompanionDelegate {
         item(String(localized: "Ask…")) { [weak self] in self?.showAsk() }
         item(String(localized: "Open Sidefolk")) { [weak self] in self?.openHome() }
         menu.addItem(playMenu())
+        for entry in runtime.extensions.shelf.entries(in: .companion) { menu.addItem(menuItem(entry)) }
         menu.addItem(.separator())
         if runtime.settings.current.isQuiet(at: Date()) {
             item(String(localized: "Turn Quiet Off")) { [weak self] in self?.setQuiet(for: nil) }

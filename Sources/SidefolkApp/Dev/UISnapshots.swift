@@ -317,6 +317,8 @@ enum UISnapshots {
             // Switches and buttons on a page, and a palette (D63).
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.keepAwake()), width: 980)
             try await page("page-extension-error", ExtensionPageView(model: SampleExtensionPage.failed()), width: 980)
+            try await page("page-extension-rich", ExtensionPageView(model: SampleRichPage.model()), width: 1180)
+            try await page("page-extension-rich-narrow", ExtensionPageView(model: SampleRichPage.model()), width: 640)
             // The Game Center (D93): Playtime's page, with many games, before any game, and narrow.
             try await page("page-game-center", GameCenterView(model: SampleGameCenter.model()), width: 1180)
             try await page("page-game-center-many", GameCenterView(model: SampleGameCenter.model(many: true)), width: 1180)
@@ -548,9 +550,10 @@ enum UISnapshots {
                        Glance.Next(title: "Call with mom", at: Date().addingTimeInterval(70 * 60), event: true)])
             glancing.waiting = 2
             glancing.tab = .today
-            // Miraya installed: a video link plays on the TV (D84). Ask holds its actions weakly, so they're kept here.
+            // An extension offers something for a video link (D100). Ask holds its actions weakly, so they're kept here.
             let tvActions = FixtureAskActions()
-            tvActions.canPlayOnTV = true
+            tvActions.drops = [SampleRichPage.drop]
+            tvActions.entries = [SampleRichPage.askEntry]
             // Today's tab with nothing in it (D84).
             let calmDay = AskModel()
             calmDay.actions = actions
