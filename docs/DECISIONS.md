@@ -3653,3 +3653,11 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 - **The keyboard in a page's scene** (found building Noor, for every page): a page's scene took no keys, so whatever hung on an area was out of reach without a mouse. Tab now goes from area to area in reading order and on out of the scene, Space or Return presses, the ring is the system's focus colour, and what is in a scroll box comes into view.
 - **`"ai": false` needs a sentence, or a page or surface** to reach it from (it needed a sentence): what a person clicks needn't be offered to a model or typed.
 
+### D109 — A page can lay itself out to its edges, hold native controls inside a scene, and draw its Today tile (2026-11-03)
+**Decision:** three general abilities, none naming an extension.
+- **`bleed`**: a bare page with no margins and no gaps between its parts. Its scenes keep their own margins; anything Sidefolk draws on it (a form, a table) keeps Sidefolk's. Back has no visible button there, because the page draws its own: the key and VoiceOver's name for it stay.
+- **`inlays`** on a page scene: a field, a choice or a switch at a place in it, at most 24, inside the scene. The scene draws the well or the pill, the system does the typing and the choosing, with its keyboard and its VoiceOver. A field is plain words; a choice is a menu over what is drawn. Anything else is dropped.
+- **`tile`** on a page: at most 720 × 300, drawn on Today across the column instead of the summary. A picture of the summary only: no areas, a click opens the page, VoiceOver reads the summary.
+**Why:** the founder asked for a page to match its approved design, not resemble it. A column of Sidefolk's cards can't hold a search box inside a header band, a menu inside a calendar's head, or a two-event tile on Today.
+**Alternatives:** building those screens into the app (D98 rules that out); drawing fake fields in a scene (no typing, no VoiceOver); a whole web view (a second renderer, and pages stay data, D62).
+
