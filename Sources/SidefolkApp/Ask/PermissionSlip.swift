@@ -100,7 +100,11 @@ struct PermissionSlip: View {
             }
             .padding(Theme.Space.l)
         }
-        .onAppear { if exactOpen { exact = true } }
+        // Text the person has to read in full (a plan, a skill's instructions) doesn't wait to be unfolded.
+        .onAppear {
+            if exactOpen { exact = true }
+            if case .text = request.details { exact = true }
+        }
         .task {
             try? await Task.sleep(for: .milliseconds(800))
             armed = true

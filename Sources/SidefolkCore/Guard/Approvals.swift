@@ -30,6 +30,8 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
         case runsPrograms
         /// Changes something else (a setting, a watcher, Sidefolk's data, another app's).
         case changesThings
+        /// Lets an extension use Sidefolk's tools without further cards: what its text says (D110).
+        case actsForYou
     }
 
     public var id: String

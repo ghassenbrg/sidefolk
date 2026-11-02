@@ -603,6 +603,14 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("homeSize:") {
+            // homeSize:<width>x<height>: Home's window at this size, to see a page narrow and wide.
+            let sides = command.dropFirst("homeSize:".count).split(separator: "x").compactMap { Double($0) }
+            if sides.count == 2, let window = home.devWindow {
+                window.setContentSize(NSSize(width: sides[0], height: sides[1]))
+            }
+            return
+        }
         if command.hasPrefix("pageFile:") {
             // pageFile:<path>: the next page `file` panel takes this, there being no one to click in it (D105).
             PageFilePanel.choiceForTest = String(command.dropFirst("pageFile:".count))

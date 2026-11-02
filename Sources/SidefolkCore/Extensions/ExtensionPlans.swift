@@ -162,13 +162,12 @@ enum ExtensionPlanWords {
     }
 
     /// The whole card. Plans the person allowed before under the same id say what is new first.
-    static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?) -> String {
+    static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool) -> String {
         var out: [String] = []
         if !when.isEmpty { out.append(String(localized: "When: \(when)", comment: "A plan's card; the extension's words for when it runs")) }
         func bullets(_ list: [(text: String, standing: Bool, new: Bool)]) -> String { list.map { "• \($0.text)" }.joined(separator: "\n") }
-        let hasOld = lines.contains { !$0.new }
         let standing = lines.filter(\.standing)
-        if hasOld {
+        if revised {
             let new = standing.filter(\.new), old = standing.filter { !$0.new }
             if !new.isEmpty { out.append(String(localized: "New, without asking you:", comment: "A plan's card") + "\n" + bullets(new)) }
             if !old.isEmpty { out.append(String(localized: "As before, without asking you:", comment: "A plan's card") + "\n" + bullets(old)) }
@@ -198,7 +197,7 @@ struct ExtensionPlanTool: Tool {
     let body: String
 
     var spec: ToolSpec {
-        ToolSpec(name: Self.name, title: String(localized: "Let it run on its own", comment: "A tool: an extension's plan the person reads, then it needs no more cards for exactly that"),
+        ToolSpec(name: Self.name, title: String(localized: "Do this without asking", comment: "A tool, after “Sideflow wants to”: a plan the person reads, then it needs no more cards for exactly that"),
                  description: "Lets an extension run what the person read, without further cards.",
                  inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id.")], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)

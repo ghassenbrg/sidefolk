@@ -5,7 +5,7 @@ import SwiftUI
 /// install sheet's passport and a gallery card. What reaches the person's things or leaves the Mac is amber (worth a
 /// look, D78); what stays inside is a plain well. Never red: red is for what was blocked or failed.
 enum Touch: CaseIterable {
-    case changesFiles, readsFiles, internet, privateData, clipboard, screen, microphone, program, apps, changesThings, ownData, readOnly
+    case changesFiles, readsFiles, internet, privateData, clipboard, screen, microphone, program, apps, changesThings, ownData, readOnly, acts
 
     init(_ effect: ApprovalRequest.Effect) {
         switch effect {
@@ -17,6 +17,7 @@ enum Touch: CaseIterable {
         case .changesFiles: self = .changesFiles
         case .runsPrograms: self = .program
         case .changesThings: self = .changesThings
+        case .actsForYou: self = .acts
         }
     }
 
@@ -32,6 +33,7 @@ enum Touch: CaseIterable {
         case .program: "terminal"
         case .apps: "arrow.up.forward.app"
         case .changesThings: "slider.horizontal.3"
+        case .acts: "point.3.connected.trianglepath.dotted"
         case .ownData: "shippingbox"
         case .readOnly: "eye"
         }
@@ -49,6 +51,7 @@ enum Touch: CaseIterable {
         case .program: Text("Runs a program", comment: "What an action touches, on a chip")
         case .apps: Text("Opens an app", comment: "What an action touches, on a chip: a link, an email draft or another app")
         case .changesThings: Text("Changes settings", comment: "What an action touches, on a chip: a setting, a watcher or Sidefolk's data")
+        case .acts: Text("Acts for you", comment: "What an action touches, on a chip: an extension may use tools for the person, without asking")
         case .ownData: Text("Its own data only", comment: "What an action touches, on a chip: an extension that reaches nothing beyond its folder")
         case .readOnly: Text("Read only", comment: "What an action touches, on a chip: it only reads")
         }
@@ -58,7 +61,7 @@ enum Touch: CaseIterable {
     var tone: ChipTone {
         switch self {
         // A program can do anything its user can, so it is worth a look too (the mockup's grey was too calm).
-        case .changesFiles, .internet, .privateData, .clipboard, .screen, .microphone, .program: .warning
+        case .changesFiles, .internet, .privateData, .clipboard, .screen, .microphone, .program, .acts: .warning
         case .readsFiles, .apps, .changesThings, .ownData, .readOnly: .neutral
         }
     }

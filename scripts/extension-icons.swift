@@ -350,9 +350,23 @@ func noor(_ c: CGContext) {
     c.fillPath()
 }
 
+/// Sideflow: a thread through three stops, as a flow reads top to bottom.
+func sideflow(_ c: CGContext) {
+    background(c, top: 0x5B8DEF, bottom: 0x0B7783)
+    stroke(c, white, width: 34) { p in
+        p.move(to: CGPoint(x: 150, y: 512))
+        p.addCurve(to: CGPoint(x: 356, y: 256), control1: CGPoint(x: 150, y: 372), control2: CGPoint(x: 356, y: 396))
+        p.addCurve(to: CGPoint(x: 156, y: 0), control1: CGPoint(x: 356, y: 116), control2: CGPoint(x: 156, y: 140))
+    }
+    for (x, y) in [(CGFloat(176), CGFloat(392)), (356, 256), (176, 120)] {
+        dot(c, CGPoint(x: x, y: y), radius: 44, fill: white, ring: rgb(0x0F2D5B, 0.0), ringWidth: 0)
+        dot(c, CGPoint(x: x, y: y), radius: 19, fill: rgb(0x2F7FB5))
+    }
+}
+
 let icons: [(folder: String, draw: (CGContext) -> Void)] = [
     ("git", git), ("world-clock", worldClock), ("system-vitals", systemVitals), ("hello-folk", helloFolk), ("weather", weather),
-    ("calculator", calculator), ("currency", currency), ("playtime", playtime), ("images", images), ("pdf", pdf), ("qr-codes", qrCodes),
+    ("calculator", calculator), ("currency", currency), ("playtime", playtime), ("sideflow", sideflow), ("images", images), ("pdf", pdf), ("qr-codes", qrCodes),
     ("archives", archives), ("dev-toolbox", devToolbox), ("feeds", feeds), ("clipboard", clipboard), ("keep-awake", keepAwake),
     ("system-vitals-plus", yourMac), ("prayer-times", noor),
 ]

@@ -43,7 +43,8 @@ public enum ExtensionActionPolicy {
     /// saying so isn't taken (D71), because a practice run or a retry rests on it.
     static func readsOnly(_ tool: any Tool) -> Bool {
         let base = (tool as? ExternalFacade)?.base ?? tool
-        guard !base.spec.mutates else { return false }
+        // Telling the person something isn't reading, however little it changes.
+        guard !base.spec.mutates, !reachesThePerson.contains(base.spec.name) else { return false }
         if let ext = base as? ExtensionTool { return ext.firstParty }
         return true
     }

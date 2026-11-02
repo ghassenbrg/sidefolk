@@ -73,7 +73,7 @@ public struct ApprovalReason: Sendable, Hashable {
         case .changesFiles: String(localized: "This changes files, so I check with you first.")
         case .runsPrograms: String(localized: "This runs a program, so I check with you first.")
         case .usesExtension: String(localized: "This hands what it's given to an extension, so I check with you first.")
-        case .readsPrivateData, .readsFiles, .changesThings: String(localized: "This could act on what was read, so I check with you first.")
+        case .readsPrivateData, .readsFiles, .changesThings, .actsForYou: String(localized: "This could act on what was read, so I check with you first.")
         }
     }
 }

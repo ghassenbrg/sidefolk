@@ -120,7 +120,7 @@ struct PageStepsView: View {
         switch state {
         case .done: mark("checkmark.circle.fill", Theme.success)
         case .failed: mark("xmark.circle.fill", Theme.danger)
-        case .waiting: mark("clock.fill", Theme.warning)
+        case .waiting: mark("exclamationmark.circle.fill", Theme.warning)
         case .running: ProgressView().controlSize(.mini).background(Circle().fill(Theme.surfaceRaised))
         case .pending: mark("ellipsis.circle.fill", Theme.inkMuted)
         case .skipped, .none: EmptyView()

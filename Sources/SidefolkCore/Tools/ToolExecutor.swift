@@ -229,6 +229,7 @@ public final class ToolExecutor: Sendable {
                 if let asker {
                     request.asker = asker
                     request.firstParty = asker.firstParty
+                    if case .text = request.details { request.effect = .actsForYou }
                 }
                 let wait = approvalTimeout.map { (seconds: min($0, Self.approvalTimeout), whenTimeIsUp: UnansweredRule.Action?.none) }
                     ?? Self.wait(for: caller, policy: policy, present: present, minute: minute)

@@ -71,7 +71,7 @@ struct ApprovalDetails: View {
                 Text(text).font(Theme.Font.caption).foregroundStyle(Theme.ink).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxHeight: 160)
+            .frame(maxHeight: 260)
             .padding(Theme.Space.s)
             .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
         case .folderAccess(let folder, let write):
