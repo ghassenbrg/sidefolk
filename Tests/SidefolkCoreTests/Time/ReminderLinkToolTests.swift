@@ -151,4 +151,32 @@ import Testing
         let found = try ok(await run.execute(name: "notes.search", input: ["query": "report"], caller: .agent(runId: "r1")))
         #expect(found.text.contains("(reminder \(reminder.id))"))
     }
+
+    // MARK: Both ways (D115)
+
+    @Test func theToolMarkingAReminderDoneFinishesItsTaskAndUndoReopensIt() async throws {
+        let task = try await item("Send the report")
+        let reminder = try await t.scheduler.create(title: task.title, at: t.clock.now.addingTimeInterval(3600), source: "user", itemId: task.id)
+        let outcome = await run.execute(name: "reminders.complete", input: ["id": .string(reminder.id)], caller: .user)
+        #expect(outcome.isOK)
+        #expect(try await notebook.item(id: task.id)?.status == .done)
+        guard case .ok(let result) = outcome.status else { Issue.record("expected a result"); return }
+        #expect(result.text.contains("Its task is done too."))
+
+        _ = try await run.undo.undo(outcome.activity.id)
+        #expect(try await notebook.item(id: task.id)?.status == .open)
+        await t.scheduler.settleLinks()
+        #expect(await t.reminder(reminder.id)?.state == .scheduled)
+    }
+
+    @Test func theToolFinishingATaskEndsItsReminderAndTheToolTrashingItToo() async throws {
+        for tool in ["notes.update", "notes.trash"] {
+            let task = try await item("Task for \(tool)")
+            let reminder = try await t.scheduler.create(title: task.title, at: t.clock.now.addingTimeInterval(3600), source: "user", itemId: task.id)
+            let input: JSONValue = tool == "notes.update" ? ["id": .string(task.id), "status": "done"] : ["id": .string(task.id)]
+            #expect(await run.execute(name: tool, input: input, caller: .user).isOK)
+            await t.scheduler.settleLinks()
+            #expect(await t.reminder(reminder.id)?.endedWithItem != nil, "\(tool)")
+        }
+    }
 }

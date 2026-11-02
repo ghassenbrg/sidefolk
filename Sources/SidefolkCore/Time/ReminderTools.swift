@@ -394,7 +394,8 @@ public enum ReminderTools {
         var spec: ToolSpec {
             ToolSpec(
                 name: "reminders.complete", title: String(localized: "Mark a reminder done"),
-                description: "Mark a reminder as done by id. A repeating reminder keeps repeating; use reminders.cancel to stop it.",
+                description: "Mark a reminder as done by id. A repeating reminder keeps repeating; use reminders.cancel to stop it. "
+                    + "One that belongs to an open task finishes the task too, and a series stops with it.",
                 inputSchema: Schema.object(["id": Schema.string("The reminder's id.")], required: ["id"]),
                 risk: .low, capabilities: [.time], category: .time, mutates: true
             )
@@ -410,14 +411,25 @@ public enum ReminderTools {
             if r.state == .cancelled {
                 throw UserFacingError("That reminder was cancelled, so there's nothing to mark done.")
             }
-            guard let before = try await scheduler.complete(id: r.id) else { throw ToolError.notFound(String(localized: "a reminder with id \(r.id)")) }
+            let completed = try await scheduler.completeWithTask(id: r.id)
+            guard let before = completed.before else { throw ToolError.notFound(String(localized: "a reminder with id \(r.id)")) }
+            let task = completed.finished
             let after = await scheduler.reminder(matching: r.id) ?? r
-            let next = after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "later"
-            let note = after.recurrence != nil ? "It will remind you again \(next)." : ""
+            let note: String
+            if task != nil {
+                note = "Its task is done too."
+            } else if after.recurrence != nil {
+                note = "It will remind you again \(after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "later")."
+            } else {
+                note = ""
+            }
             return ToolResult(text: "Marked “\(r.title)” done. \(note)".trimmingCharacters(in: .whitespaces),
                               card: ResultCard(kind: .reminder, title: r.title,
-                                               subtitle: after.recurrence == nil ? String(localized: "Done") : String(localized: "Done for now"), refId: r.id),
-                              undo: before == after ? nil : UndoAction(label: String(localized: "Undo done")) { try await scheduler.restore(before) },
+                                               subtitle: after.recurrence == nil || task != nil ? String(localized: "Done") : String(localized: "Done for now"), refId: r.id),
+                              undo: before == after ? nil : UndoAction(label: String(localized: "Undo done")) {
+                                  if let task { try await scheduler.reopen(task) }
+                                  try await scheduler.restore(before)
+                              },
                               untrusted: foreign)
         }
     }

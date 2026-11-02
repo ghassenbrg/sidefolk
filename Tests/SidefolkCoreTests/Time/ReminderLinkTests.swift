@@ -244,3 +244,99 @@ import Testing
         #expect(!hidden.contains("Prepare the report"))
     }
 }
+
+/// The rules both ways (D115), through the same doors the Pocket, Home and the agents use.
+@Suite struct ReminderTaskSyncTests {
+    let t: SchedulerEnv
+    let notebook: NotebookStore
+
+    init() async throws {
+        t = try await SchedulerEnv()
+        notebook = NotebookStore(t.env.db)
+    }
+
+    func task(_ title: String = "Send the report", kind: NotebookItem.Kind = .task) async throws -> NotebookItem {
+        let inbox = try await notebook.inbox(now: t.clock.now)
+        let item = NotebookItem(collectionId: inbox.id, kind: kind, title: title, source: "user", now: t.clock.now)
+        try await notebook.add(item)
+        return item
+    }
+
+    func remind(_ item: NotebookItem, every rule: Recurrence? = nil) async throws -> Reminder {
+        try await t.scheduler.create(title: item.title, at: t.clock.now.addingTimeInterval(3600), recurrence: rule, source: "user", itemId: item.id)
+    }
+
+    @Test func aReminderMarkedDoneFinishesItsTask() async throws {
+        let item = try await task()
+        let r = try await remind(item)
+        try await t.scheduler.complete(id: r.id)
+        #expect(try await notebook.item(id: item.id)?.status == .done)
+        #expect(await t.reminder(r.id)?.state == .done)
+    }
+
+    @Test func aRepeatingReminderMarkedDoneFinishesItsTaskAndTheSeriesStops() async throws {
+        let item = try await task()
+        let r = try await remind(item, every: Recurrence(frequency: .daily))
+        try await t.scheduler.complete(id: r.id)
+        #expect(try await notebook.item(id: item.id)?.status == .done)
+        let after = try #require(await t.reminder(r.id))
+        #expect(after.state == .cancelled)
+        #expect(after.endedWithItem == .done)
+    }
+
+    @Test func aTaskDoneEndsItsWaitingReminder() async throws {
+        let item = try await task()
+        let r = try await remind(item)
+        _ = try await notebook.setStatus(itemId: item.id, .done, now: t.clock.now)
+        await t.scheduler.settleLinks()
+        #expect(await t.reminder(r.id)?.endedWithItem == .done)
+        #expect(await t.scheduler.upcoming().isEmpty)
+    }
+
+    @Test func aTaskTrashedEndsItsReminderAndOneDeletedForGoodCancelsIt() async throws {
+        let item = try await task()
+        let r = try await remind(item)
+        _ = try await notebook.trash(itemId: item.id, now: t.clock.now)
+        await t.scheduler.settleLinks()
+        #expect(await t.reminder(r.id)?.state == .cancelled)
+        try await notebook.restore(itemId: item.id, now: t.clock.now)
+        await t.scheduler.settleLinks()
+        #expect(await t.reminder(r.id)?.state == .scheduled)
+        try await notebook.purge(itemId: item.id)
+        #expect(await t.reminder(r.id)?.state == .cancelled)
+    }
+
+    /// Opening a task again brings back what it ended, if still ahead (D49), but never what the person marked done.
+    @Test func aReopenedTaskLeavesAReminderThePersonMarkedDone() async throws {
+        let item = try await task()
+        let r = try await remind(item)
+        try await t.scheduler.complete(id: r.id)
+        _ = try await notebook.setStatus(itemId: item.id, .open, now: t.clock.now)
+        await t.scheduler.settleLinks()
+        #expect(await t.reminder(r.id)?.state == .done)
+    }
+
+    @Test func snoozingOrCancellingLeavesTheTask() async throws {
+        let item = try await task()
+        let snoozed = try await remind(item)
+        try await t.scheduler.snooze(id: snoozed.id, until: t.clock.now.addingTimeInterval(7200))
+        #expect(try await notebook.item(id: item.id)?.status == .open)
+        try await t.scheduler.cancel(id: snoozed.id)
+        #expect(try await notebook.item(id: item.id)?.status == .open)
+    }
+
+    @Test func aNoteIsLeftAlone() async throws {
+        let item = try await task("Book title", kind: .note)
+        let r = try await remind(item)
+        try await t.scheduler.complete(id: r.id)
+        #expect(try await notebook.item(id: item.id)?.status == .open)
+    }
+
+    @Test func aFinishedTaskIsNotFinishedAgain() async throws {
+        let item = try await task()
+        let r = try await remind(item)
+        _ = try await notebook.setStatus(itemId: item.id, .done, now: t.clock.now.addingTimeInterval(-60))
+        try await t.scheduler.complete(id: r.id)
+        #expect(try await notebook.item(id: item.id)?.updatedAt == t.clock.now.addingTimeInterval(-60))
+    }
+}

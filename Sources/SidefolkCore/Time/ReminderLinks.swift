@@ -5,7 +5,8 @@ import GRDB
 /// reminders still waiting for it (a repeating one stops), and they come back when the task is opened again or the item
 /// restored, if their time is still ahead. Every way an item changes (the Notebook, the tools, Undo, other agents)
 /// announces `.notebook`, and the scheduler settles the links then; `fire` checks once more, so a reminder never fires
-/// for a task finished a moment before.
+/// for a task finished a moment before. The other way (D115): a reminder marked done finishes its open task, wherever
+/// it was marked. Snoozing or cancelling it says nothing about the task.
 extension ReminderScheduler {
     /// Why `item` ends the reminders that belong to it, if it does. An item that no longer exists counts as trashed.
     static func endReason(_ item: NotebookItem?) -> Reminder.EndedWithItem? {
@@ -105,19 +106,22 @@ extension ReminderScheduler {
         }
     }
 
-    /// "Mark done" on a reminder that belongs to a task: the task is done, this time is answered, and the rest of a
-    /// series stops with the task.
-    func finishTask(reminderId id: String) async throws {
-        guard let r = try await store.reminder(id: id), let itemId = r.itemId else {
-            try await complete(id: id)
-            return
-        }
-        let notebook = NotebookStore(store.db)
-        if let item = try await notebook.item(id: itemId), item.kind == .task, item.status == .open, item.deletedAt == nil {
-            _ = try await notebook.setStatus(itemId: itemId, .done, now: clock.now)
-            events.changed(.notebook)
-        }
-        try await complete(id: id)
-        await settleLinks()
+    /// The open task a reminder belongs to, which marking the reminder done would finish.
+    func linkedOpenTask(_ r: Reminder) async -> NotebookItem? {
+        guard r.state != .done, r.state != .cancelled, let item = await linkedItem(r), item.kind == .task, item.status == .open else { return nil }
+        return item
+    }
+
+    /// Undo of `complete`: its task open again. The reminder is put back by `restore`.
+    func reopen(_ task: NotebookItem) async throws {
+        _ = try await NotebookStore(store.db).setStatus(itemId: task.id, task.status, now: clock.now)
+        events.changed(.notebook)
+    }
+
+    /// Marks `task` done, and says so; nil if it couldn't.
+    func finish(_ task: NotebookItem?) async -> NotebookItem? {
+        guard let task, (try? await NotebookStore(store.db).setStatus(itemId: task.id, .done, now: clock.now)) != nil else { return nil }
+        events.changed(.notebook)
+        return task
     }
 }

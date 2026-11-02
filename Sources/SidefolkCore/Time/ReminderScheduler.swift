@@ -181,9 +181,18 @@ public actor ReminderScheduler {
     }
 
     /// Marks a reminder done. A repeating reminder is not ended: Done answers this time only and
-    /// clears a snooze; use `cancel` to stop the series.
+    /// clears a snooze; use `cancel` to stop the series. One that belongs to an open task finishes the task, and a
+    /// series stops with it (D115).
     @discardableResult
     public func complete(id: String) async throws -> Reminder? {
+        try await completeWithTask(id: id).before
+    }
+
+    /// `complete`, and the task it finished, if it did. The reminder goes first: settling can run at any wait, and one
+    /// ended by its task rather than by the person would come back when the task reopens.
+    func completeWithTask(id: String) async throws -> (before: Reminder?, finished: NotebookItem?) {
+        var task: NotebookItem?
+        if let r = try await store.reminder(id: id) { task = await linkedOpenTask(r) }
         let changed = try await update(id) { r in
             if r.recurrence != nil {
                 guard r.state == .snoozed else { return false }
@@ -197,7 +206,9 @@ public actor ReminderScheduler {
             return true
         }
         await finishChange()
-        return changed?.before
+        let finished = await finish(task)
+        if finished != nil { await settleLinks() }
+        return (changed?.before, finished)
     }
 
     /// Postpones a reminder to `until`. Returns how it was before, for Undo.
@@ -426,7 +437,7 @@ public actor ReminderScheduler {
             case ActionID.snooze10: try await snooze(id: id, until: clock.now.addingTimeInterval(600))
             case ActionID.tomorrow: try await snooze(id: id, until: tomorrowMorning())
             case ActionID.stop: try await cancel(id: id)
-            case ActionID.taskDone: try await finishTask(reminderId: id)
+            case ActionID.taskDone: try await complete(id: id)
             default: break
             }
         } catch {
