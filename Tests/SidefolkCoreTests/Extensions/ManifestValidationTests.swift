@@ -26,7 +26,7 @@ import Testing
     func fields(_ r: ValidationReport) -> [String] { r.errors.map(\.field) }
 
     @Test func shippedExtensionsAndTheSampleAreValid() {
-        let folders = (ExtFixtures.builtInFolders + ExtFixtures.addonFolders).map(ExtFixtures.builtIn) + [ExtFixtures.repoRoot.appendingPathComponent("extensions/hello-folk")]
+        let folders = (ExtFixtures.builtInFolders + ExtFixtures.addonFolders).map(ExtFixtures.builtIn) + [ExtFixtures.repoRoot.appendingPathComponent("extensions/hello-abilities"), ExtFixtures.repoRoot.appendingPathComponent("extensions/hello-folk")]
         for folder in folders {
             let r = ExtensionValidator.validate(at: folder, paths: paths, resolver: Self.resolver)
             #expect(r.isValid, "\(folder.lastPathComponent): \(r.errors)")

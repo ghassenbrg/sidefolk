@@ -75,7 +75,7 @@ public enum CommandSlotKind: String, Sendable, CaseIterable {
     /// Something a slot of this kind takes.
     var sample: String {
         switch self {
-        case .text: "some words"
+        case .text: "garden gate"
         case .word: "word"
         case .number, .integer: "7"
         case .expression: "1+1"

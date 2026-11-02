@@ -51,3 +51,20 @@ import Testing
         #expect(!ExtensionDropAction.glob(String(repeating: "*a", count: 40) + "b", matches: String(repeating: "a", count: 2000)))
     }
 }
+
+/// Miraya's "Play on TV" lives in its manifest now, not in the app (D100): installed, a video link offers it and runs its own tool; gone, the
+/// link keeps its reminder.
+@Suite struct DropActionFromManifestTests {
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons)) func aVideoLinkOffersWhatItsExtensionDeclares() throws {
+        let manifest = try ExtensionManifest.decode(Data(contentsOf: ExtFixtures.source("miraya").appendingPathComponent(ExtensionManifest.fileName)))
+        let meta = try #require(manifest.drops.first)
+        #expect(meta.tool == "play_on_tv" && manifest.tools["play_on_tv"] != nil)
+        let action = ExtensionDropAction(extensionId: manifest.id, extensionName: manifest.name, key: meta.id, title: meta.title, kinds: meta.kinds, patterns: meta.patterns,
+                                         tool: "ext.miraya.play_on_tv", input: meta.input)
+        #expect(DropChoices.offers(for: .link, value: "https://cdn.example.com/films/trip.mp4", among: [action]).count == 1)
+        #expect(DropChoices.offers(for: .link, value: "https://example.com/a/Clip.MOV", among: [action]).count == 1)
+        #expect(DropChoices.offers(for: .link, value: "https://www.youtube.com/watch?v=abc", among: [action]).isEmpty)
+        #expect(DropChoices.offers(for: .link, value: "http://example.com/film.mp4", among: [action]).isEmpty)
+        #expect(action.input(for: "https://a.example/b.mp4") == ["url": "https://a.example/b.mp4"])
+    }
+}

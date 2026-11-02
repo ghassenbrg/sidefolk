@@ -1407,6 +1407,17 @@
         }
       }
     },
+    "%@ asked your AI: %@" : {
+      "comment" : "History: an extension asked the person's AI to write something; its name, then what for, in its own words",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ asked your AI: %2$@"
+          }
+        }
+      }
+    },
     "%@ asks" : {
       "comment" : "Above a decision card: the companion asks",
       "localizations" : {
@@ -24724,6 +24735,9 @@
         }
       }
     },
+    "%lld settings, in Settings › Add-ons" : {
+      "comment" : "Install sheet: how many settings an extension declares"
+    },
     "%lld skills" : {
       "comment" : "What a backup holds",
       "localizations" : {
@@ -33659,6 +33673,9 @@
         }
       }
     },
+    "A tab in Ask: %@" : {
+      "comment" : "Install sheet: a tab an extension adds; its title"
+    },
     "A theme changes colours, type, spacing and corners. It can't run anything." : {
       "localizations" : {
         "ar" : {
@@ -37452,6 +37469,9 @@
           }
         }
       }
+    },
+    "Add-ons' settings" : {
+      "comment" : "Settings search: settings extensions declare"
     },
     "Added" : {
       "localizations" : {
@@ -42825,6 +42845,9 @@
         }
       }
     },
+    "An extension" : {
+      "comment" : "History: when the extension's name isn't known"
+    },
     "An extension Sidefolk hasn't checked is asking." : {
       "localizations" : {
         "ar" : {
@@ -46740,6 +46763,9 @@
           }
         }
       }
+    },
+    "Ask the AI for an extension" : {
+      "comment" : "A tool: an extension asks the person's AI to write something"
     },
     "Ask the user" : {
       "localizations" : {
@@ -52321,6 +52347,17 @@
         }
       }
     },
+    "Can ask your AI to write something, up to %lld times a day. It says it uses it %@." : {
+      "comment" : "Install sheet: permissions.ai; the daily limit, then the author's purpose, “to write quiz questions”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can ask your AI to write something, up to %1$lld times a day. It says it uses it %2$@."
+          }
+        }
+      }
+    },
     "Can change files" : {
       "comment" : "A chip on a permission slip for a folder",
       "localizations" : {
@@ -54835,6 +54872,9 @@
           }
         }
       }
+    },
+    "Change an extension's setting" : {
+      "comment" : "A tool: a setting an extension declared"
     },
     "Change and delete notes" : {
       "localizations" : {
@@ -74159,6 +74199,7 @@
       }
     },
     "Done" : {
+      "comment" : "A card on an extension's page: what it is about is done for today",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85577,6 +85618,7 @@
       }
     },
     "From %@" : {
+      "comment" : "A menu item an extension added: its tooltip names the extension",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -103709,6 +103751,12 @@
         }
       }
     },
+    "In the companion's menu: %@" : {
+      "comment" : "Install sheet: items an extension adds; their titles"
+    },
+    "In the menu bar's menu: %@" : {
+      "comment" : "Install sheet: items an extension adds; their titles"
+    },
     "In the sidebar" : {
       "comment" : "All Extensions: whether a page has a row in Home's sidebar",
       "extractionState" : "stale",
@@ -106107,6 +106155,9 @@
         }
       }
     },
+    "It counts toward your AI's usage. The AI gets only the words the extension sends: no tools, nothing of yours. Each request is in History, and a switch in Settings › Add-ons turns it off." : {
+
+    },
     "It didn't ask Sidefolk for anything." : {
       "localizations" : {
         "ar" : {
@@ -107052,6 +107103,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它在沙盒中运行，只允许这里列出的内容。"
+          }
+        }
+      }
+    },
+    "It says it uses it %@. %lld of %lld requests today." : {
+      "comment" : "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It says it uses it %1$@. %2$lld of %3$lld requests today."
           }
         }
       }
@@ -113370,6 +113432,9 @@
           }
         }
       }
+    },
+    "Let it use your AI" : {
+      "comment" : "An extension's row: the person's switch for its use of their AI"
     },
     "Let the Mac sleep" : {
       "localizations" : {
@@ -132227,6 +132292,9 @@
         }
       }
     },
+    "Note in History" : {
+      "comment" : "A tool: an extension adds one row to History"
+    },
     "Note: %@" : {
       "comment" : "Under a reminder: the note it belongs to",
       "localizations" : {
@@ -137289,7 +137357,7 @@
       }
     },
     "Off" : {
-      "comment" : "Reasoning effort: the model doesn't reason before answering",
+      "comment" : "An extension's setting: a switch that is off\nReasoning effort: the model doesn't reason before answering",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -137522,6 +137590,9 @@
           }
         }
       }
+    },
+    "On" : {
+      "comment" : "An extension's setting: a switch that is on"
     },
     "On %lld" : {
       "comment" : "A filter in Settings › Add-ons: the extensions switched on, “On 9”",
@@ -149750,6 +149821,7 @@
     },
     "Plays the video on your TV with Miraya." : {
       "comment" : "The drop card: what Play on TV does; Miraya is an extension's name",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -175371,7 +175443,7 @@
       }
     },
     "Show" : {
-      "comment" : "Ask's tabs, for VoiceOver: the conversation, Today or Play\nOpens Settings › Trust › Your data\nOpens the Gallery's Updates",
+      "comment" : "Ask's tabs, for VoiceOver: the conversation, Today or Play\nOpens Settings › Trust › Your data\nOpens the Gallery's Updates\nVoiceOver: tabs on an extension's page",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -196930,6 +197002,9 @@
         }
       }
     },
+    "That isn't a value for “%@”." : {
+      "comment" : "An extension's setting, by its title"
+    },
     "That isn't a web address. Nothing was saved." : {
       "localizations" : {
         "ar" : {
@@ -199776,7 +199851,7 @@
       }
     },
     "The AI didn't answer." : {
-      "comment" : "Trivia questions couldn't be made: the call failed",
+      "comment" : "An extension's request to the AI failed\nTrivia questions couldn't be made: the call failed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -209050,6 +209125,9 @@
           }
         }
       }
+    },
+    "There's no such setting." : {
+
     },
     "There's nothing for me to work on yet." : {
       "localizations" : {
@@ -231979,6 +232057,9 @@
         }
       }
     },
+    "When you drop something on the companion: %@" : {
+      "comment" : "Install sheet: what an extension offers for a drop; their titles"
+    },
     "When — e.g. “tomorrow 9am” or “every 30 minutes”; leave empty to keep %@" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -235301,6 +235382,9 @@
           }
         }
       }
+    },
+    "Written by %@" : {
+      "comment" : "History: text the person's AI wrote for an extension; its name"
     },
     "Written by Sidefolk %@" : {
       "comment" : "When an extension draft was written: “Written by Sidefolk 5 minutes ago”",
@@ -264500,6 +264584,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”已经是 Sidefolk 的伙伴之一。"
+          }
+        }
+      }
+    },
+    "“%@” is also a sentence of %@: when someone says it, the AI answers instead of either." : {
+      "comment" : "Install sheet: two extensions claim the same command sentence; the sentence, then the other extension's name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” is also a sentence of %2$@: when someone says it, the AI answers instead of either."
           }
         }
       }
