@@ -73,14 +73,15 @@ final class HostedPanel<Content: View> {
 
     /// Places the panel next to `anchor` (the companion's frame), on the side with more room,
     /// fully inside the visible frame of `screen`.
-    func place(beside anchor: NSRect, on screen: NSScreen, gap: CGFloat = 10, preferAbove: Bool = false) {
-        lastPlacement = { [weak self] in self?.place(beside: anchor, on: screen, gap: gap, preferAbove: preferAbove) }
+    /// - Parameter roomAbove: how much taller it would be standing above, right now: what it has there and not elsewhere.
+    func place(beside anchor: NSRect, on screen: NSScreen, gap: CGFloat = 10, preferAbove: Bool = false, roomAbove: @escaping () -> CGFloat = { 0 }) {
+        lastPlacement = { [weak self] in self?.place(beside: anchor, on: screen, gap: gap, preferAbove: preferAbove, roomAbove: roomAbove) }
         let size = panel.isVisible && panel.frame.height > 1 ? panel.frame.size : fittingSize
         let visible = screen.visibleFrame
         var origin: NSPoint
         if preferAbove {
             origin = NSPoint(x: anchor.midX - size.width / 2, y: anchor.maxY + gap)
-            if origin.y + size.height > visible.maxY { origin.y = anchor.minY - gap - size.height }
+            if !CardPlacement.standsAbove(top: origin.y, height: size.height, roomAbove: roomAbove(), screenTop: visible.maxY) { origin.y = anchor.minY - gap - size.height }
         } else {
             let roomLeft = anchor.minX - visible.minX
             let roomRight = visible.maxX - anchor.maxX

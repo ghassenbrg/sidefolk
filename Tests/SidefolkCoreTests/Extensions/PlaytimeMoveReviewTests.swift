@@ -254,6 +254,25 @@ struct PlaytimeMoveReviewTests {
         #expect(waits > 0, "it waits, and the newest wins")
     }
 
+    // MARK: A card that settles
+
+    /// Above, a card has its tail and is 8 points taller; under the companion it isn't. Near the screen's top, judged by its size just now, it flipped for ever and took the app down.
+    @Test func aCardNearTheTopOfTheScreenSettles() {
+        let tail: CGFloat = 8, screenTop: CGFloat = 950, plain: CGFloat = 284
+        for top in stride(from: CGFloat(600), through: 700, by: 1) {
+            var showing = true, changes = 0
+            for _ in 0..<40 {
+                let above = CardPlacement.standsAbove(top: top, height: plain + (showing ? tail : 0), roomAbove: showing ? 0 : tail, screenTop: screenTop)
+                if above != showing { changes += 1 }
+                showing = above
+            }
+            #expect(changes <= 1, "at \(top): \(changes) changes")
+        }
+        // At the height that crashed: the anchor's top less the gap, as measured from a real crash.
+        #expect(!CardPlacement.standsAbove(top: 661.8, height: 284, roomAbove: 8, screenTop: 950), "without its tail it fits, with it it wouldn't: it stands under")
+        #expect(CardPlacement.standsAbove(top: 600, height: 292, roomAbove: 0, screenTop: 950))
+    }
+
     // MARK: Carrying once, for good
 
     /// Removing it leaves nothing, and installing it again doesn't bring back numbers from before: what was carried is gone from the app, and not carried twice.

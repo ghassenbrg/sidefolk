@@ -196,7 +196,10 @@ final class SidecardController {
 
     private func place(_ anchor: NSRect, _ screen: NSScreen) {
         // The tail's tip lands just above the head; the margin under the glass is the shadow's room.
-        hosted.place(beside: anchor, on: screen, gap: 4 - SidecardView.margin.bottom, preferAbove: true)
+        hosted.place(beside: anchor, on: screen, gap: 4 - SidecardView.margin.bottom, preferAbove: true) { [weak model] in
+            // Standing above, it has its tail: a card without one now must fit with it, or it would fit, grow, not fit, and never settle (`CardPlacement`).
+            model?.tailAt == nil ? SidecardShape.tailSize.height : 0
+        }
     }
 
     /// The whisper runs out its time unless the pointer holds it; leaving gives it three more seconds (b02).
