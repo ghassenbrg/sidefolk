@@ -67,9 +67,10 @@ public enum Language {
     static func word(_ key: String) -> String? {
         let (code, loaded) = state.withLock { ($0.code, $0.tables) }
         let tables = scoped?.tables ?? loaded ?? [:]
-        let plain = tables.mapValues { $0.compactMapValues { if case .plain(let s) = $0 { s } else { nil } } }
-        let found = Localized(scoped?.code ?? code, plain)[key]
-        return found == key && plain["en"]?[key] == nil && plain[Localized.normalized(scoped?.code ?? code)]?[key] == nil ? nil : found
+        // By the language's table directly: `L` runs dozens of times a board, and a table holds hundreds of words.
+        if case .plain(let word)? = tables[Localized.normalized(scoped?.code ?? code)]?[key] { return word }
+        if case .plain(let word)? = tables["en"]?[key] { return word }
+        return nil
     }
 
     /// `strings/` beside `bin/`, where Sidefolk installs the program (`<folder>/bin/<program>`).

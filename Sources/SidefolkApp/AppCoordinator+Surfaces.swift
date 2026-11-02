@@ -1,5 +1,6 @@
 import AppKit
 import SidefolkCore
+import SwiftUI
 
 /// Extensions' surfaces beside the companion (D99): opening one (from words, a menu or the AI, all through
 /// `surfaces.open`), its reactions and sounds under the same limits as cues, one Activity row, and away it goes with the extension.
@@ -212,11 +213,56 @@ extension AppCoordinator {
         case "surfaceExportSounds":
             // The app's synthesized sounds as files, for a pack moving off their names (D101).
             GameSounds.shared.export(to: URL(fileURLWithPath: argument))
+        case "surfaceExportArt":
+            // The drawn hands, coin and dice as pictures, for a pack moving off the app's drawings (D101).
+            Self.exportTossArt(to: URL(fileURLWithPath: argument))
         case "surfaceStats":
             Log.shared.info("dev", "surface", ["layers": "\(controller.model?.view.layerCount ?? 0)", "frame": "\(controller.frame)", "visible": "\(controller.isVisible)"])
         default: return false
         }
         return true
     }
+
+    private static func exportTossArt(to dir: URL) {
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        func write<V: View>(_ name: String, side: CGFloat, _ view: V) {
+            let renderer = ImageRenderer(content: view.frame(width: side, height: side).padding(4))
+            renderer.scale = 2
+            guard let image = renderer.cgImage, let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return }
+            try? data.write(to: dir.appendingPathComponent(name + ".png"))
+        }
+        for hand in Hand.allCases { write("hand-\(hand.rawValue)", side: 58, HandShape(hand: hand)) }
+        write("coin-heads", side: 64, CoinFace(heads: true))
+        write("coin-tails", side: 64, CoinFace(heads: false))
+        for value in 1...6 { write("die-\(value)", side: 44, DieFace(value: value)) }
+        for sides in [4, 8, 10, 12, 20, 100] { write("poly-\(sides)", side: 44, TossArtPolyhedron(sides: sides)) }
+    }
     #endif
 }
+
+#if DEBUG
+/// A die's silhouette without its number: the pack writes the number over it.
+private struct TossArtPolyhedron: View {
+    var sides: Int
+
+    private var color: Color {
+        switch sides {
+        case 4: Color(hex: 0x4F7DF3)
+        case 8: Color(hex: 0x2BB3A3)
+        case 10: Color(hex: 0xA77BF3)
+        case 12: Color(hex: 0xFF8A3D)
+        case 20: Color(hex: 0x7C5CE0)
+        default: Color(hex: 0x5B6B85)
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            DieOutline(sides: sides).fill(LinearGradient(colors: [color.opacity(0.8), color], startPoint: .top, endPoint: .bottom))
+            DieOutline(sides: sides).stroke(.black.opacity(0.2), lineWidth: 1)
+            if sides == 20 { DieFacets().stroke(.white.opacity(0.35), lineWidth: 1) }
+        }
+        .shadow(color: .black.opacity(0.25), radius: 2, y: 2)
+    }
+}
+#endif

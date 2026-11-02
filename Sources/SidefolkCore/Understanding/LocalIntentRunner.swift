@@ -193,6 +193,8 @@ public struct LocalIntentRunner: Sendable {
         let short = !text.contains("\n") && text.count <= 100
         let card = ResultCard(kind: .extensionResult, title: short ? text : tool.spec.title, subtitle: name,
                               detail: short ? nil : text.clipped(2_000), refId: tool.extensionId)
+        // What it opened is the answer: the panel steps aside, as for a quick intent, rather than staying to be read.
+        if result.asks?.openSurface != nil || result.asks?.openPage != nil { return .card(card, activityId: out.activity.id, undo: false) }
         return .answer(card, activityId: out.activity.id)
     }
 

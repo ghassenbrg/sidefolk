@@ -5,7 +5,7 @@ import Foundation
 enum ExtensionCommandRules {
     static let maxCommandsPerTool = 32
     static let maxSentencesPerCommand = 24
-    static let maxSentencesPerExtension = 200
+    static let maxSentencesPerExtension = 400
     /// In one language's `strings/` file (D100).
     static let maxSentencesPerLanguage = 400
     static let maxParts = 16

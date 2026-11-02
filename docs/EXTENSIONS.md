@@ -497,7 +497,7 @@ people say:
 - a sentence that starts with a slot taking any words (`text`, `word`, `place`, `list`), or two of them with
   nothing but a space between;
 - replies anyone types: "yes", "no", "ok", "thanks", "stop", "cancel", "help", "undo", "hello"…;
-- more than 3 slots or 80 characters a sentence, 24 sentences a command, 32 commands a tool, 64 sentences an
+- more than 3 slots or 80 characters a sentence, 24 sentences a command, 32 commands a tool, 400 sentences an
   extension; a sentence that says the same as another; `"ai": false` on a tool without commands.
 
 **When a sentence is yours.** Sidefolk's own understanding goes first (reminders, notes, watches, quiet,
