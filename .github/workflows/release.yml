@@ -68,6 +68,14 @@ jobs:
           SIGNING: ${{ steps.signing.outputs.signing }}
         run: scripts/ci/release-plan.sh | tee -a "$GITHUB_OUTPUT"
 
+      # Before the long part: a release can't go out without the packs a fresh Mac installs (D98), so the gallery that
+      # has them is published first. build-app.sh takes them again, and release.sh verifies what the app holds.
+      - name: Check the seed packs
+        env:
+          SIDEFOLK_RELEASE: "1"
+          SIDEFOLK_RELEASE_LABEL: ${{ steps.plan.outputs.label }}
+        run: python3 -I scripts/seed-packs.py fetch "$RUNNER_TEMP/seed-packs" --required
+
       - name: Test, build, sign and notarize
         if: steps.signing.outputs.signing == 'yes'
         env:
@@ -84,6 +92,7 @@ jobs:
         run: |
           swift test --no-parallel
           SIDEFOLK_RELEASE=1 SIDEFOLK_RELEASE_LABEL="$LABEL" scripts/build-app.sh release
+          python3 -I scripts/seed-packs.py verify build/Sidefolk.app/Contents/Resources/SeedPacks
           scripts/package.sh "$LABEL"
 
       - name: Keep the build
