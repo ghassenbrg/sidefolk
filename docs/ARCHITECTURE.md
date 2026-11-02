@@ -134,7 +134,10 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   `kv`) and publishes `AppEvent.toss`. The app's `CompanionPlayer` plays both: a moment (`flick`, `roll`,
   `pump`), then `TossStage` draws the objects in the caption panel above the companion, landing on the result. Games (D75, D79)
   are extensions with `games` in their manifest; the app's Play panel (`Sources/SidefolkApp/Play/`) draws their boards
-  from fixed parts and plays the companion's cues (docs/EXTENSIONS.md › Games).
+  from fixed parts and plays the companion's cues (docs/EXTENSIONS.md › Games). Surfaces (D99) are the general form:
+  `sidefolk/surface.*` answers with a `SurfaceScene` (Core `Surfaces/`, parsed and capped, its animations flattened to
+  curves), which `SceneView` (App `Surfaces/`) draws as Core Animation layers inside Sidefolk's own `SurfaceFrame`; pictures and
+  sounds come only from the pack's `assets` through `PackAssetReader`.
 - `Location/` (D48) — where the person is, when they share it: `LocationSettings` (off, the Mac's location,
   a place chosen by name) and `KnownPlace` (town, region, country, time zone, coordinates rounded to 0.01°)
   in `AppSettings`; `PlaceKeeper` (actor) names Location Services positions through a `ReverseGeocoding`
