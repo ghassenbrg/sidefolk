@@ -143,6 +143,11 @@ public final class Extension {
             SharedPlace.use(args.values)
             self?.placeWasChanged?()
         }
+        notices["sidefolk/tools.listed"] = { args in Actions.receiveListing(args) }
+        notices["sidefolk/tools.checked"] = { args in Actions.receiveCheck(args) }
+        notices["sidefolk/tools.result"] = { args in Actions.receiveResult(args) }
+        notices["sidefolk/plan.result"] = { args in Plans.receive(args) }
+        notices["sidefolk/plan.ended"] = { args in if let plan = args.string("plan") { Plans.ended?(plan) } }
         notices["sidefolk/settings.changed"] = { [weak self] args in
             ExtensionSettings.use(args.values["settings"])
             self?.settingsChanged?()

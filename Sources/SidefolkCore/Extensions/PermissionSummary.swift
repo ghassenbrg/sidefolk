@@ -30,14 +30,18 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var place: ExtensionPurpose?
     /// May ask to schedule reminders (`permissions.schedule`, D107), for this purpose.
     public var schedule: ExtensionPurpose?
+    /// Asking Sidefolk to use its tools through Guard (`permissions.act`, D110).
+    public var act: ExtensionPurpose?
 
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
                 clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil,
-                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil) {
+                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil, act: ExtensionPurpose? = nil) {
+        self.act = act
         self.place = place
         self.schedule = schedule
         self.ai = ai
+        self.act = act
         self.network = network
         self.read = read
         self.write = write
@@ -72,6 +76,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         ai = try c.decodeIfPresent(ExtensionAIAccess.self, forKey: .ai)
         place = try c.decodeIfPresent(ExtensionPurpose.self, forKey: .place)
         schedule = try c.decodeIfPresent(ExtensionPurpose.self, forKey: .schedule)
+        act = try c.decodeIfPresent(ExtensionPurpose.self, forKey: .act)
     }
 
     /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …). Programs named
@@ -119,7 +124,7 @@ public struct ExtensionPurpose: Codable, Sendable, Hashable {
 /// (SECURITY T13, T16). Deterministic: built from the manifest, never from model text.
 public struct PermissionSummary: Sendable, Hashable {
     public struct Line: Sendable, Hashable {
-        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, ai, place, schedule, none, unsandboxed }
+        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, ai, place, schedule, act, none, unsandboxed }
         public var kind: Kind
         public var text: String
         /// Worth drawing attention to on the install sheet.
@@ -226,14 +231,23 @@ public struct PermissionSummary: Sendable, Hashable {
                               caution: false,
                               note: String(localized: "Off until you say yes. They follow your Focus, Quiet and Attention settings. A switch in Settings › Add-ons takes it back.")))
         }
+        if let act = p.act {
+            // Sidefolk's guards, all enforced by the host: the closed list, a card each time, plans read in full, History (D110, T42).
+            lines.append(Line(kind: .act, text: String(localized: "Can ask Sidefolk to use its tools and other extensions' tools. It says it uses them \(act.purpose).",
+                                                       comment: "Install sheet: permissions.act; the author's purpose, “to run the steps of flows you build”"),
+                              caution: true,
+                              note: String(localized: "Each use asks you first, unless you read and allowed a plan for exactly that. Every use is in History.")))
+        }
         if !p.network && p.media {
             // HEIC and AVIF need the certificate service, which can fetch from an address (SandboxProfile.mediaRules).
             lines.append(Line(kind: .media, text: String(localized: "Can't connect to the internet directly, but a Mac service it uses could carry data out"), caution: true))
         } else if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
-            lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))
+            // With `act` it may reach both through a tool, on a card: it is only its own reach that is none.
+            lines.append(Line(kind: .none, text: p.act != nil ? String(localized: "No access of its own to your files or the internet")
+                : String(localized: "No access to your files or the internet"), caution: false))
         } else if !p.network {
             // What it can't do matters as much beside files: the sandbox has no network rule at all (SandboxProfile).
-            lines.append(Line(kind: .none, text: String(localized: "Can't use the internet"), caution: false))
+            lines.append(Line(kind: .none, text: p.act != nil ? String(localized: "Can't use the internet by itself") : String(localized: "Can't use the internet"), caution: false))
         }
 
         var warnings: [String] = []
@@ -254,6 +268,9 @@ public struct PermissionSummary: Sendable, Hashable {
         }
         if p.network, p.screen {
             warnings.append(String(localized: "It can record your screen and use the internet, so it could send what's on your screen elsewhere."))
+        }
+        if p.act != nil, p.network || !p.exec.isEmpty || !p.programs.isEmpty {
+            warnings.append(String(localized: "It can use Sidefolk's tools and reach beyond this Mac by itself, so what they return could leave it. It gets no plans: every use asks you."))
         }
         if p.network, !p.write.isEmpty {
             warnings.append(String(localized: "It can save what it downloads into \(list(p.write.map(show)))."))

@@ -227,8 +227,8 @@ final class HostEnv {
     let store: ExtensionStore
     let host: ExtensionHost
 
-    init(configure: (inout ExtensionHost.Configuration) -> Void = { _ in }) throws {
-        env = try TestEnv()
+    init(env given: TestEnv? = nil, configure: (inout ExtensionHost.Configuration) -> Void = { _ in }) throws {
+        env = try given ?? TestEnv()
         root = try ExtFixtures.tempDir("host")
         paths = SidefolkPaths(home: root.appendingPathComponent("home", isDirectory: true))
         try paths.prepare()

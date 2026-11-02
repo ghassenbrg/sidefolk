@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Tools that let an agent (Sidefolk's own brain or an external MCP client) reach the user:
 /// `notify.user`, `ask.user`, and a content-free `status`.
@@ -13,6 +14,10 @@ public enum AgentFacingTools {
 
     /// An answer the user typed (instead of picking an option) arrives as this prefix + the text.
     public static let typedAnswerPrefix = "text:"
+
+    /// An extension's name, for where its words are shown: the app sets this once its extensions are up (D110).
+    public static let extensionNames = Mutex<(@Sendable (String) -> String?)?>(nil)
+    static func extensionName(_ id: String) -> String? { extensionNames.withLock { $0 }?(id) }
 
     /// "Claude Code" for "claude-code", "Codex" for "codex"; other names as given.
     public static func displayName(_ client: String) -> String {
@@ -108,6 +113,9 @@ struct AskUserTool: Tool {
         // Who is asking is shown with the question; agents must not pose as Sidefolk or the user.
         var asker: String?
         if case .external(let client) = context.caller { asker = String(localized: "\(AgentFacingTools.displayName(client)) asks") }
+        if case .extension(let id) = context.caller {
+            asker = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) asks", comment: "Under a question; an extension's name")
+        }
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
                                                           title: question.clipped(200), body: asker, actions: actions, refKind: "ask"),
                                          timeout: max(10, timeout))

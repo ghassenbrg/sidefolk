@@ -11,7 +11,7 @@ enum ExtensionAbilityRules {
     static let maxPatterns = 16
 
     static func check(_ m: ExtensionManifest) -> [ValidationIssue] {
-        settingIssues(m) + entryIssues(m) + dropIssues(m) + aiIssues(m) + carriedIssues(m)
+        settingIssues(m) + entryIssues(m) + dropIssues(m) + aiIssues(m) + actIssues(m) + carriedIssues(m)
     }
 
     private static func isName(_ s: String) -> Bool { s.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil }
@@ -165,6 +165,14 @@ enum ExtensionAbilityRules {
             issues.append(ValidationIssue(field: "permissions.ai.daily_cap", message: "must be \(ExtensionManifest.AIMeta.caps.lowerBound)–\(ExtensionManifest.AIMeta.caps.upperBound) requests a day."))
         }
         return issues
+    }
+
+    private static func actIssues(_ m: ExtensionManifest) -> [ValidationIssue] {
+        guard let act = m.permissions.act else { return [] }
+        guard isPlain(act.purpose, 120), act.purpose.hasPrefix("to ") || act.purpose.hasPrefix("for ") else {
+            return [ValidationIssue(field: "permissions.act.purpose", message: "must be one plain line of at most 120 characters starting with “to” or “for”.")]
+        }
+        return []
     }
 
     private static func carriedIssues(_ m: ExtensionManifest) -> [ValidationIssue] {

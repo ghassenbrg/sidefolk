@@ -331,6 +331,13 @@ final class SettingsModel {
         return SettingsSearch.find(query, in: all.map(\.searchEntry)).compactMap { found in all.first { $0.id == found.id } }
     }
 
+    /// Ends a plan an extension runs without asking (D110): through the tool, so History has it.
+    func endPlan(_ plan: ExtensionPlanInfo, extensionId id: String) async {
+        let outcome = await services.runtime.executor.execute(name: ExtensionPlanEndTool.name, input: ["extension": .string(id), "plan": .string(plan.id)], caller: .user)
+        extensionError = outcome.problem.map { UserFacingError(verbatim: $0.message) } ?? nil
+        extensions = await services.extensions()
+    }
+
     /// The person's switch for an extension's use of their AI (D100).
     func setAI(_ on: Bool, extensionId id: String) async {
         await services.runtime.extensions.setAIAllowed(extensionId: id, on)

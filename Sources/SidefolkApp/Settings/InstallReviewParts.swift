@@ -184,6 +184,7 @@ struct InstallPermissionRow: View {
         case .ai: "sparkles"
         case .place: "location"
         case .schedule: "bell.badge"
+        case .act: "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath"
         case .udp: "dot.radiowaves.left.and.right"
         case .none: "lock"
         case .unsandboxed: "exclamationmark.triangle"

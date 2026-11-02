@@ -26,6 +26,10 @@ public actor ExtensionHost {
         public var language: @Sendable () -> String = { ExtensionStrings.current }
         /// Runs a tool as the extension asks for it (one History row, a setting, a request to the AI), through the executor (D100).
         public var runTool: (@Sendable (_ name: String, _ input: JSONValue, _ caller: Caller, _ timeout: TimeInterval) async -> ToolOutcome)?
+        /// What extensions with `permissions.act` use Sidefolk's tools through (D110).
+        public var actions: ExtensionActionGateway?
+        /// The person said every page and online service asks, each time (D47).
+        public var askEachTimeOnline: @Sendable () async -> Bool = { false }
         /// The person's AI by name, nil without one: what an extension's label says (D100).
         public var aiName: @Sendable () -> String? = { nil }
         /// What the person calls their companion, for `{companion}` in the extension's words where Sidefolk writes them.
@@ -89,6 +93,9 @@ public actor ExtensionHost {
         /// The last plan of reminders asked for while one is being held back, and when one last went through (D107).
         var planWaiting: JSONValue?
         var lastPlan = Date.distantPast
+        /// When the person, or a clean request, last called one of its tools: what it may ask for a plan after (D110).
+        var lastPersonCall = Date.distantPast
+        var actionCalls: [Date] = []
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -167,6 +174,13 @@ public actor ExtensionHost {
         // A smaller extension loaded before the one that includes it registered its tools; it rests now (D67).
         reconsiderResting()
         events.changed(.extensions)
+        let stream = events.stream()
+        Task { [weak self] in
+            for await event in stream {
+                guard case .watchFired(let id, let watch, let title, let summary) = event else { continue }
+                await self?.tellWatchFired(extensionId: id, watch: watch, title: title, summary: summary)
+            }
+        }
     }
 
     /// Stops every running process.
@@ -299,7 +313,7 @@ public actor ExtensionHost {
                              examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt),
                              place: consentPurpose(.place, extensionId: id).map { ExtensionConsentStatus(purpose: $0, on: hasConsent(.place, extensionId: id)) },
                              schedule: consentPurpose(.schedule, extensionId: id).map { ExtensionConsentStatus(purpose: $0, on: hasConsent(.schedule, extensionId: id)) },
-                             needsAnUpdate: rt.outdatedWasOn != nil)
+                             needsAnUpdate: rt.outdatedWasOn != nil, plans: planInfos(id))
     }
 
     /// A tool's commands, in every language the extension has them in (D100). Compiled once a runtime: this is asked each time the extensions are
@@ -346,6 +360,7 @@ public actor ExtensionHost {
         if p.ai != nil, let purpose = words?.aiPurpose { p.ai?.purpose = purpose }
         if p.place != nil, let purpose = words?.placePurpose { p.place?.purpose = purpose }
         if p.schedule != nil, let purpose = words?.schedulePurpose { p.schedule?.purpose = purpose }
+        if p.act != nil, let purpose = words?.actPurpose { p.act?.purpose = purpose }
         return p
     }
 
@@ -1358,6 +1373,8 @@ public actor ExtensionHost {
             await programReplacesOccurrences(id, params: params)
         case .settingSet(let params):
             await programSetsSetting(id, params: params)
+        case .action(let method, let params):
+            await handleAction(id, method: method, params: params)
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:
@@ -1513,6 +1530,8 @@ public actor ExtensionHost {
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },
                              service: Self.reachName(rt.manifest?.services ?? []), trustedOnly: meta?.trustedOnly ?? [],
+                             sandboxed: rt.record.kind == .sidefolk, forAgents: rt.record.kind == .sidefolk && meta?.agents == true,
+                             began: { [weak self] caller, tainted in await self?.notePersonCall(id, caller: caller, tainted: tainted) },
                              asking: { [weak self] asks, caller in await self?.performAsks(id, asks, caller: caller) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)

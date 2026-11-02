@@ -190,7 +190,7 @@ struct ExtensionRow: View {
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
         }
         // The settings it declares, and the person's switch for its use of their AI (D100).
-        if ext.settingRows.contains(where: \.listed) || ext.aiStatus != nil || ext.placeStatus != nil || ext.scheduleStatus != nil {
+        if ext.settingRows.contains(where: \.listed) || ext.aiStatus != nil || ext.placeStatus != nil || ext.scheduleStatus != nil || !ext.plans.isEmpty {
             RowsCard {
                 ForEach(ext.settingRows.filter(\.listed)) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
                 if let ai = ext.aiStatus {
@@ -205,6 +205,9 @@ struct ExtensionRow: View {
                     SettingsToggle(title: Text("Send reminders", comment: "An extension's row: the person's switch for the reminders it plans"),
                                    detail: Text("It says it uses them \(schedule.purpose).", comment: "Under an extension's switch for its reminders: the author's purpose, “to remind you of the moments you choose”"),
                                    isOn: Binding(get: { schedule.on }, set: { on in Task { await model.setConsent("schedule", on, extensionId: ext.id) } }))
+                }
+                ForEach(ext.plans) { plan in
+                    ExtensionPlanRow(plan: plan) { Task { await model.endPlan(plan, extensionId: ext.id) } }
                 }
             }
             .padding(.top, Theme.Space.xs)

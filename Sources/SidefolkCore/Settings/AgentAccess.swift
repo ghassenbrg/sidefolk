@@ -18,6 +18,8 @@ public struct AgentAccess: Codable, Sendable, Equatable {
     public var read: AgentPermission = .ask
     /// Change notes and move them to the Trash (restorable for 30 days; only the person empties it).
     public var change: AgentPermission = .allow
+    /// Use the tools extensions offer them (D112): asked each time, or off. Never without asking.
+    public var extensions: AgentPermission = .ask
 
     public init() {}
 
@@ -27,5 +29,6 @@ public struct AgentAccess: Codable, Sendable, Equatable {
         if let v = try? c.decode(AgentPermission.self, forKey: .save) { save = v }
         if let v = try? c.decode(AgentPermission.self, forKey: .read) { read = v }
         if let v = try? c.decode(AgentPermission.self, forKey: .change) { change = v }
+        if let v = try? c.decode(AgentPermission.self, forKey: .extensions) { extensions = v == .allow ? .ask : v }
     }
 }

@@ -10,7 +10,7 @@ struct AgentAccessGroup: View {
 
     var body: some View {
         SettingsGroup(title: Text(verbatim: SettingKey.agentAccess.title),
-                      footer: Text("For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings."),
+                      footer: Text("For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings, except through a tool an extension marked for them, on a card."),
                       anchor: .agentAccess) {
             row("Save notes, reminders and watches",
                 detail: "Add to your notebook, remind you, and watch pages or this Mac for you. Their notes are tagged with their name.",
@@ -21,6 +21,16 @@ struct AgentAccessGroup: View {
             row("Read your notes and reminders",
                 detail: "Search and list your notebook, your reminders and today's plan.",
                 value: access.read) { p in model.update { $0.agentAccess.read = p } }
+            // Asked each time or off: Allow isn't offered, because Sidefolk can't tell what an extension's tool does (D112).
+            SettingsRow(title: Text("Use tools extensions offer them"),
+                        detail: Text("Only tools an extension marks for other agents. A card asks you each time.")) {
+                Picker(selection: Binding(get: { access.extensions }, set: { p in model.update { $0.agentAccess.extensions = p } })) {
+                    Text("Ask each time").tag(AgentPermission.ask)
+                    Text("Off").tag(AgentPermission.off)
+                } label: { Text("Use tools extensions offer them") }
+                .labelsHidden()
+                .fixedSize()
+            }
         }
     }
 

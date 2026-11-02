@@ -33,6 +33,8 @@ public final class SidefolkRuntime: Sendable {
     public let watchers: WatcherEngine
     public let tokens: BrainTokenRegistry
     public let gateway: ExternalToolGateway
+    /// What extensions with `permissions.act` use Sidefolk's tools through (D110).
+    public let actions: ExtensionActionGateway
     public let sessionTracker: SessionTracker
     public let jobTracker: JobTracker
     public let extensions: ExtensionHost
@@ -95,6 +97,8 @@ public final class SidefolkRuntime: Sendable {
         tokens = BrainTokenRegistry()
         gateway = ExternalToolGateway(registry: registry, permissions: permissions, broker: broker, activity: activity,
                                       events: events, clock: clock, access: { [settings] in settings.current.agentAccess })
+        let actions = ExtensionActionGateway(registry: registry, permissions: permissions, broker: broker, activity: activity, events: events, clock: clock)
+        self.actions = actions
         sessionTracker = SessionTracker(store: sessions, attention: attention, events: events, clock: clock,
                                         titles: ConversationTitles(locations: .forApp(paths: paths)), open: { session in
             let host = HostTrust.target(for: session)
@@ -105,6 +109,8 @@ public final class SidefolkRuntime: Sendable {
         hostConfiguration.runTool = { [executor] name, input, caller, timeout in
             await executor.execute(name: name, input: input, caller: caller, timeout: timeout)
         }
+        hostConfiguration.actions = actions
+        hostConfiguration.askEachTimeOnline = { [permissions, clock] in (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
         hostConfiguration.aiName = { [settings] in settings.current.provider.shortName }
         hostConfiguration.currentPlace = { [settings] in settings.current.location.current }
         hostConfiguration.companionName = { [settings] in settings.current.companionName }
@@ -157,6 +163,8 @@ public final class SidefolkRuntime: Sendable {
         registry.register(ExtensionConsentTool(host: host))
         registry.register(ExtensionOccurrencesTool(host: host))
         registry.register(ExtensionPlaceSearchTool(shelfName: { id in host.shelf.names[id] }))
+        registry.register(ExtensionPlanEndTool(host: host))
+        AgentFacingTools.extensionNames.withLock { $0 = { id in host.shelf.names[id] } }
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening",

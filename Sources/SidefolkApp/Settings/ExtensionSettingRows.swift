@@ -47,6 +47,19 @@ struct ExtensionSettingRowView: View {
 }
 
 /// The person's switch for an extension's use of their AI (D100), with what it says it is for and how much it asked today.
+/// A plan the person allowed for an extension (D110), with the way to end it: its calls then ask again.
+struct ExtensionPlanRow: View {
+    var plan: ExtensionPlanInfo
+    var end: () -> Void
+
+    var body: some View {
+        SettingsRow(title: Text(ext: plan.title.isEmpty ? plan.id : plan.title),
+                    detail: Text("Runs \(plan.actions) actions without asking. \(plan.when)", comment: "Settings › Add-ons: an extension's plan; a count, then its own words for when it runs")) {
+            Button(action: end) { Text("End", comment: "Settings › Add-ons: ends an extension's plan") }.buttonStyle(.sf(.secondary))
+        }
+    }
+}
+
 struct ExtensionAISwitchRow: View {
     var status: ExtensionAIStatus
     /// A signed pack's own words for it.

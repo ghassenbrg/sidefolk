@@ -175,13 +175,17 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var place: PurposeMeta?
         /// May ask to tell the person things at moments it plans (D107). Off until they say yes.
         public var schedule: PurposeMeta?
+        /// Asking Sidefolk to use its tools and other extensions', through Guard, for a stated purpose (D110).
+        public var act: PurposeMeta?
 
         public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
                     power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false,
-                    ai: AIMeta? = nil, place: PurposeMeta? = nil, schedule: PurposeMeta? = nil) {
+                    ai: AIMeta? = nil, place: PurposeMeta? = nil, schedule: PurposeMeta? = nil, act: PurposeMeta? = nil) {
+            self.act = act
             self.place = place
             self.schedule = schedule
             self.ai = ai
+            self.act = act
             self.network = network
             self.networkPurpose = networkPurpose
             self.files = files
@@ -195,7 +199,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai", "place", "schedule"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai", "place", "schedule", "act"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
@@ -210,6 +214,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             ai = try c.decodeIfPresent(AIMeta.self, forKey: "ai")
             place = try c.decodeIfPresent(PurposeMeta.self, forKey: "place")
             schedule = try c.decodeIfPresent(PurposeMeta.self, forKey: "schedule")
+            act = try c.decodeIfPresent(PurposeMeta.self, forKey: "act")
         }
     }
 
@@ -258,6 +263,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         /// Arguments of free words that do something by themselves: left out when the call comes from an AI that has read something from outside in this turn,
         /// because such words may be whoever wrote that page's (T40). The person's own call and a clean turn keep them.
         public var trustedOnly: [String]
+        /// Other agents may use it (`sidefolk mcp`), on a card each time and under the person's switch for them (D112).
+        public var agents: Bool?
 
         public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
                     paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = [],
@@ -280,7 +287,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var offeredToModel: Bool { ai ?? true }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary", "trusted_only"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary", "trusted_only", "agents"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
@@ -294,6 +301,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             device = try c.decodeIfPresent(String.self, forKey: "device")
             summary = try c.decodeIfPresent(ToolSummary.self, forKey: "summary")
             trustedOnly = try c.decodeIfPresent([String].self, forKey: "trusted_only") ?? []
+            agents = try c.decodeIfPresent(Bool.self, forKey: "agents")
         }
     }
 

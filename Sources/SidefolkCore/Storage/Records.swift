@@ -367,6 +367,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case webSetting = "web_setting"
         /// A page a page linked to, read because the person said to keep reading in this conversation (D119).
         case research
+        /// Without a card, because it fit a plan the person read and allowed (D110).
+        case plan
     }
 
     public var id: Int64?

@@ -91,10 +91,30 @@ public final class ToolExecutor: Sendable {
     public func execute(
         name: String, input: JSONValue, caller: Caller, tainted: Bool = false, taintedBy: TaintSource? = nil, mentions: UserMentions? = nil,
         timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil, pickedFile: String? = nil,
-        onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil
+        onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil, standing: Bool = false, asker: ApprovalRequest.Asker? = nil
     ) async -> ToolOutcome {
         await perform(name: name, input: input, caller: caller, tainted: tainted, taintedBy: taintedBy, mentions: mentions, timeout: timeout,
-                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile)
+                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile, standing: standing, asker: asker)
+    }
+
+    /// Guard's answer for this call, with nothing run, shown or logged (D110): what a card would be.
+    func check(name: String, input: JSONValue, caller: Caller, tainted: Bool, standing: Bool) async -> ToolCheck? {
+        guard let tool = registry.tool(named: name) else { return nil }
+        let spec = tool.spec, input = input.objectValue == nil ? JSONValue.object([:]) : input, summary = tool.summary(for: input).clipped(240)
+        func result(_ decision: ToolCheck.Decision, _ why: String? = nil) -> ToolCheck {
+            ToolCheck(decision: decision, why: why, summary: summary, risk: spec.risk, mutates: spec.mutates)
+        }
+        if let missing = Self.missingRequired(spec.inputSchema, input) { return result(.deny, "Missing \(missing)") }
+        if let problem = InputSchema.problem(spec.inputSchema, input, unknownKeys: false) { return result(.deny, problem) }
+        if let why = tool.refusal(for: input, context: ToolContext(caller: caller, now: clock.now, tainted: tainted)) { return result(.deny, why) }
+        guard let policy = try? await permissions.policy(now: clock.now) else { return result(.deny) }
+        let grants = (try? await permissions.grants()) ?? [], folders = (try? await permissions.folders()) ?? []
+        switch engine.evaluate(spec: spec, input: input, summary: summary, scope: tool.scope(for: input), caller: caller, tainted: tainted,
+                               policy: policy, grants: grants, folders: folders, standing: standing) {
+        case .allow: return result(.allow)
+        case .ask: return result(.ask)
+        case .deny(let why): return result(.deny, why)
+        }
     }
 
     /// Runs a skipped step on the person's click in Now. The click answers the question its card
@@ -106,13 +126,13 @@ public final class ToolExecutor: Sendable {
         let call = step.call
         return await perform(name: call.tool, input: call.input, caller: call.caller, tainted: call.tainted, taintedBy: step.request.taintedBy,
                              mentions: call.mentions,
-                             timeout: 90, approvalTimeout: nil, onWaiting: nil, answered: step.request)
+                             timeout: 90, approvalTimeout: nil, onWaiting: nil, answered: step.request, standing: false, asker: nil)
     }
 
     /// - Parameter answered: a question the person already said "Allow" to, outside a card.
     private func perform(
         name: String, input: JSONValue, caller: Caller, tainted: Bool, taintedBy: TaintSource?, mentions: UserMentions?, timeout: TimeInterval,
-        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil
+        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil, standing: Bool = false, asker: ApprovalRequest.Asker? = nil
     ) async -> ToolOutcome {
         let callId = Identifier.make()
         guard let tool = registry.tool(named: name) else {
@@ -173,7 +193,7 @@ public final class ToolExecutor: Sendable {
             let folders = ((try? await permissions.folders()) ?? []) + extraFolders
             let decision = engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller,
                                            tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions,
-                                           answeredFolders: answeredFolders)
+                                           answeredFolders: answeredFolders, standing: standing)
             switch decision {
             case .allow(let tag):
                 // A site allowed for good, used while outside content is in play, is the only site the call may reach:
@@ -206,6 +226,10 @@ public final class ToolExecutor: Sendable {
                     request.canKeepReading = await research.canOffer(run: run, for: reading)
                 }
                 var readByResearch = false
+                if let asker {
+                    request.asker = asker
+                    request.firstParty = asker.firstParty
+                }
                 let wait = approvalTimeout.map { (seconds: min($0, Self.approvalTimeout), whenTimeIsUp: UnansweredRule.Action?.none) }
                     ?? Self.wait(for: caller, policy: policy, present: present, minute: minute)
                 let answer: ApprovalDecision

@@ -67,6 +67,8 @@ public enum AppEvent: Sendable {
     case companion(CompanionAct)
     /// An extension's surface to open beside the companion (D99), from the person's words or the AI.
     case surface(SurfaceRequest)
+    /// A watch an extension made fired: it hears, instead of the person (D111).
+    case watchFired(extensionId: String, watch: String, title: String, summary: String)
     /// The extension was turned off or removed: its surface goes with it, kept or not.
     case surfaceGone(extensionId: String)
     /// A tool's reply asked to put its surface away (`close_surface`, D100): kept, to come back to. Nil: whichever of its are open.

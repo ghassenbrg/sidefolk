@@ -156,7 +156,7 @@ struct PermissionSlip: View {
         switch request.caller {
         case .external(let client): AgentFacingTools.displayName(client)
         // An extension's tool, whoever started it, is the extension acting ("Tea Timer wants to").
-        case .extension, .command, .user, .agent, .routine: look?.name ?? companionName
+        case .extension, .command, .user, .agent, .routine: request.asker?.name ?? look?.name ?? companionName
         }
     }
 

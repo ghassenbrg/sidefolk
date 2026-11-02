@@ -1,0 +1,250 @@
+import Foundation
+
+/// An extension using Sidefolk's tools through Guard (`permissions.act`, D110): the list, Guard's answer without running, a call, and
+/// plans the person read so exactly that needs no more cards. Everything runs through `ExtensionActionGateway`; each answer goes back
+/// to this program alone, as a notice, because a program never sends the host a request (MCPClient).
+extension ExtensionHost {
+    /// Calls a minute per extension: each is a row in History, and maybe a card.
+    private static let callsPerMinute = 60
+
+    func handleAction(_ id: String, method: String, params: JSONValue) async {
+        guard let rt = runtimes[id], rt.record.enabled, rt.record.kind == .sidefolk, rt.pin.permissions?.act != nil,
+              let gateway = configuration.actions, let client = rt.client else {
+            await runtimes[id]?.client?.notify(Self.answerMethod(method), params: ["request": params["request"] ?? .null, "ok": false, "reason": "off"])
+            return
+        }
+        let request = params["request"] ?? .null
+        switch method {
+        case "sidefolk/tools.list":
+            let tools = gateway.specs(for: id).map(Self.listed)
+            await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
+        case "sidefolk/tools.check":
+            guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
+                await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
+                return
+            }
+            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: false, gateway: gateway)
+            guard let check = await gateway.check(tool, input: input, extensionId: id, standing: standing) else {
+                await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unknown"])
+                return
+            }
+            var reply: [String: JSONValue] = ["request": request, "ok": true, "decision": .string(check.decision.rawValue), "summary": .string(check.summary),
+                                              "risk": .string(check.risk.rawValue), "mutates": .bool(check.mutates), "standing": .bool(standing)]
+            if let why = check.why { reply["why"] = .string(why) }
+            await client.notify("sidefolk/tools.checked", params: .object(reply))
+        case "sidefolk/tools.call":
+            guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "failed", "text": "That call wasn't usable."])
+                return
+            }
+            let now = Date()
+            let recent = (runtimes[id]?.actionCalls ?? []).filter { now.timeIntervalSince($0) < 60 }
+            guard recent.count < Self.callsPerMinute else {
+                runtimes[id]?.actionCalls = recent
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "denied", "text": "Too many actions in a minute."])
+                return
+            }
+            runtimes[id]?.actionCalls = recent + [now]
+            let timeout = params["timeout"]?.doubleValue.map { min(max($0, 1), 600) }
+            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
+            let asker = asker(rt)
+            begin(id)
+            // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
+            Task { [weak self] in
+                let outcome = await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, timeout: timeout)
+                await self?.finishAction(id, request: request, standing: standing, outcome: outcome)
+            }
+        case "sidefolk/plan.approve":
+            await approvePlan(id, request: request, params: params, gateway: gateway)
+        case "sidefolk/plan.forget":
+            if let plan = params["plan"]?.stringValue { await updatePreferences(id) { $0.plans[plan] = nil } }
+            events.changed(.extensions)
+        default:
+            break
+        }
+    }
+
+    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome) async {
+        end(id)
+        let summary = ToolFormat.oneLine(ExtensionText.clean(outcome.activity.summary), 240)
+        var reply: [String: JSONValue] = ["request": request, "summary": .string(summary), "standing": .bool(standing), "undoable": .bool(outcome.activity.undoAvailable)]
+        switch outcome.status {
+        case .ok(let result):
+            reply["ok"] = .bool(!result.isError)
+            reply["status"] = .string(result.isError ? "error" : "ok")
+            reply["text"] = .string(result.text)
+            reply["untrusted"] = .bool(result.untrusted)
+        case .denied(let why):
+            reply["ok"] = false
+            reply["status"] = "denied"
+            reply["text"] = .string(why)
+        case .failed(let error):
+            reply["ok"] = false
+            reply["status"] = "failed"
+            reply["text"] = .string(error.message)
+        case .unanswered:
+            reply["ok"] = false
+            reply["status"] = "unanswered"
+            reply["text"] = .string(outcome.problem?.message ?? "")
+        }
+        await runtimes[id]?.client?.notify("sidefolk/tools.result", params: .object(reply))
+    }
+
+    private static func answerMethod(_ method: String) -> String {
+        switch method {
+        case "sidefolk/tools.list": "sidefolk/tools.listed"
+        case "sidefolk/tools.check": "sidefolk/tools.checked"
+        case "sidefolk/plan.approve": "sidefolk/plan.result"
+        default: "sidefolk/tools.result"
+        }
+    }
+
+    private static func listed(_ spec: ToolSpec) -> JSONValue {
+        var out: [String: JSONValue] = ["name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description), "schema": spec.inputSchema,
+                                        "risk": .string(spec.risk.rawValue), "mutates": .bool(spec.mutates), "category": .string(spec.category.rawValue)]
+        if spec.name.hasPrefix("ext.") { out["extension"] = .string(String(spec.name.dropFirst(4).prefix { $0 != "." })) }
+        return .object(out)
+    }
+
+    private static func listed(_ plan: ExtensionPlan) -> JSONValue {
+        var out: [String: JSONValue] = ["id": .string(plan.id), "title": .string(plan.title),
+                                        "standing": .array(plan.steps.map { .bool($0.standing) })]
+        if let ends = plan.expiresAt { out["expires_at"] = .number(ends.timeIntervalSince1970) }
+        return .object(out)
+    }
+
+    private func asker(_ rt: Runtime) -> ApprovalRequest.Asker {
+        ApprovalRequest.Asker(name: name(rt), firstParty: rt.pin.origin?.firstParty == true)
+    }
+
+    // MARK: Plans
+
+    /// The person's click or typed command to this extension, or a clean request of Sidefolk's own agent: only just after one may it ask
+    /// for a plan (T3). Called by its tools (`ExtensionTool.began`).
+    func notePersonCall(_ id: String, caller: Caller, tainted: Bool) {
+        switch caller {
+        case .user, .command: runtimes[id]?.lastPersonCall = Date()
+        case .agent where !tainted: runtimes[id]?.lastPersonCall = Date()
+        default: break
+        }
+    }
+
+    /// An extension that could carry what it reads out by itself gets no plans, only cards: what a plan's reads return goes to its program, and a
+    /// plan's point is that from there it can reach only what the person read.
+    private static func contained(_ p: ExtensionPermissions) -> Bool {
+        !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp
+    }
+
+    /// Who a plan was allowed for.
+    private func owner(_ rt: Runtime) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let permissions = (try? encoder.encode(rt.pin.permissions ?? ExtensionPermissions())) ?? Data()
+        return ExtensionHash.sha256(permissions + Data((rt.pin.origin?.firstParty == true ? "own" : "other").utf8))
+    }
+
+    private func livePlans(_ id: String, now: Date = Date()) -> [ExtensionPlan] {
+        guard let rt = runtimes[id] else { return [] }
+        let owner = owner(rt)
+        return rt.preferences.plans.values.filter { $0.live(at: now, owner: owner) }.sorted { $0.id < $1.id }
+    }
+
+    /// The plans Settings › Add-ons lists.
+    func planInfos(_ id: String) -> [ExtensionPlanInfo] {
+        livePlans(id).filter { $0.expiresAt == nil }.map {
+            ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count, approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
+        }
+    }
+
+    /// The person ended it; its program hears, so it can say so.
+    func endPlan(extensionId id: String, plan: String) async {
+        guard runtimes[id]?.preferences.plans[plan] != nil else { return }
+        await updatePreferences(id) { $0.plans[plan] = nil }
+        await runtimes[id]?.client?.notify("sidefolk/plan.ended", params: ["plan": .string(plan)])
+        events.changed(.extensions)
+    }
+
+    private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, counting: Bool, gateway: ExtensionActionGateway) async -> Bool {
+        guard let rt = runtimes[id], let plan, let saved = rt.preferences.plans[plan], saved.live(at: Date(), owner: owner(rt)),
+              Self.contained(rt.pin.permissions ?? ExtensionPermissions()), let tool = gateway.tool(named: name, for: id) else { return false }
+        let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
+        let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
+        let fits = saved.steps.contains { step in
+            step.standing && step.tool == tool.spec.name && step.definition == definition && step.reach == reach
+                && ExtensionPlanRules.matches(input, template: step.input, fillable: fillable)
+        }
+        guard fits else { return false }
+        // "Ask each time" for the internet is the person's word for every page, whoever asks (D47).
+        if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return false }
+        guard counting else { return true }
+        let day = AIHelper.dayKey(Date()), used = rt.preferences.planCalls[plan]
+        let count = used?.day == day ? used?.count ?? 0 : 0
+        guard count < saved.perDay else { return false }
+        runtimes[id]?.preferences.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1)
+        return true
+    }
+
+    private func approvePlan(_ id: String, request: JSONValue, params: JSONValue, gateway: ExtensionActionGateway) async {
+        func refuse(_ reason: String) async {
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
+        }
+        guard let rt = runtimes[id], let plan = params["plan"] else { return await refuse("unusable") }
+        guard Self.contained(rt.pin.permissions ?? ExtensionPermissions()) else { return await refuse("not_contained") }
+        guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        guard let planId = plan["id"]?.stringValue, planId.range(of: #"^[A-Za-z0-9._:-]{1,64}$"#, options: .regularExpression) != nil,
+              let rawSteps = plan["steps"]?.arrayValue, (1...ExtensionPlanRules.maxSteps).contains(rawSteps.count) else { return await refuse("unusable") }
+        let ttl = plan["ttl"]?.intValue
+        if let ttl, !ExtensionPlanRules.ttls.contains(ttl) { return await refuse("unusable") }
+        let perDay = plan["per_day"]?.intValue ?? ExtensionPlanRules.defaultPerDay
+        guard ExtensionPlanRules.perDays.contains(perDay) else { return await refuse("unusable") }
+
+        let previous = rt.preferences.plans[planId]
+        var steps: [ExtensionPlan.Step] = [], lines: [(text: String, standing: Bool, new: Bool)] = []
+        for raw in rawSteps {
+            guard let name = raw["tool"]?.stringValue, let input = raw["input"], input.objectValue != nil, let tool = gateway.tool(named: name, for: id) else {
+                return await refuse("unknown_tool")
+            }
+            let stands = ExtensionPlanRules.standing(tool: tool, template: input)
+            let step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: ExtensionPlanRules.definition(tool.spec),
+                                          reach: ExtensionPlanRules.reach(tool.scope(for: input)), standing: stands)
+            guard !steps.contains(step) else { continue }
+            steps.append(step)
+            let seen = previous?.steps.contains { $0.tool == step.tool && $0.input == step.input } ?? false
+            lines.append((ExtensionPlanWords.line(tool: tool, template: input), stands, previous != nil && !seen))
+        }
+        let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
+        let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 200)
+        let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl)
+        let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, body: body)
+        let asker = asker(rt)
+        Task { [weak self] in
+            let outcome = await gateway.askForPlan(card, input: ["extension": .string(id), "plan": .string(planId)], extensionId: id, asker: asker)
+            await self?.finishPlan(id, request: request, outcome: outcome, plan: ExtensionPlan(
+                id: planId, title: title, when: when, steps: steps, owner: "", approvedAt: Date(),
+                expiresAt: ttl.map { Date().addingTimeInterval(Double($0)) }, perDay: perDay))
+        }
+    }
+
+    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, plan: ExtensionPlan) async {
+        guard outcome.isOK, let rt = runtimes[id] else {
+            let reason = if case .unanswered = outcome.status { "unanswered" } else { "denied" }
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
+            return
+        }
+        var plan = plan
+        plan.owner = owner(rt)
+        await updatePreferences(id) { $0.plans[plan.id] = plan }
+        events.changed(.extensions)
+        await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
+                                                                             "standing": .array(plan.steps.map { .bool($0.standing) })])
+    }
+
+    // MARK: Its own watches
+
+    /// A watch this extension made fired: it hears, not the person (`WatcherEngine.announce`). The words are the page's or the file's.
+    func tellWatchFired(extensionId id: String, watch: String, title: String, summary: String) async {
+        guard let rt = runtimes[id], rt.record.enabled, rt.pin.permissions?.act != nil else { return }
+        await rt.client?.notify("sidefolk/watch.fired", params: ["watch": .string(watch), "title": .string(ExtensionText.line(title, characters: 80)),
+                                                                  "summary": .string(ExtensionText.untrusted(summary, bytes: 2_000))])
+    }
+}

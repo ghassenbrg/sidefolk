@@ -64,10 +64,23 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var mode: GuardMode?
     /// The tool is Sidefolk's own: built in, or one of its signed extensions.
     public var firstParty = true
+    /// The extension asking, when it is asking for a tool that isn't its own (`permissions.act`, D110): the card names it, not the tool's owner.
+    public var asker: Asker?
     public var createdAt: Date
     /// When it stops waiting and counts as unanswered, set by the broker from the wait it was given, so Home can say
     /// "stops at 18:08" (D58).
     public var expiresAt: Date?
+
+    /// Who is asking, in the name the person installed.
+    public struct Asker: Sendable, Hashable {
+        public var name: String
+        public var firstParty: Bool
+
+        public init(name: String, firstParty: Bool) {
+            self.name = name
+            self.firstParty = firstParty
+        }
+    }
 
     public init(id: String = Identifier.make(), tool: String, title: String, summary: String, risk: Risk, caller: Caller,
                 details: Details, canAlways: Bool, tainted: Bool = false, effect: Effect = .changesThings, canAllowForRequest: Bool = false,
@@ -142,9 +155,13 @@ public actor ApprovalBroker {
     /// self-chosen, so the limit is shared rather than per name.
     public static let maxPendingExternal = 1
 
-    /// Whether a card for this caller may be shown now.
+    /// Whether a card for this caller may be shown now. An extension too gets one at a time, itself (D110).
     public func hasRoom(for caller: Caller) -> Bool {
-        caller.kind != "external" || requests.values.filter { $0.caller.kind == "external" }.count < Self.maxPendingExternal
+        switch caller {
+        case .external: requests.values.filter { $0.caller.kind == "external" }.count < Self.maxPendingExternal
+        case .extension: !requests.values.contains { $0.caller == caller }
+        default: true
+        }
     }
 
     /// Shows the card and waits for the answer. A request `hasRoom` refuses is denied at once.

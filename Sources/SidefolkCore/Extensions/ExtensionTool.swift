@@ -24,6 +24,12 @@ public struct ExtensionTool: Tool {
     public let paired: PairedDevice?
     /// Arguments left out of a call from an AI that has read something from outside in this turn (`trusted_only`).
     let trustedOnly: Set<String>
+    /// Runs in its sandbox: not a plain MCP server, which runs with the person's own rights (T16).
+    let sandboxed: Bool
+    /// Other agents may use it, on a card each time (`tools.<name>.agents`, D112).
+    public let forAgents: Bool
+    /// Told who called, before the call: a plan may be asked for only just after the person (D110).
+    private let began: (@Sendable (Caller, Bool) async -> Void)?
     /// Does what a reply asked for, knowing who made the call (D100).
     private let asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
@@ -52,6 +58,7 @@ public struct ExtensionTool: Tool {
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
+         sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> Void)? = nil,
          asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)? = nil,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
@@ -62,6 +69,9 @@ public struct ExtensionTool: Tool {
         self.firstParty = firstParty
         self.commands = commands
         self.trustedOnly = Set(trustedOnly)
+        self.sandboxed = sandboxed
+        self.forAgents = forAgents
+        self.began = began
         self.paired = firstParty ? paired : nil
         self.sentence = firstParty ? sentence : nil
         self.service = firstParty ? service : nil
@@ -157,6 +167,7 @@ public struct ExtensionTool: Tool {
             grants.append(ExtensionFolderGrant(path: canon, write: write))
             input = input.setting(param, .string(canon))
         }
+        await began?(context.caller, context.tainted)
         let result = try await invoke(input, grants)
         if let asks = result.asks { await asking?(asks, context.caller) }
         return result

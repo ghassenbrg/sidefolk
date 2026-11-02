@@ -157,6 +157,12 @@ extension WatcherEngine {
     // MARK: Telling the user
 
     func announce(_ w: Watcher, _ result: ProbeResult) async {
+        // A watch an extension made is its own trigger (D111): it hears, and tells the person in its own way.
+        if w.source.hasPrefix("extension:") {
+            events.publish(.watchFired(extensionId: String(w.source.dropFirst("extension:".count)), watch: w.id, title: w.title,
+                                       summary: result.summary.displaySafe.clipped(WatchLimits.summaryLimit)))
+            return
+        }
         var actions: [AttentionAction] = []
         if result.openTarget != nil { actions.append(AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true)) }
         if w.mode == .once { actions.append(AttentionAction(id: "keep", title: String(localized: "Keep watching"), isPrimary: actions.isEmpty)) }
