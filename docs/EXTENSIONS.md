@@ -1017,7 +1017,7 @@ act around), `scale`, `sx`, `sy`, `rotate` (degrees), `opacity`, `z` (order amon
   `hover` too (the sticks that would go), or gives them a look of their own, `{"id": "badge", "dy": -1, "opacity": 1}`, whose `opacity`
   is the value itself, so a node at 0 can appear. Without `hover` the area itself stays still. An area's box stays where it rests
   whatever its own look does. Under Reduce Motion a press dims rather than moves. **`sound`** plays on the press itself. **`selected`** tells VoiceOver.
-  **`submits`**: the name of an `entry`; a press sends what is typed there, as Return does, and it takes no press while the field is empty.
+  **`submits`**: the name of an `entry`; a press sends what is typed there, as Return does, and while the field is empty it takes no press and is drawn at half its opacity.
 - **`always`** works while an animation holds moves (the companion clicked mid-shuffle).
 - **`timed_from_ms`** is a moment of the scene from which the press is timed, from the input event's own time: the move carries
   `ms`, below 0 before it. Show the signal with an animation delayed to the same moment and you have a reflex test, with no

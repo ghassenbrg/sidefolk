@@ -96,6 +96,11 @@ public enum SurfacePolicy {
         return .scene
     }
 
+    /// How see-through an area that sends a field's words is drawn: dim while there is nothing to send, as it takes no press then.
+    public static func submitOpacity(_ node: SceneNode, typed: String) -> Double {
+        typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? node.opacity * 0.5 : node.opacity
+    }
+
     /// The scene's key that answers this press: an exact one before a class of keys.
     public static func match(_ key: String, seat: String?, in scene: SurfaceScene) -> SceneKey? {
         if let seat, let k = scene.keys.first(where: { $0.bySeat && $0.match == .character(seat) }) { return k }

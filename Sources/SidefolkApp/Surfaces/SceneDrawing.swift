@@ -77,6 +77,8 @@ enum SceneDrawing {
         case .trailing: .right
         }
         paragraph.lineBreakMode = style.lines == 1 ? .byClipping : .byWordWrapping
+        // As Text wraps everywhere else: no lone word on a last line.
+        paragraph.lineBreakStrategy = .standard
         func attributed(_ points: CGFloat) -> NSAttributedString {
             var plain: [NSAttributedString.Key: Any] = [.font: font(style, points), .foregroundColor: color, .paragraphStyle: paragraph]
             if style.strike {

@@ -193,6 +193,13 @@ struct SceneTests {
         #expect(times == times.sorted())
     }
 
+    @Test func whatSendsAFieldIsDimWhileThereIsNothingToSend() throws {
+        let s = try scene([["type": "group", "id": "send", "w": 40, "h": 40, "opacity": 0.8, "area": ["id": "send", "label": "Send", "submits": "word"]]])
+        let node = try #require(s.node("send"))
+        #expect(SurfacePolicy.submitOpacity(node, typed: "") == 0.4 && SurfacePolicy.submitOpacity(node, typed: "  ") == 0.4)
+        #expect(SurfacePolicy.submitOpacity(node, typed: "a") == 0.8)
+    }
+
     @Test func nothingRunsForEver() throws {
         // A repeat is capped, and the whole timeline, so a surface always comes to rest.
         let s = try scene([box], ["animations": [["target": "a", "to": ["x": 5], "ms": 100, "repeat": 100000]]])
