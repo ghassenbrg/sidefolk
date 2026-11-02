@@ -66,7 +66,7 @@ private struct PickedMark: View {
     }
 }
 
-private struct BadgeView: View {
+struct BadgeView: View {
     var badge: ExtensionPage.Badge
 
     var body: some View {

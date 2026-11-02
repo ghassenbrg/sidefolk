@@ -372,7 +372,7 @@ struct SectionView: View {
                 out.append(.hero(h))
             case .transport(let t):
                 out.append(.transport(t))
-            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table:
+            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps:
                 out.append(.rich(block))
             case .control(let c):
                 if case .toggle = c.kind {
@@ -400,7 +400,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps: EmptyView()
         }
     }
 }

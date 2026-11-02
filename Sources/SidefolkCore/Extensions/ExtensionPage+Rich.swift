@@ -164,6 +164,8 @@ extension ExtensionPage {
                                       value: goal == nil ? nil : i["value"]?.intValue.map { max(0, min($0, goal ?? 0)) }, goal: goal)
             }
             return items.isEmpty ? nil : .badges(BadgeList(title: text(j["title"], 60), items: items))
+        case "steps":
+            return parseSteps(j).map(Block.steps)
         case "recent":
             let items = (j["items"]?.arrayValue ?? []).prefix(maxRecent).compactMap { i -> RecentList.Item? in
                 guard let title = text(i["title"], 80) else { return nil }

@@ -16,7 +16,9 @@ struct ExtensionPageInputs: View {
                     RowsCard {
                         ForEach(Array(rows.enumerated()), id: \.offset) { _, block in
                             switch block {
+                            case .choice(let c) where c.multiple: PageMultiChoiceRow(choice: c, model: model)
                             case .choice(let c): PageChoiceRow(choice: c, model: model)
+                            case .field(let f) where f.id != nil: PageEditFieldRow(field: f, model: model).id(f.id)
                             case .field(let f): PageFieldRow(field: f, model: model)
                             default: EmptyView()
                             }

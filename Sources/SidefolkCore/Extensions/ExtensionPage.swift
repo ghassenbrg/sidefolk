@@ -127,6 +127,8 @@ public struct ExtensionPage: Sendable, Hashable {
         case scene(PageScene)
         /// Rows of controls under named columns (D108): one line per thing that has several settings. Narrow, each row stacks.
         case table(PageTable)
+        /// Things in order on a line, with their states (D113).
+        case steps(Steps)
     }
 
     /// A small label beside an option: "Paired", "New", "Off".
@@ -207,12 +209,20 @@ public struct ExtensionPage: Sendable, Hashable {
         public var disabled = false
         /// Picking changes the page's state instead of running a tool (D105).
         public var go: PageGo?
+        /// Several may be on; the tool gets the set, a list of values, under `key` (D113).
+        public var multiple = false
+        public var selectedAll: [String] = []
 
         /// What a pick does to the page's state, with `go`.
         public func go(picking value: String) -> PageGo? { go.map { var g = $0; g.set[key] = .string(value); return g } }
 
         /// What runs when `value` is picked.
         public func input(picking value: String) -> JSONValue { input.setting(key, .string(value)) }
+
+        /// What runs for a set of options, in their order.
+        public func input(pickingAll values: [String]) -> JSONValue {
+            input.setting(key, .array(options.map(\.value).filter(values.contains).map { .string($0) }))
+        }
     }
 
     public struct Field: Sendable, Hashable {
@@ -245,6 +255,22 @@ public struct ExtensionPage: Sendable, Hashable {
         /// With `go`: as they type, a moment after they stop. It starts with `value`, what the state holds.
         public var live = false
         public var value: String?
+        /// Set: it shows `value` and is changed in place, with no button (D113). Its own name keeps what's typed apart from the next field's.
+        public var id: String?
+        public var kind: Kind = .text
+        /// Chips that put a value at the caret.
+        public var tokens: [Token] = []
+
+        public enum Kind: String, Sendable, Hashable { case text, multiline, time, number }
+
+        public struct Token: Sendable, Hashable {
+            public var label: String
+            public var value: String
+            public var symbol: String?
+        }
+
+        /// How long what's typed may be: edited in place, it may be a whole prompt.
+        public static let longestEdit = 8_000
 
         /// What the page's state gets for `text`, with `go`.
         public func go(typing text: String) -> PageGo? {
@@ -253,7 +279,7 @@ public struct ExtensionPage: Sendable, Hashable {
 
         /// What runs for `text`, trimmed and at most 500 characters.
         public func input(typing text: String) -> JSONValue {
-            input.setting(key, .string(String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))))
+            input.setting(key, .string(String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(id == nil ? 500 : Self.longestEdit))))
         }
     }
 
@@ -539,9 +565,14 @@ public struct ExtensionPage: Sendable, Hashable {
             let key = j["key"]?.stringValue ?? "value"
             guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
             let selected = j["selected"]?.stringValue ?? ""
-            return .choice(Choice(label: label, detail: text(j["detail"], 240), options: options,
-                                  selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input,
-                                  style: style, key: key, disabled: j["disabled"]?.boolValue ?? false, go: go))
+            var choice = Choice(label: label, detail: text(j["detail"], 240), options: options,
+                                selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input,
+                                style: style, key: key, disabled: j["disabled"]?.boolValue ?? false, go: go)
+            if go == nil, j["multiple"]?.boolValue == true {
+                choice.multiple = true
+                choice.selectedAll = (j["selected_all"]?.arrayValue ?? []).compactMap(\.stringValue).filter { v in options.contains { $0.value == v } }
+            }
+            return .choice(choice)
         case "hero":
             guard let title = text(j["title"], 80) else { return nil }
             let facts = (j["facts"]?.arrayValue ?? []).prefix(4).compactMap { f -> Fact? in
@@ -564,12 +595,24 @@ public struct ExtensionPage: Sendable, Hashable {
                                         state: j["state"]?.stringValue.flatMap(Transport.State.init) ?? .stopped, buttons: buttons))
         case "field":
             let go = PageGo.parse(j["go"])
-            guard let label = text(j["label"], 60), let button = text(j["button"], 24), let tool = go == nil ? toolName(j["tool"]) : "",
+            // With an `id` it is edited in place (D113), so it has no button and may hold a whole prompt, its lines kept.
+            let editId = go == nil ? j["id"]?.stringValue.flatMap { $0.range(of: #"^[A-Za-z0-9_.:-]{1,64}$"#, options: .regularExpression) != nil ? $0 : nil } : nil
+            guard let label = text(j["label"], 60), let button = editId != nil ? "" : text(j["button"], 24), let tool = go == nil ? toolName(j["tool"]) : "",
                   let input = smallInput(j["input"]) else { return nil }
             let key = j["key"]?.stringValue ?? "text"
             guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
-            return .field(Field(label: label, detail: text(j["detail"], 240), placeholder: text(j["placeholder"], 60), button: button, tool: tool,
-                                input: input, key: key, go: go, live: go != nil && (j["live"]?.boolValue ?? false), value: text(j["value"], 500)))
+            var field = Field(label: label, detail: text(j["detail"], 240), placeholder: text(j["placeholder"], 60), button: button, tool: tool,
+                              input: input, key: key, go: go, live: go != nil && (j["live"]?.boolValue ?? false), value: text(j["value"], 500))
+            if let editId {
+                field.id = editId
+                field.value = j["value"]?.stringValue.map { ExtensionText.untrusted($0, bytes: Field.longestEdit * 2) } ?? ""
+                field.kind = j["kind"]?.stringValue.flatMap(Field.Kind.init(rawValue:)) ?? .text
+                field.tokens = (j["tokens"]?.arrayValue ?? []).prefix(16).compactMap { t in
+                    guard let label = text(t["label"], 40), let value = t["value"]?.stringValue, (1...200).contains(value.count) else { return nil }
+                    return Field.Token(label: label, value: ExtensionText.line(value, characters: 200), symbol: symbol(t["symbol"]))
+                }
+            }
+            return .field(field)
         case "list":
             let rows = (j["items"]?.arrayValue ?? []).prefix(maxItems).compactMap { r -> Row? in
                 guard let title = text(r["title"], 120) else { return nil }

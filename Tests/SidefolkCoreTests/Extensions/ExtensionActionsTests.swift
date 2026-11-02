@@ -294,12 +294,12 @@ import Testing
     }
 
     @Test func theInstallSheetSaysWhatItCanDoAndNothingFalse() {
-        let summary = PermissionSummary.forExtension(ExtensionPermissions(act: ExtensionActAccess(purpose: "to run flows")))
+        let summary = PermissionSummary.forExtension(ExtensionPermissions(act: ExtensionPurpose(purpose: "to run flows")))
         #expect(summary.lines.contains { $0.kind == .act && $0.caution && $0.text.contains("to run flows") })
         #expect(summary.texts.contains("No access of its own to your files or the internet"))
         #expect(!summary.texts.contains("No access to your files or the internet"))
-        #expect(ExtensionPermissions(act: ExtensionActAccess(purpose: "x")).widens(ExtensionPermissions()), "gaining it holds the update for a look")
-        let online = PermissionSummary.forExtension(ExtensionPermissions(network: true, act: ExtensionActAccess(purpose: "to x")))
+        #expect(ExtensionPermissions(act: ExtensionPurpose(purpose: "x")).widens(ExtensionPermissions()), "gaining it holds the update for a look")
+        let online = PermissionSummary.forExtension(ExtensionPermissions(network: true, act: ExtensionPurpose(purpose: "to x")))
         #expect(online.warnings.contains { $0.contains("every use asks you") })
     }
 

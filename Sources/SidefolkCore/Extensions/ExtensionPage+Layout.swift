@@ -81,6 +81,7 @@ extension ExtensionPage.Block {
         case .tabs: "tabs"
         case .badges: "badges"
         case .scene: "scene"
+        case .steps: "steps"
         case .recent: "recent"
         case .table: "table"
         case .settings: "settings"
