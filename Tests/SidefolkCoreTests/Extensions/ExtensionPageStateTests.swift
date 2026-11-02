@@ -136,9 +136,9 @@ struct ExtensionPageStateTests {
     }
 
     @Test func aSceneMayHoldNativeControlsWithinItself() throws {
-        let scene: JSONValue = ["size": ["width": 400, "height": 200], "children": []]
+        let scene: JSONValue = ["size": [400, 200], "nodes": []]
         func page(_ inlays: JSONValue) -> ExtensionPage? {
-            ExtensionPage.parse(["sections": [["blocks": [["type": "scene", "scene": scene, "inlays": inlays]]]]])
+            try? ExtensionPage.parse(["sections": [["blocks": [["type": "scene", "scene": scene, "inlays": inlays]]]]])
         }
         let field: JSONValue = ["type": "field", "label": "Search", "button": "Clear", "key": "q", "go": ["set": [:]], "live": true]
         let parsed = page([["x": 10, "y": 10, "w": 200, "h": 30, "part": field],
