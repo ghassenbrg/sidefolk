@@ -90,11 +90,11 @@ public final class ToolExecutor: Sendable {
     ///   - onWaiting: called when the call is parked waiting for the user's approval.
     public func execute(
         name: String, input: JSONValue, caller: Caller, tainted: Bool = false, taintedBy: TaintSource? = nil, mentions: UserMentions? = nil,
-        timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil,
+        timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil, pickedFile: String? = nil,
         onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil
     ) async -> ToolOutcome {
         await perform(name: name, input: input, caller: caller, tainted: tainted, taintedBy: taintedBy, mentions: mentions, timeout: timeout,
-                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil)
+                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile)
     }
 
     /// Runs a skipped step on the person's click in Now. The click answers the question its card
@@ -112,7 +112,7 @@ public final class ToolExecutor: Sendable {
     /// - Parameter answered: a question the person already said "Allow" to, outside a card.
     private func perform(
         name: String, input: JSONValue, caller: Caller, tainted: Bool, taintedBy: TaintSource?, mentions: UserMentions?, timeout: TimeInterval,
-        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?
+        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil
     ) async -> ToolOutcome {
         let callId = Identifier.make()
         guard let tool = registry.tool(named: name) else {
@@ -149,7 +149,8 @@ public final class ToolExecutor: Sendable {
             (scope, input) = await tool.confirmReach(input, scope: scope)
         }
         var decisionTag: ActivityEntry.Decision = .auto
-        var extraFolders: [GrantedFolder] = []
+        // A file the person chose in the system's panel for this call: read of it alone, and only as themselves (SECURITY T12).
+        var extraFolders: [GrantedFolder] = caller == .user ? [pickedFile.flatMap(FolderAccess.canonical)].compactMap { $0.map { GrantedFolder(path: $0, access: .read) } } : []
         // Folders the person allowed in a card for this call: a file there was named for this call, not picked from a
         // folder shared for good (D72).
         var answeredFolders: [String] = []
