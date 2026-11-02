@@ -170,7 +170,7 @@ struct SceneTests {
             ["target": "b", "to": ["rotate": 90], "ms": 100, "repeat": 2, "autoreverse": true],
         ]])
         #expect(curve(s, "a", .opacity)?.times == [0, 0.1])
-        #expect(curve(s, "b", .opacity)?.times == [0, 0.2, 0.3])
+        #expect(curve(s, "b", .opacity)?.times.map { ($0 * 1000).rounded() } == [0, 200, 300])
         let r = try #require(curve(s, "b", .rotate))
         #expect(r.values == [0, 90, 0, 90, 0], "\(r.values)")
         #expect(r.times.last == 0.4)

@@ -154,7 +154,8 @@ struct SceneReader {
         var node = SceneNode(id: id, kind: kind)
         node.width = width
         node.height = height
-        if width == 0, height == 0, case .group = kind { (node.width, node.height) = (parent.width, parent.height) }
+        // A plain group with no size is as large as its parent; a helper works its size out from what it holds.
+        if width == 0, height == 0, ["group", nil].contains(j["type"]?.stringValue) { (node.width, node.height) = (parent.width, parent.height) }
         node.x = SurfaceScene.clamp(j["x"]?.doubleValue, SurfaceScene.coordinates, 0)
         node.y = SurfaceScene.clamp(j["y"]?.doubleValue, SurfaceScene.coordinates, 0)
         if let a = j["anchor"]?.arrayValue?.compactMap(\.doubleValue), a.count == 2 {
@@ -268,7 +269,8 @@ struct SceneReader {
     }
 
     private mutating func textStyle(_ j: JSONValue, needsText: Bool) throws -> SceneText? {
-        let words = GameBoard.longText(j["text"], SurfaceScene.maxTextCharacters)
+        // Empty is a fine thing to say (a tile not typed in yet); no text at all, or not text, isn't.
+        let words = GameBoard.longText(j["text"], SurfaceScene.maxTextCharacters) ?? j["text"]?.stringValue.map { _ in "" }
         if needsText, words == nil { return nil }
         text += words?.count ?? 0
         guard text <= SurfaceScene.maxAllText else { throw SurfaceScene.refused("holds more than \(SurfaceScene.maxAllText) characters") }

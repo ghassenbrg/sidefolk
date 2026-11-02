@@ -27,8 +27,8 @@ final class SurfacePanelController {
     var isVisible: Bool { hosted.panel.isVisible }
     var frame: NSRect { hosted.panel.frame }
     var onVisibilityChange: ((Bool) -> Void)?
-    /// The surface ended by itself: left past its time, or an overlay's life was up.
-    var onExpired: ((SurfaceModel) -> Void)?
+    /// The surface ended here: left past its time, an overlay's life was up, or an overlay was closed.
+    var onExpired: ((SurfaceModel, SurfaceCloseReason) -> Void)?
     var onBack: ((SurfaceModel) -> Void)? {
         get { holder.onBack }
         set { holder.onBack = newValue }
@@ -72,7 +72,7 @@ final class SurfacePanelController {
         expiry = Task { [weak self] in
             try? await Task.sleep(for: .seconds(SurfacePolicy.overlayLifetime))
             guard !Task.isCancelled, let self, self.holder.model === model else { return }
-            self.onExpired?(model)
+            self.onExpired?(model, .timeout)
         }
     }
 
@@ -126,13 +126,13 @@ final class SurfacePanelController {
         model.pause()
         if presentation == .overlay {
             expiry?.cancel()
-            onExpired?(model)
+            onExpired?(model, .closed)
             return
         }
         expiry = Task { [weak self] in
             try? await Task.sleep(for: .seconds(SurfacePolicy.keptFor))
             guard !Task.isCancelled, let self, self.holder.model === model, !self.isVisible else { return }
-            self.onExpired?(model)
+            self.onExpired?(model, .timeout)
         }
     }
 

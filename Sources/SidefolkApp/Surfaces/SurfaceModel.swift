@@ -123,7 +123,7 @@ final class SurfaceModel {
     }
 
     /// What the scene needs of time: its clocks (one with the same id carries on), its `after`, its close and its events.
-    private func schedule(_ scene: SurfaceScene, still: Bool) {
+    private func schedule(_ scene: SurfaceScene, still: Bool, events: Bool = true) {
         let ids = Set(scene.timers.map(\.id))
         for (id, running) in timers where !ids.contains(id) {
             running.task.cancel()
@@ -152,7 +152,7 @@ final class SurfaceModel {
                 self?.onFinished?()
             }
         }
-        runEvents(scene, still: still)
+        if events { runEvents(scene, still: still) }
     }
 
     private func start(_ id: String, seconds: TimeInterval) {
@@ -238,7 +238,7 @@ final class SurfaceModel {
     func resume() {
         lastActive = Date()
         guard let scene else { return }
-        schedule(scene, still: reduceMotion())
+        schedule(scene, still: reduceMotion(), events: false)
     }
 
     func stop() {

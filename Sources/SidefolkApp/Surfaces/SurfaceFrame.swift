@@ -27,6 +27,7 @@ struct SurfaceFrame: View {
             header
             canvas
         }
+        .frame(minWidth: 260)
         .background(Theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))

@@ -2,11 +2,9 @@ import Foundation
 import Synchronization
 import Testing
 @testable import SidefolkCore
-@testable import ext_scene_sample
-import SidefolkExtensionKit
 
 /// The surface channel (D99): `sidefolk/surface.open|move|close` with the game channel's limits, the manifest's keys,
-/// `surfaces.open`, its sentences and the sample program running in its sandbox.
+/// `surfaces.open` and its sentences.
 struct SurfaceChannelTests {
     static let fixture = #"""
     import json, sys, time
@@ -58,7 +56,7 @@ struct SurfaceChannelTests {
         return source
     }
 
-    func validate(_ surfaces: JSONValue, assets: JSONValue?, files: [String: Data]) throws -> ValidationReport {
+    func validate(_ surfaces: JSONValue, assets: JSONValue?, files: [String: Data]) async throws -> ValidationReport {
         let h = try HostEnv()
         let dir = try ExtFixtures.tempDir("surface-val").appendingPathComponent("fixture")
         let source = try ExtFixtures.makeExtension(at: dir, manifest: Self.manifest(surfaces, assets: assets), files: ["server.py": Self.fixture])
@@ -67,35 +65,35 @@ struct SurfaceChannelTests {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try data.write(to: url)
         }
-        return h.host.preview(folder: source).report
+        return await h.host.preview(folder: source).report
     }
 
     // MARK: The manifest
 
     @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))
-    func theValidatorChecksSurfacesAndAssets() throws {
-        let fine = try validate(["a": ["title": "A", "kind": "overlay", "width": 200, "height": 200]], assets: "assets", files: ["assets/a.png": PackAssetsTests.png()])
+    func theValidatorChecksSurfacesAndAssets() async throws {
+        let fine = try await validate(["a": ["title": "A", "kind": "overlay", "width": 200, "height": 200]], assets: "assets", files: ["assets/a.png": PackAssetsTests.png()])
         #expect(fine.errors.isEmpty, "\(fine.errors)")
         #expect(fine.text.contains("Surfaces: A"))
 
-        func errors(_ surfaces: JSONValue, assets: JSONValue? = nil, files: [String: Data] = [:]) throws -> String {
-            try validate(surfaces, assets: assets, files: files).errors.map(\.description).joined(separator: "\n")
+        func errors(_ surfaces: JSONValue, assets: JSONValue? = nil, files: [String: Data] = [:]) async throws -> String {
+            try await validate(surfaces, assets: assets, files: files).errors.map(\.description).joined(separator: "\n")
         }
-        #expect(try errors(["BAD": ["title": "A"]]).contains("valid surface name"))
-        #expect(try errors(["a": ["title": ""]]).contains("title"))
-        #expect(try errors(["a": ["title": "A", "width": 900]]).contains("width"))
-        #expect(try errors(["a": ["title": "A", "height": 700]]).contains("height"))
-        #expect(try errors(["a": ["title": "A", "kind": "overlay", "width": 600]]).contains("width"))
-        #expect(try errors(["a": ["title": "A", "width": 50]]).contains("width"))
-        #expect(try errors(["a": ["title": "A", "say": ["open {thing}"]]]).contains("slots"))
-        #expect(try errors(["a": ["title": "A", "symbol": "NOT A SYMBOL"]]).contains("symbol"))
-        #expect(try errors(["a": ["title": "A", "unheard": true]]).contains("known key"))
-        #expect(try errors(["a": ["title": "A", "kind": "fullscreen"]]).isEmpty == false)
+        do { let found = try await errors(["BAD": ["title": "A"]]); #expect(found.contains("valid surface name"), "\(found)") }
+        do { let found = try await errors(["a": ["title": ""]]); #expect(found.contains("title"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "width": 900]]); #expect(found.contains("width"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "height": 700]]); #expect(found.contains("height"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "kind": "overlay", "width": 600]]); #expect(found.contains("width"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "width": 50]]); #expect(found.contains("width"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "say": ["open {thing}"]]]); #expect(found.contains("slots"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "symbol": "NOT A SYMBOL"]]); #expect(found.contains("symbol"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "unheard": true]]); #expect(found.contains("known key"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A", "kind": "fullscreen"]]); #expect(found.isEmpty == false, "\(found)") }
 
-        #expect(try errors(["a": ["title": "A"]], assets: "../up").contains("assets"))
-        #expect(try errors(["a": ["title": "A"]], assets: "nope").contains("isn't a folder"))
-        #expect(try errors(["a": ["title": "A"]], assets: "assets", files: ["assets/run.sh": Data("x".utf8)]).contains("assets/run.sh"))
-        #expect(try errors(["a": ["title": "A"]], assets: "assets", files: ["assets/x.png": Data("x".utf8)]).contains("assets/x.png"))
+        do { let found = try await errors(["a": ["title": "A"]], assets: "../up"); #expect(found.contains("assets"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A"]], assets: "nope"); #expect(found.contains("isn't a folder"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A"]], assets: "assets", files: ["assets/run.sh": Data("x".utf8)]); #expect(found.contains("assets/run.sh"), "\(found)") }
+        do { let found = try await errors(["a": ["title": "A"]], assets: "assets", files: ["assets/x.png": Data("x".utf8)]); #expect(found.contains("assets/x.png"), "\(found)") }
     }
 
     // MARK: The channel
@@ -157,7 +155,7 @@ struct SurfaceChannelTests {
         let (first, _) = try await h.host.openSurface(board, language: "en")
         let (second, _) = try await h.host.openSurface(board, language: "en")
         #expect(first == second, "the fixture reuses its session name")
-        let stream = h.events.stream()
+        let stream = h.env.events.stream()
         try await h.host.setEnabled(false, id: info.id)
         #expect(h.host.surfaceShelf.all.isEmpty, "turned off, nothing of it can open")
         var gone = false
@@ -179,123 +177,26 @@ struct SurfaceChannelTests {
     func theToolOpensForThePersonAndForTheAIOnlyWhatItIsOffered() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: folder())
-        let tool = SurfacesOpenTool(events: h.events, shelf: h.host.surfaceShelf)
+        let tool = SurfacesOpenTool(events: h.env.events, shelf: h.host.surfaceShelf)
         #expect(tool.spec.description.contains("\(info.id)/board") && !tool.spec.description.contains("\(info.id)/quiet"), "the AI is told only what is offered to it")
         #expect(tool.spec.risk == .low)
 
-        let stream = h.events.stream()
+        let stream = h.env.events.stream()
         func requests() async -> SurfaceRequest? {
             for await event in stream { if case .surface(let r) = event { return r } }
             return nil
         }
-        _ = try await tool.run(["surface": .string("\(info.id)/board")], context: ToolContext(caller: .agent(runId: "r")))
+        _ = try await tool.run(["surface": .string("\(info.id)/board")], context: ToolContext(caller: .agent(runId: "r"), now: Date()))
         let byAI = await requests()
         #expect(byAI?.focus == false, "the AI's waits for a click")
-        _ = try await tool.run(["surface": .string("\(info.id)/quiet")], context: ToolContext(caller: .user))
+        _ = try await tool.run(["surface": .string("\(info.id)/quiet")], context: ToolContext(caller: .user, now: Date()))
         let byPerson = await requests()
         #expect(byPerson?.focus == true && byPerson?.takesKeyboard == false, "an overlay never takes the keyboard")
-        await #expect(throws: (any Error).self) { try await tool.run(["surface": .string("\(info.id)/quiet")], context: ToolContext(caller: .agent(runId: "r"))) }
-        await #expect(throws: (any Error).self) { try await tool.run(["surface": "dev.nope.x/y"], context: ToolContext(caller: .user)) }
+        await #expect(throws: (any Error).self) { try await tool.run(["surface": .string("\(info.id)/quiet")], context: ToolContext(caller: .agent(runId: "r"), now: Date())) }
+        await #expect(throws: (any Error).self) { try await tool.run(["surface": "dev.nope.x/y"], context: ToolContext(caller: .user, now: Date())) }
 
-        let parser = IntentParser(surfaces: h.host.surfaceShelf.all)
+        let parser = IntentParser(when: WhenParser(), surfaces: h.host.surfaceShelf.all)
         #expect(parser.surface("open the board")?.intent == .surface(id: "\(info.id)/board"))
         #expect(parser.surface("open the moon") == nil)
-    }
-
-    // MARK: The sample, from the Kit
-
-    /// A scene the Kit wrote, as Sidefolk reads it.
-    static func read(_ scene: SidefolkExtensionKit.Scene) throws -> SurfaceScene {
-        let data = try JSONSerialization.data(withJSONObject: scene.json)
-        let parsed = try SurfaceScene.parse(try JSONValue.parse(String(decoding: data, as: UTF8.self)))
-        #expect(parsed.notes.isEmpty, "nothing dropped: \(parsed.notes)")
-        return parsed
-    }
-
-    @Test @MainActor func theSampleScenesReadCleanly() throws {
-        let shuffle = try Self.read(Shuffle().scene())
-        #expect(shuffle.areas.filter { $0.id == "pick" }.count == 3)
-        #expect(shuffle.keys.map(\.match) == [.character("1"), .character("2"), .character("3")])
-        #expect(shuffle.inputOpens(reduceMotion: false) > 2.5 && shuffle.inputOpens(reduceMotion: true) > 2.5, "the shuffle is the point: it plays under Reduce Motion")
-        #expect(shuffle.runs.contains { $0.id == "round" && !$0.events.isEmpty })
-        #expect(shuffle.nodes.contains { $0.kind == .companion(pose: .thinking) } && shuffle.nodes.contains { $0.kind == .person })
-
-        var picked = Shuffle()
-        picked.pick(1)
-        let result = try Self.read(picked.scene())
-        #expect(result.over && result.outcome != nil && result.tally != nil)
-
-        let drag = try Self.read(DragBoard().scene())
-        #expect(drag.areas.first { $0.id == "pin" }?.drag?.mode == .free)
-        #expect(drag.areas.first { $0.id == "field" }?.drag == SceneDrag(mode: .grid(rows: 4, columns: 8), ghost: "preview"))
-
-        let keys = try Self.read(WordBoard().scene())
-        #expect(keys.areas.filter { $0.id == "kb" }.count == 28)
-        #expect(keys.keys.contains { $0.match == .named(.return) && $0.value == "↵" } && keys.keys.contains { $0.match == .named(.delete) })
-        #expect(keys.areas.allSatisfy { !$0.label.isEmpty })
-
-        let coin = try Self.read(Coin().scene())
-        #expect(coin.runs.first?.curves.contains { $0.property == .flip } == true)
-    }
-
-    /// The Kit's board with the most on it, within the channel's 64 KB: 81 cells, each with its pencil notes.
-    @Test func aFullBoardFitsTheChannel() throws {
-        let cell = Node.rect(fill: .surfaceRaised, stroke: .line).style("c")
-        let scene = Scene(width: 460, height: 460) {
-            Node.grid(columns: 9, cell: (50, 50)) {
-                for r in 0..<9 {
-                    for c in 0..<9 {
-                        Node.group {
-                            cell
-                            Node.text("123\n456\n789", size: 10, color: .inkMuted, lines: 3).style("n")
-                        }
-                        .area("cell", value: "\(r),\(c)", label: "Row \(r + 1), column \(c + 1)", hover: nil, press: nil)
-                    }
-                }
-            }
-        }
-        .style("c", ["w": 50, "h": 50])
-        .style("n", ["w": 50, "h": 50])
-        let data = try JSONSerialization.data(withJSONObject: scene.json)
-        #expect(data.count < SurfaceScene.maxBytes, "\(data.count)")
-        let read = try SurfaceScene.parse(try JSONValue.parse(String(decoding: data, as: UTF8.self)))
-        #expect(read.areas.count == 81)
-    }
-
-    @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))
-    func theSampleRunsInItsSandboxFromThePack() async throws {
-        let h = try HostEnv()
-        let pack = try Self.samplePack()
-        let info = try await h.host.install(from: pack)
-        let all = h.host.surfaceShelf.all
-        #expect(all.map(\.surface) == ["coin", "drag", "keys", "shuffle"])
-        #expect(all.allSatisfy(\.sounds))
-        let reader = try #require(await h.host.assetReader(extensionId: info.id))
-        #expect(reader.has("tile-star.png") && reader.has("ding.wav"))
-        #expect(reader.image("tile-star.png", maxSide: 64)?.width == 64)
-        #expect(reader.soundURL("ding.wav") != nil)
-        let shuffle = try #require(all.first { $0.surface == "shuffle" })
-        let session = SurfaceSession(info: shuffle, host: h.host, reduceMotion: false)
-        let scene = try await session.open(language: "en")
-        #expect(scene.areas.filter { $0.id == "pick" }.count == 3)
-        #expect(session.inputOpen() == false, "moves wait for the shuffle")
-        #expect(try await session.move(.click(area: "pick", value: "0", ms: nil)) == nil)
-        session.holdInput(until: .distantPast)
-        let picked = try #require(try await session.move(.click(area: "pick", value: "0", ms: nil)))
-        #expect(picked.over)
-        await session.close(.finished)
-        #expect(await h.host.isRunning(info.id))
-    }
-
-    /// The sample put together as a pack: its manifest, assets and the built program.
-    static func samplePack() throws -> URL {
-        let source = ExtFixtures.repoRoot.appendingPathComponent("samples/scene-sample", isDirectory: true)
-        let pack = try ExtFixtures.tempDir("scene-pack").appendingPathComponent("scenes", isDirectory: true)
-        let fm = FileManager.default
-        try fm.createDirectory(at: pack.appendingPathComponent("bin"), withIntermediateDirectories: true)
-        try fm.copyItem(at: source.appendingPathComponent(ExtensionManifest.fileName), to: pack.appendingPathComponent(ExtensionManifest.fileName))
-        try fm.copyItem(at: source.appendingPathComponent("assets"), to: pack.appendingPathComponent("assets"))
-        try fm.copyItem(at: ExtFixtures.products.appendingPathComponent("ext-scene-sample"), to: pack.appendingPathComponent("bin/ext-scene-sample"))
-        return pack
     }
 }

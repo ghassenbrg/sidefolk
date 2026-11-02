@@ -1337,7 +1337,8 @@ public actor ExtensionHost {
 
     private func stopIfIdle(_ id: String) async {
         guard let rt = runtimes[id], rt.client != nil else { return }
-        if rt.inFlight > 0 || Date().timeIntervalSince(rt.lastUsed) < config.idleTimeout * 0.9 {
+        // A surface open or kept holds its state in the program: it stays until the surface closes (D99).
+        if rt.inFlight > 0 || Date().timeIntervalSince(rt.lastUsed) < config.idleTimeout * 0.9 || openSurfaces.values.contains(where: { $0.info.extensionId == id }) {
             touch(id)
             return
         }

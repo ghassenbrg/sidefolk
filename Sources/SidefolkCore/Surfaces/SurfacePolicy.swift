@@ -38,6 +38,12 @@ public enum SurfacePolicy {
         case .panel: candidates = roomLeft >= roomRight ? [left, right, above, below] : [right, left, above, below]
         case .overlay: candidates = [above, roomLeft >= roomRight ? left : right, roomLeft >= roomRight ? right : left, below]
         }
+        // A card in the way: beside it, above it or below it, at the same height.
+        for card in cards {
+            let first = candidates[0]
+            candidates += [CGPoint(x: card.minX - gap - size.width, y: first.y), CGPoint(x: card.maxX + gap, y: first.y),
+                           CGPoint(x: first.x, y: card.maxY + gap), CGPoint(x: first.x, y: card.minY - gap - size.height)]
+        }
         func inside(_ p: CGPoint) -> CGRect {
             CGRect(x: min(max(p.x, screen.minX + 8), screen.maxX - size.width - 8), y: min(max(p.y, screen.minY + 8), screen.maxY - size.height - 8),
                    width: size.width, height: size.height)

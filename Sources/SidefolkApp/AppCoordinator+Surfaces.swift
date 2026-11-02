@@ -11,7 +11,7 @@ extension AppCoordinator {
             if presentation == .panel { self.companion.keepRaised(visible) }
             if !visible { self.cues.reset() }
         }
-        panel.onExpired = { [weak self] model in self?.finish(model, reason: .timeout) }
+        panel.onExpired = { [weak self] model, reason in self?.finish(model, reason: reason) }
         panel.onBack = { model in model.send(.back) }
         panel.onSpeaker = { [weak self] model in self?.toggleSurfaceSounds(model) }
         panel.onCloseButton = { [weak panel] _ in panel?.hide() }
