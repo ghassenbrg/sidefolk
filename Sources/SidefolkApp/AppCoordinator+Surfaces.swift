@@ -163,7 +163,7 @@ extension AppCoordinator {
     /// `surface:<extension>/<surface>` opens one as the AI would, waiting for a click; `surfaceFocus:…` as the person would.
     /// `surfaceClick:x,y` and `surfaceDrag:x,y:x,y` act on the panel's canvas (`overlay:` first for the overlay) through
     /// AppKit; `surfaceKey:<k>` presses a key; `surfaceMove:<area>[=value]` clicks an area by name (only if offered);
-    /// `surfaceClose`, `surfaceFilm:<seconds>[:overlay]` writes frames, animations included, to `snapshots/film-…`,
+    /// `surfaceEntry:<field>=<words>` types in a field; `surfaceClose`, `surfaceFilm:<seconds>[:overlay]` writes frames, animations included, to `snapshots/film-…`,
     /// `surfaceStats` logs layers and sizes, `surfaceExportSounds:<dir>` writes the app's sounds as WAV files.
     func devSurface(_ command: String) -> Bool {
         let parts = command.split(separator: ":", maxSplits: 1).map(String.init)
@@ -190,6 +190,9 @@ extension AppCoordinator {
         case "surfaceMove":
             let bits = argument.split(separator: "=", maxSplits: 1).map(String.init)
             if let area = bits.first { controller.model?.send(.click(area: area, value: bits.count > 1 ? bits[1] : nil, ms: nil)) }
+        case "surfaceEntry":
+            let bits = argument.split(separator: "=", maxSplits: 1).map(String.init)
+            if bits.count == 2 { controller.model?.view.devType(bits[1], in: bits[0]) }
         case "surfaceClose":
             controller.hide()
         case "surfaceFilm":

@@ -94,6 +94,7 @@ final class SceneView: NSView {
         start(drawn.runs)
         applyScrolls(settled)
         layoutFields(settled)
+        dimEmptySubmits()
         CATransaction.commit()
         takeFocusIfAsked(settled)
         restyleHover()
@@ -567,12 +568,37 @@ final class SceneView: NSView {
                     guard let clean = SurfaceMove.typed(text) else { return }
                     self.onMove?(.entry(id: id, text: clean))
                     field.stringValue = ""
+                    self.dimEmptySubmits()
                 }
+                field.onChange = { [weak self] in self?.dimEmptySubmits() }
             }
             field.configure(entry, placeholder: entry.placeholder.map(figures.fill))
             field.frame = CGRect(x: rect.minX * scale, y: rect.minY * scale, width: rect.width * scale, height: rect.height * scale)
         }
     }
+
+    /// An area that sends a field's words looks dim while there is nothing to send, when it takes no press either.
+    private func dimEmptySubmits() {
+        guard let nodes = scene?.nodes else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        func visit(_ node: SceneNode) {
+            if let name = node.area?.submits, let field = fields[name], let item = layers[node.id] {
+                item.main.opacity = Float(SurfacePolicy.submitOpacity(node, typed: field.stringValue))
+            }
+            node.children.forEach(visit)
+        }
+        nodes.forEach(visit)
+        CATransaction.commit()
+    }
+
+    #if DEBUG
+    /// Words in a field, as if typed: `surfaceEntry`. A click on what submits it, or Return, still sends it.
+    func devType(_ text: String, in name: String) {
+        fields[name]?.stringValue = text
+        dimEmptySubmits()
+    }
+    #endif
 
     /// The keyboard's first stop, when the surface has it and the scene has a field.
     func focusField() {
@@ -686,6 +712,8 @@ nonisolated final class SceneAXElement: NSAccessibilityElement, @unchecked Senda
 /// A scene's one-line field, typed with the person's input method.
 final class SceneField: NSTextField, NSTextFieldDelegate {
     var onSubmit: ((String) -> Void)?
+    /// What is typed changed.
+    var onChange: (() -> Void)?
     private var max = 40
 
     init() {
@@ -714,6 +742,7 @@ final class SceneField: NSTextField, NSTextFieldDelegate {
 
     func controlTextDidChange(_ note: Notification) {
         if stringValue.count > max { stringValue = String(stringValue.prefix(max)) }
+        onChange?()
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
