@@ -2,9 +2,8 @@ import Foundation
 @testable import SidefolkCore
 import Testing
 
-/// Commands with slots (D100): everything the app's own game sentences do (`IntentGameCommands`, D93) said through what any
-/// extension can declare, with no game names in the mechanism: this file is the proof that the sentences can move.
-/// The words are the app's own tables, handed over as an extension's manifest and `strings/` would hold them.
+/// Commands with slots (D100): sentences as rich as a person's, said through what any extension can declare, with no names in the mechanism.
+/// The words are tables, handed over as an extension's manifest and `strings/` would hold them.
 struct CommandFrameTests {
     static let phrases: [String: [String]] = [
         "level": ["{level:level}"],
@@ -25,12 +24,12 @@ struct CommandFrameTests {
     static let manifestLike: CommandVocabulary = {
         var v = CommandVocabulary()
         var levels: [String: [String]] = [:]
-        for (word, value) in GameSlotWords.levels { levels[value, default: []].append(word) }
+        for (word, value) in CommandFrameWords.levels { levels[value, default: []].append(word) }
         v.choices = ["level": levels]
         v.parts = phrases.mapValues { [ExtensionManifest.PartMeta(say: $0)] }
-        v.parts["friend"] = [ExtensionManifest.PartMeta(say: GameSlotWords.twoPlayers, input: ["players": 2])]
-        v.carry = CommandCarry([ExtensionManifest.CarryMeta(words: Array(GameSlotWords.fillers), lead: Array(GameSlotWords.playWords) + GameSlotWords.playJoined,
-                                                            inside: GameSlotWords.joined, endings: GameSlotWords.particles)])
+        v.parts["friend"] = [ExtensionManifest.PartMeta(say: CommandFrameWords.twoPlayers, input: ["players": 2])]
+        v.carry = CommandCarry([ExtensionManifest.CarryMeta(words: Array(CommandFrameWords.fillers), lead: Array(CommandFrameWords.playWords) + CommandFrameWords.playJoined,
+                                                            inside: CommandFrameWords.joined, endings: CommandFrameWords.particles)])
         return v
     }()
 

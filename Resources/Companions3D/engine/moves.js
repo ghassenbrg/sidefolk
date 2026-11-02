@@ -649,7 +649,7 @@ Object.assign(ACTIONS, {
     },
   },
 
-  // Accents: the short versions fast games (Copy Me) use, under a second each.
+  // Accents: the short versions fast choreography uses, under a second each.
   waveQuick: {
     dur: 1.0,
     fn(t, P) {

@@ -213,13 +213,13 @@ struct ExtensionTextIsolatesTests {
         #expect(ExtensionText.line(label, characters: 30) == "Check Mochi's paw")
     }
 
-    @Test func pagesAndBoardsShowThem() throws {
-        let b = try GameBoardTests.board("""
-            {"parts": [{"type": "prompt", "text": "\\u2068Mochi\\u2069 يعدّ… بقي \\u20681\\u2069.", "eyebrow": "\\u2068Nori\\u2069"},
-                       {"type": "button", "label": "Check \\u2068Mochi\\u2069's paw", "move": "accuse"}]}
-            """)
-        guard case .prompt(let p) = b.parts[0] else { Issue.record("\(b.parts)"); return }
-        #expect(p.text == "\(fsi)Mochi\(pdi) يعدّ… بقي \(fsi)1\(pdi)." && p.eyebrow == "\(fsi)Nori\(pdi)")
-        #expect(b.buttons.first?.label == "Check \(fsi)Mochi\(pdi)'s paw")
+    @Test func scenesShowThem() throws {
+        let s = try SurfaceScene.parse(["size": [300, 200], "title": "\u{2068}Mochi\u{2069} يعدّ", "nodes": [
+            ["type": "text", "id": "t", "text": "\u{2068}Mochi\u{2069} يعدّ… بقي \u{2068}1\u{2069}.", "w": 200, "h": 20],
+            ["type": "group", "id": "g", "w": 20, "h": 20, "area": ["id": "a", "label": "Check \u{2068}Mochi\u{2069}'s paw"]],
+        ]])
+        guard case .text(let text) = s.nodes[0].kind else { Issue.record("text"); return }
+        #expect(text.text == "\(fsi)Mochi\(pdi) يعدّ… بقي \(fsi)1\(pdi).")
+        #expect(s.areas.first?.label == "Check \(fsi)Mochi\(pdi)'s paw" && s.title == "\(fsi)Mochi\(pdi) يعدّ")
     }
 }

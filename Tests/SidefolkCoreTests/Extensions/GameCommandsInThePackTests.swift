@@ -131,7 +131,7 @@ struct GameCommandsInThePackTests {
     @Test func thePackIsValidAndNamesNoGamesKey() throws {
         guard let folder = Self.folder else { return }
         let (m, _) = try Self.loaded(folder)
-        #expect(m.games.isEmpty, "no game channel")
+        #expect(m.retired.isEmpty, "no game channel")
         #expect(m.surfaces["play"] != nil && m.assets == "assets")
         #expect(m.settings.filter { !$0.listed }.count > 0 && m.settings.filter(\.listed).map(\.key) == ["tone", "sounds", "sneaky"])
     }

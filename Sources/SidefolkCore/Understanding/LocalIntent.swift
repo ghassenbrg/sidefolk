@@ -76,7 +76,7 @@ public enum LocalIntent: Sendable, Equatable {
     case needsTarget(kind: String, becomes: String?)
     /// A weather report with no place named, while Sidefolk doesn't know where the person is (D48).
     case needsPlace(WeatherQuantity)
-    /// A trick or a game with the companion (D44).
+    /// A trick or a little game with the companion (D44).
     case companion(CompanionAct)
     /// A coin, dice or rock, paper, scissors on the desktop.
     /// "new conversation", "start fresh": the next request to the AI starts a new conversation (D45).

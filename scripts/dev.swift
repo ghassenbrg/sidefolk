@@ -14,7 +14,7 @@
 //                           menu item or tab, as a click on it; Remove in Settings › Add-ons, without its question)
 //   swift scripts/dev.swift pocket   (D84: opens or closes the menu bar's Pocket)
 //   swift scripts/dev.swift attention:focus:60 | attention:quiet | attention:open   (D84: Focus or Quiet, minutes or for good)
-//   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:games:default   (D88)
+//   swift scripts/dev.swift interrupt:agent:claude-code:today | interrupt:watches:whisper | interrupt:companion:default   (D88)
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:agenda | calendar:day | calendar:week:2026-11-03 | calendar:month | calendar:year
 //                           (D66, D84, D97) | calendar:swipe:-160[:film] | calendar:scroll:300[:film] | calendar:drag:x1,y1:x2,y2[:film]
@@ -46,14 +46,10 @@
 //   swift scripts/dev.swift cardKeys | cardKey:return|cmdReturn|escape|left|right|tab|backtab|up|down   (D84: the card
 //                           shortcut, then keys on the card or the held cards it fanned)
 //   swift scripts/dev.swift play:dance | play:catch_me | play:breathe | click   (D44; click is a click on the companion)
-//   swift scripts/dev.swift game:dev.sidefolk.playtime/which_cup | move:{"cell":[0,1]} | key:1 | closeGame | playMenu   (D75, D79)
-//                           | cue:sulk | cue:tease | cue:accent:wave   (a game cue's move, as an open game's board plays it)
-//   swift scripts/dev.swift drag:0,0,1,2   (a puzzle's plot dragged corner to corner, cell by cell, then let go)
 //   swift scripts/dev.swift surface:<extension>/<surface> | surfaceFocus:<extension>/<surface>   (D99: as the AI, waiting for a click; as the person)
 //                           | surfaceClick:[overlay:]x,y | surfaceDrag:[overlay:]x,y:x,y | surfaceKey:<k> | surfaceMove:<area>[=value]
 //                           | surfaceClose | surfaceFilm:[overlay:]<seconds> (frames, animations included, in snapshots/film-…) | surfaceStats
 //                           | surfaceExportSounds:<dir> (the app's sounds as WAV files, for a pack) | surfaceExportArt:<dir> (its drawn hands, coin and dice as PNGs)
-//   swift scripts/dev.swift askTab:play   (Ask open, then its Play tab: the Play panel's menu of games)
 //   swift scripts/dev.swift click:companion | click:200,300   (a mouse click on the companion in the Play panel's scene,
 //                           Which Cup?'s paw, or at a point of the panel from its top left)
 //   swift scripts/dev.swift key:space | key:right | key:return | key:escape   (Garden Plots drawn from the keyboard)

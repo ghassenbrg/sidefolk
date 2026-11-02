@@ -48,7 +48,7 @@ struct ExtensionSettingTool: Tool {
     }
 }
 
-/// `extensions.activity` (D100): one row in History from an extension's surface or game, in its words, marked as its own. Only the
+/// `extensions.activity` (D100): one row in History from an extension's surface, in its words, marked as its own. Only the
 /// extension reaches it, for itself; a model never does, and the words are cleaned and clipped like a page's.
 struct ExtensionActivityTool: Tool {
     static let name = "extensions.activity"

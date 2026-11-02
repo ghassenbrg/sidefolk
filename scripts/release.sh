@@ -55,6 +55,9 @@ sign --options runtime --entitlements Resources/Sidefolk.entitlements "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 # The packs a fresh Mac installs (D98), as the gallery's team signed them.
 python3 -I scripts/seed-packs.py verify "$APP/Contents/Resources/SeedPacks"
+# Nothing of an extension's may ship (D98, D101): against the names in the add-ons' own manifests.
+[[ -d "${SIDEFOLK_ADDONS_REPO:-../sidefolk-addons}/extensions" ]] || fail "the add-ons checkout isn't there, which extension-free-binary.sh reads (SIDEFOLK_ADDONS_REPO)."
+sh scripts/extension-free-binary.sh --strict "$APP" "${SIDEFOLK_ADDONS_REPO:-../sidefolk-addons}" || fail "the app holds an extension's name."
 # No debug entitlement may ship (it lets other processes attach to Sidefolk).
 if codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q "get-task-allow"; then fail "get-task-allow is in the signature."; fi
 

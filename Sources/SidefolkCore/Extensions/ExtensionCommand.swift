@@ -7,7 +7,7 @@ extension ExtensionManifest {
     ///
     /// Since D100 a command may also have a `name`, under which `strings/<language>.json` holds its sentences in other
     /// languages, and `names`: what it is called, with `with` naming parts of the sentence (`parts`) that may come anywhere
-    /// around it, in any order ("trivia about space, hard, 10 questions"). A part's slots fill the arguments of their names;
+    /// around it, in any order ("a quiz about space, hard, 10 questions"). A part's slots fill the arguments of their names;
     /// a slot `input` mentions and the sentence didn't fill is left out.
     public struct Command: Sendable, Hashable, Decodable {
         public var name: String?

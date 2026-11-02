@@ -157,7 +157,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .attentionMode: String(localized: "Focus holds whispers until it ends; Quiet lets through only what can't wait.",
                                     comment: "Settings › Attention")
         case .interruptions:
-            String(localized: "Reminders, watches, commands, Claude Code, Codex, other apps, extensions, games and the companion: a card, a whisper, only in Today or off.",
+            String(localized: "Reminders, watches, commands, Claude Code, Codex, other apps, extensions and the companion: a card, a whisper, only in Today or off.",
                    comment: "Settings › Attention: search")
         case .quietHours: String(localized: "Every night. Reminders still come, silently; whispers wait for the morning.",
                                  comment: "Settings › Attention › Quiet hours")

@@ -37,13 +37,9 @@ enum QA {
         case .find(let q, let kind, let collection): return "find “\(q)” kind=\(kind.map { "\($0)" } ?? "-") in \(collection ?? "-")"
         case .companion(let act): return "companion \(act.rawValue)"
         case .read(let source): return "read \(source)"
-        case .chance(let c): return "chance \(c.kind.rawValue) x\(c.count) d\(c.sides)\(c.modifier) \(c.hand?.rawValue ?? "-")"
         case .newConversation: return "newConversation"
         case .extensionCommand(let call): return "command \(call.tool) \(call.input.jsonString)"
-        case .game(let id, let game): return "game \(id)/\(game)"
         case .surface(let id): return "surface \(id)"
-        case .gamesMenu: return "gamesMenu"
-        case .gameCommand(let c): return "gameCommand \(c)"
         }
     }
 

@@ -26,7 +26,7 @@ final class AppCoordinator {
     let notifier: SystemNotifier
     let monitor: EnvironmentMonitor
     let companion = CompanionWindowController()
-    /// Tricks and games with the companion (D44).
+    /// Tricks and little games with the companion (D44).
     lazy var player: CompanionPlayer = {
         let player = CompanionPlayer(companion: companion)
         player.anchorProvider = { [weak self] in self?.anchor() }

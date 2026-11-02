@@ -141,7 +141,7 @@ extension SceneReader {
 extension SurfaceScene {
     /// This scene as it is drawn in a language that reads right to left: every box measured from the far side, its curves
     /// with it, text aligned the other way, rotations turned. A node marked `ltr` is placed mirrored but its contents stay,
-    /// which keeps a picture or a puzzle the same in every language; so does a scene with `mirror` off.
+    /// which keeps a picture or a grid the same in every language; so does a scene with `mirror` off.
     public func mirrored() -> SurfaceScene {
         guard mirrors else { return self }
         var scene = self

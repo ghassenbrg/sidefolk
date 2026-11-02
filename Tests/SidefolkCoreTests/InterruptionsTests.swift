@@ -20,7 +20,7 @@ import Testing
         #expect(InterruptSource.of(source: "routine:r1", refKind: "notify", refId: nil) == [.companion])
         #expect(InterruptSource.of(source: "summary", refKind: nil, refId: nil).isEmpty)
         #expect(InterruptSource.of(source: "brief", refKind: "brief", refId: nil).isEmpty)
-        for source in [InterruptSource.reminders, .watches, .watch("w1"), .commands, .agent("claude-code"), .extension("dev.git"), .games, .companion] {
+        for source in [InterruptSource.reminders, .watches, .watch("w1"), .commands, .agent("claude-code"), .extension("dev.git"), .companion] {
             #expect(InterruptSource(key: source.key) == source)
         }
     }
@@ -69,7 +69,6 @@ import Testing
                 #expect(levels.route(level: level, source: source, refKind: nil, refId: nil) == .deliver(level), "\(source) \(level)")
             }
         }
-        #expect(levels.level(for: .games) == .whisper)
     }
 
     @Test func choicesEachSourceOffers() {
@@ -78,10 +77,6 @@ import Testing
         #expect(levels.level(for: .reminders) == .card, "a reminder may come quieter, never not at all")
         levels.set(.today, for: .reminders)
         #expect(levels.level(for: .reminders) == .today)
-        levels.set(.card, for: .games)
-        #expect(levels.level(for: .games) == .whisper, "a game's lines are on or off")
-        levels.set(.off, for: .games)
-        #expect(levels.level(for: .games) == .off)
         // Back to the default clears it, so a later default reaches everyone who never chose.
         levels.set(.card, for: .reminders)
         #expect(levels.explicit(.reminders) == nil)

@@ -192,7 +192,7 @@ extension ExtensionHost {
 
     // MARK: One History row
 
-    /// `sidefolk/activity.add` (D100): a surface or a game adds one row to History, as the person's game does when it ends.
+    /// `sidefolk/activity.add` (D100): a surface adds one row to History, for something of its own that ended.
     /// At most one every few seconds, whatever the program sends.
     func addActivity(_ id: String, params: JSONValue) async {
         guard let rt = runtimes[id], rt.record.enabled, rt.record.kind == .sidefolk, let run = configuration.runTool else { return }

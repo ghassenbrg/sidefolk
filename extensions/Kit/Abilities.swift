@@ -26,7 +26,7 @@ import Foundation
     }
 }
 
-/// One row in History from a surface or a game, in the extension's words (D100). `key` is its own name for what it was about, `result`
+/// One row in History from a surface, in the extension's words (D100). `key` is its own name for what it was about, `result`
 /// `win`, `loss`, `draw` or `done`. At most one every five seconds.
 public enum Activity {
     @MainActor public static func add(_ text: String, key: String? = nil, result: String? = nil) {

@@ -131,13 +131,6 @@ struct ExtensionReviewTests {
         if case .surface? = parser.parse("open the garden", now: now)?.intent {} else { Issue.record("its own sentence still opens it: \(kind("open the garden"))") }
     }
 
-    @Test func aGameSentenceYieldsToSidefolksOwnToo() {
-        let game = GameInfo(extensionId: "dev.test.g", extensionName: "G", game: "g", title: "G", say: ["remind me at 5 to stretch", "let's play g"])
-        let parser = IntentParser(when: TimeTest.parser(), home: "/Users/test", games: [game])
-        if case .remind? = parser.parse("remind me at 5 to stretch", now: TimeTest.wednesday10)?.intent {} else { Issue.record("a reminder stays a reminder") }
-        #expect(parser.parse("let's play g", now: TimeTest.wednesday10)?.intent == .game(extensionId: "dev.test.g", game: "g"))
-    }
-
     @Test func aSurfaceIsNotCalledAGame() {
         let parsed = ParsedIntent(intent: .surface(id: "x/y"), hint: "")
         let said = parsed.understanding(now: Date(), calendar: .current).sentence

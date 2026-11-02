@@ -398,7 +398,7 @@ enum Antics {
                      faces: [(0, .squeeze), (0.95, nil)], snappy: true)
     }()
 
-    /// After a toss: wobbling, eyes rolling, head swaying.
+    /// After being flung: wobbling, eyes rolling, head swaying.
     static let dizzy: Antic = {
         let circle = (0...16).map { i -> Key in
             let a = Double(i) / 8 * .pi
@@ -517,7 +517,7 @@ enum Antics {
     ], faces: [(0.05, .curious), (0.7, .joy), (0.95, nil)], snappy: true)
 }
 
-// MARK: Games' reactions
+// MARK: Reactions a surface can ask for (D99)
 
 extension Antics {
     /// "Hmph": a small huff, then it turns its shoulder on you, head away and down, arms hanging, ears drooping; a
@@ -572,7 +572,7 @@ extension Antics {
       + ears([0, -0.22, -0.18, 0], at: [0, 0.1, 0.55, 1]),
     faces: [(0, .surprised), (0.85, nil)], snappy: true)
 
-    // Accents: the short versions fast games (Copy Me) use, under a second each.
+    // Accents: the short versions fast choreography uses, under a second each.
 
     static let waveQuick = Antic(duration: 0.9, tracks: [
         Track(.armR, [.rest, .turn(2.2), .turn(2.55), .turn(2.1), .turn(2.5), .rest], at: [0, 0.2, 0.38, 0.56, 0.74, 1]),

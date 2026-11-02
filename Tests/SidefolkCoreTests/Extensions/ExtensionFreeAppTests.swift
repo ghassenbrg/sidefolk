@@ -10,9 +10,8 @@ import Testing
 /// What it can't see: a name built while the app runs ("mir" + "aya"). No pattern can; `scripts/extension-free-binary.sh` looks
 /// at what a built app really holds, which catches names joined when it is compiled, and nothing catches one read from outside.
 @Suite struct ExtensionFreeAppTests {
-    /// Flip to true when Playtime has moved (D101): game code then fails like everything else, instead of being
-    /// reported. Nothing else needs changing.
-    static let transitionOver = false
+    /// Playtime has moved (D101): game code fails like everything else.
+    static let transitionOver = true
 
     /// Ids and names of every extension Sidefolk has published. Companions aren't extensions (D55), so their
     /// `dev.sidefolk.companions.` ids aren't looked for.
@@ -23,12 +22,14 @@ import Testing
     static var namedInContext: Regex<Substring> { /(?:[nN]ame|title): "(?:Clipboard|Weather|Images|Your Mac)"|\b(?:Clipboard|Weather|Images|Your Mac) extension\b/ }
     /// A program or a registered tool of one (`ext-weather`, `ext.world-clock.convert_time`).
     static var programs: Regex<Substring> { /\bext[-.](?:weather|world-clock|calculator|system-vitals(?:-plus)?|git|currency|images|pdf|qr-codes|archives|dev-toolbox|feeds|clipboard|keep-awake|miraya|playtime)\b/ }
-    /// What Playtime is moving out (D101), and its name; `openGame`, `.gameCenter` and the like too.
+    /// What Playtime took with it (D101), and its name; `openGame`, `.gameCenter` and the like too.
     static var gameCode: Regex<Substring> { /\bPlaytime\b|\b(?:Game|Games|Play|Puzzle|Trivia)[A-Z][A-Za-z]*|\b[A-Z][A-Za-z]*(?:Game|Games|Puzzle|Puzzles|Trivia)\b|\b[a-z]+(?:Game|Games|Puzzle|Puzzles|Trivia)(?:[A-Z][A-Za-z]*)?\b|\b(?:game|games|puzzle|trivia)[A-Z][A-Za-z]*\b|\bBoardView\b|\bgames\.[a-z]+|\b(?:HandsMatch|HandsReveal|CompanionToss|TossStage|CoinFace|DiceTray|ChanceIntent)\b|\b(?:CompanionPlay(?:er)?|Petting)\b/ }
 
     /// Words that are the app's own as much as an extension's (its clipboard tools, its weather watch): `namedInContext` and `names`
     /// look for those where they name something. Every other extension's name and id, from its own manifest, means nothing else here.
-    static let commonWords: Set<String> = ["archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus"]
+    /// So are a surface's and a menu entry's plain words ("play", "games"): the app has its own Play menu, and people run games full screen.
+    static let commonWords: Set<String> = ["archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus",
+                                           "play", "games", "rock", "paper", "scissors"]
 
     /// What the gallery's manifests say, read when the test runs, so a new extension needs no hand-kept list. Nil with no add-ons
     /// checkout at hand: the patterns above still run.
@@ -37,19 +38,28 @@ import Testing
         let repo = env ?? root.deletingLastPathComponent().appendingPathComponent("sidefolk-addons")
         let folder = repo.appendingPathComponent("extensions")
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: folder.path) else { return nil }
-        func spoken(_ s: String) -> String { s.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").lowercased() }
+        func spoken(_ s: String) -> String {
+            String(s.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " })
+                .trimmingCharacters(in: .whitespaces)
+        }
         var details: Set<String> = [], moving: Set<String> = []
         for name in names {
             let file = folder.appendingPathComponent(name).appendingPathComponent(ExtensionManifest.fileName)
             guard let data = try? Data(contentsOf: file), let m = try? JSONDecoder().decode(JSONValue.self, from: data), let id = m["id"]?.stringValue else { continue }
             let own = [String(id.split(separator: ".").last ?? ""), m["name"]?.stringValue ?? ""].map(spoken).filter { !$0.isEmpty && !commonWords.contains($0) }
             if id.hasSuffix(".playtime") { moving.formUnion(own) } else { details.formUnion(own) }
-            for key in ["games", "surfaces"] {
-                for (game, meta) in m[key]?.objectValue ?? [:] {
-                    moving.insert(spoken(game))
-                    if let title = meta["title"]?.stringValue { moving.insert(spoken(title)) }
+            let isOwn: (String) -> Bool = { !$0.isEmpty && !commonWords.contains($0) }
+            for (surface, meta) in m["surfaces"]?.objectValue ?? [:] {
+                moving.formUnion([spoken(surface), spoken(meta["title"]?.stringValue ?? "")].filter(isOwn))
+            }
+            // What it names in the menus says what it holds: every game, in one case, now that no manifest lists them.
+            func entries(_ list: [JSONValue]) {
+                for entry in list {
+                    moving.formUnion([spoken(entry["title"]?.stringValue ?? "")].filter(isOwn))
+                    entries(entry["items"]?.arrayValue ?? [])
                 }
             }
+            entries(m["entries"]?.arrayValue ?? [])
         }
         return (details.sorted(), moving.sorted())
     }

@@ -35,9 +35,6 @@ public final class Extension {
     private var carried: (@MainActor (String, Arguments, [String: Any], [String: [[String: Any]]]) -> [String: Any])?
     /// Called when a setting changed while the program runs; every request carries them anyway (`ExtensionSettings`).
     public var settingsChanged: (@MainActor () -> Void)?
-    /// Games the manifest declares (Game.swift).
-    var games: [String: (start: @MainActor (GameRequest) async throws -> GameReply, move: @MainActor (GameRequest) async throws -> Board,
-                         end: @MainActor (GameRequest) async -> Void)] = [:]
     /// Surfaces the manifest declares (Surface.swift).
     private var surfaces: [String: (open: @MainActor (SurfaceRequest) async throws -> SurfaceReply, move: @MainActor (SurfaceRequest) async throws -> Scene,
                                     close: @MainActor (SurfaceRequest) async -> Void)] = [:]
@@ -223,20 +220,6 @@ public final class Extension {
             let name = params["palette"] as? String ?? ""
             guard let palette = palettes[name], let preview = palette.preview else { throw Unknown(what: "No preview in palette: \(name)") }
             return try await preview(params["item"] as? String ?? "")?.json ?? [:]
-        case "sidefolk/game.start", "sidefolk/game.move", "sidefolk/game.end":
-            let name = params["game"] as? String ?? ""
-            guard let game = games[name] else { throw Unknown(what: "Unknown game: \(name)") }
-            let request = GameRequest(params)
-            switch method {
-            case "sidefolk/game.start":
-                let reply = try await game.start(request)
-                return ["session": reply.session, "board": reply.board.json]
-            case "sidefolk/game.move":
-                return ["board": try await game.move(request).json]
-            default:
-                await game.end(request)
-                return [:]
-            }
         case "sidefolk/surface.open", "sidefolk/surface.move", "sidefolk/surface.close":
             let name = params["surface"] as? String ?? ""
             guard let surface = surfaces[name] else { throw Unknown(what: "Unknown surface: \(name)") }

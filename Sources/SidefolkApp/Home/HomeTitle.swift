@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The large-title behaviour of Home's places (D93's fix): a place whose page has its own title (an extension's page
-/// and the Game Center, Today, On duty, a watch, You, a collection) shows it once, large, in the page; the toolbar's
+/// Today, On duty, a watch, You, a collection) shows it once, large, in the page; the toolbar's
 /// small title appears only after that one has scrolled up under the toolbar, as macOS does. A place without one keeps
 /// the toolbar's title.
 @MainActor @Observable

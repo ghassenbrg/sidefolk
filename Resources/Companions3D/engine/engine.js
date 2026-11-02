@@ -502,7 +502,7 @@ export class Companion {
       if (L.gaze) P.gaze = L.gaze;
     }
 
-    // Petting: a bliss that deepens the longer it lasts. First a smile and a lean into the hand;
+    // Being stroked: a bliss that deepens the longer it lasts. First a smile and a lean into the hand;
     // then eyes shut, ears smoothed back, the body melting and swaying, a happy wag; at the end
     // a sigh, and (Balanced, Lively) a thank-you.
     {

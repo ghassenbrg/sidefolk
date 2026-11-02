@@ -33,7 +33,7 @@ public enum CommandText {
 }
 
 /// Everything an extension's commands are built from, in all its languages at once (D100): a person may speak any of
-/// them whatever the app's language is, as with the games' sentences before (D93).
+/// them whatever the app's language is.
 public struct CommandVocabulary: Sendable {
     public var words: [String: [String]]
     public var choices: [String: [String: [String]]]
@@ -201,7 +201,7 @@ struct CommandPhrase: Sendable {
 
     private static func slotPattern(_ slot: CommandSentence.Slot, last: Bool) -> String {
         guard let vocabulary = slot.vocabulary else {
-            // Free words stop at a comma: "trivia about space, hard".
+            // Free words stop at a comma: "a quiz about space, hard".
             if slot.kind == .text { return last ? #"[^,،、]+"# : #"[^,،、]+?"# }
             return slot.kind.pattern
         }
@@ -232,7 +232,7 @@ struct CommandPhrase: Sendable {
     }
 }
 
-/// A command said by its name with parts around it, in any order (D100): "trivia about space, hard, 10 questions",
+/// A command said by its name with parts around it, in any order (D100): "a quiz about space, hard, 10 questions",
 /// "jouons au morpion difficile", "guess a number between 1 and 1000". Conservative like the rest of the parser (D4):
 /// once the parts and the carrying words are out, what remains must be exactly its name, and a bare name counts only with a
 /// word that says it is meant or a part, so another extension's command keeps it.
@@ -254,7 +254,7 @@ struct CommandFrame: Sendable {
             return CommandPart(name: name, phrases: phrases, fixed: metas.first?.input ?? [:],
                                isFree: phrases.contains { $0.slots.contains { $0.isFree } })
         }
-        // Numbers and enums come out first, free words last: "trivia about space, hard" must not take "hard" as the topic.
+        // Numbers and enums come out first, free words last: "a quiz about space, hard" must not take "hard" as the topic.
         parts = compiled.filter { !$0.isFree } + compiled.filter(\.isFree)
     }
 

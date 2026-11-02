@@ -118,7 +118,7 @@ public struct SceneNode: Sendable, Hashable, Identifiable {
     public var shadow: SceneShadow?
     public var children: [SceneNode] = []
     public var area: SceneArea?
-    /// This node's own contents never mirror (a picture, a puzzle: the same in every language).
+    /// This node's own contents never mirror (a picture, a grid: the same in every language).
     public var ltr = false
     /// What VoiceOver reads for a thing that can't be pressed; nil leaves it out.
     public var label: String?
@@ -403,7 +403,7 @@ public struct SceneReaction: Sendable, Hashable {
         self.look = look
     }
 
-    /// The existing moves; `pump`, `flick` and `roll` are the ones a toss plays.
+    /// The existing moves; `pump`, `flick` and `roll` are a fist pumped, a coin flicked and dice thrown.
     public enum Move: Sendable, Hashable {
         case cue(CompanionCue.Move)
         case pump, flick, roll
@@ -454,7 +454,7 @@ public struct SceneCurve: Sendable, Hashable {
     public var values: [Double]
     /// One for each span between points.
     public var eases: [SceneEase]
-    /// Keeps moving under Reduce Motion (a shuffle that is the game itself). Otherwise it is skipped and the end shows at once.
+    /// Keeps moving under Reduce Motion (when the movement is the point). Otherwise it is skipped and the end shows at once.
     public var essential: Bool
 }
 

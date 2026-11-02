@@ -45,6 +45,12 @@ jobs:
         with:
           fetch-depth: 0 # the build number is the commit count, and tags must be known
 
+      # The add-ons' manifests, which extension-free-binary.sh looks for in the built app (D101).
+      - uses: actions/checkout@v4
+        with:
+          repository: ghassenbrg/sidefolk-addons
+          path: .addons
+
       - name: Select Xcode
         run: scripts/ci/select-xcode.sh
 
@@ -89,6 +95,7 @@ jobs:
           SIDEFOLK_NOTARY_KEYCHAIN: ${{ steps.signing.outputs.keychain }}
           SIDEFOLK_RELEASE_LABEL: ${{ steps.plan.outputs.label }}
           SIDEFOLK_SEED_GALLERY: ${{ inputs.seed_gallery }}
+          SIDEFOLK_ADDONS_REPO: ${{ github.workspace }}/.addons
         run: scripts/release.sh
 
       - name: Test and build (ad hoc signed)
@@ -100,6 +107,7 @@ jobs:
           swift test --no-parallel
           SIDEFOLK_RELEASE=1 SIDEFOLK_RELEASE_LABEL="$LABEL" scripts/build-app.sh release
           python3 -I scripts/seed-packs.py verify build/Sidefolk.app/Contents/Resources/SeedPacks
+          sh scripts/extension-free-binary.sh --strict build/Sidefolk.app .addons
           scripts/package.sh "$LABEL"
 
       - name: Keep the build

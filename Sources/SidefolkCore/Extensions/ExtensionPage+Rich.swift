@@ -39,7 +39,7 @@ extension ExtensionPage {
     }
 
     public struct CardGrid: Sendable, Hashable {
-        /// `large` has room for a wide picture and several lines (a game); `small` is a tile of a line or two (today's board).
+        /// `large` has room for a wide picture and several lines; `small` is a tile of a line or two.
         public enum Size: String, Sendable, Hashable { case small, large }
 
         public struct Item: Sendable, Hashable {
