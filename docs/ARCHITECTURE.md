@@ -49,7 +49,7 @@ in development, in the repo (`SIDEFOLK_RESOURCES`).
 | Database | `~/Library/Application Support/Sidefolk/sidefolk.sqlite` (WAL) |
 | Extensions | `~/Library/Application Support/Sidefolk/Extensions/<id>/` |
 | Extension drafts (written by Sidefolk's AI, D39) | `~/Library/Application Support/Sidefolk/ExtensionDrafts/local.<name>/` |
-| Built-in extensions (D39) | `Sidefolk.app/Contents/Resources/Extensions/<folder>/` (manifest, icon, `bin/ext-<folder>`) with `catalog.json`; sources in `extensions/<folder>/Sources`, on `extensions/Kit` |
+| Seed packs (D98) | `Sidefolk.app/Contents/Resources/SeedPacks/` (`seed-packs.json`, signed `<name>-<version>.zip` from the gallery); the repository's list is `Resources/SeedPacks/seed-packs.json`, the sources are in sidefolk-addons; what is left to install on this Mac: `Addons/seed-packs.json` |
 | Skills | `~/Library/Application Support/Sidefolk/Skills/<name>/SKILL.md` |
 | Restore (D91) | `<home>/.restore-pending/` (staged until the relaunch), `Restore-undo-<date>/` (kept 7 days), `Restore-review/` (extensions and companions from a folder waiting for a look) |
 | Agent config stand-ins (D86) | `<SIDEFOLK_HOME>/agent-configs/` (`claude/`, `codex/`, `.local/bin/sidefolk`): what Connect and the command link change in a copy on any data folder but the default one |
@@ -154,12 +154,11 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   (`sidefolk/watch.check`), enforces timeouts, isolates crashes, enable/disable/uninstall. A call that
   names a folder (`tools.<name>.paths`) gets a process of its own whose profile adds that folder (D39).
   `ProgramResolver` finds programs named in `exec` (`git`); `ExtensionIcon` checks icons.
-- `BundledExtensions` (D39) — at launch, installs the app's built-in extensions on or off as
-  `catalog.json` says, reinstalls them when the shipped files change, lists the ones this Mac can't run.
-  Each built-in is a Swift executable target (`ext-<folder>`, Package.swift's `builtInExtensions`) on
-  `SidefolkExtensionKit` (`extensions/Kit`: the stdio MCP loop, schemas, paths, programs, the web);
-  `scripts/build-app.sh` copies each program into its folder and signs it before the app. Switched-off
-  built-ins reach the model as one line each (`ExtensionContext.switchedOff`), not as tools.
+- `SeedPacks` (D98) — at launch, on a Mac that hasn't had them, installs the packs the app carries, each checked by
+  `AddonStore.unpack(seed:from:)`, on or off as the list says, and lists any it couldn't. No extension is built with the
+  app: each is a Swift executable in sidefolk-addons on a copy of `SidefolkExtensionKit` (`extensions/Kit`: the stdio
+  MCP loop, schemas, paths, programs, the web). `scripts/seed-packs.py` fetches and verifies the packs. Switched-off
+  extensions of Sidefolk's own reach the model as one line each (`ExtensionContext.switchedOff`), not as tools.
 - `ExtensionDrafts` and `ExtensionBuilderTools` (D39) — `extensions.draft` (text-only drafts, validated
   and started once with nothing granted), `extensions.review` (posts `AppEvent.reviewExtension`; the app
   opens the install sheet), `extensions.read_draft`; the `build-extension` skill drives them.

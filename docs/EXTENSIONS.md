@@ -18,8 +18,8 @@ Examples live in this repository:
 | sidefolk-addons `extensions/playtime`, `keep-awake`, `clipboard`, `miraya` | Games, pages, palettes and background work ([Pages](#pages), [Games](#games)). |
 | [`skills/sidefolk-extension/templates`](../skills/sidefolk-extension/templates) | Starting points in Python, Node and sh. |
 
-Every folder here with a `Sources/` ships with Sidefolk ([Built-in extensions](#built-in-extensions-and-the-gallery)):
-those are Swift programs built on [`extensions/Kit`](../extensions/Kit), so they need nothing installed on the Mac. For a guided path
+Sidefolk's own extensions are Swift programs on [`extensions/Kit`](../extensions/Kit), so they need nothing installed on
+the Mac, and they all live in the gallery ([Seed packs and the gallery](#seed-packs-and-the-gallery)). For a guided path
 through this page, install the [`sidefolk-extension` skill](../skills/sidefolk-extension/SKILL.md) in
 Claude Code or Codex. You can also add any existing MCP server (see
 [Plain MCP servers](#plain-mcp-servers)); it runs without a sandbox and is labelled that way.
@@ -39,7 +39,7 @@ Claude Code or Codex. You can also add any existing MCP server (see
 11. [Speaking the person's language](#speaking-the-persons-language)
 12. [Testing locally](#testing-locally)
 13. [Installing, updating, removing](#installing-updating-removing)
-14. [Built-in extensions and the gallery](#built-in-extensions-and-the-gallery)
+14. [Seed packs and the gallery](#seed-packs-and-the-gallery)
 15. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
 16. [Plain MCP servers](#plain-mcp-servers)
 17. [Troubleshooting](#troubleshooting)
@@ -108,6 +108,9 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `sidefolk` | no | Minimum Sidefolk version, written `>=0.1`. |
 | `description` | no | At most 300 characters. What it does, in full: Settings shows it under Details, and the install preview shows it whole. |
 | `tagline` | no | One line of at most 60 characters, shown under the name in Settings › Add-ons and the Gallery. Without one, the description's first sentence is shown. |
+| `examples` | no | Up to 3 requests to try, one line of at most 120 characters each: a button under the extension in Settings › Add-ons that fills the Ask panel (nothing is sent until the person presses Return), and searched there. Translated in `strings/`. |
+| `services` | no | The public services the program talks to: `[{"name": "Open-Meteo", "hosts": ["api.open-meteo.com"]}]`, needs `permissions.network`. Up to 8, each with up to 16 lower-case host names. Shown on the install sheet and in Settings › Trust. The sandbox can't hold a program to it, so anyone else's is said as their word; only a pack Sidefolk signed is believed (D47, D98). |
+| `replaces` | no | Ids of extensions this one does everything of: while this one is on, they rest (their tools step aside, D67). Only between Sidefolk's own signed packs. |
 | `folk` | no | The folk that appears while it works, e.g. `byte`. |
 | `author` | no | At most 100 characters. |
 | `icon` | no | A square PNG (64–1024 px) or one-page square PDF in the folder, at most 256 KiB. See [Icons](#icons). |
@@ -315,8 +318,8 @@ a tool from the extension “System Vitals”", plus your input schema with its 
 (`description`, `title`, `examples`, `default`) removed. Give tools clear titles (the manifest's
 `tools.<name>.title`, else the program's `title`) and parameters self-explanatory names
 (`below_percent`, not `n`); types, `enum`, `minimum`/`maximum` and `maxLength` stay and are enforced.
-The one exception is Sidefolk's own [built-in extensions](#built-in-extensions-and-the-gallery): their descriptions
-ship inside the signed app, so the model reads them (D39).
+The one exception is Sidefolk's own [signed packs](#seed-packs-and-the-gallery): their descriptions come under Sidefolk's
+signature, so the model reads them (D39, D98).
 
 **Inputs are checked against your schema** before the call reaches you: wrong types, values outside
 an `enum` or a bound, strings longer than `maxLength` (100,000 characters at most), and, with
@@ -402,6 +405,22 @@ characters are stripped and results are capped at 20 KB, descriptions at 1 KB an
 and schema. If a later run reports something different (or a new tool), that tool is put on hold
 until you approve the change in Settings › Add-ons. This stops an extension from changing what
 a tool claims to do after you installed it.
+
+### A call in one sentence
+
+`tools.<name>.summary` says what a call is about to do, for its approval card and History: `"Clone {url} into {destination}"`
+rather than the title and its arguments. Each `{parameter}` is the call's own argument: text and numbers as they are,
+a list of texts joined in the person's language, a parameter in `paths` shown as a short path. Several forms choose by
+what the call says, the first that holds:
+
+```json
+"summary": [{ "unless": "from", "text": "Convert {time} here" }, { "text": "Convert {time} in {from}" }]
+```
+
+`if` wants the argument there and not false, `unless` missing or false. At most 4 forms of 120 characters, plain text, the
+only braces being parameters. A language's `tools.<name>.summary` gives one text per form with the same parameters. If an
+argument it needs is missing or isn't words, the card shows the title and the arguments. Only a pack Sidefolk signed is
+shown this way (D98, T1): anyone else's approval card keeps the title and the exact arguments, whatever the manifest says.
 
 ## Answering without the AI: commands
 
@@ -939,13 +958,18 @@ neither on nor off, are under All. ⌘F searches; ↑ and ↓ move between rows,
 after 5 minutes without use. If it stops unexpectedly 3 times within 5 minutes, Sidefolk turns it
 off and tells you.
 
-## Built-in extensions and the gallery
+## Seed packs and the gallery
 
-Four ship with Sidefolk (`extensions/catalog.json`): World Clock, System Vitals, Weather and Calculator. Each is a
-small Swift program built with the app on [`extensions/Kit`](../extensions/Kit) and signed inside it
-(`Contents/Resources/Extensions/<folder>/bin/`), so none needs Python, Node or anything else installed. The others
-Sidefolk makes are in the add-on gallery (D55, [sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons)):
-signed packs Home's Gallery downloads only when the person picks one, then installed through the same sheet.
+The app builds in no extension (D98). Everything Sidefolk makes is in the add-on gallery (D55,
+[sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons)): signed packs Home's Gallery downloads when the person
+picks one, then installed through the same sheet, each a small Swift program on [`extensions/Kit`](../extensions/Kit),
+so none needs Python, Node or anything else installed.
+
+Four are also **seed packs**: World Clock, System Vitals, Weather and Calculator. The app carries their signed packs and
+a list (`Resources/SeedPacks/seed-packs.json`), and a fresh Mac installs them once, offline, so the first run has
+something to try. From then on they are gallery extensions like the rest: the gallery updates them, removing one is
+remembered, an app update never touches them. Publish the gallery before releasing the app, since a release takes the
+packs from it (`scripts/seed-packs.py`).
 
 Several answer common sentences at once, without the AI (D50): Calculator ("what's 12*7", "15% of 80", "convert
 5 km to miles", "days until 25 December"), World Clock ("time in Tokyo"), System Vitals ("about this mac"), and from
@@ -957,10 +981,10 @@ would be the wrong answer.
 
 | Extension | Where | Permissions | What it does |
 |---|---|---|---|
-| World Clock | Built in, on | None | The time anywhere, conversions with daylight saving |
-| System Vitals | Built in, on | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers. Rests while Your Mac is on, which does all of it (D67) |
-| Weather | Built in, on | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
-| Calculator | Built in, on | None | Exact sums and percentages, units, date maths |
+| World Clock | Gallery, seed pack, on | None | The time anywhere, conversions with daylight saving |
+| System Vitals | Gallery, seed pack, on | `pmset` | Battery, disk, memory, about this Mac; low battery and disk watchers. Rests while Your Mac is on, which does all of it (D67) |
+| Weather | Gallery, seed pack, on | The internet (Open-Meteo) | Forecasts, sunrise, sunset and the moon, where the person is when they share it (D48); a rain watcher |
+| Calculator | Gallery, seed pack, on | None | Exact sums and percentages, units, date maths |
 | Git | Gallery | The internet, `git`, a folder named per call | Clone, status, pull, log |
 | Currency | Gallery | The internet (the ECB's daily file) | Money between the euro and 30 currencies; a rate watcher |
 | Playtime | Gallery | None | Eleven games and four puzzles in the Play panel, trivia, a random number or pick (D75, D79) |
@@ -979,19 +1003,11 @@ Every tool of an extension that is on reaches the model with each request. The o
 the model is told their names and what they do, and suggests switching one on in Settings › Add-ons when it would
 help. Nothing writes over an original: pictures, PDFs and zips are always new files.
 
-The built-in ones are installed at launch like any extension (validated, copied, locked, pinned, started once),
-with three differences:
-
-- **They can be switched off, not uninstalled**: they would come back with the next launch.
-- **They follow the app.** At every launch Sidefolk compares the shipped files with the installed copy
-  and reinstalls when they differ (an update, or a damaged copy), keeping whether the person had it on.
-  An update that asks for more (a new permission) is installed switched off, with a notice.
-- **Their tool descriptions reach the model**: first-party text from the app, not a stranger's.
-
-If you install your own copy of a built-in extension (same id) from a folder, Sidefolk keeps it until the
-app brings a strictly newer version, then replaces it and says so. A gallery extension updates from the gallery
-(D65, D70: by itself when the new version asks for nothing more, else after a look) and may need a newer Sidefolk
-snapshot (`minimum_sidefolk` in its `addon.json`, D83).
+A signed pack differs from anyone else's extension in what Sidefolk believes of it (`origin` `official`): its tool
+descriptions reach the model, its `summary` speaks for a call on the approval card, its `services` count as where its
+calls go (D47), `replaces` lets it rest a smaller one (D67). A copy someone installs from a folder under the same id gets
+none of that. A gallery extension updates from the gallery (D65, D70: by itself when the new version asks for nothing
+more, else after a look) and may need a newer Sidefolk snapshot (`minimum_sidefolk` in its `addon.json`, D83).
 
 ## Extensions Sidefolk writes for you
 
@@ -1009,7 +1025,7 @@ When a request needs something no tool does, Sidefolk's AI can offer to build an
 Only Sidefolk's own agent (or the person) can use these tools, never in a request that read outside
 content, and they are never offered to other agents. Drafts are listed under Settings › Add-ons ›
 Drafts (Review…, Show in Finder, Move to Trash). An installed draft is "Written for you"; like any
-extension not shipped with the app, its descriptions don't reach the model, so its tools are known by
+extension Sidefolk didn't sign, its descriptions don't reach the model, so its tools are known by
 their titles and parameter names, from the person's next request.
 
 ## Plain MCP servers
@@ -1028,7 +1044,7 @@ Settings › Add-ons › Add MCP Server… takes a name, a command and its argum
 
 | Symptom | Likely cause and fix |
 |---|---|
-| "… needs Python, which isn't on this Mac", "Git needs Git, …" | Install Apple's command line tools: `xcode-select --install` (or git with Homebrew). The built-ins other than Git need nothing. |
+| A program named in `exec` or `run` isn't found | Install it: Apple's command line tools (`xcode-select --install`) bring Python and git. Sidefolk's own Swift programs need nothing. |
 | "~/x isn't shared with Sidefolk for this." | A folder parameter named a folder outside what the person shared, or one replaced by a link since Guard looked. |
 | "… must be a compiled program" | `run.command` points at a script. Use `"command": "python3", "args": ["main.py"]`. |
 | `ModuleNotFoundError` for your own module | Python's isolated mode; add your folder to `sys.path` (see above). |

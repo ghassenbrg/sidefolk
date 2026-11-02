@@ -14,7 +14,7 @@ never decides what it may do.
 |---|---|
 | `docs/EXTENSIONS.md` | The author's reference: every key, the protocol, sandbox, commands, pages, palettes, limits. Read the sections you need. |
 | `Sources/SidefolkCore/Extensions/` | `ExtensionManifest.swift` (strict decoding), `ManifestValidator.swift` (every rule below), `ExtensionCommandRules.swift`, `ExtensionPage.swift` (what a page may hold), `SandboxProfile.swift`, `PermissionSummary.swift` (the install sheet's lines), `ExtensionHost.swift` (lifecycle, pages, palettes), `ExtensionDrafts.swift` |
-| `extensions/` | The four built-ins (world-clock, system-vitals, weather, calculator; `catalog.json`), the `Kit/`, and the Python sample `hello-folk` |
+| `extensions/` | The `Kit/` and the Python sample `hello-folk`. No extension is built into the app (D98); the guard test `ExtensionFreeAppTests` fails if the app names one |
 | `../sidefolk-addons/` (read its AGENTS.md) | The gallery (D55): `extensions/<name>/`, `Kit/` (a copy), `Tests/`, `scripts/build.py`, `check.sh`, `publish.sh` |
 | `skills/sidefolk-extension/` | The public skill for outside developers, with Python, Node and sh templates (no pages) |
 | This skill's `templates/swift/` | Water Tally: a Kit program with four tools, commands, a page with a Today tile, buttons, a switch, a chart and a watcher; `build.sh`; unit tests |
@@ -22,7 +22,9 @@ never decides what it may do.
 Copy what a working extension does before inventing. Closest examples: a page and switches, `keep-awake`; a palette
 and background work, `clipboard`; a page with charts and many watchers, `system-vitals-plus`; folders named per call
 and a program by name, `git`; the internet and a watcher that fires once per crossing, `currency` (all in
-`../sidefolk-addons/extensions/`); commands, `extensions/calculator` and `world-clock`.
+`../sidefolk-addons/extensions/`); commands, `calculator` and `world-clock`, there too. What the app knows of an
+extension comes from its folder only (D98): `examples`, `tools.<name>.summary`, `services` and `replaces` in the manifest,
+words in `strings/`. Summaries, services and `replaces` count only for packs Sidefolk signs.
 
 ## 0. Is it an extension?
 
@@ -252,9 +254,8 @@ definitions are held until approved.
 - Translated words: the extension's own `strings/` in all ten languages (step 3, Language): `build.py` packs it and
   puts the name, tagline and description per language in the catalog, so the gallery, the install sheet and every
   page speak the person's language. `ExtensionLanguagesTests` here wants every word in every language for Sidefolk's
-  own. `BuiltInExtensionWords.swift` (the app's catalog) is the fallback for packs from before D76: keep it word for
-  word with the manifest (`BuiltInExtensionWordsTests`), and add a new extension's words there too while older packs
-  are around.
+  own, examples and tool summaries included. The app keeps no copy (D98).
+- A new manifest key means an older Sidefolk refuses the pack: name the snapshot in `addon.json`'s `minimum_sidefolk`.
 - `swift test`, `python3 scripts/build.py --unsigned`, `scripts/check.sh` there; `make test` here.
 - `python3 scripts/build.py` (Developer ID) and `scripts/publish.sh` are the founder's. `build.py` numbers snapshots
   itself, keeps a published pack byte for byte, and stops when a released version's files changed. Never raise a
@@ -275,7 +276,7 @@ definitions are held until approved.
       `make test`.
 - [ ] Snapshots of the page (and palette, Ask answers) read and compared with what was meant, light and dark if the
       layout is new.
-- [ ] Icon, tagline ≤ 60, description ≤ 300, author; gallery: `addon.json`, `BuiltInExtensionWords`, strings.
+- [ ] Icon, tagline ≤ 60, description ≤ 300, author; `examples`; each tool's `summary` on a gallery extension; `services` when it uses the internet; gallery: `addon.json`, strings.
 - [ ] Every word people see through `L` and `strings/`, complete in ten languages (`extension-strings.py check`);
       numbers, sizes and dates through `Format`; snapshots in German (long), Japanese and Arabic (right to left) read.
 - [ ] `docs/STATUS.md` (what changed, how verified, the next step); a DECISIONS entry for any new kind of reach;

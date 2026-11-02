@@ -3267,3 +3267,73 @@ events, a week of 522 things reads and indexes in 4 ms; idle CPU with the week o
 History (about 1.5% for the whole app with its companion). Not done: a real trackpad's swipe and pinch by hand (the
 swipes were fed as the trackpad's events; the pinch is SwiftUI's `MagnifyGesture`), the person's own EventKit data
 (the debug build wasn't given calendar access, so it ran on the sample).
+
+### D98 — Extensions own everything: the rule, its guard test, their details in their manifests, seed packs (2026-11-01)
+
+**Decision:** The founder's rule: "extension things will always be with the extension: screens, overlays, pop-ups,
+everything. When I uninstall an extension, everything for it is gone; when I install, I get everything." The app holds
+general abilities any extension can use and no code naming one. This decision is the rule, the test that keeps it, the
+details that left the app, and the four extensions that were built into it. D99–D101 are the abilities and Playtime's
+move.
+
+- **The guard.** `ExtensionFreeAppTests` reads every line under `Sources`, comments included, and `Resources/SeedPacks`,
+  for extensions' ids, names, programs and game symbols, against `scripts/extension-free-allowlist.json`. That file
+  holds only the approved exceptions: the publisher check (official means the signing identity), the seed list, themes
+  (app-owned since D92), catch-me and petting (the companion's own life). Comments are covered on purpose: a comment
+  naming an extension is how code written for it starts, and telling them apart would need a parser for no gain.
+  Everything fails now except game code and Miraya's drop action, which are reported until `transitionOver` flips to
+  true in D101's last step.
+- **Details, each a general manifest ability**, validated, for any extension:
+  - `examples`: up to three requests to try, shown under the extension in Settings and searched there. They only fill
+    the Ask panel; nothing is sent until the person presses Return.
+  - `tools.<name>.summary`: the sentence for a call's approval card and History, a text or forms with `if`/`unless`,
+    filled only from the call's exact arguments, cleaned as before. **Believed only for packs Sidefolk signed**
+    (`origin.firstParty`): anyone else's could say one thing while the call does another (T1), so it is valid but never
+    shown, and the validator says so. A sentence that can't be filled falls back to the title and arguments.
+  - `services`: the services and hosts the program talks to, on the install sheet and in Settings › Trust for everyone,
+    said as the author's word for anyone but Sidefolk, whose sandbox lets them reach any site. **Only signed packs get
+    D47's reach**: the exception after outside content rests on Sidefolk's signature, and `ExtensionDetailsTests` still
+    checks every address in such a program against its list.
+  - `replaces`: what D67's resting used to hard-code, still only between Sidefolk's own signed packs, so no extension can
+    quiet another.
+  - Words: `strings/` (D76) is the only source, and also translates examples and summaries. `BuiltInExtensionWords`,
+    `BuiltInExamples`, `BuiltInToolSummary`, `BuiltInServices`, `ExtensionOverlap` and the catalog strings only they used
+    are gone.
+- **Seed packs.** World Clock, System Vitals, Weather and Calculator are ordinary gallery extensions now, with their
+  sources in sidefolk-addons. The app carries their signed packs and a data list (`Resources/SeedPacks`, the only place
+  they're named). A fresh Mac installs them once, on or off as the list says, offline, each checked as a download is
+  (size and digest against the app's list, signature against the gallery's team). Then the gallery updates them, and
+  removing one is remembered (`Addons/seed-packs.json`, which lists only what is left to install). An app update never
+  touches them and adds no new seed to a Mac that has had its seeds. A restore brings back only those in the backup. A
+  pack that doesn't check out stays out, says why in Settings › Add-ons with Try again, and is tried again at launch.
+- **Existing copies.** A stored origin of `bundled` now reads as `official`: same folder, data and switch, no reinstall.
+  They are the person's to remove and the gallery's to update. Their versions were raised (`1.2.0` → `1.3.0`) so the
+  gallery's `1.3.0-snapshot.n` is newer. Until that update arrives such a copy shows its manifest's English title in
+  the places the app's catalog used to translate only if it has no `strings/`; all four have them. It has no summaries
+  or examples until updated, and its card shows the title and arguments.
+- **Builds.** `scripts/seed-packs.py` takes the newest version each entry's `minimum_sidefolk` allows from the signed
+  catalog, verifying everything. A release can't go out without them: `release.yml` checks first, `build-app.sh` stops
+  when `SIDEFOLK_RELEASE` is set, `release.sh` verifies what the app holds. Any other build warns and goes without, or
+  uses `build/seed-packs` from the last fetch; `SIDEFOLK_SEED_GALLERY` points at a local signed `dist/`.
+- **Dev samples** use made-up extensions (`SampleAddons`: Repo Pal, Time Zones, Mac Pulse, Sky Watch, Paste Shelf, Stay Up,
+  Cast Along, Code Maker, Newsstand). `extensions/hello-folk` stays as an unshipped developer sample; the Settings row
+  that offered samples from the app, which no build ever filled, is gone.
+
+**Why:** an app update must never change an extension's screen or content on its own, and a new one must ship without an
+app release. Every table by extension id in the app made both false.
+
+**Alternatives:** a file of its own for the details, as `strings/` was, so older copies ignore it: the founder asked for the
+manifest, and `minimum_sidefolk` (D83) with the sheet's "update Sidefolk" (`needsNewerSidefolk`) already handles an older
+copy. Keeping the four in the app as `bundled` with a special path: exactly what the rule rules out. Reinstalling
+bundled copies from the seed pack at upgrade: an app update would be touching them. Showing summaries for everyone: T1.
+Remembering removals by a list of what was removed: every later seed would then look new to an existing Mac.
+
+**Implications:** Amends D39 (no extension is built in; every one can be removed), D47 (the service comes from the signed
+manifest), D55 (a seed installs once without a click, from a list the app's own signature seals), D67 (`replaces`) and D76
+(no fallback to the app's catalog). Every gallery extension but Miraya gains a key older copies refuse, so its `addon.json`
+names `minimum_sidefolk`: that number must be the snapshot that ships this, and the lead raises it. Copies from before
+D83 ignore that key and get "update Sidefolk" from the install sheet. **Order at release:** publish the gallery first,
+then release the app, because a release fetches the packs. Tests that run a real extension need the add-ons checkout
+(`SIDEFOLK_ADDONS_REPO`), as CI already provides; `release.yml` doesn't check it out, so its own test step skips them.
+Not moved: Miraya's drop action (AppCoordinator+Ask, DropChoices, DropCard), which waits for D100's Entries; game code
+(D101). SECURITY T2, T33 and EXTENSIONS › Seed packs have the details.

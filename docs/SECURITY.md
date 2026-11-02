@@ -72,16 +72,16 @@ after outside content was read, because what a steered model writes into them re
 a page (`web.fetch`) on a site the person allowed for good (a site grant: exact site, no query or fragment,
 and the fetch may not be redirected off that site, so an open redirect there can't carry the path
 elsewhere: `ToolContext.site`), and a call whose destination Sidefolk's own code fixes
-(`NetworkReach.service`, an extension or service grant): the weather report (Open-Meteo) and the built-in
-extensions in `BuiltInServices` (Weather → Open-Meteo, Currency → the ECB; only the app's own copies,
-origin `bundled`, and a test checks every address in their programs against the list). Those grants come
+(`NetworkReach.service`, an extension or service grant): the weather report (Open-Meteo) and extensions whose
+signed manifest names their `services` (D98: only packs Sidefolk signed, origin `official`; anyone else's list is shown
+as their word and changes nothing here; a test checks every address in those programs against the list). Those grants come
 from a clean turn or from Settings: "Always" is still never offered after outside content, and without a
 grant these ask as before, in Full access too. A metric report reaches no network at all
 (`NetworkReach.nowhere`). A new site, a query on any site, a watcher, an open, someone else's network
 extension or MCP server ask as above. The person's internet rule: *Ask each time* (no grants, no "Always",
 and no mode answers for an internet call; even a weather report asks), *Ask once for each site* (the
-default), or *Don't ask before reading* (in a clean turn any public page and the built-in services go
-without a card, logged `web_setting`, as Auto does for medium; after outside content the built-in services
+default), or *Don't ask before reading* (in a clean turn any public page and those services go
+without a card, logged `web_setting`, as Auto does for medium; after outside content those services
 and the allowed sites do, so a steered place name can reach Open-Meteo, and nothing else changes). Sites can
 also be allowed in Settings.
 *A device the person paired (D72), for Sidefolk's own agent in Auto and Full access only.* After outside content,
@@ -89,7 +89,7 @@ a call that reaches only a device the person paired goes without a card: Full ac
 in Activity), Auto too unless it's high risk (`auto_mode_paired`); "Ask every time" and "Ask once per kind" ask as
 before. What a steered model writes into it reaches the person's own TV and no one else, as with an address the person
 typed. It holds only when all of this does: the tool declares `"reach": "paired"` and its extension is Sidefolk's own
-(origin `bundled` or `official`, signed by Sidefolk's team; anyone else's declaration is ignored, since the sandbox
+(origin `official`, signed by Sidefolk's team; anyone else's declaration is ignored, since the sandbox
 can't hold a program to it, as with D47's services); Sidefolk asked the running program (`sidefolk/paired.check`,
 never through the model, with only the words naming the device) and it named a device the person paired, whose key
 the connection then demands; and Sidefolk bound the call to that device's id before Guard looked, so what runs is
@@ -100,8 +100,10 @@ everything as before.
 Extension and MCP
 tool descriptions never reach the model: it gets a neutral line built from the tool title and
 extension name, and the schema without its free text (descriptions stay on the install sheet). The
-exception is the extensions Sidefolk ships (origin `bundled`, installed only from the app's own signed
-Resources, D39): their descriptions are first-party text and are reviewed like prompts.
+exception is Sidefolk's own signed packs (origin `official`, D39, D55, D98): their descriptions are first-party text and
+are reviewed like prompts. The same signature is what lets a tool's `summary` speak for a call on its approval card,
+built only from the call's exact arguments; anyone else's summary is never shown (T1). An extension's `examples`, whoever
+wrote them, only fill the Ask panel with words the person reads: nothing is sent until they press Return.
 Untrusted text is wrapped as `<untrusted source=…>` (closing tag escaped), stripped of invisible
 and bidi characters (U+200B–200F, 202A–202E, 2060–2069, FEFF, E0000–E007F) and capped at 20 KB.
 That is hygiene, not a boundary. Rendered Markdown never loads remote images; links show the full
@@ -111,7 +113,7 @@ extension's error included, are shown verbatim (`Text(ext:)`), never read as Mar
 (≤ 60 characters) still reach the model. A site the person allowed for good can receive, in a page's
 path, whatever a steered model puts there: only that site's owner reads it, so the trade rests on the
 person allowing sites they trust (a site where strangers can read who fetched what, a request bin, isn't
-one). `BuiltInServices` is Sidefolk's word for its own code: the sandbox can't hold a program to host
+one). A signed manifest's `services` is Sidefolk's word for its own code: the sandbox can't hold a program to host
 names (§3), so a change to those programs must keep the address test passing. In Full access or Auto, an injected
 instruction can put the Mac's screen, a window, or a video the person allowed for that call on a TV the person paired,
 or stop, pause or seek what plays there (D72): that is what those modes accept for the person's own devices, with
@@ -437,11 +439,8 @@ means false, ≤ 64 KiB.
   files are rejected.
 - Verify before each spawn (cached by inode+mtime, full check daily). A mismatch disables the
   extension and asks the user.
-- Updates are reinstalls with a permission diff and a tool diff. Built-in extensions (D39) are
-  reinstalled from the app's Resources when their files differ from the installed copy; one that gains
-  a permission comes back switched off with a notice. They can't be uninstalled (they would return),
-  only switched off. A hand-installed copy with the same id is replaced only by a strictly newer
-  built-in version.
+- Updates are reinstalls with a permission diff and a tool diff. An app update never touches an installed extension
+  (D98): the seed packs it carries are installed once, and only on a Mac that hasn't had them.
 - Pin a hash of `tools/list` (names, descriptions, schemas). A tool that changes at runtime (rug
   pull) is quarantined until approved.
 - Data lives in `ExtensionData/<id>/`. Sidefolk never loads code, skills or config from there.
@@ -593,7 +592,7 @@ paths and queries are dropped, hosts stay.
 | Open URL | Same as T11 |
 | Markdown images | Never loaded |
 | Markdown links | Web pages only (`webLinksOnly`); other text verbatim |
-| Network extensions | Install warning; only the built-in services (`BuiltInServices`, address-checked) skip the taint rule (D47), and Sidefolk's own extensions' calls to a device the person paired, confirmed and bound per call, in Auto and Full access (D72) |
+| Network extensions | Install warning; only signed manifests' services (`services`, address-checked, D98) skip the taint rule (D47), and Sidefolk's own extensions' calls to a device the person paired, confirmed and bound per call, in Auto and Full access (D72) |
 | MCP servers | Labelled as unsandboxed |
 | External agents | T4 |
 | Clipboard | T12 |
@@ -726,7 +725,10 @@ of `ghassenbrg/sidefolk-addons`, so, as for updates (T31), nothing is believed a
   Anyone else's 3D companion waits for a data-only format.
 - *Extensions* go through the install preview like any extension, with its permissions and warnings; origin
   `official` makes them first-party (T2's rule doesn't apply to Sidefolk's own words, D39) and drops the download
-  mark after the checks, as for built-ins. They are never installed without the person's click. An update installs
+  mark after the checks. They are never installed without the person's click, except the seed packs (D98): a fresh
+  Mac installs the few on the app's list once, from packs inside the app, whose list the app's signature seals, each
+  still checked for size, digest and the gallery's signature and on a Mac that has never had them; refused ones aren't
+  installed. A removal is remembered, so they never come back by themselves. An update installs
   by itself only while "Update add-ons automatically" is on and only if it widens nothing the person agreed to
   (D70: no new permission, judged on the permissions themselves, no tool riskier than before, no `background`);
   otherwise it waits for the same install sheet. Its pack is fetched and checked exactly as a click would.
@@ -953,7 +955,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   `/System` (holds the dyld shared cache) and `/usr/share`; map-executable on `/usr/lib` and
   `/System`; `/dev/null` and `/dev/urandom`; timezone files; broad `file-read-metadata`;
   `sysctl-read`.
-- **A compiled Swift program** (every built-in extension, D39): nothing beyond the base rules; Swift and
+- **A compiled Swift program** (every one of Sidefolk's own extensions, D39): nothing beyond the base rules; Swift and
   Foundation load from `/usr/lib/swift` and `/System`. With `network`, `URLSession` works on the base
   `trustd.agent` lookup and the mDNSResponder socket. Core Image and HEIC or PNG output need `media`.
 - **sh:** `/bin/sh` reads `/private/var/select/sh` and execs `/bin/bash`, so allow both. A script's
@@ -1073,7 +1075,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 17. **Extension commands (T32):** `ExtensionCommandTests`: sentences that could swallow words are refused, slots
     are checked after matching, core intents win, two extensions claiming one sentence go to the AI, a network
     tool asks and honours the AI's grant, "Ask each time" holds, a command can't draft extensions, an `"ai":
-    false` tool never reaches the model; `ExtensionCommandBuiltInTests` drives the built-ins' commands through
+    false` tool never reaches the model; `ExtensionCommandBuiltInTests` drives Sidefolk's own extensions' commands through
     the runner.
 
 ## 5. What Sidefolk never does
@@ -1085,8 +1087,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   the person turned on Full access, and then never from a turn that read outside content (D37);
   never "always" for high risk. AI-written extension code runs only in a sandbox: once with nothing
   granted to check it, then only after the person installs it from the install preview (T27).
-- Never hard-deletes, sets exec bits or strips quarantine, except from its own code: the built-ins it
-  installs from its bundle (D39), add-ons after the checks of T33, and a new version of itself after the
+- Never hard-deletes, sets exec bits or strips quarantine, except from its own code: add-ons and seed packs after the
+  checks of T33, and a new version of itself after the
   checks of T31.
 - Never puts secrets or prompts in argv, logs, SQLite, UserDefaults, child env or exports; never
   sends a key to a host other than its provider's.
@@ -1101,7 +1103,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   approved that removal (T25), or it is a calendar event the person deleted or approved deleting, whose copy Undo
   puts back (T34).
 - Never offers MCP sampling, roots or elicitation to extensions; never downloads extension code except
-  Sidefolk's signed add-ons when the person clicks Get or Update (T33), and never updates one by itself.
+  Sidefolk's signed add-ons when the person clicks Get or Update, or by themselves under D70's rule (T33).
 - Never edits `~/.claude`, `~/.claude.json` or `~/.codex` without a click, a confirmation and a
   backup; never writes through a linked skill folder, and never answers Codex's hook trust review
   for the person (T28).
