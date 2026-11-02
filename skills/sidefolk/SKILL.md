@@ -126,6 +126,13 @@ checking from a menu), and `prefix` and `suffix` put a short symbol or unit arou
 `watch_reorder {"ids": ["…", "…"]}` arranges yours. If a watcher is refused for lack of room, call `watch_more_room`
 once: it asks the user. If they refuse, stop some of yours instead.
 
+### notes_get, notes_collection, notes_arrange
+
+`notes_list` and `notes_search` cut each note to a line; `notes_get {"id": "…"}` reads one in full, and asks like any
+reading. `notes_update` takes `append` to add words without sending the note back, and `due` for when a task is due
+(it stands on the user's Calendar and nudges nobody; `remind` is the nudge). `notes_collection` changes a collection's
+name, icon or colour, and always asks the user. `notes_arrange {"collections": ["Work", "Home"]}` orders them.
+
 ### notify_user
 
 ```json

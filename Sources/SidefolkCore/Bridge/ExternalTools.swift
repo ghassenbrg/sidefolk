@@ -9,8 +9,9 @@ public enum ExternalToolPolicy {
     /// Always offered and run without asking: they reach the user only through Sidefolk's own bubbles,
     /// and `status` only counts.
     public static let always: Set<String> = ["notify.user", "ask.user", "status"]
-    /// Always offered and always asked, whatever the settings say: it's how agents get past their shared room (D116).
-    public static let alwaysAsks: Set<String> = ["watch.more_room"]
+    /// Always offered and always asked, whatever the settings say: how agents get past their shared room (D116), and
+    /// changing a collection, since naming one is what they otherwise can't do (T4).
+    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection"]
     /// Adding to what the user has: `watch.list` shows an agent only its own watchers, `reminders.cancel`
     /// reaches only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
     public static let saving: Set<String> = [
@@ -18,10 +19,10 @@ public enum ExternalToolPolicy {
         "watch.pause", "watch.resume", "watch.update", "watch.reorder",
     ]
     /// Reading the user's data (notes, reminders, today's plan).
-    public static let reading: Set<String> = ["notes.search", "notes.list", "reminders.list", "agenda.today"]
+    public static let reading: Set<String> = ["notes.search", "notes.list", "notes.get", "reminders.list", "agenda.today"]
     /// Changing the user's notes, or moving them to the Trash, where they stay restorable for 30 days.
     /// Never deleting for good: only the user empties the Trash.
-    public static let changing: Set<String> = ["notes.update", "notes.trash"]
+    public static let changing: Set<String> = ["notes.update", "notes.trash", "notes.arrange"]
 
     public static var all: Set<String> { always.union(alwaysAsks).union(saving).union(reading).union(changing) }
 

@@ -322,6 +322,17 @@ public final class AppDatabase: Sendable {
             }
             try db.execute(sql: Self.fourthLiveValueRunsQuietly)
         }
+        // Notebooks in the person's order, and a task's due date with or without a time (D117). `items.due_at` has been
+        // there since v1, unused. Until someone arranges them, collections stay alphabetical.
+        m.registerMigration("v8-notebook-order-due") { db in
+            try db.alter(table: "collections") { t in
+                t.add(column: "sort_order", .integer).notNull().defaults(to: 0)
+            }
+            try db.alter(table: "items") { t in
+                t.add(column: "due_all_day", .boolean).notNull().defaults(to: false)
+            }
+            try db.create(index: "items_due", on: "items", columns: ["due_at"])
+        }
         return m
     }
 }

@@ -44,6 +44,11 @@ struct AgendaTool: Tool {
         lines.append(today.isEmpty ? "No reminders today." : "Reminders today (\(today.count)):")
         let items = await reminders.items(for: today)
         lines += today.map { "- " + reminders.line($0, item: $0.itemId.flatMap { items[$0] }) }
+        let dueToday = try await notebook.dueTasks(from: start, to: end)
+        if !dueToday.isEmpty {
+            lines.append("Tasks due today (\(dueToday.count)):")
+            lines += dueToday.map { "- " + NoteFormat.line($0, collections: collections, snippet: false) }
+        }
         lines.append(tasks.isEmpty ? "No open tasks." : "Open tasks, newest first (\(found.count > tasks.count ? "\(tasks.count)+" : "\(tasks.count)")):")
         let next = await NoteFormat.reminders(tasks, notebook: notebook)
         lines += tasks.map { "- " + NoteFormat.line($0, collections: collections, snippet: false, reminder: next[$0.id]) }
@@ -54,6 +59,6 @@ struct AgendaTool: Tool {
         // Titles another agent or app wrote are their words, not the user's (T2, T3).
         return ToolResult(text: lines.joined(separator: "\n"),
                           card: ResultCard(kind: .list, title: String(localized: "Today"), subtitle: subtitle, detail: detail.isEmpty ? nil : detail),
-                          untrusted: today.contains(where: ReminderTools.Shared.isForeign) || NoteFormat.hasForeign(tasks, collections: collections))
+                          untrusted: today.contains(where: ReminderTools.Shared.isForeign) || NoteFormat.hasForeign(tasks + dueToday, collections: collections))
     }
 }

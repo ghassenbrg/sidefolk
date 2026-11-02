@@ -41,6 +41,8 @@ public struct NotebookCollection: SidefolkRecord, Identifiable, Hashable {
     public var createdAt: Date
     public var updatedAt: Date
     public var archivedAt: Date?
+    /// Its place in the sidebar, lowest first; 0 for all until someone arranges them, then alphabetical (D117).
+    public var sortOrder: Int = 0
 
     public init(id: String = Identifier.make(), name: String, kind: Kind, emoji: String? = nil, source: String = "user",
                 now: Date = Date()) {
@@ -67,7 +69,10 @@ public struct NotebookItem: SidefolkRecord, Identifiable, Hashable {
     public var url: String?
     public var tags: String
     public var status: Status
+    /// When a task is due, which isn't when to be nudged: that's a reminder, and it can have either, both or neither (D117).
     public var dueAt: Date?
+    /// Due on a day rather than at a time; `dueAt` is then noon that day (`NoteDue.dayInstant`).
+    public var dueAllDay: Bool = false
     public var source: String
     public var createdAt: Date
     public var updatedAt: Date

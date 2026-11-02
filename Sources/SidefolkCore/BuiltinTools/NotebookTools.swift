@@ -28,6 +28,7 @@ struct NotesSaveTool: Tool {
                                              enum: ["project", "topic", "list"]),
             "url": Schema.string("A web link this note is about (http or https)."),
             "tags": Schema.array("Short labels", items: Schema.string("One word or hyphenated phrase")),
+            "due": Schema.string("For a task: when it's due (\"friday\", \"dec 5 at 5pm\"). It stands on the Calendar; it nudges nobody, that's `remind`."),
             "remind": Schema.string("Also remind the user about it at this time (\"tomorrow at 9\", \"friday 5pm\"): the reminder belongs to it and stops when the task is done or the item trashed."),
         ], required: ["text"]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: true, external: true)
@@ -58,7 +59,9 @@ struct NotesSaveTool: Tool {
         }
         if kind == .link, url == nil { url = NoteText.firstURL(in: text)?.absoluteString }
 
-        // The time is read before anything is saved, so a time that can't be used changes nothing.
+        // The times are read before anything is saved, so one that can't be used changes nothing.
+        let due = try NoteDue.read(input["due"]?.stringValue, parser: reminders?.parser() ?? WhenParser(), now: context.now)
+        try NoteDue.check(due, kind: kind ?? .note)
         let remindAt = try input.optionalText("remind", limit: 200)
         if let remindAt {
             guard let reminders else { throw UserFacingError("Reminders aren't running, so I can't set one.") }
@@ -73,10 +76,11 @@ struct NotesSaveTool: Tool {
             target = (try await notebook.inbox(now: context.now), false)
         }
         let finalKind = kind ?? .note
-        let item = NotebookItem(
+        var item = NotebookItem(
             collectionId: target.collection.id, kind: finalKind, title: title, body: body, url: url,
             tags: NoteText.cleanTags(input.textList("tags") ?? []), source: context.provenanceTag, runId: context.caller.runId,
             now: context.now)
+        _ = NoteDue.apply(due, to: &item)
         try await notebook.add(item)
         var reminder: Reminder?
         if let remindAt, let reminders {
@@ -246,13 +250,16 @@ struct NotesUpdateTool: Tool {
             "collection": Schema.string("Move it to this project, topic or list (created if missing)"),
             "status": Schema.string("open or done", enum: ["open", "done"]),
             "tags": Schema.array("Replaces the tags; an empty list clears them", items: Schema.string("A tag")),
+            "append": Schema.string("Words to add at the end, leaving what's there. Instead of `text`."),
+            "due": Schema.string("For a task: when it's due (\"friday\", \"dec 5 at 5pm\"); empty clears it. Not a reminder: it nudges nobody."),
             "remind": Schema.string("Add a reminder about it at this time (\"tomorrow at 9\"); it belongs to the item."),
         ], required: ["id"]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: true)
 
     func summary(for input: JSONValue) -> String {
         var changes: [String] = []
-        if input["text"] != nil { changes.append(String(localized: "text")) }
+        if input["text"] != nil || input["append"] != nil { changes.append(String(localized: "text")) }
+        if input["due"] != nil { changes.append(String(localized: "due date")) }
         if let c = input.string("collection") { changes.append(String(localized: "move to \(c)")) }
         if let s = input.string("status") { changes.append(Self.mark(s)) }
         if input["tags"] != nil { changes.append(String(localized: "tags")) }
@@ -278,10 +285,24 @@ struct NotesUpdateTool: Tool {
             throw UserFacingError("That's a fact in “About you”. Use the profile tools to change it.")
         }
         let previous = item
+        let due = try NoteDue.read(input["due"]?.stringValue, parser: reminders?.parser() ?? WhenParser(), now: context.now)
+        try NoteDue.check(due, kind: item.kind)
         // What changed, in English for the model and in the app's language for the card.
         var changed: [String] = []
         var shownChanged: [String] = []
 
+        // Adding to a note, without having to send back all of it (D117). Words from elsewhere make it elsewhere's; a
+        // note already from elsewhere never becomes the person's by being added to.
+        if let more = try input.optionalText("append", limit: NoteText.maxText) {
+            guard input.string("text") == nil else { throw ToolError.invalidInput(String(localized: "give “text” or “append”, not both.")) }
+            guard item.body.count + more.count + 2 <= NoteText.maxText else {
+                throw UserFacingError("That would make the note too long. Start a new one instead.")
+            }
+            item.body = item.body.isEmpty ? more : item.body + "\n\n" + more
+            if !ItemProvenance.isForeign(item.source) { item.source = context.provenanceTag }
+            changed.append("text")
+            shownChanged.append(String(localized: "text"))
+        }
         if input.string("text") != nil {
             let (title, body) = NoteText.split(try input.requiredText("text", limit: NoteText.maxText))
             item.title = title
@@ -317,6 +338,10 @@ struct NotesUpdateTool: Tool {
             changed.append("tags")
             shownChanged.append(String(localized: "tags"))
         }
+        if NoteDue.apply(due, to: &item) {
+            changed.append("due date")
+            shownChanged.append(String(localized: "due date"))
+        }
         let remindAt = try input.optionalText("remind", limit: 200)
         if let remindAt {
             guard let reminders else { throw UserFacingError("Reminders aren't running, so I can't set one.") }
@@ -326,7 +351,7 @@ struct NotesUpdateTool: Tool {
             _ = try reminders.future(remindAt, now: context.now)
         }
         guard !changed.isEmpty || remindAt != nil else {
-            throw ToolError.invalidInput(String(localized: "nothing to change. Give new text, a collection, a status, tags or a reminder."))
+            throw ToolError.invalidInput(String(localized: "nothing to change. Give new text, words to append, a due date, a collection, a status, tags or a reminder."))
         }
 
         if !changed.isEmpty {
@@ -484,5 +509,144 @@ struct CollectionsCreateTool: Tool {
                 try await notebook.deleteCollection(id: id)
                 events.changed(.notebook)
             })
+    }
+}
+
+/// A note in full, words and all: the lists cut each to a line, so without this nothing can read what the person wrote.
+struct NotesGetTool: Tool {
+    let notebook: NotebookStore
+
+    var spec: ToolSpec {
+        ToolSpec(name: "notes.get", title: String(localized: "Read a note"),
+                 description: "Read one note, idea, task or link in full by its id, from notes_search or notes_list. Those cut each to a line; this has all of it.",
+                 inputSchema: Schema.object(["id": Schema.string("The item's id.")], required: ["id"]),
+                 risk: .low, capabilities: [.notebook], category: .notes, mutates: false, external: true)
+    }
+
+    func summary(for input: JSONValue) -> String { String(localized: "Read a note") }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        let id = try input.requiredText("id", limit: 64)
+        guard let item = try await notebook.item(id: id), item.deletedAt == nil else {
+            throw ToolError.notFound(String(localized: "a note with that id"))
+        }
+        let collections = try await NotebookCollections.byId(notebook)
+        let reminders = await NoteFormat.reminders([item], notebook: notebook)
+        let head = NoteFormat.line(item, collections: collections, snippet: false, reminder: reminders[item.id])
+        let body = ExternalText.clean(item.body)
+        return ToolResult(text: body.isEmpty ? head : "\(head)\n\n\(body)",
+                          card: ResultCard(kind: .note, title: item.title, refId: item.id, itemKind: item.kind),
+                          untrusted: NoteFormat.hasForeign([item], collections: collections))
+    }
+}
+
+/// Changes a collection itself: its name, icon and colour, as its sheet in Home does (D117).
+struct NotesCollectionTool: Tool {
+    let notebook: NotebookStore
+    let events: EventBus
+
+    var spec: ToolSpec {
+        ToolSpec(name: "notes.collection", title: String(localized: "Change a collection"),
+                 description: """
+                 Change a project, topic or list: its name, its icon (emoji, or symbol, an SF Symbol from the app's set) and its \
+                 color (red, orange, yellow, green, mint, teal, blue, indigo, purple, pink, brown, gray, or #RRGGBB). An empty \
+                 emoji, symbol or color goes back to the default. The Inbox and About you keep their names.
+                 """,
+                 inputSchema: Schema.object([
+                     "collection": Schema.string("Which one, by name."),
+                     "name": Schema.string("Its new name."),
+                     "emoji": Schema.string("An emoji for its icon."),
+                     "symbol": Schema.string("An SF Symbol for its icon, like \"star.fill\"."),
+                     "color": Schema.string("A color name or #RRGGBB."),
+                 ], required: ["collection"]),
+                 risk: .low, capabilities: [.notebook], category: .notes, mutates: true, external: true)
+    }
+
+    func summary(for input: JSONValue) -> String { String(localized: "Change “\((input.string("collection") ?? "").clipped(60))”") }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        let wanted = try input.requiredText("collection", limit: 100)
+        guard let found = try await NotebookCollections.resolve(wanted, notebook: notebook) else {
+            throw ToolError.notFound(String(localized: "a collection called “\(wanted)”"))
+        }
+        var c = found
+        if let name = input.string("name")?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+            guard c.kind != .inbox, c.kind != .profile else { throw UserFacingError("The Inbox and About you keep their names.") }
+            let clean = name.displaySafe.clipped(60)
+            if let taken = try await notebook.findCollection(named: clean), taken.id != c.id, taken.name.lowercased() == clean.lowercased() {
+                throw UserFacingError("There's already a collection called “\(clean)”.")
+            }
+            c.name = clean
+            // A name is quoted to the model as the user's own only when it is (T3).
+            c.source = context.provenanceTag
+        }
+        if let emoji = input["emoji"]?.stringValue {
+            let clean = CollectionLooks.emoji(emoji)
+            guard clean != nil || emoji.isEmpty else { throw ToolError.invalidInput(String(localized: "“emoji” must be one emoji.")) }
+            c.emoji = clean
+            if clean != nil { c.symbol = nil }
+        }
+        if let symbol = input["symbol"]?.stringValue {
+            guard symbol.isEmpty || CollectionLooks.symbols.contains(symbol) else {
+                throw ToolError.invalidInput(String(localized: "“\(symbol.clipped(40))” isn't one of the icons."))
+            }
+            c.symbol = symbol.isEmpty ? nil : symbol
+            if !symbol.isEmpty { c.emoji = nil }
+        }
+        if let color = input["color"]?.stringValue {
+            guard color.isEmpty || CollectionLooks.isColor(color) else {
+                throw ToolError.invalidInput(String(localized: "“color” must be a color's name or #RRGGBB."))
+            }
+            c.color = color.isEmpty ? nil : color.lowercased()
+        }
+        guard c != found else { throw ToolError.invalidInput(String(localized: "nothing to change. Give a name, an emoji, a symbol or a color.")) }
+        c.updatedAt = context.now
+        try await notebook.updateCollection(c)
+        events.changed(.notebook)
+        let notebook = self.notebook
+        let events = self.events
+        return ToolResult(text: "Changed the collection “\(c.name)”.", card: ResultCard(kind: .list, title: String(localized: "Changed “\(NotebookCollections.shownName(c))”")),
+                          undo: UndoAction(label: String(localized: "Changed it back")) {
+                              try await notebook.restoreLook(of: found)
+                              events.changed(.notebook)
+                          },
+                          untrusted: NotebookCollections.isForeign(found))
+    }
+}
+
+/// Puts collections in an order (D117).
+struct NotesArrangeTool: Tool {
+    let notebook: NotebookStore
+    let events: EventBus
+
+    var spec: ToolSpec {
+        ToolSpec(name: "notes.arrange", title: String(localized: "Arrange collections"),
+                 description: "Put projects, topics and lists in this order in the sidebar, each by name. The Inbox stays first, and any not named follow.",
+                 inputSchema: Schema.object(["collections": .object(["type": "array", "items": ["type": "string"], "description": "Names in the new order."])], required: ["collections"]),
+                 risk: .low, capabilities: [.notebook], category: .notes, mutates: true, external: true)
+    }
+
+    func summary(for input: JSONValue) -> String { String(localized: "Arrange your collections") }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        let names = input.textList("collections") ?? []
+        guard !names.isEmpty else { throw ToolError.invalidInput(String(localized: "“collections” must list them in their new order.")) }
+        var ids: [String] = []
+        for name in names {
+            guard let c = try await NotebookCollections.resolve(name, notebook: notebook) else {
+                throw ToolError.notFound(String(localized: "a collection called “\(name)”"))
+            }
+            ids.append(c.id)
+        }
+        let before = try await notebook.collections(includeArchived: true)
+        try await notebook.arrangeCollections(ids, now: context.now)
+        events.changed(.notebook)
+        let notebook = self.notebook
+        let events = self.events
+        return ToolResult(text: "Arranged \(ids.count) collections.", card: ResultCard(kind: .list, title: String(localized: "Arranged your collections")),
+                          undo: UndoAction(label: String(localized: "Put them back")) {
+                              try await notebook.restoreOrder(of: before)
+                              events.changed(.notebook)
+                          })
     }
 }

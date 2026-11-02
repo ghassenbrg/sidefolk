@@ -31,7 +31,7 @@ public struct NotebookStore: Sendable {
 
     public func collections(includeArchived: Bool = false) async throws -> [NotebookCollection] {
         try await db.writer.read { db in
-            var request = NotebookCollection.order(sql: "CASE kind WHEN 'inbox' THEN 0 ELSE 1 END, name COLLATE NOCASE")
+            var request = NotebookCollection.order(sql: "CASE kind WHEN 'inbox' THEN 0 ELSE 1 END, sort_order, name COLLATE NOCASE")
             if !includeArchived { request = request.filter(Column("archived_at") == nil) }
             return try request.fetchAll(db)
         }
@@ -59,7 +59,43 @@ public struct NotebookStore: Sendable {
             guard n.hasPrefix(wanted), let next = n.dropFirst(wanted.count).first else { return false }
             return !(next.isLetter || next.isNumber)
         }
-        return prefixed.count == 1 ? prefixed[0] : nil
+        if prefixed.count == 1 { return prefixed[0] }
+        // "Sidefolk Dev" for "Sidefolk-Dev": the same words, however they're joined or accented. Only as sure as one.
+        let loose = looseName(wanted)
+        guard !loose.isEmpty, prefixed.isEmpty else { return nil }
+        let same = all.filter { looseName($0.name) == loose }
+        return same.count == 1 ? same[0] : nil
+    }
+
+    /// A name's letters and digits, without case or accents.
+    static func looseName(_ name: String) -> String {
+        String(name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil).filter { $0.isLetter || $0.isNumber })
+    }
+
+    /// Puts collections in this order (D117). The Inbox stays first, and any not named follow, as they were.
+    public func arrangeCollections(_ ids: [String], now: Date = Date()) async throws {
+        try await db.writer.write { db in
+            let all = try NotebookCollection.order(sql: "sort_order, name COLLATE NOCASE").fetchAll(db)
+            var seen = Set<String>()
+            let named = ids.filter { seen.insert($0).inserted }.compactMap { id in all.first { $0.id == id } }
+            let rest = all.filter { c in !named.contains { $0.id == c.id } }
+            for (i, var c) in (named + rest).enumerated() where c.sortOrder != i + 1 {
+                c.sortOrder = i + 1
+                c.updatedAt = now
+                try c.update(db)
+            }
+        }
+    }
+
+    /// Open tasks due from `start` until `end`, soonest first, for the Calendar and the day's plan (D117).
+    public func dueTasks(from start: Date, to end: Date) async throws -> [NotebookItem] {
+        try await db.writer.read { db in
+            try NotebookItem.filter(Column("deleted_at") == nil && Column("kind") == NotebookItem.Kind.task.rawValue
+                                    && Column("status") == NotebookItem.Status.open.rawValue
+                                    && Column("due_at") >= start.timeIntervalSince1970 && Column("due_at") < end.timeIntervalSince1970)
+                .order(Column("due_at"))
+                .fetchAll(db)
+        }
     }
 
     /// Returns the named collection, creating it when it does not exist. The look-up and the insert
@@ -75,7 +111,8 @@ public struct NotebookStore: Sendable {
         return try await db.writer.write { db in
             let live = try NotebookCollection.filter(Column("archived_at") == nil).filter(!skipped.contains(Column("kind"))).fetchAll(db)
             if let found = Self.match(clean, in: live) { return (found, false) }
-            let created = NotebookCollection(name: clean, kind: kind, source: source, now: now)
+            var created = NotebookCollection(name: clean, kind: kind, source: source, now: now)
+            created.sortOrder = try Self.nextOrder(db)
             try created.insert(db)
             return (created, true)
         }
@@ -87,12 +124,49 @@ public struct NotebookStore: Sendable {
                                  now: Date = Date()) async throws -> NotebookCollection {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines).clipped(60)
         let created = NotebookCollection(name: clean, kind: kind, source: source, now: now)
-        try await db.writer.write { db in
+        return try await db.writer.write { db in
             let taken = try NotebookCollection.filter(sql: "name = ? COLLATE NOCASE", arguments: [clean]).fetchCount(db) > 0
             if taken { throw UserFacingError("There's already a collection called “\(clean)”.") }
-            try created.insert(db)
+            var placed = created
+            placed.sortOrder = try Self.nextOrder(db)
+            try placed.insert(db)
+            return placed
         }
-        return created
+    }
+
+    /// Saves a collection as it stands, for the tool that changes it.
+    public func updateCollection(_ c: NotebookCollection) async throws {
+        try await db.writer.write { db in try c.update(db) }
+    }
+
+    /// Undo of that tool: only what it changed, so whatever happened since stays, and one deleted since is left alone.
+    public func restoreLook(of old: NotebookCollection) async throws {
+        try await db.writer.write { db in
+            guard var c = try NotebookCollection.fetchOne(db, key: old.id) else { return }
+            c.name = old.name
+            c.source = old.source
+            c.emoji = old.emoji
+            c.symbol = old.symbol
+            c.color = old.color
+            try c.update(db)
+        }
+    }
+
+    /// Undo of arranging: each its old place, leaving the rest of it alone.
+    public func restoreOrder(of old: [NotebookCollection]) async throws {
+        try await db.writer.write { db in
+            for was in old {
+                guard var c = try NotebookCollection.fetchOne(db, key: was.id) else { continue }
+                c.sortOrder = was.sortOrder
+                try c.update(db)
+            }
+        }
+    }
+
+    /// Where a new collection goes: alphabetical until someone arranges them, then at the end.
+    private static func nextOrder(_ db: Database) throws -> Int {
+        let most = try Int.fetchOne(db, sql: "SELECT MAX(sort_order) FROM collections") ?? 0
+        return most > 0 ? most + 1 : 0
     }
 
     /// The user renaming a collection in the app: the new name is their own words.
@@ -266,6 +340,20 @@ public struct NotebookStore: Sendable {
                 if let collectionId { r = r.filter(Column("collection_id") == collectionId) }
                 if let kinds { r = r.filter(kinds.map(\.rawValue).contains(Column("kind"))) }
                 results = try r.order(Column("updated_at").desc).limit(limit).fetchAll(db)
+            }
+            // A collection's name finds what's in it, after what says the words itself ("sidefolk", all of Sidefolk-Dev).
+            if collectionId == nil, results.count < limit, !query.isEmpty {
+                // Not About you, whose facts aren't a list to be found by "about"; not a word too short to mean a name.
+                let loose = Self.looseName(query)
+                let named = try NotebookCollection.filter(Column("archived_at") == nil && Column("kind") != NotebookCollection.Kind.profile.rawValue).fetchAll(db)
+                    .filter { loose.count >= 3 && Self.looseName($0.name).contains(loose) }.map(\.id)
+                if !named.isEmpty {
+                    let found = Set(results.map(\.id))
+                    var r = NotebookItem.filter(Column("deleted_at") == nil).filter(named.contains(Column("collection_id")))
+                    if let kinds { r = r.filter(kinds.map(\.rawValue).contains(Column("kind"))) }
+                    let more = try r.order(Column("updated_at").desc).limit(limit).fetchAll(db).filter { !found.contains($0.id) }
+                    results += more.prefix(limit - results.count)
+                }
             }
             return results
         }

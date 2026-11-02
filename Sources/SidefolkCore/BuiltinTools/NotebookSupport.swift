@@ -243,6 +243,59 @@ enum NoteText {
 }
 
 /// Compact one-line renderings of notebook items for the model.
+/// When a task is due (D117), read from words or for the model. A date in the past is fine: it's late, not wrong. Not a
+/// reminder: nothing comes of it by itself, except that it stands on the Calendar.
+public enum NoteDue {
+    enum Change {
+        case clear
+        case set(Date, allDay: Bool)
+    }
+
+    /// A day rather than a time is kept as noon that day, so moving a few time zones doesn't make it the day before.
+    public static func dayInstant(_ date: Date, calendar: Calendar) -> Date {
+        calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) ?? date
+    }
+
+    /// What `due` asks for, nil when it isn't there, read before anything is changed so a bad one changes nothing. Empty clears.
+    static func read(_ text: String?, parser: WhenParser, now: Date) throws -> Change? {
+        guard let text else { return nil }
+        let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if words.isEmpty { return .clear }
+        guard words.count <= 200, let found = parser.parse(words, now: now), found.confidence != .low else {
+            throw UserFacingError("I couldn't read “\(words.clipped(60))” as a date.", recovery: "Try something like “friday”, “dec 5” or “tomorrow at 5pm”.")
+        }
+        guard found.recurrence == nil else {
+            throw UserFacingError("A due date can't repeat. For something that comes back, set a repeating reminder instead.")
+        }
+        return found.hasTime ? .set(found.date, allDay: false) : .set(dayInstant(found.date, calendar: parser.calendar), allDay: true)
+    }
+
+    /// Whether this kind can have what's asked.
+    static func check(_ change: Change?, kind: NotebookItem.Kind) throws {
+        if case .set = change, kind != .task { throw UserFacingError("Only a task has a due date. For a note, set a reminder instead.") }
+    }
+
+    /// True when it changed anything.
+    static func apply(_ change: Change?, to item: inout NotebookItem) -> Bool {
+        switch change {
+        case nil: return false
+        case .clear:
+            guard item.dueAt != nil else { return false }
+            item.dueAt = nil
+            item.dueAllDay = false
+        case .set(let date, let allDay):
+            item.dueAt = date
+            item.dueAllDay = allDay
+        }
+        return true
+    }
+
+    static func line(_ item: NotebookItem) -> String? {
+        guard let due = item.dueAt, item.kind == .task else { return nil }
+        return "due " + (item.dueAllDay ? ToolFormat.day(due) : TimeFormat.full(due, calendar: .current))
+    }
+}
+
 enum NoteFormat {
     /// - Parameter reminder: the item's next reminder (D49), so "move my reminder for the report" has an id to use.
     static func line(_ item: NotebookItem, collections: [String: NotebookCollection], snippet: Bool = true, reminder: Reminder? = nil) -> String {
@@ -250,6 +303,7 @@ enum NoteFormat {
         let place = collections[item.collectionId].map { ToolFormat.oneLine(ExternalText.clean($0.name), 60) }
         var meta = [place ?? "?", ToolFormat.day(item.createdAt)]
         if item.status == .done { meta.append("done") }
+        if let due = NoteDue.line(item) { meta.append(due) }
         if let reminder, let due = reminder.nextDue { meta.append("reminder \(TimeFormat.full(due, calendar: .current)) (reminder \(reminder.id))") }
         if !item.tagList.isEmpty { meta.append("#" + item.tagList.joined(separator: " #")) }
         if let origin = ItemProvenance.note(for: item.source) { meta.append(origin) }

@@ -91,6 +91,12 @@ extension ExternalToolPolicy {
             `until`. watch_stop ends it sooner.
             """,
         "watch.list": "List the watchers and live values you started, with their ids and state. Other apps' and the user's don't show.",
+        "notes.get": "Read one of the user's notes, ideas, tasks or links in full, by its id from notes_search or notes_list, which cut each to a line.",
+        "notes.collection": """
+            Change one of the user's projects, topics or lists: its name, its icon (emoji, or symbol from the app's set) or its \
+            color (a name like blue, or #RRGGBB). You can't create one, or rename the Inbox or About you.
+            """,
+        "notes.arrange": "Put the user's projects, topics and lists in this order, each by name. The Inbox stays first; any not named follow.",
         "watch.stop": "Stop one of your watchers or live values, by its id (or its title).",
         "watch.pause": "Pause one of your watchers or live values without stopping it, by its id (or its title).",
         "watch.resume": "Start one of your paused or finished watchers or live values again, by its id (or its title).",
