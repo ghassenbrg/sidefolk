@@ -93,11 +93,11 @@ struct OpenSurface: Sendable {
 }
 
 /// An open surface's one line to its extension: it hears only moves the scene on screen offered, and the app's code can't
-/// send any other, whatever a bug or a timer tries. The same check again at the host would cost nothing, but the scene is
-/// known only here.
+/// send any other, whatever a bug or a timer tries.
 public final class SurfaceSession: Sendable {
     public let info: SurfaceInfo
-    private let host: ExtensionHost
+    /// Nil only for a sample with no extension behind it (the UI snapshots).
+    private let host: ExtensionHost?
     private struct State {
         var session: String?
         var scene: SurfaceScene?
@@ -106,13 +106,14 @@ public final class SurfaceSession: Sendable {
     private let state = Mutex(State())
     private let reduceMotion: Bool
 
-    public init(info: SurfaceInfo, host: ExtensionHost, reduceMotion: Bool) {
+    public init(info: SurfaceInfo, host: ExtensionHost?, reduceMotion: Bool) {
         self.info = info
         self.host = host
         self.reduceMotion = reduceMotion
     }
 
     public func open(language: String, arguments: [String: JSONValue] = [:]) async throws -> SurfaceScene {
+        guard let host else { throw UserFacingError("That has closed.") }
         let (session, scene) = try await host.openSurface(info, language: language, arguments: arguments)
         state.withLock {
             $0.session = session
@@ -127,7 +128,7 @@ public final class SurfaceSession: Sendable {
         guard let id = state.withLock({ s -> String? in
             guard let scene = s.scene, move.offered(by: scene, inputOpen: now >= s.opensAt) else { return nil }
             return s.session
-        }) else { return nil }
+        }), let host else { return nil }
         let scene = try await host.moveSurface(info: info, session: id, move: move, now: now)
         state.withLock {
             $0.scene = scene
@@ -138,7 +139,7 @@ public final class SurfaceSession: Sendable {
 
     public func close(_ reason: SurfaceCloseReason) async {
         guard let id = state.withLock({ s -> String? in defer { s.session = nil }; return s.session }) else { return }
-        await host.closeSurface(info: info, session: id, reason: reason)
+        await host?.closeSurface(info: info, session: id, reason: reason)
     }
 
     /// Whether moves are open now, for the panel's own check before it shows a press.

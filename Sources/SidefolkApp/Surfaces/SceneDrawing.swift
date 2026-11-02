@@ -65,10 +65,11 @@ enum SceneDrawing {
         guard let context = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
         let paragraph = NSMutableParagraphStyle()
+        // By now these mean left and right: `mirrored()` has already turned them for a language that reads right to left.
         paragraph.alignment = switch style.align {
-        case .leading: .natural
+        case .leading: .left
         case .center: .center
-        case .trailing: NSApp?.userInterfaceLayoutDirection == .rightToLeft ? .left : .right
+        case .trailing: .right
         }
         paragraph.lineBreakMode = style.lines == 1 ? .byClipping : .byWordWrapping
         func attributed(_ points: CGFloat) -> NSAttributedString {

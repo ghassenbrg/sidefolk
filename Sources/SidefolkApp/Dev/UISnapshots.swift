@@ -601,6 +601,13 @@ enum UISnapshots {
             for (name, caption) in sampleTosses(face: portrait) {
                 try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 300)
             }
+            // An extension's surface in its frame, and an overlay (D99): a fictional extension, no pack.
+            if wantedName("surface") {
+                let panel = await SampleSurface.model(.panel, scene: SampleSurface.panelScene, companion: portrait)
+                try await page("surface-panel", SurfaceFrame(model: panel, onBack: {}, onSpeaker: {}, onClose: {}), width: panel.canvas.width)
+                let overlay = await SampleSurface.model(.overlay, scene: SampleSurface.overlayScene, companion: portrait)
+                try await page("surface-overlay", SurfaceFrame(model: overlay, onBack: {}, onSpeaker: {}, onClose: {}), width: 220)
+            }
             // The Play panel in each state, and the moment a clash is halfway (D75).
             for (name, model, at) in await SamplePlayBoards.models(portrait: portrait) where wantedName("game-\(name)") {
                 try await page("game-\(name)", PlayView(model: model).environment(\.revealProgress, at), width: PlayView.width)

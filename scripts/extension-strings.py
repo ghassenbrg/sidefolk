@@ -62,6 +62,7 @@ def manifest_words(folder):
     for w, meta in m.get("watchers", {}).items():
         paths += [("watchers", w, "title")] + ([("watchers", w, "description")] if meta.get("description") else [])
     paths += [("pages", p, "title") for p in m.get("pages", {})]
+    paths += [("surfaces", s, "title") for s in m.get("surfaces", {})]
     for g, meta in m.get("games", {}).items():
         paths += [("games", g, "title")] + ([("games", g, "tagline")] if meta.get("tagline") else [])
     for p, meta in m.get("palettes", {}).items():

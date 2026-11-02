@@ -73,6 +73,8 @@ for source in extensions/*/Sources; do
   cp "extensions/$name/sidefolk-extension.json" "extensions/$name/icon.pdf" "$dest/"
   # Its words in Sidefolk's other languages (D76).
   [[ -d "extensions/$name/strings" ]] && cp -R "extensions/$name/strings" "$dest/strings"
+  # The pictures and sounds its scenes draw from (D99).
+  [[ -d "extensions/$name/assets" ]] && cp -R "extensions/$name/assets" "$dest/assets"
   cp "$BIN/ext-$name" "$dest/bin/ext-$name"
 done
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.

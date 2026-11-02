@@ -97,6 +97,11 @@ final class SurfaceModel {
         }
     }
 
+    #if DEBUG
+    /// A scene with no extension behind it, for the UI snapshots.
+    func showForSnapshot(_ scene: SurfaceScene) async { await show(scene) }
+    #endif
+
     private func show(_ next: SurfaceScene) async {
         for note in next.notes { Log.shared.debug("surfaces", note, ["surface": info.id]) }
         await view.assets.preload(next)
