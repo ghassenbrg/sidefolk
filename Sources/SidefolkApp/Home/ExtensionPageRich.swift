@@ -231,8 +231,12 @@ struct PageCard: View {
 
     @ViewBuilder private var tile: some View {
         if let picture = item.picture {
-            PagePictureView(picture: picture, model: model, side: Int(side) * 2)
+            // With a colour, the picture stands on a tile of it, a little inside its edges.
+            let tile = item.color.flatMap { Color(extensionHex: $0) }
+            PagePictureView(picture: picture, model: model, side: Int(side) * 2, fill: tile == nil)
+                .padding(tile == nil ? 0 : side * 0.07)
                 .frame(width: side, height: side)
+                .background(tile ?? .clear)
                 .clipShape(RoundedRectangle(cornerRadius: size == .large ? 18 : 12, style: .continuous))
         } else if let symbol = item.symbol {
             Image(systemName: symbol).font(.system(size: side * 0.4, weight: .semibold))

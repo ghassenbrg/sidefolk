@@ -1108,7 +1108,7 @@ For a look no part offers, a **scene inside the page**: `{"type": "scene", "scen
 
 Caps: 6 stats, 48 cards (3 buttons and a menu of 8 each), 2–6 tabs (no tabs inside; switching asks nothing of the program), 32 badges, 20 recent; a section
 may have a `picture` beside its title. A picture is addressed, never fetched: `{"pack": path, "dark": path}` in the folder the manifest's `assets` names
-(pinned at install), `{"data": name}` in the data folder, `{"companion": "face"|"full"}`, `{"person": true}` (Sidefolk places these; you never read them). A hero with a
+(pinned at install; a card's `color` then is the tile it stands on), `{"data": name}` in the data folder, `{"companion": "face"|"full"}`, `{"person": true}` (Sidefolk places these; you never read them). A hero with a
 `scene` carries the page's title itself. In the Kit: `.stats`, `.cards`, `.tabs`, `.badges`, `.recent`, `.settings`, `Hero(scene:figure:says:)`, `Picture`.
 
 ### Commands with slots, in every language

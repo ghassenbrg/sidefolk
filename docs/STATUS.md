@@ -55,8 +55,9 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
   the input-method path of `submits`; VoiceOver heard live; Codex's refusal with a real file (its check is tested, no quota spent).
   **Known gaps before a release:** never yet notarized with packs inside (RELEASE.md › Add-ons first proves it before the gallery changes);
   every `minimum_sidefolk` is the placeholder 786 in all 17 add-ons until the lead sets the real number (`build.py --sidefolk-build N` stops on it).
-  **Next:** Playtime rebuilt on these (D101, with what D99's amendment says it accepts), then snapshot B removes the old code and flips the
+  **Next:** Playtime rebuilt on these (D101, in progress below), then snapshot B removes the old code and flips the
   guard, `extension-free-binary.sh --strict` with it, and adds a run with no extension installed asserting no games UI.
+- **Playtime moved, the foundation** (branch `team/playtime-move` in both repositories; D101; not on main): the stage (Playtime's parts library), one surface, menu, commands, entries, settings and what carries over, the Game Center as its page, AI trivia on AI help, its art and sounds in the pack. Higher or Lower is whole, filmed against the old panel, in German and Arabic too. **Half done on purpose:** `StagePads`, `StageCups`, `StageReflex`, `StageSticks`, `StageLetters` and `StagePuzzle` draw a placeholder card (`unmoved`) until the groups fill them; rock, paper, scissors and the desktop coin, dice and hands aren't moved yet. **To add a game:** catalog entry (`Looks.swift`), its driver (`GameTable.drivers`), its command, sound and level settings in the manifest and `strings/`, its parts' file, a line in `PlaytimeStageTests`.
 
 - **CI's silent test deaths, fixed** (2026-11-01): from about snapshot 724 the core test process died on GitHub's
   runners about two minutes in, with no failing test (release runs 41267300489 to 41270779706, and CI). The kernel
