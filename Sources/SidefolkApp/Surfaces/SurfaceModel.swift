@@ -50,8 +50,16 @@ final class SurfaceModel {
     @ObservationIgnored var onSound: ((String) -> Void)?
     @ObservationIgnored var onOver: ((SurfaceScene) -> Void)?
     @ObservationIgnored var onResize: (() -> Void)?
-    @ObservationIgnored var reduceMotion: () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+    @ObservationIgnored var reduceMotion: () -> Bool = { SurfaceModel.reducesMotion }
     @ObservationIgnored var rtl: () -> Bool = { Locale.Language(identifier: AppLanguage.current).characterDirection == .rightToLeft }
+
+    /// The Mac's setting; a debug run can ask for it with SIDEFOLK_REDUCE_MOTION=1 rather than change that setting.
+    static var reducesMotion: Bool {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["SIDEFOLK_REDUCE_MOTION"] == "1" { return true }
+        #endif
+        return NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
 
     init(info: SurfaceInfo, session: SurfaceSession, soundsOn: Bool) {
         self.info = info
