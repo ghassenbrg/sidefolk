@@ -28,6 +28,9 @@ struct CalendarView: View {
             }
             VStack(alignment: .leading, spacing: Theme.Space.m) {
                 header
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
+                    .zIndex(1)
                 notices
                 content
             }
@@ -181,7 +184,9 @@ struct CalendarView: View {
         .transition(reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: slide).combined(with: .opacity),
                                                            removal: .move(edge: slide == .leading ? .trailing : .leading).combined(with: .opacity)))
         .offset(x: model.swipe)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+        // Drawing clips do not clip hit testing: the month's offscreen buffer weeks must not catch header clicks.
+        .contentShape(Rectangle())
         .clipped()
         .background(CalendarScrollCatcher(model: model, step: step))
     }
