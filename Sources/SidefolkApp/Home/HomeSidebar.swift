@@ -55,7 +55,10 @@ struct HomeSidebar: View {
                 }
                 .tag(HomeSelection.you)
                 .help(Text("What \(model.companionName) keeps in mind about you, and where each fact came from."))
-                ForEach(notebook.collections.filter { $0.kind != .profile }) { c in collectionRow(c) }
+                ForEach(notebook.collections.filter { $0.kind != .profile }) { c in
+                    collectionRow(c).moveDisabled(c.kind == .inbox)
+                }
+                .onMove { from, to in notebook.arrange(from: from, to: to) }
                 row(Text("Trash"), count: notebook.trashCount, quiet: true) {
                     Image(systemName: "trash").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.inkFaint).frame(width: 20)
                 }

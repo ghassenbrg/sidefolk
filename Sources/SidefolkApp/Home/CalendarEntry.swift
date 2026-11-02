@@ -8,6 +8,8 @@ enum CalendarEntry: Identifiable, Hashable {
     /// A reminder that was done, or told you, at `at`.
     case finished(Reminder, at: Date)
     case event(CalendarEvent)
+    /// An open task on the day or at the time it's due (D117). Sidefolk's own: it never reaches the Mac's calendars.
+    case due(NotebookItem)
 
     /// What it is, for its colour and the list that shows or hides it (D97).
     enum Kind: String, CaseIterable {
@@ -36,7 +38,7 @@ enum CalendarEntry: Identifiable, Hashable {
         var name: String {
             switch self {
             case .reminder: String(localized: "Reminders", comment: "The Calendar's list: Sidefolk's reminders as a calendar")
-            case .task: String(localized: "Tasks", comment: "The Calendar's list: tasks with a time, as a calendar")
+            case .task: String(localized: "Tasks", comment: "The Calendar's list: tasks with a time or a due date, as a calendar")
             case .routine: String(localized: "Routines", comment: "The Calendar's list: reminders that run a prompt, as a calendar")
             case .event: ""
             }
@@ -48,20 +50,26 @@ enum CalendarEntry: Identifiable, Hashable {
         case .reminder(let o): "r" + o.id
         case .finished(let r, _): "f" + r.id
         case .event(let e): "e" + e.id
+        case .due(let item): "d" + item.id
         }
     }
 
     var start: Date {
         switch self {
-        case .reminder(let o): o.at
-        case .finished(_, let at): at
-        case .event(let e): e.start
+        case .reminder(let o): return o.at
+        case .finished(_, let at): return at
+        case .event(let e): return e.start
+        case .due(let item):
+            // A day's due date is kept as noon; on the Calendar it takes the whole of that day.
+            let at = item.dueAt ?? item.createdAt
+            return item.dueAllDay ? Calendar.current.startOfDay(for: at) : at
         }
     }
 
-    /// A reminder is a moment; it ends where it starts.
+    /// A reminder is a moment; it ends where it starts. A task due on a day takes the day.
     var end: Date {
         if case .event(let e) = self { return e.end }
+        if case .due(let item) = self, item.dueAllDay { return Calendar.current.date(byAdding: .day, value: 1, to: start) ?? start }
         return start
     }
 
@@ -70,16 +78,22 @@ enum CalendarEntry: Identifiable, Hashable {
         case .reminder(let o): o.reminder.title
         case .finished(let r, _): r.title
         case .event(let e): e.title
+        case .due(let item): item.title
         }
     }
 
-    var allDay: Bool { event?.allDay ?? false }
+    var allDay: Bool {
+        if case .due(let item) = self { return item.dueAllDay }
+        return event?.allDay ?? false
+    }
+
+    var dueTask: NotebookItem? { if case .due(let item) = self { item } else { nil } }
 
     var reminder: Reminder? {
         switch self {
         case .reminder(let o): o.reminder
         case .finished(let r, _): r
-        case .event: nil
+        case .event, .due: nil
         }
     }
 
@@ -90,7 +104,7 @@ enum CalendarEntry: Identifiable, Hashable {
     var movable: Bool {
         switch self {
         case .reminder(let o): o.isNext
-        case .finished: false
+        case .finished, .due: false
         case .event(let e): e.changeable
         }
     }
@@ -98,9 +112,16 @@ enum CalendarEntry: Identifiable, Hashable {
     var struck: Bool { if case .finished(let r, _) = self { r.state == .done } else { false } }
 
     /// Still to come and not acted on: a reminder's time already passed.
-    var late: Bool { if case .reminder(let o) = self { o.at < Date() } else { false } }
+    var late: Bool {
+        switch self {
+        case .reminder(let o): o.at < Date()
+        case .due(let item): item.dueAt.map { DueBadge.isLate($0, allDay: item.dueAllDay) } ?? false
+        default: false
+        }
+    }
 
     func kind(item: NotebookItem?) -> Kind {
+        if case .due = self { return .task }
         guard let reminder else { return .event }
         if reminder.action?.kind == .prompt { return .routine }
         return item?.kind == .task ? .task : .reminder
@@ -112,6 +133,7 @@ enum CalendarEntry: Identifiable, Hashable {
         case .reminder(let o): o.reminder.action?.kind == .prompt ? "sparkles" : item.map { ItemKindStyle.symbol($0.kind) } ?? "alarm"
         case .finished(let r, _): r.state == .done ? "checkmark.circle.fill" : "bell"
         case .event(let e): e.repeats ? "repeat" : "calendar"
+        case .due: "checkmark.circle"
         }
     }
 

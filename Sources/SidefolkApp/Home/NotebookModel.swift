@@ -41,7 +41,7 @@ final class NotebookModel {
 
     static let profileName = "About you"
 
-    private(set) var collections: [NotebookCollection] = []
+    var collections: [NotebookCollection] = []
     private(set) var archived: [NotebookCollection] = []
     private(set) var counts: [String: Int] = [:]
     private(set) var trash: [NotebookItem] = []
@@ -63,6 +63,7 @@ final class NotebookModel {
     private(set) var reminders: [String: Reminder] = [:]
     /// The item whose reminder time is being picked.
     var pickingTime: NotebookItem?
+    var pickingDue: NotebookItem?
 
     private(set) var selectedId: String?
     /// Where the selected item was made and changed (D58), for its Connected list.
@@ -116,7 +117,7 @@ final class NotebookModel {
         await ensureProfile()
         let all = (try? await store.collections(includeArchived: true)) ?? []
         let rank: (NotebookCollection) -> Int = { $0.kind == .inbox ? 0 : $0.kind == .profile ? 1 : 2 }
-        let sorted = all.sorted { (rank($0), $0.name.lowercased()) < (rank($1), $1.name.lowercased()) }
+        let sorted = all.sorted { (rank($0), $0.sortOrder, $0.name.lowercased()) < (rank($1), $1.sortOrder, $1.name.lowercased()) }
         collections = sorted.filter { $0.archivedAt == nil }
         archived = sorted.filter { $0.archivedAt != nil }
         let live = (try? await store.items(limit: 100_000)) ?? []
@@ -133,6 +134,20 @@ final class NotebookModel {
         _ = await createCollection(named: Self.profileName, kind: .profile)
     }
 
+    /// The Tasks tab: pinned as ever, then what's due, soonest first, then the rest as they were (D117). A sort that
+    /// keeps its place among equals, so nothing else moves.
+    static func dueFirst(_ items: [NotebookItem]) -> [NotebookItem] {
+        func rank(_ item: NotebookItem) -> (Int, Date) {
+            if item.pinnedAt != nil { return (0, .distantPast) }
+            if item.status == .open, let due = item.dueAt { return (1, due) }
+            return (2, .distantPast)
+        }
+        return items.enumerated().sorted { a, b in
+            let (ra, rb) = (rank(a.element), rank(b.element))
+            return ra == rb ? a.offset < b.offset : ra < rb
+        }.map(\.element)
+    }
+
     func reloadItems() async {
         guard let collectionId else {
             items = []
@@ -142,6 +157,7 @@ final class NotebookModel {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
         if q.isEmpty {
             items = (try? await store.items(collectionId: collectionId, kinds: kinds, limit: 1000)) ?? []
+            if filter.kind == .task { items = Self.dueFirst(items) }
         } else {
             items = (try? await store.search(q, collectionId: everywhere ? nil : collectionId, kinds: kinds, limit: 200)) ?? []
         }
@@ -371,6 +387,30 @@ final class NotebookModel {
     }
 
     // MARK: Collections
+
+    /// The person dragged a collection in the sidebar; the Inbox stays first (D117).
+    func arrange(from: IndexSet, to: Int) {
+        var shown = collections.filter { $0.kind != .profile }
+        shown.move(fromOffsets: from, toOffset: to)
+        let ids = shown.map(\.id)
+        collections = collections.filter { $0.kind == .profile } + shown
+        Task {
+            try? await store.arrangeCollections(ids)
+            runtime.events.changed(.notebook)
+            await reloadCollections()
+        }
+    }
+
+    /// A task's due date, or none (D117). Not a reminder: it nudges nobody; it stands here and on the Calendar.
+    func setDue(_ item: NotebookItem, at date: Date?, allDay: Bool) async {
+        guard var fresh = try? await store.item(id: item.id) else { return }
+        fresh.dueAt = date
+        fresh.dueAllDay = date != nil && allDay
+        fresh.updatedAt = Date()
+        try? await store.update(fresh)
+        runtime.events.changed(.notebook)
+        await reloadItems()
+    }
 
     /// Creates a collection with exactly this name (refusing duplicates, case-insensitively).
     @discardableResult

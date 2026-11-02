@@ -281,6 +281,9 @@ struct CalendarMenu: View {
             Button("Remove from Calendar") { model.delete(entry, undo: undo) }
         case .finished(let r, _):
             if let item = model.item(of: r) { Button(ItemLink.openTitle(item.kind)) { model.now.open(item) } }
+        case .due(let item):
+            Button("Mark Done") { Task { await model.finish(item, undo: undo) } }
+            Button(ItemLink.openTitle(item.kind)) { model.now.open(item) }
         case .event(let e):
             Button("Open in Calendar") { model.openInCalendar(e) }
             if e.changeable {

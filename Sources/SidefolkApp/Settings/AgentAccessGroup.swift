@@ -16,7 +16,7 @@ struct AgentAccessGroup: View {
                 detail: "Add to your notebook, remind you, and watch pages or this Mac for you. Their notes are tagged with their name.",
                 value: access.save) { p in model.update { $0.agentAccess.save = p } }
             row("Change and delete notes",
-                detail: "Edit notes, move them, mark tasks done, or move them to the Trash. Only you can empty the Trash.",
+                detail: "Edit notes, move them, mark tasks done, arrange your collections, or move notes to the Trash. Only you can empty the Trash.",
                 value: access.change) { p in model.update { $0.agentAccess.change = p } }
             row("Read your notes and reminders",
                 detail: "Search and list your notebook, your reminders and today's plan.",

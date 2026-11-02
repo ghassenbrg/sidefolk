@@ -11,17 +11,21 @@ enum CollectionLook {
         ("pink", Color(hex: 0xEE6BA8)), ("brown", Color(hex: 0xA77B58)), ("gray", Color(hex: 0x8A97AD)),
     ]
 
-    static let symbols = [
-        "folder.fill", "tray.fill", "star.fill", "heart.fill", "bookmark.fill", "flag.fill",
-        "lightbulb.fill", "sparkles", "flame.fill", "bolt.fill", "leaf.fill", "pawprint.fill",
-        "book.fill", "graduationcap.fill", "briefcase.fill", "hammer.fill", "paintbrush.fill", "music.note",
-        "camera.fill", "gamecontroller.fill", "airplane", "house.fill", "cart.fill", "fork.knife",
-        "dumbbell.fill", "cross.case.fill", "dollarsign.circle.fill", "calendar", "checklist", "globe",
-    ]
+    static let symbols = CollectionLooks.symbols
 
     static func color(_ c: NotebookCollection) -> Color {
         if let name = c.color, let found = colors.first(where: { $0.name == name }) { return found.color }
+        // The person's own colour, moved only in lightness until it reads on this theme's cards in light and dark
+        // (`CalendarPalette`). Identity, never status (D78): it's used for this collection's icon and nothing else.
+        if let name = c.color, let hex = CollectionLooks.hex(name) { return CalendarTint.of(hex).text }
         return c.kind == .profile ? Theme.aqua : Theme.folkColor("pip")
+    }
+
+    /// A colour as it's stored: "#rrggbb".
+    static func stored(_ color: Color) -> String? {
+        guard let c = NSColor(color).usingColorSpace(.sRGB) else { return nil }
+        func part(_ v: CGFloat) -> Int { min(255, max(0, Int((v * 255).rounded()))) } // the panel picks in a wider gamut
+        return String(format: "#%02x%02x%02x", part(c.redComponent), part(c.greenComponent), part(c.blueComponent))
     }
 
     static func symbol(_ c: NotebookCollection) -> String {
@@ -103,7 +107,16 @@ struct CollectionLookPicker: View {
                     .accessibilityLabel(Text(verbatim: option.name))
                     .accessibilityAddTraits(color == option.name ? .isSelected : [])
                 }
+                // Any other colour; chosen, it stays readable (`CollectionLook.color`).
+                ColorPicker(selection: Binding(get: { color.flatMap(CollectionLooks.hex).map { Color(hex: $0) } ?? Color(hex: 0x3E8BF0) },
+                                               set: { color = CollectionLook.stored($0) }), supportsOpacity: false) {
+                    Text("Another colour", comment: "A collection's sheet: pick any colour")
+                }
+                .labelsHidden()
+                .help(Text("Another colour", comment: "A collection's sheet: pick any colour"))
+                .overlay { if color.flatMap(CollectionLooks.hex) != nil { RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.ink.opacity(0.7), lineWidth: 2).padding(-3).allowsHitTesting(false) } }
             }
+            ScrollView {
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(30), spacing: 6), count: 10), spacing: 6) {
                 ForEach(CollectionLook.symbols, id: \.self) { name in
                     Button { symbol = name; emoji = "" } label: {
@@ -117,6 +130,8 @@ struct CollectionLookPicker: View {
                     .accessibilityAddTraits(chosen(name) ? .isSelected : [])
                 }
             }
+            }
+            .frame(height: 180)
             HStack(spacing: Theme.Space.s) {
                 CollectionTile(collection: preview, size: 30)
                 TextField("Emoji", text: Binding(get: { emoji }, set: { emoji = String($0.trimmingCharacters(in: .whitespaces).prefix(2)) }),

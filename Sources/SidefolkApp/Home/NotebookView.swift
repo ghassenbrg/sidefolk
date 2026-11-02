@@ -16,6 +16,7 @@ struct NotebookView: View {
         }
         .background(Theme.surface)
         .sheet(item: $model.pickingTime) { item in PickReminderTimeSheet(item: item, model: model) }
+        .sheet(item: $model.pickingDue) { item in PickDueDateSheet(item: item, model: model) }
     }
 }
 
@@ -295,6 +296,7 @@ private struct ItemRow: View {
                     if item.pinnedAt != nil {
                         Image(systemName: "pin.fill").foregroundStyle(Theme.sun).accessibilityLabel("Pinned")
                     }
+                    if item.kind == .task, item.status == .open, let due = item.dueAt { DueBadge(due: due, allDay: item.dueAllDay) }
                     if let reminder = model.reminders[item.id] { ReminderBadge(reminder: reminder) }
                     Text(TimeText.short(item.updatedAt))
                     if let place = elsewhere { Text("in \(place)") }

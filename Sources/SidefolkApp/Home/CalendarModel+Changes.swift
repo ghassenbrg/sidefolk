@@ -84,6 +84,11 @@ extension CalendarModel {
 
     func openInCalendar(_ event: CalendarEvent) { MacCalendar.open(event) }
 
+    /// A task due on the Calendar, done from there (D117): as its own tool, so it's in History and Undo takes it back.
+    func finish(_ item: NotebookItem, undo: UndoManager?) async {
+        _ = await call("notes.update", ["id": .string(item.id), "status": "done"], undo: undo, action: String(localized: "Mark Done"))
+    }
+
     // MARK: Adding
 
     /// What a new thing on the Calendar can be.

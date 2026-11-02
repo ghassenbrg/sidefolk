@@ -201,6 +201,18 @@ struct CalendarInspector: View {
                 }
             case .finished:
                 Spacer()
+            case .due(let item):
+                Button("Open in Notebook") {
+                    model.inspecting = nil
+                    model.now.open(item)
+                }
+                .buttonStyle(.sf(.secondary))
+                Spacer()
+                Button(String(localized: "state.done", defaultValue: "Done", comment: "Checkbox and status: the task or reminder is done")) {
+                    model.inspecting = nil
+                    Task { await model.finish(item, undo: undo) }
+                }
+                .buttonStyle(.sf(.primary))
             case .event(let e):
                 if e.changeable {
                     Button(e.repeats ? "Delete this time" : "Delete") { model.delete(entry, undo: undo) }.buttonStyle(.sf(.destructive))

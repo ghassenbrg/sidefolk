@@ -108,6 +108,7 @@ struct NotebookEditor: View {
             }
             .buttonStyle(.sf(.secondary))
             .help(item.pinnedAt == nil ? "Pin to the top" : "Unpin")
+            if item.kind == .task { DueButton(item: item, model: model) }
             RemindButton(item: item, model: model)
             Button {
                 Task { await model.moveToTrash(item) }
@@ -125,6 +126,7 @@ struct NotebookEditor: View {
     /// When it was made and changed, and its reminder (D49), if it has one.
     private func meta(_ item: NotebookItem) -> some View {
         HStack(spacing: Theme.Space.s) {
+            if item.kind == .task, item.status == .open, let due = item.dueAt { DueBadge(due: due, allDay: item.dueAllDay) }
             if let reminder = model.reminders[item.id] { ReminderBadge(reminder: reminder) }
             Text(verbatim: metaText(item)).foregroundStyle(Theme.inkFaint)
         }

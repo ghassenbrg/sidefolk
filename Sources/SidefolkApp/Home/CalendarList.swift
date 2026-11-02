@@ -166,6 +166,11 @@ struct CalendarList: View {
                     CheckCircle(checked: false, label: Text("Mark “\(o.reminder.title)” done")) { Task { await model.now.complete(o.reminder) } }
                 }
             }
+        case .due(let item):
+            HStack(spacing: Theme.Space.s) {
+                Chip(text: Text("Due", comment: "The Agenda: a task that's due"), tone: .neutral)
+                CheckCircle(checked: false, label: Text("Mark “\(item.title)” done")) { Task { await model.finish(item, undo: nil) } }
+            }
         case .event(let e) where isNext(entry):
             Chip(text: Text("in \(TimeText.span(e.start.timeIntervalSinceNow))", comment: "The Agenda: how long until the next event"), tone: .accent)
         case .event:
@@ -190,6 +195,9 @@ struct CalendarList: View {
             } else if o.reminder.source == "user", o.reminder.recurrence == nil {
                 parts.append(String(localized: "You asked \(TimeText.short(o.reminder.createdAt))", comment: "The Agenda: when the person set a reminder, “You asked today 15:58”"))
             }
+        case .due(let item):
+            if let due = item.dueAt { parts.append(DueBadge.words(due, allDay: item.dueAllDay)) }
+            if let who = Describe.source(item.source) { parts.append(String(localized: "from \(who)")) }
         case .finished(let r, let at):
             parts.append(r.state == .done
                          ? String(localized: "Done at \(TimeFormat.clock(at, calendar: .current))", comment: "The Agenda: when a reminder was done")

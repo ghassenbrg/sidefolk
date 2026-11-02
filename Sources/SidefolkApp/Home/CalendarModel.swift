@@ -268,7 +268,8 @@ final class CalendarModel {
         let finished = ((try? await rt.reminderStore.finished(from: range.start, to: range.end)) ?? [])
             .map { Entry.finished($0, at: $0.lastFiredAt ?? $0.fireAt) }
         let events = (await rt.calendarReader.events(from: range.start, to: range.end) ?? []).map(Entry.event)
-        let reminders = due + finished
+        let dueTasks = ((try? await rt.notebook.dueTasks(from: range.start, to: range.end)) ?? []).map(Entry.due)
+        let reminders = due + finished + dueTasks
         let ids = Set(reminders.compactMap { $0.reminder?.itemId })
         let found = ids.isEmpty ? [] : ((try? await rt.notebook.items(ids: Array(ids))) ?? [])
         let calendars = await rt.calendarReader.calendars() ?? []
