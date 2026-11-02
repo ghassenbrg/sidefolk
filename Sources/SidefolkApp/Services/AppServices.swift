@@ -49,6 +49,9 @@ struct ExtensionInfo: Identifiable, Hashable {
     /// The settings it declares, and its use of the person's AI (D100).
     var settingRows: [ExtensionSettingRow] = []
     var aiStatus: ExtensionAIStatus?
+    /// The person's yes to its use of their place and to its reminders (D106, D107).
+    var placeStatus: ExtensionConsentStatus?
+    var scheduleStatus: ExtensionConsentStatus?
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }

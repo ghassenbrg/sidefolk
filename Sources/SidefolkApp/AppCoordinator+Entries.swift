@@ -37,9 +37,14 @@ extension AppCoordinator {
                 let outcome = await runtime.executor.execute(name: name, input: input, caller: .user)
                 if let problem = outcome.problem { runtime.events.publish(.notice(problem.message)) }
             }
-        case .page(let page):
+        case .page(let page, let state):
             askPanel.hide()
-            home.show(section: .page("\(entry.extensionId)/\(page)"))
+            let id = "\(entry.extensionId)/\(page)"
+            Task {
+                if let state { await runtime.extensions.movePage(id, PageGo(set: state)) }
+                home.show(section: .page(id))
+                await home.pageMoved(id)
+            }
         case .surface(let id, let arguments):
             askPanel.hide()
             Task {

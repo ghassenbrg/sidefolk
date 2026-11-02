@@ -103,6 +103,6 @@ enum SampleRichPage {
     static let drop = ExtensionDropAction(extensionId: id, extensionName: "Bird Log", key: "clip", title: "Add a birdsong", detail: "Keeps the clip with your log", symbol: "waveform",
                                           kinds: [.link], patterns: ["https://*.mp4", "https://*.m3u8", "https://*.mov"], tool: "ext.birdlog.add_clip", input: ["url": "{value}"])
 
-    static let askEntry = ExtensionEntry(extensionId: id, extensionName: "Bird Log", key: "log", title: "Birds", symbol: "bird", places: [.ask], action: .page("log"), firstParty: true)
+    static let askEntry = ExtensionEntry(extensionId: id, extensionName: "Bird Log", key: "log", title: "Birds", symbol: "bird", places: [.ask], action: .page("log", state: nil), firstParty: true)
 }
 #endif

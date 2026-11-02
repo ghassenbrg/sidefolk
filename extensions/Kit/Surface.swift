@@ -57,6 +57,13 @@ public struct ToolReply {
         return copy
     }
 
+    /// One of your pages, showing `state` (D105). With the page already open, it takes the state where it is; `push` lets Back return from it.
+    public func opening(page: String, state: [String: Any], push: Bool = false) -> ToolReply {
+        var copy = self
+        copy.asks["open_page"] = ["page": page, "state": state, "push": push] as [String: Any]
+        return copy
+    }
+
     /// What History says this call did, in place of the tool's title and arguments. Sidefolk believes it only of packs it signed.
     public func row(_ words: String) -> ToolReply {
         var copy = self

@@ -50,6 +50,8 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var drops: [String: Watcher] = [:]
         /// `permissions.ai`'s purpose (D100).
         public var aiPurpose: String?
+        public var placePurpose: String?
+        public var schedulePurpose: String?
 
         public init() {}
     }
@@ -190,7 +192,7 @@ extension ExtensionStrings {
         guard let o = any as? [String: Any] else { return w }
         let english = code == "en"
         let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "examples", "surfaces", "text",
-                                                                 "commands", "parts", "choices", "carry", "settings", "entries", "drops", "ai_purpose"]
+                                                                 "commands", "parts", "choices", "carry", "settings", "entries", "drops", "ai_purpose", "place_purpose", "schedule_purpose"]
         for key in o.keys.sorted() where !allowed.contains(key) {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
             issues.append(ValidationIssue(field: "\(file).\(key)", message: why))
@@ -262,6 +264,8 @@ extension ExtensionStrings {
         }
         w.text = texts(o["text"], file: file, code: code, base: base, issues: &issues)
         w.aiPurpose = line(o["ai_purpose"], "\(file).ai_purpose", max: 120, base: m.permissions.ai?.purpose)
+        w.placePurpose = line(o["place_purpose"], "\(file).place_purpose", max: 120, base: m.permissions.place?.purpose)
+        w.schedulePurpose = line(o["schedule_purpose"], "\(file).schedule_purpose", max: 120, base: m.permissions.schedule?.purpose)
         let settingWords = object("settings", names: Set(m.settings.map(\.key)))
         for setting in m.settings {
             guard let value = settingWords[setting.key] else { continue }
@@ -438,6 +442,8 @@ extension ValidationReport {
         guard var p = permissions else { return nil }
         if p.networkPurpose != nil, let purpose = strings?.words(for: language)?.networkPurpose { p.networkPurpose = purpose }
         if p.ai != nil, let purpose = strings?.words(for: language)?.aiPurpose { p.ai?.purpose = purpose }
+        if p.place != nil, let purpose = strings?.words(for: language)?.placePurpose { p.place?.purpose = purpose }
+        if p.schedule != nil, let purpose = strings?.words(for: language)?.schedulePurpose { p.schedule?.purpose = purpose }
         return p
     }
 }

@@ -127,12 +127,15 @@ extension ExtensionManifest {
         public var tool: String?
         public var input: [String: JSONValue]?
         public var page: String?
+        /// What the page shows when this opens it (D105).
+        public var state: [String: JSONValue]?
         /// One of its surfaces, opened as the person's own click opens it; `input` is what it starts with.
         public var surface: String?
         public var items: [EntryMeta]
 
         public init(id: String, title: String, symbol: String? = nil, places: [Place] = [], tool: String? = nil, input: [String: JSONValue]? = nil,
-                    page: String? = nil, surface: String? = nil, items: [EntryMeta] = []) {
+                    page: String? = nil, state: [String: JSONValue]? = nil, surface: String? = nil, items: [EntryMeta] = []) {
+            self.state = state
             self.id = id
             self.title = title
             self.symbol = symbol
@@ -145,7 +148,7 @@ extension ExtensionManifest {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["id", "title", "symbol", "places", "tool", "input", "page", "surface", "items"])
+            try decoder.rejectUnknownKeys(["id", "title", "symbol", "places", "tool", "input", "page", "state", "surface", "items"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             id = try c.decode(String.self, forKey: "id")
             title = try c.decode(String.self, forKey: "title")
@@ -202,6 +205,19 @@ extension ExtensionManifest {
 
     /// `permissions.ai` (D100): the extension may ask the person's AI to write something, for this purpose and at most this
     /// many times a day. It gets words back and nothing else: no tools, none of the person's data.
+    /// `{"purpose": "to show prayer times for your place"}`, what the person is told it is for (D106, D107).
+    public struct PurposeMeta: Sendable, Hashable, Decodable {
+        public var purpose: String
+
+        public init(purpose: String) { self.purpose = purpose }
+
+        public init(from decoder: Decoder) throws {
+            try decoder.rejectUnknownKeys(["purpose"])
+            let c = try decoder.container(keyedBy: AnyKey.self)
+            purpose = try c.decode(String.self, forKey: "purpose")
+        }
+    }
+
     public struct AIMeta: Sendable, Hashable, Decodable {
         public static let defaultCap = 20
         public static let caps = 1...200

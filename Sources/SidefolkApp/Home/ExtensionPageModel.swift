@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import Observation
 import SidefolkCore
+import UniformTypeIdentifiers
 
 /// Extensions' pages in Home (D62): which there are, how the person arranged them (D67), what each said last, and one
 /// model per page while it is shown.
@@ -74,6 +75,9 @@ final class ExtensionPagesModel {
         return m
     }
 
+    /// The page was asked to show something else (D105), and may be open already.
+    func moved(_ id: String) async { await models[id]?.refresh() }
+
     #if DEBUG
     /// A sample page's model for the UI snapshots' window.
     func showSample(page: ExtensionPageModel) { models[page.info.id] = page }
@@ -111,7 +115,8 @@ final class ExtensionPagesModel {
     /// (D63), then the page read again so every place showing it agrees.
     func flip(_ info: ExtensionPageInfo, _ control: ExtensionPage.Control, on: Bool?) async {
         switching[info.id] = on ?? isOn(info.id) ?? false
-        problem = await ExtensionControl.run(control, on: on, extensionId: info.extensionId, services: services)
+        // A sidebar or a tile has no state to change: only a tool runs from there.
+        if control.act == nil { problem = await ExtensionControl.run(control, on: on, extensionId: info.extensionId, services: services) }
         if let page = try? await services.runtime.extensions.renderPage(extensionId: info.extensionId, page: info.page,
                                                                       language: ExtensionPageModel.language),
            let summary = page.summary {
@@ -165,6 +170,28 @@ enum ExtensionControl {
     }
 }
 
+/// The system's open panel for a page's `file` (D105): the person chooses, and only then does the tool hear of a path.
+enum PageFilePanel {
+    @MainActor
+    static func choose(_ ask: PageFileAsk) async -> String? {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        let types = ask.types.compactMap { UTType(filenameExtension: $0) }
+        if !types.isEmpty { panel.allowedContentTypes = types }
+        #if DEBUG
+        if let chosen = choiceForTest { return chosen }
+        #endif
+        return await panel.begin() == .OK ? panel.url?.path : nil
+    }
+
+    #if DEBUG
+    /// The debug app's stand-in for the person: there is no one to click in the panel.
+    static var choiceForTest: String?
+    #endif
+}
+
 /// One extension page while it is open: what the extension says now, refreshed as often as its manifest asks, the
 /// past of its charts from Sidefolk's history, and its heads-ups (the extension's watchers) to switch on or off.
 @MainActor @Observable
@@ -200,6 +227,20 @@ final class ExtensionPageModel {
     private(set) var opened: Set<String> = []
     /// Which tab each set of tabs shows (D100), while Home is open.
     var tabChoices: [String: String] = [:]
+    /// What the page was told to remember, and where Back goes (D105), while Home is open.
+    private(set) var state = PageState()
+    /// The page's column, as the program is told it (D105): what it draws to.
+    private(set) var width: Int?
+    /// One reading at a time; a change while one is out reads once more after it, so what shows is never older than the last click.
+    private var reading = false
+    private var readAgain = false
+    private var widthWait: Task<Void, Never>?
+    /// What a click just put on the clipboard, word for word: nobody should have to trust a button's label for that (SECURITY T12).
+    private(set) var copied: String?
+    /// Waiting for the person to answer Sidefolk's question (D106, D107).
+    var asking: PageConsent?
+    private var placePurpose: String?
+    private var schedulePurpose: String?
     /// The extension's settings and its use of the AI, as the host keeps them (D100).
     var settingRows: [ExtensionSettingRow] = []
     var aiStatus: ExtensionAIStatus?
@@ -243,6 +284,8 @@ final class ExtensionPageModel {
         guard let services else { return }
         palettes = await services.runtime.extensions.palettes().filter { $0.extensionId == info.extensionId }
         await loadAlerts()
+        // The first reading already knows the column's width, so a page that draws to it doesn't draw twice.
+        for _ in 0..<15 where width == nil { try? await Task.sleep(for: .milliseconds(20)) }
         while !Task.isCancelled {
             await refresh()
             try? await Task.sleep(for: .seconds(info.refresh), tolerance: .seconds(Double(info.refresh) / 10))
@@ -251,21 +294,86 @@ final class ExtensionPageModel {
 
     func refresh() async {
         guard let host = services?.runtime.extensions else { return }
-        do {
-            page = try await host.renderPage(extensionId: info.extensionId, page: info.page, language: Self.language)
-            problem = nil
-            updated = Date()
-            await loadSettings()
-        } catch {
-            problem = (error as? UserFacingError)?.message ?? String(localized: "The page couldn't be read.")
+        guard !reading else {
+            readAgain = true
+            return
         }
+        reading = true
+        defer { reading = false }
+        repeat {
+            readAgain = false
+            for go in await host.takePageMoves(info.id) { state.apply(go) }
+            do {
+                page = try await host.renderPage(extensionId: info.extensionId, page: info.page, language: Self.language, state: state.json, width: width)
+                problem = nil
+                updated = Date()
+                await loadSettings()
+            } catch {
+                problem = (error as? UserFacingError)?.message ?? String(localized: "The page couldn't be read.")
+            }
+        } while readAgain
         await loadHistory()
+    }
+
+    /// The column changed size: the page draws to it. Rounded and a moment late, so a window being dragged doesn't read the page at every point.
+    func setWidth(_ points: CGFloat) {
+        let rounded = Int(points / 10) * 10
+        guard rounded > 0, rounded != width else { return }
+        let first = width == nil
+        width = rounded
+        guard !first else { return }
+        widthWait?.cancel()
+        widthWait = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            await self?.refresh()
+        }
+    }
+
+    /// Changes the state and reads the page again (D105). No tool, so nothing in History.
+    func go(_ go: PageGo) async {
+        guard state.apply(go) else { return }
+        await refresh()
+    }
+
+    /// What a control does that isn't a tool (D105).
+    func perform(_ act: PageAct) async {
+        switch act {
+        case .go(let move):
+            await go(move)
+        case .copy(let words):
+            // Sidefolk's own tool, so the switch for the clipboard holds and History has the exact words.
+            let outcome = await services?.runtime.executor.execute(name: "clipboard.write", input: ["text": .string(words)], caller: .user)
+            if let why = outcome?.problem?.message { problem = why } else { copied = words }
+        case .file(let ask):
+            guard let services, let path = await PageFilePanel.choose(ask) else { return }
+            // The file they chose, for this one call, and nothing beside it: not the folder it is in (SECURITY T12), not another parameter that names a path.
+            let short = String(info.extensionId.split(separator: ".").last ?? "")
+            let others = await services.runtime.extensions.pathParameters(extensionId: info.extensionId, tool: ask.tool)
+            var input = ask.input.objectValue ?? [:]
+            for key in others { input[key] = nil }
+            input[ask.param] = .string(path)
+            let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: .object(input), caller: .user, pickedFile: path)
+            await refresh()
+            if let why = outcome.problem?.message { problem = why }
+        case .allow(let consent):
+            asking = consent
+        case .settings(let pane):
+            switch pane {
+            case .attention: services?.openSettings(tab: .attention)
+            case .place: services?.openSettings(tab: .privacy)
+            case .notifications:
+                if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") { NSWorkspace.shared.open(url) }
+            }
+        }
     }
 
     private func loadSettings() async {
         guard let details = await services?.runtime.extensions.info(id: info.extensionId) else { return }
         settingRows = details.settings
         aiStatus = details.ai
+        placePurpose = await services?.runtime.extensions.consentPurpose(.place, extensionId: info.extensionId)
+        schedulePurpose = await services?.runtime.extensions.consentPurpose(.schedule, extensionId: info.extensionId)
         signedBySidefolk = details.origin?.firstParty == true
     }
 
@@ -352,12 +460,44 @@ final class ExtensionPageModel {
 
     /// A switch or button: the extension's own tool, run as the person through Guard (D63), then the page again.
     func run(_ control: ExtensionPage.Control, on: Bool?) async {
+        if var act = control.act {
+            // A switch says its new state in the page's own.
+            if case .go(var move) = act, let key = control.key, let on {
+                move.set[key] = .bool(on)
+                act = .go(move)
+            }
+            await perform(act)
+            onControl?()
+            return
+        }
         guard let services else { return }
         let why = await ExtensionControl.run(control, on: on, extensionId: info.extensionId, services: services)
         await refresh()
         // After the read, which clears any earlier problem: what went wrong with this click stays in sight.
         if let why { problem = why }
         onControl?()
+    }
+
+    /// The person's answer to Sidefolk's question (D106, D107), through the tool that records it.
+    func answer(_ consent: PageConsent, allow: Bool) async {
+        guard let services else { return }
+        let what = consent == .place ? "place" : "schedule"
+        let outcome = await services.runtime.executor.execute(name: "extensions.consent", input: ["extension": .string(info.extensionId), "what": .string(what), "on": .bool(allow)], caller: .user)
+        await refresh()
+        if let why = outcome.problem?.message { problem = why }
+    }
+
+    /// What Sidefolk says it means, the extension's purpose marked as its own words. Read before the question shows, so it never waits.
+    func consentWords(_ consent: PageConsent) -> String {
+        let purpose = consent == .place ? placePurpose : schedulePurpose
+        let says = purpose.map { String(localized: "\(info.extensionName) says it wants this \($0).", comment: "Asked before an extension may have the person's place or schedule reminders: the extension's stated purpose") }
+        let what = switch consent {
+        case .place: String(localized: "It will get your town and region, its coordinates to about a kilometre and its time zone, and hear when they change. With internet access it could send them on. You can take this back in Settings › Add-ons.",
+                            comment: "Asked before an extension may have the person's place")
+        case .schedule: String(localized: "It can send you reminders at moments it plans, which follow your Focus, Quiet and Attention settings. It can't show them while Sidefolk is quit unless it asks macOS to. You can take this back in Settings › Add-ons.",
+                               comment: "Asked before an extension may schedule reminders")
+        }
+        return [says, what].compactMap { $0 }.joined(separator: "\n\n")
     }
 
     /// A choice, field or list row's tool (D68): whether it ran without a problem.

@@ -30,6 +30,8 @@ public final class Extension {
                                     choose: @MainActor (_ item: String, _ action: String) async throws -> PaletteChoice,
                                     preview: (@MainActor (_ item: String) async throws -> PalettePreview?)?)] = [:]
     private var backgroundWork: (@MainActor () async -> Void)?
+    private var planning: (@MainActor (String) async throws -> OccurrencePlan)?
+    private var placeWasChanged: (@MainActor () -> Void)?
     private var notices: [String: @MainActor (Arguments) -> Void] = [:]
     private var pairedCheck: (@MainActor (_ tool: String, _ arguments: Arguments) async -> Paired)?
     private var carried: (@MainActor (String, Arguments, [String: Any], [String: [[String: Any]]]) -> [String: Any])?
@@ -120,10 +122,27 @@ public final class Extension {
         carried = receive
     }
 
+    /// Your whole plan of reminders, when Sidefolk asks: on starting, waking and each new day, and when the person says yes (D107). It goes
+    /// through `reason`: `start`, `wake`, `daily` or `consent`. Sidefolk keeps the timer; between plans nothing of yours needs to run.
+    public func planOccurrences(_ make: @escaping @MainActor (_ reason: String) async throws -> OccurrencePlan) {
+        planning = make
+    }
+
+    /// The person's place moved, or they took it back: `SharedPlace.current` says which (D106).
+    public func placeChanged(_ handle: @escaping @MainActor () -> Void) {
+        placeWasChanged = handle
+    }
+
     /// Answers every message that has an id until Sidefolk closes stdin. Nothing else may reach stdout.
     public func serve() async {
         ExtensionServices.send = { [weak self] method, params in self?.send(method, params) }
         notices["sidefolk/ai.answer"] = { args in AI.receive(args) }
+        notices["sidefolk/place.found"] = { args in SharedPlace.found(args) }
+        notices["sidefolk/occurrences.result"] = { args in Occurrences.received(args) }
+        notices["sidefolk/place.changed"] = { [weak self] args in
+            SharedPlace.use(args.values)
+            self?.placeWasChanged?()
+        }
         notices["sidefolk/settings.changed"] = { [weak self] args in
             ExtensionSettings.use(args.values["settings"])
             self?.settingsChanged?()
@@ -180,6 +199,8 @@ public final class Extension {
         Language.use(params["language"] as? String)
         ExtensionSettings.use(params["settings"])
         AI.use(params["ai"] as? String, asked: method)
+        SharedPlace.use(params)
+        Occurrences.use(params)
         switch method {
         case "initialize":
             return ["protocolVersion": params["protocolVersion"] as? String ?? "2025-06-18", "capabilities": ["tools": [:]],
@@ -204,6 +225,9 @@ public final class Extension {
             guard let check = watchers[watcher] else { throw Unknown(what: "Unknown watcher: \(watcher)") }
             let result = try await check(Arguments(params["config"] as? [String: Any] ?? [:]), params["state"] as? [String: Any] ?? [:])
             return ["triggered": result.triggered, "state": result.state, "summary": result.summary]
+        case "sidefolk/occurrences.plan":
+            guard let plan = planning else { return [:] }
+            return try await plan(params["reason"] as? String ?? "start").json
         case "sidefolk/page.render":
             let page = params["page"] as? String ?? ""
             guard let render = pages[page] else { throw Unknown(what: "Unknown page: \(page)") }

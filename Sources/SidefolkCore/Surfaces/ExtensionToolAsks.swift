@@ -9,7 +9,7 @@ public struct ExtensionToolAsks: Sendable, Hashable {
     public var arguments: [String: JSONValue] = [:]
     /// Which of its surfaces goes away, kept to come back to. Empty: whichever of its are open.
     public var closeSurface: String?
-    public var openPage: String?
+    public var openPage: PageMove?
     /// The AI's words wait this long, so they don't give away what an animation is still showing.
     public var holdAnswer: TimeInterval?
     /// What History says this call did, in place of the tool's title and arguments ("Heads!"). Believed only for packs Sidefolk signed, like `summary` (D98).
@@ -31,7 +31,7 @@ public struct ExtensionToolAsks: Sendable, Hashable {
         if let close = json["close_surface"] {
             if close.boolValue == true { closeSurface = "" } else if let name = close.stringValue, manifest.surfaces[name] != nil { closeSurface = name }
         }
-        if let page = json["open_page"]?.stringValue, manifest.pages[page] != nil { openPage = page }
+        if let move = PageMove.parse(json["open_page"]), manifest.pages[move.page] != nil { openPage = move }
         if let ms = json["hold_answer_ms"]?.doubleValue, ms.isFinite, ms > 0 { holdAnswer = min(ms / 1000, Self.longestHold) }
         if let said = json["row"]?.stringValue { row = ExtensionText.line(said, characters: 120) }
         guard openSurface != nil || closeSurface != nil || openPage != nil || holdAnswer != nil || row != nil else { return nil }
@@ -70,6 +70,10 @@ extension ExtensionHost {
             _ = await run(SurfacesOpenTool.name, ["surface": .string("\(id)/\(name)"), "arguments": .object(asks.arguments), "focus": .bool(person)], .extension(id: id), 10)
         }
         if let close = asks.closeSurface { events.publish(.surfaceAway(extensionId: id, surface: close.isEmpty ? nil : close)) }
-        if let page = asks.openPage, person { events.publish(.extensionPage(id: "\(id)/\(page)")) }
+        if let move = asks.openPage, person {
+            let page = "\(id)/\(move.page)"
+            if let go = move.go { pageMoves[page, default: []].append(go) }
+            events.publish(.extensionPage(id: page))
+        }
     }
 }

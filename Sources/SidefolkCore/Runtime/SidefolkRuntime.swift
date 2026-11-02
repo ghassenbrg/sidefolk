@@ -27,6 +27,7 @@ public final class SidefolkRuntime: Sendable {
     public let broker: ApprovalBroker
     public let executor: ToolExecutor
     public let attention: AttentionCenter
+    public let occurrences: OccurrenceScheduler
     public let scheduler: ReminderScheduler
     public let brief: MorningBrief
     public let watchers: WatcherEngine
@@ -88,6 +89,7 @@ public final class SidefolkRuntime: Sendable {
                              events: { day in await calendarReader.events(on: day) ?? [] })
         scheduler = ReminderScheduler(store: reminderStore, attention: attention, events: events, settings: settings,
                                       clock: clock, brief: brief)
+        occurrences = OccurrenceScheduler(store: ExtensionOccurrenceStore(KVStore(db)), attention: attention, events: events, clock: clock)
         watchers = WatcherEngine(store: watcherStore, attention: attention, events: events, clock: clock,
                                  opener: { url in _ = await platform.open(url: url) })
         tokens = BrainTokenRegistry()
@@ -104,6 +106,7 @@ public final class SidefolkRuntime: Sendable {
             await executor.execute(name: name, input: input, caller: caller, timeout: timeout)
         }
         hostConfiguration.aiName = { [settings] in settings.current.provider.shortName }
+        hostConfiguration.currentPlace = { [settings] in settings.current.location.current }
         hostConfiguration.companionName = { [settings] in settings.current.companionName }
         hostConfiguration.carriedSettings = { [settings] section in settings.current.section(section) }
         hostConfiguration.forgetCarried = { [settings] section in await settings.update { $0.parked[section] = nil } }
@@ -150,6 +153,9 @@ public final class SidefolkRuntime: Sendable {
         let host = extensions
         registry.register(ExtensionSettingTool(host: host))
         registry.register(ExtensionActivityTool(shelfName: { id in host.shelf.names[id] }))
+        registry.register(ExtensionConsentTool(host: host))
+        registry.register(ExtensionOccurrencesTool(host: host))
+        registry.register(ExtensionPlaceSearchTool(shelfName: { id in host.shelf.names[id] }))
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening",
@@ -174,7 +180,10 @@ public final class SidefolkRuntime: Sendable {
             Log.shared.error("bridge", "local API failed to start", ["error": String(describing: error)])
         }
         await scheduler.start()
+        await extensions.setOccurrences(occurrences)
         await extensions.start()
+        await occurrences.start(extensions: await extensions.scheduling())
+        await extensions.startPlanning()
         // Off the launch path: a fresh Mac's first launch installs each seed pack (a short start of each, D98).
         let seeds = seedPacks, host = extensions, store = addons
         Task { await seeds.install(into: host, store: store) }
@@ -194,13 +203,16 @@ public final class SidefolkRuntime: Sendable {
     public func rearm() async {
         await scheduler.reschedule()
         await watchers.rearm()
+        await occurrences.reschedule()
+        await extensions.replanIfMoved()
     }
 
     /// Before quitting: stop timers and the socket, and return what system notifications should cover
     /// while Sidefolk is off.
     public func stop() async -> [FallbackNotification] {
-        let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400)
+        let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400) + (await occurrences.fallbackNotifications())
         await scheduler.stop()
+        await occurrences.stop()
         await watchers.stop()
         await watchers.flushHistory()
         await extensions.shutdown()

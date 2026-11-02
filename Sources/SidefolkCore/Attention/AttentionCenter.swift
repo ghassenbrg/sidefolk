@@ -217,8 +217,10 @@ public actor AttentionCenter {
             idleAway = s.secondsSinceInput > 300
             if wasIdle, !idleAway, !env.away, !held.isEmpty { Task { await reconsiderHeld(summary: .away) } }
         }
+        let punctual = item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true
         let decision = AttentionPolicy.decide(level: level, source: item.source, createdAt: item.createdAt, now: now,
-                                              env: environment, recent: recent, gentle: gentle)
+                                              env: environment, recent: recent, gentle: gentle, punctual: punctual,
+                                              reachWhenAway: item.refKind == OccurrenceScheduler.systemAttentionKind)
         switch decision {
         case .present(let presentation):
             held[item.id] = nil

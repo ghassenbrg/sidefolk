@@ -65,9 +65,11 @@ public enum AttentionPolicy {
     /// - Parameters:
     ///   - recent: when earlier attention-level items were presented, with their source.
     ///   - gentle: when earlier gentle items were presented, with their source.
+    ///   - punctual: a moment the person asked to be told of, so waiting makes it wrong: it skips the spacing as a reminder does, but keeps the budgets (D107).
+    ///   - reachWhenAway: the person also asked for it through macOS, so being away doesn't hold it (D107).
     public static func decide(
         level: AttentionLevel, source: String, createdAt: Date, now: Date, env: AttentionEnvironment,
-        recent: [(source: String, at: Date)], gentle: [(source: String, at: Date)] = []
+        recent: [(source: String, at: Date)], gentle: [(source: String, at: Date)] = [], punctual: Bool = false, reachWhenAway: Bool = false
     ) -> AttentionDecision {
         let level = level == .critical && !criticalSources.contains(source) ? .attention : level
         if level == .ambient { return .present(.ambient) }
@@ -78,7 +80,9 @@ public enum AttentionPolicy {
         }
 
         // Away: queue, a summary is shown on return.
-        if env.away { return .hold(until: nil) }
+        if env.away {
+            return reachWhenAway && canSystem && !env.isQuiet ? .present(.system(sound: env.sounds, alsoOnDesktop: false)) : .hold(until: nil)
+        }
 
         if env.isQuiet {
             // Gentle things wait; explicit reminders and watches still reach you quietly.
@@ -112,7 +116,7 @@ public enum AttentionPolicy {
         if source == "reminder" { return .present(.attention(expandFor: expandSeconds)) }
 
         // Rate limits for attention: spacing overall, a per-source budget and a per-family budget.
-        if let last = recent.map(\.at).max(), now.timeIntervalSince(last) < attentionSpacing {
+        if !punctual, let last = recent.map(\.at).max(), now.timeIntervalSince(last) < attentionSpacing {
             return .hold(until: last.addingTimeInterval(attentionSpacing))
         }
         let window = recent.filter { now.timeIntervalSince($0.at) < perSourceWindow }

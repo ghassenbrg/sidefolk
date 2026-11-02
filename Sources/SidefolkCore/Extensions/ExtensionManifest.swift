@@ -171,10 +171,16 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var networkPurpose: String?
         /// Asking the person's AI to write something, for a stated purpose, a few times a day (D100).
         public var ai: AIMeta?
+        /// May ask the person for where they are, for a stated purpose (D106). Off until they say yes.
+        public var place: PurposeMeta?
+        /// May ask to tell the person things at moments it plans (D107). Off until they say yes.
+        public var schedule: PurposeMeta?
 
         public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
                     power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false,
-                    ai: AIMeta? = nil) {
+                    ai: AIMeta? = nil, place: PurposeMeta? = nil, schedule: PurposeMeta? = nil) {
+            self.place = place
+            self.schedule = schedule
             self.ai = ai
             self.network = network
             self.networkPurpose = networkPurpose
@@ -189,7 +195,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai", "place", "schedule"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
@@ -202,6 +208,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             udp = try c.decodeIfPresent(Bool.self, forKey: "udp") ?? false
             networkPurpose = try c.decodeIfPresent(String.self, forKey: "network_purpose")
             ai = try c.decodeIfPresent(AIMeta.self, forKey: "ai")
+            place = try c.decodeIfPresent(PurposeMeta.self, forKey: "place")
+            schedule = try c.decodeIfPresent(PurposeMeta.self, forKey: "schedule")
         }
     }
 

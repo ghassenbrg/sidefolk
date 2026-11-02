@@ -48,7 +48,7 @@ struct PageChoiceView: View {
         guard option.value != choice.selected, pending == nil else { return }
         pending = option.value
         Task {
-            await model.run(tool: choice.tool, input: choice.input(picking: option.value))
+            if let go = choice.go(picking: option.value) { await model.go(go) } else { await model.run(tool: choice.tool, input: choice.input(picking: option.value)) }
             pending = nil
         }
     }

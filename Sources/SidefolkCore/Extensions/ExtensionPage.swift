@@ -7,6 +7,13 @@ import Foundation
 public struct ExtensionPage: Sendable, Hashable {
     public var summary: Summary?
     public var sections: [Section]
+    /// The label of Back, drawn while the page has somewhere to go back to (D105).
+    public var back: String?
+    /// The page draws its own head: no title row or summary on it (D105). Its summary still reaches Today and the sidebar.
+    public var bare = false
+    public var dress: PageDress?
+    /// How wide its column may grow (D108).
+    public var maxWidth: Double?
 
     public init(summary: Summary? = nil, sections: [Section] = []) {
         self.summary = summary
@@ -187,10 +194,15 @@ public struct ExtensionPage: Sendable, Hashable {
         public var tool: String
         public var input: JSONValue
         public var style: Style = .segmented
-        /// The name the picked option's value goes under in `input`.
+        /// The name the picked option's value goes under in `input`, or in the page's state with `go`.
         public var key: String = "value"
         /// Shown but not changeable now (while sharing, say).
         public var disabled = false
+        /// Picking changes the page's state instead of running a tool (D105).
+        public var go: PageGo?
+
+        /// What a pick does to the page's state, with `go`.
+        public func go(picking value: String) -> PageGo? { go.map { var g = $0; g.set[key] = .string(value); return g } }
 
         /// What runs when `value` is picked.
         public func input(picking value: String) -> JSONValue { input.setting(key, .string(value)) }
@@ -203,8 +215,18 @@ public struct ExtensionPage: Sendable, Hashable {
         public var button: String
         public var tool: String
         public var input: JSONValue
-        /// The name the typed text goes under in `input`.
+        /// The name the typed text goes under in `input`, or in the page's state with `go`.
         public var key: String
+        /// Submitting changes the page's state instead of running a tool (D105).
+        public var go: PageGo?
+        /// With `go`: as they type, a moment after they stop. It starts with `value`, what the state holds.
+        public var live = false
+        public var value: String?
+
+        /// What the page's state gets for `text`, with `go`.
+        public func go(typing text: String) -> PageGo? {
+            go.map { var g = $0; g.set[key] = .string(String(text.prefix(500))); return g }
+        }
 
         /// What runs for `text`, trimmed and at most 500 characters.
         public func input(typing text: String) -> JSONValue {
@@ -252,6 +274,10 @@ public struct ExtensionPage: Sendable, Hashable {
         public var disabled = false
         /// Drawn as its symbol in a filled circle, its label read aloud and on hover (D101).
         public var round = false
+        /// What it does instead of running `tool` (D105).
+        public var act: PageAct?
+        /// A switch with `go`: the name its new state goes under in the page's state.
+        public var key: String?
 
         public var style: Style? { if case .button(let s) = kind { s } else { nil } }
 
@@ -327,6 +353,11 @@ public struct ExtensionPage: Sendable, Hashable {
     public struct Note: Sendable, Hashable {
         public var text: String
         public var tone: Tone
+
+        public init(text: String, tone: Tone) {
+            self.text = text
+            self.tone = tone
+        }
     }
 
     public struct Ask: Sendable, Hashable {
@@ -350,6 +381,10 @@ public struct ExtensionPage: Sendable, Hashable {
         }
         let sections = (object["sections"]?.arrayValue ?? []).prefix(maxSections).compactMap(section)
         var page = ExtensionPage(summary: object["summary"].flatMap(summary), sections: sections)
+        page.back = text(object["back"], 40)
+        page.bare = object["bare"]?.boolValue ?? false
+        page.dress = PageDress.parse(object["dress"])
+        page.maxWidth = object["max_width"]?.doubleValue.flatMap { $0.isFinite ? min(1320, max(640, $0)) : nil }
         page.keepOnePrimary()
         return page
     }
@@ -397,6 +432,7 @@ public struct ExtensionPage: Sendable, Hashable {
                         list[s].blocks[b] = .cards(grid)
                     case .tabs(var tabs):
                         for i in tabs.tabs.indices { visit(&tabs.tabs[i].sections) }
+                        visit(&tabs.sections)
                         list[s].blocks[b] = .tabs(tabs)
                     default: break
                     }
@@ -452,13 +488,18 @@ public struct ExtensionPage: Sendable, Hashable {
             guard let label = text(j["label"], 40), let ask = text(j["ask"], 200) else { return nil }
             return .ask(Ask(label: label, ask: ask))
         case "switch":
-            guard let label = text(j["label"], 60), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
-            return .control(Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 240), tool: tool,
-                                    input: input, symbol: symbol(j["symbol"])))
+            let act = PageAct.parse(j)
+            guard let label = text(j["label"], 60), let tool = act == nil ? toolName(j["tool"]) : "", let input = smallInput(j["input"]) else { return nil }
+            var control = Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 240), tool: tool,
+                                  input: input, symbol: symbol(j["symbol"]))
+            control.act = act
+            control.key = stateKey(j["key"])
+            return .control(control)
         case "button":
             return button(j, characters: 60).map { .control($0) }
         case "choice":
-            guard let label = text(j["label"], 60), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
+            let go = PageGo.parse(j["go"])
+            guard let label = text(j["label"], 60), let tool = go == nil ? toolName(j["tool"]) : "", let input = smallInput(j["input"]) else { return nil }
             let style = j["style"]?.stringValue.flatMap(Choice.Style.init(rawValue:)) ?? .segmented
             // Pictures and rows hold a list of things (windows, devices); side by side, a few options read best.
             let many = style == .tiles || style == .rows
@@ -475,7 +516,7 @@ public struct ExtensionPage: Sendable, Hashable {
             let selected = j["selected"]?.stringValue ?? ""
             return .choice(Choice(label: label, detail: text(j["detail"], 240), options: options,
                                   selected: options.contains { $0.value == selected } ? selected : "", tool: tool, input: input,
-                                  style: style, key: key, disabled: j["disabled"]?.boolValue ?? false))
+                                  style: style, key: key, disabled: j["disabled"]?.boolValue ?? false, go: go))
         case "hero":
             guard let title = text(j["title"], 80) else { return nil }
             let facts = (j["facts"]?.arrayValue ?? []).prefix(4).compactMap { f -> Fact? in
@@ -497,18 +538,20 @@ public struct ExtensionPage: Sendable, Hashable {
                                         duration: seconds(j["duration"]).flatMap { $0 > 0 ? $0 : nil },
                                         state: j["state"]?.stringValue.flatMap(Transport.State.init) ?? .stopped, buttons: buttons))
         case "field":
-            guard let label = text(j["label"], 60), let button = text(j["button"], 24), let tool = toolName(j["tool"]),
+            let go = PageGo.parse(j["go"])
+            guard let label = text(j["label"], 60), let button = text(j["button"], 24), let tool = go == nil ? toolName(j["tool"]) : "",
                   let input = smallInput(j["input"]) else { return nil }
             let key = j["key"]?.stringValue ?? "text"
             guard key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
             return .field(Field(label: label, detail: text(j["detail"], 240), placeholder: text(j["placeholder"], 60), button: button, tool: tool,
-                                input: input, key: key))
+                                input: input, key: key, go: go, live: go != nil && (j["live"]?.boolValue ?? false), value: text(j["value"], 500)))
         case "list":
             let rows = (j["items"]?.arrayValue ?? []).prefix(maxItems).compactMap { r -> Row? in
                 guard let title = text(r["title"], 120) else { return nil }
                 var button: Control?
-                if let b = r["button"], let label = text(b["label"], 24), let tool = toolName(b["tool"]), let input = smallInput(b["input"]) {
-                    button = Control(kind: .button(.secondary), label: label, tool: tool, input: input, symbol: symbol(b["symbol"]))
+                if let b = r["button"] {
+                    button = self.button(b, characters: 24)
+                    button?.kind = .button(.secondary)
                 }
                 return Row(title: title, detail: text(r["detail"], 240), image: dataFile(r["image"]), color: color(r["color"]),
                            symbol: symbol(r["symbol"]), button: button)
@@ -523,10 +566,17 @@ public struct ExtensionPage: Sendable, Hashable {
     /// A button: its label (at most `characters`), the extension's own tool and a small input, a style, a symbol, and
     /// whether it can be clicked now.
     static func button(_ j: JSONValue, characters: Int) -> Control? {
-        guard let label = text(j["label"], characters), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
+        let act = PageAct.parse(j)
+        guard let label = text(j["label"], characters), let tool = act == nil ? toolName(j["tool"]) : "", let input = smallInput(j["input"]) else { return nil }
         return Control(kind: .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary), label: label,
                        detail: text(j["detail"], 240), tool: tool, input: input, symbol: symbol(j["symbol"]), disabled: j["disabled"]?.boolValue ?? false,
-                       round: j["shape"]?.stringValue == "round")
+                       round: j["shape"]?.stringValue == "round", act: act)
+    }
+
+    /// A key in the page's state (D105).
+    static func stateKey(_ j: JSONValue?) -> String? {
+        guard let key = j?.stringValue, key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil else { return nil }
+        return key
     }
 
     /// The extension's own tool's name, never another's (`ext.other.tool`).
@@ -575,7 +625,10 @@ public struct ExtensionPage: Sendable, Hashable {
             for section in list {
                 for block in section.blocks {
                     if case .chart(let chart) = block { for s in chart.series { out["\(chart.id)/\(s.key)"] = s.value } }
-                    if case .tabs(let tabs) = block { for tab in tabs.tabs { visit(tab.sections) } }
+                    if case .tabs(let tabs) = block {
+                        for tab in tabs.tabs { visit(tab.sections) }
+                        visit(tabs.sections)
+                    }
                 }
             }
         }

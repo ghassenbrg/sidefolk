@@ -27,6 +27,9 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     #endif
 
     /// Brings Home to the front, optionally on a section; keeps the current section otherwise.
+    /// An extension's page was asked to show something else, and may be open already (D105).
+    func pageMoved(_ id: String) async { await model.pages.moved(id) }
+
     func show(section: Section? = nil) {
         switch section {
         case .now: model.selection = .now

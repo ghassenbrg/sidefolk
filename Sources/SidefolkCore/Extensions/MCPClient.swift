@@ -63,6 +63,10 @@ public enum MCPClientEvent: Sendable {
     case activity(JSONValue)
     /// `sidefolk/settings.set`: the extension changes one of its own settings (D100).
     case settingSet(JSONValue)
+    /// `sidefolk/place.search`: the extension looks a place up by name (D106); the host decides.
+    case placeSearch(JSONValue)
+    /// `sidefolk/occurrences.replace`: the extension's whole plan of reminders (D107); the host decides.
+    case occurrences(JSONValue)
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -210,9 +214,13 @@ public final class MCPClient: Sendable {
         return MCPWatchResult(triggered: triggered, state: r["state"] ?? .null, summary: r["summary"]?.stringValue ?? "")
     }
 
-    /// `sidefolk/page.render {page, language}` → `{page: {summary, sections}}` (D62). `language` here wins over the client's.
-    public func pageRender(page: String, language: String, timeout: TimeInterval = 30) async throws -> JSONValue {
-        let r = try await request("sidefolk/page.render", params: ["page": .string(page), "language": .string(language)], timeout: timeout)
+    /// `sidefolk/page.render {page, language, state, width, background}` → `{page: {summary, sections}}` (D62, D105). `language` here wins over the
+    /// client's. `background`: nobody is looking, so a page with no charts to keep may answer with its summary alone.
+    public func pageRender(page: String, language: String, state: JSONValue? = nil, width: Int? = nil, timeout: TimeInterval = 30) async throws -> JSONValue {
+        var params: [String: JSONValue] = ["page": .string(page), "language": .string(language), "state": state ?? .object([:])]
+        if let width { params["width"] = .number(Double(width)) }
+        if state == nil { params["background"] = true }
+        let r = try await request("sidefolk/page.render", params: .object(params), timeout: timeout)
         guard let page = r["page"], page.objectValue != nil else { throw MCPError.badResponse("sidefolk/page.render") }
         return page
     }
@@ -331,6 +339,10 @@ public final class MCPClient: Sendable {
                 onEvent(.activity(params))
             } else if method == "sidefolk/settings.set", let params = message["params"] {
                 onEvent(.settingSet(params))
+            } else if method == "sidefolk/place.search", let params = message["params"] {
+                onEvent(.placeSearch(params))
+            } else if method == "sidefolk/occurrences.replace", let params = message["params"] {
+                onEvent(.occurrences(params))
             }
             return
         }

@@ -80,11 +80,17 @@ extension ExtensionPage {
             public var symbol: String?
             public var badge: String?
             public var sections: [Section]
+            /// Picking it changes the page's state and the page is read again (D105), rather than Sidefolk showing its sections.
+            public var go: PageGo?
         }
 
         public var tabs: [Tab]
-        /// Shown first; the person's click stays while Home is open.
+        /// Shown first; the person's click stays while Home is open. With `go` on the tabs, always the program's.
         public var selected: String
+        /// Drawn under the tabs whichever is picked: what the program read for it (D105).
+        public var sections: [Section] = []
+        /// The picked tab's fill (D108).
+        public var tint: PageDress.Pair?
     }
 
     public struct BadgeList: Sendable, Hashable {
@@ -170,8 +176,13 @@ extension ExtensionPage {
             guard let json = j["scene"], let scene = try? SurfaceScene.parse(json, within: SceneSize(width: PageScene.maxWidth, height: PageScene.maxHeight)) else { return nil }
             var actions: [String: PageScene.Action] = [:]
             for (area, action) in j["actions"]?.objectValue ?? [:] {
-                guard let tool = toolName(action["tool"]), let input = smallInput(action["input"]) else { continue }
-                actions[area] = PageScene.Action(tool: tool, input: input)
+                // An area has no words of its own to show, so it may move around the page and no more: what is copied, opened or asked
+                // for hangs on a button that says so (D105).
+                if let go = PageGo.parse(action["go"]) {
+                    actions[area] = PageScene.Action(tool: "", input: .object([:]), act: .go(go))
+                } else if let tool = toolName(action["tool"]), let input = smallInput(action["input"]) {
+                    actions[area] = PageScene.Action(tool: tool, input: input)
+                }
             }
             return .scene(PageScene(scene: scene, actions: actions))
         case "settings":
@@ -209,11 +220,16 @@ extension ExtensionPage {
                 guard !(s["blocks"]?.arrayValue ?? []).contains(where: { $0["type"]?.stringValue == "tabs" }) else { return nil }
                 return section(s)
             }
-            return sections.isEmpty ? nil : Tabs.Tab(id: id, label: label, symbol: symbol(t["symbol"]), badge: text(t["badge"], 8), sections: sections)
+            let go = PageGo.parse(t["go"])
+            return sections.isEmpty && go == nil ? nil : Tabs.Tab(id: id, label: label, symbol: symbol(t["symbol"]), badge: text(t["badge"], 8), sections: sections, go: go)
         }
         guard tabs.count >= 2 else { return nil }
         let selected = j["selected"]?.stringValue.flatMap { s in tabs.contains { $0.id == s } ? s : nil } ?? tabs[0].id
-        return .tabs(Tabs(tabs: tabs, selected: selected))
+        let under = (j["sections"]?.arrayValue ?? []).prefix(maxSections).compactMap { s -> Section? in
+            guard !(s["blocks"]?.arrayValue ?? []).contains(where: { $0["type"]?.stringValue == "tabs" }) else { return nil }
+            return section(s)
+        }
+        return .tabs(Tabs(tabs: tabs, selected: selected, sections: under, tint: PageDress.Pair.parse(j["tint"])))
     }
 
     static func date(_ j: JSONValue?) -> Date? {
@@ -224,12 +240,15 @@ extension ExtensionPage {
 /// A scene inside a page: `actions` says which of the extension's own tools each of its areas runs, as the person, through Guard. It
 /// has no session: nothing goes to the program but those tool calls, and a page's scene takes no keys and keeps no clocks of its own.
 public struct PageScene: Sendable, Hashable {
-    public static let maxWidth = 960.0
-    public static let maxHeight = 720.0
+    /// As wide as a page may grow and tall enough for one whole screen of it (D108).
+    public static let maxWidth = 1320.0
+    public static let maxHeight = 1600.0
 
     public struct Action: Sendable, Hashable {
         public var tool: String
         public var input: JSONValue
+        /// What it does instead of running `tool` (D105).
+        public var act: PageAct?
     }
 
     public var scene: SurfaceScene
@@ -237,8 +256,16 @@ public struct PageScene: Sendable, Hashable {
 
     /// What a click on an area runs: its tool, with the area's own value as `value`.
     public func action(area: String, value: String?) -> (tool: String, input: JSONValue)? {
-        guard let action = actions[area] else { return nil }
+        guard let action = actions[area], action.act == nil else { return nil }
         guard let value else { return (action.tool, action.input) }
         return (action.tool, action.input.setting("value", .string(value)))
+    }
+
+    /// What a click on an area does that isn't a tool: the area's `value`, for `go`, goes into the state as `value` (D105).
+    public func act(area: String, value: String?) -> PageAct? {
+        guard let act = actions[area]?.act else { return nil }
+        guard let value, case .go(var go) = act else { return act }
+        go.set["value"] = .string(value)
+        return .go(go)
     }
 }

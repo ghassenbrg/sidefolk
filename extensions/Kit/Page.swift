@@ -12,15 +12,31 @@ import Foundation
 public struct Page {
     public var summary: Summary?
     public var sections: [Section]
+    /// The label of the page's Back (D105), drawn while it has a state to go back to. Nothing to do with a surface's `{"back": true}`
+    /// or `Scene.withBack()`, which are a scene's own.
+    public var back: String?
+    /// The page draws its own head: no title row or summary on it. The summary still reaches Today and the sidebar (D105).
+    public var bare: Bool
+    public var dress: PageDress?
+    /// How wide its column may grow, 640–1320 (D108).
+    public var maxWidth: Double?
 
-    public init(summary: Summary? = nil, sections: [Section] = []) {
+    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, dress: PageDress? = nil, maxWidth: Double? = nil) {
         self.summary = summary
         self.sections = sections
+        self.back = back
+        self.bare = bare
+        self.dress = dress
+        self.maxWidth = maxWidth
     }
 
     var json: [String: Any] {
         var out: [String: Any] = ["sections": sections.filter { !$0.blocks.isEmpty }.map(\.json)]
         if let summary { out["summary"] = summary.json }
+        if let back { out["back"] = back }
+        if bare { out["bare"] = true }
+        if let dress { out["dress"] = dress.json }
+        if let maxWidth { out["max_width"] = maxWidth }
         return out
     }
 }
@@ -166,6 +182,12 @@ public enum Block {
     case transport(Transport)
     /// A button with all its options: a line on hover, dimmed when it can't run yet.
     case action(Action)
+    /// A switch whose new state goes into the page's state under `key` (D105): a draft, with nothing saved yet.
+    case draftToggle(_ label: String, detail: String? = nil, on: Bool, key: String, symbol: String? = nil)
+    /// One of a few options, whose pick goes into the page's state under `key` (D105). `style` draws it as a plain choice (nil), or as `.cards`, `.rows`.
+    case draftChoice(_ label: String, detail: String? = nil, options: [Option], selected: String, key: String, style: PickerStyle? = nil, disabled: Bool = false)
+    /// A text field whose words go into the page's state under `key` (D105). `live`: a moment after they stop typing, and `button` clears it. Otherwise when submitted.
+    case draftField(_ label: String, detail: String? = nil, placeholder: String? = nil, button: String, key: String, value: String? = nil, live: Bool = false, set: [String: Any] = [:])
     /// Numbers side by side in one strip (D100).
     case stats([StatItem])
     /// A scene inside the page: `PageSceneBlock`.
@@ -174,6 +196,8 @@ public enum Block {
     case cards(size: CardSize = .large, [Card])
     /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
     case tabs(selected: String? = nil, [PageTab])
+    /// Tabs that say where the page is (D105): picking one changes its state, and `sections` are what the program drew for the tab showing. `tint`: the picked tab's fill.
+    case goTabs(selected: String, [PageTab], tint: PagePair? = nil, sections: [Section])
     /// Achievements, earned or on their way (D100).
     case badges(_ title: String? = nil, [Achievement])
     /// The last things that happened, newest first (D100).
@@ -230,6 +254,10 @@ public enum Block {
             var out: [String: Any] = ["type": "tabs", "tabs": tabs.map(\.json)]
             if let selected { out["selected"] = selected }
             return out
+        case .goTabs(let selected, let tabs, let tint, let sections):
+            var out: [String: Any] = ["type": "tabs", "selected": selected, "tabs": tabs.map(\.json), "sections": sections.filter { !$0.blocks.isEmpty }.map(\.json)]
+            if let tint { out["tint"] = tint.json }
+            return out
         case .badges(let title, let items):
             var out: [String: Any] = ["type": "badges", "items": items.map(\.json)]
             if let title { out["title"] = title }
@@ -248,6 +276,14 @@ public enum Block {
             return out
         case .action(let action):
             return action.json
+        case .draftToggle(let label, let detail, let on, let key, let symbol):
+            return Self.dropNil(["type": "switch", "label": label, "detail": detail, "on": on, "key": key, "go": [:] as [String: Any], "symbol": symbol])
+        case .draftChoice(let label, let detail, let options, let selected, let key, let style, let disabled):
+            return Self.dropNil(["type": "choice", "style": style?.rawValue, "label": label, "detail": detail, "selected": selected, "key": key, "go": [:] as [String: Any],
+                                 "disabled": disabled ? true : nil, "options": options.map(\.json)])
+        case .draftField(let label, let detail, let placeholder, let button, let key, let value, let live, let set):
+            return Self.dropNil(["type": "field", "label": label, "detail": detail, "placeholder": placeholder, "button": button, "key": key, "value": value,
+                                 "live": live ? true : nil, "go": ["set": set] as [String: Any]])
         }
     }
 
@@ -278,6 +314,13 @@ public struct Action {
     public var disabled: Bool
     /// Drawn as its symbol in a filled circle.
     public var round: Bool
+    /// What it does instead of running a tool (D105).
+    public var act: PageAct?
+
+    public init(_ label: String, act: PageAct, style: ButtonStyle = .secondary, symbol: String? = nil, detail: String? = nil, disabled: Bool = false, round: Bool = false) {
+        self.init(label, tool: "", style: style, symbol: symbol, detail: detail, disabled: disabled, round: round)
+        self.act = act
+    }
 
     public init(_ label: String, tool: String, input: [String: Any] = [:], style: ButtonStyle = .secondary, symbol: String? = nil,
                 detail: String? = nil, disabled: Bool = false, round: Bool = false) {
@@ -292,7 +335,8 @@ public struct Action {
     }
 
     var json: [String: Any] {
-        var out: [String: Any] = ["type": "button", "label": label, "tool": tool, "input": input, "style": style.rawValue]
+        var out: [String: Any] = ["type": "button", "label": label, "input": input, "style": style.rawValue]
+        if let act { act.fill(&out) } else { out["tool"] = tool }
         if let symbol { out["symbol"] = symbol }
         if let detail { out["detail"] = detail }
         if disabled { out["disabled"] = true }

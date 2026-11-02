@@ -97,6 +97,9 @@ enum ExtensionAbilityRules {
             // Exactly one thing to do: its tool, its page, its surface, or a menu of items.
             let does = [entry.tool != nil, entry.page != nil, entry.surface != nil, !entry.items.isEmpty].filter { $0 }.count
             if does != 1 { issues.append(ValidationIssue(field: field, message: "must have one of tool, page, surface or items.")) }
+            if let state = entry.state, entry.page == nil || JSONValue.object(state).jsonString.utf8.count > PageState.maxBytes {
+                issues.append(ValidationIssue(field: "\(field).state", message: "needs a page, and at most \(PageState.maxBytes) bytes."))
+            }
             if let surface = entry.surface, m.surfaces[surface] == nil { issues.append(ValidationIssue(field: "\(field).surface", message: "“\(surface)” isn't one of its surfaces.")) }
             if let tool = entry.tool, m.tools[tool] == nil { issues.append(ValidationIssue(field: "\(field).tool", message: "“\(tool)” isn't one of its tools.")) }
             if let page = entry.page, m.pages[page] == nil { issues.append(ValidationIssue(field: "\(field).page", message: "“\(page)” isn't one of its pages.")) }
@@ -146,8 +149,15 @@ enum ExtensionAbilityRules {
     // MARK: AI and what it used to have
 
     private static func aiIssues(_ m: ExtensionManifest) -> [ValidationIssue] {
-        guard let ai = m.permissions.ai else { return [] }
         var issues: [ValidationIssue] = []
+        // What the person reads before they agree: the same rule as the AI's (D106, D107).
+        for (name, purpose) in [("place", m.permissions.place?.purpose), ("schedule", m.permissions.schedule?.purpose)] {
+            guard let purpose else { continue }
+            if !isPlain(purpose, 120) || (!purpose.hasPrefix("to ") && !purpose.hasPrefix("for ")) {
+                issues.append(ValidationIssue(field: "permissions.\(name).purpose", message: "must be one plain line of at most 120 characters starting with “to” or “for”."))
+            }
+        }
+        guard let ai = m.permissions.ai else { return issues }
         if !isPlain(ai.purpose, 120) || (!ai.purpose.hasPrefix("to ") && !ai.purpose.hasPrefix("for ")) {
             issues.append(ValidationIssue(field: "permissions.ai.purpose", message: "must be one plain line of at most 120 characters starting with “to” or “for”."))
         }

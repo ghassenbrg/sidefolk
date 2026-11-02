@@ -190,11 +190,21 @@ struct ExtensionRow: View {
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
         }
         // The settings it declares, and the person's switch for its use of their AI (D100).
-        if ext.settingRows.contains(where: \.listed) || ext.aiStatus != nil {
+        if ext.settingRows.contains(where: \.listed) || ext.aiStatus != nil || ext.placeStatus != nil || ext.scheduleStatus != nil {
             RowsCard {
                 ForEach(ext.settingRows.filter(\.listed)) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
                 if let ai = ext.aiStatus {
                     ExtensionAISwitchRow(status: ai) { on in Task { await model.setAI(on, extensionId: ext.id) } }
+                }
+                if let place = ext.placeStatus {
+                    SettingsToggle(title: Text("Share your place", comment: "An extension's row: the person's switch for its use of their place"),
+                                   detail: Text("It says it uses it \(place.purpose).", comment: "Under an extension's switch for the person's place: the author's purpose, “to show prayer times for your place”"),
+                                   isOn: Binding(get: { place.on }, set: { on in Task { await model.setConsent("place", on, extensionId: ext.id) } }))
+                }
+                if let schedule = ext.scheduleStatus {
+                    SettingsToggle(title: Text("Send reminders", comment: "An extension's row: the person's switch for the reminders it plans"),
+                                   detail: Text("It says it uses them \(schedule.purpose).", comment: "Under an extension's switch for its reminders: the author's purpose, “to remind you of prayer times you choose”"),
+                                   isOn: Binding(get: { schedule.on }, set: { on in Task { await model.setConsent("schedule", on, extensionId: ext.id) } }))
                 }
             }
             .padding(.top, Theme.Space.xs)

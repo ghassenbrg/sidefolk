@@ -12,6 +12,7 @@ extension AppCoordinator {
         let status = await notifier.authorizationStatus()
         let allowed = status == .authorized || status == .provisional
         await runtime.attention.update { $0.systemNotificationsAllowed = allowed }
+        await runtime.extensions.setNotificationStatus(status == .notDetermined ? "unknown" : allowed ? "allowed" : "denied")
         return allowed
     }
 

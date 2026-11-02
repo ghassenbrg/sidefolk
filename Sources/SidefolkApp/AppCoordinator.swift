@@ -510,6 +510,23 @@ final class AppCoordinator {
             home.show(page: String(command.dropFirst(5)))
             return
         }
+        if command.hasPrefix("pageState:") {
+            // pageState:<extension id>/<page>:<json>: Home on that page, showing this state, as an entry opens it (D105).
+            let rest = command.dropFirst("pageState:".count)
+            guard let colon = rest.firstIndex(of: ":"), let state = try? JSONValue.parse(Data(rest[rest.index(after: colon)...].utf8)).objectValue else { return }
+            let id = String(rest[..<colon])
+            Task {
+                await runtime.extensions.movePage(id, PageGo(set: state))
+                home.show(page: id)
+                await home.pageMoved(id)
+            }
+            return
+        }
+        if command.hasPrefix("pageFile:") {
+            // pageFile:<path>: the next page `file` panel takes this, there being no one to click in it (D105).
+            PageFilePanel.choiceForTest = String(command.dropFirst("pageFile:".count))
+            return
+        }
         if command.hasPrefix("palette:") {
             // palette:<extension id>/<palette>: as if its shortcut were pressed (D63).
             Task { await palettes.toggle(String(command.dropFirst(8))) }
@@ -800,6 +817,7 @@ final class AppCoordinator {
             putSurfaceAway(of: id, surface: surface)
         case .extensionPage(let id):
             home.show(section: .page(id))
+            Task { await home.pageMoved(id) }
         case .dataChanged(let domain):
             if domain == .permissions { refreshMode() }
             if [.reminders, .watchers, .runs, .attention, .skipped].contains(domain) { scheduleNowRefresh() }

@@ -380,8 +380,32 @@ extension SectionHeader where Trailing == EmptyView {
 extension View {
     /// The card surface used across windows (Lantern's card, D84): the theme's card colour, a hairline and e1.
     func cardSurface(radius: CGFloat = Theme.Radius.card) -> some View {
-        background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .elevation(.e1, radius: radius)
+        modifier(CardSurface(radius: radius))
+    }
+}
+
+/// The card's colour and hairline, where a page dressed itself (D108): an extension's page says them, and only for its own cards.
+struct CardDress: Equatable {
+    var fill: Color
+    var line: Color?
+}
+
+extension EnvironmentValues {
+    @Entry var cardDress: CardDress?
+}
+
+private struct CardSurface: ViewModifier {
+    var radius: CGFloat
+    @Environment(\.cardDress) private var dress
+
+    func body(content: Content) -> some View {
+        if let dress {
+            let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+            content.background(dress.fill, in: shape).overlay(shape.strokeBorder(dress.line ?? Theme.line).allowsHitTesting(false))
+        } else {
+            content.background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+                .elevation(.e1, radius: radius)
+        }
     }
 }
 
@@ -489,20 +513,29 @@ struct PageTitle: View {
 }
 
 /// A scrolling page on the sunken background with a centered column of content.
-struct PageScroll<Content: View>: View {
+struct PageScroll<Content: View, Ground: View>: View {
     var maxWidth: CGFloat = 760
     var padding: CGFloat = Theme.Space.xxl
     @ViewBuilder var content: Content
+    /// A dressed page's own (D108).
+    @ViewBuilder var ground: Ground
     @Environment(\.rendersFullPage) private var fullPage
+
+    init(maxWidth: CGFloat = 760, padding: CGFloat = Theme.Space.xxl, @ViewBuilder content: () -> Content, @ViewBuilder ground: () -> Ground) {
+        self.maxWidth = maxWidth
+        self.padding = padding
+        self.content = content()
+        self.ground = ground()
+    }
 
     var body: some View {
         if fullPage {
-            column.frame(maxWidth: .infinity, alignment: .top).background { PageBackground() }
+            column.frame(maxWidth: .infinity, alignment: .top).background { ground }
         } else {
             ScrollView { column.frame(maxWidth: .infinity) }
                 .scrollContentBackground(.hidden)
                 .clipsUnderToolbar()
-                .background { PageBackground() }
+                .background { ground }
         }
     }
 
@@ -511,6 +544,12 @@ struct PageScroll<Content: View>: View {
             .frame(maxWidth: maxWidth, alignment: .leading)
             .padding(.horizontal, padding)
             .padding(.vertical, Theme.Space.xl)
+    }
+}
+
+extension PageScroll where Ground == PageBackground {
+    init(maxWidth: CGFloat = 760, padding: CGFloat = Theme.Space.xxl, @ViewBuilder content: () -> Content) {
+        self.init(maxWidth: maxWidth, padding: padding, content: content) { PageBackground() }
     }
 }
 

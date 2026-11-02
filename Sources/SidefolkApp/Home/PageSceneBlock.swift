@@ -37,8 +37,12 @@ struct PageSceneBlock: View {
         view.frame.size = CGSize(width: scene.size.width * scale, height: scene.size.height * scale)
         let actions = block
         view.onMove = { move in
-            guard case .click(let area, let value, _) = move, let action = actions.action(area: area, value: value) else { return }
-            Task { await model.run(tool: action.tool, input: action.input) }
+            guard case .click(let area, let value, _) = move else { return }
+            if let act = actions.act(area: area, value: value) {
+                Task { await model.perform(act) }
+            } else if let action = actions.action(area: area, value: value) {
+                Task { await model.run(tool: action.tool, input: action.input) }
+            }
         }
         view.show(scene, scale: scale, rtl: Locale.Language(identifier: AppLanguage.current).characterDirection == .rightToLeft,
                   reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)

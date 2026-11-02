@@ -96,7 +96,7 @@ private struct PageChoiceRow: View {
             guard value != choice.selected else { return }
             pending = value
             Task {
-                await model.run(tool: choice.tool, input: choice.input(picking: value))
+                if let go = choice.go(picking: value) { await model.go(go) } else { await model.run(tool: choice.tool, input: choice.input(picking: value)) }
                 pending = nil
             }
         })
@@ -120,6 +120,7 @@ private struct PageFieldRow: View {
     var model: ExtensionPageModel
     @State private var text = ""
     @State private var running = false
+    @State private var began = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -128,9 +129,15 @@ private struct PageFieldRow: View {
                 TextField(text: $text) { Text(ext: field.placeholder ?? field.label) }
                     .lanternField()
                     .onSubmit(send)
-                Button(action: send) { Text(ext: field.button) }
-                    .buttonStyle(.sf(.secondary))
-                    .disabled(running || text.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .task(id: text) { await follow() }
+                // A live field has no need of a button to send, only one to clear (D105).
+                if !field.live {
+                    Button(action: send) { Text(ext: field.button) }
+                        .buttonStyle(.sf(.secondary))
+                        .disabled(running || text.trimmingCharacters(in: .whitespaces).isEmpty)
+                } else if !text.isEmpty {
+                    Button { text = "" } label: { Text(ext: field.button) }.buttonStyle(.sf(.quiet))
+                }
             }
         }
         .padding(.horizontal, Theme.Space.l)
@@ -141,9 +148,26 @@ private struct PageFieldRow: View {
         guard !running, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         running = true
         Task {
-            if await model.run(tool: field.tool, input: field.input(typing: text)) { text = "" }
+            if let go = field.go(typing: text) {
+                await model.go(go)
+            } else if await model.run(tool: field.tool, input: field.input(typing: text)) {
+                text = ""
+            }
             running = false
         }
+    }
+
+    /// A live field tells the page a moment after typing stops, and starts from what the page's state holds.
+    private func follow() async {
+        guard field.live else { return }
+        if !began {
+            began = true
+            if let value = field.value, text.isEmpty { text = value }
+            return
+        }
+        try? await Task.sleep(for: .milliseconds(250))
+        guard !Task.isCancelled, text != (field.value ?? ""), let go = field.go(typing: text) else { return }
+        await model.go(go)
     }
 }
 
@@ -207,7 +231,7 @@ private struct PageListRow: View {
                 Button {
                     running = true
                     Task {
-                        await model.run(tool: button.tool, input: button.input)
+                        await model.run(button, on: nil)
                         running = false
                     }
                 } label: {

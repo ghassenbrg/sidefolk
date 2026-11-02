@@ -92,3 +92,148 @@ public enum Activity {
         waiting.removeValue(forKey: id)?.resume(returning: result)
     }
 }
+
+/// Where the person is, for an extension that declares `permissions.place` and only once they said yes (D106). Their place never changes
+/// by itself here: requests carry it, and `ext.placeChanged` says when it moved or they took it back.
+@MainActor public enum SharedPlace {
+    public struct Place: Sendable {
+        public var city: String
+        public var region: String?
+        public var country: String?
+        public var countryCode: String?
+        public var latitude: Double
+        public var longitude: Double
+        public var timeZone: String?
+        public var updatedAt: Date?
+
+        init?(_ json: [String: Any]?) {
+            guard let json, let city = json["city"] as? String, let latitude = (json["latitude"] as? NSNumber)?.doubleValue,
+                  let longitude = (json["longitude"] as? NSNumber)?.doubleValue else { return nil }
+            self.city = city
+            region = json["region"] as? String
+            country = json["country"] as? String
+            countryCode = json["country_code"] as? String
+            self.latitude = latitude
+            self.longitude = longitude
+            timeZone = json["time_zone"] as? String
+            updatedAt = (json["updated_at"] as? String).flatMap { ISO8601DateFormatter().date(from: $0) }
+        }
+    }
+
+    public struct Found: Sendable {
+        public var places: [Place]
+        /// Why there is nothing, in the person's language: no connection, or too soon after the last.
+        public var problem: String?
+    }
+
+    /// The person's place while they allow it; nil when they don't, or Sidefolk doesn't know one.
+    public private(set) static var current: Place?
+    /// Whether they said yes.
+    public private(set) static var shared = false
+    private static var waiting: [String: CheckedContinuation<Found, Never>] = [:]
+
+    /// Requests say what it may know: a request without the key changes nothing, since not every request has one.
+    static func use(_ params: [String: Any]) {
+        guard let status = params["place_share"] as? String else { return }
+        shared = status == "on"
+        current = shared ? Place(params["place"] as? [String: Any]) : nil
+    }
+
+    /// Looks a place up by name through Sidefolk's own place search. Only the words typed leave the Mac.
+    public static func search(_ query: String) async -> Found {
+        let request = UUID().uuidString
+        return await withCheckedContinuation { continuation in
+            waiting[request] = continuation
+            ExtensionServices.send?("sidefolk/place.search", ["request": request, "query": query])
+        }
+    }
+
+    static func found(_ args: Arguments) {
+        guard let request = args.string("request"), let continuation = waiting.removeValue(forKey: request) else { return }
+        let places = (args.values["places"] as? [[String: Any]] ?? []).compactMap { Place($0) }
+        continuation.resume(returning: Found(places: places, problem: args.string("problem")))
+    }
+}
+
+/// One moment to tell the person something, for an extension that declares `permissions.schedule` and only once they said yes (D107). Sidefolk
+/// keeps the timer, so the program needn't be running. Its words go to the person, never a model.
+public struct Occurrence {
+    public var id: String
+    public var at: Date
+    public var expiresAt: Date
+    public var title: String
+    public var body: String?
+    public var group: String?
+    public var systemFallback: Bool
+    public var openPage: String?
+    public var openState: [String: Any]?
+
+    /// `id` names this moment for good (`[a-z0-9._:-]`, at most 120): one that was told is never told again.
+    public init(id: String, at: Date, expiresAt: Date, title: String, body: String? = nil, group: String? = nil, systemFallback: Bool = false,
+                openPage: String? = nil, openState: [String: Any]? = nil) {
+        self.id = id
+        self.at = at
+        self.expiresAt = expiresAt
+        self.title = title
+        self.body = body
+        self.group = group
+        self.systemFallback = systemFallback
+        self.openPage = openPage
+        self.openState = openState
+    }
+
+    var json: [String: Any] {
+        let format = ISO8601DateFormatter()
+        var out: [String: Any] = ["id": id, "at": format.string(from: at), "expires_at": format.string(from: expiresAt), "title": title, "system_fallback": systemFallback]
+        if let body { out["body"] = body }
+        if let group { out["group"] = group }
+        if let openPage { out["open"] = ["page": openPage, "state": openState ?? [:]] as [String: Any] }
+        return out
+    }
+}
+
+/// A plan of reminders, the whole of it: what isn't in it no longer comes.
+public struct OccurrencePlan {
+    public var revision: Int
+    public var occurrences: [Occurrence]
+
+    public init(revision: Int, occurrences: [Occurrence]) {
+        self.revision = revision
+        self.occurrences = occurrences
+    }
+
+    var json: [String: Any] { ["revision": revision, "occurrences": occurrences.map(\.json)] }
+}
+
+@MainActor public enum Occurrences {
+    public enum Notifications: String, Sendable { case allowed, denied, unknown }
+
+    /// The person said yes.
+    public private(set) static var allowed = false
+    /// What macOS says of notifications from Sidefolk: only matters for `systemFallback`.
+    public private(set) static var notifications = Notifications.unknown
+    public private(set) static var pending = 0
+    public private(set) static var revision = 0
+
+    static func use(_ params: [String: Any]) {
+        guard let status = params["occurrences"] as? [String: Any] else { return }
+        allowed = status["allowed"] as? Bool ?? false
+        notifications = (status["notifications"] as? String).flatMap(Notifications.init(rawValue:)) ?? .unknown
+        pending = (status["pending"] as? NSNumber)?.intValue ?? 0
+        revision = (status["revision"] as? NSNumber)?.intValue ?? 0
+    }
+
+    /// How the last plan went, for a program that wants to say so: `reason` when it wasn't taken.
+    public private(set) static var lastResult: (ok: Bool, reason: String?)?
+
+    static func received(_ args: Arguments) {
+        lastResult = (args.bool("ok") ?? false, args.string("reason"))
+        pending = args.int("pending") ?? pending
+        revision = args.int("revision") ?? revision
+    }
+
+    /// Replaces the whole plan at once. A plan with a lower `revision` than the last is ignored; one with nothing in it cancels what was left.
+    public static func replace(_ plan: OccurrencePlan) {
+        ExtensionServices.send?("sidefolk/occurrences.replace", plan.json)
+    }
+}

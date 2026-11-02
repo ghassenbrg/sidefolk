@@ -43,6 +43,8 @@ public actor ExtensionHost {
         public var forgetGrants: @Sendable (String) async -> Void = { _ in }
         /// Takes rows in an extension's own words out of History when it goes (D100).
         public var forgetOwnRows: @Sendable (String) async -> Void = { _ in }
+        /// Where the person is, as Sidefolk knows it (D106).
+        public var currentPlace: @Sendable () -> KnownPlace? = { nil }
         public init() {}
     }
 
@@ -83,6 +85,10 @@ public actor ExtensionHost {
         var settingsWaiting: [String: JSONValue] = [:]
         var settingsFlushing = false
         var lastSetting = Date.distantPast
+        var lastPlaceSearch = Date.distantPast
+        /// The last plan of reminders asked for while one is being held back, and when one last went through (D107).
+        var planWaiting: JSONValue?
+        var lastPlan = Date.distantPast
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -105,6 +111,8 @@ public actor ExtensionHost {
     private var sampling: Task<Void, Never>?
     /// What each page said last, for Today's tiles: by `extension/page`.
     private var latest: [String: (at: Date, page: ExtensionPage)] = [:]
+    /// State a tool's reply or an entry asked a page to take (D105), until the page next reads it.
+    var pageMoves: [String: [PageGo]] = [:]
     /// The surfaces of enabled extensions, readable without waiting on the actor: the sentences that open them are
     /// matched as the person types (D99).
     public nonisolated let surfaceShelf = SurfaceShelf()
@@ -120,6 +128,17 @@ public actor ExtensionHost {
     let requestContext = ExtensionRequestContext()
     /// Reaches the person's AI for an extension that asks (D100): the app sets it once its AI runtime exists.
     var aiHelper: AIHelper?
+    /// Tells the person about extensions' planned moments (D107).
+    var occurrences: OccurrenceScheduler?
+    /// How many each has pending, for what goes with its requests.
+    var occurrenceCounts: [String: (pending: Int, revision: Int)] = [:]
+    /// What macOS says about notifications from Sidefolk: "allowed", "denied" or "unknown".
+    var notificationStatus = "unknown"
+    var planning: Task<Void, Never>?
+    var placeWatch: Task<Void, Never>?
+    /// What the extensions allowed to know were last told, and the zone and day their plans were made for.
+    var lastPlace: String?
+    var plannedFor = (zone: "", day: Date.distantPast)
 
     /// - Parameter secrets: environment values for an MCP server, by server id (from the Keychain).
     ///   Only the keys the server was added with are used.
@@ -154,6 +173,10 @@ public actor ExtensionHost {
     public func shutdown() async {
         sampling?.cancel()
         sampling = nil
+        planning?.cancel()
+        planning = nil
+        placeWatch?.cancel()
+        placeWatch = nil
         await pageHistory.save()
         let clients = runtimes.values.compactMap(\.client) + runtimes.values.flatMap(\.oneShots.values)
         for id in runtimes.keys {
@@ -273,7 +296,10 @@ public actor ExtensionHost {
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings, restingFor: restingFor(id),
-                             examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt), needsAnUpdate: rt.outdatedWasOn != nil)
+                             examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt),
+                             place: consentPurpose(.place, extensionId: id).map { ExtensionConsentStatus(purpose: $0, on: hasConsent(.place, extensionId: id)) },
+                             schedule: consentPurpose(.schedule, extensionId: id).map { ExtensionConsentStatus(purpose: $0, on: hasConsent(.schedule, extensionId: id)) },
+                             needsAnUpdate: rt.outdatedWasOn != nil)
     }
 
     /// A tool's commands, in every language the extension has them in (D100). Compiled once a runtime: this is asked each time the extensions are
@@ -318,6 +344,8 @@ public actor ExtensionHost {
         var p = p
         if p.networkPurpose != nil, let purpose = words?.networkPurpose { p.networkPurpose = purpose }
         if p.ai != nil, let purpose = words?.aiPurpose { p.ai?.purpose = purpose }
+        if p.place != nil, let purpose = words?.placePurpose { p.place?.purpose = purpose }
+        if p.schedule != nil, let purpose = words?.schedulePurpose { p.schedule?.purpose = purpose }
         return p
     }
 
@@ -479,6 +507,7 @@ public actor ExtensionHost {
         integrity.forget(id)
         await pageHistory.forget(extensionId: id)
         await forgetPreferences(id)
+        await occurrences?.forget(id)
         await config.forgetOwnRows(id)
         SeedPacks.removed(id, paths: paths)
         try await store.delete(id: id)
@@ -504,6 +533,7 @@ public actor ExtensionHost {
             try await store.save(rt.record)
             registerTools(id)
             keepRunning(id)
+            Task { await self.askForPlan(id, reason: "start") }
         } else {
             // Mark it disabled before awaiting shutdown, so a concurrent call cannot start a new
             // process and acquire resources while the previous process is being stopped.
@@ -516,6 +546,8 @@ public actor ExtensionHost {
             registry.unregister(owner: id)
             shelveSurfaces()
             try await store.save(rt.record)
+            await occurrences?.cancel(id)
+            occurrenceCounts[id]?.pending = 0
         }
         reconsiderResting()
         events.changed(.extensions)
@@ -682,7 +714,7 @@ public actor ExtensionHost {
 
     /// Asks the extension for one of its pages, and keeps what its charts said. `language` is the person's
     /// (`fr`, `ar`), for an extension that speaks it.
-    public func renderPage(extensionId id: String, page: String, language: String? = nil, now: Date = Date()) async throws -> ExtensionPage {
+    public func renderPage(extensionId id: String, page: String, language: String? = nil, state: JSONValue? = nil, width: Int? = nil, now: Date = Date()) async throws -> ExtensionPage {
         guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         guard let meta = rt.manifest?.pages[page] else { throw ToolError.notFound(String(localized: "the page \(page) in \(rt.pin.name)")) }
         begin(id)
@@ -690,7 +722,7 @@ public actor ExtensionHost {
         let client = try await ensureRunning(id)
         let json: JSONValue
         do {
-            json = try await client.pageRender(page: page, language: language ?? config.language(), timeout: config.callTimeout)
+            json = try await client.pageRender(page: page, language: language ?? config.language(), state: state, width: width, timeout: config.callTimeout)
         } catch let error as MCPError {
             throw userFacing(error, action: String(localized: "showing “\(meta.title)”"), name: rt.pin.name)
         }
@@ -702,6 +734,17 @@ public actor ExtensionHost {
 
     /// What the page said the last time anything read it, and when.
     public func latestPage(extensionId id: String, page: String) -> (at: Date, page: ExtensionPage)? { latest["\(id)/\(page)"] }
+
+    /// A tool's parameters that name files or folders (`paths`): a page's `file` fills one, and the rest stay out of its input (D105).
+    public func pathParameters(extensionId id: String, tool: String) -> Set<String> {
+        Set((runtimes[id]?.manifest?.tools[tool]?.paths ?? [:]).keys)
+    }
+
+    /// What the page should take in before it reads again (D105), once.
+    public func takePageMoves(_ page: String) -> [PageGo] { pageMoves.removeValue(forKey: page) ?? [] }
+
+    /// An entry opening a page at a state of its own (D105).
+    public func movePage(_ page: String, _ go: PageGo) { pageMoves[page, default: []].append(go) }
 
     /// Reads every page that keeps a history or has a tile on Today once every `interval` seconds while Sidefolk runs,
     /// so its charts reach back a day and its tile is current. A page that fails is tried again next time.
@@ -861,7 +904,7 @@ public actor ExtensionHost {
                 try ensureApproved(id, remote, title)
                 (text, asked) = try await client.callToolAsking(name: remote, arguments: input, timeout: limit)
             } else {
-                text = try await callInOwnProcess(id, remote: remote, title: title, input: input, folders: folders, timeout: limit)
+                (text, asked) = try await callInOwnProcess(id, remote: remote, title: title, input: input, folders: folders, timeout: limit)
             }
         } catch MCPError.toolFailed(let message) {
             // The tool's own explanation helps the model fix its call; it is the extension's text, so untrusted.
@@ -901,7 +944,7 @@ public actor ExtensionHost {
     /// those folders, and it stops when the call ends, so the extension never keeps that access (D39).
     /// It lists its tools first, so a tool that changed since install is held as it would be otherwise.
     private func callInOwnProcess(_ id: String, remote: String, title: String, input: JSONValue,
-                                  folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> String {
+                                  folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> (text: String, asks: JSONValue?) {
         guard let rt = runtimes[id], rt.record.kind == .sidefolk else {
             throw UserFacingError("Only sandboxed extensions can work in a folder you name.")
         }
@@ -928,9 +971,9 @@ public actor ExtensionHost {
         }
         do {
             try ensureApproved(id, remote, title)
-            let text = try await client.callTool(name: remote, arguments: input, timeout: timeout)
+            let answer = try await client.callToolAsking(name: remote, arguments: input, timeout: timeout)
             await finish()
-            return text
+            return answer
         } catch {
             await finish()
             throw error
@@ -972,7 +1015,7 @@ public actor ExtensionHost {
 
     // MARK: Processes
 
-    private func ensureRunning(_ id: String) async throws -> MCPClient {
+    func ensureRunning(_ id: String) async throws -> MCPClient {
         guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         if let c = rt.client, c.isAlive { return c }
         if let starting = rt.starting { return try await starting.value }
@@ -1306,6 +1349,10 @@ public actor ExtensionHost {
             Task { await self.answerAI(id, request: request, params: params) }
         case .activity(let params):
             await addActivity(id, params: params)
+        case .placeSearch(let params):
+            Task { await self.searchPlace(id, params: params) }
+        case .occurrences(let params):
+            await programReplacesOccurrences(id, params: params)
         case .settingSet(let params):
             await programSetsSetting(id, params: params)
         case .rejectedServerRequest(let method):
@@ -1361,6 +1408,8 @@ public actor ExtensionHost {
         shelveSurfaces()
         try? await store.save(rt.record)
         reconsiderResting()
+        await occurrences?.cancel(id)
+        occurrenceCounts[id]?.pending = 0
         Log.shared.warning("extensions", "turned off", ["id": id, "why": reason])
         if let notice { events.publish(.notice(notice)) }
         events.changed(.extensions)

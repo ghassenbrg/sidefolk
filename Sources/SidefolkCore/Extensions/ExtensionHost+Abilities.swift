@@ -18,7 +18,7 @@ extension ExtensionHost {
                 if let tool = e.tool {
                     action = .tool(name: ExtensionTool.registryName(short: short, tool: tool), input: .object(e.input ?? [:]))
                 } else if let page = e.page {
-                    action = .page(page)
+                    action = .page(page, state: e.state)
                 } else if let surface = e.surface {
                     action = .surface(id: "\(id)/\(surface)", arguments: .object(e.input ?? [:]))
                 } else {
@@ -138,6 +138,16 @@ extension ExtensionHost {
             guard let m = rt.manifest else { continue }
             var extras: [String: JSONValue] = [:]
             if !m.settings.isEmpty { extras["settings"] = .object(rt.preferences.resolved(m.settings)) }
+            if rt.pin.permissions?.place != nil {
+                let on = hasConsent(.place, extensionId: id)
+                extras["place_share"] = .string(on ? "on" : "off")
+                if on { extras["place"] = Self.placeJSON(configuration.currentPlace()) }
+            }
+            if rt.pin.permissions?.schedule != nil {
+                let on = hasConsent(.schedule, extensionId: id)
+                extras["occurrences"] = ["allowed": .bool(on), "notifications": .string(notificationStatus),
+                                         "pending": .number(Double(occurrenceCounts[id]?.pending ?? 0)), "revision": .number(Double(occurrenceCounts[id]?.revision ?? 0))]
+            }
             if rt.pin.permissions?.ai != nil, rt.preferences.aiOn != false, aiHelper != nil { asking.insert(id) }
             if !extras.isEmpty { context[id] = extras }
         }
@@ -318,6 +328,7 @@ extension ExtensionHost {
 enum ExtensionAbilityLimits {
     static let activitySeconds: TimeInterval = 5
     static let settingSeconds: TimeInterval = 1
+    static let planSeconds: TimeInterval = 10
     /// How a row may say something ended, for a surface that counts its own rows.
     static let results: Set<String> = ["win", "loss", "draw", "done"]
 }

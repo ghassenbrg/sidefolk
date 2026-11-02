@@ -86,6 +86,10 @@ def manifest_words(folder):
         paths += [("settings", s["key"], "options", o["value"]) for o in s.get("options", [])]
     if m.get("permissions", {}).get("ai"):
         paths.append(("ai_purpose",))
+    if m.get("permissions", {}).get("place"):
+        paths.append(("place_purpose",))
+    if m.get("permissions", {}).get("schedule"):
+        paths.append(("schedule_purpose",))
     named = {c["name"] for meta in m.get("tools", {}).values() for c in meta.get("commands", []) if c.get("name")}
     paths += [("commands", n) for n in sorted(named)]
     paths += [("parts", n) for n in sorted(m.get("parts", {}))]

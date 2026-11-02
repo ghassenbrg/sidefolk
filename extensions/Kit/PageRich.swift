@@ -102,6 +102,8 @@ public struct PageTab {
     public var symbol: String?
     public var badge: String?
     public var sections: [Section]
+    /// Picking it changes the page's state and reads the page again (D105), so only the tab showing has to be drawn.
+    public var go: Go?
 
     public init(_ id: String, _ label: String, symbol: String? = nil, badge: String? = nil, sections: [Section]) {
         self.id = id
@@ -111,10 +113,16 @@ public struct PageTab {
         self.sections = sections
     }
 
+    public init(_ id: String, _ label: String, symbol: String? = nil, badge: String? = nil, go: Go) {
+        self.init(id, label, symbol: symbol, badge: badge, sections: [])
+        self.go = go
+    }
+
     var json: [String: Any] {
         var out: [String: Any] = ["id": id, "label": label, "sections": sections.filter { !$0.blocks.isEmpty }.map(\.json)]
         if let symbol { out["symbol"] = symbol }
         if let badge { out["badge"] = badge }
+        if let go { out["go"] = go.json }
         return out
     }
 }
@@ -180,13 +188,22 @@ public struct RecentItem {
 public struct PageSceneBlock: @unchecked Sendable {
     public var scene: Scene
     public var actions: [String: (tool: String, input: [String: Any])]
+    /// Areas that do something other than run a tool (D105).
+    public var acts: [String: PageAct]
 
-    public init(_ scene: Scene, actions: [String: (tool: String, input: [String: Any])] = [:]) {
+    public init(_ scene: Scene, actions: [String: (tool: String, input: [String: Any])] = [:], acts: [String: PageAct] = [:]) {
         self.scene = scene
         self.actions = actions
+        self.acts = acts
     }
 
     public var json: [String: Any] {
-        ["type": "scene", "scene": scene.json, "actions": actions.mapValues { ["tool": $0.tool, "input": $0.input] as [String: Any] }]
+        var out: [String: [String: Any]] = actions.mapValues { ["tool": $0.tool, "input": $0.input] as [String: Any] }
+        for (area, act) in acts {
+            var one: [String: Any] = [:]
+            act.fill(&one)
+            out[area] = one
+        }
+        return ["type": "scene", "scene": scene.json, "actions": out]
     }
 }

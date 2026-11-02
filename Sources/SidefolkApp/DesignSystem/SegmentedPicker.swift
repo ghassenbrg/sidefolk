@@ -32,15 +32,18 @@ struct SegmentedPicker<Value: Hashable>: View {
     var small = false
     /// Every segment as wide as the widest, as a control filling its row does.
     var equalWidths = false
+    /// The chosen segment in this colour, its words white: a page's own (D108).
+    var chosenFill: Color?
     @Environment(\.colorScheme) private var scheme
     @Environment(\.isEnabled) private var isEnabled
 
-    init(_ label: Text, selection: Binding<Value>, segments: [Segment], small: Bool = false, equalWidths: Bool = false) {
+    init(_ label: Text, selection: Binding<Value>, segments: [Segment], small: Bool = false, equalWidths: Bool = false, chosenFill: Color? = nil) {
         self.label = label
         _selection = selection
         self.segments = segments
         self.small = small
         self.equalWidths = equalWidths
+        self.chosenFill = chosenFill
     }
 
     init(_ label: LocalizedStringKey, selection: Binding<Value>, segments: [Segment], small: Bool = false, equalWidths: Bool = false) {
@@ -61,12 +64,12 @@ struct SegmentedPicker<Value: Hashable>: View {
                         segment.title.lineLimit(1)
                     }
                     .font(.system(size: small ? 12 : 13, weight: chosen ? .semibold : .medium))
-                    .foregroundStyle(chosen ? Theme.ink : Theme.inkMuted)
+                    .foregroundStyle(chosen ? (chosenFill == nil ? Theme.ink : Color.white) : Theme.inkMuted)
                     .padding(.horizontal, small ? Theme.Space.s + 2 : Theme.Space.m)
                     .frame(maxWidth: equalWidths ? .infinity : nil, minHeight: (small ? Theme.Size.buttonSmall : Theme.Size.button) - 4)
                     .background {
                         if chosen {
-                            inner.fill(scheme == .dark ? Color.white.opacity(0.12) : Theme.surfaceRaised)
+                            inner.fill(chosenFill ?? (scheme == .dark ? Color.white.opacity(0.12) : Theme.surfaceRaised))
                                 .shadow(color: Color(hex: 0x0F1E36).opacity(scheme == .dark ? 0 : 0.10), radius: 1, y: 1)
                         }
                     }

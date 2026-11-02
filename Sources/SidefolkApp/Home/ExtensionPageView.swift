@@ -7,19 +7,38 @@ import SwiftUI
 /// looks. Every text on it is the extension's, so it is shown verbatim and never styled as Sidefolk's own controls.
 struct ExtensionPageView: View {
     var model: ExtensionPageModel
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         // A page of numbers and charts may use a wide window; a page of switches stays a readable column. Either is
         // centred, so a wide window never leaves the page on one side.
-        PageScroll(maxWidth: model.page?.isRich == true ? 1320 : 860) {
-            // A hero with a scene carries the page's title itself (D100), large.
-            if model.page?.hero?.scene == nil { header }
+        PageScroll(maxWidth: model.page?.maxWidth.map { CGFloat($0) } ?? (model.page?.isRich == true ? 1320 : 860)) {
+            // Told to the program, which may draw to it (D105): the column it fills, wherever the window puts it.
+            Color.clear.frame(height: 0).frame(maxWidth: .infinity)
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { model.setWidth($0) }
+            // What went wrong with a click, and the words a click just copied, are Sidefolk's to say whatever the page draws (D105).
+            if model.page?.bare == true, let problem = model.problem {
+                NoteView(note: ExtensionPage.Note(text: problem, tone: .bad))
+            }
+            if let copied = model.copied {
+                Label { Text("Copied: \(copied)", comment: "An extension's page: the exact words a button just put on the clipboard") } icon: { Image(systemName: "doc.on.clipboard") }
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+            }
+            // A hero with a scene carries the page's title itself (D100), large; a bare page draws its own head (D105).
+            if model.page?.hero?.scene == nil, model.page?.bare != true { header }
+            if let back = model.page?.back, model.state.canGoBack {
+                Button { Task { await model.go(PageGo(back: true)) } } label: {
+                    Label { Text(ext: back) } icon: { Image(systemName: "chevron.backward") }
+                }
+                .buttonStyle(.sf(.quiet))
+                .keyboardShortcut("[", modifiers: .command)
+            }
             if let updates = model.updates, let entry = updates.addonUpdate(for: model.info.extensionId) {
                 AddonUpdateStrip(entry: entry, updates: updates)
             }
             if let page = model.page {
                 // A hero leading the page says what the summary would, larger and with its actions (D74).
-                if let summary = page.summary, page.hero == nil { SummaryBanner(summary: summary, model: model) }
+                if let summary = page.summary, page.hero == nil, !page.bare { SummaryBanner(summary: summary, model: model) }
                 if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
                 PageRegions(spacing: Theme.Space.xl) {
                     ForEach(Array(page.regions.enumerated()), id: \.offset) { _, part in
@@ -37,13 +56,28 @@ struct ExtensionPageView: View {
                     }
                 }
                 if !model.alerts.isEmpty { HeadsUps(model: model) }
+                // A bare page's head is the extension's own: whose page this is stays Sidefolk's to say.
+                if page.bare {
+                    Text("Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+                }
             } else if let problem = model.problem {
                 RowsCard { InlineEmpty(label: Text(ext: problem), systemImage: "exclamationmark.triangle") }
             } else {
                 ProgressView().frame(maxWidth: .infinity).padding(Theme.Space.xxl)
             }
+        } ground: {
+            PageGround(dress: model.page?.dress, model: model)
         }
+        .environment(\.cardDress, cardDress)
+        .pageConsent(model: model)
         .task(id: model.info.id) { await model.run() }
+    }
+
+    /// A dressed page's cards (D108).
+    private var cardDress: CardDress? {
+        guard let dress = model.page?.dress, let card = dress.card, let fill = Color(extensionHex: scheme == .dark ? card.dark : card.light) else { return nil }
+        return CardDress(fill: fill, line: dress.line.flatMap { Color(extensionHex: scheme == .dark ? $0.dark : $0.light) })
     }
 
     private var header: some View {

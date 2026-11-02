@@ -401,7 +401,7 @@ extension AppCoordinator: AppServices {
             iconPath: e.iconPath, fromDraft: e.origin == .draft, fromGallery: e.origin == .official, command: e.command, author: e.author,
             hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor, needsAnUpdate: e.needsAnUpdate,
             examples: e.examples, services: e.services, signedBySidefolk: e.origin?.firstParty == true,
-            settingRows: e.settings, aiStatus: e.ai)
+            settingRows: e.settings, aiStatus: e.ai, placeStatus: e.place, scheduleStatus: e.schedule)
     }
 
 }

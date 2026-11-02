@@ -277,6 +277,17 @@ public struct ExtensionToolInfo: Sendable, Hashable {
 }
 
 /// Everything Settings › Extensions shows for one installed extension or MCP server.
+/// Whether the person said yes to something an extension may ask for (D106, D107), and what it said it wanted it for.
+public struct ExtensionConsentStatus: Sendable, Hashable {
+    public var purpose: String
+    public var on: Bool
+
+    public init(purpose: String, on: Bool) {
+        self.purpose = purpose
+        self.on = on
+    }
+}
+
 public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var id: String
     public var name: String
@@ -310,6 +321,9 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var settings: [ExtensionSettingRow] = []
     /// Its use of the person's AI, when it declares one (D100).
     public var ai: ExtensionAIStatus? = nil
+    /// Its use of the person's place and its reminders, when it declares them (D106, D107).
+    public var place: ExtensionConsentStatus? = nil
+    public var schedule: ExtensionConsentStatus? = nil
     /// This copy was made for an older Sidefolk and doesn't run (D101): the row and its page offer the update.
     public var needsAnUpdate: Bool = false
 

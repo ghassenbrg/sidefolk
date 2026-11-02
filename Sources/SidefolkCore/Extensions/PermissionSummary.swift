@@ -26,11 +26,17 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var networkPurpose: String?
     /// Asking the person's AI to write something (`permissions.ai`, D100).
     public var ai: ExtensionAIAccess?
+    /// May ask for the person's place (`permissions.place`, D106), for this purpose.
+    public var place: ExtensionPurpose?
+    /// May ask to schedule reminders (`permissions.schedule`, D107), for this purpose.
+    public var schedule: ExtensionPurpose?
 
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
                 clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil,
-                outputMute: Bool = false, ai: ExtensionAIAccess? = nil) {
+                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil) {
+        self.place = place
+        self.schedule = schedule
         self.ai = ai
         self.network = network
         self.read = read
@@ -64,6 +70,8 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         udp = try c.decodeIfPresent(Bool.self, forKey: .udp) ?? false
         networkPurpose = try c.decodeIfPresent(String.self, forKey: .networkPurpose)
         ai = try c.decodeIfPresent(ExtensionAIAccess.self, forKey: .ai)
+        place = try c.decodeIfPresent(ExtensionPurpose.self, forKey: .place)
+        schedule = try c.decodeIfPresent(ExtensionPurpose.self, forKey: .schedule)
     }
 
     /// Exec entries that can run arbitrary code (shells, interpreters, `osascript`, `curl` …). Programs named
@@ -100,11 +108,18 @@ public struct ExtensionAIAccess: Codable, Sendable, Hashable {
     }
 }
 
+/// One thing an extension says it wants something for, as pinned at install (D106, D107).
+public struct ExtensionPurpose: Codable, Sendable, Hashable {
+    public var purpose: String
+
+    public init(purpose: String) { self.purpose = purpose }
+}
+
 /// Plain-language permission lines for the install sheet, plus warnings about dangerous combinations
 /// (SECURITY T13, T16). Deterministic: built from the manifest, never from model text.
 public struct PermissionSummary: Sendable, Hashable {
     public struct Line: Sendable, Hashable {
-        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, ai, none, unsandboxed }
+        public enum Kind: String, Sendable, Hashable { case network, read, write, exec, media, clipboard, power, screen, outputMute, udp, ai, place, schedule, none, unsandboxed }
         public var kind: Kind
         public var text: String
         /// Worth drawing attention to on the install sheet.
@@ -197,6 +212,19 @@ public struct PermissionSummary: Sendable, Hashable {
                                                       comment: "Install sheet: permissions.ai; the daily limit, then the author's purpose, “to write quiz questions”"),
                               caution: true,
                               note: String(localized: "It counts toward your AI's usage. The AI gets only the words the extension sends: no tools, nothing of yours. Each request is in History, and a switch in Settings › Add-ons turns it off.")))
+        }
+        if let place = p.place {
+            lines.append(Line(kind: .place, text: String(localized: "Can ask for your place. It says it uses it \(place.purpose).",
+                                                         comment: "Install sheet: permissions.place; the author's purpose, “to show prayer times for your place”"),
+                              caution: false,
+                              note: p.network ? String(localized: "Off until you say yes. With its internet access it could send your town and coordinates anywhere. A switch in Settings › Add-ons takes it back.")
+                                  : String(localized: "Off until you say yes. A switch in Settings › Add-ons takes it back.")))
+        }
+        if let schedule = p.schedule {
+            lines.append(Line(kind: .schedule, text: String(localized: "Can ask to send you reminders at moments it plans. It says it uses them \(schedule.purpose).",
+                                                            comment: "Install sheet: permissions.schedule; the author's purpose, “to remind you of prayer times you choose”"),
+                              caution: false,
+                              note: String(localized: "Off until you say yes. They follow your Focus, Quiet and Attention settings. A switch in Settings › Add-ons takes it back.")))
         }
         if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))

@@ -13,6 +13,12 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
     public var carried: [String] = []
     /// The frame's speaker, by surface, when it isn't one of its settings. Goes with the extension.
     public var speakers: [String: Bool] = [:]
+    /// The person's yes to its use of their place and to its reminders (D106, D107). Unlike the AI's, nil is no: asked for, never assumed.
+    public var placeOn: Bool?
+    public var scheduleOn: Bool?
+    /// What they said yes to: a change of it asks again.
+    public var placeTerms: String?
+    public var scheduleTerms: String?
 
     public init() {}
 
@@ -24,6 +30,10 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
         aiCalls = (try? c.decode(Int.self, forKey: .aiCalls)) ?? 0
         carried = (try? c.decode([String].self, forKey: .carried)) ?? []
         speakers = (try? c.decode([String: Bool].self, forKey: .speakers)) ?? [:]
+        placeOn = try? c.decodeIfPresent(Bool.self, forKey: .placeOn)
+        scheduleOn = try? c.decodeIfPresent(Bool.self, forKey: .scheduleOn)
+        placeTerms = try? c.decodeIfPresent(String.self, forKey: .placeTerms)
+        scheduleTerms = try? c.decodeIfPresent(String.self, forKey: .scheduleTerms)
     }
 
     static func key(_ id: String) -> String { "extension.preferences.\(id)" }
@@ -131,8 +141,8 @@ public struct ExtensionEntry: Sendable, Hashable, Identifiable {
     public enum Action: Sendable, Hashable {
         /// One of its own tools, run as the person, through Guard.
         case tool(name: String, input: JSONValue)
-        /// One of its own pages in Home.
-        case page(String)
+        /// One of its own pages in Home, at a state of its own (D105).
+        case page(String, state: [String: JSONValue]?)
         /// One of its own surfaces, opened through `surfaces.open` as the person.
         case surface(id: String, arguments: JSONValue)
         /// A submenu of `items`.

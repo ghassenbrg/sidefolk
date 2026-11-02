@@ -65,7 +65,7 @@ import Testing
         #expect(shelf.entries(in: .companion).map(\.key) == ["hello", "greetings"])
         #expect(shelf.entries(in: .pocket).map(\.key) == ["hello"])
         #expect(shelf.entries(in: .ask).map(\.key) == ["hello"])
-        #expect(shelf.entries(in: .companion)[0].action == .page("hello"))
+        #expect(shelf.entries(in: .companion)[0].action == .page("hello", state: nil))
         #expect(shelf.entries(in: .companion)[1].items.map(\.key) == ["greet_me", "greet_again"])
         guard case .tool(let tool, let input) = shelf.entries(in: .companion)[1].items[0].action else { Issue.record("not a tool"); return }
         #expect(tool == "ext.hello-abilities.greet")

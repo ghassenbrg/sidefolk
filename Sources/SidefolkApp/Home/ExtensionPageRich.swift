@@ -286,18 +286,35 @@ struct PageCard: View {
 struct PageTabs: View {
     var tabs: ExtensionPage.Tabs
     var model: ExtensionPageModel
+    @Environment(\.colorScheme) private var scheme
+
+    private var chosenFill: Color? { tabs.tint.flatMap { Color(extensionHex: scheme == .dark ? $0.dark : $0.light) } }
 
     var body: some View {
         let key = tabs.tabs.map(\.id).joined(separator: "/")
-        let shown = model.tabChoices[key].flatMap { id in tabs.tabs.first { $0.id == id } } ?? tabs.tabs.first { $0.id == tabs.selected } ?? tabs.tabs[0]
+        // Tabs that go somewhere are the program's to say; the others stay where the person left them.
+        let programs = tabs.tabs.contains { $0.go != nil }
+        let shown = (programs ? nil : model.tabChoices[key].flatMap { id in tabs.tabs.first { $0.id == id } }) ?? tabs.tabs.first { $0.id == tabs.selected } ?? tabs.tabs[0]
+        let selection = Binding(get: { shown.id }, set: { id in
+            if let go = tabs.tabs.first(where: { $0.id == id })?.go { Task { await model.go(go) } } else { model.tabChoices[key] = id }
+        })
         VStack(alignment: .leading, spacing: Theme.Space.l) {
-            SegmentedPicker(Text("Show", comment: "VoiceOver: tabs on an extension's page"),
-                            selection: Binding(get: { shown.id }, set: { model.tabChoices[key] = $0 }),
-                            segments: tabs.tabs.map { tab in
-                                .init(tab.id, tab.badge.map { Text(ext: tab.label) + Text(verbatim: " ") + Text(ext: $0) } ?? Text(ext: tab.label), symbol: tab.symbol)
-                            })
-                .fixedSize()
+            // When they don't all fit, a menu that says which is showing, so none is out of reach (D105).
+            ViewThatFits(in: .horizontal) {
+                SegmentedPicker(Text("Show", comment: "VoiceOver: tabs on an extension's page"), selection: selection,
+                                segments: tabs.tabs.map { tab in
+                                    .init(tab.id, tab.badge.map { Text(ext: tab.label) + Text(verbatim: " ") + Text(ext: $0) } ?? Text(ext: tab.label), symbol: tab.symbol)
+                                }, chosenFill: chosenFill)
+                    .fixedSize()
+                Picker(selection: selection) {
+                    ForEach(tabs.tabs, id: \.id) { tab in Label { Text(ext: tab.label) } icon: { Image(systemName: tab.symbol ?? "circle") }.tag(tab.id) }
+                } label: {
+                    Text("Show", comment: "VoiceOver: tabs on an extension's page")
+                }
+                .pickerStyle(.menu).labelsHidden().fixedSize()
+            }
             ForEach(Array(shown.sections.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
+            ForEach(Array(tabs.sections.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
         }
     }
 }

@@ -337,6 +337,12 @@ final class SettingsModel {
         extensions = await services.extensions()
     }
 
+    /// The person's switch for an extension's use of their place, or its reminders (D106, D107), through the tool that records it.
+    func setConsent(_ what: String, _ on: Bool, extensionId id: String) async {
+        _ = await services.runtime.executor.execute(name: "extensions.consent", input: ["extension": .string(id), "what": .string(what), "on": .bool(on)], caller: .user)
+        extensions = await services.extensions()
+    }
+
     /// Asks before letting changed tools run: they can do things the user never agreed to.
     func reviewToolChanges(_ ext: ExtensionInfo) async {
         let alert = NSAlert()

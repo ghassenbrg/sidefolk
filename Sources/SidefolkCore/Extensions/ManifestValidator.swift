@@ -399,7 +399,9 @@ public struct ManifestValidator: Sendable {
                           warnings: inout [String]) -> ExtensionPermissions {
         var result = ExtensionPermissions(network: p.network, media: p.media, clipboard: p.clipboard, power: p.power, screen: p.screen,
                                           udp: p.udp && p.network, outputMute: p.outputMute,
-                                          ai: p.ai.map { ExtensionAIAccess(purpose: ExtensionText.line($0.purpose, characters: 120), dailyCap: $0.dailyCap ?? ExtensionManifest.AIMeta.defaultCap) })
+                                          ai: p.ai.map { ExtensionAIAccess(purpose: ExtensionText.line($0.purpose, characters: 120), dailyCap: $0.dailyCap ?? ExtensionManifest.AIMeta.defaultCap) },
+                                          place: p.place.map { ExtensionPurpose(purpose: ExtensionText.line($0.purpose, characters: 120)) },
+                                          schedule: p.schedule.map { ExtensionPurpose(purpose: ExtensionText.line($0.purpose, characters: 120)) })
         if let purpose = p.networkPurpose {
             let line = ExtensionText.line(purpose, characters: 120)
             if !p.network || line != purpose || !purpose.hasPrefix("for ") && !purpose.hasPrefix("to ") {
