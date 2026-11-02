@@ -834,7 +834,8 @@ sidebar, heads-ups): put each language's words in `strings/<language>.json` besi
   "tagline": "Dein Mac wach und du aktiv, so lange du willst",
   "description": "…",
   "network_purpose": "um Fernseher im lokalen Netzwerk zu finden und dorthin zu streamen",
-  "tools": { "keep_awake": { "title": "Den Mac wach halten" } },
+  "examples": ["halte meinen Mac 2 Stunden wach"],
+  "tools": { "keep_awake": { "title": "Den Mac wach halten", "summary": "Den Mac {duration} wach halten" } },
   "watchers": { "ended": { "title": "Wach halten beendet", "description": "…" } },
   "pages": { "awake": { "title": "Wach halten" } },
   "palettes": { "history": { "title": "Zwischenablage", "placeholder": "Kopiertes durchsuchen" } },
@@ -845,7 +846,8 @@ sidebar, heads-ups): put each language's words in `strings/<language>.json` besi
 
 Every field is optional and translates the manifest's own: a key the manifest doesn't have (a tool it doesn't list, a
 tagline it lacks) is an error, and so is any other key. Each must be plain text within the manifest's limit, or half as
-long again (languages run longer than English): a name up to 90 characters, a tagline 90, a description 450. Sidefolk
+long again (languages run longer than English): a name up to 90 characters, a tagline 90, a description 450. `examples`
+has one text for each of the manifest's, and a tool's `summary` one text for each of its forms with the same parameters (D98). Sidefolk
 shows the person's language, the closest one you have (`pt` finds `pt-BR`, `zh-CN` finds `zh-Hans`), else the
 manifest. Commands (`say`) stay English: Sidefolk's understanding without AI is English. Tool descriptions from
 `tools/list` stay as they are too (they're pinned at install; a description that changed with the language would put

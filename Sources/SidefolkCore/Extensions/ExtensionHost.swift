@@ -134,6 +134,11 @@ public actor ExtensionHost {
             return
         }
         var rt = Runtime(record: record, pin: pin)
+        // A copy the app used to ship reads as the gallery's (`ExtensionOrigin`): saved so, once, with nothing else changed.
+        if record.granted?.string("origin") == "bundled", let granted = try? JSONValue.from(pin) {
+            rt.record.granted = granted
+            try? await store.save(rt.record)
+        }
         if record.kind == .sidefolk {
             restoreInterruptedUpdate(record.id, pins: pin.files)
             let folder = installer.installedFolder(record.id)
@@ -285,12 +290,14 @@ public actor ExtensionHost {
             let oldTools = old.manifest.map { Array($0.tools.keys) } ?? Array(old.pin.tools.keys)
             let before = ExtensionUpdateDiff.Side(
                 version: old.record.version, permissions: had, lines: PermissionSummary.forExtension(shown(had, words(old))).texts,
-                tools: Dictionary(oldTools.map { ($0, risk(old, $0)) }, uniquingKeysWith: max), background: old.manifest?.background ?? false)
+                tools: Dictionary(oldTools.map { ($0, risk(old, $0)) }, uniquingKeysWith: max), background: old.manifest?.background ?? false,
+                hosts: Set((old.manifest?.services ?? []).flatMap(\.hosts)))
             let now = report.permissions ?? ExtensionPermissions()
             let after = ExtensionUpdateDiff.Side(
                 version: manifest.version, permissions: now,
                 lines: PermissionSummary.forExtension(shown(now, report.strings?.words(for: config.language()))).texts,
-                tools: Dictionary(report.toolRisks.map { ($0.name, $0.risk) }, uniquingKeysWith: max), background: manifest.background)
+                tools: Dictionary(report.toolRisks.map { ($0.name, $0.risk) }, uniquingKeysWith: max), background: manifest.background,
+                hosts: Set(manifest.services.flatMap(\.hosts)))
             preview.update = ExtensionUpdateDiff(from: before, to: after)
         }
         return preview

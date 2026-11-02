@@ -3293,7 +3293,8 @@ move.
   - `services`: the services and hosts the program talks to, on the install sheet and in Settings › Trust for everyone,
     said as the author's word for anyone but Sidefolk, whose sandbox lets them reach any site. **Only signed packs get
     D47's reach**: the exception after outside content rests on Sidefolk's signature, and `ExtensionDetailsTests` still
-    checks every address in such a program against its list.
+    checks every address in such a program against its list. An update naming a new host waits for the person (D70);
+    a first list doesn't, since it says less than the program could already do.
   - `replaces`: what D67's resting used to hard-code, still only between Sidefolk's own signed packs, so no extension can
     quiet another.
   - Words: `strings/` (D76) is the only source, and also translates examples and summaries. `BuiltInExtensionWords`,

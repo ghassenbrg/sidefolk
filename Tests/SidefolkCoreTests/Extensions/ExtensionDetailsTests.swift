@@ -173,6 +173,18 @@ import Testing
         #expect(checked >= 2)
     }
 
+    /// A new host waits for a look (D70); a first list doesn't, or every network extension's move here would.
+    @Test func anUpdateNamingANewHostAsksFirst() {
+        func side(_ hosts: Set<String>) -> ExtensionUpdateDiff.Side {
+            .init(version: "1", permissions: ExtensionPermissions(network: true), lines: [], tools: [:], background: false, hosts: hosts)
+        }
+        #expect(!ExtensionUpdateDiff(from: side([]), to: side(["a.example.com"])).widens)
+        #expect(!ExtensionUpdateDiff(from: side(["a.example.com"]), to: side(["a.example.com"])).widens)
+        let more = ExtensionUpdateDiff(from: side(["a.example.com"]), to: side(["a.example.com", "b.example.com"]))
+        #expect(more.widens && more.addedHosts == ["b.example.com"])
+        #expect(InstallReview.Update(more).added == ["Connects to b.example.com now"])
+    }
+
     // MARK: Replaces
 
     @Test func replacesNamesOtherExtensions() throws {
