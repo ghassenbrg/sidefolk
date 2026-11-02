@@ -37,6 +37,7 @@ Claude Code or Codex. You can also add any existing MCP server (see
 9. [Pages](#pages)
 10. [Surfaces and scenes](#surfaces-and-scenes)
 11. [Rich pages, commands in every language, entries, settings, AI help](#rich-pages-commands-in-every-language-entries-settings-ai-help)
+    and [Places in a page, the person's place, planned moments](#places-in-a-page-the-persons-place-planned-moments)
 12. [Speaking the person's language](#speaking-the-persons-language)
 13. [Testing locally](#testing-locally)
 14. [Installing, updating, removing](#installing-updating-removing)
@@ -964,7 +965,7 @@ them: name it in `addon.json`'s `minimum_sidefolk` (D83).
 
 ### Richer page parts
 
-For a look no part offers, a **scene inside the page**: `{"type": "scene", "scene": { … }, "actions": {"<area id>": {"tool": "open", "input": { … }}}}`. It is the same as a surface's scene, up to 960 × 720, fitted to the page's width: pictures from your pack, the same caps, hover and press. Each area runs its action's tool as the person, with the area's `value` as `value`; a reply can open a surface. It takes no keys and has no session: anything that plays is a surface. Kit: `.scene(PageSceneBlock(scene, actions: […]))`.
+For a look no part offers, a **scene inside the page**: `{"type": "scene", "scene": { … }, "actions": {"<area id>": {"tool": "open", "input": { … }}}}`. It is the same as a surface's scene, up to 1320 × 1600, fitted to the page's width: pictures from your pack, the same caps, hover and press. Each area runs its action's tool as the person, with the area's `value` as `value`; a reply can open a surface. It takes no keys and has no session: anything that plays is a surface. Kit: `.scene(PageSceneBlock(scene, actions: […]))`.
 
 ```json
 {"type": "hero", "title": "Bird Log", "detail": "…", "symbol": "bird", "scene": {"pack": "garden.png", "dark": "garden-night.png"},
@@ -1071,6 +1072,53 @@ A request is at most 8,000 characters and 32,000 bytes. **Codex:** it always add
 ### One row in History
 
 `sidefolk/activity.add {text, key, result}`: `text` up to 120 characters; `key` your own name for it; `result` `win`, `loss`, `draw` or `done`, to count later. At most one every five seconds. When your extension is removed, these rows, being your own words, go with it; rows of what its tools did stay, as the record of what ran. `sidefolk/settings.set` is held to one a second, the last value winning, and writes nothing for a value it already has. Kit: `Activity.add("Logged a robin", key: "robin", result: "done")`.
+
+## Places in a page, the person's place, planned moments
+
+A pack using any of this names the snapshot that has it in `addon.json`'s `minimum_sidefolk` (D83). Older copies skip page keys they don't know.
+
+### State and moving around (D105)
+
+`sidefolk/page.render` gets `state` (what the page was told to remember, at most 4 KB, kept by Sidefolk while Home is open), `width` (its column in points, rounded down to 10) and, when nobody is looking, `background: true`: answer with the summary alone unless the page keeps charts (`history`). Don't fetch inside a render: requests run in order, so it holds up every click. Fetch beside it and draw what you have.
+
+```json
+{"bare": true, "back": "Back to names", "max_width": 1080,
+ "dress": {"ground": {"light": "#F5F0ED", "dark": "#10132C"}, "card": {"light": "#FFFFFF", "dark": "#191D3E"}},
+ "sections": [{"blocks": [
+   {"type": "tabs", "selected": "prayer", "tint": {"light": "#7354B8", "dark": "#7354B8"},
+    "tabs": [{"id": "overview", "label": "Overview", "symbol": "square.grid.2x2", "go": {"set": {"tab": "overview"}}}, {"id": "prayer", "label": "Prayer", "go": {"set": {"tab": "prayer"}}}],
+    "sections": [{"blocks": [ … what you drew for this tab … ]}]},
+   {"type": "button", "label": "Name details", "go": {"set": {"name": 3}, "push": true}},
+   {"type": "field", "label": "Search", "button": "Clear", "key": "q", "go": {}, "live": true, "value": "ar"},
+   {"type": "choice", "label": "Method", "key": "method", "go": {}, "selected": "3", "options": [ … ]},
+   {"type": "switch", "label": "Remind me", "key": "remind", "go": {}, "on": false},
+   {"type": "button", "label": "Copy bearing", "copy": "293° clockwise from true north"},
+   {"type": "button", "label": "Import CSV", "file": {"tool": "import_csv", "param": "path", "types": ["csv"]}},
+   {"type": "button", "label": "Use my place", "allow": "place"},
+   {"type": "button", "label": "Open settings", "settings": "notifications"}]}]}
+```
+
+Exactly one of `tool`, `go`, `copy`, `file`, `allow`, `settings` on a button (a list row's and a card's too). `go`: `set` merges into the state (null takes a key out), `push` lets Back return to the state before, `back` returns. State that wouldn't fit is refused whole. A scene's area may `go` or run a tool, nothing else: `{"actions": {"open": {"go": {"set": {"tab": "qibla"}}}}}`, its `value` arriving as `value`. A `file` tool declares that parameter in its `paths`; it gets a read of that one file for that call. `allow`: `place`, `schedule`. `settings`: `notifications`, `attention`, `place`. A tool's reply may say `"open_page": {"page": "noor", "state": {"tab": "qibla"}, "push": true}`, still only when a person started it; a manifest entry with a `page` may say `state`. In the Kit: `Page(back:bare:dress:maxWidth:)`, `Go`, `PageAct`, `Action(_:act:)`, `.goTabs`, `.draftToggle`, `.draftChoice`, `.draftField`, `args.pageState`, `args.pageWidth`, `args.pageIsBackground`, `ToolReply.opening(page:state:push:)`. `Page.back` has nothing to do with a surface's `{"back": true}`.
+
+`bare` hides Sidefolk's title row and summary on the page (the summary still feeds Today and the sidebar); what went wrong with a click and "Added by …" stay. A scene may be up to 1320 × 1600: draw it `width` wide and it isn't shrunk. Tabs that don't fit become a menu.
+
+### The person's place (D106)
+
+`"permissions": {"place": {"purpose": "to show prayer times for your place"}}`, translated as `place_purpose` in `strings/`. It starts "to" or "for". Off until the person says yes to Sidefolk's question: a button with `"allow": "place"`, or a switch in Settings › Add-ons. Requests then carry `place_share` (`on`, `off`) and `place` (`{city, region, country, country_code, latitude, longitude, time_zone, updated_at}`, null when Sidefolk knows none; `time_zone` may be missing). A running program hears `sidefolk/place.changed` when it really moved or the person took it back. If the purpose changes, or you add `network`, they are asked again. Kit: `SharedPlace.current`, `.shared`, `ext.placeChanged { }`.
+
+Looking a place up by name needs the permission, not the yes, since only the words typed leave: `sidefolk/place.search {request, query}` → `sidefolk/place.found {request, places, problem}`, one in two seconds, each a row in History. Search when someone submits, not as they type. Kit: `await SharedPlace.search("Kyoto")`.
+
+### Planned moments (D107)
+
+`"permissions": {"schedule": {"purpose": "to remind you of the prayer times you choose"}}`, `schedule_purpose` in `strings/`, and the person's yes with `"allow": "schedule"`. Never use a watcher or a sleeping process as a timer.
+
+Sidefolk asks for your whole plan on `sidefolk/occurrences.plan {reason}` (`start`, `wake`, `daily`, `consent`, `place`): answer `{revision, occurrences: [{id, at, expires_at, title, body, group, system_fallback, open: {page, state}}]}`. After a change of your own, send the same as the notice `sidefolk/occurrences.replace`. What isn't in a plan no longer comes; an empty plan cancels. `at` and `expires_at` are ISO 8601 with their offset; `id` is `[a-z0-9._:-]` up to 120 and names that moment for good: leave fetch times out of it. Requests carry `occurrences` `{allowed, notifications, pending, revision}`: send a revision above that one.
+
+- **When it is told:** at `at`, through the person's Attention settings, Focus and Quiet. Up to 2 minutes late it is still told; later it is silent. Past `expires_at` the notice is taken back. A new one of a `group` takes the last one's place. Told once, never again.
+- **Not promised:** nothing is told while Sidefolk is quit or the Mac asleep, unless `system_fallback` asked macOS to at quit, and then only what was planned by then. `notifications` says whether macOS will. Say so on your page.
+- **Limits:** 256 pending, 35 days ahead, 64 told a day, one plan in ten seconds (the last wins, none when nothing changed). You hear `sidefolk/occurrences.result {ok, pending, revision, reason}`.
+
+Kit: `ext.planOccurrences { reason in OccurrencePlan(revision:, occurrences: […]) }`, `Occurrences.replace(_:)`, `Occurrences.allowed`, `.notifications`, `.pending`, `.revision`, `.lastResult`.
 
 ## Speaking the person's language
 

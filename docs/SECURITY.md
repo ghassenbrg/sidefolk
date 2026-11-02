@@ -663,6 +663,7 @@ key lives in the Keychain bound to that host (as T18), requests are never redire
 removed with everything else. Replies stay silent while another app records and in Quiet.
 
 **T30 Where the person is (M/M), D48.** Off until the person chooses in Settings › Trust › Your location;
+- *What extensions may be told (D106).* An extension may have the person's place only after their yes to Sidefolk's question, per extension, bound to its pinned purpose and whether it has the internet; an update changing either asks again. It gets the same two-decimal coordinates and town name the weather uses. A program with `network` can send them anywhere, and one of its tool replies can put them before a model: the question says the first, and the install sheet too. This is the one exception to "only weather lookups use them".
 until then nothing about where they are leaves the Mac, and the AI is only told the place isn't known.
 - *The Mac's location.* Location Services at a city's accuracy (3 km), significant changes only. macOS asks
   once, when the person picks it (`NSLocationUsageDescription`, and the hardened runtime's
@@ -1159,3 +1160,14 @@ echoing the fetched address not counted; each visit in History; Sidefolk's own a
 limit by limit in `ResearchModeTests`. *Residual:* a hostile page can list one link per letter and tell a steered model to
 spell what's already in the prompt (About you, matching notes), about six bits a link. It needs no knowledge of the person.
 The budget bounds that to about nine characters per yes, then the person is asked again, and History shows the visits.
+
+**T42 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:
+- *`go`* only changes state the host keeps for that open page, 4 KB at most, and asks for another reading; nothing else happens, and nothing is in History because nothing was done.
+- *`copy`* runs `clipboard.write` as the person: the capability switch applies, History and the page show the exact words, and it hangs only on a button with a label, never a scene's area, so a command can't be planted for pasting behind nothing (T12).
+- *`file`* opens the system's panel; only then does a path exist, with a read of that one file for that one call. Other path parameters are stripped. Guard's forbidden places still hold.
+- *`allow`* shows Sidefolk's own question, with the extension's purpose marked as what it says; the extension can't answer it. `extensions.consent` refuses every caller but the person. *`settings`* opens a fixed pane.
+- *Occurrences:* the host's timer, the person's yes checked again at each telling, 256 pending, 64 a day, one plan in ten seconds, ids never told twice, revisions never going back. The words are the extension's, so its name is always with them and they never reach a model: nothing in `ContextBuilder` or the live state reads attention items' words, and `critical` stays out of reach (`extension:` isn't a critical source). See D107 for what this changes in T24.
+- *`extensions.place_search`* goes through Guard with its one service named, and its answer goes to that program alone.
+- *Who reaches these tools.* `extensions.consent` answers only the person (`caller == .user`); `extensions.occurrences` and `extensions.place_search` only the extension for itself (`.extension(own)`, `own` being the id in the call). None is offered to a model (`offeredToModel: false`), and each refuses by caller in the tool itself, so no agent, routine or access group can reach them, whatever a group lists.
+- *`dress`:* a ground or card the theme's ink can't be read on is left out, and Sidefolk's own question is drawn by the window, not the dressed page. A bare page still says whose it is.
+

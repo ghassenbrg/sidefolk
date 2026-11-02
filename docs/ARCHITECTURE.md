@@ -109,6 +109,7 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   - `CLIBrain` holds what the two CLI brains share: binary vetting, the prompt-free probe, the
     environment allow-list, the one-message conversation, the per-run private folder.
   - `ScriptedModel` (tests only) replays canned turns.
+- `OccurrenceScheduler` (actor, D107) — extensions' planned moments: one timer, told through `AttentionCenter`, kept in `KVStore`; the extension's process needn't be awake.
 - `ReminderScheduler` (actor) — one timer for the next due reminder (no polling), re-armed on
   change, wake, clock change; fires to `AttentionCenter`; recurrence; snooze; missed-on-launch
   summary; computes fallback system notifications when the app quits. A reminder can belong to a
@@ -406,6 +407,10 @@ program's `@executable_path/../lib` rpath: the sandbox already reads the extensi
 - `scripts/release.sh` — sign with Developer ID (hardened runtime, entitlements), notarize and staple the app,
   then the DMG. Fails clearly when `SIDEFOLK_SIGN_IDENTITY` / `SIDEFOLK_NOTARY_PROFILE` are missing. The
   checklist around it is docs/RELEASE.md.
+
+## Places in a page (D105–D108)
+
+A page's state and Back live in `ExtensionPageModel`, per open page; the program gets them with each reading and keeps nothing. `ExtensionPage+Actions` reads what a control may do instead of a tool, and `PageState` applies it. Replies and entries queue a `PageGo` in the host (`pageMoves`) that the page takes in before its next reading. `extensions.consent`, `.occurrences` and `.place_search` (`ExtensionHost+Consent`) are the only doors for a person's yes, a plan and a place search.
 
 ## What extensions declare (D100)
 
