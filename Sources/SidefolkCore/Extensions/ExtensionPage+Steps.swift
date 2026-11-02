@@ -88,6 +88,6 @@ extension ExtensionPage {
             return Steps.Hook(tool: tool, input: input, key: key, label: text(h["label"], 30))
         }
         return Steps(title: text(j["title"], 60), caption: text(j["caption"], 240), items: items, selected: j["selected"]?.stringValue, select: hook(j["select"]), reorder: hook(j["reorder"]),
-                     insert: hook(j["insert"]), line: (j["line"]?.arrayValue ?? []).prefix(2).compactMap { color($0) })
+                     insert: hook(j["insert"]), line: Array((j["line"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2)))
     }
 }
