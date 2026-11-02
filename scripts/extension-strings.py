@@ -85,7 +85,7 @@ def manifest_words(folder):
     if m.get("permissions", {}).get("ai"):
         paths.append(("ai_purpose",))
     named = {c["name"] for meta in m.get("tools", {}).values() for c in meta.get("commands", []) if c.get("name")}
-    paths += [("commands", n, "say") for n in sorted(named)]
+    paths += [("commands", n) for n in sorted(named)]
     paths += [("parts", n) for n in sorted(m.get("parts", {}))]
     paths += [("choices", n) for n in sorted(m.get("choices", {}))]
     if m.get("carry"):

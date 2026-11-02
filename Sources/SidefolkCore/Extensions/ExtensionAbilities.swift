@@ -62,13 +62,16 @@ public struct ExtensionSettingRow: Sendable, Hashable, Identifiable {
     public var step: Double?
     public var length: Int
     public var value: JSONValue
+    /// Shown under Settings › Add-ons and found by its search (`listed` in the manifest).
+    public var listed: Bool
 
     public var id: String { "\(extensionId)/\(key)" }
     /// The tool every change goes through (`ExtensionSettingTool`).
     public static let tool = "extensions.setting"
 
     public init(extensionId: String, key: String, type: ExtensionManifest.SettingMeta.Kind, title: String, detail: String? = nil,
-                options: [Option] = [], minimum: Double? = nil, maximum: Double? = nil, step: Double? = nil, length: Int = 200, value: JSONValue) {
+                options: [Option] = [], minimum: Double? = nil, maximum: Double? = nil, step: Double? = nil, length: Int = 200, value: JSONValue, listed: Bool = true) {
+        self.listed = listed
         self.extensionId = extensionId
         self.key = key
         self.type = type

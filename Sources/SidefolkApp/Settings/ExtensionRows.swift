@@ -183,9 +183,9 @@ struct ExtensionRow: View {
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
         }
         // The settings it declares, and the person's switch for its use of their AI (D100).
-        if !ext.settingRows.isEmpty || ext.aiStatus != nil {
+        if ext.settingRows.contains(where: \.listed) || ext.aiStatus != nil {
             RowsCard {
-                ForEach(ext.settingRows) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
+                ForEach(ext.settingRows.filter(\.listed)) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
                 if let ai = ext.aiStatus {
                     ExtensionAISwitchRow(status: ai) { on in Task { await model.setAI(on, extensionId: ext.id) } }
                 }

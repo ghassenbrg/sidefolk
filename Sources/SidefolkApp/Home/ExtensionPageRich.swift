@@ -343,7 +343,7 @@ struct PageSettings: View {
     var model: ExtensionPageModel
 
     var body: some View {
-        let chosen = rows.keys.isEmpty ? model.settingRows : rows.keys.compactMap { key in model.settingRows.first { $0.key == key } }
+        let chosen = rows.keys.isEmpty ? model.settingRows.filter(\.listed) : rows.keys.compactMap { key in model.settingRows.first { $0.key == key } }
         if !chosen.isEmpty || (rows.ai && model.aiStatus != nil) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 if let title = rows.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }

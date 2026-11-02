@@ -3,8 +3,8 @@ import Foundation
 /// What `ManifestValidator` checks in a manifest's commands (D50), so a mistake is a plain message at install
 /// rather than a command that quietly never matches.
 enum ExtensionCommandRules {
-    static let maxCommandsPerTool = 8
-    static let maxSentencesPerCommand = 12
+    static let maxCommandsPerTool = 32
+    static let maxSentencesPerCommand = 24
     static let maxSentencesPerExtension = 200
     /// In one language's `strings/` file (D100).
     static let maxSentencesPerLanguage = 400

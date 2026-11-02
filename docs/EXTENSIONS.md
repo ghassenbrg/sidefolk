@@ -497,7 +497,7 @@ people say:
 - a sentence that starts with a slot taking any words (`text`, `word`, `place`, `list`), or two of them with
   nothing but a space between;
 - replies anyone types: "yes", "no", "ok", "thanks", "stop", "cancel", "help", "undo", "hello"…;
-- more than 3 slots or 80 characters a sentence, 12 sentences a command, 8 commands a tool, 64 sentences an
+- more than 3 slots or 80 characters a sentence, 24 sentences a command, 32 commands a tool, 64 sentences an
   extension; a sentence that says the same as another; `"ai": false` on a tool without commands.
 
 **When a sentence is yours.** Sidefolk's own understanding goes first (reminders, notes, watches, quiet,
@@ -1175,7 +1175,7 @@ folder goes under an argument the tool lists in `paths`. At most three offers sh
 ]
 ```
 
-Up to 64. Sidefolk stores them, shows them under Settings › Add-ons and with a `settings` part on your page, finds them in Settings' search, backs them up, keeps them through updates, and removes them with the extension. Every `tools/call` and `sidefolk/` request carries `settings`, all of them, defaults filled; a change sends the notice `sidefolk/settings.changed`. Change one of your own with the notice `sidefolk/settings.set {key, value}` (a speaker button on your surface): it's checked and goes in History. The AI can't change them: offer a tool for that. Words: `settings.<key>.title|detail|options.<value>`. Kit: `ExtensionSettings.bool("sounds")`, `ExtensionSettings.set(…)`, `ext.settingsChanged`.
+Up to 64. `"listed": false` keeps one out of Settings › Add-ons and its search, for what you hold per thing you have many of: it shows only where you name it (a `settings` part's `keys`, a scene's `speaker`). Sidefolk stores them, shows them under Settings › Add-ons and with a `settings` part on your page, finds them in Settings' search, backs them up, keeps them through updates, and removes them with the extension. Every `tools/call` and `sidefolk/` request carries `settings`, all of them, defaults filled; a change sends the notice `sidefolk/settings.changed`. Change one of your own with the notice `sidefolk/settings.set {key, value}` (a speaker button on your surface): it's checked and goes in History. The AI can't change them: offer a tool for that. Words: `settings.<key>.title|detail|options.<value>`. Kit: `ExtensionSettings.bool("sounds")`, `ExtensionSettings.set(…)`, `ext.settingsChanged`.
 
 `settings_from: "<section>"` and `carries: {"store": [...], "history": [...]}` (Sidefolk's own extensions only): once, Sidefolk's request `sidefolk/settings.carry {from, values, store, history}` gives what the app kept for this work: the section, values of its store by name, and a copy of what History has of a tool (up to 2,000 rows, each `at`, `summary`, `args`). Your `{settings: {…}}` are stored, and `{"ai": false}` sets the person's AI switch off, for someone who had said no. It can't turn it on. Kit: `ext.carry { section, values in … }`, `ext.carryAll { section, values, store, history in … }`.
 
