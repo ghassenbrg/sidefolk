@@ -7,6 +7,12 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Dev ideas, batch 3: watchers run apart from where they show (items 6, 7; D116)
+
+Display modes, order, All watchers, value formatting, agent tools, and no count for the person; other agents ask past 25. The founder's question took the handover's recommended answer.
+
+Verified: `swift test` against a clean add-ons checkout, with `WatchManagementTests` and the limits' tests rewritten. In the debug app on a fresh home: five live values made by typing, three beside the companion and two quiet; a synthetic drag moved the third row first and it stayed; "$" and "GPU" on the page and the pins (`34% GPU`, `$17.07 GB`), and the Arabic page with its numbers intact; 200 live values every 10 s cost 1.7 % CPU against 1.4 % for 5; a value set to come and go stood beside the companion at a reading and was gone seconds later. A review found Sidefolk's own agent could give itself room under Full access, routines and extensions had lost all ceiling, the first moments spent the attention budget and filled History (now a pin kept nowhere), a fourth value from before would have vanished, and sparklines read digits from what was set around a value; all fixed. Not run: a person's hand on the drag, a live agent calling `watch.more_room` (its permission and the room are tested, and Guard's asking is the usual path), and many web or command watchers at once.
+
 ## 2026-11-03: Dev ideas, batch 2: "done" is checked against what ran, and a reminder marked done finishes its task (items 3, 4, 5; D115)
 
 **Item 3:** `ReplyCheck` on every brain's reply, `UnbackedClaim` in ten languages, a tool's own error never shown as done on the quick path. **Item 4:** `ReminderScheduler.complete` finishes the open task wherever the reminder is marked; the rules both ways are D115's table. Other linked pairs were looked for and listed there. **Item 5:** already fixed by D90, nothing built. On a debug build, "what's my memory usage" showed in Ask and had gone three minutes later, with "Older answers are in History" beneath; a normal result stays its half hour (`ResultLifetimeTests`).

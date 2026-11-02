@@ -137,9 +137,10 @@ folder grants, network or commands to escape its own sandbox. The `.external` pr
 without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create
 a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
 together), `reminders.cancel` (only reminders that client name set; others read as not found),
-notify/`ask_user`, `status`, non-command watchers (10 active for all clients together, each stopping
+notify/`ask_user`, `status`, non-command watchers (25 active for all clients together, more only when the
+person says yes to `watch.more_room`, which always asks, D116; each stopping
 after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so parallel calls can't
-overshoot), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
+overshoot), their own watchers' pause, resume, display, order and formatting (`canManage`), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
 web values and no weather, which would reach a server; a fast one stops within the hour) (D42).
 They see descriptions and schemas written for them (`ExternalToolPolicy.externalSpec`): no
 `collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
@@ -632,11 +633,11 @@ binary targets or build plugins from dependencies.
   (`CGSessionCopyCurrentDictionary`) before holding or releasing items. Identical titles within
   10 min are not yet deduplicated.
 - Watcher floors: web 5 min, site 60 s, command 60 s. Reports (D35): metrics 5 s, weather and web
-  values 60 s (still one request a minute per host), command output 10 s; at most 4 live at once,
+  values 60 s (still one request a minute per host), command output 10 s; at most 3 shown beside the companion (the rest run hidden, D116),
   ending after an hour or a day unless the user said "until I stop it". `watch.report` is offered
   to external agents for this Mac's metrics only: a web value would let them read pages through
   Sidefolk (T4). A web value or a
-  command's output is untrusted in the tool result (T2). At most 50 active, with per-caller quotas.
+  command's output is untrusted in the tool result (T2). The person's own have no count since D116: these floors and the four checks at once bound them. Other agents have a shared room (T4).
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
   external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
   step that makes a watcher active.
@@ -886,9 +887,10 @@ chose. Found in the 0.1.0 review and fixed:
   default over a failed read.
 - *Audit.* A step refused by Stop or Quit wasn't in Activity (its write was cancelled with the run); audit
   rows are now written from a detached task.
-- *Shared room.* Other agents may show this Mac's load (D42), but live values have four places beside the
-  companion; they together now hold at most two (`WatchLimits.maxActiveExternalReports`), so one steered by a
-  hostile repo can't leave the person unable to show their own.
+- *Shared room.* Other agents may show this Mac's load (D42), but live values have three places beside the
+  companion (D116); they together hold at most two (`WatchLimits.maxExternalBeside`), and past that theirs run hidden,
+  so one steered by a hostile repo can't leave the person unable to show their own. What they set around a value is
+  at most 8 plain characters.
 - *Disk.* `FileHandle.write(_:)` raises an Objective-C exception on a full disk, which nothing catches: the log
   writer and the `sidefolk` helper's error output use the throwing `write(contentsOf:)`. A day's log stops at
   16 MB.
