@@ -202,6 +202,12 @@ public enum Block {
     case stats([StatItem])
     /// A scene inside the page: `PageSceneBlock`.
     case scene(PageSceneBlock)
+    /// Things in order, on a line (D113).
+    case steps(StepRail)
+    /// A value edited in place (D113).
+    case edit(EditField)
+    /// Several of a few options (D113).
+    case several(MultiChoice)
     /// Cards in a grid, each with a picture from the pack, words, a badge and buttons (D100).
     case cards(size: CardSize = .large, [Card])
     /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
@@ -258,6 +264,12 @@ public enum Block {
             return transport.json
         case .scene(let block):
             return block.json
+        case .steps(let rail):
+            return rail.json
+        case .edit(let field):
+            return field.json
+        case .several(let choice):
+            return choice.json
         case .stats(let items):
             return ["type": "stats", "items": items.map(\.json)]
         case .cards(let size, let items):
