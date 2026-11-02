@@ -50,7 +50,7 @@ final class SurfaceModel {
     @ObservationIgnored var onSound: ((String) -> Void)?
     @ObservationIgnored var onOver: ((SurfaceScene) -> Void)?
     @ObservationIgnored var onResize: (() -> Void)?
-    @ObservationIgnored var reduceMotion: () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+    @ObservationIgnored var reduceMotion: () -> Bool = { SurfaceMotion.reduced }
     @ObservationIgnored var rtl: () -> Bool = { Locale.Language(identifier: AppLanguage.current).characterDirection == .rightToLeft }
 
     init(info: SurfaceInfo, session: SurfaceSession, soundsOn: Bool) {
@@ -291,5 +291,15 @@ extension SurfaceModel {
         }
         if let outcome = last?.outcome { args["result"] = .string(outcome.rawValue) }
         return ActivityEntry(at: Date(), caller: "user", tool: "surfaces.use", risk: Risk.low.rawValue, decision: .auto, summary: summary, args: .object(args))
+    }
+}
+
+/// Whether a surface's steps play. A debug run can ask for Reduce Motion without touching the Mac's settings.
+enum SurfaceMotion {
+    static var reduced: Bool {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["SIDEFOLK_REDUCE_MOTION"] == "1" { return true }
+        #endif
+        return NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     }
 }
