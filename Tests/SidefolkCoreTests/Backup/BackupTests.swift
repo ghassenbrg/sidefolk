@@ -75,6 +75,22 @@ import Testing
         #expect(BackupRestore(paths: to).undoable != nil)
     }
 
+    /// What the host keeps for an extension (D100) lives in the database, so a backup carries it.
+    @Test func anExtensionsSettingsComeBackWithABackup() async throws {
+        let (_, source) = try await Self.filled("settings-from")
+        var kept = ExtensionPreferences()
+        kept.values = ["tone": "warm"]
+        kept.aiOn = false
+        try await KVStore(source.db).set(ExtensionPreferences.key("dev.test.kept"), kept)
+        let file = try Self.file("settings")
+        try await BackupWriter(runtime: source).write(to: file)
+        let to = try Self.home("settings-to")
+        _ = try await Self.restore(file, into: to)
+        let restored = try await Self.runtime(to)
+        let back = try await KVStore(restored.db).get(ExtensionPreferences.key("dev.test.kept"), as: ExtensionPreferences.self)
+        #expect(back == kept)
+    }
+
     @Test func whatIsNotABackupOrDamagedIsRefusedAndNothingChanges() async throws {
         let junk = try Self.file("junk")
         try Data("not a zip at all".utf8).write(to: junk)

@@ -9,6 +9,10 @@ public struct ExtensionStrings: Sendable, Hashable {
     public static let folder = "strings"
     /// The languages Sidefolk ships (the app's `AppLanguage.supported`), English first.
     public static let languages = ["en", "fr", "es", "de", "it", "pt-BR", "ja", "ko", "zh-Hans", "ar"]
+    /// Each language's name in English, for what is written to a model.
+    public static let languageNames = ["en": "English", "fr": "French", "es": "Spanish", "de": "German", "it": "Italian",
+                                       "pt-BR": "Brazilian Portuguese", "ja": "Japanese", "ko": "Korean", "zh-Hans": "Simplified Chinese",
+                                       "ar": "Arabic"]
     public static let maxBytes = 256 * 1024
     public static let maxTexts = 2000
 

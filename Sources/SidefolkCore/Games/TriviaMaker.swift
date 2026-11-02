@@ -80,16 +80,3 @@ public actor TriviaMaker {
         return "\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)"
     }
 }
-
-extension ProviderSettings {
-    /// The provider's short name for a label ("Made by Claude Code"), nil without AI.
-    public var shortName: String? {
-        switch kind {
-        case .none: nil
-        case .claudeCode: "Claude Code"
-        case .codex: "Codex"
-        case .anthropic: "Anthropic"
-        case .openAICompatible: preset == .custom ? String(localized: "your AI", comment: "A custom AI service, named in a label") : preset.name
-        }
-    }
-}

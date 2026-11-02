@@ -61,8 +61,8 @@ public struct IntentParser: Sendable {
             ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx) ?? extensionCommand(p.command)
     }
 
-    /// Whether Sidefolk's own understanding takes this sentence, games aside: an extension's command with the same words
-    /// never reaches the extension (D50, D100). The validator tells the author so.
+    /// Whether Sidefolk's own understanding takes this sentence: an extension's command with the same words never reaches the
+    /// extension (D50, D100). The validator tells the author so. What extensions declare isn't weighed here.
     func claimsAsItsOwn(_ text: String, now: Date = Date()) -> Bool {
         guard let p = prepare(text) else { return true }
         let ctx = Context(now: now, known: [], watching: [])

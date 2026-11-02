@@ -310,7 +310,7 @@ final class ExtensionPageModel {
             guard let s = services?.runtime.settings.current else { return nil }
             made = figure == .face ? CompanionArt.avatar(for: s, side: CGFloat(side)) : CompanionArt.portrait(for: s, state: .listening, side: CGFloat(side))
         case .person:
-            made = GameFigures.accountPicture
+            made = AccountPicture.current
         }
         if let made { pictureCache[key] = made }
         return made
