@@ -312,6 +312,8 @@ enum UISnapshots {
             try await page("page-extension-rich", ExtensionPageView(model: SampleRichPage.model()), width: 1180)
             try await page("page-extension-scene", ExtensionPageView(model: SampleRichPage.sceneModel()), width: 980)
             try await page("page-extension-rich-narrow", ExtensionPageView(model: SampleRichPage.model()), width: 640)
+            // A copy made for an older Sidefolk (D101): where its page was, what to do.
+            try await page("page-extension-needs-update", ExtensionNeedsUpdateView(info: ExtensionPageInfo(extensionId: "dev.example.old", extensionName: "Marbles", page: "marbles", title: "Marbles", symbol: "circle.fill", needsAnUpdate: true), updates: UpdateModel()), width: 980)
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-shelf", ExtensionPageView(model: SampleExtensionPage.shelf()), width: 980)

@@ -164,6 +164,10 @@ final class FixtureServices: AppServices {
                           warnings: [], sandboxed: true,
                           lastError: "It crashed 3 times in 5 minutes, so I turned it off. Nothing else was affected.",
                           services: [.init(name: "Open-Meteo", hosts: ["air-quality-api.open-meteo.com"])]),
+            // A copy made for an older Sidefolk (D101): listed, with its update instead of a switch.
+            ExtensionInfo(id: "dev.example.marbles", name: "Marbles", version: "1.0.0", description: "A game of marbles on the desktop.",
+                          kind: .sidefolk, enabled: true, folk: nil, toolNames: [], watcherNames: [], permissionLines: [], warnings: [],
+                          sandboxed: true, lastError: nil, fromGallery: true, needsAnUpdate: true),
             ExtensionInfo(id: "mcp.github", name: "GitHub", version: "", description: "",
                           kind: .mcpServer, enabled: true, folk: "byte", toolNames: ["create_issue", "list_pull_requests", "search_code"],
                           watcherNames: [], permissionLines: [], warnings: [], sandboxed: false, lastError: nil,
