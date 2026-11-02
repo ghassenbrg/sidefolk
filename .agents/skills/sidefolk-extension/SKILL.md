@@ -43,8 +43,8 @@ Where it will live:
 - **Gallery** (Sidefolk's own, ids `dev.sidefolk.<name>`): `../sidefolk-addons/extensions/<name>/`, built and signed by
   `scripts/build.py`. `build.py` asserts the `dev.sidefolk.` prefix and `run.command == "bin/ext-<name>"`; there is no
   path for third-party packs yet.
-- **Built-in** (ships inside the app, can't be removed): only for what everyone needs; D55 cut these to four. Ask the
-  founder first.
+- **Seed pack** (a gallery extension a fresh Mac also installs once, `Resources/SeedPacks/seed-packs.json`, D98): only
+  for what everyone needs; there are four. Ask the founder first. No extension is built into the app.
 - **Local** (one Mac, anyone's id like `com.example.thing`): a folder installed with Settings › Add-ons › Install
   from folder… (or dropped on the companion). No signing, no gallery, no updates but reinstalling.
 - **Draft**: Sidefolk's own AI writes text-only drafts (`.py .js .mjs .cjs .sh .json .txt .md .csv`, at most 20 files,

@@ -9,7 +9,7 @@ what to check by hand. Decisions that aren't code (licence, name, website, prici
 - `make app` (`scripts/build-app.sh release`): `swift build -c release --only-use-versions-from-resolved-file`
   for the app and the `sidefolk` helper, assembles `build/Sidefolk.app` (Info.plist from `Resources/Info.plist`,
   version from `Sources/SidefolkCore/Version.swift`, build number from `git rev-list --count HEAD`), compiles the
-  string catalog into `.lproj` folders, copies icons, brand art, provider logos, skills, built-in extensions and
+  string catalog into `.lproj` folders, copies icons, brand art, provider logos, skills, the seed packs (`scripts/seed-packs.py`, D98) and
   dependency resource bundles, signs inside out with the hardened runtime (helper, then app with
   `Resources/Sidefolk.entitlements`) and verifies with `codesign --verify --deep --strict`. Identity:
   `SIDEFOLK_SIGN_IDENTITY`, else the first "Apple Development" identity, else ad hoc.
@@ -163,7 +163,8 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
       another computer).
 - [ ] Login item from /Applications; `sidefolk` installs on PATH from Settings › Connections and answers
       `sidefolk status`.
-- [ ] Built-in extensions run in their sandbox (World Clock, Calculator, Weather, System Vitals), and one from
+- [ ] The gallery was published before this release (it holds the seed packs, D98). On a fresh data folder the seed packs
+      install and run in their sandbox (World Clock, Calculator, Weather, System Vitals), and one from
       the gallery installs (Images on a photo). On a Mac **without** Apple's developer tools: no "install the
       command line developer tools" dialog appears at launch, and Git from the gallery says it needs git and how
       to get it.

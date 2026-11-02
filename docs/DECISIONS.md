@@ -3308,9 +3308,8 @@ move.
   pack that doesn't check out stays out, says why in Settings › Add-ons with Try again, and is tried again at launch.
 - **Existing copies.** A stored origin of `bundled` now reads as `official`: same folder, data and switch, no reinstall.
   They are the person's to remove and the gallery's to update. Their versions were raised (`1.2.0` → `1.3.0`) so the
-  gallery's `1.3.0-snapshot.n` is newer. Until that update arrives such a copy shows its manifest's English title in
-  the places the app's catalog used to translate only if it has no `strings/`; all four have them. It has no summaries
-  or examples until updated, and its card shows the title and arguments.
+  gallery's `1.3.0-snapshot.n` is newer. Until that update arrives such a copy has no summaries or examples, and its
+  approval card shows the title and arguments; its words already come from its `strings/`.
 - **Builds.** `scripts/seed-packs.py` takes the newest version each entry's `minimum_sidefolk` allows from the signed
   catalog, verifying everything. A release can't go out without them: `release.yml` checks first, `build-app.sh` stops
   when `SIDEFOLK_RELEASE` is set, `release.sh` verifies what the app holds. Any other build warns and goes without, or
