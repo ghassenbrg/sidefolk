@@ -848,6 +848,47 @@ day, packs cached by topic for the day. *Residual:* the topic is the person's ow
 answer, within a family-quiz prompt and the checks; facts may be wrong, so they are labelled as made by the AI and not
 checked.
 
+**T40 Extensions' surfaces, scenes and pack assets (M/M), D99.** An extension can now show its own pictures and words
+in a window beside the companion, play its own sounds and take clicks and keys there. Three things could go wrong.
+Mitigations:
+- *Spoofing:* a surface is always framed by Sidefolk with the extension's icon and name, drawn outside the canvas it can
+  reach (`SurfaceFrame`); the extension can't remove it or draw on it. It can still draw a picture of an approval card
+  inside its canvas, so what makes that harmless is where it stands and what it can catch: its window level is below
+  Sidefolk's own panels and cards (one under `.floating`), so it can never cover one; it is placed clear of them
+  (`SurfacePolicy.place`); opening Ask, where permission slips stand, puts a surface panel away; and while an approval
+  waits (`mood.approvals`), every surface dims and takes no click, key or field (`SurfacePolicy.takesInput`), so it can't
+  catch a press meant for the card. Its keys go to it only while it has the keyboard, which it takes only when the person
+  opened it (D75: the AI's waits for a click; an overlay never takes it). Command keys never reach a scene; ⌘W, ✕ and Esc are
+  the frame's, and if a scene takes Esc, two in a second still close it. Back is the app's control. The danger red
+  has no token name in a scene (D78). *Its words stay inside its surface:* a reaction has no text at all, cues carry no
+  line, and `{companion}` is filled in at draw time, so the name never comes back. Activity's row is in Sidefolk's words
+  from typed values (an outcome, two numbers).
+- *Decode safety:* an asset is read only from the extension's installed, locked copy, by a path that `PackAssets.clean`
+  accepts (plain relative names, no `..`, nothing hidden, no scheme), each part `lstat`ed so a link is refused, its
+  bytes matching the install's pin (T14) every time. Before any pixel is decoded, ImageIO reads the header alone: the
+  content type must match the name (PNG, JPEG, WebP, HEIC; SVG, PDF, GIF and TIFF are refused, as they can point out or
+  animate), one frame, at most 3000 px a side and 6 million pixels, 4 MiB; a decode goes through a thumbnail at the size
+  drawn (never larger than the caps, whatever the header claimed), off the main thread where it can, and a failure draws
+  nothing. Sounds: WAV, AIFF, CAF or M4A, up to 2 MiB, 10 s, 96 kHz, stereo, converted to the mixer's format. The validator
+  runs the same checks at install. Sounds follow the person's speaker (off by default), Quiet, a fullscreen app and
+  macOS's interface sounds, at one fixed volume, four a second.
+- *Resource caps:* a scene is at most 64 KB (the channel's limit, as are 2 s a reply, 20 moves a second, one surface in
+  each place), 1500 nodes, 16 deep, 400 pictures of 64 files, 400 areas, 160 keys, 8 timers, 24,000 characters, 6000
+  animation points, 40 repeats, 120 s a timeline: going past one refuses the scene, and it ends. No animation runs for
+  ever, so a surface always comes to rest, and at rest no timer or display link runs (measured in D99). Decoded pictures
+  are held within 96 MiB and dropped when it closes. An extension can't push: it answers moves, and `after_ms` is
+  capped at 600 in a row with no one touching it. An overlay goes after a minute. A pack's assets are at most 48 MiB, 512 files.
+- *It is no side door:* a scene is data; moves are typed and sent only if the scene on screen offered them
+  (`SurfaceSession`, `SurfaceMove.offered`), never tools. Text is cleaned as on pages and never reaches a model. The
+  person's companion and the person are nodes it can place, drawn by Sidefolk, with no channel back: no snapshot, no
+  pointer (only a press's area, a drag's ends and a typed entry). `surfaces.open` goes through `ToolExecutor`; the AI can
+  open only a surface whose manifest says `ai`. Turned off or removed, the surface closes at once.
+*Residual:* ImageIO and AVFoundation decode files the extension's author chose, in Sidefolk's own process; the caps and
+pinning narrow that, and a gallery pack is signed, but a flaw in those frameworks would be reachable from a local pack the
+person installed. A clever picture inside the frame can still look like something it isn't; the frame always says
+whose it is, and it can catch nothing while a real card waits. An overlay's transparent pixels pass clicks through by AppKit's
+own rule, which wasn't tested with a real pointer.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person
@@ -1060,6 +1101,12 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
     (`agenda.today` denied reads nothing). Connect's skill: installed once, a foreign file backed up and
     never removed, a linked folder left alone, removed with its empty folder; Codex hooks merged beside the
     person's own, removed exactly, nothing written to Codex's trust state.
+16. **Surfaces and pack assets (T40, D99, `Tests/SidefolkCoreTests/Surfaces`):** the validator's caps, hostile pictures
+    (a wrong type, an SVG with a link, truncated, a header claiming 60000 × 60000, too large), sounds past their caps, links
+    and hidden files in the folder, the total budget, a file changed after install; node, depth, picture, area, key and timer
+    limits; an area without a label isn't offered; moves only for what the scene on screen offered, down to the
+    channel; the focus rules (the keyboard only when the person opened it, an overlay never, Esc twice always closes,
+    command keys never); placement clear of cards; a surface going with its extension.
 16. **The calendar's changes (T34, D97, `CalendarWriteTests`):** nothing is written until the person allows
     changes; an event with attendees, a read-only calendar and a calendar that can't take changes are refused;
     create, update and delete each undo (a deleted event comes back with its alerts) and each is in History; the AI

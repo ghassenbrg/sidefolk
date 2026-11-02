@@ -67,11 +67,17 @@ final class SurfacePanelController {
         if presentation == .overlay { startLife(model) }
     }
 
-    /// An overlay goes by itself when its time is up: nothing of an extension's stays on the desktop unattended.
+    /// An overlay goes by itself when a minute has passed since it was last touched: nothing of an extension's stays on
+    /// the desktop unattended.
     private func startLife(_ model: SurfaceModel) {
         expiry = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(SurfacePolicy.overlayLifetime))
-            guard !Task.isCancelled, let self, self.holder.model === model else { return }
+            while true {
+                let left = model.lastActive.addingTimeInterval(SurfacePolicy.overlayLifetime).timeIntervalSinceNow
+                guard left > 0 else { break }
+                try? await Task.sleep(for: .seconds(left))
+                guard !Task.isCancelled else { return }
+            }
+            guard let self, self.holder.model === model else { return }
             self.onExpired?(model, .timeout)
         }
     }

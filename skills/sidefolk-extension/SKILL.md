@@ -154,3 +154,9 @@ job truly needs it.
 - [ ] It has an icon, a description of at most 300 characters, a `tagline` of one line (at most 60 characters,
   shown under its name in Settings), and an author.
 - [ ] Nothing it sends leaves for an address the person didn't ask about.
+
+## Your own look: surfaces and scenes
+
+A panel or overlay beside the companion, drawn from data: images and sounds from your pack's `assets` folder, text, shapes,
+animations Sidefolk runs by itself, click areas, drags and keys that come back as typed moves. Declare `assets` and `surfaces` in
+the manifest and answer `sidefolk/surface.open`, `.move` and `.close`; the reference is docs/EXTENSIONS.md › Surfaces and scenes.

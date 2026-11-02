@@ -130,7 +130,7 @@ extension AppCoordinator {
     /// `surfaceClick:x,y` and `surfaceDrag:x,y:x,y` act on the panel's canvas (`overlay:` first for the overlay) through
     /// AppKit; `surfaceKey:<k>` presses a key; `surfaceMove:<area>[=value]` clicks an area by name (only if offered);
     /// `surfaceClose`, `surfaceFilm:<seconds>[:overlay]` writes frames, animations included, to `snapshots/film-…`,
-    /// `surfaceStats` logs layers and sizes.
+    /// `surfaceStats` logs layers and sizes, `surfaceExportSounds:<dir>` writes the app's sounds as WAV files.
     func devSurface(_ command: String) -> Bool {
         let parts = command.split(separator: ":", maxSplits: 1).map(String.init)
         guard let verb = parts.first, verb.hasPrefix("surface") else { return false }
@@ -176,6 +176,9 @@ extension AppCoordinator {
                 }
                 Log.shared.info("dev", "film written", ["dir": dir.path, "frames": "\(frame)"])
             }
+        case "surfaceExportSounds":
+            // The app's synthesized sounds as files, for a pack moving off their names (D101).
+            GameSounds.shared.export(to: URL(fileURLWithPath: argument))
         case "surfaceStats":
             Log.shared.info("dev", "surface", ["layers": "\(controller.model?.view.layerCount ?? 0)", "frame": "\(controller.frame)", "visible": "\(controller.isVisible)"])
         default: return false

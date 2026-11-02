@@ -36,14 +36,15 @@ Claude Code or Codex. You can also add any existing MCP server (see
 8. [Watchers](#watchers)
 9. [Pages](#pages)
 10. [Games](#games)
-11. [Speaking the person's language](#speaking-the-persons-language)
-12. [Testing locally](#testing-locally)
-13. [Installing, updating, removing](#installing-updating-removing)
-14. [Built-in extensions and the gallery](#built-in-extensions-and-the-gallery)
-15. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
-16. [Plain MCP servers](#plain-mcp-servers)
-17. [Troubleshooting](#troubleshooting)
-18. [Limits](#limits)
+11. [Surfaces and scenes](#surfaces-and-scenes)
+12. [Speaking the person's language](#speaking-the-persons-language)
+13. [Testing locally](#testing-locally)
+14. [Installing, updating, removing](#installing-updating-removing)
+15. [Built-in extensions and the gallery](#built-in-extensions-and-the-gallery)
+16. [Extensions Sidefolk writes for you](#extensions-sidefolk-writes-for-you)
+17. [Plain MCP servers](#plain-mcp-servers)
+18. [Troubleshooting](#troubleshooting)
+19. [Limits](#limits)
 
 ## Quick start
 
@@ -801,6 +802,217 @@ Playtime (sidefolk-addons `extensions/playtime`) is the example: its rules are p
 in the data folder so a game survives the program stopping while idle). A 0.1.0 snapshot from before games refuses a
 manifest with `games` at install (an unknown key), as with pages.
 
+## Surfaces and scenes
+
+A **surface** is a panel or an overlay beside the companion that Sidefolk frames for your extension (D99); a **scene** is
+what it shows: pictures from your own pack, text and shapes, with animations Sidefolk runs by itself, areas and keys that
+send you typed moves. It is the general form of the Play panel: anything you could draw as a board you can draw as a
+scene, in your own look, and it ships with your extension alone. The game channel below it keeps working until snapshot
+B (D101), then only this remains.
+
+A worked example is `samples/scene-sample/` (a shuffle of three pack images with a click to pick, a free drag and a grid
+drag, a keyboard, a coin flip overlay). To run it: `swift build --product ext-scene-sample`, copy its
+`sidefolk-extension.json`, `assets/` and `.build/debug/ext-scene-sample` as `bin/ext-scene-sample` into a folder, then in the
+debug app `swift scripts/dev.swift installFolder:<folder>` and `surface:dev.sample.scenes/shuffle`.
+
+### The manifest
+
+```json
+"assets": "assets",
+"surfaces": {
+  "board": { "title": "Find the star", "symbol": "star.fill", "width": 420, "height": 380,
+             "say": ["find the star"], "ai": true },
+  "coin":  { "title": "Flip a coin", "kind": "overlay", "width": 220, "height": 260 }
+}
+```
+
+- **`surfaces.<name>`**: `title` (1–40 characters, translated in `strings/` as `surfaces.<name>.title`), `symbol`, `kind`
+  (`panel`, the default, or `overlay`), `width` and `height`, the canvas you ask for: 120–720 × 120–676 points for a
+  panel, 120–460 × 120–420 for an overlay. A scene larger than this is cut to it; on a small screen Sidefolk scales the
+  canvas down and takes the scale off every point you hear back. `say`: sentences that open it, by the command rules,
+  no slots. `ai`: `true` lets the AI open it through `surfaces.open` (off by default).
+- **`assets`**: the name of one folder in your pack; everything in it must be a picture or a sound, or the validator
+  refuses the pack (`sidefolk ext validate` names each file).
+
+### Pack assets
+
+Scenes draw from your `assets` folder alone, by a path relative to it (`cups/red.png`). Nothing outside the pack can be
+named: no absolute paths, no `..`, no hidden files, no URLs, no links in the folder. Files are pinned with the install, and
+checked again each time one is loaded; if it changed, the node simply draws nothing.
+
+| | Allowed | Caps |
+|---|---|---|
+| Pictures | PNG, JPEG, WebP, HEIC; one still frame; the content must be what its name says | 4 MiB; 3000 px a side; 6 million pixels |
+| Sounds | WAV, AIFF, CAF, M4A; mono or stereo, up to 96 kHz | 2 MiB; 10 s |
+| All together | | 512 files; 48 MiB; at most 96 MiB decoded in memory at once (older pictures are dropped) |
+
+A picture that can't be decoded draws nothing; it never stops the surface. Give a picture another for the dark with
+`dark`, and draw it as a stencil in a theme colour with `tint`. Sounds are played at one fixed volume, at most four a
+second, only when the person's speaker in the frame is on (off by default), never in Quiet, over a fullscreen app, or
+with macOS's interface sounds off.
+
+### The channel
+
+| Request | You get | You answer |
+|---|---|---|
+| `sidefolk/surface.open` | `surface`, `language`, `arguments` (what opened it passed: up to twelve small plain values) | `{session, scene}` |
+| `sidefolk/surface.move` | `surface`, `session`, `move` | `{scene}` |
+| `sidefolk/surface.close` | `surface`, `session`, `reason` (`closed`, `timeout`, `finished`) | anything |
+
+The limits are the game channel's: an answer within 2 s and within 64 KB or the surface ends ("X didn't answer, so this
+closed"), at most 20 moves a second, and only for the one surface open in its place (one panel, one overlay). You can't
+push a scene: you answer moves, and `after_ms` asks Sidefolk to come back for the next (600 times in a row with nobody
+touching it, then it stops asking). You keep no clock. You aren't told the companion's name or anything about the person.
+Moves are not tool calls: anything that acts on the world stays a tool, behind Guard.
+
+**Moves** (Kit: `SurfaceMove`), each sent only if the scene on screen offered it:
+
+```json
+{"click": {"area": "pick", "value": "2", "ms": -40}}      // value and ms if the area has them; ms below 0 is before its moment
+{"drag":  {"area": "field", "mode": "cells",  "from": [0, 1], "to": [2, 3]}}
+{"drag":  {"area": "pin",   "mode": "points", "from": [40, 70], "to": [300, 110]}}
+{"key":   {"id": "hint", "char": "h", "ms": 120}}
+{"entry": {"id": "word", "text": "hello"}}
+{"timer": "round"}   {"next": true}   {"back": true}
+```
+
+### A scene
+
+```json
+{ "size": [400, 340], "title": "Round 2", "back": true, "background": "surface_sunken",
+  "styles": { "cell": { "type": "shape", "fill": "surface_raised", "w": 40, "h": 40 } },
+  "nodes": [ … ], "animations": [ … ], "keys": [ … ], "timers": [ {"id": "round", "ms": 15000} ],
+  "react": {"move": "think"}, "after_ms": 900, "input_after_ms": 200, "transition_ms": 160,
+  "mirror": true, "announce": "Your turn", "over": true, "outcome": "win", "tally": [7, 6],
+  "close": true, "close_after_ms": 2500 }
+```
+
+Everything but `nodes` may be left out. In the Kit: `Scene(width:height:) { … }.animating(…).key(…).timer(…).title(…)`.
+
+- **`title`** is the frame's first line (your surface's title otherwise). **`back`** shows the frame's Back (⌘[), which sends
+  `{back: true}`; ✕, Esc and ⌘W are always the frame's and put the surface away, kept ten minutes.
+- **`styles`** are keys a node takes with `"style": "cell"` (its own keys win), to keep a large board under 64 KB. A 9 × 9 board
+  with pencil notes in every cell, built with the Kit, fits.
+- **`after_ms`** (100–10000), **`input_after_ms`** (no moves for so long), **`transition_ms`** (a node that changed since the last
+  scene eases to its new place, up to 1000), **`announce`** (what VoiceOver hears), **`mirror`** (false: never mirrored).
+- **`over`** says it ended; Sidefolk stops its clocks and writes its one Activity row in its own words. `outcome` (`win`,
+  `loss`, `draw`) and `tally` (two numbers) are what it may say. **`close`** puts the surface away, after `close_after_ms` (at
+  most 30 s). An overlay goes by itself a minute after it was last touched.
+- A value that is off is dropped, a node of a type this version doesn't know is skipped, and each drop is logged for you
+  (`surfaces` in the log). Going past a cap below refuses the whole scene.
+
+### Nodes
+
+Every node: `id` (give one to anything you animate or that should stay the same layer across scenes; otherwise its place in
+the tree names it), `x`, `y`, `w`, `h` (its box in its parent, from the top left), `anchor` ([0.5, 0.5]: what scale and rotation
+act around), `scale`, `sx`, `sy`, `rotate` (degrees), `opacity`, `z` (order among siblings), `clip`, `corner`, `shadow`
+({color, radius, dx, dy}), `children`, `ltr`, `label`, `area`.
+
+| `type` | Keys | Kit |
+|---|---|---|
+| `group` | `children`; with no size it is its parent's | `Node.group { }` |
+| `image` | `image`, `dark`, `fit` (`contain`, `cover`, `fill`), `tint` | `Node.image("a.png")` |
+| `text` | `text`, `size`, `weight`, `design` (`default`, `rounded`, `serif`, `mono`), `color`, `align`, `valign`, `lines`, `min_scale` (shrinks to fit its box) | `Node.text("Hi", size: 17)` |
+| `shape` | `shape` (`rect`, `ellipse`, `capsule`, `path`), `path` (`M x y`, `L x y`, `Q cx cy x y`, `C a b c d x y`, `Z`), `fill`, `gradient` ({colors, from, to}), `stroke`, `line_width`, `dash`, `corner` | `Node.rect(fill: .accent, corner: 12)` |
+| `symbol` | `name` (an SF Symbol), `color` | `Node.symbol("star.fill")` |
+| `flip` | `front`, `back` (nodes), `showing`, `axis` (`y`, `x`); the `flip` value turns it in half turns | `Node.flip(front:back:)` |
+| `row`, `column` | `items`, `gap`, `align`, `pack`; each item needs a size | `Node.row(gap: 4) { }` |
+| `grid` | `columns`, `cell` [w, h], `gap`, `items`; an item with no size takes the cell's | `Node.grid(columns:cell:) { }` |
+| `keyset` | `name`, `rows` of {`key`, `label`, `spoken`, `typed`, `fill`, `ink`, `w`, `faded`, `disabled`, `no_key`}, `key` [w, h], `gap`, `corner`, `size`, `fill`, `ink`, `lip`, `lip_color`, `sound` | `Node.keyset(name:rows:)` |
+| `companion` | `pose` (`idle`, `listening`, `thinking`, `waiting`, `success`, `alert`, `celebrating`) | `Node.companion(pose:)` |
+| `person` | | `Node.person()` |
+| `entry` | `name`, `placeholder`, `max` (up to 120), `locked`, `size` | `Node.entry(name:)` |
+| `clock` | `seconds`, `running`, `down`, and a text's style | `Node.clock(seconds:)` |
+
+- **Colours:** by the theme's name, which follow the person's theme and dark mode: `ink`, `ink_muted`, `ink_faint`, `surface`,
+  `surface_sunken`, `surface_raised`, `line`, `well`, `accent`, `on_accent`, `accent_soft`, `link`, `info`, `success`,
+  `success_soft`, `warning`, `warning_soft`, `clear`; the verdicts, what a result means for the person: `win`, `loss` (a calm
+  tone, never red), `draw`; or plain, `#RRGGBB`, `#RRGGBBAA`, `{"light": "#…", "dark": "#…"}`. Never say a result with colour
+  alone (D78): a symbol or a word goes with it.
+- **The person's companion and the person** are nodes you can place, up to four in a scene, and never read: Sidefolk draws
+  them, and nothing about them comes back to you. `{companion}` in a text is its name, filled in when it is drawn.
+- **A keyset** lays out centred rows of caps, each an area and its key: a press, on screen or on the keyboard, is
+  `{click: {area: <name>, value: <key>}}`. `typed` is the keyboard's key when it differs (`return`, `delete`).
+- **Right to left:** in Arabic each box is measured from the far side, with its animations, text alignment and rotations; a
+  column or a dragged point comes back to you in your own terms. `ltr` keeps a node's contents as they are (a picture, a
+  puzzle, a word's tiles), and `"mirror": false` the whole scene.
+- **Limits:** 1500 nodes, 16 deep, 400 pictures of 64 different files, 400 areas, 160 keys, 8 timers, 2 entries, 4 clocks,
+  24,000 characters (400 a text), 240 path commands; coordinates within ±4000.
+
+### Areas and keys
+
+`"area": {"id": "pick", "value": "2", "label": "Tile 2", "key": "2", "hover": {"scale": 1.03}, "press": {"dy": 2}, "highlight": ["a", "b"],
+"sound": "tick.wav", "always": true, "disabled": false, "timed_from_ms": 2300, "seat": false, "selected": false,
+"drag": {"mode": "grid", "rows": 4, "columns": 8, "ghost": "preview"}}`
+
+- **`label` is required**: it is what VoiceOver reads and presses, and an area without one isn't offered. Text nodes are read
+  as they are; give anything else that means something a `label`.
+- **`hover`** and **`press`** (`scale`, `dx`, `dy`, `opacity`) are drawn at once by Sidefolk; `highlight` names other nodes that take
+  `hover` too (the sticks that would go). **`sound`** plays on the press itself. **`selected`** tells VoiceOver.
+- **`always`** works while an animation holds moves (the companion clicked mid-shuffle).
+- **`timed_from_ms`** is a moment of the scene from which the press is timed, from the input event's own time: the move carries
+  `ms`, below 0 before it. Show the signal with an animation delayed to the same moment and you have a reflex test, with no
+  clock of yours and no stream.
+- **`drag`**: `grid` reports cells and stretches `ghost` from the first to the one under the pointer; `free` reports canvas points and
+  moves `ghost` with it. A click without moving is a drag from a cell to itself. Neither waits for you while it goes.
+
+`"keys": [{"key": "h", "id": "hint"}, {"key": "letter", "id": "type"}, {"key": "digit", "id": "num"}, {"key": "a", "id": "left", "seat": true, "timed_from_ms": 2300}]`
+
+A key is a letter, a digit or `?` as the person's keyboard types it (an Arabic letter, é), a name (`return`, `space`, `delete`, `left`, `right`,
+`up`, `down`, `escape`), or a class (`letter`, `digit`: the move carries it). `seat` goes by where the key sits on a US keyboard,
+whatever the layout (two players' sides). With `area` it presses that area, with its look and sound. Keys reach you only
+while the surface has the keyboard, which it takes only when the person opened it; the AI's waits for a click, and an overlay
+never takes it. Command keys never reach you, and Esc only if you name it, and pressed twice it closes anyway.
+
+### Animations
+
+Sidefolk runs them, so nothing is streamed; at rest a surface runs nothing at all. A scene can't animate for ever: at most 40
+repeats and 120 seconds a timeline.
+
+```json
+"animations": [
+  {"id": "round", "essential": true, "blocks_input": true, "sequence": [
+     {"wait_ms": 900},
+     {"sound": "whoosh.wav"},
+     {"together": [{"target": "a", "to": {"flip": 1}, "ms": 360}, {"target": "b", "to": {"flip": 1}, "ms": 360}]},
+     {"target": "a", "keys": [{"t": 0, "x": 14, "z": 2}, {"t": 0.5, "x": 80, "y": 105, "scale": 1.1}, {"t": 1, "x": 140, "z": 0}], "ms": 360},
+     {"react": {"move": "cheer"}, "announce": "Ready"}
+  ]},
+  {"stagger": {"targets": ["t0", "t1", "t2"], "step_ms": 140}, "to": {"flip": 1}, "ms": 340},
+  {"target": "die", "frames": ["d3.png", "d1.png", "d6.png"], "frame_ms": 70},
+  {"target": "ball", "to": {"y": 40}, "ms": 200, "repeat": 3, "autoreverse": true, "ease": "out", "delay_ms": 100}
+]
+```
+
+- **A step** names a `target` and goes `to` values, or through `keys` (each with `t` from 0 to 1), in `ms`: `x`, `y`, `scale`, `sx`, `sy`,
+  `rotate`, `opacity`, `flip` (half turns: 11 lands on the back), `z`. It starts from wherever the last step left it. `ease`: `linear`,
+  `in`, `out`, `in_out`, `spring`. `delay_ms`, `repeat`, `autoreverse`.
+- **Groups:** `sequence`, `together`, `stagger`, with `wait_ms`. **`frames`** swaps a picture from the pack, the last one staying.
+- **Events** at a point in a sequence: `sound`, `react`, `announce`.
+- **`id`** makes a top-level item its own run: the next scene sending it unchanged carries on rather than starting again, so a
+  move during a shuffle doesn't restart it. Without one it plays anew with its scene.
+- **`blocks_input`** holds moves until it has played, except `always`.
+- **Reduce Motion:** a step simply isn't played, and the end shows at once; what blocked moves lets go. **`essential`** keeps a step
+  moving when it is the point (a shuffle). Your scene's final state is always what the animation ends on, so nothing depends on it.
+- **Companion reactions** (`react`, `{move, effect, prop, look}`): `move` from the fixed list (`think`, `cheer`, `celebrate`, `sulk`, `bow`, `nod`,
+  `shrug`, `giggle`, `wince`, `gasp`, `tease`, `sweat`, `dizzy`, `ready`, `shuffle`, `hop`, `spin`, `wave`, `dance`, `accent:wave`, `accent:hop`,
+  `accent:spin`, `accent:bow`, `pump`, `flick`, `roll`), `effect` (`confetti`, `sparkles`, `hearts`, `question`, `exclaim`, `sweat`, `stars`, `frost`, `flame`),
+  `prop` (`hat`, `crown`, `magnifier`, `cards`, `sealed_card`, `gem`, `none`, `balloons(n)`), `look` (`panel`, `you`, `away`). Paced as cues are, only while
+  the surface is on screen. **There are no words:** an extension's words appear only inside its own surface, and the
+  companion never says them, on the desktop or aloud.
+
+The steps a reader needs for a shuffle are in the Kit as `Anim.swap`, and the whole of the above as `Anim.to`, `.move`, `.scale`, `.fade`,
+`.rotate`, `.flip`, `.keys`, `.frames`, `.sequence`, `.together`, `.stagger`, `.wait`, `.sound`, `.react`, `.announce`, with `.delay`, `.repeating`, `.essential`,
+`.blocksInput` and `.named`.
+
+### What the frame is for
+
+Sidefolk always frames a surface: a panel has a header with your icon, the title and your name, Back when you asked for it, the
+speaker if your pack has sounds, and ✕; an overlay has a small chip with your icon, your name and ✕ under its canvas. You draw only
+inside. A surface stands below Sidefolk's own panels and cards in the window order and keeps clear of them; while an approval
+waits, it dims and takes nothing, so it can't catch a press meant for the card. It goes with your extension: turned off or removed,
+it is closed at once. See SECURITY T40.
+
 ## Speaking the person's language
 
 Sidefolk speaks ten languages (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`), and so can your
@@ -1062,6 +1274,8 @@ Settings › Add-ons › Add MCP Server… takes a name, a command and its argum
 | Pictures (palettes, list rows, heroes, tiles) | a PNG or JPEG in the data folder: 4 MB a row, 25 MB a preview |
 | Nudges | one every 20 seconds, with `permissions.power` |
 | Languages | `strings/<language>.json`: 256 KiB each, 2,000 texts; translated words up to half as long again as the manifest's |
+| Surfaces | 16 per extension; canvas up to 720 × 676 (an overlay 460 × 420); 64 KB a scene; 2 s a reply; 20 moves a second; 1500 nodes (above) |
+| Pack assets | 512 files, 48 MiB; a picture 4 MiB, 3000 px a side, 6 million pixels; a sound 2 MiB, 10 s |
 | Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart; one primary button; a hero's 4 facts and 3 actions; a transport's 5 buttons; 6 cards, 24 tiles or rows a choice |
 | Watcher summary / state | 200 characters / 64 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |

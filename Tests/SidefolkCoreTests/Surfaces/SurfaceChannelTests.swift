@@ -195,6 +195,9 @@ struct SurfaceChannelTests {
         await #expect(throws: (any Error).self) { try await tool.run(["surface": .string("\(info.id)/quiet")], context: ToolContext(caller: .agent(runId: "r"), now: Date())) }
         await #expect(throws: (any Error).self) { try await tool.run(["surface": "dev.nope.x/y"], context: ToolContext(caller: .user, now: Date())) }
 
+        let args = SurfacesOpenTool.arguments(["topic": "cups\u{202E}", "count": 3, "on": true, "nested": ["x": 1], "BAD KEY": "y"])
+        #expect(args == ["topic": "cups", "count": 3, "on": true], "small plain values only, cleaned: \(args)")
+
         let parser = IntentParser(when: WhenParser(), surfaces: h.host.surfaceShelf.all)
         #expect(parser.surface("open the board")?.intent == .surface(id: "\(info.id)/board"))
         #expect(parser.surface("open the moon") == nil)

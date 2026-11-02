@@ -47,6 +47,10 @@
 //   swift scripts/dev.swift game:dev.sidefolk.playtime/which_cup | move:{"cell":[0,1]} | key:1 | closeGame | playMenu   (D75, D79)
 //                           | cue:sulk | cue:tease | cue:accent:wave   (a game cue's move, as an open game's board plays it)
 //   swift scripts/dev.swift drag:0,0,1,2   (a puzzle's plot dragged corner to corner, cell by cell, then let go)
+//   swift scripts/dev.swift surface:<extension>/<surface> | surfaceFocus:<extension>/<surface>   (D99: as the AI, waiting for a click; as the person)
+//                           | surfaceClick:[overlay:]x,y | surfaceDrag:[overlay:]x,y:x,y | surfaceKey:<k> | surfaceMove:<area>[=value]
+//                           | surfaceClose | surfaceFilm:[overlay:]<seconds> (frames, animations included, in snapshots/film-…) | surfaceStats
+//                           | surfaceExportSounds:<dir> (the app's sounds as WAV files, for a pack)
 //   swift scripts/dev.swift askTab:play   (Ask open, then its Play tab: the Play panel's menu of games)
 //   swift scripts/dev.swift click:companion | click:200,300   (a mouse click on the companion in the Play panel's scene,
 //                           Which Cup?'s paw, or at a point of the panel from its top left)
