@@ -140,5 +140,7 @@ struct SurfacePolicyTests {
         #expect(SurfacePolicy.match("return", seat: nil, in: scene)?.id == "go")
         #expect(SurfacePolicy.match("space", seat: nil, in: scene) == nil)
         #expect(SurfacePolicy.match("ش", seat: "a", in: scene)?.id == "left", "a seat goes by where the key sits, on any layout")
+        #expect(SurfaceMove.key(id: "left", character: "ش", ms: 12).offered(by: scene), "and what that key types on this layout doesn't turn its move away")
+        #expect(!SurfaceMove.key(id: "hint", character: "ش", ms: nil).offered(by: scene), "a key by what it types still has to type it")
     }
 }

@@ -54,8 +54,16 @@ final class SceneLayers {
     func apply(_ node: SceneNode, in view: SceneView) {
         self.node = node
         let w = CGFloat(node.width), h = CGFloat(node.height)
-        main.bounds = CGRect(x: 0, y: 0, width: w, height: h)
-        main.anchorPoint = CGPoint(x: node.anchorX, y: node.anchorY)
+        if main.bounds.size != CGSize(width: w, height: h) || main.anchorPoint != CGPoint(x: node.anchorX, y: node.anchorY) {
+            // A new size shows at once, its top left where it was: only where it goes eases, or a box changing size would swing about its middle.
+            let left = main.position.x - main.bounds.width * main.anchorPoint.x, top = main.position.y - main.bounds.height * main.anchorPoint.y
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            main.bounds = CGRect(x: 0, y: 0, width: w, height: h)
+            main.anchorPoint = CGPoint(x: node.anchorX, y: node.anchorY)
+            main.position = CGPoint(x: left + w * node.anchorX, y: top + h * node.anchorY)
+            CATransaction.commit()
+        }
         main.zPosition = node.z
         main.masksToBounds = node.clips
         main.cornerRadius = node.isShape ? 0 : node.corner

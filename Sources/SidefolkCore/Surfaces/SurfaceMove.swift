@@ -75,7 +75,8 @@ public enum SurfaceMove: Sendable, Hashable {
             return scene.keys.contains { k in
                 guard k.id == id, k.area == nil, inputOpen || k.always else { return false }
                 return switch k.match {
-                case .character(let c): character == nil || character == c
+                // A seat goes by where the key sits: on another layout the same key types something else.
+                case .character(let c): k.bySeat || character == nil || character == c
                 case .named: character == nil
                 case .anyLetter: character?.first?.isLetter == true
                 case .anyDigit: character?.first?.isNumber == true
