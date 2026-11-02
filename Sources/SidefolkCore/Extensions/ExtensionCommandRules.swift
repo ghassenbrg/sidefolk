@@ -172,9 +172,10 @@ enum ExtensionCommandRules {
             return [ValidationIssue(field: field, message: "isn't a phrase Sidefolk can read: 1–\(CommandSentence.maxLength) characters, slots like {level:level}.")]
         }
         let words = phrase.replacingOccurrences(of: #"\{[^}]*\}"#, with: "", options: .regularExpression)
-        let hasWords = words.range(of: #"\p{L}"#, options: .regularExpression) != nil
+        // A mark will do ("+{n:integer}"): what matters is that it has something to be found by besides a slot that takes any number or word.
+        let hasWords = words.range(of: #"[\p{L}\p{S}\p{P}]"#, options: .regularExpression) != nil
         if !hasWords, compiled.slots.contains(where: { $0.vocabulary == nil }) {
-            return [ValidationIssue(field: field, message: "needs a word of its own beside a slot that isn't an enum or a list, like “about {topic:text}”.")]
+            return [ValidationIssue(field: field, message: "needs a word or mark of its own beside a slot that isn't an enum or a list, like “about {topic:text}”.")]
         }
         return []
     }

@@ -203,6 +203,8 @@ final class ExtensionPageModel {
     /// The extension's settings and its use of the AI, as the host keeps them (D100).
     var settingRows: [ExtensionSettingRow] = []
     var aiStatus: ExtensionAIStatus?
+    /// Its own words for what Sidefolk's switch does are believed only then (D98).
+    var signedBySidefolk = false
     /// Pictures from nothing behind them, for UI snapshots.
     var samplePicture: (@MainActor (PagePicture) -> NSImage?)?
     private var pictureCache: [String: NSImage] = [:]
@@ -264,6 +266,7 @@ final class ExtensionPageModel {
         guard let details = await services?.runtime.extensions.info(id: info.extensionId) else { return }
         settingRows = details.settings
         aiStatus = details.ai
+        signedBySidefolk = details.origin?.firstParty == true
     }
 
     /// A setting's row changed: through the same tool as any change to it, then the page again, which may depend on it.
@@ -296,7 +299,8 @@ final class ExtensionPageModel {
             made = await ExtensionPictures.load(name, in: folder, pixels: side, limit: ExtensionDataFile.thumbnailLimit)
         case .companion(let figure):
             guard let s = services?.runtime.settings.current else { return nil }
-            made = figure == .face ? CompanionArt.avatar(for: s, side: CGFloat(side)) : CompanionArt.portrait(for: s, state: .listening, side: CGFloat(side))
+            // Whole, cut to what is drawn: a figure's blank margins would make it stand small and off its ground.
+            made = figure == .face ? CompanionArt.avatar(for: s, side: CGFloat(side)) : SceneFigures.trim(CompanionArt.portrait(for: s, state: .listening, side: CGFloat(side)))
         case .person:
             made = AccountPicture.current
         }

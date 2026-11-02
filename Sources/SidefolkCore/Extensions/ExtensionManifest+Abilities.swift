@@ -43,11 +43,14 @@ extension ExtensionManifest {
         public var listed: Bool
         /// Another setting this one reads until it has a value of its own; a change to that one clears the value (one choice for all, and a change for one thing).
         public var follows: String?
+        /// A choice of a few short options, all shown side by side rather than behind a menu (D101).
+        public var segmented: Bool
 
         public static let longestText = 500
 
         public init(key: String, type: Kind, title: String, detail: String? = nil, options: [Option] = [], minimum: Double? = nil,
-                    maximum: Double? = nil, step: Double? = nil, length: Int? = nil, default: JSONValue? = nil, listed: Bool = true, follows: String? = nil) {
+                    maximum: Double? = nil, step: Double? = nil, length: Int? = nil, default: JSONValue? = nil, listed: Bool = true, follows: String? = nil, segmented: Bool = false) {
+            self.segmented = segmented
             self.listed = listed
             self.follows = follows
             self.key = key
@@ -63,7 +66,7 @@ extension ExtensionManifest {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["key", "type", "title", "detail", "options", "minimum", "maximum", "step", "length", "default", "listed", "follows"])
+            try decoder.rejectUnknownKeys(["key", "type", "title", "detail", "options", "minimum", "maximum", "step", "length", "default", "listed", "follows", "segmented"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             key = try c.decode(String.self, forKey: "key")
             type = try c.decode(Kind.self, forKey: "type")
@@ -77,6 +80,7 @@ extension ExtensionManifest {
             self.default = try c.decodeIfPresent(JSONValue.self, forKey: "default")
             listed = try c.decodeIfPresent(Bool.self, forKey: "listed") ?? true
             follows = try c.decodeIfPresent(String.self, forKey: "follows")
+            segmented = try c.decodeIfPresent(Bool.self, forKey: "segmented") ?? false
         }
 
         /// What it holds until the person changes it.

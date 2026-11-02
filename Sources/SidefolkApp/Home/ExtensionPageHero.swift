@@ -17,6 +17,28 @@ struct PageButton: View {
     @State private var running = false
 
     var body: some View {
+        if control.round { roundButton } else { framedButton }
+    }
+
+    /// Its symbol in a circle, for a card whose whole point is this one action.
+    private var roundButton: some View {
+        Button {
+            running = true
+            Task {
+                await model.run(control, on: nil)
+                running = false
+            }
+        } label: {
+            Image(systemName: control.symbol.map { $0.replacingOccurrences(of: ".fill", with: "") + ".circle.fill" } ?? "circle.fill")
+                .font(.system(size: 26)).foregroundStyle(Theme.accent)
+        }
+        .buttonStyle(.plain)
+        .disabled(running || control.disabled)
+        .help(control.detail.map { Text(ext: $0) } ?? Text(ext: control.label))
+        .accessibilityLabel(Text(ext: control.label))
+    }
+
+    private var framedButton: some View {
         Button {
             running = true
             Task {
@@ -33,14 +55,14 @@ struct PageButton: View {
                 Text(ext: control.label)
             }
         }
-        .buttonStyle(.sf(kind, compact: !large && control.style != .primary, large: large))
+        .buttonStyle(.sf(kind, compact: !large && control.style != .primary && control.style != .accent, large: large))
         .disabled(running || control.disabled)
         .help(control.detail.map { Text(ext: $0) } ?? Text(ext: control.label))
     }
 
     private var kind: SFButtonStyle.Kind {
         switch control.style ?? .secondary {
-        case .primary: .primary
+        case .primary, .accent: .primary
         case .secondary: .secondary
         case .destructive: leads ? .danger : .destructive
         case .plain: .quiet

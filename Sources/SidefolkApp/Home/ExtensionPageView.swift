@@ -207,6 +207,8 @@ struct SectionView: View {
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityValue(open ? Text("Unfolded", comment: "Spoken state of a section of an extension page that folds: open now")
                                          : Text("Folded", comment: "Spoken state of a section of an extension page that folds: closed now"))
+            } else if let banner = section.banner, let title = section.title {
+                banded(title, banner)
             } else if section.title != nil || hasCharts {
                 HStack {
                     if let picture = section.picture {
@@ -220,6 +222,26 @@ struct SectionView: View {
             }
             if open { content }
         }
+    }
+
+    /// Its title on a band in the extension's colour, with its picture or a symbol at the start.
+    private func banded(_ title: String, _ banner: ExtensionPage.Section.Banner) -> some View {
+        let tint = Color(extensionHex: banner.tint) ?? Theme.accent
+        return HStack(spacing: 8) {
+            if let picture = section.picture {
+                PagePictureView(picture: picture, model: model, side: 48).frame(width: 24, height: 24).clipShape(Circle())
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+            } else if let symbol = banner.symbol {
+                Image(systemName: symbol).font(.system(size: 15, weight: .bold)).foregroundStyle(tint).frame(width: 24, height: 24)
+            }
+            Text(ext: title).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink).lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surfaceRaised)
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(0.16))))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(tint.opacity(0.35), lineWidth: 1))
+        .accessibilityAddTraits(.isHeader)
     }
 
     /// A section that folds is open once the person opened it, or when the extension doesn't fold it.

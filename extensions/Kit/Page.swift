@@ -69,8 +69,15 @@ public struct Section {
     public var collapsed: Bool?
     /// A small picture beside its title.
     public var picture: Picture?
+    /// Its title on a band tinted this colour (`#RRGGBB`), beside its picture or a symbol.
+    public var banner: (tint: String, symbol: String?)?
+    /// Across the page, however little it holds, rather than beside its neighbours.
+    public var wide: Bool
 
-    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil, picture: Picture? = nil) {
+    public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil, picture: Picture? = nil,
+                banner: (tint: String, symbol: String?)? = nil, wide: Bool = false) {
+        self.banner = banner
+        self.wide = wide
         self.picture = picture
         self.title = title
         self.detail = detail
@@ -86,6 +93,12 @@ public struct Section {
         if place != .main { out["place"] = place.rawValue }
         if let collapsed { out["collapsed"] = collapsed }
         if let picture { out["picture"] = picture.json }
+        if let banner {
+            var band: [String: Any] = ["tint": banner.tint]
+            if let symbol = banner.symbol { band["symbol"] = symbol }
+            out["banner"] = band
+        }
+        if wide { out["wide"] = true }
         return out
     }
 }
@@ -167,7 +180,8 @@ public enum Block {
     case recent(_ title: String? = nil, [RecentItem])
     /// The extension's own settings, as the host keeps and draws them: the manifest's `settings`, these `keys` or all of them, and
     /// with `ai` the person's switch for its use of the AI (D100).
-    case settings(_ title: String? = nil, keys: [String] = [], ai: Bool = false)
+    /// `aiTitle` and `aiDetail`: your words for the AI switch, believed only of packs Sidefolk signed. `grid`: each in a small card of its own with its picture from `pictures`.
+    case settings(_ title: String? = nil, keys: [String] = [], ai: Bool = false, aiTitle: String? = nil, aiDetail: String? = nil, grid: Bool = false, pictures: [String: Picture] = [:])
 
     var json: [String: Any] {
         switch self {
@@ -224,9 +238,13 @@ public enum Block {
             var out: [String: Any] = ["type": "recent", "items": items.map(\.json)]
             if let title { out["title"] = title }
             return out
-        case .settings(let title, let keys, let ai):
+        case .settings(let title, let keys, let ai, let aiTitle, let aiDetail, let grid, let pictures):
             var out: [String: Any] = ["type": "settings", "keys": keys, "ai": ai]
             if let title { out["title"] = title }
+            if let aiTitle { out["ai_title"] = aiTitle }
+            if let aiDetail { out["ai_detail"] = aiDetail }
+            if grid { out["grid"] = true }
+            if !pictures.isEmpty { out["pictures"] = pictures.mapValues(\.json) }
             return out
         case .action(let action):
             return action.json
@@ -239,6 +257,8 @@ public enum Block {
 /// `primary` is the page's one main action (Sidefolk keeps only the first filled); `plain` is quiet text for what's
 /// rarely needed ("Look again", "Forget").
 public enum ButtonStyle: String {
+    /// Filled like the primary, for what stands out where it is, without being what the page is for.
+    case accent
     case primary, secondary, destructive, plain
 }
 
@@ -256,9 +276,12 @@ public struct Action {
     public var symbol: String?
     public var detail: String?
     public var disabled: Bool
+    /// Drawn as its symbol in a filled circle.
+    public var round: Bool
 
     public init(_ label: String, tool: String, input: [String: Any] = [:], style: ButtonStyle = .secondary, symbol: String? = nil,
-                detail: String? = nil, disabled: Bool = false) {
+                detail: String? = nil, disabled: Bool = false, round: Bool = false) {
+        self.round = round
         self.label = label
         self.tool = tool
         self.input = input
@@ -273,6 +296,7 @@ public struct Action {
         if let symbol { out["symbol"] = symbol }
         if let detail { out["detail"] = detail }
         if disabled { out["disabled"] = true }
+        if round { out["shape"] = "round" }
         return out
     }
 }
@@ -340,6 +364,10 @@ public struct Hero {
     /// A figure at its trailing end, `.companion(.full)` the person's own, with `says` in a bubble beside it, inside this page.
     public var figure: Picture?
     public var says: String?
+    /// `#RRGGBB`, one or two: the symbol's tile as a gradient, its symbol in white.
+    public var tile: [String] = []
+    /// `#RRGGBB`, one or two: a soft wash over the whole card.
+    public var wash: [String] = []
 
     public init(_ title: String, eyebrow: String? = nil, detail: String? = nil, tone: Tone = .neutral, symbol: String? = nil, code: String? = nil,
                 image: String? = nil, busy: Bool = false, facts: [(String, String)] = [], actions: [Action] = [], scene: Picture? = nil,
@@ -362,6 +390,8 @@ public struct Hero {
     var json: [String: Any] {
         var out: [String: Any] = ["type": "hero", "title": title, "tone": tone.rawValue, "busy": busy,
                                   "facts": facts.map { ["label": $0.0, "value": $0.1] }, "actions": actions.map(\.json)]
+        if !tile.isEmpty { out["tile"] = tile }
+        if !wash.isEmpty { out["wash"] = wash }
         if let eyebrow { out["eyebrow"] = eyebrow }
         if let detail { out["detail"] = detail }
         if let symbol { out["symbol"] = symbol }

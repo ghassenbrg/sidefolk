@@ -129,6 +129,13 @@ public func L(_ key: String, _ values: [String: Any] = [:]) -> String {
     return fill(text, values)
 }
 
+/// `english` where the same English means something else elsewhere in your program ("Solved" a puzzle, "Solved" a riddle): a language may need two words for it.
+/// Its key in `strings/` is `context|english`; `extension-strings.py sync` writes it, reading as `english`.
+public func L(_ english: String, context: String, _ values: [String: Any] = [:]) -> String {
+    let key = context + "|" + english
+    return fill(Language.word(key) ?? english, values)
+}
+
 /// A count of something, in the language's plural form: `one` and `other` are the English (`other` is the key the
 /// translations use), `{count}` the number in the language's digits.
 public func L(one: String, other: String, count: Int, _ values: [String: Any] = [:]) -> String {

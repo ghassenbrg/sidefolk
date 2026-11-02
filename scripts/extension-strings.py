@@ -5,7 +5,7 @@
   scripts/extension-strings.py status <extension folder>…   what each language still needs
   scripts/extension-strings.py check <extension folder>…    exit 1 unless every language has everything
 
-`sync` reads the sources (Sources/**/*.swift with the Kit's `L("…")` and `L(one: "…", other: "…", count:)`, or
+`sync` reads the sources (Sources/**/*.swift with the Kit's `L("…")`, `L("…", context: "…")` and `L(one: "…", other: "…", count:)`, or
 *.py / *.js calling `L("…")`) and rewrites `text` in strings/en.json: new keys added, keys no longer used dropped from
 every language. `check` wants, in each of the nine other languages, every `text` key, and a translation of each word
 the manifest shows people (name, tagline, description, tool, watcher, page, palette titles, the network's purpose, examples and tool summaries).
@@ -18,7 +18,8 @@ from pathlib import Path
 
 LANGUAGES = ["fr", "es", "de", "it", "pt-BR", "ja", "ko", "zh-Hans", "ar"]
 STRING = r'"((?:[^"\\\n]|\\.)*)"'
-PLAIN = re.compile(r'\bL\(\s*' + STRING)
+PLAIN = re.compile(r'\bL\(\s*' + STRING + r'(?!\s*,\s*context:)')
+CONTEXT = re.compile(r'\bL\(\s*' + STRING + r'\s*,\s*context:\s*' + STRING)
 PLURAL = re.compile(r'\bL\(\s*one:\s*' + STRING + r'\s*,\s*other:\s*' + STRING)
 
 
@@ -40,6 +41,9 @@ def used(folder):
         for m in PLAIN.finditer(text):
             key = unescape(m.group(1), path)
             out.setdefault(key, key)
+        for m in CONTEXT.finditer(text):
+            english = unescape(m.group(1), path)
+            out[unescape(m.group(2), path) + "|" + english] = english
     return out
 
 

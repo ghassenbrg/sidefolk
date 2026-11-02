@@ -65,9 +65,11 @@ extension ExtensionHost {
         let w = words(rt), values = rt.preferences.resolved(m.settings)
         return m.settings.map { s in
             let own = w?.settings[s.key]
-            return ExtensionSettingRow(extensionId: rt.record.id, key: s.key, type: s.type, title: own?.title ?? s.title, detail: own?.detail ?? s.detail,
-                                       options: s.options.map { .init(value: $0.value, title: own?.options[$0.value] ?? $0.title) },
-                                       minimum: s.minimum, maximum: s.maximum, step: s.step, length: s.length ?? 200, value: values[s.key] ?? s.fallback, listed: s.listed)
+            var row = ExtensionSettingRow(extensionId: rt.record.id, key: s.key, type: s.type, title: own?.title ?? s.title, detail: own?.detail ?? s.detail,
+                                          options: s.options.map { .init(value: $0.value, title: own?.options[$0.value] ?? $0.title) },
+                                          minimum: s.minimum, maximum: s.maximum, step: s.step, length: s.length ?? 200, value: values[s.key] ?? s.fallback, listed: s.listed)
+            row.segmented = s.segmented
+            return row
         }
     }
 

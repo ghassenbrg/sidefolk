@@ -29,8 +29,11 @@ public struct StatItem {
     public var value: String
     public var symbol: String?
     public var tone: Tone
+    /// `#RRGGBB` for its symbol, where a tone would say something it doesn't mean.
+    public var color: String?
 
-    public init(_ label: String, _ value: String, symbol: String? = nil, tone: Tone = .neutral) {
+    public init(_ label: String, _ value: String, symbol: String? = nil, tone: Tone = .neutral, color: String? = nil) {
+        self.color = color
         self.label = label
         self.value = value
         self.symbol = symbol
@@ -40,6 +43,7 @@ public struct StatItem {
     var json: [String: Any] {
         var out: [String: Any] = ["label": label, "value": value, "tone": tone.rawValue]
         if let symbol { out["symbol"] = symbol }
+        if let color { out["color"] = color }
         return out
     }
 }

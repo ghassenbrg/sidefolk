@@ -50,6 +50,15 @@ public struct ExtensionPage: Sendable, Hashable {
         public var collapsed: Bool?
         /// A small picture beside its title (D100): the person's companion beside "Play against …", say.
         public var picture: PagePicture?
+        /// Its title on a band tinted this colour, beside its picture or a symbol (D101).
+        public var banner: Banner?
+        /// Across the page, however little it holds, rather than beside its neighbours (D101).
+        public var wide = false
+
+        public struct Banner: Sendable, Hashable {
+            public var tint: String
+            public var symbol: String?
+        }
 
         public init(title: String? = nil, blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil, picture: PagePicture? = nil) {
             self.picture = picture
@@ -134,6 +143,10 @@ public struct ExtensionPage: Sendable, Hashable {
         /// A figure standing at its trailing end, with `says` beside it in a bubble inside this page (D100).
         public var figure: PagePicture?
         public var says: String?
+        /// `#RRGGBB`, one or two: the symbol's tile as a gradient, its symbol in white (D101).
+        public var tile: [String] = []
+        /// `#RRGGBB`, one or two: a soft wash over the whole card, top to bottom.
+        public var wash: [String] = []
     }
 
     public struct Transport: Sendable, Hashable {
@@ -225,7 +238,8 @@ public struct ExtensionPage: Sendable, Hashable {
 
         /// `plain` (D74) is a quiet text button for what's rarely needed ("Look again", "Forget"); an older Sidefolk
         /// draws it as `secondary`.
-        public enum Style: String, Sendable, Hashable { case primary, secondary, destructive, plain }
+        /// `accent` is filled like the primary, for what stands out where it is (the one card left waiting), without being what the page is for.
+        public enum Style: String, Sendable, Hashable { case primary, secondary, destructive, plain, accent }
 
         public var kind: Kind
         public var label: String
@@ -236,6 +250,8 @@ public struct ExtensionPage: Sendable, Hashable {
         public var symbol: String?
         /// Shown dimmed, `detail` saying why: a step that can't be taken yet ("Choose a TV first").
         public var disabled = false
+        /// Drawn as its symbol in a filled circle, its label read aloud and on hover (D101).
+        public var round = false
 
         public var style: Style? { if case .button(let s) = kind { s } else { nil } }
 
@@ -341,9 +357,13 @@ public struct ExtensionPage: Sendable, Hashable {
     static func section(_ s: JSONValue) -> Section? {
         let blocks = (s["blocks"]?.arrayValue ?? []).prefix(maxBlocks).compactMap(block)
         let title = text(s["title"], 60)
-        return blocks.isEmpty ? nil : Section(title: title, blocks: blocks, place: s["place"]?.stringValue.flatMap(Section.Place.init) ?? .main,
-                                              collapsed: title == nil ? nil : s["collapsed"]?.boolValue,
-                                              detail: title == nil ? nil : text(s["detail"], 160), picture: title == nil ? nil : PagePicture.parse(s["picture"]))
+        guard !blocks.isEmpty else { return nil }
+        var section = Section(title: title, blocks: blocks, place: s["place"]?.stringValue.flatMap(Section.Place.init) ?? .main,
+                              collapsed: title == nil ? nil : s["collapsed"]?.boolValue,
+                              detail: title == nil ? nil : text(s["detail"], 160), picture: title == nil ? nil : PagePicture.parse(s["picture"]))
+        if title != nil, let tint = color(s["banner"]?["tint"]) { section.banner = Section.Banner(tint: tint, symbol: symbol(s["banner"]?["symbol"])) }
+        section.wide = s["wide"]?.boolValue ?? false
+        return section
     }
 
     /// The hero leading the page, when its first section starts with one: drawn instead of the summary banner.
@@ -466,7 +486,8 @@ public struct ExtensionPage: Sendable, Hashable {
             return .hero(Hero(eyebrow: text(j["eyebrow"], 30), title: title, detail: text(j["detail"], 300), tone: tone(j["tone"]),
                               symbol: symbol(j["symbol"]), code: code, image: dataFile(j["image"]), busy: j["busy"]?.boolValue ?? false,
                               facts: facts, actions: (j["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) },
-                              scene: PagePicture.parse(j["scene"]), figure: PagePicture.parse(j["figure"]), says: text(j["says"], 80)))
+                              scene: PagePicture.parse(j["scene"]), figure: PagePicture.parse(j["figure"]), says: text(j["says"], 80),
+                              tile: (j["tile"]?.arrayValue ?? []).prefix(2).compactMap(color), wash: (j["wash"]?.arrayValue ?? []).prefix(2).compactMap(color)))
         case "transport":
             // Every button is drawn as its symbol, its label read aloud and shown on hover.
             let buttons = (j["buttons"]?.arrayValue ?? []).prefix(5).compactMap { button($0, characters: 30) }.filter { $0.symbol != nil }
@@ -504,7 +525,8 @@ public struct ExtensionPage: Sendable, Hashable {
     static func button(_ j: JSONValue, characters: Int) -> Control? {
         guard let label = text(j["label"], characters), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
         return Control(kind: .button(j["style"]?.stringValue.flatMap(Control.Style.init(rawValue:)) ?? .secondary), label: label,
-                       detail: text(j["detail"], 240), tool: tool, input: input, symbol: symbol(j["symbol"]), disabled: j["disabled"]?.boolValue ?? false)
+                       detail: text(j["detail"], 240), tool: tool, input: input, symbol: symbol(j["symbol"]), disabled: j["disabled"]?.boolValue ?? false,
+                       round: j["shape"]?.stringValue == "round")
     }
 
     /// The extension's own tool's name, never another's (`ext.other.tool`).

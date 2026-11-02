@@ -66,6 +66,8 @@ public struct ExtensionSettingRow: Sendable, Hashable, Identifiable {
     public var value: JSONValue
     /// Shown under Settings › Add-ons and found by its search (`listed` in the manifest).
     public var listed: Bool
+    /// A few short options, all shown (`segmented` in the manifest).
+    public var segmented = false
 
     public var id: String { "\(extensionId)/\(key)" }
     /// The tool every change goes through (`ExtensionSettingTool`).

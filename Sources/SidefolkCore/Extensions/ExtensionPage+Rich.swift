@@ -33,6 +33,8 @@ extension ExtensionPage {
             public var value: String
             public var symbol: String?
             public var tone: Tone
+            /// `#RRGGBB` for its symbol, where a tone would say something it doesn't mean: a trophy in gold (D101).
+            public var color: String?
         }
 
         public var items: [Item]
@@ -121,6 +123,12 @@ extension ExtensionPage {
         public var keys: [String]
         /// Its use of the AI gets its switch here too.
         public var ai: Bool
+        /// Its own words for that switch. Believed only for packs Sidefolk signed, like a tool's `summary` (D98): anyone else's could call it something it isn't.
+        public var aiTitle: String?
+        public var aiDetail: String?
+        /// Each in a small card of its own, in a grid, with its picture from `pictures` (D101): one choice per thing it has many of.
+        public var grid = false
+        public var pictures: [String: PagePicture] = [:]
     }
 
     static let maxTabs = 6
@@ -134,7 +142,7 @@ extension ExtensionPage {
         case "stats":
             let items = (j["items"]?.arrayValue ?? []).prefix(maxStats).compactMap { i -> StatStrip.Item? in
                 guard let label = text(i["label"], 40), let value = text(i["value"], 24) else { return nil }
-                return StatStrip.Item(label: label, value: value, symbol: symbol(i["symbol"]), tone: tone(i["tone"]))
+                return StatStrip.Item(label: label, value: value, symbol: symbol(i["symbol"]), tone: tone(i["tone"]), color: color(i["color"]))
             }
             return items.isEmpty ? nil : .stats(StatStrip(items: items))
         case "cards":
@@ -170,7 +178,10 @@ extension ExtensionPage {
             let keys = (j["keys"]?.arrayValue ?? []).prefix(ExtensionAbilityRules.maxSettings).compactMap { k -> String? in
                 k.stringValue.flatMap { $0.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil ? $0 : nil }
             }
-            return .settings(SettingsRows(title: text(j["title"], 60), keys: keys, ai: j["ai"]?.boolValue ?? false))
+            var pictures: [String: PagePicture] = [:]
+            for key in keys { pictures[key] = PagePicture.parse(j["pictures"]?[key]) }
+            return .settings(SettingsRows(title: text(j["title"], 60), keys: keys, ai: j["ai"]?.boolValue ?? false, aiTitle: text(j["ai_title"], 60), aiDetail: text(j["ai_detail"], 240),
+                                          grid: j["grid"]?.boolValue ?? false, pictures: pictures))
         default:
             return nil
         }

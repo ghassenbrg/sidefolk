@@ -35,6 +35,9 @@ struct PagePictureView: View {
     var model: ExtensionPageModel
     var side: Int
     var fill = true
+    /// What it stands on, once it is there: a tile of plain colour on its own reads as a missing picture.
+    var backing: Color?
+    var backingInset: CGFloat = 0
     @Environment(\.colorScheme) private var scheme
     @State private var image: NSImage?
 
@@ -42,6 +45,7 @@ struct PagePictureView: View {
         Group {
             if let image {
                 Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: fill ? .fill : .fit)
+                    .padding(backingInset).background(backing ?? .clear)
             } else {
                 Color.clear
             }
@@ -62,6 +66,7 @@ struct PageSceneHero: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Theme.surfaceRaised
+            if let wash { LinearGradient(colors: [wash.first ?? .clear, wash.last ?? .clear], startPoint: .top, endPoint: .bottom) }
             if let scene = hero.scene {
                 HStack(spacing: 0) {
                     Spacer(minLength: 0)
@@ -79,9 +84,11 @@ struct PageSceneHero: View {
                     }
                     HStack(spacing: Theme.Space.m) {
                         if let symbol = hero.symbol {
-                            Image(systemName: symbol).font(.system(size: 24, weight: .bold)).foregroundStyle(Theme.accent)
+                            let tile = hero.tile.compactMap { Color(extensionHex: $0) }
+                            Image(systemName: symbol).font(.system(size: 24, weight: .bold)).foregroundStyle(tile.isEmpty ? Theme.accent : Color.white)
                                 .frame(width: 52, height: 52)
-                                .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .background(tile.isEmpty ? AnyShapeStyle(Theme.accentSoft) : AnyShapeStyle(LinearGradient(colors: tile.count == 1 ? tile + tile : tile, startPoint: .top, endPoint: .bottom)),
+                                            in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                                 .accessibilityHidden(true)
                         }
                         VStack(alignment: .leading, spacing: 2) {
@@ -96,18 +103,26 @@ struct PageSceneHero: View {
                     }
                 }
                 .padding(Theme.Space.xl)
-                .frame(maxHeight: .infinity)
                 Spacer(minLength: 0)
                 if let figure = hero.figure {
-                    VStack(alignment: .trailing, spacing: Theme.Space.xs) {
+                    VStack(alignment: .trailing, spacing: 0) {
                         if let says = hero.says {
-                            Text(ext: says).font(Theme.Font.callout).foregroundStyle(Theme.ink).multilineTextAlignment(.leading)
-                                .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
-                                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.line))
+                            Text(ext: says).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(Theme.ink).multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true).lineLimit(5)
+                                .padding(.horizontal, 14).padding(.vertical, 10)
+                                .background {
+                                    HeroBubbleShape().fill(Theme.surface).shadow(color: .black.opacity(0.1), radius: 6, y: 3)
+                                        .overlay(HeroBubbleShape().stroke(Theme.line, lineWidth: 1))
+                                }
                                 .frame(maxWidth: 220, alignment: .trailing)
                         }
-                        PagePictureView(picture: figure, model: model, side: 440, fill: false).frame(width: 130, height: 120)
+                        ZStack(alignment: .bottom) {
+                            Ellipse().fill(RadialGradient(colors: [.black.opacity(0.28), .clear], center: .center, startRadius: 0, endRadius: 50))
+                                .frame(width: 110, height: 12).offset(y: 5)
+                            PagePictureView(picture: figure, model: model, side: 440, fill: false).frame(width: 130, height: 120, alignment: .bottom)
+                        }
+                        .frame(width: 130, height: 120, alignment: .bottom)
+                        .accessibilityHidden(true)
                     }
                     .padding(.trailing, Theme.Space.xl).padding(.top, Theme.Space.m)
                 }
@@ -120,6 +135,25 @@ struct PageSceneHero: View {
 
     private var actions: some View {
         ForEach(Array(hero.actions.enumerated()), id: \.offset) { _, c in PageButton(control: c, model: model, large: true) }
+    }
+
+    /// Soft, so what stands on it stays readable: the colours the extension names at a tenth or so of their strength, a little more in the dark.
+    @Environment(\.colorScheme) private var scheme
+    private var wash: [Color]? {
+        let colors = hero.wash.compactMap { Color(extensionHex: $0) }
+        guard let top = colors.first else { return nil }
+        return [top.opacity(0.10), (colors.last ?? top).opacity(scheme == .dark ? 0.22 : 0.16)]
+    }
+}
+
+/// A rounded bubble with a small tail under its middle, toward whoever stands below it.
+nonisolated struct HeroBubbleShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path(roundedRect: r, cornerRadius: 18, style: .continuous)
+        p.move(to: CGPoint(x: r.midX - 10, y: r.maxY - 1))
+        p.addQuadCurve(to: CGPoint(x: r.midX + 2, y: r.maxY + 11), control: CGPoint(x: r.midX - 2, y: r.maxY + 6))
+        p.addQuadCurve(to: CGPoint(x: r.midX + 10, y: r.maxY - 1), control: CGPoint(x: r.midX + 5, y: r.maxY + 4))
+        return p
     }
 }
 
@@ -141,7 +175,7 @@ struct PageStatStrip: View {
         ForEach(Array(strip.items.enumerated()), id: \.offset) { _, item in
             HStack(spacing: Theme.Space.m) {
                 if let symbol = item.symbol {
-                    Image(systemName: symbol).font(.system(size: 22, weight: .bold)).foregroundStyle(item.tone == .neutral ? Theme.accent : item.tone.color).frame(width: 30)
+                    Image(systemName: symbol).font(.system(size: 22, weight: .bold)).foregroundStyle(item.color.flatMap { Color(extensionHex: $0) } ?? (item.tone == .neutral ? Theme.accent : item.tone.color)).frame(width: 30)
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     Text(ext: item.value).font(Theme.Font.number).monospacedDigit().foregroundStyle(Theme.ink).lineLimit(1)
@@ -208,7 +242,8 @@ struct PageCard: View {
             }
             if !item.actions.isEmpty || item.menu != nil {
                 VStack(spacing: Theme.Space.xs) {
-                    ForEach(Array(item.actions.enumerated()), id: \.offset) { _, c in PageButton(control: c, model: model) }
+                    // A round action is the card's own, and a tick takes its place once it is done; the picture still runs it.
+                    ForEach(Array(item.actions.enumerated()), id: \.offset) { _, c in if !(c.round && item.done) { PageButton(control: c, model: model) } }
                     if let menu = item.menu {
                         Menu {
                             ForEach(Array(menu.items.enumerated()), id: \.offset) { _, c in
@@ -233,10 +268,8 @@ struct PageCard: View {
         if let picture = item.picture {
             // With a colour, the picture stands on a tile of it, a little inside its edges.
             let tile = item.color.flatMap { Color(extensionHex: $0) }
-            PagePictureView(picture: picture, model: model, side: Int(side) * 2, fill: tile == nil)
-                .padding(tile == nil ? 0 : side * 0.07)
+            PagePictureView(picture: picture, model: model, side: Int(side) * 2, fill: tile == nil, backing: tile, backingInset: tile == nil ? 0 : side * 0.07)
                 .frame(width: side, height: side)
-                .background(tile ?? .clear)
                 .clipShape(RoundedRectangle(cornerRadius: size == .large ? 18 : 12, style: .continuous))
         } else if let symbol = item.symbol {
             Image(systemName: symbol).font(.system(size: side * 0.4, weight: .semibold))
@@ -351,13 +384,40 @@ struct PageSettings: View {
         if !chosen.isEmpty || (rows.ai && model.aiStatus != nil) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 if let title = rows.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
-                RowsCard {
-                    ForEach(chosen) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
-                    if rows.ai, let ai = model.aiStatus {
-                        ExtensionAISwitchRow(status: ai) { on in Task { await model.setAI(on) } }
+                if rows.grid {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: Theme.Space.s)], spacing: Theme.Space.s) {
+                        ForEach(chosen) { row in gridRow(row) }
+                    }
+                } else {
+                    RowsCard {
+                        ForEach(chosen) { row in ExtensionSettingRowView(row: row) { value in Task { await model.set(row, to: value) } } }
+                        if rows.ai, let ai = model.aiStatus {
+                            // Its own words only where they can be believed; the switch and what it does are the same.
+                            let own = model.signedBySidefolk
+                            ExtensionAISwitchRow(status: ai, title: own ? rows.aiTitle : nil, detail: own ? rows.aiDetail : nil) { on in Task { await model.setAI(on) } }
+                        }
                     }
                 }
             }
         }
+    }
+
+    /// One choice of many: its picture, its name, and the choice.
+    private func gridRow(_ row: ExtensionSettingRow) -> some View {
+        HStack(spacing: Theme.Space.m) {
+            if let picture = rows.pictures[row.key] {
+                PagePictureView(picture: picture, model: model, side: 60).frame(width: 30, height: 30).clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            }
+            Text(ext: row.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
+            Spacer(minLength: Theme.Space.s)
+            Picker(selection: Binding(get: { row.value.stringValue ?? "" }, set: { value in Task { await model.set(row, to: .string(value)) } })) {
+                ForEach(row.options, id: \.value) { option in Text(ext: option.title).tag(option.value) }
+            } label: {
+                Text(ext: row.title)
+            }
+            .labelsHidden().fixedSize()
+        }
+        .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.xs)
+        .background(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).fill(Theme.surfaceRaised))
     }
 }

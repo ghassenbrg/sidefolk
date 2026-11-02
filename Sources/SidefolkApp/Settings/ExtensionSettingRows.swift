@@ -17,6 +17,10 @@ struct ExtensionSettingRowView: View {
         case .switch:
             Toggle(isOn: Binding(get: { row.value.boolValue ?? false }, set: { change(.bool($0)) })) { Text(ext: row.title) }
                 .toggleStyle(.switch).labelsHidden().tint(Theme.accent)
+        case .choice where row.segmented:
+            SegmentedPicker(Text(ext: row.title), selection: Binding(get: { row.value.stringValue ?? "" }, set: { change(.string($0)) }),
+                            segments: row.options.map { .init($0.value, Text(ext: $0.title)) })
+                .frame(maxWidth: 320)
         case .choice:
             Picker(selection: Binding(get: { row.value.stringValue ?? "" }, set: { change(.string($0)) })) {
                 ForEach(row.options, id: \.value) { option in Text(ext: option.title).tag(option.value) }
@@ -45,11 +49,14 @@ struct ExtensionSettingRowView: View {
 /// The person's switch for an extension's use of their AI (D100), with what it says it is for and how much it asked today.
 struct ExtensionAISwitchRow: View {
     var status: ExtensionAIStatus
+    /// A signed pack's own words for it.
+    var title: String?
+    var detail: String?
     var change: (Bool) -> Void
 
     var body: some View {
-        SettingsToggle(title: Text("Let it use your AI", comment: "An extension's row: the person's switch for its use of their AI"),
-                       detail: status.heldBack.map { Text(verbatim: $0) }
+        SettingsToggle(title: title.map { Text(ext: $0) } ?? Text("Let it use your AI", comment: "An extension's row: the person's switch for its use of their AI"),
+                       detail: status.heldBack.map { Text(verbatim: $0) } ?? detail.map { Text(ext: $0) }
                            ?? Text("It says it uses it \(status.purpose). \(status.usedToday) of \(status.dailyCap) requests today.",
                                    comment: "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit"),
                        isOn: Binding(get: { status.on }, set: change))

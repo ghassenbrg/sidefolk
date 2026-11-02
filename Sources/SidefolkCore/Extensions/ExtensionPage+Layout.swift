@@ -44,6 +44,7 @@ extension ExtensionPage.Section {
     /// Across the page: numbers, two or more cards, a row of buttons or questions, or notes alone (heads-ups that
     /// read as one line). Anything else (one card with its note, a few switches) takes a column beside its neighbours.
     public var isWide: Bool {
+        if wide { return true }
         if blocks.contains(where: { $0.isMetric || ["hero", "transport", "tiles", "cards", "stats", "grid", "tabs", "badges", "recent", "scene"].contains($0.kind) }) { return true }
         if blocks.filter(\.isCard).count >= 2 { return true }
         let kinds = Set(blocks.map(\.kind))
