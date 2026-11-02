@@ -674,10 +674,11 @@ enum UISnapshots {
             try await page("sheet-install-gallery", InstallPreviewSheet(preview: FixtureServices.galleryPreview, model: settings), width: 600)
             try await page("sheet-install-unknown", InstallPreviewSheet(preview: FixtureServices.unknownMirrorPreview, model: settings), width: 600)
             try await page("sheet-install-update", InstallPreviewSheet(preview: FixtureServices.updatePreview, model: settings), width: 600)
+            try await page("sheet-install-services", InstallPreviewSheet(preview: FixtureServices.servicePreview, model: settings), width: 600)
             // The passport's second step: what it can touch (D84).
             for (name, preview) in [("extension", FixtureServices.samplePreview), ("draft", FixtureServices.draftPreview),
                                     ("gallery", FixtureServices.galleryPreview), ("unknown", FixtureServices.unknownMirrorPreview),
-                                    ("update", FixtureServices.updatePreview)] {
+                                    ("update", FixtureServices.updatePreview), ("services", FixtureServices.servicePreview)] {
                 try await page("sheet-install-\(name)-touch", InstallPreviewSheet(preview: preview, model: settings, step: .touch), width: 600)
             }
             try await page("sheet-add-mcp-server", AddServerSheet(model: settings), width: 500)

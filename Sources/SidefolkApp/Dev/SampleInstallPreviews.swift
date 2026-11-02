@@ -14,7 +14,18 @@ extension FixtureServices {
         sourceFolder: URL(fileURLWithPath: NSHomeDirectory() + "/Downloads/trip-planner"),
         review: InstallReview(id: "dev.example.trip-planner", permissions: ExtensionPermissions(network: true, read: [home + "/Documents/Travel"]),
                               background: false, toolRisks: [.medium, .medium], update: nil, source: .folder),
-        toolNames: ["plan_day", "packing_list"], watcherNames: [], folk: "scout")
+        toolNames: ["plan_day", "packing_list"], watcherNames: [], folk: "scout",
+        services: [.init(name: "Open Trips", hosts: ["api.opentrips.example.com"])])
+
+    /// Sidefolk's own from the gallery, naming the service it talks to (D98): the sheet takes its word.
+    static let servicePreview = ExtensionInstallPreview(
+        id: SampleAddons.skyWatch, name: "Sky Watch", version: "1.3.0-snapshot.1",
+        description: "Today's weather and the week ahead for any place, and a heads-up before rain, from Open-Meteo. Only the place you ask about leaves your Mac.",
+        sourceFolder: URL(fileURLWithPath: "/tmp/Addons/Downloads/sky-watch"),
+        review: InstallReview(id: SampleAddons.skyWatch, permissions: ExtensionPermissions(network: true), background: false,
+                              toolRisks: [.medium, .medium], update: nil, source: .gallery),
+        toolNames: ["Weather forecast", "Sunrise, sunset and the moon"], watcherNames: ["Rain soon"], folk: "scout",
+        services: [.init(name: "Open-Meteo", hosts: ["api.open-meteo.com", "geocoding-api.open-meteo.com"])])
 
     /// Cast Along's permissions from someone else's folder: the same facts as the gallery's, said as a warning.
     static let unknownMirrorPreview = ExtensionInstallPreview(

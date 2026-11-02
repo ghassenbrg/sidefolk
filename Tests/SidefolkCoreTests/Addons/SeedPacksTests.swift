@@ -161,6 +161,25 @@ struct SeedPacksTests {
         await c.env.host.shutdown()
     }
 
+    /// After the relaunch each seed gets its switch back, in a backup from before D98 too, and doesn't wait for the gallery.
+    @Test func aRestoresFollowUpSwitchesSeedsAndLeavesTheGalleryOut() async throws {
+        let c = try Carried()
+        try c.carry("alpha", id: "dev.sidefolk.alpha")
+        try c.carry("beta", id: "dev.sidefolk.beta", on: false)
+        let packs = c.packs
+        await packs.install(into: c.env.host, store: c.store)
+        let plan = BackupRestore.Plan(backupCreated: Date(), app: "x", device: nil, extensions: [
+            .init(id: "dev.sidefolk.alpha", name: "alpha", version: "1.0.0", enabled: false, source: .gallery),
+            .init(id: "dev.sidefolk.beta", name: "beta", version: "1.0.0", enabled: true, source: .builtIn),
+        ], addons: [])
+        let report = await RestoreFollowUp(paths: c.env.paths, seedWait: 1)
+            .run(plan, store: c.store, host: c.env.host, themes: ThemeLibrary(paths: c.env.paths), channel: .snapshots, seeds: Set(packs.seeds().map(\.id)))
+        #expect(report.failed.isEmpty, "\(report.failed)")
+        #expect(await c.env.host.info(id: "dev.sidefolk.alpha")?.enabled == false)
+        #expect(await c.env.host.info(id: "dev.sidefolk.beta")?.enabled == true)
+        await c.env.host.shutdown()
+    }
+
     /// The list in the repository is the one the founder approved (D98), and every entry's pack is in the gallery.
     @Test func theRepositorysListNamesTheFour() throws {
         let file = ExtFixtures.repoRoot.appendingPathComponent("Resources/SeedPacks/\(SeedPacks.listFile)")
