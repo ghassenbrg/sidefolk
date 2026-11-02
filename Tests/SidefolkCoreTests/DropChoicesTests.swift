@@ -8,21 +8,46 @@ import Testing
         #expect(DropChoices.choices(for: .file) == [.save, .watch, .ask, .openWith])
         #expect(DropChoices.choices(for: .folder) == [.save, .watch, .ask, .openWith])
         #expect(DropChoices.choices(for: .text) == [.save, .remind, .ask, .copy])
-        let page = URL(string: "https://example.com/pricing")!
-        #expect(DropChoices.choices(for: .link, link: page, canPlayOnTV: true) == [.save, .watch, .ask, .remind])
+        #expect(DropChoices.choices(for: .link) == [.save, .watch, .ask, .remind])
     }
 
-    @Test func aVideoLinkPlaysOnTheTVOnlyWithMiraya() {
-        let film = URL(string: "https://cdn.example.com/films/trip.mp4")!
-        #expect(DropChoices.choices(for: .link, link: film, canPlayOnTV: true).last == .playOnTV)
-        #expect(DropChoices.choices(for: .link, link: film, canPlayOnTV: false).last == .remind)
+    static func offer(_ id: String = "dev.test.player", kinds: [ExtensionManifest.DropMeta.Kind] = [.link],
+                      patterns: [String] = ["https://*.mp4", "https://*.m3u8", "https://*.mov"]) -> ExtensionDropAction {
+        ExtensionDropAction(extensionId: id, extensionName: "Player", key: "play", title: "Play", kinds: kinds, patterns: patterns, tool: "ext.player.play",
+                            input: ["url": "{value}"])
     }
 
-    @Test func onlyTheVideoItselfOverHTTPSIsAVideoLink() {
-        #expect(DropChoices.isVideoLink(URL(string: "https://example.com/live/index.m3u8")!))
-        #expect(DropChoices.isVideoLink(URL(string: "https://example.com/a/Clip.MOV")!))
-        // A page with a video in it, or a plain-HTTP file, isn't one a TV can be handed.
-        #expect(!DropChoices.isVideoLink(URL(string: "https://www.youtube.com/watch?v=abc")!))
-        #expect(!DropChoices.isVideoLink(URL(string: "http://example.com/film.mp4")!))
+    /// An extension's offer takes the reminder's place on a link, and adds to anything else's four (D100).
+    @Test func anOfferTakesTheLinksReminderPlace() {
+        #expect(DropChoices.choices(for: .link, offers: 1) == [.save, .watch, .ask])
+        #expect(DropChoices.choices(for: .file, offers: 1) == [.save, .watch, .ask, .openWith])
+    }
+
+    @Test func offersFollowKindAndPattern() {
+        let all = [Self.offer()]
+        let film = "https://cdn.example.com/films/trip.MP4?token=abc"
+        #expect(DropChoices.offers(for: .link, value: film, among: all).count == 1)
+        #expect(DropChoices.offers(for: .link, value: "https://example.com/live/index.m3u8", among: all).count == 1)
+        // A page with a video in it, or a plain-HTTP file, isn't one this author asked for.
+        #expect(DropChoices.offers(for: .link, value: "https://www.youtube.com/watch?v=abc", among: all).isEmpty)
+        #expect(DropChoices.offers(for: .link, value: "http://example.com/film.mp4", among: all).isEmpty)
+        #expect(DropChoices.offers(for: .file, value: "/tmp/film.mp4", among: all).isEmpty)
+        let files = [Self.offer(kinds: [.file], patterns: ["*.pdf"])]
+        #expect(DropChoices.offers(for: .file, value: "/Users/a/Invoice April.PDF", among: files).count == 1)
+        #expect(DropChoices.offers(for: .file, value: "/Users/a.pdf/notes.txt", among: files).isEmpty)
+        // No pattern means anything of that kind; never more than a card holds.
+        let many = (0..<5).map { Self.offer("dev.test.p\($0)", kinds: [.text], patterns: []) }
+        #expect(DropChoices.offers(for: .text, value: "words", among: many).count == 3)
+    }
+
+    @Test func whatWasDroppedGoesWhereTheManifestSays() {
+        #expect(Self.offer().input(for: "https://a.example/b.mp4") == ["url": "https://a.example/b.mp4"])
+    }
+
+    @Test func aGlobIsLinearAndWhole() {
+        #expect(ExtensionDropAction.glob("*.mp4", matches: "a.mp4"))
+        #expect(!ExtensionDropAction.glob("*.mp4", matches: "a.mp4x"))
+        #expect(ExtensionDropAction.glob("a?c*", matches: "abcdef"))
+        #expect(!ExtensionDropAction.glob(String(repeating: "*a", count: 40) + "b", matches: String(repeating: "a", count: 2000)))
     }
 }

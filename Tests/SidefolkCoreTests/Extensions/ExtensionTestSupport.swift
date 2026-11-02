@@ -245,6 +245,8 @@ final class HostEnv {
         store = ExtensionStore(env.db)
         var config = ExtensionHost.Configuration()
         config.callTimeout = 10
+        let executor = env.executor
+        config.runTool = { name, input, caller, timeout in await executor.execute(name: name, input: input, caller: caller, timeout: timeout) }
         configure(&config)
         host = ExtensionHost(paths: paths, store: store, registry: env.registry, events: env.events, configuration: config)
     }

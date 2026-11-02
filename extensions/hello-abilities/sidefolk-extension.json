@@ -1,0 +1,58 @@
+{
+  "id": "dev.sidefolk.hello-abilities",
+  "name": "Hello Abilities",
+  "version": "1.0.0",
+  "sidefolk": ">=0.1",
+  "description": "A sample for developers that uses every ability of D100: a rich page, commands with slots in two languages, entries, a drop action, settings, a request to the person's AI and a History row. Copy what you need. It doesn't ship.",
+  "tagline": "One of each ability, to copy from",
+  "author": "Sidefolk",
+  "assets": "assets",
+  "run": { "command": "python3", "args": ["main.py"] },
+  "permissions": {
+    "ai": { "purpose": "to write a short line about a word you give it", "daily_cap": 3 }
+  },
+  "settings": [
+    { "key": "loud", "type": "switch", "title": "Say it loudly", "detail": "Greetings end in an exclamation mark.", "default": true },
+    { "key": "tone", "type": "choice", "title": "Tone", "options": [{ "value": "warm", "title": "Warm" }, { "value": "plain", "title": "Plain" }], "default": "warm" },
+    { "key": "times", "type": "number", "title": "How many times", "minimum": 1, "maximum": 5, "step": 1, "default": 1 },
+    { "key": "name", "type": "text", "title": "Who to greet when nobody is named", "length": 40, "default": "friend" }
+  ],
+  "settings_from": "hello_old",
+  "choices": {
+    "tone": { "warm": ["warm", "kindly"], "plain": ["plain", "flatly"] }
+  },
+  "parts": {
+    "tone": { "say": ["{tone:tone}", "in a {tone:tone} way"] },
+    "times": { "say": ["{times:integer:1-5} times"] },
+    "about": { "say": ["about {topic:text:40}"] },
+    "twice": { "say": ["twice"], "input": { "times": 2 } }
+  },
+  "carry": { "words": ["say", "please", "a", "the"], "lead": ["say"] },
+  "tools": {
+    "greet": {
+      "title": "Greet", "risk": "low", "mutates": false,
+      "commands": [
+        { "name": "greet", "say": ["greet {who:word}"] },
+        { "name": "wave", "names": ["hello", "greeting"], "with": ["tone", "times", "about", "twice"], "input": { "who": "you" } }
+      ]
+    },
+    "again": { "title": "Greet again", "risk": "low", "mutates": false, "ai": false,
+               "commands": [{ "name": "again", "say": ["greet again", "one more greeting"] }] },
+    "riddle": { "title": "Write a line", "risk": "low", "mutates": false },
+    "note": { "title": "Note it in History", "risk": "low", "mutates": false },
+    "keep": { "title": "Keep a link", "risk": "low", "mutates": false },
+    "quiet": { "title": "Greet quietly", "risk": "low", "mutates": false }
+  },
+  "pages": { "hello": { "title": "Hello", "symbol": "hand.wave", "refresh": 60 } },
+  "entries": [
+    { "id": "hello", "title": "Hello", "symbol": "hand.wave", "places": ["companion", "pocket", "ask"], "page": "hello" },
+    { "id": "greetings", "title": "Greetings", "places": ["companion"], "items": [
+      { "id": "greet_me", "title": "Greet me", "tool": "greet", "input": { "who": "you" } },
+      { "id": "greet_again", "title": "Again", "tool": "again" }
+    ] }
+  ],
+  "drops": [
+    { "id": "keep_clip", "title": "Keep this clip", "detail": "Notes the video's address.", "symbol": "film", "kinds": ["link"],
+      "patterns": ["https://*.mp4", "https://*.mov"], "tool": "keep", "input": { "url": "{value}" } }
+  ]
+}

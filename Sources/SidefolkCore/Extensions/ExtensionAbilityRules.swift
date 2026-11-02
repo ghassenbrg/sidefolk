@@ -82,6 +82,8 @@ enum ExtensionAbilityRules {
             if !isPlain(entry.title, 40) { issues.append(ValidationIssue(field: "\(field).title", message: "must be one line of 1–40 characters of plain text.")) }
             if let s = entry.symbol, !isSymbol(s) { issues.append(ValidationIssue(field: "\(field).symbol", message: "must be an SF Symbol name, like gamecontroller.")) }
             if depth == 0, entry.places.isEmpty { issues.append(ValidationIssue(field: "\(field).places", message: "must name companion, pocket or ask.")) }
+            // A tab opens one thing: a menu of items doesn't fit one.
+            if entry.places.contains(.ask), !entry.items.isEmpty { issues.append(ValidationIssue(field: "\(field).places", message: "can't put a menu of items in Ask: a tab opens one tool or page.")) }
             if depth > 0, !entry.places.isEmpty { issues.append(ValidationIssue(field: "\(field).places", message: "is only for a top-level entry.")) }
             if depth >= 2, !entry.items.isEmpty { issues.append(ValidationIssue(field: "\(field).items", message: "goes two levels deep at most.")) }
             if entry.items.count > maxEntryItems { issues.append(ValidationIssue(field: "\(field).items", message: "can hold at most \(maxEntryItems) items.")) }
