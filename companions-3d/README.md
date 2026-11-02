@@ -1,6 +1,6 @@
 # 3D companions (D51)
 
-Mochi, Spark, Ember, Kiko, Nimbo and Folio (and Iris, Nori, Purl, Rune) as animated 3D characters. Each can be shown
+Mochi, Spark, Ember, Kiko, Nimbo and Folio (and Iris, Nori, Purl, Rune, and Piko, 3D only) as animated 3D characters. Each can be shown
 in 2D or 3D (Settings › Companion › Look; the 2D forms: `companions-2d/`, D59). The app shows them in
 a transparent web view over the companion's 2D rig, which still runs undrawn: it keeps the states,
 idle life, clicks, petting and the Sidecard's anchor, and every cue it gets is replayed in 3D

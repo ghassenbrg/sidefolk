@@ -11,7 +11,7 @@
   <img src="docs/screenshots/desktop-light.png" alt="Mochi the rabbit on its light at the bottom of the desktop, with a count of 12 on its shoulder, three waiting cards fanned above it and Scout beside it">
 </picture>
 
-Sidefolk puts a character on your desktop: Mochi the rabbit, Spark, or one of eight more from the add-on gallery.
+Sidefolk puts a character on your desktop: Mochi the rabbit, Spark, or one of nine more from the add-on gallery.
 Tell it things in plain words and it keeps them: notes, ideas, lists, reminders, pages and files to watch. All of
 that works on your Mac without any AI. When you want answers or help with bigger jobs, connect the AI you already
 use: Claude Code, Codex, an API key, or a model running on your own Mac.
@@ -42,8 +42,8 @@ to do something you haven't allowed. Small folks stand beside it while their job
 for watches, Byte for agents), and live values sit beside it as pins.
 
 Pick a companion, its size, how lively it is and where it lives (always, only when needed, or in the menu bar) in
-**Settings › Companion**. Mochi and Spark are built in, in 3D or 2D; Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl and
-Rune come from the gallery. You can also make your own: a folder with a `species.json` and SVG shapes, read as data
+**Settings › Companion**. Mochi and Spark are built in, in 3D or 2D; Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl,
+Rune and Piko come from the gallery. You can also make your own: a folder with a `species.json` and SVG shapes, read as data
 and never run (`companions/template/` and Miso, a cat, show how).
 
 ### Ask in plain words, no AI needed for the basics

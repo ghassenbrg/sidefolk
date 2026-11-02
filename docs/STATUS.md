@@ -34,7 +34,8 @@ the month grid taking clicks over its view controls (hidden buffer weeks now hav
 - **Ten languages** for everything people read, extensions included (D28, D76).
 
 **The add-on gallery** (github.com/ghassenbrg/sidefolk-addons, release `gallery`): companions Ember, Kiko, Nimbo,
-Folio, Iris, Nori, Purl and Rune; extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
+Folio, Iris, Nori, Purl, Rune and Piko (a robot cat in Spark's colours, 3D only, no `CompanionChoice`: worn by name, D77,
+snapshot 1 needs Sidefolk snapshot 779; its pipeline isn't in this repository); extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
 fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
 Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes are the app's own (D92). Every add-on is in
 snapshots. **Playtime 1.0.0-snapshot.7** needs Sidefolk snapshot 779 (older copies keep the version
