@@ -7,6 +7,12 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: The menu bar icon follows the menu bar, at full strength (the founder, in passing)
+
+*Amends D84's fading mark.* It was half-faded when the companion was hidden (`appearsDisabled`), on purpose, and it looked broken; it no longer fades. It also ignored the bar: with Appearance on Light or Dark, 6468e79c told the button a look from the Mac's Light or Dark, but the bar's own colour comes from the wallpaper and from a full-screen app, so it stayed dark on a black bar. Now it's never told one.
+
+Verified with a throwaway status item on this Mac: its look is `VibrantLight` whatever `NSApp.appearance` is, and its template draws the same; setting the button's own appearance is what changed it. Not run: a dark menu bar with Appearance on Light (a full-screen app, on the founder's screen), which 6468e79c's black icon was about; if it returns there, that's the place to look.
+
 ## 2026-11-03: Dev ideas, batch 4: notebooks arranged and dressed, tasks due on the Calendar, and a proposal (items 8, 9, 10; D117)
 
 Decisions and limits in D117; the direction for item 10 is `docs/research/notebook-proposal.md`, waiting for the founder.

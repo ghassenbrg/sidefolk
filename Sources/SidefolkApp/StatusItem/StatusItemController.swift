@@ -63,17 +63,11 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         updateLabel()
     }
 
-    /// The icon follows the menu bar, never the app's own Light or Dark choice (Settings › Appearance): NSApp's
-    /// appearance reaches the status item's window too, and a Light choice drew a black icon on a dark menu bar.
-    /// The Pocket keeps the app's choice. Called again when the Mac's appearance changes.
-    func followMenuBar(app: NSAppearance?) {
+    /// The Pocket keeps the app's own Light or Dark choice. The icon is left to macOS, which sets its status window's
+    /// look from the menu bar itself: that depends on the wallpaper and on a full-screen app, not on Light or Dark, so
+    /// the button is never told one (measured: `NSApp.appearance` doesn't reach it, and telling it one fixes it wrong).
+    func setPocketAppearance(_ app: NSAppearance?) {
         popover.appearance = app
-        guard app != nil else {
-            item.button?.appearance = nil
-            return
-        }
-        let dark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
-        item.button?.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
     }
 
     /// In Full access the menu bar icon turns orange, like the Mac's own "in use" dots, so the mode is visible even
@@ -94,10 +88,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         updateLabel()
     }
 
-    /// The companion is hidden: the mark fades, still clickable (D84).
+    /// The companion is hidden, for what the icon's menu offers. The icon itself stays as it is: a fading mark read as
+    /// broken (the founder, amending D84).
     func setCompanionHidden(_ hidden: Bool) {
         self.hidden = hidden
-        item.button?.appearsDisabled = hidden
     }
 
     /// A live value beside the icon, while the companion is away from the desktop (nil removes it).

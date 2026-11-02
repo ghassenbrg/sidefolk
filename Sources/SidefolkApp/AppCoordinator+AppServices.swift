@@ -335,7 +335,7 @@ extension AppCoordinator: AppServices {
         case .light: NSApp.appearance = NSAppearance(named: .aqua)
         case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
         }
-        statusItem.followMenuBar(app: NSApp.appearance)
+        statusItem.setPocketAppearance(NSApp.appearance)
     }
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }
