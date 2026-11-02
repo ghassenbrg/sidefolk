@@ -102,7 +102,7 @@ public struct CommandCarry: Sendable {
     let leadInside: [String]
     let inside: [String]
     let endings: [String]
-    /// Words that carry only this sentence: the companion's own name, which the extension can't know ("play trivia with mochi").
+    /// Words that carry only this sentence: the companion's own name, which the extension can't know ("play marbles with mochi").
     var also: Set<String> = []
 
     init(_ metas: [ExtensionManifest.CarryMeta] = []) {
@@ -304,7 +304,7 @@ struct CommandFrame: Sendable {
         func ends(_ text: String) -> [String: JSONValue]? {
             if names.contains(carry.residual(text)), meant || tookPart { return [:] }
             guard tookPart else { return nil }
-            // What joined the sentence to the part goes with the part: "flip a coin; tails".
+            // What joined the sentence to the part goes with the part: "spin the wheel; red".
             let said = text.split(whereSeparator: \.isWhitespace).joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,;:!-–—"))
             if wholeSentences.contains(CommandText.key(said)) { return [:] }
             return slottedSentences.lazy.compactMap { $0.match(said) }.first

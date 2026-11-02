@@ -61,7 +61,7 @@ jobs:
       - name: Run each test bundle
         id: tests
         run: |
-          [[ -d .addons ]] && export SIDEFOLK_ADDONS_REPO="$PWD/.addons"
+          if [[ -d .addons ]]; then export SIDEFOLK_ADDONS_REPO="$PWD/.addons"; else export SIDEFOLK_GUARD_WITHOUT_ADDONS=1; fi
           echo "start=$(date -u '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
           scripts/ci/run-test-bundles.sh "$RUNNER_TEMP/tests"
 

@@ -50,7 +50,7 @@ Translate these once and use the same word everywhere, including in Settings and
 | whisper, card | What the companion says on the desktop: a whisper is short news that fades; a card waits for an answer. |
 | approval, permission slip, Allow once, Always allow | Sidefolk asking before it does something. |
 | Pocket | The menu bar's popover. |
-| Play panel, game, puzzle | Where games and puzzles are played beside the companion. |
+| surface | A panel or overlay an extension draws beside the companion, framed with its name. |
 | extension, skill | Add-ons: an extension brings tools and watchers; a skill is written instructions. |
 | folk, on duty | A folk is "on duty" while its job is live (a reminder is near, a watch is running). |
 

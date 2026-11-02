@@ -23,13 +23,15 @@ import Testing
     /// A program or a registered tool of one (`ext-weather`, `ext.world-clock.convert_time`).
     static var programs: Regex<Substring> { /\bext[-.](?:weather|world-clock|calculator|system-vitals(?:-plus)?|git|currency|images|pdf|qr-codes|archives|dev-toolbox|feeds|clipboard|keep-awake|miraya|playtime)\b/ }
     /// What Playtime took with it (D101), and its name; `openGame`, `.gameCenter` and the like too.
-    static var gameCode: Regex<Substring> { /\bPlaytime\b|\b(?:Game|Games|Play|Puzzle|Trivia)[A-Z][A-Za-z]*|\b[A-Z][A-Za-z]*(?:Game|Games|Puzzle|Puzzles|Trivia)\b|\b[a-z]+(?:Game|Games|Puzzle|Puzzles|Trivia)(?:[A-Z][A-Za-z]*)?\b|\b(?:game|games|puzzle|trivia)[A-Z][A-Za-z]*\b|\bBoardView\b|\bgames\.[a-z]+|\b(?:HandsMatch|HandsReveal|CompanionToss|TossStage|CoinFace|DiceTray|ChanceIntent)\b|\b(?:CompanionPlay(?:er)?|Petting)\b/ }
+    static var gameCode: Regex<Substring> { /\bPlaytime\b|\bplaytime\b|\b(?i:sudoku|tictactoe|tic[- ]tac[- ]toe|higher_lower|guess_animal|balloon_words|which_cup|copy_me|quick_paws|last_stick|memory_pairs|daily_word|rock_paper_scissors|garden_plots|blossoms|seesaw|heads or tails|natural 20|rock, paper|rock paper scissors)\b|\b(?:Game|Games|Play|Puzzle|Trivia)[A-Z][A-Za-z]*|\b[A-Z][A-Za-z]*(?:Game|Games|Puzzle|Puzzles|Trivia)\b|\b[a-z]+(?:Game|Games|Puzzle|Puzzles|Trivia)(?:[A-Z][A-Za-z]*)?\b|\b(?:game|games|puzzle|trivia)[A-Z][A-Za-z]*\b|\bBoardView\b|\bgames\.[a-z]+|\b(?:HandsMatch|HandsReveal|CompanionToss|TossStage|CoinFace|DiceTray|ChanceIntent)\b|\b(?:CompanionPlay(?:er)?|Petting)\b/ }
 
     /// Words that are the app's own as much as an extension's (its clipboard tools, its weather watch): `namedInContext` and `names`
     /// look for those where they name something. Every other extension's name and id, from its own manifest, means nothing else here.
     /// So are a surface's and a menu entry's plain words ("play", "games"): the app has its own Play menu, and people run games full screen.
     static let commonWords: Set<String> = ["archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus",
-                                           "play", "games", "rock", "paper", "scissors"]
+                                           "play", "games", "rock", "paper", "scissors", "heads", "tails",
+                                           // A surface's plain arguments, and symbols anything might draw.
+                                           "easy", "fair", "hard", "true", "false", "menu", "last", "again", "random", "center", "harder", "easier", "coin", "dice", "toss"]
 
     /// What the gallery's manifests say, read when the test runs, so a new extension needs no hand-kept list. Nil with no add-ons
     /// checkout at hand: the patterns above still run.
@@ -51,11 +53,14 @@ import Testing
             let isOwn: (String) -> Bool = { !$0.isEmpty && !commonWords.contains($0) }
             for (surface, meta) in m["surfaces"]?.objectValue ?? [:] {
                 moving.formUnion([spoken(surface), spoken(meta["title"]?.stringValue ?? "")].filter(isOwn))
+                // What a surface can be opened with names what it holds, as ids: `higher_lower`.
+                for values in (meta["arguments"]?.objectValue ?? [:]).values { moving.formUnion((values.arrayValue ?? []).compactMap(\.stringValue).map(spoken).filter(isOwn)) }
             }
             // What it names in the menus says what it holds: every game, in one case, now that no manifest lists them.
             func entries(_ list: [JSONValue]) {
                 for entry in list {
                     moving.formUnion([spoken(entry["title"]?.stringValue ?? "")].filter(isOwn))
+                    moving.formUnion((entry["input"]?.objectValue ?? [:]).values.compactMap(\.stringValue).map(spoken).filter(isOwn))
                     entries(entry["items"]?.arrayValue ?? [])
                 }
             }
@@ -64,10 +69,10 @@ import Testing
         return (details.sorted(), moving.sorted())
     }
 
-    /// One of those words, whatever its case, however it is joined up: `Keep Awake`, `keep-awake`, `KeepAwake`, `keep_awake`.
+    /// One of those words, whatever its case, however it is joined up: `Keep Awake`, `keep-awake`, `KeepAwake`, `keep_awake`, `Rock, paper`.
     static func anyOf(_ words: [String]) throws -> Regex<Substring>? {
         guard !words.isEmpty else { return nil }
-        let parts = words.map { $0.split(separator: " ").map { NSRegularExpression.escapedPattern(for: String($0)) }.joined(separator: "[ _-]?") }
+        let parts = words.map { $0.split(separator: " ").map { NSRegularExpression.escapedPattern(for: String($0)) }.joined(separator: "[ ,_-]{0,2}") }
         return try Regex("(?i)\\b(?:\(parts.joined(separator: "|")))\\b", as: Substring.self)
     }
 
@@ -155,6 +160,11 @@ import Testing
         if let words = Self.manifestWords() {
             if let pattern = try Self.anyOf(words.details) { details += Self.hits(pattern, in: lines) }
             if let pattern = try Self.anyOf(words.moving) { games += Self.hits(pattern, in: lines) }
+        } else {
+            // With no manifests, only the patterns above run, and a new game's words would pass: CI must have them, and says so if it hasn't, unless it knows.
+            let env = ProcessInfo.processInfo.environment
+            let message = "No add-ons checkout: the guard hasn't read any manifest. Set SIDEFOLK_ADDONS_REPO (or SIDEFOLK_GUARD_WITHOUT_ADDONS=1 where that can't be)."
+            if env["CI"] != nil, env["SIDEFOLK_GUARD_WITHOUT_ADDONS"] == nil { Issue.record(Comment(rawValue: message)) } else { print("ExtensionFreeAppTests: \(message)") }
         }
         let detailsLeft = try Self.judged(details, exceptions)
         let gamesLeft = try Self.judged(games, exceptions)
@@ -205,9 +215,21 @@ import Testing
 
     /// Every exception is one the founder approved: this list grows only with them.
     @Test func theAllowlistHoldsOnlyTheApprovedExceptions() throws {
-        let approved = ["Sources/SidefolkCore/Addons/AddonCatalog.swift", "Resources/SeedPacks/seed-packs.json", "Sources/SidefolkCore/Themes/*", "Resources/Themes/*",
-                        "Sources/SidefolkApp/Dev/*", "Sources/SidefolkApp/Updates/AddonUpdateController.swift",
-                        "Sources/*"]
-        #expect(Set(try Self.exceptions().map(\.file)) == Set(approved))
+        let theme = #"dev\.sidefolk\.theme"#
+        // What each may match is as much the exception as where: `Sources/*` matching anything would waive the whole rule.
+        let approved = ["Sources/SidefolkCore/Addons/AddonCatalog.swift": [#"dev\.sidefolk\.addons"#], "Resources/SeedPacks/seed-packs.json": [".+"], "Sources/SidefolkCore/Themes/*": [theme], "Resources/Themes/*": [theme],
+                        "Sources/SidefolkApp/Dev/*": [theme], "Sources/SidefolkApp/Updates/AddonUpdateController.swift": [theme],
+                        "Sources/*": [#"\bCompanionPlay(?:er)?\b|\bPetting\b"#]]
+        let listed = Dictionary(grouping: try Self.exceptions(), by: \.file).mapValues { $0.map(\.match) }
+        #expect(listed == approved)
+    }
+
+    /// What the guard read through once and missed, now seen: ids from what a surface takes and an entry's input, a name with commas, words of chance.
+    @Test func theGuardSeesWhatItsReviewPlanted() throws {
+        let word = try #require(try Self.anyOf(["higher lower", "rock paper scissors"]))
+        let planted: [(String, Int, Substring)] = [#""higher_lower""#, #""Rock, paper, scissors""#, "rock-paper-scissors"].enumerated().map { ("Sources/A.swift", $0.offset, Substring($0.element)) }
+        #expect(Set(Self.hits(word, in: planted).map(\.line)) == [0, 1, 2])
+        let always: [(String, Int, Substring)] = ["playtime", "sudoku", "Heads or tails…", "Natural 20!", "tictactoe"].enumerated().map { ("Sources/A.swift", $0.offset, Substring($0.element)) }
+        #expect(Set(Self.hits(Self.gameCode, in: always).map(\.line)) == [0, 1, 2, 3, 4], "with no manifests at hand too")
     }
 }

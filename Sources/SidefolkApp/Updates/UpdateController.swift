@@ -434,7 +434,7 @@ final class UpdateController: UpdateActions {
             notes: """
                 **What's new**
                 - Start a fresh conversation, or go back to an earlier one in Home.
-                - Coins and dice land on the desktop, thrown by your companion.
+                - Your companion looks up when you come back.
                 - Sidefolk looks for updates and asks before installing them.
                 """,
             page: URL(string: "https://github.com/ghassenbrg/sidefolk/releases/tag/v0.1.0-snapshot.430")!,

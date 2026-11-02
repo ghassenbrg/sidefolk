@@ -553,7 +553,7 @@ Object.assign(ACTIONS, {
 });
 
 /**
- * Game reactions (D75, built in D88's batch): sulk, shrug, tease, ready, and the short accents fast games use. Each is
+ * Surfaces' reactions (D99, built in D88's batch): sulk, shrug, tease, ready, and the short accents fast choreography uses. Each is
  * short, reads from across the room and comes back to rest by itself. `still` is what Reduce Motion plays instead: the
  * face and a small turn of the head, nothing that travels.
  */
@@ -702,7 +702,7 @@ Object.assign(ACTIONS, {
       for (const s of ['L', 'R']) { fwd(P, s, 45 * hands); raise(P, s, -18 * hands); }
       ears(P, 16 * win(t, 0.25, 0.4, 0.55, 0.75));
       P.look *= 1 - win(t, 0.15, 0.35, 0.55, 0.75);
-      // Eyes stay open: a fast game shows the next thing right after.
+      // Eyes stay open: the next thing may show right after.
       face(P, { mood: 'smile' });
     },
     still(t, P) { add(P, 'head', 10 * win(t, 0, 0.2, 0.4, 0.6)); face(P, { mood: 'smile' }); },

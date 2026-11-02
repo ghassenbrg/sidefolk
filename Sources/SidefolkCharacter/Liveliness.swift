@@ -41,8 +41,7 @@ public enum CharacterAntic: String, CaseIterable, Sendable {
     case boop, pet, startle, cheer, land, spin, dizzy
     // Tricks the person asks for, and play (D44): tickled, it giggles; one slow breath for the breathing exercise.
     case wave, dance, bow, nod, giggle, breathe
-    // Chance, played for the person (D44, amended): a coin flicked up, dice shaken and thrown, a fist pumped for rock,
-    // paper, scissors.
+    // Moves an extension's surface may ask for (D99): something flicked up, something shaken and thrown, a fist pumped.
     case flick, roll, pump
     // Reactions a surface can ask for (D99): a huff turned away, a shrug, a playful tease, a crouch ready to play, a
     // wince, a gasp; and the short accents fast choreography uses.

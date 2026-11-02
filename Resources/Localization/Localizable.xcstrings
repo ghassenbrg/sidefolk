@@ -4794,72 +4794,6 @@
         }
       }
     },
-    "%@ in %@ · from Weather" : {
-      "comment" : "Under the date: “18 °C in Fukuoka · from Weather”",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ في %2$@ · من الطقس"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ in %2$@ · laut Wetter"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ in %2$@ · from Weather"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ en %2$@ · según Tiempo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ à %2$@ · d’après Météo"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ a %2$@ · da Meteo"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%2$@ %1$@ · 天気より"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%2$@ %1$@ · 날씨 기준"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ em %2$@ · do Tempo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%2$@ %1$@ · 来自天气"
-          }
-        }
-      }
-    },
     "%@ in · %@ out" : {
       "comment" : "Tokens sent to and received from the AI this week: “12K in · 3K out”",
       "extractionState" : "stale",
@@ -135802,65 +135736,6 @@
         }
       }
     },
-    "Play rock, paper, scissors" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لعب حجرة ورقة مقص"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schere, Stein, Papier spielen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jugar a piedra, papel o tijera"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jouer à pierre-feuille-ciseaux"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gioca a sasso, carta, forbici"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "じゃんけんをする"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "가위바위보 하기"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jogar pedra, papel e tesoura"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "玩石头剪刀布"
-          }
-        }
-      }
-    },
     "Play with the companion" : {
       "localizations" : {
         "ar" : {
@@ -142547,66 +142422,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请重新安装 Codex，或选择其他提供方。"
-          }
-        }
-      }
-    },
-    "Relax and challenge your brain" : {
-      "comment" : "Game Center: under the puzzles",
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "استرخِ وتحدَّ عقلك"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entspann dich und fordere deinen Kopf"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Relájate y pon a prueba tu mente"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Détendez-vous et faites travailler vos méninges"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rilassati e metti alla prova la mente"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リラックスして頭の体操"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "쉬면서 머리를 써 봐요"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Relaxe e desafie a mente"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "放松一下，动动脑"
           }
         }
       }
@@ -151028,65 +150843,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仪式与休息"
-          }
-        }
-      }
-    },
-    "Rock, paper or scissors? Say yours." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حجرة أم ورقة أم مقص؟ قل لي اختيارك."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schere, Stein oder Papier? Sag, was du nimmst."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¿Piedra, papel o tijera? Dime cuál eliges."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pierre, feuille ou ciseaux ? Dites-moi votre choix."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sasso, carta o forbici? Dimmi cosa scegli."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "グー、チョキ、パー、どれにしますか？"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "가위, 바위, 보? 뭘 낼지 말해 주세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pedra, papel ou tesoura? Diga o que você escolhe."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "石头、剪刀还是布？告诉我你出哪个。"
           }
         }
       }
@@ -188428,65 +188184,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "天气服务返回了我无法读懂的内容。"
-          }
-        }
-      }
-    },
-    "The whole Mac in plain words: processor, graphics, memory, apps, disks, battery health, heat and network, as a page with live charts, a tile on Today, instant answers and a heads-up when something needs you. Nothing leaves your Mac." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الـ Mac كله بكلمات بسيطة: المعالج والرسومات والذاكرة والتطبيقات والأقراص وصحة البطارية والحرارة والشبكة، في صفحة برسوم بيانية مباشرة وبطاقة في اليوم وإجابات فورية وتنبيه حين يحتاجك شيء. لا شيء يغادر جهاز Mac الخاص بك."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der ganze Mac in einfachen Worten: Prozessor, Grafik, Arbeitsspeicher, Apps, Festplatten, Batteriezustand, Wärme und Netzwerk, als Seite mit Live-Diagrammen, als Kachel in Heute, mit sofortigen Antworten und einem Hinweis, wenn etwas dich braucht. Nichts verlässt deinen Mac."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todo el Mac en palabras sencillas: procesador, gráficos, memoria, apps, discos, salud de la batería, temperatura y red, como una página con gráficos en vivo, un mosaico en Hoy, respuestas al instante y un aviso cuando algo te necesita. Nada sale de tu Mac."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout votre Mac en termes simples : processeur, graphisme, mémoire, apps, disques, santé de la batterie, chaleur et réseau, sous forme d’une page aux graphiques en direct, d’une tuile dans Aujourd’hui, de réponses instantanées et d’une alerte quand quelque chose a besoin de vous. Rien ne quitte votre Mac."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutto il Mac in parole semplici: processore, grafica, memoria, app, dischi, salute della batteria, calore e rete, come una pagina con grafici in diretta, un riquadro in Oggi, risposte immediate e un avviso quando qualcosa ha bisogno di te. Niente lascia il tuo Mac."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mac全体をわかりやすい言葉で：プロセッサ、グラフィックス、メモリ、アプリ、ディスク、バッテリーの状態、温度、ネットワークを、ライブグラフ付きのページ、「今日」のタイル、すぐに返る答え、そして何かあったときのお知らせで。データがMacの外に出ることはありません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mac 전체를 쉬운 말로: 프로세서, 그래픽, 메모리, 앱, 디스크, 배터리 상태, 발열, 네트워크를 실시간 차트가 있는 페이지, 오늘 타일, 즉시 답변, 그리고 확인이 필요할 때 알림으로 보여 줘요. 아무것도 Mac 밖으로 나가지 않아요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O Mac inteiro em palavras simples: processador, gráficos, memória, apps, discos, saúde da bateria, temperatura e rede, como uma página com gráficos ao vivo, um bloco em Hoje, respostas instantâneas e um aviso quando algo precisa de você. Nada sai do seu Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用通俗的话看懂整台 Mac：处理器、图形、内存、应用、磁盘、电池健康、温度和网络，呈现为带实时图表的页面、“今天”中的磁贴、即时回答，以及需要你留意时的提醒。所有数据都不会离开你的 Mac。"
           }
         }
       }

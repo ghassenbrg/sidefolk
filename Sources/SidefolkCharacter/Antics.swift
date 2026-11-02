@@ -506,7 +506,7 @@ enum Antics {
             looks: [(0.6, CGVector(dx: 0, dy: 1)), (0.92, nil)], snappy: true)
     }()
 
-    /// "Rock, paper, scissors…": one fist pumped three times, the hand shown on the fourth beat (at 0.7).
+    /// One fist pumped three times, the hand shown on the fourth beat (at 0.7).
     static let pump = Antic(duration: 1.6, tracks: [
         Track(.armR, [.rest, .turn(1.7), .turn(0.7), .turn(1.7), .turn(0.7), .turn(1.7), .turn(1.0), .turn(1.0), .rest],
               at: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.88, 1]),

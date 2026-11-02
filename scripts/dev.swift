@@ -49,11 +49,6 @@
 //   swift scripts/dev.swift surface:<extension>/<surface> | surfaceFocus:<extension>/<surface>   (D99: as the AI, waiting for a click; as the person)
 //                           | surfaceClick:[overlay:]x,y | surfaceDrag:[overlay:]x,y:x,y | surfaceKey:<k> | surfaceMove:<area>[=value]
 //                           | surfaceClose | surfaceFilm:[overlay:]<seconds> (frames, animations included, in snapshots/film-…) | surfaceStats
-//                           | surfaceExportSounds:<dir> (the app's sounds as WAV files, for a pack) | surfaceExportArt:<dir> (its drawn hands, coin and dice as PNGs)
-//   swift scripts/dev.swift click:companion | click:200,300   (a mouse click on the companion in the Play panel's scene,
-//                           Which Cup?'s paw, or at a point of the panel from its top left)
-//   swift scripts/dev.swift key:space | key:right | key:return | key:escape   (Garden Plots drawn from the keyboard)
-//   swift scripts/dev.swift toss:coin[:3] | toss:dice[:2[:20]] | toss:rps:rock   (a coin, dice or a hand, through companion.toss)
 //   swift scripts/dev.swift update:offer | update:notice | update:downloading | update:downloaded | update:failed
 //                           | update:uptodate | update:check   (D46: the update window and bubble with a made-up version)
 //   swift scripts/dev.swift update:ready | update:updated   (D70: installing by itself: the window waiting for a calm

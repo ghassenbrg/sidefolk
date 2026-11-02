@@ -49,7 +49,8 @@ struct AppWithoutGamesTests {
         let catalog = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]
         let keys = Set((catalog?["strings"] as? [String: Any] ?? [:]).keys)
         for gone in ["Games", "Games…", "All Games…", "Flip a Coin", "Roll a Die", "Quick Throw", "Call Heads", "Game sounds", "Sneaky", "When it wins",
-                     "Make new trivia questions with AI", "The companion's lines while you play.", "Heads or tails…", "Rolling…", "Natural 20!"] {
+                     "Make new trivia questions with AI", "The companion's lines while you play.", "Heads or tails…", "Rolling…", "Natural 20!", "Play rock, paper, scissors",
+                     "Rock, paper or scissors? Say yours.", "Relax and challenge your brain", "Coins and dice land on the desktop, thrown by your companion."] {
             #expect(!keys.contains(gone), "“\(gone)” is still in the catalog")
         }
         #expect(keys.contains("Catch me!"), "the companion's own stays")

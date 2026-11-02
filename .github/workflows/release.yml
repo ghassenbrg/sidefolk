@@ -103,6 +103,7 @@ jobs:
         env:
           LABEL: ${{ steps.plan.outputs.label }}
           SIDEFOLK_SEED_GALLERY: ${{ inputs.seed_gallery }}
+          SIDEFOLK_ADDONS_REPO: ${{ github.workspace }}/.addons
         run: |
           swift test --no-parallel
           SIDEFOLK_RELEASE=1 SIDEFOLK_RELEASE_LABEL="$LABEL" scripts/build-app.sh release

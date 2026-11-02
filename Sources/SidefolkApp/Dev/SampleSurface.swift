@@ -7,7 +7,7 @@ import SwiftUI
 /// (pictures from a pack are checked in the debug app with the sample in `samples/scene-sample`). Drawn at its final state.
 enum SampleSurface {
     static func info(_ presentation: SurfaceInfo.Presentation) -> SurfaceInfo {
-        SurfaceInfo(extensionId: "dev.sample.lantern-garden", extensionName: "Lantern Garden", surface: "plots", title: "Plant a row", symbol: "leaf",
+        SurfaceInfo(extensionId: "dev.sample.lantern-garden", extensionName: "Lantern Garden", surface: "rows", title: "Plant a row", symbol: "leaf",
                     presentation: presentation, width: 400, height: 340, sounds: true)
     }
 
