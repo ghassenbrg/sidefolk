@@ -111,14 +111,6 @@ final class FixtureServices: AppServices {
     static let sampleIcon = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .deletingLastPathComponent().appendingPathComponent("extensions/hello-folk/icon.pdf").path
 
-    /// An icon in a sidefolk-addons checkout beside this one, for the game fixtures until Playtime's move (D101).
-    static func addonIcon(_ folder: String) -> String {
-        if let repo = ProcessInfo.processInfo.environment["SIDEFOLK_ADDONS_REPO"] {
-            return URL(fileURLWithPath: repo).appendingPathComponent("extensions/\(folder)/icon.pdf").path
-        }
-        return URL(fileURLWithPath: sampleIcon).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().appendingPathComponent("sidefolk-addons/extensions/\(folder)/icon.pdf").path
-    }
 
     /// From the add-on gallery (D55).
     static let repoPal = ExtensionInfo(
@@ -201,9 +193,6 @@ final class FixtureServices: AppServices {
     func showAbout() {}
     func openGallery() {}
     func openAsk(prefill: String) {}
-    /// The Game Center's Continue in snapshots: a game put away.
-    var keptGame: GameInfo?
-    func openPlayMenu() {}
     func editReminder(_ id: String, title: String, when: String) async -> UserFacingError? { nil }
     func moveReminder(_ id: String, to date: Date) async -> UserFacingError? {
         _ = try? await runtime.scheduler.snooze(id: id, until: date)

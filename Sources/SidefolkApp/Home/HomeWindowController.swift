@@ -7,7 +7,7 @@ import SwiftUI
 final class HomeWindowController: NSObject, NSWindowDelegate {
     enum Section {
         case now, calendar, notebook, onDuty, history, gallery
-        /// An extension's page (`ExtensionPageInfo.id`): the Game Center (D93).
+        /// An extension's page (`ExtensionPageInfo.id`).
         case page(String)
     }
 

@@ -33,24 +33,6 @@ struct CompanionSettingsView: View {
             }
         }
 
-        // Games in the Play panel (D75): how the companion takes a win, sounds (off until turned on) and Sneaky (D93).
-        SettingsGroup(title: "Games") {
-            SettingsRow(title: Text("When it wins"), detail: Text(toneDetail), anchor: .gameTone) {
-                SegmentedPicker("When it wins", selection: Binding(get: { model.settings.games.tone }, set: { tone in model.update { $0.games.tone = tone } }),
-                                segments: [
-                    .init(GameTone.gentle, Text(String(localized: "tone.gentle", defaultValue: "Gentle", comment: "How the companion takes a win in games: kindly"))),
-                    .init(GameTone.cheeky, Text(String(localized: "tone.cheeky", defaultValue: "Cheeky", comment: "How the companion takes a win in games: a small tease, then kind"))),
-                    .init(GameTone.competitive, Text(String(localized: "tone.competitive", defaultValue: "Competitive", comment: "How the companion takes a win in games: a victory dance"))),
-                ])
-            }
-            SettingsToggle(.gameSounds, isOn: Binding(get: { model.settings.games.sounds }, set: { on in model.update { $0.games.sounds = on } }))
-            SettingsToggle(.gameSneaky, isOn: Binding(get: { model.settings.games.sneaky }, set: { on in model.update { $0.games.sneaky = on } }))
-            // Off and greyed while no AI is set up: nothing would make the questions (D95).
-            SettingsToggle(.gameAITrivia, isOn: Binding(get: { model.settings.games.aiTriviaOn(providerSet: model.settings.provider.kind != .none) },
-                                                        set: { on in model.update { $0.games.aiTrivia = on } }))
-                .disabled(model.settings.provider.kind == .none)
-        }
-
         SettingsGroup(title: "Look") {
             SettingsRow(title: Text("Size"), anchor: .size) {
                 SegmentedPicker("Size", selection: Binding(get: { model.settings.size }, set: { size in model.update { $0.size = size } }), segments: [
@@ -74,14 +56,6 @@ struct CompanionSettingsView: View {
                 ])
             }
             SettingsToggle(.sleep, isOn: setting(\.sleepWhenIdle))
-        }
-    }
-
-    private var toneDetail: LocalizedStringKey {
-        switch model.settings.games.tone {
-        case .gentle: "“Good game!” and nothing more."
-        case .cheeky: "A small tease, then kind: “Ha! Mine. Rematch?”"
-        case .competitive: "A victory dance, and it wants a rematch when it loses."
         }
     }
 

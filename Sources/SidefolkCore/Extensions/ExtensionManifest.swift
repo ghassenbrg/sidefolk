@@ -32,8 +32,6 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     public var background: Bool
     /// Pop-up lists on a keyboard shortcut, filled by `sidefolk/palette.query` (D63).
     public var palettes: [String: PaletteMeta]
-    /// Games played in the Play panel beside the companion, over `sidefolk/game.*` (D75).
-    public var games: [String: GameMeta]
     /// Requests to try, as the person would say them, in Settings under its name (D98). `strings/` translates them.
     public var examples: [String]
     /// The public services the program talks to, shown on the install sheet and in Settings › Trust (D98).
@@ -60,6 +58,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     /// A section of settings Sidefolk used to keep for what this extension does now: given to it once (D100). Honoured
     /// for Sidefolk's own extensions only.
     public var settingsFrom: String?
+    /// What it names of `retiredKeys`: it was made for an older Sidefolk and doesn't run here.
+    public var retired: [String] = []
     /// What else the app kept for the work a Sidefolk extension does now, handed over once with `settings_from`.
     public var carries: Carries = Carries()
 
@@ -369,47 +369,6 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
     }
 
-    /// A game in the Play panel (D75): Sidefolk draws its boards from what `sidefolk/game.start` and `game.move` return.
-    public struct GameMeta: Sendable, Hashable, Decodable {
-        public var title: String
-        /// An SF Symbol for the Play menu and the panel's header.
-        public var symbol: String?
-        /// Whole sentences that open it at once, without the AI ("let's play trivia").
-        public var say: [String]
-        /// Levels the game offers, easiest first; the person picks one on its page or in its set-up.
-        public var levels: [String]
-        /// Offered to Sidefolk's AI through `games.open`; missing means yes.
-        public var ai: Bool?
-        /// One line under its title on the Play panel's menu card ("Keep your eye on the gem").
-        public var tagline: String?
-        /// Which of Sidefolk's looks dresses it (`GameLook`, D79 amended): its colour, scene and icon, all Sidefolk's art.
-        /// Kept as written so the validator can name a wrong one.
-        public var look: String?
-
-        public init(title: String, symbol: String? = nil, say: [String] = [], levels: [String] = [], ai: Bool? = nil,
-                    tagline: String? = nil, look: String? = nil) {
-            self.title = title
-            self.symbol = symbol
-            self.say = say
-            self.levels = levels
-            self.ai = ai
-            self.tagline = tagline
-            self.look = look
-        }
-
-        public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "symbol", "say", "levels", "ai", "tagline", "look"])
-            let c = try decoder.container(keyedBy: AnyKey.self)
-            title = try c.decode(String.self, forKey: "title")
-            symbol = try c.decodeIfPresent(String.self, forKey: "symbol")
-            say = try c.decodeIfPresent([String].self, forKey: "say") ?? []
-            levels = try c.decodeIfPresent([String].self, forKey: "levels") ?? []
-            ai = try c.decodeIfPresent(Bool.self, forKey: "ai")
-            tagline = try c.decodeIfPresent(String.self, forKey: "tagline")
-            look = try c.decodeIfPresent(String.self, forKey: "look")
-        }
-    }
-
     /// One setting of a watcher, filled in by whoever creates the watcher.
     public struct ConfigField: Sendable, Hashable, Codable {
         public enum FieldType: String, Sendable, Hashable, Codable { case integer, number, string, boolean }
@@ -446,7 +405,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
                 tagline: String? = nil, folk: String? = nil, author: String? = nil, icon: String? = nil, run: Run, permissions: Permissions = Permissions(),
                 tools: [String: ToolMeta] = [:], watchers: [String: WatcherMeta] = [:], words: [String: [String]] = [:],
                 pages: [String: PageMeta] = [:], background: Bool = false, palettes: [String: PaletteMeta] = [:],
-                games: [String: GameMeta] = [:], examples: [String] = [], services: [Service] = [], replaces: [String] = [],
+                examples: [String] = [], services: [Service] = [], replaces: [String] = [],
                 assets: String? = nil, surfaces: [String: SurfaceMeta] = [:], choices: [String: [String: [String]]] = [:],
                 parts: [String: PartMeta] = [:], carry: CarryMeta = CarryMeta(), settings: [SettingMeta] = [], entries: [EntryMeta] = [],
                 drops: [DropMeta] = [], settingsFrom: String? = nil) {
@@ -467,7 +426,6 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         self.pages = pages
         self.background = background
         self.palettes = palettes
-        self.games = games
         self.examples = examples
         self.services = services
         self.replaces = replaces
@@ -483,11 +441,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
     }
 
     public init(from decoder: Decoder) throws {
-        try decoder.rejectUnknownKeys(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
-                                       "permissions", "tools", "watchers", "words", "pages", "background", "palettes", "games",
-                                       "examples", "services", "replaces", "assets", "surfaces",
-                                       "choices", "parts", "carry", "settings", "entries", "drops", "settings_from", "carries"])
+        try decoder.rejectUnknownKeys(Set(["id", "name", "version", "sidefolk", "description", "tagline", "folk", "author", "icon", "run",
+                                           "permissions", "tools", "watchers", "words", "pages", "background", "palettes",
+                                           "examples", "services", "replaces", "assets", "surfaces",
+                                           "choices", "parts", "carry", "settings", "entries", "drops", "settings_from", "carries"]).union(Self.retiredKeys))
         let c = try decoder.container(keyedBy: AnyKey.self)
+        retired = c.allKeys.map(\.stringValue).filter(Self.retiredKeys.contains).sorted()
         id = try c.decode(String.self, forKey: "id")
         name = try c.decode(String.self, forKey: "name")
         version = try c.decode(String.self, forKey: "version")
@@ -505,7 +464,6 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         pages = try c.decodeIfPresent([String: PageMeta].self, forKey: "pages") ?? [:]
         background = try c.decodeIfPresent(Bool.self, forKey: "background") ?? false
         palettes = try c.decodeIfPresent([String: PaletteMeta].self, forKey: "palettes") ?? [:]
-        games = try c.decodeIfPresent([String: GameMeta].self, forKey: "games") ?? [:]
         examples = try c.decodeIfPresent([String].self, forKey: "examples") ?? []
         services = try c.decodeIfPresent([Service].self, forKey: "services") ?? []
         replaces = try c.decodeIfPresent([String].self, forKey: "replaces") ?? []
@@ -520,6 +478,10 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         settingsFrom = try c.decodeIfPresent(String.self, forKey: "settings_from")
         carries = try c.decodeIfPresent(Carries.self, forKey: "carries") ?? Carries()
     }
+
+    /// Keys of abilities this Sidefolk had and has given up (D101). A copy naming one was made for an older Sidefolk: it isn't broken or
+    /// unknown, so it reads and stands in the list as needing an update, and nothing it has here is lost; a pack naming one can't be installed.
+    public static let retiredKeys: Set<String> = ["games"]
 
     /// The last part of the id (`dev.example.tea-timer` → `tea-timer`), used in tool names.
     public var shortName: String { String(id.split(separator: ".").last ?? Substring(id)) }

@@ -158,8 +158,6 @@ extension AppCoordinator: AskActions {
                   caption: caption, fades: true)
     }
 
-    func openPlay() { openPlayMenu(focus: true) }
-
     func open(_ entry: ExtensionEntry) { run(entry) }
 
     func openConversation(_ thread: String?) {
@@ -234,8 +232,6 @@ extension AppCoordinator: AskActions {
             switch outcome {
             case .card(let card, let activityId, let undo):
                 addResult(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), card: card, to: model, caption: caption)
-                // A coin, dice or hand is said once it has landed, never while it is in the air (D75).
-                if card.kind == .chance { try? await Task.sleep(for: .seconds(player.untilLanded())) }
                 say(SpokenLine.card(card))
                 // Quick intents close the panel a moment after their card appears, once their words are said.
                 try? await Task.sleep(for: .seconds(undo ? 2.5 : 1.2))
@@ -309,7 +305,7 @@ extension AppCoordinator: AskActions {
             var shownCards = Set<String>()
             // What may be said aloud once the run ends: the answer, else the last change, else the failure.
             var line: String?
-            // When a toss shown in this run lands, which the answer waits for.
+            // When an extension's animation in this run comes to rest, which the answer waits for (D100).
             var landing: Date?
             func caption() -> String? {
                 defer { captioned = true }
@@ -325,14 +321,12 @@ extension AppCoordinator: AskActions {
                     model.phase = String(localized: "Waiting for your OK…")
                 case .toolFinished(let activity, let ok):
                     // Read-only results feed the answer; only changes become cards (DECISIONS D5), and so
-                    // does a way to the System Settings page where macOS needs the person's OK (D38). What the
-                    // companion flipped or rolled is shown as it came, whatever the answer makes of it (D44).
+                    // does a way to the System Settings page where macOS needs the person's OK (D38).
                     if let card = activity.card,
-                       ok ? activity.mutates || card.kind == .chance : PrivacyPane.isKnown(card.url) || SettingsLink.isKnown(card.url) {
+                       ok ? activity.mutates : PrivacyPane.isKnown(card.url) || SettingsLink.isKnown(card.url) {
                         shownCards.insert(card.title)
                         addResult(.result(card, activityId: activity.id, undo: activity.undoAvailable), card: card, to: model, caption: caption())
                         line = SpokenLine.card(card)
-                        if card.kind == .chance { landing = Date().addingTimeInterval(player.untilLanded()) }
                         // An extension's animation still showing the result: its reply says how long (D100).
                         if let hold = card.holdAnswer { landing = Date().addingTimeInterval(hold) }
                     }
@@ -345,7 +339,7 @@ extension AppCoordinator: AskActions {
                     }
                 case .reply(let reply):
                     let answer = reply.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                    // The AI's words about a toss wait until it has landed: no "Heads!" while the coin still spins (D75).
+                    // The AI's words wait for it: no result while the animation still builds up to it.
                     if let landing, landing > Date() { try? await Task.sleep(for: .seconds(landing.timeIntervalSinceNow)) }
                     if !answer.isEmpty {
                         model.add(.answer(answer, canThinkHarder: !thinkHarder && runtime.settings.current.provider.smartModel != "",
@@ -592,11 +586,6 @@ extension AppCoordinator: AskActions {
 
     /// A result card for the panel. What the companion flipped or rolled waits until it lands on the desktop (D44).
     func addResult(_ entry: AskEntry.Content, card: ResultCard, to model: AskModel, caption: String?) {
-        let wait = card.kind == .chance ? player.untilLanded() : 0
-        guard wait > 0 else { return model.add(entry, caption: caption) }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(wait))
-            model.add(entry, caption: caption)
-        }
+        model.add(entry, caption: caption)
     }
 }

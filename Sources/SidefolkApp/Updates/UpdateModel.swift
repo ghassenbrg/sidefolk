@@ -67,6 +67,9 @@ final class UpdateModel {
         addonWaiting.filter { entry in !addonReview.contains { $0.id == entry.id } }
     }
 
+    /// Extensions needing an update (D101) the gallery has nothing newer for yet, after someone asked.
+    var addonNoneYet: Set<String> = []
+
     func addonUpdate(for id: String) -> AddonEntry? { addonPending.first { $0.id == id } }
 
     /// Its new version would be allowed to do more: Review opens the install sheet instead of updating.
@@ -132,6 +135,8 @@ protocol AddonUpdateActions: AnyObject {
     func update(_ entries: [AddonEntry])
     /// Fetches an extension's update and opens the install sheet, which says what is new.
     func review(_ entry: AddonEntry)
+    /// A copy made for an older Sidefolk (D101): the gallery's newest of it, as `update(_:)` would, looking first.
+    func updateOutOfDate(_ id: String)
     /// Home's Gallery, where the Updates section leads.
     func showAddonUpdates()
 }

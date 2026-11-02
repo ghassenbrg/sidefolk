@@ -28,10 +28,6 @@ enum UISnapshots {
             }
             ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
         }
-        // Boards a game wrote (Playtime's `writeSampleBoards`), drawn as `play-<game>-<moment>`.
-        if let i = args.firstIndex(of: "--game-boards"), i + 1 < args.count {
-            gameBoards = URL(fileURLWithPath: args[i + 1], isDirectory: true)
-        }
         // Only the shots whose names contain one of these words: a page under review in seconds, not minutes.
         if let i = args.firstIndex(of: "--only"), i + 1 < args.count {
             only = args[i + 1].split(separator: ",").map(String.init)
@@ -110,13 +106,9 @@ enum UISnapshots {
             try await homeShot("today-extensions", size: CGSize(width: 1280, height: 1000))
             full.selection = .onDuty
             try await homeShot("onduty-extensions")
-            // An extension's page and the Game Center in the window, at the top and scrolled (D93).
-            full.pages.showSample([SampleExtensionPage.info, SampleGameCenter.info], summaries: [:])
-            full.pages.showSample(center: SampleGameCenter.model())
+            // An extension's page in the window, at the top and scrolled.
+            full.pages.showSample([SampleExtensionPage.info], summaries: [:])
             full.pages.showSample(page: SampleExtensionPage.model())
-            full.selection = .page(SampleGameCenter.info.id)
-            try await homeShot("gamecenter")
-            try await homeShot("gamecenter-scrolled", scroll: 260)
             full.selection = .page(SampleExtensionPage.info.id)
             try await homeShot("extension-page")
             try await homeShot("extension-page-scrolled", scroll: 140)
@@ -320,11 +312,6 @@ enum UISnapshots {
             try await page("page-extension-rich", ExtensionPageView(model: SampleRichPage.model()), width: 1180)
             try await page("page-extension-scene", ExtensionPageView(model: SampleRichPage.sceneModel()), width: 980)
             try await page("page-extension-rich-narrow", ExtensionPageView(model: SampleRichPage.model()), width: 640)
-            // The Game Center (D93): Playtime's page, with many games, before any game, and narrow.
-            try await page("page-game-center", GameCenterView(model: SampleGameCenter.model()), width: 1180)
-            try await page("page-game-center-many", GameCenterView(model: SampleGameCenter.model(many: true)), width: 1180)
-            try await page("page-game-center-empty", GameCenterView(model: SampleGameCenter.model(empty: true)), width: 1180)
-            try await page("page-game-center-narrow", GameCenterView(model: SampleGameCenter.model()), width: 700)
             try await page("panel-extension-palette", PaletteView(model: SampleExtensionPage.palette(host: full.services.runtime.extensions)), width: 880)
             // Choices, fields and lists with pictures on a page (D68).
             try await page("page-extension-shelf", ExtensionPageView(model: SampleExtensionPage.shelf()), width: 980)
@@ -429,13 +416,12 @@ enum UISnapshots {
             settings.setAttention(.open, until: nil)
             await settings.services.runtime.attention.update { $0.quiet = false }
             // What may interrupt you, changed (D88): Claude Code only in Today, Codex in whispers, one watch set apart,
-            // an app that called once, the game's lines off.
+            // an app that called once.
             let watch = try await settings.services.runtime.watcherStore.all().first
             settings.update { s in
                 s.interruptions.set(.today, for: .agent("claude-code"))
                 s.interruptions.set(.whisper, for: .agent("codex"))
                 s.interruptions.set(.whisper, for: .agent("cursor"))
-                s.interruptions.set(.off, for: .games)
                 if let watch { s.interruptions.set(.today, for: .watch(watch.id)) }
             }
             await settings.loadNoticeSources()
@@ -601,29 +587,12 @@ enum UISnapshots {
                 try await page("desktop-floor-\(name)", FloorScene(portrait: still, floor: floor, height: floor.sidecard == nil ? 300 : 520,
                                                                    measure: measure), width: 760)
             }
-            for (name, caption) in sampleTosses(face: portrait) {
-                try await page("desktop-toss-\(name)", CaptionView(model: caption), width: 300)
-            }
             // An extension's surface in its frame, and an overlay (D99): a fictional extension, no pack.
             if wantedName("surface") {
                 let panel = await SampleSurface.model(.panel, scene: SampleSurface.panelScene, companion: portrait)
                 try await page("surface-panel", SurfaceFrame(model: panel, onBack: {}, onSpeaker: {}, onClose: {}), width: panel.canvas.width)
                 let overlay = await SampleSurface.model(.overlay, scene: SampleSurface.overlayScene, companion: portrait)
                 try await page("surface-overlay", SurfaceFrame(model: overlay, onBack: {}, onSpeaker: {}, onClose: {}), width: 220)
-            }
-            // The Play panel in each state, and the moment a clash is halfway (D75).
-            for (name, model, at) in await SamplePlayBoards.models(portrait: portrait) where wantedName("game-\(name)") {
-                try await page("game-\(name)", PlayView(model: model).environment(\.revealProgress, at), width: PlayView.width)
-            }
-            // The panel's menu of games, its home (D79 amended).
-            if wantedName("game-menu") {
-                try await page("game-menu", PlayMenuView(menu: SamplePlayBoards.menu(from: gameBoards, portrait: portrait)), width: PlayView.width)
-            }
-            // Playtime's real boards, every game and moment, when a folder of them is given (`--game-boards`).
-            if let boards = gameBoards {
-                for (name, model) in await SamplePlayBoards.real(from: boards, portrait: portrait) where wantedName("play-\(name)") {
-                    try await page("play-\(name)", PlayView(model: model).environment(\.revealProgress, 1), width: PlayView.width)
-                }
             }
 
             // Lantern's design-system sheet (D84): tokens and shared components, the reference for every screen.
@@ -1006,47 +975,13 @@ enum UISnapshots {
         return ask
     }
 
-    /// A value read now and a hand played, answered without AI (D35 and D44, amended).
+    /// A value read now, answered without AI (D35).
     private static func sampleAskNow() -> AskModel {
         let ask = AskModel()
         ask.add(.result(ResultCard(kind: .reading, title: "CPU: 23%"), activityId: nil, undo: false), caption: "what's my cpu usage?")
         ask.add(.result(ResultCard(kind: .reading, title: "Temperature in Fukuoka: 18 °C", subtitle: "Fukuoka, Japan"), activityId: nil, undo: false),
                 caption: "temperature in Fukuoka")
-        ask.add(.result(ResultCard(kind: .chance, title: Toss.hands(person: .rock, companion: .paper).result, subtitle: "You 2 · Me 3 · Draws 1"),
-                        activityId: nil, undo: false), caption: "rock")
         return ask
-    }
-
-    /// What the companion flipped, rolled and played (D44, amended; D75): landed with the result under it and Again, one coin
-    /// halfway up, a called coin, a natural 20 and the shapes of dice, and two hands meeting.
-    private static func sampleTosses(face: NSImage?) -> [(String, CaptionModel)] {
-        func caption(_ toss: Toss, landed: Bool = true, text: String? = nil, at: Double = 0.5, again: Bool = true) -> CaptionModel {
-            let model = CaptionModel()
-            model.text = text ?? ""
-            model.companionName = "Mochi"
-            model.face = face
-            let flight = 1.2
-            model.stage = TossShow(toss: toss, start: Date().addingTimeInterval(landed ? -3 : -at * flight - 0.3), flight: flight, still: false, landed: landed)
-            if landed, again, !{ if case .hands = toss { true } else { false } }() { model.again = {} }
-            return model
-        }
-        return [
-            ("coin-flying", caption(.coins([false]), landed: false, text: String(localized: "Heads or tails…"), at: 0.45)),
-            ("coin-heads", caption(.coins([true]))),
-            ("coin-called", caption(.coins([false], call: false), text: String(localized: "You called it!", comment: "The companion: the person called the coin right"))),
-            ("coins", caption(.coins([true, false, true]))),
-            ("dice-rolling", caption(.dice(sides: 6, rolls: [5, 3], modifier: 0), landed: false, text: String(localized: "Rolling…"), at: 0.4)),
-            ("dice", caption(.dice(sides: 6, rolls: [5, 3], modifier: 1))),
-            ("doubles", caption(.dice(sides: 6, rolls: [4, 4], modifier: 0), text: String(localized: "Doubles!", comment: "The companion: two dice landed on the same face"))),
-            ("d20", caption(.dice(sides: 20, rolls: [20], modifier: 0), text: String(localized: "Natural 20!", comment: "The companion: a d20 landed on 20"))),
-            ("polyhedra", caption(.dice(sides: 8, rolls: [3, 7], modifier: 0))),
-            ("d12", caption(.dice(sides: 12, rolls: [11, 4, 9], modifier: 2))),
-            ("many-dice", caption(.dice(sides: 6, rolls: [1, 2, 3, 4, 5, 6, 6], modifier: 0))),
-            ("hands-clash", caption(.hands(person: .scissors, companion: .paper), landed: false, at: 1.25)),
-            ("hands-you-win", caption(.hands(person: .rock, companion: .scissors))),
-            ("hands-i-win", caption(.hands(person: .rock, companion: .paper))),
-            ("hands-draw", caption(.hands(person: .scissors, companion: .scissors))),
-        ]
     }
 
     /// Using the internet (D47): a page Sidefolk chose, a built-in service, and a new site after reading a page.
@@ -1185,7 +1120,6 @@ enum UISnapshots {
     }
 
     private static var only: [String] = []
-    private static var gameBoards: URL?
 
     private static func wantedName(_ name: String) -> Bool { only.isEmpty || only.contains { name.contains($0) } }
 

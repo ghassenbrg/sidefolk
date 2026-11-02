@@ -107,7 +107,7 @@ struct SayWords {
         case "profile.remember": "person"
         case "watch.create": "binoculars"
         case "watch.report", "watch.read": "gauge.with.dots.needle.33percent"
-        case "companion.play", "companion.toss": "gamecontroller"
+        case "companion.play": "gamecontroller"
         default: Theme.Symbol.say
         }
     }

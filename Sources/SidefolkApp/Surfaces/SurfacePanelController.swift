@@ -102,7 +102,7 @@ final class SurfacePanelController {
             guard let self, event.window === self.hosted.panel, let model = self.holder.model else { return event }
             // A text field being typed in (through the input method) keeps its keys.
             if self.hosted.panel.firstResponder is NSTextView { return event }
-            guard let key = PlayPanelController.key(event) else { return event }
+            guard let key = Self.key(event) else { return event }
             let command = event.modifierFlags.contains(.command)
             let now = Date()
             switch SurfacePolicy.route(key, command: command, scene: model.scene, lastEscape: self.lastEscape, now: now) {
@@ -118,8 +118,35 @@ final class SurfacePanelController {
                 // A key held down: a repeat adds nothing while the last press is still on its way.
                 if event.isARepeat, model.isBusy { return nil }
                 // Return and Space are the scene's alone: never a press of whichever frame button has the focus.
-                return model.press(key, seat: PlayPanelController.seat(event), timestamp: event.timestamp) || key == "return" || key == "space" ? nil : event
+                return model.press(key, seat: Self.seat(event), timestamp: event.timestamp) || key == "return" || key == "space" ? nil : event
             }
+        }
+    }
+
+    /// The Latin letter printed where a key sits on a US keyboard, for keys chosen by position (two players' A and L).
+    static func seat(_ event: NSEvent) -> String? {
+        let letters: [UInt16: String] = [0: "a", 1: "s", 2: "d", 3: "f", 37: "l", 40: "k", 38: "j"]
+        return letters[event.keyCode]
+    }
+
+    /// The scene's name for a key: a letter or digit, `return` or `space`.
+    static func key(_ event: NSEvent) -> String? {
+        switch event.keyCode {
+        case 36, 76: return "return"
+        case 49: return "space"
+        case 51: return "delete"
+        case 33: return "["
+        // Esc is the board's only while it is using it (a plot drawn from the keyboard); otherwise it closes the panel.
+        case 53: return "escape"
+        case 123: return "left"
+        case 124: return "right"
+        case 125: return "down"
+        case 126: return "up"
+        default:
+            // The character the key types in the person's layout (é, ñ, an Arabic letter), not the one printed on it.
+            guard let c = (event.characters ?? event.charactersIgnoringModifiers)?.lowercased(), c.count == 1,
+                  c.first!.isLetter || c.first!.isNumber || c == "?" else { return nil }
+            return c
         }
     }
 

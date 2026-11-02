@@ -161,8 +161,13 @@ public enum NetworkReach: Sendable, Hashable {
 public struct ResultCard: Codable, Sendable, Hashable {
     public enum Kind: String, Codable, Sendable {
         case note, reminder, watcher, memory, file, web, list, info, collection, extensionResult
-        /// One value read now (`watch.read`), and what came up when the companion flipped, rolled or played a hand.
-        case reading, chance
+        /// One value read now (`watch.read`).
+        case reading
+
+        /// A kind an older Sidefolk wrote that this one no longer has still reads, as a plain card: a past result stays in History.
+        public init(from decoder: Decoder) throws {
+            self = Kind(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .info
+        }
     }
     public var kind: Kind
     public var title: String

@@ -53,9 +53,10 @@ enum SceneColors {
         case .warningSoft: Theme.warningSoft
         case .info: Theme.link
         case .clear: .clear
-        case .win: GameColors.color(.win)
-        case .loss: GameColors.color(.loss)
-        case .draw: GameColors.color(.draw)
+        // A win is success; a loss a calm warm tone, never the danger red (D78); a draw plain ink.
+        case .win: Theme.success
+        case .loss: Color(light: 0xB07A52, dark: 0xD9A982)
+        case .draw: Theme.inkMuted
         }
     }
 }
@@ -344,7 +345,7 @@ struct SceneFigures {
     /// The friendly stand-in for someone with no account picture, as Sidefolk's own places draw it.
     @MainActor
     static func standIn(side: CGFloat) -> CGImage? {
-        let renderer = ImageRenderer(content: PlayerAvatar(picture: nil, size: side))
+        let renderer = ImageRenderer(content: PersonStandIn(picture: nil, size: side))
         renderer.scale = 2
         return renderer.cgImage
     }
@@ -365,11 +366,68 @@ struct SceneFigures {
             case .celebrating: .celebrating
             }
             var rect = CGRect(x: 0, y: 0, width: side * 2, height: side * 2)
-            return GameFigures.trim(CompanionArt.portrait(for: settings, state: state, side: CGFloat(side)))?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+            return SceneFigures.trim(CompanionArt.portrait(for: settings, state: state, side: CGFloat(side)))?.cgImage(forProposedRect: &rect, context: nil, hints: nil)
         }, person: { side in
             var rect = CGRect(x: 0, y: 0, width: side * 2, height: side * 2)
             if let picture = AccountPicture.current { return picture.cgImage(forProposedRect: &rect, context: nil, hints: nil) }
             return SceneFigures.standIn(side: CGFloat(side))
         }, companionName: settings.companionName)
+    }
+}
+
+extension SceneFigures {
+    private static var trimmed: [ObjectIdentifier: NSImage] = [:]
+
+    /// The picture without its empty margins, so it can stand on the table at the size asked.
+    static func trim(_ image: NSImage?) -> NSImage? {
+        guard let image else { return nil }
+        if let done = trimmed[ObjectIdentifier(image)] { return done }
+        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil), let box = opaqueBox(cg),
+              let cut = cg.cropping(to: box) else { return image }
+        let out = NSImage(cgImage: cut, size: NSSize(width: CGFloat(cut.width) / 2, height: CGFloat(cut.height) / 2))
+        trimmed[ObjectIdentifier(image)] = out
+        return out
+    }
+
+    private static func opaqueBox(_ cg: CGImage) -> CGRect? {
+        let w = cg.width, h = cg.height
+        var pixels = [UInt8](repeating: 0, count: w * h)
+        guard let ctx = CGContext(data: &pixels, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w, space: CGColorSpaceCreateDeviceGray(),
+                                  bitmapInfo: CGImageAlphaInfo.alphaOnly.rawValue) else { return nil }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        var minX = w, minY = h, maxX = -1, maxY = -1
+        for y in 0..<h {
+            for x in 0..<w where pixels[y * w + x] > 24 {
+                minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+            }
+        }
+        guard maxX >= minX, maxY >= minY else { return nil }
+        // The bitmap's rows run bottom up in the context; CGImage cropping counts from the top.
+        return CGRect(x: minX, y: h - 1 - maxY, width: maxX - minX + 1, height: maxY - minY + 1)
+    }
+}
+
+/// The person on the score bar: their picture, or a friendly stand-in (a smiling face on a soft disc).
+struct PersonStandIn: View {
+    var picture: NSImage?
+    var size: CGFloat
+
+    var body: some View {
+        Group {
+            if let picture {
+                Image(nsImage: picture).resizable().scaledToFill()
+            } else {
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(hex: 0xFFD7A8), Color(hex: 0xFFB27A)], startPoint: .top, endPoint: .bottom))
+                    Image(systemName: "face.smiling.inverse").font(.system(size: size * 0.6, weight: .regular))
+                        .foregroundStyle(.white, Color(hex: 0xE58B4E))
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+        .accessibilityHidden(true)
     }
 }

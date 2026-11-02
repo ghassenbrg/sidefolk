@@ -43,7 +43,7 @@ struct SurfacesOpenTool: Tool {
     static func arguments(_ j: JSONValue?) -> [String: JSONValue] {
         var out: [String: JSONValue] = [:]
         for (key, value) in (j?.objectValue ?? [:]).sorted(by: { $0.key < $1.key }).prefix(12) {
-            guard GameBoard.token(.string(key)) != nil else { continue }
+            guard SceneReading.token(.string(key)) != nil else { continue }
             switch value {
             case .string(let text):
                 let clean = ExtensionText.clip(ExtensionText.clean(text), 200)
@@ -102,7 +102,7 @@ private extension SurfacesOpenTool {
 }
 
 extension IntentParser {
-    /// A sentence a surface says opens it, as for games (D75): right away and without AI; two extensions claiming one go to the AI.
+    /// A sentence a surface says opens it: right away and without AI; two extensions claiming one go to the AI.
     func surface(_ command: String) -> ParsedIntent? {
         let found = surfaces.filter { $0.say.contains(where: { (try? CommandSentence($0))?.match(command) != nil }) }
         guard let info = found.first, Set(found.map(\.extensionId)).count == 1 else { return nil }

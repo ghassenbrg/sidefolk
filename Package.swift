@@ -28,8 +28,6 @@ let package = Package(
                 "SidefolkCharacter",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
-            // The Play panel's pictures (cups, gem, balloon, trophy), chosen by a board's part, never sent by a game.
-            resources: [.copy("Play/Art")],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
         .executableTarget(name: "sidefolk", dependencies: ["SidefolkCore"]),

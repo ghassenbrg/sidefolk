@@ -11,7 +11,8 @@ public enum CompanionAct: String, CaseIterable, Sendable, Codable {
     /// One calm minute of breathing in and out with it.
     case breathe
 
-    public var isGame: Bool { self == .catchMe || self == .breathe }
+    /// It runs for a while with the companion in view, rather than playing at once.
+    public var takesAWhile: Bool { self == .catchMe || self == .breathe }
 
     /// What the hint and the card call it, in the app's language.
     public var title: String {

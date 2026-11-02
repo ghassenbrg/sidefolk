@@ -2,7 +2,7 @@ import Foundation
 
 /// An extension's words in the languages Sidefolk speaks (D76): `strings/<language>.json` beside the manifest. A
 /// language's file may translate what the manifest shows people (name, tagline, description, tool, watcher, page and
-/// palette and game titles, the network's purpose, examples and tool summaries) and carries the program's own sentences under `text`, which `strings/en.json`
+/// palette titles, the network's purpose, examples and tool summaries) and carries the program's own sentences under `text`, which `strings/en.json`
 /// lists in English. Files of their own rather than a manifest key, because older copies of Sidefolk refuse a manifest
 /// with a key they don't know (T13), and ignore a folder they don't read.
 public struct ExtensionStrings: Sendable, Hashable {
@@ -26,11 +26,7 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var watchers: [String: Watcher] = [:]
         public var pages: [String: String] = [:]
         public var palettes: [String: Palette] = [:]
-        /// Game titles (D75), shown in the Play menu, the panel's header and `games.open`.
-        public var games: [String: String] = [:]
-        /// Game taglines, under the title on the Play panel's menu card.
-        public var gameTaglines: [String: String] = [:]
-        /// Requests to try (D98), in the manifest's order.
+            /// Requests to try (D98), in the manifest's order.
         public var examples: [String] = []
         /// Each tool's summary (D98): one text for each of the manifest's forms, in order.
         public var toolSummaries: [String: [String]] = [:]
@@ -193,7 +189,7 @@ extension ExtensionStrings {
         var w = Words()
         guard let o = any as? [String: Any] else { return w }
         let english = code == "en"
-        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "examples", "surfaces", "text",
+        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "examples", "surfaces", "text",
                                                                  "commands", "parts", "choices", "carry", "settings", "entries", "drops", "ai_purpose"]
         for key in o.keys.sorted() where !allowed.contains(key) {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
@@ -258,11 +254,6 @@ extension ExtensionStrings {
             w.palettes[name] = Palette(title: line(f["title"], "\(file).palettes.\(name).title", max: 40, base: m.palettes[name]?.title),
                                        placeholder: line(f["placeholder"], "\(file).palettes.\(name).placeholder", max: 60,
                                                          base: m.palettes[name]?.placeholder))
-        }
-        for (name, value) in object("games", names: Set(m.games.keys)) {
-            let f = fields(value, "\(file).games.\(name)", ["title", "tagline"])
-            w.games[name] = line(f["title"], "\(file).games.\(name).title", max: 40, base: m.games[name]?.title)
-            w.gameTaglines[name] = line(f["tagline"], "\(file).games.\(name).tagline", max: 60, base: m.games[name]?.tagline)
         }
         w.examples = examples(o["examples"], "\(file).examples", of: m.examples)
         for (name, value) in object("surfaces", names: Set(m.surfaces.keys)) {

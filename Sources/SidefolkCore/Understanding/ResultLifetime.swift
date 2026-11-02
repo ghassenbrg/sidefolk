@@ -33,11 +33,11 @@ public enum ResultLifetime {
         }
     }
 
-    /// A result card's weight by its kind: values, lookups and chance are quick; what was made or found to keep is
+    /// A result card's weight by its kind: values and lookups are quick; what was made or found to keep is
     /// normal.
     public static func weight(of card: ResultCard.Kind) -> Weight {
         switch card {
-        case .reading, .chance, .info, .extensionResult, .web: .quick
+        case .reading, .info, .extensionResult, .web: .quick
         case .note, .reminder, .watcher, .memory, .file, .list, .collection: .normal
         }
     }

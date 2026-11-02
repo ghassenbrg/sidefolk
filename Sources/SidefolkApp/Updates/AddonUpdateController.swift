@@ -103,6 +103,18 @@ final class AddonUpdateController: AddonUpdateActions {
 
     func showAddonUpdates() { openGallery() }
 
+    func updateOutOfDate(_ id: String) {
+        Task {
+            model.addonNoneYet.remove(id)
+            let have = await runtime.extensions.info(id: id)?.version
+            guard let catalog = try? await runtime.addons.catalog(refresh: true), let entry = catalog.entry(id), entry.kind == .extension, entry.version != have else {
+                model.addonNoneYet.insert(id)
+                return
+            }
+            update(entry)
+        }
+    }
+
     /// "Check for Updates…": the gallery's list fetched again now, not the one kept for half an hour, so an add-on
     /// published minutes ago is found without waiting for the next look.
     func checkNow() {

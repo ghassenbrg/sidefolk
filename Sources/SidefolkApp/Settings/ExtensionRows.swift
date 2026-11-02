@@ -109,12 +109,16 @@ struct ExtensionRow: View {
         } subtitle: {
             subtitle
         } trailing: {
-            if let entry = model.services.updates.addonUpdate(for: ext.id) { AddonUpdateInline(entry: entry, updates: model.services.updates) }
-            Toggle("Enable \(ext.name)", isOn: Binding(get: { ext.enabled }, set: { on in
-                switched()
-                Task { await model.setEnabled(ext, on) }
-            }))
-            .toggleStyle(.switch).labelsHidden().tint(Theme.accent)
+            if ext.needsAnUpdate {
+                ExtensionNeedsUpdateButton(id: ext.id, name: ext.name, updates: model.services.updates)
+            } else {
+                if let entry = model.services.updates.addonUpdate(for: ext.id) { AddonUpdateInline(entry: entry, updates: model.services.updates) }
+                Toggle("Enable \(ext.name)", isOn: Binding(get: { ext.enabled }, set: { on in
+                    switched()
+                    Task { await model.setEnabled(ext, on) }
+                }))
+                .toggleStyle(.switch).labelsHidden().tint(Theme.accent)
+            }
         } details: {
             details
         }
@@ -122,7 +126,10 @@ struct ExtensionRow: View {
 
     /// The one line under the name: what stopped it, why a search found it, or what it does.
     @ViewBuilder private var subtitle: some View {
-        if let error = ext.lastError, !expanded {
+        if ext.needsAnUpdate {
+            Label(ExtensionNeedsUpdateWords.detail, systemImage: "arrow.up.circle")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(expanded ? nil : 1)
+        } else if let error = ext.lastError, !expanded {
             Label(error, systemImage: "exclamationmark.circle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger).lineLimit(1)
         } else if let bigger = ext.restingFor, ext.enabled, !expanded {
@@ -201,7 +208,7 @@ struct ExtensionRow: View {
             Label(error, systemImage: "exclamationmark.circle.fill")
                 .font(Theme.Font.caption).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
         }
-        if ext.enabled {
+        if ext.enabled, !ext.needsAnUpdate {
             // What to say to use it, one click from the Ask panel; nothing is sent until Return.
             ForEach(ext.examples, id: \.self) { example in
                 Button { model.services.openAsk(prefill: example) } label: {

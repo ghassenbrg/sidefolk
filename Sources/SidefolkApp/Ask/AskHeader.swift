@@ -4,8 +4,8 @@ import SwiftUI
 /// What Ask shows under its field (D84): the conversation, or a compact Today. Play is the third tab, and opens the
 /// Play panel in Ask's place (one panel at a time), so it is never a state of its own here.
 enum AskTab: Hashable {
-    case ask, today, play
-    /// A tab an extension declares (D100): it opens what the entry says, in Ask's place, as Play does.
+    case ask, today
+    /// A tab an extension declares (D100): it opens what the entry says, in Ask's place.
     case entry(String)
 }
 
@@ -54,8 +54,7 @@ struct AskHeader: View {
         let waiting = max(model.waiting, model.glance.decisions.count + model.glance.sessions.count)
         let today = waiting > 0 ? Text("Today") + Text(verbatim: " \(waiting.formatted())") : Text("Today")
         return [.init(.ask, Text("Ask", comment: "Ask's tab: the conversation")),
-                .init(.today, today),
-                .init(.play, Text("Play", comment: "Ask's tab: opens the Play panel with its games"))]
+                .init(.today, today)]
             // Anyone but Sidefolk's own says whose it is, as in the menus (T41).
             + entries.map { .init(.entry($0.id), Text(ext: $0.shownTitle), symbol: $0.symbol) }
     }
@@ -65,7 +64,6 @@ struct AskHeader: View {
 
     private func choose(_ tab: AskTab) {
         switch tab {
-        case .play: model.actions?.openPlay()
         case .entry(let id): entries.first { $0.id == id }.map { model.actions?.open($0) }
         case .ask, .today: model.tab = tab
         }

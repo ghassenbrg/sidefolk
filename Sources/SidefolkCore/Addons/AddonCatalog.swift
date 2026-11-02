@@ -91,7 +91,7 @@ public struct AddonCatalog: Sendable, Equatable {
 
     /// Whether `entry` is offered over an installed `version` on `channel`: a newer version, or any version the
     /// channel takes when the installed one is a release this gallery never listed at or above it (D80). Those are
-    /// copies from before D65 renumbered every add-on to 1.0.0 snapshots (playtime 1.2.0, git 1.1.0, archives 1.0.0),
+    /// copies from before D65 renumbered every add-on to 1.0.0 snapshots (at 1.2.0, say),
     /// numbered above everything the gallery has now. A release the gallery publishes stays listed (D65), so a copy
     /// of one is never offered a lower snapshot.
     public func offers(_ entry: AddonEntry, over version: String, on channel: UpdateChannel) -> Bool {

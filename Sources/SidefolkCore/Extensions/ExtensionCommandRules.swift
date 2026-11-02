@@ -311,7 +311,6 @@ enum ExtensionCommandRules {
             }
         }
         for name in m.surfaces.keys.sorted() { for (j, sentence) in (m.surfaces[name]?.say ?? []).enumerated() { check(sentence, "surfaces.\(name).say[\(j)]") } }
-        for name in m.games.keys.sorted() { for (j, sentence) in (m.games[name]?.say ?? []).enumerated() { check(sentence, "games.\(name).say[\(j)]") } }
         return out
     }
 

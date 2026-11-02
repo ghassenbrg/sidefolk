@@ -84,7 +84,6 @@ struct PocketView: View {
     private var moreMenu: some View {
         Menu {
             Button("Open Sidefolk", action: actions.openHome).keyboardShortcut("o")
-            Button(String(localized: "Games…", comment: "The Pocket's ⋯ menu: opens the Play panel's menu of games"), action: actions.openGames)
             Button("Settings…", action: actions.openSettings).keyboardShortcut(",")
             if !model.entries.isEmpty {
                 Divider()

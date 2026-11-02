@@ -144,8 +144,6 @@ protocol AskActions: AnyObject {
     func openHome()
     /// Home › Now, where skipped steps wait (D37).
     func openNow()
-    /// The Play panel's menu of games, in Ask's place (D84).
-    func openPlay()
     func open(_ entry: ExtensionEntry)
 }
 

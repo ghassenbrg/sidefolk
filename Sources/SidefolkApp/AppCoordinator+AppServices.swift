@@ -105,6 +105,9 @@ extension AppCoordinator: AppServices {
 
     func previewExtension(at folder: URL) async -> Result<ExtensionInstallPreview, UserFacingError> {
         let preview = await runtime.extensions.preview(folder: folder, origin: Self.fromGallery(folder, paths: runtime.paths) ? .official : nil)
+        if preview.report.needsAnUpdate {
+            return .failure(UserFacingError("This version was made for an older Sidefolk.", recovery: "Get the newest from the Gallery."))
+        }
         if preview.report.needsNewerSidefolk {
             return .failure(UserFacingError("This version needs a newer Sidefolk.",
                                             recovery: "Choose Check for Updates… in Sidefolk's menu, then try again.",
@@ -326,7 +329,6 @@ extension AppCoordinator: AppServices {
     }
 
     func openAsk(prefill: String) { showAsk(prefill: prefill.isEmpty ? nil : prefill) }
-    func openPlayMenu() { openPlayMenu(focus: true) }
 
     func understands(_ text: String) -> Bool {
         runtime.intentParser.parse(LocalIntentRunner.expandSlash(text), now: Date(), knownCollections: knownCollections,
@@ -387,7 +389,7 @@ extension AppCoordinator: AppServices {
             sandboxed: e.summary.sandboxed, lastError: e.lastError,
             pendingTools: e.tools.filter(\.quarantined).map { $0.title.isEmpty ? $0.name : $0.title },
             iconPath: e.iconPath, fromDraft: e.origin == .draft, fromGallery: e.origin == .official, command: e.command, author: e.author,
-            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor,
+            hiddenSearchTexts: ExtensionListQuery.texts(for: e), commands: e.tools.flatMap(\.commands), restingFor: e.restingFor, needsAnUpdate: e.needsAnUpdate,
             examples: e.examples, services: e.services, signedBySidefolk: e.origin?.firstParty == true,
             settingRows: e.settings, aiStatus: e.ai)
     }

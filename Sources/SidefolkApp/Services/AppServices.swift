@@ -38,6 +38,8 @@ struct ExtensionInfo: Identifiable, Hashable {
     var commands: [String] = []
     /// The extension that does all this one does and is on, so this one rests (D67).
     var restingFor: String?
+    /// This copy was made for an older Sidefolk and doesn't run (D101): the row offers the update instead of a switch.
+    var needsAnUpdate = false
     /// Requests to try, from its manifest, in the person's language (D98).
     var examples: [String] = []
     /// The services its manifest says it talks to (D98).
@@ -316,11 +318,6 @@ protocol AppServices: AnyObject {
     /// empty one, as it was left.
     func openAsk(prefill: String)
 
-    // Games (D93)
-    /// The game put away in the Play panel, which Continue resumes.
-    var keptGame: GameInfo? { get }
-    /// The Play panel's menu of every game.
-    func openPlayMenu()
 }
 
 extension ExtensionInfo {

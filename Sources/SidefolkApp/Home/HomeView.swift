@@ -130,8 +130,8 @@ struct HomeView: View {
             WatchDetailView(home: model, model: model.watch)
         case .page(let id):
             if let info = model.pages.info(id) {
-                if info.gameCenter {
-                    GameCenterView(model: model.pages.center(info))
+                if info.needsAnUpdate {
+                    ExtensionNeedsUpdateView(info: info, updates: model.services.updates)
                 } else {
                     ExtensionPageView(model: model.pages.model(info))
                 }
@@ -212,7 +212,7 @@ private struct PlaceTitle: View {
         case .gallery:
             return String(localized: "Companions, extensions and themes", comment: "Under the Gallery's title")
         case .page(let id):
-            // "Playtime" over "Playtime" says nothing: the extension only when the page has another name.
+            // A name over the same name says nothing: the extension only when the page has another name.
             return model.pages.info(id).flatMap { $0.extensionName == $0.title ? nil : $0.extensionName }
         case .collection(let id):
             let n = model.notebook.counts[id] ?? 0

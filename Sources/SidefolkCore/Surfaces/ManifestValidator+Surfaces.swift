@@ -19,7 +19,7 @@ extension ManifestValidator {
         }
     }
 
-    /// A title, a symbol, one of the two ways to stand, a canvas within the caps, and sentences as a game's.
+    /// A title, a symbol, one of the two ways to stand, a canvas within the caps, and sentences that only open it.
     func checkSurfaces(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
         if m.surfaces.count > 16 { issues.append(ValidationIssue(field: "surfaces", message: "can declare at most 16 surfaces.")) }
         var seen: [String: String] = [:]
@@ -55,8 +55,8 @@ extension ManifestValidator {
             if let key = s.speakerSetting, m.settings.first(where: { $0.key == key })?.type != .switch {
                 issues.append(ValidationIssue(field: "\(field).speaker_setting", message: "“\(key)” isn't a switch among its settings."))
             }
-            if s.say.count > Self.maxGameSentences {
-                issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(Self.maxGameSentences) sentences."))
+            if s.say.count > Self.maxSurfaceSentences {
+                issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(Self.maxSurfaceSentences) sentences."))
             }
             for (i, sentence) in s.say.enumerated() {
                 let sf = "\(field).say[\(i)]"

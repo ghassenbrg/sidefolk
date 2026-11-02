@@ -2,9 +2,8 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// The click-through layer above the companion: one line of text, what it flipped, rolled or played with the result
-/// under it, and for games (D75) a prop it holds and a short effect. It never takes a click, catch-me needs them all,
-/// except the Again pill under a coin or dice for its few seconds.
+/// The click-through layer above the companion: one line of text, a prop it holds and a short effect (a surface's reaction, D99).
+/// It never takes a click: catch-me needs them all.
 final class CompanionCaption {
     let model = CaptionModel()
     private lazy var hosted: HostedPanel<CaptionView> = {
@@ -17,14 +16,11 @@ final class CompanionCaption {
     private var effectEnd: Task<Void, Never>?
     var anchorProvider: (() -> (NSRect, NSScreen)?)?
 
-    /// Shows `text` (and `stage` beneath it), for `seconds` when given (then it goes), otherwise until the next line.
-    /// `announce: false` keeps a passing line ("Rolling…") from VoiceOver, which hears the result.
-    func show(_ text: String, stage: TossShow? = nil, for seconds: TimeInterval? = nil, announce: Bool = true, companionName: String = "") {
+    /// Shows `text`, for `seconds` when given (then it goes), otherwise until the next line.
+    func show(_ text: String, for seconds: TimeInterval? = nil) {
         hiding?.cancel()
         model.text = text
-        model.stage = stage
-        model.companionName = companionName
-        if announce, !text.isEmpty {
+        if !text.isEmpty {
             NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
                                  userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
         }
@@ -37,21 +33,14 @@ final class CompanionCaption {
         }
     }
 
-    /// The Again pill under a landed coin or dice: the panel takes clicks while it shows.
-    func offerAgain(_ again: (() -> Void)?) {
-        model.again = again
-        hosted.panel.ignoresMouseEvents = again == nil
-        reposition()
-    }
-
-    /// What the companion holds in a game (balloons, a crown), until the game closes or it puts it away.
-    func hold(_ prop: GameCue.Prop?) {
-        model.prop = prop == GameCue.Prop.none ? nil : prop
+    /// What the companion holds (balloons, a crown), until the surface closes or it puts it away.
+    func hold(_ prop: CompanionCue.Prop?) {
+        model.prop = prop == CompanionCue.Prop.none ? nil : prop
         present()
     }
 
     /// A short mark above it (confetti, a "?"), gone after a moment.
-    func flash(_ effect: GameCue.Effect) {
+    func flash(_ effect: CompanionCue.Effect) {
         if effect.moves, NSWorkspace.shared.accessibilityDisplayShouldReduceMotion { return }
         model.effect = (effect, Date())
         present()
@@ -81,17 +70,14 @@ final class CompanionCaption {
         if model.isEmpty { hosted.panel.orderOut(nil) } else { reposition() }
     }
 
-    /// The line and the toss go; a prop held in a game stays.
+    /// The line goes; a held prop stays.
     func hide() {
         hiding?.cancel()
         model.text = ""
-        // Nothing left to animate while it is away.
-        model.stage = nil
-        offerAgain(nil)
         settle()
     }
 
-    /// Everything goes, the game's prop too.
+    /// Everything goes, the prop too.
     func clear() {
         model.prop = nil
         model.effect = nil
@@ -102,15 +88,10 @@ final class CompanionCaption {
 @MainActor @Observable
 final class CaptionModel {
     var text = ""
-    var stage: TossShow?
-    var companionName = ""
-    /// Its face, for the coin's heads.
-    var face: NSImage?
-    var again: (() -> Void)?
-    var prop: GameCue.Prop?
-    var effect: (GameCue.Effect, Date)?
+    var prop: CompanionCue.Prop?
+    var effect: (CompanionCue.Effect, Date)?
 
-    var isEmpty: Bool { text.isEmpty && stage == nil && prop == nil && effect == nil }
+    var isEmpty: Bool { text.isEmpty && prop == nil && effect == nil }
 }
 
 struct CaptionView: View {
@@ -118,32 +99,16 @@ struct CaptionView: View {
     static let effectSeconds: TimeInterval = 1.6
 
     var body: some View {
-        // The words on top; the objects nearest the companion, whom they fly up from; a held prop right above its head.
+        // The words on top; a held prop right above its head.
         VStack(spacing: 6) {
             if !model.text.isEmpty {
                 // A whisper of the Sidecard (D84): the same glass as everything else beside the companion; its tail
                 // only when nothing stands between it and the head.
-                Whisper(text: Text(verbatim: model.text), tail: model.stage == nil && model.prop == nil ? SidecardTail(edge: .bottom) : nil)
+                Whisper(text: Text(verbatim: model.text), tail: model.prop == nil ? SidecardTail(edge: .bottom) : nil)
                     .padding(.horizontal, 12).padding(.bottom, 14)
                     .accessibilityHidden(true)
             }
             if let effect = model.effect { EffectMark(effect: effect.0, start: effect.1).accessibilityHidden(true) }
-            if let stage = model.stage {
-                TossStage(show: stage, companionLabel: model.companionName, face: model.face).accessibilityHidden(true)
-                if stage.resting {
-                    TossChip(toss: stage.toss).transition(.scale.combined(with: .opacity)).accessibilityHidden(true)
-                }
-            }
-            if let again = model.again {
-                Button(action: again) {
-                    Label(String(localized: "Again", comment: "A pill under a coin or dice: flip or roll once more"), systemImage: "arrow.clockwise")
-                        .font(Theme.Font.captionStrong)
-                        .padding(.horizontal, 12).padding(.vertical, 5)
-                        .foregroundStyle(Theme.onAccent)
-                        .background(Capsule().fill(Theme.accent))
-                }
-                .buttonStyle(.plain)
-            }
             if let prop = model.prop { PropView(prop: prop).accessibilityHidden(true) }
         }
         .padding(10)
@@ -154,7 +119,7 @@ struct CaptionView: View {
 /// A short mark above the companion, drawn in code for every companion, 2D and 3D: confetti falls, sparkles twinkle,
 /// a "?" bobs.
 struct EffectMark: View {
-    var effect: GameCue.Effect
+    var effect: CompanionCue.Effect
     var start: Date
 
     private var still: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
@@ -214,10 +179,25 @@ struct EffectMark: View {
     }
 }
 
-/// What the companion holds above its head in a game: balloons, a hat, a crown, a magnifier, cards, its sealed card,
+/// A small card face down: it has picked and isn't telling.
+private struct SealedCard: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                .fill(LinearGradient(colors: [Theme.navy, Theme.navy.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(.white.opacity(0.7), lineWidth: 1.5).padding(2)
+            Circle().fill(Theme.folkColor("play").opacity(0.4)).frame(width: 14, height: 14)
+        }
+        .frame(width: 22, height: 30)
+        .rotationEffect(.degrees(-8))
+        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+    }
+}
+
+/// What the companion holds above its head: balloons, a hat, a crown, a magnifier, cards, its sealed card,
 /// a gem. Overlays drawn in code, so every companion can hold them.
 struct PropView: View {
-    var prop: GameCue.Prop
+    var prop: CompanionCue.Prop
 
     var body: some View {
         Group {
@@ -234,7 +214,7 @@ struct PropView: View {
             case .hat: Image(systemName: "party.popper.fill").font(.system(size: 24)).foregroundStyle(Theme.coral)
             case .magnifier: Image(systemName: "magnifyingglass").font(.system(size: 24, weight: .bold)).foregroundStyle(Theme.navy)
             case .cards: Image(systemName: "rectangle.portrait.on.rectangle.portrait.fill").font(.system(size: 22)).foregroundStyle(Theme.folkColor("play"))
-            case .sealedCard: SealedCard(portrait: nil).scaleEffect(1.3)
+            case .sealedCard: SealedCard().scaleEffect(1.3)
             case .gem: Image(systemName: "diamond.fill").font(.system(size: 22)).foregroundStyle(Theme.aqua)
             case .none: EmptyView()
             }

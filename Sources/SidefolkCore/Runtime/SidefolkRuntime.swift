@@ -130,7 +130,7 @@ public final class SidefolkRuntime: Sendable {
             tools: gateway, tokens: tokens, sessions: sessionTracker, jobs: jobTracker, status: StatusReader(db: db)))
 
         registry.register(BuiltinTools.make(notebook: notebook, platform: platform, events: events,
-                                            reminders: ReminderTools.shared(scheduler: scheduler, settings: settings), scores: KVStore(db)))
+                                            reminders: ReminderTools.shared(scheduler: scheduler, settings: settings)))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
         registry.register([CalendarTodayTool(reader: calendarReader)])
@@ -144,8 +144,6 @@ public final class SidefolkRuntime: Sendable {
         registry.register(SkillTools.all(skills))
         registry.register(ExtensionWatchTool(host: extensions, engine: watchers))
         registry.register(ExtensionBuilderTools.all(drafts: extensionDrafts, host: extensions, events: events))
-        registry.register([GamesOpenTool(events: events, shelf: extensions.gameShelf, settings: settings, activity: activity),
-                           GamesSettingsTool(settings: settings, shelf: extensions.gameShelf)])
         registry.register(SurfacesOpenTool(events: events, shelf: extensions.surfaceShelf))
         let host = extensions
         registry.register(ExtensionSettingTool(host: host))
@@ -159,7 +157,7 @@ public final class SidefolkRuntime: Sendable {
         // Only switched-on extensions register tools, so their commands are the ones that count (D50).
         let commandTools = registry.all.compactMap { $0 as? ExtensionTool }.filter { $0.commands != nil }
         return IntentParser(when: WhenParser(settings: s), companionNames: ["sidefolk", "pip", s.companionName],
-                            here: s.location.current?.name, commandTools: commandTools, games: extensions.gameShelf.all, surfaces: extensions.surfaceShelf.all)
+                            here: s.location.current?.name, commandTools: commandTools, surfaces: extensions.surfaceShelf.all)
     }
 
     /// Starts the background engines and the local API other agents connect to.

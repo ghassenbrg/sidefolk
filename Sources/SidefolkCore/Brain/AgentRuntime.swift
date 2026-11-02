@@ -220,7 +220,7 @@ public actor AgentRuntime {
         }
     }
 
-    /// One request to the person's AI for a feature, not a conversation (D95: a game's trivia questions): Sidefolk's
+    /// One request to the person's AI for a feature, not a conversation (D100: an extension's AI help): Sidefolk's
     /// fixed `system` words and `prompt`, no tools, no memory or context, nothing kept but the run's record, so it counts
     /// toward the person's usage like any other. Throws when no AI is set up or the call fails.
     public func oneShot(system: String, prompt: String, purpose: String, seconds: TimeInterval = 90) async throws -> (text: String, provider: String) {

@@ -90,17 +90,15 @@ public struct ExtensionPageInfo: Sendable, Hashable, Identifiable {
     public var needsAccessibility: Bool
     /// The extension's one line, for its card in All Extensions (D67).
     public var tagline: String?
-    /// The extension declares games and this is its first page: Sidefolk draws it as the Game Center (D93), its own
-    /// screen fed by the page's records, rather than from page parts.
-    public var gameCenter: Bool
+    /// Its copy was made for an older Sidefolk (D101): the page says so and offers the update, and asks the program nothing.
+    public var needsAnUpdate: Bool
 
     public var id: String { "\(extensionId)/\(page)" }
 
     public init(extensionId: String, extensionName: String, page: String, title: String, symbol: String? = nil, refresh: Int = 5,
-                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false, tagline: String? = nil,
-                gameCenter: Bool = false) {
+                history: Bool = false, widget: Bool = false, iconPath: String? = nil, needsAccessibility: Bool = false, tagline: String? = nil, needsAnUpdate: Bool = false) {
         self.tagline = tagline
-        self.gameCenter = gameCenter
+        self.needsAnUpdate = needsAnUpdate
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.page = page
@@ -312,6 +310,8 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var settings: [ExtensionSettingRow] = []
     /// Its use of the person's AI, when it declares one (D100).
     public var ai: ExtensionAIStatus? = nil
+    /// This copy was made for an older Sidefolk and doesn't run (D101): the row and its page offer the update.
+    public var needsAnUpdate: Bool = false
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

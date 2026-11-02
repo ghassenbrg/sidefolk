@@ -37,7 +37,7 @@ public struct SurfaceScene: Sendable, Hashable {
     /// What VoiceOver hears as this scene shows.
     public var announce: String?
     /// How it ended for the person, as Sidefolk's own row says it; never words of the extension's.
-    public var outcome: GameVerdict?
+    public var outcome: SceneOutcome?
     public var tally: [Int]?
     /// What was left out and why, for the author: logged, never shown.
     public var notes: [String] = []
@@ -47,7 +47,7 @@ public struct SurfaceScene: Sendable, Hashable {
         self.nodes = nodes
     }
 
-    public static let maxBytes = GameBoard.maxBytes
+    public static let maxBytes = 64 * 1024
     public static let maxNodes = 1500
     public static let maxDepth = 16
     public static let maxImages = 400
@@ -392,11 +392,11 @@ public struct SceneTimer: Sendable, Hashable {
 /// The companion's reaction, from Sidefolk's fixed lists: no words, nothing it can drive. Paced by `CueLimiter`.
 public struct SceneReaction: Sendable, Hashable {
     public var move: Move?
-    public var effect: GameCue.Effect?
-    public var prop: GameCue.Prop?
+    public var effect: CompanionCue.Effect?
+    public var prop: CompanionCue.Prop?
     public var look: Look?
 
-    public init(move: Move? = nil, effect: GameCue.Effect? = nil, prop: GameCue.Prop? = nil, look: Look? = nil) {
+    public init(move: Move? = nil, effect: CompanionCue.Effect? = nil, prop: CompanionCue.Prop? = nil, look: Look? = nil) {
         self.move = move
         self.effect = effect
         self.prop = prop
@@ -405,7 +405,7 @@ public struct SceneReaction: Sendable, Hashable {
 
     /// The existing moves; `pump`, `flick` and `roll` are the ones a toss plays.
     public enum Move: Sendable, Hashable {
-        case cue(GameCue.Move)
+        case cue(CompanionCue.Move)
         case pump, flick, roll
 
         init?(_ raw: String) {
@@ -414,7 +414,7 @@ public struct SceneReaction: Sendable, Hashable {
             case "flick": self = .flick
             case "roll": self = .roll
             default:
-                guard let move = GameCue.Move(rawValue: raw) else { return nil }
+                guard let move = CompanionCue.Move(rawValue: raw) else { return nil }
                 self = .cue(move)
             }
         }
@@ -424,8 +424,8 @@ public struct SceneReaction: Sendable, Hashable {
 
     static func parse(_ j: JSONValue?) -> SceneReaction? {
         guard let j, j.objectValue != nil else { return nil }
-        let reaction = SceneReaction(move: j["move"]?.stringValue.flatMap(Move.init), effect: j["effect"]?.stringValue.flatMap(GameCue.Effect.init(rawValue:)),
-                                     prop: j["prop"]?.stringValue.flatMap(GameCue.Prop.parse), look: j["look"]?.stringValue.flatMap(Look.init(rawValue:)))
+        let reaction = SceneReaction(move: j["move"]?.stringValue.flatMap(Move.init), effect: j["effect"]?.stringValue.flatMap(CompanionCue.Effect.init(rawValue:)),
+                                     prop: j["prop"]?.stringValue.flatMap(CompanionCue.Prop.parse), look: j["look"]?.stringValue.flatMap(Look.init(rawValue:)))
         return reaction == SceneReaction() ? nil : reaction
     }
 }

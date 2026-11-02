@@ -72,7 +72,7 @@ extension SceneReader {
     /// words for VoiceOver and the same key on the keyboard. `{key, label, fill, ink, w, disabled, faded}` per key; the
     /// move is a click on the set's `name` with the key as its value.
     mutating func keyset(_ j: JSONValue, id: String, depth: Int, node: inout SceneNode) throws -> [SceneNode] {
-        guard let name = GameBoard.token(j["name"]) else { return [] }
+        guard let name = SceneReading.token(j["name"]) else { return [] }
         let key = j["key"]?.arrayValue?.compactMap(\.doubleValue) ?? []
         let (kw, kh) = (SurfaceScene.clamp(key.first, 8...200, 32), SurfaceScene.clamp(key.count > 1 ? key[1] : nil, 8...200, 40))
         let gaps = j["gap"]?.arrayValue?.compactMap(\.doubleValue) ?? [j["gap"]?.doubleValue ?? 4]
@@ -94,12 +94,12 @@ extension SceneReader {
         for (r, row) in rows.enumerated() {
             var x = (node.width - widths[r]) / 2
             for (c, k) in row.enumerated() {
-                guard let value = GameBoard.line(k["key"], 12) else { continue }
+                guard let value = SceneReading.line(k["key"], 12) else { continue }
                 let w = width(k)
                 let capId = "\(id).\(r).\(c)"
                 let locked = k["disabled"]?.boolValue ?? false
                 let fill = k["fill"].flatMap { Self.color($0) } ?? plain
-                let word = GameBoard.line(k["label"], 12) ?? value
+                let word = SceneReading.line(k["label"], 12) ?? value
                 let cap: JSONValue = .object([
                     "type": "group", "id": .string(capId), "x": .number(x), "y": .number(y), "w": .number(w), "h": .number(kh),
                     "opacity": k["faded"]?.boolValue == true ? 0.45 : 1,
@@ -110,7 +110,7 @@ extension SceneReader {
                                  "design": "rounded", "color": k["ink"].map { $0 } ?? Self.json(ink), "min_scale": 0.5]),
                     ]),
                     "area": .object([
-                        "id": .string(name), "value": .string(value), "label": .string(GameBoard.line(k["spoken"], 60) ?? word), "disabled": .bool(locked),
+                        "id": .string(name), "value": .string(value), "label": .string(SceneReading.line(k["spoken"], 60) ?? word), "disabled": .bool(locked),
                         "press": ["dy": .number(lip), "scale": 0.98], "hover": ["scale": 1.03],
                     ].merging(j["sound"].map { ["sound": $0] } ?? [:]) { own, _ in own }),
                 ])

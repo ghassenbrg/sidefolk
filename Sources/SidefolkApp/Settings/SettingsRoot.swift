@@ -348,12 +348,6 @@ struct SettingInlineControl: View {
         case .eyesFollow: toggle(setting(\.eyesFollowPointer))
         case .folks: toggle(setting(\.showFolks))
         case .sleep: toggle(setting(\.sleepWhenIdle))
-        case .gameSounds: toggle(setting(\.games.sounds))
-        case .gameSneaky: toggle(setting(\.games.sneaky))
-        case .gameAITrivia:
-            toggle(Binding(get: { model.settings.games.aiTriviaOn(providerSet: model.settings.provider.kind != .none) },
-                           set: { on in model.update { $0.games.aiTrivia = on } }))
-                .disabled(model.settings.provider.kind == .none)
         case .sounds: toggle(setting(\.sounds))
         case .hiddenNotifications: toggle(setting(\.useSystemNotificationsWhenHidden))
         case .morningBrief: toggle(setting(\.morningBrief))

@@ -253,7 +253,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var quietHoursSetAside: Date?
     /// What a full-screen app does to interruptions (D84).
     public var fullScreen: FullScreenRule = .quiet
-    /// How far each source may interrupt: reminders, watches, agents, extensions, games, the companion (D88).
+    /// How far each source may interrupt: reminders, watches, agents, extensions, the companion (D88).
     public var interruptions = Interruptions()
     /// Comfortable or compact spacing in every window; nil follows the theme (D84).
     public var density: ThemeTokens.Density?
@@ -291,8 +291,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var homePages = HomePages()
     /// Simple or colorful icons in Home's navigation; nil follows the theme (D67).
     public var sidebarIcons: ThemeLayout.Icons?
-    /// Games in the Play panel: the companion's tone, sounds, Sneaky (D75).
-    public var games = GameSettings()
     /// Sections this copy doesn't know, kept as they were (D100): a section the app retired stays here until the extension that
     /// does that work now receives it, once (`settings_from`).
     public var parked: [String: JSONValue] = [:]
@@ -355,7 +353,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.agentAccess, &agentAccess)
         read(.homePages, &homePages)
         sidebarIcons = try? c.decodeIfPresent(ThemeLayout.Icons.self, forKey: .sidebarIcons)
-        read(.games, &games)
         read(.parked, &parked)
         if let all = try? decoder.container(keyedBy: AnyKey.self) {
             for key in all.allKeys where CodingKeys(stringValue: key.stringValue) == nil {

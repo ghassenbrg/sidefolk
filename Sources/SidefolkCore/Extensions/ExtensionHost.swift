@@ -49,6 +49,9 @@ public actor ExtensionHost {
         var record: ExtensionRecord
         var pin: ExtensionPin
         var manifest: ExtensionManifest?
+        /// This copy was made for an older Sidefolk (D101) and doesn't run: whether the person had it on. Its stored record stays as it was,
+        /// so nothing is lost whichever way they go; off in memory, so nothing of it is offered, it stays listed with its page saying what to do.
+        var outdatedWasOn: Bool?
         var client: MCPClient?
         var generation = 0
         /// Tool names the running process offers; nil until it has started once.
@@ -98,9 +101,8 @@ public actor ExtensionHost {
     private var sampling: Task<Void, Never>?
     /// What each page said last, for Today's tiles: by `extension/page`.
     private var latest: [String: (at: Date, page: ExtensionPage)] = [:]
-    /// The games of enabled extensions, readable without waiting on the actor: the sentences that open them are
-    /// matched as the person types (D75).
-    public nonisolated let gameShelf = GameShelf()
+    /// The surfaces of enabled extensions, readable without waiting on the actor: the sentences that open them are
+    /// matched as the person types (D99).
     public nonisolated let surfaceShelf = SurfaceShelf()
     /// The surface open in each place (D99): one panel, one overlay.
     var openSurfaces: [SurfaceInfo.Presentation: OpenSurface] = [:]
@@ -114,12 +116,6 @@ public actor ExtensionHost {
     let requestContext = ExtensionRequestContext()
     /// Reaches the person's AI for an extension that asks (D100): the app sets it once its AI runtime exists.
     var aiHelper: AIHelper?
-    /// The one game open in the Play panel, with its recent moves for the rate limit (ExtensionHost+Games).
-    var openGame: OpenGame?
-    /// Makes a trivia pack for a game that asks (D95): the app sets it once the person's AI can be reached.
-    var triviaHelp: (@Sendable (_ extensionId: String, _ request: String, _ params: JSONValue) async -> JSONValue)?
-    /// Extensions with a trivia request under way: one at a time each.
-    var triviaAsking: Set<String> = []
 
     /// - Parameter secrets: environment values for an MCP server, by server id (from the Keychain).
     ///   Only the keys the server was added with are used.
@@ -197,7 +193,11 @@ public actor ExtensionHost {
                 rt.manifest = report.manifest
                 rt.iconPath = report.iconPath
                 rt.strings = report.strings
-                if !report.isValid, record.enabled {
+                if report.needsAnUpdate {
+                    rt.outdatedWasOn = record.enabled
+                    rt.record.enabled = false
+                    rt.record.lastError = nil
+                } else if !report.isValid, record.enabled {
                     rt.record.enabled = false
                     let issue = report.errors.first?.description ?? String(localized: "unknown problem")
                     rt.record.lastError = String(localized: "It no longer passes Sidefolk's checks: \(issue).")
@@ -264,12 +264,12 @@ public actor ExtensionHost {
         }
         return ExtensionInfo(id: id, name: name(rt),
                              version: rt.record.version, kind: rt.record.kind,
-                             enabled: rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
+                             enabled: rt.outdatedWasOn ?? rt.record.enabled, running: rt.client?.isAlive ?? false, lastError: rt.record.lastError,
                              description: description(rt), tagline: tagline(rt), folk: rt.pin.folk, author: rt.pin.author, origin: rt.pin.origin,
                              iconPath: rt.iconPath, summary: summary,
                              command: rt.pin.server?.commandLine, tools: tools, watchers: watcherKinds(of: rt),
                              toolWarnings: rt.toolWarnings, restingFor: restingFor(id),
-                             examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt))
+                             examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt), needsAnUpdate: rt.outdatedWasOn != nil)
     }
 
     /// A tool's commands, in every language the extension has them in (D100).
@@ -400,7 +400,7 @@ public actor ExtensionHost {
             await stop(id)
         }
         registry.unregister(owner: id)
-        shelveGames()
+        shelveSurfaces()
         let staged = try installer.stage(source: folder, id: id, quarantine: origin?.firstParty == true ? .none : .original)
         let committed = try installer.commit(staged)
         do {
@@ -448,7 +448,7 @@ public actor ExtensionHost {
         } catch {
             if let client = runtimes[id]?.client { await client.shutdown() }
             registry.unregister(owner: id)
-            shelveGames()
+            shelveSurfaces()
             installer.rollback(committed)
             integrity.forget(id)
             runtimes[id] = previous.map { var p = $0; p.client = nil; p.live = nil; return p }
@@ -464,7 +464,7 @@ public actor ExtensionHost {
         await stop(id)
         runtimes[id] = nil
         registry.unregister(owner: id)
-        shelveGames()
+        shelveSurfaces()
         installer.remove(id: id)
         integrity.forget(id)
         await pageHistory.forget(extensionId: id)
@@ -479,6 +479,7 @@ public actor ExtensionHost {
 
     public func setEnabled(_ enabled: Bool, id: String) async throws {
         guard var rt = runtimes[id] else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
+        if rt.outdatedWasOn != nil { throw UserFacingError("Update \(rt.pin.name) to use it.") }
         if enabled {
             if rt.record.kind == .sidefolk {
                 integrity.forget(id)
@@ -503,7 +504,7 @@ public actor ExtensionHost {
             rt = runtimes[id] ?? rt
             runtimes[id] = rt
             registry.unregister(owner: id)
-            shelveGames()
+            shelveSurfaces()
             try await store.save(rt.record)
         }
         reconsiderResting()
@@ -652,15 +653,19 @@ public actor ExtensionHost {
     /// The pages of every enabled extension, for Home's sidebar and Today.
     public func pages() -> [ExtensionPageInfo] {
         runtimes.keys.sorted().flatMap { id -> [ExtensionPageInfo] in
-            guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
-            let first = m.pages.keys.sorted().first
+            // A page the person came to know stays where it is when its copy is out of date, saying what to do, and asks the program nothing.
+            guard let rt = runtimes[id], rt.record.enabled || rt.outdatedWasOn == true, let m = rt.manifest else { return [] }
             return m.pages.keys.sorted().compactMap { name -> ExtensionPageInfo? in
                 guard let p = m.pages[name] else { return nil }
+                if rt.outdatedWasOn != nil {
+                    return ExtensionPageInfo(extensionId: id, extensionName: self.name(rt), page: name, title: words(rt)?.pages[name] ?? p.title, symbol: p.symbol,
+                                             iconPath: rt.iconPath, tagline: tagline(rt), needsAnUpdate: true)
+                }
                 return ExtensionPageInfo(extensionId: id, extensionName: self.name(rt), page: name, title: words(rt)?.pages[name] ?? p.title,
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
                                          history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
                                          needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true,
-                                         tagline: tagline(rt), gameCenter: !m.games.isEmpty && name == first)
+                                         tagline: tagline(rt))
             }
         }
     }
@@ -781,35 +786,9 @@ public actor ExtensionHost {
         return (try await ensureRunning(id), meta.title)
     }
 
-    // MARK: Games (D75)
-
-    /// The games of every enabled extension, for the Play menu, `games.open` and the sentences that open them.
-    public func games() -> [GameInfo] {
-        runtimes.keys.sorted().flatMap { id -> [GameInfo] in
-            guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
-            let firstParty = rt.pin.origin?.firstParty == true
-            let name = self.name(rt)
-            return m.games.keys.sorted().compactMap { game -> GameInfo? in
-                guard let g = m.games[game] else { return nil }
-                return GameInfo(extensionId: id, extensionName: name, game: game,
-                                title: words(rt)?.games[game] ?? g.title, symbol: g.symbol,
-                                levels: g.levels, ai: g.ai ?? true, say: g.say, iconPath: rt.iconPath,
-                                tagline: words(rt)?.gameTaglines[game] ?? g.tagline, look: g.look.flatMap(GameLook.init(rawValue:)))
-            }
-        }
-    }
-
-    func shelveGames() {
-        gameShelf.set(games())
+    func shelveSurfaces() {
         surfaceShelf.set(surfaces())
         shelveAbilities()
-    }
-
-    /// The running process of an extension that declares `game`, and the extension's name for messages.
-    func gameClient(_ id: String, _ game: String) async throws -> (MCPClient, String) {
-        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
-        guard rt.manifest?.games[game] != nil else { throw ToolError.notFound(String(localized: "the game \(game) in \(rt.pin.name)")) }
-        return (try await ensureRunning(id), name(rt))
     }
 
     // MARK: Surfaces (D99)
@@ -1306,20 +1285,6 @@ public actor ExtensionHost {
                 await client.notify("sidefolk/output_mute.result", params: ["request": .string(request), "ok": false,
                     "message": .string((error as? UserFacingError)?.message ?? error.localizedDescription)])
             }
-        case .triviaRequest(let request, let params):
-            // Only Sidefolk's own extensions, switched on, and one request at a time (D95, SECURITY T17).
-            guard rt.pin.origin?.firstParty == true, rt.record.enabled, let client = rt.client, let help = triviaHelp,
-                  !triviaAsking.contains(id) else {
-                Log.shared.warning("extensions", "trivia request refused", ["id": id])
-                await rt.client?.notify("sidefolk/trivia.pack", params: ["request": .string(request), "ok": false, "reason": "off"])
-                return
-            }
-            triviaAsking.insert(id)
-            Task {
-                let reply = await help(id, request, params)
-                await self.triviaAnswered(id)
-                await client.notify("sidefolk/trivia.pack", params: reply)
-            }
         case .aiRequest(let request, let params):
             // One at a time each; the answer goes back to this program alone (D100, SECURITY T41).
             guard rt.record.enabled, rt.client != nil, !rt.aiAsking else {
@@ -1343,13 +1308,6 @@ public actor ExtensionHost {
                 Log.shared.warning("extensions", "tools/list failed after a change", ["id": id, "error": String(describing: error)])
             }
         }
-    }
-
-    private func triviaAnswered(_ id: String) { triviaAsking.remove(id) }
-
-    /// The app hands over how trivia packs are made once its AI runtime exists (D95).
-    public func setTriviaHelp(_ help: @escaping @Sendable (_ extensionId: String, _ request: String, _ params: JSONValue) async -> JSONValue) {
-        triviaHelp = help
     }
 
     private func outputMuteFailed(id: String, generation: Int, sequence: Int, reason: String) async {
@@ -1389,7 +1347,7 @@ public actor ExtensionHost {
         runtimes[id] = rt
         await forgetSurfaces(of: id)
         registry.unregister(owner: id)
-        shelveGames()
+        shelveSurfaces()
         try? await store.save(rt.record)
         reconsiderResting()
         Log.shared.warning("extensions", "turned off", ["id": id, "why": reason])
@@ -1443,7 +1401,7 @@ public actor ExtensionHost {
 
     private func registerTools(_ id: String) {
         registry.unregister(owner: id)
-        shelveGames()
+        shelveSurfaces()
         guard let rt = runtimes[id], rt.record.enabled, restingFor(id) == nil else { return }
         for name in rt.pin.tools.keys.sorted() where rt.pin.pending[name] == nil && (rt.live?.contains(name) ?? true) {
             guard let def = rt.pin.tools[name], let local = localName(rt, name) else { continue }

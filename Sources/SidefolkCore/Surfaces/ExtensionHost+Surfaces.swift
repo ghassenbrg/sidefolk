@@ -1,13 +1,18 @@
 import Foundation
 import Synchronization
 
-/// The surface channel (D99): `sidefolk/surface.open`, `surface.move` and `surface.close`, with the game channel's limits
-/// (D75), which it generalises and which stays until snapshot B: a reply within 2 s, at most 64 KB, at most 20 moves a
+/// The surface channel (D99): `sidefolk/surface.open`, `surface.move` and `surface.close`, not tool calls, because a move a second
+/// would put a row in History and the Guard in front of every click: a reply within 2 s, at most 64 KB, at most 20 moves a
 /// second, only for the one surface open in its place. A move can only change the extension's own state; anything that
 /// acts on the world stays a tool, behind Guard.
 extension ExtensionHost {
-    public static let surfaceReplySeconds = gameReplySeconds
-    public static let surfaceMovesPerSecond = gameMovesPerSecond
+    public static let surfaceReplySeconds: TimeInterval = 2
+    public static let surfaceMovesPerSecond = 20
+
+    /// A session id the extension chose: up to 64 letters, digits, `_` and `-`.
+    static func sessionId(_ s: String) -> String? {
+        s.range(of: #"^[A-Za-z0-9_-]{1,64}$"#, options: .regularExpression) != nil ? s : nil
+    }
 
     /// Opens a surface, ending what was open in its place: one panel, one overlay.
     public func openSurface(_ info: SurfaceInfo, language: String, arguments: [String: JSONValue] = [:]) async throws -> (session: String, scene: SurfaceScene) {

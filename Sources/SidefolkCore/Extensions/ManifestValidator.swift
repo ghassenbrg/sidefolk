@@ -41,6 +41,9 @@ public struct ValidationReport: Sendable {
         !errors.isEmpty && errors.allSatisfy { $0.message == "isn't a known key." || ($0.field == "sidefolk" && $0.message.hasPrefix("needs Sidefolk")) }
     }
 
+    /// It was made for an older Sidefolk (`ExtensionManifest.retiredKeys`): what helps is a newer version of it, not a newer Sidefolk.
+    public var needsAnUpdate: Bool { manifest?.retired.isEmpty == false }
+
     /// Effective risk of each declared tool after Sidefolk's floors.
     public var toolRisks: [(name: String, risk: Risk)] {
         guard let manifest, let permissions else { return [] }
@@ -85,7 +88,6 @@ public struct ValidationReport: Sendable {
             out.append("Palettes: " + m.palettes.keys.sorted().compactMap { k in m.palettes[k].map { "\($0.title)\($0.hotkey.map { " (\($0))" } ?? "")" } }
                 .joined(separator: ", "))
         }
-        if let m = manifest, !m.games.isEmpty { out.append("Games: " + m.games.keys.sorted().compactMap { m.games[$0]?.title }.joined(separator: ", ")) }
         if let m = manifest, !m.surfaces.isEmpty { out.append("Surfaces: " + m.surfaces.keys.sorted().compactMap { m.surfaces[$0]?.title }.joined(separator: ", ")) }
         if let m = manifest, let assets = m.assets { out.append("Assets: \(assets)") }
         if manifest?.background == true { out.append("Keeps running while it's on") }
@@ -177,6 +179,15 @@ public struct ManifestValidator: Sendable {
             return report
         }
         report.manifest = manifest
+        if !manifest.retired.isEmpty {
+            // Its other parts answer to what that Sidefolk read, so they aren't judged. What the list shows for it (its icon, its name in the
+            // person's language) is read all the same; words about what's gone are nobody's business now.
+            var ignored: [ValidationIssue] = []
+            report.iconPath = checkIcon(manifest.icon, folder: dir, issues: &ignored)
+            report.strings = ExtensionStrings.load(folder: dir, manifest: manifest, issues: &ignored)
+            report.errors = manifest.retired.map { ValidationIssue(field: $0, message: "is something an older Sidefolk read: this version needs an update.") }
+            return report
+        }
         var issues: [ValidationIssue] = []
         checkIdentity(manifest, folder: dir, mode: mode, issues: &issues, warnings: &report.warnings)
         report.launch = checkRun(manifest.run, folder: dir, issues: &issues)
@@ -188,7 +199,6 @@ public struct ManifestValidator: Sendable {
         checkWatchers(manifest, issues: &issues)
         checkPages(manifest, issues: &issues)
         checkPalettes(manifest, issues: &issues)
-        checkGames(manifest, issues: &issues)
         checkDetails(manifest, issues: &issues, warnings: &report.warnings)
         checkAssets(manifest, folder: dir, issues: &issues)
         checkSurfaces(manifest, issues: &issues)
@@ -587,58 +597,8 @@ extension ManifestValidator {
         }
     }
 
-    /// A game's sentences: twice a command's, so it can be opened by two or so sentences in each of the ten languages
-    /// ("let's play tic-tac-toe", "jouons au morpion"); each still only opens it.
-    static let maxGameSentences = 24
-
-    /// Games (D75): a title, a symbol, levels, and sentences that follow the command rules (D50) with no slots, since
-    /// a sentence only opens the game.
-    func checkGames(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
-        if m.games.count > 32 { issues.append(ValidationIssue(field: "games", message: "can declare at most 32 games.")) }
-        var seen: [String: String] = [:]
-        for name in m.games.keys.sorted() {
-            let field = "games.\(name)"
-            guard let g = m.games[name] else { continue }
-            if name.range(of: Self.namePattern, options: .regularExpression) == nil || name.count > 32 {
-                issues.append(ValidationIssue(field: field, message: "isn't a valid game name (lowercase letters, digits and _, at most 32)."))
-            }
-            if g.title.isEmpty || g.title.count > 40 || ExtensionText.clean(g.title) != g.title {
-                issues.append(ValidationIssue(field: "\(field).title", message: "must be 1–40 characters of plain text."))
-            }
-            if let s = g.symbol, s.count > 64 || s.range(of: Self.symbolPattern, options: .regularExpression) == nil {
-                issues.append(ValidationIssue(field: "\(field).symbol", message: "must be an SF Symbol name, like gamecontroller."))
-            }
-            if let t = g.tagline, t.isEmpty || t.count > 60 || ExtensionText.clean(t) != t || t.contains(where: \.isNewline) {
-                issues.append(ValidationIssue(field: "\(field).tagline", message: "must be one line of 1–60 characters of plain text."))
-            }
-            if let look = g.look, GameLook(rawValue: look) == nil {
-                issues.append(ValidationIssue(field: "\(field).look", message: "must be one of Sidefolk's game looks: "
-                    + GameLook.allCases.map(\.rawValue).joined(separator: ", ") + "."))
-            }
-            if g.levels.count > 5 || Set(g.levels).count != g.levels.count
-                || g.levels.contains(where: { $0.range(of: #"^[a-z][a-z0-9_]{0,19}$"#, options: .regularExpression) == nil }) {
-                issues.append(ValidationIssue(field: "\(field).levels", message: "must be at most 5 different names of lowercase letters, digits and _."))
-            }
-            if g.say.count > Self.maxGameSentences {
-                issues.append(ValidationIssue(field: "\(field).say", message: "can hold at most \(Self.maxGameSentences) sentences."))
-            }
-            for (i, sentence) in g.say.enumerated() {
-                let sf = "\(field).say[\(i)]"
-                do {
-                    let compiled = try CommandSentence(sentence)
-                    if !compiled.slots.isEmpty {
-                        issues.append(ValidationIssue(field: sf, message: "can't have slots: a game's sentence only opens it."))
-                    } else if let other = seen[compiled.shape] {
-                        issues.append(ValidationIssue(field: sf, message: "says the same as \(other)."))
-                    } else {
-                        seen[compiled.shape] = sf
-                    }
-                } catch {
-                    issues.append(ValidationIssue(field: sf, message: error.message))
-                }
-            }
-        }
-    }
+    /// A surface's sentences: twice a command's, so it can be opened by two or so sentences in each of the ten languages; each still only opens it.
+    static let maxSurfaceSentences = 24
 
     func checkPages(_ m: ExtensionManifest, issues: inout [ValidationIssue]) {
         if m.pages.count > 4 { issues.append(ValidationIssue(field: "pages", message: "can declare at most 4 pages.")) }

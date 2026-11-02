@@ -25,8 +25,6 @@ public enum InterruptSource: Hashable, Sendable {
     case agent(String)
     /// An extension whose watches report to the person.
     case `extension`(String)
-    /// The lines the companion says during a game.
-    case games
     /// What the companion says on its own: its AI's notices and routines, folk introductions, "All clear".
     case companion
     /// Add-on updates waiting (D89): the whisper after a day and an update to look at.
@@ -40,7 +38,6 @@ public enum InterruptSource: Hashable, Sendable {
         case .commands: "commands"
         case .agent(let name): "agent:\(name)"
         case .extension(let id): "extension:\(id)"
-        case .games: "games"
         case .companion: "companion"
         case .addonUpdates: "addons"
         }
@@ -55,25 +52,22 @@ public enum InterruptSource: Hashable, Sendable {
         case ("commands", nil): self = .commands
         case ("agent", let name?): self = .agent(name)
         case ("extension", let id?): self = .extension(id)
-        case ("games", nil): self = .games
         case ("companion", nil): self = .companion
         case ("addons", nil): self = .addonUpdates
         default: return nil
         }
     }
 
-    /// What the table offers. A reminder is the person's own: it may come quieter, never not at all. The game's
-    /// lines are a caption beside the game, so they are on or off.
+    /// What the table offers. A reminder is the person's own: it may come quieter, never not at all.
     public var choices: [InterruptLevel] {
         switch self {
         case .reminders: [.card, .whisper, .today]
-        case .games: [.whisper, .off]
         default: [.card, .whisper, .today, .off]
         }
     }
 
-    /// Today's behaviour (D88): each notice at its own level; the game's lines as they were; add-on updates gently (D89).
-    public var defaultLevel: InterruptLevel { self == .games || self == .addonUpdates ? .whisper : .card }
+    /// Today's behaviour (D88): each notice at its own level; add-on updates gently (D89).
+    public var defaultLevel: InterruptLevel { self == .addonUpdates ? .whisper : .card }
 
     /// "Claude Code" and "claude" are one agent, as are Codex's client names; others by their lowercased name.
     public static func agentName(_ client: String) -> String {

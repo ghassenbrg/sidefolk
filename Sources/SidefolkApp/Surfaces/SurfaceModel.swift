@@ -287,7 +287,7 @@ extension SurfaceModel {
         var summary = String(localized: "Used \(what) from \(info.extensionName)", comment: "Activity: an extension's panel was used, then whose")
         var args: [String: JSONValue] = ["extension": .string(info.extensionId), "surface": .string(info.surface)]
         if let t = last?.tally {
-            summary += " · " + String(localized: "You \(t[0]) · \(companionName) \(t[1])", comment: "A game's score: the person's, then the companion's (named)")
+            summary += " · " + String(localized: "You \(t[0]) · \(companionName) \(t[1])", comment: "A score: the person's, then the companion's (named)")
         }
         if let outcome = last?.outcome { args["result"] = .string(outcome.rawValue) }
         return ActivityEntry(at: Date(), caller: "user", tool: "surfaces.use", risk: Risk.low.rawValue, decision: .auto, summary: summary, args: .object(args))

@@ -22,7 +22,6 @@ struct InterruptionsGroup: View {
             ForEach(model.extensions.filter { !$0.watcherNames.isEmpty }) { ext in
                 row(.extension(ext.id), look: ext.look)
             }
-            row(.games)
             row(.addonUpdates)
             row(.companion)
         }
@@ -146,7 +145,6 @@ extension InterruptSource {
         case .commands: String(localized: "Commands", comment: "Settings › Attention: commands started with `sidefolk run`")
         case .agent(let name): Describe.agentName(name)
         case .extension(let id): look?.name ?? extensions[id] ?? id
-        case .games: String(localized: "Games")
         case .companion: companion
         case .addonUpdates: String(localized: "Add-on updates", comment: "Settings › Attention: newer versions of companions, extensions and themes")
         }
@@ -162,7 +160,6 @@ extension InterruptSource {
         case .agent: Text("Its notices and what it saves. Its questions and approvals always come as a card.",
                           comment: "Settings › Attention: under an agent such as Claude Code")
         case .extension: Text("What its watches notice.", comment: "Settings › Attention: under an extension")
-        case .games: Text("The companion's lines while you play.", comment: "Settings › Attention › Games")
         case .companion: Text("Its AI's notices, routines and its own remarks. Its questions always come.",
                               comment: "Settings › Attention: under the companion's name")
         case .addonUpdates: Text("Newer versions waiting, once they've waited a day, and updates to look at.",
@@ -177,7 +174,6 @@ extension InterruptSource {
         case .commands: "terminal"
         case .agent: "sparkles"
         case .extension: "puzzlepiece.extension"
-        case .games: "gamecontroller"
         case .companion: "face.smiling"
         case .addonUpdates: "arrow.down.circle"
         }
@@ -188,7 +184,6 @@ extension InterruptSource {
         case .reminders: "tempo"
         case .watches, .watch: "scout"
         case .commands, .agent, .extension: "byte"
-        case .games: "play"
         case .companion: "sidefolk"
         case .addonUpdates: "byte"
         }

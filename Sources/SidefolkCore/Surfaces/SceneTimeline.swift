@@ -51,7 +51,7 @@ enum SceneTimeline {
             var end = begin
             let sound = j["sound"]?.stringValue.flatMap { PackAssets.clean($0).flatMap { PackAssets.kind(of: $0) == .sound ? $0 : nil } }
             let react = SceneReaction.parse(j["react"])
-            let announce = GameBoard.line(j["announce"], 200)
+            let announce = SceneReading.line(j["announce"], 200)
             if sound != nil || react != nil || announce != nil {
                 guard events.count < SurfaceScene.maxEvents else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxEvents) timed events") }
                 events.append(SceneEvent(at: begin, sound: sound, react: react, announce: announce))
@@ -141,7 +141,7 @@ enum SceneTimeline {
         guard items.count <= SurfaceScene.maxSteps else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxSteps) animations") }
         var grouped: [(id: String?, items: [JSONValue])] = [(nil, [])]
         for item in items {
-            if let id = GameBoard.token(item["id"]) { grouped.append((id, [item])) } else { grouped[0].items.append(item) }
+            if let id = SceneReading.token(item["id"]) { grouped.append((id, [item])) } else { grouped[0].items.append(item) }
         }
         guard grouped.count <= SurfaceScene.maxRuns else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxRuns) separate animations") }
         var runs: [SceneRun] = []

@@ -16,12 +16,19 @@ final class SurfaceSounds {
     private static let budget = 48 * 1024 * 1024
     private var held = 0
     private var limiter = CueLimiter()
+    private static let volume: Float = 0.35
+    /// How long the engine stays up after the last sound, so the next tap doesn't wait for it to start.
+    private static let linger: Duration = .seconds(3)
+    /// Whether the Mac allows interface sounds at all (System Settings › Sound › Play user interface sound effects).
+    private static var interfaceSoundsOn: Bool {
+        UserDefaults(suiteName: "com.apple.systemsound")?.object(forKey: "com.apple.sound.uiaudio.enabled") as? Bool ?? true
+    }
     private var wired = false
     private var busyUntil = Date.distantPast
     private var idle: Task<Void, Never>?
 
     func play(_ path: String, from reader: PackAssetReader) {
-        guard limiter.sound(at: Date()), GameSounds.interfaceSoundsOn else { return }
+        guard limiter.sound(at: Date()), Self.interfaceSoundsOn else { return }
         let key = reader.root + "/" + path
         guard let buffer = buffers[key] ?? load(path, reader) else { return }
         if buffers[key] == nil {
@@ -36,7 +43,7 @@ final class SurfaceSounds {
         if !wired {
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: format)
-            engine.mainMixerNode.outputVolume = GameSounds.volume
+            engine.mainMixerNode.outputVolume = Self.volume
             wired = true
         }
         if !engine.isRunning { guard (try? engine.start()) != nil else { return } }
@@ -46,7 +53,7 @@ final class SurfaceSounds {
         idle?.cancel()
         let wait = busyUntil.timeIntervalSinceNow
         idle = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(wait) + GameSounds.linger)
+            try? await Task.sleep(for: .seconds(wait) + Self.linger)
             guard !Task.isCancelled, let self else { return }
             self.player.stop()
             self.engine.stop()

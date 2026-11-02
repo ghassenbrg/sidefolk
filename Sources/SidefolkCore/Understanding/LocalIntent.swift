@@ -41,29 +41,6 @@ public struct ReportIntent: Sendable, Equatable {
     }
 }
 
-/// A coin, dice or a hand for the companion to play (D44, amended), for `companion.toss`.
-public struct ChanceIntent: Sendable, Equatable {
-    public enum Kind: String, Sendable { case coin, dice, rockPaperScissors = "rock_paper_scissors" }
-
-    public var kind: Kind
-    public var count = 1
-    public var sides = 6
-    public var modifier = 0
-    /// Rock, paper, scissors: the person's hand; nil when they haven't said it yet.
-    public var hand: Hand?
-    /// A coin the person called before it flew: true for heads (D75).
-    public var call: Bool?
-
-    public init(_ kind: Kind, count: Int = 1, sides: Int = 6, modifier: Int = 0, hand: Hand? = nil, call: Bool? = nil) {
-        self.kind = kind
-        self.count = count
-        self.sides = sides
-        self.modifier = modifier
-        self.hand = hand
-        self.call = call
-    }
-}
-
 /// What the user meant, worked out without a model.
 public enum LocalIntent: Sendable, Equatable {
     /// `important` reminders are the ones that still interrupt during quiet mode ("urgent: remind me ...").
@@ -102,19 +79,12 @@ public enum LocalIntent: Sendable, Equatable {
     /// A trick or a game with the companion (D44).
     case companion(CompanionAct)
     /// A coin, dice or rock, paper, scissors on the desktop.
-    case chance(ChanceIntent)
     /// "new conversation", "start fresh": the next request to the AI starts a new conversation (D45).
     case newConversation
     /// A sentence one switched-on extension answers without the AI (D50).
     case extensionCommand(ExtensionCommandCall)
-    /// A game to open in the Play panel (D75): an extension's, by one of its sentences, or the companion's own match.
-    case game(extensionId: String, game: String)
     /// A surface an extension declares (D99), by one of its sentences: `extension-id/surface`.
     case surface(id: String)
-    /// "show me the games", "let's play", "games": the Play panel's menu of every game (D79 amended).
-    case gamesMenu
-    /// "rematch", "trivia about space, hard", "pause the game", "show my stats": the app's own game sentences (D93).
-    case gameCommand(GameCommand)
 }
 
 /// An intent and the line the input shows before Enter ("Reminder · Tue 09:00 · no AI").

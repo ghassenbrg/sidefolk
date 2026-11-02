@@ -57,8 +57,6 @@ public enum MCPClientEvent: Sendable {
     case clipboardSource
     /// The extension requests a temporary default-output mute under its install permission.
     case outputMute(request: String, enabled: Bool, sequence: Int)
-    /// `sidefolk/trivia.request`: a game asks for trivia questions made by the person's AI (D95); the host decides.
-    case triviaRequest(request: String, params: JSONValue)
     /// `sidefolk/ai.request`: the extension asks the person's AI to write something (D100); the host decides.
     case aiRequest(request: String, params: JSONValue)
     /// `sidefolk/activity.add`: one row for History (D100).
@@ -326,9 +324,6 @@ public final class MCPClient: Sendable {
                       let enabled = message["params"]?["enabled"]?.boolValue,
                       let sequence = message["params"]?["sequence"]?.intValue, sequence > 0 {
                 onEvent(.outputMute(request: request, enabled: enabled, sequence: sequence))
-            } else if method == "sidefolk/trivia.request", let params = message["params"],
-                      let request = params["request"]?.stringValue, UUID(uuidString: request) != nil {
-                onEvent(.triviaRequest(request: request, params: params))
             } else if method == "sidefolk/ai.request", let params = message["params"],
                       let request = params["request"]?.stringValue, UUID(uuidString: request) != nil {
                 onEvent(.aiRequest(request: request, params: params))

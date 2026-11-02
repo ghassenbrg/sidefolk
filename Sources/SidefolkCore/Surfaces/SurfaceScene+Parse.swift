@@ -21,7 +21,7 @@ extension SurfaceScene {
             if let node = try reader.node(item, path: "n\(i)", depth: 0, parent: box) { scene.nodes.append(node) }
         }
         scene.background = SceneReader.color(json["background"])
-        scene.title = GameBoard.line(json["title"], 60)
+        scene.title = SceneReading.line(json["title"], 60)
         scene.back = json["back"]?.boolValue ?? false
         scene.over = json["over"]?.boolValue ?? false
         scene.close = json["close"]?.boolValue ?? false
@@ -32,12 +32,12 @@ extension SurfaceScene {
         scene.speaker = json["speaker"]?.stringValue.flatMap { $0.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil ? $0 : nil }
         scene.transition = clamp(json["transition_ms"]?.doubleValue, 0...1000, 0) / 1000
         scene.mirrors = json["mirror"]?.boolValue ?? true
-        scene.announce = GameBoard.line(json["announce"], 200)
-        scene.outcome = json["outcome"]?.stringValue.flatMap(GameVerdict.init(rawValue:))
+        scene.announce = SceneReading.line(json["announce"], 200)
+        scene.outcome = json["outcome"]?.stringValue.flatMap(SceneOutcome.init(rawValue:))
         if let t = json["tally"]?.arrayValue?.compactMap(\.intValue), t.count == 2 { scene.tally = t.map { min(max($0, 0), 99_999) } }
 
         scene.timers = (json["timers"]?.arrayValue ?? []).compactMap { t in
-            guard let id = GameBoard.token(t["id"]), let ms = t["ms"]?.doubleValue, (100...3_600_000).contains(ms) else { return nil }
+            guard let id = SceneReading.token(t["id"]), let ms = t["ms"]?.doubleValue, (100...3_600_000).contains(ms) else { return nil }
             return SceneTimer(id: id, seconds: ms / 1000)
         }
         guard scene.timers.count <= maxTimers else { throw refused("has more than \(maxTimers) timers") }
@@ -205,7 +205,7 @@ struct SceneReader {
         node.clips = node.clips || j["clip"]?.boolValue == true
         node.corner = SurfaceScene.clamp(j["corner"]?.doubleValue, 0...1000, 0)
         node.ltr = j["ltr"]?.boolValue ?? false
-        node.label = GameBoard.line(j["label"], 120)
+        node.label = SceneReading.line(j["label"], 120)
         if let s = j["shadow"] {
             node.shadow = SceneShadow(color: Self.color(s["color"]) ?? .rgba(0x0000_0033), radius: SurfaceScene.clamp(s["radius"]?.doubleValue, 0...40, 4),
                                       dx: SurfaceScene.clamp(s["dx"]?.doubleValue, -40...40, 0), dy: SurfaceScene.clamp(s["dy"]?.doubleValue, -40...40, 0))
@@ -276,10 +276,10 @@ struct SceneReader {
         case "scroll":
             return .scroll(SceneScroll(contentHeight: SurfaceScene.clamp(j["content_h"]?.doubleValue, 0...8000, 0), to: Self.nodeId(j["scroll_to"])))
         case "entry":
-            guard let name = GameBoard.token(j["name"]) else { return nil }
+            guard let name = SceneReading.token(j["name"]) else { return nil }
             entries += 1
             guard entries <= SurfaceScene.maxEntries else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxEntries) fields") }
-            return .entry(SceneEntry(id: name, placeholder: GameBoard.line(j["placeholder"], 60), max: Int(SurfaceScene.clamp(j["max"]?.doubleValue, 1...120, 40)),
+            return .entry(SceneEntry(id: name, placeholder: SceneReading.line(j["placeholder"], 60), max: Int(SurfaceScene.clamp(j["max"]?.doubleValue, 1...120, 40)),
                                      locked: j["locked"]?.boolValue ?? false, size: SurfaceScene.clamp(j["size"]?.doubleValue, 9...40, 15),
                                      focus: j["focus"]?.boolValue ?? false, plain: j["plain"]?.boolValue ?? false, weight: Self.weight(j["weight"], .regular, &notes),
                                      design: j["design"]?.stringValue.flatMap(SceneText.Design.init) ?? .standard))
@@ -320,7 +320,7 @@ struct SceneReader {
             total += words.count
             runs.append(SceneText.Run(text: words, color: Self.color(run["color"]), weight: run["weight"].map { Self.weight($0, .regular, &notes) }))
         }
-        let words = runs.isEmpty ? GameBoard.longText(j["text"], SurfaceScene.maxTextCharacters) ?? j["text"]?.stringValue.map { _ in "" } : runs.map(\.text).joined()
+        let words = runs.isEmpty ? SceneReading.long(j["text"], SurfaceScene.maxTextCharacters) ?? j["text"]?.stringValue.map { _ in "" } : runs.map(\.text).joined()
         if needsText, words == nil { return nil }
         text += words?.count ?? 0
         guard text <= SurfaceScene.maxAllText else { throw SurfaceScene.refused("holds more than \(SurfaceScene.maxAllText) characters") }
@@ -425,15 +425,15 @@ struct SceneReader {
     // MARK: Areas and keys
 
     private mutating func area(_ j: JSONValue, node: SceneNode) throws -> SceneArea? {
-        guard let id = GameBoard.token(j["id"]) else { return nil }
+        guard let id = SceneReading.token(j["id"]) else { return nil }
         // Every interactive node says what it is: without words it can't be reached by VoiceOver, so it isn't offered.
-        guard let label = GameBoard.line(j["label"], 120) else {
+        guard let label = SceneReading.line(j["label"], 120) else {
             notes.append("The area \(id) on \(node.id) has no label for VoiceOver, so it was left out.")
             return nil
         }
         areas += 1
         guard areas <= SurfaceScene.maxAreas else { throw SurfaceScene.refused("has more than \(SurfaceScene.maxAreas) areas") }
-        var area = SceneArea(id: id, value: GameBoard.line(j["value"], 24), label: label)
+        var area = SceneArea(id: id, value: SceneReading.line(j["value"], 24), label: label)
         area.disabled = j["disabled"]?.boolValue ?? false
         area.always = j["always"]?.boolValue ?? false
         area.selected = j["selected"]?.boolValue ?? false
@@ -447,7 +447,7 @@ struct SceneReader {
                 area.looks[id] = look
             }
         }
-        area.submits = GameBoard.token(j["submits"])
+        area.submits = SceneReading.token(j["submits"])
         area.sound = j["sound"]?.stringValue.flatMap { PackAssets.clean($0).flatMap { PackAssets.kind(of: $0) == .sound ? $0 : nil } }
         area.timedFrom = j["timed_from_ms"]?.doubleValue.flatMap { (0...60_000).contains($0) ? $0 / 1000 : nil }
         if let d = j["drag"] {
@@ -483,8 +483,8 @@ struct SceneReader {
     }
 
     static func key(_ j: JSONValue) -> SceneKey? {
-        guard let match = keyMatch(j["key"]?.stringValue), let id = GameBoard.token(j["id"]) else { return nil }
-        return SceneKey(match: match, id: id, area: GameBoard.token(j["area"]), value: GameBoard.line(j["value"], 24), bySeat: j["seat"]?.boolValue ?? false,
+        guard let match = keyMatch(j["key"]?.stringValue), let id = SceneReading.token(j["id"]) else { return nil }
+        return SceneKey(match: match, id: id, area: SceneReading.token(j["area"]), value: SceneReading.line(j["value"], 24), bySeat: j["seat"]?.boolValue ?? false,
                         timedFrom: j["timed_from_ms"]?.doubleValue.flatMap { (0...60_000).contains($0) ? $0 / 1000 : nil }, always: j["always"]?.boolValue ?? false)
     }
 }

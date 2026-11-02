@@ -30,19 +30,16 @@ public struct IntentParser: Sendable {
     let here: String?
     /// The tools of switched-on extensions that answer sentences without the AI (D50), tried after every core intent.
     let commandTools: [ExtensionTool]
-    /// The games of switched-on extensions, whose sentences open them (D75).
-    let games: [GameInfo]
     /// Their surfaces, the same (D99).
     let surfaces: [SurfaceInfo]
 
     public init(when: WhenParser, home: String = NSHomeDirectory(), companionNames: [String] = ["sidefolk", "pip"], here: String? = nil,
-                commandTools: [ExtensionTool] = [], games: [GameInfo] = [], surfaces: [SurfaceInfo] = []) {
+                commandTools: [ExtensionTool] = [], surfaces: [SurfaceInfo] = []) {
         self.when = when
         self.home = home
         names = companionNames.map { $0.lowercased() }
         self.here = here
         self.commandTools = commandTools
-        self.games = games
         self.surfaces = surfaces
     }
 
@@ -59,10 +56,9 @@ public struct IntentParser: Sendable {
         let ctx = Context(now: now, known: knownCollections, watching: watching)
         // In two parts: one chain of twelve is more than the type checker will take in reasonable time. An extension's
         // command comes after every one of Sidefolk's own (D50).
-        // So does a sentence that opens an extension's surface (T41). A game's keeps its place before `gameCommand` until the old game
-        // code goes (D101), and yields to Sidefolk's own by itself.
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? gamesMenu(p.command) ?? game(p.command)
-        let own = quick ?? gameCommand(p.command) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
+        // So does a sentence that opens an extension's surface (T41).
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command)
+        let own = quick ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
             ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
         return own ?? surface(p.command) ?? extensionCommand(p.command)
     }
@@ -72,7 +68,7 @@ public struct IntentParser: Sendable {
     func claimsAsItsOwn(_ text: String, now: Date = Date()) -> Bool {
         guard let p = prepare(text) else { return true }
         let ctx = Context(now: now, known: [], watching: [])
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? stopWatch(p.command, ctx)
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? stopWatch(p.command, ctx)
         return (quick ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx) ?? remind(p.command, ctx) ?? note(p.typed, ctx)
             ?? find(p.command, ctx)) != nil
     }

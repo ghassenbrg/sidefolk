@@ -35,8 +35,6 @@ extension ParsedIntent {
             return IntentPlan(kind: String(localized: "Read now"), title: hint, chips: [], tool: "watch.read")
         case .companion:
             return IntentPlan(kind: String(localized: "Play"), title: hint, chips: [], tool: "companion.play")
-        case .chance:
-            return IntentPlan(kind: String(localized: "Play"), title: hint, chips: [], tool: "companion.toss")
         default:
             return IntentPlan(kind: hint, title: "", chips: [], tool: nil)
         }

@@ -32,12 +32,8 @@ final class AppCoordinator {
         player.anchorProvider = { [weak self] in self?.anchor() }
         return player
     }()
-    /// A toss brought the hidden companion out for the moment; it goes away again once the result has gone.
-    var tossRevealed = false
     /// The overlay that brought a hidden companion out, which goes again with it.
     var surfaceRevealedCompanion: ObjectIdentifier?
-    /// Games in the Play panel beside the companion (D75), and the companion's reactions to them.
-    lazy var playPanel: PlayPanelController = makePlayPanel()
     lazy var surfacePanel: SurfacePanelController = makeSurfacePanel(.panel)
     lazy var surfaceOverlay: SurfacePanelController = makeSurfacePanel(.overlay)
     lazy var cues: CueDirector = makeCueDirector()
@@ -124,7 +120,6 @@ final class AppCoordinator {
         }
 
         agent = makeAgentRuntime()
-        installTriviaHelp()
         installAIHelp()
         ExtensionCompanionWords.set(runtime.settings.current.companionName)
         onboarding = Onboarding(coordinator: self)
@@ -257,7 +252,6 @@ final class AppCoordinator {
         companion.apply(size: s.size, reducedMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
         companion.character.liveliness = CompanionArt.liveliness(s.liveliness)
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
-        player.companionName = s.companionName
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
@@ -424,8 +418,6 @@ final class AppCoordinator {
         if command.hasPrefix("play:"), let act = CompanionAct(rawValue: String(command.dropFirst(5))) { runtime.events.publish(.companion(act)); return }
         if command == "click" { companionClicked(); return }
         if command.hasPrefix("tip:") || command.hasPrefix("recede:") { companion.devFloor(command); return }
-        if command.hasPrefix("toss:") { devToss(command.dropFirst(5).split(separator: ":").map(String.init)); return }
-        if devGame(command) { return }
         if devSurface(command) { return }
         if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }
         if command.hasPrefix("voice:volume:"), let volume = Double(command.dropFirst("voice:volume:".count)) {
@@ -611,12 +603,6 @@ final class AppCoordinator {
             }
             return
         }
-        if command == "askTab:play" {
-            // Ask's Play tab, as a click on it does (`AskHeader.choose`): the Play panel's menu of games.
-            showAsk()
-            ask.actions?.openPlay()
-            return
-        }
         if command.hasPrefix("ask:") {
             showAsk()
             ask.text = String(command.dropFirst(4))
@@ -703,8 +689,7 @@ final class AppCoordinator {
             let fresh = ask.text.isEmpty && ask.attachment == nil && !ask.hasResults && ask.pinnedEntries.isEmpty
             ask.tab = fresh && (waitingCount > 0 || !ask.glance.isEmpty) && !slipsOnly ? .today : .ask
         }
-        // One panel at a time: the game is kept and comes back as it was (D75); a card folds into what Ask shows.
-        playPanel.hide()
+        // One panel at a time: a surface is kept and comes back as it was (D99); a card folds into what Ask shows.
         surfacePanel.hide()
         if !slipsOnly { sidecard.yieldToAsk() }
         refreshGlance()
@@ -796,16 +781,12 @@ final class AppCoordinator {
             askPanel.hide()
             settingsWindow.review(folder: folder)
         case .companion(let act):
-            // A game needs the companion in view and the panel out of the way; a trick plays beside it.
-            if act.isGame {
+            // Its little games need it in view and the panel out of the way; a trick plays beside it.
+            if act.takesAWhile {
                 askPanel.hide()
                 if !companion.isVisible { showCompanion(true) }
-                // A game keeps it out: the toss that brought it out no longer puts it away.
-                tossRevealed = false
             }
             player.play(act)
-        case .game(let request):
-            openGame(request)
         case .surface(let request):
             openSurface(request)
         case .surfaceGone(let id):
@@ -814,27 +795,6 @@ final class AppCoordinator {
             putSurfaceAway(of: id, surface: surface)
         case .extensionPage(let id):
             home.show(section: .page(id))
-        case .gamesMenu(let focus):
-            openPlayMenu(focus: focus)
-        case .gameCenter:
-            openGameCenter()
-        case .gamesAway:
-            putGameAway()
-        case .toss(let toss):
-            // The result belongs on the desktop: hidden, the companion comes out for the moment and goes again after.
-            if !companion.isVisible {
-                showCompanion(true)
-                tossRevealed = true
-            }
-            player.face = CompanionArt.avatar(for: runtime.settings.current, side: 96)
-            player.toss(toss, again: { [weak self] in self?.tossAgain(toss) }) { [weak self] in
-                guard let self, tossRevealed else { return }
-                tossRevealed = false
-                // Only the companion goes: an answer may still be open in the Ask panel.
-                guard player.game == nil else { return }
-                companion.hide()
-                renderReadouts()
-            }
         case .dataChanged(let domain):
             if domain == .permissions { refreshMode() }
             if [.reminders, .watchers, .runs, .attention, .skipped].contains(domain) { scheduleNowRefresh() }
@@ -842,7 +802,6 @@ final class AppCoordinator {
             if domain == .watchers { refreshReadouts() }
             if domain == .reminders { onboarding.reminderCreated() }
             if domain == .settings {
-                followGameSettings()
                 applyCompanionSettings()
                 applyAttention()
                 Task { await runtime.rearm() }
@@ -985,7 +944,7 @@ extension AppCoordinator: CompanionDelegate {
         return menu
     }
 
-    /// Play (D44): tricks, then the two games, or a way out of the one running.
+    /// Play (D44): tricks, then its two little games, or a way out of the one running.
     private func playMenu() -> NSMenuItem {
         let play = NSMenu()
         if player.game != nil {
@@ -1001,60 +960,10 @@ extension AppCoordinator: CompanionDelegate {
                     self?.player.play(act)
                 })
             }
-            // Games in the Play panel (D75): its menu, the companion's own match, then the extensions'.
-            play.addItem(.separator())
-            play.addItem(ClosureTarget.item(String(localized: "All Games…", comment: "Play menu: opens the Play panel's menu of games")) { [weak self] in
-                self?.openPlayMenu(focus: true)
-            })
-            for info in [GameInfo.handsMatch] + runtime.extensions.gameShelf.all {
-                play.addItem(ClosureTarget.item(info.title) { [weak self] in self?.openGameFromMenu(info) })
-            }
-            // Chance, drawn by the same tool the AI and the person's words reach (D44, amended).
-            play.addItem(.separator())
-            let coin = NSMenu()
-            coin.addItem(ClosureTarget.item(String(localized: "Call Heads", comment: "A menu: flip a coin having called heads")) { [weak self] in
-                self?.toss(["kind": "coin", "call": "heads"])
-            })
-            coin.addItem(ClosureTarget.item(String(localized: "Call Tails", comment: "A menu: flip a coin having called tails")) { [weak self] in
-                self?.toss(["kind": "coin", "call": "tails"])
-            })
-            coin.addItem(ClosureTarget.item(String(localized: "Just Flip", comment: "A menu: flip a coin without calling it")) { [weak self] in
-                self?.toss(["kind": "coin"])
-            })
-            let flip = NSMenuItem(title: String(localized: "Flip a Coin"), action: nil, keyEquivalent: "")
-            flip.submenu = coin
-            play.addItem(flip)
-            play.addItem(ClosureTarget.item(String(localized: "Roll a Die")) { [weak self] in self?.toss(["kind": "dice"]) })
-            let hands = NSMenu()
-            for hand in Hand.allCases {
-                hands.addItem(ClosureTarget.item(hand.title) { [weak self] in self?.toss(["kind": "rock_paper_scissors", "hand": .string(hand.rawValue)]) })
-            }
-            let rps = NSMenuItem(title: String(localized: "Quick Throw", comment: "A menu: one throw of rock, paper, scissors; pick your hand"), action: nil, keyEquivalent: "")
-            rps.submenu = hands
-            play.addItem(rps)
         }
-        let item = NSMenuItem(title: String(localized: "Play", comment: "The companion's menu: tricks and games"), action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: String(localized: "Play", comment: "The companion's menu: its tricks and little games"), action: nil, keyEquivalent: "")
         item.submenu = play
         return item
-    }
-
-    /// Flips, rolls or plays a hand through the executor, as the person's own action: the event it sends plays it.
-    func toss(_ input: JSONValue) {
-        Task { _ = await runtime.executor.execute(name: "companion.toss", input: input, caller: .user) }
-    }
-
-    /// `toss:coin[:count]`, `toss:dice[:count[:sides]]`, `toss:rps:<hand>`.
-    func devToss(_ parts: [String]) {
-        var input: [String: JSONValue] = ["kind": .string(parts.first == "rps" ? "rock_paper_scissors" : parts.first ?? "coin")]
-        // toss:coin:call:heads, a coin called before it flies (D75).
-        if parts.count == 3, parts[1] == "call" {
-            input["call"] = .string(parts[2])
-            return toss(.object(input))
-        }
-        if parts.first == "rps" { input["hand"] = .string(parts.count > 1 ? parts[1] : "rock") }
-        if parts.first != "rps", parts.count > 1, let count = Double(parts[1]) { input["count"] = .number(count) }
-        if parts.count > 2, let sides = Double(parts[2]) { input["sides"] = .number(sides) }
-        toss(.object(input))
     }
 
     func companionDragChanged(_ dragging: Bool) {
@@ -1068,7 +977,6 @@ extension AppCoordinator: CompanionDelegate {
     func companionMoved() {
         sidecard.reposition()
         if let (frame, screen) = anchor() {
-            playPanel.reposition(beside: frame, on: screen)
             surfacePanel.reposition(beside: frame, on: screen)
             surfaceOverlay.reposition(beside: frame, on: screen)
         }
