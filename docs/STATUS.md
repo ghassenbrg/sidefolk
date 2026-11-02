@@ -38,6 +38,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## In progress
 
+- **Dev ideas (`sandbox/sidefolk-dev-ideas.md`), for the founder to look at:** batches 1 and 2 are done (HISTORY's top entries). D115 keeps D49's return of a reminder when its task reopens, where the handover recommended it stay cancelled.
 - **For the founder, from snapshot B (D101):** the reaction props the app still draws (D101's "Left for the founder"); in two-player rock, paper, scissors the reveal still says "You" and the companion's name with a winner's glow, as the old code did, against D96. Checks and what wasn't run: HISTORY's top entry. **Open, small:** with a surface panel open `snap` lists a 40×40 fully transparent `FloatingPanel` near the companion; not identified.
 - **For other branches:** `Sources/SidefolkApp/Play/` and `Sources/SidefolkCore/Games/` are gone, so a branch from before snapshot B that touches them will conflict: its game changes go into Playtime in the add-ons instead.
 
@@ -71,8 +72,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
   steered model puts in a page's path.
 - **Extensions can't hold secrets yet**, so Git can't reach private repositories or SSH remotes, and connectors
   (GitHub, Notion, Linear) wait for it.
-- **Built-ins' limits:** QR Codes needs an Apple GPU; Currency covers the ECB's 30 currencies; the promise check
-  reads English replies only; a folder with more than 20,000 items can't be watched.
+- **Built-ins' limits:** QR Codes needs an Apple GPU; Currency covers the ECB's 30 currencies; a folder with more than 20,000 items can't be watched.
 - **Languages:** the `sidefolk` command line, `StatusSnapshot.sentence`, bridge protocol errors, manifest checks
   (`ManifestValidator`, `ValidationReport.text`) and `ExtensionError`/`MCPError` details stay English on purpose.
   Stored collection names ("Inbox", "About you") stay English and are shown through

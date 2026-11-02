@@ -3509,3 +3509,22 @@ general: nothing here names a game or an extension, and all of it can replace wh
 
 **Left for the founder:** the props the app draws for a reaction (`gem`, `balloons(n)`, `sealed_card`, `magnifier`, `cards`, in `CompanionCue.Prop` and `PropView`) are a fixed general list no decision approved by name, and a new look for them would need an app release. Either a reaction names a picture from the pack (a general ability; the art would move to the pack), or this list is approved here as general.
 
+### D115 — What "done" means: the reply is checked against what ran, and a reminder marked done finishes its task (2026-11-03)
+**Decision:** *amends D49. Dev ideas, items 3 and 4.*
+- **Replies.** `ReplyCheck` runs on every brain's reply in `AgentRuntime`, so Claude Code, Codex and API models alike, and adds what really happened beneath the model's words, in the app's language. A step that changes something, failed and wasn't then done again (same tool, same words) is told whatever the reply says: "Not done: “…”." and why. A reply making a firm claim when no call of any kind worked gets "Sorry, that didn't actually happen: no action ran. Nothing was changed." A reply saying it couldn't, when something did succeed, gets "Done so far: …". It stays in the conversation, so the model reads it next turn. Words are checked in all ten languages (`UnbackedClaim`): "firm" means about what Sidefolk does, so "I've added comments to the code" passes. `LoopBackend`'s one extra turn also fires after calls that all failed, never after one that worked or one the person refused; the CLIs run their own loop, so they get the correction without that turn.
+- **The quick path.** A tool's own `isError` no longer shows as done (`LocalIntentRunner`); everything else there already came from `ToolExecutor`.
+- **Reminders and tasks.** All of it goes through `ReminderScheduler.complete` and `settleLinks`, so the Pocket, Home, the Calendar, bubbles, notifications and tools agree:
+
+| What happens | What follows |
+|---|---|
+| Reminder marked done, its task open | Task done. A series stops with it (as the bubble's Mark done already did). Undo reopens the task |
+| Reminder marked done, it belongs to a note | Nothing else: a note has no done |
+| Task done | Waiting reminders end: a one-off done, a series stopped (D49) |
+| Task to the Trash | Waiting reminders end; restoring brings back those still ahead (D49) |
+| Task deleted for good | Reminders cancelled (D49) |
+| Task reopened | Reminders it ended come back if still ahead (D49), a series marked done among them, since the task ended it; a one-off the person marked done, or anything they cancelled, stays so |
+| Reminder snoozed or cancelled | Task unchanged |
+
+**Why:** the founder: "when the companion says an action is done, it is actually completed", and a reminder marked done left its task open everywhere but the bubble. *Why add rather than replace the model's words:* a reply can hold a good answer beside a false claim, and the correction is true either way, even when the check misfires on a sentence about the past. *Why told always after a failure:* the claim words can't be complete, and a failure is what ToolExecutor knows for certain. *The handover recommended a reopened task's reminder stay cancelled;* D49's return is kept, because it was tested and decided, makes reopening a task marked by mistake undo everything, and only ever brings back times still ahead. Flagged for the founder.
+**Alternatives:** a second model call to judge the reply (costs quota and can be wrong in its turn); replacing the reply (loses the answer); a card for the correction (words also reach voice and the next turn).
+**Not covered:** a reply that does one thing and claims another too ("saved it and set a reminder" with only the save run), or that reads something and claims it changed it: a failure is told, a thing never attempted beside something that worked isn't. Claims outside the words listed pass. Other linked pairs, checked: a collection deleted from Home moves its items to the Trash, so their reminders follow; an archived collection's reminders still fire, which is what the person set; Apple Notes copies are independent once copied; watchers have no linked records.
