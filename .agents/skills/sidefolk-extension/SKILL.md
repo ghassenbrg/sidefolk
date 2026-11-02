@@ -26,6 +26,13 @@ and a program by name, `git`; the internet and a watcher that fires once per cro
 extension comes from its folder only (D98): `examples`, `tools.<name>.summary`, `services` and `replaces` in the manifest,
 words in `strings/`. Summaries, services and `replaces` count only for packs Sidefolk signs.
 
+**A surface and a scene (D99):** when a page isn't enough, ask for a panel or an overlay and send a `Scene`; everything it draws
+comes from the pack's `assets` folder (PNG, JPEG, WebP, HEIC, WAV, AIFF, CAF, M4A, within caps the validator checks). Every area
+needs a `label`; a move comes back only if the scene on screen offered it; keep state in the program and rebuild the whole
+scene each time (Sidefolk changes only what differs, by node id); give a shuffle a name so a later scene carries it on, mark it
+`essential` if it is the point under Reduce Motion, and `blocksInput`. Check with `surface:<id>/<name>`, `surfaceClick:`,
+`surfaceDrag:`, `surfaceKey:`, `surfaceFilm:`, then `snap` (dev.swift's list); measure idle CPU with the surface at rest.
+
 ## 0. Is it an extension?
 
 Yes when the job fits a sandbox: compute, read this Mac's own state (processes, memory, battery: what System Vitals+
@@ -37,7 +44,7 @@ No when it needs:
 - an account, API key or token: extensions can't hold secrets (D39); a plain MCP server can (Settings › Add-ons ›
   Add MCP Server…, unsandboxed, at least medium risk);
 - to know which app is in front, open apps or links: Launch Services stays closed (D63);
-- to draw its own UI: pages are data Sidefolk draws (D62). A companion or a theme has its own path.
+- to draw its own UI outside Sidefolk's frame: pages and scenes are data Sidefolk draws (D62, D99). A companion or a theme has its own path.
 
 Where it will live:
 - **Gallery** (Sidefolk's own, ids `dev.sidefolk.<name>`): `../sidefolk-addons/extensions/<name>/`, built and signed by
@@ -86,6 +93,7 @@ Write it down before any code: each feature, which part carries it, and what tha
 | Commands only | The AI gains nothing (a coin flip, a page's setting) | `"ai": false` plus at least one command | (the tool) |
 | Watcher | "Tell me when…", checked every 5 min at the soonest; on a page it is a heads-up switch | `watchers.<name>` | `ext.watcher(name) { settings, state in Check(…) }` |
 | Page | A feature someone looks at: a page in Home's sidebar under Extensions | `pages.<name>` | `ext.page(name) { args in Page(…) }` |
+| Surface | Its own look beside the companion: a panel or overlay, a scene of pack images, text and shapes, native animation, click areas, drags, keys (D99). `docs/EXTENSIONS.md › Surfaces and scenes`, `samples/scene-sample` | `surfaces.<name>`, `assets` | `ext.surface(name, open:, move:)`, `Scene`, `Node`, `Anim` |
 | Today tile | The page's summary on Today | `pages.<name>.widget: true` | (the page's `Summary`) |
 | Switch, button | Act from the page: runs one of its own tools as the person, through Guard (D63) | the tool | `.toggle(…, tool:, input:)`, `.button(…, tool:, input:, style:)` |
 | Ask button | Send a sentence to Ask, as if typed | none | `.ask(label, sentence)` |

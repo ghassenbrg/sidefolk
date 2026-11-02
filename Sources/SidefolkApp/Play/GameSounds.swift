@@ -130,4 +130,22 @@ final class GameSounds {
         }
         return buffer
     }
+
+    #if DEBUG
+    /// The sounds as files in `dir`, for a pack's `assets` (D99): the same synthesis, so an extension that moves off the
+    /// names sounds as it did.
+    func export(to dir: URL) {
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        func write(_ name: String, _ buffer: AVAudioPCMBuffer) {
+            let settings: [String: Any] = [AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: format.sampleRate, AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16,
+                                           AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false]
+            let url = dir.appendingPathComponent(name + ".wav")
+            if let file = try? AVAudioFile(forWriting: url, settings: settings, commonFormat: .pcmFormatFloat32, interleaved: false) { try? file.write(from: buffer) }
+        }
+        for sound in GameSound.allCases { write(sound.rawValue, make(notes(sound))) }
+        for (i, hz) in [523.25, 659.25, 783.99, 880.0, 1_046.5].enumerated() {
+            write("note-\(i)", make([Note(at: 0, hz: hz, length: 0.32, decay: 9), Note(at: 0, hz: hz * 2, length: 0.2, decay: 16, level: 0.25)]))
+        }
+    }
+    #endif
 }

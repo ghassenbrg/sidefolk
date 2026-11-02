@@ -30,6 +30,8 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var examples: [String] = []
         /// Each tool's summary (D98): one text for each of the manifest's forms, in order.
         public var toolSummaries: [String: [String]] = [:]
+        /// Surface titles (D99), shown in the frame and `surfaces.open`.
+        public var surfaces: [String: String] = [:]
         /// The program's sentences by their English key: one text, or forms by count (`one`, `other`…).
         public var text: [String: Text] = [:]
 
@@ -158,7 +160,7 @@ extension ExtensionStrings {
         var w = Words()
         guard let o = any as? [String: Any] else { return w }
         let english = code == "en"
-        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "examples", "text"]
+        let allowed: Set<String> = english ? ["text"] : ["name", "tagline", "description", "network_purpose", "tools", "watchers", "pages", "palettes", "games", "examples", "surfaces", "text"]
         for key in o.keys.sorted() where !allowed.contains(key) {
             let why = english ? "isn't allowed in English: the manifest has the English words; en.json lists only `text`." : "isn't a known key."
             issues.append(ValidationIssue(field: "\(file).\(key)", message: why))
@@ -229,6 +231,10 @@ extension ExtensionStrings {
             w.gameTaglines[name] = line(f["tagline"], "\(file).games.\(name).tagline", max: 60, base: m.games[name]?.tagline)
         }
         w.examples = examples(o["examples"], "\(file).examples", of: m.examples)
+        for (name, value) in object("surfaces", names: Set(m.surfaces.keys)) {
+            let f = fields(value, "\(file).surfaces.\(name)", ["title"])
+            w.surfaces[name] = line(f["title"], "\(file).surfaces.\(name).title", max: 40, base: m.surfaces[name]?.title)
+        }
         w.text = texts(o["text"], file: file, code: code, base: base, issues: &issues)
         return w
 

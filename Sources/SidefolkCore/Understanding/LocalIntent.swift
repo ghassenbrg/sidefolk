@@ -109,6 +109,8 @@ public enum LocalIntent: Sendable, Equatable {
     case extensionCommand(ExtensionCommandCall)
     /// A game to open in the Play panel (D75): an extension's, by one of its sentences, or the companion's own match.
     case game(extensionId: String, game: String)
+    /// A surface an extension declares (D99), by one of its sentences: `extension-id/surface`.
+    case surface(id: String)
     /// "show me the games", "let's play", "games": the Play panel's menu of every game (D79 amended).
     case gamesMenu
     /// "rematch", "trivia about space, hard", "pause the game", "show my stats": the app's own game sentences (D93).

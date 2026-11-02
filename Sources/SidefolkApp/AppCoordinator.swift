@@ -36,6 +36,8 @@ final class AppCoordinator {
     var tossRevealed = false
     /// Games in the Play panel beside the companion (D75), and the companion's reactions to them.
     lazy var playPanel: PlayPanelController = makePlayPanel()
+    lazy var surfacePanel: SurfacePanelController = makeSurfacePanel(.panel)
+    lazy var surfaceOverlay: SurfacePanelController = makeSurfacePanel(.overlay)
     lazy var cues: CueDirector = makeCueDirector()
     private(set) var onboarding: Onboarding!
     var mood = CompanionMood()
@@ -420,6 +422,7 @@ final class AppCoordinator {
         if command.hasPrefix("tip:") || command.hasPrefix("recede:") { companion.devFloor(command); return }
         if command.hasPrefix("toss:") { devToss(command.dropFirst(5).split(separator: ":").map(String.init)); return }
         if devGame(command) { return }
+        if devSurface(command) { return }
         if command.hasPrefix("swipe:") { askPanel.devSwipe(String(command.dropFirst(6))); return }
         if command.hasPrefix("voice:volume:"), let volume = Double(command.dropFirst("voice:volume:".count)) {
             // 0 checks spoken replies and the mouth without a sound on the developer's Mac.
@@ -680,6 +683,7 @@ final class AppCoordinator {
         }
         // One panel at a time: the game is kept and comes back as it was (D75); a card folds into what Ask shows.
         playPanel.hide()
+        surfacePanel.hide()
         if !slipsOnly { sidecard.yieldToAsk() }
         refreshGlance()
         companion.keepRaised(true)
@@ -740,6 +744,7 @@ final class AppCoordinator {
         }
         mood.apply(event, now: Date())
         renderMood()
+        holdSurfacesForApprovals()
         switch event {
         case .nudge:
             PaletteController.nudge()
@@ -779,6 +784,10 @@ final class AppCoordinator {
             player.play(act)
         case .game(let request):
             openGame(request)
+        case .surface(let request):
+            openSurface(request)
+        case .surfaceGone(let id):
+            dropSurfaces(of: id)
         case .gamesMenu(let focus):
             openPlayMenu(focus: focus)
         case .gameCenter:
@@ -1031,7 +1040,11 @@ extension AppCoordinator: CompanionDelegate {
 
     func companionMoved() {
         sidecard.reposition()
-        if let (frame, screen) = anchor() { playPanel.reposition(beside: frame, on: screen) }
+        if let (frame, screen) = anchor() {
+            playPanel.reposition(beside: frame, on: screen)
+            surfacePanel.reposition(beside: frame, on: screen)
+            surfaceOverlay.reposition(beside: frame, on: screen)
+        }
     }
 
     func companionReceived(_ drop: Attachment) {

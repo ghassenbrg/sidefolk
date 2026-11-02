@@ -72,6 +72,9 @@ public actor ExtensionHost {
     /// The games of enabled extensions, readable without waiting on the actor: the sentences that open them are
     /// matched as the person types (D75).
     public nonisolated let gameShelf = GameShelf()
+    public nonisolated let surfaceShelf = SurfaceShelf()
+    /// The surface open in each place (D99): one panel, one overlay.
+    var openSurfaces: [SurfaceInfo.Presentation: OpenSurface] = [:]
     /// The one game open in the Play panel, with its recent moves for the rate limit (ExtensionHost+Games).
     var openGame: OpenGame?
     /// Makes a trivia pack for a game that asks (D95): the app sets it once the person's AI can be reached.
@@ -383,6 +386,7 @@ public actor ExtensionHost {
     /// Removes the extension, its data folder and its record.
     public func uninstall(id: String) async throws {
         guard let rt = runtimes[id] else { throw ToolError.notFound(String(localized: "an extension called \(id)")) }
+        await forgetSurfaces(of: id)
         await stop(id)
         runtimes[id] = nil
         registry.unregister(owner: id)
@@ -417,6 +421,7 @@ public actor ExtensionHost {
             // process and acquire resources while the previous process is being stopped.
             rt.record.enabled = false
             runtimes[id] = rt
+            await forgetSurfaces(of: id)
             await stop(id)
             rt = runtimes[id] ?? rt
             runtimes[id] = rt
@@ -717,12 +722,50 @@ public actor ExtensionHost {
         }
     }
 
-    func shelveGames() { gameShelf.set(games()) }
+    func shelveGames() {
+        gameShelf.set(games())
+        surfaceShelf.set(surfaces())
+    }
 
     /// The running process of an extension that declares `game`, and the extension's name for messages.
     func gameClient(_ id: String, _ game: String) async throws -> (MCPClient, String) {
         guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
         guard rt.manifest?.games[game] != nil else { throw ToolError.notFound(String(localized: "the game \(game) in \(rt.pin.name)")) }
+        return (try await ensureRunning(id), name(rt))
+    }
+
+    // MARK: Surfaces (D99)
+
+    /// The surfaces of every enabled extension, for the tool and the sentences that open them.
+    public func surfaces() -> [SurfaceInfo] {
+        runtimes.keys.sorted().flatMap { id -> [SurfaceInfo] in
+            guard let rt = runtimes[id], rt.record.enabled, let m = rt.manifest else { return [] }
+            let name = self.name(rt)
+            let table = words(rt)
+            let hasSounds = m.assets.map { folder in rt.pin.files.contains { $0.path.hasPrefix(folder + "/") && PackAssets.kind(of: $0.path) == .sound } } ?? false
+            return m.surfaces.keys.sorted().compactMap { surface -> SurfaceInfo? in
+                guard let s = m.surfaces[surface] else { return nil }
+                let (mw, mh) = s.kind == .panel ? (SurfaceLimits.maxWidth, SurfaceLimits.maxHeight) : (SurfaceLimits.maxOverlayWidth, SurfaceLimits.maxOverlayHeight)
+                return SurfaceInfo(extensionId: id, extensionName: name, surface: surface, title: table?.surfaces[surface] ?? s.title, symbol: s.symbol,
+                                   presentation: s.kind, width: min(s.width ?? (s.kind == .panel ? 400 : 240), mw),
+                                   height: min(s.height ?? (s.kind == .panel ? 480 : 240), mh), say: s.say, ai: s.ai ?? false, sounds: hasSounds,
+                                   iconPath: rt.iconPath)
+            }
+        }
+    }
+
+    /// Reads an extension's pack assets as they were installed: nil when it declares none.
+    public func assetReader(extensionId id: String) -> PackAssetReader? {
+        guard let rt = runtimes[id], let folder = rt.manifest?.assets, rt.record.kind == .sidefolk else { return nil }
+        var pins: [String: String] = [:]
+        for file in rt.pin.files where file.path.hasPrefix(folder + "/") { pins[file.path] = file.sha256 }
+        return PackAssetReader(root: installer.installedFolder(id) + "/" + folder, prefix: folder, pins: pins)
+    }
+
+    func surfaceClient(_ info: SurfaceInfo) async throws -> (MCPClient, String) {
+        let id = info.extensionId
+        guard let rt = runtimes[id], rt.record.enabled else { throw ToolError.unavailable(String(localized: "That extension is turned off.")) }
+        guard rt.manifest?.surfaces[info.surface] != nil else { throw ToolError.notFound(info.title) }
         return (try await ensureRunning(id), name(rt))
     }
 
@@ -1278,7 +1321,8 @@ public actor ExtensionHost {
 
     private func stopIfIdle(_ id: String) async {
         guard let rt = runtimes[id], rt.client != nil else { return }
-        if rt.inFlight > 0 || Date().timeIntervalSince(rt.lastUsed) < config.idleTimeout * 0.9 {
+        // A surface open or kept holds its state in the program: it stays until the surface closes (D99).
+        if rt.inFlight > 0 || Date().timeIntervalSince(rt.lastUsed) < config.idleTimeout * 0.9 || openSurfaces.values.contains(where: { $0.info.extensionId == id }) {
             touch(id)
             return
         }

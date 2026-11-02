@@ -8,6 +8,7 @@ let package = Package(
         .executable(name: "SidefolkApp", targets: ["SidefolkApp"]),
         .executable(name: "sidefolk", targets: ["sidefolk"]),
         .executable(name: "sidefolk-render", targets: ["sidefolk-render"]),
+        .executable(name: "ext-scene-sample", targets: ["ext-scene-sample"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
@@ -36,7 +37,9 @@ let package = Package(
         .target(name: "SidefolkExtensionKit", path: "extensions/Kit"),
         // Every extension is built and signed in the sidefolk-addons repository (D55, D98); the Kit stays here, where it
         // is changed first, and the tests run the gallery's programs in their sandbox from a checkout beside this one.
-        .testTarget(name: "SidefolkCoreTests", dependencies: ["SidefolkCore", "SidefolkExtensionKit"]),
+        // A sample of surfaces (D99), fictional and never shipped: the tests and the debug app run it.
+        .executableTarget(name: "ext-scene-sample", dependencies: ["SidefolkExtensionKit"], path: "samples/scene-sample/Sources"),
+        .testTarget(name: "SidefolkCoreTests", dependencies: ["SidefolkCore", "SidefolkExtensionKit", .target(name: "ext-scene-sample")]),
         .testTarget(name: "SidefolkCharacterTests", dependencies: ["SidefolkCharacter"]),
     ]
 )

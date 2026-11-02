@@ -32,15 +32,18 @@ public struct IntentParser: Sendable {
     let commandTools: [ExtensionTool]
     /// The games of switched-on extensions, whose sentences open them (D75).
     let games: [GameInfo]
+    /// Their surfaces, the same (D99).
+    let surfaces: [SurfaceInfo]
 
     public init(when: WhenParser, home: String = NSHomeDirectory(), companionNames: [String] = ["sidefolk", "pip"], here: String? = nil,
-                commandTools: [ExtensionTool] = [], games: [GameInfo] = []) {
+                commandTools: [ExtensionTool] = [], games: [GameInfo] = [], surfaces: [SurfaceInfo] = []) {
         self.when = when
         self.home = home
         names = companionNames.map { $0.lowercased() }
         self.here = here
         self.commandTools = commandTools
         self.games = games
+        self.surfaces = surfaces
     }
 
     public init(calendar: Calendar = .autoupdatingCurrent, morningHour: Int = 9, afternoonHour: Int = 14, eveningHour: Int = 18,
@@ -56,7 +59,7 @@ public struct IntentParser: Sendable {
         let ctx = Context(now: now, known: knownCollections, watching: watching)
         // In two parts: one chain of twelve is more than the type checker will take in reasonable time. An extension's
         // command comes after every one of Sidefolk's own (D50).
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? gamesMenu(p.command) ?? game(p.command)
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? chance(p.command) ?? gamesMenu(p.command) ?? game(p.command) ?? surface(p.command)
         return quick ?? gameCommand(p.command) ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
             ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx) ?? extensionCommand(p.command)
     }

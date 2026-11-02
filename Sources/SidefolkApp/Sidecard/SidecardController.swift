@@ -81,6 +81,8 @@ final class SidecardController {
     var currentId: String? { model.shape == .stack ? nil : model.item?.id }
     /// A card (not a whisper) is out asking now.
     var cardOut: Bool { hosted.panel.isVisible && model.shape == .card }
+    /// Where the card stands, for what must stay clear of it (D99).
+    var visibleFrame: NSRect? { hosted.panel.isVisible ? hosted.panel.frame : nil }
 
     func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
         if model.item?.id == item.id, model.shape != .stack { return }

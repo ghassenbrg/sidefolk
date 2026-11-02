@@ -35,6 +35,9 @@ public final class Extension {
     /// Games the manifest declares (Game.swift).
     var games: [String: (start: @MainActor (GameRequest) async throws -> GameReply, move: @MainActor (GameRequest) async throws -> Board,
                          end: @MainActor (GameRequest) async -> Void)] = [:]
+    /// Surfaces the manifest declares (Surface.swift).
+    private var surfaces: [String: (open: @MainActor (SurfaceRequest) async throws -> SurfaceReply, move: @MainActor (SurfaceRequest) async throws -> Scene,
+                                    close: @MainActor (SurfaceRequest) async -> Void)] = [:]
 
     public init(name: String, version: String = "1.0.0") {
         self.name = name
@@ -46,6 +49,13 @@ public final class Extension {
     public func tool(_ name: String, _ title: String, _ description: String, input: [String: Any] = Schema.none,
                      run: @escaping @MainActor (Arguments) async throws -> String) {
         tools.append(Tool(name: name, title: title, description: description, input: input, run: run))
+    }
+
+    /// A surface the manifest declares (`surfaces.<name>`): a panel or overlay Sidefolk frames, drawn from your `Scene`.
+    public func surface(_ name: String, open: @escaping @MainActor (SurfaceRequest) async throws -> SurfaceReply,
+                        move: @escaping @MainActor (SurfaceRequest) async throws -> Scene,
+                        close: @escaping @MainActor (SurfaceRequest) async -> Void = { _ in }) {
+        surfaces[name] = (open, move, close)
     }
 
     /// A watcher kind the manifest declares: given its settings and the state it returned last time, whether to
@@ -192,6 +202,20 @@ public final class Extension {
                 return ["board": try await game.move(request).json]
             default:
                 await game.end(request)
+                return [:]
+            }
+        case "sidefolk/surface.open", "sidefolk/surface.move", "sidefolk/surface.close":
+            let name = params["surface"] as? String ?? ""
+            guard let surface = surfaces[name] else { throw Unknown(what: "Unknown surface: \(name)") }
+            let request = SurfaceRequest(params)
+            switch method {
+            case "sidefolk/surface.open":
+                let reply = try await surface.open(request)
+                return ["session": reply.session, "scene": reply.scene.json]
+            case "sidefolk/surface.move":
+                return ["scene": try await surface.move(request).json]
+            default:
+                await surface.close(request)
                 return [:]
             }
         case "sidefolk/paired.check":

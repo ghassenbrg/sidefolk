@@ -69,6 +69,10 @@ public enum AppEvent: Sendable {
     case toss(Toss)
     /// A game to open in the Play panel (D75), from the person's words, the Play menu or the AI.
     case game(GameRequest)
+    /// An extension's surface to open beside the companion (D99), from the person's words or the AI.
+    case surface(SurfaceRequest)
+    /// The extension was turned off or removed: its surface goes with it, kept or not.
+    case surfaceGone(extensionId: String)
     /// The Play panel's menu of every game (D79 amended): "show me the games", or `games.open` without a game. `focus`
     /// as for a game: the person's own words take the keyboard, the AI's wait for a click.
     case gamesMenu(focus: Bool)
