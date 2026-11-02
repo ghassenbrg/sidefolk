@@ -6,7 +6,7 @@ import Testing
 /// reads, with its pictures and sounds checked against the pack, a game can't answer with anything Sidefolk would refuse, and the menu opens every game.
 struct PlaytimeGamesSandboxTests {
     static let games = ["daily_word", "trivia", "tictactoe", "copy_me", "quick_paws", "which_cup", "higher_lower", "guess_animal",
-                        "balloon_words", "last_stick", "memory_pairs", "plots", "seesaw", "sudoku", "blossoms"]
+                        "balloon_words", "last_stick", "memory_pairs", "rock_paper_scissors", "plots", "seesaw", "sudoku", "blossoms"]
 
     /// A move the scene offers, as a person might press.
     static func botMove(_ scene: SurfaceScene, step: Int) -> SurfaceMove? {
@@ -38,6 +38,28 @@ struct PlaytimeGamesSandboxTests {
             }
             await h.host.closeSurface(info: info, session: session, reason: .finished)
             session = ""
+        }
+    }
+
+    /// The desktop's coin, dice and hands: an overlay that plays what it was given, comes back when it has landed, offers Again where it should and goes by itself.
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons), arguments: ["en", "ar"])
+    func theTossOverlay(language: String) async throws {
+        let h = try HostEnv()
+        let installed = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
+        let info = try #require(h.host.surfaceShelf.all.first { $0.extensionId == installed.id && $0.surface == "toss" })
+        #expect(info.presentation == .overlay && !info.activity)
+        let cases: [([String: JSONValue], Bool)] = [(["kind": "coin", "flips": "101"], true), (["kind": "dice", "sides": 20, "rolls": "20", "modifier": 0], true),
+                                                    (["kind": "dice", "sides": 6, "rolls": "1,2,3,4,5,6,1,2,3,4", "modifier": -3], true),
+                                                    (["kind": "hands", "person": "rock", "companion": "paper"], false)]
+        var now = Date()
+        for (arguments, again) in cases {
+            let (session, flying) = try await h.host.openSurface(info, language: language, arguments: arguments)
+            #expect(flying.after != nil && flying.areas.isEmpty, "\(arguments)")
+            now = now.addingTimeInterval(3)
+            let landed = try #require(try await h.host.moveSurface(info: info, session: session, move: .next, now: now))
+            #expect(landed.after == nil && landed.close, "\(arguments)")
+            #expect(landed.areas.contains { $0.id == "again" } == again, "\(arguments)")
+            await h.host.closeSurface(info: info, session: session, reason: .finished)
         }
     }
 }

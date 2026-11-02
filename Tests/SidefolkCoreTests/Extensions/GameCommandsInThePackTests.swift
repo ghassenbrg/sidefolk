@@ -57,6 +57,8 @@ struct GameCommandsInThePackTests {
             ("خمن رقمي حتى ٥٠٠", ["game": "higher_lower", "mode": "yours", "max": 500]),
             ("play higher or lower up to 1000", ["game": "higher_lower", "max": 1000]),
             ("word of the day", ["game": "daily_word"]),
+            ("rock paper scissors", ["game": "rock_paper_scissors"]), ("let's play rock, paper, scissors", ["game": "rock_paper_scissors"]), ("rps", ["game": "rock_paper_scissors"]),
+            ("play rock paper scissors with a friend", ["game": "rock_paper_scissors", "players": 2]), ("chifoumi", ["game": "rock_paper_scissors"]), ("じゃんけん", ["game": "rock_paper_scissors"]),
             ("sudoku hard", ["game": "sudoku", "level": "hard"]),
             ("tic tac toe", ["game": "tictactoe"]), ("hangman", ["game": "balloon_words"]), ("jouons au morpion", ["game": "tictactoe"]), ("今日のことば", ["game": "daily_word"]),
             ("数独を難しいでしよう", ["game": "sudoku", "level": "hard"]),
@@ -76,6 +78,35 @@ struct GameCommandsInThePackTests {
         #expect(m.tools["put_away"].flatMap { ToolCommands($0.commands, vocabulary: v) }?.input(for: "pause the game") != nil)
         let sounds = try #require(m.tools["game_settings"].flatMap { ToolCommands($0.commands, vocabulary: v) })
         #expect(sounds.input(for: "게임 소리 꺼줘")?["sounds"]?.boolValue == false && sounds.input(for: "turn game sounds on")?["sounds"]?.boolValue == true)
+    }
+
+    /// What people say for chance on the desktop, as the app's own parser answered it (IntentChanceTests), and more languages than it knew; nothing else.
+    @Test func theSentencesForCoinsDiceAndHands() throws {
+        guard let folder = Self.folder else { return }
+        let (m, strings) = try Self.loaded(folder)
+        let toss = try #require(m.tools["toss"].flatMap { ToolCommands($0.commands, vocabulary: CommandVocabulary(manifest: m, strings: strings)) })
+        let cases: [(String, [String: JSONValue])] = [
+            ("flip a coin", ["kind": "coin"]), ("toss a coin for me", ["kind": "coin"]), ("heads or tails", ["kind": "coin"]), ("coin flip", ["kind": "coin"]),
+            ("flip a coin, I call heads", ["kind": "coin", "call": "heads"]), ("heads or tails: tails", ["kind": "coin", "call": "tails"]),
+            ("flip 3 coins", ["kind": "coin", "count": 3]), ("toss two coins", ["kind": "coin", "many": "n2"]),
+            ("roll a die", ["kind": "dice"]), ("roll a dice", ["kind": "dice"]), ("roll the die", ["kind": "dice"]),
+            ("roll the dice", ["kind": "dice", "count": 2]), ("roll dice", ["kind": "dice", "count": 2]), ("roll 3 dice", ["kind": "dice", "count": 3]),
+            ("roll two d20s", ["kind": "dice", "many": "n2", "sides": 20]), ("roll a d20", ["kind": "dice", "sides": 20]), ("roll 2d6+1", ["kind": "dice", "count": 2, "sides": 6, "modifier": 1]),
+            ("roll 3d8 - 2", ["kind": "dice", "count": 3, "sides": 8, "minus": 2]), ("roll d100", ["kind": "dice", "sides": 100]), ("roll a 12-sided die", ["kind": "dice", "sides": 12]),
+            ("rock", ["kind": "rock_paper_scissors", "hand": "rock"]), ("I choose paper", ["kind": "rock_paper_scissors", "hand": "paper"]),
+            ("rock paper scissors: scissors", ["kind": "rock_paper_scissors", "hand": "scissors"]), ("I'll go with rock", ["kind": "rock_paper_scissors", "hand": "rock"]),
+            // The other languages say the same.
+            ("lance une pièce", ["kind": "coin"]), ("pile ou face, je dis face", ["kind": "coin", "call": "heads"]), ("wirf 3 münzen", ["kind": "coin", "count": 3]), ("wirf einen w20", ["kind": "dice", "sides": 20]),
+            ("tira los dados", ["kind": "dice", "count": 2]), ("lancia un dado", ["kind": "dice"]), ("jogue uma moeda", ["kind": "coin"]), ("サイコロを振って", ["kind": "dice"]),
+            ("コイントス", ["kind": "coin"]), ("동전 던져줘", ["kind": "coin"]), ("주사위 굴려줘", ["kind": "dice"]), ("抛硬币", ["kind": "coin"]), ("掷两个骰子", ["kind": "dice", "count": 2]),
+            ("ارم عملة", ["kind": "coin"]), ("أختار حجرة", ["kind": "rock_paper_scissors", "hand": "rock"]), ("je choisis pierre", ["kind": "rock_paper_scissors", "hand": "rock"]),
+            ("我出剪刀", ["kind": "rock_paper_scissors", "hand": "scissors"]), ("グーを出す", ["kind": "rock_paper_scissors", "hand": "rock"]),
+        ]
+        for (text, expected) in cases { #expect(toss.input(for: text)?.objectValue == expected, "\(text): \(String(describing: toss.input(for: text)))") }
+        for text in ["flip a coin to decide where we eat", "rock music", "roll back the last commit", "paper towels", "heads up", "rock paper scissors is a silly game",
+                     "flip 20 coins", "roll 50 dice", "roll a d1", "what are the odds of heads?", "do a flip"] {
+            #expect(toss.input(for: text) == nil, "\(text): \(String(describing: toss.input(for: text)))")
+        }
     }
 
     /// Every name a pack gives a game, in every language, opens that game with a word saying it is meant.
