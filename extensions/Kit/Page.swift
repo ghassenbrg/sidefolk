@@ -192,6 +192,8 @@ public enum Block {
     case action(Action)
     /// A switch whose new state goes into the page's state under `key` (D105): a draft, with nothing saved yet.
     case draftToggle(_ label: String, detail: String? = nil, on: Bool, key: String, symbol: String? = nil)
+    /// A switch that does `act` rather than run a tool: flipped on, Sidefolk asks the person (`.allow`), and it stands for what they answered.
+    case actToggle(_ label: String, detail: String? = nil, on: Bool, act: PageAct)
     /// One of a few options, whose pick goes into the page's state under `key` (D105). `style` draws it as a plain choice (nil), or as `.cards`, `.rows`.
     case draftChoice(_ label: String, detail: String? = nil, options: [Option], selected: String, key: String, style: PickerStyle? = nil, disabled: Bool = false)
     /// A text field whose words go into the page's state under `key` (D105). `live`: a moment after they stop typing, and `button` clears it. Otherwise when submitted.
@@ -290,6 +292,10 @@ public enum Block {
             return action.json
         case .draftToggle(let label, let detail, let on, let key, let symbol):
             return Self.dropNil(["type": "switch", "label": label, "detail": detail, "on": on, "key": key, "go": [:] as [String: Any], "symbol": symbol])
+        case .actToggle(let label, let detail, let on, let act):
+            var out = Self.dropNil(["type": "switch", "label": label, "detail": detail, "on": on, "input": [:] as [String: Any]])
+            act.fill(&out)
+            return out
         case .draftChoice(let label, let detail, let options, let selected, let key, let style, let disabled):
             return Self.dropNil(["type": "choice", "style": style?.rawValue, "label": label, "detail": detail, "selected": selected, "key": key, "go": [:] as [String: Any],
                                  "disabled": disabled ? true : nil, "options": options.map(\.json)])
