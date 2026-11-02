@@ -89,6 +89,12 @@ struct PocketView: View {
                 Divider()
                 ForEach(model.entries) { entry in PocketEntry(entry: entry, open: actions.openEntry) }
             }
+            if !content.unseen.isEmpty {
+                Divider()
+                Menu("Running Quietly") {
+                    ForEach(content.unseen) { row in Button { row.open() } label: { Text(verbatim: row.title) } }
+                }
+            }
             if !model.palettes.isEmpty {
                 Divider()
                 ForEach(model.palettes, id: \.id) { info in

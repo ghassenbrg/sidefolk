@@ -191,6 +191,11 @@ protocol AppServices: AnyObject {
     func pauseWatcher(_ id: String) async
     func resumeWatcher(_ id: String) async
     func stopWatcher(_ id: String) async
+    /// The person's arrangement of watchers (D116).
+    func reorderWatchers(_ ids: [String]) async
+    /// Where a live value shows; what stopped it, in words, if it couldn't.
+    func setWatcherDisplay(_ id: String, _ display: Watcher.Display) async -> String?
+    func setWatcherAffixes(_ id: String, prefix: String?, suffix: String?) async
     func checkWatcherNow(_ id: String) async
 
     // Sessions and jobs

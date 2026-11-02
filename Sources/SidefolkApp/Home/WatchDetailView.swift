@@ -17,6 +17,7 @@ struct WatchDetailView: View {
                 .padding(.bottom, -Theme.Space.m)
             if let w = model.watcher {
                 hero(w)
+                if w.mode == .report { LiveValueLook(watcher: w, value: home.now.readings[w.id]?.value, services: home.services) { Task { await model.reload() } } }
                 if hasText(w) { change(w) }
                 timeline(w)
             } else if model.loaded {

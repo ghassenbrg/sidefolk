@@ -38,6 +38,8 @@ struct PocketContent {
     var nextUp: [Row] = []
     var agents: [Row] = []
     var watching = 0
+    /// Live values not shown beside the companion, for the ⋯ menu (D116).
+    var unseen: [Row] = []
     var hotkey = ""
 
     /// The line under the name: what the menu bar mark says, in words.

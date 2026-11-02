@@ -61,6 +61,10 @@ struct OnDutyView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: Theme.Space.s) {
+                if !now.watchers.isEmpty || !now.reports.isEmpty {
+                    Button { model.selection = .watchers } label: { Label("All watchers", systemImage: "list.bullet") }
+                        .buttonStyle(.sf(.secondary, size: .large))
+                }
                 if !duty.pausable.isEmpty {
                     Button { pauseAll(duty) } label: { Label("Pause all", systemImage: "pause") }
                         .buttonStyle(.sf(.secondary, size: .large, working: pausing))
@@ -175,11 +179,11 @@ struct OnDutyView: View {
     }
 
     private func liveValues(_ duty: OnDuty) -> some View {
-        FolkCard(folk: nil, title: Text("Live values"), role: Text("Read every few seconds or minutes, beside \(model.companionName)"),
+        FolkCard(folk: nil, title: Text("Live values"), role: Text("Read every few seconds or minutes"),
                  count: duty.runningReports) {
             ForEach(duty.reports) { r in
                 let reading = now.readings[r.id]
-                ListRow(title: Text(verbatim: reading?.label ?? r.title), meta: Text(verbatim: Describe.reportSchedule(r))) {
+                ListRow(title: Text(verbatim: reading?.label ?? r.title), meta: Text(verbatim: WatcherRow.meta(r))) {
                     rowIcon(Describe.watcherKind(r.kind).symbol)
                 } trailing: {
                     HStack(spacing: Theme.Space.m) {

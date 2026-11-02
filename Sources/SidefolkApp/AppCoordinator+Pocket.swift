@@ -152,6 +152,10 @@ extension AppCoordinator {
                                   open: { [weak self] in self?.pocketClosing { $0.openNow() } }))
         }
         c.watching = ((try? await runtime.watcherStore.active()) ?? []).count
+        c.unseen = unseenValues.map { value in
+            .init(id: value.id, title: value.line, detail: nil, trailing: nil, symbol: "eye.slash", live: false,
+                  open: { [weak self] in self?.pocketClosing { $0.home.showWatch(value.id) } })
+        }
         return c
     }
 

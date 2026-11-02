@@ -176,10 +176,10 @@ enum DesktopScenes {
     }
 
     static var pins: [Readout] {
-        [Readout(id: "cpu", label: String(localized: "CPU"), value: "23%", symbol: "cpu", spark: [14, 22, 18, 25, 21, 30, 24, 23], at: now, interval: 10),
-         Readout(id: "w", label: "Fukuoka", value: "18.4 °C", symbol: "cloud.sun", spark: [18.9, 18.8, 18.6, 18.5, 18.4], at: now, interval: 60),
-         Readout(id: "net", label: String(localized: "Network"), value: "↓ 1.2 MB/s", symbol: "network", paused: true, at: now, interval: 10),
-         Readout(id: "old", label: "Pro plan", value: "$15", symbol: "globe", at: now.addingTimeInterval(-2 * 3600), interval: 300)]
+        [Readout(id: "cpu", label: String(localized: "CPU"), value: "23%", atRest: PinValue.atRest("23%"), symbol: "cpu", spark: [14, 22, 18, 25, 21, 30, 24, 23], at: now, interval: 10),
+         Readout(id: "w", label: "Fukuoka", value: "18.4 °C", atRest: PinValue.atRest("18.4 °C"), symbol: "cloud.sun", spark: [18.9, 18.8, 18.6, 18.5, 18.4], at: now, interval: 60),
+         Readout(id: "net", label: String(localized: "Network"), value: "↓ 1.2 MB/s", atRest: PinValue.atRest("↓ 1.2 MB/s"), symbol: "network", paused: true, at: now, interval: 10),
+         Readout(id: "old", label: "Pro plan", value: "$15", atRest: PinValue.atRest("$15"), symbol: "globe", at: now.addingTimeInterval(-2 * 3600), interval: 300)]
     }
 
     static var agents: [AgentChip] {

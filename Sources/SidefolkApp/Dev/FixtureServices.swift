@@ -76,6 +76,14 @@ final class FixtureServices: AppServices {
 
     func pauseWatcher(_ id: String) async { await changeWatcher(id) { $0.state = .paused } }
     func resumeWatcher(_ id: String) async { await changeWatcher(id) { $0.state = .active } }
+    func reorderWatchers(_ ids: [String]) async { _ = ids }
+    func setWatcherDisplay(_ id: String, _ display: Watcher.Display) async -> String? {
+        await changeWatcher(id) { $0.display = display }
+        return nil
+    }
+    func setWatcherAffixes(_ id: String, prefix: String?, suffix: String?) async {
+        await changeWatcher(id) { $0.valuePrefix = prefix; $0.valueSuffix = suffix }
+    }
     func checkWatcherNow(_ id: String) async { await changeWatcher(id) { $0.lastCheckedAt = Date() } }
 
     func stopWatcher(_ id: String) async {

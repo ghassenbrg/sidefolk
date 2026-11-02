@@ -62,7 +62,7 @@ extension AppCoordinator {
     /// Keeps a live value's recent numbers for its pin's small line: the first number in what it read ("23%",
     /// "↓ 1.2 MB/s"). Words with no number draw no line.
     func noteSpark(_ reading: WatchReading) {
-        guard let match = reading.value.firstMatch(of: /-?\d+(?:[.,]\d+)?/),
+        guard let match = reading.plain.firstMatch(of: /-?\d+(?:[.,]\d+)?/),
               let number = Double(match.output.replacingOccurrences(of: ",", with: ".")) else { return }
         var values = sparks[reading.watcherId] ?? []
         values.append(number)
@@ -88,12 +88,18 @@ extension AppCoordinator {
         menu.addItem(ClosureTarget.item(paused ? String(localized: "Resume Updates") : String(localized: "Pause Updates")) { [weak self] in
             self?.runWatchTool(paused ? "watch.resume" : "watch.pause", id: id)
         })
+        menu.addItem(ClosureTarget.item(String(localized: "Show Now and Then")) { [weak self] in self?.setDisplay(.notify, id: id) })
+        menu.addItem(ClosureTarget.item(String(localized: "Run Quietly")) { [weak self] in self?.setDisplay(.quiet, id: id) })
         menu.addItem(ClosureTarget.item(String(localized: "Open Sidefolk")) { [weak self] in self?.openHome() })
         menu.addItem(.separator())
         menu.addItem(ClosureTarget.item(String(localized: "Stop Showing It", comment: "A live value's menu beside the companion: stop the report")) { [weak self] in
             self?.runWatchTool("watch.stop", id: id)
         })
         return menu
+    }
+
+    private func setDisplay(_ display: Watcher.Display, id: String) {
+        Task { _ = await runtime.executor.execute(name: "watch.update", input: ["id": .string(id), "display": .string(display.rawValue)], caller: .user) }
     }
 
     private func runWatchTool(_ name: String, id: String) {

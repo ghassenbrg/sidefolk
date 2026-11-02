@@ -207,6 +207,8 @@ enum UISnapshots {
             try await homeShot("history-small", size: small)
             full.selection = .onDuty
             try await homeShot("onduty-small", size: small)
+            full.selection = .watchers
+            try await homeShot("watchers-small", size: small)
             full.selection = .calendar
             for mode in CalendarModel.Mode.allCases {
                 full.calendar.mode = mode

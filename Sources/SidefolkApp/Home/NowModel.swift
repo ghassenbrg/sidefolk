@@ -279,10 +279,10 @@ final class NowModel {
         let items = (try? await rt.notebook.items(ids: Array(Set(reminders.compactMap(\.itemId))))) ?? []
         linked = Dictionary(items.filter { $0.deletedAt == nil }.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         // From the engine, not the database: routine check times are only saved every few minutes.
-        let watching = await rt.watchers.list().filter { [.active, .paused, .error].contains($0.state) }
+        let watching = await rt.watchers.arranged().filter { [.active, .paused, .error].contains($0.state) }
         watchers = watching.filter { $0.mode != .report }
         ticks = await rt.watchers.recentTicks(for: watchers.map(\.id), count: Self.ticks)
-        reports = watching.filter { $0.mode == .report }.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
+        reports = watching.filter { $0.mode == .report }
         readings = Dictionary(await rt.watchers.latestReadings().map { ($0.watcherId, $0) }, uniquingKeysWith: { a, _ in a })
         values = await rt.watchers.recentValues()
         jobs = (try? await rt.jobs.running()) ?? []
@@ -508,7 +508,7 @@ final class NowModel {
     func update(_ reading: WatchReading) {
         guard reports.contains(where: { $0.id == reading.watcherId }) else { return }
         readings[reading.watcherId] = reading
-        if let number = WatchReading.number(in: reading.value) {
+        if let number = WatchReading.number(in: reading.plain) {
             values[reading.watcherId] = (values[reading.watcherId, default: []] + [number]).suffix(WatcherEngine.historyLength).map { $0 }
         }
     }

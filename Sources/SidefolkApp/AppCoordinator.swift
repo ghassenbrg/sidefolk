@@ -68,6 +68,9 @@ final class AppCoordinator {
     var readings: [String: WatchReading] = [:]
     var notifiedReports: Set<String> = []
     var readoutTask: Task<Void, Never>?
+    /// The value having its moment beside the companion, and when each last had one (D116).
+    var momentId: String?
+    var moments: [String: Date] = [:]
     /// Talking and spoken replies (D34).
     private(set) lazy var voice = VoiceController(host: self, secrets: secrets)
     /// Where the person is, while they share their Mac's location (D48).
@@ -932,6 +935,7 @@ extension AppCoordinator: CompanionDelegate {
         item(String(localized: "Ask…")) { [weak self] in self?.showAsk() }
         item(String(localized: "Open Sidefolk")) { [weak self] in self?.openHome() }
         menu.addItem(playMenu())
+        if let quiet = unseenValuesMenu() { menu.addItem(quiet) }
         for entry in runtime.extensions.shelf.entries(in: .companion) { menu.addItem(menuItem(entry)) }
         menu.addItem(.separator())
         if runtime.settings.current.isQuiet(at: Date()) {

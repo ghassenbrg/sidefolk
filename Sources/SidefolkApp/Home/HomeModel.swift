@@ -12,6 +12,8 @@ enum HomeSelection: Hashable {
     case page(String)
     /// A watch's own page (D87), by `Watcher.id`; it belongs to On duty.
     case watch(String)
+    /// Every watcher in one list, to arrange (D116); it belongs to On duty.
+    case watchers
 
     /// The places, in ⌘1–5 order (D84); `.collection("")` stands for the Notebook, which opens where it was.
     static let places: [HomeSelection] = [.now, .calendar, .collection(""), .onDuty, .history]
@@ -21,7 +23,7 @@ enum HomeSelection: Hashable {
         case .now: "Today"
         case .calendar: "Calendar"
         case .collection, .trash, .you: "Notebook"
-        case .onDuty, .watch: "On duty"
+        case .onDuty, .watch, .watchers: "On duty"
         case .history: "History"
         case .page: "Extensions"
         case .gallery: "Gallery"
@@ -34,7 +36,7 @@ enum HomeSelection: Hashable {
         case .now: "sun.max"
         case .calendar: "calendar"
         case .collection, .trash, .you: "book.closed"
-        case .onDuty, .watch: "dot.radiowaves.left.and.right"
+        case .onDuty, .watch, .watchers: "dot.radiowaves.left.and.right"
         case .history: "clock.arrow.circlepath"
         case .page: "puzzlepiece.extension"
         case .gallery: "sparkles"
@@ -44,7 +46,7 @@ enum HomeSelection: Hashable {
     /// The same place, whichever collection is open.
     func isPlace(_ place: HomeSelection) -> Bool {
         switch (self, place) {
-        case (.collection, .collection), (.trash, .collection), (.you, .collection), (.watch, .onDuty): true
+        case (.collection, .collection), (.trash, .collection), (.you, .collection), (.watch, .onDuty), (.watchers, .onDuty): true
         default: self == place
         }
     }
@@ -54,6 +56,8 @@ enum HomeSelection: Hashable {
 /// it shows stays current without polling.
 @MainActor @Observable
 final class HomeModel {
+    /// Why a live value couldn't move beside the companion (D116), until the next try.
+    var watcherProblem: String?
     let services: AppServices
     let now: NowModel
     let notebook: NotebookModel
@@ -219,7 +223,7 @@ final class HomeModel {
                 await settingsHost.gallery.load()
             }
         case .watch(let id): Task { await watch.show(id) }
-        case .now, .onDuty, .page, nil: break
+        case .now, .onDuty, .page, .watchers, nil: break
         }
     }
 

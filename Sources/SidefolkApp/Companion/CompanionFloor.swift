@@ -7,6 +7,8 @@ struct Readout: Identifiable, Equatable {
     var id: String
     var label: String
     var value: String
+    /// The value at rest beside the companion, with what is set around it (`WatchReading.atRest`).
+    var atRest: String
     var symbol = "gauge.with.dots.needle.33percent"
     /// The numbers it read since Sidefolk started, oldest first, for the small line (kept in memory only).
     var spark: [Double] = []
@@ -56,7 +58,8 @@ final class FloorModel {
     var extrasFrame = CGRect.zero
 
     /// At most this many pins stand by the companion; Home shows them all.
-    static let pinsShown = 3
+    /// Those beside it, and the moment of one that comes and goes (D116).
+    static let pinsShown = WatchLimits.maxBeside + 1
     static let pinHeight: CGFloat = 24
     static let dot: CGFloat = 22
     static let gap: CGFloat = 4
@@ -131,7 +134,7 @@ struct MiniPin: View {
         let dim = pin.paused || pin.stale(at: now)
         HStack(spacing: 5) {
             Image(systemName: pin.paused ? "pause.fill" : pin.symbol).font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.inkMuted)
-            Text(verbatim: PinValue.atRest(pin.value)).font(.system(size: 12, weight: .semibold).monospacedDigit())
+            Text(verbatim: pin.atRest).font(.system(size: 12, weight: .semibold).monospacedDigit())
                 .foregroundStyle(dim ? Theme.inkFaint : Theme.ink).lineLimit(1)
         }
         .padding(.horizontal, Theme.Space.s + 1)

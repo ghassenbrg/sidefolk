@@ -76,6 +76,16 @@ extension AppCoordinator: AppServices {
     func pauseWatcher(_ id: String) async { _ = try? await runtime.watchers.pause(id) }
     func resumeWatcher(_ id: String) async { _ = try? await runtime.watchers.resume(id) }
     func stopWatcher(_ id: String) async { _ = await runtime.watchers.remove(id) }
+    func reorderWatchers(_ ids: [String]) async { await runtime.watchers.reorder(ids) }
+    func setWatcherDisplay(_ id: String, _ display: Watcher.Display) async -> String? {
+        do {
+            try await runtime.watchers.setDisplay(id, display)
+            return nil
+        } catch { return String(describing: error) }
+    }
+    func setWatcherAffixes(_ id: String, prefix: String?, suffix: String?) async {
+        _ = try? await runtime.watchers.setValueAffixes(id, prefix: prefix, suffix: suffix)
+    }
     func checkWatcherNow(_ id: String) async { _ = await runtime.watchers.checkNow(id) }
 
     // MARK: Sessions, notebook

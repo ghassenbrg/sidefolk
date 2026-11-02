@@ -14561,6 +14561,7 @@
       }
     },
     "%lld command watchers are already running. Stop one first." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -35263,6 +35264,65 @@
         }
       }
     },
+    "After" : {
+      "comment" : "Short text after a live value, like GPU",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Después"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dopo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "後"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "뒤"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depois"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "后缀"
+          }
+        }
+      }
+    },
     "After %@" : {
       "localizations" : {
         "ar" : {
@@ -36892,6 +36952,64 @@
         }
       }
     },
+    "All Watchers…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل المراقبات…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Beobachtungen…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las vigilancias…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les surveillances…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutte le sentinelle…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての監視…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 지켜보기…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os monitoramentos…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部监视…"
+          }
+        }
+      }
+    },
     "All changes" : {
       "comment" : "The update window: opens the release page",
       "localizations" : {
@@ -37240,6 +37358,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全天"
+          }
+        }
+      }
+    },
+    "All watchers" : {
+      "comment" : "Home: the page listing every watcher",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل المراقبات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Beobachtungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las vigilancias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les surveillances"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutte le sentinelle"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての監視"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 지켜보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os monitoramentos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部监视"
           }
         }
       }
@@ -41795,6 +41972,254 @@
         }
       }
     },
+    "Arrange watchers" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ترتيب المراقبات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beobachtungen anordnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordenar vigilancias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organiser les surveillances"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordina sentinelle"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "監視を並べ替え"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지켜보기 정렬"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar monitoramentos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整理监视"
+          }
+        }
+      }
+    },
+    "Arranged %lld watchers" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رُتِّبت %lld مراقبات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رُتِّبت %lld مراقبة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رُتِّبت مراقبة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رُتِّبت %lld مراقبة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "رُتِّبت مراقبتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم تُرتَّب أي مراقبة"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Beobachtung angeordnet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Beobachtungen angeordnet"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Arranged %lld watcher"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Arranged %lld watchers"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld vigilancia ordenada"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld vigilancias ordenadas"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld surveillance organisée"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld surveillances organisées"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sentinella ordinata"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sentinelle ordinate"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld件の監視を並べ替えました"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "지켜보기 %lld개를 정렬했어요"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld monitoramento organizado"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld monitoramentos organizados"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "已整理 %lld 项监视"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "As the theme" : {
       "comment" : "Settings › General › Icons in Home: follow the theme",
       "localizations" : {
@@ -42084,6 +42509,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "问 %@ 点什么"
+          }
+        }
+      }
+    },
+    "Ask %@ to watch a page or show a value." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اطلب من %@ مراقبة صفحة أو إظهار قيمة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte %@, eine Seite zu beobachten oder einen Wert anzuzeigen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pídele a %@ que vigile una página o muestre un valor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demandez à %@ de surveiller une page ou d’afficher une valeur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiedi a %@ di tenere d’occhio una pagina o di mostrare un valore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@に、ページの監視や値の表示を頼めます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에게 페이지를 지켜보거나 값을 보여 달라고 해 보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peça a %@ para monitorar uma página ou mostrar um valor."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 %@ 监视一个页面，或显示一个数值吧。"
           }
         }
       }
@@ -46011,6 +46494,65 @@
         }
       }
     },
+    "Before" : {
+      "comment" : "Short text before a live value, like $",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قبل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Davor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avant"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prima"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앞"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前缀"
+          }
+        }
+      }
+    },
     "Before anything changes" : {
       "comment" : "Settings › Brain: under “Guard checks every step”",
       "localizations" : {
@@ -46184,6 +46726,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "行为"
+          }
+        }
+      }
+    },
+    "Beside the companion" : {
+      "comment" : "Where a live value shows",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بجانب الرفيق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neben dem Begleiter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Junto al acompañante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À côté du compagnon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accanto al compagno"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相棒のそば"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언 옆"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao lado do companheiro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴旁边"
           }
         }
       }
@@ -50362,6 +50963,122 @@
         }
       }
     },
+    "Change how a live value shows" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير طريقة إظهار قيمة مباشرة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändern, wie ein Live-Wert angezeigt wird"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar cómo se muestra un valor en vivo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier l’affichage d’une valeur en direct"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia come si mostra un valore dal vivo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライブ値の表示方法を変更"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실시간 값을 보여 주는 방식 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar como um valor ao vivo aparece"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改实时数值的显示方式"
+          }
+        }
+      }
+    },
+    "Change how “%@” shows" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير طريقة إظهار «%@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändern, wie „%@“ angezeigt wird"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar cómo se muestra “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier l’affichage de « %@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia come si mostra “%@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の表示方法を変更"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”을(를) 보여 주는 방식 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar como “%@” aparece"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改“%@”的显示方式"
+          }
+        }
+      }
+    },
     "Change the event “%@”" : {
       "localizations" : {
         "ar" : {
@@ -50534,6 +51251,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 有变化"
+          }
+        }
+      }
+    },
+    "Changed how %@ shows" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّرت طريقة إظهار %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzeige von %@ geändert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambió cómo se muestra %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’affichage de %@ a changé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiato come si mostra %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の表示方法を変更しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 보여 주는 방식을 바꿨어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudou como %@ aparece"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已更改 %@ 的显示方式"
           }
         }
       }
@@ -68728,6 +69503,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从一角拖到对角，点一块地来去掉"
+          }
+        }
+      }
+    },
+    "Drag to arrange. The first live values set to show stand beside %@; %lld fit there, and the rest run on." : {
+      "comment" : "The page listing every watcher",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب للترتيب. أول القيم المباشرة المضبوطة على الإظهار تقف بجانب %1$@؛ يتسع المكان لـ %2$lld منها، وتستمر البقية في العمل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Anordnen ziehen. Die ersten Live-Werte, die angezeigt werden sollen, stehen neben %1$@; %2$lld passen dorthin, der Rest läuft weiter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Drag to arrange. The first live values set to show stand beside %1$@; %2$lld fit there, and the rest run on."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra para ordenar. Los primeros valores en vivo con ajuste de mostrar quedan junto a %1$@; caben %2$lld, y el resto sigue funcionando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glissez pour organiser. Les premières valeurs en direct réglées sur l’affichage se placent à côté de %1$@ ; %2$lld y tiennent, les autres tournent sans s’afficher."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina per ordinare. I primi valori dal vivo impostati su mostra stanno accanto a %1$@; ne entrano %2$lld, gli altri continuano a funzionare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドラッグして並べ替えます。表示に設定したライブ値は先頭から%1$@のそばに並び、%2$lld件まで入ります。残りは表示せずに動き続けます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "끌어서 정렬하세요. 보이도록 설정한 실시간 값은 앞에서부터 %1$@ 옆에 놓이고, %2$lld개까지 들어가요. 나머지는 보이지 않게 계속 실행돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste para organizar. Os primeiros valores ao vivo definidos para aparecer ficam ao lado de %1$@; cabem %2$lld, e o resto continua rodando."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖动来整理。设为显示的前几个实时数值会排在 %1$@ 旁边，那里放得下 %2$lld 个，其余的继续运行。"
           }
         }
       }
@@ -92844,6 +93684,7 @@
       }
     },
     "I'm already showing %lld live values. Stop one first." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -93033,7 +93874,66 @@
         }
       }
     },
+    "I'm already watching %lld things that nobody asked for directly. Stop one before starting another." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أراقب بالفعل %lld من الأشياء التي لم يطلبها أحد مباشرةً. أوقف واحدًا قبل بدء آخر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich beobachte schon %lld Dinge, um die niemand direkt gebeten hat. Beende eines, bevor du ein weiteres startest."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya estoy vigilando %lld cosas que nadie pidió directamente. Detén una antes de iniciar otra."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je surveille déjà %lld choses que personne n’a demandées directement. Arrêtes-en une avant d’en lancer une autre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sto già osservando %lld cose che nessuno ha chiesto direttamente. Fermane una prima di avviarne un’altra."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直接頼まれていないものをすでに%lld件見守っています。別のものを始める前に、どれかを止めてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 요청받지 않은 항목을 이미 %lld개 지켜보고 있어요. 다른 항목을 시작하기 전에 하나를 중지해 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já estou observando %lld coisas que ninguém pediu diretamente. Pare uma antes de iniciar outra."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我已经在监视 %lld 项没有人直接要求的内容。开始新的之前，请先停止一项。"
+          }
+        }
+      }
+    },
     "I'm already watching %lld things. Stop one before starting another." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -103360,6 +104260,64 @@
         }
       }
     },
+    "Let agents watch more" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح للوكلاء بمراقبة المزيد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agenten mehr beobachten lassen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar que los agentes vigilen más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laisser les agents surveiller plus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia che gli agenti osservino di più"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エージェントの監視数を増やす"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "에이전트가 더 지켜보게 하기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar os agentes monitorarem mais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让智能体多监视一些"
+          }
+        }
+      }
+    },
     "Let it use your AI" : {
       "comment" : "An extension's row: the person's switch for its use of their AI",
       "localizations" : {
@@ -103415,6 +104373,196 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许它使用你的 AI"
+          }
+        }
+      }
+    },
+    "Let other agents keep %lld more watchers running" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "السماح للوكلاء الآخرين بإبقاء %lld مراقبات إضافية قيد التشغيل"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "السماح للوكلاء الآخرين بإبقاء %lld مراقبة إضافية قيد التشغيل"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "السماح للوكلاء الآخرين بإبقاء مراقبة إضافية واحدة قيد التشغيل"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "السماح للوكلاء الآخرين بإبقاء %lld مراقبة إضافية قيد التشغيل"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "السماح للوكلاء الآخرين بإبقاء مراقبتين إضافيتين قيد التشغيل"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "عدم السماح للوكلاء الآخرين بإبقاء مراقبات إضافية قيد التشغيل"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Andere Agenten dürfen %lld weitere Beobachtung laufen lassen"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Andere Agenten dürfen %lld weitere Beobachtungen laufen lassen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Let other agents keep %lld more watcher running"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Let other agents keep %lld more watchers running"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dejar que otros agentes mantengan %lld vigilancia más activa"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dejar que otros agentes mantengan %lld vigilancias más activas"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Laisser les autres agents garder %lld surveillance de plus active"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Laisser les autres agents garder %lld surveillances de plus actives"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Lascia che gli altri agenti tengano attiva %lld sentinella in più"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Lascia che gli altri agenti tengano attive %lld sentinelle in più"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ほかのエージェントがあと%lld件の監視を動かせるようにする"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "다른 에이전트가 지켜보기를 %lld개 더 실행하게 하기"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deixar outros agentes manterem mais %lld monitoramento ativo"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deixar outros agentes manterem mais %lld monitoramentos ativos"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "让其他智能体再多运行 %lld 项监视"
+                }
+              }
+            }
           }
         }
       }
@@ -125232,6 +126380,65 @@
         }
       }
     },
+    "Now and then" : {
+      "comment" : "Where a live value shows: a moment beside the companion at each reading",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من حين لآخر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab und zu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De vez en cuando"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De temps en temps"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni tanto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ときどき"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가끔"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De vez em quando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偶尔"
+          }
+        }
+      }
+    },
     "Now and then a stretch, a yawn or a glance at your work; sits down when nothing happens. Still while you type." : {
       "localizations" : {
         "ar" : {
@@ -126574,6 +127781,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅限你已与 Sidefolk 共享或在卡片上允许的文件夹。它的沙盒只为那一次请求打开该文件夹。"
+          }
+        }
+      }
+    },
+    "Only a live value has a place to show. A watch tells you when something changes." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للقيمة المباشرة وحدها مكان تظهر فيه. أما المراقبة فتخبرك عندما يتغيّر شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur ein Live-Wert hat einen Platz zum Anzeigen. Eine Beobachtung sagt dir, wann sich etwas ändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo un valor en vivo tiene un lugar donde mostrarse. Una vigilancia te avisa cuando algo cambia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seule une valeur en direct a un endroit où s’afficher. Une surveillance vous dit quand quelque chose change."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo un valore dal vivo ha un posto dove mostrarsi. Una sentinella ti avvisa quando qualcosa cambia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示先を選べるのはライブ値だけです。監視は、何かが変わったときにお知らせします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실시간 값만 보여 줄 곳을 고를 수 있어요. 지켜보기는 무언가 바뀌면 알려 줘요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só um valor ao vivo tem um lugar para aparecer. Um monitoramento avisa você quando algo muda."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有实时数值才有显示的位置。监视会在有变化时告诉你。"
           }
         }
       }
@@ -131974,6 +133239,7 @@
       }
     },
     "Other agents already show %lld live values. Stop one first." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -132217,6 +133483,196 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他智能体和扩展仍遵循各自的规则。"
+          }
+        }
+      }
+    },
+    "Other agents may keep %lld watchers running" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يمكن للوكلاء الآخرين إبقاء %lld مراقبات قيد التشغيل"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يمكن للوكلاء الآخرين إبقاء %lld مراقبة قيد التشغيل"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يمكن للوكلاء الآخرين إبقاء مراقبة واحدة قيد التشغيل"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يمكن للوكلاء الآخرين إبقاء %lld مراقبة قيد التشغيل"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يمكن للوكلاء الآخرين إبقاء مراقبتين قيد التشغيل"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا يمكن للوكلاء الآخرين إبقاء أي مراقبة قيد التشغيل"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Andere Agenten dürfen %lld Beobachtung laufen lassen"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Andere Agenten dürfen %lld Beobachtungen laufen lassen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Other agents may keep %lld watcher running"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Other agents may keep %lld watchers running"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Otros agentes pueden mantener %lld vigilancia activa"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Otros agentes pueden mantener %lld vigilancias activas"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Les autres agents peuvent garder %lld surveillance active"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Les autres agents peuvent garder %lld surveillances actives"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Gli altri agenti possono tenere attiva %lld sentinella"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Gli altri agenti possono tenere attive %lld sentinelle"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ほかのエージェントは監視を%lld件まで動かせます"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "다른 에이전트가 지켜보기를 %lld개까지 실행할 수 있어요"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Outros agentes podem manter %lld monitoramento ativo"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Outros agentes podem manter %lld monitoramentos ativos"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "其他智能体最多可运行 %lld 项监视"
+                }
+              }
+            }
           }
         }
       }
@@ -136747,6 +138203,64 @@
         }
       }
     },
+    "Put them back" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعادتها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a ponerlas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les remettre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimettile a posto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元に戻す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "되돌리기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colocar de volta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放回去"
+          }
+        }
+      }
+    },
     "Put “%@” back as it was" : {
       "localizations" : {
         "ar" : {
@@ -138155,6 +139669,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安静：只接收紧急事项，无声音"
+          }
+        }
+      }
+    },
+    "Quietly" : {
+      "comment" : "Where a live value shows: only when looked for",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بهدوء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leise"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En silencio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discrètement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In silenzio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静かに"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "조용히"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "悄悄地"
           }
         }
       }
@@ -139585,7 +141158,66 @@
         }
       }
     },
+    "Read every few seconds or minutes" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُقرأ كل بضع ثوانٍ أو دقائق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird alle paar Sekunden oder Minuten gelesen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se lee cada pocos segundos o minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lue toutes les quelques secondes ou minutes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letto ogni pochi secondi o minuti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数秒〜数分ごとに読み取り"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "몇 초 또는 몇 분마다 읽어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lido a cada poucos segundos ou minutos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每隔几秒或几分钟读取一次"
+          }
+        }
+      }
+    },
     "Read every few seconds or minutes, beside %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -151024,6 +152656,64 @@
         }
       }
     },
+    "Run Quietly" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل بهدوء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leise ausführen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutar en silencio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuter discrètement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegui in silenzio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静かに実行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "조용히 실행"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executar em silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "悄悄运行"
+          }
+        }
+      }
+    },
     "Run claude in Terminal to see what's wrong." : {
       "localizations" : {
         "ar" : {
@@ -151547,6 +153237,64 @@
         }
       }
     },
+    "Running Quietly" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعمل بهدوء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft leise"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutándose en silencio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécution discrète"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In esecuzione in silenzio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静かに実行中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "조용히 실행 중"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executando em silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在悄悄运行"
+          }
+        }
+      }
+    },
     "Running commands" : {
       "localizations" : {
         "ar" : {
@@ -151659,6 +153407,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已运行 %@"
+          }
+        }
+      }
+    },
+    "Running quietly. It's in On duty and the menu." : {
+      "comment" : "A live value that isn't shown beside the companion",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعمل بهدوء. تجدها في «في الخدمة» وفي القائمة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft leise. Du findest es unter Im Einsatz und im Menü."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona en silencio. Está en De servicio y en el menú."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle tourne discrètement. Vous la trouvez dans En service et dans le menu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funziona in silenzio. Lo trovi in In servizio e nel menu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静かに動いています。「稼働中」とメニューで確認できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "조용히 실행 중이에요. ‘작동 중’과 메뉴에서 볼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rodando em silêncio. Está em Em serviço e no menu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在悄悄运行。可以在“在岗”和菜单中找到它。"
           }
         }
       }
@@ -158487,6 +160294,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示文件"
+          }
+        }
+      }
+    },
+    "Show Now and Then" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار من حين لآخر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab und zu anzeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar de vez en cuando"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher de temps en temps"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra ogni tanto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ときどき表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가끔 보여 주기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar de vez em quando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偶尔显示"
           }
         }
       }
@@ -172911,6 +174776,64 @@
         }
       }
     },
+    "Symbols and Units…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرموز والوحدات…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symbole und Einheiten…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Símbolos y unidades…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symboles et unités…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simboli e unità…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記号と単位…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기호 및 단위…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Símbolos e unidades…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "符号和单位…"
+          }
+        }
+      }
+    },
     "System Settings is open — switch Sidefolk on there." : {
       "localizations" : {
         "ar" : {
@@ -175828,6 +177751,7 @@
       }
     },
     "That app already has %lld watchers going. Stop one first." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -189233,6 +191157,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有名为“%@”的合集，其他应用也无法创建合集。请不指定合集直接保存（会放入收件箱），或先请用户在 Sidefolk 中创建它。"
+          }
+        }
+      }
+    },
+    "There's no more room beside me. Move another live value away first." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يعد هناك مكان بجانبي. انقل قيمة مباشرة أخرى أولًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neben mir ist kein Platz mehr. Verschiebe zuerst einen anderen Live-Wert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya no hay sitio junto a mí. Antes, aparta otro valor en vivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’y a plus de place à côté de moi. Déplacez d’abord une autre valeur en direct."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non c’è più posto accanto a me. Prima sposta un altro valore dal vivo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そばにこれ以上置く場所がありません。先にほかのライブ値を移してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 옆에 더 둘 자리가 없어요. 먼저 다른 실시간 값을 옮겨 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há mais espaço ao meu lado. Antes, tire outro valor ao vivo daí."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我旁边没有更多位置了。请先把另一个实时数值移走。"
           }
         }
       }
@@ -211344,6 +213326,123 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在哪里打开"
+          }
+        }
+      }
+    },
+    "Where it shows" : {
+      "comment" : "A live value's page",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مكان الإظهار"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wo es angezeigt wird"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dónde se muestra"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où l’afficher"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dove si mostra"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示する場所"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보여 줄 곳"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onde aparece"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示位置"
+          }
+        }
+      }
+    },
+    "Where this value shows. It goes on running whichever." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مكان إظهار هذه القيمة. تستمر في العمل أيًّا كان الاختيار."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wo dieser Wert angezeigt wird. Er läuft in jedem Fall weiter."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dónde se muestra este valor. Sigue funcionando sea cual sea."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où cette valeur s’affiche. Elle continue de tourner dans tous les cas."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dove si mostra questo valore. Continua a funzionare in ogni caso."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この値を表示する場所です。どれを選んでも動き続けます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 값을 보여 줄 곳이에요. 어느 쪽이든 계속 실행돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onde este valor aparece. Ele continua rodando de qualquer jeito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个数值的显示位置。无论选哪个，它都会继续运行。"
           }
         }
       }
@@ -238719,6 +240818,64 @@
         }
       }
     },
+    "“display” must be beside, notify or quiet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن تكون «display» إحدى القيم beside أو notify أو quiet."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„display“ muss beside, notify oder quiet sein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“display” debe ser beside, notify o quiet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« display » doit valoir beside, notify ou quiet."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“display” deve essere beside, notify o quiet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「display」は beside、notify、quiet のいずれかにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“display”는 beside, notify, quiet 중 하나여야 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“display” precisa ser beside, notify ou quiet."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“display”必须是 beside、notify 或 quiet。"
+          }
+        }
+      }
+    },
     "“every_seconds” must be more than 0 and at most 7 days." : {
       "localizations" : {
         "ar" : {
@@ -238773,6 +240930,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“every_seconds”必须大于 0，且不超过 7 天。"
+          }
+        }
+      }
+    },
+    "“ids” must list the watchers in their new order." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن تسرد «ids» المراقبات بترتيبها الجديد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„ids“ muss die Beobachtungen in ihrer neuen Reihenfolge auflisten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ids” debe listar las vigilancias en su nuevo orden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« ids » doit lister les surveillances dans leur nouvel ordre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ids” deve elencare le sentinelle nel loro nuovo ordine."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「ids」には、新しい順に並べた監視を指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ids”에는 지켜보기를 새 순서대로 나열해야 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ids” precisa listar os monitoramentos na nova ordem."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ids”必须按新的顺序列出这些监视。"
           }
         }
       }
