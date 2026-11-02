@@ -1990,7 +1990,8 @@ own Home, as they would in Miraya's app; they stay in Miraya's data folder, roun
 **Not built:** a drawn capture area, seeking by dragging the transport's bar, a volume slider, app icons on window tiles.
 
 ### D75 — Games beside the companion: the Play panel, a game channel, companion cues; trivia without AI; the four redesigned (2026-10-31)
-*Amended by D79:* ten more games, one trivia, and Playtime's words in `strings/`.
+*Amended by D79:* ten more games, one trivia, and Playtime's words in `strings/`. *Amended by D99:* an extension may now draw
+pictures and play sounds of its own from its pack, in a surface; the game channel stays until snapshot B (D101).
 **Decision:** games are played in a **Play panel** beside the companion, drawn by Sidefolk from data, with the companion
 as the opponent next to it (the approved plan, phase 1):
 - **`games` in the manifest** (`title`, `symbol`, `say`, `levels`, `ai`): `say` sentences follow the command rules
@@ -2240,6 +2241,8 @@ win or a draw. Community themes made before this get Harbor's amber and a warnin
 roles; gallery themes pass as they are.
 
 ### D79 — Games, phases 2 and 3: the ten new games in the Play panel, their parts, one trivia, one way to speak (2026-10-31)
+*Amended by D99:* "a game never sends a picture" holds for the Play panel's boards only; a scene draws from the extension's pack.
+
 **Decision:** *amends D75 and D76.* All ten approved games are played in the Play panel from Playtime, on the engines written for them, with
 no AI: Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower (both ways), Guess My Animal, Balloon Words, Last
 Stick, Memory Pairs and Daily Word, beside trivia.
@@ -3267,3 +3270,66 @@ events, a week of 522 things reads and indexes in 4 ms; idle CPU with the week o
 History (about 1.5% for the whole app with its companion). Not done: a real trackpad's swipe and pinch by hand (the
 swipes were fed as the trackpad's events; the pinch is SwiftUI's `MagnifyGesture`), the person's own EventKit data
 (the debug build wasn't given calendar access, so it ran on the sample).
+
+### D99 — Pack assets, the Scene and surfaces: an extension draws its own screens as native data, always framed (2026-11-02)
+**Decision:** *amends D62, D75 and D79 ("no images": an extension may now show pictures and play sounds from its own pack,
+inside a surface); part of the founder's rule that everything of an extension's lives in the extension (D98).* Three general
+abilities, naming no game and no extension, with everything else staying as it is until D101:
+- **Pack assets:** an `assets` folder named by the manifest; pictures (PNG, JPEG, WebP, HEIC: one still, the content matching its
+  name, 4 MiB, 3000 px a side, 6 million pixels) and sounds (WAV, AIFF, CAF, M4A: 2 MiB, 10 s, 96 kHz, stereo), 512 files, 48 MiB,
+  addressed by a relative path, checked by the validator and again at each load (a clean path, no link, the install's pin,
+  caps read from the header before any pixel; a failure draws nothing), 96 MiB decoded at most. Nothing from outside the pack.
+  Sounds at a fixed volume, four a second, behind the frame's speaker (off by default, in `games.speakers`), Quiet,
+  fullscreen and macOS's interface sounds.
+- **The Scene:** a typed, capped, validated tree the extension sends as data (`SurfaceScene`): `image`, `text`, `shape`, `symbol`,
+  `flip`, `group`, the helpers `row`, `column`, `grid`, `keyset` (read into plain boxes), `companion`, `person`, `entry`, `clock`; transforms
+  on every node; timed animations flattened when read into one complete path per node and property (`SceneTimeline`), so the app
+  hands Core Animation whole curves and nothing is streamed: moves, scale, fade, rotate, half-turn flips, frames, sequences,
+  staggers, repeats; events at a moment (a pack sound, a reaction, an announcement); areas (hover, press, highlight, a sound,
+  `always`, a press timed from a moment of the scene, grid and free drags with a ghost drawn by the app); keys (exact, by class,
+  by seat); timers Sidefolk keeps; theme tokens and verdict tones by name; Reduce Motion (a step isn't played and its end shows, unless
+  `essential`); right to left (`mirrored()`, `ltr`); a label on every area, or it isn't one. Layers hold each node's final state, so
+  nothing depends on an animation finishing; a new scene changes only what differs, by node id.
+- **Surfaces:** a declared `panel` or `overlay` beside the companion, up to 720 × 676 of canvas (with the 44 pt header, about 720 tall),
+  always framed by Sidefolk with the extension's icon and name (`SurfaceFrame`), a back and a close the app owns, one of each kind at a
+  time, opened through `surfaces.open` (the person's words, or the AI where the manifest says `ai`), keyboard only when the person
+  opened it (D75), gone with the extension. The channel is `sidefolk/surface.open|move|close`, with the game channel's limits, which
+  stays until snapshot B. Moves are typed and go out only if the scene on screen offered them (`SurfaceSession`).
+- **Companion references:** "the person's companion" and "the person" are nodes it can place and never read; `{companion}` in a text is
+  filled in at draw time; reactions come from a fixed list (the existing moves, `pump`, `flick`, `roll`) and carry no words. An extension's
+  words appear only inside its own surface.
+- **The Kit** (`Scene`, `Node`, `Anim`, `Reaction`, `KeyCap`, `Drag`, `Surface`), identical in both repositories.
+
+**Why:** the founder, 2026-11-01: "extension things will always be with the extension: screens, overlays, pop-ups, everything."
+Every board in the Play panel had to be drawable from these, so Playtime can move without an app release. Each primitive came from
+listing what every board part and the desktop toss do; the table is below. Measured in the debug app with Mochi on the desktop: the app's CPU with no
+surface 1.7–2.4 %; with the shuffle's scene at rest 1.2–2.9 %, the main thread blocked in the run loop (`sample`: 3030 of 3138 samples), the
+keyboard's (199 layers) 2.5 %; while the shuffle plays 1.5–1.8 %, since the render server runs it. Footprint 53 MB without, 61 MB with the shuffle's
+pictures, 66 MB with the keyboard, 60 MB after closing.
+
+**Alternatives:** a web view per surface (could imitate anything, ignores themes, a second engine; already refused in D75 and now by the
+founder); SwiftUI as the renderer (a redraw per change, and a timeline wakes the app each frame; layers cost nothing at rest); streaming
+frames or positions from the program (2 s replies, 20 a second, and CPU); an extension choosing its own window (an imitation of a
+card would then be a window of its own); SVG (points at other files, D13's icon rule); custom fonts (a font is code to a decoder);
+Sidefolk's named sounds in scenes (the app would keep game sounds: `surfaceExportSounds:<dir>` writes them as files for a pack instead).
+
+**Implications:** Core: `Surfaces/` (`PackAssets`, `SurfaceScene`, `SceneTimeline`, `SurfaceMove`, `SurfaceInfo`, `SurfacePolicy`, `ExtensionHost+Surfaces`,
+`SurfacesOpenTool`). App: `Surfaces/` (`SceneView`, `SceneLayers`, `SceneDrawing`, `SurfaceModel`, `SurfaceFrame`, `SurfacePanelController`, `SurfaceSounds`) and
+`AppCoordinator+Surfaces`; surfaces stand one window level under `.floating`, so never over a card. A pack with `assets` or `surfaces` is refused by a
+Sidefolk from before this with "update Sidefolk" (D83). `samples/scene-sample` is a fictional sample; tests and the debug app run it, nothing ships it.
+Authors: EXTENSIONS › Surfaces and scenes; threats: SECURITY T40.
+
+How each board part maps (Playtime's move, D101): prompt and speech bubble: `text` on a `path` shape; eyebrow, chip: `capsule` and `text`; answer tiles: `group`
+with an area (`value`, `key`, `hover`, `press`), `win`/`loss` and a `symbol`, a shake as `keys` on `x`; grid: `grid` of areas, stamps and drops as `keys`, cards as `flip`;
+score bar: `person`, `companion`, `text`, pips as shapes; end card: shapes, `text`, areas, `over` with `outcome` and `tally`; timer bar: `timers` and a named `sx` run, its last
+seconds a fade-in of a second bar; reveals: coin `flip`, dice `frames` and `keys`, hands `keys`, `clip` for a cut; `react` `pump`, `flick`, `roll`; note, facts: `text`; buttons: areas with `key`,
+Return on the primary; the companion as a button: `companion` with an `always` area; choice: areas with `value`; pads: a `sequence` of fades with `sound` and `react`,
+`blocks_input`; cups: `Anim.swap` in a named `essential` run; reflex: a press `timed_from_ms`, a delayed fade and sound, a timer, keys by `seat`; meter: a `gradient` with a named run;
+number field, letters, keyboards: `keyset`, one move a key, `stagger` on `flip`; Hangul's grouping moves to the program; entry: `entry`; sticks: an area each with `highlight`;
+lives: pictures; puzzle: `grid`, `path` lines, `drag` by cells with a `ghost`, `clock`; arrow-key cursors drawn by the program from key moves; bevels: two shapes and `press`; suspense: the program's scenes with `after_ms`; sounds: pack files
+from `surfaceExportSounds`.
+
+**Gaps, for D100 and D101:** a cue's `line` has no form: by the rule the words go inside the surface, so the companion no longer speaks a game's line on the desktop; a game's tone and
+Sneaky reach it through D100's settings, not `surface.open`; a coin's face embossed in gold has no form (a `companion` node can stand on the coin, untinted); Activity's row is
+`surfaces.use` ("Used X from Y"), so `GameStats` and the Play menu's numbers need Playtime's own records; opening with words beyond whole sentences needs D100's commands, which pass `arguments`.
+A flip is a 2D squash, as the toss has always been, not a 3D turn: `render(in:)`, which films and snapshots use, doesn't draw 3D transforms. Not verified: clicks through an overlay's clear pixels with a real pointer (AppKit's own rule); sound through real speakers.

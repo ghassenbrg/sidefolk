@@ -41,6 +41,12 @@ they have, D83); **Miraya 1.0.0-snapshot.4** needs snapshot 593 (`output_mute`, 
 
 ## In progress
 
+- **Surfaces, Scene and pack assets** (branch `team/ext-scene` in both repositories, D99, SECURITY T40; first of the "extensions own
+  everything" abilities, snapshot A): an extension can open a framed panel or overlay drawn natively from data, with images and
+  sounds from its pack; the old Play panel is untouched. Verified: `make test`, `samples/scene-sample` in tests and the debug app (shuffle,
+  drags, keyboard, coin filmed with `surfaceFilm:`), snapshots `surface-*` in light, dark, German and Arabic, idle CPU flat. Next: Playtime on
+  it (D101), with D100's commands and settings; the gaps are at the end of D99.
+
 - **CI's silent test deaths, fixed** (2026-11-01): from about snapshot 724 the core test process died on GitHub's
   runners about two minutes in, with no failing test (release runs 41267300489 to 41270779706, and CI). The kernel
   killed it (EXC_GUARD: an NSPipe closed a guarded descriptor). Cause: `childSeesOnlyStandardDescriptors` did
