@@ -950,7 +950,7 @@ Everything but `nodes` may be left out. In the Kit: `Scene(width:height:) { … 
 - **`after_still_ms`** is `after_ms` under Reduce Motion, when what it waits for doesn't play; you aren't told that setting.
   **`speaker`**: a switch among your settings that the frame's speaker is while this scene shows.
 - **`after_ms`** (100–10000), **`input_after_ms`** (no moves for so long), **`transition_ms`** (a node that changed since the last
-  scene eases to its new place, up to 1000), **`announce`** (what VoiceOver hears), **`mirror`** (false: never mirrored).
+  scene eases to its new place, its new size showing at once, up to 1000), **`announce`** (what VoiceOver hears), **`mirror`** (false: never mirrored).
 - **`over`** says it ended; Sidefolk stops its clocks and writes its one Activity row in its own words. `outcome` (`win`,
   `loss`, `draw`) and `tally` (two numbers) are what it may say. **`close`** puts the surface away, after `close_after_ms` (at
   most 30 s). An overlay goes by itself a minute after the person last touched it: your clocks don't count. Each `over` scene after
