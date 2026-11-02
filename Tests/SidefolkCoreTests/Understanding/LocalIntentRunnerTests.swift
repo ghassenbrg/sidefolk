@@ -35,6 +35,34 @@ import Testing
         #expect(await runtime.watchers.list().isEmpty, "nothing to stop afterwards")
     }
 
+    // MARK: Done means done (D115)
+
+    static let actions = [
+        ("notes.save", "note: buy milk"), ("notes.save", "todo: call the bank"),
+        ("reminders.create", "remind me in 1 hour to stretch"), ("watch.create", "tell me when example.com changes"),
+    ]
+
+    @Test(arguments: actions) func aToolThatFailsNeverReadsAsDone(tool: String, said: String) async throws {
+        runtime.registry.register(ProbeTool(name: tool, risk: .low, result: { _ in throw UserFacingError("The disk is full.") }))
+        guard case .failed(let error) = try await run(said) else { Issue.record("“\(said)” should fail"); return }
+        #expect(error.message.contains("The disk is full."))
+    }
+
+    @Test(arguments: actions) func aToolThatReportsAProblemNeverReadsAsDone(tool: String, said: String) async throws {
+        runtime.registry.register(ProbeTool(name: tool, risk: .low, result: { _ in ToolResult(text: "It went wrong.", isError: true) }))
+        guard case .failed(let error) = try await run(said) else { Issue.record("“\(said)” should fail"); return }
+        #expect(error.message == "It went wrong.")
+    }
+
+    @Test func whatItSaysWasSavedIsThere() async throws {
+        let note = try card(try await run("note: buy milk"))
+        #expect(try await runtime.notebook.item(id: try #require(note.refId))?.title == "Buy milk")
+        let reminder = try card(try await run("remind me in 1 hour to stretch"))
+        #expect(await runtime.scheduler.reminder(matching: try #require(reminder.refId)) != nil)
+        _ = try card(try await run("tell me when example.com changes"))
+        #expect(await runtime.watchers.list().count == 1)
+    }
+
     // MARK: Lists
 
     @Test func addToAListMakesTheListWithACapitalName() async throws {

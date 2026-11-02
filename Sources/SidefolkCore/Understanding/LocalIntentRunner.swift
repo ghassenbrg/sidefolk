@@ -203,6 +203,8 @@ public struct LocalIntentRunner: Sendable {
     private func execute(_ tool: String, _ input: JSONValue) async -> LocalOutcome {
         let out = await runtime.executor.execute(name: tool, input: input, caller: .user)
         guard case .ok(let result) = out.status else { return .failed(out.problem!) }
+        // A tool's own "that went wrong" is no result to show as done (D115); with a card it says what to do next.
+        guard !result.isError || result.card != nil else { return .failed(UserFacingError(verbatim: result.text.clipped(300))) }
         let card = result.card ?? ResultCard(kind: .info, title: result.text.clipped(120))
         return .card(card, activityId: out.activity.id, undo: out.activity.undoAvailable)
     }

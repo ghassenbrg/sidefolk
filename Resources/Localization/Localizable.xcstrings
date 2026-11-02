@@ -119066,6 +119066,65 @@
         }
       }
     },
+    "Not done: “%@”." : {
+      "comment" : "Added under a reply: a step that failed, in the tool's words about it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يتم: «%@»."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht erledigt: „%@“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se hizo: «%@»."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas fait : « %@ »."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non fatto: «%@»."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未完了：「%@」。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "완료되지 않음: “%@”."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não feito: “%@”."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未完成：“%@”。"
+          }
+        }
+      }
+    },
     "Not going" : {
       "comment" : "The Calendar's details: an invited person said no",
       "localizations" : {
@@ -169172,6 +169231,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查时出了点问题。"
+          }
+        }
+      }
+    },
+    "Sorry, that didn't actually happen: no action ran. Nothing was changed." : {
+      "comment" : "Added under a reply that said something was done when no tool did it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عذرًا، لم يحدث ذلك فعلًا: لم يُنفَّذ أي إجراء. لم يتغيّر شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entschuldigung, das ist gar nicht passiert: Es lief keine Aktion. Es wurde nichts geändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perdón, eso no llegó a ocurrir: no se ejecutó ninguna acción. No se ha cambiado nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désolé, ce n’est pas vraiment arrivé : aucune action n’a été lancée. Rien n’a été modifié."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scusa, non è successo davvero: nessuna azione è stata eseguita. Non è stato modificato nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すみません、実際には行われていません。操作は実行されませんでした。何も変更されていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "죄송해요, 실제로는 이루어지지 않았어요. 어떤 작업도 실행되지 않았어요. 아무것도 변경되지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desculpe, isso não aconteceu de fato: nenhuma ação foi executada. Nada foi alterado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "抱歉，这并没有真正发生：没有执行任何操作。没有做任何更改。"
           }
         }
       }

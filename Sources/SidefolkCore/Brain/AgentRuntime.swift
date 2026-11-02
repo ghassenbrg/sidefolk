@@ -333,7 +333,9 @@ public actor AgentRuntime {
             let backend = choice.backend
             let work = Task { try await backend.run(task, toolbox: toolbox, emit: emit) }
             toolbox.onStop { work.cancel() }
-            var reply = try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }
+            let answer = try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }
+            let registry = executor.registry
+            var reply = ReplyCheck.checked(answer, outcomes: toolbox.outcomes) { registry.tool(named: $0)?.spec.mutates }
             reply.tainted = toolbox.isTainted
             emit(.reply(reply))
             let answered = Exchange(threadId: threadId, role: .assistant, content: reply.text,

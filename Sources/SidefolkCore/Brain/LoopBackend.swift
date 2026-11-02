@@ -102,8 +102,10 @@ public struct LoopBackend: BrainBackend, BrainUsageReporting {
             // A turn cut off by the output limit may hold a truncated tool call; never run it.
             let calls = turn.stop == .maxTokens ? [] : turn.toolCalls
             if calls.isEmpty {
-                // Said it did something without doing anything: one more turn to act, or to say so.
-                if !nudged, outcomes.isEmpty, !toolbox.specs.isEmpty, turn.stop != .maxTokens, UnbackedClaim.found(in: turn.text) {
+                // Said it did something that nothing did: one more turn to act, or to say so. Not after a call that
+                // worked, which may be what it means, nor one the person refused, which must not be tried again.
+                let onlyFailed = outcomes.allSatisfy { if case .failed = $0.status { true } else { false } }
+                if !nudged, onlyFailed, !toolbox.specs.isEmpty, turn.stop != .maxTokens, UnbackedClaim.found(in: turn.text) {
                     nudged = true
                     transcript.append(.modelTurn(turn))
                     transcript.append(.user(UnbackedClaim.nudge))

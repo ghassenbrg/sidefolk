@@ -256,3 +256,154 @@ import Testing
         #expect(reply.text == "I can't help with that one.")
     }
 }
+
+/// What the person reads about what was done comes from what ran (D115), whichever brain answered.
+@Suite struct ReplyCheckTests {
+    /// A runtime whose brain says `says`, with real-named tools that work or fail.
+    func reply(_ says: [ScriptedModel.Step], tools: [any Tool]) async throws -> String {
+        let h = try AgentRuntimeTests.Harness(ScriptedModel(says), tools: tools)
+        let (_, events) = await h.run(AgentRequest(text: "Do it"))
+        return try #require(events.compactMap(\.reply).first).text
+    }
+
+    func working(_ name: String) -> ProbeTool { noteTool(name: name) }
+
+    func failing(_ name: String) -> ProbeTool {
+        ProbeTool(name: name, risk: .low, capabilities: [], mutates: true, result: { _ in throw UserFacingError("The disk is full.") })
+    }
+
+    static let claims = [
+        ("notes.save", "I've saved that to your notes."),
+        ("notes.save", "I added the task to your list."),
+        ("notes.save", "I've saved that."),
+        ("reminders.create", "Reminder set for tomorrow."),
+        ("watch.create", "I'm watching the page now."),
+    ]
+
+    @Test(arguments: claims) func aClaimWithNoToolCallIsCorrected(tool: String, claim: String) async throws {
+        let text = try await reply([.turn(.reply(claim)), .turn(.reply(claim))], tools: [working(tool)])
+        #expect(text.hasPrefix(claim))
+        #expect(text.contains("no action ran"))
+        #expect(text.hasSuffix("Nothing was changed."))
+    }
+
+    @Test(arguments: claims) func aClaimAfterAFailedCallSaysWhatFailed(tool: String, claim: String) async throws {
+        let text = try await reply([.turn(.calling([call("c1", tool.replacingOccurrences(of: ".", with: "_"))])), .turn(.reply(claim)), .turn(.reply(claim))], tools: [failing(tool)])
+        #expect(text.contains("Not done:"))
+        #expect(text.contains("The disk is full."))
+        #expect(!text.contains("no action ran"))
+    }
+
+    @Test func aFailureThatWentUnclaimedIsStillTold() async throws {
+        let text = try await reply([.turn(.calling([call("c1", "notes_save")])), .turn(.reply("All good!"))], tools: [failing("notes.save")])
+        #expect(text.contains("Not done:"))
+    }
+
+    @Test func aFailureThenTheSameThingDoneIsNotTold() async throws {
+        let flaky = CallCounter()
+        let tool = ProbeTool(name: "notes.save", risk: .low, capabilities: [], mutates: true, result: { _ in
+            flaky.bump()
+            if flaky.value == 1 { throw UserFacingError("Try again.") }
+            return ToolResult(text: "Saved.")
+        })
+        let text = try await reply([.turn(.calling([call("c1", "notes_save", "tea")])), .turn(.calling([call("c2", "notes_save", "tea")])),
+                                    .turn(.reply("I've saved it."))], tools: [tool])
+        #expect(text == "I've saved it.")
+    }
+
+    @Test func oneOfThreeFailedIsTold() async throws {
+        let tool = ProbeTool(name: "notes.save", risk: .low, capabilities: [], mutates: true, result: { input in
+            if input.string("x") == "b" { throw UserFacingError("The disk is full.") }
+            return ToolResult(text: "Saved.")
+        })
+        let text = try await reply([.turn(.calling([call("c1", "notes_save", "a"), call("c2", "notes_save", "b"), call("c3", "notes_save", "c")])),
+                                    .turn(.reply("I've saved all three."))], tools: [tool])
+        #expect(text.contains("Not done: “Probe b”."))
+        #expect(text.contains("The disk is full."))
+    }
+
+    @Test func aToolThatDoesntExistIsNoFailedAction() async throws {
+        let text = try await reply([.turn(.calling([call("c1", "web_search", "tea")])), .turn(.calling([call("c2", "notes_save", "tea")])),
+                                    .turn(.reply("I've saved it."))], tools: [working("notes.save")])
+        #expect(text == "I've saved it.")
+    }
+
+    /// Asking again after a refusal would ask the person again; a claim after one is still false.
+    @Test func aRefusedStepIsNotTriedAgainAndAClaimIsCorrected() async throws {
+        let model = ScriptedModel([.turn(.calling([call("c1", "notes_save", "tea")])), .turn(.reply("I've saved that."))])
+        let h = try AgentRuntimeTests.Harness(model, tools: [noteTool(name: "notes.save", risk: .high)])
+        let answered = h.env.autoAnswer(.deny)
+        let (_, events) = await h.run(AgentRequest(text: "Do it"))
+        _ = await answered.value
+        #expect(model.requests.count == 2)
+        #expect(try #require(events.compactMap(\.reply).first).text.contains("no action ran"))
+    }
+
+    /// What read-only calls and plain answers say stays as it is: the words may be about what was read.
+    @Test(arguments: ["Your reminder is set for 3 pm.", "You have no reminder set for 5.", "Done tasks: 3.", "I've saved that.", "Done."])
+    func aReadThatWorkedIsLeftAlone(said: String) async throws {
+        let read = ProbeTool(name: "notes.list", risk: .low, capabilities: [], mutates: false, result: { _ in ToolResult(text: "3 notes") })
+        let text = try await reply([.turn(.calling([call("c1", "notes_list")])), .turn(.reply(said))], tools: [read])
+        #expect(text == said)
+    }
+
+    /// An action that isn't a change, like opening a page, worked: it isn't asked for again.
+    @Test func openingSomethingIsLeftAloneAndNotDoneTwice() async throws {
+        let counter = CallCounter()
+        let open = ProbeTool(name: "open.url", risk: .low, capabilities: [], mutates: false, result: { _ in counter.bump(); return ToolResult(text: "Opened.") })
+        let text = try await reply([.turn(.calling([call("c1", "open_url")])), .turn(.reply("Done, I'm showing it."))], tools: [open])
+        #expect(text == "Done, I'm showing it.")
+        #expect(counter.value == 1)
+    }
+
+    @Test(arguments: ["I'll show you an example:", "I've added comments to the code.", "I removed the repeated sentence.", "I've created a shorter version.",
+                      "Done: three things.", "Pronto para ajudar.", "Listo para ayudarte.", "Fertig gestellt wurde das Haus 1910.", "Should I set a reminder?"])
+    func wordsAboutSomethingElseGetNoCorrection(said: String) async throws {
+        let text = try await reply([.turn(.reply(said)), .turn(.reply(said))], tools: [working("notes.save")])
+        #expect(text == said)
+    }
+
+    @Test func aClaimBackedByTheToolPassesAsItIs() async throws {
+        let text = try await reply([.turn(.calling([call("c1", "notes_save")])), .turn(.reply("I've saved it."))], tools: [working("notes.save")])
+        #expect(text == "I've saved it.")
+    }
+
+    @Test func sayingItFailedWhenItWorkedGetsTheTruth() async throws {
+        let text = try await reply([.turn(.calling([call("c1", "notes_save")])), .turn(.reply("Sorry, I couldn't save that."))], tools: [working("notes.save")])
+        #expect(text.hasPrefix("Sorry, I couldn't save that."))
+        #expect(text.contains("Done so far:"))
+    }
+
+    @Test func anAnswerThatClaimsNothingPasses() async throws {
+        let text = try await reply([.turn(.reply("Fukuoka is about 18°C."))], tools: [working("notes.save")])
+        #expect(text == "Fukuoka is about 18°C.")
+    }
+
+    @Test(arguments: [
+        "J’ai enregistré ta note.", "Je te rappellerai à 9 h.", "J’ai ajouté la tâche.", "C'est fait.", "Ich habe die Notiz gespeichert.", "Ich werde dich erinnern.",
+        "He guardado la nota.", "Te recordaré mañana.", "Salvei a nota.", "Vou te lembrar amanhã.", "Ho salvato la nota.", "Ti ricorderò domani.",
+        "メモを保存しました。", "リマインドします。", "메모를 저장했어요.", "알려 드릴게요.", "已保存笔记。", "我会提醒你。", "حفظت الملاحظة.", "تم الحفظ.", "سأذكرك غدًا.",
+    ]) func aClaimInEveryLanguage(claim: String) {
+        #expect(UnbackedClaim.firm(in: claim))
+        #expect(UnbackedClaim.found(in: claim))
+    }
+
+    @Test(arguments: [
+        "Je n’ai pas enregistré ta note.", "Paris est en France.", "Ich habe die Notiz nicht gespeichert.", "Berlin liegt in Deutschland.",
+        "No he guardado la nota.", "Madrid está en España.", "Não salvei a nota.", "Lisboa fica em Portugal.", "Non ho salvato la nota.", "Roma è in Italia.",
+        "メモを保存できませんでした。", "東京は日本にあります。", "저장하지 못했어요.", "서울은 한국에 있어요.", "无法保存笔记。", "北京在中国。", "لم أحفظ الملاحظة.", "لم يتم الحفظ.", "القاهرة في مصر.",
+    ]) func notAClaimInEveryLanguage(answer: String) {
+        #expect(!UnbackedClaim.firm(in: answer))
+    }
+
+    @Test func aDenialIsNotAnyNegative() {
+        #expect(!UnbackedClaim.denied(in: "I didn't add a due date."))
+    }
+
+    @Test(arguments: [
+        "I couldn't save that.", "Je n’ai pas pu enregistrer ça.", "Ich konnte das nicht speichern.", "No pude guardar eso.", "Não consegui salvar isso.",
+        "Non sono riuscito a salvarlo.", "保存できませんでした。", "저장하지 못했어요.", "无法保存。", "لم أتمكن من حفظ ذلك.",
+    ]) func aDenialInEveryLanguage(denial: String) {
+        #expect(UnbackedClaim.denied(in: denial))
+    }
+}
