@@ -132,6 +132,20 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
 
 ## Checklist
 
+**Add-ons first, proved before they are published (D98)**
+
+Publishing the gallery replaces its packs, and copies older than their `minimum_sidefolk` then find nothing to install, until an app
+that meets it exists. There is no rollback but a revert and new snapshots, so the app is proved first. In this order:
+- [ ] Merge the work to `main` and read its number: `git rev-list --count origin/main`. The release takes the next number or later (each
+      commit raises it), so `N` is that number plus the commit that sets it, and no other session may land between.
+- [ ] In sidefolk-addons, set every `minimum_sidefolk` that names a branch's placeholder (`0.1.0-snapshot.786`) to `0.1.0-snapshot.N`.
+- [ ] Build there, without publishing: `python3 scripts/build.py --sidefolk-build N`. It stops on the placeholder and on any number above `N`.
+- [ ] Here: `SIDEFOLK_SEED_GALLERY=<add-ons>/dist SIDEFOLK_RELEASE_LABEL=snapshot.<N> scripts/release.sh`, which carries those signed packs and
+      makes a real notary submission with them inside. **Never tried with packs inside before snapshot A:** wait for Accepted.
+- [ ] `sh scripts/extension-free-binary.sh build/Sidefolk.app <add-ons>`: read what it lists (`--strict` once D101 removes the game code).
+- [ ] Only now publish that same `dist/`: `scripts/publish.sh` there. Then run the Release workflow on that commit or a later one; its
+      `seed-packs.py` takes the packs from the gallery and stops if any is missing or needs a newer build.
+
 **Before the build**
 - [ ] `git status` clean on `main`, merged and pushed; `swift build` and `swift test --no-parallel` pass.
 - [ ] `Sources/SidefolkCore/Version.swift` says the version being released; `docs/RELEASE-NOTES.md` matches.
@@ -163,7 +177,7 @@ no key to keep: the feed is this repository's GitHub Releases, and trust is the 
       another computer).
 - [ ] Login item from /Applications; `sidefolk` installs on PATH from Settings › Connections and answers
       `sidefolk status`.
-- [ ] The gallery was published before this release (it holds the seed packs, D98). On a fresh data folder the seed packs
+- [ ] On a fresh data folder the seed packs
       install and run in their sandbox (World Clock, Calculator, Weather, System Vitals), and one from
       the gallery installs (Images on a photo). On a Mac **without** Apple's developer tools: no "install the
       command line developer tools" dialog appears at launch, and Git from the gallery says it needs git and how

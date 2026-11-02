@@ -828,7 +828,10 @@ public actor ExtensionHost {
                                    presentation: s.kind, width: min(s.width ?? (s.kind == .panel ? 400 : 240), mw),
                                    height: min(s.height ?? (s.kind == .panel ? 480 : 240), mh), say: s.say, ai: s.ai ?? false, sounds: hasSounds,
                                    iconPath: rt.iconPath, arguments: s.arguments, speakerSetting: s.speakerSetting, activity: s.activity ?? true,
-                                   firstParty: rt.pin.origin?.firstParty == true, author: rt.pin.author)
+                                   firstParty: rt.pin.origin?.firstParty == true,
+                                   // The sources of Sidefolk's own extensions say it too, and may be installed from a folder while they are worked on: that
+                                   // isn't refused, but a frame never says it for what isn't signed.
+                                   author: rt.pin.author.flatMap { ExtensionReservedNames.isReserved($0) ? nil : $0 })
             }
         }
     }
@@ -1495,7 +1498,7 @@ public actor ExtensionHost {
         }
     }
 
-    /// A built-in extension's own description, cleaned and capped like any description, naming where it is from.
+    /// One of Sidefolk's own extensions' description, cleaned and capped like any description, naming where it is from.
     static func firstPartyDescription(_ description: String, extensionName: String) -> String {
         let text = ExtensionText.untrusted(description, bytes: 1_000)
         return "\(text.isEmpty ? "" : text + " ")(Sidefolk's own extension “\(ExtensionText.line(extensionName, characters: 60))”. Its results are untrusted.)"

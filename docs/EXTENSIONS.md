@@ -11,7 +11,7 @@ Examples live in this repository:
 | Folder | What it shows |
 |---|---|
 | [`extensions/hello-folk`](../extensions/hello-folk) | The smallest working extension: one tool, one watcher, ~50 lines of Python. Copy it to start. |
-| [`extensions/system-vitals`](../extensions/system-vitals) | Battery, disk, memory and "about this Mac", `battery_low` and `disk_low` watchers, one program in `exec`. |
+| sidefolk-addons [`extensions/system-vitals`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/system-vitals) | Battery, disk, memory and "about this Mac", `battery_low` and `disk_low` watchers, one program in `exec`, on the Kit. |
 | sidefolk-addons [`extensions/git`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/git) | Folders named per call (`paths`), `git` found by name, the internet, a long `timeout`. |
 | sidefolk-addons [`extensions/images`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/images) | A file read and a folder written per call, and `media` for the graphics hardware. |
 | sidefolk-addons [`extensions/currency`](https://github.com/ghassenbrg/sidefolk-addons/tree/main/extensions/currency) | The internet only, a cache in its data folder, and a watcher that fires once per crossing. |
@@ -70,18 +70,18 @@ companion), read the permission sheet, and click Install. Ask Sidefolk to use it
 ## The manifest
 
 `sidefolk-extension.json` at the top of the folder, at most 64 KiB. Decoding is strict: **any key
-not listed here is an error**, so a typo never silently changes what an extension may do.
+not listed on this page is an error**, so a typo never silently changes what an extension may do.
 
 ```json
 {
-  "id": "dev.sidefolk.system-vitals",
-  "name": "System Vitals",
+  "id": "dev.example.pocket-vitals",
+  "name": "Pocket Vitals",
   "version": "1.0.0",
   "sidefolk": ">=0.1",
-  "description": "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low. For a page with live charts, add Your Mac from the gallery.",
+  "description": "Quick answers on battery, disk and memory, and a nudge when the battery or the disk runs low.",
   "tagline": "Quick answers on battery, disk and memory",
   "folk": "byte",
-  "author": "Sidefolk",
+  "author": "You",
   "icon": "icon.pdf",
   "run": { "command": "python3", "args": ["main.py"] },
   "permissions": {
@@ -104,8 +104,8 @@ not listed here is an error**, so a typo never silently changes what an extensio
 
 | Key | Required | Rules |
 |---|---|---|
-| `id` | yes | Reverse-DNS, lowercase: `^[a-z0-9]+(\.[a-z0-9-]+)+$`, at most 64 characters. The installed copy lives in `Extensions/<id>/`. The last part (`system-vitals`) names its tools, so it must be unique among your extensions. |
-| `name` | yes | 1–60 characters of plain text, shown everywhere. |
+| `id` | yes | Reverse-DNS, lowercase: `^[a-z0-9]+(\.[a-z0-9-]+)+$`, at most 64 characters. The installed copy lives in `Extensions/<id>/`. The last part (`pocket-vitals`) names its tools, so it must be unique among your extensions. |
+| `name` | yes | 1–60 characters of plain text, shown everywhere. "Sidefolk" and the companions' names, however written, in any language, are kept for Sidefolk's own signed packs. |
 | `version` | yes | `1.0` or `1.0.0`, optionally with `-beta.1`. |
 | `sidefolk` | no | Minimum Sidefolk version, written `>=0.1`. |
 | `description` | no | At most 300 characters. What it does, in full: Settings shows it under Details, and the install preview shows it whole. |
@@ -114,7 +114,7 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `services` | no | The public services the program talks to: `[{"name": "Open-Meteo", "hosts": ["api.open-meteo.com"]}]`, needs `permissions.network`. Up to 8, each with up to 16 lower-case host names. Shown on the install sheet and in Settings › Trust. The sandbox can't hold a program to it, so anyone else's is said as their word; only a pack Sidefolk signed is believed (D47, D98). |
 | `replaces` | no | Ids of extensions this one does everything of: while this one is on, they rest (their tools step aside, D67). Only between Sidefolk's own signed packs. |
 | `folk` | no | The folk that appears while it works, e.g. `byte`. |
-| `author` | no | At most 100 characters. |
+| `author` | no | At most 100 characters; the frame of your surface says it, unless it is one of those names and the pack isn't Sidefolk's. |
 | `icon` | no | A square PNG (64–1024 px) or one-page square PDF in the folder, at most 256 KiB. See [Icons](#icons). |
 | `run.command` | yes | `python3`, `node` or `sh`, or a compiled program inside the folder (`bin/server`). Nothing else: no absolute paths, no other interpreters. |
 | `run.args` | depends | For `python3`/`node`/`sh` the first argument is the script, a path inside the folder (`main.py`, `src/server.js`). At most 32 arguments. |
@@ -142,13 +142,22 @@ not listed here is an error**, so a typo never silently changes what an extensio
 | `background` | no | `true` keeps it running while it is on: it starts with Sidefolk, never stops for being idle, and comes back after a crash (up to the crash limit). For work that must watch all the time (the clipboard, a power assertion). The install preview says so. |
 | `palettes.<name>` | no | A pop-up list on a keyboard shortcut (D63): `title` (≤ 40), `hotkey` (`shift+cmd+c`: cmd, ctrl or option, then one key; the person can change it) and `placeholder`. At most 2. See [Palettes](#palettes). |
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
+| `tools.<name>.summary` | no | The sentence for a call, with its arguments ([A call in one sentence](#a-call-in-one-sentence)); believed for Sidefolk's own. |
+| `permissions.ai` | no | `purpose` and `daily_cap`: the person's AI, for words only ([AI help](#ai-help)). |
+| `games` | no | Old, until Sidefolk snapshot B (D101): [Games](#games). |
+| `assets` | no | The name of one folder of pictures and sounds ([Pack assets](#pack-assets)). |
+| `surfaces` | no | Panels and overlays you draw ([The manifest](#the-manifest-1)). |
+| `choices`, `parts`, `carry` | no | What commands' sentences are made of ([Commands with slots](#commands-with-slots-in-every-language)). |
+| `settings` | no | What the host keeps for you ([Settings](#settings)). |
+| `entries`, `drops` | no | Items in Sidefolk's menus and Ask, and offers for a drop ([Entries and drop actions](#entries-and-drop-actions)). |
+| `settings_from`, `carries` | no | What the app used to keep for this work, for Sidefolk's own ([Settings](#settings)). |
 
 **Other languages.** The manifest is English; its words in other languages are files of their own,
 `strings/<language>.json` beside it (see [Speaking the person's language](#speaking-the-persons-language)). A copy of
 Sidefolk from before them ignores the folder; a key in the manifest itself would make it refuse the manifest.
 
 **Folder name.** When you validate a folder, its name should be the id or the id's last part
-(`system-vitals`); otherwise you get a warning (usually a copied template with an old id).
+(`pocket-vitals`); otherwise you get a warning (usually a copied template with an old id).
 
 **Paths in `files`.** They are resolved with `realpath`, so links are followed at install time and
 the resolved folder is what you grant. They can't contain quotes, backslashes or control characters,
@@ -296,7 +305,7 @@ extension uses, even while a request is waiting. The Swift Kit serializes reques
 
 ```json
 → {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"Sidefolk","version":"0.1.0"}}}
-← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"system-vitals","version":"1.0.0"}}}
+← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"pocket-vitals","version":"1.0.0"}}}
 → {"jsonrpc":"2.0","method":"notifications/initialized"}
 ```
 
@@ -316,7 +325,7 @@ extension uses, even while a request is waiting. The Swift Kit serializes reques
 **The model doesn't see your descriptions.** A tool description is offered to every request before
 anything has been read, so a hostile one could steer the model unnoticed. Sidefolk shows the user
 your descriptions on the install sheet and in Settings, but tells the model only "“Battery status”,
-a tool from the extension “System Vitals”", plus your input schema with its free text
+a tool from the extension “Pocket Vitals”", plus your input schema with its free text
 (`description`, `title`, `examples`, `default`) removed. Give tools clear titles (the manifest's
 `tools.<name>.title`, else the program's `title`) and parameters self-explanatory names
 (`below_percent`, not `n`); types, `enum`, `minimum`/`maximum` and `maxLength` stay and are enforced.
@@ -384,7 +393,7 @@ has 30 seconds; at most 16 are in flight at once.
 
 ## Tools, risk and approvals
 
-Your tool `battery` in extension `dev.sidefolk.system-vitals` becomes **`ext.system-vitals.battery`**
+Your tool `battery` in extension `dev.example.pocket-vitals` becomes **`ext.pocket-vitals.battery`**
 (at most 64 characters in total). Every call goes through Sidefolk's Guard like any built-in tool:
 
 | Risk | What happens when the agent calls it |
@@ -850,7 +859,13 @@ debug app `swift scripts/dev.swift installFolder:<folder>` and `surface:dev.samp
   (`panel`, the default, or `overlay`), `width` and `height`, the canvas you ask for: 120–720 × 120–676 points for a
   panel, 120–460 × 120–420 for an overlay. A scene larger than this is cut to it; on a small screen Sidefolk scales the
   canvas down and takes the scale off every point you hear back. `say`: sentences that open it, by the command rules,
-  no slots. `ai`: `true` lets the AI open it through `surfaces.open` (off by default).
+  no slots, and they come after everything Sidefolk itself understands. `ai`: `true` lets the AI open it through `surfaces.open`
+  (off by default). `arguments`: what the AI may pass when it does, each name with the values it may take
+  (`{"level": ["easy", "hard"]}`, `"true"` for a yes): nothing else from a model reaches your program this way, because a model
+  can be steered by what it read (T40). A person's click, or your own tool's reply, passes anything. `speaker_setting`: a `switch`
+  among your `settings` that the frame's speaker reads and writes, so one setting and the frame agree; without it the host keeps
+  the choice for this surface. `activity`: `false` when your program writes its own History row (`sidefolk/activity.add`), so
+  Sidefolk writes no "Used …" row.
 - **`assets`**: the name of one folder in your pack; everything in it must be a picture or a sound, or the validator
   refuses the pack (`sidefolk ext validate` names each file).
 
@@ -879,8 +894,11 @@ with macOS's interface sounds off.
 | `sidefolk/surface.move` | `surface`, `session`, `move` | `{scene}` |
 | `sidefolk/surface.close` | `surface`, `session`, `reason` (`closed`, `timeout`, `finished`) | anything |
 
+Your `settings` and the AI's name go with these as with every request.
+
 The limits are the game channel's: an answer within 2 s and within 64 KB or the surface ends ("X didn't answer, so this
-closed"), at most 20 moves a second, and only for the one surface open in its place (one panel, one overlay). You can't
+closed"), at most 20 moves a second (past that a move is dropped, and a key held down adds nothing while the last press is still on
+its way), and only for the one surface open in its place (one panel, one overlay). You can't
 push a scene: you answer moves, and `after_ms` asks Sidefolk to come back for the next (600 times in a row with nobody
 touching it, then it stops asking). You keep no clock. You aren't told the companion's name or anything about the person.
 Moves are not tool calls: anything that acts on the world stays a tool, behind Guard.
@@ -895,6 +913,22 @@ Moves are not tool calls: anything that acts on the world stays a tool, behind G
 {"entry": {"id": "word", "text": "hello"}}
 {"timer": "round"}   {"next": true}   {"back": true}
 ```
+
+**Opening one from anything else.** A tool's reply can carry `sidefolk` beside `content`: so a menu item, a command with slots, a page's
+button or a tool the AI called can start a surface, for your own only, as your manifest declares them:
+
+```json
+{"content": [{"type": "text", "text": "Opening sudoku"}],
+ "sidefolk": {"open_surface": {"surface": "board", "arguments": {"game": "sudoku"}},
+              "close_surface": "board", "open_page": "stats", "hold_answer_ms": 1500}}
+```
+
+`open_surface` (or just its name): the person's own click or command takes the keyboard; the AI's call opens only a surface marked
+`ai`, and waits for a click; a routine, another agent or a watcher opens nothing. `close_surface` (a name, or `true` for whichever of
+yours are open) puts it away, kept. `open_page` shows your page in Home, for the person's own click or command only. `hold_answer_ms`
+(up to 5000) keeps the AI's words back while an animation is still showing the result. Anything else is left out. Kit:
+`ext.tool(…, reply: { args in ToolReply("Opening").opening(surface: "board", arguments: […]) })`. An entry can also name a surface directly
+(`"surface": "board"`, `input` being what it starts with). This is never a push: it only ever answers a call someone made through Guard.
 
 ### A scene
 
@@ -913,11 +947,16 @@ Everything but `nodes` may be left out. In the Kit: `Scene(width:height:) { … 
   `{back: true}`; ✕, Esc and ⌘W are always the frame's and put the surface away, kept ten minutes.
 - **`styles`** are keys a node takes with `"style": "cell"` (its own keys win), to keep a large board under 64 KB. A 9 × 9 board
   with pencil notes in every cell, built with the Kit, fits.
+- **`after_still_ms`** is `after_ms` under Reduce Motion, when what it waits for doesn't play; you aren't told that setting.
+  **`speaker`**: a switch among your settings that the frame's speaker is while this scene shows.
 - **`after_ms`** (100–10000), **`input_after_ms`** (no moves for so long), **`transition_ms`** (a node that changed since the last
   scene eases to its new place, up to 1000), **`announce`** (what VoiceOver hears), **`mirror`** (false: never mirrored).
 - **`over`** says it ended; Sidefolk stops its clocks and writes its one Activity row in its own words. `outcome` (`win`,
   `loss`, `draw`) and `tally` (two numbers) are what it may say. **`close`** puts the surface away, after `close_after_ms` (at
-  most 30 s). An overlay goes by itself a minute after it was last touched.
+  most 30 s). An overlay goes by itself a minute after the person last touched it: your clocks don't count. Each `over` scene after
+  the first writes a row only if the person made a move since. Timers and `after_ms` together stop after 600 with nobody touching it.
+  Put away, a surface runs nothing: moves not sent are dropped, a reply still on its way is what it shows when it comes back, and its
+  clocks and animations go on from where they were.
 - A value that is off is dropped, a node of a type this version doesn't know is skipped, and each drop is logged for you
   (`surfaces` in the log). Going past a cap below refuses the whole scene.
 
@@ -932,32 +971,39 @@ act around), `scale`, `sx`, `sy`, `rotate` (degrees), `opacity`, `z` (order amon
 |---|---|---|
 | `group` | `children`; with no size it is its parent's | `Node.group { }` |
 | `image` | `image`, `dark`, `fit` (`contain`, `cover`, `fill`), `tint` | `Node.image("a.png")` |
-| `text` | `text`, `size`, `weight`, `design` (`default`, `rounded`, `serif`, `mono`), `color`, `align`, `valign`, `lines`, `min_scale` (shrinks to fit its box) | `Node.text("Hi", size: 17)` |
+| `text` | `text`, `size`, `weight` (to `black`), `design` (`default`, `rounded`, `serif`, `mono`, `theme`: the person's theme's face and scale), `color`, `align`, `valign`, `lines`, `min_scale` (shrinks to fit its box), `italic`, `tabular`, `strike`, `runs` ([{`text`, `color`, `weight`}], parts wrapping as one) | `Node.text("Hi", size: 17).textLook(italic: true)`, `Node.runs(…)` |
 | `shape` | `shape` (`rect`, `ellipse`, `capsule`, `path`), `path` (`M x y`, `L x y`, `Q cx cy x y`, `C a b c d x y`, `Z`), `fill`, `gradient` ({colors, from, to}), `stroke`, `line_width`, `dash`, `corner` | `Node.rect(fill: .accent, corner: 12)` |
-| `symbol` | `name` (an SF Symbol), `color` | `Node.symbol("star.fill")` |
+| `symbol` | `name` (an SF Symbol), `color`, `weight`, `mode` (`mono`: one flat colour), `secondary` (a second layer's colour) | `Node.symbol("star.fill").symbolLook(weight: "black", mono: true)` |
+| `scroll` | `content_h` (what its children take up), `scroll_to` (a node to keep in view); wheel and trackpad move it in the app, with nothing sent, and it stays where it was across scenes by its `id` | `Node.scroll(contentHeight:scrollTo:) { }` |
 | `flip` | `front`, `back` (nodes), `showing`, `axis` (`y`, `x`); the `flip` value turns it in half turns | `Node.flip(front:back:)` |
 | `row`, `column` | `items`, `gap`, `align`, `pack`; each item needs a size | `Node.row(gap: 4) { }` |
 | `grid` | `columns`, `cell` [w, h], `gap`, `items`; an item with no size takes the cell's | `Node.grid(columns:cell:) { }` |
 | `keyset` | `name`, `rows` of {`key`, `label`, `spoken`, `typed`, `fill`, `ink`, `w`, `faded`, `disabled`, `no_key`}, `key` [w, h], `gap`, `corner`, `size`, `fill`, `ink`, `lip`, `lip_color`, `sound` | `Node.keyset(name:rows:)` |
-| `companion` | `pose` (`idle`, `listening`, `thinking`, `waiting`, `success`, `alert`, `celebrating`) | `Node.companion(pose:)` |
-| `person` | | `Node.person()` |
-| `entry` | `name`, `placeholder`, `max` (up to 120), `locked`, `size` | `Node.entry(name:)` |
-| `clock` | `seconds`, `running`, `down`, and a text's style | `Node.clock(seconds:)` |
+| `companion` | `pose` (`idle`, `listening`, `thinking`, `waiting`, `success`, `alert`, `celebrating`), `figure` (`face`: its profile picture), `align` (`bottom`: stands on the box's edge), `duotone` (in shades of a colour) | `Node.companion(pose:).figure(face:bottom:duotone:)` |
+| `person` | `align`, `duotone`; with no account picture Sidefolk draws its friendly stand-in | `Node.person()` |
+| `entry` | `name`, `placeholder`, `max` (up to 120), `locked`, `size`, `focus` (takes the keyboard as it appears, if the surface has it), `plain` (no box of its own), `weight`, `design`. Always inside the canvas. | `Node.entry(name:).fieldLook(focus:plain:)` |
+| `clock` | `seconds`, `running`, `down`, and a text's style (`tabular` unless you say not); h:mm:ss past an hour | `Node.clock(seconds:)` |
 
 - **Colours:** by the theme's name, which follow the person's theme and dark mode: `ink`, `ink_muted`, `ink_faint`, `surface`,
   `surface_sunken`, `surface_raised`, `line`, `well`, `accent`, `on_accent`, `accent_soft`, `link`, `info`, `success`,
   `success_soft`, `warning`, `warning_soft`, `clear`; the verdicts, what a result means for the person: `win`, `loss` (a calm
-  tone, never red), `draw`; or plain, `#RRGGBB`, `#RRGGBBAA`, `{"light": "#…", "dark": "#…"}`. Never say a result with colour
+  tone, never red), `draw`; a theme colour tuned, `{"token": "accent", "alpha": 0.75, "brightness": -0.14}`; or plain, `#RRGGBB`,
+  `#RRGGBBAA`, `{"light": "#…", "dark": "#…"}`. Never say a result with colour
   alone (D78): a symbol or a word goes with it.
-- **The person's companion and the person** are nodes you can place, up to four in a scene, and never read: Sidefolk draws
-  them, and nothing about them comes back to you. `{companion}` in a text is its name, filled in when it is drawn.
+- **The person's companion and the person** are nodes you can place, up to 32 in a scene, and never read: Sidefolk draws
+  them, and nothing about them comes back to you. `{companion}` in any of your words Sidefolk shows (a text, an area's label, a
+  placeholder, `title`, `announce`, a page, a setting's title or detail, a menu item, an Activity row) is its name, filled in on
+  Sidefolk's side.
 - **A keyset** lays out centred rows of caps, each an area and its key: a press, on screen or on the keyboard, is
   `{click: {area: <name>, value: <key>}}`. `typed` is the keyboard's key when it differs (`return`, `delete`).
 - **Right to left:** in Arabic each box is measured from the far side, with its animations, text alignment and rotations; a
   column or a dragged point comes back to you in your own terms. `ltr` keeps a node's contents as they are (a picture, a
   puzzle, a word's tiles), and `"mirror": false` the whole scene.
 - **Limits:** 1500 nodes, 16 deep, 400 pictures of 64 different files, 400 areas, 160 keys, 8 timers, 2 entries, 4 clocks,
-  24,000 characters (400 a text), 240 path commands; coordinates within ±4000.
+  24,000 characters (400 a text), 240 path commands; coordinates within ±4000; **96 MiB of bitmaps** (every text, clock, symbol,
+  gradient, figure and tinted picture is `w × h × 16` bytes, a picture counts once at its largest) and **6000 animated points**, a
+  `flip` counting as 8 samples a half turn. Past any of them the scene is refused. Only whole sentences and whole values are trusted:
+  every cap in characters also holds at most 8 marks on a character.
 
 ### Areas and keys
 
@@ -967,8 +1013,11 @@ act around), `scale`, `sx`, `sy`, `rotate` (degrees), `opacity`, `z` (order amon
 
 - **`label` is required**: it is what VoiceOver reads and presses, and an area without one isn't offered. Text nodes are read
   as they are; give anything else that means something a `label`.
-- **`hover`** and **`press`** (`scale`, `dx`, `dy`, `opacity`) are drawn at once by Sidefolk; `highlight` names other nodes that take
-  `hover` too (the sticks that would go). **`sound`** plays on the press itself. **`selected`** tells VoiceOver.
+- **`hover`** and **`press`** (`scale`, `dx`, `dy`, `opacity`, `rotate`) are drawn at once by Sidefolk; `highlight` names other nodes that take
+  `hover` too (the sticks that would go), or gives them a look of their own, `{"id": "badge", "dy": -1, "opacity": 1}`, whose `opacity`
+  is the value itself, so a node at 0 can appear. Without `hover` the area itself stays still. An area's box stays where it rests
+  whatever its own look does. Under Reduce Motion a press dims rather than moves. **`sound`** plays on the press itself. **`selected`** tells VoiceOver.
+  **`submits`**: the name of an `entry`; a press sends what is typed there, as Return does, and it takes no press while the field is empty.
 - **`always`** works while an animation holds moves (the companion clicked mid-shuffle).
 - **`timed_from_ms`** is a moment of the scene from which the press is timed, from the input event's own time: the move carries
   `ms`, below 0 before it. Show the signal with an animation delayed to the same moment and you have a reflex test, with no
@@ -1027,11 +1076,12 @@ The steps a reader needs for a shuffle are in the Kit as `Anim.swap`, and the wh
 
 ### What the frame is for
 
-Sidefolk always frames a surface: a panel has a header with your icon, the title and your name, Back when you asked for it, the
+Sidefolk always frames a surface: a panel has a header with your icon, the title and your name (with your `author`, or "not from Sidefolk", unless the pack is Sidefolk's own), Back when you asked for it, the
 speaker if your pack has sounds, and ✕; an overlay has a small chip with your icon, your name and ✕ under its canvas. You draw only
 inside. A surface stands below Sidefolk's own panels and cards in the window order and keeps clear of them; while an approval
 waits, it dims and takes nothing, so it can't catch a press meant for the card. It goes with your extension: turned off or removed,
-it is closed at once. See SECURITY T40.
+it is closed at once, as it is when an update replaces your program or the crash limit turns it off. Removed, its sounds, its speaker
+choice and its settings go too. See SECURITY T40.
 
 ## Rich pages, commands in every language, entries, settings, AI help
 
@@ -1040,6 +1090,8 @@ What any extension can declare, and Sidefolk keeps or draws for it (D100). All o
 them: name it in `addon.json`'s `minimum_sidefolk` (D83).
 
 ### Richer page parts
+
+For a look no part offers, a **scene inside the page**: `{"type": "scene", "scene": { … }, "actions": {"<area id>": {"tool": "open", "input": { … }}}}`. It is the same as a surface's scene, up to 960 × 720, fitted to the page's width: pictures from your pack, the same caps, hover and press. Each area runs its action's tool as the person, with the area's `value` as `value`; a reply can open a surface. It takes no keys and has no session: anything that plays is a surface. Kit: `.scene(PageSceneBlock(scene, actions: […]))`.
 
 ```json
 {"type": "hero", "title": "Bird Log", "detail": "…", "symbol": "bird", "scene": {"pack": "garden.png", "dark": "garden-night.png"},
@@ -1125,7 +1177,7 @@ folder goes under an argument the tool lists in `paths`. At most three offers sh
 
 Up to 64. Sidefolk stores them, shows them under Settings › Add-ons and with a `settings` part on your page, finds them in Settings' search, backs them up, keeps them through updates, and removes them with the extension. Every `tools/call` and `sidefolk/` request carries `settings`, all of them, defaults filled; a change sends the notice `sidefolk/settings.changed`. Change one of your own with the notice `sidefolk/settings.set {key, value}` (a speaker button on your surface): it's checked and goes in History. The AI can't change them: offer a tool for that. Words: `settings.<key>.title|detail|options.<value>`. Kit: `ExtensionSettings.bool("sounds")`, `ExtensionSettings.set(…)`, `ext.settingsChanged`.
 
-`settings_from: "<section>"` (Sidefolk's own extensions only): once, Sidefolk's request `sidefolk/settings.carry {from, values}` gives what the app kept for this work, and your `{settings: {…}}` are stored. Kit: `ext.carry { section, values in … }`.
+`settings_from: "<section>"` and `carries: {"store": [...], "history": [...]}` (Sidefolk's own extensions only): once, Sidefolk's request `sidefolk/settings.carry {from, values, store, history}` gives what the app kept for this work: the section, values of its store by name, and a copy of what History has of a tool (up to 2,000 rows, each `at`, `summary`, `args`). Your `{settings: {…}}` are stored, and `{"ai": false}` sets the person's AI switch off, for someone who had said no. It can't turn it on. Kit: `ext.carry { section, values in … }`, `ext.carryAll { section, values, store, history in … }`.
 
 ### AI help
 
@@ -1135,9 +1187,11 @@ Up to 64. Sidefolk stores them, shows them under Settings › Add-ons and with a
 
 Any extension may declare it. The person sees the purpose and the cap on the install sheet, has a switch per extension, and each request in History; it counts in their usage. The purpose starts with "to" or "for"; the cap is 1–200, 20 if you leave it out; raising it holds your update for review. The notice `sidefolk/ai.request {request: <uuid>, prompt, label, language}` (at most 8,000 characters, one at a time) is answered by one notice `sidefolk/ai.answer {request, ok, text, made_by}` or `{request, ok: false, reason}`: `off`, `busy`, `limit`, `unusable`, `failed`, `denied`. Requests carry `ai` (the AI's name) while you may ask. The AI has no tools and nothing of the person's; it gets your words marked as untrusted. **Validate the answer as anything from outside**, and say who wrote it. Identical words the same day cost nothing. Kit: `AI.available`, `await AI.ask(prompt, label:)`.
 
+A request is at most 8,000 characters and 32,000 bytes. **Codex:** it always adds the person's own `AGENTS.md`, and has no switch for it, so while that file is there nothing is asked for an extension: the reason is `off`, and the switch says why.
+
 ### One row in History
 
-`sidefolk/activity.add {text, key, result}`: `text` up to 120 characters; `key` your own name for it; `result` `win`, `loss`, `draw` or `done`, to count later. At most one every five seconds. Kit: `Activity.add("Logged a robin", key: "robin", result: "done")`.
+`sidefolk/activity.add {text, key, result}`: `text` up to 120 characters; `key` your own name for it; `result` `win`, `loss`, `draw` or `done`, to count later. At most one every five seconds. When your extension is removed, these rows, being your own words, go with it; rows of what its tools did stay, as the record of what ran. `sidefolk/settings.set` is held to one a second, the last value winning, and writes nothing for a value it already has. Kit: `Activity.add("Logged a robin", key: "robin", result: "done")`.
 
 ## Speaking the person's language
 
@@ -1223,10 +1277,10 @@ person's language before anything is installed; an older Sidefolk ignores the ke
 
 1. **Run your program by hand.** Pipe messages in and read what comes out:
    ```sh
-   cd extensions/system-vitals
+   cd extensions/hello-folk
    printf '%s\n' \
      '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
-     '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"disk","arguments":{}}}' \
+     '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hello","arguments":{}}}' \
      | python3 -I main.py
    ```
    Run it from a scratch folder (`cd "$(mktemp -d)"`), as in the quick start: anything it writes
@@ -1288,8 +1342,9 @@ so none needs Python, Node or anything else installed.
 
 Four are also **seed packs**: World Clock, System Vitals, Weather and Calculator. The app carries their signed packs and
 a list (`Resources/SeedPacks/seed-packs.json`), and a fresh Mac installs them once, offline, so the first run has
-something to try. From then on they are gallery extensions like the rest: the gallery updates them, removing one is
-remembered, an app update never touches them. Publish the gallery before releasing the app, since a release takes the
+something to try. From then on they are gallery extensions like the rest: the gallery updates them (on the default Releases
+channel, once a plain version is released; until then a copy stays at the version it has), removing one is remembered, an app update
+never touches them. Publish the gallery before releasing the app, since a release takes the
 packs from it (`scripts/seed-packs.py`).
 
 Several answer common sentences at once, without the AI (D50): Calculator ("what's 12*7", "15% of 80", "convert

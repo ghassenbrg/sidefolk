@@ -29,8 +29,10 @@ struct ExtensionReviewTests {
         #expect(await h.host.preview(folder: source).report.errors.contains { $0.field == "name" }, "the sheet says so")
         await #expect(throws: UserFacingError.self) { try await h.host.install(from: source) }
         #expect(await h.host.preview(folder: source, origin: .official).canInstall, "a signed pack may")
-        let authored = ExtFixtures.manifest(id: "local.probe2", tools: [:]).setting("author", "Sidefolk Team")
-        await #expect(throws: UserFacingError.self) { try await install(h, authored, name: "probe2") }
+        // A folder may say it is by Sidefolk (its own sources do, while they are worked on); its frame won't.
+        let authored = SurfaceReviewTests.manifest(id: "local.probe2", surfaces: ["p": ["title": "P"]]).setting("author", "Sidefolk Team")
+        _ = try await install(h, authored, name: "probe2")
+        #expect(h.host.surfaceShelf.all.first?.author == nil && h.host.surfaceShelf.all.first?.firstParty == false)
     }
 
     @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))
@@ -318,5 +320,37 @@ struct ExtensionReviewTests {
         let giant: [JSONValue] = (0..<40).map { _ in ["type": "text", "text": "x", "w": 2000, "h": 2000] }
         let refused = try ExtensionPage.parse(["sections": [["blocks": [["type": "scene", "scene": ["nodes": .array(giant)]]]]]])
         #expect(refused.sections.allSatisfy { $0.blocks.isEmpty })
+    }
+}
+
+/// `scripts/extension-strings.py check` is what the add-ons' README trusts: it must see D100's words too.
+struct ExtensionStringsScriptTests {
+    @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))
+    func theCheckSeesDropsEntriesAndSettings() throws {
+        let folder = try ExtFixtures.tempDir("words").appendingPathComponent("fixture")
+        let manifest = ExtFixtures.manifest(id: "dev.test.words", tools: [:], extra: [
+            "drops": [["id": "play", "title": "Play", "kinds": ["link"], "tool": "go", "input": ["x": "{value}"]]],
+            "entries": [["id": "go", "title": "Go", "places": ["companion"], "tool": "go"]],
+            "settings": [["key": "tone", "type": "choice", "title": "Tone", "options": [["value": "a", "title": "A"], ["value": "b", "title": "B"]]]],
+        ])
+        _ = try ExtFixtures.makeExtension(at: folder, manifest: manifest, files: ["server.py": ""])
+        let strings = folder.appendingPathComponent("strings")
+        try FileManager.default.createDirectory(at: strings, withIntermediateDirectories: true)
+        for language in ExtensionStrings.languages { try Data(#"{"name": "x"}"#.utf8).write(to: strings.appendingPathComponent("\(language).json")) }
+        func run(_ verb: String) throws -> (status: Int32, said: String) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+            process.arguments = ["-I", ExtFixtures.repoRoot.appendingPathComponent("scripts/extension-strings.py").path, verb, folder.path]
+            let out = Pipe()
+            process.standardOutput = out
+            process.standardError = out
+            try process.run()
+            let said = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            process.waitUntilExit()
+            return (process.terminationStatus, said)
+        }
+        #expect(try run("check").status != 0)
+        let said = try run("status").said
+        #expect(said.contains("drops.play.title") && said.contains("entries.go") && said.contains("settings.tone.options.a"), "\(said)")
     }
 }

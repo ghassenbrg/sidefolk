@@ -70,6 +70,26 @@ def manifest_words(folder):
         paths += [("games", g, "title")] + ([("games", g, "tagline")] if meta.get("tagline") else [])
     for p, meta in m.get("palettes", {}).items():
         paths += [("palettes", p, "title")] + ([("palettes", p, "placeholder")] if meta.get("placeholder") else [])
+    # What Sidefolk D100 added: drops, entries and their items, settings and their choices, the AI's purpose, named commands.
+    for d in m.get("drops", []):
+        paths += [("drops", d["id"], "title")] + ([("drops", d["id"], "detail")] if d.get("detail") else [])
+
+    def entries(items):
+        for e in items:
+            yield ("entries", e["id"])
+            yield from entries(e.get("items", []))
+    paths += list(entries(m.get("entries", [])))
+    for s in m.get("settings", []):
+        paths += [("settings", s["key"], "title")] + ([("settings", s["key"], "detail")] if s.get("detail") else [])
+        paths += [("settings", s["key"], "options", o["value"]) for o in s.get("options", [])]
+    if m.get("permissions", {}).get("ai"):
+        paths.append(("ai_purpose",))
+    named = {c["name"] for meta in m.get("tools", {}).values() for c in meta.get("commands", []) if c.get("name")}
+    paths += [("commands", n, "say") for n in sorted(named)]
+    paths += [("parts", n) for n in sorted(m.get("parts", {}))]
+    paths += [("choices", n) for n in sorted(m.get("choices", {}))]
+    if m.get("carry"):
+        paths.append(("carry",))
     return paths
 
 

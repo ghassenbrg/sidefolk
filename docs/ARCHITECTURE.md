@@ -359,7 +359,7 @@ itself. Release side: docs/RELEASE.md › Updates.
 
 Folder with `sidefolk-extension.json`:
 ```json
-{ "id": "dev.sidefolk.system-vitals", "name": "System Vitals", "version": "1.0.0",
+{ "id": "dev.example.pocket-vitals", "name": "Pocket Vitals", "version": "1.0.0",
   "sidefolk": ">=0.1", "folk": "byte", "description": "...",
   "run": { "command": "python3", "args": ["main.py"] },
   "permissions": { "network": false, "files": { "read": [], "write": [] }, "exec": ["/usr/bin/pmset"] },

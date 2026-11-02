@@ -80,7 +80,7 @@ Three short columns, each with a small picture.
 
 ## 10. Extensions
 
-- **Copy:** Git, World Clock and System Vitals come built in. Add your own, sandboxed and shown in plain
+- **Copy:** World Clock, Weather, System Vitals and Calculator come with a fresh Mac, and Git is a click away in the gallery. Add your own, sandboxed and shown in plain
   words before you install. Or ask Sidefolk to write a small one for you; nothing installs until you click.
 - **Picture:** `screenshots/settings-extensions-light.png`
 - **Link:** "Write an extension" → docs/EXTENSIONS.md on GitHub.

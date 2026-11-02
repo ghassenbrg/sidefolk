@@ -26,7 +26,6 @@ enum ExtensionReservedNames {
     static func issues(_ manifest: ExtensionManifest, strings: ExtensionStrings?) -> [ValidationIssue] {
         var issues: [ValidationIssue] = []
         if isReserved(manifest.name) { issues.append(ValidationIssue(field: "name", message: "“\(manifest.name)” is kept for Sidefolk's own: choose another name.")) }
-        if let author = manifest.author, isReserved(author) { issues.append(ValidationIssue(field: "author", message: "“\(author)” is kept for Sidefolk's own.")) }
         for language in (strings?.tables.keys.sorted() ?? []) {
             if let name = strings?.tables[language]?.name, isReserved(name) {
                 issues.append(ValidationIssue(field: "strings/\(language).json", message: "“\(name)” is kept for Sidefolk's own: choose another name."))

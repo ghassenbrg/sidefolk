@@ -34,8 +34,8 @@ screen. You press ⌘⇧Space or click it and type what you want in plain words.
 questions, organising things, copying your Apple Notes into the notebook. You choose how often it asks
 before acting; files are only touched in folders you share and deleting means the Trash.
 
-**Also:** push-to-talk with on-device speech recognition (off by default), sandboxed extensions (Git,
-World Clock, System Vitals built in), ten languages, light and dark, and Claude Code / Codex can send it
+**Also:** push-to-talk with on-device speech recognition (off by default), sandboxed extensions (World Clock,
+Weather and System Vitals to start with, more in a gallery), ten languages, light and dark, and Claude Code / Codex can send it
 notes and reminders over MCP.
 
 **Privacy:** everything is stored in one folder on your Mac. No account, no analytics, no tracking.

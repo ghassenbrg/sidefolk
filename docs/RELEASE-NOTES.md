@@ -107,9 +107,9 @@ reminds and keeps watch, plays with you, and your AI agents can talk to it.
 ### Extensions
 - Sandboxed extensions (a manifest plus a program speaking MCP), with a permission sheet in plain words,
   pinned files, tamper detection, icons, and changed tools held for review (D13, D24).
-- Four built in, each a small program inside the app, so none needs anything installed: World Clock,
+- Four a fresh Mac starts with, installed once and yours to remove, each a small program that needs nothing installed: World Clock,
   System Vitals, Weather (forecasts, sunrise, sunset and the moon, a rain watcher) and Calculator (exact
-  sums, units, date maths) (D39, D55).
+  sums, units, date maths) (D98).
 - The add-on gallery, downloaded only when you pick one, as packs signed by Sidefolk's developer (D55):
   Git, Currency, Images, PDF Tools, QR Codes, Archives, Dev Toolbox, Feeds, Your Mac (a page of live
   gauges), Clipboard (history in a palette, ⌥P), Keep Awake, Miraya (your screen on a TV) and Playtime.
@@ -154,7 +154,7 @@ reminds and keeps watch, plays with you, and your AI agents can talk to it.
 - A Mac with Apple silicon and macOS 15 or later. `scripts/build-app.sh` builds for the Mac it runs on
   (arm64 on Apple silicon); a universal build has not been made or tested.
 - Optional: the `claude` or `codex` command signed in, an API key, or Ollama or LM Studio, for AI.
-  git (Apple's Command Line Tools or Homebrew) for the Git extension; the other built-ins need nothing.
+  git (Apple's Command Line Tools or Homebrew) for the Git extension; the others need nothing.
   macOS 26 or later for the better speech recognition.
 - To build: Xcode 26 or later (Swift 6.2).
 

@@ -96,7 +96,7 @@ public struct AddonUpdater: Sendable {
     }
 
     /// The gallery's extensions on this Mac (installed from it: origin `official`) that `catalog` has a newer version of
-    /// on `channel`. Built-ins follow the app; an extension from a folder is the person's own copy.
+    /// on `channel`. An extension from a folder is the person's own copy.
     public func extensionUpdates(in catalog: AddonCatalog, channel: UpdateChannel) async -> [AddonEntry] {
         await extensions.extensions().filter { $0.kind == .sidefolk && $0.origin == .official }.compactMap { have in
             guard let entry = catalog.entry(have.id, on: channel), entry.kind == .extension,

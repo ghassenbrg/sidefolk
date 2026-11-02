@@ -10473,6 +10473,71 @@
         }
       }
     },
+    "%@ says: %@" : {
+      "comment" : "VoiceOver: what an extension's panel announces, always with the extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقول %1$@: %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sagt: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ says: %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dice: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dit : %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dice: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ diz: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 说：%2$@"
+          }
+        }
+      }
+    },
     "%@ sent an answer I couldn't read. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -12903,6 +12968,71 @@
         }
       }
     },
+    "%@, by %@" : {
+      "comment" : "The frame of an extension's panel: its name and its author",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@، من %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, von %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, by %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, de %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, par %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, di %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@（作成：%2$@）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, 만든 이 %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, de %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@，作者 %2$@"
+          }
+        }
+      }
+    },
     "%@, charging" : {
       "localizations" : {
         "ar" : {
@@ -13075,6 +13205,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@，别看！"
+          }
+        }
+      }
+    },
+    "%@, not from Sidefolk" : {
+      "comment" : "The frame of an extension's panel: its name, when it names no author",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@، ليس من Sidefolk"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, nicht von Sidefolk"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, no es de Sidefolk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, ne vient pas de Sidefolk"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, non di Sidefolk"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（Sidefolk製ではありません）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, Sidefolk 제공 아님"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, não é da Sidefolk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@，并非来自 Sidefolk"
           }
         }
       }
@@ -42919,6 +43108,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来自文件夹的扩展：你看过它能做什么之后才会重新安装。"
+          }
+        }
+      }
+    },
+    "An extension shows this." : {
+      "comment" : "The Say bar, before Return: the sentence opens an extension's panel",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعرض ملحق هذا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Erweiterung zeigt das."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una extensión muestra esto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une extension affiche cela."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo mostra un’estensione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能が表示します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 보여 줘요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma extensão mostra isso."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由扩展来显示。"
           }
         }
       }
@@ -127832,6 +128080,65 @@
         }
       }
     },
+    "Not while you use Codex with your own AGENTS.md: Codex always reads that file, and the answer goes to the extension." : {
+      "comment" : "Under an extension's AI switch: why it can't use the person's AI now",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس ما دمت تستخدم Codex مع ملف AGENTS.md الخاص بك: يقرأ Codex هذا الملف دائمًا، وتذهب الإجابة إلى الملحق."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht, solange du Codex mit deiner eigenen AGENTS.md nutzt: Codex liest diese Datei immer, und die Antwort geht an die Erweiterung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No mientras uses Codex con tu propio AGENTS.md: Codex siempre lee ese archivo y la respuesta va a la extensión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas tant que vous utilisez Codex avec votre propre AGENTS.md : Codex lit toujours ce fichier, et la réponse va à l’extension."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non finché usi Codex con il tuo AGENTS.md: Codex legge sempre quel file e la risposta va all’estensione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分のAGENTS.mdがあるCodexを使っている間は利用できません。Codexは常にそのファイルを読み、回答は拡張機能に渡ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자신의 AGENTS.md가 있는 Codex를 쓰는 동안에는 안 돼요. Codex는 항상 그 파일을 읽고, 답변은 확장 프로그램으로 가요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não enquanto você usar o Codex com seu próprio AGENTS.md: o Codex sempre lê esse arquivo, e a resposta vai para a extensão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你使用带有自己的 AGENTS.md 的 Codex 时不可用：Codex 总会读取该文件，而回答会交给扩展。"
+          }
+        }
+      }
+    },
     "Note" : {
       "localizations" : {
         "ar" : {
@@ -192464,6 +192771,7 @@
       }
     },
     "That's faster than a surface takes moves." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -204650,6 +204958,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这会移除所有笔记、提醒、监视、文件夹授权和扩展，你的历史记录和日志，以及保存在钥匙串中的密钥。Sidefolk 会重新开始。此操作无法撤销。"
+          }
+        }
+      }
+    },
+    "This replaces Sidefolk's own %@ with a copy Sidefolk didn't sign. Its settings and what you always allowed for it won't carry over." : {
+      "comment" : "Install sheet: an unsigned folder takes the place of a signed extension; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يستبدل هذا %@ من Sidefolk بنسخة لم توقّعها Sidefolk. لن تنتقل إعداداته وما سمحت به دائمًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ersetzt Sidefolks %@ durch eine Kopie, die Sidefolk nicht signiert hat. Ihre Einstellungen und was du ihr immer erlaubt hast, werden nicht übernommen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto sustituye %@ de Sidefolk por una copia que Sidefolk no ha firmado. Sus ajustes y lo que siempre le permitiste no se conservarán."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ceci remplace %@ de Sidefolk par une copie que Sidefolk n’a pas signée. Ses réglages et ce que vous lui aviez toujours autorisé ne seront pas repris."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostituisce %@ di Sidefolk con una copia che Sidefolk non ha firmato. Le sue impostazioni e ciò che le avevi sempre consentito non verranno mantenuti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkの%@を、Sidefolkが署名していないコピーに置き換えます。設定と「常に許可」した内容は引き継がれません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 %@을(를) Sidefolk가 서명하지 않은 사본으로 바꿔요. 설정과 항상 허용한 내용은 이어지지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isso substitui %@ da Sidefolk por uma cópia que a Sidefolk não assinou. Os ajustes dela e o que você sempre permitiu não serão mantidos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会把 Sidefolk 的 %@ 换成未经 Sidefolk 签名的副本。它的设置和你一直允许的内容不会保留。"
           }
         }
       }

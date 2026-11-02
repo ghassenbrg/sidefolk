@@ -23,7 +23,7 @@ public struct ContextSources: Sendable {
     /// `LiveStateSummary.provider(db:)` builds them from the stores.
     public var liveState: @Sendable () async -> String?
     public var skills: @Sendable () async -> [SkillSummary]
-    /// Built-in extensions installed but switched off, one line each (`ExtensionContext.switchedOff`): what the AI
+    /// Sidefolk's own extensions installed but switched off, one line each (`ExtensionContext.switchedOff`): what the AI
     /// can suggest switching on, at a line's cost instead of every tool's.
     public var switchedOff: @Sendable () async -> [String]
     /// Sidefolk's own extensions in the add-on gallery that aren't installed (`ExtensionContext.inGallery`, D55).
@@ -220,7 +220,7 @@ public struct ContextBuilder: Sendable {
             "- Big jobs (many notes) go in batches: do a batch, say what's done and what's left, and continue when the user asks.",
         ]
         if !switchedOff.isEmpty {
-            lines.append("- Built-in extensions the user has switched off (Settings › Add-ons): " + switchedOff.joined(separator: "; ")
+            lines.append("- Sidefolk's own extensions the user has switched off (Settings › Add-ons): " + switchedOff.joined(separator: "; ")
                 + ". When one of them would do what the user asks, say which, and that they can switch it on there; you can't use it until they do.")
         }
         if !inGallery.isEmpty {

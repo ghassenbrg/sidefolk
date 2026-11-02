@@ -51,7 +51,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var extensionId: String?
     /// The site an address Sidefolk wrote itself reaches ("example.com"), which "Always allow" would cover (D47).
     public var site: String?
-    /// The one service a built-in reaches whatever the model writes ("Open-Meteo"), so the card can say so (D47).
+    /// The one service one of Sidefolk's own reaches whatever the model writes ("Open-Meteo"), so the card can say so (D47).
     public var service: String?
     /// The exact request an extension's tool would receive, for the card's "Exact request": the summary says it in
     /// words, clipped (D71).
@@ -60,7 +60,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var taintedBy: TaintSource?
     /// The approval mode for this caller when it asked: the card says Full access or Auto didn't answer it (D71).
     public var mode: GuardMode?
-    /// The tool is Sidefolk's own: built in, or a bundled or gallery extension.
+    /// The tool is Sidefolk's own: built in, or one of its signed extensions.
     public var firstParty = true
     public var createdAt: Date
     /// When it stops waiting and counts as unanswered, set by the broker from the wait it was given, so Home can say

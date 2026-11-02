@@ -48,7 +48,7 @@ public final class SidefolkRuntime: Sendable {
     private let upkeep = DailyChore()
 
     /// - Parameters:
-    ///   - bundledResources: the app's Resources folder (bundled skills, built-in and sample extensions).
+    ///   - bundledResources: the app's Resources folder (bundled skills, seed packs).
     ///   - extensionSecrets: environment values for an MCP server, read from the Keychain by server id.
     ///   - appleEvents: how Notes and Reminders are reached; tests pass a fake.
     ///   - approvalMinute: how long a minute of an unanswered approval lasts (D37); the UI snapshots

@@ -62,10 +62,9 @@ enum ExtensionFiles {
         return out
     }
 
-    /// What a copied file's quarantine becomes. A downloaded folder's copy keeps the download's mark for Gatekeeper
-    /// to judge (`original`). The app's own built-ins drop it (`none`): their files are sealed in the signed,
-    /// notarized app Gatekeeper already let run, and the install checks the copy against them; a downloaded app
-    /// marks every file inside it, and Gatekeeper would otherwise stop each built-in's program at launch.
+    /// What a copied file's quarantine becomes. A folder's copy keeps the download's mark for Gatekeeper to judge
+    /// (`original`). A pack Sidefolk signed drops it (`none`): its signature was checked before it was unpacked (T33), and
+    /// Gatekeeper would otherwise stop its program at launch.
     enum Quarantine { case original, none }
 
     /// Copies `source` into a new folder `dest` (which must not exist), file by file, without following links.

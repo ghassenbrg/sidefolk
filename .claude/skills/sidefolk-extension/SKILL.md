@@ -167,7 +167,7 @@ handlers, then `await ext.serve()`; top-level code is on the main actor. The Kit
 - **Tools**: `Schema.object([...], required:)` with `Schema.string/integer/number/boolean/array/path`; every object
   refuses unknown keys, so bound everything. Read with `args.string/int/double/bool/strings/required`. Throw
   `Problem("…")` for what the person or model can fix: it becomes an `isError` result. Third-party descriptions never
-  reach the model (D24); first-party ones (built-in and gallery, `ExtensionOrigin.firstParty`) do (D39, D55), so write
+  reach the model (D24); first-party ones (Sidefolk's signed packs, `ExtensionOrigin.firstParty`) do (D39, D55), so write
   them like prompts.
 - **Watchers**: return `Check(triggered:, state:, summary:)`. Trigger on change, not level, keeping what you need in
   `state` (≤ 64 KB); `summary` ≤ 200 characters. A page shows each watcher as a heads-up switch that runs
