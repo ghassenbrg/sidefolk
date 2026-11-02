@@ -304,8 +304,9 @@ struct CommandFrame: Sendable {
         func ends(_ text: String) -> [String: JSONValue]? {
             if names.contains(carry.residual(text)), meant || tookPart { return [:] }
             guard tookPart else { return nil }
-            if wholeSentences.contains(CommandText.key(text)) { return [:] }
-            let said = text.split(whereSeparator: \.isWhitespace).joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,;:-–—"))
+            // What joined the sentence to the part goes with the part: "flip a coin; tails".
+            let said = text.split(whereSeparator: \.isWhitespace).joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: " ,;:!-–—"))
+            if wholeSentences.contains(CommandText.key(said)) { return [:] }
             return slottedSentences.lazy.compactMap { $0.match(said) }.first
         }
         if let rest = ends(text) { return values.merging(rest) { own, _ in own } }

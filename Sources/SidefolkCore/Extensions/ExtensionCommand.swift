@@ -277,7 +277,8 @@ public struct CommandSentence: Sendable {
         // Two letters at least, spaces aside: Korean spaces between syllables ("한 판 더").
         let hangul = literal.unicodeScalars.contains { (0xAC00...0xD7A3).contains($0.value) }
         let wording = hangul ? literal.filter { !$0.isWhitespace } : literal
-        guard loneSum || wording.range(of: #"\p{L}{2,}"#, options: .regularExpression) != nil else {
+        // A character of a script written without spaces is a word by itself ("玩").
+        guard loneSum || wording.range(of: #"\p{L}{2,}"#, options: .regularExpression) != nil || CommandText.isUnspaced(literal) else {
             throw CommandProblem(message: "needs at least one word of its own, like “time in {place:place}”.")
         }
         if case .slot(let first) = pieces.first, first.isFree {
