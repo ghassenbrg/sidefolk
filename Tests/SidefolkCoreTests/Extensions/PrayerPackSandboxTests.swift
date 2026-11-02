@@ -244,6 +244,103 @@ import Testing
         #expect(String(describing: page).contains("Al Malik"))
     }
 
+    private func saveTwoReminders(_ w: World) async throws {
+        try await w.run("save_reminders", ["master": true, "companion": true, "system": false, "prayers": ["maghrib": ["before": 5, "at": true, "iqamah": -1]]])
+        #expect(await w.consent(true).isOK)
+        try await waitFor { await w.pending() == 2 }
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func withoutTodaysDaysGoodRemindersStay() async throws {
+        let w = try await World()
+        try await saveTwoReminders(w)
+        let data = w.h.host.dataFolder(extensionId: Self.id)
+        try Data("offline".utf8).write(to: data.appendingPathComponent("debug-network.txt"))
+
+        // Cleared downloads and no network: nothing to plan from, so what is planned stays.
+        try await w.run("clear_data", ["scope": "cache"])
+        try await Task.sleep(for: .milliseconds(500))
+        #expect(await w.pending() == 2, "clearing downloads changes no reminder")
+
+        // A program started fresh with nothing, asked for a plan, as at launch.
+        await w.h.host.askForPlan(Self.id, reason: "start")
+        try await Task.sleep(for: .milliseconds(500))
+        #expect(await w.pending() == 2, "a launch without today's days keeps the plan")
+
+        // The days come back and the plan is made from them.
+        try Data("fixtures".utf8).write(to: data.appendingPathComponent("debug-network.txt"))
+        await w.h.host.askForPlan(Self.id, reason: "wake")
+        try await Task.sleep(for: .milliseconds(500))
+        #expect(await w.pending() == 2)
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func changingTheConventionMovesTheRemindersAfterTheDaysCome() async throws {
+        let w = try await World()
+        try await saveTwoReminders(w)
+        try await w.run("save_calculation", ["method": 3, "school": 1])
+        // Asr moves with the school; Maghrib doesn't: nothing was lost on the way.
+        try await Task.sleep(for: .milliseconds(500))
+        #expect(await w.pending() == 2)
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func remindersCanBeTurnedOffInASentence() async throws {
+        let w = try await World()
+        try await saveTwoReminders(w)
+        #expect(try await w.run("reminders_off").contains("off"))
+        try await waitFor { await w.pending() == 0 }
+        #expect(try await w.run("pause_reminders").contains("nothing to pause"))
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func aPauseEndsWhereItCanBeSeen() async throws {
+        let w = try await World()
+        try await saveTwoReminders(w)
+        for until in ["2099-01-01T00:00:00Z", "2020-01-01T00:00:00Z", "whenever"] {
+            let outcome = await w.h.env.executor.execute(name: "ext.prayer-times.pause_reminders", input: ["until": .string(until)], caller: .user)
+            #expect(!outcome.isOK, "\(until)")
+        }
+        try await w.run("pause_reminders", ["until": "tomorrow"])
+        let summary = try #require(try await w.page().summary)
+        let detail = Self.plain(summary.detail)
+        #expect(detail.contains("paused until"), "\(detail)")
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func aMosqueCanBeTheFirstThingSetUp() async throws {
+        let w = try await World(place: false)
+        let setup = String(describing: try await w.page())
+        let manual = String(describing: try await w.page(["sheet": "manual"]))
+        #expect(manual.contains("save_manual"), "the setup's own button goes somewhere")
+        let review = String(describing: try await w.page(["sheet": "import"]))
+        #expect(review != setup)
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func clearingEverythingForgetsAFileBeingLookedOver() async throws {
+        let w = try await World()
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("noor-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let csv = folder.appendingPathComponent("mosque.csv")
+        try Data("date,fajr,dhuhr,asr,maghrib,isha\n2026-11-02,05:00,11:40,14:30,16:46,18:10\n".utf8).write(to: csv)
+        try await w.run("import_csv", ["path": .string(csv.path)])
+        let holding = w.h.host.dataFolder(extensionId: Self.id).appendingPathComponent("import-review.json")
+        #expect(FileManager.default.fileExists(atPath: holding.path))
+        try await w.run("clear_data", ["scope": "all"])
+        #expect(!FileManager.default.fileExists(atPath: holding.path))
+        let outcome = await w.h.env.executor.execute(name: "ext.prayer-times.save_import", input: .object([:]), caller: .user)
+        #expect(!outcome.isOK, "nothing is left to add")
+    }
+
+    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    func anotherPlacesTimetableDoesNotStayListed() async throws {
+        let w = try await World()
+        try await w.run("choose_place", ["label": "Paris", "country": "France", "latitude": 48.8566, "longitude": 2.3522, "zone": "Europe/Paris"])
+        let sources = String(describing: try await w.page(["sheet": "prefs", "section": "sources"]))
+        #expect(!sources.contains("35.68"), "only the place's own calculated source")
+    }
+
     private func waitFor(_ condition: () async -> Bool) async throws {
         for _ in 0..<100 {
             if await condition() { return }

@@ -99,6 +99,7 @@ struct PageTableView: View {
                 lined.frame(minWidth: 560).frame(maxWidth: .infinity, alignment: .leading)
                 stacked
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .cardSurface()
         }
     }
