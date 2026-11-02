@@ -45,6 +45,17 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         present()
     }
 
+    /// A watch's page, in a Home that comes to the front.
+    func showWatch(_ id: String) {
+        show()
+        model.now.openWatch?(id)
+    }
+
+    func showWatchers() {
+        show()
+        model.selection = .watchers
+    }
+
     /// Opens History with the conversation `thread` open in place (D45, D84).
     func show(conversation thread: String?) {
         Task { await model.showConversation(thread) }
@@ -103,17 +114,6 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
 
     /// Dev channel: `home:<place>` (today, calendar, notebook, onduty, history, you, trash, gallery), and History's filter
     /// as `home:history:agents` (D84).
-    /// A watch's page, in a Home that comes to the front.
-    func showWatch(_ id: String) {
-        show()
-        model.now.openWatch?(id)
-    }
-
-    func showWatchers() {
-        show()
-        model.selection = .watchers
-    }
-
     func showPlace(_ place: String) {
         let parts = place.split(separator: ":").map(String.init)
         switch parts.first {
