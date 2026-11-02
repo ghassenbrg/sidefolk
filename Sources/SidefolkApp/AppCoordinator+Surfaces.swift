@@ -40,7 +40,7 @@ extension AppCoordinator {
         if let previous = controller.model { finish(previous, reason: .closed) }
         let s = runtime.settings.current
         let host = runtime.extensions
-        let session = SurfaceSession(info: info, host: host, reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        let session = SurfaceSession(info: info, host: host, reduceMotion: SurfaceModel.reducesMotion)
         let model = SurfaceModel(info: info, session: session, soundsOn: false)
         // An overlay is a moment: a companion that came out for it goes again with it.
         surfaceRevealedCompanion = wasHidden && info.presentation == .overlay ? ObjectIdentifier(model) : nil
@@ -186,7 +186,7 @@ extension AppCoordinator {
             let points = argument.split(separator: ":").compactMap { point(String($0)) }
             Task { await controller.devMouse(points) }
         case "surfaceKey":
-            _ = controller.model?.press(argument, seat: nil, timestamp: ProcessInfo.processInfo.systemUptime)
+            _ = controller.model?.press(argument, seat: argument.count == 1 ? argument : nil, timestamp: ProcessInfo.processInfo.systemUptime)
         case "surfaceMove":
             let bits = argument.split(separator: "=", maxSplits: 1).map(String.init)
             if let area = bits.first { controller.model?.send(.click(area: area, value: bits.count > 1 ? bits[1] : nil, ms: nil)) }

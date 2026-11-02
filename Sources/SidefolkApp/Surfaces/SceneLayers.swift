@@ -72,8 +72,8 @@ final class SceneLayers {
         if let s = node.shadow {
             main.shadowColor = SceneColors.cg(s.color, appearance: view.effectiveAppearance)
             main.shadowRadius = s.radius
-            // The canvas is flipped, as a shadow's offset isn't.
-            main.shadowOffset = CGSize(width: s.dx, height: -s.dy)
+            // The layers' geometry is the flipped view's: a positive `dy` falls down the canvas, as it says.
+            main.shadowOffset = CGSize(width: s.dx, height: s.dy)
             main.shadowOpacity = 1
         } else {
             main.shadowOpacity = 0
