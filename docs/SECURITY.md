@@ -865,6 +865,8 @@ person installed. A clever picture inside the frame can still look like somethin
 whose it is, and it can catch nothing while a real card waits. An overlay's transparent pixels pass clicks through by AppKit's
 own rule, which wasn't tested with a real pointer.
 
+A tool's reply can open its surface with arguments of its own, which `surfaces.open`'s filter on a model's words doesn't touch: a model could otherwise start something by itself with free words from a page it read (a topic that spends the person's AI, in Playtime's case). `trusted_only` on a tool drops such arguments in a tainted turn, in `ExtensionTool.run`, before the program hears them (D101). History's row and a Guard card still show what the model asked.
+
 **T29 Crashing Sidefolk, or making it forget a setting, from outside (M/M), D41.** Other agents, extensions,
 web pages and stored rows hand Sidefolk numbers and errors. A crash is a denial of service, and a crash caused by
 a stored row is a loop at every launch; an error answered with a default can quietly undo a setting the person

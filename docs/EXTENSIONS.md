@@ -799,7 +799,7 @@ button or a tool the AI called can start a surface, for your own only, as your m
 `open_surface` (or just its name): the person's own click or command takes the keyboard; the AI's call opens only a surface marked
 `ai`, and waits for a click; a routine, another agent or a watcher opens nothing. `close_surface` (a name, or `true` for whichever of
 yours are open) puts it away, kept. `open_page` shows your page in Home, for the person's own click or command only. `hold_answer_ms`
-(up to 5000) keeps the AI's words back while an animation is still showing the result. Anything else is left out. Kit:
+(up to 5000) keeps your reply back while an animation is still showing the result: the card a person's command gets, what is said aloud and the AI's words, even for a read-only tool. `row` says in History what this call did in place of the tool's title and arguments ("Flip a coin — Heads!"); believed only of packs Sidefolk signed, like `summary`. A surface your tool opened this way has no History row of its own: your tool's call is the row. Anything else is left out. Kit:
 `ext.tool(…, reply: { args in ToolReply("Opening").opening(surface: "board", arguments: […]) })`. An entry can also name a surface directly
 (`"surface": "board"`, `input` being what it starts with). This is never a push: it only ever answers a call someone made through Guard.
 
@@ -821,7 +821,7 @@ Everything but `nodes` may be left out. In the Kit: `Scene(width:height:) { … 
 - **`styles`** are keys a node takes with `"style": "cell"` (its own keys win), to keep a large board under 64 KB. A 9 × 9 board
   with pencil notes in every cell, built with the Kit, fits.
 - **`after_still_ms`** is `after_ms` under Reduce Motion, when what it waits for doesn't play; you aren't told that setting.
-  **`speaker`**: a switch among your settings that the frame's speaker is while this scene shows.
+  **`speaker`**: a switch among your settings that the frame's speaker is while this scene shows; `false`: this scene has no sound, so the frame shows no speaker and none plays.
 - **`after_ms`** (100–10000), **`input_after_ms`** (no moves for so long), **`transition_ms`** (a node that changed since the last
   scene eases to its new place, its new size showing at once, up to 1000), **`announce`** (what VoiceOver hears), **`mirror`** (false: never mirrored).
 - **`over`** says it ended; Sidefolk stops its clocks and writes its one Activity row in its own words. `outcome` (`win`,
@@ -979,10 +979,16 @@ For a look no part offers, a **scene inside the page**: `{"type": "scene", "scen
 {"type": "settings", "title": "Settings", "keys": ["sounds", "region"], "ai": true}
 ```
 
+To dress them in your own colours (all `#RRGGBB`, so a new look needs no release of Sidefolk): a hero's `tile` (one or two, its symbol's tile, the symbol white) and `wash` (one or two, a soft wash over the card); a stat's `color` for its symbol; a section's `banner: {"tint", "symbol"}` puts its title on a tinted band beside its `picture` or that symbol, and `wide: true` takes the page's width whatever it holds. A button's `"shape": "round"` is its symbol in a filled circle (a tick takes its place once the card is `done`, and the picture still runs it); `"style": "accent"` is filled like the primary without being the page's one primary. A `settings` part's `"grid": true` gives each choice a small card of its own, with its picture from `pictures` by key; `ai_title` and `ai_detail` are your words for the AI switch, believed only of packs Sidefolk signed.
+
 Caps: 6 stats, 48 cards (3 buttons and a menu of 8 each), 2–6 tabs (no tabs inside; switching asks nothing of the program), 32 badges, 20 recent; a section
 may have a `picture` beside its title. A picture is addressed, never fetched: `{"pack": path, "dark": path}` in the folder the manifest's `assets` names
 (pinned at install; a card's `color` then is the tile it stands on), `{"data": name}` in the data folder, `{"companion": "face"|"full"}`, `{"person": true}` (Sidefolk places these; you never read them). A hero with a
 `scene` carries the page's title itself. In the Kit: `.stats`, `.cards`, `.tabs`, `.badges`, `.recent`, `.settings`, `Hero(scene:figure:says:)`, `Picture`.
+
+### Free words after outside content
+
+`"trusted_only": ["topic"]` on a tool lists arguments of free words that do something by themselves. Sidefolk leaves them out of a call from an AI that has read something from outside in this turn, since they may be whoever wrote that page's (T40). The person's own call and a clean turn keep them.
 
 ### Commands with slots, in every language
 
@@ -1010,7 +1016,7 @@ may have a `picture` beside its title. A picture is addressed, never fetched: `{
  "carry": {"words": ["jouons", "au", "un"], "lead": ["jouons"], "inside": [], "endings": []}}
 ```
 
-A whole sentence (`say`) matches as before (D50). A command with `names` takes its parts anywhere around the name, in any order: "play a quiz about the sea, hard, 10 questions" gives
+A whole sentence (`say`) matches as before (D50). With `with`, parts may stand around it too, and what is left must still be the sentence, word for word ("roll a die for me again", `{"say": ["roll a die"], "with": ["again"]}`): the way to say "with or without this" without writing each form out. A character of a script written without spaces is a word by itself (`玩`). What the person calls the companion just now carries a sentence with a name in every extension ("play marbles with mochi"), so you never list it. A command with `names` takes its parts anywhere around the name, in any order: "play a quiz about the sea, hard, 10 questions" gives
 `{"what": "quiz", "level": "hard", "topic": "sea", "count": 10}`. Once the parts and carrying words are out, exactly its name must be left, and a bare name needs a `lead` word or a part, so another extension's word
 stays theirs. `inside` lists carrying words taken out wherever they are (Japanese, Chinese), `endings` those off a word's end (Korean particles). Two numbers in a phrase read low to high. Slots: every kind in
 [commands](#answering-without-the-ai-commands), bounds (`{n:integer:1-50}`, `{t:text:40}`), `{x:list}` from `words`, `{x:enum}` from `choices` (the tool gets the value). A part's slots fill the argument of their name; one left out is left out.
@@ -1048,7 +1054,7 @@ folder goes under an argument the tool lists in `paths`. At most three offers sh
 ]
 ```
 
-Up to 64. `"listed": false` keeps one out of Settings › Add-ons and its search, for what you hold per thing you have many of: it shows only where you name it (a `settings` part's `keys`, a scene's `speaker`). Sidefolk stores them, shows them under Settings › Add-ons and with a `settings` part on your page, finds them in Settings' search, backs them up, keeps them through updates, and removes them with the extension. Every `tools/call` and `sidefolk/` request carries `settings`, all of them, defaults filled; a change sends the notice `sidefolk/settings.changed`. Change one of your own with the notice `sidefolk/settings.set {key, value}` (a speaker button on your surface): it's checked and goes in History. The AI can't change them: offer a tool for that. Words: `settings.<key>.title|detail|options.<value>`. Kit: `ExtensionSettings.bool("sounds")`, `ExtensionSettings.set(…)`, `ext.settingsChanged`.
+Up to 64. `"follows": "<key>"` (another setting of the same type that follows nothing) reads that one until this one is changed, and a change to that one clears this one: one choice for all and a change for one thing, in one write and one History row. `"segmented": true` shows a choice of up to four short options side by side. `"listed": false` keeps one out of Settings › Add-ons and its search, for what you hold per thing you have many of: it shows only where you name it (a `settings` part's `keys`, a scene's `speaker`). Sidefolk stores them, shows them under Settings › Add-ons and with a `settings` part on your page, finds them in Settings' search, backs them up, keeps them through updates, and removes them with the extension. Every `tools/call` and `sidefolk/` request carries `settings`, all of them, defaults filled; a change sends the notice `sidefolk/settings.changed`. Change one of your own with the notice `sidefolk/settings.set {key, value}` (a speaker button on your surface): it's checked and goes in History. The AI can't change them: offer a tool for that. Words: `settings.<key>.title|detail|options.<value>`. Kit: `ExtensionSettings.bool("sounds")`, `ExtensionSettings.set(…)`, `ext.settingsChanged`.
 
 `settings_from: "<section>"` and `carries: {"store": [...], "history": [...]}` (Sidefolk's own extensions only): once, Sidefolk's request `sidefolk/settings.carry {from, values, store, history}` gives what the app kept for this work: the section, values of its store by name, and a copy of what History has of a tool (up to 2,000 rows, each `at`, `summary`, `args`). Your `{settings: {…}}` are stored, and `{"ai": false}` sets the person's AI switch off, for someone who had said no. It can't turn it on. Kit: `ext.carry { section, values in … }`, `ext.carryAll { section, values, store, history in … }`.
 
@@ -1070,6 +1076,8 @@ A request is at most 8,000 characters and 32,000 bytes. **Codex:** it always add
 
 Sidefolk speaks ten languages (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`), and so can your
 extension (D76). Two parts:
+
+The same English can need two words: `L("Solved", context: "games")` has its own key in `strings/` (`games|Solved`) and reads as `Solved` in English; `extension-strings.py sync` writes it.
 
 **What the manifest shows people**, before your program ever runs (Settings, the install sheet, the gallery, Home's
 sidebar, heads-ups): put each language's words in `strings/<language>.json` beside the manifest.
