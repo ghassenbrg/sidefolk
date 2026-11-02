@@ -224,6 +224,21 @@ import Testing
         #expect(listed == approved)
     }
 
+    /// Reading no manifest looks just like a clean app, so the binary check refuses to say so.
+    @Test func theBinaryCheckFailsHavingReadNothing() throws {
+        let empty = FileManager.default.temporaryDirectory.appendingPathComponent("no-addons-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: empty) }
+        let run = Process()
+        run.executableURL = URL(fileURLWithPath: "/bin/sh")
+        run.arguments = [Self.root.appendingPathComponent("scripts/extension-free-binary.sh").path, "--strict", empty.path, empty.path]
+        run.standardOutput = FileHandle.nullDevice
+        run.standardError = FileHandle.nullDevice
+        try run.run()
+        run.waitUntilExit()
+        #expect(run.terminationStatus == 2)
+    }
+
     /// What the guard read through once and missed, now seen: ids from what a surface takes and an entry's input, a name with commas, words of chance.
     @Test func theGuardSeesWhatItsReviewPlanted() throws {
         let word = try #require(try Self.anyOf(["higher lower", "rock paper scissors"]))

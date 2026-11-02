@@ -35,7 +35,7 @@ for file in glob.glob(os.path.join(sys.argv[1], "extensions", "*", "sidefolk-ext
 print("\n".join(sorted(out)))
 PY
 # Reading no manifest would look just like a clean app.
-if [ ! -s "$words" ]; then
+if [ -z "$(tr -d '[:space:]' < "$words")" ]; then
     echo "No extension's manifest under $addons/extensions: nothing to look for, so nothing was checked." >&2
     exit 2
 fi
