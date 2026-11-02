@@ -38,7 +38,8 @@
     },
     "again": { "title": "Greet again", "risk": "low", "mutates": false, "ai": false,
                "commands": [{ "name": "again", "say": ["greet again", "one more greeting"] }] },
-    "riddle": { "title": "Write a line", "risk": "low", "mutates": false },
+    "riddle": { "title": "Write a line", "risk": "low", "mutates": false,
+                "commands": [{ "name": "riddle", "say": ["write a line about {word:text}"] }] },
     "note": { "title": "Note it in History", "risk": "low", "mutates": false },
     "keep": { "title": "Keep a link", "risk": "low", "mutates": false },
     "quiet": { "title": "Greet quietly", "risk": "low", "mutates": false }

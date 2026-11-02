@@ -553,7 +553,6 @@ enum UISnapshots {
             // An extension offers something for a video link (D100). Ask holds its actions weakly, so they're kept here.
             let tvActions = FixtureAskActions()
             tvActions.drops = [SampleRichPage.drop]
-            tvActions.entries = [SampleRichPage.askEntry]
             // Today's tab with nothing in it (D84).
             let calmDay = AskModel()
             calmDay.actions = actions
@@ -935,6 +934,7 @@ enum UISnapshots {
         let ask = AskModel()
         ask.actions = actions
         ask.attachment = Attachment(kind: kind, label: label, text: text)
+        if !actions.drops.isEmpty { ask.entryTabs = [SampleRichPage.askEntry] }
         return ask
     }
 

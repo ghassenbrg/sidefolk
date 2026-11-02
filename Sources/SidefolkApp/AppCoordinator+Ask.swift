@@ -160,8 +160,6 @@ extension AppCoordinator: AskActions {
 
     func openPlay() { openPlayMenu(focus: true) }
 
-    var askEntries: [ExtensionEntry] { runtime.extensions.shelf.entries(in: .ask) }
-
     func open(_ entry: ExtensionEntry) { run(entry) }
 
     func openConversation(_ thread: String?) {

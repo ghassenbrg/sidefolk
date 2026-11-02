@@ -326,7 +326,7 @@ private struct HistoryRow: View {
         switch event.kind {
         case .action(let e):
             switch Describe.callerKind(e.caller) {
-            case "user": PersonAvatar()
+            case "user", "command": PersonAvatar()
             case "agent": CompanionAvatar(settings: home.services.runtime.settings.current)
             case "external": FolkAvatar(name: "byte", size: Theme.Size.avatar)
             case "routine": FolkAvatar(name: "tempo", size: Theme.Size.avatar)

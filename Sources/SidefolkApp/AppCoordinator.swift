@@ -429,9 +429,25 @@ final class AppCoordinator {
         }
         if command.hasPrefix("dropChoice:") {
             // One of the drop card's choices, as a click on it (D84).
-            if let choice = DropChoice(rawValue: String(command.dropFirst("dropChoice:".count))), let attachment = ask.attachment {
-                perform(choice, with: attachment, in: ask)
+            let name = String(command.dropFirst("dropChoice:".count))
+            if let attachment = ask.attachment {
+                if let choice = DropChoice(rawValue: name) {
+                    perform(choice, with: attachment, in: ask)
+                } else if let offer = extensionDrops(for: attachment).first(where: { $0.key == name }) {
+                    perform(offer, with: attachment, in: ask)
+                }
             }
+            return
+        }
+        if command.hasPrefix("uninstall:") {
+            // uninstall:<extension id>: as Settings › Add-ons' Remove does, without its question.
+            Task { _ = await uninstallExtension(String(command.dropFirst("uninstall:".count))) }
+            return
+        }
+        if command.hasPrefix("entry:") {
+            // An extension's menu item or tab (D100), as a click on it.
+            func flat(_ list: [ExtensionEntry]) -> [ExtensionEntry] { list.flatMap { [$0] + flat($0.items) } }
+            if let entry = flat(runtime.extensions.shelf.entries).first(where: { $0.id == command.dropFirst("entry:".count) }) { run(entry) }
             return
         }
         if command.hasPrefix("drop:") {
@@ -673,6 +689,8 @@ final class AppCoordinator {
     /// `slipsOnly`: a permission slip arrived while Ask was closed; it stands alone above the companion.
     func showAsk(prefill: String? = nil, focus: Bool = true, slipsOnly: Bool = false) {
         if let prefill { ask.text = prefill }
+        // As they are now: an extension that is gone leaves no tab (D100).
+        ask.entryTabs = runtime.extensions.shelf.entries(in: .ask)
         // Opened with nothing to say yet while something waits or comes up: Today first (D84); otherwise the
         // conversation, where typing goes either way.
         if !askPanel.isVisible || ask.compact {

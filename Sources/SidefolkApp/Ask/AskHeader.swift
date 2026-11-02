@@ -60,7 +60,7 @@ struct AskHeader: View {
     }
 
     /// Two at most: the row stays one row whichever extensions are on.
-    private var entries: [ExtensionEntry] { Array((model.actions?.askEntries ?? []).prefix(2)) }
+    private var entries: [ExtensionEntry] { Array(model.entryTabs.prefix(2)) }
 
     private func choose(_ tab: AskTab) {
         switch tab {

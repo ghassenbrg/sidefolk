@@ -7,6 +7,7 @@ struct SettingsRoot: View {
     var model: SettingsModel
     @FocusState private var searchFocused: Bool
     private var navigation: SettingsNavigation { model.navigation }
+    private var addonResults: [ExtensionSettingRow] { model.addonSettings(matching: navigation.query) }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -40,7 +41,7 @@ struct SettingsRoot: View {
     private var header: some View {
         HStack(spacing: Theme.Space.m) {
             if navigation.searching {
-                let count = navigation.results.count
+                let count = navigation.results.count + addonResults.count
                 Text(count == 0 ? String(localized: "Nothing for “\(navigation.query)”", comment: "Settings search: no results")
                      : String(localized: "\(count) results for “\(navigation.query)”", comment: "Settings search: “6 results for “quiet””"))
                     .font(Theme.Font.title2).foregroundStyle(Theme.ink).lineLimit(1)
@@ -217,8 +218,7 @@ struct SettingsSearchResults: View {
 
     var body: some View {
         let results = navigation.results
-        let addons = SettingsSearch.find(navigation.query, in: model.services.runtime.extensions.shelf.settings.map(\.searchEntry))
-            .compactMap { found in model.services.runtime.extensions.shelf.settings.first { $0.id == found.id } }
+        let addons = model.addonSettings(matching: navigation.query)
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.xl) {

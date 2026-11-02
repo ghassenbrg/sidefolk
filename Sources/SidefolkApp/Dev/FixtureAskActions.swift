@@ -39,7 +39,6 @@ final class FixtureAskActions: AskActions {
     func perform(_ action: DropChoice, with attachment: Attachment, in model: AskModel) {}
     /// What a fictional extension offers for a drop (D100's drop actions).
     var drops: [ExtensionDropAction] = []
-    var entries: [ExtensionEntry] = []
     func dropChoices(for attachment: Attachment) -> [DropChoice] {
         DropChoices.choices(for: attachment.dropKind, offers: extensionDrops(for: attachment).count)
     }
@@ -47,7 +46,6 @@ final class FixtureAskActions: AskActions {
         DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
     }
     func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel) {}
-    var askEntries: [ExtensionEntry] { entries }
     func open(_ entry: ExtensionEntry) {}
     func open(_ attachment: Attachment, with app: URL, in model: AskModel) {}
     func openPlay() {}

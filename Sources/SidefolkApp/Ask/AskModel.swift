@@ -146,8 +146,6 @@ protocol AskActions: AnyObject {
     func openNow()
     /// The Play panel's menu of games, in Ask's place (D84).
     func openPlay()
-    /// Extensions' tabs beside Ask's own (D100).
-    var askEntries: [ExtensionEntry] { get }
     func open(_ entry: ExtensionEntry)
 }
 
@@ -182,6 +180,8 @@ final class AskModel {
     }
     /// The conversation or a compact Today under the field (D84).
     var tab: AskTab = .ask
+    /// Extensions' tabs beside Ask's own (D100), as they were when it opened.
+    var entryTabs: [ExtensionEntry] = []
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
     let found = FindModel()
     /// Today at a glance, shown while nothing is typed (D58): Ask's resting state, on top of the stack (D84).

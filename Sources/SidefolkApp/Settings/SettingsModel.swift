@@ -325,6 +325,12 @@ final class SettingsModel {
         extensions = await services.extensions()
     }
 
+    /// What extensions that are on declare and a search finds (D100), best first.
+    func addonSettings(matching query: String) -> [ExtensionSettingRow] {
+        let all = services.runtime.extensions.shelf.settings
+        return SettingsSearch.find(query, in: all.map(\.searchEntry)).compactMap { found in all.first { $0.id == found.id } }
+    }
+
     /// The person's switch for an extension's use of their AI (D100).
     func setAI(_ on: Bool, extensionId id: String) async {
         await services.runtime.extensions.setAIAllowed(extensionId: id, on)
