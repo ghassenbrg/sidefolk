@@ -101,3 +101,40 @@ struct SceneSampleTests {
         return pack
     }
 }
+
+/// What the Kit writes for the review's abilities is what the app reads (D99, D100).
+struct KitAbilityTests {
+    @Test func theKitsNewPartsAreRead() throws {
+        let scene = SidefolkExtensionKit.Scene(width: 300, height: 200) {
+            Node.scroll(contentHeight: 600, scrollTo: "low") { Node.rect(fill: .accent.tuned(alpha: 0.5, brightness: -0.1)).id("low").at(0, 500).size(300, 40) }.id("list").size(300, 200)
+            Node.text("VS", size: 20, weight: "black").textLook(italic: true, tabular: true, strike: true).id("vs").size(100, 30)
+            Node.runs([(text: "First ", color: nil, weight: "bold"), (text: "the rest", color: .inkMuted, weight: nil)], lines: 2).id("runs").size(100, 30)
+            Node.symbol("xmark").symbolLook(weight: "black", mono: true).id("mark").size(20, 20)
+            Node.companion().figure(face: true, bottom: true, duotone: .hex("#F0C040")).id("coin").size(40, 40)
+            Node.entry(name: "answer").fieldLook(focus: true, plain: true, weight: "semibold", design: "rounded").id("field").size(100, 30)
+            Node.rect().id("ok").size(40, 30).area("ok", label: "OK", hover: nil, looks: ["vs": AreaLook(dy: -1, opacity: 1, rotate: 4)], submits: "answer", selected: true)
+            Node.rect().id("plots").size(40, 30).area("plots", label: "Plots", drag: .cells(rows: 2, columns: 2, inset: 3))
+        }.afterStill(ms: 200).speaker("sounds")
+        let read = try SceneSampleTests.read(scene)
+        guard case .scroll(let box)? = read.node("list")?.kind, case .shape(let fill)? = read.node("low")?.kind else { Issue.record("\(read.nodes)"); return }
+        #expect(box.contentHeight == 600 && box.to == "low" && fill.fill == .tuned(.accent, alpha: 0.5, brightness: -0.1))
+        guard case .text(let vs)? = read.node("vs")?.kind, case .text(let runs)? = read.node("runs")?.kind, case .symbol(let mark)? = read.node("mark")?.kind else { Issue.record("\(read.nodes)"); return }
+        #expect(vs.italic && vs.tabular && vs.strike && vs.weight == .black && runs.runs.count == 2 && mark.mono && mark.weight == .black)
+        guard case .companion(_, let look)? = read.node("coin")?.kind else { Issue.record("\(read.nodes)"); return }
+        #expect(look.face && look.bottom && look.duotone != nil)
+        #expect(read.entries.first?.focus == true && read.entries.first?.plain == true)
+        let ok = try #require(read.areas.first { $0.id == "ok" })
+        #expect(ok.submits == "answer" && ok.selected && ok.looks["vs"]?.absolute == true && ok.hover == nil)
+        #expect(read.areas.first { $0.id == "plots" }?.drag?.inset == 3)
+        #expect(read.afterStill == 0.2 && read.speaker == "sounds")
+    }
+
+    @Test func aPageSceneComesThroughThePage() throws {
+        let block = PageSceneBlock(SidefolkExtensionKit.Scene(width: 300, height: 100) { Node.rect().id("go").size(50, 50).area("go", label: "Go") }, actions: ["go": (tool: "start", input: ["a": 1])])
+        let data = try JSONSerialization.data(withJSONObject: ["sections": [["blocks": [block.json]]]])
+        let json = try JSONValue.parse(String(decoding: data, as: UTF8.self))
+        let page = try ExtensionPage.parse(json)
+        guard case .scene(let scene)? = page.sections.first?.blocks.first else { Issue.record("\(page)"); return }
+        #expect(scene.action(area: "go", value: nil)?.tool == "start")
+    }
+}

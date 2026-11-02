@@ -130,7 +130,8 @@ struct CommandFrameTests {
 
     @Test func approvalWordsInAnyLanguageAreNeverACommand() {
         for word in ["yes", "No", "approve", "deny", "allow", "always allow", "oui", "ja", "はい", "네", "是", "نعم", "non", "nein", "いいえ"] {
-            #expect(throws: CommandProblem.self, "\(word)") { try CommandSentence(word) }
+            // Refused, or at least never matched: a manifest that says one fails at install (`replySentences`).
+            #expect((try? CommandSentence(word))?.match(word) == nil, "\(word)")
         }
     }
 }

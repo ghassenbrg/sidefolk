@@ -85,7 +85,7 @@ import Testing
         #expect(!(await f.build("hi").system.contains("switched off")))
         f.builder.sources.switchedOff = { ["PDF Tools (A PDF's details and text)", "QR Codes (Makes a QR code picture)"] }
         let ctx = await f.build("merge these two PDFs")
-        #expect(ctx.system.contains("- Built-in extensions the user has switched off (Settings › Add-ons): PDF Tools (A PDF's details and text); "
+        #expect(ctx.system.contains("- Sidefolk's own extensions the user has switched off (Settings › Add-ons): PDF Tools (A PDF's details and text); "
             + "QR Codes (Makes a QR code picture). When one of them would do what the user asks, say which"))
         let off = ExtensionContext.switchedOff([
             ExtensionInfo.sample(id: "dev.sidefolk.pdf", name: "PDF Tools", enabled: false, origin: .official, description: "A PDF's details."),

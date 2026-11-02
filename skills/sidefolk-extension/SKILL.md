@@ -157,6 +157,8 @@ job truly needs it.
 
 ## Your own look: surfaces and scenes
 
+A tool's reply opens it: `ext.tool(…, reply: { _ in ToolReply("Opening").opening(surface: "board", arguments: […]) })`, so a menu item, a command with slots or a page's button can start one (the AI's call only one marked `ai`, passing only what `surfaces.<n>.arguments` lists). `closingSurface()`, `opening(page:)` and `holdingAnswer(ms:)` too. A look a page part doesn't offer: `.scene(PageSceneBlock(scene, actions:))` inside the page.
+
 A panel or overlay beside the companion, drawn from data: images and sounds from your pack's `assets` folder, text, shapes,
 animations Sidefolk runs by itself, click areas, drags and keys that come back as typed moves. Declare `assets` and `surfaces` in
 the manifest and answer `sidefolk/surface.open`, `.move` and `.close`; the reference is docs/EXTENSIONS.md › Surfaces and scenes.

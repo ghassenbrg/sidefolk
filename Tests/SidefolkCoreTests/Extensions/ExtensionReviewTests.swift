@@ -76,6 +76,8 @@ struct ExtensionReviewTests {
         #expect(stack.count == 1)
         #expect(ExtensionText.clip(stack, 120).utf8.count < 100)
         #expect(ExtensionText.line(stack, characters: 120).utf8.count < 100)
+        #expect(stack.clipped(240).utf8.count < 100, "a row's summary")
+        #expect(Redactor.arguments(.string(stack)).stringValue?.utf8.count ?? .max < 100, "and its arguments")
         #expect(AIHelpQuestion(params: ["prompt": .string(stack)], extensionId: "x", purpose: "to test") == nil, "a request is bounded in bytes too")
         #expect(AIHelpQuestion(params: ["prompt": "Write a line about tea."], extensionId: "x", purpose: "to test") != nil)
         // Real writing keeps its marks.
@@ -127,6 +129,13 @@ struct ExtensionReviewTests {
         if case .stopWatch? = parser.parse("stop watching the deploy", now: now)?.intent {} else { Issue.record("stopping stays stopping") }
         if case .find? = parser.parse("find my passport", now: now)?.intent {} else { Issue.record("finding stays finding") }
         if case .surface? = parser.parse("open the garden", now: now)?.intent {} else { Issue.record("its own sentence still opens it: \(kind("open the garden"))") }
+    }
+
+    @Test func aGameSentenceYieldsToSidefolksOwnToo() {
+        let game = GameInfo(extensionId: "dev.test.g", extensionName: "G", game: "g", title: "G", say: ["remind me at 5 to stretch", "let's play g"])
+        let parser = IntentParser(when: TimeTest.parser(), home: "/Users/test", games: [game])
+        if case .remind? = parser.parse("remind me at 5 to stretch", now: TimeTest.wednesday10)?.intent {} else { Issue.record("a reminder stays a reminder") }
+        #expect(parser.parse("let's play g", now: TimeTest.wednesday10)?.intent == .game(extensionId: "dev.test.g", game: "g"))
     }
 
     @Test func aSurfaceIsNotCalledAGame() {

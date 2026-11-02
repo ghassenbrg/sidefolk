@@ -60,6 +60,10 @@ enum SampleRichPage {
       {"type": "clock", "x": 64, "y": 120, "w": 90, "h": 32, "seconds": 4512, "running": false, "size": 17, "weight": "bold", "align": "leading"},
       {"type": "text", "x": 170, "y": 120, "w": 120, "h": 32, "text": "Old count", "strike": true, "color": "ink_muted"},
       {"type": "companion", "x": 500, "y": 80, "w": 120, "h": 130, "align": "bottom"},
+      {"type": "group", "x": 420, "y": 20, "w": 64, "h": 64, "corner": 32, "clip": true, "children": [
+        {"type": "shape", "shape": "ellipse", "w": 64, "h": 64, "fill": "#F0C040"},
+        {"type": "companion", "x": 8, "y": 8, "w": 48, "h": 48, "figure": "face", "duotone": "#F0C040"}]},
+      {"type": "person", "x": 500, "y": 20, "w": 44, "h": 44, "corner": 22},
       {"type": "group", "id": "open", "x": 24, "y": 166, "w": 150, "h": 40, "children": [{"type": "shape", "w": 150, "h": 40, "corner": 10, "fill": "accent"}, {"type": "text", "w": 150, "h": 40, "text": "Open the log", "weight": "semibold", "color": "on_accent"}],
        "area": {"id": "open", "label": "Open the log"}}]}}]}]}
     """#

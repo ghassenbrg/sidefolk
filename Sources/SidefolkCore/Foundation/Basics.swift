@@ -69,7 +69,7 @@ public struct UserFacingError: Error, Sendable, Equatable, CustomStringConvertib
 extension String {
     /// Trims and caps text that goes into logs, prompts or UI.
     public func clipped(_ limit: Int) -> String {
-        let t = trimmingCharacters(in: .whitespacesAndNewlines)
+        let t = ExtensionText.withoutStacks(trimmingCharacters(in: .whitespacesAndNewlines))
         guard t.count > limit else { return t }
         return String(t.prefix(max(0, limit - 1))) + "…"
     }

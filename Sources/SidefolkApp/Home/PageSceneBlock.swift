@@ -3,7 +3,8 @@ import SidefolkCore
 import SwiftUI
 
 /// A scene drawn inside an extension's page (D100): the same native layers as a surface, fitted to the page's width, with each
-/// area running the extension's own tool. So a center of its own can look however it wants, with no app release.
+/// area running the extension's own tool. So a center of its own can look however it wants, with no app release. It plays no sounds:
+/// a page has no speaker to say so, and anything that plays is a surface.
 struct PageSceneBlock: View {
     var block: PageScene
     var model: ExtensionPageModel
@@ -38,9 +39,6 @@ struct PageSceneBlock: View {
         view.onMove = { move in
             guard case .click(let area, let value, _) = move, let action = actions.action(area: area, value: value) else { return }
             Task { await model.run(tool: action.tool, input: action.input) }
-        }
-        view.onPressSound = { path in
-            if let reader, services?.runtime.settings.current != nil { SurfaceSounds.shared.play(path, from: reader) }
         }
         view.show(scene, scale: scale, rtl: Locale.Language(identifier: AppLanguage.current).characterDirection == .rightToLeft,
                   reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)

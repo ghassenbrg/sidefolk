@@ -5,6 +5,7 @@ import Foundation
 /// scissors" is the companion's match. A sentence two extensions' games both claim goes to the AI, as for commands.
 extension IntentParser {
     func game(_ command: String) -> ParsedIntent? {
+        guard !games.isEmpty, !claimsAsItsOwn(command) else { return nil }
         var found: [GameInfo] = []
         for game in games {
             if game.say.contains(where: { (try? CommandSentence($0))?.match(command) != nil }) { found.append(game) }
