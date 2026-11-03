@@ -168,11 +168,14 @@ enum ExtensionAbilityRules {
     }
 
     private static func actIssues(_ m: ExtensionManifest) -> [ValidationIssue] {
-        guard let act = m.permissions.act else { return [] }
-        guard isPlain(act.purpose, 120), act.purpose.hasPrefix("to ") || act.purpose.hasPrefix("for ") else {
-            return [ValidationIssue(field: "permissions.act.purpose", message: "must be one plain line of at most 120 characters starting with “to” or “for”.")]
+        var issues: [ValidationIssue] = []
+        for (name, meta) in [("act", m.permissions.act), ("events", m.permissions.events)] {
+            guard let meta else { continue }
+            if !(isPlain(meta.purpose, 120) && (meta.purpose.hasPrefix("to ") || meta.purpose.hasPrefix("for "))) {
+                issues.append(ValidationIssue(field: "permissions.\(name).purpose", message: "must be one plain line of at most 120 characters starting with “to” or “for”."))
+            }
         }
-        return []
+        return issues
     }
 
     private static func carriedIssues(_ m: ExtensionManifest) -> [ValidationIssue] {

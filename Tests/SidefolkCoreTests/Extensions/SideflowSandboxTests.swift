@@ -155,13 +155,14 @@ import Testing
         for i in 0..<40 { steps.append(["id": .string("s\(i)"), "text": .string(String(repeating: "words ", count: 40))]) }
         _ = await w.h.call("ext.sideflow.create_flow", ["name": "Long", "definition": ["steps": .array(steps)]])
         let home = try await w.h.host.renderPage(extensionId: "dev.sidefolk.sideflow", page: "flows", state: .object([:]), width: 1000)
-        #expect(home.hero != nil)
+        #expect(home.workspace)
         #expect(home.summary != nil)
         let id = await w.flow("Long")?["id"]?.stringValue ?? ""
         let one = try await w.h.host.renderPage(extensionId: "dev.sidefolk.sideflow", page: "flows", state: ["flow": .string(id)], width: 1000)
-        let rail = one.sections.flatMap(\.blocks).compactMap { block -> ExtensionPage.Steps? in if case .steps(let s) = block { s } else { nil } }.first
-        #expect(rail?.items.count == 41, "when it runs, and every step")
-        #expect(rail?.reorder != nil)
+        let tree = one.sections.flatMap(\.blocks).compactMap { block -> ExtensionPage.Tree? in if case .tree(let t) = block { t } else { nil } }.first
+        #expect(tree?.reading.count == 41, "what sets it off, and every step")
+        #expect(tree?.reorder != nil)
+        #expect(tree?.picker?.items.isEmpty == false)
         let background = try await w.h.host.renderPage(extensionId: "dev.sidefolk.sideflow", page: "flows")
         #expect(background.sections.isEmpty, "Today reads only the summary")
     }

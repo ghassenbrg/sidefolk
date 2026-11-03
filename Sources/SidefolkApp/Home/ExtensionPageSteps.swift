@@ -260,9 +260,10 @@ struct PageEditFieldRow: View {
     var field: ExtensionPage.Field
     var model: ExtensionPageModel
     @State private var text = ""
-    @State private var selection: TextSelection?
     @FocusState private var focused: Bool
     @State private var problem = false
+    @State private var chipFocused = false
+    @State private var inserting: (value: String, count: Int) = ("", 0)
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
@@ -270,11 +271,23 @@ struct PageEditFieldRow: View {
             if let detail = field.detail {
                 Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
             }
-            editor
+            if field.tokens.isEmpty {
+                editor
+            } else {
+                TokenTextEditor(text: $text, tokens: field.tokens, label: field.label, multiline: field.kind == .multiline, inserting: inserting, ended: commit, focused: $chipFocused)
+                    .frame(minHeight: field.kind == .multiline ? 84 : 30, maxHeight: field.kind == .multiline ? 180 : 30)
+                    .overlay(alignment: .topLeading) {
+                        if text.isEmpty, let placeholder = field.placeholder {
+                            Text(ext: placeholder).font(Theme.Font.body).foregroundStyle(Theme.inkFaint).padding(.horizontal, 9).padding(.vertical, 5).allowsHitTesting(false)
+                        }
+                    }
+                    .padding(Theme.Space.xxs)
+                    .fieldChrome(focused: chipFocused, problem: problem)
+            }
             if !field.tokens.isEmpty {
                 FlowRow(spacing: Theme.Space.xs) {
                     ForEach(field.tokens, id: \.value) { token in
-                        Button { insert(token.value) } label: {
+                        Button { inserting = (token.value, inserting.count + 1) } label: {
                             Label { Text(ext: token.label) } icon: { token.symbol.map { Image(systemName: $0) } }
                                 .font(Theme.Font.caption)
                                 .padding(.horizontal, Theme.Space.s)
@@ -290,7 +303,7 @@ struct PageEditFieldRow: View {
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.s + 2)
         .onAppear { text = shown }
-        .onChange(of: shown) { _, new in if !focused { text = new } }
+        .onChange(of: shown) { _, new in if !focused && !chipFocused { text = new } }
         .onChange(of: focused) { _, now in if !now { commit() } }
     }
 
@@ -299,7 +312,7 @@ struct PageEditFieldRow: View {
     @ViewBuilder private var editor: some View {
         switch field.kind {
         case .multiline:
-            TextEditor(text: $text, selection: $selection)
+            TextEditor(text: $text)
                 .font(Theme.Font.body)
                 .scrollContentBackground(.hidden)
                 .focused($focused)
@@ -308,27 +321,12 @@ struct PageEditFieldRow: View {
                 .fieldChrome(focused: focused, problem: problem)
                 .accessibilityLabel(Text(ext: field.label))
         default:
-            TextField(text: $text, selection: $selection) { Text(ext: field.placeholder ?? field.label) }
+            TextField(text: $text) { Text(ext: field.placeholder ?? field.label) }
                 .lanternField()
                 .focused($focused)
                 .font(field.kind == .text ? Theme.Font.body : Theme.Font.mono)
                 .onSubmit(commit)
         }
-    }
-
-    private func insert(_ value: String) {
-        let range = selection.flatMap { s -> Range<String.Index>? in
-            if case .selection(let r) = s.indices { return r }
-            return nil
-        }
-        if let range, range.lowerBound <= text.endIndex, range.upperBound <= text.endIndex {
-            text.replaceSubrange(range, with: value)
-        } else {
-            text += value
-        }
-        focused = true
-        // A chip is a whole change: it needn't wait for the person to leave the field.
-        if selection == nil { commit() }
     }
 
     private func commit() {

@@ -220,25 +220,28 @@ struct PageCard: View {
     private var side: CGFloat { size == .large ? 84 : 56 }
 
     var body: some View {
-        if item.tree != nil || item.press != nil {
-            pressable
+        if let press = item.press {
+            // The whole card goes somewhere (D118).
+            card
+                .contentShape(Rectangle())
+                .onTapGesture { Task { await model.run(press, on: nil) } }
+                .accessibilityAction(named: Text(ext: press.label)) { Task { await model.run(press, on: nil) } }
         } else {
-            plain
+            card
         }
     }
 
-    /// The whole card goes somewhere, with its tree's small drawing at its foot (D118).
-    private var pressable: some View {
+    private var card: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             plain
-            if let tree = item.tree {
-                TreeMini(tree: tree).frame(maxWidth: .infinity).padding(.bottom, Theme.Space.s)
-            }
+            // Its tree's small drawing at its foot (D118).
+            if let tree = item.tree { TreeMini(tree: tree).frame(maxWidth: .infinity) }
         }
-        .contentShape(Rectangle())
-        .onTapGesture { if let press = item.press { Task { await model.run(press, on: nil) } } }
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .cardSurface(radius: Theme.Radius.panel)
         .accessibilityElement(children: .contain)
-        .accessibilityAction(named: Text(ext: item.press?.label ?? item.title)) { if let press = item.press { Task { await model.run(press, on: nil) } } }
+        .accessibilityLabel(Text(ext: [item.title, item.detail].compactMap { $0 }.joined(separator: ", ")))
     }
 
     private var plain: some View {
@@ -286,11 +289,7 @@ struct PageCard: View {
                 }
             }
         }
-        .padding(Theme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardSurface(radius: Theme.Radius.panel)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text(ext: [item.title, item.detail].compactMap { $0 }.joined(separator: ", ")))
     }
 
     @ViewBuilder private var tile: some View {

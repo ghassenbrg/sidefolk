@@ -248,6 +248,21 @@ extension ExtensionHost {
 
     // MARK: Its own watches
 
+    /// Something happened: those with `permissions.events` hear (D123). One that could carry words off the Mac hears only what and when, never the person's words.
+    func tell(_ happening: Happening) async {
+        for rt in runtimes.values where rt.record.enabled && rt.pin.permissions?.events != nil {
+            var params: [String: JSONValue] = ["name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]
+            if Self.contained(rt.pin.permissions ?? ExtensionPermissions()) {
+                if let title = happening.title { params["title"] = .string(ExtensionText.line(title, characters: 200)) }
+                if let detail = happening.detail { params["detail"] = .string(ExtensionText.untrusted(detail, bytes: 2_000)) }
+            }
+            await rt.client?.notify("sidefolk/happened", params: .object(params))
+        }
+    }
+
+    /// Whether anyone is listening, so nothing is looked up for nobody.
+    public var hearsHappenings: Bool { runtimes.values.contains { $0.record.enabled && $0.pin.permissions?.events != nil } }
+
     /// A watch this extension made fired: it hears, not the person (`WatcherEngine.announce`). The words are the page's or the file's.
     func tellWatchFired(extensionId id: String, watch: String, title: String, summary: String) async {
         guard let rt = runtimes[id], rt.record.enabled, rt.pin.permissions?.act != nil else { return }

@@ -118,16 +118,39 @@ import Testing
         #expect(names.contains("notify.user"))
         #expect(!names.contains("skills.create"))
         #expect(!names.contains(tool), "its own tools aren't offered: it has its program")
-        #expect(ExtensionActionPolicy.builtIn.isDisjoint(with: ["extensions.setting", "extensions.plan", "extensions.draft", "watch.command", "profile.remember", "skills.create"]))
+        #expect(ExtensionActionPolicy.builtIn.isDisjoint(with: ["extensions.setting", "extensions.plan", "extensions.draft", "profile.remember", "profile.forget", "skills.create", "skills.delete"]))
     }
 
-    @Test func aPlainMCPServersToolIsNeverOffered() {
-        let tool = ExtensionTool(spec: ToolSpec(name: "ext.mcp.exec", title: "x", description: "", inputSchema: .object([:]), risk: .medium, capabilities: [.network, .extensions], category: .extensions, mutates: true),
-                                 extensionId: "mcp.x", extensionName: "x", remoteName: "exec", sandboxed: false) { _, _ in ToolResult(text: "") }
-        #expect(!ExtensionActionPolicy.offers(tool, to: "com.example.other"))
-        let sandboxed = ExtensionTool(spec: tool.spec, extensionId: "com.example.x", extensionName: "x", remoteName: "exec") { _, _ in ToolResult(text: "") }
+    @Test func everyOtherExtensionsToolIsOfferedAndOneOutsideASandboxAlwaysAsks() {
+        let spec = ToolSpec(name: "ext.mcp.exec", title: "x", description: "", inputSchema: .object([:]), risk: .medium, capabilities: [.network, .extensions], category: .extensions, mutates: true)
+        let mcp = ExtensionTool(spec: spec, extensionId: "mcp.x", extensionName: "x", remoteName: "exec", sandboxed: false) { _, _ in ToolResult(text: "") }
+        #expect(ExtensionActionPolicy.offers(mcp, to: "com.example.other"))
+        #expect(ExtensionActionPolicy.spec(mcp).risk == .high, "a card every time: it runs outside any sandbox")
+        #expect(!ExtensionPlanRules.standing(tool: ExternalFacade(base: mcp, spec: ExtensionActionPolicy.spec(mcp)), template: .object([:])), "and never in a plan")
+        let sandboxed = ExtensionTool(spec: spec, extensionId: "com.example.x", extensionName: "x", remoteName: "exec") { _, _ in ToolResult(text: "") }
         #expect(ExtensionActionPolicy.offers(sandboxed, to: "com.example.other"))
         #expect(!ExtensionActionPolicy.offers(sandboxed, to: "com.example.x"))
+        #expect(ExtensionActionPolicy.spec(sandboxed).risk == .medium)
+        var runsAnything = spec
+        runsAnything.capabilities.insert(.shell)
+        let shell = ExtensionTool(spec: runsAnything, extensionId: "com.example.x", extensionName: "x", remoteName: "exec") { _, _ in ToolResult(text: "") }
+        #expect(ExtensionActionPolicy.offers(shell, to: "com.example.other"))
+        #expect(ExtensionActionPolicy.spec(shell).risk == .high)
+        var page = spec
+        page.offeredToModel = false
+        let pageOnly = ExtensionTool(spec: page, extensionId: "com.example.x", extensionName: "x", remoteName: "exec") { _, _ in ToolResult(text: "") }
+        #expect(ExtensionActionPolicy.offers(pageOnly, to: "com.example.other"), "kept from the model isn't kept from what the person builds")
+    }
+
+    @Test func anExtensionNeverGetsAlwaysForWhatAlwaysAsks() {
+        let spec = ToolSpec(name: "watch.command", title: "x", description: "", inputSchema: .object([:]), risk: .high, capabilities: [.watch, .shell], category: .watch, mutates: true)
+        let decision = PermissionEngine().evaluate(spec: spec, input: .object([:]), summary: "x", scope: ToolScope(command: "/bin/echo hi"), caller: .extension(id: "com.example.a"), tainted: false,
+                                                   policy: GuardPolicy(), grants: [], folders: [])
+        guard case .ask(let request) = decision else {
+            Issue.record("it asks")
+            return
+        }
+        #expect(!request.canAlways)
     }
 
     @Test func noHostToolOfAnyExtensionsIsReachableThroughEitherGroup() throws {

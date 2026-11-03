@@ -183,7 +183,7 @@ public struct TreeLayout: Sendable {
             m.split = 5
             m.drop = 6
             m.join = 5
-            m.empty = 24
+            m.empty = 44
             m.margin = 0
             return m
         }

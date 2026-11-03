@@ -185,6 +185,7 @@ struct InstallPermissionRow: View {
         case .place: "location"
         case .schedule: "bell.badge"
         case .act: "point.3.connected.trianglepath.dotted"
+        case .events: "bolt.badge.clock"
         case .udp: "dot.radiowaves.left.and.right"
         case .none: "lock"
         case .unsandboxed: "exclamationmark.triangle"

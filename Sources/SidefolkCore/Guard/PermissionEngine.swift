@@ -114,8 +114,8 @@ public struct PermissionEngine: Sendable {
                 extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
             ))
         case .high:
-            // Only an exact command may be granted "always"; everything else is asked every time.
-            let exactCommand = scope.command != nil
+            // Only an exact command may be granted "always"; everything else is asked every time. An extension gets no "always" for these at all (D120).
+            let exactCommand = scope.command != nil && caller.kind != "extension"
             if exactCommand, !tainted, honoursGrants,
                Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)

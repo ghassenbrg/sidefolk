@@ -152,6 +152,7 @@ private struct TreeLines: View {
     var lines: [TreeLayout.Line]
     var line: TreeLine
     var size: CGSize
+    var corner: CGFloat = 14
     @Environment(\.accessibilityReduceMotion) private var still
 
     var body: some View {
@@ -174,7 +175,7 @@ private struct TreeLines: View {
     }
 
     private func draw(_ one: TreeLayout.Line, in context: inout GraphicsContext, phase: CGFloat?) {
-        let path = Self.path(one.points, corner: 14)
+        let path = Self.path(one.points, corner: corner)
         let ys = one.points.map(\.y)
         let paint = GraphicsContext.Shading.linearGradient(Gradient(colors: [line.from, line.to]), startPoint: CGPoint(x: 0, y: ys.min() ?? 0), endPoint: CGPoint(x: 0, y: max((ys.max() ?? 1), (ys.min() ?? 0) + 1)))
         if let phase {
@@ -274,7 +275,7 @@ private struct TreeCard: View {
             Image(systemName: ExtensionPage.Tone.good.symbol).font(.system(size: 18)).foregroundStyle(ExtensionPage.Tone.good.color)
                 .accessibilityLabel(Text("Done", comment: "A card on an extension's page: what it is about is done for today"))
         }
-        if selected, tree.reorder != nil {
+        if selected, tree.reorder != nil, tree.move(node.id, by: -1) != nil || tree.move(node.id, by: 1) != nil {
             Menu { moves } label: { Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.inkMuted).frame(width: 24, height: 24) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                 .accessibilityLabel(Text("More", comment: "A card on an extension's page: its menu"))
@@ -530,7 +531,7 @@ struct TreeMini: View {
         let layout = TreeLayout(tree, editable: false, metrics: .mini)
         let line = TreeLine(tree.line)
         ZStack(alignment: .topLeading) {
-            TreeLines(lines: layout.lines, line: line, size: layout.size)
+            TreeLines(lines: layout.lines, line: line, size: layout.size, corner: 4)
             TreeBoard(size: layout.size) {
                 ForEach(layout.cards, id: \.node.id) { card in
                     let tint = card.node.color.flatMap { Color(extensionHex: $0) } ?? line.to

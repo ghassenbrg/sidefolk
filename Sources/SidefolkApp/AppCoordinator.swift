@@ -130,6 +130,7 @@ final class AppCoordinator {
         }
 
         agent = makeAgentRuntime()
+        runtime.companionAgent.use(agent)
         installAIHelp()
         ExtensionCompanionWords.set(runtime.settings.current.companionName)
         onboarding = Onboarding(coordinator: self)

@@ -181,8 +181,18 @@ public actor ExtensionHost {
         let stream = events.stream()
         Task { [weak self] in
             for await event in stream {
-                guard case .watchFired(let id, let watch, let title, let summary) = event else { continue }
-                await self?.tellWatchFired(extensionId: id, watch: watch, title: title, summary: summary)
+                switch event {
+                case .watchFired(let id, let watch, let title, let summary):
+                    await self?.tellWatchFired(extensionId: id, watch: watch, title: title, summary: summary)
+                case .happened(let happening):
+                    await self?.tell(happening)
+                case .toolFinished(let activity, ok: true):
+                    if let happening = Happening(activity) { await self?.tell(happening) }
+                case .agent(_, .reply(let reply)):
+                    await self?.tell(Happening(name: "companion.finished", title: String(reply.text.prefix(200))))
+                default:
+                    continue
+                }
             }
         }
     }
@@ -365,6 +375,7 @@ public actor ExtensionHost {
         if p.place != nil, let purpose = words?.placePurpose { p.place?.purpose = purpose }
         if p.schedule != nil, let purpose = words?.schedulePurpose { p.schedule?.purpose = purpose }
         if p.act != nil, let purpose = words?.actPurpose { p.act?.purpose = purpose }
+        if p.events != nil, let purpose = words?.eventsPurpose { p.events?.purpose = purpose }
         return p
     }
 

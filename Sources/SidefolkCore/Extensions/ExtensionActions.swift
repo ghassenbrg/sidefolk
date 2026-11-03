@@ -1,20 +1,22 @@
 import Foundation
 
-/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, SECURITY T43). The list is by name
-/// and closed, as `ExternalToolPolicy` is for other agents: what the person's data, their folders and the network can be reached
-/// with stays behind Guard, and what could widen an extension's own reach (other extensions' settings, skills, memory, programs,
-/// plain MCP servers, which run unsandboxed) simply doesn't exist for it.
+/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, D120, SECURITY T43). Sidefolk's own are listed by
+/// name, as `ExternalToolPolicy` lists them for other agents; what could widen an extension's own reach (other extensions' settings, skills, memory, Sidefolk's own
+/// host tools) simply doesn't exist for it. Every other extension's tools and every MCP server's are reachable, the person's call on the founder's word (D120); those
+/// that run outside a sandbox or can run anything are on a card every single time, never in a plan and never "Always".
 public enum ExtensionActionPolicy {
     /// Reaching the person is all they do, so they keep their risk: the words are shown as the extension's.
     static let reachesThePerson: Set<String> = ["notify.user", "ask.user"]
 
     public static let builtIn: Set<String> = reachesThePerson.union([
-        "agenda.today", "calendar.today", "calendar.create",
-        "notes.save", "notes.search", "notes.list", "collections.list",
-        "reminders.create", "reminders.list", "reminders.cancel",
-        "watch.create", "watch.list", "watch.pause", "watch.resume", "watch.stop",
-        "web.fetch", "files.list", "files.read", "files.search", "files.mkdir", "files.move", "files.rename", "files.trash",
-        "clipboard.read", "clipboard.write", "open.url",
+        "agenda.today", "calendar.today", "calendar.create", "calendar.update", "calendar.delete",
+        "notes.save", "notes.search", "notes.list", "notes.update", "notes.trash", "collections.list", "collections.create",
+        "reminders.create", "reminders.list", "reminders.cancel", "reminders.complete", "reminders.snooze",
+        "watch.create", "watch.list", "watch.pause", "watch.resume", "watch.stop", "watch.read", "watch.report", "watch.command",
+        "web.fetch", "files.list", "files.read", "files.search", "files.mkdir", "files.move", "files.rename", "files.trash", "files.reveal",
+        "clipboard.read", "clipboard.write", "open.url", "open.email", "open.app",
+        "applenotes.list", "applenotes.read", "applenotes.copy", "applenotes.remove", "applereminders.list",
+        "companion.play", "surfaces.open", "status", CompanionJobTool.name, AttentionSetTool.name,
     ])
 
     /// Never without a card, whatever a plan says: what someone copied is theirs alone, and silent reads of it are surveillance.
@@ -30,13 +32,17 @@ public enum ExtensionActionPolicy {
         "ask.user": ["question"],
     ]
 
-    /// Whether `tool` is offered to the extension `id`. Another extension's tool must be a sandboxed one the model may use too: never
-    /// its own (it has its program), never one kept to its commands, never an MCP server's.
+    /// Whether `tool` is offered to the extension `id`: any other extension's or MCP server's, or one of Sidefolk's own on the list. Never its own: it has its program.
     static func offers(_ tool: any Tool, to id: String) -> Bool {
-        guard tool.spec.offeredToModel, tool.spec.risk != .high || builtIn.contains(tool.spec.name) else { return false }
-        guard tool.spec.capabilities.isDisjoint(with: [.shell]) else { return false }
-        if let ext = tool as? ExtensionTool { return ext.sandboxed && ext.extensionId != id }
+        if let ext = tool as? ExtensionTool { return ext.extensionId != id }
         return builtIn.contains(tool.spec.name)
+    }
+
+    /// Whether a card can't really say what it will do: it runs outside any sandbox, or can run anything. It stays a card every time (D120).
+    static func alwaysAsks(_ tool: any Tool) -> Bool {
+        if !tool.spec.capabilities.isDisjoint(with: [.shell]) { return true }
+        if let ext = tool as? ExtensionTool { return !ext.sandboxed }
+        return false
     }
 
     /// Whether Sidefolk itself says a tool changes nothing: its own word for its own tools, and its signed extensions'. Anyone else's manifest
@@ -49,11 +55,11 @@ public enum ExtensionActionPolicy {
         return true
     }
 
-    /// The tool as this caller gets it: at least medium, so it asks, unless a plan the person read covers the call.
-    static func spec(_ spec: ToolSpec) -> ToolSpec {
-        guard !reachesThePerson.contains(spec.name) else { return spec }
-        var spec = spec
-        spec.risk = max(spec.risk, .medium)
+    /// The tool as this caller gets it: at least medium, so it asks, unless a plan the person read covers the call; high, so it always asks, where a card is all there can be.
+    static func spec(_ tool: any Tool) -> ToolSpec {
+        guard !reachesThePerson.contains(tool.spec.name) else { return tool.spec }
+        var spec = tool.spec
+        spec.risk = alwaysAsks(tool) ? .high : max(spec.risk, .medium)
         return spec
     }
 }
@@ -97,12 +103,12 @@ public final class ExtensionActionGateway: Sendable {
     /// The tool as `id` may reach it; nil for one it can't.
     func tool(named name: String, for id: String) -> (any Tool)? {
         guard let base = source.tool(named: name), ExtensionActionPolicy.offers(base, to: id) else { return nil }
-        return ExternalFacade(base: base, spec: ExtensionActionPolicy.spec(base.spec))
+        return ExternalFacade(base: base, spec: ExtensionActionPolicy.spec(base))
     }
 
     /// What `id` may ask for, with the words each tool's author may show a model (D24): an extension gets the same specs.
     func tools(for id: String) -> [any Tool] {
-        source.all.filter { ExtensionActionPolicy.offers($0, to: id) }.map { ExternalFacade(base: $0, spec: ExtensionActionPolicy.spec($0.spec)) }
+        source.all.filter { ExtensionActionPolicy.offers($0, to: id) }.map { ExternalFacade(base: $0, spec: ExtensionActionPolicy.spec($0)) }
     }
 
     /// - Parameter standing: the call fits a plan the person read and allowed.
@@ -113,7 +119,7 @@ public final class ExtensionActionGateway: Sendable {
             return ToolOutcome(activity: act, status: .denied("Sidefolk doesn't offer that tool to extensions."))
         }
         exposed.register(facade)
-        let limit = timeout ?? (facade.spec.name == "ask.user" ? AgentFacingTools.maxAskSeconds + 15 : 90)
+        let limit = timeout ?? facade.spec.timeout ?? (facade.spec.name == "ask.user" ? AgentFacingTools.maxAskSeconds + 15 : 90)
         // Evaluating medium calls as tainted makes Guard ask every time and never offer "Always allow" (T1, as other agents): an
         // extension's calls can carry whatever it read.
         return await executor.execute(name: facade.spec.name, input: input, caller: .extension(id: id), tainted: facade.spec.risk >= .medium,

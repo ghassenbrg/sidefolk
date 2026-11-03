@@ -74,6 +74,9 @@ public actor AttentionCenter {
         let before = env
         change(&env)
         guard env != before else { return }
+        if env.isQuiet != before.isQuiet || env.isFocused != before.isFocused {
+            events.publish(.happened(Happening(name: "attention.changed", title: env.isQuiet ? "quiet" : env.isFocused ? "focus" : "open")))
+        }
         let returned = before.away && !env.away && !idleAway
         let calmer = (before.isQuiet && !env.isQuiet) || (before.isFocused && !env.isFocused)
         // After Focus or Quiet, what waited comes as one card (D84), as it does after being away.
@@ -89,6 +92,7 @@ public actor AttentionCenter {
     /// `acknowledged` when it is Off).
     @discardableResult
     public func post(_ request: AttentionRequest) async -> AttentionItem {
+        if request.refKind == "reminder" { events.publish(.happened(Happening(name: "reminder.fired", title: request.title))) }
         let item = makeItem(request)
         return await deliver(item)
     }

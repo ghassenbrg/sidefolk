@@ -49,6 +49,32 @@ public struct ToolActivity: Sendable, Hashable {
     }
 }
 
+/// Something that happened in Sidefolk, for extensions with `permissions.events` (D123). `title` and `detail` are the person's own words.
+public struct Happening: Sendable, Hashable {
+    /// What an extension may say it wants to hear.
+    public static let names = ["reminder.fired", "reminder.created", "note.saved", "calendar.starting", "companion.finished", "agent.finished", "attention.changed", "mac.woke"]
+
+    public var name: String
+    public var title: String?
+    public var detail: String?
+
+    public init(name: String, title: String? = nil, detail: String? = nil) {
+        self.name = name
+        self.title = title
+        self.detail = detail
+    }
+
+    /// What a tool's finishing says happened: only what the person or the companion did. What an extension did doesn't count, or a flow could set itself off.
+    public init?(_ activity: ToolActivity) {
+        guard activity.caller.kind != "extension" else { return nil }
+        switch activity.tool {
+        case "notes.save", "notes.update": self.init(name: "note.saved", title: activity.summary)
+        case "reminders.create": self.init(name: "reminder.created", title: activity.summary)
+        default: return nil
+        }
+    }
+}
+
 public enum AppEvent: Sendable {
     case toolStarted(ToolActivity)
     case toolFinished(ToolActivity, ok: Bool)
@@ -69,6 +95,8 @@ public enum AppEvent: Sendable {
     case surface(SurfaceRequest)
     /// A watch an extension made fired: it hears, instead of the person (D111).
     case watchFired(extensionId: String, watch: String, title: String, summary: String)
+    /// Something happened an extension with `permissions.events` may hear (D123).
+    case happened(Happening)
     /// The extension was turned off or removed: its surface goes with it, kept or not.
     case surfaceGone(extensionId: String)
     /// A tool's reply asked to put its surface away (`close_surface`, D100): kept, to come back to. Nil: whichever of its are open.

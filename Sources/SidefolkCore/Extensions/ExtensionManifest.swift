@@ -177,10 +177,12 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var schedule: PurposeMeta?
         /// Asking Sidefolk to use its tools and other extensions', through Guard, for a stated purpose (D110).
         public var act: PurposeMeta?
+        public var events: PurposeMeta?
 
         public init(network: Bool = false, files: Files = Files(), exec: [String] = [], media: Bool = false, clipboard: Bool = false,
                     power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil, outputMute: Bool = false,
-                    ai: AIMeta? = nil, place: PurposeMeta? = nil, schedule: PurposeMeta? = nil, act: PurposeMeta? = nil) {
+                    ai: AIMeta? = nil, place: PurposeMeta? = nil, schedule: PurposeMeta? = nil, act: PurposeMeta? = nil, events: PurposeMeta? = nil) {
+            self.events = events
             self.act = act
             self.place = place
             self.schedule = schedule
@@ -199,7 +201,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai", "place", "schedule", "act"])
+            try decoder.rejectUnknownKeys(["network", "files", "exec", "media", "clipboard", "power", "screen", "udp", "network_purpose", "output_mute", "ai", "place", "schedule", "act", "events"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             network = try c.decodeIfPresent(Bool.self, forKey: "network") ?? false
             files = try c.decodeIfPresent(Files.self, forKey: "files") ?? Files()
@@ -215,6 +217,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             place = try c.decodeIfPresent(PurposeMeta.self, forKey: "place")
             schedule = try c.decodeIfPresent(PurposeMeta.self, forKey: "schedule")
             act = try c.decodeIfPresent(PurposeMeta.self, forKey: "act")
+            events = try c.decodeIfPresent(PurposeMeta.self, forKey: "events")
         }
     }
 

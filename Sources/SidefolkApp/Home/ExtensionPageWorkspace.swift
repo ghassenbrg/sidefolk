@@ -107,6 +107,8 @@ struct PageWorkspace: View {
                 ForEach(Array(sections.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
             }
             .padding(padded)
+            // Room for the companion at the corner, under what the column holds.
+            .padding(.bottom, page.companion && sections.first?.place == .trailing ? 64 : 0)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollContentBackground(.hidden)
