@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Pages composed like an app's screen, and four homepages (D170)
+
+General page abilities (sections as cards, rows and joined panes, a branded head, metrics, a ring on a plain hero, selectable scrolling rows, a preview pane, search, placed heads-ups and host controls, `palette` and `refresh`, an installed app's icon), and the founder's accepted designs for Miraya, Clipboard, Your Mac and Keep Awake built on them in sidefolk-addons. Checked: both suites with the real packs, state tests in the add-ons, 39 states rendered in light and dark, the live app in English, Arabic and German and at a narrow window, a cold security review and the audit session's read. Parity and limits: `sandbox/extension-homepage-implementation-handoff-2026-11-03/implementation/PARITY.md`.
+
 ## 2026-11-03: Ask's field no longer draws what you sent under its prompt
 
 From the founder's report on snapshot 1075. Disabling a field that holds the keyboard, in the same step that clears it, leaves the old words on screen under the prompt until something redraws it: the field locks while Ask is thinking. It gets a new field each time it locks and frees (`SayBar`, `.id(disabled)`). Checked by eye on real window captures, with Return through the real `model.submit` and the busy state set by a temporary hook: the old words are gone during Thinking and after it. Not run: the founder's exact path (typing on the keyboard, pressing Return or OK) with a real AI answer. The field also takes the keyboard back when Thinking ends, which 1075 didn't do, checked the same way through two rounds of typing and sending. History's search field keeps a set width beside its filters, or takes its own line when they need the room.

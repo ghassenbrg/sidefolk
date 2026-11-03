@@ -30,6 +30,8 @@ public struct Page {
     public var companion: Bool
     /// `#RRGGBB`, one or two, deep enough to hold white words: the first fills the page's main button and switches, the last marks what's selected (D126). The rest stays the theme's.
     public var accent: [String]
+    /// Its palettes' row stays off this state of the page, drawn by a `.hostControls` part on another. What it needs from macOS always shows.
+    public var quietHost = false
 
     public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false, accent: [String] = []) {
         self.accent = accent
@@ -46,7 +48,7 @@ public struct Page {
     }
 
     var json: [String: Any] {
-        var out: [String: Any] = ["sections": sections.filter { !$0.blocks.isEmpty }.map(\.json)]
+        var out: [String: Any] = ["sections": sections.filter { !$0.blocks.isEmpty || !$0.accessories.isEmpty }.map(\.json)]
         if let summary { out["summary"] = summary.json }
         if let back { out["back"] = back }
         if bare { out["bare"] = true }
@@ -57,6 +59,7 @@ public struct Page {
         if workspace { out["workspace"] = true }
         if companion { out["companion"] = true }
         if !accent.isEmpty { out["accent"] = accent }
+        if quietHost { out["quiet_host"] = true }
         return out
     }
 }
@@ -109,6 +112,19 @@ public struct Section {
     public var banner: (tint: String, symbol: String?)?
     /// Across the page, however little it holds, rather than beside its neighbours.
     public var wide: Bool
+    /// Its title and all its parts in one card, the parts flat inside it.
+    public var card = false
+    /// Sections in a row of the same name stand side by side, sharing the width by `weight`, and stack when the column is narrow.
+    public var row: String?
+    public var weight = 1.0
+    /// The row's sections share one card, with a line between them.
+    public var joined = false
+    /// Its last part stands at the foot of its card.
+    public var pinLast = false
+    /// Up to three choices or buttons at the end of its title. With them it needs no parts: a toolbar.
+    public var accessories: [Block] = []
+    /// A dot in this tone before its title: the title says a state.
+    public var status: Tone?
 
     public init(_ title: String? = nil, _ blocks: [Block], place: Place = .main, collapsed: Bool? = nil, detail: String? = nil, picture: Picture? = nil,
                 banner: (tint: String, symbol: String?)? = nil, wide: Bool = false) {
@@ -135,6 +151,15 @@ public struct Section {
             out["banner"] = band
         }
         if wide { out["wide"] = true }
+        if card { out["card"] = true }
+        if let row {
+            out["row"] = row
+            out["weight"] = weight
+        }
+        if joined { out["joined"] = true }
+        if pinLast { out["pin_last"] = true }
+        if !accessories.isEmpty { out["accessories"] = accessories.map(\.json) }
+        if let status { out["status"] = status.rawValue }
         return out
     }
 }
@@ -245,6 +270,7 @@ public enum Block {
     /// The extension's own settings, as the host keeps and draws them: the manifest's `settings`, these `keys` or all of them, and
     /// with `ai` the person's switch for its use of the AI (D100).
     /// `aiTitle` and `aiDetail`: your words for the AI switch, believed only of packs Sidefolk signed. `grid`: each in a small card of its own with its picture from `pictures`.
+    case part(any PagePart)
     case settings(_ title: String? = nil, keys: [String] = [], ai: Bool = false, aiTitle: String? = nil, aiDetail: String? = nil, grid: Bool = false, pictures: [String: Picture] = [:])
 
     var json: [String: Any] {
@@ -286,6 +312,7 @@ public enum Block {
             return transport.json
         case .scene(let block):
             return block.json
+        case .part(let part): return part.json
         case .tree(let tree): return tree.json
         case .bar(let bar): return bar.json
         case .nav(let nav): return nav.json
@@ -344,7 +371,7 @@ public enum Block {
         }
     }
 
-    private static func dropNil(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
+    static func dropNil(_ values: [String: Any?]) -> [String: Any] { values.compactMapValues { $0 } }
 }
 
 /// One row of `.table`: what it is about, and a cell per column.
@@ -390,7 +417,7 @@ public enum ButtonStyle: String {
 }
 
 public enum PickerStyle: String {
-    case segmented, cards, tiles, rows
+    case segmented, cards, tiles, rows, bar, menu, pills
 }
 
 /// A button: runs one of this extension's tools with `input`. `detail` is shown on hover; `disabled` dims it, its
@@ -407,6 +434,10 @@ public struct Action {
     public var round: Bool
     /// What it does instead of running a tool (D105).
     public var act: PageAct?
+    /// Across the whole width of what holds it.
+    public var fill = false
+    /// Drawn as its symbol in a framed square, its label read aloud and on hover.
+    public var iconOnly = false
 
     public init(_ label: String, act: PageAct, style: ButtonStyle = .secondary, symbol: String? = nil, detail: String? = nil, disabled: Bool = false, round: Bool = false) {
         self.init(label, tool: "", style: style, symbol: symbol, detail: detail, disabled: disabled, round: round)
@@ -432,6 +463,8 @@ public struct Action {
         if let detail { out["detail"] = detail }
         if disabled { out["disabled"] = true }
         if round { out["shape"] = "round" }
+        if iconOnly { out["shape"] = "icon" }
+        if fill { out["fill"] = true }
         return out
     }
 }
@@ -503,6 +536,12 @@ public struct Hero {
     public var tile: [String] = []
     /// `#RRGGBB`, one or two: a soft wash over the whole card.
     public var wash: [String] = []
+    /// How much is left, around a value, in the symbol's place. Only where you know how much that is.
+    public var ring: (fraction: Double, value: String, caption: String?)?
+    /// Short states under the title: (words, symbol, tone).
+    public var chips: [(String, String?, Tone)] = []
+    /// Drawn as one of the page's plain cards, its tone in its words and marks only.
+    public var plain = false
 
     public init(_ title: String, eyebrow: String? = nil, detail: String? = nil, tone: Tone = .neutral, symbol: String? = nil, code: String? = nil,
                 image: String? = nil, busy: Bool = false, facts: [(String, String)] = [], actions: [Action] = [], scene: Picture? = nil,
@@ -527,6 +566,9 @@ public struct Hero {
                                   "facts": facts.map { ["label": $0.0, "value": $0.1] }, "actions": actions.map(\.json)]
         if !tile.isEmpty { out["tile"] = tile }
         if !wash.isEmpty { out["wash"] = wash }
+        if let ring { out["ring"] = Block.dropNil(["fraction": ring.fraction, "value": ring.value, "caption": ring.caption]) }
+        if !chips.isEmpty { out["chips"] = chips.map { Block.dropNil(["label": $0.0, "symbol": $0.1, "tone": $0.2.rawValue]) } }
+        if plain { out["plain"] = true }
         if let eyebrow { out["eyebrow"] = eyebrow }
         if let detail { out["detail"] = detail }
         if let symbol { out["symbol"] = symbol }
@@ -581,6 +623,11 @@ public struct Row {
     public var button: (label: String, tool: String, input: [String: Any], symbol: String?)?
     /// A button that does something other than run a tool (D105), in place of `button`.
     public var action: Action?
+    /// What clicking anywhere on the row does. Arrow keys move through a list's rows that have one.
+    public var press: Action?
+    public var selected = false
+    /// A small symbol at its end, in the page's selected colour, with what it means read aloud: "pinned".
+    public var mark: (symbol: String, label: String)?
 
     public init(_ title: String, detail: String? = nil, image: String? = nil, color: String? = nil, symbol: String? = nil,
                 button: (label: String, tool: String, input: [String: Any], symbol: String?)? = nil) {
@@ -609,6 +656,12 @@ public struct Row {
             out["button"] = b
         }
         if let action { out["button"] = action.json }
+        if let press { out["press"] = press.json }
+        if selected { out["selected"] = true }
+        if let mark {
+            out["mark"] = mark.symbol
+            out["mark_label"] = mark.label
+        }
         return out
     }
 }

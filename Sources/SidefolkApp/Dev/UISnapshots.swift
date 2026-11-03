@@ -329,6 +329,13 @@ enum UISnapshots {
             try await page("page-extension-mac-narrow", ExtensionPageView(model: SampleExtensionPage.model()), width: 640)
             // Switches and buttons on a page, and a palette (D63).
             try await page("page-extension-awake", ExtensionPageView(model: SampleExtensionPage.stayUp()), width: 980)
+            // A page made of cards and rows, in light, dark and a narrow window.
+            try await page("page-extension-composed", ExtensionPageView(model: SampleComposedPage.model()), width: 848)
+            try await page("page-extension-composed-narrow", ExtensionPageView(model: SampleComposedPage.model()), width: 560)
+            // Pages a program drew, saved as JSON beside what it needs: a real extension's in every state, with nothing behind them.
+            for sample in SamplePageFiles.load() {
+                try await page("page-file-\(sample.name)", ExtensionPageView(model: sample.model()), width: sample.width)
+            }
             try await page("page-extension-error", ExtensionPageView(model: SampleExtensionPage.failed()), width: 980)
             try await page("page-extension-rich", ExtensionPageView(model: SampleRichPage.model()), width: 1180)
             try await page("page-extension-scene", ExtensionPageView(model: SampleRichPage.sceneModel()), width: 980)

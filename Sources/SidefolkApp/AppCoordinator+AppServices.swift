@@ -31,6 +31,7 @@ extension AppCoordinator: AppServices {
     }
 
     func openCalendarSettings() { MacCalendar.openSettings() }
+    func openPalette(_ id: String) { Task { await palettes.toggle(id) } }
 
     func allowCalendarChanges(_ on: Bool) async {
         // Full access covers writing too; it was asked when the calendar was shown, and is asked here if it wasn't.

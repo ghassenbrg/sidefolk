@@ -171,14 +171,17 @@ struct PageBarView: View {
                 .help(Text(ext: back))
                 .accessibilityLabel(Text(ext: back))
             }
+            if bar.brand { PageIcon(info: model.info, size: 46) }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: Theme.Space.s) {
                     Text(ext: bar.title).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1).accessibilityAddTraits(.isHeader).homePageTitle()
-                    if let pill = bar.pill { TreePill(badge: pill) }
+                    if let pill = bar.pill, !bar.brand { TreePill(badge: pill) }
                 }
                 if let detail = bar.detail { Text(ext: detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(2) }
             }
             Spacer(minLength: Theme.Space.m)
+            if bar.brand, let pill = bar.pill { PageStatePill(badge: pill) }
+            if bar.updated { PageUpdated(model: model) }
             if !bar.menu.isEmpty {
                 Menu {
                     ForEach(Array(bar.menu.enumerated()), id: \.offset) { _, control in
@@ -195,6 +198,50 @@ struct PageBarView: View {
                 .accessibilityLabel(Text("More", comment: "A card on an extension's page: its menu"))
             }
             ForEach(Array(bar.actions.enumerated()), id: \.offset) { _, control in PageButton(control: control, model: model).fixedSize() }
+        }
+    }
+}
+
+/// A state at the end of a head: a dot in its tone and its words.
+struct PageStatePill: View {
+    var badge: ExtensionPage.Badge
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Circle().fill(badge.tone == .neutral ? Theme.inkFaint : badge.tone.color).frame(width: 8, height: 8)
+            Text(ext: badge.text).font(Theme.Font.caption.weight(.medium)).foregroundStyle(badge.tone == .neutral ? Theme.inkMuted : Theme.ink).lineLimit(1)
+        }
+        .padding(.horizontal, Theme.Space.s + 3).padding(.vertical, 5)
+        .background(badge.tone.soft, in: Capsule())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// When the page was last read, and a button to read it now: Sidefolk's words, since only it knows.
+private struct PageUpdated: View {
+    var model: ExtensionPageModel
+
+    var body: some View {
+        HStack(spacing: Theme.Space.m) {
+            if let updated = model.updated {
+                Group {
+                    if Date().timeIntervalSince(updated) < 30 {
+                        Text("Updated just now", comment: "On an extension page's head: it was read moments ago")
+                    } else {
+                        Text("updated \(updated.formatted(date: .omitted, time: .standard))", comment: "When an extension page last refreshed")
+                    }
+                }
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            }
+            Button { Task { await model.refresh() } } label: {
+                Image(systemName: "arrow.clockwise").font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.ink)
+                    .frame(width: 34, height: 34)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.sfBare)
+            .accessibilityLabel(Text("Refresh", comment: "Reads an extension's page again now"))
+            .help(Text("Refresh", comment: "Reads an extension's page again now"))
         }
     }
 }

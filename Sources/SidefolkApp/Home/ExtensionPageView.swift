@@ -15,7 +15,9 @@ struct ExtensionPageView: View {
         }
         .environment(\.cardDress, cardDress)
         .environment(\.pageAccent, pageAccent)
-        .environment(\.pageSelected, model.page?.dress?.accent == nil ? model.page?.accent.last.flatMap { Color(extensionHex: $0) } : nil)
+        .environment(\.pageSelected, pageSelected)
+        .environment(\.pageAccentWords, model.page?.dress?.accent?.words(scheme) ?? .white)
+        .environment(\.pageWell, model.page?.dress?.well?.color(scheme))
         .tint(pageAccent)
         .pageConsent(model: model)
         .task(id: model.info.id) { await model.run() }
@@ -38,7 +40,8 @@ struct ExtensionPageView: View {
             }
             // A hero with a scene carries the page's title itself (D100), large; a bare page draws its own head (D105).
             if model.page?.hero?.scene == nil, model.page?.bare != true { header }
-            if let back = model.page?.back, model.state.canGoBack {
+            // A page led by its own head has the way back there, with the same key.
+            if let back = model.page?.back, model.state.canGoBack, model.page?.leadsWithBar != true {
                 Button { Task { await model.go(PageGo(back: true)) } } label: {
                     Label { Text(ext: back) } icon: { Image(systemName: "chevron.backward") }
                 }
@@ -54,11 +57,14 @@ struct ExtensionPageView: View {
             if let page = model.page {
                 // A hero leading the page says what the summary would, larger and with its actions (D74).
                 if let summary = page.summary, page.hero == nil, !page.bare { SummaryBanner(summary: summary, model: model) }
-                if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
-                PageRegions(spacing: page.bleed ? 0 : Theme.Space.xl) {
-                    ForEach(Array(page.regions.enumerated()), id: \.offset) { _, part in
+                // Under the page's own head when it has one, so what it needs from macOS doesn't stand above its name.
+                if !page.leadsWithBar, showsHostControls(page) { HostControls(model: model, quiet: page.quietHost) }
+                PageRegions(spacing: page.bleed ? 0 : page.isComposed ? Theme.Space.l : Theme.Space.xl) {
+                    ForEach(Array(page.regions.enumerated()), id: \.offset) { i, part in
                         Group {
-                            if part.sections.count == 1, let section = part.sections.first, section.isWide || part.region != .main {
+                            if part.sections.first?.row != nil, part.sections.count > 1 {
+                                PageRowView(sections: part.sections, model: model)
+                            } else if part.sections.count == 1, let section = part.sections.first, section.isWide || part.region != .main {
                                 SectionView(section: section, model: model)
                             } else {
                                 // Beside a side column the main one is narrower: two small sections to a row at most.
@@ -70,9 +76,10 @@ struct ExtensionPageView: View {
                         .pageRegion(part.region)
                         // On a page out to its edges a scene keeps its own margins; what Sidefolk draws keeps Sidefolk's.
                         .padding(page.bleed && !part.sections.allSatisfy(\.isOnlyScenes) ? Theme.Space.xl : 0)
+                        if i == 0, page.leadsWithBar, showsHostControls(page) { HostControls(model: model, quiet: page.quietHost).pageRegion(.top) }
                     }
                 }
-                if !model.alerts.isEmpty { HeadsUps(model: model) }
+                if !model.alerts.isEmpty, !page.placesHeadsUps { HeadsUps(model: model) }
                 // A bare page's head is the extension's own: whose page this is stays Sidefolk's to say.
                 if page.bare {
                     Text("Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
@@ -87,6 +94,19 @@ struct ExtensionPageView: View {
         } ground: {
             PageGround(dress: model.page?.dress, model: model)
         }
+    }
+
+    /// What's selected: a dress's own colour, or a page's own accent (D126). A dress with neither keeps its look.
+    private var pageSelected: Color? {
+        if let dress = model.page?.dress {
+            return dress.selected?.color(scheme) ?? (dress.accent == nil ? model.page?.accent.last.flatMap { Color(extensionHex: $0) } : nil)
+        }
+        return model.page?.accent.last.flatMap { Color(extensionHex: $0) }
+    }
+
+    private func showsHostControls(_ page: ExtensionPage) -> Bool {
+        guard !page.placesHostControls else { return false }
+        return (!model.palettes.isEmpty && !page.quietHost) || (model.info.needsAccessibility && !AXIsProcessTrusted())
     }
 
     /// A dressed page's filled buttons and switches (D108).
@@ -217,6 +237,7 @@ struct SectionView: View {
         case hero(ExtensionPage.Hero), transport(ExtensionPage.Transport)
         /// The richer parts (D100), each on its own, drawn in ExtensionPageRich.swift.
         case rich(ExtensionPage.Block)
+        case metrics([ExtensionPage.Block]), askRows([ExtensionPage.Ask]), wideButton(ExtensionPage.Control)
         var id: String {
             switch self {
             case .gauges(let b): "g\(b.count)\(b.hashValue)"
@@ -226,10 +247,14 @@ struct SectionView: View {
             case .asks(let a): "a\(a.count)\(a.hashValue)"
             case .switches(let c): "s\(c.count)\(c.hashValue)"
             case .buttons(let c): "b\(c.count)\(c.hashValue)"
-            case .inputs(let b): "i\(b.count)\(b.hashValue)"
+            // By what they are, not what they hold: a search box keeps the keyboard, and a list its place, as the rows change.
+            case .inputs(let b): "i" + b.map(\.inputIdentity).joined(separator: "|")
             case .hero(let h): "h\(h.hashValue)"
             case .transport(let t): "t\(t.hashValue)"
             case .rich(let b): "r\(b.hashValue)"
+            case .metrics(let b): "x\(b.count)\(b.hashValue)"
+            case .askRows(let a): "q\(a.count)\(a.hashValue)"
+            case .wideButton(let c): "w\(c.hashValue)"
             }
         }
     }
@@ -269,14 +294,25 @@ struct SectionView: View {
                     if let picture = section.picture {
                         PagePictureView(picture: picture, model: model, side: 56).frame(width: 28, height: 28).clipShape(Circle())
                     }
-                    if let title = section.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
-                    if let detail = section.detail { Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1) }
+                    if let status = section.status { Circle().fill(status == .neutral ? Theme.inkFaint : status.color).frame(width: 10, height: 10) }
+                    if section.card || section.joined {
+                        // In a card there's room for its line under the title, whole.
+                        VStack(alignment: .leading, spacing: 3) {
+                            if let title = section.title { Text(ext: title).font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
+                            if let detail = section.detail { Text(ext: detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true) }
+                        }
+                    } else {
+                        if let title = section.title { Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
+                        if let detail = section.detail { Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1) }
+                    }
                     Spacer(minLength: Theme.Space.s)
                     if hasCharts { windowPicker }
+                    ForEach(Array(section.accessories.enumerated()), id: \.offset) { _, accessory in PageSectionAccessory(block: accessory, model: model) }
                 }
             }
             if open { content }
         }
+        .modifier(SectionCardModifier(on: section.card))
     }
 
     /// Its title on a band in the extension's colour, with its picture or a symbol at the start.
@@ -308,6 +344,8 @@ struct SectionView: View {
 
     @ViewBuilder private var content: some View {
         ForEach(groups) { group in
+            // Its last part stands at the foot of the card, however tall the row made it.
+            if section.pinLast, group.id == groups.last?.id { Spacer(minLength: 0) }
             switch group {
             // Rings in one row and numbers in the next, each row filling the width (D67).
             case .gauges(let blocks), .stats(let blocks):
@@ -315,11 +353,19 @@ struct SectionView: View {
                     ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
                 }
             case .cards(let blocks):
-                CardGrid(minWidth: 340, maxColumns: 3, spacing: Theme.Space.m) {
+                CardGrid(minWidth: section.card ? 220 : 340, maxColumns: 3, spacing: section.card ? Theme.Space.l : Theme.Space.m) {
                     ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in BlockView(block: b, model: model) }
                 }
+            case .metrics(let blocks):
+                CardGrid(minWidth: 180, maxColumns: blocks.count, spacing: Theme.Space.m) {
+                    ForEach(Array(blocks.enumerated()), id: \.offset) { _, b in if case .metric(let m) = b { PageMetricView(metric: m, model: model) } }
+                }
+            case .askRows(let asks):
+                PageAskRows(asks: asks, model: model)
+            case .wideButton(let control):
+                PageButton(control: control, model: model, large: true)
             case .notes(let notes):
-                VStack(alignment: .leading, spacing: Theme.Space.s) { ForEach(Array(notes.enumerated()), id: \.offset) { _, n in NoteView(note: n) } }
+                VStack(alignment: .leading, spacing: Theme.Space.s) { ForEach(Array(notes.enumerated()), id: \.offset) { _, n in NoteView(note: n, model: model) } }
             case .switches(let controls):
                 RowsCard {
                     ForEach(Array(controls.enumerated()), id: \.offset) { _, c in SwitchRow(control: c, model: model) }
@@ -350,7 +396,16 @@ struct SectionView: View {
 
     private var hasCharts: Bool { section.blocks.contains { if case .chart = $0 { true } else { false } } }
 
-    private var windowPicker: some View {
+    @ViewBuilder private var windowPicker: some View {
+        // In a card, as the page's other small choices look.
+        if section.card {
+            PageWindowPills(model: model)
+        } else {
+            defaultWindowPicker
+        }
+    }
+
+    private var defaultWindowPicker: some View {
         SegmentedPicker(Text("Chart window", comment: "What the 10 min / 1 hour / 24 hours choice above a chart is, read by VoiceOver"),
                         selection: Binding(get: { model.window }, set: { model.window = $0 }), segments: [
             .init(ExtensionPageModel.Window.tenMinutes, Text("10 min", comment: "Chart window: the last ten minutes")),
@@ -372,6 +427,10 @@ struct SectionView: View {
                 if case .cards(let b) = out.last { out[out.count - 1] = .cards(b + [block]) } else { out.append(.cards([block])) }
             case .note(let n):
                 if case .notes(let ns) = out.last { out[out.count - 1] = .notes(ns + [n]) } else { out.append(.notes([n])) }
+            case .metric:
+                if case .metrics(let b) = out.last { out[out.count - 1] = .metrics(b + [block]) } else { out.append(.metrics([block])) }
+            case .ask(let a) where a.row:
+                if case .askRows(let as_) = out.last { out[out.count - 1] = .askRows(as_ + [a]) } else { out.append(.askRows([a])) }
             case .ask(let a):
                 if case .asks(let as_) = out.last { out[out.count - 1] = .asks(as_ + [a]) } else { out.append(.asks([a])) }
             case .choice, .field, .list:
@@ -380,8 +439,10 @@ struct SectionView: View {
                 out.append(.hero(h))
             case .transport(let t):
                 out.append(.transport(t))
-            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks:
+            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .heading, .headsUps, .hostControls, .preview:
                 out.append(.rich(block))
+            case .control(let c) where c.fill:
+                out.append(.wideButton(c))
             case .control(let c):
                 if case .toggle = c.kind {
                     if case .switches(let cs) = out.last { out[out.count - 1] = .switches(cs + [c]) } else { out.append(.switches([c])) }
@@ -405,10 +466,10 @@ private struct BlockView: View {
         case .gauge(let g): GaugeView(gauge: g)
         case .stat(let s): StatView(stat: s)
         case .chart(let c): ChartCard(chart: c, model: model)
-        case .bars(let b): BarsCard(bars: b)
+        case .bars(let b): BarsCard(bars: b, model: model)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .metric, .heading, .headsUps, .hostControls, .preview: EmptyView()
         }
     }
 }
@@ -469,16 +530,77 @@ private struct StatView: View {
 
 struct NoteView: View {
     var note: ExtensionPage.Note
+    var model: ExtensionPageModel?
+    @Environment(\.pageWell) private var well
+    @Environment(\.pageSelected) private var selected
+
+    private var markColor: Color {
+        if note.tone != .neutral { return note.tone.color }
+        return note.style == .band ? (selected ?? Theme.inkFaint) : Theme.inkMuted
+    }
 
     var body: some View {
+        switch note.style {
+        case .band:
+            line
+                .padding(.horizontal, Theme.Space.m)
+                .padding(.vertical, Theme.Space.s + 2)
+                .background(note.tone == .neutral ? (well ?? note.tone.soft) : note.tone.soft, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+        case .plain:
+            line
+        case .verdict:
+            HStack(spacing: Theme.Space.m) {
+                Image(systemName: note.symbol ?? note.tone.symbol).font(.system(size: 14, weight: .bold)).foregroundStyle(note.tone == .neutral ? Theme.inkMuted : note.tone.color)
+                    .frame(width: 30, height: 30)
+                    .background(note.tone.soft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                Text(ext: note.text).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private var line: some View {
         HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-            Image(systemName: note.tone.symbol).foregroundStyle(note.tone == .neutral ? Theme.inkFaint : note.tone.color)
-            Text(ext: note.text).font(Theme.Font.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+            Image(systemName: note.symbol ?? note.tone.symbol).foregroundStyle(markColor)
+            Text(ext: note.text).font(Theme.Font.body).foregroundStyle(note.style == .plain && note.tone == .neutral ? Theme.inkMuted : Theme.ink).fixedSize(horizontal: false, vertical: true)
+            if let link = note.link, let model {
+                Button { Task { await model.run(link, on: nil) } } label: { Text(ext: link.label).font(Theme.Font.body).foregroundStyle(Theme.link) }
+                    .buttonStyle(.sfBare)
+            }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Theme.Space.m)
-        .padding(.vertical, Theme.Space.s + 2)
-        .background(note.tone.soft, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+    }
+}
+
+/// A section as one card: its title and parts inside, the parts flat. Its padding is the same as a row's.
+private struct SectionCardModifier: ViewModifier {
+    var on: Bool
+
+    func body(content: Content) -> some View {
+        if on {
+            content
+                .environment(\.pageFlat, true)
+                .padding(Theme.Space.l)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .cardSurface()
+        } else {
+            content
+        }
+    }
+}
+
+/// A choice or a button at the end of a section's title.
+private struct PageSectionAccessory: View {
+    var block: ExtensionPage.Block
+    var model: ExtensionPageModel
+
+    var body: some View {
+        switch block {
+        case .control(let control): PageButton(control: control, model: model)
+        case .choice(let choice): PageChoiceInline(choice: choice, model: model)
+        default: EmptyView()
+        }
     }
 }
 
@@ -511,6 +633,14 @@ private let seriesColors: [Color] = [Theme.accent, Theme.coral, Theme.mint, Them
 private struct ChartCard: View {
     var chart: ExtensionPage.Chart
     var model: ExtensionPageModel
+    @Environment(\.pageFlat) private var flat
+    @Environment(\.colorScheme) private var scheme
+
+    /// The chart's own colours, where it names them.
+    private var colors: [Color] {
+        let own = chart.colors.compactMap { $0.color(scheme) }
+        return own.isEmpty ? seriesColors : own
+    }
 
     private struct Point: Identifiable {
         var series: String
@@ -523,13 +653,13 @@ private struct ChartCard: View {
         let points = chart.series.flatMap { s in model.points(chart: chart.id, series: s.key).map { Point(series: s.label, t: $0.t, v: $0.v) } }
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(alignment: .top) {
-                Text(ext: chart.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                Spacer(minLength: Theme.Space.s)
+                if !chart.title.isEmpty, !flat { Text(ext: chart.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink) }
+                if !flat { Spacer(minLength: Theme.Space.s) }
                 // The value now, by line, in the line's color: the legend and the reading at once.
                 HStack(spacing: Theme.Space.s) {
                     ForEach(Array(chart.series.enumerated()), id: \.offset) { i, s in
                         HStack(spacing: 4) {
-                            Circle().fill(seriesColors[i % seriesColors.count]).frame(width: 7, height: 7)
+                            Circle().fill(colors[i % colors.count]).frame(width: 7, height: 7)
                             Text(ext: chart.series.count > 1 ? "\(s.label) \(s.display ?? "")" : (s.display ?? ""))
                                 .font(Theme.Font.captionStrong).foregroundStyle(Theme.ink).monospacedDigit()
                         }
@@ -543,7 +673,7 @@ private struct ChartCard: View {
                     .foregroundStyle(by: .value(Self.line, p.series)).interpolationMethod(.monotone)
                     .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
             }
-            .chartForegroundStyleScale(domain: chart.series.map(\.label), range: Array(seriesColors.prefix(max(1, chart.series.count))))
+            .chartForegroundStyleScale(domain: chart.series.map(\.label), range: Array((0..<max(1, chart.series.count)).map { colors[$0 % colors.count] }))
             .chartLegend(.hidden)
             .chartYScale(domain: 0...(chart.max ?? max(0.001, (points.map(\.v).max() ?? 1) * 1.15)))
             .chartXScale(domain: Date().addingTimeInterval(-model.window.seconds)...Date())
@@ -559,7 +689,7 @@ private struct ChartCard: View {
                     AxisValueLabel(format: model.window == .day ? .dateTime.hour() : .dateTime.hour().minute(), collisionResolution: .greedy)
                 }
             }
-            .frame(height: 140)
+            .frame(height: chart.height.map { CGFloat($0) } ?? 140)
             .overlay {
                 if points.count < 2 {
                     Text("Collecting…", comment: "A chart that has too few readings yet").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
@@ -570,7 +700,7 @@ private struct ChartCard: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .padding(Theme.Space.m)
+        .padding(flat ? 0 : Theme.Space.m)
         .cardSurface()
     }
 
@@ -586,16 +716,43 @@ private struct ChartCard: View {
 
 private struct BarsCard: View {
     var bars: ExtensionPage.Bars
+    var model: ExtensionPageModel
+    @Environment(\.pageFlat) private var flat
+    @Environment(\.pageWell) private var well
+    @Environment(\.pageSelected) private var selected
+
+    private func color(_ item: ExtensionPage.Bar) -> Color { item.tone == .neutral ? selected ?? Theme.accent : item.tone.color }
+
+    /// Its picture or symbol beside it, its name over the bar and the value at the end.
+    private func pictured(_ item: ExtensionPage.Bar) -> some View {
+        HStack(spacing: Theme.Space.m) {
+            Group {
+                if let picture = item.picture {
+                    PagePictureView(picture: picture, model: model, side: 64, fill: false)
+                } else if let symbol = item.symbol {
+                    Image(systemName: symbol).font(.system(size: 15)).foregroundStyle(Theme.inkMuted)
+                }
+            }
+            .frame(width: 28, height: 28)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ext: item.label).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
+                PageMeter(fraction: item.fraction, color: color(item), track: well ?? Theme.surfaceSunken, height: 6)
+            }
+            Text(ext: item.value).font(Theme.Font.body).foregroundStyle(Theme.ink).monospacedDigit().frame(minWidth: 36, alignment: .trailing)
+        }
+        .accessibilityElement(children: .combine)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
-            CardTitle(title: bars.title, caption: bars.caption)
+            if !bars.title.isEmpty { CardTitle(title: bars.title, caption: bars.caption) }
+            else if let caption = bars.caption { Text(ext: caption).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true) }
             if bars.items.isEmpty {
                 Text("Nothing to show right now.", comment: "An extension page's list of bars is empty")
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
             }
             ForEach(Array(bars.items.enumerated()), id: \.offset) { _, item in
-                VStack(alignment: .leading, spacing: 4) {
+                if item.picture != nil || item.symbol != nil { pictured(item) } else { VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(ext: item.label).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
                         Spacer(minLength: Theme.Space.s)
@@ -603,18 +760,18 @@ private struct BarsCard: View {
                     }
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(Theme.surfaceSunken)
-                            Capsule().fill(item.tone == .neutral ? Theme.accent : item.tone.color)
+                            Capsule().fill(well ?? Theme.surfaceSunken)
+                            Capsule().fill(color(item))
                                 .frame(width: max(4, geo.size.width * item.fraction))
                         }
                     }
                     .frame(height: 6)
                 }
-                .accessibilityElement(children: .combine)
+                .accessibilityElement(children: .combine) }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(Theme.Space.m)
+        .padding(flat ? 0 : Theme.Space.m)
         .cardSurface()
     }
 }
@@ -622,6 +779,7 @@ private struct BarsCard: View {
 private struct FactsCard: View {
     var facts: ExtensionPage.Facts
     @Environment(\.pixelLength) private var pixel
+    @Environment(\.pageFlat) private var flat
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -641,7 +799,7 @@ private struct FactsCard: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(Theme.Space.m)
+        .padding(flat ? 0 : Theme.Space.m)
         .cardSurface()
     }
 }
@@ -654,6 +812,7 @@ private struct SwitchRow: View {
     var control: ExtensionPage.Control
     var model: ExtensionPageModel
     @State private var pending: Bool?
+    @Environment(\.pageFlat) private var flat
 
     var body: some View {
         HStack(spacing: Theme.Space.m) {
@@ -675,7 +834,7 @@ private struct SwitchRow: View {
                 .toggleStyle(.switch).labelsHidden()
                 .disabled(pending != nil)
         }
-        .padding(.horizontal, Theme.Space.l)
+        .padding(.horizontal, flat ? 0 : Theme.Space.l)
         .padding(.vertical, Theme.Space.s + 2)
     }
 
@@ -688,11 +847,13 @@ private struct SwitchRow: View {
 /// Sidefolk's own part of the page, not the extension's (D63).
 struct HostControls: View {
     var model: ExtensionPageModel
+    /// Only what it needs from macOS: its palettes' row is drawn elsewhere on this page.
+    var quiet = false
     @State private var trusted = AXIsProcessTrusted()
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            if !model.palettes.isEmpty {
+            if !model.palettes.isEmpty, !quiet {
                 RowsCard {
                     ForEach(model.palettes) { p in PaletteSettingsRow(info: p) }
                 }

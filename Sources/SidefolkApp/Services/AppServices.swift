@@ -317,6 +317,8 @@ protocol AppServices: AnyObject {
     func replayOnboarding()
     /// Opens Settings, on `tab` if given (Agents: connect Claude Code / Codex, install the sidefolk command).
     func openSettings(tab: SettingsTab?)
+    /// Opens an extension's palette by its id, as its shortcut does.
+    func openPalette(_ id: String)
     /// Opens the About window: the logo, the version, the notices.
     func showAbout()
     /// Opens the Gallery in Home: companions, extensions and themes to get (D84).

@@ -9,6 +9,8 @@ public enum Picture {
     case data(_ name: String)
     case companion(Figure)
     case person
+    /// An installed app's icon, from its path ("/Applications/Xcode.app"). You learn nothing back.
+    case app(_ path: String)
 
     var json: [String: Any] {
         switch self {
@@ -19,6 +21,7 @@ public enum Picture {
         case .data(let name): return ["data": name]
         case .companion(let figure): return ["companion": figure.rawValue]
         case .person: return ["person": true]
+        case .app(let path): return ["app": path]
         }
     }
 }

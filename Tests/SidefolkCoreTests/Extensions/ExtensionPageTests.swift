@@ -129,18 +129,26 @@ struct ExtensionPageTests {
         let summary = try #require(page.summary)
         #expect(!summary.title.isEmpty && summary.detail.contains("CPU"), "\(summary)")
         let titles = page.sections.compactMap(\.title)
-        for expected in ["Right now", "Over time", "What's using your Mac", "Memory", "Storage", "Network", "This Mac"] {
+        // A pack that draws its own head (D170), or one from before: whichever this checkout holds, since a pack's page changes with its own release.
+        for expected in page.bare ? ["Processor & graphics", "Top apps", "Heads-ups", "Over time", "Memory", "Storage", "Network", "This Mac"]
+            : ["Right now", "Over time", "What's using your Mac", "Memory", "Storage", "Network", "This Mac"] {
             #expect(titles.contains(expected), "\(titles)")
         }
         // Read inside the sandbox: other apps' use, the disk's free space and the chip all came through.
         let all = page.sections.flatMap(\.blocks)
         let bars = all.compactMap { if case .bars(let b) = $0 { b } else { nil } }
-        #expect(bars.first { $0.title == "Memory" }?.items.isEmpty == false, "apps' memory")
-        let disk = all.compactMap { if case .gauge(let g) = $0, g.label == "Disk" { g } else { nil } }.first
+        #expect(bars.first?.items.isEmpty == false, "apps' use")
+        let disk: String? = all.compactMap {
+            switch $0 {
+            case .metric(let m) where m.label == "Storage": m.value
+            case .gauge(let g) where g.label == "Disk": g.value
+            default: nil
+            }
+        }.first
         // Free space as System Settings counts it (what macOS can clear counts as free), read inside the sandbox.
         let settings = try URL(fileURLWithPath: "/").resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
             .volumeAvailableCapacityForImportantUsage.map { Double($0) / 1e9 } ?? 0
-        let shown = disk.flatMap { Double($0.value.seen.split(separator: " ").first ?? "") } ?? 0
+        let shown = disk.flatMap { Double($0.seen.split(separator: " ").first ?? "") } ?? 0
         #expect(abs(shown - settings) < max(2, settings * 0.05), "page \(shown) GB, macOS \(settings) GB")
         #expect(page.samples.keys.contains("cpu/total") && page.samples.keys.contains("memory/used"))
         let kept = await h.host.pageHistory.points(extensionId: info.id, page: "mac", key: "cpu/total", window: 600, now: Date())

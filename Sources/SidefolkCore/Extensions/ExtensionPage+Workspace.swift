@@ -9,6 +9,10 @@ extension ExtensionPage {
         public var actions: [Control]
         /// Under ⋯.
         public var menu: [Control]
+        /// Led by the extension's own icon, as Sidefolk knows it.
+        public var brand = false
+        /// Says when the page was last read, with a button to read it now. Sidefolk's words, since only it knows.
+        public var updated = false
     }
 
     public struct Nav: Sendable, Hashable {
@@ -72,7 +76,8 @@ extension ExtensionPage {
             guard let title = text(j["title"], 80) else { return nil }
             return .bar(PageHead(title: title, pill: badge(j["pill"]), detail: text(j["detail"], 240),
                             actions: (j["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) },
-                            menu: (j["menu"]?.arrayValue ?? []).prefix(8).compactMap { button($0, characters: 30) }))
+                            menu: (j["menu"]?.arrayValue ?? []).prefix(8).compactMap { button($0, characters: 30) },
+                            brand: j["brand"]?.boolValue ?? false, updated: j["updated"]?.boolValue ?? false))
         case "nav":
             let items = (j["items"]?.arrayValue ?? []).prefix(maxItems).compactMap(item)
             let brand = j["brand"]?.boolValue ?? false, title = text(j["title"], 40)

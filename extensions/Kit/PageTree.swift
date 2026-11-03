@@ -161,8 +161,14 @@ public struct PageBar {
     public var detail: String?
     public var actions: [Action]
     public var menu: [Action]
+    /// Led by your own icon, as Sidefolk knows it; `pill` goes to the far end, as a state with a dot.
+    public var brand = false
+    /// Sidefolk says when the page was last read, with a button to read it now.
+    public var updated = false
 
-    public init(_ title: String, pill: Badge? = nil, detail: String? = nil, actions: [Action] = [], menu: [Action] = []) {
+    public init(_ title: String, pill: Badge? = nil, detail: String? = nil, actions: [Action] = [], menu: [Action] = [], brand: Bool = false, updated: Bool = false) {
+        self.brand = brand
+        self.updated = updated
         self.title = title
         self.pill = pill
         self.detail = detail
@@ -174,6 +180,8 @@ public struct PageBar {
         var out: [String: Any] = ["type": "bar", "title": title, "actions": actions.map(\.json), "menu": menu.map(\.json)]
         if let pill { out["pill"] = ["text": pill.text, "tone": pill.tone.rawValue] }
         if let detail { out["detail"] = detail }
+        if brand { out["brand"] = true }
+        if updated { out["updated"] = true }
         return out
     }
 }

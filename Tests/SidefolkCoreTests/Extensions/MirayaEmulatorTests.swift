@@ -39,7 +39,7 @@ struct MirayaEmulatorTests {
         let pair = await h.call("ext.miraya.pair_tv", ["tv": .string(address)])
         let answer = try #require(pair.okText, "\(pair.status)")
         let page = try await h.host.renderPage(extensionId: info.id, page: "miraya")
-        let hero = try #require(page.hero)
+        let hero = try #require(page.sections.flatMap(\.blocks).compactMap { if case .hero(let h) = $0 { h } else { nil } }.first)
         let code = try #require(hero.code).filter(\.isNumber)
         #expect(code.count == 6 && answer.contains(code.prefix(3)))
         let nodes = try Self.nodes()

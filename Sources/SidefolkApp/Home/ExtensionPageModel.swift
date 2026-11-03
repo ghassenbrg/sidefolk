@@ -382,6 +382,10 @@ final class ExtensionPageModel {
             if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
         case .allow(let consent):
             asking = consent
+        case .palette(let name):
+            services?.openPalette("\(info.extensionId)/\(name)")
+        case .refresh:
+            await refresh()
         case .settings(let pane):
             switch pane {
             case .attention: services?.openSettings(tab: .attention)
@@ -435,6 +439,15 @@ final class ExtensionPageModel {
             made = figure == .face ? CompanionArt.avatar(for: s, side: CGFloat(side)) : SceneFigures.trim(CompanionArt.portrait(for: s, state: .listening, side: CGFloat(side)))
         case .person:
             made = AccountPicture.current
+        case .app(let path):
+            // Off the main thread, and only a real app where apps are installed, after following any link: anything else draws nothing.
+            let cg = await Task.detached { () -> CGImage? in
+                let url = URL(fileURLWithPath: path).resolvingSymlinksInPath()
+                guard PagePicture.isAppPath(url.path), (try? url.resourceValues(forKeys: [.isApplicationKey]))?.isApplication == true else { return nil }
+                var rect = CGRect(x: 0, y: 0, width: side, height: side)
+                return NSWorkspace.shared.icon(forFile: url.path).cgImage(forProposedRect: &rect, context: nil, hints: nil)
+            }.value
+            made = cg.map { NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height)) }
         }
         if let made { pictureCache[key] = made }
         return made

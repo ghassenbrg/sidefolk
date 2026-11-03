@@ -28,6 +28,10 @@ struct RichBlockView: View {
         case .nav(let nav): PageNavView(nav: nav, model: model)
         case .notice(let notice): PageNoticeView(notice: notice, model: model)
         case .ticks(let ticks): PageTicksView(ticks: ticks)
+        case .heading(let heading): PageHeadingView(heading: heading)
+        case .headsUps(let part): PagePlacedHeadsUps(part: part, model: model)
+        case .hostControls: HostControls(model: model)
+        case .preview(let preview): PagePreviewView(preview: preview, model: model)
         default: EmptyView()
         }
     }

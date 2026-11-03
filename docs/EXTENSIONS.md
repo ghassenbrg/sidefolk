@@ -1116,6 +1116,28 @@ A request is at most 8,000 characters and 32,000 bytes. **Codex:** it always add
 
 `sidefolk/activity.add {text, key, result}`: `text` up to 120 characters; `key` your own name for it; `result` `win`, `loss`, `draw` or `done`, to count later. At most one every five seconds. When your extension is removed, these rows, being your own words, go with it; rows of what its tools did stay, as the record of what ran. `sidefolk/settings.set` is held to one a second, the last value winning, and writes nothing for a value it already has. Kit: `Activity.add("Logged a robin", key: "robin", result: "done")`.
 
+## Pages composed like an app's screen (D170)
+
+A list of sections stands one under another. When a page's design needs more, these say so, and Sidefolk still draws all of it from data. Nothing here names a product; older copies skip what they don't know, so a pack using them names the snapshot in `minimum_sidefolk`. Kit: `Section.inCard(…)`, `Metric`, `Preview`, and the `Block` helpers in `Kit/PageCompose.swift`.
+
+**Sections.** `card: true` holds the title and every part in one card, the parts flat inside it. `row: "name"` with `weight` puts neighbouring sections with that name side by side, sharing the width and the tallest height; below 760 points they stack. `joined: true` on a row makes one card with a line between them. `accessories` (up to three choices or buttons) sit at the title's end, and with them a section may have no parts at all: a toolbar. `status` is a dot in a tone before the title. `pin_last` stands its last part at the card's foot.
+
+**Page.** A `bar` with `brand: true` leads with the extension's icon and puts `pill` at the far end as a state with a dot; `updated: true` adds when it was last read and a button to read it now, in Sidefolk's words. `quiet_host: true` keeps a page's palette row off this state, for a `host_controls` part elsewhere; what the extension needs from macOS always shows. `dress` also takes `selected` (what's selected) and `well` (a neutral note, a bar's track). A `dress.accent` too light for white words now holds black ones rather than being left out, as long as it shows at 3:1 on the card; `selected` follows the same rule and `well` must keep the theme's words readable.
+
+**Parts.**
+
+| Part | Keys |
+|---|---|
+| `metric` | `label`, `value`, `symbol`, `tone`, `tint` `{light, dark}`, `caption`, `fraction` (a bar) or `spark` `{chart, series}` (a line of that chart's past), `size` `large`/`small`. A `warn` or `bad` tone beats the tint. |
+| `heading` | `title`, `rule`: a smaller title inside a card. |
+| `heads_ups` | `show` (watchers shown first), `more`, `less` (your words for showing the rest). Placed here, they aren't also drawn at the page's foot. |
+| `host_controls` | Sidefolk's own row for your palettes' shortcuts, and what you need from macOS. |
+| `preview` | `kind`, `kind_symbol`, `title`, `text` (up to 32,000 bytes), `code`, `image`, `color`, `facts`, `footer`, `actions` (up to five), `empty` (the words when there's nothing to show). |
+
+**More on parts you know.** `hero`: `plain` draws it as one of the page's cards with `ring` `{fraction, value, caption}` (only when you really know how much is left) and `chips`. `choice`: `style` `bar` (segments across the width), `menu` (a full-width menu), `pills`; `hide_label`; `columns` for tiles; an option's `detail` shows on hover in a bar. `field`: `search` with `live` and `go`. `list`: `max_height` scrolls it in its own height (then up to 100 rows), `empty`, and a row's `press` (a click anywhere, up and down move through them; only `go`, since the keys fire it with no words on screen), `selected`, `mark`, `mark_label`. `ask`: `row`, `symbol`. `note`: `style` `band`/`plain`/`verdict`, `symbol`, `link`. `bars`: `title` is optional, and an item may have `picture` or `symbol`. `chart`: `height`, `colors`. A button: `fill` across the width, `shape: "icon"` as its symbol in a framed square (needs a symbol, and only a tool or `go`), `palette` opens one of your own palettes and shows its shortcut, `refresh` reads the page again. A picture may be `{"app": "/Applications/Thing.app"}`: only that app's icon, only from where apps are installed, and you learn nothing back. Give a `symbol` too, for anything else.
+
+**Checking every state.** Dump your page's JSON and read it with `SIDEFOLK_SNAPSHOT_PAGES=<folder> swift run SidefolkApp --ui-snapshots out --only page-file-<name>`: each `<name>.json` is `{"title", "icon", "width", "folder", "alerts": [{"watcher", "title", "description", "on"}], "page": {…}}`, and comes out in light and dark with made-up past readings.
+
 ## Places in a page, the person's place, planned moments
 
 A pack using any of this names the snapshot that has it in `addon.json`'s `minimum_sidefolk` (D83). Older copies skip page keys they don't know.

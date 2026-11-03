@@ -149,7 +149,14 @@ struct ExtensionServiceTests {
         #expect(held.hasPrefix("Awake until") && held.contains("Screen may sleep"), "\(held)")
         let page = try await h.host.renderPage(extensionId: info.id, page: "awake")
         #expect(page.summary?.title.hasPrefix("Awake until") == true)
-        #expect(page.sections.flatMap(\.blocks).contains { if case .control(let c) = $0 { c.tool == "stop_keeping_awake" } else { false } })
+        // Stop is in the hero of a pack that draws its own head (D170), and a plain button on one from before. Whichever this checkout holds; a pack's page changes with its own release.
+        #expect(page.sections.flatMap(\.blocks).contains {
+            switch $0 {
+            case .hero(let h): page.bare && h.actions.contains { $0.tool == "stop_keeping_awake" }
+            case .control(let c): !page.bare && c.tool == "stop_keeping_awake"
+            default: false
+            }
+        })
         let nowhere = await h.call("ext.keep-awake.keep_awake", ["while_app": "No Such App Anywhere"])
         #expect(nowhere.okText == nil || nowhere.okText?.contains("isn't open") == true)
         let stopped = try #require(await h.call("ext.keep-awake.stop_keeping_awake").okText)

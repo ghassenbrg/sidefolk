@@ -13,6 +13,10 @@ public enum PageAct: Sendable, Hashable {
     case allow(PageConsent)
     /// One of Sidefolk's or the Mac's settings panes.
     case settings(PageSettingsPane)
+    /// Opens one of this extension's own palettes, as its shortcut does. The button shows that shortcut.
+    case palette(String)
+    /// Reads the page again now.
+    case refresh
 
     /// The control's own: `go`, `copy`, `file`, `allow` or `settings`. Exactly one, or it isn't drawn as one.
     static func parse(_ j: JSONValue) -> PageAct? {
@@ -21,6 +25,8 @@ public enum PageAct: Sendable, Hashable {
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
         if let consent = j["allow"]?.stringValue.flatMap(PageConsent.init(rawValue:)) { return .allow(consent) }
         if let pane = j["settings"]?.stringValue.flatMap(PageSettingsPane.init(rawValue:)) { return .settings(pane) }
+        if let palette = j["palette"]?.stringValue, palette.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil { return .palette(palette) }
+        if j["refresh"]?.boolValue == true { return .refresh }
         return nil
     }
 }
@@ -118,6 +124,19 @@ public struct PageDress: Sendable, Hashable {
 
         /// Can the theme's ink be read on it? Text and controls stay the theme's, so a dark "light" colour would hide them. Near-white for
         /// light, near-black for dark, whatever the hue.
+        /// At or below `holdsWhite`, for each appearance.
+        public var lightHoldsWhite: Bool { Self.luminance(light) <= Self.holdsWhite }
+        public var darkHoldsWhite: Bool { Self.luminance(dark) <= Self.holdsWhite }
+
+        /// A colour that fills what's on or picked, seen against what it stands on: holding white, or at 3:1, in each appearance. White on a white card would hide whether a switch is on.
+        func shows(on ground: Pair) -> Bool {
+            func contrast(_ a: String, _ b: String) -> Double {
+                let la = Self.luminance(a), lb = Self.luminance(b)
+                return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+            }
+            return (lightHoldsWhite || contrast(light, ground.light) >= 3) && (darkHoldsWhite || contrast(dark, ground.dark) >= 3)
+        }
+
         var readable: Bool { Self.luminance(light) >= 0.6 && Self.luminance(dark) <= 0.12 }
 
         /// At or below this, white words read at 4.5:1.
@@ -136,15 +155,21 @@ public struct PageDress: Sendable, Hashable {
     public var ground: Pair
     public var card: Pair?
     public var line: Pair?
-    /// Filled buttons and switches on this page. White goes on it, so it has to hold white words.
+    /// Filled buttons and switches on this page. Too light to hold white words, it holds near-black ones.
     public var accent: Pair?
+    /// What's selected on this page, and the soft tint under it.
+    public var selected: Pair?
+    /// Soft wells on this page's cards: a neutral note, a bar's track.
+    public var well: Pair?
     public var picture: PagePicture?
     /// The picture repeats rather than filling the page.
     public var tile = false
 
     static func parse(_ j: JSONValue?) -> PageDress? {
         guard let ground = Pair.parse(j?["ground"]), ground.readable else { return nil }
-        return PageDress(ground: ground, card: Pair.parse(j?["card"]).flatMap { $0.readable ? $0 : nil }, line: Pair.parse(j?["line"]), accent: Pair.parse(j?["accent"]).flatMap { Pair.luminance($0.light) <= 0.35 && Pair.luminance($0.dark) <= 0.35 ? $0 : nil }, picture: PagePicture.parse(j?["picture"]),
+        let card = Pair.parse(j?["card"]).flatMap { $0.readable ? $0 : nil }
+        return PageDress(ground: ground, card: card, line: Pair.parse(j?["line"]), accent: Pair.parse(j?["accent"]).flatMap { $0.shows(on: card ?? ground) ? $0 : nil },
+                         selected: Pair.parse(j?["selected"]).flatMap { $0.shows(on: card ?? ground) ? $0 : nil }, well: Pair.parse(j?["well"]).flatMap { $0.readable ? $0 : nil }, picture: PagePicture.parse(j?["picture"]),
                          tile: j?["picture"]?["tile"]?.boolValue ?? false)
     }
 }

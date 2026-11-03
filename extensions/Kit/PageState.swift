@@ -35,6 +35,10 @@ public enum PageAct {
     case allow(String)
     /// Opens `notifications` (the Mac's), `attention` or `place` (Sidefolk's).
     case settings(String)
+    /// Opens one of your own palettes, as its shortcut does. The button shows that shortcut.
+    case palette(String)
+    /// Reads the page again now.
+    case refresh
 
     func fill(_ out: inout [String: Any]) {
         switch self {
@@ -43,6 +47,8 @@ public enum PageAct {
         case .file(let tool, let param, let types, let input): out["file"] = ["tool": tool, "param": param, "types": types, "input": input] as [String: Any]
         case .allow(let what): out["allow"] = what
         case .settings(let pane): out["settings"] = pane
+        case .palette(let name): out["palette"] = name
+        case .refresh: out["refresh"] = true
         }
     }
 }
@@ -65,14 +71,20 @@ public struct PageDress {
     public var ground: PagePair
     public var card: PagePair?
     public var line: PagePair?
-    /// Filled buttons and switches on the page; white goes on it, so it must be deep enough to hold white words.
+    /// Filled buttons and switches on the page. Too light to hold white words, it holds near-black ones.
     public var accent: PagePair?
+    /// What's selected on the page, and the soft tint under it.
+    public var selected: PagePair?
+    /// Soft wells on its cards: a neutral note, a bar's track.
+    public var well: PagePair?
     public var picture: Picture?
     /// The picture repeats rather than filling the page.
     public var tile: Bool
 
-    public init(ground: PagePair, card: PagePair? = nil, line: PagePair? = nil, accent: PagePair? = nil, picture: Picture? = nil, tile: Bool = false) {
+    public init(ground: PagePair, card: PagePair? = nil, line: PagePair? = nil, accent: PagePair? = nil, selected: PagePair? = nil, well: PagePair? = nil, picture: Picture? = nil, tile: Bool = false) {
         self.accent = accent
+        self.selected = selected
+        self.well = well
         self.ground = ground
         self.card = card
         self.line = line
@@ -85,6 +97,8 @@ public struct PageDress {
         if let card { out["card"] = card.json }
         if let line { out["line"] = line.json }
         if let accent { out["accent"] = accent.json }
+        if let selected { out["selected"] = selected.json }
+        if let well { out["well"] = well.json }
         if let picture {
             var p = picture.json
             if tile { p["tile"] = true }
