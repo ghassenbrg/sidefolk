@@ -65,14 +65,29 @@ public enum NotebookCollections {
         // What can't be seen goes first, so a name that only looks like About you or the Inbox is taken for what it looks like.
         let clean = name.displaySafe.clipped(60)
         guard !clean.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
-        if isProfileName(clean) || clean.lowercased() == String(localized: "About you").lowercased() { throw profileRefusal }
+        if looksLikeProfile(clean) { throw profileRefusal }
         // The Inbox always exists (it is made on first use); a look-alike "inbox" project would split notes.
-        if isInboxName(clean) || clean.lowercased() == String(localized: "Inbox").lowercased() {
+        if looksLikeInbox(clean) {
             throw UserFacingError("“Inbox” is always there: it's where notes go when no collection is named.")
         }
         // Another agent, only on the person's yes on a card (D160); `notes.save` never makes one for it.
         guard mayCreate(context.caller) || context.personWasAsked else { throw creationRefusal(clean, caller: context.caller) }
         return try await notebook.createCollection(name: clean, kind: kind, source: context.provenanceTag, now: context.now)
+    }
+
+    /// A name as it reads: compatibility forms folded, what can't be seen gone, case ignored. Letters from another script
+    /// that look the same (a Cyrillic "Іnbox") aren't caught: a card shows them, and they're an accepted residual (D160).
+    static func asItReads(_ name: String) -> String {
+        let seen = String(String.UnicodeScalarView(name.precomposedStringWithCompatibilityMapping.unicodeScalars.filter { !$0.properties.isDefaultIgnorableCodePoint }))
+        return seen.displaySafe.lowercased()
+    }
+
+    static func looksLikeProfile(_ name: String) -> Bool {
+        [profileName, String(localized: "About you")].contains { asItReads($0) == asItReads(name) }
+    }
+
+    static func looksLikeInbox(_ name: String) -> Bool {
+        [NotebookStore.inboxName, String(localized: "Inbox")].contains { asItReads($0) == asItReads(name) }
     }
 
     /// The notebook's shape is the user's: other agents and extensions file into what exists, and never

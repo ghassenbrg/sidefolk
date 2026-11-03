@@ -490,7 +490,10 @@ struct CollectionsListTool: Tool {
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         var collections = try await notebook.collections()
         // What's known about the person isn't another agent's to size up (T4).
-        if case .external = context.caller { collections.removeAll { $0.kind == .profile } }
+        switch context.caller {
+        case .external, .extension: collections.removeAll { $0.kind == .profile }
+        case .user, .agent, .routine, .command: break
+        }
         let counts = try await NotebookCollections.itemCounts(notebook)
         guard !collections.isEmpty else {
             return ToolResult(text: "The notebook has no collections yet. Notes go to the Inbox.",
@@ -535,8 +538,8 @@ struct CollectionsCreateTool: Tool {
             }
             kind = k
         }
-        if NotebookCollections.isProfileName(name) { throw NotebookCollections.profileRefusal }
-        if name.lowercased() == NotebookStore.inboxName.lowercased() {
+        if NotebookCollections.looksLikeProfile(name) { throw NotebookCollections.profileRefusal }
+        if NotebookCollections.looksLikeInbox(name) {
             // The Inbox always exists (it is made on first use); a look-alike second one is never wanted.
             let inbox = try await notebook.inbox(now: context.now)
             return ToolResult(text: "“\(inbox.name)” already exists.",
@@ -544,7 +547,7 @@ struct CollectionsCreateTool: Tool {
                                                subtitle: String(localized: "Already exists"), refId: inbox.id))
         }
         // Reuse only an exact (case-insensitive) match here; fuzzy matching is for filing notes.
-        let existing = try await NotebookCollections.filable(notebook).first { $0.name.lowercased() == name.lowercased() }
+        let existing = try await NotebookCollections.filable(notebook).first { NotebookCollections.asItReads($0.name) == NotebookCollections.asItReads(name) }
         if let existing {
             return ToolResult(text: "“\(existing.name)” already exists.",
                               card: ResultCard(kind: .collection, title: existing.name, subtitle: String(localized: "Already exists"), refId: existing.id))
@@ -616,7 +619,12 @@ struct NotesCollectionTool: Tool {
                  risk: .low, capabilities: [.notebook], category: .notes, mutates: true, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { String(localized: "Change “\((input.string("collection") ?? "").clipped(60))”") }
+    func summary(for input: JSONValue) -> String {
+        let which = (input.string("collection") ?? "").displaySafe.clipped(60)
+        // The card has to say what a new name is: a yes to it is the only thing between an agent and a name beside the person's own.
+        if let name = input.string("name")?.displaySafe.clipped(60), !name.isEmpty { return String(localized: "Rename “\(which)” to “\(name)”") }
+        return String(localized: "Change “\(which)”")
+    }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let wanted = try input.requiredText("collection", limit: 100)
@@ -627,6 +635,9 @@ struct NotesCollectionTool: Tool {
         if let name = input.string("name")?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
             guard c.kind != .inbox, c.kind != .profile else { throw UserFacingError("The Inbox and About you keep their names.") }
             let clean = name.displaySafe.clipped(60)
+            guard !clean.isEmpty, !NotebookCollections.looksLikeProfile(clean), !NotebookCollections.looksLikeInbox(clean) else {
+                throw UserFacingError("That name is taken by the notebook's own: choose another.")
+            }
             if let taken = try await notebook.findCollection(named: clean), taken.id != c.id, taken.name.lowercased() == clean.lowercased() {
                 throw UserFacingError("There's already a collection called “\(clean)”.")
             }

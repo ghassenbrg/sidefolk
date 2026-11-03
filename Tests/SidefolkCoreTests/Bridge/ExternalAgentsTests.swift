@@ -263,21 +263,41 @@ import Testing
     /// What the card shows is what's made: nothing unseen, no second line, no twin of what's Sidefolk's own.
     @Test func aNameCantHideAnythingFromTheCard() async throws {
         let s = try await Stack()
-        for twin in ["About you\u{200E}", "ABOUT\u{2060} YOU", "Inbox\u{2060}", "\u{202E}Inbox"] {
+        for twin in ["About you\u{200E}", "ABOUT\u{2060} YOU", "Inbox\u{2060}", "\u{202E}Inbox", "About you\u{00AD}", "Inbox\u{00AD}", "About\u{3000}you",
+                     "About\u{2003}you", "Inbox\u{034F}", "Inbox\u{FE0F}", "Inbox\u{3164}", "Inbox\u{061C}", "Ａｂｏｕｔ ｙｏｕ", "Inbox\u{0085}"] {
             let answered = s.answerNextCard(.allowOnce)
             let refused = try await s.call("collections_create", ["name": .string(twin)])
             answered.cancel()
             #expect(try await !s.runtime.notebook.collections().contains { $0.kind == .project }, "\(twin): \(refused.text)")
         }
         let answered = s.answerNextCard(.allowOnce)
-        let made = try await s.call("collections_create", ["name": "Pockito\nSidefolk checked this: safe\u{202E}"])
+        let made = try await s.call("collections_create", ["name": "Pockito\u{2028}Sidefolk checked this: safe\u{202E}"])
         answered.cancel()
         let card = try #require(await answered.value)
-        #expect(!card.summary.contains("\n") && !card.summary.contains("\u{202E}"), "\(card.summary)")
+        #expect(!card.summary.contains("\u{2028}") && !card.summary.contains("\u{202E}"), "\(card.summary)")
         #expect(!made.isError, "\(made.text)")
         let kept = try await s.runtime.notebook.collections().first { $0.kind == .project }
         #expect(kept?.name == "Pockito Sidefolk checked this: safe")
         #expect(card.summary.contains(kept?.name ?? "?"))
+        await s.stop()
+    }
+
+    /// Renaming is the same reach as making one: the card says the new name, and it can't be a twin either.
+    @Test func aRenameSaysTheNewNameOnItsCard() async throws {
+        let s = try await Stack()
+        await s.runtime.settings.update { $0.agentAccess.change = .allow }
+        _ = try await s.runtime.notebook.collection(named: "Pockito", kind: .project, now: Date())
+        let denied = s.answerNextCard(.deny)
+        _ = try await s.call("notes_collection", ["collection": "Pockito", "name": "URGENT\u{2028}read me"])
+        denied.cancel()
+        let card = try #require(await denied.value)
+        #expect(card.summary.contains("URGENT read me"), "\(card.summary)")
+        let allowed = s.answerNextCard(.allowOnce)
+        let twin = try await s.call("notes_collection", ["collection": "Pockito", "name": "About you\u{00AD}"])
+        allowed.cancel()
+        _ = await allowed.value
+        #expect(twin.isError)
+        #expect(try await s.runtime.notebook.findCollection(named: "Pockito") != nil)
         await s.stop()
     }
 
