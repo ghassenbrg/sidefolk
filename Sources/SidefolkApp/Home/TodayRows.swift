@@ -251,18 +251,14 @@ struct QueueRow: View {
     }
 
     private func no() -> KeyPress.Result {
-        switch decision {
-        case .approval(let request): act { await model.answer(request, .deny) }
-        case .attention(let item): act { await model.respond(item, action: nil) }
-        case .skipped(let step): act { await model.dismissSkipped(step) }
-        case .session: return .ignored
-        }
+        guard let work = decision.notNow(model) else { return .ignored }
+        act(work)
         return .handled
     }
 
     private func snooze() -> KeyPress.Result {
-        guard case .attention(let item) = decision, let later = item.actions.first(where: { $0.id.hasPrefix("snooze") }) else { return .ignored }
-        act { await model.respond(item, action: later.id) }
+        guard let work = decision.snoozed(model) else { return .ignored }
+        act(work)
         return .handled
     }
 }
@@ -680,6 +676,22 @@ struct EditReminderSheet: View {
 }
 
 extension NowModel.Decision {
+    /// Delete: not now. Nil for what can only be opened.
+    func notNow(_ model: NowModel) -> (() async -> Void)? {
+        switch self {
+        case .approval(let request): { await model.answer(request, .deny) }
+        case .attention(let item): { await model.respond(item, action: nil) }
+        case .skipped(let step): { await model.dismissSkipped(step) }
+        case .session: nil
+        }
+    }
+
+    /// S: later, for what offers it.
+    func snoozed(_ model: NowModel) -> (() async -> Void)? {
+        guard case .attention(let item) = self, let later = item.actions.first(where: { $0.id.hasPrefix("snooze") }) else { return nil }
+        return { await model.respond(item, action: later.id) }
+    }
+
     /// Who's asking, above a card: the board's "Mochi asks", "Claude Code is waiting", "Watch changed".
     @MainActor func cardLabel(_ model: NowModel) -> String {
         switch self {
@@ -739,6 +751,7 @@ struct NextUpRow: View {
     var decision: NowModel.Decision
     var model: NowModel
     var focused: FocusState<String?>.Binding
+    var act: (@escaping () async -> Void) -> Void
     var bringForward: () -> Void
 
     var body: some View {
@@ -767,10 +780,18 @@ struct NextUpRow: View {
         .focusable()
         .focusEffectDisabled()
         .focused(focused, equals: decision.id)
-        .onKeyPress(keys: [.return, .upArrow, .downArrow, .leftArrow, .rightArrow, "j", "k"], phases: .down) { press in
+        .onKeyPress(keys: [.return, .delete, .upArrow, .downArrow, .leftArrow, .rightArrow, "s", "j", "k"], phases: .down) { press in
             switch press.key {
             case .return:
                 bringForward()
+                return .handled
+            case .delete:
+                guard let work = decision.notNow(model) else { return .ignored }
+                act(work)
+                return .handled
+            case "s":
+                guard let work = decision.snoozed(model) else { return .ignored }
+                act(work)
                 return .handled
             case .upArrow, .leftArrow, "k": return move(-1)
             default: return move(1)

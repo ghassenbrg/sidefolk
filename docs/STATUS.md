@@ -42,10 +42,10 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 - **Theme redesign (D130) — built on `team/themes-two`, not merged or released:** Sidefolk is the new default and Harbor a painted theme, on
   one calm design: a plain sidebar with art in its header, a selected row the theme draws, a rebuilt Today, rounded sheets
   with the theme's sky behind the toolbar. All ten languages. Verified: tests with the add-ons worktree, the release build, `sidefolk theme check`,
-  snapshots in light, dark, Arabic and German and at the default window size, the move off the old id, and arrow keys against a control.
+  snapshots in light, dark, Arabic and German and at the default window size (all five themes, light and dark), the move off the old id, arrow keys against a control, and synthetic clicks in a debug app: Your day's +, Add reminder, a drag in the day and ⌘Z.
   Paper Garden, Night Studio and Marshmallow stay built in for now; their move to the gallery is on `team/themes-two` (with `team/themes-two` in sidefolk-addons, unpublished), and the gallery must publish before an app without them ships.
   Mochi's brand images are redrawn in the newer design, and the live 3D Mochi is tuned toward them with the same model. Not verified, for the founder to
-  check on the snapshot: real clicks and drag, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
+  check on the snapshot: real mouse clicks and drag, Delete and S on Next up, the New menu, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
   The edge check flags petting and the flip with or without this change (older issue). Next: this split, `team/themes-default`, goes in the first snapshot; then the gallery move.
 
 
