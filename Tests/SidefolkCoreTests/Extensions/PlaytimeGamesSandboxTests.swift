@@ -23,9 +23,10 @@ struct PlaytimeGamesSandboxTests {
         let installed = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
         let info = try #require(h.host.surfaceShelf.all.first { $0.extensionId == installed.id && $0.surface == "play" })
         #expect(info.sounds && !info.activity && info.height <= SurfaceLimits.maxHeight)
-        // The menu first: it offers every game.
+        // The menu first: it offers every game, and Surprise me.
         let (menuSession, menu) = try await h.host.openSurface(info, language: language)
-        #expect(Set(menu.areas.filter { $0.id == "open" }.compactMap(\.value)) == Set(Self.games))
+        let offered = Set(menu.areas.filter { $0.id == "open" }.compactMap(\.value))
+        #expect(offered.isSuperset(of: Self.games) && offered.subtracting(Self.games).isSubset(of: ["random"]))
         await h.host.closeSurface(info: info, session: menuSession, reason: .finished)
         var now = Date()
         for game in Self.games {
