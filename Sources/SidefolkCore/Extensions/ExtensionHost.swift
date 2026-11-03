@@ -971,6 +971,8 @@ public actor ExtensionHost {
             if rt.pin.origin?.firstParty == true, let row = asks.row, !row.isEmpty { result.rowSummary = row }
         }
         result.placing = placing(ExtensionOutput.list(asked), for: id, tool: remote, folders: folders)
+        // Saving can still fail after this, and a failure's row must not be its answer (T44).
+        if Self.holdsThePersonsWords(rt.pin.permissions) { result.rowError = result.card?.title }
         return result
     }
 
