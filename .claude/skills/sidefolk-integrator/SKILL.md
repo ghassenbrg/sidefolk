@@ -82,6 +82,9 @@ Then the rules that need an eye on the diff:
   on the built app, `scripts/extension-free-binary.sh --strict` guard it.
 - **A pack needing a new host ability** sets `minimum_sidefolk` to a snapshot that has it. The placeholder
   `0.1.0-snapshot.786` on an unmerged branch becomes the real number only in Add-ons first.
+- **A test expecting a pack's new design** must read which design the checkout holds and check either one (`0462bd9a`,
+  `page.bare`): add-ons `main` keeps the published design until that pack ships, after the app, so a test fixed to the new
+  one turns the pass and CI red. The fix is the owner's, through the coordinator.
 
 ## Conflict hot spots
 
@@ -132,7 +135,7 @@ On the exact final commit, clean tree:
 
 ```bash
 git -C ~/git/sidefolk-addons fetch -q origin
-git -C <clean add-ons tree> switch --detach origin/main && swift build --package-path <clean add-ons tree>   # the add-ons Release will test: its commit goes in the evidence
+git -C <clean add-ons tree> switch --detach origin/main && swift build --package-path <clean add-ons tree>   # the add-ons CI will test: its commit goes in the evidence
 make strings                                                       # then commit the catalog if it changed
 N=$(( $(git rev-list --count HEAD) + 1 ))                          # commit the docs/STATUS.md line naming N; then git rev-list --count HEAD equals N
 swift build -c release --product SidefolkApp                       # debug-only tests miss release-only breakage
@@ -156,6 +159,11 @@ list in the RELEASE? (`grep -i skipped <log>`). Some skips are honest: while add
 against the snapshot, and the RELEASE? says who. Also run the add-ons repo's own checks in that clean
 tree when any add-ons ref is in play (`swift test`, `python3 scripts/build.py --unsigned`, then `scripts/check.sh` with
 `SIDEFOLK_APP=<your tree>`), and make sure no sibling branch is checked out there. Kit: `diff -r extensions/Kit <that add-ons tree>/Kit` is empty, or say which side leads.
+
+**Only this pass and CI run the add-on tests.** The Release workflow checks out add-ons for its binary check but doesn't
+build them, so every test that needs them skips there (on 1170, `ShippedExtensionSandboxTests` in 0.001 s). A red add-on
+test turns CI red and doesn't stop the Release, and a green Release says nothing about them: the green suite you owe is
+still this one, with them run.
 
 Before asking to release also: `git fetch`, `git merge-base --is-ancestor origin/main HEAD`, `git rev-list --count HEAD`
 (the build number the snapshot gets), `Version.swift` unchanged (the version stays until the founder ships it; every
@@ -181,9 +189,11 @@ gh run list --repo ghassenbrg/sidefolk --workflow release.yml --limit 1 --json d
 ```
 
 Release builds whatever `main` holds, hence the chain: a refused push must not start it. Add
-`-f seed_gallery=… -f addons_ref=<branch>` only for Add-ons first (below), which has its own order. Release runs its own build and tests; CI
-on `main` runs from the push in parallel. Watch both with `gh run view <id>`; wait for CI first only if the coordinator
-said so, and report a red CI at once. Notarization can take an hour or more (the job allows 210 minutes): tell the
+`-f seed_gallery=… -f addons_ref=<branch>` only for Add-ons first (below), which has its own order. Release runs its own build and tests, add-on tests
+skipped (the final pass); CI on `main` runs from the push in parallel, with them. Watch both with `gh run view <id>`; wait
+for CI first only if the coordinator said so, and report a red CI at once, having read the step that failed (`gh run view
+<id> --attempt <n> --log-failed`). A rerun can fail in its Build step for a network reason (on 1170, the GRDB clone timed
+out): that says nothing about the tests, and any earlier attempt's red Test still stands. Notarization can take an hour or more (the job allows 210 minutes): tell the
 coordinator after the first hour, ask why before rerunning, and check the tags and releases first: a snapshot of the
 same commit replaces the earlier one, but a half-finished run is better understood than repeated.
 
