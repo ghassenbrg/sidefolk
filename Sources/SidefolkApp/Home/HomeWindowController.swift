@@ -33,6 +33,9 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     #if DEBUG
     /// The question a page's `allow` shows, for the debug app.
     func pageAsks(_ id: String, _ consent: PageConsent) { model.pages.asks(id, consent) }
+
+    /// A native control in a page's scene pressed by its label, through what its click runs (D109): nothing outside the app can reach one.
+    func pagePressesInlay(_ id: String, label: String) async -> Bool { await model.pages.pressInlay(id, label: label) }
     #endif
 
     func show(section: Section? = nil) {

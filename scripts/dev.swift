@@ -26,6 +26,7 @@
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:<extension id>/<page>   (D62)
 //                           | pageState:<extension id>/<page>:<json> (D105) | pageFile:<path>   (a page's next file panel takes this)
 //                           | pageTool:<extension id>/<page>:<tool>:<json>   (that tool as the person, as a click runs it) | pageWidth:<points> | pageLook:dark|light|system | pageKey:<scene>:focus|tab|backtab|press
+//                           | pageInlay:<extension id>/<page>:<label>   (D109: a button or switch laid into the open page's scene, pressed as its click runs)
 //                           | pageAsk:<extension id>/<page>:place|schedule | pageConsent:<extension id>:place|schedule:on|off   (D106, D107)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
 //                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)

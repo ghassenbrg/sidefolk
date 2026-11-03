@@ -534,6 +534,17 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("pageInlay:") {
+            // pageInlay:<extension id>/<page>:<label>: a button or switch laid into the open page's scene, pressed through what its click runs (D109).
+            let rest = command.dropFirst("pageInlay:".count)
+            guard let colon = rest.firstIndex(of: ":") else { return }
+            let id = String(rest[..<colon]), label = String(rest[rest.index(after: colon)...])
+            Task {
+                let found = await home.pagePressesInlay(id, label: label)
+                Log.shared.info("dev", "pageInlay", ["label": label, "found": "\(found)"])
+            }
+            return
+        }
         if command.hasPrefix("pageAsk:") {
             // pageAsk:<extension id>/<page>:place|schedule: Sidefolk's question, as a page's `allow` shows it (D106, D107).
             let rest = command.dropFirst("pageAsk:".count).split(separator: ":").map(String.init)

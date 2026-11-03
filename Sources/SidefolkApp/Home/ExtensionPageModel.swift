@@ -80,6 +80,21 @@ final class ExtensionPagesModel {
 
     #if DEBUG
     func asks(_ id: String, _ consent: PageConsent) { models[id]?.asking = consent }
+
+    func pressInlay(_ id: String, label: String) async -> Bool {
+        guard let model = models[id], let page = model.page else { return false }
+        for section in page.sections {
+            for block in section.blocks {
+                guard case .scene(let scene) = block else { continue }
+                for inlay in scene.inlays {
+                    guard case .control(let control) = inlay.part, control.label == label else { continue }
+                    if case .toggle(let on) = control.kind { await model.run(control, on: !on) } else { await model.run(control, on: nil) }
+                    return true
+                }
+            }
+        }
+        return false
+    }
     #endif
 
     #if DEBUG
