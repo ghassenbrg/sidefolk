@@ -21,11 +21,12 @@ struct ExtensionBadge: View {
     var size: CGFloat = 32
     /// Drawn instead of the initial when there's no icon file: a page's own symbol.
     var symbol: String?
+    @State private var loaded: NSImage?
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: size * 0.225, style: .continuous)
         Group {
-            if let image = ExtensionIconCache.image(at: look.iconPath) {
+            if let image = loaded ?? ExtensionIconCache.ready(at: look.iconPath) {
                 Image(nsImage: image).resizable().interpolation(.high).scaledToFill()
             } else {
                 let color = Theme.folkColor(Self.folk(for: look))
@@ -46,6 +47,7 @@ struct ExtensionBadge: View {
         .overlay(shape.strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
         .shadow(color: .black.opacity(size >= 24 ? 0.16 : 0), radius: size * 0.05, y: size * 0.025)
         .accessibilityHidden(true)
+        .task(id: look.iconPath) { loaded = await ExtensionIconCache.image(at: look.iconPath) }
     }
 
     static let folks = ["byte", "tempo", "scout", "pip", "seed", "melody", "nova", "play", "brew", "guard"]
@@ -62,19 +64,33 @@ struct ExtensionBadge: View {
     }
 }
 
-/// Icons decoded once per file version. Paths come from Sidefolk's checked copies (or the folder being
-/// previewed), and a file that changes on disk is read again.
+/// Icons decoded once per file version. Paths come from Sidefolk's checked copies (or the folder being previewed), and a file that
+/// changes on disk is read again. A PDF is only ever drawn from its bitmap (`ExtensionIconBitmap`), off the main thread.
 @MainActor
 enum ExtensionIconCache {
-    private static var images: [String: (stamp: Date, image: NSImage?)] = [:]
+    private static var images: [String: (stamp: Date, image: NSImage)] = [:]
 
-    static func image(at path: String?) -> NSImage? {
+    private static func stamp(of path: String?) -> Date? {
         guard let path, let attributes = try? FileManager.default.attributesOfItem(atPath: path),
-              let size = attributes[.size] as? Int, size <= SidefolkCore.ExtensionIcon.maxBytes,
-              let stamp = attributes[.modificationDate] as? Date else { return nil }
-        if let cached = images[path], cached.stamp == stamp { return cached.image }
-        let image = NSImage(contentsOfFile: path)
-        images[path] = (stamp, image)
+              let size = attributes[.size] as? Int, size <= SidefolkCore.ExtensionIcon.maxBytes else { return nil }
+        return attributes[.modificationDate] as? Date
+    }
+
+    /// What's already here, for the first frame.
+    static func ready(at path: String?) -> NSImage? {
+        guard let path, let stamp = stamp(of: path), let kept = images[path], kept.stamp == stamp else { return nil }
+        return kept.image
+    }
+
+    static func image(at path: String?) async -> NSImage? {
+        guard let path, let stamp = stamp(of: path) else { return nil }
+        if let kept = images[path], kept.stamp == stamp { return kept.image }
+        let shown: String? = await Task.detached(priority: .utility) {
+            (path as NSString).pathExtension.lowercased() == "pdf" ? ExtensionIconBitmap.path(forPDF: path) : path
+        }.value
+        let image = shown.flatMap { NSImage(contentsOfFile: $0) }
+        // Only what's there is kept: not having one yet may pass, and it's asked again next time.
+        if let image { images[path] = (stamp, image) }
         return image
     }
 }

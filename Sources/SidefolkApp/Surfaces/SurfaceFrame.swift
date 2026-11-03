@@ -129,10 +129,11 @@ struct SceneCanvas: NSViewRepresentable {
 struct SurfaceIcon: View {
     var info: SurfaceInfo
     var side: CGFloat
+    @State private var icon: NSImage?
 
     var body: some View {
         Group {
-            if let path = info.iconPath, let image = NSImage(contentsOfFile: path) {
+            if let image = icon ?? ExtensionIconCache.ready(at: info.iconPath) {
                 Image(nsImage: image).resizable().scaledToFit()
             } else {
                 Image(systemName: info.symbol ?? "puzzlepiece.extension").font(.system(size: side * 0.6, weight: .semibold)).foregroundStyle(Theme.accent)
@@ -140,6 +141,7 @@ struct SurfaceIcon: View {
         }
         .frame(width: side, height: side)
         .accessibilityHidden(true)
+        .task(id: info.iconPath) { icon = await ExtensionIconCache.image(at: info.iconPath) }
     }
 }
 
