@@ -11,7 +11,7 @@ struct UpdateView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: Theme.Space.l) {
                 HStack(alignment: .center, spacing: Theme.Space.l) {
-                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 64, height: 64).accessibilityHidden(true)
+                    Image(nsImage: CompanionAppIcon.sidefolk).resizable().frame(width: 64, height: 64).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: Theme.Space.xs) {
                         Text(headline).font(Theme.Font.title1).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)

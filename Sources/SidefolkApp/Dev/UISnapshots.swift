@@ -209,6 +209,13 @@ enum UISnapshots {
             try await homeShot("onduty-small", size: small)
             full.selection = .watchers
             try await homeShot("watchers-small", size: small)
+            // The Dock's icon when the companion stands in for Sidefolk's (D118).
+            if let icon = CompanionAppIcon.image(for: AppSettings()) {
+                let view = NSImageView(image: icon)
+                view.frame = NSRect(x: 0, y: 0, width: CompanionAppIcon.side, height: CompanionAppIcon.side)
+                let file = dir.appendingPathComponent("companion-app-icon.png")
+                if wanted(file) { try write(view, to: file) }
+            }
             full.selection = .calendar
             for mode in CalendarModel.Mode.allCases {
                 full.calendar.mode = mode

@@ -347,6 +347,7 @@ struct SettingInlineControl: View {
         case .addonUpdates: toggle(setting(\.updates.addons))
         case .eyesFollow: toggle(setting(\.eyesFollowPointer))
         case .folks: toggle(setting(\.showFolks))
+        case .companionAppIcon: toggle(setting(\.companionAppIcon))
         case .sleep: toggle(setting(\.sleepWhenIdle))
         case .sounds: toggle(setting(\.sounds))
         case .hiddenNotifications: toggle(setting(\.useSystemNotificationsWhenHidden))

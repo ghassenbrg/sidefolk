@@ -244,7 +244,7 @@ enum AgentTip {
         let state = chip.needsYou ? String(localized: "needs you", comment: "A chip on an agent waiting for an answer")
             : TimeText.span(now.timeIntervalSince(chip.since))
         let many = chip.count > 1 ? String(localized: "\(chip.count) sessions", comment: "An agent's face beside the companion standing for several sessions in one folder") : nil
-        return ([chip.agent, chip.project, many, state].compactMap { $0 }).joined(separator: " · ")
+        return ([chip.agent, chip.project, chip.title, many, state].compactMap { $0 }).joined(separator: " · ")
     }
 }
 

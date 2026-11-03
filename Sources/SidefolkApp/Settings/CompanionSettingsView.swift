@@ -43,6 +43,7 @@ struct CompanionSettingsView: View {
             }
             SettingsToggle(.eyesFollow, isOn: setting(\.eyesFollowPointer))
             SettingsToggle(.folks, isOn: setting(\.showFolks))
+            SettingsToggle(.companionAppIcon, isOn: setting(\.companionAppIcon))
         }
 
         SettingsGroup(title: Text(verbatim: SettingKey.liveliness.section)) {

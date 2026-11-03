@@ -192,7 +192,7 @@ struct PocketView: View {
 
     private func updateCard(_ version: String) -> some View {
         HStack(spacing: Theme.Space.s) {
-            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 30, height: 30).accessibilityHidden(true)
+            Image(nsImage: CompanionAppIcon.sidefolk).resizable().frame(width: 30, height: 30).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(version) is ready", comment: "Settings › General: a new version, “0.1.0 snapshot 560 is ready”")
                     .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)

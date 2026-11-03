@@ -46,6 +46,7 @@ public enum HookForwarder {
         guard let session = json.string("session_id") else { return nil }
         var e = SessionEvent(event: name, sessionId: String(session.prefix(128)))
         e.cwd = json.string("cwd")
+        e.transcriptPath = json.string("transcript_path").map { String($0.prefix(1024)) }
         e.message = json.string("message").map { SessionEvent.oneLine($0, 300) }
         e.notificationType = json.string("notification_type")
         e.toolName = json.string("tool_name").map { String($0.prefix(128)) }
@@ -58,7 +59,7 @@ public enum HookForwarder {
 
     private static func leadingFields(_ text: String) -> [String: JSONValue] {
         var fields: [String: JSONValue] = [:]
-        for key in ["session_id", "cwd", "tool_name", "hook_event_name"] {
+        for key in ["session_id", "cwd", "tool_name", "hook_event_name", "transcript_path"] {
             let pattern = "\"\(key)\"\\s*:\\s*(\"(?:[^\"\\\\]|\\\\.)*\")"
             guard let re = try? NSRegularExpression(pattern: pattern),
                   let m = re.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),

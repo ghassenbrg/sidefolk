@@ -8,7 +8,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     // General
     case openAtLogin, askShortcut, cardShortcut, language, appUpdates, addonUpdates, channel, timesOfDay, welcome
     // Companion
-    case chooseCompanion, presence, size, eyesFollow, folks, liveliness, sleep
+    case chooseCompanion, presence, size, eyesFollow, folks, companionAppIcon, liveliness, sleep
     // Attention
     case attentionMode, interruptions, quietHours, fullScreen, sounds, systemNotifications, hiddenNotifications, morningBrief
     // Brain
@@ -26,7 +26,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     var tab: SettingsTab {
         switch self {
         case .openAtLogin, .askShortcut, .cardShortcut, .language, .appUpdates, .addonUpdates, .channel, .timesOfDay, .welcome: .general
-        case .chooseCompanion, .presence, .size, .eyesFollow, .folks, .liveliness, .sleep: .companion
+        case .chooseCompanion, .presence, .size, .eyesFollow, .folks, .companionAppIcon, .liveliness, .sleep: .companion
         case .attentionMode, .interruptions, .quietHours, .fullScreen, .sounds, .systemNotifications, .hiddenNotifications, .morningBrief:
             .attention
         case .provider, .lastRequest, .voiceInput, .spokenReplies, .voice, .speechModel: .brain
@@ -46,7 +46,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .timesOfDay, .welcome: String(localized: "Words for times", comment: "Settings › General: what morning, afternoon, evening mean")
         case .chooseCompanion: String(localized: "Choose a companion", comment: "Settings › Companion: a group")
         case .presence: String(localized: "Where it lives", comment: "Settings › Companion: always on the desktop, when needed, menu bar only")
-        case .size, .eyesFollow, .folks: String(localized: "Look")
+        case .size, .eyesFollow, .folks, .companionAppIcon: String(localized: "Look")
         case .liveliness, .sleep: String(localized: "How it behaves", comment: "Settings › Companion: a group")
         case .attentionMode: String(localized: "Right now", comment: "Settings › Attention: Open, Focus or Quiet at this moment")
         case .interruptions: String(localized: "What may interrupt you", comment: "Settings › Attention: a group, how far each source may go")
@@ -84,6 +84,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .size: String(localized: "Size")
         case .eyesFollow: String(localized: "Eyes follow the pointer")
         case .folks: String(localized: "Show folks on duty")
+        case .companionAppIcon: String(localized: "Use my companion as the app icon")
         case .liveliness: String(localized: "Liveliness")
         case .sleep: String(localized: "Sleep when you're away")
         case .attentionMode: String(localized: "Open, Focus or Quiet", comment: "Settings › Attention: the three ways things reach you")
@@ -152,6 +153,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .size: String(localized: "Small, medium or large on the desktop.", comment: "Settings › Companion: search")
         case .eyesFollow: String(localized: "A glance now and then, never a stare.")
         case .folks: String(localized: "Tempo, Scout and Byte sit beside the companion while a reminder, watch or agent is live.")
+        case .companionAppIcon: String(localized: "Shows in the Dock while Sidefolk is open. Finder and the menu bar keep Sidefolk's own.")
         case .liveliness: String(localized: "Minimal, balanced or lively: how often it moves on its own.", comment: "Settings › Companion: search")
         case .sleep: String(localized: "Naps after 10 minutes without input and wakes when you're back.")
         case .attentionMode: String(localized: "Focus holds whispers until it ends; Quiet lets through only what can't wait.",

@@ -209,7 +209,7 @@ struct SidecardItemCard: View {
     /// of moment. An agent session's notice names the agent and its project, from the session it is about.
     static func source(_ item: AttentionItem, companion: String, sessions: [String: AgentSession] = [:]) -> Text {
         if item.refKind == "session", let session = item.refId.flatMap({ sessions[$0] }) {
-            return Text(verbatim: ([AgentFacingTools.displayName(session.agent), session.projectName].compactMap { $0 }).joined(separator: " · "))
+            return Text(verbatim: ([AgentFacingTools.displayName(session.agent), session.conversationTitle ?? session.projectName].compactMap { $0 }).joined(separator: " · "))
         }
         let kind: Text? = switch item.refKind ?? item.source {
         case "reminder": Text("reminder", comment: "A card's source line: “Tempo · reminder”")

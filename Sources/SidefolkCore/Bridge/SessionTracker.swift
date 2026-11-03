@@ -16,6 +16,8 @@ public struct SessionEvent: Sendable, Equatable {
     public var hostBundleId: String?
     public var hostPid: Int?
     public var tty: String?
+    /// Where the agent keeps this conversation, for its title alone (D118).
+    public var transcriptPath: String?
 
     public init(agent: String = "claude-code", event: String, sessionId: String, cwd: String? = nil, message: String? = nil,
                 notificationType: String? = nil, toolName: String? = nil, prompt: String? = nil,
@@ -43,6 +45,7 @@ public struct SessionEvent: Sendable, Equatable {
         o["host_bundle_id"] = hostBundleId.map(JSONValue.string)
         o["host_pid"] = hostPid.map { .number(Double($0)) }
         o["tty"] = tty.map(JSONValue.string)
+        o["transcript_path"] = transcriptPath.map(JSONValue.string)
         return .object(o)
     }
 
@@ -65,6 +68,7 @@ public struct SessionEvent: Sendable, Equatable {
         hostBundleId = word("host_bundle_id", 155)
         hostPid = json["host_pid"]?.intValue.flatMap { $0 > 1 && $0 < Int(Int32.max) ? $0 : nil }
         tty = json.string("tty").flatMap { $0.hasPrefix("/dev/") && $0.count <= 64 ? $0 : nil }
+        transcriptPath = json.string("transcript_path").flatMap { $0.hasPrefix("/") && $0.utf8.count <= 1024 && !$0.contains("\0") ? $0 : nil }
     }
 
     /// First line, control characters removed, capped.
@@ -89,9 +93,15 @@ public actor SessionTracker {
     private var needsYouItem: [String: String] = [:]
     /// The last "finished" notice per session: replaced by the next, withdrawn when the session works again.
     private var finishedItem: [String: String] = [:]
+    private let titles: ConversationTitles?
+    /// When each session's title was last looked for: a hook can fire many times a second.
+    private var titleLooked: [String: Date] = [:]
+    private static let titleEvery: TimeInterval = 20
+    private static let titleAtStop: TimeInterval = 2
 
     public init(store: SessionStore, attention: AttentionCenter, events: EventBus, clock: any Clock = SystemClock(),
-                open: OpenHandler? = nil) {
+                titles: ConversationTitles? = nil, open: OpenHandler? = nil) {
+        self.titles = titles
         self.store = store
         self.attention = attention
         self.events = events
@@ -125,6 +135,7 @@ public actor SessionTracker {
         if let pid = e.hostPid { session.hostPid = pid }
         if let tty = e.tty { session.tty = tty }
         session.updatedAt = now
+        lookForTitle(of: &session, event: e, now: now)
 
         switch e.event {
         case "UserPromptSubmit", "PreToolUse":
@@ -216,6 +227,18 @@ public actor SessionTracker {
         case "codex": "Codex"
         default: agent
         }
+    }
+
+    /// What the agent's app calls this conversation, kept when it has nothing to say. It stays nil rather than guess (D118).
+    private func lookForTitle(of session: inout AgentSession, event e: SessionEvent, now: Date) {
+        guard let titles else { return }
+        if e.event == "SessionEnd" { titleLooked[session.id] = nil }
+        // Hooks can fire many times a second. A Stop is when a title is likeliest to be new, so it may look sooner.
+        if let last = titleLooked[session.id], now.timeIntervalSince(last) < (e.event == "Stop" ? Self.titleAtStop : Self.titleEvery) { return }
+        // Session ids come from hooks: no number of them makes this grow for ever.
+        if titleLooked.count > 500 { titleLooked.removeAll() }
+        titleLooked[session.id] = now
+        if let title = titles.title(agent: e.agent, sessionId: e.sessionId, transcriptPath: e.transcriptPath) { session.conversationTitle = title }
     }
 
     static func project(_ s: AgentSession) -> String { s.projectName ?? String(localized: "a session") }

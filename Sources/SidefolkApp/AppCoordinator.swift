@@ -257,6 +257,7 @@ final class AppCoordinator {
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
+        applyAppIcon(s)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
         companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0)
         sidecard.model.companionName = s.companionName

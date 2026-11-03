@@ -102,7 +102,7 @@ extension AppCoordinator {
             let session = group.session
             c.needsYou.append(.init(id: "session-\(session.id)", title: String(localized: "\(Self.agentName(session.agent)) needs you")
                                         + (group.count > 1 ? " · \(group.count.formatted())" : ""),
-                                    detail: [session.projectName, session.detail].compactMap { $0 }.joined(separator: " · "),
+                                    detail: [session.projectName, session.conversationTitle, session.detail].compactMap { $0 }.joined(separator: " · "),
                                     trailing: TimeText.clock(session.updatedAt), symbol: "hand.raised", folk: "byte",
                                     open: { [weak self] in self?.pocketClosing { $0.openSession(session) } }))
         }
@@ -142,7 +142,7 @@ extension AppCoordinator {
                 ?? Self.agentName(session.agent)
             c.agents.append(.init(id: "working-\(session.id)",
                                   title: group.count > 1 ? "\(name) · \(group.count.formatted())" : name,
-                                  detail: session.detail, trailing: TimeText.duration(now.timeIntervalSince(session.startedAt)),
+                                  detail: session.conversationTitle ?? session.detail, trailing: TimeText.duration(now.timeIntervalSince(session.startedAt)),
                                   symbol: "terminal", folk: "byte", live: true,
                                   open: { [weak self] in self?.pocketClosing { $0.openSession(session) } }))
         }

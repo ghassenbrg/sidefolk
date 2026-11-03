@@ -333,6 +333,11 @@ public final class AppDatabase: Sendable {
             }
             try db.create(index: "items_due", on: "items", columns: ["due_at"])
         }
+        // What an agent's own app calls the conversation (D118), kept apart from `title`, its first prompt, so a row
+        // never shows a guess as a title.
+        m.registerMigration("v9-session-title") { db in
+            try db.alter(table: "sessions") { t in t.add(column: "conversation_title", .text) }
+        }
         return m
     }
 }

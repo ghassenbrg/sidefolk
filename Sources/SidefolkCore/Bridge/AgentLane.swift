@@ -9,6 +9,8 @@ public struct AgentChip: Sendable, Equatable, Identifiable {
     public var agent: String
     /// The folder it works in ("pockito"), when known.
     public var project: String?
+    /// What its own app calls the conversation, when it says (D118).
+    public var title: String? = nil
     /// It waits for the person in its own terminal.
     public var needsYou: Bool
     public var since: Date
@@ -31,20 +33,27 @@ public struct AgentSessionGroup: Sendable, Equatable, Identifiable {
     /// The one that stands for the rest: the most recently active.
     public var session: AgentSession
     public var count: Int
+    /// When the earliest of them started.
+    public var since: Date
     public var id: String { session.id }
 
     /// Grouped in the order they came, each group at its first session's place.
     public static func of(_ sessions: [AgentSession]) -> [AgentSessionGroup] {
         var groups: [AgentSessionGroup] = []
-        var index: [String: Int] = [:]
+        // Titled conversations stand apart (D118), which is why they have titles; one with no title, like a subagent,
+        // joins whichever of them it can.
         for s in sessions {
-            let key = "\(s.agent)|\(s.cwd ?? s.id)|\(s.state.rawValue)"
-            if let i = index[key] {
+            let same = { (g: AgentSessionGroup) in g.session.agent == s.agent && (g.session.cwd ?? g.session.id) == (s.cwd ?? s.id) && g.session.state == s.state }
+            let match = groups.firstIndex { same($0) && (s.conversationTitle == nil || $0.session.conversationTitle == nil || $0.session.conversationTitle == s.conversationTitle) }
+            if let i = match {
                 groups[i].count += 1
-                if s.updatedAt > groups[i].session.updatedAt { groups[i].session = s }
+                groups[i].since = min(groups[i].since, s.startedAt)
+                // What opens is the session the row names: one with a title stands for the rest over one without.
+                let standing = groups[i].session
+                let titled = standing.conversationTitle != nil, joinerTitled = s.conversationTitle != nil
+                if (joinerTitled && !titled) || (joinerTitled == titled && s.updatedAt > standing.updatedAt) { groups[i].session = s }
             } else {
-                index[key] = groups.count
-                groups.append(AgentSessionGroup(session: s, count: 1))
+                groups.append(AgentSessionGroup(session: s, count: 1, since: s.startedAt))
             }
         }
         return groups
@@ -61,9 +70,11 @@ public enum AgentLane {
             .sorted { ($0.state == .needsYou ? 0 : 1, $0.startedAt) < ($1.state == .needsYou ? 0 : 1, $1.startedAt) }
         return AgentSessionGroup.of(live).prefix(shown).map { group in
             let s = group.session
-            return AgentChip(id: s.id, agent: AgentFacingTools.displayName(s.agent), project: s.projectName,
-                             needsYou: s.state == .needsYou, since: live.first { $0.cwd == s.cwd && $0.agent == s.agent }?.startedAt ?? s.startedAt,
+            var chip = AgentChip(id: s.id, agent: AgentFacingTools.displayName(s.agent), project: s.projectName,
+                             needsYou: s.state == .needsYou, since: group.since,
                              count: group.count)
+            chip.title = s.conversationTitle
+            return chip
         }
     }
 }

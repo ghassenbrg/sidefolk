@@ -84,7 +84,7 @@ struct UpdateHero: View {
     var body: some View {
         if let offer = shown {
             HStack(alignment: .top, spacing: Theme.Space.l) {
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 52, height: 52).accessibilityHidden(true)
+                Image(nsImage: CompanionAppIcon.sidefolk).resizable().frame(width: 52, height: 52).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Theme.Space.xs) {
                     HStack(spacing: Theme.Space.s) {
                         Text("\(offer.version.shown) is ready", comment: "Settings › General: a new version, “0.1.0 snapshot 560 is ready”")

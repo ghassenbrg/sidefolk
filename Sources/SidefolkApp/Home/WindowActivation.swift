@@ -21,6 +21,7 @@ enum WindowActivation {
         // Activating in the same turn as the policy switch can leave a stale menu bar.
         Task { @MainActor in
             NSApp.activate()
+            CompanionAppIcon.reapply()
             window.makeKeyAndOrderFront(nil)
         }
     }

@@ -112,6 +112,8 @@ public struct AgentSession: SidefolkRecord, Identifiable, Hashable {
     public var agent: String
     public var cwd: String?
     public var title: String?
+    /// What the agent's own app calls this conversation, when it says (`ConversationTitles`, D118).
+    public var conversationTitle: String?
     public var state: State
     public var detail: String?
     public var hostApp: String?

@@ -180,8 +180,9 @@ enum Describe {
     static func session(_ s: AgentSession) -> String {
         let who = agentName(s.agent)
         if let project = s.projectName {
-            return String(localized: "\(who) in \(project)", comment: "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”")
+            let place = String(localized: "\(who) in \(project)", comment: "A thing, then where it is: “Ideas in Sidefolk”, “Claude Code in sidefolk”")
+            return s.conversationTitle.map { "\(place) · \($0)" } ?? place
         }
-        return s.title ?? who
+        return s.conversationTitle ?? s.title ?? who
     }
 }

@@ -132,6 +132,8 @@ state, never the folder or title from a hook payload. Others arrive through expl
 lists, which taint the turn. Memories, skills and routines created by non-user callers or in
 tainted turns need approval showing the full text.
 
+*Agents' transcripts (D118).* `transcript_path` comes from a hook, so `ConversationTitles` believes it only inside the agent's own folder and never through a link, reads only the end of the file, parses only lines that declare a title, and keeps only that title, plain and clipped. It reaches the person and not the model.
+
 **T4 Confused deputy via external MCP clients (H/H).** An agent in a hostile repo uses Sidefolk's
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
 without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create

@@ -7,9 +7,13 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Dev ideas, batch 5: conversation titles and the companion's app icon (items 11, 12; D118)
+
+Decisions in D118; the founder's question took the recommended answer. Verified: `ConversationTitlesTests` with temp files (the person's name first, no title gives nothing, conversation words aren't titles, paths outside and links refused, a long file's end, Codex's index, rows, the tracker's throttle); this Mac's real transcript has `{"type":"custom-title","customTitle":…}` in the shape read. The icon rendered in `--ui-snapshots` (`companion-app-icon`). A review found that opening a named pipe would have hung every hook, `since` showed the oldest session in the folder, and a Pocket row lost why it needed you; all fixed; About, the Pocket and the update window keep Sidefolk's own icon. Not run: a live Claude Code hook through to a row, Codex's real index with a session, and the icon in the real Dock across becoming a regular app (it is set again then).
+
 ## 2026-11-03: The companion can answer for Sidefolk (D120)
 
-Six built-in tools: what it's running, updates for it and for the Mac, opening a place, its look. Verified: `SelfToolsTests` with the app's side as a seam (looking, failing, a development build, install asking first, Undo, none offered to other agents, the model told); the parser against this Mac's real `softwareupdate --list`, which listed macOS 27.2 and Command Line Tools. Not run: a live model calling them, and a real update found this way (only a published copy can).
+Six built-in tools: what it's running, updates for it and for the Mac, opening a place, its look. Verified: `SelfToolsTests` with the app's side as a seam (looking, failing, a development build, install asking first and saying what it came to, Undo, none offered to other agents, the model told); the parser against this Mac's real `softwareupdate --list`, which listed macOS 27.2 and Command Line Tools. A review before release found the look was saved but never applied, asking to install could restart at once when an update was already downloaded while saying it hadn't, a failed look read as up to date, and a full pipe could hang `softwareupdate`; all fixed. Not run: a live model calling them, and a real update found this way (only a published copy can).
 
 ## 2026-11-03: The menu bar icon follows the menu bar, at full strength (the founder, in passing)
 
