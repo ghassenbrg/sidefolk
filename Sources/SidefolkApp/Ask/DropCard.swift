@@ -329,7 +329,7 @@ private struct FileOfferCard: View {
     /// (D150), in white and neutrals only; nothing Sidefolk says is on it.
     private func frame(_ first: ExtensionDropAction, _ group: [ExtensionDropAction]) -> some View {
         FrostLoader(path: picturePath, mark: first.mark.map { mark in { await packPicture(mark, first.extensionId) } },
-                    markKey: first.mark.map { first.extensionId + $0 }) { frost in
+                    markKey: first.mark.map { first.extensionId + "|" + $0 }) { frost in
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: Theme.Space.xs) {
                     if let look = looks[first.extensionId] { ExtensionBadge(look: look, size: 18) }

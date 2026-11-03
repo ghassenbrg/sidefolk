@@ -69,32 +69,32 @@ nonisolated struct FileFrost: @unchecked Sendable {
         }
     }
 
-    /// One card holds several loaders for one file, and they share one request.
-    @MainActor private static var asking: [String: Task<ImageBox, Never>] = [:]
-    private struct ImageBox: @unchecked Sendable { var image: NSImage? }
+    /// One card holds several loaders for one file, and they share one request. What's shared is a `CGImage`, which can be read from any
+    /// thread, and each gets a wrapper of its own, because an `NSImage` can't.
+    @MainActor private static var asking: [String: Task<CGImage?, Never>] = [:]
 
     private static func shared(_ path: String) async -> NSImage? {
-        let task = await MainActor.run { () -> Task<ImageBox, Never> in
+        let task = await MainActor.run { () -> Task<CGImage?, Never> in
             if let task = asking[path] { return task }
-            let task = Task { () -> ImageBox in
+            let task = Task { () -> CGImage? in
                 let image = await thumbnail(of: URL(fileURLWithPath: path))
                 await MainActor.run { asking[path] = nil }
-                return ImageBox(image: image)
+                return image
             }
             asking[path] = task
             return task
         }
-        return await task.value.image
+        return await task.value.map { NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height)) }
     }
 
     /// First of the picture and the clock: a crafted file can keep the service drawing long after it's asked to stop, and the card
     /// doesn't wait for that.
-    private static func thumbnail(of url: URL) async -> NSImage? {
+    private static func thumbnail(of url: URL) async -> CGImage? {
         let asked = Asked(request: QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side), scale: 2, representationTypes: .thumbnail))
-        return await withCheckedContinuation { (continuation: CheckedContinuation<NSImage?, Never>) in
+        return await withCheckedContinuation { (continuation: CheckedContinuation<CGImage?, Never>) in
             let once = Once(continuation)
             QLThumbnailGenerator.shared.generateBestRepresentation(for: asked.request) { drawn, _ in
-                once.finish(drawn.map { NSImage(cgImage: $0.cgImage, size: NSSize(width: $0.cgImage.width, height: $0.cgImage.height)) })
+                once.finish(drawn?.cgImage)
             }
             Task {
                 try? await Task.sleep(for: patience)
@@ -106,9 +106,9 @@ nonisolated struct FileFrost: @unchecked Sendable {
 
     private final class Once: @unchecked Sendable {
         private let lock = NSLock()
-        private var continuation: CheckedContinuation<NSImage?, Never>?
-        init(_ continuation: CheckedContinuation<NSImage?, Never>) { self.continuation = continuation }
-        func finish(_ image: NSImage?) {
+        private var continuation: CheckedContinuation<CGImage?, Never>?
+        init(_ continuation: CheckedContinuation<CGImage?, Never>) { self.continuation = continuation }
+        func finish(_ image: CGImage?) {
             lock.lock()
             let waiting = continuation
             continuation = nil
