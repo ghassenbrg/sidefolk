@@ -68,7 +68,7 @@ struct ExtensionBadge: View {
 /// changes on disk is read again. A PDF is only ever drawn from its bitmap (`ExtensionIconBitmap`), off the main thread.
 @MainActor
 enum ExtensionIconCache {
-    private static var images: [String: (stamp: Date, image: NSImage?)] = [:]
+    private static var images: [String: (stamp: Date, image: NSImage)] = [:]
 
     private static func stamp(of path: String?) -> Date? {
         guard let path, let attributes = try? FileManager.default.attributesOfItem(atPath: path),
@@ -89,7 +89,8 @@ enum ExtensionIconCache {
             (path as NSString).pathExtension.lowercased() == "pdf" ? ExtensionIconBitmap.path(forPDF: path) : path
         }.value
         let image = shown.flatMap { NSImage(contentsOfFile: $0) }
-        images[path] = (stamp, image)
+        // Only what's there is kept: not having one yet may pass, and it's asked again next time.
+        if let image { images[path] = (stamp, image) }
         return image
     }
 }

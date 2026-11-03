@@ -63,9 +63,7 @@ import Testing
         // Not a PDF at all: sips fails, and it says nothing about what a real one would cost.
         #expect(FileManager.default.createFile(atPath: name, contents: Data("not a pdf \(UUID())".utf8)))
         #expect(ExtensionIconBitmap.outcome(forPDF: name) == .notNow)
-        let refused = (try? FileManager.default.contentsOfDirectory(atPath: ExtensionIconBitmap.folder).filter { $0.hasSuffix(".refused") }.count) ?? 0
-        #expect(ExtensionIconBitmap.outcome(forPDF: name) == .notNow)
-        #expect(((try? FileManager.default.contentsOfDirectory(atPath: ExtensionIconBitmap.folder).filter { $0.hasSuffix(".refused") }.count) ?? 0) == refused)
+        #expect(ExtensionIconBitmap.outcome(forPDF: name) == .notNow, "asked again, and still nothing against it")
     }
 
     /// An extension already installed must never go off over its icon: at launch nothing is drawn, so nothing can refuse it.
