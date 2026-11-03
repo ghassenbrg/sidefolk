@@ -45,7 +45,8 @@ public enum AgentFacingTools {
     static func source(for caller: Caller) -> String {
         switch caller {
         case .user: "user"
-        case .agent: "agent"
+        // A job an extension handed over keeps to that extension's level, not the companion's own (D88).
+        case .agent(let run): AgentRuntime.jobOwner(of: run).map { "extension:\($0)" } ?? "agent"
         case .routine(let id): "routine:\(id)"
         case .external(let client): "external:\(client)"
         case .extension(let id): "extension:\(id)"
