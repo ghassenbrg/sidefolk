@@ -18,10 +18,36 @@ import Testing
 
     struct TestFailure: Error { let message: String; init(_ m: String) { message = m } }
 
+    @Test func anAgentCantRaiseAReminderToCritical() async throws {
+        let (t, executor) = try await setup()
+        let r = try await t.scheduler.create(title: "Stretch", at: t.env.clock.now.addingTimeInterval(3600), source: "user")
+        let changed = await executor.execute(name: "reminders.update", input: ["id": .string(r.id), "level": "critical"], caller: .agent(runId: "r"))
+        #expect(try ok(changed).text.contains("ordinary alert"))
+        #expect(await t.scheduler.reminder(matching: r.id)?.level == .attention)
+    }
+
+    /// Words a turn wrote are that turn's, whoever the reminder began with (T3), and Undo puts all of it back.
+    @Test func newWordsAreTheirWritersAndUndoTakesThemBack() async throws {
+        let (t, _) = try await setup()
+        let r = try await t.scheduler.create(title: "Call Sam", at: t.env.clock.now.addingTimeInterval(3600), source: "user")
+        let tool = ReminderTools.UpdateTool(ReminderTools.Shared(scheduler: t.scheduler, parser: { [calendar = t.calendar] in TimeTest.parser(calendar) }))
+        let context = ToolContext(caller: .agent(runId: "r"), now: t.env.clock.now, tainted: true)
+        let result = try await tool.run(["id": .string(r.id), "title": "Call Sam tomorrow", "when": "in 2 hours"], context: context)
+        let after = try #require(await t.scheduler.reminder(matching: r.id))
+        #expect(after.title == "Call Sam tomorrow")
+        #expect(after.source == context.provenanceTag)
+        #expect(after.source != "user")
+        #expect(result.untrusted)
+        try await result.undo?.perform()
+        let back = try #require(await t.scheduler.reminder(matching: r.id))
+        #expect(back.title == "Call Sam")
+        #expect(back.source == "user")
+    }
+
     @Test func specsAreLowRiskTimeTools() async throws {
         let (t, _) = try await setup()
         let specs = Dictionary(uniqueKeysWithValues: t.env.registry.specs.map { ($0.name, $0) })
-        #expect(Set(specs.keys) == ["reminders.create", "reminders.list", "reminders.cancel", "reminders.complete", "reminders.snooze"])
+        #expect(Set(specs.keys) == ["reminders.create", "reminders.list", "reminders.cancel", "reminders.complete", "reminders.snooze", "reminders.update"])
         for spec in specs.values {
             #expect(spec.risk == .low)
             #expect(spec.capabilities == [.time])

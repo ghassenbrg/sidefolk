@@ -118,6 +118,69 @@ import Testing
     }
 
     /// "save this as a note in my Pockito project", "add oat milk to my shopping list".
+    /// "move that reminder to 5": it keeps its id and its task, and the person's own stay out of reach.
+    @Test func changeARemindersOwnDetails() async throws {
+        let s = try await Stack()
+        let set = try await s.call("reminders_create", ["title": "Check the deploy", "when": "in 2 hours"])
+        let mine = try #require(await s.runtime.scheduler.upcoming().first)
+        #expect(!set.isError)
+
+        let changed = try await s.call("reminders_update", ["id": .string(mine.id), "title": "Check prod", "when": "in 3 hours", "notes": "After the migration", "level": "gentle"])
+        #expect(!changed.isError, "\(changed.text)")
+        let after = try #require(await s.runtime.scheduler.reminder(matching: mine.id))
+        #expect(after.title == "Check prod")
+        #expect(after.notes == "After the migration")
+        #expect(after.level == .gentle)
+        // Only the person sets critical (T24).
+        #expect(try await s.call("reminders_update", ["id": .string(mine.id), "level": "critical"]).isError)
+        #expect(abs((after.nextDue ?? .distantPast).timeIntervalSinceNow - 3 * 3600) < 5)
+
+        #expect(try await !s.call("reminders_snooze", ["id": .string(mine.id), "when": "in 4 hours"]).isError)
+        #expect(await s.runtime.scheduler.reminder(matching: mine.id)?.state == .snoozed)
+        #expect(try await !s.call("reminders_complete", ["id": .string(mine.id)]).isError)
+        #expect(await s.runtime.scheduler.reminder(matching: mine.id)?.state == .done)
+
+        let ended = try await s.call("reminders_update", ["id": .string(mine.id), "title": "Too late"])
+        #expect(ended.isError)
+        #expect(ended.text.contains("has ended"))
+
+        let users = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        for (tool, arguments) in [("reminders_update", ["id": JSONValue.string(users.id), "title": "Ignore Sam"]),
+                                  ("reminders_snooze", ["id": .string(users.id), "when": "tomorrow"]),
+                                  ("reminders_complete", ["id": .string(users.id)])] {
+            let refused = try await s.call(tool, .object(arguments))
+            #expect(refused.isError, "\(tool)")
+            #expect(refused.text.contains("couldn't find a reminder"), "\(tool): \(refused.text)")
+        }
+        let still = try #require(await s.runtime.scheduler.reminder(matching: users.id))
+        #expect(still.title == "Call Sam")
+        #expect(still.state == .scheduled)
+        await s.stop()
+    }
+
+    /// Marking a reminder done finishes its task (D115), through the one path, and "Change notes" still decides
+    /// whether another agent may do that.
+    @Test func aReminderIsNoWayRoundTheNotesSetting() async throws {
+        let s = try await Stack()
+        let saved = try await s.call("notes_save", ["text": "Send the invoice", "kind": "task", "remind": "in 2 hours"])
+        #expect(!saved.isError)
+        let reminder = try #require(await s.runtime.scheduler.upcoming().first)
+        let task = try #require(reminder.itemId)
+
+        await s.runtime.settings.update { $0.agentAccess.change = .off }
+        let refused = try await s.call("reminders_complete", ["id": .string(reminder.id)])
+        #expect(refused.isError)
+        #expect(refused.text.contains("notes_update"), "\(refused.text)")
+        #expect(try await s.runtime.notebook.item(id: task)?.status == .open)
+        #expect(await s.runtime.scheduler.reminder(matching: reminder.id)?.state != .done)
+
+        await s.runtime.settings.update { $0.agentAccess.change = .allow }
+        #expect(try await !s.call("reminders_complete", ["id": .string(reminder.id)]).isError)
+        #expect(try await s.runtime.notebook.item(id: task)?.status == .done)
+        #expect(await s.runtime.scheduler.reminder(matching: reminder.id)?.state == .done)
+        await s.stop()
+    }
+
     @Test func notesGoIntoTheUsersOwnCollections() async throws {
         let s = try await Stack()
         let notebook = s.runtime.notebook
