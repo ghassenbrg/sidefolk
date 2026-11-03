@@ -37,7 +37,7 @@ struct PageWorkspace: View {
                 }
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: Theme.Space.m) {
-                        status
+                        status(named: showsPlaces && leading.contains { $0.blocks.contains { if case .nav(let nav) = $0 { nav.brand } else { false } } })
                         ForEach(Array(heads.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
                     }
                     .padding(.horizontal, Theme.Space.xl).padding(.top, Theme.Space.m).padding(.bottom, heads.isEmpty ? 0 : Theme.Space.m)
@@ -82,7 +82,21 @@ struct PageWorkspace: View {
     }
 
     /// What went wrong with a click, and the words a click just copied, are Sidefolk's to say whatever the page draws (D105).
-    @ViewBuilder private var status: some View {
+    /// `named`: the column of places already says whose page this is, as Sidefolk knows it.
+    @ViewBuilder private func status(named: Bool) -> some View {
+        // The way back stays with no head to draw it (D105).
+        if let back = page.back, model.state.canGoBack, !heads.contains(where: { $0.blocks.contains { if case .bar = $0 { true } else { false } } }) {
+            Button { Task { await model.go(PageGo(back: true)) } } label: {
+                Label { Text(ext: back) } icon: { Image(systemName: "chevron.backward") }
+            }
+            .buttonStyle(.sf(.quiet))
+            .keyboardShortcut("[", modifiers: .command)
+        }
+        // Whose page this is stays Sidefolk's to say (D105).
+        if !named {
+            Text("Added by \(model.info.extensionName)", comment: "Under an extension page's title: the extension it comes from")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
+        }
         if let problem = model.problem { NoteView(note: ExtensionPage.Note(text: problem, tone: .bad)) }
         if let copied = model.copied {
             Label { Text("Copied: \(copied)", comment: "An extension's page: the exact words a button just put on the clipboard") } icon: { Image(systemName: "doc.on.clipboard") }
@@ -93,6 +107,12 @@ struct PageWorkspace: View {
         }
     }
 
+    /// What Sidefolk adds to any extension's page: its palettes' keys and what it needs, and its heads-ups. They want the middle's width, so they go on a screen that scrolls.
+    @ViewBuilder private var hostParts: some View {
+        if model.info.needsAccessibility || !model.palettes.isEmpty { HostControls(model: model) }
+        if !model.alerts.isEmpty { HeadsUps(model: model) }
+    }
+
     @ViewBuilder private var main: some View {
         if let only = rest.first, rest.count == 1, case .tree(let tree)? = only.blocks.first, only.blocks.count == 1 {
             PageTreeView(tree: tree, model: model).frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -100,9 +120,10 @@ struct PageWorkspace: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.xl) {
                     ForEach(Array(rest.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
+                    hostParts
                 }
                 .padding(Theme.Space.xl)
-                .frame(maxWidth: 1180, alignment: .leading)
+                .frame(maxWidth: page.maxWidth.map { CGFloat($0) } ?? 1180, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .scrollContentBackground(.hidden)

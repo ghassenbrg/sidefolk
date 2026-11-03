@@ -686,7 +686,7 @@ private struct SwitchRow: View {
 
 /// The palette's shortcut, changeable here, and Accessibility when the extension pastes or keeps the person active:
 /// Sidefolk's own part of the page, not the extension's (D63).
-private struct HostControls: View {
+struct HostControls: View {
     var model: ExtensionPageModel
     @State private var trusted = AXIsProcessTrusted()
 
@@ -736,7 +736,7 @@ private struct HostControls: View {
 // MARK: Heads-ups
 
 /// The extension's watchers as switches: on, it checks every five minutes and the companion speaks up.
-private struct HeadsUps: View {
+struct HeadsUps: View {
     var model: ExtensionPageModel
 
     var body: some View {

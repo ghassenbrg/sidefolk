@@ -739,7 +739,7 @@ public actor ExtensionHost {
                 return ExtensionPageInfo(extensionId: id, extensionName: self.name(rt), page: name, title: words(rt)?.pages[name] ?? p.title,
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
                                          history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
-                                         needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true,
+                                         needsAccessibility: (!m.palettes.isEmpty && rt.pin.permissions?.clipboard == true) || rt.pin.permissions?.power == true,
                                          tagline: tagline(rt))
             }
         }

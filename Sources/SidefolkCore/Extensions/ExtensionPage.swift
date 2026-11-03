@@ -460,7 +460,8 @@ public struct ExtensionPage: Sendable, Hashable {
         page.maxWidth = object["max_width"]?.doubleValue.flatMap { $0.isFinite ? min(1320, max(640, $0)) : nil }
         page.workspace = page.bare && (object["workspace"]?.boolValue ?? false)
         page.companion = object["companion"]?.boolValue ?? false
-        page.accent = Array((object["accent"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2))
+        // As in a dress: white goes on it, so what's too light to hold white words is left out (D108).
+        page.accent = Array((object["accent"]?.arrayValue ?? []).compactMap { color($0) }.filter { PageDress.Pair.luminance($0) <= PageDress.Pair.holdsWhite }.prefix(2))
         page.keepOnePrimary()
         return page
     }

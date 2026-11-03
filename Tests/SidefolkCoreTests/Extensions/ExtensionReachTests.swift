@@ -109,6 +109,7 @@ struct ExtensionReachTests {
         let page = try ExtensionPage.parse(["sections": [], "accent": ["#2A6FE8", "#6E4BF2", "#000000"]])
         #expect(page.accent == ["#2A6FE8", "#6E4BF2"])
         #expect(try ExtensionPage.parse(["sections": [], "accent": ["nonsense"]]).accent.isEmpty)
+        #expect(try ExtensionPage.parse(["sections": [], "accent": ["#FFEE00"]]).accent.isEmpty, "too light to hold white words")
     }
 
     @Test func aJobIsNeverOfferedToTheModelAndAsksWithoutAPlan() {
