@@ -384,6 +384,10 @@ public struct ManifestValidator: Sendable {
             issues.append(ValidationIssue(field: "icon", message: "“\(icon)” \(problem)"))
             return nil
         }
+        if (rel as NSString).pathExtension.lowercased() == "pdf", ExtensionIconBitmap.path(forPDF: path) == nil {
+            issues.append(ValidationIssue(field: "icon", message: "“\(icon)” takes too long or too much memory to draw."))
+            return nil
+        }
         return path
     }
 
