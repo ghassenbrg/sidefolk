@@ -121,9 +121,12 @@ struct PermissionSlip: View {
             } else {
                 button.keyboardShortcut(.return, modifiers: .command)
             }
-            if request.canAlways || request.canAllowForRequest {
+            if request.canAlways || request.canAllowForRequest || request.canKeepReading {
                 Menu {
                     Button { answer(.allowOnce) } label: { Text("Allow once") }
+                    if request.canKeepReading {
+                        Button { answer(.keepReading) } label: { Text("Allow, and read a few pages it links to without asking", comment: "In Allow's menu when the AI reads a page. For this conversation: an hour and twelve pages at most, and it stops if the AI uses anything else") }
+                    }
                     if request.canAlways {
                         Button { answer(.allowAlways) } label: { Text(alwaysTitle) }
                     } else if request.canAllowForRequest {

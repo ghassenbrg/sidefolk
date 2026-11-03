@@ -43,8 +43,10 @@ struct WebFetchTool: Tool {
         let decoded = WebContent.decode(response.body, contentType: response.contentType)
         var title: String?
         var text: String
+        var links: [String] = []
         if kind == .html {
             let page = HTMLText.extract(decoded)
+            links = HTMLText.links(page.anchors, base: response.url)
             title = page.title.map { ExternalText.clean($0) }
             text = page.text
         } else {
@@ -68,9 +70,11 @@ struct WebFetchTool: Tool {
             out += "\n\n[Cut off at \(limit.formatted()) characters; the page is longer.]"
         }
         let host = response.url.host ?? response.url.absoluteString
-        return ToolResult(
+        var result = ToolResult(
             text: out,
             card: ResultCard(kind: .web, title: title?.clipped(80) ?? host, subtitle: host, url: response.url.absoluteString),
             untrusted: true)
+        result.links = links
+        return result
     }
 }

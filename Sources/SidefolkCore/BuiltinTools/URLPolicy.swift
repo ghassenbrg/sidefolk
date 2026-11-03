@@ -207,6 +207,12 @@ public struct URLPolicy: Sendable {
     /// different parts of the system read them differently.
     public static func checkHost(_ url: URL, allowPrivate: Bool = false) throws {
         guard let raw = url.host else { throw Violation.missingHost }
+        // `url.host` is already decoded, so `%6Cocalhost` would read as a name it isn't checked as: what goes out is the
+        // encoded form, and macOS still reaches the host (found in review, D119).
+        // An international name is encoded too, in bytes from %80 up: that's as it should be.
+        if !raw.contains(":"), let encoded = URLComponents(url: url, resolvingAgainstBaseURL: true)?.percentEncodedHost, encoded.contains(/%[0-7][0-9a-fA-F]/) {
+            throw Violation.notAWebAddress
+        }
         var host = raw.lowercased()
         while host.hasSuffix(".") { host.removeLast() }
         guard !host.isEmpty, !host.contains("%") || host.contains(":") else { throw Violation.notAWebAddress }

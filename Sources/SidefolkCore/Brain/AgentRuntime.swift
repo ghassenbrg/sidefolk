@@ -143,6 +143,7 @@ public actor AgentRuntime {
         await tails[threadId]?.value
         if currentThread == threadId { currentThread = nil }
         threadActivity[threadId] = nil
+        await executor.research.forget(thread: threadId)
         if lastPreviewThread == threadId { lastPreview = nil }
         try await exchanges.delete(threadId: threadId)
         events.changed(.conversations)
@@ -331,6 +332,7 @@ public actor AgentRuntime {
             // The backend runs on its own task so the toolbox can end it: when nobody answered a card
             // and the person's setting says to stop the task (D37).
             let backend = choice.backend
+            await executor.research.begin(run: runId, thread: threadId, continuing: ((try? await exchanges.recent(threadId: threadId, limit: 2).count) ?? 2) > 1)
             let work = Task { try await backend.run(task, toolbox: toolbox, emit: emit) }
             toolbox.onStop { work.cancel() }
             let answer = try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }

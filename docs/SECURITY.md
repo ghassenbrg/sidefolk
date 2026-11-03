@@ -1148,3 +1148,14 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   for the person (T28).
 - Never runs the brain when isolation cannot be verified.
 - Never sends telemetry.
+
+**T42 Reading on from a page leaks what the model holds (M/M, D119).** After outside content is read, a steered model could
+put the person's data in an address it fetches (T2). "Read a few pages without asking" lets pages go without a card, so it
+must not widen that. *Holds:* only links on a page read since the person's yes, compared byte for byte (`ResearchMode`, the
+fragment aside), never an address the model wrote or respelled; GET only through `web.fetch`, no cookies, no local addresses
+(T11, an encoded host refused); the person's click on a card, for this conversation, 12 pages and an hour at most; ended for
+good by any tool but reading pages and a few named harmless ones; not in a conversation from before a restart; off-site links
+echoing the fetched address not counted; each visit in History; Sidefolk's own agent only; not under "Ask each time". Tested
+limit by limit in `ResearchModeTests`. *Residual:* a hostile page can list one link per letter and tell a steered model to
+spell what's already in the prompt (About you, matching notes), about six bits a link. It needs no knowledge of the person.
+The budget bounds that to about nine characters per yes, then the person is asked again, and History shows the visits.

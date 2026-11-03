@@ -213,6 +213,8 @@ public struct ToolResult: Sendable {
     public var isError: Bool
     /// What an extension's program asked for with this reply: its own surface or page (D100). Nil for everyone else.
     public var asks: ExtensionToolAsks?
+    /// The addresses a page that was read links to (D119): the only ones "keep reading" covers.
+    public var links: [String] = []
     /// What History says this call did, when that is better told afterwards than from its arguments (a signed extension's reply, D101).
     public var rowSummary: String?
 

@@ -7,9 +7,12 @@ public enum HTMLText {
     public struct Page: Sendable, Equatable {
         public var title: String?
         public var text: String
-        public init(title: String?, text: String) {
+        /// The links in what was kept, as written: what's hidden or thrown away leaves none (D119).
+        public var anchors: [String]
+        public init(title: String?, text: String, anchors: [String] = []) {
             self.title = title
             self.text = text
+            self.anchors = anchors
         }
     }
 
@@ -22,11 +25,29 @@ public enum HTMLText {
         for tag in ["main", "article"] {
             if let range = scanner.innerRange(of: tag, in: 0..<scanner.count) {
                 let text = scanner.render(range)
-                if text.count >= 200 { return Page(title: title, text: text) }
+                if text.count >= 200 { return Page(title: title, text: text, anchors: scanner.anchors) }
             }
         }
         let body = scanner.innerRange(of: "body", in: 0..<scanner.count) ?? 0..<scanner.count
-        return Page(title: title, text: scanner.render(body))
+        let text = scanner.render(body)
+        return Page(title: title, text: text, anchors: scanner.anchors)
+    }
+
+    /// The web pages among a page's links, whole, in order, at most `limit`. Only `http` and `https`, and no page on this
+    /// Mac or the local network, which a link has no business reaching (SECURITY T11).
+    public static func links(_ anchors: [String], base: URL, limit: Int = 40) -> [String] {
+        var seen = Set<String>()
+        var found: [String] = []
+        for anchor in anchors where found.count < limit {
+            let raw = anchor.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let url = URL(string: raw, relativeTo: base)?.absoluteURL, let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+                  (try? URLPolicy.checkHost(url)) != nil, url.user == nil, url.password == nil else { continue }
+            var parts = URLComponents(url: url, resolvingAgainstBaseURL: true)
+            parts?.fragment = nil
+            guard let whole = parts?.string, whole.count <= URLPolicy.maxLength, whole != base.absoluteString, seen.insert(whole).inserted else { continue }
+            found.append(whole)
+        }
+        return found
     }
 
     private static func cleanLine(_ s: String) -> String {
@@ -163,6 +184,28 @@ public enum HTMLText {
             return limit
         }
 
+        /// The links seen by the last `render`.
+        var anchors: [String] = []
+
+        /// An `a` tag's address.
+        func href(_ attributes: Range<Int>) -> String? {
+            guard let at = find(Array("href".utf8), from: attributes.lowerBound, to: attributes.upperBound) else { return nil }
+            var i = at + 4
+            while i < attributes.upperBound, bytes[i] == 32 || bytes[i] == 9 || bytes[i] == 10 || bytes[i] == 13 { i += 1 }
+            guard i < attributes.upperBound, bytes[i] == UInt8(ascii: "=") else { return nil }
+            i += 1
+            while i < attributes.upperBound, bytes[i] == 32 || bytes[i] == 9 || bytes[i] == 10 || bytes[i] == 13 { i += 1 }
+            guard i < attributes.upperBound else { return nil }
+            let quote = bytes[i]
+            if quote == UInt8(ascii: "\"") || quote == UInt8(ascii: "'") {
+                guard let end = find([quote], from: i + 1, to: attributes.upperBound) else { return nil }
+                return string((i + 1)..<end)
+            }
+            var end = i
+            while end < attributes.upperBound, bytes[end] != 32, bytes[end] != 9, bytes[end] != 10, bytes[end] != 13 { end += 1 }
+            return string(i..<end)
+        }
+
         func isHidden(_ attributes: Range<Int>) -> Bool {
             let text = String(decoding: lower[attributes], as: UTF8.self)
             let squashed = text.filter { !$0.isWhitespace }
@@ -188,6 +231,7 @@ public enum HTMLText {
 
         func render(_ range: Range<Int>) -> String {
             var out = TextOut()
+            anchors = []
             var preDepth = 0
             var i = range.lowerBound
             let end = range.upperBound
@@ -222,6 +266,7 @@ public enum HTMLText {
                     continue
                 }
                 switch t.name {
+                case "a": if anchors.count < 500, let href = href(t.attributes) { anchors.append(href) }
                 case "br": out.lineBreak(1)
                 case "li": out.lineBreak(1); out.marker("- ")
                 case "h1", "h2", "h3", "h4", "h5", "h6":

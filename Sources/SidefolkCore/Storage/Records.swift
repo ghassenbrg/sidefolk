@@ -365,6 +365,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case skipped
         /// Read a page or used a built-in service without asking because the person chose so for the internet (D47).
         case webSetting = "web_setting"
+        /// A page a page linked to, read because the person said to keep reading in this conversation (D119).
+        case research
     }
 
     public var id: Int64?

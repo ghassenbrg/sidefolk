@@ -57,6 +57,8 @@ public final class ToolExecutor: Sendable {
     private let engine = PermissionEngine()
     private let broker: ApprovalBroker
     private let forRequest = RequestAllowances()
+    /// Links the person said could be read on, by conversation (D119).
+    public let research = ResearchMode()
     private let activity: ActivityStore
     private let events: EventBus
     let clock: any Clock
@@ -197,6 +199,12 @@ public final class ToolExecutor: Sendable {
                 request.firstParty = ext?.firstParty ?? true
                 request.mode = policy.mode(for: caller)
                 if tainted { request.taintedBy = taintedBy }
+                // Reading a page, for Sidefolk's own agent, unless the person has it ask every time (D47, D119).
+                let reading = spec.name == "web.fetch" && caller.kind == "agent" ? tool.scope(for: input).url : nil
+                if let reading, let run = caller.runId, policy.internet(for: caller) != .askEachTime {
+                    request.canKeepReading = await research.canOffer(run: run, for: reading)
+                }
+                var readByResearch = false
                 let wait = approvalTimeout.map { (seconds: min($0, Self.approvalTimeout), whenTimeIsUp: UnansweredRule.Action?.none) }
                     ?? Self.wait(for: caller, policy: policy, present: present, minute: minute)
                 let answer: ApprovalDecision
@@ -205,6 +213,9 @@ public final class ToolExecutor: Sendable {
                     answer = .allowOnce
                 } else if request.canAllowForRequest, let run = caller.runId, await forRequest.covers(spec.name, run: run) {
                     answer = .allowOnce
+                } else if let reading, let run = caller.runId, policy.internet(for: caller) != .askEachTime, await research.take(reading, run: run, now: clock.now) {
+                    answer = .allowOnce
+                    readByResearch = true
                 } else {
                     onWaiting?(request)
                     guard let reply = await broker.requestIfRoom(request, timeout: wait.seconds) else {
@@ -227,7 +238,8 @@ public final class ToolExecutor: Sendable {
                     act.error = why
                     return ToolOutcome(activity: act, status: .denied(why))
                 }
-                decisionTag = answer == .allowAlways ? .always : .allowed
+                decisionTag = readByResearch ? .research : answer == .allowAlways ? .always : .allowed
+                if answer == .keepReading, request.canKeepReading, let run = caller.runId { await research.grant(run: run, now: clock.now) }
                 if answer == .allowForRequest, request.canAllowForRequest, let run = caller.runId {
                     await forRequest.allow(spec.name, run: run)
                 }
@@ -283,6 +295,7 @@ public final class ToolExecutor: Sendable {
     public func cancelApprovals(runId: String) async {
         await broker.cancel(runId: runId)
         await forRequest.end(run: runId)
+        await research.end(run: runId)
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,
@@ -292,7 +305,7 @@ public final class ToolExecutor: Sendable {
         events.publish(.toolStarted(act))
         let context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
         do {
-            let result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
+            var result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
             act.card = result.card
             if let row = result.rowSummary { act.summary = row }
             if let undo = result.undo {
@@ -307,6 +320,15 @@ public final class ToolExecutor: Sendable {
                           error: nil, undoable: act.undoAvailable)
             }
             events.publish(.toolFinished(act, ok: !result.isError))
+            if let run = caller.runId, caller.kind == "agent" {
+                await research.toolReturned(tool.spec.name, run: run)
+                // Under a yes, the model is told what it may read on to (D119). A long page gives up its end for them.
+                let links = await research.note(links: result.links, from: tool.scope(for: input).url ?? "", run: run, now: clock.now)
+                if !links.isEmpty {
+                    let list = "\n\nLinks on this page:\n" + links.joined(separator: "\n")
+                    result.text = String(result.text.prefix(max(0, UntrustedText.maxBytes - list.utf8.count - 500))) + list
+                }
+            }
             return ToolOutcome(activity: act, status: .ok(result), source: result.untrusted ? TaintSource.of(tool) : nil)
         } catch {
             let ufe = Self.userFacing(error, tool: tool.spec)

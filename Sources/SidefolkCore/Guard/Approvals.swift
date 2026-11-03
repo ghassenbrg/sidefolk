@@ -47,6 +47,8 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     /// Whether "Allow for this request" may be offered: the same tool then runs without a card until
     /// Sidefolk's run ends (D37). Only where "Always" isn't, and only for what can't carry data out.
     public var canAllowForRequest: Bool
+    /// The card may offer to keep reading linked pages for this conversation (D119).
+    public var canKeepReading = false
     /// The extension whose tool this is, so the card can show its icon and name.
     public var extensionId: String?
     /// The site an address Sidefolk wrote itself reaches ("example.com"), which "Always allow" would cover (D47).
@@ -110,10 +112,12 @@ public enum ApprovalDecision: Sendable, Hashable {
     case allowAlways
     /// This tool, for the rest of the run that asked (`ApprovalRequest.canAllowForRequest`).
     case allowForRequest
+    /// This page, and pages it and those link to, for this conversation (`ResearchMode`, D119).
+    case keepReading
     case deny
     case expired
 
-    public var allowed: Bool { self == .allowOnce || self == .allowAlways || self == .allowForRequest }
+    public var allowed: Bool { self == .allowOnce || self == .allowAlways || self == .allowForRequest || self == .keepReading }
 }
 
 /// The tools the person allowed "for this request" (D37), by the run that asked. They end with the run.

@@ -29071,6 +29071,64 @@
         }
       }
     },
+    "A link on a page, read without asking because you allowed a few in this conversation." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رابط في صفحة، قُرئ دون السؤال لأنك سمحت ببعضها في هذه المحادثة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Link auf einer Seite, ohne Nachfrage gelesen, weil du in diesem Gespräch einige erlaubt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un enlace de una página, leído sin preguntar porque permitiste algunos en esta conversación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un lien sur une page, lu sans demander car vous en avez autorisé quelques-uns dans cette conversation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un link in una pagina, letto senza chiedere perché ne hai consentiti alcuni in questa conversazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このページのリンクです。この会話でいくつか許可されたため、確認なしで読みました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지의 링크로, 이 대화에서 몇 개를 허용하셔서 묻지 않고 읽었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um link em uma página, lido sem perguntar porque você permitiu alguns nesta conversa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "页面上的链接，因你在此对话中允许了几个而未询问就读取。"
+          }
+        }
+      }
+    },
     "A little camera scout" : {
       "localizations" : {
         "ar" : {
@@ -38306,6 +38364,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许 ⌘⏎"
+          }
+        }
+      }
+    },
+    "Allow, and read a few pages it links to without asking" : {
+      "comment" : "In Allow's menu when the AI reads a page. For this conversation: an hour and twelve pages at most, and it stops if the AI uses anything else",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح، وقراءة بضع صفحات مرتبطة دون السؤال"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlauben und einige verlinkte Seiten ohne Nachfrage lesen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir y leer sin preguntar algunas páginas enlazadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser, et lire sans demander quelques pages liées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti e leggi senza chiedere alcune pagine collegate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可して、リンク先のページをいくつか確認なしで読む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "허용하고 연결된 페이지 몇 개를 묻지 않고 읽기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir e ler sem perguntar algumas páginas vinculadas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许，并在不询问的情况下阅读几个链接的页面"
           }
         }
       }
