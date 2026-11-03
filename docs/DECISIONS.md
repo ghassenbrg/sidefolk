@@ -1942,9 +1942,12 @@ screen and has the network), so its word adds no reach. SECURITY T2, T21, T36; E
 **Decision:** the ten on-duty helper folks use paintings cut from the founder-approved reference in
 `folk-family/redesign-2026-10-31/`. Their existing helper roles, accessibility labels, placement, and
 whole-body entrance, exit and breathing remain. The vector drawing is retained as a fallback and for
-the resource-free plain version; the selectable companions are unchanged. `scripts/cut-folk-redesign.py`
-rebuilds the bundled paintings from the reference.
+the resource-free plain version; the selectable companions are unchanged.
 **Why:** the founder approved the new silhouettes and asked for the current helpers to match them.
+*Amended 2026-11-03:* the paintings are no longer cut from that white sheet, which left white patches under their
+feet and around small props. All ten are generated transparent from the start, with the reference as their likeness,
+and they stay the same size in the same canvas with the same floor line. The founder's rule: never generate on a
+background and cut it out afterwards. The loose marks (notes, sparkles, steam) are gone, since that's where leftovers hid.
 
 ### D74 — Extension pages read like app screens: a hero, one primary action, choices as pictures, cards and rows; Miraya rebuilt on them (2026-10-31)
 **Decision:** pages get what a well-organised app screen needs, for any extension, still drawn by Sidefolk from data

@@ -56,6 +56,8 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 - **For the founder, from snapshot B (D101):** the reaction props the app still draws (D101's "Left for the founder"); in two-player rock, paper, scissors the reveal still says "You" and the companion's name with a winner's glow, as the old code did, against D96. Checks and what wasn't run: HISTORY's top entry. **Open, small:** with a surface panel open `snap` lists a 40×40 fully transparent `FloatingPanel` near the companion; not identified.
 - **For other branches:** `Sources/SidefolkApp/Play/` and `Sources/SidefolkCore/Games/` are gone, so a branch from before snapshot B that touches them will conflict: its game changes go into Playtime in the add-ons instead.
 
+- **Helper folks' art (D73 amended):** all ten paintings in `Sources/SidefolkCharacter/Art/folks/` are now generated transparent, not cut from a white sheet: same names, 384×384 and floor line, no loose notes or sparkles. Checked on magenta, dark and white, at the app's sizes against the old ones, and in `--ui-snapshots` (Today, the desktop floor); Scout, Pip, Byte and Guard are the site's art. `folk-family/<id>/<id>.png` were already clean. `Resources/Character/folks.png` still shows the vector folks from before D73. Next: the snapshot after the 2026-11-03 integration.
+
 - **Website:** `https://getsidefolk.com` (registered at GoDaddy, verified on the founder's GitHub account, HTTPS
   enforced) serves a one-page placeholder with no download button, from the separate repository
   [sidefolk-site](https://github.com/ghassenbrg/sidefolk-site): `public/`, deployed on every push to its `main`. It
