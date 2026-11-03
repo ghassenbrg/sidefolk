@@ -64,6 +64,35 @@ import Testing
         await runtime.extensions.shutdown()
     }
 
+    /// A drop's caption is a file's name or a link, not the person's words (D141).
+    @Test func aRefusalFromADropStopsThereAndASentencesGoesOnToTheAI() async throws {
+        let program = #"""
+        import json, sys
+        for line in sys.stdin:
+            m = json.loads(line)
+            method, id = m.get("method"), m.get("id")
+            if id is None: continue
+            if method == "initialize":
+                r = {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "t", "version": "1"}}
+            elif method == "tools/list":
+                r = {"tools": [{"name": "no", "description": "Refuses.", "inputSchema": {"type": "object"}}]}
+            elif method == "tools/call":
+                r = {"isError": True, "content": [{"type": "text", "text": "Not this."}]}
+            else:
+                r = {}
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": id, "result": r}) + "\n"); sys.stdout.flush()
+        """#
+        let folder = try ExtFixtures.tempDir("refuser")
+        let source = try ExtFixtures.makeExtension(at: folder.appendingPathComponent("refuser"), manifest: ExtFixtures.manifest(id: "dev.test.refuser", tools: ["no": ["risk": "low"]]), files: ["server.py": program])
+        _ = try await runtime.extensions.install(from: source)
+        var call = ExtensionCommandCall(tool: "ext.refuser.no", input: .object([:]), extensionId: "dev.test.refuser", said: "")
+        guard case .declined = await runner.run(.extensionCommand(call)) else { Issue.record("a sentence's refusal goes on to the AI"); return }
+        call.fromDrop = true
+        guard case .failed(let error) = await runner.run(.extensionCommand(call)) else { Issue.record("a drop's refusal stops there"); return }
+        #expect(error.message.contains("Not this."))
+        await runtime.extensions.shutdown()
+    }
+
     @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
     func aPlaceTheClockDoesntKnowGoesToTheAI() async throws {
         try await install("world-clock")

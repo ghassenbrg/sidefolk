@@ -138,7 +138,7 @@ struct AskView: View {
                     DropCard(attachment: attachment, choices: actions.dropChoices(for: attachment),
                              offers: actions.extensionDrops(for: attachment),
                              choose: { actions.perform($0, with: attachment, in: model) },
-                             chooseOffer: { actions.perform($0, with: attachment, in: model) },
+                             chooseOffer: { actions.perform($0, choosing: $1, with: attachment, in: model) },
                              openWith: { actions.open(attachment, with: $0, in: model) })
                 }
             }
@@ -271,6 +271,10 @@ struct AskView: View {
         if model.replyingTo != nil { return String(localized: "Your reply continues that conversation") }
         if model.pendingReminderTitle != nil { return String(localized: "When? Try “tomorrow 9am” or “in 2 hours”") }
         if model.pendingWatch != nil { return String(localized: "Which address? e.g. localhost:3000 or example.com/status") }
+        // Return doesn't choose an extension's offer (D141), so nothing here should suggest it does.
+        if let attachment = model.attachment, attachment.dropKind == .file, model.actions?.extensionDrops(for: attachment).isEmpty == false {
+            return String(localized: "Click a choice, or type what you want")
+        }
         if model.attachment != nil { return String(localized: "Pick what to do, or type what you want") }
         if offersFresh { return String(localized: "Your next request continues this conversation") }
         return String(localized: "Type something, or drop a file or link on me")
@@ -365,7 +369,14 @@ private struct EntryView: View {
         switch entry.content {
         case .result(let card, let activityId, let undo):
             ResultCardView(card: card, look: card.kind == .extensionResult ? card.refId.flatMap { model.extensionLooks[$0] } : nil, actions: {
-                if undo, let activityId {
+                if let files = card.files, !files.isEmpty {
+                    if files.count == 1, let file = files.first, file.canOpen {
+                        Button("Open") { model.actions?.open(file: file) }.buttonStyle(.sf(.primary))
+                    }
+                    Button { model.actions?.show(files: files) } label: { Text("Show in Finder", comment: "On a saved file's card") }
+                        .buttonStyle(.sf(files.count == 1 && files[0].canOpen ? .secondary : .primary))
+                }
+                if undo || card.files?.isEmpty == false, let activityId {
                     Button("Undo") { model.actions?.undo(activityId: activityId, in: model) }.buttonStyle(.sf(.secondary))
                 }
                 if PrivacyPane.isKnown(card.url) {

@@ -179,11 +179,13 @@ public struct SandboxProfile: Sendable, Hashable {
     /// service, measured on macOS 27 (resize, HEIC/PNG/JPEG out, a QR code drawn and read); no files, no network.
     /// HEIC and AVIF out need trustd too: the video encoder is chosen only after its signature is checked. That service can
     /// fetch from an address a certificate names, so what `media` allows isn't sealed off from the internet (PermissionSummary).
+    /// Core Audio finds its codecs through the registrar, or writing compressed or 24-bit sound fails (D143).
     static let mediaRules = """
 
-    ;; media (granted at install): the GPU and the decoders, nothing else
+    ;; media (granted at install): the GPU, the decoders and the audio codecs, nothing else
     (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
-    (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent"))
+    (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent")
+      (global-name "com.apple.audio.AudioComponentRegistrar"))
 
     """
 

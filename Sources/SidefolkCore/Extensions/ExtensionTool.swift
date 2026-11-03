@@ -11,6 +11,8 @@ public struct ExtensionTool: Tool {
     /// Parameters naming a folder the person chooses (`tools.<name>.paths`): Guard checks them like any
     /// file tool's paths, and the sandbox opens exactly those for this call.
     public let folderParameters: [String: ExtensionManifest.FolderUse]
+    /// Parameters holding a list of files, read only, each file granted by itself (D141).
+    public let fileLists: Set<String>
     /// One of Sidefolk's own extensions, by its signed pack (D39, D98): its summaries and its service are believed.
     public let firstParty: Bool
     /// The manifest's sentence for a call, with its words in the person's language (D98); only for Sidefolk's own.
@@ -56,7 +58,7 @@ public struct ExtensionTool: Tool {
     public static let timeouts = 1...300
 
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
-         folderParameters: [String: ExtensionManifest.FolderUse] = [:], firstParty: Bool = false, commands: ToolCommands? = nil,
+         folderParameters: [String: ExtensionManifest.FolderUse] = [:], fileLists: Set<String> = [], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
          sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> Void)? = nil,
          asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)? = nil,
@@ -66,6 +68,7 @@ public struct ExtensionTool: Tool {
         self.extensionName = extensionName
         self.remoteName = remoteName
         self.folderParameters = folderParameters
+        self.fileLists = fileLists
         self.firstParty = firstParty
         self.commands = commands
         self.trustedOnly = Set(trustedOnly)
@@ -110,6 +113,9 @@ public struct ExtensionTool: Tool {
             let path = (raw as NSString).expandingTildeInPath
             if use == .write { scope.writePaths.append(path) } else { scope.readPaths.append(path) }
         }
+        for param in fileLists.sorted() {
+            scope.readPaths += (input[param]?.arrayValue ?? []).compactMap(\.stringValue).map { ($0 as NSString).expandingTildeInPath }
+        }
         return scope
     }
 
@@ -139,6 +145,13 @@ public struct ExtensionTool: Tool {
                 return "“\(param)” must be a full path, like ~/git/project."
             }
         }
+        for param in fileLists.sorted() {
+            guard let value = input[param], !value.isNull else { continue }
+            guard let items = value.arrayValue, items.count <= ExtensionOutputs.maxFiles,
+                  items.allSatisfy({ ($0.stringValue.map { ($0 as NSString).expandingTildeInPath } ?? "").hasPrefix("/") }) else {
+                return "“\(param)” must be a list of at most \(ExtensionOutputs.maxFiles) full paths."
+            }
+        }
         return nil
     }
 
@@ -164,8 +177,30 @@ public struct ExtensionTool: Tool {
                   FolderAccess.allows(canon, write: write, folders: context.folders) else {
                 throw UserFacingError("\(FolderAccess.displayPath(path)) isn't shared with Sidefolk for this.", changedNothing: true)
             }
-            grants.append(ExtensionFolderGrant(path: canon, write: write))
+            let handedOver = context.handedOver.contains(canon)
+            var info = stat()
+            // Handed over means a file: a folder or a link to one reads as far more than the card said.
+            if handedOver, lstat(canon, &info) != 0 || info.st_mode & S_IFMT != S_IFREG {
+                throw UserFacingError("\(FolderAccess.displayPath(path)) can't be used for this.", changedNothing: true)
+            }
+            grants.append(ExtensionFolderGrant(path: canon, write: write, handedOver: handedOver))
             input = input.setting(param, .string(canon))
+        }
+        for param in fileLists.sorted() {
+            guard let items = input[param]?.arrayValue else { continue }
+            var checked: [JSONValue] = []
+            for item in items {
+                let path = (item.stringValue.map { ($0 as NSString).expandingTildeInPath }) ?? ""
+                var info = stat()
+                // Followed to what it really is first, so a link to something private is judged as that.
+                guard let canon = FolderAccess.canonical(path), FolderAccess.forbiddenReason([canon]) == nil,
+                      FolderAccess.allows(canon, write: false, folders: context.folders), lstat(canon, &info) == 0, info.st_mode & S_IFMT == S_IFREG else {
+                    throw UserFacingError("\(FolderAccess.displayPath(path)) can't be used for this.", changedNothing: true)
+                }
+                grants.append(ExtensionFolderGrant(path: canon, write: false, handedOver: context.handedOver.contains(canon)))
+                checked.append(.string(canon))
+            }
+            input = input.setting(param, .array(checked))
         }
         await began?(context.caller, context.tainted)
         let result = try await invoke(input, grants)
@@ -199,4 +234,6 @@ public struct PairedAnswer: Sendable, Hashable {
 public struct ExtensionFolderGrant: Sendable, Hashable {
     public var path: String
     public var write: Bool
+    /// The person dropped or picked this very file for this call, so a result may be saved beside it (D140).
+    public var handedOver = false
 }

@@ -78,7 +78,7 @@ extension ExtensionPermissions {
     /// even inside a folder it had, which only errs towards asking.
     public func widens(_ old: ExtensionPermissions) -> Bool {
         let flags: [(Bool, Bool)] = [(network, old.network), (media, old.media), (clipboard, old.clipboard), (power, old.power),
-                                     (screen, old.screen), (udp, old.udp), (outputMute, old.outputMute)]
+                                     (screen, old.screen), (udp, old.udp), (outputMute, old.outputMute), (placesFiles, old.placesFiles)]
         if flags.contains(where: { $0.0 && !$0.1 }) { return true }
         if let ai, ai.dailyCap > (old.ai?.dailyCap ?? 0) { return true }
         if (place != nil && old.place == nil) || (schedule != nil && old.schedule == nil) { return true }

@@ -152,8 +152,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var files: Files
         /// Absolute paths of programs it may run.
         public var exec: [String]
-        /// The Mac's graphics hardware and media decoders, which modern image code needs (resizing a photo,
-        /// rendering a QR code). No files or network come with it.
+        /// The Mac's graphics hardware, media decoders and audio codecs, which modern image and sound code needs
+        /// (resizing a photo, rendering a QR code, writing a sound file). No files or network come with it.
         public var media: Bool
         /// What the person copies: reading and changing the clipboard (D63).
         public var clipboard: Bool
@@ -268,11 +268,18 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var trustedOnly: [String]
         /// Other agents may use it (`sidefolk mcp`), on a card each time and under the person's switch for them (D112).
         public var agents: Bool?
+        /// File endings Sidefolk may save beside a file the person hands over for a call (D140).
+        public var outputs: [String]
+        /// A parameter holding a list of files, each granted for one call by itself (D141). `paths` stays one path a parameter.
+        public var fileLists: [String: FolderUse]
 
         public init(title: String? = nil, risk: Risk? = nil, category: ToolCategory? = nil, mutates: Bool? = nil,
                     paths: [String: FolderUse] = [:], timeout: Int? = nil, ai: Bool? = nil, commands: [Command] = [],
-                    reach: Reach? = nil, device: String? = nil, summary: ToolSummary? = nil, trustedOnly: [String] = []) {
+                    reach: Reach? = nil, device: String? = nil, summary: ToolSummary? = nil, trustedOnly: [String] = [], outputs: [String] = [],
+                    fileLists: [String: FolderUse] = [:]) {
+            self.fileLists = fileLists
             self.trustedOnly = trustedOnly
+            self.outputs = outputs
             self.title = title
             self.risk = risk
             self.category = category
@@ -290,7 +297,7 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var offeredToModel: Bool { ai ?? true }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary", "trusted_only", "agents"])
+            try decoder.rejectUnknownKeys(["title", "risk", "category", "mutates", "paths", "timeout", "ai", "commands", "reach", "device", "summary", "trusted_only", "agents", "outputs", "file_lists"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             title = try c.decodeIfPresent(String.self, forKey: "title")
             risk = try c.decodeIfPresent(Risk.self, forKey: "risk")
@@ -305,6 +312,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
             summary = try c.decodeIfPresent(ToolSummary.self, forKey: "summary")
             trustedOnly = try c.decodeIfPresent([String].self, forKey: "trusted_only") ?? []
             agents = try c.decodeIfPresent(Bool.self, forKey: "agents")
+            outputs = try c.decodeIfPresent([String].self, forKey: "outputs") ?? []
+            fileLists = try c.decodeIfPresent([String: FolderUse].self, forKey: "file_lists") ?? [:]
         }
     }
 

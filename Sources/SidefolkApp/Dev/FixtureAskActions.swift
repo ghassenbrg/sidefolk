@@ -27,6 +27,8 @@ final class FixtureAskActions: AskActions {
     func undo(activityId: String, in model: AskModel) {}
     func answer(approval: ApprovalRequest, decision: ApprovalDecision) {}
     func open(card: ResultCard) {}
+    func open(file: PlacedFile) {}
+    func show(files: [PlacedFile]) {}
     func saveAnswer(_ text: String, tainted: Bool, in model: AskModel) {}
     func saveAsTask(_ text: String, in model: AskModel) {}
     func remind(_ guess: ReminderGuess, in model: AskModel) {}
@@ -43,9 +45,10 @@ final class FixtureAskActions: AskActions {
         DropChoices.choices(for: attachment.dropKind, offers: extensionDrops(for: attachment).count)
     }
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction] {
-        DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
+        if attachment.dropKind == .file { return DropChoices.offers(forFiles: attachment.dropFiles, among: drops) }
+        return DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
     }
-    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel) {}
+    func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel) {}
     func open(_ entry: ExtensionEntry) {}
     func open(_ attachment: Attachment, with app: URL, in model: AskModel) {}
     func openPlay() {}

@@ -124,7 +124,7 @@ not listed on this page is an error**, so a typo never silently changes what an 
 | `permissions.exec` | no | Absolute paths of programs it may run, like `/usr/bin/pmset`, or `git` by name ([Programs by name](#programs-by-name)). |
 | `permissions.clipboard` | no | `true` lets it read and change the clipboard (D63). Its tools can't be below medium risk: what someone copies is theirs. |
 | `permissions.power` | no | `true` lets it keep the Mac awake (macOS power assertions) and ask Sidefolk to keep the person active (`sidefolk/nudge`, D63). |
-| `permissions.media` | no | `true` opens the Mac's graphics hardware and media decoders, which image code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo). No files or network come with it. |
+| `permissions.media` | no | `true` opens the Mac's graphics hardware, media decoders and audio codecs, which image and sound code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo, AVAudioFile). No files or network come with it. |
 | `permissions.network_purpose` | no | With `network`: what you use it for, one line starting with "to" or "for" (≤ 120 characters), e.g. "to find TVs on your local network and stream to them". The sheet adds it to "Can use the network, the internet included": the sandbox can't keep you to the local network (D69). |
 | `permissions.udp` | no | With `network`: a UDP port of your own and the packets that come back to it, which live audio and video (WebRTC) needs; `network` alone refuses the bind. No listening TCP server. |
 | `permissions.screen` | no | `true` lets it record the screen and the sound the Mac plays (ScreenCaptureKit) and compress it with the hardware video encoder (D69). macOS asks the person to allow **Sidefolk** in Screen Recording: an extension runs as Sidefolk's child, so the permission is Sidefolk's, and this line is what keeps other extensions from using it. Pictures in IOSurfaces need `media` too. Its tools can't be below medium risk. |
@@ -239,6 +239,8 @@ Good to know:
   renderer, and ImageIO reads a photo the hardware decoded through the video decoder service; both fail in the
   sandbox without `"media": true`, which opens exactly those (two IOKit user clients and one service). A
   virtual machine's GPU isn't among them.
+- **Sound needs `media` too.** Core Audio finds its codecs through a registrar service; without it, writing compressed
+  or 24-bit sound fails (AVAudioFile). `media` opens that one service.
 - **System services for specific programs.** Some system programs need a system service to work.
   Sidefolk opens it only when that program is in `exec`: `/usr/bin/pmset` gets
   `com.apple.PowerManagement.control` (battery state).
@@ -278,6 +280,30 @@ For a call with such a parameter:
 
 The install sheet says "Can read and change files in a folder you name, for that request only, once you
 approve it". A `"write"` parameter raises every tool to at least medium risk, like a fixed write folder.
+
+### Saving a result beside a file
+
+A tool that makes a new file from one the person handed over declares the endings it makes, and Sidefolk saves the result (D140). Your program never gets to write in that folder:
+
+```json
+"tools": { "convert": { "title": "Convert a file", "paths": { "path": "read" }, "outputs": ["jpg", "png"], "timeout": 300 } }
+```
+
+Write the result in your data folder, then say so in the reply. In the Kit:
+
+```swift
+return ToolReply("Made trip.jpg.").saving(data: "out/1.jpg", as: "trip.jpg", beside: path)
+```
+
+Without the Kit, add `"sidefolk": {"outputs": [{"data": "out/1.jpg", "name": "trip.jpg", "source": "<the path you were given>"}]}` to the `tools/call` result.
+
+- **Beside what?** Only a file the person dropped or picked for this very call, as a page's `file` button gives. A path an AI named, or a file you can read because its folder is shared, isn't handed over, and the reply's text says it wasn't saved.
+- **Moved, not copied:** the data file is gone from your data folder once it's saved. If it can't be saved, it stays, so clean up after yourself.
+- **What's refused:** links, hard-linked files, a `data` path that leaves your folder, a `name` with a folder in it or a leading dot, a `name` that doesn't start with the source's name, an ending your tool didn't declare, and any ending that isn't on Sidefolk's list (`ExtensionOutputs.allowedEndings`: nothing that runs, no HTML or SVG). At most 64 files and 64 GB a call, 32 GB each.
+- **What the person sees:** Sidefolk's own card, with sizes measured from the real files, Show in Finder, Undo, and Open for images, audio, video, PDF, plain text and CSV. You can't open anything yourself.
+- **Never overwrites:** a name in use becomes `trip 2.jpg`. The file you made gets plain permissions and macOS's quarantine mark.
+
+The install sheet says "Can have Sidefolk save new files beside a file you give it". `outputs` puts the tool at medium risk or above. Your data folder itself is off limits: you can do anything inside it, but not remove or replace it.
 
 ### Programs by name
 
@@ -1047,6 +1073,19 @@ extensions claim goes to the AI, and the install sheet says so. Within one exten
 
 `places`: `companion` (its menu), `pocket` (the Pocket's ⋯ and the menu bar's right click), `ask` (a tab, one an extension; it opens a tool or a page). 8 entries, 32 items each, two levels. `kinds`: `file`, `folder`, `link`, `text`; `patterns` are globs on a link's address without its query, or a file's name; none means any of the kind. A file or
 folder goes under an argument the tool lists in `paths`. At most three offers show on the card, after Sidefolk's own, each with your name; a link's first offer takes its reminder's place. Words in `strings/`: `entries.<id>`, `drops.<id>.title|detail`. Everything runs your own tool as the person, through Guard.
+
+**Dropped files are the person's own act (D141).** An offer with `"kinds": ["file"]` runs your tool as the person, with a read of exactly the files dropped, for that one call, wherever they are. Sidefolk's card says so first, in its own words: your name, the file count and names, and whether you can use the internet. Your offers sit apart under your name. Nothing is chosen for them, and Return doesn't choose, so the card is the yes. A retry later has no read. Folders, links and text work as before.
+
+For several files, a tool lists a parameter in `file_lists` and an offer puts `{values}` under it. It's read only, at most 64 files, and each must be a regular file:
+
+```json
+"tools": { "convert": { "title": "Convert files", "file_lists": { "files": "read" }, "outputs": ["jpg", "png"], "timeout": 300 } },
+"drops": [{ "id": "photo", "title": "Opens anywhere", "detail": "JPEG. Any transparency becomes white.", "kinds": ["file"], "patterns": ["*.heic", "*.png"],
+            "tool": "convert", "input": { "files": "{values}", "format": "jpg" },
+            "menu": [{ "title": "PNG", "input": { "format": "png" } }, { "title": "TIFF", "input": { "format": "tiff" } }] }]
+```
+
+Every file must fit `patterns`. Several files only see offers with `{values}`, and more than 64 see none. `{value}` works as before for one file. `menu` (at most 12 choices of at most 30 characters) is more choices on the same card, drawn by Sidefolk: a second step wouldn't have the read, since it ends with the call. Any other argument of yours that names a path is taken out of what you receive for a drop, so only what was dropped can be there.
 
 ### Settings
 

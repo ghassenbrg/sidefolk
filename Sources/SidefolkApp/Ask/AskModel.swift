@@ -9,6 +9,15 @@ struct Attachment: Equatable {
     var label: String
     /// Text handed to the brain (always treated as untrusted).
     var text: String?
+    /// Every file in the drag, when there was more than one. `kind` holds the first.
+    var files: [URL] = []
+
+    /// Files macOS handed over, from a drag or from Finder's Send to Sidefolk (D151).
+    static func files(_ urls: [URL]) -> Attachment? {
+        guard let first = urls.first else { return nil }
+        return Attachment(kind: .file(first), label: urls.count == 1 ? DropChoices.shownName(first.path) : String(localized: "\(urls.count) files", comment: "What several dropped files are called"),
+                          text: nil, files: urls)
+    }
 }
 
 /// A reminder the local parser could make from words that didn't start with "remind me".
@@ -118,6 +127,9 @@ protocol AskActions: AnyObject {
     func undo(activityId: String, in model: AskModel)
     func answer(approval: ApprovalRequest, decision: ApprovalDecision)
     func open(card: ResultCard)
+    /// A file Sidefolk saved: opened in its default app, or shown in Finder (D142). Only on the person's click.
+    func open(file: PlacedFile)
+    func show(files: [PlacedFile])
     /// `tainted`: the words came from a turn that read outside content.
     func saveAnswer(_ text: String, tainted: Bool, in model: AskModel)
     func saveAsTask(_ text: String, in model: AskModel)
@@ -139,7 +151,7 @@ protocol AskActions: AnyObject {
     func dropChoices(for attachment: Attachment) -> [DropChoice]
     /// What extensions offer for it (D100).
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction]
-    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel)
+    func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel)
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
@@ -362,6 +374,8 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
+        // Choosing an extension's offer is what lets it read the file, so Return never makes that choice for you (D141).
+        if trimmed.isEmpty, let attachment, attachment.dropKind == .file, actions?.extensionDrops(for: attachment).isEmpty == false { return }
         // Nothing typed with something dropped: Return is the drop card's first choice (D84).
         if trimmed.isEmpty, let attachment, let first = actions?.dropChoices(for: attachment).first {
             actions?.perform(first, with: attachment, in: self)

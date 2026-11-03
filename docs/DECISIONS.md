@@ -3833,3 +3833,60 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 **Decision (the founder's, 2026-11-03: "Yes, with titles too"):** `permissions.events` `{purpose}`, on the install sheet with a caution. A running program hears `sidefolk/happened {name, at, title?, detail?}` for `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting` (five minutes before), `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. No card each time.
 - **Revisits D111**, which left this out because titles would leak without a card. The founder chose titles. Every extension with the permission hears the words, whatever else it can reach (the founder, asked "Extensions that can reach the internet: should they hear reminder and meeting titles too?": "Yes, titles for all", shown that they could be sent off the Mac without a card). The install sheet says so. Gaining a reach re-asks at update, as any widening does.
 - **Not counted:** what an extension itself did, so a flow can't set itself off through its own note.
+
+### D140 — Sidefolk saves an extension's result beside the file the person handed over (2026-11-03)
+**Decision:** a tool may declare `outputs`, the file endings it makes. Its program writes in its own data folder and names what it made in its reply (`sidefolk.outputs`, Kit: `ToolReply.saving(data:as:beside:)`). Sidefolk, not the sandbox, then moves the file beside the source. The sandbox gains no rule and never opens the person's folder for writing. Rules, all enforced by `ExtensionOutputs`, most of them the coordinator's:
+- Only beside a file the person dropped or picked for this very call (`ToolContext.handedOver`, set only by Sidefolk's own code, never from input, and gone on a retry or in a plan). Never a system, protected or hidden folder.
+- The data file: a regular file with one hard link, reached by walking down from the data folder with no link followed anywhere. Reading elsewhere through Sidefolk's own privileges is the main risk.
+- The name: bare, no path parts, no leading dot, no invisible or direction characters, at most 200 bytes, and starting with the source's whole name, followed by a space or a dot (so "trip small.jpg", never `CLAUDE.md`).
+- The ending: declared by the tool and on Sidefolk's own list, which holds nothing that runs. A manifest can't widen it.
+- At most 32 GB a file, 64 GB and 64 files a call. Never overwrites: placing is an exclusive rename, and a name in use gets a number.
+- The saved file is `0644`, loses the program's attributes and carries macOS's quarantine mark.
+- Each placement is its own row in History, and the install sheet says so.
+
+**Why:** the founder wants results beside the original, without a folder grant. A sandbox rule to create files in a folder could let a program change other files there, whereas this leaves a converter unable to touch that folder at all.
+
+**Alternatives:** a write grant on the parent folder (wider than the job, and prompts); a sandbox grant of one new path (only some rules could express it, and the program would choose the moment); saving only in the data folder (the person would have to fetch it).
+
+**Reviewed:** an independent security review found a critical hole in the first version: a data folder swapped for a link let a program have `~/.ssh` saved as a photo. It also found an older hole of the same kind in the data folder's own profile. Both are fixed, with tests, along with its other findings. A second round found one medium race (a folder swapped during a save) and four small issues, also fixed (SECURITY T45).
+
+**Implications:** placing runs after the call, off the host's actor, so a file that appears always has its row. `outputs` raises the risk floor to medium. Output is written twice when the destination is on another disk. Conversion needs room on the home disk. Open, Show and Undo come later (D142) and build on `PlacedFile`, which records what was placed. The source still needs a `"read"` parameter in `paths`. SECURITY T45.
+
+### D141 — A dropped file is the person's own act: one call's read, several files at once, and the card is the yes (2026-11-03)
+**Decision:** the founder's, for all file drops ("All drops"), against the reviewers' recommendation of the new kind only. No shipped or planned extension declares a file drop today, so the exposure is local third-party ones and future ones. An offer with `kinds: ["file"]` runs its tool as `Caller.user`, with `pickedFiles` set only by Sidefolk's drag code. New: `tools.<name>.file_lists` (one read-only list parameter, at most 64 regular files, each granted by itself), `{values}` in a drop's input, and a drop's `menu` (at most 12 choices of at most 30 characters, on the same card, since the read ends with the call). Link, text and folder drops are unchanged; a folder in a drag means no offers.
+
+**The card:** Noor's conditions. Sidefolk's own words come first and name who reads what and whether it could leave the Mac. The extension's offers sit apart under its name. Exact count and every name reachable. Nothing pre-selected, Return doesn't choose, clicks ignored for 400 ms. Sidefolk's own choices stay, smaller.
+
+**Why:** dropping a file is the person's explicit act on that file, and today's alternative for an unshared file is a card offering the whole folder. A list, not a higher cap on `paths`, because that cap counts parameters of one string each, and Sideflow's flows already go through `scope(for:)`, so each listed file gets Guard's normal check.
+
+**Alternatives:** the new kind only, leaving `{value}` drops as they were (the reviewers' choice); a higher `paths` cap; a second step for more choices (it would have no read).
+
+**Reviewed:** an independent security round found the card's internet claim false for one system service, which moved behind `network` as its own sandbox hardening. HEIC and AVIF can't be written without that service, so `media` keeps it too (the founder's call, 2026-11-03): an extension with `media` can't claim the internet is closed, and its card says instead that other things it's allowed to use could carry the file out. With none of those ways, the card says "It can't go online by itself" (the founder's wording, 2026-11-03): "by itself" because two extensions working together can still pass data along (SECURITY). The card also counts `ai` and `place` as ways out. It found a file's name could reach the AI as the person's words after a refusal, so a drop's refusal now stops there. Menu items and page controls no longer carry paths (they could read in a shared folder with no card). The click guard re-arms on a new drop and covers keyboard and VoiceOver, an extension's name can't hold a line break, and a handed-over path must be a regular file on both routes.
+
+**Implications:** `ExtensionCommandCall.handedOver`, set only here. `ToolExecutor.execute` gains an additive `pickedFiles`, leaving Noor's `pickedFile` as it is. A list in a plan asks on a card unless it's exactly what the person read, since a list only matches byte for byte; either way it reaches only shared folders. The cap on list values in History's arguments rises from 20 to 64 **for every tool**, so that a drop's files all show. SECURITY T12, T43.
+
+### D143 — Sound files under `media` (2026-11-03)
+
+Converting a sound in the sandbox failed: writing AAC gave `fmt?`, and 24-bit WAV raised an exception (16-bit WAV doesn't need this). Core Audio finds its codecs through `com.apple.audio.AudioComponentRegistrar`, so `media` now opens that one service too, and its install line names sound ("Can use the Mac's media tools for pictures and sound"). Measured with a sound program under the media rules with and without the service, and with every format through the real host. An independent review ran: no sound or device access comes with it, a component one process registers stays invisible to another, and the registrar opened no sockets. A second review found it adds one small reach: a `media` extension can list the audio components installed on the Mac (134 in the test, one not Apple's). With trustd also under `media`, the certificate fetch happens with or without the registrar, so the registrar adds no way out. Out-of-process units are refused. Not tested: a real third-party or AUv3 unit loading. The reviews ran without the built gallery, so their shipped-extension sandbox tests didn't run; the full suite against a built gallery covers those. The rule matches by name, so `media` also reaches the root instance of this service. Existing installs get the rule with no new question, since it's a host rule under a permission they already hold. Video stays a separate decision: it would add the encoder service to `media`, where only `screen` has it now.
+
+### D142 — Open, Show in Finder and Undo on a file Sidefolk saved (2026-11-03)
+**Decision:** a result that saved files (D140) gets Sidefolk's own card: its title and sizes measured from the real files, not the extension's words, and three actions. The founder's words on Open and Show, asked "May Sidefolk open and show files that an extension just created?": "Allow both". Sidefolk draws them, they run only on the person's click, only on a file Sidefolk placed itself, and an extension can't ask for them, so D63 otherwise stands.
+- **Open** is drawn only for images, audio, video, PDF, plain text and CSV, and only if the contents fit: not a program or script, and the right start for formats that have one. Anything else gets Show in Finder alone.
+- **Show in Finder** only reveals the file.
+- **Undo** moves the file to the Trash through the undo path every tool uses, so History offers it too. It acts only on what is still exactly what was placed (same device, inode, size and time). A file changed since stays, and the card says so. The original is never touched.
+
+**Why:** the person wants the new file at once, and an extension must not be able to launch things.
+
+**Alternatives:** Show only (safer, one more step; the founder chose both); letting extensions ask for Open (D63 keeps that closed).
+
+**Implications:** `ResultCard.files` holds `PlacedFile`s and is saved with the conversation, so an old card re-checks identity at each click. A page's `file` action shows a save that failed. Dragging the file out of the card comes with D150's card. SECURITY T45.
+
+### D151 — Send to Sidefolk from Finder (2026-11-03)
+**Decision:** a macOS Service, "Send to Sidefolk", in Finder's right-click menu for files. macOS hands the selected files to Sidefolk as a drag does, and they arrive on the same drop card with the same grant (D141). The person can give it a keyboard shortcut in System Settings. It needs no permission of its own.
+
+**Why:** the founder asked for an easier way in than dragging, in the spirit of Filee's. This is the smallest one, and it doesn't watch anything.
+
+**Alternatives:** a global shortcut that asks Finder for its selection (needs Automation permission); the ring (D152, not built, waiting on a test).
+
+**Implications:** any app can send files this way, and unlike a drag it needs no click. So nothing runs until the person chooses on the card, it doesn't take the keyboard, and it leaves alone what the person is in the middle of (SECURITY T43). Service names aren't translated yet.
+

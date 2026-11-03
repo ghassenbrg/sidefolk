@@ -3,6 +3,7 @@ import SidefolkCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: AppCoordinator?
+    private var sendToSidefolk: SendToSidefolk?
     /// The quit work is done (or must be skipped), so terminating doesn't wait for it again.
     private var readyToQuit = false
 
@@ -55,6 +56,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let coordinator = AppCoordinator(runtime: runtime)
                 coordinator.restoreOutcome = restored
                 self.coordinator = coordinator
+                let sender = SendToSidefolk { [weak coordinator] files in coordinator?.filesFromAnotherApp(files) ?? false }
+                self.sendToSidefolk = sender
+                NSApp.servicesProvider = sender
                 await coordinator.start()
             } catch {
                 Log.shared.error("app", "launch failed", ["error": String(describing: error)])

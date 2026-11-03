@@ -10,6 +10,8 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var programs: [ResolvedProgram]
     /// The most any tool does in a folder the person names in a call (`tools.<name>.paths`); nil when none does.
     public var folders: ExtensionManifest.FolderUse?
+    /// Sidefolk may save its results beside a file the person hands over (`tools.<name>.outputs`, D140).
+    public var placesFiles: Bool
     /// The graphics hardware and media decoders (`permissions.media`).
     public var media: Bool
     /// The clipboard, read and changed (`permissions.clipboard`, D63).
@@ -38,9 +40,11 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
                 clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil,
-                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil, act: ExtensionPurpose? = nil, events: ExtensionPurpose? = nil) {
+                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil, act: ExtensionPurpose? = nil, events: ExtensionPurpose? = nil,
+                placesFiles: Bool = false) {
         self.events = events
         self.act = act
+        self.placesFiles = placesFiles
         self.place = place
         self.schedule = schedule
         self.ai = ai
@@ -60,6 +64,15 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         self.networkPurpose = networkPurpose
     }
 
+    /// Ways out other than its own internet: your AI, a place search, Sidefolk's tools, the certificate service under `media`, the
+    /// clipboard, a folder named at install, which may sync, a program it runs (the drop card, D141).
+    public var carriesOut: Bool { ai != nil || place != nil || act != nil || media || clipboard || !write.isEmpty || !exec.isEmpty || !programs.isEmpty }
+
+    /// It can't carry what it reads beyond this Mac by itself, so it may get plans and hear titles without a card each time (D110, D129).
+    public var isContained: Bool {
+        !network && exec.isEmpty && programs.isEmpty && write.isEmpty && folders != .write && !clipboard && !screen && !udp && !placesFiles
+    }
+
     /// Pins saved before programs, per-call folders, media, clipboard, power, screen and UDP existed have none of them.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -69,6 +82,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         exec = try c.decode([String].self, forKey: .exec)
         programs = try c.decodeIfPresent([ResolvedProgram].self, forKey: .programs) ?? []
         folders = try c.decodeIfPresent(ExtensionManifest.FolderUse.self, forKey: .folders)
+        placesFiles = try c.decodeIfPresent(Bool.self, forKey: .placesFiles) ?? false
         media = try c.decodeIfPresent(Bool.self, forKey: .media) ?? false
         clipboard = try c.decodeIfPresent(Bool.self, forKey: .clipboard) ?? false
         power = try c.decodeIfPresent(Bool.self, forKey: .power) ?? false
@@ -89,7 +103,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 
     /// Raises every tool to at least medium risk: it can reach the internet, change files or run anything.
     /// The clipboard counts: what someone copied (a password, an address) is theirs alone. So does the screen.
-    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty || clipboard || screen || outputMute }
+    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || placesFiles || !dangerousExec.isEmpty || clipboard || screen || outputMute }
 
     static let anythingRunners: Set<String> = [
         "sh", "bash", "zsh", "dash", "ksh", "csh", "tcsh", "fish", "env", "xargs", "nohup", "sudo", "su", "login",
@@ -181,6 +195,10 @@ public struct PermissionSummary: Sendable, Hashable {
         case nil:
             break
         }
+        if p.placesFiles {
+            lines.append(Line(kind: .write, text: String(localized: "Can have Sidefolk save new files beside a file you give it"), caution: false,
+                              note: String(localized: "Sidefolk saves them itself and never replaces a file. The extension can't write in that folder.")))
+        }
         let dangerous = Set(p.dangerousExec)
         for path in p.exec {
             let anything = dangerous.contains(path)
@@ -193,7 +211,7 @@ public struct PermissionSummary: Sendable, Hashable {
                               note: String(localized: "Sidefolk found it on this Mac, and it may start only its own helper programs.")))
         }
         if p.media {
-            lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's graphics hardware for pictures"), caution: false))
+            lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's media tools for pictures and sound"), caution: false))
         }
         if p.clipboard {
             lines.append(Line(kind: .clipboard, text: String(localized: "Can read and change what you copy (the clipboard), and see which app you copied in"), caution: true))
@@ -243,11 +261,10 @@ public struct PermissionSummary: Sendable, Hashable {
                               note: String(localized: "Each use asks you first, unless you read and allowed a plan for exactly that. A plan can search your notes unattended, with words it fills in. Every use is in History.")))
         }
         if let events = p.events {
-            let contained = !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp
             lines.append(Line(kind: .events, text: String(localized: "Hears when things happen in Sidefolk: a reminder fires, a note is saved, a meeting is about to start, an agent finishes. It says it uses that \(events.purpose).",
                                                           comment: "Install sheet: permissions.events; the author's purpose, “to start what you set up”"),
                               caution: true,
-                              note: contained ? String(localized: "It hears their titles too, without a card each time. It can't reach the internet by itself; anything it passes on goes through Sidefolk.")
+                              note: p.isContained ? String(localized: "It hears their titles too, without a card each time. It can't reach the internet by itself; anything it passes on goes through Sidefolk.")
                                   : String(localized: "It hears their titles too, without a card each time, and it can reach beyond this Mac, so it could send them on.")))
         }
         if !p.network && p.media {

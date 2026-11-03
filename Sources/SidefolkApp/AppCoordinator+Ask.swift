@@ -399,6 +399,17 @@ extension AppCoordinator: AskActions {
         Task { await agent.cancelAll() }
     }
 
+    func open(file: PlacedFile) {
+        let url = URL(fileURLWithPath: file.path)
+        // In the app for its ending, never launched as itself, so a swap after this check can't start a program.
+        guard file.canOpen, let app = NSWorkspace.shared.urlForApplication(toOpen: url) else { return }
+        NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    func show(files: [PlacedFile]) {
+        NSWorkspace.shared.activateFileViewerSelecting(files.filter(\.isStillThere).map { URL(fileURLWithPath: $0.path) })
+    }
+
     func undo(activityId: String, in model: AskModel) {
         Task {
             do {
@@ -407,6 +418,8 @@ extension AppCoordinator: AskActions {
                 } else {
                     model.add(.info(String(localized: "That can't be undone anymore.")), fades: true)
                 }
+            } catch let said as UserFacingError {
+                model.add(.error(said, retryable: false))
             } catch {
                 model.add(.error(UserFacingError("I couldn't undo that.", detail: String(describing: error)), retryable: false))
             }

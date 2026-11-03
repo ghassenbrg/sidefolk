@@ -8,6 +8,12 @@ public struct ExtensionCommandCall: Sendable, Hashable {
     public var extensionId: String
     /// The sentence as the person typed or said it: an address in it counts as typed (SECURITY T1).
     public var said: String
+    /// Files the person dropped for this call. Only the drop card sets it, and the call then runs as the person's own act,
+    /// with a read of those files alone (D141).
+    public var handedOver: [String] = []
+    /// It came from a drop card, not a sentence: the caption is a file's name or a link, never the person's words, so a refusal
+    /// stops here and doesn't go on to the AI as if they'd typed it.
+    public var fromDrop = false
 
     public init(tool: String, input: JSONValue, extensionId: String, said: String) {
         self.tool = tool

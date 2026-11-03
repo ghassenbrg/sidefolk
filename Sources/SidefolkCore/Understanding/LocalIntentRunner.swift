@@ -159,14 +159,24 @@ public struct LocalIntentRunner: Sendable {
         guard let tool = runtime.registry.tool(named: call.tool) as? ExtensionTool, tool.extensionId == call.extensionId else {
             return .failed(UserFacingError("That extension is turned off now, so nothing ran.", changedNothing: true))
         }
-        let out = await runtime.executor.execute(name: call.tool, input: call.input, caller: .command(extensionId: call.extensionId),
-                                                 mentions: UserMentions(text: call.said))
+        let out = await runtime.executor.execute(name: call.tool, input: call.input,
+                                                 caller: call.handedOver.isEmpty ? .command(extensionId: call.extensionId) : .user,
+                                                 mentions: UserMentions(text: call.said), pickedFiles: call.handedOver)
         guard case .ok(let result) = out.status else { return .failed(out.problem!) }
         let name = tool.extensionName
         let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !result.isError else {
+            if call.fromDrop { return .failed(UserFacingError(verbatim: String(localized: "\(name) couldn't do that: \(text.clipped(300))", comment: "An extension's own explanation after its name"))) }
             return .declined(UserFacingError(verbatim: String(localized: "\(name) couldn't answer that: \(text.clipped(300))",
                                                               comment: "An extension's own explanation after its name")))
+        }
+        // Files saved: Sidefolk's own words, from the real files, and its own actions on them (D142).
+        if !result.placed.isEmpty {
+            let said = ExtensionOutputs.summary(of: result.placed)
+            let problems = result.notSaved
+            var card = ResultCard(kind: .extensionResult, title: said.title, subtitle: name, detail: [said.detail, problems].compactMap { $0 }.joined(separator: "\n"), refId: tool.extensionId)
+            card.files = result.placed
+            return .answer(card, activityId: out.activity.id)
         }
         // A one-line answer is the card's title ("15% of 80 = 12"); a longer one is all there, under the tool's name.
         let short = !text.contains("\n") && text.count <= 100

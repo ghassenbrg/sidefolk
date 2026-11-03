@@ -85,6 +85,9 @@ struct ExtensionScreenUDPTests {
         for absent in ["replayd", "windowserver", "videoencoder", "network-bind", "network-inbound"] {
             #expect(!none.contains(absent), "\(absent)")
         }
+        let media = try profile(ExtensionPermissions(media: true))
+        #expect(media.contains("com.apple.audio.AudioComponentRegistrar") && !media.contains("videoencoder"))
+        #expect(!none.contains("AudioComponentRegistrar"))
         let screen = try profile(ExtensionPermissions(screen: true))
         #expect(screen.contains("com.apple.replayd") && screen.contains("com.apple.windowserver.active")
                 && screen.contains("com.apple.coremedia.videoencoder"))

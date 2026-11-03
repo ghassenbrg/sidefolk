@@ -563,6 +563,23 @@ enum UISnapshots {
             // An extension offers something for a video link (D100). Ask holds its actions weakly, so they're kept here.
             let tvActions = FixtureAskActions()
             tvActions.drops = [SampleRichPage.drop]
+            // An extension offers things for dropped files (D141): one with no internet, one with it. A fictional extension.
+            func offers(network: Bool) -> [ExtensionDropAction] {
+                let name = network ? "Courier" : "Reshaper"
+                let more = network ? [] : [ExtensionManifest.DropMeta.MenuItem(title: "PNG", input: ["format": "png"]), ExtensionManifest.DropMeta.MenuItem(title: "TIFF", input: ["format": "tiff"])]
+                func offer(_ key: String, _ title: String, _ detail: String) -> ExtensionDropAction {
+                    ExtensionDropAction(extensionId: "dev.example.\(name.lowercased())", extensionName: name, key: key, title: title, detail: detail, kinds: [.file],
+                                        tool: "ext.\(name.lowercased()).make", input: ["files": "{values}"], menu: key == "any" ? more : [], pathParameters: ["files"], canSendAway: network)
+                }
+                return network ? [offer("send", "Send to my server", "Uploads it and copies a link.")]
+                    : [offer("any", "Opens anywhere", "JPEG. Any transparency becomes white."), offer("mail", "Small enough to email", "JPEG, at most 2,000 pixels wide.")]
+            }
+            let offerActions = FixtureAskActions()
+            offerActions.drops = offers(network: false)
+            let networkActions = FixtureAskActions()
+            networkActions.drops = offers(network: true)
+            let mediaActions = FixtureAskActions()
+            mediaActions.drops = offers(network: false).map { var offer = $0; offer.canSendAway = true; offer.canSendAwayWithoutInternet = true; return offer }
             // Today's tab with nothing in it (D84).
             let calmDay = AskModel()
             calmDay.actions = actions
@@ -578,6 +595,10 @@ enum UISnapshots {
                           ("desktop-ask-drop-file", dropped(.file(URL(fileURLWithPath: NSHomeDirectory() + "/Documents/Invoice April.pdf")),
                                                             "Invoice April.pdf", actions)),
                           ("desktop-ask-drop-folder", dropped(.file(FileManager.default.temporaryDirectory), "Downloads", actions)),
+                          ("desktop-ask-drop-offer", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", offerActions)),
+                          ("desktop-ask-drop-offer-network", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", networkActions)),
+                          ("desktop-ask-drop-offer-media", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", mediaActions)),
+                          ("desktop-ask-drop-offer-many", droppedMany(offerActions)),
                           ("desktop-ask-drop-text", dropped(.text, "“Ask Priya about the venue deposit”", actions,
                                                             text: "Ask Priya about the venue deposit")),
                           ("desktop-ask-drop-video", dropped(.url(URL(string: "https://cdn.example.com/films/trip.mp4")!), "cdn.example.com",
@@ -933,6 +954,13 @@ enum UISnapshots {
     }
 
     /// Something just dropped on the companion, nothing typed: the drop card (D84).
+    private static func droppedMany(_ actions: FixtureAskActions) -> AskModel {
+        let ask = dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "12 files", actions)
+        ask.attachment?.files = ["trip", "harbour", "boats", "market", "sunset", "church", "lunch", "steps", "ferry", "beach", "alley", "hills"]
+            .map { URL(fileURLWithPath: NSTemporaryDirectory() + "\($0).heic") }
+        return ask
+    }
+
     private static func dropped(_ kind: Attachment.Kind, _ label: String, _ actions: FixtureAskActions, text: String? = nil) -> AskModel {
         let ask = AskModel()
         ask.actions = actions

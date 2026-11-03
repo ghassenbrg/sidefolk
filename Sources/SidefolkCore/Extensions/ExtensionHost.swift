@@ -770,7 +770,8 @@ public actor ExtensionHost {
 
     /// A tool's parameters that name files or folders (`paths`): a page's `file` fills one, and the rest stay out of its input (D105).
     public func pathParameters(extensionId id: String, tool: String) -> Set<String> {
-        Set((runtimes[id]?.manifest?.tools[tool]?.paths ?? [:]).keys)
+        let meta = runtimes[id]?.manifest?.tools[tool]
+        return Set((meta?.paths ?? [:]).keys).union((meta?.fileLists ?? [:]).keys)
     }
 
     /// What the page should take in before it reads again (D105), once.
@@ -969,7 +970,23 @@ public actor ExtensionHost {
             result.card?.holdAnswer = asks.holdAnswer
             if rt.pin.origin?.firstParty == true, let row = asks.row, !row.isEmpty { result.rowSummary = row }
         }
+        result.placing = placing(ExtensionOutput.list(asked), for: id, tool: remote, folders: folders)
+        // Saving can still fail after this, and a failure's row must not be its answer (T44).
+        if Self.holdsThePersonsWords(rt.pin.permissions) { result.rowError = result.card?.title }
         return result
+    }
+
+    /// What the program made, to be saved beside what the person handed over once the call is over (D140). Sidefolk does this,
+    /// not the sandbox, off this actor because it can take a while, and outside the call's timeout so nothing placed goes unrecorded.
+    private func placing(_ outputs: [ExtensionOutput], for id: String, tool remote: String, folders: [ExtensionFolderGrant]) -> (@Sendable () async -> ExtensionPlacement)? {
+        guard !outputs.isEmpty else { return nil }
+        let endings = Set((runtimes[id]?.manifest?.tools[remote]?.outputs ?? []).map { $0.lowercased() })
+        let handedOver = Set(folders.filter(\.handedOver).map(\.path))
+        // Only the folder they all sit in is resolved. This extension's own name is opened without following anything: the
+        // program can reach that path, so it is never trusted to be what it was.
+        let base = FolderAccess.canonical(paths.extensionData.path) ?? paths.extensionData.path
+        let data = base + "/" + id
+        return { await ExtensionOutputs.placeAll(outputs, dataFolder: data, handedOver: handedOver, endings: endings) }
     }
 
     /// Which paired device a call would reach, asked of the extension's running program, never through the model
@@ -1544,7 +1561,7 @@ public actor ExtensionHost {
                                 : Self.modelDescription(title: title, extensionName: rt.pin.name, kind: rt.record.kind),
                             inputSchema: firstParty ? def.inputSchema : Self.modelSchema(def.inputSchema),
                             risk: risk(rt, def.name), capabilities: capabilities, category: meta?.category ?? .extensions,
-                            mutates: meta?.mutates ?? true, external: false,
+                            mutates: (meta?.mutates ?? true) || !(meta?.outputs.isEmpty ?? true), external: false,
                             // A little longer than the call itself, so the extension's own timeout is what reports it.
                             timeout: timeout.map { $0 + 5 },
                             // The author may keep a tool to its commands; then the model never sees it (D50).
@@ -1557,7 +1574,7 @@ public actor ExtensionHost {
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote,
-                             folderParameters: meta?.paths ?? [:], firstParty: firstParty,
+                             folderParameters: meta?.paths ?? [:], fileLists: Set((meta?.fileLists ?? [:]).keys), firstParty: firstParty,
                              commands: commandsOf(id, tool: def.name),
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },

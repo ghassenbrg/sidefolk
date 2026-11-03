@@ -108,7 +108,7 @@ struct ShippedExtensionSandboxTests {
     func imagesConvertIntoTheFolderNamedOnly() async throws {
         let h = try HostEnv()
         let info = try await h.host.install(from: ExtFixtures.builtIn("images"))
-        #expect(info.summary.texts.contains("Can use the Mac's graphics hardware for pictures"))
+        #expect(info.summary.texts.contains("Can use the Mac's media tools for pictures and sound"))
         let work = try await Self.sharedFolder(h)
         try Self.png(work.appendingPathComponent("sky.png"))
         let details = try #require(await h.call("ext.images.image_info", ["path": .string(work.appendingPathComponent("sky.png").path)]).okText)

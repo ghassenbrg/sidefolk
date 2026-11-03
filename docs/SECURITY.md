@@ -383,7 +383,7 @@ name that was swapped in after the check is still read through `O_NOFOLLOW_ANY` 
 
 **T12 Clipboard and drops (M/M).** Clipboard reads are user-initiated or medium, always untrusted.
 Writes are low, but medium when tainted (pastejacking `curl … | sh`), and show the exact text. A
-dropped file grants a one-turn read of that file only; dropped items are never opened or run.
+dropped file grants a one-turn read of that file only; dropped items are never opened or run. An extension is a second possible reader, for one call and only after the person chooses its offer (T43, D141).
 
 **T25 The Mac's own apps through Apple Events (M/H), D38.** Apple Notes and Reminders are read with
 Apple Events once the person has said yes to macOS's Automation prompt; from then on any Apple Event
@@ -972,7 +972,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 ;; media=true adds (pictures on Apple silicon, measured on macOS 27; a VM's GPU is not among them):
 ;; (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
-;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent"))
+;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent")
+;;   (global-name "com.apple.audio.AudioComponentRegistrar"))
 
 ;; network=true adds (all-or-nothing, see limits):
 ;; (allow system-socket) (allow network-outbound (remote ip "*:*"))
@@ -985,7 +986,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 - **`media` keeps the certificate service.** Writing HEIC or AVIF needs it (the encoder's signature is checked), and it can fetch from an address a certificate names, so data can leave that way. Those extensions show a warning instead of the promise.
 - **`ai` and `place` carry words out through Sidefolk,** by design: up to 8,000 characters to the person's AI, and 80 to the place search. Sidefolk warns about both on the drop card.
-- **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave.
+- **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave. That's why the drop card says an extension can't go online *by itself*.
 - **Anything can read** other same-user processes' command lines, the Mac's serial number and its MAC addresses. An extension with `network` could send those.
 - **File names:** a lookup by inode number resolves names under `/Users`, though not inside another extension's data folder or the contents of any file.
 
@@ -996,7 +997,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   `sysctl-read`.
 - **A compiled Swift program** (every one of Sidefolk's own extensions, D39): nothing beyond the base rules; Swift and
   Foundation load from `/usr/lib/swift` and `/System`. With `network`, `URLSession` works on the
-  `trustd.agent` lookup and the mDNSResponder socket. Core Image and HEIC or PNG output need `media`.
+  `trustd.agent` lookup and the mDNSResponder socket. Core Image, HEIC or PNG output, and writing compressed sound need `media`.
 - **sh:** `/bin/sh` reads `/private/var/select/sh` and execs `/bin/bash`, so allow both. A script's
   external commands must each be listed (`head` was denied).
 - **python3:** framework builds (Homebrew and Xcode) re-exec
@@ -1168,10 +1169,25 @@ limit by limit in `ResearchModeTests`. *Residual:* a hostile page can list one l
 spell what's already in the prompt (About you, matching notes), about six bits a link. It needs no knowledge of the person.
 The budget bounds that to about nine characters per yes, then the person is asked again, and History shows the visits.
 
+**T45 An extension's result saved by Sidefolk, and its data folder (H/H), D140.** New reach, held by Sidefolk: at a program's asking, Sidefolk itself, with the person's full privileges, moves a file out of the program's data folder into one of the person's folders. The attacker is a malicious extension, which controls its data folder and its reply, and may have a second copy running while this happens.
+- *Reading through Sidefolk:* the data file is reached by walking down from the data folder with no link followed at any step, so nothing the program does to the folder, even during the walk, leads elsewhere. The data folder's parent is the only part resolved. It must be a regular file with one hard link. FIFOs and devices are refused without hanging. A clone taken later than the measurement is measured again, and a copy stops at the measured size.
+- *Writing:* only beside a file in `ToolContext.handedOver`, which only Sidefolk's panel and drop code can set, never tool input, a model, a retry or a plan. Never a protected or hidden folder. An exclusive rename means nothing is overwritten, and the name starts with the source's whole name, so a program can't plant `CLAUDE.md` or `package.json` beside an unrelated file in a project. A bare name with an ending the tool declared and that's on `allowedEndings`, which leaves out anything that runs, runs script (HTML, SVG) or holds macros in the formats that do (DOC, ODT, ODS, ODP). Invisible and direction characters and blank names are refused.
+- *The saved file:* `0644`, today's dates, no flags but a disk's own compression, no attributes from the program, and macOS's quarantine mark.
+- *Exhaustion:* 64 files, 32 GB each, 64 GB a call, and room checked on another disk. It runs off the host's actor, and stops between files if the person stops it.
+- *Races:* the destination folder is opened with no link followed at any level, judged by where the system says it is, then used only through that handle. A program able to write above the folder can't redirect a save by swapping it.
+- *Records:* placing runs after the call and outside its timeout, so a file saved in a running Sidefolk has its own row in History. A crash between the rename and the row leaves none. The tool counts as changing things whatever its manifest says. Adding `outputs` in an update asks again.
+- *The data folder itself* was already a risk before this: a program could remove its folder and put a link there, and the next start's profile, built from the real path, would open the link's target read-write with no one asked. The profile now denies creating or removing that one path, and a link found there at start is removed (`prepareDataFolder`).
+
+- *Open, Show and Undo (D142):* Sidefolk's own actions on a file it placed, on a click, never available to a program. Open has a short list (images, audio, video, PDF, plain text, CSV) checked by ending and by contents, and re-checks at each click that this is the same file (device and inode), so a link or a replacement isn't launched, including from a card saved in an old conversation. Undo acts only if size and time match too.
+
+*Residual:* a source already named `CLAUDE.txt` still allows `CLAUDE.md`. A saved file is the program's content under an honest name, and could still be false or exploit a bug in whatever opens it, as with any download. Hence the quarantine mark, and D142's short list of what Open may launch. A program may keep its own copy if removing the data file fails.
+
 **T43 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:
 - *`go`* only changes state the host keeps for that open page, 4 KB at most, and asks for another reading; nothing else happens, and nothing is in History because nothing was done.
 - *`copy`* runs `clipboard.write` as the person: the capability switch applies, History and the page show the exact words, and it hangs only on a button with a label, never a scene's area, so a command can't be planted for pasting behind nothing (T12).
 - *`file`* opens the system's panel; only then does a path exist, with a read of that one file for that one call. Other path parameters are stripped. Guard's forbidden places still hold.
+- *A drop on a file offer* (D141) is treated the same: Sidefolk's drag code hands over the paths the system gave it, and the call runs as the person with a read of those files alone, for that one call. Other path parameters are stripped, and the list parameter is overwritten rather than merged, so a template or a menu choice can't plant a path. Each file is followed to what it really is and must be a regular file outside forbidden places, so a dropped link to `~/.ssh` is refused. A panel shows what was chosen, but a drag can carry more than its picture shows and another app can start one. So **the card is the yes**: Sidefolk's own words, not the extension's, name the extension, the exact count and every name (reachable), and say if it could send the files on. The extension's titles sit apart under its name, nothing is pre-selected, Return doesn't choose, and clicks are ignored for a moment after the card appears, because it opens under a mouse that has just let go. A drop with no choice runs nothing. Finder's Send to Sidefolk (D151) arrives on the same card, and any app could send files through it, as any app can start a drag. A refusal from a drop stops there: the caption is a file's name or a link, not the person's words, so it never goes on to the AI as if typed. Menu items and page controls carry no paths, so only a `file` button or a drop can name a file for the person. Applies to every file offer, as the founder chose ("All drops"), so a local third-party extension gets a read of any dropped file with only this card as the yes.
+- *Finder's Send to Sidefolk* (D151) leads to the same card, but a Service needs no click: any app can call one. So it never takes the keyboard, doesn't replace a file already waiting or join words being typed, and nothing runs until the person chooses on the card.
 - *`allow`* shows Sidefolk's own question, with the extension's purpose marked as what it says; the extension can't answer it. `extensions.consent` refuses every caller but the person. *`settings`* opens a fixed pane.
 - *Occurrences:* the host's timer, the person's yes checked again at each telling, 256 pending, 64 a day, one plan in ten seconds, ids never told twice, revisions never going back. The words are the extension's, so its name is always with them and they never reach a model: nothing in `ContextBuilder` or the live state reads attention items' words, and `critical` stays out of reach (`extension:` isn't a critical source). See D107 for what this changes in T24.
 - *`extensions.place_search`* goes through Guard with its one service named, and its answer goes to that program alone.

@@ -31,7 +31,10 @@ extension ExtensionHost {
             drops += m.drops.map { d in
                 ExtensionDropAction(extensionId: id, extensionName: name, key: d.id, title: w?.drops[d.id]?.title ?? d.title,
                                     detail: w?.drops[d.id]?.description ?? d.detail, symbol: d.symbol, kinds: d.kinds, patterns: d.patterns,
-                                    tool: ExtensionTool.registryName(short: short, tool: d.tool), input: d.input)
+                                    tool: ExtensionTool.registryName(short: short, tool: d.tool), input: d.input, menu: d.menu,
+                                    pathParameters: Set((m.tools[d.tool]?.paths.keys.map { $0 } ?? []) + (m.tools[d.tool]?.fileLists.keys.map { $0 } ?? [])),
+                                    canSendAway: rt.pin.permissions.map { $0.network || $0.carriesOut } ?? false,
+                                    canSendAwayWithoutInternet: rt.pin.permissions.map { !$0.network && $0.carriesOut } ?? false)
             }
             settings += settingRows(rt)
         }

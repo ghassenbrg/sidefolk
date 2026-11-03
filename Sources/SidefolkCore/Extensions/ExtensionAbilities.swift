@@ -203,11 +203,30 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     /// The tool's name in the registry.
     public var tool: String
     public var input: [String: JSONValue]
+    /// More choices, on the same card (D141).
+    public var menu: [ExtensionManifest.DropMeta.MenuItem]
+    /// Every parameter of the tool that names a file: only what Sidefolk puts there for a drop may name one (D141).
+    public var pathParameters: Set<String>
+    /// What it reads could leave the Mac: it has the internet; can have your AI or a place search carry its words; uses `media`, whose
+    /// certificate service can fetch from an address (SandboxProfile.mediaRules); or can put it on the clipboard or in a folder
+    /// named at install, which may sync. The card says so.
+    public var canSendAway: Bool
+    /// By one of those ways, without the internet of its own, so the card doesn't say it can use the internet.
+    public var canSendAwayWithoutInternet: Bool
 
     public var id: String { "\(extensionId)/\(key)" }
 
+    /// It takes several files in one call.
+    public var takesMany: Bool { input.values.contains(.string("{values}")) }
+
     public init(extensionId: String, extensionName: String, key: String, title: String, detail: String? = nil, symbol: String? = nil,
-                kinds: [ExtensionManifest.DropMeta.Kind], patterns: [String] = [], tool: String, input: [String: JSONValue]) {
+                kinds: [ExtensionManifest.DropMeta.Kind], patterns: [String] = [], tool: String, input: [String: JSONValue],
+                menu: [ExtensionManifest.DropMeta.MenuItem] = [], pathParameters: Set<String> = [], canSendAway: Bool = false,
+                canSendAwayWithoutInternet: Bool = false) {
+        self.menu = menu
+        self.pathParameters = pathParameters
+        self.canSendAway = canSendAway
+        self.canSendAwayWithoutInternet = canSendAwayWithoutInternet
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.key = key
@@ -244,6 +263,18 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     /// The tool's arguments, with what was dropped in place of `{value}`.
     public func input(for value: String) -> JSONValue {
         .object(input.mapValues { $0 == .string("{value}") ? .string(value) : $0 })
+    }
+
+    /// The arguments for files the person dropped: exactly those paths under the argument meant for them. Any other path a
+    /// template or a menu choice names is taken out, so a manifest can't plant one (D141, SECURITY T43).
+    public func input(forFiles files: [String], choosing item: ExtensionManifest.DropMeta.MenuItem? = nil) -> JSONValue {
+        var fields = input.merging(item?.input ?? [:]) { _, chosen in chosen }
+        for key in pathParameters where fields[key] != .string("{value}") && fields[key] != .string("{values}") { fields[key] = nil }
+        return .object(fields.mapValues { value in
+            if value == .string("{value}") { return .string(files.first ?? "") }
+            if value == .string("{values}") { return .array(files.map { .string($0) }) }
+            return value
+        })
     }
 
     /// `*` any run of characters and `?` one, ignoring case. By hand, in linear-ish time: an author's pattern never becomes a

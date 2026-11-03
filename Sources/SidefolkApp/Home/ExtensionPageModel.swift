@@ -184,8 +184,10 @@ enum ExtensionControl {
     @MainActor
     static func run(tool: String, input: JSONValue, extensionId: String, services: AppServices) async -> String? {
         let short = String(extensionId.split(separator: ".").last ?? "")
+        // A control's input is the author's, not a file the person chose: only a `file` button may name one (D105, D141).
+        let paths = await services.runtime.extensions.pathParameters(extensionId: extensionId, tool: tool)
         let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: tool),
-                                                              input: input, caller: .user)
+                                                              input: input.removing(paths), caller: .user)
         return outcome.problem?.message
     }
 }
@@ -376,6 +378,8 @@ final class ExtensionPageModel {
             let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: .object(input), caller: .user, pickedFile: path)
             await refresh()
             if let why = outcome.problem?.message { problem = why }
+            // Reported in its own words, since the call itself went through (D140).
+            if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
         case .allow(let consent):
             asking = consent
         case .settings(let pane):

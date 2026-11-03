@@ -174,7 +174,7 @@ public enum Redactor {
     public static func arguments(_ value: JSONValue) -> JSONValue {
         switch value {
         case .string(let s): return .string(redact(s).clipped(300))
-        case .array(let a): return .array(a.prefix(20).map(arguments))
+        case .array(let a): return .array(a.prefix(ExtensionOutputs.maxFiles).map(arguments))
         case .object(let o):
             var result: [String: JSONValue] = [:]
             for (k, v) in o {
