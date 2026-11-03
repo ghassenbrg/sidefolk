@@ -83593,6 +83593,7 @@
     },
     "From an extension's job: %@" : {
       "comment" : "Spoken aloud: words from a job an extension handed the companion, which doesn't know which one",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -84005,7 +84006,6 @@
       }
     },
     "From your History" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -124696,7 +124696,6 @@
       }
     },
     "No agent sessions running" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -131266,7 +131265,6 @@
       }
     },
     "Nothing in History for that" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -151179,7 +151177,6 @@
       }
     },
     "Read your History" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -167781,7 +167778,6 @@
       }
     },
     "See which agent sessions are running" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -167840,7 +167836,6 @@
       }
     },
     "See your agents' sessions" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -257016,7 +257011,6 @@
       }
     },
     "“since” must be today, yesterday, this week or an ISO 8601 time." : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
