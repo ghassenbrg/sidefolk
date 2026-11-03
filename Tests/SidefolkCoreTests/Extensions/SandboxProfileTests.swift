@@ -25,6 +25,7 @@ import Testing
         ;; the extension (read-only) and its data folder (read-write)
         (allow file-read* (subpath (param "EXT_DIR")))
         (allow file-read* file-write* (subpath (param "DATA_DIR")))
+        (deny file-write-unlink file-write-create (literal (param "DATA_DIR")))
 
         ;; files.read
         (allow file-read*

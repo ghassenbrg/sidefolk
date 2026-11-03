@@ -463,7 +463,7 @@ folder (`tools.<name>.paths`, T27) runs in its own process whose profile adds on
 tracked and stopped like the main one, and ends with the call. Three crashes in
 5 min → disabled. *Residual:* a grandchild whose parent exits within the second it was forked is
 reparented to launchd before it is seen; it keeps the sandbox, and only extensions whose sheet says
-they run programs can fork at all.
+they run programs can fork at all. The data folder's contents are the program's, but the folder itself is Sidefolk's: the profile denies creating or removing that path, and whatever isn't a folder there is removed at start and never followed.
 
 **T16 User-added MCP servers (M/H).** They run unsandboxed with the user's rights and Sidefolk's
 TCC grants, labelled as such, with the command shown at add time. Tools default to medium and
