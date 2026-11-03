@@ -11,6 +11,12 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
 
 **Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.
 
+## 2026-11-03: MCP and in-app tools, batch A (D156–D159)
+
+From [the audit](research/mcp-tools-audit-2026-11-03.md), which called the tools through a debug app before anything was proposed. Tool annotations; a client's cancel takes its question or card away; a session started before Sidefolk gets its tools when it opens, and a call notices a Trust change; Connect gives Codex a tool timeout longer than a question waits. `watch.update` on any watcher, `reminders.update`, `reminders.snooze` and `reminders.complete` for an agent's own, `notes.restore`. Reads by date, `calendar.find` for the companion. `sidefolk notify`, `ask`, `remind`, `note`, `tools`, `call`, `status --json`. Typed reads without AI. Words that misled agents.
+
+**Checked:** the suite; a script speaking MCP to the real `sidefolk mcp` and a debug app on its own home, including the app coming up after the session; the command by hand, its exit codes, and `call` refused on `extensions.consent` and `files_read`; typed "list my reminders" with no AI (no agent run). **Not checked:** a real Claude Code or Codex session as the client; Codex's 60 s default, from memory, since measuring takes a live call; a real calendar.
+
 ## 2026-11-03: Normal windows and full-screen spaces: a change that didn't work, and test runs out of the way (D137)
 
 The founder's report of Sidefolk appearing inside full-screen Claude. Released in snapshot 916 ahead of its check, labelled unproven. **The check then showed it doesn't work:** on a real full-screen space the old build and the new one both open Home on that space, 3 of 3 each. 916's release notes were corrected. The first version of the check reported the same for every build, quiet mode included, because it counted any Sidefolk window; it now looks only at the copy under test. Verified otherwise: with `SIDEFOLK_QUIET_WINDOWS=1` the frontmost app stayed where it was while Home and Settings opened, and both rendered for `snap`; `swift test` in full. Next: `.fullScreenNone` kept the window off that space in 2 of 2 tries, and the fix is being built on it.

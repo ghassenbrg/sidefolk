@@ -6,7 +6,8 @@ MCP to `sidefolk mcp`. The page the founder approved is at https://claude.ai/art
 ## What a turn costs (A12)
 
 One typed request ("move my stretch reminder to 6pm") took a Codex brain 72,007 input and 153 output tokens over 3 steps,
-about 24,000 a step. That run wasn't meant to happen: a press on the debug app's card that nobody here sent.
+about 24,000 a step. The founder pressed "Answer with Codex" on the debug app's card during the audit, which is how a live
+figure came to exist at all.
 
 Measured without any model call, by counting what Sidefolk hands over (bytes, and about 4 bytes to a token):
 
