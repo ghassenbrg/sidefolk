@@ -81,11 +81,7 @@ public struct SandboxProfile: Sendable, Hashable {
         sb += "(allow file-read* file-write* (subpath \(add("DATA_DIR", try real(inputs.dataDir)))))\n"
         // What's inside is the program's; the folder itself is Sidefolk's.
         sb += "(deny file-write-unlink file-write-create (literal (param \"DATA_DIR\")))\n"
-        // Everything else's data stays out of sight: even when a file changed is no business of another extension's.
-        if let allData = inputs.allData {
-            sb += "(deny file-read-metadata file-test-existence (subpath \(add("ALL_DATA", try real(allData)))))\n"
-            sb += "(allow file-read-metadata file-test-existence (literal (param \"ALL_DATA\")) (subpath (param \"DATA_DIR\")))\n"
-        }
+        let allData = try inputs.allData.map { add("ALL_DATA", try real($0)) }
 
         let reads = try inputs.permissions.read.map(real)
         if !reads.isEmpty {
@@ -137,6 +133,34 @@ public struct SandboxProfile: Sendable, Hashable {
         if inputs.permissions.network && inputs.permissions.udp {
             sb += udpRules
         }
+        // People's folders are denied in the base rules, and a `file-read*` doesn't undo that (measured), so what it was given
+        // opens by name here. Above each of those, only the folder itself: the way down, and no further. All of it twice, because
+        // the same folders also go by the data volume's own name, which `F_GETPATH_NOFIRMLINK` can hand back.
+        let dataVolume = "/System/Volumes/Data"
+        var ways: Set<String> = ["/Users", NSHomeDirectory()]
+        let given = params.filter { $0.key != "ALL_DATA" && $0.value.hasPrefix("/Users/") }
+        for path in params.map(\.value) where path.hasPrefix("/Users/") {
+            var up = (path as NSString).deletingLastPathComponent
+            while up != "/" {
+                ways.insert(up)
+                up = (up as NSString).deletingLastPathComponent
+            }
+        }
+        sb += "\n;; what it was given, and the folders above that, by name only\n(allow file-read-metadata file-test-existence\n"
+        for (index, path) in given.enumerated() {
+            sb += "  (subpath (param \"\(path.key)\"))\n  (subpath \(add("GIVEN_\(index)", dataVolume + path.value)))\n"
+        }
+        let everyWay = ways.union(ways.map { dataVolume + $0 }).sorted()
+        sb += everyWay.enumerated().map { "  (literal \(add("WAY_\($0.offset)", $0.element)))" }.joined(separator: "\n") + ")\n"
+        // Everything else's data stays out of sight, whatever was given above it: even when a file changed is no business of
+        // another extension's. Last, so nothing opened here undoes it. Reading the folder itself would list who is installed.
+        if let allData {
+            let other = add("ALL_DATA_VOLUME", dataVolume + (params.first { $0.key == "ALL_DATA" }?.value ?? ""))
+            let mine = add("DATA_DIR_VOLUME", dataVolume + (params.first { $0.key == "DATA_DIR" }?.value ?? ""))
+            sb += "(deny file-read-metadata file-test-existence (subpath \(allData)) (subpath \(other)))\n"
+            sb += "(allow file-read-metadata file-test-existence (literal \(allData)) (literal \(other)) (subpath (param \"DATA_DIR\")) (subpath \(mine)))\n"
+            sb += "(deny file-read-data (literal \(allData)) (literal \(other)))\n"
+        }
         return SandboxProfile(text: sb, parameters: params)
     }
 
@@ -158,6 +182,8 @@ public struct SandboxProfile: Sendable, Hashable {
 
     ;; what dyld, libSystem and interpreters need
     (allow file-read-metadata)
+    ;; nothing in people's folders can be seen by name or looked up by a file's number (fsgetpath); what it's given opens below
+    (deny file-read-metadata file-test-existence (subpath "/Users") (subpath "/System/Volumes/Data/Users"))
     (allow file-read*
       (literal "/")
       (subpath "/usr/lib") (subpath "/usr/share") (subpath "/System") (subpath "/Library/Apple")

@@ -938,7 +938,10 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   (global-name "com.apple.logd"))
 
 ;; what dyld/libSystem/interpreters need
-(allow file-read-metadata)                       ; stat for path resolution (leaks existence, but not inside other extensions' data)
+(allow file-read-metadata)                       ; stat for path resolution (leaks existence outside /Users)
+(deny file-read-metadata file-test-existence (subpath "/Users") (subpath "/System/Volumes/Data/Users"))   ; opened again for what it was given and the folders above that
+;; last, under both names: other extensions' data stays closed, and the folder that holds it can't be listed
+;; (deny file-read-metadata file-test-existence (subpath ALL_DATA)) (allow ... (literal ALL_DATA) (subpath DATA_DIR)) (deny file-read-data (literal ALL_DATA))
 (allow file-read*
   (literal "/")                                  ; required: without it even /bin/echo aborts
   (subpath "/usr/lib") (subpath "/usr/share") (subpath "/System") (subpath "/Library/Apple")
@@ -991,7 +994,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - **`ai` and `place` carry words out through Sidefolk,** by design: up to 8,000 characters to the person's AI, and 80 to the place search. Sidefolk warns about both on the drop card.
 - **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave. That's why the drop card says an extension can't go online *by itself*.
 - **Anything can read** other same-user processes' command lines, the Mac's serial number and its MAC addresses. An extension with `network` could send those.
-- **File names:** a lookup by inode number resolves names under `/Users`, though not inside another extension's data folder or the contents of any file.
+- **Other processes' paths:** an extension can read the working folders and open files of other processes of the same user. No sandbox rule fully stopped it.
+- **File names outside `/Users`:** a lookup by inode number still resolves names elsewhere on the disk, such as in `/Applications` and `/private/var`, though no file's contents. Under `/Users` it finds only what the extension was given and the folders above that, though it can tell a used file number from an unused one, so files can be counted, not named. Under `/Users`, a path that reaches something through a link outside what the extension was given no longer works. A home outside `/Users` gets none of this. `/Users` and the home folder always resolve by name; a link outside `/Users` that points to a given file still works; and two places outside the extension's own can always be read, `/private/var/db/timezone` and `/private/var/select/sh`.
 
 **What runtimes need to start** *(verified)*:
 - **Every runtime:** read on `/` itself (without it even `/bin/echo` aborts), `/usr/lib`,

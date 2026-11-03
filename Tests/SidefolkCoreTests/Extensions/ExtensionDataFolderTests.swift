@@ -102,6 +102,110 @@ import Testing
         #expect(!SandboxProfile.baseRules.contains("notification_center"))
     }
 
+    /// Inside the checkout, the one folder under /Users a test may use: nothing here touches the person's own files.
+    @Test(.enabled(if: #filePath.hasPrefix("/Users/"), "needs a checkout under /Users"))
+    func peoplesFoldersAreClosedButTheWayDownToWhatItWasGiven() throws {
+        let checkout = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let root = checkout.appendingPathComponent(".build/sandbox-names-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let mine = root.appendingPathComponent("data/me"), other = root.appendingPathComponent("elsewhere")
+        for folder in [mine, other] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+        let theirs = other.appendingPathComponent("file"), own = mine.appendingPathComponent("file")
+        for file in [theirs, own] { try Data("x".utf8).write(to: file) }
+        func runs(_ program: String, _ arguments: String...) throws -> Bool {
+            let profile = try SandboxProfile.make(.init(extensionDir: (program as NSString).deletingLastPathComponent, dataDir: mine.path, executable: program,
+                                                        permissions: ExtensionPermissions()))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
+            process.arguments = ["-p", profile.text] + profile.arguments + [program] + arguments
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        }
+        #expect(try runs("/usr/bin/stat", own.path))
+        #expect(try runs("/bin/test", "-e", root.appendingPathComponent("data").path), "the way down")
+        #expect(try !runs("/usr/bin/stat", theirs.path))
+        #expect(try !runs("/bin/test", "-e", theirs.path))
+        #expect(try !runs("/bin/test", "-e", checkout.appendingPathComponent("Package.swift").path))
+        // The same folders by the data volume's own name: an existing name and a missing one must look alike there too.
+        let throughTheVolume = "/System/Volumes/Data" + theirs.path
+        #expect(try !runs("/bin/test", "-e", throughTheVolume))
+        #expect(try !runs("/bin/test", "-e", throughTheVolume + "-missing"))
+        #expect(try runs("/bin/test", "-e", "/System/Volumes/Data" + own.path), "what it was given, by that name too")
+    }
+
+    /// A home under /Users, in the checkout, with two extensions' data folders and a folder nobody was given.
+    private struct PeoplesFolders {
+        let root: URL, all: URL, mine: URL, other: URL, elsewhere: URL
+        init() throws {
+            let checkout = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            root = checkout.appendingPathComponent(".build/sandbox-names-\(UUID().uuidString)")
+            all = root.appendingPathComponent("ExtensionData")
+            mine = all.appendingPathComponent("me")
+            other = all.appendingPathComponent("other")
+            elsewhere = root.appendingPathComponent("elsewhere")
+            for folder in [mine, other, elsewhere] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+        }
+
+        /// Its exit status and what it said on the way out.
+        func run(_ program: String, _ arguments: String...) throws -> (ok: Bool, said: String) {
+            let profile = try SandboxProfile.make(.init(extensionDir: (program as NSString).deletingLastPathComponent, dataDir: mine.path, executable: program,
+                                                        permissions: ExtensionPermissions(), allData: all.path))
+            let process = Process(), error = Pipe()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
+            process.arguments = ["-p", profile.text] + profile.arguments + [program] + arguments
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = error
+            try process.run()
+            let said = String(decoding: error.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            process.waitUntilExit()
+            return (process.terminationStatus == 0, said)
+        }
+    }
+
+    @Test(.enabled(if: #filePath.hasPrefix("/Users/"), "needs a checkout under /Users"))
+    func noExtensionCanListWhoIsInstalledOrWhatTheyKeep() throws {
+        let home = try PeoplesFolders()
+        defer { try? FileManager.default.removeItem(at: home.root) }
+        for file in [home.mine, home.other] { try Data("x".utf8).write(to: file.appendingPathComponent("file")) }
+        #expect(try home.run("/usr/bin/stat", home.mine.appendingPathComponent("file").path).ok)
+        #expect(try !home.run("/bin/ls", home.all.path).ok)
+        #expect(try !home.run("/bin/ls", home.other.path).ok)
+    }
+
+    /// A file's number gives nothing away but that it's used: counted, not named.
+    @Test(.enabled(if: #filePath.hasPrefix("/Users/"), "needs a checkout under /Users"))
+    func aFilesNumberDoesntNameIt() throws {
+        let home = try PeoplesFolders()
+        defer { try? FileManager.default.removeItem(at: home.root) }
+        let hidden = home.elsewhere.appendingPathComponent("file")
+        try Data("x".utf8).write(to: hidden)
+        var info = stat()
+        #expect(lstat(hidden.path, &info) == 0)
+        let used = try home.run("/usr/bin/stat", "/.vol/\(info.st_dev)/\(info.st_ino)")
+        #expect(!used.ok && used.said.contains("Operation not permitted"), "\(used.said)")
+        let unused = try home.run("/usr/bin/stat", "/.vol/\(info.st_dev)/\(UInt64(1) << 60)")
+        #expect(!unused.ok && unused.said.contains("No such file"), "\(unused.said)")
+    }
+
+    @Test(.enabled(if: #filePath.hasPrefix("/Users/"), "needs a checkout under /Users"))
+    func aLinkOpensNothingUnderPeoplesFolders() throws {
+        let home = try PeoplesFolders()
+        defer { try? FileManager.default.removeItem(at: home.root) }
+        let given = home.mine.appendingPathComponent("file"), hidden = home.elsewhere.appendingPathComponent("file")
+        for file in [given, hidden] { try Data("x".utf8).write(to: file) }
+        // In a folder nobody gave it, pointing at what it was given.
+        let toGiven = home.elsewhere.appendingPathComponent("to-given"), outOf = home.mine.appendingPathComponent("out-of")
+        try FileManager.default.createSymbolicLink(at: toGiven, withDestinationURL: given)
+        // In what it was given, pointing out of it.
+        try FileManager.default.createSymbolicLink(at: outOf, withDestinationURL: hidden)
+        #expect(try home.run("/bin/test", "-e", given.path).ok)
+        #expect(try !home.run("/bin/test", "-e", toGiven.path).ok)
+        #expect(try !home.run("/bin/test", "-e", outOf.path).ok)
+    }
+
     @Test func anotherExtensionsDataCantEvenBeSeen() throws {
         let root = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                appropriateFor: FileManager.default.temporaryDirectory, create: true)
