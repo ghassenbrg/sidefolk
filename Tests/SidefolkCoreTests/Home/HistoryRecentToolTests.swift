@@ -90,7 +90,8 @@ import Testing
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at HTTPS://bob:canary-case@host/a?code=canary-code"))
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at postgres://admin:canary-db@db/prod"))
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at https://bob:p@canary-at@host/"))
-        for address in ["postgres://u:canary-slash/ss@db", "https://u:canary-quote\"ss@h", "mailto:a@b?body=canary-mail", "magnet:?xt=canary-magnet", "https:\u{200B}//u:canary-unseen@h", "https://host/canary-path/x"] {
+        for address in ["postgres://u:canary-slash/ss@db", "https://u:canary-quote\"ss@h", "mailto:a@b?body=canary-mail", "magnet:?xt=canary-magnet", "https:\u{200B}//u:canary-unseen@h", "https://host/canary-path/x", "https://h/unsub?email=me@canary-email.com", "https://h\\canary-back\\x", "see:mailto:me@canary-see.com",
+                        "<mailto:me@canary-angle.com>", "see:file:/Users/me/canary-file", "(https://u:canary-paren@h)", "HTTPS:/u:canary-one@h/x"] {
             _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at \(address)"))
         }
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "notes.save", risk: "low", decision: .auto,
@@ -99,7 +100,7 @@ import Testing
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "extension:dev.sidefolk.sideflow", title: "Filled in canary-flow", refKind: "notify"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "watcher", title: "canary-watch exited", refKind: "watcher"))
         let text = await read(["limit": 50]).outcome.promptText
-        for canary in ["hunter2-canary", "canary-query", "canary-command", "canary-userinfo", "canary-search", "canary-failed", "canary-pass", "canary-fragment", "canary-case", "canary-code", "canary-db", "canary-at", "canary-slash", "canary-quote", "canary-mail", "canary-magnet", "canary-unseen", "canary-path", "sk-ant-api03", "canary-key", "canary-job", "canary-flow", "canary-watch"] {
+        for canary in ["hunter2-canary", "canary-query", "canary-command", "canary-userinfo", "canary-search", "canary-failed", "canary-pass", "canary-fragment", "canary-case", "canary-code", "canary-db", "canary-at", "canary-slash", "canary-quote", "canary-mail", "canary-magnet", "canary-unseen", "canary-path", "canary-email", "canary-back", "canary-see", "canary-angle", "canary-file", "canary-paren", "canary-one", "sk-ant-api03", "canary-key", "canary-job", "canary-flow", "canary-watch"] {
             #expect(!text.contains(canary), "\(canary) in \(text)")
         }
         #expect(text.contains("used clipboard.write"), "\(text)")
@@ -109,6 +110,8 @@ import Testing
     @Test func aQuestionMarkInPlainWordsStays() async throws {
         try await log("external:codex", "Save “Push now? Maybe later”")
         #expect(await read().outcome.promptText.contains("Push now? Maybe later"))
+        try await log("external:codex", "Remind at 10:30, note: call back")
+        #expect(await read().outcome.promptText.contains("10:30, note: call back"))
     }
 
     /// A client's chosen name can't read as the person or Sidefolk, or forge a line.

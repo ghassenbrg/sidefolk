@@ -89,20 +89,11 @@ struct HistoryRecentTool: Tool {
         return safe(item.title)
     }
 
-    /// Words with any address cut to where it goes: its sign-in, path, query and fragment can each hold a secret, and a line
-    /// doesn't need them.
+    /// Words with any address taken out whole: its sign-in, path, query and fragment can each hold a secret, spelled more
+    /// ways than a parser here would catch, and a line doesn't need it.
     private static func safe(_ words: String) -> String {
-        let shown = Redactor.redact(words).displaySafe.split(separator: " ").map { word -> String in
-            let token = String(word)
-            if let scheme = token.range(of: "://") {
-                let after = token[scheme.upperBound...]
-                let host = (after.lastIndex(of: "@").map { after[after.index(after: $0)...] } ?? after).prefix { !"/?#\"”".contains($0) }
-                return String(token[..<scheme.upperBound]) + String(host)
-            }
-            if let colon = token.firstIndex(of: ":"), ["mailto", "magnet", "tel", "sms", "data", "file"].contains(token[..<colon].lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "“\"("))) {
-                return String(token[...colon]) + "…"
-            }
-            return token
+        let shown = Redactor.redact(words).displaySafe.split(separator: " ").map { word in
+            word.contains(/(?i)[a-z][a-z0-9+.-]*:[\/\\]|(mailto|magnet|tel|sms|data|file):/) ? "an address" : String(word)
         }
         return ToolFormat.oneLine(shown.joined(separator: " "), 120)
     }
