@@ -1828,6 +1828,64 @@
         }
       }
     },
+    "%@ can't be used for this." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن استخدام %@ لهذا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kann dafür nicht verwendet werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se puede usar para esto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne peut pas être utilisé pour cela."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non può essere usato per questo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はこれには使えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 이 용도로 사용할 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não pode ser usado para isso."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 不能用于此事。"
+          }
+        }
+      }
+    },
     "%@ can't be worn by this copy of Sidefolk." : {
       "localizations" : {
         "ar" : {
@@ -2804,6 +2862,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”无法完成这个操作。没有做任何更改。"
+          }
+        }
+      }
+    },
+    "%@ couldn't do that: %@" : {
+      "comment" : "An extension's own explanation after its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تتمكن %@ من فعل ذلك: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ konnte das nicht tun: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ couldn't do that: %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no pudo hacerlo: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’a pas pu le faire : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non è riuscito a farlo: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はそれを実行できませんでした：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 그 작업을 하지 못했어요: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não conseguiu fazer isso: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没能完成：%@"
           }
         }
       }
@@ -9924,6 +10047,378 @@
         }
       }
     },
+    "%@ reads these %lld files only if you choose below, and only this once. It can't use the internet." : {
+      "comment" : "The drop card, Sidefolk's own words: an extension's name and a count",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تقرأ %@ هذه الملفات الـ %lld إلا إذا اخترت ذلك أدناه، ولمرة واحدة فقط. لا يمكنها استخدام الإنترنت."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese %lld Dateien nur, wenn du unten zustimmst, und nur dieses eine Mal. Es kann das Internet nicht nutzen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reads these %2$lld files only if you choose below, and only this once. It can't use the internet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee estos %lld archivos solo si lo eliges abajo, y solo esta vez. No puede usar internet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lit ces %lld fichiers seulement si vous le choisissez ci-dessous, et cette fois seulement. Il ne peut pas utiliser Internet."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questi %lld file solo se lo scegli qui sotto, e solo questa volta. Non può usare internet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、下で選んだときだけ、この1回だけ、この%lld個のファイルを読みます。インターネットは使えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 아래에서 선택할 때만, 이번 한 번만 이 파일 %lld개를 읽어요. 인터넷을 사용할 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê estes %lld arquivos só se você escolher abaixo, e só desta vez. Ele não pode usar a internet."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅当你在下方选择时，%@ 才会读取这 %lld 个文件，而且只此一次。它无法访问互联网。"
+          }
+        }
+      }
+    },
+    "%@ reads these %lld files only if you choose below. It can use the internet, so it could send them anywhere." : {
+      "comment" : "The drop card, Sidefolk's own words: an extension's name and a count",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تقرأ %@ هذه الملفات الـ %lld إلا إذا اخترت ذلك أدناه. يمكنها استخدام الإنترنت، لذا قد ترسلها إلى أي مكان."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese %lld Dateien nur, wenn du unten zustimmst. Es kann das Internet nutzen und könnte sie überallhin senden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reads these %2$lld files only if you choose below. It can use the internet, so it could send them anywhere."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee estos %lld archivos solo si lo eliges abajo. Puede usar internet, así que podría enviarlos a cualquier parte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lit ces %lld fichiers seulement si vous le choisissez ci-dessous. Il peut utiliser Internet, donc il pourrait les envoyer n’importe où."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questi %lld file solo se lo scegli qui sotto. Può usare internet, quindi potrebbe inviarli ovunque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、下で選んだときだけ、この%lld個のファイルを読みます。インターネットを使えるので、ファイルをどこにでも送れてしまいます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 아래에서 선택할 때만 이 파일 %lld개를 읽어요. 인터넷을 사용할 수 있어서 파일을 어디로든 보낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê estes %lld arquivos só se você escolher abaixo. Ele pode usar a internet, então poderia enviá-los para qualquer lugar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅当你在下方选择时，%@ 才会读取这 %lld 个文件。它可以访问互联网，所以可能把文件发送到任何地方。"
+          }
+        }
+      }
+    },
+    "%@ reads these %lld files only if you choose below. It has no internet access of its own, but other things it's allowed to use could carry them out." : {
+      "comment" : "The drop card, Sidefolk's own words: an extension's name and how many files",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تقرأ %@ هذه الملفات الـ %lld إلا إذا اخترت ذلك أدناه. ليس لديها اتصال بالإنترنت بنفسها، لكن أشياء أخرى مسموح لها باستخدامها قد تنقل الملفات إلى الخارج."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese %lld Dateien nur, wenn du unten zustimmst. Es hat selbst keinen Internetzugang, aber andere Dinge, die es nutzen darf, könnten sie nach außen tragen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reads these %2$lld files only if you choose below. It has no internet access of its own, but other things it's allowed to use could carry them out."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee estos %lld archivos solo si lo eliges abajo. No tiene acceso propio a internet, pero otras cosas que puede usar podrían sacarlos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lit ces %lld fichiers seulement si vous le choisissez ci-dessous. Il n’a pas d’accès à Internet en propre, mais d’autres éléments qu’il peut utiliser pourraient les transmettre à l’extérieur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questi %lld file solo se lo scegli qui sotto. Non ha un accesso a internet suo, ma altre cose che può usare potrebbero portarli fuori."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、下で選んだときだけ、この%lld個のファイルを読みます。それ自体はインターネットに接続できませんが、使用を許可されている別のものがファイルを外部に運ぶ可能性があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 아래에서 선택할 때만 이 파일 %lld개를 읽어요. 자체적으로 인터넷에 접근할 수는 없지만, 사용이 허용된 다른 것이 파일을 밖으로 보낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê estes %lld arquivos só se você escolher abaixo. Ele não tem acesso próprio à internet, mas outras coisas que ele pode usar poderiam levá-los para fora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅当你在下方选择时，%@ 才会读取这 %lld 个文件。它自己无法访问互联网，但它被允许使用的其他东西可能把文件带出去。"
+          }
+        }
+      }
+    },
+    "%@ reads this file only if you choose below, and only this once. It can't use the internet." : {
+      "comment" : "The drop card, Sidefolk's own words: an extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تقرأ %@ هذا الملف إلا إذا اخترت ذلك أدناه، ولمرة واحدة فقط. لا يمكنها استخدام الإنترنت."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese Datei nur, wenn du unten zustimmst, und nur dieses eine Mal. Es kann das Internet nicht nutzen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee este archivo solo si lo eliges abajo, y solo esta vez. No puede usar internet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lit ce fichier seulement si vous le choisissez ci-dessous, et cette fois seulement. Il ne peut pas utiliser Internet."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questo file solo se lo scegli qui sotto, e solo questa volta. Non può usare internet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、下で選んだときだけ、この1回だけ、このファイルを読みます。インターネットは使えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 아래에서 선택할 때만, 이번 한 번만 이 파일을 읽어요. 인터넷을 사용할 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê este arquivo só se você escolher abaixo, e só desta vez. Ele não pode usar a internet."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅当你在下方选择时，%@ 才会读取这个文件，而且只此一次。它无法访问互联网。"
+          }
+        }
+      }
+    },
+    "%@ reads this file only if you choose below. It can use the internet, so it could send the file anywhere." : {
+      "comment" : "The drop card, Sidefolk's own words: an extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تقرأ %@ هذا الملف إلا إذا اخترت ذلك أدناه. يمكنها استخدام الإنترنت، لذا قد ترسل الملف إلى أي مكان."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese Datei nur, wenn du unten zustimmst. Es kann das Internet nutzen und könnte die Datei überallhin senden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee este archivo solo si lo eliges abajo. Puede usar internet, así que podría enviar el archivo a cualquier parte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lit ce fichier seulement si vous le choisissez ci-dessous. Il peut utiliser Internet, donc il pourrait envoyer le fichier n’importe où."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questo file solo se lo scegli qui sotto. Può usare internet, quindi potrebbe inviare il file ovunque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、下で選んだときだけ、このファイルを読みます。インターネットを使えるので、ファイルをどこにでも送れてしまいます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 아래에서 선택할 때만 이 파일을 읽어요. 인터넷을 사용할 수 있어서 파일을 어디로든 보낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê este arquivo só se você escolher abaixo. Ele pode usar a internet, então poderia enviar o arquivo para qualquer lugar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅当你在下方选择时，%@ 才会读取这个文件。它可以访问互联网，所以可能把文件发送到任何地方。"
+          }
+        }
+      }
+    },
+    "%@ reads this file only if you choose below. It has no internet access of its own, but other things it's allowed to use could carry the file out." : {
+      "comment" : "The drop card, Sidefolk's own words: an extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تقرأ %@ هذا الملف إلا إذا اخترت ذلك أدناه. ليس لديها اتصال بالإنترنت بنفسها، لكن أشياء أخرى مسموح لها باستخدامها قد تنقل الملف إلى الخارج."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese Datei nur, wenn du unten zustimmst. Es hat selbst keinen Internetzugang, aber andere Dinge, die es nutzen darf, könnten die Datei nach außen tragen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee este archivo solo si lo eliges abajo. No tiene acceso propio a internet, pero otras cosas que puede usar podrían sacar el archivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lit ce fichier seulement si vous le choisissez ci-dessous. Il n’a pas d’accès à Internet en propre, mais d’autres éléments qu’il peut utiliser pourraient transmettre le fichier à l’extérieur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questo file solo se lo scegli qui sotto. Non ha un accesso a internet suo, ma altre cose che può usare potrebbero portare fuori il file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、下で選んだときだけ、このファイルを読みます。それ自体はインターネットに接続できませんが、使用を許可されている別のものがファイルを外部に運ぶ可能性があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 아래에서 선택할 때만 이 파일을 읽어요. 자체적으로 인터넷에 접근할 수는 없지만, 사용이 허용된 다른 것이 파일을 밖으로 보낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê este arquivo só se você escolher abaixo. Ele não tem acesso próprio à internet, mas outras coisas que ele pode usar poderiam levar o arquivo para fora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅当你在下方选择时，%@ 才会读取这个文件。它自己无法访问互联网，但它被允许使用的其他东西可能把文件带出去。"
+          }
+        }
+      }
+    },
     "%@ rejected your API key. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -10100,6 +10595,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 返回的监视状态数据太多。"
+          }
+        }
+      }
+    },
+    "%@ says it can" : {
+      "comment" : "The drop card: above what an extension offers, in its own words",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقول %@ إنها تستطيع"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sagt, es kann"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dice que puede"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dit pouvoir faire ceci"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dice di poter fare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の説明によると、できること"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 설명: 할 수 있는 일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ diz que pode"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 声称可以"
           }
         }
       }
@@ -16714,7 +17268,7 @@
       }
     },
     "%lld files" : {
-      "comment" : "A chip on a permission slip",
+      "comment" : "A chip on a permission slip\nThe drop card: how many files were dropped\nWhat several dropped files are called",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -16900,6 +17454,128 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld files are ready" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ملفات جاهزة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Dateien sind bereit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld archivos están listos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fichiers sont prêts"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld file sono pronti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld個のファイルの準備ができました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 %lld개가 준비됐어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld arquivos estão prontos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个文件已就绪"
+          }
+        }
+      }
+    },
+    "%lld files beside %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ملفات بجانب %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Dateien neben %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld files beside %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld archivos junto a %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fichiers à côté de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld file accanto a %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@の隣に%1$lld個のファイル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ 옆에 파일 %1$lld개"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld arquivos ao lado de %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个文件，在 %@ 旁边"
           }
         }
       }
@@ -27164,6 +27840,65 @@
         }
       }
     },
+    "%lld%% smaller" : {
+      "comment" : "How much smaller a saved file is",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصغر بنسبة %lld%%"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% kleiner"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% más pequeño"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% plus petit"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% più piccolo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%%小さくなりました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% 작아짐"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% menor"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小了 %lld%%"
+          }
+        }
+      }
+    },
     "+ %lld more" : {
       "localizations" : {
         "ar" : {
@@ -28678,6 +29413,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有文件更改了：%@。"
+          }
+        }
+      }
+    },
+    "A file has changed since it was saved, so it was left where it is." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر ملف منذ حفظه، لذا تُرك حيث هو."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Datei hat sich seit dem Speichern geändert und wurde deshalb dort gelassen, wo sie ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un archivo cambió desde que se guardó, así que se dejó donde está."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un fichier a changé depuis son enregistrement, il a donc été laissé là où il est."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un file è cambiato dopo il salvataggio, quindi è stato lasciato dov’è."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存後にファイルが変更されたため、そのままにしました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장한 뒤 파일이 바뀌어서 그대로 두었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um arquivo mudou desde que foi salvo, então foi deixado onde está."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有文件在保存后被改动过，所以保持原样。"
           }
         }
       }
@@ -40959,6 +41752,65 @@
         }
       }
     },
+    "Another choice" : {
+      "comment" : "The drop card: a menu of more things an extension offers",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خيار آخر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere Auswahl"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otra opción"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre choix"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un’altra scelta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかの選択肢"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 선택"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outra opção"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换一个选择"
+          }
+        }
+      }
+    },
     "Another colour" : {
       "comment" : "A collection's sheet: pick any colour",
       "localizations" : {
@@ -49706,6 +50558,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可更改文件"
+          }
+        }
+      }
+    },
+    "Can have Sidefolk save new files beside a file you give it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها جعل Sidefolk يحفظ ملفات جديدة بجانب ملف تعطيه إياها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Darf Sidefolk neue Dateien neben einer Datei speichern lassen, die du übergibst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede hacer que Sidefolk guarde archivos nuevos junto a un archivo que le des"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut demander à Sidefolk d’enregistrer de nouveaux fichiers à côté d’un fichier que vous lui donnez"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può far salvare a Sidefolk nuovi file accanto a un file che gli dai"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指定したファイルの隣に、Sidefolkが新しいファイルを保存できる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건넨 파일 옆에 Sidefolk가 새 파일을 저장하게 할 수 있음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode fazer o Sidefolk salvar novos arquivos ao lado de um arquivo que você der"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以让 Sidefolk 把新文件保存在你交给它的文件旁边"
           }
         }
       }
@@ -59449,6 +60359,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除搜索"
+          }
+        }
+      }
+    },
+    "Click a choice, or type what you want" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر على خيار أو اكتب ما تريد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicke auf eine Auswahl oder tippe, was du möchtest"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic en una opción o escribe lo que quieras"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur un choix, ou tapez ce que vous voulez"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic su una scelta o scrivi quello che vuoi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択肢をクリックするか、やりたいことを入力してください"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택지를 클릭하거나 원하는 내용을 입력하세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique em uma opção ou digite o que você quer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击一个选项，或输入你想要的"
           }
         }
       }
@@ -99943,6 +100911,64 @@
         }
       }
     },
+    "It can only save beside a file you gave it for this request." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكنها الحفظ إلا بجانب ملف أعطيتها إياه لهذا الطلب."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es kann nur neben einer Datei speichern, die du ihm für diese Anfrage übergeben hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo puede guardar junto a un archivo que le diste para esta petición."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il ne peut enregistrer qu’à côté d’un fichier que vous lui avez donné pour cette demande."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può salvare solo accanto a un file che gli hai dato per questa richiesta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この依頼で渡したファイルの隣にしか保存できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 요청에서 건넨 파일 옆에만 저장할 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ele só pode salvar ao lado de um arquivo que você deu para este pedido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它只能保存在你为这次请求交给它的文件旁边。"
+          }
+        }
+      }
+    },
     "It can read %@ and use the internet, so it could upload those files." : {
       "localizations" : {
         "ar" : {
@@ -100524,6 +101550,122 @@
         }
       }
     },
+    "It couldn't be saved in that folder." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الحفظ في ذلك المجلد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es konnte nicht in diesem Ordner gespeichert werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar en esa carpeta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’a pas pu être enregistré dans ce dossier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile salvarlo in quella cartella."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのフォルダには保存できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 폴더에는 저장할 수 없었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar nessa pasta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存到那个文件夹。"
+          }
+        }
+      }
+    },
+    "It couldn't be saved." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الحفظ."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es konnte nicht gespeichert werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’a pas pu être enregistré."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile salvarlo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장할 수 없었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存。"
+          }
+        }
+      }
+    },
     "It counts toward your AI's usage. The AI gets only the words the extension sends: no tools, nothing of yours. Each request is in History, and a switch in Settings › Add-ons turns it off." : {
       "localizations" : {
         "ar" : {
@@ -100636,6 +101778,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它没有向 Sidefolk 请求任何事。"
+          }
+        }
+      }
+    },
+    "It didn't make a plain file." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُنشئ ملفًا عاديًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es hat keine normale Datei erstellt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No creó un archivo normal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n’est pas un fichier ordinaire."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ha creato un file normale."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通常のファイルを作成しませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일반 파일을 만들지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ele não criou um arquivo comum."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它没有生成普通文件。"
           }
         }
       }
@@ -103854,6 +105054,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它的说明会被移除。此操作无法撤销。"
+          }
+        }
+      }
+    },
+    "Its name has to start with the name of the file it came from." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن يبدأ الاسم باسم الملف الذي جاء منه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Name muss mit dem Namen der Ausgangsdatei beginnen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su nombre tiene que empezar por el nombre del archivo de origen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son nom doit commencer par le nom du fichier d’origine."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il nome deve iniziare con il nome del file di partenza."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前は、元のファイル名で始まる必要があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이름은 원본 파일 이름으로 시작해야 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O nome precisa começar com o nome do arquivo de origem."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名称必须以来源文件的名称开头。"
+          }
+        }
+      }
+    },
+    "Its name isn't a plain file name." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم ليس اسم ملف عاديًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Name ist kein normaler Dateiname."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su nombre no es un nombre de archivo normal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son nom n’est pas un nom de fichier ordinaire."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il nome non è un normale nome di file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前が通常のファイル名ではありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이름이 일반 파일 이름이 아니에요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O nome não é um nome de arquivo comum."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名称不是普通的文件名。"
           }
         }
       }
@@ -124800,6 +126116,64 @@
         }
       }
     },
+    "Not saved:" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُحفظ:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht gespeichert:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No guardado:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non enregistré :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non salvato:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されなかったもの："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장되지 않음:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não salvo:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未保存："
+          }
+        }
+      }
+    },
     "Not signed in" : {
       "localizations" : {
         "ar" : {
@@ -132309,6 +133683,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只有在沙盒中运行的扩展才能在你指定的文件夹中工作。"
+          }
+        }
+      }
+    },
+    "Only the first %lld files were saved." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُفظت أول %lld ملفات فقط."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur die ersten %lld Dateien wurden gespeichert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo se guardaron los primeros %lld archivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuls les %lld premiers fichiers ont été enregistrés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono stati salvati solo i primi %lld file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最初の%lld個のファイルだけを保存しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "처음 %lld개 파일만 저장했어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só os primeiros %lld arquivos foram salvos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只保存了前 %lld 个文件。"
           }
         }
       }
@@ -160246,6 +161678,70 @@
         }
       }
     },
+    "Saved %@ beside %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُفظ %1$@ بجانب %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ neben %@ gespeichert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved %1$@ beside %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se guardó %@ junto a %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ enregistré à côté de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ salvato accanto a %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@の隣に%1$@を保存しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ 옆에 %1$@ 저장함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ salvo ao lado de %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已把 %1$@ 保存在 %2$@ 旁边"
+          }
+        }
+      }
+    },
     "Saved by %@" : {
       "localizations" : {
         "ar" : {
@@ -162880,6 +164376,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全选"
+          }
+        }
+      }
+    },
+    "Select a file first, or fewer of them." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدّد ملفًا أولًا، أو عددًا أقل من الملفات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle zuerst eine Datei aus oder weniger Dateien."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona primero un archivo, o menos archivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez d’abord un fichier, ou moins de fichiers."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleziona prima un file, o meno file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先にファイルを選ぶか、数を減らしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "먼저 파일을 선택하거나 개수를 줄여 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecione primeiro um arquivo, ou menos arquivos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先选择一个文件，或选择少一些文件。"
           }
         }
       }
@@ -165527,6 +167081,7 @@
       }
     },
     "Show all" : {
+      "comment" : "The drop card: list every dropped file",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -165818,6 +167373,7 @@
       }
     },
     "Show fewer" : {
+      "comment" : "The drop card: fold the list of dropped files",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -165992,6 +167548,7 @@
       }
     },
     "Show in Finder" : {
+      "comment" : "On a saved file's card",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -171022,6 +172579,64 @@
         }
       }
     },
+    "Sidefolk is in the middle of something. Try again when that's done." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk مشغول بشيء ما. حاول مرة أخرى عندما ينتهي."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk ist gerade beschäftigt. Versuche es erneut, wenn es fertig ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk está ocupado con algo. Inténtalo de nuevo cuando termine."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk est occupé. Réessayez quand ce sera terminé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk è occupato con qualcosa. Riprova quando ha finito."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkは別の作業中です。終わってからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk가 다른 일을 하는 중이에요. 끝난 뒤에 다시 시도해 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk está no meio de algo. Tente de novo quando terminar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 正忙着别的事。等它忙完再试。"
+          }
+        }
+      }
+    },
     "Sidefolk is stopping." : {
       "localizations" : {
         "ar" : {
@@ -172007,6 +173622,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 在更改每个文件前都会在旁边保存一份备份。断开连接只会移除它添加的内容。"
+          }
+        }
+      }
+    },
+    "Sidefolk saves them itself and never replaces a file. The extension can't write in that folder." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحفظها Sidefolk بنفسه ولا يستبدل أي ملف أبدًا. لا يمكن للإضافة الكتابة في ذلك المجلد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk speichert sie selbst und ersetzt nie eine Datei. Die Erweiterung darf in diesem Ordner nicht schreiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk los guarda él mismo y nunca reemplaza un archivo. La extensión no puede escribir en esa carpeta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk les enregistre lui-même et ne remplace jamais un fichier. L’extension ne peut pas écrire dans ce dossier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk li salva da solo e non sostituisce mai un file. L’estensione non può scrivere in quella cartella."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存はSidefolk自身が行い、ファイルを置き換えることはありません。拡張機能はそのフォルダに書き込めません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장은 Sidefolk가 직접 하고 파일을 덮어쓰지 않아요. 확장 프로그램은 그 폴더에 쓸 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk os salva sozinho e nunca substitui um arquivo. A extensão não pode gravar nessa pasta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 自己负责保存，绝不会替换已有文件。扩展无法写入那个文件夹。"
           }
         }
       }
@@ -179532,6 +181205,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行 %@ 后停止"
+          }
+        }
+      }
+    },
+    "Stopped before saving the rest." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقّف قبل حفظ الباقي."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt, bevor der Rest gespeichert wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se detuvo antes de guardar el resto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêté avant d’enregistrer le reste."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermato prima di salvare il resto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "残りを保存する前に停止しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나머지를 저장하기 전에 멈췄어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parou antes de salvar o resto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在保存其余文件之前已停止。"
           }
         }
       }
@@ -191909,6 +193640,122 @@
         }
       }
     },
+    "The file it belongs beside is gone." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملف الذي يجب أن يكون بجانبه لم يعد موجودًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei, neben die sie gehört, ist nicht mehr da."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo junto al que va ya no existe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier à côté duquel il doit aller n’existe plus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il file accanto a cui va non c’è più."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隣に置くはずのファイルがなくなりました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "옆에 둘 파일이 없어졌어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo ao lado do qual ele ficaria não existe mais."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它要放在旁边的那个文件已不存在。"
+          }
+        }
+      }
+    },
+    "The file it made is too large to save." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملف الذي أنشأته كبير جدًا للحفظ."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erstellte Datei ist zu groß zum Speichern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo que creó es demasiado grande para guardarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier créé est trop gros pour être enregistré."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il file creato è troppo grande per essere salvato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作成されたファイルは大きすぎて保存できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "만든 파일이 너무 커서 저장할 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo criado é grande demais para salvar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它生成的文件太大，无法保存。"
+          }
+        }
+      }
+    },
     "The file pattern should be a short name pattern like *.pdf." : {
       "localizations" : {
         "ar" : {
@@ -196910,6 +198757,64 @@
         }
       }
     },
+    "There isn't room to save it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد مساحة كافية لحفظه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es ist nicht genug Platz zum Speichern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay espacio para guardarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’y a pas assez de place pour l’enregistrer."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non c’è spazio per salvarlo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存する空きがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장할 공간이 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há espaço para salvar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有空间保存它。"
+          }
+        }
+      }
+    },
     "There's already a collection called “%@”." : {
       "localizations" : {
         "ar" : {
@@ -200117,6 +202022,64 @@
         }
       }
     },
+    "This extension can't save files of that kind." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن لهذه الإضافة حفظ ملفات من هذا النوع."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Erweiterung kann Dateien dieser Art nicht speichern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta extensión no puede guardar archivos de ese tipo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette extension ne peut pas enregistrer ce type de fichier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa estensione non può salvare file di quel tipo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この拡張機能はその種類のファイルを保存できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 확장 프로그램은 그 종류의 파일을 저장할 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta extensão não pode salvar arquivos desse tipo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此扩展无法保存那种类型的文件。"
+          }
+        }
+      }
+    },
     "This file isn't plain text, so Scout compares its size and time only." : {
       "localizations" : {
         "ar" : {
@@ -203273,6 +205236,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今晚 %@"
+          }
+        }
+      }
+    },
+    "Too many files already have that name." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هناك ملفات كثيرة جدًا بهذا الاسم بالفعل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu viele Dateien haben schon diesen Namen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya hay demasiados archivos con ese nombre."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop de fichiers portent déjà ce nom."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Troppi file hanno già quel nome."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その名前のファイルがすでに多すぎます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 이름의 파일이 이미 너무 많아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já há arquivos demais com esse nome."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已经有太多文件用了这个名称。"
           }
         }
       }
@@ -240719,6 +242740,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已运行 %@"
+          }
+        }
+      }
+    },
+    "saving %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "das Speichern von %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el guardado de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "l’enregistrement de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il salvataggio di %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 저장"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o salvamento de %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存 %@"
+          }
+        }
+      }
+    },
+    "saving %lld files" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ %lld ملفات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "das Speichern von %lld Dateien"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el guardado de %lld archivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "l’enregistrement de %lld fichiers"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il salvataggio di %lld file"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld個のファイルの保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 %lld개 저장"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o salvamento de %lld arquivos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存 %lld 个文件"
           }
         }
       }
