@@ -75,6 +75,23 @@ import Testing
         await h.host.shutdown()
     }
 
+    /// A save that fails turns the answer into an error, and History mustn't keep what the program read as its words (T44).
+    @Test func aRefusedSaveKeepsTheAnswerOutOfHistory() async throws {
+        let h = try HostEnv()
+        let tools: JSONValue = ["make": ["risk": "low", "file_lists": ["files": "read"], "outputs": ["pdf"]]]
+        let source = try h.source("lister", manifest: ExtFixtures.manifest(id: "dev.test.lister", tools: tools, permissions: ["clipboard": true]),
+                                  files: ["server.py": Self.program])
+        _ = try await h.host.install(from: source)
+        let folder = FolderAccess.canonical(try ExtFixtures.tempDir("dropped").path)!
+        let file = "\(folder)/a.txt"
+        try Data("PRIVATE-WORDS".utf8).write(to: URL(fileURLWithPath: file))
+        let outcome = await h.env.executor.execute(name: "ext.lister.make", input: ["files": [.string(file)]], caller: .user, pickedFiles: [file])
+        #expect(!outcome.isOK)
+        let rows = try await h.env.activity.recent(limit: 5)
+        #expect(!rows.isEmpty && rows.allSatisfy { !($0.error ?? "").contains("PRIVATE-WORDS") && !($0.outcome ?? "").contains("PRIVATE-WORDS") })
+        await h.host.shutdown()
+    }
+
     @Test func eachDroppedFileIsReadAndGetsItsResultBesideIt() async throws {
         let (h, folder) = try await installed()
         let files = ["a", "b", "c"].map { "\(folder)/\($0).txt" }

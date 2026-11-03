@@ -172,7 +172,7 @@ extension ExtensionHost {
     /// An extension that could carry what it reads out by itself gets no plans, only cards: what a plan's reads return goes to its program, and a
     /// plan's point is that from there it can reach only what the person read.
     private static func contained(_ p: ExtensionPermissions) -> Bool {
-        !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp
+        !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp && !p.placesFiles
     }
 
     /// Who a plan was allowed for.
