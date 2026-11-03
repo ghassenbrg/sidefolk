@@ -92,10 +92,32 @@ struct HistoryRecentTool: Tool {
     /// Words with any address taken out whole: its sign-in, path, query and fragment can each hold a secret, spelled more
     /// ways than a parser here would catch, and a line doesn't need it.
     private static func safe(_ words: String) -> String {
-        let shown = Redactor.redact(words).displaySafe.split(separator: " ").map { word in
-            word.contains(/(?i)[a-z][a-z0-9+.-]*:[\/\\]|(mailto|magnet|tel|sms|data|file):/) ? "an address" : String(word)
-        }
+        let shown = Redactor.redact(words).displaySafe.split(separator: " ").map { looksLikeAnAddress($0) ? "an address" : String($0) }
         return ToolFormat.oneLine(shown.joined(separator: " "), 120)
+    }
+
+    /// Over-reads on purpose: a plain word lost costs a line a word, an address kept can cost a password. It goes by scalars,
+    /// since a mark on a colon or a slash makes one character that no longer equals it, and by compatibility forms, so a
+    /// fullwidth colon or at sign counts. Each word is looked at once, however long.
+    private static func looksLikeAnAddress(_ word: Substring) -> Bool {
+        guard word.unicodeScalars.count <= longestWord else { return true }
+        let scalars = Array(String(word).decomposedStringWithCompatibilityMapping.unicodeScalars)
+        if scalars.contains(where: { "@=\\".unicodeScalars.contains($0) }) { return true }
+        // What only opens or closes a word isn't inside it: "note:", "now?", "(soon)", "50%" and "10:30," are plain words.
+        let inner = scalars.drop { "\"'“‘([{<".unicodeScalars.contains($0) }
+        let core = inner.reversed().drop { "\"'”’)]}>,.;!?:%".unicodeScalars.contains($0) }.reversed().map(Character.init)
+        if core.contains(where: { $0 == "?" || $0 == "%" }) { return true }
+        if core.contains("/"), core.contains(".") { return true }
+        return core.contains(":") && !isAClockTime(String(core))
+    }
+
+    private static let longestWord = 64
+
+    /// "9:30" or "10:30:15": the one everyday word with a colon inside.
+    private static func isAClockTime(_ word: String) -> Bool {
+        let parts = word.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 2 || parts.count == 3, (1...2).contains(parts[0].count) else { return false }
+        return parts.dropFirst().allSatisfy { $0.count == 2 } && parts.allSatisfy { $0.allSatisfy { $0.isASCII && $0.isNumber } }
     }
 
     private static func since(_ text: String?, now: Date, calendar: Calendar) throws -> Date {

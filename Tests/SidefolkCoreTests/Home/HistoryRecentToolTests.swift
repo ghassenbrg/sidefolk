@@ -107,11 +107,35 @@ import Testing
         #expect(text.contains("a command ended") && text.contains("a watch had news"), "\(text)")
     }
 
+    /// However an address is spelled. Each of these got through a pattern that matched whole characters and known schemes.
+    @Test func anAddressGoesHoweverItsSpelled() async throws {
+        for address in ["https:/\u{0301}/u:canary-mark@h/a?k=v", "mailto:\u{0301}a@canary-mailmark.c", "https:\u{FE0F}//u:canary-selector@h", "ftp:u:canary-ftp@h", "sip:u:canary-sip@h",
+                        "[redacted]://u:canary-kept@h/a?k=v", "https%3A%2F%2Fu%3Acanary-percent%40h", "https：／／u：canary-wide＠h", "u：canary-colon",
+                        "example.com/reset?canary-bare", "example.com/canary-host-path", "h/a?token=canary-equals", "tel:canary-tel", "sms:canary-sms", "localhost:canary-port",
+                        "10:30:canary-clock", "１０：canary-widetime", String(repeating: "canary-long", count: 8)] {
+            try await log("external:codex", "Remind at \(address) soon")
+        }
+        let text = await read(["limit": 50]).outcome.promptText
+        #expect(!text.contains("canary"), "\(text)")
+        #expect(text.split(separator: "\n").filter { $0.hasPrefix("- ") }.allSatisfy { $0.contains("an address soon") }, "\(text)")
+    }
+
+    /// A word thousands of letters long can't hold the read up.
+    @Test func aVeryLongWordTakesNoTime() async throws {
+        let long = String(repeating: "a", count: 200_000)
+        try await log("external:codex", "Remind at \(long)")
+        let started = ContinuousClock.now
+        #expect(await read().outcome.promptText.contains("an address"))
+        #expect(ContinuousClock.now - started < .seconds(5))
+    }
+
     @Test func aQuestionMarkInPlainWordsStays() async throws {
         try await log("external:codex", "Save “Push now? Maybe later”")
         #expect(await read().outcome.promptText.contains("Push now? Maybe later"))
         try await log("external:codex", "Remind at 10:30, note: call back")
         #expect(await read().outcome.promptText.contains("10:30, note: call back"))
+        try await log("external:codex", "Save 9:30 (soon) and/or 50%, AT&T v1.2 “done:” file.txt")
+        #expect(await read().outcome.promptText.contains("9:30 (soon) and/or 50%, AT&T v1.2 “done:” file.txt"))
     }
 
     /// A client's chosen name can't read as the person or Sidefolk, or forge a line.
