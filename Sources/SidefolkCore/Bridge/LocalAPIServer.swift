@@ -271,11 +271,16 @@ public final class LocalAPIServer: Sendable {
             let input = params["arguments"] ?? .object([:])
             // Cancelled if the connection drops: a card still waiting for its answer then counts as
             // "no", so a later Allow never acts for a caller that is gone (L8).
+            let handle = params.string("call")
             conn.track(Task {
                 let outcome = await self.call(name, input: input, caller: caller)
-                conn.finishCall()
+                conn.finishCall(handle)
                 conn.send(BridgeProtocol.reply(id: id, result: ["text": .string(outcome.promptText), "isError": .bool(!outcome.isOK)]))
-            })
+            }, as: handle)
+        case .toolsCancel:
+            // Only this connection's own calls are in reach, whatever the handle says.
+            if let handle = params.string("call") { conn.cancelCall(handle) }
+            conn.send(BridgeProtocol.reply(id: id, result: ["ok": true]))
         case .status:
             Task {
                 let snapshot = await self.services.status?.snapshot() ?? StatusSnapshot()
@@ -397,16 +402,26 @@ final class BridgeConnection: Sendable {
         var callTimes: [Date] = []
         var lastActivity = Date()
         var calls: [Task<Void, Never>] = []
+        /// Calls the client can name, to cancel them.
+        var named: [String: Task<Void, Never>] = [:]
         var closed = false
     }
 
     /// Keeps a tool call's task so `close()` can cancel it.
-    func track(_ task: Task<Void, Never>) {
+    func track(_ task: Task<Void, Never>, as handle: String? = nil) {
         let closed = session.withLock { s -> Bool in
-            if !s.closed { s.calls.append(task) }
+            if !s.closed {
+                s.calls.append(task)
+                if let handle { s.named[handle] = task }
+            }
             return s.closed
         }
         if closed { task.cancel() }
+    }
+
+    /// The client gave up on this call: a card still waiting goes away and counts as "no" (L8).
+    func cancelCall(_ handle: String) {
+        session.withLock { $0.named[handle] }?.cancel()
     }
 
     init(id: UInt64, fd: Int32, lineLimit: Int, peerPID: pid_t?) {
@@ -514,9 +529,10 @@ final class BridgeConnection: Sendable {
         }
     }
 
-    func finishCall() {
+    func finishCall(_ handle: String? = nil) {
         session.withLock { s in
             s.inFlight -= 1
+            if let handle { s.named[handle] = nil }
             s.lastActivity = Date()
             // Finished calls can't be told apart from here; keep the list short instead.
             if s.inFlight == 0 { s.calls.removeAll() }

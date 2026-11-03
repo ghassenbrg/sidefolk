@@ -199,6 +199,61 @@ import Testing
         await s.stop()
     }
 
+    /// A client that gives up takes its question off the desktop, and only its own.
+    @Test func aCancelledQuestionGoesAway() async throws {
+        let s = try await Stack()
+        let attention = s.runtime.attention
+        let stream = s.runtime.events.stream()
+        let shown = Task<Bool, Never> {
+            for await e in stream { if case .attention(.present(let item, _)) = e, item.refKind == "ask" { return true } }
+            return false
+        }
+        s.pipes.send(["jsonrpc": "2.0", "id": 50, "method": "tools/call",
+                      "params": ["name": "ask_user", "arguments": ["question": "Push?", "options": ["Yes", "No"], "timeout_seconds": 300]]])
+        #expect(await shown.value)
+        #expect(await attention.open().contains { $0.refKind == "ask" })
+
+        // The same request id from another client's connection reaches nothing.
+        let other = MCPPipes(connector: SocketConnector(socketPath: s.runtime.paths.socket.path))
+        _ = try await other.request(1, "initialize", ["protocolVersion": "2025-06-18", "clientInfo": ["name": "other"]])
+        _ = try await other.request(2, "tools/call", ["name": "status", "arguments": [:]])
+        other.send(["jsonrpc": "2.0", "method": "notifications/cancelled", "params": ["requestId": 50]])
+        _ = try await other.request(3, "ping")
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(await attention.open().contains { $0.refKind == "ask" })
+
+        s.pipes.send(["jsonrpc": "2.0", "method": "notifications/cancelled", "params": ["requestId": 50, "reason": "timed out"]])
+        var gone = false
+        for _ in 0..<100 where !gone {
+            try await Task.sleep(for: .milliseconds(20))
+            gone = await !attention.open().contains { $0.refKind == "ask" }
+        }
+        #expect(gone)
+        // MCP: no reply to it, so the next line is the ping's.
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(try await s.pipes.request(51, "ping")["id"] == 51)
+        await other.finish()
+        await s.stop()
+    }
+
+    /// A card waiting for a read goes the same way, and a late Allow can't act for a caller that gave up.
+    @Test func aCancelledReadTakesItsCardAway() async throws {
+        let s = try await Stack()
+        let stream = s.runtime.events.stream()
+        let resolved = Task<ApprovalDecision?, Never> {
+            for await e in stream { if case .approvalResolved(_, let decision) = e { return decision } }
+            return nil
+        }
+        let broker = s.runtime.broker
+        s.pipes.send(["jsonrpc": "2.0", "id": 60, "method": "tools/call", "params": ["name": "notes_list", "arguments": [:]]])
+        for _ in 0..<100 where await broker.pending().isEmpty { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(await !broker.pending().isEmpty)
+        s.pipes.send(["jsonrpc": "2.0", "method": "notifications/cancelled", "params": ["requestId": 60]])
+        #expect(await resolved.value == .deny)
+        #expect(await broker.pending().isEmpty)
+        await s.stop()
+    }
+
     /// "what's on my plate today": one card, then today's reminders and open tasks.
     @Test func whatsOnMyPlateAsksOnce() async throws {
         let s = try await Stack()

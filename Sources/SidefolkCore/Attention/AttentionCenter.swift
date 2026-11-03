@@ -102,9 +102,14 @@ public actor AttentionCenter {
             await self?.expire(id: id)
         }
         // The waiter is in place before the item can be shown, so an instant answer is never lost.
-        let answer = await withCheckedContinuation { c in
-            waiting[id] = c
-            Task { await self.deliver(item) }
+        // A caller that gave up takes its question with it: nobody is left waiting on the answer.
+        let answer = await withTaskCancellationHandler {
+            await withCheckedContinuation { c in
+                waiting[id] = c
+                Task { await self.deliver(item) }
+            }
+        } onCancel: {
+            Task { await self.expire(id: id) }
         }
         timer.cancel()
         return answer
