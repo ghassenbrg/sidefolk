@@ -24,8 +24,12 @@ docs, then this file.
 **Treat `~/git/sidefolk` as a stale checkout that isn't yours.** Check with `git -C ~/git/sidefolk rev-list --count
 main..origin/main`. It may hold the founder's uncommitted work, so nobody works, commits, resets or edits docs there, and
 `git add -A` is out. Read with `git show origin/main:<file>`. New Claude worktrees are cut from that local `main`, so this
-skill may not be in them: a fresh one with no work runs `git fetch origin && git reset --hard origin/main`; one with work
-moves its commits onto `origin/main` by rebase or cherry-pick.
+skill may not be in them: a fresh one with no work runs `git fetch origin && git reset --hard origin/main`, after checking
+`git rev-parse --show-toplevel` is that worktree (the same reset once ran in `~/git/sidefolk`); one with work moves its
+commits onto `origin/main` by rebase or cherry-pick. The shell tool's directory resets to the session's root between calls,
+which for most sessions is `~/git/sidefolk`: every brief says `git -C <absolute path>` for repository commands and absolute
+paths otherwise, and scripts use `/bin/bash` and `set -euo pipefail`. Back up
+uncommitted work under `sandbox/` (git ignores it) before any cleanup.
 
 **Never touch** `/Applications/Sidefolk.app`, the founder's real data, or their real agent configs (`~/.claude*`,
 `~/.codex`), not even for read-only checks of `~/.codex`. On any other `SIDEFOLK_HOME`, Connect writes stand-ins in
@@ -93,7 +97,9 @@ From `AGENTS.md`, which sessions should read themselves:
   `--all-apps` overrides that, and no session should need it.
 - Launch debug apps with `SIDEFOLK_QUIET_WINDOWS=1`: the founder is usually working here. Leave it out only for a check
   that needs real clicks or keys, and that needs a click slot from the coordinator when the Mac is idle: one session on the
-  screen, 10 minutes at most, no full screen or space switching, the debug app stopped by its pid right after.
+  screen, 10 minutes at most, no full screen or space switching, the debug app stopped by its pid right after. The idle
+  counter reads a few seconds while Keep Awake nudges the pointer, so it says nothing about who is clicking. Say whether a
+  check used synthetic events (queued into the app's own window) or real input.
 - Stop debug apps as soon as they aren't needed, by the pid file you wrote, never by name pattern (`pkill -f` hit
   others'), and check the process is gone.
 - Never run `swift scripts/dev.swift language:<x>`: it changes a default that every debug app shares.
@@ -101,8 +107,9 @@ From `AGENTS.md`, which sessions should read themselves:
 - Host tests use `SIDEFOLK_ADDONS_REPO=<your own clean add-ons worktree at add-ons origin/main>`, never `../sidefolk-addons`
   and never another session's tree. A checkout that's behind or has a branch checked out fails the gallery and words tests:
   `git -C ~/git/sidefolk-addons worktree add --detach <path> origin/main`. The exception is Add-ons first, which tests against
-  its add-ons branch. CI and Release test against add-ons `main` unless `addons_ref` says otherwise, so a suite that is green
-  only against a branch fails there.
+  its add-ons branch. CI tests against add-ons `main`, so a suite green only against a branch fails there. Release checks out
+  add-ons (`main`, or `addons_ref`) for its binary check and doesn't build them, so add-on tests skip there: a red one
+  turns CI red and doesn't stop a Release. Before MERGE-READY a session names the real-pack tests that ran.
 - `git add` by file name, never `-A`.
 - Live model calls cost the founder's quota: rare and tiny, scripted models in tests.
 
@@ -202,7 +209,8 @@ tests add-ons `main`, so it may be red until step 8; rerun after step 8, and tha
 2. In add-ons, change each placeholder `minimum_sidefolk` to `0.1.0-snapshot.N`.
 3. Build, no publish, in a clean add-ons worktree: `python3 scripts/build.py --sidefolk-build N`.
 4. `gh release create gallery-next dist/*.zip --prerelease` in add-ons, a holding release.
-5. Push that add-ons branch, unmerged, so the tests read the packs this app goes with.
+5. Push that add-ons branch, unmerged, so the Release's binary check reads the packs this app goes with. The add-on tests
+   ran earlier, in the pass against this branch.
 6. Run Release with `seed_gallery` and `addons_ref`:
    `gh workflow run release.yml --repo ghassenbrg/sidefolk --ref main -f channel=snapshot -f seed_gallery=https://github.com/ghassenbrg/sidefolk-addons/releases/download/gallery-next -f addons_ref=<branch>`
 7. Only when that release exists: publish the same `dist/` with `scripts/publish.sh`, delete `gallery-next`, and prove it with
@@ -213,7 +221,10 @@ tests add-ons `main`, so it may be red until step 8; rerun after step 8, and tha
 ## Publishing the gallery alone
 
 When no new app is needed. The queue has one slot, separate from the app's, but an app release and an upload shouldn't
-run together. A session holding the founder's yes, in a **clean add-ons worktree** (`build.py` packs the whole checkout):
+run together. One add-ons builder at a time too: `publish.sh` replaces the whole catalog and deletes packs it doesn't name,
+so the next publisher rebases over add-ons `main`, rebuilds and retests. A Kit change lands in the app first, so `diff -r` differs until
+the add-on lands: say which side leads. A pack-only change still runs the app's whole suite against that pack, with no name filter. A session
+holding the founder's yes, in a **clean add-ons worktree** (`build.py` packs the whole checkout):
 
 1. `swift test --no-parallel`, then `python3 scripts/build.py --unsigned`, `SIDEFOLK_APP=<clean app worktree> scripts/check.sh`, and
    `<app>/scripts/extension-strings.py check <extension folder>…`.
@@ -238,8 +249,9 @@ run together. A session holding the founder's yes, in a **clean add-ons worktree
    EOF
    ```
 
-5. `scripts/publish.sh`, then fetch the live catalog again and check the entry, its `minimum_sidefolk`, and that nothing else
-   moved. Any queued add-on rebases over the new add-ons `main` next.
+5. `scripts/publish.sh`, then fetch the live catalog again and check its digest, the entry, its `minimum_sidefolk`, and that
+   nothing else moved. The CDN can serve the old catalog for about two minutes, so an old answer right after isn't a failure.
+   Any queued add-on rebases over the new add-ons `main` next.
 
 A gallery yes doesn't cover an app release, or the other way round.
 
@@ -259,5 +271,17 @@ A gallery yes doesn't cover an app release, or the other way round.
 - **A release-only break.** Tests passed, but code had landed inside `#if DEBUG`, so the release build failed and left no snapshot.
 - **Unscoped commands.** `dev.swift` without `SIDEFOLK_HOME` reached other sessions' apps. It refuses now. A pressed card blamed on
   this was the founder's own click: ask before concluding, and tell everyone when it's settled.
+- **A name filter hid the test that mattered.** A pack's "452 of 452" left out `everyGamesScenesRead`, which its new menu entry
+  broke, and it surfaced only after the pack was live. Run the app's whole suite against a pack.
+- **A suite that wasn't.** A wrong relative path broke every `cd` in a homepages script, so `make strings`, a release build and
+  a filtered test ran in `~/git/sidefolk`, and the suite reported as running never ran. The owner said so at once. Two hours
+  later another session's `git reset --hard` hit the same checkout; a backup under `sandbox/` meant nothing was lost.
+- **Reading the workflow beats remembering it.** A fallback was withdrawn on the belief that Release runs the add-on tests.
+  It doesn't build them (`release.yml`).
+- **Words typed in a session.** Some sessions published only on the founder's own sentence there ("Publish Sideflow"), until
+  the founder typed in those sessions that the coordinator's permission was enough. Permission checks stayed theirs.
+- **Release tags sort as text** on GitHub's page and in its list: 961 sat above 1170. Read the list by version number, and keep
+  the digit count (four digits hold to 9999). The app sorts by version, so only people reading the page were misled, and the
+  founder drafted the old three-digit releases.
 - **A site in the main repository** would have raised snapshot numbers and broken the Add-ons first freeze, so it has its own.
 - **Security text in this public repository** follows the global skill's hygiene section. This file is public too.

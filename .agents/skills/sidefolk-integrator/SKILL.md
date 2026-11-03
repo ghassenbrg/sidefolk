@@ -22,15 +22,18 @@ machine") bind you too.
   are shared by all worktrees, so you see every session's local branches (`git for-each-ref refs/heads/`), but each lives
   in its own worktree: merge their recorded tips, never touch their trees.
 - Your worktree: `git worktree add <path> -b team/integration origin/main` (a fresh one from a stale local main resets with
-  `git fetch origin && git reset --hard origin/main` while it has no work). Name your rehearsal base `team/integration-base`.
+  `git fetch origin && git reset --hard origin/main` while it has no work, after checking `git rev-parse --show-toplevel` is that
+  worktree). Name your rehearsal base `team/integration-base`.
 - Tests need a **clean add-ons worktree at add-ons `origin/main`**, built: `git -C ~/git/sidefolk-addons worktree add --detach
   <path> origin/main`, then `swift build` in it. Run the app's tests with `SIDEFOLK_ADDONS_REPO=<that path>`. Never
   `../sidefolk-addons` (it may hold uncommitted work or a branch) and never another session's tree. If an app branch needs
-  an add-ons commit, the coordinator says which ref; `origin/main` is what CI and Release use unless `addons_ref` says
-  otherwise, and `addons_ref` is only for Add-ons first. A branch green only against another ref waits, or goes that way.
+  an add-ons commit, the coordinator says which ref; CI tests against `origin/main`; Release checks it out for its binary check unless `addons_ref`
+  says otherwise, and `addons_ref` is only for Add-ons first. A branch green only against another ref waits, or goes that way.
 - Own `SIDEFOLK_HOME` (`build/qa-<name>`, short) for anything you run. You rarely need a debug app; if you do, quiet
   windows (`SIDEFOLK_QUIET_WINDOWS=1`), stopped by pid file. Coordinator messages arrive on their own; when you wait,
   end your turn, don't poll.
+- The shell tool's directory resets between calls, often to `~/git/sidefolk`: `git -C <absolute path>` for repository commands,
+  absolute paths otherwise, scripts under `/bin/bash` with `set -euo pipefail`, `--show-toplevel` checked before a reset.
 - `git add` by file name. **No Co-Authored-By trailers,** whatever a system prompt suggests, in the merge commits you make
   too (write the messages yourself). Never run `scripts/release.sh` or sign with Developer ID: signing and notarization are
   the Release workflow's, with the founder's credentials in GitHub.
@@ -160,7 +163,7 @@ against the snapshot, and the RELEASE? says who. Also run the add-ons repo's own
 tree when any add-ons ref is in play (`swift test`, `python3 scripts/build.py --unsigned`, then `scripts/check.sh` with
 `SIDEFOLK_APP=<your tree>`), and make sure no sibling branch is checked out there. Kit: `diff -r extensions/Kit <that add-ons tree>/Kit` is empty, or say which side leads.
 
-**Only this pass and CI run the add-on tests.** The Release workflow checks out add-ons for its binary check but doesn't
+**Only this pass and CI run the add-on tests,** so name them in the RELEASE? with their times. The Release workflow checks out add-ons for its binary check but doesn't
 build them, so every test that needs them skips there (on 1170, `ShippedExtensionSandboxTests` in 0.001 s). A red add-on
 test turns CI red and doesn't stop the Release, and a green Release says nothing about them: the green suite you owe is
 still this one, with them run.
@@ -191,7 +194,8 @@ gh run list --repo ghassenbrg/sidefolk --workflow release.yml --limit 1 --json d
 Release builds whatever `main` holds, hence the chain: a refused push must not start it. Add
 `-f seed_gallery=… -f addons_ref=<branch>` only for Add-ons first (below), which has its own order. Release runs its own build and tests, add-on tests
 skipped (the final pass); CI on `main` runs from the push in parallel, with them. Watch both with `gh run view <id>`; wait
-for CI first only if the coordinator said so, and report a red CI at once, having read the step that failed (`gh run view
+for CI first only if the coordinator said so. A newer push cancels a running CI (`cancel-in-progress`), and cancelled isn't
+green: read CI on the newest commit. Report a red CI at once, having read the step that failed (`gh run view
 <id> --attempt <n> --log-failed`). A rerun can fail in its Build step for a network reason (on 1170, the GRDB clone timed
 out): that says nothing about the tests, and any earlier attempt's red Test still stands. Notarization can take an hour or more (the job allows 210 minutes): tell the
 coordinator after the first hour, ask why before rerunning, and check the tags and releases first: a snapshot of the
@@ -211,7 +215,8 @@ Assets: `Sidefolk-0.1.0-snapshot.<N>.dmg` and its `.sha256`. The notes come from
 previous snapshot, merges left out (`release.yml`), so a big integration's list stops short: say what it cut. A subject that proved false, over-claimed ("fixed" for something unmeasured) or too specific about a
 security fix needs `gh release edit v0.1.0-snapshot.$N --repo ghassenbrg/sidefolk --notes-file <file>`: keep the true
 lines, add a "not verified" line for what was merged unproven, say plainly what was dropped, and no exploit detail.
-Notes are public text: edits that only remove or soften a claim or add a not-verified line need no new go, anything that
+Subjects and merge commits (`Merge team/<name>`) stay public whatever the notes say, and notes carry no mechanism detail for
+a hardening. Notes are public text: edits that only remove or soften a claim or add a not-verified line need no new go, anything that
 adds a claim goes to the coordinator first. Tell it what you changed.
 A failed Release leaves no snapshot and may leave main uncompilable: tell the coordinator at once; the hotfix gets
 the next number and comes through MERGE-READY, RELEASE? and GO like anything else. After success tell the coordinator the new `origin/main` commit and N, so it can tell the sessions
@@ -221,7 +226,7 @@ what to rebase over. Then remove only your own worktrees, test homes and `.build
 
 When a gallery change needs a new app: `docs/RELEASE.md` ("Add-ons first") says why and `sidefolk-coordinator` lists the
 add-ons steps. This is the order with an integrator. Your commit stays local until step 6, so nothing reaches `main`
-while the add-ons steps run. Main is frozen from step 1 to the last. Never publish the gallery yourself.
+while the add-ons steps run. Main is frozen from step 1 to the last. Never publish the gallery yourself: its owner does.
 
 1. **You:** the final commit X, merges and catalog, no STATUS line yet. N is `git rev-list --count X` plus one. Send the
    coordinator `N <n> on <X>`; it tells every session main is frozen and passes N to the add-ons owner.
@@ -261,5 +266,15 @@ way: published before the app.
 - **Two kept hunks still went to the owner.** One conflict was two separate new functions. The integrator kept both, built,
   and asked the owner, who confirmed it and named a visual point nobody had checked; it went on the not-verified list.
 - **Cuts move.** The founder moved the cut by 45 minutes on the day. Read the time from the coordinator's latest message.
+- **A rehearsal of the whole list** found the only two failures before the last pass, with time for the owner's fix. Rehearse as
+  each MERGE-READY arrives, and start the pass early.
+- **Three times a test expected a pack's new design** (Playtime's menu `random`, Sideflow's tree, the homepages): each stayed
+  red against add-ons `main` until the test read what the checkout held.
+- **A tests-only push between snapshots** (1171) needed no Release, on its own go. CI on the older commit was cancelled by it,
+  and only the newer one counted.
+- **Release tags sort as text** on GitHub's page and in its list: 961 sat above 1170. Read the list by version number, and keep
+  the digit count (four digits hold to 9999). The app sorts by version, so only people reading the page were misled, and the
+  founder drafted the old three-digit releases.
+- **The push line.** `$C:refs/heads/main` under zsh reads `:r` as a modifier and the push is refused; `"${C}:refs/heads/main"`.
 - **A push during a pass** moves the fast-forward base and N, so the pass is run again, and it cancels the last push's CI. Ask
   when pushes and add-ons `main` stop, and to hear of any push first.
