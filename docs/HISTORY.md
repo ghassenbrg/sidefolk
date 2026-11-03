@@ -7,6 +7,12 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-04: Sideflow in the gallery, with flows that reach every tool (D110-D114, D125-D129)
+
+**What:** a builder of cards that arranges itself, in a page that takes the window; flows that use any tool, other extensions and MCP servers (on a card every time), a job for the companion, Focus and Quiet, events with titles, voice and how Sidefolk looks; a mini tree on Ask's card and an Activity tab. What a flow fills in stays out of History (D127, T44): the step as written and its length, a notice as "<extension>: a notice". A reminder's title shows, the founder's choice, and its notes can't be filled in without a card. An extension with `media` isn't contained.
+
+**How it was checked:** full suite and release build on each landing's tip; `SideflowSandboxTests` in the real sandbox; the signed pack installed from a local gallery in a debug app of snapshot 1075, a plan's card and a run; a real MCP call and a real shell command each on their own card; independent security reviews of every widening, which found real gaps, including one found only by running it (the notice's own row). The published packs were downloaded back and compared by digest.
+
 ## 2026-11-04: Three themes move from the app to the gallery (D130)
 
 On the founder's go, relayed steps from the coordinator: snapshot 1177 ships Sidefolk and Harbor only, and Paper Garden, Night Studio and Marshmallow 2.0.0-snapshot.1 are published from add-ons `97c55b5`, needing 1177. Whoever wears one keeps the setting and gets it back with no click while Update add-ons automatically is on (`fetchThemeThatMoved`, D70), at launch and after each add-on look. Before the release, an independent review found the fetch ran only at launch, which would have left anyone updating before the publish on the default until they quit; it now tries after each look too. The audit session passed the fixed commit on a code read.
@@ -32,6 +38,7 @@ On the founder's word: Clipboard, Keep Awake and Your Mac 1.0.0-snapshot.5 and M
 ## 2026-11-03: Pages composed like an app's screen, and four homepages (D170)
 
 General page abilities (sections as cards, rows and joined panes, a branded head, metrics, a ring on a plain hero, selectable scrolling rows, a preview pane, search, placed heads-ups and host controls, `palette` and `refresh`, an installed app's icon), and the founder's accepted designs for Miraya, Clipboard, Your Mac and Keep Awake built on them in sidefolk-addons. Checked: both suites with the real packs, state tests in the add-ons, 39 states rendered in light and dark, the live app in English, Arabic and German and at a narrow window, a cold security review and the audit session's read. Parity and limits: `sandbox/extension-homepage-implementation-handoff-2026-11-03/implementation/PARITY.md`.
+
 
 ## 2026-11-04: Sideflow in the gallery, with flows that reach every tool (D110-D114, D125-D129)
 
