@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: The companion reads History and sees agents' sessions (D160, B5, B6)
+
+The companion can read short lines of History and see which agents are running, on a card, as outside content. **Found in independent review, fixed:** a row's summary quoting what a tool was given, a copied text or a command among them, on its way to the AI provider; secrets and addresses in the lines that are quoted, spelled ways a pattern missed (a mark on a slash, a fullwidth colon, percent escapes, schemes it didn't list); a very long word holding the read up; a client's name reading as the person. A line now goes by each scalar and loses any word that could be an address, a few plain ones with it. **Checked:** the suite, with canaries for each spelling. **Not checked:** the card on screen, and a live model reading the lines.
+
 ## 2026-11-03: A coordinator skill for this repository
 
 `sidefolk-coordinator` (`.claude/skills/`, mirrored in `.agents/skills/`) holds what a session coordinating the others needs to know here: the repositories, how D, T and migration numbers are given out, the app and gallery release mechanics, the session messages, and lessons from past incidents. It holds nothing perishable and gives the commands to read today's state. Checked: its read-only commands were run against `origin/main`, the catalog diff against the live catalog, and an independent reader went through it cold. Not run: pushes, `gh workflow run`, `build.py --sidefolk-build`, `publish.sh`, which only a real release should run.
