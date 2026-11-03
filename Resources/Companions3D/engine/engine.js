@@ -291,7 +291,10 @@ export class Companion {
   on(ev, fn) { (this.listeners[ev] ||= []).push(fn); }
   emit(ev, data) { (this.listeners[ev] || []).forEach((f) => f(data)); }
 
-  setMood(name) { this.mood = name; this.moodFace = moodFace(name); }
+  /** A feeling's face, with what this character changes about it (`face.moods`: Mochi rests with an open smile). */
+  faceOf(name) { return { ...moodFace(name), ...this.C.face?.moods?.[name] }; }
+
+  setMood(name) { this.mood = name; this.moodFace = this.faceOf(name); }
 
   /** The one-shot moves this character has (the shared set and its own, minus what its body can't do). */
   get moves() { return [...Object.keys(ACTIONS), ...Object.keys(this.C.actions || {})].filter((n) => !(this.C.skip || []).includes(n)); }
@@ -822,10 +825,10 @@ export class Companion {
 
   faceStep(dt, layers, P, speechOpen) {
     // Target: mood, a passing smile, then each move's face on top by its weight.
-    let target = { ...(this.flash && this.time < this.flash.until ? moodFace(this.flash.mood) : this.moodFace) };
+    let target = { ...(this.flash && this.time < this.flash.until ? this.faceOf(this.flash.mood) : this.moodFace) };
     let curMood = this.flash && this.time < this.flash.until ? this.flash.mood : this.mood;
     for (const [lf, w] of layers) {
-      const lt = { ...(lf.mood ? moodFace(lf.mood) : target), ...lf };
+      const lt = { ...(lf.mood ? this.faceOf(lf.mood) : target), ...lf };
       for (const k of Object.keys(target)) {
         if (typeof lt[k] !== 'number') continue;
         // Eyes are either open or shut for a feeling: half-blended lids read as smug, so they
@@ -867,8 +870,8 @@ export class Companion {
       const lid = e.side > 0 ? f.lidL : f.lidR;
       e.uniforms.uLid.value.set(lid, f.lidSlant, f.lidBottom, f.lidBottomSlant);
       e.uniforms.uGaze.value.set(this.gaze.x, this.gaze.y);
-      // `face.twinkle: false`: no idle twinkle (a thin cross over a dark iris or a lens), only real sparkles.
-      e.uniforms.uSparkle.value = this.C.face.twinkle === false && f.sparkle < 0.5 ? 0 : clamp(f.sparkle);
+      // `face.twinkle`: false, no idle twinkle (a thin cross over a dark iris or a lens), only real sparkles; 'never', none.
+      e.uniforms.uSparkle.value = this.C.face.twinkle === 'never' || (this.C.face.twinkle === false && f.sparkle < 0.5) ? 0 : clamp(f.sparkle);
       const open = f.eyeOpen;
       e.mesh.scale.set(1 + (open - 1) * 0.55, open, 1);
       e.mesh.position.set(this.gaze.x * 0.012, this.gaze.y * 0.008, 0);

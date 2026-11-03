@@ -3765,3 +3765,5 @@ to lose it by hiding snapshots (`ThemeSuccession.toFetch`, `fetchThemeThatMoved`
 tries again, and a whisper says so once. So the gallery must publish them before an app without them ships.
 
 **Brand art:** Mochi's solo portrait and full-body image follow the newer design too (masters `rabbit-portrait.png`, `mascot-mochi.png`; the old ones in `Brand/archive/mochi-2026-10/`). The app icon stays as approved.
+
+**The live 3D Mochi follows it, with the same model and rig:** deep navy ear tips, a deeper scarf, bigger darker eyes with quieter reflections, and an open smile at rest (`face.moods`, for Mochi only). Its portrait and avatar are redone. Its build stays slimmer than the art, since that would need a new model. The 2D Mochi stays the flat drawn style.

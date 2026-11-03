@@ -231,7 +231,9 @@ no animation frames while hidden: use `companion.step(seconds)` (renders), not w
 the canvas has no size: give the tab one with `resize_window` first. Read results from files the page saves into
 `build/companions-3d/`, not from screenshots.
 
-Go through all of these before showing it; each caught a real mistake:
+Go through all of these before showing it; each caught a real mistake. When a look changes on an existing companion, run the
+faces close up at every mood too (a thin sparkle cross and a flat lower lid only showed there, on Mochi), and run a gate that fails
+against an untouched copy before blaming your change:
 1. **The sheet grid**: `(await import('./sheet.js')).sheet(companion)`: 16 feelings, moves and postures. Iterate on
    shape, colours, eye size and placement, mouth, brows, blush and postures until it reads as the same character.
 2. **Turnaround**: `turnaround(companion)` beside the sheet's turnaround row (front, ¾, side, back).
