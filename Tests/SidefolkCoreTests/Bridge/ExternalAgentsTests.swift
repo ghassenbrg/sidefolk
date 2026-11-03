@@ -765,9 +765,18 @@ import Testing
         let plain = try await s.runtime.scheduler.create(title: "Pill soon", at: Date().addingTimeInterval(3600), source: "user", itemId: second)
         let vital = try await s.runtime.scheduler.create(title: "Pill now", at: Date().addingTimeInterval(7200), level: .critical, source: "user", itemId: second)
         let refused = try await s.call("reminders_complete", ["id": .string(plain.id)])
-        #expect(refused.text.contains("marked that reminder important"), "\(refused.text)")
+        #expect(refused.text.contains("marked important"), "\(refused.text)")
         #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == .scheduled)
         #expect(try await s.runtime.notebook.item(id: second)?.status == .open)
+
+        // Its own reminder, tied to that task, is no way round: no card, and no finishing it.
+        let own = try await s.call("reminders_create", ["title": "Mine", "when": "in 3 hours", "item": .string(second)])
+        #expect(!own.isError, "\(own.text)")
+        let mine = try #require(await s.runtime.scheduler.upcoming().first { $0.source.hasPrefix("external:") })
+        let notMine = try await s.call("reminders_complete", ["id": .string(mine.id)])
+        #expect(notMine.text.contains("marked important"), "\(notMine.text)")
+        #expect(try await s.runtime.notebook.item(id: second)?.status == .open)
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == .scheduled)
         await s.stop()
     }
 

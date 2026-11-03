@@ -188,6 +188,10 @@ public enum ReminderTools {
             return r
         }
 
+        /// Finishing a task ends every reminder it has: another agent can't end an important one that way, its own reminder
+        /// or not, card or no card (T24).
+        static let importantOneHoldsIt = UserFacingError(verbatim: "That task has a reminder the user marked important, so only they can finish it, in Sidefolk. You can ask them to.")
+
         /// Someone else's reminder, past what a card may touch: only the person says what breaks through Quiet, and ending,
         /// moving or rewording one of those would quietly undo what they chose (T24).
         func notImportant(_ r: Reminder) throws {
@@ -468,7 +472,7 @@ public enum ReminderTools {
             }
             // Finishing the task ends every reminder it has (D115), so the card says so, and an important one holds it back.
             let others = await shared.scheduler.upcoming().filter { $0.itemId == task.id && $0.id != r.id }
-            for other in others { try shared.notImportant(other) }
+            if await shared.scheduler.wouldEndAnImportantOne(r) { throw Shared.importantOneHoldsIt }
             return (others.isEmpty && r.recurrence == nil ? String(localized: "Mark your reminder \(name) done, and the task it belongs to")
                 : String(localized: "Mark your reminder \(name) done, and the task it belongs to, which ends all its reminders and repeats"), input)
         }
@@ -481,6 +485,7 @@ public enum ReminderTools {
             if r.state == .cancelled {
                 throw UserFacingError("That reminder was cancelled, so there's nothing to mark done.")
             }
+            if case .external = context.caller, await scheduler.linkedOpenTask(r) != nil, await scheduler.wouldEndAnImportantOne(r) { throw Shared.importantOneHoldsIt }
             // Finishing a task is changing a note: another agent gets no way round the person's setting for that.
             if case .external = context.caller, !context.personWasAsked, shared.access().change != .allow, await scheduler.linkedOpenTask(r) != nil {
                 throw UserFacingError("That reminder belongs to an open task, and the user keeps changing notes to themselves. Finish the task with notes_update, which may ask them, or cancel the reminder.")
