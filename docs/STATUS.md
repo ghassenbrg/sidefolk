@@ -64,6 +64,17 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
   branch; the bundle ID `app.sidefolk.*` against this domain (launch [CHECKLIST](launch/CHECKLIST.md) row 3); the
   similar AI companion the domain research found.
 
+- **Helper folks' art (D73 amended):** all ten paintings in `Sources/SidefolkCharacter/Art/folks/` are now generated transparent, not cut from a white sheet: same names, 384×384 and floor line, no loose notes or sparkles. Checked on magenta, dark and white, at the app's sizes against the old ones, and in `--ui-snapshots` (Today, the desktop floor); Scout, Pip, Byte and Guard are the site's art. `folk-family/<id>/<id>.png` were already clean. `Resources/Character/folks.png` still shows the vector folks from before D73. Next: the snapshot after the 2026-11-03 integration.
+
+- **Website:** `https://getsidefolk.com` (registered at GoDaddy, verified on the founder's GitHub account, HTTPS
+  enforced) serves a one-page placeholder with no download button, from the separate repository
+  [sidefolk-site](https://github.com/ghassenbrg/sidefolk-site): `public/`, deployed on every push to its `main`. It
+  lives apart because this repository's build number is the commit count of `main`, so site commits here would change
+  it. Checked 2026-11-03: every address redirects to the HTTPS one, and the certificate covers `www`. **For the
+  founder:** turn off Pages on this repository, which still publishes from a branch; the bundle ID `app.sidefolk.*`
+  against this domain (launch [CHECKLIST](launch/CHECKLIST.md) row 3); the similar AI companion the domain research
+  found. Next: the real page, from [LANDING-PAGE.md](launch/LANDING-PAGE.md).
+
 - **Noor, the extension (D105–D109, T43), not the companion of the same name (D121):** an Islamic companion in the add-ons gallery (`extensions/prayer-times`, id `dev.sidefolk.prayer-times`, shown as Noor), rebuilt at the founder's request to match its 20 approved boards rather than resemble them. The host's abilities land first, through the coordinator; the add-on follows on the snapshot that has D109, with `minimum_sidefolk` set to that snapshot. Branch `team/noor` in sidefolk-addons until then.
   - **Checked:** an independent review pressed what it could and found dead controls, then fixed; `pageInlay:` presses native controls through what their click runs (Copy bearing and Copy result checked on the real clipboard, Allow opens Sidefolk's question, Import opens the review). `NoorSceneTests` fails on any control the host would drop.
   - **Not verified:** VoiceOver and real mouse clicks by a person (this process has no Accessibility trust: `pageKey` and `pageInlay` go through the handlers); the open file panel by hand; macOS notifications through a real permission prompt; a signed pack's install from the gallery until the add-on is released; real sleep and wake; Increase Contrast and Reduce Motion.
