@@ -8,7 +8,7 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
 until the founder releases it. The latest released is **snapshot 1177**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101). It no longer carries Paper Garden, Night Studio and Marshmallow; they are in the gallery, published right after it (D130).
 
-- **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
+- **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; ten more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
   **Sidecard**: whispers, cards that fold into the count, Ask (⌘⇧Space or a click) with its understanding row, and
   permission slips for approvals (firm ones never take Return). Pins (live values) and the agents lane sit beside
@@ -61,10 +61,10 @@ snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a cop
   `main`, so site commits here would change it. Live since 2026-11-03, checked there: pages, images and font
   load, every address redirects to the HTTPS one. There is no download button until 0.1.0, only a link to the test
   builds. Its colours and Mochi are the new default theme's (D130), in snapshot 1075. Home shows the real Today page,
-  light and dark, rendered from 1075's sources and captioned as sample data, and its sample cards use the app's wording
-  (checked in the debug app and in source; the cards weren't seen on screen). Sideflow and Formatic are shown as in the
-  gallery, each with how to find it: turn on Show snapshots in Get add-ons, needs snapshot 1137 (Sideflow) or 1170
-  (Formatic). Those numbers are written by hand, so a new `minimum_sidefolk` for either means changing the site.
+  light and dark, rendered from 1177's sources and captioned as sample data, and its sample cards use the app's wording
+  (checked in the debug app and in source; the cards weren't seen on screen). It says to turn on Show snapshots, for the
+  gallery and the next builds, since a fresh install starts on releases only (D65). Sideflow needs snapshot 1137, Formatic
+  1170 and the three gallery themes 1177: written by hand, so a new `minimum_sidefolk` means changing the site.
   **For the founder:** turn off Pages on this repository, which still publishes from a branch; the bundle ID `app.sidefolk.*` against this domain (launch [CHECKLIST](launch/CHECKLIST.md) row 3); the
   similar AI companion the domain research found.
 

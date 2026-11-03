@@ -11,15 +11,17 @@
   <img src="docs/screenshots/desktop-light.png" alt="Mochi the rabbit on its light at the bottom of the desktop, with a count of 12 on its shoulder, three waiting cards fanned above it and Scout beside it">
 </picture>
 
-Sidefolk puts a character on your desktop: Mochi the rabbit, Spark, or one of nine more from the add-on gallery.
+<p align="center"><sub>Screenshots here are from the app, with sample data.</sub></p>
+
+Sidefolk puts a character on your desktop: Mochi the rabbit, Spark, or one of ten more from the add-on gallery.
 Tell it things in plain words and it keeps them: notes, ideas, lists, reminders, pages and files to watch. All of
 that works on your Mac without any AI. When you want answers or help with bigger jobs, connect the AI you already
 use: Claude Code, Codex, an API key, or a model running on your own Mac.
 
 > **0.1.0 isn't released yet.** Signed and notarized test builds ("snapshots") are on
-> [Releases](https://github.com/ghassenbrg/sidefolk/releases); once installed, Sidefolk finds the next ones
-> itself and asks before installing. Or [build it from source](#build-from-source). Read
-> [what isn't done yet](#what-isnt-done-yet) before you rely on it.
+> [Releases](https://github.com/ghassenbrg/sidefolk/releases), or [build it from source](#build-from-source). Read
+> [what isn't done yet](#what-isnt-done-yet) before you rely on it. Then [turn on snapshots](#turn-on-snapshots) to
+> see the whole gallery and be told about the next builds.
 
 **Contents:** [What it does](#what-it-does) · [Privacy](#privacy) · [Choosing an AI](#choosing-an-ai) ·
 [Install](#install) · [Add-ons](#add-ons-companions-extensions-and-themes) · [Agents and MCP](#agents-and-mcp) ·
@@ -35,6 +37,8 @@ it works, amber when something waits for you (with a count on its shoulder), gre
 tasks it has a life of its own (a stretch, a yawn, a glance at your work) and it sits, then lies down, when nothing
 happens. Click it, stroke it with the pointer, drag and throw it. It holds still while you type and uses little CPU
 at rest; **Settings › Companion › Liveliness** goes from *Minimal* to *Lively*, and Reduce Motion is respected.
+Turn on **Hide over full-screen apps** there and it stays on your ordinary desktops: Ask still opens wherever you
+are, and you choose how something that needs you reaches you.
 
 Everything it says is one kind of card beside it, the **Sidecard**: a short whisper for news that fades by itself,
 a card when something needs an answer (it folds into the count after 30 seconds), and a permission slip when it wants
@@ -43,38 +47,44 @@ for watches, Byte for agents), and live values sit beside it as pins.
 
 Pick a companion, its size, how lively it is and where it lives (always, only when needed, or in the menu bar) in
 **Settings › Companion**. Mochi and Spark are built in, in 3D or 2D; Ember, Kiko, Nimbo, Folio, Iris, Nori, Purl,
-Rune and Piko come from the gallery. You can also make your own: a folder with a `species.json` and SVG shapes, read as data
+Rune, Piko and Noor come from the gallery. You can also make your own: a folder with a `species.json` and SVG shapes, read as data
 and never run (`companions/template/` and Miso, a cat, show how).
 
 ### Ask in plain words, no AI needed for the basics
 
-Click the companion or press **⌘⇧Space** and type, or use the Say bar at the top of Home (**⌘K**):
+Click the companion or press **⌘⇧Space** and type, or use the Say bar in Home's toolbar (**⌘K**):
 
 - `remind me tomorrow at 9 to send the deck` · `remind me every weekday at 9 to do standup`
 - `idea: extensions could bring their own folk` · `add oat milk to my groceries list`
 - `watch example.com/pricing` · `tell me when report.pdf appears in Downloads`
-- `tell me the CPU every 10 seconds` · `temperature in Fukuoka every minute` · `time in Tokyo`
+- `tell me the CPU every 10 seconds` · `temperature in Lisbon every minute` · `time in Tokyo`
 
 These finish on your Mac in a moment, without AI. The line under the field says what Return will do and whether it
 uses AI (⌘Return always asks the AI, ⌥Return saves a note). Every request ends in a card (a saved note, a reminder,
 an answer, a question for you), not a chat log, and most can be undone. Drop a file, a link or some text on the
 companion to save it, watch it or ask about it.
 
+Ask is a shortcut, so it stays short: a result goes soon after it reached you (seconds for a quick value, minutes for
+an answer), and eight requests at most stay in it. Pin one to keep it, even past quitting. History keeps what a
+command answered.
+
 <p align="center"><img src="docs/screenshots/ask-light.png" width="420" alt="Ask beside the companion: a permission slip to move three files, an answer, and a reminder set for 17:00"></p>
 
 ### Home: your day, your notes, what's running, what happened
 
-- **Today:** what needs you, what's on duty, your day as a line (with your calendar if you turn it on), what you
-  captured.
+- **Today:** what needs you, what's on duty, your day as a list (with your calendar if you turn it on), what you
+  captured. Next up takes the keyboard: ↑ ↓ to move, Delete for not now, S to snooze; no key ever says yes. In your
+  day, drag a reminder or press ← → to move it by 15 minutes, and ⌘Z puts it back.
 - **Calendar:** reminders and calendar events as an agenda, a week or a month.
-- **Notebook:** an Inbox, your projects, topics and lists of notes, ideas, tasks and links, **You** (the facts it
-  keeps in mind about you, which you can read, edit and forget) and the Trash (30 days).
+- **Notebook:** a page of its own, with an Inbox, your projects, topics and lists of notes, ideas, tasks and links,
+  **You** (the facts it keeps in mind about you, which you can read, edit and forget) and the Trash (30 days).
 - **On duty:** every watch, live value, repeating reminder, agent session and extension at work, with Pause and Stop.
 - **History:** every action (who asked, what was decided, what happened, Undo where it can), your conversations
   with the AI, and what Sidefolk told you.
-- **Extension pages** and the **Gallery** of add-ons.
+- **Extension pages:** Your Mac, Clipboard, Keep Awake and Miraya each have a page laid out like an app's own screen.
+- **Get add-ons** opens the **Gallery**.
 
-<p align="center"><img src="docs/screenshots/home-on-duty-light.png" width="760" alt="On duty: Scout's watches, Tempo's repeating reminders, Byte's agents and Keep Awake, and two live values"></p>
+<p align="center"><img src="docs/screenshots/home-on-duty-light.png" width="760" alt="On duty: Scout's watches, Tempo's repeating reminders, Byte's agents, and two live values"></p>
 
 ### It reminds you, and keeps watch
 
@@ -89,12 +99,11 @@ companion to save it, watch it or ask about it.
 
 ### Games
 
-With Playtime from the gallery, the companion plays with you in a small panel beside it: Tic-tac-toe, Copy Me, Quick
-Paws, Which Cup?, Higher or Lower, Guess My Animal, Balloon Words, Last Stick, Memory Pairs, Daily Word and trivia,
-and four puzzles to solve alone (Garden Plots, Seesaw, Sudoku, Blossoms) with a daily board for each level, hints and best times.
-No AI, in all ten languages.
-
-<p align="center"><img src="docs/screenshots/play-menu-light.png" width="380" alt="Playtime's menu: Mochi asks which game, with wins, streak and games played"></p>
+With Playtime from the gallery, the companion plays with you in a small panel beside it: eleven games (Tic-tac-toe, Copy Me, Quick Paws, Which Cup?, Higher or Lower, Guess My Animal, Balloon
+Words, Last Stick, Memory Pairs, Rock, Paper, Scissors, and trivia)
+and five puzzles to solve alone (Garden Plots, Seesaw, Sudoku, Blossoms, Daily Word), with a daily board for each level,
+hints and best times. Every game has a pause card, and practice boards and words leave today's alone. No AI, in all
+ten languages, and Playtime can use a language of its own.
 
 ### More
 
@@ -102,8 +111,16 @@ No AI, in all ten languages.
   read your open reminders. It removes a note from Notes only when you ask, after a whole copy, asking every time.
 - **Voice, if you want it** (**Settings › Brain › Voice**): hold the Ask shortcut, talk, let go. Speech is
   recognised on your Mac and never kept; it answers in one short spoken line.
-- **Themes** dress the app (colours, type, density, a little art): Sidefolk and Harbor built in; Paper Garden, Night Studio and Marshmallow
-  in the gallery, or your own (`sidefolk theme new`, or the [`sidefolk-theme` skill](skills/sidefolk-theme/SKILL.md)
+- **Routines, with Sideflow from the gallery.** Say what you repeat, if you've connected an AI, or build it step by
+  step. Sideflow builds routines that can use Sidefolk's tools, your other extensions and connected MCP servers, hand
+  your companion a job, and start when something happens. MCP servers and anything that can run programs ask you on a
+  card every time. Other steps run on their own only after you've read and allowed the exact plan, and each action is
+  listed in History. A step can also speak a line or change how Sidefolk looks.
+- **File conversion, with Formatic from the gallery.** Formatic turns a file into the format you need, right on your
+  Mac: photos like HEIC and AVIF, PDF pages into pictures, sound, data files like JSON into CSV, and archives. Drop
+  files on your companion and pick what you need; new files appear beside the originals, which are never changed.
+- **Themes** dress the app (colours, type, density, a little art): Sidefolk, the default, and Harbor built in; Paper
+  Garden, Night Studio and Marshmallow from the gallery; or your own (`sidefolk theme new`, or the [`sidefolk-theme` skill](skills/sidefolk-theme/SKILL.md)
   for Claude Code or Codex).
 
 ### You decide how much it asks
@@ -165,6 +182,12 @@ Apple's newer speech recognition.
 **Download:** the latest snapshot's disk image is on [Releases](https://github.com/ghassenbrg/sidefolk/releases),
 signed with a Developer ID and notarized.
 
+### Turn on snapshots
+
+Sidefolk starts on releases only, whichever build you installed. To see the whole gallery and hear about the next
+builds, choose **Get add-ons** in Home's sidebar, then **Show snapshots**, or set **Versions to offer** in **Settings ›
+General › Updates**. Sidefolk always asks before installing an update of itself.
+
 ### Build from source
 
 You need Xcode 26 or later (Swift 6.2).
@@ -186,10 +209,13 @@ it finds Claude Code or Codex. Choose an AI later, when you first need one.
 ## Add-ons: companions, extensions and themes
 
 Home's **Gallery** lists what Sidefolk's developer publishes in [sidefolk-addons](https://github.com/ghassenbrg/sidefolk-addons):
-companions, extensions (Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev Toolbox, Feeds, Your Mac,
-Clipboard, Keep Awake, Miraya) and themes. Each is downloaded only when you pick it, as a pack signed by the
+companions, extensions (Sideflow, Formatic, Playtime, Noor, Your Mac, Clipboard, Keep Awake, Miraya, Git, Currency,
+Images, PDF Tools, QR Codes, Archives, Dev Toolbox, Feeds) and themes. [Show snapshots](#turn-on-snapshots) to see them.
+Each is downloaded only when you pick it, as a pack signed by the
 developer, and Sidefolk checks the signature before using it. Add-ons update by themselves when they ask for nothing
-new; otherwise they wait for your look.
+new; otherwise they wait for your look. A few need a recent Sidefolk: Sideflow snapshot 1137, Formatic snapshot 1170,
+Playtime snapshot 958, the new pages of Your Mac, Clipboard, Keep Awake and Miraya snapshot 1170, and the three themes
+snapshot 1177.
 
 Extensions give your companion new tools, things to watch, pages in Home, tiles on Today, palettes and games. An
 extension is a folder with a manifest and a small program that speaks [MCP](https://modelcontextprotocol.io).
@@ -220,20 +246,35 @@ one, set a reminder, watch something, show a live value, tell you something or a
   ends, and when it fails, the last lines it printed.
 - **Any other MCP client:** run `sidefolk mcp` over stdio; Settings › Connections › Other apps has the snippet.
 
+- **From a script:** `sidefolk notify`, `ask`, `remind`, `note`, `tools`, `call` and `status --json`.
+
 What other agents may do (save, change, read) is yours to set in **Settings › Trust**. Reading your notes or
 reminders asks you first by default. Files, the clipboard, the web, commands, settings and extensions are never
 offered to them, and they can never answer an approval.
+
+An agent can also see the names of your lists and make a new one, watch something for up to a week, and change one of
+your own reminders. Making a list and changing your reminder take a card every time, and the card says which one and
+what changes. An agent can't end, move or reword a reminder you marked important at all, and can't finish, rename or
+trash the note it's tied to.
+
+Sidefolk's own AI can read short lines of your History and see which agents are running, on a card, so "what did I
+miss?" has an answer.
 
 ## What isn't done yet
 
 - **Snapshots only.** 0.1.0 isn't released, and its licence isn't chosen yet.
 - **Apple silicon only**, and most testing has been on macOS 27.
-- **Mail, Music and Shortcuts** can't be reached; the calendar is read only. Scheduled AI routines ("every weekday
-  at 9, give me my open tasks") aren't built.
-- **Watches and live values run only while Sidefolk runs.** Reminders fall back to macOS notifications when it's quit.
+- **Mail, Music and Shortcuts** can't be reached; the calendar is read only.
+- **Watches, live values and routines run only while Sidefolk runs and your Mac is awake.** Reminders fall back to
+  macOS notifications when it's quit.
+- **Formatic** doesn't convert video.
 - **Extensions** can use the whole internet or none of it (not chosen sites) and can't keep an API key yet.
 - **The quick understanding without AI reads English only**; with an AI connected, ask in any language.
-- **Not yet tried by hand:** voice with a real microphone, Claude Code hooks in a real session, several displays.
+- **Not yet tried by hand:** voice with a real microphone; Claude Code hooks, and a real Claude Code or Codex session
+  using the newer agent tools; several displays; a routine on a real schedule over hours or with the Mac asleep, and a
+  live AI step in one; Formatic with a real drag from Finder, and Finder's Send to Sidefolk; Miraya on a real TV (only
+  an emulator so far); Today's keys and drag, and the new extension pages, with a real mouse and keyboard; VoiceOver by
+  ear on the newer screens; reaching you over a full-screen app with **Hide over full-screen apps** on.
 
 The full, current list is in [docs/STATUS.md](docs/STATUS.md).
 
