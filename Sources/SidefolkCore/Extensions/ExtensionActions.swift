@@ -1,6 +1,6 @@
 import Foundation
 
-/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, D127, SECURITY T43). Sidefolk's own are listed by
+/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, D127, SECURITY T44). Sidefolk's own are listed by
 /// name, as `ExternalToolPolicy` lists them for other agents; what could widen an extension's own reach (other extensions' settings, skills, memory, Sidefolk's own
 /// host tools) simply doesn't exist for it. Every other extension's tools and every MCP server's are reachable, the person's call on the founder's word (D127); those
 /// that run outside a sandbox or can run anything are on a card every single time, never in a plan and never "Always".
@@ -24,7 +24,7 @@ public enum ExtensionActionPolicy {
 
     /// The only places a plan may leave for filling in at run time. Each holds words that stay inside Sidefolk and are shown as the
     /// extension's: a note's text, a reminder's title, a notice, a question. A note search's words are the founder's exception:
-    /// they choose what comes back (D127). Anything parsed as a time, anything that could pick a target or carry words off the Mac, is written out or gets a card each time (T43).
+    /// they choose what comes back (D127). Anything parsed as a time, anything that could pick a target or carry words off the Mac, is written out or gets a card each time (T44).
     static let fillable: [String: Set<String>] = [
         "notes.save": ["text"],
         // The founder's choice, knowing words from elsewhere then choose which notes come back (D127).

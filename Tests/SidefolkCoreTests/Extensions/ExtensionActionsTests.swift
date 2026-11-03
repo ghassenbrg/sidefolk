@@ -2,7 +2,7 @@ import Foundation
 @testable import SidefolkCore
 import Testing
 
-/// An extension using Sidefolk's tools (D110, SECURITY T43): what it can reach, what asks, and what a plan the person read lets through.
+/// An extension using Sidefolk's tools (D110, SECURITY T44): what it can reach, what asks, and what a plan the person read lets through.
 @Suite struct ExtensionActionsTests {
     /// Passes a notice to the host and returns its first reply, so a test can speak the program's side of the protocol.
     static let bridge = """
@@ -401,7 +401,7 @@ import Testing
         #expect(saved.extensions == .ask, "Allow isn't a choice for them, however it got saved")
     }
 
-    // MARK: What a code review found (T43)
+    // MARK: What a code review found (T44)
 
     @Test func writtenMeansTheSameBytes() {
         let two: JSONValue = ["url": "https://example.com/caf\u{e9}"], other: JSONValue = ["url": "https://example.com/cafe\u{301}"]

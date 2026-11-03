@@ -1473,7 +1473,7 @@
       }
     },
     "%@ asks" : {
-      "comment" : "Above a decision card: the companion asks",
+      "comment" : "Above a decision card: the companion asks\nUnder a question; an extension's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -5378,6 +5378,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 已经在那里了"
+          }
+        }
+      }
+    },
+    "%@ is asking to use this, so I check with you each time." : {
+      "comment" : "A permission slip; an extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يطلب %@ استخدام هذا، لذا أسألك في كل مرة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ möchte das nutzen, deshalb frage ich dich jedes Mal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pide usar esto, así que te pregunto cada vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ demande à l’utiliser, je vous demande donc confirmation à chaque fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ chiede di usarlo, quindi ti chiedo conferma ogni volta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がこれを使いたいと求めているため、毎回確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 이것을 사용하려고 해서, 그때마다 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ está pedindo para usar isto, então eu confirmo com você a cada vez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 想使用这个，所以我每次都会先问你。"
           }
         }
       }
@@ -29324,6 +29383,65 @@
         }
       }
     },
+    "A job for your companion uses your AI and its tools, under your own trust settings. What it does is in History." : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تستخدم المهمة المسندة إلى رفيقك ذكاءك الاصطناعي وأدواته، وفق إعدادات الثقة الخاصة بك. وما يفعله يظهر في السجل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Auftrag für deinen Begleiter nutzt deine KI und seine Werkzeuge, nach deinen eigenen Vertrauenseinstellungen. Was er tut, steht im Verlauf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una tarea para tu compañero usa tu IA y sus herramientas, según tus propios ajustes de confianza. Lo que hace queda en Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une tâche confiée à votre compagnon utilise votre IA et ses outils, selon vos propres réglages de confiance. Ce qu’il fait figure dans Historique."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un’operazione per il tuo compagno usa la tua IA e i suoi strumenti, secondo le tue impostazioni di fiducia. Ciò che fa è nella Cronologia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンに任せるタスクは、AIとコンパニオンのツールを、ご自身の信頼設定のもとで使います。何をしたかは履歴に残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언에게 맡기는 작업은 내 AI와 컴패니언의 도구를, 직접 정한 신뢰 설정에 따라 사용해요. 한 일은 기록에 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma tarefa para o seu companheiro usa a sua IA e as ferramentas dele, de acordo com os seus próprios ajustes de confiança. O que ele faz fica em Histórico."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交给你的伙伴的任务会使用你的 AI 和它的工具，遵循你自己的信任设置。它做了什么，都记录在历史记录里。"
+          }
+        }
+      }
+    },
     "A link now points somewhere else on the way to %@, so I stopped looking there." : {
       "localizations" : {
         "ar" : {
@@ -31902,6 +32020,65 @@
         }
       }
     },
+    "Acts for you" : {
+      "comment" : "What an action touches, on a chip: an extension may use tools for the person, without asking",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتصرف نيابةً عنك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handelt für dich"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actúa por ti"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agit pour vous"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agisce per te"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代わりに実行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대신 실행"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Age por você"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替你行动"
+          }
+        }
+      }
+    },
     "Acts on its own. Still asks before high-risk actions and anything a web page, file or extension could have steered." : {
       "localizations" : {
         "ar" : {
@@ -32014,6 +32191,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不经询问直接行动。凡是受网页、文件或扩展操控、可能把你的数据发送出去的操作，仍会先询问。"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "comment" : "A step rail's add button",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추가"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加"
           }
         }
       }
@@ -40252,6 +40488,65 @@
         }
       }
     },
+    "An extension asked: %@" : {
+      "comment" : "A conversation's record: a job an extension handed the companion",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سأل ملحق: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Erweiterung hat gefragt: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una extensión preguntó: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une extension a demandé : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un’estensione ha chiesto: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能が質問しました：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 물었어요: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma extensão perguntou: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个扩展询问：%@"
+          }
+        }
+      }
+    },
     "An extension from a folder: it's installed again only once you've looked at what it can do." : {
       "localizations" : {
         "ar" : {
@@ -43245,6 +43540,65 @@
         }
       }
     },
+    "As before, without asking you:" : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كما كان، دون سؤالك:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie bisher, ohne dich zu fragen:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como antes, sin preguntarte:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comme avant, sans vous demander :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come prima, senza chiederti:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これまでと同じ、確認なしで："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전처럼, 묻지 않고:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como antes, sem perguntar a você:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和以前一样，无需询问你："
+          }
+        }
+      }
+    },
     "As the theme" : {
       "comment" : "Settings › General › Icons in Home: follow the theme",
       "localizations" : {
@@ -46052,6 +46406,197 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "至少 8 个字符。"
+          }
+        }
+      }
+    },
+    "At most %lld actions a day. You can end this in Settings › Add-ons." : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "على الأكثر %lld إجراءات في اليوم. يمكنك إنهاء هذا من الإعدادات › الإضافات."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "على الأكثر %lld إجراءً في اليوم. يمكنك إنهاء هذا من الإعدادات › الإضافات."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "على الأكثر إجراء واحد في اليوم. يمكنك إنهاء هذا من الإعدادات › الإضافات."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "على الأكثر %lld إجراء في اليوم. يمكنك إنهاء هذا من الإعدادات › الإضافات."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "على الأكثر إجراءان في اليوم. يمكنك إنهاء هذا من الإعدادات › الإضافات."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "على الأكثر %lld إجراء في اليوم. يمكنك إنهاء هذا من الإعدادات › الإضافات."
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Höchstens %lld Aktion pro Tag. Du kannst das unter Einstellungen › Add-ons beenden."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Höchstens %lld Aktionen pro Tag. Du kannst das unter Einstellungen › Add-ons beenden."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "At most %lld action a day. You can end this in Settings › Add-ons."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "At most %lld actions a day. You can end this in Settings › Add-ons."
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Como máximo %lld acción al día. Puedes terminarlo en Ajustes › Complementos."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Como máximo %lld acciones al día. Puedes terminarlo en Ajustes › Complementos."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Au plus %lld action par jour. Vous pouvez y mettre fin dans Réglages › Modules."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Au plus %lld actions par jour. Vous pouvez y mettre fin dans Réglages › Modules."
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Al massimo %lld azione al giorno. Puoi interromperlo in Impostazioni › Componenti aggiuntivi."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Al massimo %lld azioni al giorno. Puoi interromperlo in Impostazioni › Componenti aggiuntivi."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "1日に最大%lld回まで。設定 › アドオンで終了できます。"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "하루에 최대 %lld번이에요. 설정 › 애드온에서 끝낼 수 있어요."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "No máximo %lld ação por dia. Você pode encerrar isto em Ajustes › Complementos."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "No máximo %lld ações por dia. Você pode encerrar isto em Ajustes › Complementos."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "每天最多 %lld 次操作。你可以在设置 › 附加组件中结束它。"
+                }
+              }
+            }
           }
         }
       }
@@ -49291,6 +49836,65 @@
         }
       }
     },
+    "Can ask Sidefolk to use its tools and other extensions' tools. It says it uses them %@." : {
+      "comment" : "Install sheet: permissions.act; the author's purpose, “to run the steps you set up”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها أن تطلب من Sidefolk استخدام أدواته وأدوات الإضافات الأخرى. وتقول إنها تستخدمها %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann Sidefolk bitten, seine Werkzeuge und die anderer Erweiterungen zu nutzen. Laut eigener Angabe nutzt sie sie %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede pedirle a Sidefolk que use sus herramientas y las de otras extensiones. Dice que las usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut demander à Sidefolk d’utiliser ses outils et ceux d’autres extensions. Elle dit les utiliser %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può chiedere a Sidefolk di usare i suoi strumenti e quelli di altre estensioni. Dice di usarli %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkに、そのツールやほかの拡張機能のツールを使うよう依頼できます。用途の説明：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에 자신의 도구와 다른 확장 프로그램의 도구를 쓰도록 요청할 수 있어요. 용도 설명: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode pedir ao Sidefolk que use as ferramentas dele e as de outras extensões. Diz que as usa %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以请 Sidefolk 使用它自己的工具和其他扩展的工具。它说明用途为：%@。"
+          }
+        }
+      }
+    },
     "Can ask for your place. It says it uses it %@." : {
       "comment" : "Install sheet: permissions.place; the author's purpose, “to show the weather where you are”",
       "localizations" : {
@@ -50815,6 +51419,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法访问互联网"
+          }
+        }
+      }
+    },
+    "Can't use the internet by itself" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يستطيع استخدام الإنترنت بمفرده"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann das Internet nicht von sich aus nutzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No puede usar internet por sí sola"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne peut pas utiliser Internet par elle-même"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non può usare internet da sola"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単独ではインターネットを使えません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼자서는 인터넷을 쓸 수 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não pode usar a internet sozinha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法自行访问互联网"
           }
         }
       }
@@ -70234,7 +70896,7 @@
       }
     },
     "Done" : {
-      "comment" : "A card on an extension's page: what it is about is done for today",
+      "comment" : "A card on an extension's page: what it is about is done for today\nA step rail row's state, for VoiceOver",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -72058,6 +72720,64 @@
         }
       }
     },
+    "Each use asks you first, unless you read and allowed a plan for exactly that. A plan can search your notes unattended, with words it fills in. Every use is in History." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل استخدام يسألك أولًا، إلا إذا قرأت خطة لهذا بالذات وسمحت بها. يمكن للخطة البحث في ملاحظاتك من دون حضورك، بكلمات تملؤها بنفسها. كل استخدام يظهر في السجل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Nutzung fragt dich zuerst, außer du hast einen Plan genau dafür gelesen und erlaubt. Ein Plan kann deine Notizen unbeaufsichtigt durchsuchen, mit Wörtern, die er selbst einsetzt. Jede Nutzung steht im Verlauf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada uso te pregunta primero, salvo que hayas leído y permitido un plan para eso exacto. Un plan puede buscar en tus notas sin supervisión, con palabras que él mismo completa. Cada uso queda en Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque utilisation vous le demande d’abord, sauf si vous avez lu et autorisé un plan pour cela précisément. Un plan peut chercher dans vos notes sans surveillance, avec des mots qu’il renseigne lui-même. Chaque utilisation figure dans l’Historique."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni uso te lo chiede prima, a meno che tu non abbia letto e consentito un piano proprio per quello. Un piano può cercare nelle tue note senza supervisione, con parole che inserisce da solo. Ogni uso è nella Cronologia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使うたびにまず確認します。ただし、その内容そのものについてのプランを読んで許可した場合は別です。プランは、自分で埋めた言葉を使って、確認なしでメモを検索できます。使用はすべて履歴に残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용할 때마다 먼저 물어봐요. 그 내용에 대한 계획을 읽고 허용한 경우는 예외예요. 계획은 직접 채운 단어로 확인 없이 메모를 검색할 수 있어요. 모든 사용은 기록에 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada uso pergunta a você primeiro, a menos que você tenha lido e permitido um plano para exatamente isso. Um plano pode pesquisar suas notas sem supervisão, com palavras que ele mesmo preenche. Cada uso fica no Histórico."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次使用都会先问你，除非你已读过并允许了恰好针对它的方案。方案可以在无人看管时搜索你的笔记，所用的词由它自己填入。每次使用都记录在历史记录中。"
+          }
+        }
+      }
+    },
     "Edit" : {
       "localizations" : {
         "ar" : {
@@ -73391,6 +74111,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用 %@"
+          }
+        }
+      }
+    },
+    "End" : {
+      "comment" : "Settings › Add-ons: ends an extension's plan",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنهاء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termina"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "종료"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结束"
+          }
+        }
+      }
+    },
+    "End an extension's plan" : {
+      "comment" : "A tool: Settings › Add-ons",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنهاء خطة إحدى الإضافات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Plan einer Erweiterung beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar el plan de una extensión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre fin au plan d’une extension"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termina il piano di un’estensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能のプランを終了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램의 계획 종료"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrar o plano de uma extensão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结束扩展的方案"
+          }
+        }
+      }
+    },
+    "End “%@”" : {
+      "comment" : "History: the person ended an extension's plan",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنهاء «%@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin de “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin de « %@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fine di “%@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」を終了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” 종료"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrar “%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结束“%@”"
           }
         }
       }
@@ -77232,7 +78129,7 @@
       }
     },
     "Failed" : {
-      "extractionState" : "stale",
+      "comment" : "A step rail row's state, for VoiceOver",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -78230,6 +79127,65 @@
         }
       }
     },
+    "Fit to the window" : {
+      "comment" : "A tree of cards on an extension's page: the zoom button that fits it all in",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاءمة النافذة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An Fenster anpassen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustar a la ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuster à la fenêtre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adatta alla finestra"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウに合わせる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우에 맞추기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustar à janela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适合窗口"
+          }
+        }
+      }
+    },
     "Focus" : {
       "comment" : "Attention: only cards that need an answer; whispers wait\nThe companion's state, read by VoiceOver: only what matters gets through",
       "localizations" : {
@@ -78344,6 +79300,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "专注已结束"
+          }
+        }
+      }
+    },
+    "Focus for %lld minutes" : {
+      "comment" : "A tool's row",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التركيز لمدة %lld دقيقة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokus für %lld Minuten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concentración durante %lld minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concentration pendant %lld minutes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concentrazione per %lld minuti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld分間集中する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld분 동안 집중"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foco por %lld minutos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专注 %lld 分钟"
           }
         }
       }
@@ -79401,7 +80416,66 @@
         }
       }
     },
+    "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings, except through a tool an extension marked for them, on a card." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لـClaude Code وCodex والتطبيقات الأخرى المتصلة بـSidefolk. كل ما تفعله يظهر في السجل، ويمكنك التراجع عنه من هناك. لا تصل أبدًا إلى ملفاتك أو أوامرك أو الويب أو الإعدادات، إلا عبر أداة وسمتها إحدى الإضافات لها، على بطاقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für Claude Code, Codex und andere Apps, die mit Sidefolk verbunden sind. Alles, was sie tun, steht im Verlauf, und du kannst es dort rückgängig machen. Sie erreichen nie deine Dateien, Befehle, das Web oder die Einstellungen, außer über ein Werkzeug, das eine Erweiterung für sie freigegeben hat, auf einer Karte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para Claude Code, Codex y otras apps conectadas a Sidefolk. Todo lo que hacen aparece en Historial, y puedes deshacerlo allí. Nunca llegan a tus archivos, comandos, la web ni Ajustes, salvo mediante una herramienta que una extensión marcó para ellas, en una tarjeta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour Claude Code, Codex et les autres apps connectées à Sidefolk. Tout ce qu’elles font apparaît dans l’Historique, où vous pouvez l’annuler. Elles n’accèdent jamais à vos fichiers, aux commandes, au web ni aux Réglages, sauf par un outil qu’une extension a prévu pour elles, sur une carte."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per Claude Code, Codex e le altre app collegate a Sidefolk. Tutto ciò che fanno compare nella Cronologia, e lì puoi annullarlo. Non raggiungono mai i tuoi file, i comandi, il web o le Impostazioni, se non tramite uno strumento che un’estensione ha indicato per loro, su una scheda."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude CodeやCodexなど、Sidefolkにつないだアプリ向けです。実行したことはすべて履歴に表示され、そこで取り消せます。ファイル、コマンド、Web、設定には届きません。拡張機能がアプリ向けに示したツールだけは、カードを通じて使えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code, Codex 등 Sidefolk에 연결된 앱을 위한 거예요. 이들이 하는 일은 모두 기록에 보이고, 거기서 되돌릴 수 있어요. 파일, 명령, 웹, 설정에는 닿지 못해요. 확장 프로그램이 이들을 위해 표시한 도구만 카드를 통해 쓸 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para o Claude Code, o Codex e outros apps conectados ao Sidefolk. Tudo o que fazem aparece no Histórico, e você pode desfazer por lá. Eles nunca alcançam seus arquivos, comandos, a web ou os Ajustes, exceto por uma ferramenta que uma extensão marcou para eles, em um cartão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "供 Claude Code、Codex 和其他连接到 Sidefolk 的 App 使用。它们做的每件事都会显示在历史记录中，你可以在那里撤销。它们不会接触你的文件、命令、网页或设置，除非通过扩展为它们标记的工具，并在卡片上征得同意。"
+          }
+        }
+      }
+    },
     "For Claude Code, Codex and other apps connected to Sidefolk. Everything they do shows in History, and you can undo it there. They never reach your files, commands, the web or Settings." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85416,6 +86490,65 @@
         }
       }
     },
+    "Hears when things happen in Sidefolk: a reminder fires, a note is saved, a meeting is about to start, an agent finishes. It says it uses that %@." : {
+      "comment" : "Install sheet: permissions.events; the author's purpose, “to start what you set up”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسمع ما يحدث في Sidefolk: يُطلق تذكير، أو تُحفظ ملاحظة، أو يوشك اجتماع على البدء، أو ينتهي وكيل. يقول إنه يستخدم ذلك %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hört mit, wenn in Sidefolk etwas passiert: Eine Erinnerung löst aus, eine Notiz wird gespeichert, ein Meeting beginnt gleich, ein Agent wird fertig. Sie nutzt das nach eigener Angabe, %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se entera de lo que ocurre en Sidefolk: salta un recordatorio, se guarda una nota, está por empezar una reunión, termina un agente. Dice que lo usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entend ce qui se passe dans Sidefolk : un rappel se déclenche, une note est enregistrée, une réunion va commencer, un agent termine. Elle dit s’en servir %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente cosa succede in Sidefolk: scatta un promemoria, viene salvata una nota, sta per iniziare una riunione, un agente finisce. Dice di usarlo %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkで起きたことを受け取ります：リマインダーが鳴る、メモが保存される、会議がまもなく始まる、エージェントが終わる。%@使うと言っています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에서 일어나는 일을 알 수 있어요: 미리 알림이 울리고, 메모가 저장되고, 회의가 곧 시작되고, 에이전트가 끝나는 때예요. %@ 사용한다고 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fica sabendo o que acontece no Sidefolk: um lembrete dispara, uma nota é salva, uma reunião está para começar, um agente termina. Diz usar isso %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "能得知 Sidefolk 里发生的事：提醒触发、笔记保存、会议即将开始、智能体完成。它表示将其%@。"
+          }
+        }
+      }
+    },
     "Helpers at work" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -85937,6 +87070,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从边栏中隐藏"
+          }
+        }
+      }
+    },
+    "Hide what it gave" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إخفاء النتيجة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergebnis ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar el resultado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le résultat"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nascondi il risultato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結果を隠す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "결과 숨기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar o resultado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏结果"
           }
         }
       }
@@ -100117,6 +101308,64 @@
         }
       }
     },
+    "It can use Sidefolk's tools and reach beyond this Mac by itself, so what they return could leave it. It gets no plans: every use asks you." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنها استخدام أدوات Sidefolk والوصول إلى ما وراء جهاز Mac هذا بنفسها، لذا قد يخرج منه ما تعيده هذه الأدوات. لا تحصل على خطط: كل استخدام يسألك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie kann die Werkzeuge von Sidefolk nutzen und von sich aus über diesen Mac hinausreichen, deshalb könnte das, was diese zurückgeben, ihn verlassen. Sie bekommt keine Pläne: Jede Nutzung fragt dich."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede usar las herramientas de Sidefolk y salir de este Mac por sí sola, así que lo que devuelvan podría salir de él. No recibe planes: cada uso te pregunta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle peut utiliser les outils de Sidefolk et sortir de ce Mac par elle-même : ce qu’ils renvoient pourrait donc en sortir. Elle ne reçoit aucun plan : chaque utilisation vous le demande."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può usare gli strumenti di Sidefolk e uscire da questo Mac da sola, quindi ciò che restituiscono potrebbe uscirne. Non riceve piani: ogni uso te lo chiede."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkのツールを使え、自分でこのMacの外へも届くため、ツールの返す内容が外に出る可能性があります。プランは渡されず、使うたびに確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 도구를 쓰고 스스로 이 Mac 밖으로도 닿을 수 있어서, 도구가 돌려주는 내용이 밖으로 나갈 수 있어요. 계획은 받지 않아요. 쓸 때마다 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela pode usar as ferramentas do Sidefolk e ir além deste Mac por conta própria, então o que elas devolvem pode sair daqui. Ela não recebe planos: cada uso pergunta a você."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它可以使用 Sidefolk 的工具，也能自行连到这台 Mac 之外，所以这些工具返回的内容可能被带出去。它不会获得方案：每次使用都会问你。"
+          }
+        }
+      }
+    },
     "It can use the internet and run %@, so it could download and run other code." : {
       "localizations" : {
         "ar" : {
@@ -100648,6 +101897,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只会发送给 %@。"
+          }
+        }
+      }
+    },
+    "It hears their titles too, without a card each time, and it can reach beyond this Mac, so it could send them on." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسمع عناوينها أيضًا، من دون بطاقة في كل مرة. ويستطيع الوصول إلى ما وراء هذا الـ Mac، فقد يرسلها إلى الخارج."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie hört auch deren Titel, ohne jedes Mal eine Karte, und sie kann über diesen Mac hinaus, also könnte sie sie weiterschicken."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "También se entera de sus títulos, sin una tarjeta cada vez, y puede llegar más allá de este Mac, así que podría enviarlos a otro sitio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle entend aussi leurs titres, sans carte à chaque fois, et elle peut sortir de ce Mac, donc elle pourrait les transmettre ailleurs."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente anche i loro titoli, senza una scheda ogni volta, e può raggiungere cose fuori da questo Mac, quindi potrebbe inoltrarli."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのタイトルも、毎回カードで確認せずに受け取ります。このMacの外にも接続できるので、外へ送ってしまうこともあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 제목도 카드를 매번 띄우지 않고 알 수 있어요. 이 Mac 밖으로도 연결할 수 있어서, 제목을 밖으로 보낼 수도 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela também fica sabendo os títulos deles, sem um cartão a cada vez, e consegue chegar além deste Mac, então poderia enviá-los adiante."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它也能得知它们的标题，无需每次弹出卡片。它能连到这台 Mac 之外，所以可能把标题发送出去。"
+          }
+        }
+      }
+    },
+    "It hears their titles too, without a card each time. It can't reach the internet by itself; anything it passes on goes through Sidefolk." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسمع عناوينها أيضًا، من دون بطاقة في كل مرة. لا يستطيع الوصول إلى الإنترنت بنفسه؛ وكل ما ينقله يمر عبر Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie hört auch deren Titel, ohne jedes Mal eine Karte. Sie kommt nicht von selbst ins Internet; alles, was sie weitergibt, läuft über Sidefolk."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "También se entera de sus títulos, sin una tarjeta cada vez. No puede llegar a internet por sí sola; todo lo que transmite pasa por Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle entend aussi leurs titres, sans carte à chaque fois. Elle ne peut pas accéder seule à internet ; tout ce qu’elle transmet passe par Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sente anche i loro titoli, senza una scheda ogni volta. Non può raggiungere internet da sola; tutto ciò che inoltra passa da Sidefolk."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのタイトルも、毎回カードで確認せずに受け取ります。自分ではインターネットに接続できません。外へ渡すものはすべてSidefolkを通ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 제목도 카드를 매번 띄우지 않고 알 수 있어요. 스스로 인터넷에 접근할 수 없고, 전달하는 모든 것은 Sidefolk를 거쳐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela também fica sabendo os títulos deles, sem um cartão a cada vez. Ela não consegue acessar a internet sozinha; tudo o que ela repassa vai pelo Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它也能得知它们的标题，无需每次弹出卡片。它无法自行联网；它转交出去的一切都会经过 Sidefolk。"
           }
         }
       }
@@ -102498,6 +103863,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它将获得你所在的城市和地区、精确到约一公里的坐标以及你的时区，并会在这些信息变化时得知。如果它能访问互联网，就可能把这些信息发送出去。你可以在设置 › 附加组件中收回这项权限。"
+          }
+        }
+      }
+    },
+    "It will still ask you each time:" : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ستسألك مع ذلك في كل مرة:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie fragt dich trotzdem jedes Mal:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te seguirá preguntando cada vez:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle vous demandera quand même à chaque fois :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te lo chiederà comunque ogni volta:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "それでも毎回確認するもの："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그래도 매번 물어봐요:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela ainda vai perguntar a você a cada vez:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍会每次都问你："
           }
         }
       }
@@ -107635,6 +109059,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "让你的智能体联系 %@"
+          }
+        }
+      }
+    },
+    "Let your companion do a job" : {
+      "comment" : "A tool: hands the companion a whole job to do with its tools",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح لرفيقك بإنجاز مهمة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Begleiter einen Auftrag erledigen lassen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar que tu compañero haga una tarea"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confier une tâche à votre compagnon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia che il tuo compagno svolga un’operazione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンにタスクを任せる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언에게 작업 맡기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar seu companheiro fazer uma tarefa"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让你的伙伴完成一项任务"
+          }
+        }
+      }
+    },
+    "Let your companion: %@" : {
+      "comment" : "A tool's row: “Let your companion: tidy my Downloads”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دع رفيقك يتولى: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Begleiter soll: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar que tu compañero se encargue: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laisser votre compagnon : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lascia fare al tuo compagno: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンに任せる：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴패니언에게 맡기기: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar seu companheiro cuidar disso: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交给你的伙伴：%@"
           }
         }
       }
@@ -113822,7 +115364,7 @@
       }
     },
     "More" : {
-      "comment" : "The Pocket's ⋯ menu: Settings, updates, About, Quit",
+      "comment" : "A card on an extension's page: its menu\nThe Pocket's ⋯ menu: Settings, updates, About, Quit",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -115632,6 +117174,65 @@
         }
       }
     },
+    "Move down" : {
+      "comment" : "A row or card on an extension's page: its menu\nA step rail row's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نقل لأسفل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach unten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bajar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descendre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta giù"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下へ移動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래로 이동"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover para baixo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下移"
+          }
+        }
+      }
+    },
     "Move files" : {
       "localizations" : {
         "ar" : {
@@ -116092,6 +117693,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移到废纸篓…"
+          }
+        }
+      }
+    },
+    "Move up" : {
+      "comment" : "A row or card on an extension's page: its menu\nA step rail row's menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نقل لأعلى"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach oben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monter"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta su"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上へ移動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위로 이동"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover para cima"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上移"
           }
         }
       }
@@ -120066,6 +121726,65 @@
         }
       }
     },
+    "New, without asking you:" : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جديد، دون سؤالك:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu, ohne dich zu fragen:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo, sin preguntarte:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau, sans vous demander :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuovo, senza chiederti:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しく、確認なしで："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로 추가, 묻지 않고:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo, sem perguntar a você:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增，无需询问你："
+          }
+        }
+      }
+    },
     "Newer versions waiting, once they've waited a day, and updates to look at." : {
       "comment" : "Settings › Attention › Add-on updates",
       "localizations" : {
@@ -120650,6 +122369,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不需要 API 密钥。该命令自带的工具会被关闭：它只能通过 Sidefolk 的工具行事。"
+          }
+        }
+      }
+    },
+    "No access of its own to your files or the internet" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا وصول خاصًا بها إلى ملفاتك أو الإنترنت"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein eigener Zugriff auf deine Dateien oder das Internet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso propio a tus archivos ni a internet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun accès propre à vos fichiers ni à Internet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun accesso proprio ai tuoi file o a internet"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルやインターネットへの独自のアクセスはありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일이나 인터넷에 직접 접근할 수 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem acesso próprio aos seus arquivos nem à internet"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有自己访问你的文件或互联网的权限"
           }
         }
       }
@@ -124157,6 +125934,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "尚未读取"
+          }
+        }
+      }
+    },
+    "Not run" : {
+      "comment" : "A step rail row's state, for VoiceOver",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُنفَّذ"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht ausgeführt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No ejecutado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non exécutée"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non eseguito"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未実行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실행 안 됨"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não executado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未运行"
           }
         }
       }
@@ -132195,6 +134031,64 @@
         }
       }
     },
+    "Only tools an extension marks for other agents. A card asks you each time." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأدوات التي تحددها إضافة للوكلاء الآخرين فقط. تسألك بطاقة في كل مرة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Werkzeuge, die eine Erweiterung für andere Agenten freigibt. Eine Karte fragt dich jedes Mal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo herramientas que una extensión marca para otros agentes. Una tarjeta te pregunta cada vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement les outils qu’une extension réserve à d’autres agents. Une carte vous demande à chaque fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo gli strumenti che un’estensione indica per altri agenti. Una scheda te lo chiede ogni volta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能がほかのエージェント向けに示したツールだけ。使うたびにカードで確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 다른 에이전트용으로 표시한 도구만 해당돼요. 카드로 매번 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só ferramentas que uma extensão marca para outros agentes. Um cartão pergunta a você a cada vez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅限扩展为其他智能体标记的工具。每次都会用卡片问你。"
+          }
+        }
+      }
+    },
     "Only urgent things until %@" : {
       "comment" : "The companion's nook while Quiet is on",
       "localizations" : {
@@ -135113,7 +137007,7 @@
       }
     },
     "Open to everything" : {
-      "comment" : "The sidebar's foot: everything may reach the person",
+      "comment" : "A tool's row: Focus and Quiet end\nThe sidebar's foot: everything may reach the person",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -142322,6 +144216,65 @@
         }
       }
     },
+    "Puts this value in the field" : {
+      "comment" : "VoiceOver: a chip beside a field",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يضع هذه القيمة في الحقل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt diesen Wert ins Feld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pone este valor en el campo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place cette valeur dans le champ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserisce questo valore nel campo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この値をフィールドに入れます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 값을 입력란에 넣어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coloca este valor no campo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把这个值填入字段"
+          }
+        }
+      }
+    },
     "Putting it in place…" : {
       "localizations" : {
         "ar" : {
@@ -142671,6 +144624,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安静模式已结束"
+          }
+        }
+      }
+    },
+    "Quiet for %lld minutes" : {
+      "comment" : "A tool's row",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الهدوء لمدة %lld دقيقة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhemodus für %lld Minuten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silencio durante %lld minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discret pendant %lld minutes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silenzio per %lld minuti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld分間静かにする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld분 동안 조용한 모드"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silêncio por %lld minutos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安静 %lld 分钟"
           }
         }
       }
@@ -144079,6 +146091,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "因为“完全访问”已开启，未经询问就运行了。"
+          }
+        }
+      }
+    },
+    "Ran without asking because it fit a plan you read and allowed." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُفّذ دون سؤال لأنه يطابق خطة قرأتها وسمحت بها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lief ohne Nachfrage, weil es zu einem Plan passte, den du gelesen und erlaubt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ejecutó sin preguntar porque encajaba con un plan que leíste y permitiste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuté sans demander, car cela correspondait à un plan que vous avez lu et autorisé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseguito senza chiedere perché rientrava in un piano che hai letto e consentito."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたが読んで許可したプランに当てはまるため、確認なしで実行されました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽고 허용한 계획에 맞아서 묻지 않고 실행했어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executado sem perguntar porque se encaixava em um plano que você leu e permitiu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需询问就运行了，因为它符合你读过并允许的方案。"
           }
         }
       }
@@ -157006,6 +159076,65 @@
         }
       }
     },
+    "Run %@ without asking you" : {
+      "comment" : "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل %@ دون أن يسألك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ausführen, ohne dich zu fragen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutar %@ sin preguntarte"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuter %@ sans vous demander"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegui %@ senza chiederti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認なしで%@を実行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "묻지 않고 %@ 실행"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executar %@ sem perguntar a você"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再询问你，直接运行 %@"
+          }
+        }
+      }
+    },
     "Run Quietly" : {
       "localizations" : {
         "ar" : {
@@ -157530,6 +159659,7 @@
       }
     },
     "Running" : {
+      "comment" : "A step rail row's state, for VoiceOver",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -158312,6 +160442,197 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在运行，但还没有模型。请获取一个能使用工具的模型："
+          }
+        }
+      }
+    },
+    "Runs %lld actions without asking. %@" : {
+      "comment" : "Settings › Add-ons: an extension's plan; a count, then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينفّذ %1$lld إجراءات دون سؤال. %2$@"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينفّذ %1$lld إجراءً دون سؤال. %2$@"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينفّذ إجراءً واحدًا دون سؤال. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينفّذ %1$lld إجراء دون سؤال. %2$@"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينفّذ إجراءين دون سؤال. %2$@"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينفّذ %1$lld إجراء دون سؤال. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Führt %1$lld Aktion ohne Nachfrage aus. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Führt %1$lld Aktionen ohne Nachfrage aus. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Runs %1$lld action without asking. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Runs %1$lld actions without asking. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ejecuta %1$lld acción sin preguntar. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ejecuta %1$lld acciones sin preguntar. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Exécute %1$lld action sans demander. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Exécute %1$lld actions sans demander. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Esegue %1$lld azione senza chiedere. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Esegue %1$lld azioni senza chiedere. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "確認なしで%1$lld件の操作を実行します。%2$@"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "묻지 않고 동작 %1$lld개를 실행해요. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Executa %1$lld ação sem perguntar. %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Executa %1$lld ações sem perguntar. %2$@"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "无需询问即可运行 %1$lld 次操作。%2$@"
+                }
+              }
+            }
           }
         }
       }
@@ -162533,6 +164854,64 @@
         }
       }
     },
+    "See what it gave" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض النتيجة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergebnis ansehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver el resultado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir le résultat"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedi il risultato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結果を見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "결과 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver o resultado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看结果"
+          }
+        }
+      }
+    },
     "Select All" : {
       "localizations" : {
         "ar" : {
@@ -163238,6 +165617,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设定"
+          }
+        }
+      }
+    },
+    "Set Focus or Quiet" : {
+      "comment" : "A tool: how much may reach the person right now",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ضبط التركيز أو الهدوء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokus oder Ruhemodus einstellen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustar Concentración o Silencio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Régler Concentration ou Discret"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imposta Concentrazione o Silenzio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "集中または静かを設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "집중 또는 조용한 모드 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir Foco ou Silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置专注或安静"
           }
         }
       }
@@ -174105,7 +176543,7 @@
       }
     },
     "Skipped" : {
-      "comment" : "Above a decision card: a step nobody answered in time",
+      "comment" : "A step rail row's state, for VoiceOver\nAbove a decision card: a step nobody answered in time",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -197023,6 +199461,64 @@
         }
       }
     },
+    "There's no such plan." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد خطة كهذه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesen Plan gibt es nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No existe ese plan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce plan n’existe pas."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non esiste nessun piano così."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのようなプランはありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그런 계획은 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esse plano não existe."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有这个方案。"
+          }
+        }
+      }
+    },
     "There's no such setting." : {
       "localizations" : {
         "ar" : {
@@ -199354,6 +201850,197 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它可能会根据读取的内容行动，所以我先问你。"
+          }
+        }
+      }
+    },
+    "This ends by itself in %lld minutes." : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتهي هذا من تلقاء نفسه بعد %lld دقائق."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتهي هذا من تلقاء نفسه بعد %lld دقيقة."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتهي هذا من تلقاء نفسه بعد دقيقة واحدة."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتهي هذا من تلقاء نفسه بعد %lld دقيقة."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتهي هذا من تلقاء نفسه بعد دقيقتين."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ينتهي هذا من تلقاء نفسه بعد %lld دقيقة."
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Das endet von selbst in %lld Minute."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Das endet von selbst in %lld Minuten."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This ends by itself in %lld minute."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This ends by itself in %lld minutes."
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Esto termina solo en %lld minuto."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Esto termina solo en %lld minutos."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fin automatique dans %lld minute."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fin automatique dans %lld minutes."
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Termina da solo tra %lld minuto."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Termina da solo tra %lld minuti."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld分後に自動で終了します。"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld분 뒤에 저절로 끝나요."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Isto termina sozinho em %lld minuto."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Isto termina sozinho em %lld minutos."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "它会在 %lld 分钟后自动结束。"
+                }
+              }
+            }
           }
         }
       }
@@ -210983,6 +213670,64 @@
         }
       }
     },
+    "Use tools extensions offer them" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام الأدوات التي تقدمها الإضافات لها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkzeuge nutzen, die Erweiterungen ihnen anbieten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar herramientas que les ofrecen las extensiones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser les outils que des extensions leur proposent"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usare gli strumenti che le estensioni offrono loro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能が提供するツールを使う"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 제공하는 도구 사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar ferramentas que as extensões oferecem a eles"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用扩展提供给它们的工具"
+          }
+        }
+      }
+    },
     "Use “remember” for facts and preferences." : {
       "localizations" : {
         "ar" : {
@@ -212568,6 +215313,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳过或停止前的等待时间"
+          }
+        }
+      }
+    },
+    "Waiting" : {
+      "comment" : "A step rail row's state, for VoiceOver",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في الانتظار"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En espera"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In attesa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待機中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대기 중"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待中"
           }
         }
       }
@@ -217722,6 +220526,65 @@
         }
       }
     },
+    "What these return goes to %@, which can't reach the internet by itself." : {
+      "comment" : "A plan's card; the extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما تعيده هذه يذهب إلى %@، وهي لا تستطيع الوصول إلى الإنترنت بنفسها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was diese zurückgeben, geht an die Erweiterung %@, die nicht von sich aus ins Internet kommt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que devuelven va a %@, que no puede llegar a internet por sí sola."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qu’ils renvoient est transmis à %@, extension qui ne peut pas accéder à Internet par elle-même."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciò che restituiscono va all’estensione %@, che non può raggiungere internet da sola."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これらが返す内容は、単独ではインターネットに届かない%@に渡されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이들이 돌려주는 내용은 혼자서는 인터넷에 접근할 수 없는 %@(으)로 가요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que elas devolvem vai para a extensão %@, que não consegue acessar a internet sozinha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些工具返回的内容会交给 %@，它无法自行访问互联网。"
+          }
+        }
+      }
+    },
     "What they may do once connected is in Trust." : {
       "comment" : "Settings › Connections: a pointer to Trust › What other agents may do",
       "localizations" : {
@@ -221510,6 +224373,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不使用 AI"
+          }
+        }
+      }
+    },
+    "Without asking you, it will:" : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دون سؤالك، ستفعل:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne dich zu fragen, wird sie:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin preguntarte, hará esto:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans vous demander, elle va :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza chiederti, farà questo:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認なしで、次のことをします："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "묻지 않고 이렇게 해요:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem perguntar a você, ela vai:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需询问你，它会："
           }
         }
       }
@@ -227180,6 +230102,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "压缩诊断信息失败。"
+          }
+        }
+      }
+    },
+    "Zoom in" : {
+      "comment" : "A tree of cards on an extension's page",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تكبير"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrößern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ampliar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom avant"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingrandisci"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡大"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확대"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ampliar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大"
+          }
+        }
+      }
+    },
+    "Zoom out" : {
+      "comment" : "A tree of cards on an extension's page",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصغير"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verkleinern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom arrière"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riduci"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "축소"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduzir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缩小"
           }
         }
       }
@@ -233953,6 +236993,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "失败"
+          }
+        }
+      }
+    },
+    "filled in when it runs" : {
+      "comment" : "A plan's card: a value the extension writes at run time",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُملأ عند التشغيل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "beim Ausführen eingesetzt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "se rellena al ejecutarse"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rempli à l’exécution"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "compilato durante l’esecuzione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実行時に入力される"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실행할 때 채워짐"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "preenchido ao executar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行时填入"
           }
         }
       }

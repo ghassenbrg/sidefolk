@@ -86,7 +86,7 @@ public struct PermissionEngine: Sendable {
         case .low where !carriesTaint && !askEachTime:
             return .allow(.auto)
         case .low, .medium:
-            // A call that fits a plan the person read in full (D110, T43): its tool and values are what they read, and the host
+            // A call that fits a plan the person read in full (D110, T44): its tool and values are what they read, and the host
             // checked where it goes. Not when they asked to be asked every time.
             if standing, honoursGrants, scope.text == nil { return .allow(.plan) }
             // Grants hold in a clean turn. After outside content was read, a grant the person gave in a clean turn

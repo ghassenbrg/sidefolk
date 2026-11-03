@@ -77,7 +77,7 @@ struct ApprovalDetails: View {
 }
 
 /// Text the person has to read in full (a plan, a skill's instructions), laid out by how it's written: a paragraph that ends in a colon and has "•" lines under it reads as a heading
-/// and its rows. All of it, in order, nothing folded (T43): only the look changes.
+/// and its rows. All of it, in order, nothing folded (T44): only the look changes.
 private struct ReadInFull: View {
     var text: String
 

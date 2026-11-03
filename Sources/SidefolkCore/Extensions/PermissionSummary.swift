@@ -236,7 +236,7 @@ public struct PermissionSummary: Sendable, Hashable {
                               note: String(localized: "Off until you say yes. They follow your Focus, Quiet and Attention settings. A switch in Settings › Add-ons takes it back.")))
         }
         if let act = p.act {
-            // Sidefolk's guards, all enforced by the host: the closed list, a card each time, plans read in full, History (D110, T43).
+            // Sidefolk's guards, all enforced by the host: the closed list, a card each time, plans read in full, History (D110, T44).
             lines.append(Line(kind: .act, text: String(localized: "Can ask Sidefolk to use its tools and other extensions' tools. It says it uses them \(act.purpose).",
                                                        comment: "Install sheet: permissions.act; the author's purpose, “to run the steps you set up”"),
                               caution: true,

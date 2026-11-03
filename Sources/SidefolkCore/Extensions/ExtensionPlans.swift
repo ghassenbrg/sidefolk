@@ -1,7 +1,7 @@
 import Foundation
 import Synchronization
 
-/// What an extension may do without a card, because the person read it (D110, SECURITY T43): its tools and their exact values, and
+/// What an extension may do without a card, because the person read it (D110, SECURITY T44): its tools and their exact values, and
 /// the few words left to fill in. Kept with its preferences, gone with it.
 public struct ExtensionPlan: Codable, Sendable, Hashable {
     public struct Step: Codable, Sendable, Hashable {

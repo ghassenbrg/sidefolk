@@ -1,6 +1,6 @@
 import Foundation
 
-/// Text a card asks the person to read in full, in the parts it's laid out by: only its look changes, and every line of it is in a part (T43).
+/// Text a card asks the person to read in full, in the parts it's laid out by: only its look changes, and every line of it is in a part (T44).
 public enum ApprovalText {
     public struct Part: Sendable, Equatable {
         /// A paragraph's first line, when the rest of it is "•" lines.
