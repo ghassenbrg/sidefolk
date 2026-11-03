@@ -89,12 +89,22 @@ struct HistoryRecentTool: Tool {
         return safe(item.title)
     }
 
+    /// Words with any address cut to where it goes: its sign-in, path, query and fragment can each hold a secret, and a line
+    /// doesn't need them.
     private static func safe(_ words: String) -> String {
-        // In an address only: a sign-in, a query, a fragment. A question mark in plain words stays.
-        let address = Redactor.redact(words)
-            .replacing(/([a-zA-Z][a-zA-Z0-9+.-]*:\/\/)[^\/\s”"]*@/, with: { $0.output.1 })
-            .replacing(/([a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s”"?#]*)[?#][^\s”"]*/, with: { $0.output.1 })
-        return ToolFormat.oneLine(address.displaySafe, 120)
+        let shown = Redactor.redact(words).displaySafe.split(separator: " ").map { word -> String in
+            let token = String(word)
+            if let scheme = token.range(of: "://") {
+                let after = token[scheme.upperBound...]
+                let host = (after.lastIndex(of: "@").map { after[after.index(after: $0)...] } ?? after).prefix { !"/?#\"”".contains($0) }
+                return String(token[..<scheme.upperBound]) + String(host)
+            }
+            if let colon = token.firstIndex(of: ":"), ["mailto", "magnet", "tel", "sms", "data", "file"].contains(token[..<colon].lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "“\"("))) {
+                return String(token[...colon]) + "…"
+            }
+            return token
+        }
+        return ToolFormat.oneLine(shown.joined(separator: " "), 120)
     }
 
     private static func since(_ text: String?, now: Date, calendar: Calendar) throws -> Date {
