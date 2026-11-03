@@ -33,7 +33,8 @@ extension ExtensionHost {
                                     detail: w?.drops[d.id]?.description ?? d.detail, symbol: d.symbol, kinds: d.kinds, patterns: d.patterns,
                                     tool: ExtensionTool.registryName(short: short, tool: d.tool), input: d.input, menu: d.menu,
                                     pathParameters: Set((m.tools[d.tool]?.paths.keys.map { $0 } ?? []) + (m.tools[d.tool]?.fileLists.keys.map { $0 } ?? [])),
-                                    canSendAway: rt.pin.permissions.map { $0.network || $0.ai != nil || $0.place != nil } ?? false)
+                                    canSendAway: rt.pin.permissions.map { $0.network || $0.ai != nil || $0.place != nil || $0.media } ?? false,
+                                    canSendAwayOnlyThroughMedia: rt.pin.permissions.map { $0.media && !$0.network && $0.ai == nil && $0.place == nil } ?? false)
             }
             settings += settingRows(rt)
         }

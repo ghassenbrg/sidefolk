@@ -578,6 +578,8 @@ enum UISnapshots {
             offerActions.drops = offers(network: false)
             let networkActions = FixtureAskActions()
             networkActions.drops = offers(network: true)
+            let mediaActions = FixtureAskActions()
+            mediaActions.drops = offers(network: false).map { var offer = $0; offer.canSendAway = true; offer.canSendAwayOnlyThroughMedia = true; return offer }
             // Today's tab with nothing in it (D84).
             let calmDay = AskModel()
             calmDay.actions = actions
@@ -595,6 +597,7 @@ enum UISnapshots {
                           ("desktop-ask-drop-folder", dropped(.file(FileManager.default.temporaryDirectory), "Downloads", actions)),
                           ("desktop-ask-drop-offer", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", offerActions)),
                           ("desktop-ask-drop-offer-network", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", networkActions)),
+                          ("desktop-ask-drop-offer-media", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", mediaActions)),
                           ("desktop-ask-drop-offer-many", droppedMany(offerActions)),
                           ("desktop-ask-drop-text", dropped(.text, "“Ask Priya about the venue deposit”", actions,
                                                             text: "Ask Priya about the venue deposit")),

@@ -207,8 +207,11 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     public var menu: [ExtensionManifest.DropMeta.MenuItem]
     /// Every parameter of the tool that names a file: only what Sidefolk puts there for a drop may name one (D141).
     public var pathParameters: Set<String>
-    /// What it reads could leave the Mac: it has the internet, or can have your AI or a place search carry its words. The card says so.
+    /// What it reads could leave the Mac: it has the internet, can have your AI or a place search carry its words, or uses `media`,
+    /// whose certificate service can fetch from an address (SandboxProfile.mediaRules). The card says so.
     public var canSendAway: Bool
+    /// That last way is its only one, so the card doesn't say it can use the internet.
+    public var canSendAwayOnlyThroughMedia: Bool
 
     public var id: String { "\(extensionId)/\(key)" }
 
@@ -217,10 +220,12 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
 
     public init(extensionId: String, extensionName: String, key: String, title: String, detail: String? = nil, symbol: String? = nil,
                 kinds: [ExtensionManifest.DropMeta.Kind], patterns: [String] = [], tool: String, input: [String: JSONValue],
-                menu: [ExtensionManifest.DropMeta.MenuItem] = [], pathParameters: Set<String> = [], canSendAway: Bool = false) {
+                menu: [ExtensionManifest.DropMeta.MenuItem] = [], pathParameters: Set<String> = [], canSendAway: Bool = false,
+                canSendAwayOnlyThroughMedia: Bool = false) {
         self.menu = menu
         self.pathParameters = pathParameters
         self.canSendAway = canSendAway
+        self.canSendAwayOnlyThroughMedia = canSendAwayOnlyThroughMedia
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.key = key

@@ -53,6 +53,27 @@ import Testing
         return try? JSONDecoder().decode(JSONValue.self, from: Data(line.utf8))
     }
 
+    /// What the drop card may promise comes from the permissions, not from the extension.
+    @Test func theCardKnowsHowAFileCouldLeave() async throws {
+        try await card([:], canSendAway: false, onlyThroughMedia: false)
+        try await card(["media": true], canSendAway: true, onlyThroughMedia: true)
+        try await card(["network": true], canSendAway: true, onlyThroughMedia: false)
+        try await card(["media": true, "network": true], canSendAway: true, onlyThroughMedia: false)
+    }
+
+    private func card(_ permissions: JSONValue, canSendAway: Bool, onlyThroughMedia: Bool) async throws {
+        let h = try HostEnv()
+        let tools: JSONValue = ["make": ["risk": "low", "file_lists": ["files": "read"]]]
+        let drops: JSONValue = [["id": "make", "title": "Make", "kinds": ["file"], "tool": "make", "input": ["files": "{values}"]]]
+        let source = try h.source("lister", manifest: ExtFixtures.manifest(id: "dev.test.lister", tools: tools, permissions: permissions, extra: ["drops": drops]),
+                                  files: ["server.py": Self.program])
+        _ = try await h.host.install(from: source)
+        let offer = try #require(h.host.shelf.drops.first)
+        #expect(offer.canSendAway == canSendAway)
+        #expect(offer.canSendAwayOnlyThroughMedia == onlyThroughMedia)
+        await h.host.shutdown()
+    }
+
     @Test func eachDroppedFileIsReadAndGetsItsResultBesideIt() async throws {
         let (h, folder) = try await installed()
         let files = ["a", "b", "c"].map { "\(folder)/\($0).txt" }

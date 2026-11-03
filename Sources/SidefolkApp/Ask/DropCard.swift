@@ -269,11 +269,19 @@ private struct FileOfferCard: View {
                 .font(.system(size: 10, weight: .semibold)).padding(.top, 2)
                 .foregroundStyle(offer.canSendAway ? Theme.warning : Theme.inkFaint)
             Group {
-                switch (many, offer.canSendAway) {
-                case (false, false): Text("\(who) reads this file only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name")
-                case (true, false): Text("\(who) reads these \(count) files only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
-                case (false, true): Text("\(who) reads this file only if you choose below. It can use the internet, so it could send the file anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name")
-                case (true, true): Text("\(who) reads these \(count) files only if you choose below. It can use the internet, so it could send them anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
+                if offer.canSendAwayOnlyThroughMedia {
+                    if many {
+                        Text("\(who) reads these \(count) files only if you choose below. It has no internet access of its own, but a Mac service it uses could carry them out.", comment: "The drop card, Sidefolk's own words: an extension's name and how many files")
+                    } else {
+                        Text("\(who) reads this file only if you choose below. It has no internet access of its own, but a Mac service it uses could carry the file out.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                    }
+                } else {
+                    switch (many, offer.canSendAway) {
+                    case (false, false): Text("\(who) reads this file only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                    case (true, false): Text("\(who) reads these \(count) files only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
+                    case (false, true): Text("\(who) reads this file only if you choose below. It can use the internet, so it could send the file anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                    case (true, true): Text("\(who) reads these \(count) files only if you choose below. It can use the internet, so it could send them anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
+                    }
                 }
             }
             .font(Theme.Font.caption).foregroundStyle(offer.canSendAway ? Theme.ink : Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
