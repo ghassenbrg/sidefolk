@@ -7,6 +7,16 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-04: Three themes move from the app to the gallery (D130)
+
+On the founder's go, relayed steps from the coordinator: snapshot 1177 ships Sidefolk and Harbor only, and Paper Garden, Night Studio and Marshmallow 2.0.0-snapshot.1 are published from add-ons `97c55b5`, needing 1177. Whoever wears one keeps the setting and gets it back with no click while Update add-ons automatically is on (`fetchThemeThatMoved`, D70), at launch and after each add-on look. Before the release, an independent review found the fetch ran only at launch, which would have left anyone updating before the publish on the default until they quit; it now tries after each look too. The audit session passed the fixed commit on a code read.
+
+Add-ons first (D98): signed build, then a holding release, then the app, then the same `dist/` published. Diff against the live gallery: the three themes added, the 30 existing entries identical in every field, their pack files byte-identical. Checked after: the catalog and three packs downloaded back from the public links with equal digests, `theSignedGalleryPassesTheRealChecks` and `theGalleryThemesCanBeUsed` at the release commit, `seed-packs.py fetch --required`.
+
+Real fetches in a debug app at build 1177, each on its own `SIDEFOLK_HOME`: wearing Marshmallow, from the live gallery, it came within 20 s of launch and Home showed it; wearing Night Studio with automatic updates off, nothing came, and after turning them on it came by 96 s with no restart (the first look is at 90 s, and until then turning the switch on doesn't look sooner); wearing Paper Garden on a local folder holding the real catalog from before the publish, nothing came, and after the new catalog and pack were put there `addons:check` brought it with no restart.
+
+Not verified: STATUS's theme entry lists it.
+
 ## 2026-11-04: The four homepages in the gallery (D170)
 
 On the founder's word: Clipboard, Keep Awake and Your Mac 1.0.0-snapshot.5 and Miraya 1.0.0-snapshot.6 published from add-ons `21534b8`, needing snapshot 1170. Before: rebased over Formatic and signed again; the app suite at `48656bdf` against those packs (2392 plus 38), the add-ons suite (492), `check.sh`, and the catalog compared with the live one: only those four entries changed. After: all 31 live files downloaded and identical to the signed build, every catalog hash matching its file, and Keep Awake installed from the live gallery in a throwaway home on a debug app, Developer ID signed, its page drawn.

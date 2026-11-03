@@ -6,7 +6,7 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest released is **snapshot 1177**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101). It no longer carries Paper Garden, Night Studio and Marshmallow; their packs reach the gallery right after it (D130).
+until the founder releases it. The latest released is **snapshot 1177**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101). It no longer carries Paper Garden, Night Studio and Marshmallow; they are in the gallery, published right after it (D130).
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -34,16 +34,17 @@ until the founder releases it. The latest released is **snapshot 1177**, on from
 Folio, Iris, Nori, Purl, Rune and Piko (a robot cat in Spark's colours, 3D only, no `CompanionChoice`: worn by name, D77,
 snapshot 1 needs Sidefolk snapshot 779; its pipeline isn't in this repository) and Noor (a baby moth, 3D only, worn by name, D121, snapshot 1 needs snapshot 779); extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
 fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
-Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes Paper Garden, Night Studio and Marshmallow, once published (D130). Every add-on is in
-snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.6** and **Your Mac, Clipboard and Keep Awake 1.0.0-snapshot.5** need snapshot 1170 (D170). **Formatic 1.0.0-snapshot.1** needs snapshot 1170.
+Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes Paper Garden, Night Studio and Marshmallow. Every add-on is in
+snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.6** and **Your Mac, Clipboard and Keep Awake 1.0.0-snapshot.5** need snapshot 1170 (D170). **Formatic 1.0.0-snapshot.1** needs snapshot 1170. The three **themes, 2.0.0-snapshot.1,** need snapshot 1177, the first without them built in (D130).
 
 ## In progress
 
 - **Homepages for Miraya, Clipboard, Your Mac and Keep Awake (D170): in the gallery since 2026-11-04, needing snapshot 1170.** **Not verified, for the founder:** real mouse clicks and arrow keys, Copy (it would overwrite the real clipboard), VoiceOver by ear (`ax` doesn't reach into these pages), Increase Contrast and Reduce Transparency, a real TV, screen-recording permission and an app quitting under a session. **Result:** `sandbox/extension-homepage-implementation-handoff-2026-11-03/implementation/PARITY.md`, comparisons beside it. **Verify:** `SIDEFOLK_PAGE_DUMP=<dir> swift test --filter HomepageStatesTests` in the add-ons, then `SIDEFOLK_SNAPSHOT_PAGES=<dir> swift run SidefolkApp --ui-snapshots out --only page-file-<state>`.
 
-- **Theme redesign (D130): in snapshot 1075,** Sidefolk the new default and Harbor a painted theme, with Paper Garden, Night Studio and Marshmallow still built in there.
-  **The founder is checking on 1075:** real mouse clicks and drag, Delete and S on Next up, the New menu, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
-  **This branch, not published:** the three themes' move to the gallery, here and on `team/themes-two` in sidefolk-addons, on the founder's go of 2026-11-04. The add-ons name the placeholder minimum, so a signed build stops until Add-ons first sets the real snapshot (docs/RELEASE.md, D98): this app ships before the publish, and copies that still have them built in must not see them as Get. Whoever wears one gets it with no click while automatic add-on updates are on, at launch and after each add-on look (`fetchThemeThatMoved`, D70). **Not verified:** a real signed theme pack fetched that way, end to end.
+- **Theme redesign (D130): Sidefolk the new default and Harbor a painted theme in the app since 1075, the other three in the gallery since 1177.** HISTORY's top entry has the move and how it was checked.
+  **The founder is checking:** real mouse clicks and drag, Delete and S on Next up, the New menu, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
+  **Not verified:** the whisper's words on screen (a fresh home's first greeting held the panel), a theme coming back in the signed release app, a real upgrade from an older build wearing one of the three, a copy older than 1177 not offering them, a person pressing Get.
+  **Next, small, for the snapshot after the founder has tested:** the audit's notes on `fetchThemeThatMoved` and a restore starting at the same launch sharing one download folder (the coordinator holds the list).
   **Checked with synthetic clicks and keys:** ← → on a reminder in Your day, ⌘Z, a drag, the New menu opening, Next up's click, ↓, Delete and S. **Not pressed:** a real mouse and keyboard, a New menu item, a late reminder moved past now. **Known on Today:** the row with the keyboard shows no highlight (D130).
   The edge check flags petting and the flip with or without this change (older issue).
 
