@@ -45,6 +45,7 @@ final class ExtensionPagesModel {
 
     func reload() async {
         list = await services.runtime.extensions.pages()
+        Describe.learnExtensionNames(Dictionary(list.map { ($0.extensionId, $0.extensionName) }, uniquingKeysWith: { a, _ in a }))
         layout = services.runtime.settings.current.homePages
         let ids = Set(list.map(\.id))
         models = models.filter { ids.contains($0.key) }

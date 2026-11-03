@@ -1,3 +1,4 @@
+import os
 import Foundation
 import SidefolkCore
 
@@ -116,8 +117,13 @@ enum Describe {
         }
     }
 
-    /// "dev.example.tea-timer" → "Tea Timer" (the id's last part, made readable).
+    /// What installed extensions call themselves, as Home last read them: an id's last part needn't be its name.
+    private static let knownNames = OSAllocatedUnfairLock(initialState: [String: String]())
+    static func learnExtensionNames(_ names: [String: String]) { knownNames.withLock { $0.merge(names) { _, new in new } } }
+
+    /// Its own name when it is known, or "dev.example.tea-timer" → "Tea Timer" (the id's last part, made readable).
     static func extensionName(_ id: String) -> String {
+        if let known = knownNames.withLock({ $0[id] }) { return known }
         let last = id.split(separator: ".").last.map(String.init) ?? id
         return last.replacingOccurrences(of: "-", with: " ").replacingOccurrences(of: "_", with: " ").capitalized
     }
