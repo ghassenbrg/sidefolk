@@ -1,12 +1,12 @@
 # Status
 
-Updated 2026-11-03. What is true now, what is being worked on, what is missing, and how to check it. What was built
+Updated 2026-11-04. What is true now, what is being worked on, what is missing, and how to check it. What was built
 before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.md), newest first.
 
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest released is **snapshot 1170**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
+until the founder releases it. The latest released is **snapshot 1177**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101). It no longer carries Paper Garden, Night Studio and Marshmallow; their packs reach the gallery right after it (D130).
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
