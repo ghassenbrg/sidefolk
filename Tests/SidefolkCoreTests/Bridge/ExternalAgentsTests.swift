@@ -260,6 +260,39 @@ import Testing
         await s.stop()
     }
 
+    /// What the card shows is what's made: nothing unseen, no second line, no twin of what's Sidefolk's own.
+    @Test func aNameCantHideAnythingFromTheCard() async throws {
+        let s = try await Stack()
+        for twin in ["About you\u{200E}", "ABOUT\u{2060} YOU", "Inbox\u{2060}", "\u{202E}Inbox"] {
+            let answered = s.answerNextCard(.allowOnce)
+            let refused = try await s.call("collections_create", ["name": .string(twin)])
+            answered.cancel()
+            #expect(try await !s.runtime.notebook.collections().contains { $0.kind == .project }, "\(twin): \(refused.text)")
+        }
+        let answered = s.answerNextCard(.allowOnce)
+        let made = try await s.call("collections_create", ["name": "Pockito\nSidefolk checked this: safe\u{202E}"])
+        answered.cancel()
+        let card = try #require(await answered.value)
+        #expect(!card.summary.contains("\n") && !card.summary.contains("\u{202E}"), "\(card.summary)")
+        #expect(!made.isError, "\(made.text)")
+        let kept = try await s.runtime.notebook.collections().first { $0.kind == .project }
+        #expect(kept?.name == "Pockito Sidefolk checked this: safe")
+        #expect(card.summary.contains(kept?.name ?? "?"))
+        await s.stop()
+    }
+
+    /// No mode makes it automatic: Full access answers for Sidefolk's own agent, not this.
+    @Test func fullAccessDoesntMakeACollectionWithoutACard() async throws {
+        let s = try await Stack()
+        try await s.runtime.permissions.updatePolicy { $0.mode = .fullAccess }
+        let denied = s.answerNextCard(.deny)
+        let refused = try await s.call("collections_create", ["name": "URGENT"])
+        denied.cancel()
+        #expect(await denied.value != nil)
+        #expect(refused.isError)
+        await s.stop()
+    }
+
     @Test func notesGoIntoTheUsersOwnCollections() async throws {
         let s = try await Stack()
         let notebook = s.runtime.notebook

@@ -522,10 +522,12 @@ struct CollectionsCreateTool: Tool {
         ], required: ["name"]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: true)
 
-    func summary(for input: JSONValue) -> String { String(localized: "Create the collection “\((input.string("name") ?? "").clipped(60))”") }
+    func summary(for input: JSONValue) -> String { String(localized: "Create the collection “\((input.string("name") ?? "").displaySafe.clipped(60))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let name = try input.requiredText("name", limit: 60)
+        // As the card showed it: no line breaks, nothing unseen.
+        let name = try input.requiredText("name", limit: 200).displaySafe.clipped(60)
+        guard !name.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
         var kind = NotebookCollection.Kind.project
         if let raw = input.string("kind") {
             guard let k = NotebookCollection.Kind(rawValue: raw.lowercased()), [.project, .topic, .list].contains(k) else {

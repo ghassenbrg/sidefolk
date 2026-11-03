@@ -62,11 +62,12 @@ public enum NotebookCollections {
     }
 
     static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, context: ToolContext) async throws -> NotebookCollection {
-        let clean = name.trimmedText.clipped(60)
+        // What can't be seen goes first, so a name that only looks like About you or the Inbox is taken for what it looks like.
+        let clean = name.displaySafe.clipped(60)
         guard !clean.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
-        if isProfileName(clean) { throw profileRefusal }
+        if isProfileName(clean) || clean.lowercased() == String(localized: "About you").lowercased() { throw profileRefusal }
         // The Inbox always exists (it is made on first use); a look-alike "inbox" project would split notes.
-        if isInboxName(clean) {
+        if isInboxName(clean) || clean.lowercased() == String(localized: "Inbox").lowercased() {
             throw UserFacingError("“Inbox” is always there: it's where notes go when no collection is named.")
         }
         // Another agent, only on the person's yes on a card (D160); `notes.save` never makes one for it.
