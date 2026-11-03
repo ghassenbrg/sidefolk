@@ -188,6 +188,20 @@ Only a companion meant to ship inside the app goes in `Resources/Companions3D/`.
   makes a big head lean less into a stroking hand (0.55: a full lean swung a big head's ears out of the window and bent its
   neck). Leaps can be lowered without touching their timing: wrap `ACTIONS.hop/jump/flip` and scale only what they
   add to `P.root.py`; stub arms want a lower `cheer` (`raise(P, s, -24)`). `edges()` (§6) says when it is enough.
+- **When the model can't reach the sheet (fur, fine inlay, feathers): build those parts instead of fighting the texture.**
+  Noor is the worked example (`rig_noor.py`, his character file, D121). Judge the raw model in the engine early: a flat
+  plate for a wing, carved slabs for feathers and a crust for fur don't get better with tuning. Cut them away by colour and
+  place, remesh the rest (octree, `SMOOTH`: voxel falls apart on open cuts), and build parts in the rig from a painting
+  each (Codex: flat, straight on, on a plain background, given the outline as a silhouette reference). Parts are skinned
+  meshes of their own in the GLB, named to sort before the body, because the engine takes the last skinned mesh as the
+  body; textures a glTF material can't carry ride on tiny `tx_*` quads the character file removes. A clean body needs no
+  texture: the rig marks zones in the AO colour's green and the material colours them. Fur is shells: copies of the
+  fur's triangles pushed out along the normal, each discarding what isn't strand, with strands leaning into clumps
+  toward the tip. Coarse strands read as fur and fine ones as sand. In a small canvas draw half the layers, coarsen the strands and
+  lower their contrast (thinner than a pixel, they turn to speckle: judge it in the app's own snapshot), turn sheen off on
+  the layers, and blur the zone marks over the mesh's edges or the fur's borders come out jagged. Draw a big colour shape like a
+  face in the surface too (`fwidth`), so the fur stops at a clean line. Then measure the GPU in the app (§8), not only the
+  CPU: fur costs the GPU, and `top` doesn't show it.
 - **Logos, letters, badges**: a decal in `extras(c, THREE)`: the body's triangles in a box on its surface (skinned
   like it, lifted a hair), its own 1024 px canvas, and the mark drawn as vector paths traced on the design image
   (px → units with the figure's top and bottom rows and its middle). Paint the texture's version out under it in the
@@ -243,6 +257,8 @@ Then save the portrait: `(await import('./sheet.js')).portrait(companion)` in a 
 `?frame=sidefolk&capture` page (see how the existing ones were made in the README) and copy
 `build/companions-3d/portrait-<id>/00001.png` to `portraits/<id>.png` in its add-on folder. Save it again after
 anything that changes its look or framing.
+
+(A companion whose look changes with the canvas size, as fur does: render its portrait at twice the size and scale it down.)
 
 **Profile picture** (D54): painted, never a crop of a render, unless the character is a real person's likeness (no
 image generation of real people: then a render, cut round by `sidefolk-private/pipeline/make_avatar.py`). With `codex-imagegen`, `--ref` the new portrait, the sheet and

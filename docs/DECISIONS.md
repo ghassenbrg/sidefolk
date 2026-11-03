@@ -3585,3 +3585,25 @@ general: nothing here names a game or an extension, and all of it can replace wh
 **Found in review before release:** the first version compared decoded addresses, so a model could spell a message in `%61`s of a listed host; a regex on a page's raw HTML could freeze a read for anyone on a page built for it (now the page's own single-pass scanner); and `http://%6Cocalhost` reached this Mac past T11 whatever the mode (now refused).
 **Alternatives:** any address after a yes, with queries stripped (a path carries as much); a setting rather than the card (a standing risk for an occasional need); per-domain grants (D47 has them; research crosses domains).
 **Residual, in T42:** a hostile page can steer which link is followed, and About you and matching notes are in the prompt from the start. The budget bounds it: about six bits a link, so some characters per yes, and the person is asked again.
+
+### D121 — Noor: a gallery companion that builds what Meshy can't make, with real fur (2026-11-03)
+**Decision:** Noor, a baby moth, joins the gallery in 3D only, worn by name with no `CompanionChoice` (D77, as Piko). He is a
+new way of making a companion, with no engine change: Meshy's model gives only his proportions. The rig cuts its wings,
+feathers and rosette away, remeshes the rest into a clean closed body, and adds those as skinned parts textured with
+paintings. The character file draws his fur in shells over the body: stacked copies of its triangles, where each strand
+narrows outward and leans into a clump, half as many layers in a small window, and coarser, softer strands the smaller he is drawn.
+The body has no texture: the rig marks zones (bare, fur, ruff) and the material colours them. The face's outline is drawn
+in the surface. He rests sitting up. `frame.sidefolk` is 2.7, and the character file raises the body's box for the feathers
+so hops stay under the window's top, since `roomAbove()` only reads the body mesh.
+**Why:** the founder compared Meshy's raw model with its design image and called it "very cheap". Its fur was a sculpted
+crust, its wings flat plates through the hips and its inlay blurred, and tuning doesn't fix those. The founder's condition
+for approving him was that this quality was really reachable, so two proof rounds came before any rig.
+**Measured on this Mac, against Spark in the same debug app, alternating, with other apps running (noisy):** idle, CPU 8–12%
+of a core against 16–19%, and the whole Mac's GPU 33–40% against 29–33%; dancing, CPU 22% against 40%, GPU 36% against 34%. A
+run an hour earlier, on the same geometry, read much the same difference at a higher level. Older Macs aren't measured.
+**Alternatives:** tuning Meshy's texture and sculpt (the first proof: cheap up close); a second Meshy model (the same flat
+wings and crust); a `CompanionChoice` case (needs an app update and his name in `ExtensionReservedNames`, which would refuse
+the Noor extension's name).
+**Implications:** up close he is a very good real-time character, not the concept's painted stills: his fur is short pile
+with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't made. The technique is in the
+`sidefolk-3d-character` skill. Fur costs the GPU, so a new companion that uses it is measured there, not only in `top`.

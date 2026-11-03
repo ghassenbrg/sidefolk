@@ -51,7 +51,7 @@
 import { Companion } from './engine/engine.js';
 import { MOODS } from './engine/moods.js';
 
-const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo', 'folio', 'iris', 'nori', 'purl', 'rune', 'piko'];
+const CHARACTERS = ['mochi', 'spark', 'ember', 'kiko', 'nimbo', 'folio', 'iris', 'nori', 'purl', 'rune', 'piko', 'noor'];
 const q = new URLSearchParams(location.search);
 // Any companion the server finds (a private one on this Mac too), not only the listed ones.
 const id = /^[a-z][a-z0-9-]{0,30}$/.test(q.get('c') || '') ? q.get('c') : 'mochi';

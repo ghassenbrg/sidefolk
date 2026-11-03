@@ -1,6 +1,6 @@
 # 3D companions (D51)
 
-Mochi, Spark, Ember, Kiko, Nimbo and Folio (and Iris, Nori, Purl, Rune, and Piko, 3D only) as animated 3D characters. Each can be shown
+Mochi, Spark, Ember, Kiko, Nimbo and Folio (and Iris, Nori, Purl, Rune, and Piko and Noor, 3D only) as animated 3D characters. Each can be shown
 in 2D or 3D (Settings › Companion › Look; the 2D forms: `companions-2d/`, D59). The app shows them in
 a transparent web view over the companion's 2D rig, which still runs undrawn: it keeps the states,
 idle life, clicks, petting and the Sidecard's anchor, and every cue it gets is replayed in 3D
@@ -55,6 +55,10 @@ all of this, from a sheet or just an idea, with templates for the rig and the ch
    lips only while the mouth opens (see `face.js`). A companion that should stay on one Mac only (a person's
    likeness) isn't published: its add-on folder is added in Settings › Companion (D60), and may bring its 2D form
    in `2d/` (D85, `companions-2d/README.md`).
+   **Fine detail and real fur (Noor, D121).** Where Meshy can't hold what the sheet asks for, the rig cuts it away and builds
+   it: `rig_noor.py` keeps Meshy's body for its proportions only, remeshes it into a clean closed shape, and adds wings,
+   feathers and rosette as skinned parts textured with paintings (`textures/noor/`), and the character file draws the fur
+   in shells over that clean body. The body then needs no texture at all: colours come from zones the rig marks.
 6. **Portrait.** In the playground, `(await import('./sheet.js')).portrait(companion)` saves the
    still Settings shows; copy it to `Resources/Companions3D/portraits/<name>.png`.
 
@@ -75,7 +79,7 @@ the window is hidden: about 18% of a core (D51), against 0.2% for a 2D companion
 ## Playground
 
 ```sh
-python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (mochi, spark, ember, kiko, nimbo, folio, iris, nori, purl, rune)
+python3 companions-3d/serve.py 8765     # http://localhost:8765/?c=ember   (mochi, spark, ember, kiko, nimbo, folio, iris, nori, purl, rune, piko, noor)
 ```
 
 `?bare&frame=tight` for clean captures; in the console `(await import('./sheet.js')).sheet(companion)`

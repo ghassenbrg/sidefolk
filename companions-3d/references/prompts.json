@@ -20,6 +20,21 @@
         "spark-sheet.webp"
       ],
       "brief": "Character reference sheet for NIMBO, a cute floating cloud companion: one plump lavender cloud body made of soft round puffs, a warm cream-peach glow in the middle of the face, big glossy dark purple eyes with white highlights, small thin eyebrows, a small open smile, rosy blush, a small golden star sitting on the top right like a hair clip, two small detached cloud puffs at the sides that act as little hands, fine velvety cotton-candy surface, no legs, floating with a soft shadow below. For the turnaround show front, three-quarter, side and back of the floating cloud. Premium 3D animated-feature character reference sheet, soft bright studio light, pale cool-white background, rounded panels. Layout like the second reference image (the Spark sheet): a large hero pose on the left; on the top right a turnaround row of four full-body views (front, three-quarter, side, back) in a neutral relaxed standing pose; on the bottom right a grid of eight head close-ups with expressions (neutral, talking, blink, happy, concerned, thinking, listening, sleep). Keep the character identical in every view: same proportions, colours, materials and details as the first reference image. Absolutely no text, no labels, no captions, no letters, no watermark, no logo."
+    },
+    "noor-sheet.png": {
+      "note": "The approved concept sheet, from ~/git/noor-companion-concept/03-sheet.png, kept unchanged."
+    },
+    "meshy/noor-front.png": {
+      "refs": "the sheet's front, side and back views",
+      "prompt": "Front view, full body, of this exact chubby baby moth character for 3D modeling, premium animated-feature quality. The three reference images are the character's front, side and back: keep the front reference's silhouette and proportions EXACTLY, it should look like the same image with only the changes listed here. Square image. Round dome head in lapis fur (#293C86) with a big smooth pearl face zone (#F5F0ED) with a small heart-shaped dip at the top centre. IMPORTANT: the pearl face zone is completely BLANK and smooth: no eyes, no eyebrows, no nose, no mouth, no blush, no pink cheeks, no markings of any kind (the face will be added later as separate parts). Wide thick creamy pearl fluffy ruff around the neck, wider than the head, with only a shallow V at the front. Small egg-shaped fat body in lapis fur, wider at the hips, sitting directly on two big round smooth pearl feet, no visible legs. Two short stubby lapis arms ending in round pearl mitten hands, held a little away from the body so there is a clear thin gap of background between each arm and the body. Two fat feather antennae in warm gold-orange, as plump and wide as in the reference, rising from the top of the head in a wide V and curving outward, clearly apart from each other. Two big teardrop wings hanging low behind the body exactly as in the front reference: their tops start under the ruff, their widest point is at hip height, their lowest points reach almost to the feet, total width about 1.9 times the body's width, NOT spread out flat like a butterfly. The wings are thick soft plush pads, amethyst (#7354B8) into lapis at the centre and rose (#BD7AA8) at the edges, with a raised warm gold rim and the same bold geometric rosette line pattern in raised warm gold as the reference. Gold rosette medallion on the chest with a warm white star of light at its centre. Even soft studio lighting with no glow on the surroundings, plain flat light grey background (#E6E9EE), no ground shadow, no text, no letters, no watermark, single figure only, perfectly symmetric left and right, facing straight at the camera."
+    },
+    "textures/noor/wing-painted.png": {
+      "refs": "the sheet's back-view wing, a flat silhouette of the wing's outline, an earlier painting for the material",
+      "prompt": "Flat texture painting of one moth wing for a 3D model, seen perfectly straight on with no perspective, on a plain flat pure white background, no shadow. The first reference is the exact ornament and composition to copy. The second reference is the exact outline: the wing must fill exactly that silhouette, same size and same place in the square, with a smooth clean edge and a thick smooth warm gold rim following that edge all the way round. The third reference shows the material and colour quality to match, not its shape. Ornament, exactly as in the first reference, keeping its layout: raised polished warm gold lines forming an interlocking rounded eight-petal rosette with a small lapis star at its centre, set in the upper middle of the wing at about 37 percent from the left and 38 percent from the top, with long slender pointed leaf-shaped lobes running from the rosette down to the bottom and out to the outer side, thin elegant lines of even width, not heavy. Surface is soft velvet with very fine short nap: deep lapis indigo in the cells around the rosette, blending through amethyst purple to soft dusty rose at the outer edges, not neon, painted with gentle shading in each cell. Premium animated-feature material quality, even soft light, no highlights, no text, no letters, no script, no signature, no watermark, only the wing."
+    },
+    "textures/noor/feather-rosette-painted.png": {
+      "refs": "the sheet's feather and chest rosette, enlarged",
+      "prompt": "Flat texture painting for a 3D model, a wide landscape image on a plain flat pure black background, two separate items side by side with clear black space between them, no shadow. On the left: one soft fluffy feather lying perfectly horizontal and straight, its stem exactly along the horizontal middle of the image, root end at the far left, tip pointing right, warm apricot gold barbs with paler tips and a bright thin gold central stem, plump, with soft fine downy barbs and a slightly feathered edge, as in the first reference but straightened. On the right: one chest ornament seen perfectly straight on, as in the second reference: a polished warm gold openwork rosette, interlocking pointed eight-petal flower lines, symmetric, its openings pure black so they can be cut out, with a soft warm white eight-pointed star of light at its centre. Premium animated-feature material quality, even light, no text, no letters, no script, no watermark."
     }
   },
   "meshy": {
@@ -79,6 +94,11 @@
         "image_to_3d": "01a18c56-7a13-76c1-bd75-3735eae38bf4",
         "reference": "rune-sheet.webp (the founder's sheet)",
         "note": "second model: the first design image made a mushroom dome; this one says 'blocky boulder ... NOT a dome, NOT a mushroom'"
+      },
+      "noor": {
+        "front_image": null,
+        "image_to_3d": "01a19e91-7c67-702c-bc97-b3e0e1a2111c",
+        "rejected_front_image": "01a19e8f-5f40-752a-b539-a72f563a3942"
       }
     },
     "calls": [
@@ -382,6 +402,18 @@
           "glb"
         ],
         "texture_prompt": "Warm grey-taupe granular river stone (#9C9786) with fine speckle and soft mottled patches of pale lichen green (#8E9C62) on the head, torso, arms and feet on every side; a thick fuzzy olive-green moss cushion (#6B7F2E) only on the top left corner of the head; a small glossy translucent amber-yellow oval gem (#E8B030) in the centre of the chest. Blank stone face: no eyes, no mouth, no markings."
+      },
+      {
+        "tool": "meshy_image_to_3d",
+        "ai_model": "meshy-7.1",
+        "input": "meshy/noor-front.png (Codex image gen, below: the nano-banana-pro design for this task id spread the wings flat and made a hood of the head)",
+        "pose_mode": "a-pose",
+        "image_enhancement": false,
+        "texture_resolution": "4k",
+        "target_formats": [
+          "glb"
+        ],
+        "texture_prompt": "Chubby baby moth plush character. Short soft lapis blue fur (#293C86) on the head, body and arms; big smooth blank pearl face zone (#F5F0ED) with a heart-shaped dip at the top, completely blank face with no eyes, no mouth, no blush; thick creamy pearl fluffy ruff (#F2E6D6); smooth pearl hands and feet; warm gold (#C9AB72) feather antennae; wings amethyst (#7354B8) into lapis at the centre and rose (#BD7AA8) at the edges with raised warm gold rim and rosette lines, the same on the back of the wings; gold rosette on the chest with a warm white star."
       }
     ]
   },
@@ -399,7 +431,8 @@
       "iris": "soft sky blue to pale periwinkle",
       "nori": "soft pale mint to light seafoam",
       "purl": "soft pale lavender to light periwinkle",
-      "rune": "soft warm sand to pale peach"
+      "rune": "soft warm sand to pale peach",
+      "noor": "soft deep dusk indigo to warm lamplit amber"
     },
     "output": "references/avatars/<id>-avatar.webp (1254 px); the app's Resources/Companions3D/avatars/<id>.png is a round 256 px crop on the face"
   }
