@@ -6,7 +6,7 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest released is **snapshot 911**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
+until the founder releases it. The latest released is **snapshot 916**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -67,7 +67,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## Known gaps
 
-- **D137 isn't proven on a real full-screen space:** Home and Settings should no longer open inside another app's full-screen space, but the before-and-after check hasn't run (it needs an idle Mac). Test copies' companions and panels still show, and sessions have to opt in to `SIDEFOLK_QUIET_WINDOWS=1`.
+- **Normal windows still open inside another app's full-screen space** when no click asked for them (measured, D137): snapshot 916's change didn't cure it. A fix on `.fullScreenNone` is in progress. A real click hasn't been measured. Test copies' companions and panels still show, sessions have to opt in to `SIDEFOLK_QUIET_WINDOWS=1`, and in 916 macOS keeps a corner of a quiet window on screen.
 - **A web watch on a sign-in page that answers 200** watches the sign-in page: "any change" and `contains` can't tell (D135). A page with no text at all, and words never seen, now say so.
 - **Small things seen in phase 5:** the greeting says "Good evening" after midnight.
 - **Not yet tried by hand with the real thing:** the microphone (permission prompt, hold to talk, AirPods), a live

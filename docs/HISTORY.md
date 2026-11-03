@@ -7,9 +7,9 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
-## 2026-11-03: Normal windows and full-screen spaces, and test runs out of the way (D137)
+## 2026-11-03: Normal windows and full-screen spaces: a change that didn't work, and test runs out of the way (D137)
 
-The founder's report of Sidefolk appearing inside full-screen Claude. Verified: the debug app with `SIDEFOLK_QUIET_WINDOWS=1` (the frontmost app stayed Claude while Home and Settings opened; both rendered for `snap`), and `swift test` in full. **Not verified yet:** the fix on a real full-screen space. A before-and-after check is ready and runs only once the Mac has been idle for ten minutes, since it switches spaces; this release went out ahead of it, for the founder to try.
+The founder's report of Sidefolk appearing inside full-screen Claude. Released in snapshot 916 ahead of its check, labelled unproven. **The check then showed it doesn't work:** on a real full-screen space the old build and the new one both open Home on that space, 3 of 3 each. 916's release notes were corrected. The first version of the check reported the same for every build, quiet mode included, because it counted any Sidefolk window; it now looks only at the copy under test. Verified otherwise: with `SIDEFOLK_QUIET_WINDOWS=1` the frontmost app stayed where it was while Home and Settings opened, and both rendered for `snap`; `swift test` in full. Next: `.fullScreenNone` kept the window off that space in 2 of 2 tries, and the fix is being built on it.
 
 ## 2026-11-03: Ask is a shortcut: shorter times, a limit of eight, pins that last, and answers in History (D136)
 
