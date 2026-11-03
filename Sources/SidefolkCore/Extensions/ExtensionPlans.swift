@@ -66,9 +66,12 @@ enum ExtensionPlanRules {
         return out
     }
 
+    /// A call too long to match against a plan asks instead: matching runs on the host's own actor.
+    static func short(_ input: JSONValue) -> Bool { input.jsonString.utf8.count <= 64_000 }
+
     /// Whether a program's own word for how a call was written is one to read: a size a card could show, and a call not so long that matching it is work.
     static func readable(written template: JSONValue, for input: JSONValue) -> Bool {
-        input.jsonString.utf8.count <= 64_000 && written(template).allSatisfy { plain($0) && $0.count <= ExtensionPlanWords.valueLimit } && objectsFit(template)
+        short(input) && written(template).allSatisfy { plain($0) && $0.count <= ExtensionPlanWords.valueLimit } && objectsFit(template)
     }
 
     /// Whether a step leaves words to fill in.

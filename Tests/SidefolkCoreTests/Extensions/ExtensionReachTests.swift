@@ -285,6 +285,20 @@ struct ExtensionReachTests {
         #expect(row.args?["x"]?.stringValue == "{{found}}")
     }
 
+    @Test func whoseWordsHistoryLeavesOut() {
+        let purpose = ExtensionPurpose(purpose: "to test")
+        var permissions = ExtensionPermissions()
+        #expect(!ExtensionHost.holdsThePersonsWords(permissions))
+        permissions.clipboard = true
+        #expect(ExtensionHost.holdsThePersonsWords(permissions))
+        permissions = ExtensionPermissions()
+        permissions.act = purpose
+        #expect(ExtensionHost.holdsThePersonsWords(permissions))
+        permissions = ExtensionPermissions()
+        permissions.events = purpose
+        #expect(ExtensionHost.holdsThePersonsWords(permissions))
+    }
+
     @Test func aReminderFilledInMayNotHoldNotesAndAProgramsWordIsBounded() throws {
         let env = try TestEnv()
         let probe = ProbeTool(name: "reminders.create", risk: .low, result: { _ in ToolResult(text: "") })

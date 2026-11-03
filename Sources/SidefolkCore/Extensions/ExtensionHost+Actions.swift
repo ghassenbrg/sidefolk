@@ -207,7 +207,7 @@ extension ExtensionHost {
     /// The step of a live plan this call fits, as it was written; nil when it fits none, and it asks.
     private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, counting: Bool, gateway: ExtensionActionGateway) async -> JSONValue? {
         guard let rt = runtimes[id], let plan, let saved = rt.preferences.plans[plan], saved.live(at: Date(), owner: owner(rt)),
-              Self.contained(rt.pin.permissions ?? ExtensionPermissions()), let tool = gateway.tool(named: name, for: id) else { return nil }
+              Self.contained(rt.pin.permissions ?? ExtensionPermissions()), ExtensionPlanRules.short(input), let tool = gateway.tool(named: name, for: id) else { return nil }
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
         let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
         let fits = saved.steps.first { step in
