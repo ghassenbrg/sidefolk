@@ -31,6 +31,7 @@ your client's name (shown to the user as unverified). You act as another app, no
 | "what's due this week" | `notes_list` with a due date to look before (the user may approve the read) |
 | "save this as a note in my Pockito project" | `notes_save` with `collection` |
 | "add oat milk to my shopping list" | `notes_save` with `kind: task` and the list as `collection` |
+| "which projects do I have?" | `collections_list` (the user may approve the read) |
 | "watch this URL and tell me when it changes" | `watch_create` with `kind: url_change` |
 | "tell me when example.com is back up" | `watch_create` with `kind: site_status` |
 | "tell me when the tests finish" | see "When something finishes" below |
