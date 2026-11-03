@@ -429,7 +429,8 @@ struct TreePicker: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: Theme.Space.s) {
                 Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-                TextField(text: $words, prompt: Text(ext: picker.placeholder ?? "")) { Text(ext: picker.placeholder ?? "") }
+                TextField(text: $words, prompt: Text(verbatim: "")) { Text(ext: picker.placeholder ?? "") }
+                    .fieldHint(Text(ext: picker.placeholder ?? ""), showing: words.isEmpty)
                     .textFieldStyle(.plain).font(Theme.Font.body).focused($typing)
                     .onSubmit { if shown.indices.contains(at) { choose(shown[at].id) } }
                     .onKeyPress(.downArrow) { at = min(at + 1, shown.count - 1); return .handled }
