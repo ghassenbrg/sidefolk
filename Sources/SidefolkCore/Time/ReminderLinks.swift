@@ -26,11 +26,7 @@ extension ReminderScheduler {
     /// Whether finishing this reminder's item would end an important reminder besides it, one that has fired and waits among them.
     func wouldEndAnImportantOne(_ r: Reminder) async -> Bool {
         guard let itemId = r.itemId else { return false }
-        let others = try? await store.db.writer.read { db in
-            try Reminder.filter(Column("item_id") == itemId && Column("id") != r.id)
-                .filter(["scheduled", "snoozed", "fired"].contains(Column("state"))).fetchAll(db)
-        }
-        return others?.contains { $0.level >= .critical } ?? true
+        return await NotebookStore(store.db).holdsAnImportantReminder(itemId: itemId, besides: r.id)
     }
 
     public func settleLinks() async {
@@ -133,5 +129,15 @@ extension ReminderScheduler {
         guard let task, (try? await NotebookStore(store.db).setStatus(itemId: task.id, .done, now: clock.now)) != nil else { return nil }
         events.changed(.notebook)
         return task
+    }
+}
+
+extension NotebookStore {
+    /// Whether an important reminder still waits on this item, so that finishing or trashing it would end one. Yes when it can't be told.
+    func holdsAnImportantReminder(itemId: String, besides other: String? = nil) async -> Bool {
+        let waiting = try? await db.writer.read { db in
+            try Reminder.filter(Column("item_id") == itemId).filter(["scheduled", "snoozed", "fired"].contains(Column("state"))).fetchAll(db)
+        }
+        return waiting?.contains { $0.id != other && $0.level >= .critical } ?? true
     }
 }

@@ -28,14 +28,12 @@ descriptions, which D116 and D157 have made longer.
 
 Written on `1d9f09a3`, for snapshot 1075 and after.
 
-**A question for the founder: can a task being finished end an important reminder? (D42, D160)** An agent's `reminders.cancel`,
-`complete`, `snooze` and `update` never touch an important reminder, and finishing another reminder won't end one beside it
-(`ReminderTools`, `wouldEndAnImportantOne`). `notes_update` marking the task done and `notes_trash` have no such check, so
-they can still end an important reminder on that task. That's how they worked before D160, under "Change notes": on Ask, a card
-that says "Change a note (mark done)" or "Move a note to the Trash" and not the reminder; on Allow, no card. D160 didn't widen this, but the rule now reads as stronger than it
-is. The fix, if wanted, is small: the same check in those two tools for an external caller, either refusing or saying on the card
-that an important reminder ends with it. A card is the better fit, since it's the person's own task. Sideflow's plans
-call the same tools, so its plan rules need a look first.
+**Decided: an important reminder holds its note (D160).** An agent's `reminders.cancel`, `complete`, `snooze` and `update`
+never touched an important reminder, but `notes_update` marking the task done and `notes_trash` could still end one: on Ask,
+after a card that says "Change a note (mark done)" or "Move a note to the Trash" and not the reminder; on Allow, the default, with
+no card. Both now refuse for another agent, card or no card, decided with the coordinator on the founder's standing instruction
+of 2026-11-03, the stricter of the two options. **For the founder to check when back:** whether a card naming the reminder
+would suit better, and extensions, which aren't held, so a plan the person read can still do this.
 
 **`media` and contained: closed.** The gap was `isContained` ignoring `media`, which D141 calls a way out. `79caa352` (T44)
 fixed it, with `mediaIsntContained`, and `ExtensionHost+Actions` reads `isContained` when a plan is approved and again when a step

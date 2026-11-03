@@ -780,6 +780,64 @@ import Testing
         await s.stop()
     }
 
+    /// `notes_update` and `notes_trash` end a note's reminders too, so an important one holds them back as well: on Allow with
+    /// no card, on Ask after a yes, and whoever set the note. The person, and a note with no important reminder, aren't held.
+    @Test func anImportantReminderHoldsItsNoteToo() async throws {
+        let s = try await Stack()
+        func task(_ title: String, kind: JSONValue = "task") async throws -> String {
+            let saved = await s.runtime.executor.execute(name: "notes.save", input: ["text": .string(title), "kind": kind], caller: .user)
+            guard case .ok(let made) = saved.status, let id = made.card?.refId else { throw CancellationError() }
+            return id
+        }
+        let held = try await task("Take the pill")
+        let vital = try await s.runtime.scheduler.create(title: "Pill now", at: Date().addingTimeInterval(3600), level: .critical, source: "user", itemId: held)
+        func holds() async throws {
+            #expect(try await s.runtime.notebook.item(id: held)?.status == .open)
+            #expect(try await s.runtime.notebook.item(id: held)?.deletedAt == nil)
+            #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == .scheduled)
+        }
+
+        await s.runtime.settings.update { $0.agentAccess.change = .allow }
+        let done = try await s.call("notes_update", ["id": .string(held), "status": "done"])
+        #expect(done.isError && done.text.contains("marked important"), "\(done.text)")
+        let doneCaps = try await s.call("notes_update", ["id": .string(held), "status": "DONE"])
+        #expect(doneCaps.isError && doneCaps.text.contains("marked important"), "\(doneCaps.text)")
+        let trashed = try await s.call("notes_trash", ["id": .string(held)])
+        #expect(trashed.isError && trashed.text.contains("marked important"), "\(trashed.text)")
+        try await holds()
+
+        await s.runtime.settings.update { $0.agentAccess.change = .ask }
+        let yes = s.answerNextCard(.allowOnce)
+        let afterYes = try await s.call("notes_trash", ["id": .string(held)])
+        yes.cancel()
+        #expect(afterYes.isError && afterYes.text.contains("marked important"), "\(afterYes.text)")
+        try await holds()
+        await s.runtime.settings.update { $0.agentAccess.change = .allow }
+
+        // The rest of a change still works.
+        let words = try await s.call("notes_update", ["id": .string(held), "append": "With water"])
+        #expect(!words.isError, "\(words.text)")
+        try await holds()
+
+        // An ordinary reminder holds nothing, and one that has ended holds nothing.
+        let plain = try await task("Send the invoice")
+        _ = try await s.runtime.scheduler.create(title: "Invoice", at: Date().addingTimeInterval(3600), source: "user", itemId: plain)
+        let plainDone = try await s.call("notes_update", ["id": .string(plain), "status": "done"])
+        #expect(!plainDone.isError, "\(plainDone.text)")
+        #expect(try await s.runtime.notebook.item(id: plain)?.status == .done)
+        let ended = try await task("Old pill")
+        let over = try await s.runtime.scheduler.create(title: "Old", at: Date().addingTimeInterval(3600), level: .critical, source: "user", itemId: ended)
+        _ = try await s.runtime.scheduler.cancel(id: over.id)
+        let endedTrash = try await s.call("notes_trash", ["id": .string(ended)])
+        #expect(!endedTrash.isError, "\(endedTrash.text)")
+
+        // The person isn't held: it's their reminder.
+        let mine = await s.runtime.executor.execute(name: "notes.update", input: ["id": .string(held), "status": "done"], caller: .user)
+        if case .ok = mine.status {} else { Issue.record("the person was held: \(mine.promptText)") }
+        #expect(try await s.runtime.notebook.item(id: held)?.status == .done)
+        await s.stop()
+    }
+
     /// Whole ids only: a short one tells nothing, even of its own.
     @Test func anAgentUsesTheWholeIdEvenForItsOwn() async throws {
         let s = try await Stack()

@@ -299,6 +299,11 @@ struct NotesUpdateTool: Tool {
         if try await NotebookCollections.isProfile(collectionId: item.collectionId, notebook: notebook) {
             throw UserFacingError("That's a fact in “About you”. Use the profile tools to change it.")
         }
+        // Marking it done would end its reminders: another agent can't end an important one this way either, card or no card (T24).
+        if case .external = context.caller, item.kind == .task, item.status != .done, input.string("status")?.lowercased() == "done",
+           await notebook.holdsAnImportantReminder(itemId: id) {
+            throw ReminderTools.Shared.importantOneHoldsIt
+        }
         let previous = item
         let due = try NoteDue.read(input["due"]?.stringValue, parser: reminders?.parser() ?? WhenParser(), now: context.now)
         try NoteDue.check(due, kind: item.kind)
@@ -427,6 +432,10 @@ struct NotesTrashTool: Tool {
         guard item.deletedAt == nil else { throw UserFacingError("That note is already in the Trash.") }
         if try await NotebookCollections.isProfile(collectionId: item.collectionId, notebook: notebook) {
             throw UserFacingError("That's a fact in “About you”. Use “forget” to remove it.")
+        }
+        // Trashing it would end its reminders (T24), as marking it done would.
+        if case .external = context.caller, await notebook.holdsAnImportantReminder(itemId: id) {
+            throw UserFacingError(verbatim: "That note has a reminder the user marked important, so only they can move it to the Trash, in Sidefolk. You can ask them to.")
         }
         _ = try await notebook.trash(itemId: id, now: context.now)
         events.changed(.notebook)
