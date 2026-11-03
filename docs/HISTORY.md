@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: A coordinator skill for this repository
+
+`sidefolk-coordinator` (`.claude/skills/`, mirrored in `.agents/skills/`) holds what a session coordinating the others needs to know here: the repositories, how D, T and migration numbers are given out, the app and gallery release mechanics, the session messages, and lessons from past incidents. It holds nothing perishable and gives the commands to read today's state. Checked: its read-only commands were run against `origin/main`, the catalog diff against the live catalog, and an independent reader went through it cold. Not run: pushes, `gh workflow run`, `build.py --sidefolk-build`, `publish.sh`, which only a real release should run.
+
 ## 2026-11-03: Sandbox data-folder hardening, and dev.swift aimed at one app
 
 **Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.
