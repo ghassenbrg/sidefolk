@@ -164,7 +164,7 @@ struct ThemeSettingsGroup: View {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = String(localized: "My Theme", comment: "The folder name a new theme starts with")
         panel.prompt = String(localized: "Start Theme")
-        panel.message = String(localized: "Sidefolk makes a folder with a copy of Harbor and a short guide, then follows it.")
+        panel.message = String(localized: "Sidefolk makes a folder with a copy of the default theme and a short guide, then follows it.")
         Task {
             guard await run(panel) == .OK, let url = panel.url else { return }
             do {

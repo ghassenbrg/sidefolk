@@ -119,8 +119,9 @@ struct DayAgenda: View {
     fileprivate static let timeWidth: CGFloat = 44
 
     private func allDay(_ event: CalendarEvent) -> some View {
-        AgendaLine(time: Text("All day", comment: "An event with no time, in the day's list"),
-                   mark: AnyView(Circle().fill(CalendarTint.of(event.color?.hex ?? Self.noCalendarColor).edge)), title: event.title, faded: false)
+        // Its words at the row's end: the time column is too narrow for them in German and Arabic.
+        AgendaLine(time: Text(verbatim: ""), mark: AnyView(Circle().fill(CalendarTint.of(event.color?.hex ?? Self.noCalendarColor).edge)),
+                   title: event.title, faded: false, note: Text("All day", comment: "An event with no time, in the day's list"))
             .accessibilityElement(children: .combine)
     }
 
@@ -171,6 +172,7 @@ private struct AgendaLine: View {
     var title: String
     var faded: Bool
     var struck = false
+    var note: Text?
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
@@ -180,6 +182,7 @@ private struct AgendaLine: View {
             Text(verbatim: title).font(Theme.Font.body).strikethrough(struck)
                 .foregroundStyle(faded ? Theme.inkMuted : Theme.ink).lineLimit(1)
             Spacer(minLength: 0)
+            note?.font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(1).fixedSize()
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, 7)

@@ -81,15 +81,21 @@ struct HomeView: View {
         .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
     }
 
-    /// A page in the sidebar's colour with rounded corners under the toolbar: one sheet set into its frame, with the corner
-    /// the cards use (D130). Today with a scene has the picture there instead, and a translucent sidebar has no colour to match.
+    /// A page with rounded corners under the toolbar: one sheet set into its frame, with the corner the cards use (D130). Today with a scene has the picture there instead, and a translucent sidebar has no colour to match.
     private var framesPage: Bool {
         let tokens = ThemeStore.shared.style.tokens
         return tokens.material.sidebar == .solid && !((model.selection ?? .now) == .now && tokens.material.scene)
     }
 
     private var pageFrame: some View {
-        Theme.sidebar.frame(height: PageFrameShape.top + PageFrameShape.radius)
+        // The theme's sky stays behind the toolbar on every page, so the window reads as one place; without a scene, the
+        // sidebar's colour.
+        ZStack(alignment: .top) {
+            Theme.sidebar
+            if ThemeStore.shared.style.tokens.material.scene { ThemeScene() }
+        }
+        .frame(height: PageFrameShape.top + PageFrameShape.radius, alignment: .top)
+        .clipped()
             .mask(alignment: .top) { PageFrameShape().fill(style: FillStyle(eoFill: true)) }
             .ignoresSafeArea()
             .allowsHitTesting(false)

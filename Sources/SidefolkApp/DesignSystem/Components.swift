@@ -856,7 +856,9 @@ struct ThemeScene: View {
     var body: some View {
         GeometryReader { g in
             if g.size.width >= 860, let art = Theme.Art.scene(dark: scheme == .dark) {
+                // Mirrored in right to left, so what's in the picture stays on the side away from the words.
                 Image(decorative: art, scale: 2).resizable().scaledToFill()
+                    .flipsForRightToLeftLayoutDirection(true)
                     .frame(width: g.size.width, height: g.size.width / 3)
                     .clipped()
                     .offset(y: -Self.lift)

@@ -60,13 +60,17 @@ struct TodayView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
                 .homePageTitle()
+                .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in hasScene ? width * 0.62 : width }
             (Text(verbatim: DayBrief.lead(needsYou: now.needsYouCount)).fontWeight(.semibold).foregroundStyle(Theme.sceneInk)
                 + Text(verbatim: " " + DayBrief.detail(next: now.nextUp, changed: now.changedWatches)).foregroundStyle(Theme.sceneInkMuted))
                 .font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale))
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: 560, alignment: .leading)
+                // Words stay over the scene's empty side, however long they run in any language (D130).
+                .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in min(560, hasScene ? width * 0.46 : width) }
         }
     }
+
+    private var hasScene: Bool { ThemeStore.shared.style.tokens.material.scene }
 
     // MARK: Needs you
 
