@@ -170,8 +170,9 @@ extension ExternalToolPolicy {
             """,
         "notes.trash": """
             Move one of the user's notes to Sidefolk's Trash by its id, when the user asks to delete it. It stays restorable \
-            for 30 days; only the user can empty the Trash.
+            for 30 days (notes_restore, by the same id); only the user can empty the Trash.
             """,
+        "notes.restore": "Bring a note back from Sidefolk's Trash by its id, when you moved it there by mistake or the user asks. You can't list what's in the Trash.",
         "notes.search": "Full-text search over the user's notes, ideas, tasks and links, with their ids. The user may be asked to allow it.",
         "notes.list": "List the user's newest notes, ideas, tasks and links with their ids, optionally for one collection, kind or status. The user may be asked to allow it.",
         "reminders.list": "List the user's upcoming reminders, soonest first, with their ids. The user may be asked to allow it.",

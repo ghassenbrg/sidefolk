@@ -7,6 +7,11 @@ import Testing
 /// over stdio to `MCPStdioBridge`, which reaches a whole Sidefolk (real tools, Guard, socket, scheduler,
 /// watchers) in a temp home, as `sidefolk mcp` does (D42).
 @Suite(.serialized) struct ExternalAgentsTests {
+    private func waitFor(_ done: @Sendable () async -> Bool) async throws {
+        for _ in 0..<200 where await !done() { try await Task.sleep(for: .milliseconds(10)) }
+        #expect(await done())
+    }
+
     /// A running Sidefolk and one connected MCP client that calls itself Codex.
     struct Stack {
         let dir: ShortTempDir
@@ -92,6 +97,28 @@ import Testing
         let refused = try await s.call("notes_update", ["id": .string(id), "status": "open"])
         #expect(refused.isError)
         #expect(refused.text.contains("What other agents may do"))
+        await s.stop()
+    }
+
+    /// "oops, bring that back": the note, and the reminder it had; never without the setting, and not from About you.
+    @Test func restoreANoteMovedToTheTrash() async throws {
+        let s = try await Stack()
+        let saved = try await s.call("notes_save", ["text": "Send the invoice", "kind": "task", "remind": "in 2 hours"])
+        let id = try #require(saved.text.firstMatch(of: /\(id ([^)]+)\)/)?.1).description
+        #expect(try await s.call("notes_restore", ["id": .string(id)]).text.contains("isn't in the Trash"))
+        #expect(try await !s.call("notes_trash", ["id": .string(id)]).isError)
+        try await waitFor { await s.runtime.scheduler.upcoming().isEmpty }
+
+        let restored = try await s.call("notes_restore", ["id": .string(id)])
+        #expect(!restored.isError, "\(restored.text)")
+        #expect(try await s.runtime.notebook.item(id: id)?.deletedAt == nil)
+        try await waitFor { await !s.runtime.scheduler.upcoming().isEmpty }
+
+        #expect(try await !s.call("notes_trash", ["id": .string(id)]).isError)
+        await s.runtime.settings.update { $0.agentAccess.change = .off }
+        let refused = try await s.call("notes_restore", ["id": .string(id)])
+        #expect(refused.text.contains("What other agents may do"))
+        #expect(try await s.runtime.notebook.item(id: id)?.deletedAt != nil)
         await s.stop()
     }
 
