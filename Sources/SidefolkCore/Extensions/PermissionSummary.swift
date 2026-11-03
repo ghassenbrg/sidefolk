@@ -64,11 +64,16 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         self.networkPurpose = networkPurpose
     }
 
-    /// Pins saved before programs, per-call folders, media, clipboard, power, screen and UDP existed have none of them.
     /// Ways out other than its own internet: your AI, a place search, Sidefolk's tools, the certificate service under `media`, the
-    /// clipboard, a folder named at install, which may sync (the drop card, D141).
-    public var carriesOut: Bool { ai != nil || place != nil || act != nil || media || clipboard || !write.isEmpty }
+    /// clipboard, a folder named at install, which may sync, a program it runs (the drop card, D141).
+    public var carriesOut: Bool { ai != nil || place != nil || act != nil || media || clipboard || !write.isEmpty || !exec.isEmpty || !programs.isEmpty }
 
+    /// It can't carry what it reads beyond this Mac by itself, so it may get plans and hear titles without a card each time (D110, D129).
+    public var isContained: Bool {
+        !network && exec.isEmpty && programs.isEmpty && write.isEmpty && folders != .write && !clipboard && !screen && !udp && !placesFiles
+    }
+
+    /// Pins saved before programs, per-call folders, media, clipboard, power, screen and UDP existed have none of them.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         network = try c.decode(Bool.self, forKey: .network)
@@ -256,11 +261,10 @@ public struct PermissionSummary: Sendable, Hashable {
                               note: String(localized: "Each use asks you first, unless you read and allowed a plan for exactly that. A plan can search your notes unattended, with words it fills in. Every use is in History.")))
         }
         if let events = p.events {
-            let contained = !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp
             lines.append(Line(kind: .events, text: String(localized: "Hears when things happen in Sidefolk: a reminder fires, a note is saved, a meeting is about to start, an agent finishes. It says it uses that \(events.purpose).",
                                                           comment: "Install sheet: permissions.events; the author's purpose, “to start what you set up”"),
                               caution: true,
-                              note: contained ? String(localized: "It hears their titles too, without a card each time. It can't reach the internet by itself; anything it passes on goes through Sidefolk.")
+                              note: p.isContained ? String(localized: "It hears their titles too, without a card each time. It can't reach the internet by itself; anything it passes on goes through Sidefolk.")
                                   : String(localized: "It hears their titles too, without a card each time, and it can reach beyond this Mac, so it could send them on.")))
         }
         if !p.network && p.media {
