@@ -790,7 +790,8 @@ import Testing
             return id
         }
         let held = try await task("Take the pill")
-        let vital = try await s.runtime.scheduler.create(title: "Pill now", at: Date().addingTimeInterval(3600), level: .critical, source: "user", itemId: held)
+        // With the note's title, so a rename would reach it.
+        let vital = try await s.runtime.scheduler.create(title: "Take the pill", at: Date().addingTimeInterval(3600), level: .critical, source: "user", itemId: held)
         func holds() async throws {
             #expect(try await s.runtime.notebook.item(id: held)?.status == .open)
             #expect(try await s.runtime.notebook.item(id: held)?.deletedAt == nil)
@@ -819,7 +820,7 @@ import Testing
         // A new title would reword it; the rest of a change still works.
         let renamed = try await s.call("notes_update", ["id": .string(held), "text": "Skip the pill"])
         #expect(renamed.isError && renamed.text.contains("marked important"), "\(renamed.text)")
-        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.title == "Pill now")
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.title == "Take the pill")
         let words = try await s.call("notes_update", ["id": .string(held), "append": "With water"])
         #expect(!words.isError, "\(words.text)")
         let sameTitle = try await s.call("notes_update", ["id": .string(held), "text": "Take the pill\nWith water and food"])
@@ -842,6 +843,16 @@ import Testing
         let mine = await s.runtime.executor.execute(name: "notes.update", input: ["id": .string(held), "status": "done"], caller: .user)
         if case .ok = mine.status {} else { Issue.record("the person was held: \(mine.promptText)") }
         #expect(try await s.runtime.notebook.item(id: held)?.status == .done)
+
+        // Ended with its task, it would come back with the agent's words if the agent opened the task and renamed it in one go.
+        await s.runtime.scheduler.settleLinks()
+        let finished = await s.runtime.scheduler.reminder(matching: vital.id)?.state
+        #expect(finished == .done, "\(String(describing: finished))")
+        let revived = try await s.call("notes_update", ["id": .string(held), "text": "Skip the pill", "status": "open"])
+        #expect(revived.isError && revived.text.contains("marked important"), "\(revived.text)")
+        #expect(try await s.runtime.notebook.item(id: held)?.status == .done)
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.title == "Take the pill")
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == finished)
         await s.stop()
     }
 

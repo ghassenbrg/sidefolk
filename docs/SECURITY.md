@@ -154,7 +154,7 @@ Reading user data (notes, reminders, `notes.get`, `agenda.today`) asks every tim
 "Always". `notes.collection` (D117) always asks too, since naming a collection is what they otherwise can't do; the
 name it gives reads as theirs. `notes.update` and `notes.trash` change or trash one note by id (never in "About you",
 never into a new collection, never deleting for good: only the person empties the Trash), each undoable
-from Activity (D52). Neither may end or reword an important reminder on the note: marking it done, trashing it or changing its title is refused, card or no card (D160, T24). Settings › Trust › What other agents may do (`AgentAccess`) sets each group (saving,
+from Activity (D52). Neither may end or reword an important reminder on the note: marking it done, trashing it or changing its title is refused, card or no card (D160, T24); a title also while that reminder has ended, since it would come back with the new words. Settings › Trust › What other agents may do (`AgentAccess`) sets each group (saving,
 changing, reading) to Allow, Ask each time or Off; defaults: saving and changing allowed, reading asks.
 "Allow" on reads is the person's explicit choice, shown with what it means; Off hides the tools and
 refuses calls with a message that names the setting. The closed list itself never changes from Settings. Files, clipboard, open, web fetch, web and weather reports, command watchers, skills,

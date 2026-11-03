@@ -326,7 +326,7 @@ struct NotesUpdateTool: Tool {
         if input.string("text") != nil {
             let (title, body) = NoteText.split(try input.requiredText("text", limit: NoteText.maxText))
             // A reminder carrying the note's title follows a rename (D49): that would reword an important one (T24).
-            if case .external = context.caller, title != item.title, await notebook.holdsAnImportantReminder(itemId: id) {
+            if case .external = context.caller, title != item.title, await notebook.hasAnImportantReminder(itemId: id) {
                 throw UserFacingError(verbatim: "That note has a reminder the user marked important, so only they can change its title, in Sidefolk. You can change the rest with append, or ask them to.")
             }
             item.title = title

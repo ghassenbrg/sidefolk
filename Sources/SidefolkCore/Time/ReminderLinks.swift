@@ -140,4 +140,11 @@ extension NotebookStore {
         }
         return waiting?.contains { $0.id != other && $0.level >= .critical } ?? true
     }
+
+    /// Whether a new title would reach an important reminder: it follows in any state, and one that ended with its task comes back
+    /// when the task is opened again (D49). Yes when it can't be told.
+    func hasAnImportantReminder(itemId: String) async -> Bool {
+        let any = try? await db.writer.read { db in try Reminder.filter(Column("item_id") == itemId).fetchAll(db) }
+        return any?.contains { $0.level >= .critical } ?? true
+    }
 }

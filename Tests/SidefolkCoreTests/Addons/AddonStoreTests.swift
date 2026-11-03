@@ -128,6 +128,7 @@ import Testing
         let first = Task { try await store.catalog(refresh: true) }
         let giveUp = ContinuousClock.now + .seconds(30)
         while held.calls == 0, ContinuousClock.now < giveUp { await Task.yield() }
+        try #require(held.calls > 0, "the first fetch never started")
         _ = try await store.catalog(refresh: true)
         held.letTheFirstGo()
         _ = try await first.value
