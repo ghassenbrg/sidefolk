@@ -34,6 +34,8 @@ struct SayBarField<Trailing: View>: View {
     /// At the trailing end: a microphone, Stop while working.
     @ViewBuilder var trailing: Trailing
     @FocusState private var focused: Bool
+    /// The field had the keyboard when it locked, so the new one takes it back when it frees.
+    @State private var hadKeyboard = false
 
     var body: some View {
         let height = size == .home ? Theme.Size.sayBarHome : Theme.Size.sayBarDesktop
@@ -78,7 +80,15 @@ struct SayBarField<Trailing: View>: View {
         }
         .animation(Theme.Motion.micro, value: binding.wrappedValue)
         .onChange(of: focusTrigger) { binding.wrappedValue = true }
-        .onChange(of: binding.wrappedValue) { focusChanged(binding.wrappedValue) }
+        .onChange(of: binding.wrappedValue) {
+            focusChanged(binding.wrappedValue)
+            if !disabled { hadKeyboard = binding.wrappedValue }
+        }
+        // A moment later: the new field has to be there to take it.
+        .onChange(of: disabled) {
+            guard !disabled, hadKeyboard else { return }
+            Task { binding.wrappedValue = true }
+        }
     }
 }
 
