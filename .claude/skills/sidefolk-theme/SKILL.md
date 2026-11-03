@@ -121,7 +121,7 @@ The check errors on: a missing or unreadable image, contrast under 4.5:1 for any
 success included, on every surface, the label on each fill, and each chip's words on its soft fill), a status colour
 outside its hue (danger red 0–30/330–360°, warning amber 30–65°, success green 70–200°; their soft fills the same hue
 or grey), a bad id or name. It warns
-on: a missing colour (the default's is used), an unknown role, a value clamped. A new theme should have **no warnings**
+on: a missing colour (the default's is used, and if it fails there the error names the role to write), an unknown role, a value clamped. A new theme should have **no warnings**
 either: give every role in both appearances. `palette.py` lists what Lantern still wants; fix all of it.
 
 ## 5. Review

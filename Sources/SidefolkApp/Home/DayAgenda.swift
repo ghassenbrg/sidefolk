@@ -29,12 +29,14 @@ struct DayAgenda: View {
         case reminder(Reminder, due: Date)
         case done(Reminder, at: Date)
         case event(CalendarEvent)
+        case now(Date)
 
         var id: String {
             switch self {
             case .reminder(let r, _): "r" + r.id
             case .done(let r, _): "d" + r.id
             case .event(let e): "e" + e.id
+            case .now: "now"
             }
         }
         var at: Date {
@@ -42,6 +44,7 @@ struct DayAgenda: View {
             case .reminder(_, let due): due
             case .done(_, let at): at
             case .event(let e): e.start
+            case .now(let at): at
             }
         }
     }
@@ -62,15 +65,15 @@ struct DayAgenda: View {
             case .reminder: true
             case .event(let e): e.end > now || recent.contains(item.id)
             case .done: recent.contains(item.id)
+            case .now: true
             }
         }
         let hidden = past.count - shownPast.count + max(0, next.count - Self.nextShown)
         VStack(alignment: .leading, spacing: 0) {
             header
             ForEach(events.filter(\.allDay)) { allDay($0) }
-            ForEach(shownPast) { row($0, now: now) }
-            nowLine(now)
-            ForEach(next.prefix(Self.nextShown)) { row($0, now: now) }
+            // One list, the now line among the rows: a late reminder moved past it stays the same row, keyboard and all.
+            ForEach(shownPast + [.now(now)] + next.prefix(Self.nextShown)) { row($0, now: now) }
             if hidden > 0 {
                 Button(action: openCalendar) { Text("\(hidden) more today", comment: "Today's list of the day: what it doesn't show, opening the Calendar") }
                     .buttonStyle(.sf(.quiet))
@@ -144,6 +147,8 @@ struct DayAgenda: View {
 
     @ViewBuilder private func row(_ item: Item, now: Date) -> some View {
         switch item {
+        case .now(let at):
+            nowLine(at)
         case .event(let event):
             AgendaLine(time: Text(verbatim: TimeFormat.clock(event.start, calendar: .current)),
                        mark: AnyView(Circle().fill(CalendarTint.of(event.color?.hex ?? Self.noCalendarColor).edge)),

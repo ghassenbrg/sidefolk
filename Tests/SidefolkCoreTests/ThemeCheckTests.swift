@@ -212,6 +212,59 @@ import UniformTypeIdentifiers
         #expect(ThemeCheck.softMeaningProblems(c).isEmpty)
     }
 
+    /// A hand-made theme from before D130: its pale accent wouldn't mark a selected row, and its author never wrote one, so
+    /// the stand-in moves toward its ink, keeping its colour, instead of refusing the theme over a role it doesn't have.
+    @Test func aPaleAccentIsNotRefusedOverARoleItNeverWrote() throws {
+        var file = ThemeFile(.sidefolk, id: "com.you.pale", name: "Pale")
+        for appearance in ["light", "dark"] {
+            for role in ThemeTokens.Colors.optionalRoles { file.colors?[appearance]?[role] = nil }
+        }
+        file.colors?["light"]?["accent"] = "#D9E6F2"
+        file.colors?["light"]?["onAccent"] = "#1C1C1E"
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(report.isUsable && report.problems.isEmpty, "\(messages(report))")
+        let c = report.tokens.colors
+        #expect(c.sidebar.light == c.surface.light)
+        #expect(ThemeCheck.contrast(c.sidebarSelected.light, c.sidebar.light) >= ThemeCheck.stateContrast)
+        #expect(ThemeCheck.contrast(c.onSidebarSelected.light, c.sidebarSelected.light) >= ThemeCheck.textContrast)
+        #expect(c.sidebarSelected.light != c.accent.light && c.sidebarSelected.light != c.ink.light)
+        // The dark side's accent stood out already, so it is untouched.
+        #expect(c.sidebarSelected.dark == c.accent.dark)
+    }
+
+    /// A role written for one appearance only: the other takes the stand-in, and what was written stays.
+    @Test func aRoleWrittenForOneAppearanceKeepsIt() throws {
+        var file = ThemeFile(.sidefolk, id: "com.you.half", name: "Half")
+        for role in ["sidebar", "sidebarInk", "sidebarInkMuted", "sidebarSelected", "onSidebarSelected"] { file.colors?["dark"]?[role] = nil }
+        let written = try #require(file.colors?["light"]?["sidebar"])
+        try write(file)
+        let report = ThemeCheck.check(folder: folder)
+        #expect(report.isUsable, "\(messages(report))")
+        #expect(report.tokens.colors.sidebar.light == ThemeFile.colour(written))
+        #expect(report.tokens.colors.sidebar.dark == report.tokens.colors.surface.dark)
+    }
+
+    /// A required colour left out comes from the default, which can change under a theme. Adding it says which role to
+    /// write; a copy already kept stays, rather than vanishing for the default with no word. A colour the theme did write
+    /// is still refused either way.
+    @Test func aColourLeftOutNeverTakesAKeptThemeAway() throws {
+        var file = ThemeFile(.sidefolk, id: "com.you.sunny", name: "Sunny")
+        file.colors?["light"]?["accent"] = "#F2C94C"
+        file.colors?["light"]?["onAccent"] = nil
+        try write(file)
+        let strict = ThemeCheck.check(folder: folder)
+        #expect(!strict.isUsable)
+        #expect(messages(strict).contains("This theme doesn't set onAccent: write it in theme.json."), "\(messages(strict))")
+        let lenient = ThemeCheck.check(folder: folder, strict: false)
+        #expect(lenient.isUsable, "\(messages(lenient))")
+        #expect(messages(lenient).contains("Warning: onAccent on accent is"), "\(messages(lenient))")
+
+        file.colors?["light"]?["onAccent"] = "#FFFFFF"
+        try write(file)
+        #expect(!ThemeCheck.check(folder: folder, strict: false).isUsable)
+    }
+
     /// The rules added on 2026-11-01 refuse a theme being made or added from a folder, but a copy Sidefolk already
     /// keeps (it passed when it was added) stays, with warnings, until its update comes.
     @Test func aKeptThemeOutlivesANewerRule() throws {

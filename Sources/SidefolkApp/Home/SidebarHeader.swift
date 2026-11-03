@@ -22,12 +22,9 @@ struct SidebarHeader: View {
             .frame(maxWidth: .infinity)
             .frame(height: SidebarHeaderArt.height - SidebarHeaderArt.toolbar - 4, alignment: .bottom)
             .padding(.bottom, Theme.Space.xs)
-            // The state beside the name where it fits, under it where it doesn't (German, a long name).
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: Theme.Space.xs) { name(settings); state }
-                VStack(alignment: .leading, spacing: 2) { name(settings); state }
-            }
-            .padding(.horizontal, Theme.Space.l)
+            // Always under the name: beside it where it fit, a long "next:" dropped it a line and moved every row below.
+            VStack(alignment: .leading, spacing: 2) { name(settings); state }
+                .padding(.horizontal, Theme.Space.l)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, Theme.Space.xs)
@@ -48,7 +45,8 @@ struct SidebarHeader: View {
             Text(verbatim: word).font(Theme.Font.callout.weight(.medium)).lineLimit(1)
                 .foregroundStyle(model.poolState == .waiting(0) || model.poolPose == .waiting ? Theme.warning : Theme.sidebarInkMuted)
         } else {
-            Text(verbatim: line).font(Theme.Font.callout).foregroundStyle(Theme.sidebarInkMuted).lineLimit(1)
+            // Cut in the middle: the time at its end is what the line is for.
+            Text(verbatim: line).font(Theme.Font.callout).foregroundStyle(Theme.sidebarInkMuted).lineLimit(1).truncationMode(.middle)
         }
     }
 

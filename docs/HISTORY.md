@@ -7,6 +7,11 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Four small fixes after the theme redesign (D130)
+
+The sidebar header keeps its height: the state or "next:" line is always under the name, and a long one is cut in the middle so its time stays. Your day is one list with the now line among its rows, so a late reminder moved past now stays the same row and keeps the keyboard. A theme that leaves out the selected row's colours gets stand-ins that pass (a pale accent moves toward the ink until it stands 3:1), so a hand-made theme from before D130 isn't refused over a role its author never wrote; a role written for one appearance keeps it. A failure caused by a colour the theme leaves out is a warning on a copy Sidefolk keeps, so the theme stays instead of going to the default with no word, and when adding it the words name the role to write.
+Checked: `ThemeCheckTests`, the full suite, the release build, snapshots of the header with a long reminder. A late row can't be held on screen from the dev tools, since a reminder fires within moments of its time, so the move across now itself wasn't pressed.
+
 ## 2026-11-03: An integrator skill, and two roles for a merge day
 
 `sidefolk-integrator` (`.claude/skills/`, mirrored in `.agents/skills/`) holds what the session merging ready branches into one snapshot needs here: the clean built add-ons tree, the final pass, doc-loss and number checks, conflict hot spots, push and Release, confirming a snapshot, and who does which step of Add-ons first. `sidefolk-coordinator` now describes the split: sessions send MERGE-READY to the coordinator and never to the integrator, the coordinator relays it, and the integrator pushes only on a GO naming the exact commit and what it covers. The generic skills are `integrator` and `coordinator` in the founder's agent-skills repository.
