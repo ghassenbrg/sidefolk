@@ -71,6 +71,13 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 - **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** the founder approved all of it, locally. Batch A is on `team/tools-batch-a`, not released (HISTORY's top entry). **Next:** release it on the founder's yes, then B1 to B6 in small batches, each with its own branch, commit and SECURITY entry, and B7 (`files.write`) last, after Formatic's D140 is on main. **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar.
 
+- **Formatic, a file-conversion extension (D140–D143, D150–D152):** the host abilities it needs are here; the extension and its designed cards aren't.
+  - **Here:** saving beside the file the person gave (D140), file drops with a menu and several files (D141), Open, Show and Undo on a saved file (D142), Finder's Send to Sidefolk (D151). Sound under `media` is D143.
+  - **Half done, local branches only:** the extension itself (add-ons `team/formatic`, in the gallery only after an app release carries these), its look (D150, `team/formatic-design` is the reference, after the themes work), the ring (D152: the founder's test passed, no go to build), and `team/sandbox-names` (failed its review once, fixed, needs another).
+  - **Next:** another review of `team/sandbox-names`, then the extension to the gallery, then D150.
+  - **Open for the founder:** whether the card's "It can't use the internet" becomes "It can't go online by itself".
+  - **Not verified:** the Service from a real Finder, including a cold launch; a real drag from Finder; Open, Show and Undo by real clicks. Checked by the suite and the debug app: every format through the real sandbox, a drop and a card choice by command. Drop menu titles can't be translated yet.
+
 ## Next
 
 1. **The founder plays the games v2** (the Game Center, two players, AI trivia) and the Calendar v2 in snapshot 780, including switching out of Month in the originally affected setup.
