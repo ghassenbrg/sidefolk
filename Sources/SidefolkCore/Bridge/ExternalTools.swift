@@ -149,9 +149,9 @@ public final class ExternalToolGateway: Sendable {
         // What isn't this agent's to touch without asking: a card each time, saying exactly what would happen (D160).
         if let others = base as? ReachesOthersRecords {
             do {
-                if let words = try await others.cardWords(for: input, caller: caller) {
+                if let asked = try await others.onACard(input, caller: caller) {
                     guard access.change != .off else { return turnedOff(base) }
-                    return await askFirst(base, words: words, input: input, caller: caller, access: access)
+                    return await askFirst(base, words: asked.words, input: asked.input, caller: caller, access: access)
                 }
             } catch {
                 let act = ToolActivity(id: Identifier.make(), tool: base.spec.name, title: base.spec.title, summary: base.summary(for: input),
@@ -186,9 +186,10 @@ extension ExternalToolGateway {
 
 /// A tool whose record may belong to someone else than the agent calling it.
 protocol ReachesOthersRecords {
-    /// What the card says, exactly, when this call would touch a record not the caller's own; nil when it wouldn't, or
-    /// there's nothing there, which the tool then says as ever. Throws what can't be done, so no card asks for it.
-    func cardWords(for input: JSONValue, caller: Caller) async throws -> String?
+    /// When this call would touch a record not the caller's own: what the card says, exactly, and the input that then runs,
+    /// settled now, so what happens is what it said. Nil when it wouldn't, or there's nothing there, which the tool then says
+    /// as ever. Throws what can't be done, so no card asks for it.
+    func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)?
 }
 
 /// An exposed tool as external agents get it: the external spec, refusals checked at run time

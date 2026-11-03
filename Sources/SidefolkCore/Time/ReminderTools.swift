@@ -178,6 +178,15 @@ public enum ReminderTools {
             return r
         }
 
+        /// Someone else's reminder, past what a card may touch: only the person says what breaks through Quiet, and ending,
+        /// moving or rewording one of those would quietly undo what they chose (T24).
+        func notImportant(_ r: Reminder) throws {
+            guard r.level < .critical else { throw UserFacingError(verbatim: "The user marked that reminder important, so only they can change it, in Sidefolk. You can ask them to.") }
+        }
+
+        /// The time a card settles on, as what runs: answered later, it still means what the card said.
+        func settled(_ date: Date) -> JSONValue { .string(ISO8601DateFormatter().string(from: date)) }
+
         /// How a result names a reminder: another agent's yes on a card isn't a read, so its words stay out.
         func quoted(_ r: Reminder, _ context: ToolContext) -> String {
             context.personWasAsked ? "that reminder" : "“\(r.title)”"
@@ -401,10 +410,11 @@ public enum ReminderTools {
 
         func summary(for input: JSONValue) -> String { String(localized: "Cancel a reminder") }
 
-        func cardWords(for input: JSONValue, caller: Caller) async throws -> String? {
+        func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)? {
             guard let r = await shared.othersRecord(input, caller: caller) else { return nil }
+            try shared.notImportant(r)
             let name = shared.named(r, now: Date())
-            return r.recurrence == nil ? String(localized: "Cancel your reminder \(name)") : String(localized: "Cancel your repeating reminder \(name), and every time after")
+            return (r.recurrence == nil ? String(localized: "Cancel your reminder \(name)") : String(localized: "Cancel your repeating reminder \(name), and every time after"), input)
         }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -439,11 +449,12 @@ public enum ReminderTools {
 
         func summary(for input: JSONValue) -> String { String(localized: "Mark a reminder done") }
 
-        func cardWords(for input: JSONValue, caller: Caller) async throws -> String? {
+        func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)? {
             guard let r = await shared.othersRecord(input, caller: caller) else { return nil }
+            try shared.notImportant(r)
             let name = shared.named(r, now: Date())
-            return await shared.scheduler.linkedOpenTask(r) == nil ? String(localized: "Mark your reminder \(name) done")
-                : String(localized: "Mark your reminder \(name) done, and the task it belongs to")
+            return (await shared.scheduler.linkedOpenTask(r) == nil ? String(localized: "Mark your reminder \(name) done")
+                : String(localized: "Mark your reminder \(name) done, and the task it belongs to"), input)
         }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -501,14 +512,16 @@ public enum ReminderTools {
             String(localized: "Snooze a reminder \(input.string("when") ?? "")").trimmingCharacters(in: .whitespaces)
         }
 
-        func cardWords(for input: JSONValue, caller: Caller) async throws -> String? {
+        func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)? {
             // Before looking: what's wrong with the words says nothing about whether the reminder is there.
             guard let whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
             let now = Date()
             let parsed = try shared.future(whenText, now: now)
             guard parsed.recurrence == nil else { throw ToolError.invalidInput(String(localized: "snooze takes a single time, not a repeat")) }
             guard let r = await shared.othersRecord(input, caller: caller) else { return nil }
-            return String(localized: "Put off your reminder \(shared.named(r, now: now)) to \(TimeFormat.when(parsed.date, now: now, calendar: shared.calendar))")
+            try shared.notImportant(r)
+            return (String(localized: "Put off your reminder \(shared.named(r, now: now)) to \(TimeFormat.when(parsed.date, now: now, calendar: shared.calendar))"),
+                    input.setting("when", shared.settled(parsed.date)))
         }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -560,31 +573,35 @@ public enum ReminderTools {
 
         func summary(for input: JSONValue) -> String { String(localized: "Change a reminder") }
 
-        func cardWords(for input: JSONValue, caller: Caller) async throws -> String? {
+        func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)? {
             // Before looking: what's wrong with the words says nothing about whether the reminder is there. One change on a
-            // card, short enough to read whole: a card that can cut off what it asks about isn't asking.
+            // card, short enough to read whole: a card that can cut off what it asks about isn't asking. What runs is what
+            // it showed: words cleaned as shown, a time settled now, and no change of repeat, which is the person's to make.
             let now = Date()
             let given = ["title", "when", "notes", "level"].filter { input[$0] != nil }
             guard !given.isEmpty else { throw ToolError.invalidInput(String(localized: "nothing to change. Give a title, a time, notes or a level.")) }
             var change = ""
+            var settled = input
             if let title = input["title"]?.stringValue?.displaySafe {
                 guard !title.isEmpty, title.count <= Self.shownOnACard else { throw UserFacingError(verbatim: "A title for someone else's reminder must be 1 to \(Self.shownOnACard) characters, so the card can show it whole.") }
                 change = String(localized: "its title to “\(title)”")
+                settled = settled.setting("title", .string(title))
             } else if let text = input.string("when") {
-                let parsed = try shared.future(text, now: now)
+                let parsed = try shared.future(CreateTool.everyFewSeconds.found(in: text) ? "every minute" : text, now: now)
+                guard parsed.recurrence == nil else { throw UserFacingError(verbatim: "Someone else's reminder can move, but only they can change how it repeats.") }
                 change = String(localized: "its time to \(TimeFormat.when(parsed.date, now: now, calendar: shared.calendar))")
-                if let rule = parsed.recurrence { change += ", " + TimeFormat.recurrence(rule, now: now, calendar: shared.calendar) }
+                settled = settled.setting("when", shared.settled(parsed.date))
             } else if let notes = input["notes"]?.stringValue?.displaySafe {
                 guard notes.count <= Self.shownOnACard else { throw UserFacingError(verbatim: "Notes for someone else's reminder must be at most \(Self.shownOnACard) characters, so the card can show them whole.") }
                 change = notes.isEmpty ? String(localized: "no notes") : String(localized: "its notes to “\(notes)”")
+                settled = settled.setting("notes", .string(notes))
             } else if let level = input.string("level") {
                 change = level == "gentle" ? String(localized: "telling you gently") : String(localized: "telling you so you look")
             }
             guard let r = await shared.othersRecord(input, caller: caller) else { return nil }
             guard given.count == 1 else { throw UserFacingError(verbatim: "Someone else's reminder takes one change per call, so each card can show it whole: \(given.joined(separator: ", ")).") }
-            // Only the person says what breaks through Quiet, and new words would quietly end it (T24).
-            guard r.level < .critical else { throw UserFacingError(verbatim: "The user marked that reminder important, so only they can change it, in Sidefolk. You can ask them to.") }
-            return String(localized: "Change your reminder \(shared.named(r, now: now)): \(change)")
+            try shared.notImportant(r)
+            return (String(localized: "Change your reminder \(shared.named(r, now: now)): \(change)"), settled)
         }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
