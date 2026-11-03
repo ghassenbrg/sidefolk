@@ -377,9 +377,12 @@ public struct AgentIntegrations: Sendable {
     // MARK: Codex
 
     static let codexTable = "mcp_servers.sidefolk"
+    static let codexToolTimeout = 630
 
     func codexSection() -> String {
-        var lines = ["[\(Self.codexTable)]", "command = \(TOMLSection.quote(helperPath))", "args = [\"mcp\"]"]
+        // Longer than the 10 minutes `ask_user` may wait, so a question outlasts Codex's own limit on a tool (D156).
+        var lines = ["[\(Self.codexTable)]", "command = \(TOMLSection.quote(helperPath))", "args = [\"mcp\"]",
+                     "tool_timeout_sec = \(Self.codexToolTimeout)"]
         if !helperEnvironment.isEmpty {
             lines += ["", "[\(Self.codexTable).env]"]
             lines += helperEnvironment.sorted { $0.key < $1.key }.map { "\($0.key) = \(TOMLSection.quote($0.value))" }
