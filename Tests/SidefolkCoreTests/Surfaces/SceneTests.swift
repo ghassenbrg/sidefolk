@@ -264,6 +264,19 @@ struct SceneTests {
 
     // MARK: Right to left
 
+    @Test func aSceneMaySayTheDirectionOfItsOwnWords() throws {
+        let node: JSONValue = .object(["type": .string("shape"), "form": .string("rect"), "w": .number(10), "h": .number(10)])
+        func parsed(_ extra: [String: JSONValue]) throws -> SurfaceScene {
+            try SurfaceScene.parse(.object(["width": .number(100), "height": .number(100), "nodes": .array([node])].merging(extra) { $1 }))
+        }
+        #expect(try parsed([:]).rightToLeft == nil, "the app's, unless it says")
+        #expect(try parsed(["direction": .string("rtl")]).rightToLeft == true)
+        #expect(try parsed(["direction": .string("ltr")]).rightToLeft == false)
+        #expect(try parsed(["direction": .string("sideways")]).rightToLeft == nil, "anything else means nothing")
+        // The reader takes the keys it knows, so a copy from before this draws such a scene in the app's direction rather than refusing it.
+        #expect(try parsed(["a_key_from_later": .string("rtl")]).rightToLeft == nil)
+    }
+
     @Test func mirroringRunsFromTheFarSideExceptWhatStaysLeftToRight() throws {
         let s = try scene([
             ["type": "group", "id": "g", "x": 10, "w": 100, "h": 50, "children": [

@@ -33,6 +33,7 @@ extension SurfaceScene {
         scene.hidesSpeaker = json["speaker"]?.boolValue == false
         scene.transition = clamp(json["transition_ms"]?.doubleValue, 0...1000, 0) / 1000
         scene.mirrors = json["mirror"]?.boolValue ?? true
+        scene.rightToLeft = json["direction"]?.stringValue.flatMap { $0 == "rtl" ? true : $0 == "ltr" ? false : nil }
         scene.announce = SceneReading.line(json["announce"], 200)
         scene.outcome = json["outcome"]?.stringValue.flatMap(SceneOutcome.init(rawValue:))
         if let t = json["tally"]?.arrayValue?.compactMap(\.intValue), t.count == 2 { scene.tally = t.map { min(max($0, 0), 99_999) } }

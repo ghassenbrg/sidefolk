@@ -3720,3 +3720,9 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 **Why:** `make test && sidefolk notify "Tests passed"` and a git hook that asks first shouldn't need an MCP client.
 **Alternatives:** *a command per tool*: the four people want have words of their own, and `call` covers the rest.
 **Implications:** T4 says so. Any program running as the person could already start `sidefolk mcp`. English like the rest of the command.
+
+### D144 — A scene may say the direction of its own words (2026-11-03)
+**Decision:** *amends D99.* A scene can say `"direction": "rtl"` or `"ltr"` (Kit: `direction(rightToLeft:)`). Present, it decides how the scene lays out, on a surface or a page, instead of the app's language; left out, nothing changes. It names no extension.
+**Why:** the founder wants Playtime in a language of its own, chosen in Playtime: an English Mac and the word of the day in Arabic. An extension's words were already its own to choose (`Language.use`), but the direction of its scenes followed the app, so Arabic drew left to right on an English app. The reverse already worked, through `"mirror": false`.
+**Alternatives:** the extension mirroring its own scene tree (a copy of `SurfaceScene.mirrored()` in a pack, with its animations, areas and drags); reversing only letter rows and leaving the rest (half a language); a per-extension language setting in the app (the app would then have to know every extension's languages, and the choice belongs with what is being played).
+**Implications:** the reader takes the keys it knows, so a copy from before this draws such a scene in the app's direction rather than refusing it (tested, and run with Playtime on the debug app from before this); an extension sends the key only when it differs from the app's. The frame stays in the app's language and direction, as do a page's parts outside a scene.

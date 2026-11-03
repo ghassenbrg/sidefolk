@@ -85,6 +85,8 @@ public struct Scene {
     public func transition(ms: Int) -> Scene { with { $0.extra["transition_ms"] = ms } }
     /// Never mirrored in a right-to-left language (a picture that reads the same everywhere).
     public func neverMirrored() -> Scene { with { $0.extra["mirror"] = false } }
+    /// The direction this scene's words read in, for an extension showing a language other than the app's (`Language.use`). Left out: the app's direction.
+    public func direction(rightToLeft: Bool) -> Scene { with { $0.extra["direction"] = rightToLeft ? "rtl" : "ltr" } }
     /// What VoiceOver hears as it shows.
     public func announcing(_ text: String) -> Scene { with { $0.extra["announce"] = text } }
     /// The companion reacts as the scene shows, from Sidefolk's fixed lists.

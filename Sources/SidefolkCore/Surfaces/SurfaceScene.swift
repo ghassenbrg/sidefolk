@@ -36,6 +36,8 @@ public struct SurfaceScene: Sendable, Hashable {
     public var transition: Double = 0
     /// Lays out right to left in Arabic: x runs from the far side, except under a node marked `ltr`.
     public var mirrors = true
+    /// The direction its own words read in, when the extension shows a language other than the app's (a player's choice of language for one game). nil: the app's direction.
+    public var rightToLeft: Bool?
     /// What VoiceOver hears as this scene shows.
     public var announce: String?
     /// How it ended for the person, as Sidefolk's own row says it; never words of the extension's.

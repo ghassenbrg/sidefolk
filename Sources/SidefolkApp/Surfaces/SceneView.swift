@@ -63,7 +63,9 @@ final class SceneView: NSView {
 
     /// Shows `scene`, sized to fit at `scale`. A run named and unchanged since the last scene carries on; everything else
     /// starts now. Under Reduce Motion only essential curves play.
-    func show(_ next: SurfaceScene, scale: CGFloat, rtl: Bool, reduceMotion: Bool) {
+    func show(_ next: SurfaceScene, scale: CGFloat, rtl appRTL: Bool, reduceMotion: Bool) {
+        // A scene in another language than the app's reads in that language's direction.
+        let rtl = next.rightToLeft ?? appRTL
         self.reduceMotion = reduceMotion
         self.scale = scale
         mirrored = rtl && next.mirrors

@@ -872,7 +872,8 @@ act around), `scale`, `sx`, `sy`, `rotate` (degrees), `opacity`, `z` (order amon
   `{click: {area: <name>, value: <key>}}`. `typed` is the keyboard's key when it differs (`return`, `delete`).
 - **Right to left:** in Arabic each box is measured from the far side, with its animations, text alignment and rotations; a
   column or a dragged point comes back to you in your own terms. `ltr` keeps a node's contents as they are (a picture, a
-  puzzle, a word's tiles), and `"mirror": false` the whole scene.
+  puzzle, a word's tiles), and `"mirror": false` the whole scene. A scene showing another language than the app's says
+  its direction with `"direction": "rtl"` or `"ltr"` (Kit: `direction(rightToLeft:)`); left out, it is the app's.
 - **Limits:** 1500 nodes, 16 deep, 400 pictures of 64 different files, 400 areas, 160 keys, 8 timers, 2 entries, 4 clocks,
   24,000 characters (400 a text), 240 path commands; coordinates within ±4000; **96 MiB of bitmaps** (every text, clock, symbol,
   gradient, figure and tinted picture is `w × h × 16` bytes, a picture counts once at its largest) and **6000 animated points**, a
