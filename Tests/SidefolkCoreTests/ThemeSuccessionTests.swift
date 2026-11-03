@@ -55,6 +55,37 @@ import Testing
         #expect(ThemeSuccession.step(&s) { _ in true } == nil)
     }
 
+    /// Someone updating from before D130 keeps everything they set: the move changes their theme and nothing else, read from
+    /// the bytes a saved copy really holds.
+    @Test func anExistingPersonsSettingsSurviveTheMove() throws {
+        var saved = settings("harbor", density: .compact)
+        saved.companionName = "Biscuit"
+        saved.themeSuccessorsOffered = ["dev.sidefolk.theme.daylight"]
+        saved.sidebarIcons = .colorful
+        let onDisk = try JSONEncoder().encode(saved)
+        var read = try JSONDecoder().decode(AppSettings.self, from: onDisk)
+        #expect(read.theme == "harbor", "a saved old id is read as it was, for the move to see it")
+        _ = ThemeSuccession.step(&read) { _ in true }
+        var expected = saved
+        expected.theme = ThemeTokens.sidefolk.id
+        #expect(read == expected)
+        // And it stays moved across another launch.
+        let again = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(read))
+        #expect(again == expected)
+    }
+
+    /// A person's own followed folder, the painted Harbor chosen on purpose, and settings saved with no theme at all.
+    @Test func whatIsNotTheOldDefaultIsLeftAlone() throws {
+        var following = settings("harbor")
+        following.themeFolder = "/Users/you/Themes/sunset"
+        #expect(ThemeSuccession.step(&following) { _ in true } == nil)
+        #expect(following.theme == "harbor")
+        var painted = settings("dev.sidefolk.theme.harbor")
+        #expect(ThemeSuccession.step(&painted) { _ in true } == nil)
+        #expect(painted.theme == "dev.sidefolk.theme.harbor")
+        #expect(try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8)).theme == ThemeTokens.sidefolk.id)
+    }
+
     @Test func currentThemesAndFollowedFoldersAreLeftAlone() {
         for id in ThemeLibrary.builtInOrder + ["com.you.sunset"] {
             var s = settings(id)
