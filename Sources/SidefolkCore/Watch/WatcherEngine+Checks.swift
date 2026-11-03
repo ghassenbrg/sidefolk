@@ -19,7 +19,11 @@ extension WatcherEngine {
         running.insert(id)
         let startEpoch = epoch
         let started = ContinuousClock.now
-        let task = Task { try await probe.check(w, now: now) }
+        // Stopped before this got a thread: no probe runs, as `stop()` says.
+        let task = Task {
+            try Task.checkCancellation()
+            return try await probe.check(w, now: now)
+        }
         inflight[id] = task
         let outcome = await task.result
         let took = ContinuousClock.now - started
