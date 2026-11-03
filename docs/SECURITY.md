@@ -929,16 +929,13 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 (allow signal (target same-sandbox))
 (allow sysctl-read)
 (allow mach-lookup
-  (global-name "com.apple.system.logger")
-  (global-name "com.apple.system.notification_center")
   (global-name "com.apple.system.opendirectoryd.libinfo")
   (global-name "com.apple.system.DirectoryService.libinfo_v1")
   (global-name "com.apple.cfprefsd.daemon") (global-name "com.apple.cfprefsd.agent")
-  (global-name "com.apple.trustd.agent") (global-name "com.apple.logd"))
-(allow ipc-posix-shm-read* (ipc-posix-name "apple.shm.notification_center"))
+  (global-name "com.apple.logd"))
 
 ;; what dyld/libSystem/interpreters need
-(allow file-read-metadata)                       ; stat for path resolution (leaks existence)
+(allow file-read-metadata)                       ; stat for path resolution (leaks existence, but not inside other extensions' data)
 (allow file-read*
   (literal "/")                                  ; required: without it even /bin/echo aborts
   (subpath "/usr/lib") (subpath "/usr/share") (subpath "/System") (subpath "/Library/Apple")
@@ -975,11 +972,12 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 ;; media=true adds (pictures on Apple silicon, measured on macOS 27; a VM's GPU is not among them):
 ;; (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
-;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder"))
+;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent"))
 
 ;; network=true adds (all-or-nothing, see limits):
 ;; (allow system-socket) (allow network-outbound (remote ip "*:*"))
 ;; (allow network-outbound (literal "/private/var/run/mDNSResponder"))  ; DNS
+;; (allow mach-lookup (global-name "com.apple.trustd.agent"))
 ;; (allow file-read* (subpath "/private/etc/ssl") (subpath "/opt/homebrew/etc/ca-certificates"))
 ```
 
@@ -989,7 +987,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   `/System`; `/dev/null` and `/dev/urandom`; timezone files; broad `file-read-metadata`;
   `sysctl-read`.
 - **A compiled Swift program** (every one of Sidefolk's own extensions, D39): nothing beyond the base rules; Swift and
-  Foundation load from `/usr/lib/swift` and `/System`. With `network`, `URLSession` works on the base
+  Foundation load from `/usr/lib/swift` and `/System`. With `network`, `URLSession` works on the
   `trustd.agent` lookup and the mDNSResponder socket. Core Image and HEIC or PNG output need `media`.
 - **sh:** `/bin/sh` reads `/private/var/select/sh` and execs `/bin/bash`, so allow both. A script's
   external commands must each be listed (`head` was denied).

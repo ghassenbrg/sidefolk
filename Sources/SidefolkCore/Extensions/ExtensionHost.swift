@@ -1191,7 +1191,8 @@ public actor ExtensionHost {
                                                     reexec: interpreter?.reexec, runtime: interpreter?.runtime ?? [],
                                                     permissions: permissions,
                                                     allowFork: !permissions.exec.isEmpty || !permissions.programs.isEmpty
-                                                        || interpreter?.name == "sh"))
+                                                        || interpreter?.name == "sh",
+                                                    allData: paths.extensionData.path))
         let profilePath = try installer.writeProfile(profile.text, id: id)
         var args = ["-f", profilePath] + profile.arguments + [executable]
         if let interpreter { args += interpreter.flags + [real] }

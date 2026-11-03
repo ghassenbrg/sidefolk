@@ -90,6 +90,48 @@ import Testing
         return host
     }
 
+    @Test func withoutTheNetworkNoServiceThatFetchesIsOpen() throws {
+        #expect(!SandboxProfile.baseRules.contains("com.apple.trustd.agent"))
+        #expect(SandboxProfile.networkRules.contains("com.apple.trustd.agent"))
+        // HEIC and AVIF can't be written without it (the encoder's signature is checked), so `media` says so to the person.
+        #expect(SandboxProfile.mediaRules.contains("com.apple.trustd.agent"))
+    }
+
+    @Test func noServiceCarriesWordsBetweenExtensionsOrOntoTheLog() {
+        #expect(!SandboxProfile.baseRules.contains("com.apple.system.logger"))
+        #expect(!SandboxProfile.baseRules.contains("notification_center"))
+    }
+
+    @Test func anotherExtensionsDataCantEvenBeSeen() throws {
+        let root = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                               appropriateFor: FileManager.default.temporaryDirectory, create: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let all = root.appendingPathComponent("ExtensionData"), mine = all.appendingPathComponent("me"), other = all.appendingPathComponent("other")
+        for folder in [mine, other] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+        let theirs = other.appendingPathComponent("file"), own = mine.appendingPathComponent("file")
+        for file in [theirs, own] { try Data("x".utf8).write(to: file) }
+        func canStat(_ path: String) throws -> Bool { try runs("/usr/bin/stat", path) }
+        func exists(_ path: String) throws -> Bool { try runs("/bin/test", "-e", path) }
+        func runs(_ program: String, _ arguments: String...) throws -> Bool {
+            let profile = try SandboxProfile.make(.init(extensionDir: (program as NSString).deletingLastPathComponent, dataDir: mine.path, executable: program,
+                                                        permissions: ExtensionPermissions(), allData: all.path))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
+            process.arguments = ["-p", profile.text] + profile.arguments + [program] + arguments
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        }
+        #expect(try canStat(own.path))
+        #expect(try !canStat(theirs.path))
+        #expect(try !canStat(other.path))
+        #expect(try exists(own.path))
+        #expect(try !exists(theirs.path))
+        #expect(try !exists(other.path))
+    }
+
     @Test func aRunningProgramCantRemoveReplaceOrSwapItsFolder() async throws {
         let (h, data, target) = try await installed()
         let outcome = await h.env.executor.execute(name: "ext.holder.attempts", input: ["target": .string(target)], caller: .user)

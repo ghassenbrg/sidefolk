@@ -34,9 +34,11 @@ public struct SandboxProfile: Sendable, Hashable {
         /// programs to run (`exec`), which the install sheet names. Without fork, an extension can't
         /// leave a process behind (SECURITY T15).
         public var allowFork: Bool?
+        /// The folder holding every extension's data folder, which this one mustn't see into.
+        public var allData: String?
 
         public init(extensionDir: String, dataDir: String, executable: String, reexec: String? = nil,
-                    runtime: [String] = [], permissions: ExtensionPermissions, allowFork: Bool? = nil) {
+                    runtime: [String] = [], permissions: ExtensionPermissions, allowFork: Bool? = nil, allData: String? = nil) {
             self.extensionDir = extensionDir
             self.dataDir = dataDir
             self.executable = executable
@@ -44,6 +46,7 @@ public struct SandboxProfile: Sendable, Hashable {
             self.runtime = runtime
             self.permissions = permissions
             self.allowFork = allowFork
+            self.allData = allData
         }
     }
 
@@ -78,6 +81,11 @@ public struct SandboxProfile: Sendable, Hashable {
         sb += "(allow file-read* file-write* (subpath \(add("DATA_DIR", try real(inputs.dataDir)))))\n"
         // What's inside is the program's; the folder itself is Sidefolk's.
         sb += "(deny file-write-unlink file-write-create (literal (param \"DATA_DIR\")))\n"
+        // Everything else's data stays out of sight: even when a file changed is no business of another extension's.
+        if let allData = inputs.allData {
+            sb += "(deny file-read-metadata file-test-existence (subpath \(add("ALL_DATA", try real(allData)))))\n"
+            sb += "(allow file-read-metadata file-test-existence (literal (param \"ALL_DATA\")) (subpath (param \"DATA_DIR\")))\n"
+        }
 
         let reads = try inputs.permissions.read.map(real)
         if !reads.isEmpty {
@@ -140,16 +148,13 @@ public struct SandboxProfile: Sendable, Hashable {
     (allow signal (target same-sandbox))
     (allow sysctl-read)
     (allow mach-lookup
-      (global-name "com.apple.system.logger")
-      (global-name "com.apple.system.notification_center")
       (global-name "com.apple.system.opendirectoryd.libinfo")
       (global-name "com.apple.system.DirectoryService.libinfo_v1")
       (global-name "com.apple.cfprefsd.daemon") (global-name "com.apple.cfprefsd.agent")
-      (global-name "com.apple.trustd.agent") (global-name "com.apple.logd")
+      (global-name "com.apple.logd")
       ;; free space as Finder and System Settings count it (what macOS can clear counts as free); read-only, and
       ;; open to every app in Apple's own App Sandbox
       (global-name "com.apple.cache_delete.public"))
-    (allow ipc-posix-shm-read* (ipc-posix-name "apple.shm.notification_center"))
 
     ;; what dyld, libSystem and interpreters need
     (allow file-read-metadata)
@@ -172,11 +177,13 @@ public struct SandboxProfile: Sendable, Hashable {
     /// Image work on Apple silicon: Core Image renders on the GPU even when asked for its software renderer, and
     /// ImageIO reads a photo the hardware decoded through the video decoder service. Two user clients and one
     /// service, measured on macOS 27 (resize, HEIC/PNG/JPEG out, a QR code drawn and read); no files, no network.
+    /// HEIC and AVIF out need trustd too: the video encoder is chosen only after its signature is checked. That service can
+    /// fetch from an address a certificate names, so what `media` allows isn't sealed off from the internet (PermissionSummary).
     static let mediaRules = """
 
     ;; media (granted at install): the GPU and the decoders, nothing else
     (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
-    (allow mach-lookup (global-name "com.apple.coremedia.videodecoder"))
+    (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent"))
 
     """
 
@@ -209,6 +216,8 @@ public struct SandboxProfile: Sendable, Hashable {
     (allow system-socket)
     (allow network-outbound (remote ip "*:*"))
     (allow network-outbound (literal "/private/var/run/mDNSResponder"))
+    ;; checking a server's certificate needs this service, which can itself fetch from an address a certificate names
+    (allow mach-lookup (global-name "com.apple.trustd.agent"))
     (allow file-read* (subpath "/private/etc/ssl")
       (regex #"^/(opt/homebrew|usr/local)/etc/(ca-certificates|openssl(@[0-9.]+)?)/"))
 

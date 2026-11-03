@@ -121,6 +121,9 @@ struct ShippedExtensionSandboxTests {
         let props = try #require(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
         #expect(props[kCGImagePropertyPixelWidth] as? Int == 100)
         #expect(FileManager.default.fileExists(atPath: work.appendingPathComponent("sky.png").path), "the original stays")
+        // The encoder is chosen only after trustd checks its signature, so this fails if `media` loses that service.
+        let heic = try #require(await h.call("ext.images.convert_images", ["folder": .string(work.path), "format": "heic"]).okText)
+        #expect(FileManager.default.fileExists(atPath: work.appendingPathComponent("Converted/sky.heic").path), "\(heic)")
         await h.host.shutdown()
     }
 
