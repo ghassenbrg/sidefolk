@@ -54,9 +54,10 @@ struct PermissionSlip: View {
                         Text(verbatim: request.title).font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)
                         if request.summary != request.title {
-                            // An extension's request shows whole: what's clipped here could still run.
-                            Text(verbatim: request.asker == nil ? request.summary : request.summary.split(whereSeparator: \.isNewline).joined(separator: " "))
-                                .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(request.asker == nil ? 3 : nil)
+                            // An extension's or another agent's request shows whole: what's clipped here could still run (D160).
+                            let whole = request.asker != nil || request.caller.kind == "external"
+                            Text(verbatim: whole ? request.summary.split(whereSeparator: \.isNewline).joined(separator: " ") : request.summary)
+                                .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(whole ? nil : 3)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if let ends = request.expiresAt {

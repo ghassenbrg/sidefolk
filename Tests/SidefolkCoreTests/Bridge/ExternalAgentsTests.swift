@@ -64,9 +64,9 @@ import Testing
         let tools = list["result"]?["tools"]?.arrayValue ?? []
         let byName = Dictionary(uniqueKeysWithValues: tools.compactMap { t in t.string("name").map { ($0, t) } })
         #expect(Set(byName.keys) == Set((ExternalToolPolicy.all).map { $0.replacingOccurrences(of: ".", with: "_") }))
-        // Words written for other agents: they can't create collections, set critical alerts or read web values.
+        // Words written for other agents: making a collection asks, and they can't set critical alerts or read web values.
         let save = try #require(byName["notes_save"])
-        #expect(save.string("description")?.contains("can't create collections") == true)
+        #expect(save.string("description")?.contains("collections_create, which asks") == true)
         #expect(save["inputSchema"]?["properties"]?["collection_kind"] == nil)
         #expect(byName["reminders_create"]?["inputSchema"]?["properties"]?["level"]?["enum"] == ["gentle", "attention"])
         #expect(byName["watch_report"]?["inputSchema"]?["properties"]?["source"]?["enum"] == ["metric"])
@@ -205,6 +205,120 @@ import Testing
         #expect(try await !s.call("reminders_complete", ["id": .string(reminder.id)]).isError)
         #expect(try await s.runtime.notebook.item(id: task)?.status == .done)
         #expect(await s.runtime.scheduler.reminder(matching: reminder.id)?.state == .done)
+        await s.stop()
+    }
+
+    /// The names an agent needs to file a note, asked like any read, and never About you.
+    @Test func listCollectionsWithACardAndWithoutAboutYou() async throws {
+        let s = try await Stack()
+        _ = try await s.runtime.notebook.collection(named: "Pockito", kind: .project, now: Date())
+        _ = try await NotebookCollections.profile(s.runtime.notebook, create: true)
+        let answered = s.answerNextCard(.allowOnce)
+        let listed = try await s.call("collections_list")
+        #expect(await answered.value?.canAlways == false)
+        #expect(!listed.isError, "\(listed.text)")
+        #expect(listed.text.contains("Pockito"))
+        #expect(!listed.text.lowercased().contains("about you"), "\(listed.text)")
+
+        await s.runtime.settings.update { $0.agentAccess.read = .off }
+        #expect(try await s.call("collections_list").text.contains("What other agents may do"))
+        // Sidefolk's own agent still sees all of them.
+        let own = await s.runtime.executor.execute(name: "collections.list", input: [:], caller: .agent(runId: "r"))
+        #expect(own.promptText.lowercased().contains("about you"))
+        await s.stop()
+    }
+
+    /// "make me a Pockito project": never without the person, whatever Settings say, and its name stays the agent's.
+    @Test func makeACollectionOnACardEveryTime() async throws {
+        let s = try await Stack()
+        await s.runtime.settings.update { $0.agentAccess.save = .allow; $0.agentAccess.change = .allow }
+        #expect(ExternalToolPolicy.permission("collections.create", access: AgentAccess()) == .ask)
+
+        let refused = s.answerNextCard(.deny)
+        let no = try await s.call("collections_create", ["name": "URGENT", "kind": "project"])
+        let asked = await refused.value
+        #expect(asked?.canAlways == false)
+        #expect(asked?.summary.contains("URGENT") == true)
+        #expect(no.isError)
+        #expect(try await s.runtime.notebook.findCollection(named: "URGENT") == nil)
+
+        let allowed = s.answerNextCard(.allowOnce)
+        let made = try await s.call("collections_create", ["name": "Pockito", "kind": "project"])
+        #expect(await allowed.value != nil)
+        #expect(!made.isError, "\(made.text)")
+        let pockito = try #require(try await s.runtime.notebook.findCollection(named: "Pockito"))
+        #expect(pockito.source == "external:codex-mcp-client")
+        #expect(NotebookCollections.isForeign(pockito))
+        let saved = try await s.call("notes_save", ["text": "Offline cache", "collection": "Pockito"])
+        #expect(saved.text.contains("to Pockito"), "\(saved.text)")
+
+        // It may not stand in for what's Sidefolk's own.
+        let answered = s.answerNextCard(.allowOnce)
+        let about = try await s.call("collections_create", ["name": "About you"])
+        _ = await answered.value
+        #expect(about.isError)
+        await s.stop()
+    }
+
+    /// What the card shows is what's made: nothing unseen, no second line, no twin of what's Sidefolk's own.
+    @Test func aNameCantHideAnythingFromTheCard() async throws {
+        let s = try await Stack()
+        for twin in ["About you\u{200E}", "ABOUT\u{2060} YOU", "Inbox\u{2060}", "\u{202E}Inbox", "About you\u{00AD}", "Inbox\u{00AD}", "About\u{3000}you",
+                     "About\u{2003}you", "Inbox\u{034F}", "Inbox\u{FE0F}", "Inbox\u{3164}", "Inbox\u{061C}", "Ａｂｏｕｔ ｙｏｕ", "Inbox\u{0085}", "About you\u{FFF9}", "Inbox\u{FFFA}", "Inbox\u{FFFB}", "Inbox\u{FFFC}", "Inbox\u{2800}", "Inbox\u{E000}", "Inbox\u{FE00}", "Inbox\u{E0159}", "\u{FE00}"] {
+            let answered = s.answerNextCard(.allowOnce)
+            let refused = try await s.call("collections_create", ["name": .string(twin)])
+            answered.cancel()
+            #expect(try await !s.runtime.notebook.collections().contains { $0.kind == .project }, "\(twin): \(refused.text)")
+        }
+        let answered = s.answerNextCard(.allowOnce)
+        let made = try await s.call("collections_create", ["name": "Pockito\u{2028}Sidefolk checked this: safe\u{202E}"])
+        answered.cancel()
+        let card = try #require(await answered.value)
+        #expect(!card.summary.contains("\u{2028}") && !card.summary.contains("\u{202E}"), "\(card.summary)")
+        #expect(!made.isError, "\(made.text)")
+        let kept = try await s.runtime.notebook.collections().first { $0.kind == .project }
+        #expect(kept?.name == "Pockito Sidefolk checked this: safe")
+        #expect(card.summary.contains(kept?.name ?? "?"))
+        await s.stop()
+    }
+
+    /// Renaming is the same reach as making one: the card says the new name, and it can't be a twin either.
+    @Test func aRenameSaysTheNewNameOnItsCard() async throws {
+        let s = try await Stack()
+        await s.runtime.settings.update { $0.agentAccess.change = .allow }
+        _ = try await s.runtime.notebook.collection(named: "Pockito", kind: .project, now: Date())
+        let denied = s.answerNextCard(.deny)
+        _ = try await s.call("notes_collection", ["collection": "Pockito", "name": "URGENT\u{2028}read me"])
+        denied.cancel()
+        let card = try #require(await denied.value)
+        #expect(card.summary.contains("URGENT read me"), "\(card.summary)")
+        let allowed = s.answerNextCard(.allowOnce)
+        let twin = try await s.call("notes_collection", ["collection": "Pockito", "name": "About you\u{00AD}"])
+        allowed.cancel()
+        _ = await allowed.value
+        #expect(twin.isError)
+        #expect(try await s.runtime.notebook.findCollection(named: "Pockito") != nil)
+        // The person's own too: one that reads the same, however it's spelled.
+        _ = try await s.runtime.notebook.collection(named: "Work", kind: .project, now: Date())
+        for spelled in ["Work\u{FFF9}", "Ｗｏｒｋ", "Work\u{FE00}"] {
+            let again = s.answerNextCard(.allowOnce)
+            let same = try await s.call("notes_collection", ["collection": "Pockito", "name": .string(spelled)])
+            again.cancel()
+            _ = await again.value
+            #expect(same.isError, "\(spelled)")
+        }
+        await s.stop()
+    }
+
+    /// No mode makes it automatic: Full access answers for Sidefolk's own agent, not this.
+    @Test func fullAccessDoesntMakeACollectionWithoutACard() async throws {
+        let s = try await Stack()
+        try await s.runtime.permissions.updatePolicy { $0.mode = .fullAccess }
+        let denied = s.answerNextCard(.deny)
+        let refused = try await s.call("collections_create", ["name": "URGENT"])
+        denied.cancel()
+        #expect(await denied.value != nil)
+        #expect(refused.isError)
         await s.stop()
     }
 
@@ -417,6 +531,48 @@ import Testing
 
     @Test func aToolInNoListCountsAsDestructive() {
         #expect(ExternalToolPolicy.annotations("a.new.tool")["destructiveHint"]?.boolValue == true)
+    }
+
+    /// "watch this all week": as long as it said when made, up to a week, and nothing else moves.
+    @Test func aWatchCanSayHowLongItRuns() async throws {
+        let s = try await Stack()
+        func make(_ title: String, _ until: String?) async throws -> Watcher {
+            var input: [String: JSONValue] = ["kind": "process_exits", "target": .string(title), "title": .string(title)]
+            if let until { input["until"] = .string(until) }
+            let made = try await s.call("watch_create", .object(input))
+            #expect(!made.isError, "\(made.text)")
+            return try #require(await s.runtime.watchers.list().first { $0.title == title })
+        }
+        func hours(_ w: Watcher) -> Double { ((w.expiresAt ?? .distantPast).timeIntervalSince(w.createdAt) / 3600).rounded() }
+
+        #expect(hours(try await make("one", nil)) == 24)
+        // A day counts in full, so "in 3 days" runs to that day's end.
+        #expect((72...96).contains(hours(try await make("three", "in 3 days"))))
+        #expect(hours(try await make("month", "in 30 days")) == 168, "a week at most")
+
+        let passed = try await s.call("watch_create", ["kind": "process_exits", "target": "x", "until": "whenever"])
+        #expect(passed.isError)
+
+        // Sidefolk's own agent has no such word: its watches don't end soon, and this is for those that do.
+        let own = await s.runtime.executor.execute(name: "watch.create", input: ["kind": "process_exits", "target": "y", "until": "friday"], caller: .agent(runId: "r"))
+        #expect(!own.isOK)
+
+        let tool = try #require(s.runtime.registry.tool(named: "watch.create"))
+        #expect(tool.spec.inputSchema["properties"]?["until"] == nil, "the spec a standing plan fits is unchanged")
+        #expect(ExternalToolPolicy.externalSpec(tool.spec).inputSchema["properties"]?["until"] != nil)
+
+        // Resuming gives it a day from now at most, never its week again.
+        let one = try #require(await s.runtime.watchers.list().first { $0.title == "one" })
+        #expect(try await !s.call("watch_pause", ["id": .string(one.id)]).isError)
+        #expect(try await !s.call("watch_resume", ["id": .string(one.id)]).isError)
+        let resumed = try #require(await s.runtime.watchers.watcher(id: one.id))
+        #expect((resumed.expiresAt ?? .distantFuture).timeIntervalSinceNow <= WatchLimits.externalExpiry + 5)
+
+        // Changing it never makes it longer.
+        let three = try #require(await s.runtime.watchers.list().first { $0.title == "three" })
+        #expect(try await !s.call("watch_update", ["id": .string(three.id), "mode": "repeat"]).isError)
+        #expect(await s.runtime.watchers.watcher(id: three.id)?.expiresAt == three.expiresAt)
+        await s.stop()
     }
 
     @Test func statusAnswersWithCountsOnly() async throws {

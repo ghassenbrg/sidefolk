@@ -271,8 +271,10 @@ public enum WatchLimits {
     /// than once a minute, after a day otherwise (D35).
     public static let fastReportLifetime: TimeInterval = 3600
     public static let reportLifetime: TimeInterval = 86400
-    /// External agents' watchers stop after a day, however they were set up (T4).
+    /// External agents' watchers stop after a day unless they said `until` when made (T4, D160).
     public static let externalExpiry: TimeInterval = 86400
+    /// How long one may run when it says so at the start (`until`, D160), and no longer however it's changed.
+    public static let externalLongest: TimeInterval = 7 * 86400
     public static let defaultCooldown: TimeInterval = 30 * 60
     public static let maxBackoff: TimeInterval = 6 * 3600
     public static let maxInterval: TimeInterval = 7 * 86400
@@ -386,9 +388,11 @@ extension String {
         var out = String.UnicodeScalarView()
         for u in unicodeScalars {
             switch u.value {
+            // What can't be seen, or reads as blank: soft hyphens, Arabic and Mongolian marks, Hangul fillers, C1 controls (D160).
+            case 0x00AD, 0x034F, 0x061C, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x180B...0x180F, 0x3164, 0xFFA0, 0x80...0x9F: continue
             case 0x200B...0x200F, 0x202A...0x202E, 0x2060...0x2069, 0xFEFF, 0xE0000...0xE007F: continue
             case 0x00...0x08, 0x0B...0x0C, 0x0E...0x1F, 0x7F: continue
-            case 0x09, 0x0A, 0x0D, 0xA0: out.append(" ")
+            case 0x09, 0x0A, 0x0D, 0xA0, 0x1680, 0x2000...0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000: out.append(" ")
             default: out.append(u)
             }
         }

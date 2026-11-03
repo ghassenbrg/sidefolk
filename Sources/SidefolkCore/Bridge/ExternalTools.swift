@@ -10,8 +10,8 @@ public enum ExternalToolPolicy {
     /// and `status` only counts.
     public static let always: Set<String> = ["notify.user", "ask.user", "status"]
     /// Always offered and always asked, whatever the settings say: how agents get past their shared room (D116), and
-    /// changing a collection, since naming one is what they otherwise can't do (T4).
-    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection"]
+    /// making or changing a collection, since a name of theirs beside the person's own is theirs only on a yes (T3, T4, D160).
+    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection", "collections.create"]
     /// Adding to what the user has: `watch.list` shows an agent only its own watchers, the `reminders.*` that change
     /// reach only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
     public static let saving: Set<String> = [
@@ -19,7 +19,7 @@ public enum ExternalToolPolicy {
         "watch.pause", "watch.resume", "watch.update", "watch.reorder",
     ]
     /// Reading the user's data (notes, reminders, today's plan).
-    public static let reading: Set<String> = ["notes.search", "notes.list", "notes.get", "reminders.list", "agenda.today"]
+    public static let reading: Set<String> = ["notes.search", "notes.list", "notes.get", "collections.list", "reminders.list", "agenda.today"]
     /// Changing the user's notes, or moving them to the Trash, where they stay restorable for 30 days.
     /// Never deleting for good: only the user empties the Trash.
     public static let changing: Set<String> = ["notes.update", "notes.trash", "notes.restore", "notes.arrange"]
@@ -184,6 +184,9 @@ struct ExternalFacade: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }
+        var context = context
+        // A card from "Ask each time" asks about the group, not this: it doesn't open what's otherwise closed.
+        context.personWasAsked = context.personWasAsked && ExternalToolPolicy.alwaysAsks.contains(spec.name)
         return try await base.run(input, context: context)
     }
 }

@@ -9,7 +9,7 @@ public enum WatchTools {
     public static func make(engine: WatcherEngine, parser: @escaping @Sendable () -> WhenParser = { WhenParser() },
                             here: @escaping @Sendable () -> KnownPlace? = { nil }) -> [any Tool] {
         [
-            WatchCreateTool(engine: engine), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser, here: here),
+            WatchCreateTool(engine: engine, parser: parser), WatchCommandTool(engine: engine, parser: parser), WatchReportTool(engine: engine, parser: parser, here: here),
             WatchReadTool(engine: engine, here: here),
             WatchListTool(engine: engine), WatchStopTool(engine: engine), WatchUpdateTool(engine: engine), WatchReorderTool(engine: engine), WatchMoreRoomTool(engine: engine), WatchPauseTool(engine: engine), WatchResumeTool(engine: engine),
         ]
@@ -213,6 +213,7 @@ enum WatchInput {
 
 struct WatchCreateTool: Tool {
     let engine: WatcherEngine
+    var parser: @Sendable () -> WhenParser = { WhenParser() }
 
     var spec: ToolSpec {
         ToolSpec(
@@ -311,8 +312,14 @@ struct WatchCreateTool: Tool {
         let watcher = Watcher(kind: kind, title: title, config: config, condition: condition, intervalS: requested,
                               mode: try WatchInput.mode(input), level: try WatchInput.level(input, caller: context.caller),
                               source: WatchSource.string(for: context), now: context.now)
+        // Only other agents' watches end soon by default, so only their schema has `until` (D160).
+        var until: Date?
+        if case .external = context.caller, let text = input.string("until") {
+            until = try DateWindow.read(from: nil, to: text, parser: parser(), now: context.now)?.end
+            guard let end = until, end > context.now else { throw UserFacingError(verbatim: "“until” has already passed. Give a later time.") }
+        }
         let added: Watcher
-        do { added = try await engine.add(watcher) } catch { throw WatchInput.watchError(error) }
+        do { added = try await engine.add(watcher, until: until) } catch { throw WatchInput.watchError(error) }
         let look = await engine.firstLook(of: added.id, polite: context.caller != .user)
         return WatchResults.started(await engine.watcher(id: added.id) ?? added, requested: requested, engine: engine, look: look)
     }

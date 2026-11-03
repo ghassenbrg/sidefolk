@@ -136,18 +136,19 @@ tainted turns need approval showing the full text.
 
 **T4 Confused deputy via external MCP clients (H/H).** An agent in a hostile repo uses Sidefolk's
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
-without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create
+without asking: `notes.save` (Inbox or a collection that already exists, tagged; it never creates
 a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
 together), `reminders.cancel` (only reminders that client name set; others read as not found),
 `reminders.update`, `reminders.snooze` and `reminders.complete` (D157: the same; a reminder tied to an open task can't be finished unless "Change notes" is on Allow, since that finishes the task), `notes.restore` by id under "Change notes", notify/`ask_user`, `status`, non-command watchers (25 active for all clients together, more only when the
 person says yes to `watch.more_room`, which always asks, D116; each stopping
-after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so parallel calls can't
+after 24 h, or at `until` if it said so when made, up to 7 days (D160: a watch of another agent's can now run that long with no card, and a page it watches is checked for that long; the room is the same, and a live value keeps its own ends. The week is for one start: an agent can resume or make a watcher again, within the room, as it always could, so what bounds it is the room and the floors, not the clock); `WatcherEngine.add` counts and inserts in one actor step, so parallel calls can't
 overshoot), their own watchers' pause, resume, display, order and formatting and, by `watch.update`, their name, interval, level and what they look for (`canManage`; D157: no floor, level or lifetime moves that way), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
 web values and no weather, which would reach a server; a fast one stops within the hour) (D42).
 They see descriptions and schemas written for them (`ExternalToolPolicy.externalSpec`): no
 `collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
 to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
 result names the item by kind and id only.
+`collections.create` (D160, reversing D42's "never"): another agent can now make a project, topic or list, on a card every time whatever Settings say, and never with "Always". Its name is recorded as that agent's, so it is quoted to Sidefolk's model as outside words (T3). What can't be seen is removed before the card and before the check against About you and the Inbox; letters from another script that look the same aren't caught, and the card shows them as they are. `notes.collection`'s card now says a new name. Reading adds `collections.list` (D160): another agent can now see the names of the person's projects, topics and lists with their counts, under the reading setting, so a card by default; never About you.
 The `sidefolk` command's `notify`, `ask`, `remind`, `note` and `call` (D159) are this same client by another door: through `ExternalToolGateway`, with these rules and nothing else, as `sidefolk-cli`. A program running as the person could already start `sidefolk mcp`.
 Reading user data (notes, reminders, `notes.get`, `agenda.today`) asks every time; an external caller never gets
 "Always". `notes.collection` (D117) always asks too, since naming a collection is what they otherwise can't do; the
@@ -643,7 +644,7 @@ binary targets or build plugins from dependencies.
   Sidefolk (T4). A web value or a
   command's output is untrusted in the tool result (T2). The person's own have no count since D116: these floors and the four checks at once bound them. Other agents have a shared room (T4).
 - At most 1 request per minute per host, backoff up to 6 h, default expiry 30 days (24 h for
-  external agents' watchers, whatever expiry they asked for). Quotas are counted in the same actor
+  external agents' watchers, or `until` up to 7 days, D160). Quotas are counted in the same actor
   step that makes a watcher active.
 - A watch's history (D87) stays on the Mac in the database (T19): its checks for 30 days and at most 500 rows,
   and the last two versions of the text it compared, 32,000 characters each, extracted text only (never a page's

@@ -38,6 +38,7 @@ extension ExternalToolPolicy {
                 if case .object(var kind)? = props["kind"], case .array(let values)? = kind["enum"] {
                     kind["enum"] = .array(values.filter { !($0.stringValue ?? "").lowercased().contains("command") })
                     props["kind"] = .object(kind)
+                    props["until"] = Schema.string("When to stop, in the user's words (\"friday\", \"in 3 days\"), when they asked for longer than a day. \(Int(WatchLimits.externalLongest / 86400)) days at most.")
                 }
             }
         case "watch.report":
@@ -74,19 +75,19 @@ extension ExternalToolPolicy {
 
     /// Add or arrange without taking anything away.
     private static let adding: Set<String> = [
-        "notify.user", "ask.user", "notes.save", "notes.restore", "notes.arrange", "reminders.create", "reminders.update", "reminders.snooze",
+        "notify.user", "ask.user", "notes.save", "notes.restore", "notes.arrange", "collections.create", "reminders.create", "reminders.update", "reminders.snooze",
         "reminders.complete", "watch.create", "watch.report",
         "watch.pause", "watch.resume", "watch.update", "watch.reorder", "watch.more_room",
     ]
     /// Calling again with the same words changes nothing more.
-    private static let sameAgain: Set<String> = ["notes.arrange", "notes.trash", "notes.restore", "reminders.cancel", "reminders.complete", "reminders.snooze", "reminders.update", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
+    private static let sameAgain: Set<String> = ["collections.create", "notes.arrange", "notes.trash", "notes.restore", "reminders.cancel", "reminders.complete", "reminders.snooze", "reminders.update", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
 
     static let descriptions: [String: String] = [
         "notes.save": """
             Save a note, idea, task or link in the user's Sidefolk notebook. The first line of `text` becomes the title, \
             the rest the body. It goes to the Inbox unless `collection` names one of the user's existing projects, topics or \
-            lists; other agents can't create collections, so when the name isn't found, save to the Inbox or ask the user to \
-            create it. Use kind task for to-dos and list items. Give `remind` a time when the user wants to be reminded about \
+            lists (collections_list says which); when the name isn't found, save to the Inbox, or make it with \
+            collections_create, which asks the user. Use kind task for to-dos and list items. Give `remind` a time when the user wants to be reminded about \
             it too: the reminder belongs to the note and stops when the task is done. Notes you save are tagged with your \
             name. The body may use simple Markdown (**bold**, *italic*, `## headings`, `- ` lists, `- [ ] ` checklists, links), \
             which the notebook shows formatted. Never save passwords, API keys, tokens or other secrets.
@@ -119,7 +120,7 @@ extension ExternalToolPolicy {
             or came back up), file_appears, file_changes and folder_new_file (only inside folders the user shared with \
             Sidefolk; target is the full path), process_exits (a program on this Mac quit; target is its name or process \
             number). Addresses on this Mac or the local network (localhost, 192.168.x.x, .local) are refused: ask the user to \
-            set those up in Sidefolk. Your watchers stop on their own after a day; watch_stop ends one sooner.
+            set those up in Sidefolk. Your watchers stop on their own after a day, or at `until` when the user wants longer, up to a week; watch_stop ends one sooner.
             """,
         "watch.report": """
             Show a live value of this Mac beside the user's companion, updated in place (not a notification): cpu, memory, \
@@ -129,9 +130,14 @@ extension ExternalToolPolicy {
             """,
         "watch.list": "List the watchers and live values you started, with their ids and state. Other apps' and the user's don't show.",
         "notes.get": "Read one of the user's notes, ideas, tasks or links in full, by its id from notes_search or notes_list, which cut each to a line.",
+        "collections.list": "List the user's projects, topics and lists by name, with how many items each holds, so you can file a note in one. The user may be asked to allow it.",
+        "collections.create": """
+            Make a new project, topic or list in the user's notebook, when they asked for one. It always asks them first. If one \
+            with that name exists it is reused, so it's safe to call when notes_save didn't find the name.
+            """,
         "notes.collection": """
             Change one of the user's projects, topics or lists: its name, its icon (emoji, or symbol from the app's set) or its \
-            color (a name like blue, or #RRGGBB). You can't create one, or rename the Inbox or About you.
+            color (a name like blue, or #RRGGBB). To make one, collections_create. You can't rename the Inbox or About you.
             """,
         "notes.arrange": "Put the user's projects, topics and lists in this order, each by name. The Inbox stays first; any not named follow.",
         "watch.stop": "Stop one of your watchers or live values, by its id (or its title).",
