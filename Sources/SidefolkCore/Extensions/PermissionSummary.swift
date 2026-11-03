@@ -70,7 +70,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 
     /// It can't carry what it reads beyond this Mac by itself, so it may get plans and hear titles without a card each time (D110, D129).
     public var isContained: Bool {
-        !network && exec.isEmpty && programs.isEmpty && write.isEmpty && folders != .write && !clipboard && !screen && !udp && !placesFiles
+        !network && !media && exec.isEmpty && programs.isEmpty && write.isEmpty && folders != .write && !clipboard && !screen && !udp && !placesFiles
     }
 
     /// Pins saved before programs, per-call folders, media, clipboard, power, screen and UDP existed have none of them.

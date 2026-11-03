@@ -223,6 +223,14 @@ import Testing
         #expect(DropChoices.offers(forFiles: ["/a.jpg", "/b.png"], among: [drop]).isEmpty)
     }
 
+    /// The certificate service `media` needs can fetch from an address, so what it read could leave that way: no plans, and no promise.
+    @Test func mediaIsntContained() {
+        let media = ExtensionPermissions(media: true, events: ExtensionPurpose(purpose: "to hear what happens"))
+        #expect(!media.isContained)
+        #expect(!PermissionSummary.forExtension(media).lines.contains { $0.note?.contains("can't reach the internet by itself") == true })
+        #expect(PermissionSummary.forExtension(media).lines.contains { $0.note?.contains("could send them on") == true })
+    }
+
     /// Saving beside a dropped file can put what it read in a synced folder, as a write folder can: no plans, and no promise.
     @Test func savingBesideAFileIsntContained() {
         #expect(ExtensionPermissions().isContained)
