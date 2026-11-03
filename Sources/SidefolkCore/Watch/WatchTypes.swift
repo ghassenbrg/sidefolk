@@ -192,6 +192,23 @@ public extension WatcherProbe {
 }
 
 /// A watcher that cannot be created or changed. The message is written for the user, in the app's language.
+/// What `WatcherEngine.edit` changes; nil leaves it.
+public struct WatchEdit: Sendable {
+    public var title: String?
+    public var intervalS: TimeInterval?
+    public var level: AttentionLevel?
+    public var mode: Watcher.Mode?
+    public var condition: JSONValue?
+
+    public init(title: String? = nil, intervalS: TimeInterval? = nil, level: AttentionLevel? = nil, mode: Watcher.Mode? = nil, condition: JSONValue? = nil) {
+        self.title = title
+        self.intervalS = intervalS
+        self.level = level
+        self.mode = mode
+        self.condition = condition
+    }
+}
+
 public enum WatchError: Error, Sendable, Equatable, CustomStringConvertible {
     case invalid(String)
     case unknownKind(String)

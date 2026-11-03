@@ -340,6 +340,41 @@ public actor WatcherEngine {
         return w
     }
 
+    /// Changes what a watcher does without losing its history. Every limit `add` holds to holds here too: an agent
+    /// can't raise its own level, go under a floor or live longer by changing a watcher (T4, T24).
+    @discardableResult
+    public func edit(_ id: String, _ change: WatchEdit) async throws -> Watcher {
+        await ensureLoaded()
+        guard var w = watchers[id], let probe = probes[w.kind] else { throw WatchError.notFound(String(localized: "that watcher")) }
+        let now = clock.now
+        if let title = change.title?.displaySafe.clipped(100), !title.isEmpty { w.title = title }
+        if let level = change.level { w.level = level > .attention && w.source != "user" ? .attention : level }
+        if let seconds = change.intervalS { w.intervalS = min(max(seconds, probe.minimumInterval(for: w)), WatchLimits.maxInterval) }
+        let modeChanged = change.mode.map { $0 != w.mode } ?? false
+        if let mode = change.mode {
+            // A report brings its floor and its end with it, and stays what it is.
+            guard w.mode != .report, mode != .report else { throw WatchError.invalid(String(localized: "“mode” must be once or repeat.")) }
+            w.mode = mode
+        }
+        let looksAgain = change.condition.map { $0 != w.condition } ?? false
+        if let condition = change.condition { w.condition = condition }
+        w = try probe.prepare(w)
+        if looksAgain { w.lastState = nil }
+        if looksAgain || change.intervalS != nil { w.nextCheckAt = min(w.nextCheckAt ?? now, now.addingTimeInterval(w.intervalS)) }
+        if let life = lifetime(w) {
+            let end = now.addingTimeInterval(life)
+            // A report made fast stops as soon as a fast one would. Another agent's never gets longer (T4).
+            if w.mode == .report, w.intervalS < 60 { w.expiresAt = min(w.expiresAt ?? end, end) }
+            else if modeChanged, !WatchSource.isExternal(w.source) { w.expiresAt = end }
+        }
+        w.updatedAt = now
+        watchers[id] = w
+        await persist(w)
+        refreshEvents(w)
+        arm()
+        return w
+    }
+
     /// What stands around a live value. Nil or empty takes it away.
     @discardableResult
     public func setValueAffixes(_ id: String, prefix: String?, suffix: String?) async throws -> Watcher {

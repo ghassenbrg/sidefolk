@@ -608,33 +608,49 @@ struct WatchResumeTool: Tool {
     }
 }
 
-/// Where a live value shows and what stands around it (D116). It runs on whichever.
+/// Changes a watcher in place, so it keeps its history: what it's called, how often it looks and how loudly it tells,
+/// what a watch looks for, and where a live value shows and what stands around it (D116). A new address or path is a new watch.
 struct WatchUpdateTool: Tool {
     let engine: WatcherEngine
 
     var spec: ToolSpec {
-        ToolSpec(name: "watch.update", title: String(localized: "Change how a live value shows"),
+        ToolSpec(name: "watch.update", title: String(localized: "Change a watcher"),
                  description: """
-                 Change how a live value shows; it goes on running whichever. display: beside (always beside the companion, \
-                 \(WatchLimits.maxBeside) places in all), notify (hidden, appears for a moment at each reading, once a minute at most), quiet \
-                 (hidden; the person checks it from a menu). prefix and suffix stand around the value, like "$" or "GPU", \
-                 \(WatchLimits.maxAffix) characters at most; an empty string takes one away. id is its id or its title.
+                 Change a watcher in place; it keeps its history. Any watcher: title, interval_minutes, level. A watch: mode (once or repeat), \
+                 contains and not_contains (a web page; an empty string takes one away), becomes (a site). A live value: display: beside \
+                 (always beside the companion, \(WatchLimits.maxBeside) places in all), notify (hidden, appears for a moment at each reading, once a \
+                 minute at most), quiet (hidden; the person checks it from a menu); prefix and suffix stand around the value, like "$" or "GPU", \
+                 \(WatchLimits.maxAffix) characters at most; an empty string takes one away. To watch another address or path, stop this one and \
+                 make a new one. id is its id or its title.
                  """,
                  inputSchema: Schema.object([
                      "id": Schema.string("The watcher's id (or its title)."),
-                     "display": Schema.string("Where it shows.", enum: Watcher.Display.allCases.map(\.rawValue)),
-                     "prefix": Schema.string("Short text before the value."),
-                     "suffix": Schema.string("Short text after the value."),
+                     "title": Schema.string("Its new name."),
+                     "interval_minutes": Schema.number("Minutes between checks. A check can't run faster than its kind allows; the result says what it became."),
+                     "level": Schema.string("How loudly to tell the user.", enum: ["gentle", "attention", "critical"]),
+                     "mode": Schema.string("A watch: once stops after telling the user; repeat keeps going.", enum: ["once", "repeat"]),
+                     "contains": Schema.string("A web page: tell me when it says this."),
+                     "not_contains": Schema.string("A web page: tell me when it stops saying this."),
+                     "becomes": Schema.string("A site: which change matters.", enum: ["up", "down", "any"]),
+                     "display": Schema.string("A live value: where it shows.", enum: Watcher.Display.allCases.map(\.rawValue)),
+                     "prefix": Schema.string("A live value: short text before it."),
+                     "suffix": Schema.string("A live value: short text after it."),
                  ], required: ["id"]),
                  risk: .low, capabilities: [.watch], category: .watch, mutates: true, external: true)
     }
 
-    func summary(for input: JSONValue) -> String { String(localized: "Change how “\((input.string("id") ?? "").clipped(60))” shows") }
+    func summary(for input: JSONValue) -> String { String(localized: "Change “\((input.string("id") ?? "").clipped(60))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         let w = try await WatchInput.resolve(input.string("id") ?? "", caller: context.caller, engine: engine)
+        var edit = WatchEdit(title: input.string("title"))
+        if input["interval_minutes"] != nil { edit.intervalS = try WatchInput.interval(input) }
+        if input["level"] != nil { edit.level = try WatchInput.level(input, caller: context.caller) }
+        if input["mode"] != nil { edit.mode = try WatchInput.mode(input) }
+        edit.condition = try Self.condition(input, of: w)
         var changed = w
         do {
+            changed = try await engine.edit(w.id, edit)
             if let raw = input.string("display") {
                 guard let display = Watcher.Display(rawValue: raw) else { throw ToolError.invalidInput(String(localized: "“display” must be beside, notify or quiet.")) }
                 changed = try await engine.setDisplay(w.id, display)
@@ -646,13 +662,43 @@ struct WatchUpdateTool: Tool {
         } catch let error as WatchError { throw WatchInput.watchError(error) }
         let engine = self.engine
         let before = w
-        let undo = UndoAction(label: String(localized: "Changed how \(w.title) shows")) {
+        let undo = UndoAction(label: String(localized: "Changed \(w.title)")) {
+            try await engine.edit(before.id, WatchEdit(title: before.title, intervalS: before.intervalS, level: before.level,
+                                                       mode: before.mode == .report ? nil : before.mode, condition: before.condition))
             if before.mode == .report { try await engine.setDisplay(before.id, before.display) }
             try await engine.setValueAffixes(before.id, prefix: before.valuePrefix, suffix: before.valueSuffix)
         }
-        return ToolResult(text: "\(changed.title) now shows \(changed.display.rawValue), around its value: “\(changed.valuePrefix ?? "")” and “\(changed.valueSuffix ?? "")”.",
-                          card: ResultCard(kind: .watcher, title: String(localized: "Changed how \(changed.title) shows"), refId: changed.id),
+        var text = "\(changed.title) now checks every \(WatchWords.everyForModel(changed.intervalS)) at level \(changed.level.rawValue)"
+        if changed.mode == .report {
+            text += ", shows \(changed.display.rawValue), around its value: “\(changed.valuePrefix ?? "")” and “\(changed.valueSuffix ?? "")”"
+        } else {
+            text += ", mode \(changed.mode.rawValue)"
+        }
+        if let end = changed.expiresAt { text += ". It stops on its own at \(TimeFormat.full(end, calendar: .autoupdatingCurrent))" }
+        return ToolResult(text: text + ".",
+                          card: ResultCard(kind: .watcher, title: String(localized: "Changed \(changed.title)"), refId: changed.id),
                           undo: undo, untrusted: !WatchSource.isUserSourced(changed.source))
+    }
+
+    /// The watcher's condition with what was asked for changed; nil when nothing was. Words for another kind of watch
+    /// are refused rather than ignored, so a caller isn't told it worked.
+    private static func condition(_ input: JSONValue, of w: Watcher) throws -> JSONValue? {
+        let page = ["contains", "not_contains"].filter { input[$0] != nil }
+        guard !page.isEmpty || input["becomes"] != nil else { return nil }
+        if !page.isEmpty, w.kind != WatchKind.urlChange {
+            throw ToolError.invalidInput(String(localized: "“contains” and “not_contains” are for a web page."))
+        }
+        if input["becomes"] != nil, w.kind != WatchKind.siteStatus {
+            throw ToolError.invalidInput(String(localized: "“becomes” is for a site."))
+        }
+        guard case .object(var fields) = w.condition else { return w.condition }
+        if !page.isEmpty { fields["changed"] = nil }
+        for key in page {
+            let text = input.string(key) ?? ""
+            fields[key] = text.isEmpty ? nil : .string(text)
+        }
+        if let becomes = input.string("becomes") { fields["becomes"] = .string(becomes) }
+        return .object(fields)
     }
 }
 
