@@ -551,17 +551,29 @@ import Testing
             return (await answer.value, result)
         }
 
-        let change = try await asked("reminders_update", ["id": .string(sam.id), "title": "Skip Sam", "notes": "No need", "level": "gentle"], .deny)
+        let change = try await asked("reminders_update", ["id": .string(sam.id), "title": "Skip Sam"], .deny)
         let words = try #require(change.card?.summary)
-        #expect(words.contains("Call Sam") && words.contains("Skip Sam") && words.contains("No need"), "\(words)")
+        #expect(words.contains("Call Sam") && words.contains("Skip Sam"), "\(words)")
         #expect(change.card?.canAlways == false)
         #expect(change.card?.risk == .medium)
         #expect(change.result.isError)
         #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.title == "Call Sam")
 
+        // One change a card, short enough to show whole, and no card for what can't be done.
+        for (arguments, says) in [(["id": JSONValue.string(sam.id), "title": "Skip Sam", "level": "gentle"], "one change"),
+                                  (["id": .string(sam.id), "title": .string(String(repeating: "x", count: 61))], "characters"),
+                                  (["id": .string(sam.id), "notes": .string(String(repeating: "x", count: 61))], "characters"),
+                                  (["id": .string(sam.id), "title": "\u{200B} "], "characters")] {
+            let refused = try await s.call("reminders_update", .object(arguments))
+            #expect(refused.isError)
+            #expect(refused.text.contains(says), "\(refused.text)")
+            #expect(await s.runtime.broker.pending().isEmpty)
+        }
+
         let moved = try await asked("reminders_snooze", ["id": .string(sam.id), "when": "in 3 hours"], .allowOnce)
         #expect(moved.card?.summary.contains("Call Sam") == true)
         #expect(!moved.result.isError, "\(moved.result.text)")
+        #expect(!moved.result.text.contains("Call Sam"), "a yes isn't a read")
         #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .snoozed)
 
         // A yes is for that call: the next one asks again.
@@ -658,6 +670,49 @@ import Testing
         let ended = try await s.runtime.scheduler.create(title: "Done one", at: Date().addingTimeInterval(3600), source: "user")
         _ = try await s.runtime.scheduler.complete(id: ended.id)
         #expect(try await s.call("reminders_cancel", ["id": .string(ended.id)]).text.contains("couldn't find a reminder"))
+        await s.stop()
+    }
+
+    /// Only the person says what breaks through Quiet: an important reminder of theirs can be put off or ended on a card, never changed.
+    @Test func anImportantReminderStaysWhatThePersonSaid() async throws {
+        let s = try await Stack()
+        let vital = try await s.runtime.scheduler.create(title: "Take the pill", at: Date().addingTimeInterval(3600), level: .critical, source: "user")
+        for arguments in [["id": JSONValue.string(vital.id), "title": "Skip it"], ["id": .string(vital.id), "level": "attention"], ["id": .string(vital.id), "notes": "new words"]] {
+            let refused = try await s.call("reminders_update", .object(arguments))
+            #expect(refused.text.contains("marked that reminder important"), "\(refused.text)")
+        }
+        let after = try #require(await s.runtime.scheduler.reminder(matching: vital.id))
+        #expect(after.level == .critical && after.title == "Take the pill" && after.source == "user")
+        await s.stop()
+    }
+
+    /// Taking notes away adds no one's words, so a reminder stays the person's.
+    @Test func noNewWordsLeaveItThePersons() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), notes: "Old", source: "user")
+        let answer = s.answerNextCard(.allowOnce)
+        #expect(try await !s.call("reminders_update", ["id": .string(sam.id), "notes": ""]).isError)
+        answer.cancel()
+        _ = await answer.value
+        let after = try #require(await s.runtime.scheduler.reminder(matching: sam.id))
+        #expect(after.notes == nil && after.source == "user")
+        await s.stop()
+    }
+
+    /// Nothing about the person's reminders is told before a card and without the whole id: not by a short one, or bad words.
+    @Test func thereIsNoProbingForThePersonsReminders() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let short = String(sam.id.prefix(6))
+        let there = try await s.call("reminders_cancel", ["id": .string(short)])
+        let notThere = try await s.call("reminders_cancel", ["id": "000000"])
+        #expect(there.text.replacingOccurrences(of: short, with: "000000") == notThere.text)
+        let emptyThere = try await s.call("reminders_update", ["id": .string(sam.id)])
+        let emptyNot = try await s.call("reminders_update", ["id": "nope"])
+        #expect(emptyThere.text == emptyNot.text, "\(emptyThere.text) / \(emptyNot.text)")
+        let badThere = try await s.call("reminders_snooze", ["id": .string(sam.id), "when": "whenever"])
+        let badNot = try await s.call("reminders_snooze", ["id": "nope", "when": "whenever"])
+        #expect(badThere.text == badNot.text)
         await s.stop()
     }
 
