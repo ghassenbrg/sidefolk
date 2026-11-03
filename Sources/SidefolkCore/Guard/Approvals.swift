@@ -109,7 +109,7 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var answersFromKeys: Bool { ["user", "agent", "command"].contains(caller.kind) }
 
     /// Whether a key may say yes to it (D58): one of `answersFromKeys`, once it has been in view for a moment
-    /// (`armed`), and with ⌘ when the risk is high. The Ask panel's card and Today's queue both follow it.
+    /// (`armed`), and with ⌘ when the risk is high. The Ask panel's card follows it; on Today no key says yes (D130).
     public func mayApproveFromKeys(armed: Bool, command: Bool) -> Bool {
         armed && answersFromKeys && (risk != .high || command)
     }

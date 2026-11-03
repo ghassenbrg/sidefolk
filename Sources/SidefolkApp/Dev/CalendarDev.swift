@@ -6,7 +6,7 @@ import SidefolkCore
 ///   calendar:swipe:-160[:film]      two fingers sideways (the events the trackpad sends, fed to the page's handler)
 ///   calendar:scroll:300[:film]      two fingers down the month (positive is later), with momentum and settling
 ///   calendar:drag:x1,y1:x2,y2[:film] a mouse drag in Home's window (points from its top left), queued as the mouse's
-///   calendar:type:<words> (into the field that has the keyboard) | calendar:dclick:x,y | calendar:click:x,y | calendar:key:left|right|up|down|return|delete|escape|cmdleft|cmdright|cmdt
+///   calendar:type:<words> (into the field that has the keyboard) | calendar:dclick:x,y | calendar:click:x,y | calendar:key:left|right|up|down|return|delete|escape|tab|s|cmdleft|cmdright|cmdt
 ///   calendar:select:<entry id> | calendar:inspect:<entry id> | calendar:hide:<calendar id> | calendar:show:<calendar id>
 ///   calendar:crowd:<count>         more sample events (SIDEFOLK_SAMPLE_CALENDAR), with how long a reload took in the log
 ///   calendar:hour:<points>          the hour's height, as a pinch leaves it
@@ -148,6 +148,7 @@ extension AppCoordinator {
         let codes: [String: (CGKeyCode, CGEventFlags)] = [
             "left": (123, []), "right": (124, []), "down": (125, []), "up": (126, []), "return": (36, []), "delete": (51, []),
             "escape": (53, []), "cmdleft": (123, .maskCommand), "cmdright": (124, .maskCommand), "cmdt": (17, .maskCommand), "cmdz": (6, .maskCommand),
+            "tab": (48, []), "s": (1, []),
         ]
         // The key window: Home's, or a popover or sheet in front of it.
         front()

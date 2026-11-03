@@ -35,7 +35,7 @@ struct HistoryView: View {
     // MARK: Filters and search
 
     private var bar: some View {
-        WrapRow(minimum: 420, spacing: Theme.Space.m) {
+        WrapRow(minimum: 560, spacing: Theme.Space.m) {
             HStack(spacing: Theme.Space.m) {
                 SegmentedPicker("Show", selection: $model.filter, segments: [
                     .init(HistoryFilter.all, Text("All", comment: "History's filter: everything")),
@@ -58,8 +58,9 @@ struct HistoryView: View {
                 .buttonStyle(.sf(.secondary))
                 .fixedSize()
             }
+            // A set width: a search field's natural width is next to nothing, and that's what this row gives what's at its end.
             SearchBox(text: $model.query, prompt: Text("Search history"), focus: $focus, focusValue: .search)
-                .frame(maxWidth: 300)
+                .frame(width: 200)
         }
         .padding(.horizontal, Theme.Size.contentPadding)
         .padding(.vertical, Theme.Space.m)

@@ -69,10 +69,14 @@ struct EventRow: View {
     }
 }
 
-/// One row of the queue, whatever it is, and the keys that answer it while it has the keyboard (D58). The rules are
-/// the approval card's: nothing answers until the row has been in view for a moment; a high-risk "yes" needs ⌘⏎;
-/// another app's or an extension's request is never approved from the keyboard, only said no to.
+/// One row of the queue, whatever it is, and the keys that act on it while it has the keyboard (D58). No key says yes here
+/// (D130): a click puts the keyboard on a row just brought forward, and another agent's question has Yes as its main
+/// answer. Keys move, snooze and say no, and no only once the row has been in view for a moment.
 struct QueueRow: View {
+    /// Delete arrives as U+007F, which `.delete` alone doesn't match.
+    static let keys: Set<KeyEquivalent> = [.return, .delete, .deleteForward, KeyEquivalent("\u{7F}"), .upArrow, .downArrow, .leftArrow, .rightArrow,
+                                           "s", "j", "k"]
+
     var decision: NowModel.Decision
     var model: NowModel
     var focused: FocusState<String?>.Binding
@@ -100,10 +104,10 @@ struct QueueRow: View {
                 row.background(isFocused ? Theme.accentSoft.opacity(0.6) : .clear)
             }
         }
-            .focusable()
+            .focusable(interactions: .edit)
             .focusEffectDisabled()
             .focused(focused, equals: decision.id)
-.onKeyPress(keys: [.return, .delete, .upArrow, .downArrow, .leftArrow, .rightArrow, "s", "j", "k"], phases: .down) { press in handle(press) }
+.onKeyPress(keys: Self.keys, phases: .down) { press in handle(press) }
             .task {
                 try? await Task.sleep(for: .milliseconds(800))
                 armed = true
@@ -220,8 +224,8 @@ struct QueueRow: View {
         switch press.key {
         case .upArrow, .leftArrow, "k": move(-1)
         case .downArrow, .rightArrow, "j": move(1)
-        case .return: yes(command: press.modifiers.contains(.command))
-        case .delete: no()
+        case .return: open()
+        case .delete, .deleteForward, KeyEquivalent("\u{7F}"): no()
         default: snooze()
         }
     }
@@ -233,31 +237,23 @@ struct QueueRow: View {
         return .handled
     }
 
-    private func yes(command: Bool) -> KeyPress.Result {
-        switch decision {
-        case .approval(let request):
-            guard request.mayApproveFromKeys(armed: armed, command: command) else { return .ignored }
-            act { await model.answer(request, .allowOnce) }
-        case .session(let session):
-            model.openSession(session)
-        case .attention(let item):
-            guard let primary = item.actions.first(where: \.isPrimary) else { return .ignored }
-            act { await model.respond(item, action: primary.id) }
-        case .skipped(let step):
-            guard armed, step.request.risk != .high || command else { return .ignored }
-            act { await model.runSkipped(step) }
-        }
+    /// Return opens a session that waits on you. Everything else takes a click on its button.
+    private func open() -> KeyPress.Result {
+        guard case .session(let session) = decision else { return .ignored }
+        model.openSession(session)
         return .handled
     }
 
     private func no() -> KeyPress.Result {
-        guard let work = decision.notNow(model) else { return .ignored }
+        guard armed, let work = decision.notNow(model) else { return .ignored }
+        focused.wrappedValue = decision.id
         act(work)
         return .handled
     }
 
     private func snooze() -> KeyPress.Result {
         guard let work = decision.snoozed(model) else { return .ignored }
+        focused.wrappedValue = decision.id
         act(work)
         return .handled
     }
@@ -748,6 +744,9 @@ extension NowModel.Decision {
 /// What waits after the decision in view (D130): who asks and what, in one line. A click or Return brings it forward, where
 /// it's answered with everything it needs; ↑ ↓ move as they do on the cards.
 struct NextUpRow: View {
+    private static let keys = QueueRow.keys
+    @State private var armed = false
+
     var decision: NowModel.Decision
     var model: NowModel
     var focused: FocusState<String?>.Binding
@@ -777,25 +776,31 @@ struct NextUpRow: View {
             .overlay(alignment: .leading) { if isFocused { SelectedRail() } }
         }
         .buttonStyle(.sfBare)
-        .focusable()
+        .focusable(interactions: .edit)
         .focusEffectDisabled()
         .focused(focused, equals: decision.id)
-        .onKeyPress(keys: [.return, .delete, .upArrow, .downArrow, .leftArrow, .rightArrow, "s", "j", "k"], phases: .down) { press in
+        .onKeyPress(keys: Self.keys, phases: .down) { press in
             switch press.key {
             case .return:
                 bringForward()
                 return .handled
-            case .delete:
-                guard let work = decision.notNow(model) else { return .ignored }
+            case .delete, .deleteForward, KeyEquivalent("\u{7F}"):
+                guard armed, let work = decision.notNow(model) else { return .ignored }
+                focused.wrappedValue = decision.id
                 act(work)
                 return .handled
             case "s":
                 guard let work = decision.snoozed(model) else { return .ignored }
+                focused.wrappedValue = decision.id
                 act(work)
                 return .handled
             case .upArrow, .leftArrow, "k": return move(-1)
             default: return move(1)
             }
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(800))
+            armed = true
         }
         .accessibilityHint(Text("Brings it forward to answer"))
     }
