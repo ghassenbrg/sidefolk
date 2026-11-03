@@ -92,7 +92,8 @@ From `AGENTS.md`, which sessions should read themselves:
 - Every test and dev run uses its own short `SIDEFOLK_HOME` (`build/qa-<name>`). `dev.swift` refuses to send without it;
   `--all-apps` overrides that, and no session should need it.
 - Launch debug apps with `SIDEFOLK_QUIET_WINDOWS=1`: the founder is usually working here. Leave it out only for a check
-  that needs real clicks or keys, tell the coordinator first, and run it when the Mac is idle.
+  that needs real clicks or keys, and that needs a click slot from the coordinator when the Mac is idle: one session on the
+  screen, 10 minutes at most, no full screen or space switching, the debug app stopped by its pid right after.
 - Stop debug apps as soon as they aren't needed, by the pid file you wrote, never by name pattern (`pkill -f` hit
   others'), and check the process is gone.
 - Never run `swift scripts/dev.swift language:<x>`: it changes a default that every debug app shares.
@@ -128,7 +129,9 @@ own checks before passing: the Kit pair, the migration name (`vN-name`, unique),
 founder's yes for anything that widens reach. From the cut on, `PUSH?` and `READY` wait or become MERGE-READY. The answer to
 the integrator's `RELEASE?` is `GO` (the global skill's form), not `RELEASE OK`, and a yes belongs to that commit. A gallery
 publish needs its own yes: it comes after the snapshot that carries its host abilities or, for a pack the app no longer
-bundles, before that snapshot.
+bundles, before that snapshot. A standing approval (global skill, "While the user is away") can stand for these yeses if its
+words cover them: quote them. One night's order: MERGE-READY cutoff, direct pushes stop, add-ons `main` stops 15 minutes before
+the last pass, `RELEASE?`, `GO`. A second push to `main` also cancels the first's CI (`cancel-in-progress`), so read CI on the newest commit.
 
 Starter for a new session's rules message: the global skill's template, filled in with the base commit, a D block, the
 migrations taken, the overlaps nearby, and the "Shared machine" list above.
