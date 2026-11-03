@@ -20,7 +20,7 @@
 //   swift scripts/dev.swift scroll:1   (the tallest scroll view on screen to the bottom, 0…1, before a snap)
 //   swift scripts/dev.swift calendar | calendar:agenda | calendar:day | calendar:week:2026-11-03 | calendar:month | calendar:year
 //                           (D66, D84, D97) | calendar:swipe:-160[:film] | calendar:scroll:300[:film] | calendar:drag:x1,y1:x2,y2[:film]
-//                           | calendar:click:x,y | calendar:dclick:x,y | calendar:key:right|return|delete|cmdz|cmdt
+//                           | calendar:click:x,y | calendar:dclick:x,y | calendar:key:right|return|delete|tab|s|cmdz|cmdt
 //                           | calendar:type:<words> | calendar:select:<id> | calendar:inspect:<id> | calendar:crowd:3000
 //                           (the Calendar's gestures fed and filmed: Sources/SidefolkApp/Dev/CalendarDev.swift; launch the
 //                           debug app with SIDEFOLK_SAMPLE_CALENDAR=1 to use a sample calendar instead of the person's)

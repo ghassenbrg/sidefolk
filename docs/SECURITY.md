@@ -34,7 +34,7 @@ what was read first and why it asks (`ApprovalReason`), never changing what Guar
 (`ApprovalRequest.Effect`: reads private data, reads files, uses the internet, opens a link or app, uses an
 extension, changes files, runs a program, changes things), from what Sidefolk lets it do: for an extension
 its sandbox's permissions, never the manifest's word that a tool changes nothing. Approval is bound to `SHA-256(tool, canonical args)`
-and re-checked at execution. Allow is inert for 800 ms, Return never defaults to Allow on high,
+and re-checked at execution. Allow is inert for 800 ms, Return never defaults to Allow on high, and on Today's queue no key says yes at all (D130),
 a card waits 120 s and then counts as a no, except the cards of Sidefolk's own agent, which follow
 the person's "If I don't answer" setting (skip the step or stop the task after N minutes, a day at
 most; D37), and a run's cards are denied when the run ends (or its socket connection drops), so a

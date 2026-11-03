@@ -92,17 +92,16 @@ struct TodayView: View {
                     Text(verbatim: (queue.count - 1).formatted()).font(Theme.Font.callout).monospacedDigit().foregroundStyle(Theme.inkFaint)
                     Spacer(minLength: Theme.Space.s)
                     KeyHint("↑ ↓")
-                    Text("to move").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                    KeyHint("↩")
-                    Text("to answer").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                    Text("to move, after a click", comment: "Today, beside Next up: the arrow keys move between the rows once one has been clicked").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
                 .padding(.top, Theme.Space.s)
-                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
+                .help(Text("After a click on one: up and down move between them, Delete says not now, S snoozes a reminder."))
                 RowsCard {
                     ForEach(queue.dropFirst()) { decision in
                         NextUpRow(decision: decision, model: now, focused: $focused, act: { work in act(on: decision, work) }) {
                             now.forwardDecision = decision.id
-                            focused = decision.id
+                            // A moment later: the card it becomes has to be there to take the keyboard.
+                            Task { focused = decision.id }
                         }
                     }
                 }

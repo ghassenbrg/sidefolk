@@ -50,6 +50,11 @@ struct DayAgenda: View {
     }
 
     var body: some View {
+        // Each minute, so where now is keeps up with a page nothing else changes on.
+        TimelineView(.everyMinute) { _ in day }
+    }
+
+    @ViewBuilder private var day: some View {
         let now = Date()
         let today = model.groups().first { $0.day == .today }?.reminders ?? []
         let events = model.events(on: .today)
