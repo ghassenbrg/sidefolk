@@ -11,19 +11,28 @@ struct HomeSidebar: View {
 
     private var notebook: NotebookModel { model.notebook }
     private var now: NowModel { model.now }
+    private var tokens: ThemeTokens { ThemeStore.shared.style.tokens }
+    /// Simple icons: the glyph alone, one style with the places'. Colourful keeps its tiles (D67).
+    private var bareIcons: Bool { ThemeStore.shared.icons == .simple }
 
     var body: some View {
         // Above the list, not in it: only the list scrolls, however many collections and pages it holds.
         VStack(spacing: 0) {
-            Button { model.selection = .now } label: { SidebarNook(model: now) }
-                .buttonStyle(.sfBare)
-                .padding(.horizontal, Theme.Space.m)
-                .padding(.top, Theme.Space.s)
-                .padding(.bottom, Theme.Space.xs)
+            if tokens.nook.header {
+                Button { model.selection = .now } label: { SidebarHeader(model: now) }
+                    .buttonStyle(.sfBare)
+            } else {
+                Button { model.selection = .now } label: { SidebarNook(model: now) }
+                    .buttonStyle(.sfBare)
+                    .padding(.horizontal, Theme.Space.m)
+                    .padding(.top, Theme.Space.s)
+                    .padding(.bottom, Theme.Space.xs)
+            }
             list
         }
+        .background(alignment: .top) { if tokens.nook.header { SidebarHeaderArt().ignoresSafeArea() } }
         // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
-        .background(ThemeStore.shared.style.tokens.material.sidebar == .solid ? Theme.surface : .clear)
+        .background(tokens.material.sidebar == .solid ? Theme.sidebar : .clear)
         .alert("Delete “\(deleting?.name ?? "")”?", isPresented: Binding(
             get: { deleting != nil }, set: { if !$0 { deleting = nil } }
         ), presenting: deleting) { c in
@@ -50,43 +59,49 @@ struct HomeSidebar: View {
                 }
             }
             Section {
-                row(Text("You", comment: "Notebook › You: what Sidefolk knows about the person"), count: 0) {
-                    SidebarSquircle(symbol: "person", color: Theme.coral)
+                row(Text("You", comment: "Notebook › You: what Sidefolk knows about the person"), count: 0, tag: .you) {
+                    if bareIcons {
+                        Image(systemName: "person").font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(model.selection == .you ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
+                    } else {
+                        SidebarSquircle(symbol: "person", color: Theme.coral)
+                    }
                 }
-                .tag(HomeSelection.you)
                 .help(Text("What \(model.companionName) keeps in mind about you, and where each fact came from."))
                 ForEach(notebook.collections.filter { $0.kind != .profile }) { c in
                     collectionRow(c).moveDisabled(c.kind == .inbox)
                 }
                 .onMove { from, to in notebook.arrange(from: from, to: to) }
-                row(Text("Trash"), count: notebook.trashCount, quiet: true) {
-                    Image(systemName: "trash").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.inkFaint).frame(width: 20)
+                row(Text("Trash"), count: notebook.trashCount, quiet: true, tag: .trash) {
+                    Image(systemName: "trash").font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(model.selection == .trash ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
                 }
-                .tag(HomeSelection.trash)
             } header: {
                 HStack {
-                    Text("Collections")
+                    Text("Collections").foregroundStyle(Theme.sidebarInkMuted)
                     Spacer()
                     Button { model.collectionSheet = .create } label: { Image(systemName: "plus").font(.system(size: 11, weight: .semibold)) }
                         .buttonStyle(.sfIcon(side: 22))
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(Theme.sidebarInkMuted)
                         .help("New collection")
                         .accessibilityLabel("New collection")
                 }
             }
-            ExtensionsSidebarSection(pages: model.pages) { model.selection = .gallery }
+            ExtensionsSidebarSection(pages: model.pages, selection: model.selection) { model.selection = .gallery }
             if !notebook.archived.isEmpty {
-                Section("Archived") {
+                Section {
                     ForEach(notebook.archived) { c in
-                        row(Text(NotebookCollections.shownName(c)), count: notebook.counts[c.id] ?? 0, quiet: true) {
-                            Image(systemName: "archivebox").foregroundStyle(Theme.inkFaint).frame(width: 20)
+                        row(Text(NotebookCollections.shownName(c)), count: notebook.counts[c.id] ?? 0, quiet: true, tag: .collection(c.id)) {
+                            Image(systemName: "archivebox")
+                                .foregroundStyle(model.selection == .collection(c.id) ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
                         }
-                        .tag(HomeSelection.collection(c.id))
                         .contextMenu {
                             Button("Unarchive") { Task { await notebook.setArchived(c, false) } }
                             Button("Delete…") { deleting = c }
                         }
                     }
+                } header: {
+                    Text("Archived").foregroundStyle(Theme.sidebarInkMuted)
                 }
             }
         }
@@ -101,7 +116,7 @@ struct HomeSidebar: View {
                     Image(systemName: "gearshape").font(.system(size: 14))
                 }
                 .buttonStyle(.sfIcon)
-                .foregroundStyle(Theme.inkMuted)
+                .foregroundStyle(Theme.sidebarInkMuted)
                 .help("Settings (⌘,)")
                 .accessibilityLabel("Settings")
             }
@@ -118,18 +133,20 @@ struct HomeSidebar: View {
         case .onDuty: model.onDutyRunning
         default: 0
         }
-        let selected = (model.selection ?? .now).isPlace(place) && !(place == .notebook && model.selection == .you)
-        row(Text(place.title), count: count, waiting: place == .now) {
+        // The Notebook's row stays plain while a collection is open: only one row is lit at a time. A watch's page belongs
+        // to On duty, which has no row of its own to light.
+        let lit = model.selection == place || (place == .onDuty && (model.selection ?? .now).isPlace(.onDuty)) || (place == .now && model.selection == nil)
+        row(Text(place.title), count: count, waiting: place == .now, tag: place, lit: lit) {
             Image(systemName: place.symbol).font(.system(size: 14, weight: .medium))
-                .foregroundStyle(selected ? Theme.link : Theme.inkMuted).frame(width: 20)
+                .foregroundStyle(lit ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
         }
-        .tag(place)
         .help(Text("\(Text(place.title)) (⌘\(index + 1))", comment: "A place, then its shortcut"))
     }
 
     private func collectionRow(_ c: NotebookCollection) -> some View {
-        row(Text(NotebookCollections.shownName(c)), count: notebook.counts[c.id] ?? 0) { CollectionTile(collection: c, size: 20) }
-            .tag(HomeSelection.collection(c.id))
+        row(Text(NotebookCollections.shownName(c)), count: notebook.counts[c.id] ?? 0, tag: .collection(c.id)) {
+            CollectionTile(collection: c, size: 20, bare: bareIcons, selected: bareIcons && model.selection == .collection(c.id))
+        }
             .help(Text(verbatim: c.name))
             .contextMenu {
                 Button("Edit…") { model.collectionSheet = .edit(c) }
@@ -144,22 +161,29 @@ struct HomeSidebar: View {
             }
     }
 
-    private func row<Icon: View>(_ title: Text, count: Int, waiting: Bool = false, quiet: Bool = false,
+    private func row<Icon: View>(_ title: Text, count: Int, waiting: Bool = false, quiet: Bool = false, tag: HomeSelection, lit: Bool? = nil,
                                  @ViewBuilder icon: () -> Icon) -> some View {
-        HStack(spacing: Theme.Space.s + 2) {
+        let selected = lit ?? (model.selection == tag)
+        return HStack(spacing: Theme.Space.s + 2) {
             icon()
-            title.font(Theme.Font.body).foregroundStyle(quiet ? Theme.inkMuted : Theme.ink).lineLimit(1)
+            title.font(selected ? Theme.Font.bodyStrong : Theme.Font.body)
+                .foregroundStyle(selected ? Theme.onSidebarSelected : quiet ? Theme.sidebarInkMuted : Theme.sidebarInk).lineLimit(1)
             Spacer(minLength: Theme.Space.xs)
             if count > 0 {
                 if waiting {
                     CountBadge(count: count)
                 } else {
-                    Text(count > 99 ? "99+" : count.formatted()).font(Theme.Font.caption.monospacedDigit()).foregroundStyle(Theme.inkFaint)
+                    Text(count > 99 ? "99+" : count.formatted()).font(Theme.Font.caption.monospacedDigit())
+                        .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInkMuted)
                 }
             }
         }
         .frame(minHeight: Theme.Size.sidebarRow - 6)
+        .background(SidebarHighlightOff())
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .tag(tag)
+        .listRowBackground(SidebarRowFill(selected: selected))
     }
 }
 

@@ -170,6 +170,8 @@ struct SidecardStrip: View {
     var tone: Tone
     var text: Text
     var symbol: String?
+    /// A line of words instead of a band, on a page where a card has room (Today, D130).
+    @Environment(\.plainSlipStrip) private var plain
 
     var body: some View {
         Label {
@@ -180,9 +182,10 @@ struct SidecardStrip: View {
         .font(Theme.Font.callout.weight(.medium))
         .foregroundStyle(tone == .calm ? Theme.link : Theme.warning)
         .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, Theme.Space.s)
+        .padding(.top, plain ? Theme.Space.m : Theme.Space.s)
+        .padding(.bottom, plain ? 0 : Theme.Space.s)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tone == .calm ? Theme.accentSoft : Theme.warningSoft)
+        .background(plain ? Color.clear : tone == .calm ? Theme.accentSoft : Theme.warningSoft)
     }
 }
 
@@ -337,4 +340,8 @@ struct ArcFan: ViewModifier {
             content
         }
     }
+}
+
+extension EnvironmentValues {
+    @Entry var plainSlipStrip = false
 }

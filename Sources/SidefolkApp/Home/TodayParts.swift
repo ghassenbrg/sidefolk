@@ -1,11 +1,11 @@
 import SidefolkCore
 import SwiftUI
 
-// Pieces of Today that more than one layout uses (D58): watches as small tiles, a line of recent values, tomorrow
+// Pieces of Today (D58, D130): watches and live values as quiet rows, a line of recent values, tomorrow
 // beside the day, and what can be done with a reminder.
 
-/// A watch as a small tile: where it looks, its state in one word, and what it last saw. A click opens the watch's own
-/// page (D87); it stands out while what it noticed waits for you.
+/// A watch as a row: where it looks and its state in one word, in colour only when it's wrong or new (D130); what it
+/// last saw is in the help. A click opens the watch's own page (D87).
 struct WatchCard: View {
     var watcher: Watcher
     var model: NowModel
@@ -14,18 +14,12 @@ struct WatchCard: View {
         let kind = Describe.watcherKind(watcher.kind)
         let waiting = model.changeWaiting(for: watcher) != nil
         Button { model.openWatch?(watcher.id) } label: {
-            VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                Label { Text(verbatim: Describe.watcherTarget(watcher) ?? watcher.title).lineLimit(1).truncationMode(.middle) }
-                    icon: { Image(systemName: kind.symbol) }
-                    .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                Text(word(waiting: waiting)).font(Theme.Font.stateWord).foregroundStyle(tone(waiting: waiting))
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                Text(verbatim: detail).font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(2)
+            OnDutyRow(symbol: kind.symbol, title: Describe.watcherTarget(watcher) ?? watcher.title) {
+                let tone = StatusTone.watch(watcher.state, changeWaiting: waiting)
+                Text(word(waiting: waiting)).font(Theme.Font.callout.weight(tone == .neutral ? .regular : .semibold))
+                    .foregroundStyle(self.tone(waiting: waiting)).lineLimit(1).fixedSize()
             }
-            .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-            .padding(Theme.Space.l)
-            .lanternTile(bar: bar(waiting: waiting))
-            .contentShape(Rectangle())
+            .help(Text(verbatim: detail))
         }
         .buttonStyle(.sfBare)
         .contextMenu {
@@ -53,18 +47,10 @@ struct WatchCard: View {
         }
     }
 
-    /// The tile's top bar: the state's colour, only when the state says something (03-system › Tiles).
-    private func bar(waiting: Bool) -> Color? {
-        switch StatusTone.watch(watcher.state, changeWaiting: waiting) {
-        case .neutral: nil
-        case let tone: Theme.color(tone)
-        }
-    }
-
-    /// A change is news, not trouble (StatusTone.watch); a watch that's simply watching keeps the ink.
+    /// A change is news, not trouble (StatusTone.watch); a watch that's simply watching stays quiet.
     private func tone(waiting: Bool) -> Color {
         switch StatusTone.watch(watcher.state, changeWaiting: waiting) {
-        case .neutral: watcher.state == .active ? Theme.ink : Theme.inkFaint
+        case .neutral: Theme.inkMuted
         case let tone: Theme.color(tone)
         }
     }
@@ -81,7 +67,7 @@ struct WatchCard: View {
     }
 }
 
-/// A live value as a small tile: its name, the value, and a line of the last few values when they are numbers.
+/// A live value as a row: its name, the value, and a line of the last few values when they are numbers.
 struct ReportCard: View {
     var report: Watcher
     var reading: WatchReading?
@@ -91,24 +77,12 @@ struct ReportCard: View {
 
     var body: some View {
         Button { open = true } label: {
-            VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                Label { Text(verbatim: "\(reading?.label ?? report.title) · \(Describe.interval(report.intervalS))").lineLimit(1) }
-                    icon: { Image(systemName: Describe.watcherKind(report.kind).symbol) }
-                    .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                HStack(alignment: .lastTextBaseline, spacing: Theme.Space.s) {
-                    Text(verbatim: reading?.value ?? "…").font(Theme.Font.number).monospacedDigit()
-                        .foregroundStyle(report.state == .paused ? Theme.inkFaint : Theme.ink)
-                        .lineLimit(1).minimumScaleFactor(0.6)
-                    Spacer(minLength: 0)
-                    if values.count > 1 { Sparkline(values: values, color: Theme.glow).frame(width: 64, height: 20) }
-                }
-                Text(verbatim: report.expiresAt == nil ? String(localized: "until you stop it") : Describe.reportSchedule(report))
-                    .font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(1)
+            OnDutyRow(symbol: Describe.watcherKind(report.kind).symbol, title: reading?.label ?? report.title) {
+                if values.count > 1 { Sparkline(values: values, color: Theme.inkMuted).frame(width: 44, height: 14) }
+                Text(verbatim: reading?.value ?? "…").font(Theme.Font.bodyStrong).monospacedDigit()
+                    .foregroundStyle(report.state == .paused ? Theme.inkFaint : Theme.ink).lineLimit(1).fixedSize()
             }
-            .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-            .padding(Theme.Space.l)
-            .lanternTile(bar: nil)
-            .contentShape(Rectangle())
+            .help(Text(verbatim: report.expiresAt == nil ? String(localized: "until you stop it") : Describe.reportSchedule(report)))
         }
         .buttonStyle(.sfBare)
         .popover(isPresented: $open, arrowEdge: .bottom) {
@@ -307,12 +281,21 @@ struct QueueCardFrame<Content: View>: View {
     }
 }
 
-extension View {
-    /// Lantern's tile (03-system › Tiles): the card surface, e1, and a 3 pt bar along the top in the state's colour.
-    func lanternTile(bar: Color?) -> some View {
-        background(Theme.surfaceRaised)
-            .overlay(alignment: .top) { if let bar { Rectangle().fill(bar).frame(height: 3) } }
-            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .elevation(.e1, radius: Theme.Radius.card)
+/// A quiet row of On duty on Today: an icon, a name, and what to say about it at the end.
+struct OnDutyRow<Trailing: View>: View {
+    var symbol: String
+    var title: String
+    @ViewBuilder var trailing: Trailing
+
+    var body: some View {
+        HStack(spacing: Theme.Space.s) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.inkMuted).frame(width: 18)
+            Text(verbatim: title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
+            Spacer(minLength: Theme.Space.s)
+            trailing
+        }
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.vertical, 7)
+        .contentShape(Rectangle())
     }
 }

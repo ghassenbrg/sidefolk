@@ -1,6 +1,6 @@
 import Foundation
 
-/// A theme as written in `theme.json` (D58), format 1. Every section is optional: what's missing comes from Harbor,
+/// A theme as written in `theme.json` (D58), format 1. Every section is optional: what's missing comes from the default,
 /// and the check says so. Nothing in it can run: it names colours, sizes, a few images and the app's own layouts.
 public struct ThemeFile: Codable, Sendable, Equatable {
     public struct TypeSection: Codable, Sendable, Equatable {
@@ -27,6 +27,12 @@ public struct ThemeFile: Codable, Sendable, Equatable {
         public var page: String?
         /// The same in the dark appearance; without it, a dark page has no wash.
         public var pageDark: String?
+        /// `line` or `soft`: how a card sits on its page (D130).
+        public var depth: String?
+        /// A wide PNG at the top of Today, behind the greeting and up under the toolbar (D130).
+        public var scene: String?
+        /// The same in the dark appearance.
+        public var sceneDark: String?
     }
 
     public struct CompanionSection: Codable, Sendable, Equatable {
@@ -36,6 +42,12 @@ public struct ThemeFile: Codable, Sendable, Equatable {
         /// The same in the dark appearance.
         public var backdropDark: String?
         public var suggests: String?
+        /// A PNG at the top of the sidebar with the companion standing in it, about 800 × 566 (D130).
+        public var header: String?
+        /// The same in the dark appearance.
+        public var headerDark: String?
+        /// The wordmark in the header's top corner.
+        public var logo: Bool?
     }
 
     public struct Art: Codable, Sendable, Equatable {
@@ -112,7 +124,8 @@ public struct ThemeFile: Codable, Sendable, Equatable {
 
     /// The images it names, by what they're for.
     public var images: [(role: String, path: String)] {
-        [("material.grain", material?.grain), ("material.page", material?.page), ("material.pageDark", material?.pageDark), ("companion.backdrop", companion?.backdrop), ("companion.backdropDark", companion?.backdropDark),
+        [("material.grain", material?.grain), ("material.page", material?.page), ("material.pageDark", material?.pageDark), ("material.scene", material?.scene), ("material.sceneDark", material?.sceneDark),
+         ("companion.header", companion?.header), ("companion.headerDark", companion?.headerDark), ("companion.backdrop", companion?.backdrop), ("companion.backdropDark", companion?.backdropDark),
          ("art.empty", art?.empty), ("art.tile", art?.tile)]
             .compactMap { role, path in path.map { (role, $0) } }
     }
@@ -128,7 +141,7 @@ extension ThemeFile {
                                     scale: tokens.type.scale, density: tokens.type.density.rawValue),
                   shape: Shape(control: tokens.radius.control, card: tokens.radius.card, window: tokens.radius.panel),
                   colors: ["light": Self.hexes(tokens.colors, dark: false), "dark": Self.hexes(tokens.colors, dark: true)],
-                  material: MaterialSection(sidebar: tokens.material.sidebar.rawValue, grain: nil, page: nil, pageDark: nil),
+                  material: MaterialSection(sidebar: tokens.material.sidebar.rawValue, grain: nil, page: nil, pageDark: nil, depth: tokens.material.depth.rawValue),
                   companion: CompanionSection(nook: tokens.nook.style.rawValue, backdrop: nil, backdropDark: nil, suggests: tokens.nook.suggests?.rawValue),
                   art: nil, motion: tokens.motion.rawValue)
     }

@@ -133,7 +133,7 @@ for (name, side, folk) in [("color", navy, aqua), ("reversed", white, aqua), ("n
 }
 let wordmark = wordmarks["color"]!
 let mark = normalized(read("Resources/Brand/masters/rabbit-portrait.png"))
-let primaryMark = normalized(read("Resources/Brand/masters/rabbit-family.png"))
+let primaryMark = normalized(read("Resources/Brand/masters/family-current.png"))
 let familyArt = normalized(read("Resources/Brand/masters/family-current.png"))
 let mono = normalized(read("Resources/Brand/exports/mascot-navy.png"))
 try save(normalized(read("Resources/Brand/masters/mascot-mochi.png")), exports.appendingPathComponent("mascot-color.png"))

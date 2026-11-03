@@ -57,7 +57,7 @@ import Testing
     /// Apple's calendar colours on Harbor's cards: text 4.5:1 on its fill, the edge 3:1 on the card, a selected
     /// event's words 4.5:1, in light and dark; only lightness moves.
     @Test func calendarColoursReadInLightAndDarkAndKeepTheirHue() {
-        let surface = ThemeTokens.harbor.colors.surfaceRaised
+        let surface = ThemeTokens.sidefolk.colors.surfaceRaised
         for color: UInt32 in [0xFF2968, 0xFF9500, 0xFFCC00, 0x63DA38, 0x1BADF8, 0xCC73E1, 0xA2845E, 0x8E8E93, 0x5B8DEF, 0xC99A5B, 0xA68BFA] {
             for dark in [false, true] {
                 let back = dark ? surface.dark : surface.light

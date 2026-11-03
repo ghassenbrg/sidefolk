@@ -47,6 +47,14 @@ enum Theme {
     /// The companion's light while it works or listens, and when something waits on the person: light, never text.
     static var glow: Color { style.glow }
     static var waitGlow: Color { style.waitGlow }
+    /// The sidebar's plane and what's on it, its selected row (the theme's, not macOS's), and words over Today's scene (D130).
+    static var sidebar: Color { style.sidebar }
+    static var sidebarInk: Color { style.sidebarInk }
+    static var sidebarInkMuted: Color { style.sidebarInkMuted }
+    static var sidebarSelected: Color { style.sidebarSelected }
+    static var onSidebarSelected: Color { style.onSidebarSelected }
+    static var sceneInk: Color { style.sceneInk }
+    static var sceneInkMuted: Color { style.sceneInkMuted }
     /// The border of a control that has no fill of its own (a secondary button, an unchecked box): 3:1 where it must
     /// be seen, faint where a hairline is enough.
     static var controlBorder: Color { style.inkFaint.opacity(0.45) }
@@ -104,6 +112,7 @@ enum Theme {
     enum Font {
         private static var fonts: ThemeStyle.Fonts { style.fonts }
         static var display: SwiftUI.Font { fonts.display }
+        static var greeting: SwiftUI.Font { fonts.greeting }
         static var title1: SwiftUI.Font { fonts.title1 }
         static var title2: SwiftUI.Font { fonts.title2 }
         static var headline: SwiftUI.Font { fonts.headline }
@@ -167,6 +176,9 @@ enum Theme {
         static var grain: CGImage? { style.grain }
         static func page(dark: Bool) -> CGImage? { dark ? style.pageDark : style.page }
         static var backdrop: CGImage? { style.backdrop }
+        /// Today's picture, and the sidebar's header (D130); each appearance falls back to the other's.
+        static func scene(dark: Bool) -> CGImage? { dark ? style.sceneDark ?? style.scene : style.scene ?? style.sceneDark }
+        static func header(dark: Bool) -> CGImage? { dark ? style.headerDark ?? style.header : style.header ?? style.headerDark }
         static func backdrop(dark: Bool) -> CGImage? { dark ? style.backdropDark ?? style.backdrop : style.backdrop }
         static var empty: CGImage? { style.emptyArt }
         static var tile: CGImage? { style.artTile }

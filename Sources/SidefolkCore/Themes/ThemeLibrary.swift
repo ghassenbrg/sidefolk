@@ -21,38 +21,39 @@ public struct InstalledTheme: Sendable, Equatable {
         self.version = version
     }
 
-    public static let harbor = InstalledTheme(tokens: .harbor)
+    public static let sidefolk = InstalledTheme(tokens: .sidefolk)
 }
 
-/// The themes Sidefolk can use (D58): Harbor, the others it ships in its Resources (`Themes/<name>/`), and themes added
+/// The themes Sidefolk can use (D58): the default and the others it ships in its Resources (`Themes/<name>/`), and themes added
 /// from a folder or the gallery, which are checked and copied into `<home>/Themes/<id>/` with every image decoded and
 /// written again by Sidefolk, so only plain pixels are kept.
 public struct ThemeLibrary: Sendable {
     /// Ids that are Sidefolk's own: only its Resources and its signed gallery may use them.
     public static let ownPrefix = "dev.sidefolk."
     /// The built-ins in the order they're offered.
-    public static let builtInOrder = ["harbor", "dev.sidefolk.theme.paper-garden", "dev.sidefolk.theme.night-studio", "dev.sidefolk.theme.marshmallow"]
+    public static let builtInOrder = [ThemeTokens.sidefolk.id, "dev.sidefolk.theme.harbor", "dev.sidefolk.theme.paper-garden", "dev.sidefolk.theme.night-studio", "dev.sidefolk.theme.marshmallow"]
 
     let directory: URL
     let bundled: URL?
 
-    /// - Parameter bundled: the app's `Resources/Themes`, where the built-ins besides Harbor live.
+    /// - Parameter bundled: the app's `Resources/Themes`, where the built-ins and the default's art live.
     public init(paths: SidefolkPaths, bundled: URL? = nil) {
         directory = paths.themes
         self.bundled = bundled
     }
 
-    /// Harbor, then the themes Sidefolk ships, in their order.
+    /// The default, with its art when the app ships it, then the themes Sidefolk ships, in their order.
     public func builtIns() -> [InstalledTheme] {
         let shipped = ((try? FileManager.default.contentsOfDirectory(at: bundled ?? directory.appendingPathComponent(".none"),
                                                                      includingPropertiesForKeys: nil)) ?? [])
             .compactMap { folder -> InstalledTheme? in
                 let report = ThemeCheck.check(folder: folder)
-                guard report.isUsable, report.tokens.id.hasPrefix(Self.ownPrefix) else { return nil }
+                guard report.isUsable, Self.isOwn(report.tokens.id) else { return nil }
                 return InstalledTheme(tokens: report.tokens, images: report.images, folder: nil)
             }
         let rank = { (id: String) in Self.builtInOrder.firstIndex(of: id) ?? Self.builtInOrder.count }
-        return [.harbor] + shipped.sorted { rank($0.id) < rank($1.id) }
+        let sorted = shipped.sorted { rank($0.id) < rank($1.id) }
+        return sorted.first?.id == ThemeTokens.sidefolk.id ? sorted : [.sidefolk] + sorted
     }
 
     /// The built-ins, then the added themes by name.
@@ -65,9 +66,15 @@ public struct ThemeLibrary: Sendable {
         return builtIns + added
     }
 
-    /// The theme with this id, or Harbor when there's none (removed, or never there).
+    /// The theme with this id, or the default when there's none (removed, or never there).
     public func theme(id: String) -> InstalledTheme {
-        all().first { $0.id == id } ?? .harbor
+        let themes = all()
+        return themes.first { $0.id == id } ?? themes.first { $0.id == ThemeTokens.sidefolk.id } ?? .sidefolk
+    }
+
+    /// One of Sidefolk's own ids: the default's, what Harbor was when it was the default, or any under the prefix.
+    static func isOwn(_ id: String) -> Bool {
+        id == ThemeTokens.sidefolk.id || id == "harbor" || id.hasPrefix(ownPrefix)
     }
 
     /// Checks the theme in `folder` and keeps a copy; a theme with the same id is replaced. Only Sidefolk's signed gallery
@@ -79,7 +86,7 @@ public struct ThemeLibrary: Sendable {
             throw UserFacingError("This theme can't be used yet.",
                                   detail: report.problems.filter { $0.level == .error }.map(\.message).joined(separator: "\n"))
         }
-        if !own, file.id == ThemeTokens.harbor.id || file.id.hasPrefix(Self.ownPrefix) {
+        if !own, Self.isOwn(file.id) {
             throw UserFacingError("This theme's id is one of Sidefolk's own.", recovery: "Give it an id of your own, like com.you.sunset.")
         }
         let fm = FileManager.default
@@ -131,7 +138,7 @@ public struct ThemeLibrary: Sendable {
 
     // MARK: Starting a theme
 
-    /// A new theme folder at `folder`, copied from Harbor, with a short guide: what `sidefolk theme new` makes.
+    /// A new theme folder at `folder`, copied from the default, with a short guide: what `sidefolk theme new` makes.
     public static func start(_ name: String, at folder: URL) throws -> URL {
         let fm = FileManager.default
         guard !fm.fileExists(atPath: folder.appendingPathComponent("theme.json").path) else {
@@ -139,7 +146,7 @@ public struct ThemeLibrary: Sendable {
         }
         let slug = name.lowercased().map { $0.isLetter || $0.isNumber ? String($0) : "-" }.joined()
             .split(separator: "-").joined(separator: "-")
-        let file = ThemeFile(.harbor, id: "com.example.\(slug.isEmpty ? "theme" : slug)", name: name.clipped(40))
+        let file = ThemeFile(.sidefolk, id: "com.example.\(slug.isEmpty ? "theme" : slug)", name: name.clipped(40))
         try fm.createDirectory(at: folder, withIntermediateDirectories: true)
         try file.encoded().write(to: folder.appendingPathComponent("theme.json"))
         try guide.write(to: folder.appendingPathComponent("README.md"), atomically: true, encoding: .utf8)
@@ -149,7 +156,7 @@ public struct ThemeLibrary: Sendable {
     static let guide = """
         # A Sidefolk theme
 
-        `theme.json` starts as a copy of Harbor. Change what you like, then:
+        `theme.json` starts as a copy of the default theme. Change what you like, then:
 
         - `sidefolk theme check <this folder>` says what's wrong, in words, and how well each text colour reads.
         - Settings › Appearance › Theme › Load from folder… uses it and repaints every window each time you save.

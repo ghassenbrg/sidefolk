@@ -522,6 +522,8 @@ struct PageScroll<Content: View, Ground: View>: View {
     /// A dressed page's own (D108).
     @ViewBuilder var ground: Ground
     @Environment(\.rendersFullPage) private var fullPage
+    @Environment(\.pageHasScene) private var hasScene
+    @State private var scrolled: CGFloat = 0
 
     init(maxWidth: CGFloat = 760, padding: CGFloat = Theme.Space.xxl, bleed: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder ground: () -> Ground) {
         self.maxWidth = maxWidth
@@ -538,7 +540,9 @@ struct PageScroll<Content: View, Ground: View>: View {
             ScrollView { column.frame(maxWidth: .infinity) }
                 .scrollContentBackground(.hidden)
                 .clipsUnderToolbar()
-                .background { ground }
+                // Only a page with a scene listens: nothing else needs a redraw per scrolled point.
+                .onScrollGeometryChange(for: CGFloat.self) { hasScene ? max($0.contentOffset.y + $0.contentInsets.top, 0) : 0 } action: { _, y in scrolled = y }
+                .background { ground.environment(\.pageScrolled, scrolled) }
         }
     }
 
@@ -815,11 +819,15 @@ struct ThemeGrain: View {
 /// behind the cards.
 struct PageBackground: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.pageHasScene) private var hasScene
+    @Environment(\.pageScrolled) private var scrolled
 
     var body: some View {
         ZStack(alignment: .top) {
             Theme.surfaceSunken
-            if let wash = Theme.Art.page(dark: scheme == .dark) {
+            if hasScene, ThemeStore.shared.style.tokens.material.scene {
+                ThemeScene().offset(y: -scrolled)
+            } else if let wash = Theme.Art.page(dark: scheme == .dark) {
                 Image(decorative: wash, scale: 2).resizable().scaledToFill()
                     .frame(height: 420, alignment: .top)
                     .frame(maxWidth: .infinity, alignment: .top)
@@ -828,11 +836,49 @@ struct PageBackground: View {
                     .opacity(0.55)
             }
         }
-        .ignoresSafeArea()
-        // The wash is scaled to fill: unclipped it spread over the Settings sidebar beside the page and took its
-        // clicks (Daylight, Paper Garden).
+        // Clipped to the whole window's height, so it reaches under the toolbar; unclipped, a scaled picture spread over
+        // the Settings sidebar beside the page and took its clicks (Daylight, Paper Garden).
         .clipped()
+        .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
+}
+
+/// A theme's picture at the top of a page (D130): the full width, up under the toolbar, its foot fading into the page so
+/// there's no seam beside the cards. A narrow window has no room beside the words, so it goes without.
+struct ThemeScene: View {
+    @Environment(\.colorScheme) private var scheme
+    private static let height: CGFloat = 290
+    /// Raises the waterline to just above the first cards.
+    private static let lift: CGFloat = 46
+
+    var body: some View {
+        GeometryReader { g in
+            if g.size.width >= 860, let art = Theme.Art.scene(dark: scheme == .dark) {
+                Image(decorative: art, scale: 2).resizable().scaledToFill()
+                    .frame(width: g.size.width, height: g.size.width / 3)
+                    .clipped()
+                    .offset(y: -Self.lift)
+                    .overlay(alignment: .top) {
+                        // Night's words stay clear of lights near the horizon.
+                        if scheme == .dark {
+                            LinearGradient(colors: [.black.opacity(0.46), .black.opacity(0.3), .black.opacity(0.12)],
+                                           startPoint: .leading, endPoint: UnitPoint(x: 0.72, y: 0.5))
+                        }
+                    }
+            }
+        }
+        .frame(height: Self.height)
+        .clipped()
+        .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.7), .init(color: .clear, location: 1)],
+                             startPoint: .top, endPoint: .bottom))
+    }
+}
+
+extension EnvironmentValues {
+    /// This page opens on the theme's scene (Today).
+    @Entry var pageHasScene = false
+    /// How far the page has scrolled, for a scene that moves with it.
+    @Entry var pageScrolled: CGFloat = 0
 }

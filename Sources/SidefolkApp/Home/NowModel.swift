@@ -149,8 +149,18 @@ final class NowModel {
 
     /// The queue as the Console's filter shows it: agents' requests and sessions, your own (reminders and your
     /// companion's questions), or what watches noticed.
+    /// The decision the person brought forward on Today; nil, or one answered since, means the first (D130).
+    var forwardDecision: String?
+
+    /// The queue with the decision in view first, the order Today shows it in.
+    var todayQueue: [Decision] {
+        let all = queue
+        guard let i = all.firstIndex(where: { $0.id == forwardDecision }) else { return all }
+        return [all[i]] + all[..<i] + all[(i + 1)...]
+    }
+
     var focusedQueue: [Decision] {
-        queue.filter { decision in
+        todayQueue.filter { decision in
             switch (focus, decision) {
             case (.all, _): true
             case (.agents, .approval(let r)): r.caller.kind != "agent" && r.caller.kind != "user"

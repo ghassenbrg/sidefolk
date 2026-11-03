@@ -268,8 +268,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var showCalendar = false
     /// The Calendar page's views, hidden calendars and whether it may change the Mac's calendars (D97).
     public var calendarPage = CalendarPageSettings()
-    /// The theme every window draws with (D58), by id; Harbor when it's missing.
-    public var theme = "harbor"
+    /// The theme every window draws with (D58), by id; the default when it's missing.
+    public var theme = ThemeTokens.sidefolk.id
     /// A theme folder being worked on: Sidefolk reloads it each time it changes.
     public var themeFolder: String?
     /// Retired themes whose successor was already offered (D92), so the offer is made once.

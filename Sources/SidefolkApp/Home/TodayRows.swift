@@ -121,28 +121,7 @@ struct QueueRow: View {
         return nil
     }
 
-    /// Who's asking, above a card: the board's "Mochi asks", "Claude Code is waiting", "Watch changed".
-    private var cardLabel: String {
-        switch decision {
-        case .approval(let request):
-            switch request.caller.kind {
-            case "agent": return String(localized: "\(model.services.runtime.settings.current.companionName) asks", comment: "Above a decision card: the companion asks")
-            case "user", "command": return String(localized: "You asked")
-            default: return String(localized: "Another app asks")
-            }
-        case .session(let session): return String(localized: "\(Describe.agentName(session.agent)) is waiting")
-        case .attention(let item):
-            switch item.refKind {
-            case "watcher": return String(localized: "Watch changed")
-            case "reminder": return String(localized: "Reminder")
-            // Another app's notice is signed by the app, as its card was.
-            case _ where item.source.hasPrefix("external:"):
-                return Describe.caller(item.source, companion: model.services.runtime.settings.current.companionName)
-            default: return String(localized: "\(model.services.runtime.settings.current.companionName) noticed")
-            }
-        case .skipped: return String(localized: "Skipped", comment: "Above a decision card: a step nobody answered in time")
-        }
-    }
+    private var cardLabel: String { decision.cardLabel(model) }
 
     private var cardTint: Color {
         switch decision {
@@ -155,14 +134,7 @@ struct QueueRow: View {
     }
 
     /// The folk whose avatar stands beside a card: Guard asks, Byte keeps agents, Scout watches, Tempo keeps time.
-    private var folk: String? {
-        switch decision {
-        case .approval, .skipped: "guard"
-        case .session: "byte"
-        // The same helper the Sidecard's card showed; the companion's own words come with its face.
-        case .attention(let item): SidecardItemCard.folk(item)
-        }
-    }
+    private var folk: String? { decision.folk }
 
     private var at: Date {
         switch decision {
@@ -704,5 +676,113 @@ struct EditReminderSheet: View {
         guard let rule = reminder.recurrence else { return next }
         return String(localized: "\(next), \(TimeFormat.recurrence(rule, now: Date(), calendar: .autoupdatingCurrent))",
                       comment: "The next time, then the repeat: “Today 10:30, every 30 minutes”")
+    }
+}
+
+extension NowModel.Decision {
+    /// Who's asking, above a card: the board's "Mochi asks", "Claude Code is waiting", "Watch changed".
+    @MainActor func cardLabel(_ model: NowModel) -> String {
+        switch self {
+        case .approval(let request):
+            switch request.caller.kind {
+            case "agent": return String(localized: "\(model.services.runtime.settings.current.companionName) asks", comment: "Above a decision card: the companion asks")
+            case "user", "command": return String(localized: "You asked")
+            default: return String(localized: "Another app asks")
+            }
+        case .session(let session): return String(localized: "\(Describe.agentName(session.agent)) is waiting")
+        case .attention(let item):
+            switch item.refKind {
+            case "watcher": return String(localized: "Watch changed")
+            case "reminder": return String(localized: "Reminder")
+            // Another app's notice is signed by the app, as its card was.
+            case _ where item.source.hasPrefix("external:"):
+                return Describe.caller(item.source, companion: model.services.runtime.settings.current.companionName)
+            default: return String(localized: "\(model.services.runtime.settings.current.companionName) noticed")
+            }
+        case .skipped: return String(localized: "Skipped", comment: "Above a decision card: a step nobody answered in time")
+        }
+    }
+
+    /// The helper who brings it; nil when the companion says it itself.
+    @MainActor var folk: String? {
+        switch self {
+        case .approval, .skipped: "guard"
+        case .session: "byte"
+        // The same helper the Sidecard's card showed; the companion's own words come with its face.
+        case .attention(let item): SidecardItemCard.folk(item)
+        }
+    }
+
+    /// Its name in a line.
+    var title: String {
+        switch self {
+        case .approval(let r): r.title
+        case .session(let s): Describe.session(s)
+        case .attention(let a): a.title
+        case .skipped(let s): s.request.title
+        }
+    }
+
+    /// Another app or an agent waiting on the person, not something of their own: its asker is said in amber.
+    var isFirm: Bool {
+        switch self {
+        case .approval(let r): r.slipTone != .calm
+        case .session: true
+        case .attention, .skipped: false
+        }
+    }
+}
+
+/// What waits after the decision in view (D130): who asks and what, in one line. A click or Return brings it forward, where
+/// it's answered with everything it needs; ↑ ↓ move as they do on the cards.
+struct NextUpRow: View {
+    var decision: NowModel.Decision
+    var model: NowModel
+    var focused: FocusState<String?>.Binding
+    var bringForward: () -> Void
+
+    var body: some View {
+        let isFocused = focused.wrappedValue == decision.id
+        Button(action: bringForward) {
+            HStack(spacing: Theme.Space.m) {
+                if let folk = decision.folk {
+                    FolkAvatar(name: folk, size: 26)
+                } else {
+                    CompanionAvatar(settings: model.services.runtime.settings.current, size: 26)
+                }
+                Text(verbatim: decision.title).font(Theme.Font.body.weight(.medium)).foregroundStyle(Theme.ink).lineLimit(1)
+                Spacer(minLength: Theme.Space.s)
+                Text(verbatim: decision.cardLabel(model)).font(Theme.Font.callout)
+                    .foregroundStyle(decision.isFirm ? Theme.warning : Theme.inkMuted).lineLimit(1)
+                Image(systemName: "chevron.forward").font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.inkFaint)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.vertical, 9)
+            .contentShape(Rectangle())
+            .background(isFocused ? Theme.accentSoft.opacity(0.6) : .clear)
+            .overlay(alignment: .leading) { if isFocused { SelectedRail() } }
+        }
+        .buttonStyle(.sfBare)
+        .focusable()
+        .focusEffectDisabled()
+        .focused(focused, equals: decision.id)
+        .onKeyPress(keys: [.return, .upArrow, .downArrow, .leftArrow, .rightArrow, "j", "k"], phases: .down) { press in
+            switch press.key {
+            case .return:
+                bringForward()
+                return .handled
+            case .upArrow, .leftArrow, "k": return move(-1)
+            default: return move(1)
+            }
+        }
+        .accessibilityHint(Text("Brings it forward to answer"))
+    }
+
+    private func move(_ step: Int) -> KeyPress.Result {
+        let queue = model.focusedQueue
+        guard let i = queue.firstIndex(where: { $0.id == decision.id }) else { return .ignored }
+        focused.wrappedValue = queue[min(max(i + step, 0), queue.count - 1)].id
+        return .handled
     }
 }

@@ -1,0 +1,99 @@
+{
+  "format": 1,
+  "id": "dev.sidefolk.theme.harbor",
+  "name": "Harbor",
+  "author": "Sidefolk",
+  "version": "1.0.0",
+  "summary": "A painted harbor: Mochi on the jetty, lanterns at night, a pale morning.",
+  "type": {
+    "display": "serif",
+    "text": "system",
+    "exact": "mono",
+    "scale": 1.0,
+    "density": "regular"
+  },
+  "shape": {
+    "control": 10,
+    "card": 16,
+    "window": 18
+  },
+  "motion": "calm",
+  "material": {
+    "sidebar": "solid",
+    "depth": "soft",
+    "scene": "art/scene.png",
+    "sceneDark": "art/scene-dark.png"
+  },
+  "companion": {
+    "nook": "cushion",
+    "header": "art/header.png",
+    "headerDark": "art/header-dark.png"
+  },
+  "layout": {
+    "icons": "simple"
+  },
+  "colors": {
+    "light": {
+      "ink": "#1E3457",
+      "inkMuted": "#4C5D7B",
+      "inkFaint": "#55667F",
+      "surface": "#FBFCFE",
+      "surfaceSunken": "#F1F4FC",
+      "surfaceRaised": "#FFFFFF",
+      "line": "#E3E8F2",
+      "well": "#EBEFF7",
+      "accent": "#2A4A7C",
+      "onAccent": "#FFFFFF",
+      "accentSoft": "#D5E6F3",
+      "link": "#2B66AD",
+      "sidebar": "#FFFFFF",
+      "sidebarInk": "#1E3457",
+      "sidebarInkMuted": "#4C5D7B",
+      "sidebarSelected": "#2A4A7C",
+      "onSidebarSelected": "#FFFFFF",
+      "danger": "#B42318",
+      "dangerSoft": "#FDECEA",
+      "onDanger": "#FFFFFF",
+      "success": "#13703F",
+      "successSoft": "#E3F4EA",
+      "warning": "#8A4B00",
+      "warningSoft": "#FFF3DC",
+      "onWarning": "#FFFFFF",
+      "glow": "#2ED4D9",
+      "waitGlow": "#F5A524",
+      "sceneInk": "#1E3457",
+      "sceneInkMuted": "#3F5070"
+    },
+    "dark": {
+      "ink": "#E2E8F2",
+      "inkMuted": "#A7B3C6",
+      "inkFaint": "#9AA6B9",
+      "surface": "#141D2C",
+      "surfaceSunken": "#101825",
+      "surfaceRaised": "#182232",
+      "line": "#25303F",
+      "well": "#1F2A3B",
+      "accent": "#7CC9CF",
+      "onAccent": "#0D2529",
+      "accentSoft": "#20344A",
+      "link": "#8FC8DA",
+      "sidebar": "#0C131F",
+      "sidebarInk": "#D9E0EB",
+      "sidebarInkMuted": "#9AA7BB",
+      "sidebarSelected": "#48638F",
+      "onSidebarSelected": "#FFFFFF",
+      "danger": "#FF8A80",
+      "dangerSoft": "#45201D",
+      "onDanger": "#2A0B08",
+      "success": "#5FD69A",
+      "successSoft": "#173A2A",
+      "warning": "#FFC266",
+      "warningSoft": "#3A2E17",
+      "onWarning": "#2A1A00",
+      "glow": "#2ED4D9",
+      "waitGlow": "#F5A524",
+      "sceneInk": "#E2E8F2",
+      "sceneInkMuted": "#CBD4E2"
+    }
+  }
+}

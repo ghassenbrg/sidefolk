@@ -314,6 +314,7 @@ private struct ItemRow: View {
         }
         .padding(.horizontal, Theme.Space.s + 2)
         .padding(.vertical, Theme.Space.s + 1)
+        .overlay(alignment: .leading) { if selected { SelectedRail() } }
         .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .onTapGesture { model.select(item.id) }

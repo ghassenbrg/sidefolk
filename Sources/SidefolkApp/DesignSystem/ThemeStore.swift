@@ -11,7 +11,7 @@ import Synchronization
 final class ThemeStore: Sendable {
     static let shared = ThemeStore()
 
-    @ObservationIgnored private let state = Mutex(ThemeStyle(.harbor))
+    @ObservationIgnored private let state = Mutex(ThemeStyle(.sidefolk))
     @ObservationIgnored private let folderState = Mutex<ThemeReport?>(nil)
     @ObservationIgnored private let iconsState = Mutex<ThemeLayout.Icons?>(nil)
 
@@ -60,19 +60,20 @@ struct ThemeStyle: Sendable {
     let ink, inkMuted, inkFaint, surface, surfaceSunken, surfaceRaised, line: Color
     let accent, onAccent, accentSoft, link, danger, dangerSoft, onDanger, success, successSoft, warning, warningSoft, onWarning: Color
     let well, glow, waitGlow: Color
+    let sidebar, sidebarInk, sidebarInkMuted, sidebarSelected, onSidebarSelected, sceneInk, sceneInkMuted: Color
     /// The person's density over the theme's, if they chose one (Settings › Appearance).
     let density: ThemeTokens.Density?
     /// Spacing after the density.
     let space: ThemeTokens.Space
     let fonts: Fonts
     /// The theme's own pictures, decoded once: paper grain, the nook's backdrop, the empty-page art.
-    let grain, page, pageDark, backdrop, backdropDark, emptyArt, artTile: CGImage?
+    let grain, page, pageDark, scene, sceneDark, backdrop, backdropDark, header, headerDark, emptyArt, artTile: CGImage?
 
     /// Lantern's type scale (D84, docs/DESIGN.md). The theme's face dresses titles, the greeting, state words and big
     /// numbers; everything read, the companion's words included, is the system face, at the theme's scale.
     struct Fonts: Sendable {
         let display, title1, title2, headline, callout, stateWord, number, mono: Font
-        let bubble, bubbleTitle, input, hint, hero, title, heading, body, bodyStrong, caption, captionStrong, eyebrow: Font
+        let bubble, bubbleTitle, input, hint, hero, title, heading, body, bodyStrong, caption, captionStrong, eyebrow, greeting: Font
 
         init(_ type: ThemeTokens.Typography) {
             let d: Font.Design = switch type.display {
@@ -84,6 +85,7 @@ struct ThemeStyle: Sendable {
             let heads: Font.Design = type.display == .serif ? .serif : .default
             let k = type.scale
             display = .system(size: 30 * k, weight: .semibold, design: d)
+            greeting = .system(size: 36 * k, weight: .semibold, design: d)
             title1 = .system(size: 22 * k, weight: .semibold, design: d)
             title2 = .system(size: 17 * k, weight: .semibold, design: heads)
             headline = .system(size: 14 * k, weight: .semibold)
@@ -133,6 +135,13 @@ struct ThemeStyle: Sendable {
         well = Color(c.well)
         glow = Color(c.glow)
         waitGlow = Color(c.waitGlow)
+        sidebar = Color(c.sidebar)
+        sidebarInk = Color(c.sidebarInk)
+        sidebarInkMuted = Color(c.sidebarInkMuted)
+        sidebarSelected = Color(c.sidebarSelected)
+        onSidebarSelected = Color(c.onSidebarSelected)
+        sceneInk = Color(c.sceneInk)
+        sceneInkMuted = Color(c.sceneInkMuted)
         // Whole and half points, so a compact or relaxed theme still lands on the pixel grid.
         let f = (density ?? tokens.type.density).factor, s = tokens.space
         func scaled(_ v: Double) -> Double { (v * f * 2).rounded() / 2 }
@@ -142,6 +151,10 @@ struct ThemeStyle: Sendable {
         grain = Self.image(theme.images["material.grain"])
         page = Self.image(theme.images["material.page"])
         pageDark = Self.image(theme.images["material.pageDark"])
+        scene = Self.image(theme.images["material.scene"])
+        sceneDark = Self.image(theme.images["material.sceneDark"])
+        header = Self.image(theme.images["companion.header"])
+        headerDark = Self.image(theme.images["companion.headerDark"])
         backdrop = Self.image(theme.images["companion.backdrop"])
         backdropDark = Self.image(theme.images["companion.backdropDark"])
         emptyArt = Self.image(theme.images["art.empty"])

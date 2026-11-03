@@ -68,7 +68,7 @@ struct SayBarField<Trailing: View>: View {
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: height / 2, style: .circular))
         .overlay {
             RoundedRectangle(cornerRadius: height / 2, style: .circular)
-                .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.line, lineWidth: binding.wrappedValue ? 2 : 1)
+                .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.controlBorder, lineWidth: binding.wrappedValue ? 2 : 1)
         }
         .animation(Theme.Motion.micro, value: binding.wrappedValue)
         .onChange(of: focusTrigger) { binding.wrappedValue = true }

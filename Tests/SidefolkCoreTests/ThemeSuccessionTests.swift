@@ -41,7 +41,18 @@ import Testing
     @Test func aGalleryThemeThatIsGoneMovesToItsSuccessor() {
         var s = settings("dev.sidefolk.theme.daylight")
         #expect(ThemeSuccession.step(&s) { _ in false } != nil)
-        #expect(s.theme == ThemeTokens.harbor.id)
+        #expect(s.theme == ThemeTokens.sidefolk.id)
+    }
+
+    /// The old default's id says nothing about who chose it: everyone moves to the new default once, and the whisper can say
+    /// Harbor's still there, under its own id (D130).
+    @Test func theOldDefaultMovesOnceToTheNewOne() {
+        var s = settings("harbor")
+        let step = ThemeSuccession.step(&s) { _ in true }
+        #expect(s.theme == ThemeTokens.sidefolk.id)
+        guard case .moved(let old, _)? = step else { Issue.record("not moved"); return }
+        #expect(old.nameLivesOn)
+        #expect(ThemeSuccession.step(&s) { _ in true } == nil)
     }
 
     @Test func currentThemesAndFollowedFoldersAreLeftAlone() {

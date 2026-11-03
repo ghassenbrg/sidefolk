@@ -49,6 +49,11 @@ extension AppCoordinator {
     /// The whisper's words: moved needs nothing more; an offer carries "Use …" (`useSuccessor`).
     static func successionItem(_ step: ThemeSuccession.Step, successorName name: String) -> AttentionItem {
         switch step {
+        case .moved(let old, _) where old.nameLivesOn:
+            AttentionItem(level: .gentle, source: ownVoice,
+                          title: String(localized: "Sidefolk has a new look. \(old.name) is still in Settings › Appearance.",
+                                        comment: "A whisper at launch after the default theme changed; the name is Harbor, now a theme of its own (D130)"),
+                          refKind: themeSuccessor)
         case .moved(let old, _):
             AttentionItem(level: .gentle, source: ownVoice,
                           title: String(localized: "\(old.name) is now \(name), its successor.",

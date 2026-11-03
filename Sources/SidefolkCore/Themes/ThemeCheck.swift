@@ -48,7 +48,7 @@ public enum ThemeCheck {
     /// added on 2026-11-01 (success and chips as text, soft fills' hues) as warnings, so a theme that passed when it
     /// was added keeps working until its update comes.
     public static func check(folder: URL, strict: Bool = true) -> ThemeReport {
-        var report = ThemeReport(tokens: .harbor)
+        var report = ThemeReport(tokens: .sidefolk)
         let manifest = folder.appendingPathComponent("theme.json")
         guard let size = (try? FileManager.default.attributesOfItem(atPath: manifest.path))?[.size] as? Int else {
             report.problems.append(.init(level: .error, message: "There's no theme.json in \(folder.lastPathComponent)."))
@@ -89,11 +89,11 @@ public enum ThemeCheck {
         let name = file.name.trimmingCharacters(in: .whitespacesAndNewlines)
         if name.isEmpty || name.count > 40 { problem(.error, "name must be 1 to 40 characters.") }
 
-        var t = ThemeTokens.harbor
+        var t = ThemeTokens.sidefolk
         t.id = file.id
         t.name = name
 
-        // Colours: every role in both appearances, Harbor's for any that's missing; the optional ones (D84) take
+        // Colours: every role in both appearances, the default's for any that's missing; the optional ones (D84, D130) take
         // their stand-ins quietly.
         var missing: [String] = []
         var missingOptional: Set<String> = []
@@ -119,13 +119,14 @@ public enum ThemeCheck {
             }
         }
         t.colors.fillOptional(missing: missingOptional)
-        if !missing.isEmpty { problem(.warning, "Harbor's colour is used for \(missing.joined(separator: ", ")).") }
+        if !missing.isEmpty { problem(.warning, "The default theme's colour is used for \(missing.joined(separator: ", ")).") }
         for row in contrastRows(t.colors) where !row.passes {
             problem(strict || !row.newer ? .error : .warning,
                     "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1.")
         }
         for message in meaningProblems(t.colors) { problem(.error, message) }
         for message in softMeaningProblems(t.colors) { problem(strict ? .error : .warning, message) }
+        for message in selectionProblems(t.colors) { problem(strict ? .error : .warning, message) }
 
         // Type, shape, motion, material, nook and icons: from the app's own sets, within its limits.
         func pick<E: RawRepresentable & CaseIterable>(_ text: String?, _ key: String, _ fallback: E, level: ThemeReport.Problem.Level = .warning) -> E
@@ -158,7 +159,11 @@ public enum ThemeCheck {
         t.material.sidebar = pick(file.material?.sidebar, "material.sidebar", t.material.sidebar)
         t.material.grain = file.material?.grain != nil
         t.material.page = file.material?.page != nil || file.material?.pageDark != nil
+        t.material.depth = pick(file.material?.depth, "material.depth", ThemeTokens.Material.Depth.line)
+        t.material.scene = file.material?.scene != nil || file.material?.sceneDark != nil
         t.nook.style = pick(file.companion?.nook, "companion.nook", t.nook.style)
+        t.nook.header = file.companion?.header != nil || file.companion?.headerDark != nil
+        t.nook.logo = file.companion?.logo ?? false
         if let suggests = file.companion?.suggests {
             if let choice = CompanionChoice(rawValue: suggests), !choice.isRetired {
                 t.nook.suggests = choice
@@ -220,7 +225,22 @@ public enum ThemeCheck {
         add("danger on dangerSoft", c.danger, on: c.dangerSoft, newer: true)
         add("warning on warningSoft", c.warning, on: c.warningSoft, newer: true)
         add("success on successSoft", c.success, on: c.successSoft, newer: true)
+        add("sidebarInk on sidebar", c.sidebarInk, on: c.sidebar, newer: true)
+        add("sidebarInkMuted on sidebar", c.sidebarInkMuted, on: c.sidebar, newer: true)
+        add("onSidebarSelected on sidebarSelected", c.onSidebarSelected, on: c.sidebarSelected, newer: true)
         return rows
+    }
+
+    /// How far a state's mark must stand from what's around it (WCAG's non-text contrast).
+    public static let stateContrast = 3.0
+
+    /// A selected row the person can't tell from the rows around it, in plain words (D130).
+    public static func selectionProblems(_ c: ThemeTokens.Colors) -> [String] {
+        [("light", c.sidebarSelected.light, c.sidebar.light), ("dark", c.sidebarSelected.dark, c.sidebar.dark)].compactMap { appearance, row, sidebar in
+            let ratio = contrast(row, sidebar)
+            guard ratio < stateContrast else { return nil }
+            return "sidebarSelected on sidebar is \(String(format: "%.2f", ratio)):1 in \(appearance); a selected row needs \(stateContrast):1 to be seen."
+        }
     }
 
     // MARK: Meaning

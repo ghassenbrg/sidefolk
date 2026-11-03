@@ -1,16 +1,14 @@
 import SidefolkCore
 import SwiftUI
 
-/// Home › Today (D84): the day first. A brief (a greeting and one sentence made of what the app knows), the day as a
-/// line, then what needs the person (three at most in view, the rest folded) beside a glance at what's on duty, and
-/// what was captured today. One layout in every theme (D84 narrows D64); the columns stack in a narrow window.
+/// Home › Today (D130): a brief (a greeting and one sentence made of what the app knows) over the theme's scene, then one
+/// decision in view with the rest under Next up, beside the day as a list and what's on duty, and what was captured today.
+/// One layout in every theme (D84 narrows D64); the columns stack in a narrow window.
 struct TodayView: View {
     var model: HomeModel
     /// The queue card the keyboard is on (D58).
     @FocusState private var focused: String?
     @State private var editing: Reminder?
-    /// The folded part of the queue is open.
-    @State private var showAll = false
     /// While Quiet is on the queue is held in one card; the person may open it anyway.
     @State private var showHeld = false
 
@@ -22,24 +20,28 @@ struct TodayView: View {
                 FullAccessBanner(settings: { model.services.openSettings(tab: .privacy) }) { Task { await now.turnOffFullAccess() } }
             }
             brief
-            DayCard(model: now, edit: { editing = $0 }) { model.selection = .calendar }
             AddonUpdatesTodayRow(updates: model.services.updates)
-            if firstDay {
-                Starters { words in model.find.query = words }
-            } else {
-                ColumnsLayout(widths: [1.75, 1], spacing: Theme.Size.columnGap, minimums: [380, 260]) {
-                    VStack(alignment: .leading, spacing: Theme.Space.l) {
+            ColumnsLayout(widths: [1.75, 1], spacing: Theme.Size.columnGap, minimums: [380, 260]) {
+                VStack(alignment: .leading, spacing: Theme.Space.m) {
+                    if firstDay {
+                        Starters { words in model.find.query = words }
+                    } else {
                         needsYou
                         if !now.kept.isEmpty { keptForToday }
                     }
-                    VStack(alignment: .leading, spacing: Theme.Space.l) {
+                    if !now.captured.isEmpty { captured }
+                }
+                VStack(alignment: .leading, spacing: Theme.Space.m) {
+                    DayAgenda(model: now, edit: { editing = $0 }) { model.selection = .calendar }
+                    if !firstDay {
                         OnDutyGlance(model: model)
                         if !now.widgets.isEmpty { ExtensionWidgetsSection(model: now) }
                     }
                 }
             }
-            if !now.captured.isEmpty { captured }
         }
+        .environment(\.pageHasScene, true)
+        .environment(\.plainSlipStrip, true)
         .sheet(item: $editing) { EditReminderSheet(reminder: $0, model: now) }
     }
 
@@ -52,61 +54,52 @@ struct TodayView: View {
     // MARK: The brief
 
     private var brief: some View {
-        WrapRow(minimum: 420, spacing: Theme.Space.l) {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Text(verbatim: DayBrief.greeting(at: Date(), name: NowModel.firstName))
-                    .font(Theme.Font.display).foregroundStyle(Theme.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityAddTraits(.isHeader)
-                    .homePageTitle()
-                (Text(verbatim: DayBrief.lead(needsYou: now.needsYouCount)).fontWeight(.semibold).foregroundStyle(Theme.ink)
-                    + Text(verbatim: " " + DayBrief.detail(next: now.nextUp, changed: now.changedWatches)).foregroundStyle(Theme.inkMuted))
-                    .font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: 620, alignment: .leading)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: Theme.Space.s) {
-                CountTile(count: now.needsYouCount, label: Text("need you", comment: "Today's count: things that wait on the person"), dot: Theme.waitGlow)
-                CountTile(count: model.onDutyRunning,
-                          label: Text("on duty", comment: "Today's count: things working for the person"), dot: Theme.glow) {
-                    model.selection = .onDuty
-                }
-                CountTile(count: now.doneCount, label: Text("done today", comment: "Today's count: things done today"), dot: Theme.success) {
-                    model.selection = .history
-                }
-            }
-            .fixedSize()
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Text(verbatim: DayBrief.greeting(at: Date(), name: NowModel.firstName))
+                .font(Theme.Font.greeting).foregroundStyle(Theme.sceneInk)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+                .homePageTitle()
+            (Text(verbatim: DayBrief.lead(needsYou: now.needsYouCount)).fontWeight(.semibold).foregroundStyle(Theme.sceneInk)
+                + Text(verbatim: " " + DayBrief.detail(next: now.nextUp, changed: now.changedWatches)).foregroundStyle(Theme.sceneInkMuted))
+                .font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 560, alignment: .leading)
         }
     }
 
     // MARK: Needs you
 
     @ViewBuilder private var needsYou: some View {
-        let queue = now.queue
-        SectionHeader(title: Text("Needs you"), count: queue.count) {
-            if !queue.isEmpty && !now.quiet {
-                HStack(spacing: Theme.Space.s) {
-                    KeyHint("↑ ↓")
-                    Text("to move").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                    KeyHint("↩")
-                    Text("to answer").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                }
-                .fixedSize()
-                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
-            }
-        }
+        let queue = now.todayQueue
         if queue.isEmpty {
             AllClear(model: now)
         } else if now.quiet && !showHeld {
             HeldCard(queue: queue, until: now.quietUntil) { showHeld = true }
         } else {
-            let shown = showAll ? queue : Array(queue.prefix(3))
-            ForEach(shown) { decision in
-                QueueRow(decision: decision, model: now, focused: $focused, style: "card") { work in act(on: decision, work) }
-            }
-            if queue.count > 3 {
-                FoldedQueue(rest: Array(queue.dropFirst(3)), open: showAll, model: now) { showAll.toggle() }
+            QueueRow(decision: queue[0], model: now, focused: $focused, style: "card") { work in act(on: queue[0], work) }
+                .id(queue[0].id)
+            if queue.count > 1 {
+                HStack(spacing: Theme.Space.s) {
+                    Text("Next up", comment: "Today: what waits after the decision in view").font(Theme.Font.headline).foregroundStyle(Theme.ink)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(verbatim: (queue.count - 1).formatted()).font(Theme.Font.callout).monospacedDigit().foregroundStyle(Theme.inkFaint)
+                    Spacer(minLength: Theme.Space.s)
+                    KeyHint("↑ ↓")
+                    Text("to move").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                    KeyHint("↩")
+                    Text("to answer").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                }
+                .padding(.top, Theme.Space.s)
+                .help(Text("Up and down move between them. Return answers yes or does the main action, Delete says not now, S snoozes a reminder."))
+                RowsCard {
+                    ForEach(queue.dropFirst()) { decision in
+                        NextUpRow(decision: decision, model: now, focused: $focused) {
+                            now.forwardDecision = decision.id
+                            focused = decision.id
+                        }
+                    }
+                }
             }
             if let result = now.skippedRun { RowsCard { SkippedRunResult(result: result) } }
         }
@@ -114,11 +107,11 @@ struct TodayView: View {
 
     /// Runs an answer, then keeps the keyboard where it was in the queue: on the next one, or the last.
     private func act(on decision: NowModel.Decision, _ work: @escaping () async -> Void) {
-        let index = now.queue.firstIndex { $0.id == decision.id } ?? 0
+        let index = now.todayQueue.firstIndex { $0.id == decision.id } ?? 0
         let hadFocus = focused != nil
         Task {
             await work()
-            let queue = now.queue
+            let queue = now.todayQueue
             if hadFocus { focused = queue.isEmpty ? nil : queue[min(index, queue.count - 1)].id }
         }
     }
@@ -185,89 +178,7 @@ struct HomePage<Content: View>: View {
     }
 }
 
-/// One of the brief's three counts: a dot of light, the number, and what it counts. A click goes where they are.
-private struct CountTile: View {
-    var count: Int
-    var label: Text
-    var dot: Color
-    var action: (() -> Void)?
 
-    var body: some View {
-        let tile = HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
-            Circle().fill(dot).frame(width: 9, height: 9).alignmentGuide(.firstTextBaseline) { $0[.bottom] - 1 }
-            VStack(alignment: .leading, spacing: 0) {
-                Text(count > 99 ? "99+" : count.formatted()).font(Theme.Font.number).monospacedDigit().foregroundStyle(Theme.ink)
-                label.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-            }
-        }
-        .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, Theme.Space.m)
-        .frame(minWidth: 108, alignment: .leading)
-        .cardSurface()
-        .accessibilityElement(children: .combine)
-        if let action {
-            Button(action: action) { tile.contentShape(Rectangle()) }.buttonStyle(.sfBare)
-        } else {
-            tile
-        }
-    }
-}
-
-/// Today's day (D58, D84): the line from morning to evening with the calendar's events and the reminders, the done ones
-/// struck through, and the way to the Calendar. Tomorrow is the Calendar's Agenda now.
-struct DayCard: View {
-    var model: NowModel
-    var edit: (Reminder) -> Void
-    var openCalendar: () -> Void
-
-    var body: some View {
-        let today = model.groups().first { $0.day == .today }?.reminders ?? []
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            WrapRow(minimum: 160, spacing: Theme.Space.s) {
-                Text("Your day").font(Theme.Font.headline).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-                HStack(spacing: Theme.Space.m) {
-                    // The colours the line draws them in, the Calendar's (D97): each calendar's own, and the
-                    // reminders' blue.
-                    if model.calendarOn { legend(Text("Calendar"), Self.calendarColors(model.events(on: .today))) }
-                    legend(Text("Reminders"), [CalendarTint.of(CalendarEntry.Kind.reminder.hex).edge])
-                    Button("Open Calendar", action: openCalendar).buttonStyle(.sf(.quiet))
-                }
-            }
-            .padding(.horizontal, Theme.Space.l)
-            .padding(.top, Theme.Space.m)
-            DayRail(reminders: today, done: model.doneToday, events: model.events(on: .today), now: Date(),
-                    move: { reminder, date in await model.move(reminder, to: date) }, add: { model.newReminder(at: $0) },
-                    menu: { AnyView(ReminderMenu(reminder: $0, model: model, edit: edit)) })
-            if !model.calendarOn {
-                InlineEmpty(text: "Show your Mac calendar here too, beside your reminders.", systemImage: "calendar",
-                            actionTitle: "Allow") { Task { await model.showCalendar() } }
-            }
-            if today.isEmpty && model.doneToday.isEmpty && model.events(on: .today).isEmpty {
-                NewReminderRow(model: model)
-            }
-        }
-        .cardSurface()
-    }
-
-    private func legend(_ title: Text, _ colors: [Color]) -> some View {
-        HStack(spacing: 5) {
-            HStack(spacing: 2) {
-                ForEach(Array(colors.enumerated()), id: \.offset) { _, color in
-                    RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 9, height: 9)
-                }
-            }
-            // Whole, never "Calend…": the row wraps instead (WrapRow).
-            title.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1).fixedSize()
-        }
-    }
-
-    /// Up to three of today's calendars' colours, in the order they come; a grey one when none has a colour.
-    private static func calendarColors(_ events: [CalendarEvent]) -> [Color] {
-        var seen: [UInt32] = []
-        for hex in events.compactMap({ $0.color?.hex }) where !seen.contains(hex) && seen.count < 3 { seen.append(hex) }
-        return (seen.isEmpty ? [DayRail.noCalendarColor] : seen).map { CalendarTint.of($0).edge }
-    }
-}
 
 /// A card of what needs the person (D84): a bar of amber along the leading edge, who asks with their avatar and when,
 /// then the card's own words and buttons; the keyboard's ring while it has the keyboard.
@@ -305,52 +216,6 @@ struct NeedsYouCard<Content: View>: View {
     }
 }
 
-/// The queue past its first three (A1): who else waits, in one sentence, and Show all.
-private struct FoldedQueue: View {
-    var rest: [NowModel.Decision]
-    var open: Bool
-    var model: NowModel
-    var toggle: () -> Void
-
-    var body: some View {
-        HStack(spacing: Theme.Space.m) {
-            HStack(spacing: -8) {
-                ForEach(Array(Set(rest.map(folk)).sorted().prefix(3)), id: \.self) { FolkAvatar(name: $0, size: 26) }
-            }
-            (open ? Text("Showing all \(rest.count + 3).", comment: "Today's queue, unfolded")
-                 : Text("\(rest.count) more can wait: \(names)", comment: "Today's queue, folded: “4 more can wait: Read the clipboard, Skipped, a reminder”"))
-                .font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Button(action: toggle) {
-                open ? Text("Show fewer") : Text("Show all \(rest.count + 3)", comment: "Today's queue, folded: shows every card")
-            }
-            .buttonStyle(.sf(.quiet))
-            .fixedSize()
-        }
-        .padding(Theme.Space.m)
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-            .strokeBorder(Theme.controlBorder.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
-    }
-
-    private var names: String {
-        rest.prefix(4).map { decision -> String in
-            switch decision {
-            case .approval(let r): r.title
-            case .session(let s): Describe.session(s)
-            case .attention(let a): a.title
-            case .skipped(let s): s.request.title
-            }
-        }.formatted(.list(type: .and))
-    }
-
-    private func folk(_ decision: NowModel.Decision) -> String {
-        switch decision {
-        case .approval, .skipped: "guard"
-        case .session: "byte"
-        case .attention(let a): a.refKind == "watcher" ? "scout" : a.refKind == "reminder" ? "tempo" : "pip"
-        }
-    }
-}
 
 /// Quiet on (A1's Focus state): the queue held in one card, saying what waits and until when, with the way in.
 private struct HeldCard: View {

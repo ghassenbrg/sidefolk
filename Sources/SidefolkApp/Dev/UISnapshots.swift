@@ -27,6 +27,10 @@ enum UISnapshots {
                 exit(1)
             }
             ThemeStore.shared.apply(InstalledTheme(tokens: report.tokens, images: report.images, folder: folder))
+        } else if let bundled = ResourceLocator.resources?.appendingPathComponent("Themes", isDirectory: true),
+                  let shipped = ThemeLibrary(paths: SidefolkPaths(home: FileManager.default.temporaryDirectory), bundled: bundled).builtIns().first {
+            // The default with its art, as the app wears it.
+            ThemeStore.shared.apply(shipped)
         }
         // Only the shots whose names contain one of these words: a page under review in seconds, not minutes.
         if let i = args.firstIndex(of: "--only"), i + 1 < args.count {

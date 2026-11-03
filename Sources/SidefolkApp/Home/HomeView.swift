@@ -81,11 +81,27 @@ struct HomeView: View {
         .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
     }
 
+    /// A page in the sidebar's colour with rounded corners under the toolbar: one sheet set into its frame, with the corner
+    /// the cards use (D130). Today with a scene has the picture there instead, and a translucent sidebar has no colour to match.
+    private var framesPage: Bool {
+        let tokens = ThemeStore.shared.style.tokens
+        return tokens.material.sidebar == .solid && !((model.selection ?? .now) == .now && tokens.material.scene)
+    }
+
+    private var pageFrame: some View {
+        Theme.sidebar.frame(height: PageFrameShape.top + PageFrameShape.radius)
+            .mask(alignment: .top) { PageFrameShape().fill(style: FillStyle(eoFill: true)) }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
     /// The selected place, with the Say bar's panel over it while the bar has words.
     private var page: some View {
         detail
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay { ThemeGrain() }
+            .overlay(alignment: .top) { if framesPage { pageFrame } }
             .overlay(alignment: .top) {
                 if showsPanel {
                     ZStack(alignment: .top) {
@@ -335,5 +351,19 @@ struct CollectionSheet: View {
                 dismiss()
             }
         }
+    }
+}
+
+/// The toolbar's strip with two curved corners below it.
+private nonisolated struct PageFrameShape: Shape {
+    static let top: CGFloat = 52
+    static let radius: CGFloat = 16
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addRect(CGRect(x: 0, y: 0, width: rect.width, height: Self.top + Self.radius))
+        path.addPath(UnevenRoundedRectangle(topLeadingRadius: Self.radius, topTrailingRadius: Self.radius, style: .continuous)
+            .path(in: CGRect(x: 0, y: Self.top, width: rect.width, height: Self.radius * 3)))
+        return path
     }
 }

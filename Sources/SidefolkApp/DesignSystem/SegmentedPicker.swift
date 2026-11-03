@@ -70,6 +70,9 @@ struct SegmentedPicker<Value: Hashable>: View {
                     .background {
                         if chosen {
                             inner.fill(chosenFill ?? (scheme == .dark ? Color.white.opacity(0.12) : Theme.surfaceRaised))
+                                // The fill alone is about 1.2:1 from its track: an edge says which one is chosen (D130). A dressed page
+                                // chooses its own fill, and its contrast.
+                                .overlay { if chosenFill == nil { inner.strokeBorder(Theme.accent) } }
                                 .shadow(color: Color(hex: 0x0F1E36).opacity(scheme == .dark ? 0 : 0.10), radius: 1, y: 1)
                         }
                     }
