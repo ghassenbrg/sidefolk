@@ -71,6 +71,10 @@ struct FileReceiptCard: View {
                     words
                     Spacer(minLength: 0)
                 }
+                // What the answer held, if it had a tree (up to 280 points), as on any card.
+                if let tree = card.tree.flatMap(ExtensionPage.tree(from:)) {
+                    TreeCompact(tree: tree).environment(\.colorScheme, .dark)
+                }
                 actions
             }
             .padding(Theme.Space.l)
