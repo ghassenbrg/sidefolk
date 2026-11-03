@@ -7,22 +7,23 @@ description: Make a finished, checked Sidefolk theme end to end, inside this rep
 
 A theme **dresses** Sidefolk, it doesn't arrange it (D58, D64 narrowed by D84): colours by role in light and dark,
 the display face, density, corner radii, motion, the sidebar's material, a paper grain, a picture washed in at the
-top of every page, art behind the companion's card in Home's sidebar, empty-page art, and the colours of the
+top of every page, a scene on Today and a header picture with the companion in Home's sidebar, empty-page art, and the colours of the
 companion's light. Every place keeps its one layout. A theme is data: `theme.json` plus PNGs, nothing runs.
 
-**The bar:** it is recognisably the concept on every screen, in light and dark; every text pair reads at 4.5:1;
+**The bar:** it is calm enough for all-day use and easy to navigate first, then recognisably the concept on every screen, in light and dark; every text pair reads at 4.5:1;
 danger is red, warning amber and success green (D78); the companion and its light stay the warm focal point; the
 art is quiet enough that cards and words sit on it without a fight; it passes `sidefolk theme check` with no errors
 and `templates/palette.py` with nothing listed, and its snapshots were read.
 
 | Where | What |
 |---|---|
-| `Sources/SidefolkCore/Themes/` | `ThemeFile` (the format), `ThemeTokens` (roles, Harbor's values), `ThemeCheck` (the rules), `ThemeLibrary` (install, `theme new`) |
+| `Sources/SidefolkCore/Themes/` | `ThemeFile` (the format), `ThemeTokens` (roles, the default's values), `ThemeCheck` (the rules), `ThemeLibrary` (install, `theme new`) |
 | `docs/DESIGN.md` | Lantern's tokens and roles; `--only design-system` draws them in any theme |
 | `docs/DECISIONS.md` | D58 (themes are data), D64 → D84 (themes dress, one layout), D78 (colour meaning) |
-| `Resources/Themes/` | the built-ins (D92): Paper Garden, Night Studio, Marshmallow (Harbor is in code); Paper Garden is the worked example of this skill (it began as Tea House) |
+| `Resources/Themes/` | the built-ins (D92, D130): Sidefolk (the default; its values are also in code), Harbor, Paper Garden, Night Studio, Marshmallow. Sidefolk and Harbor are the worked examples of scene and header art; Paper Garden of a full finish |
 | `../sidefolk-addons/themes/` | the gallery's themes (`addon.json`, `theme.json`, `art/*.png`); empty since D92 |
-| This skill's `templates/` | `roles.md` (every key, where it shows, its rule), `art-prompts.md`, `fit-art.py`, `palette.py` |
+| This skill's `templates/` | `roles.md` (every key, where it shows, its rule), `art-prompts.md`, `fit-art.py`, `palette.py`, `art-contrast.py` |
+| `LESSONS.md` | what earlier themes taught us: read it first, add to it last (§8) |
 
 ## 0. Plan
 
@@ -46,8 +47,8 @@ for a gallery theme). Build once: `swift build` (gives `.build/debug/sidefolk` a
   card, sidebar, accent, glow) as hex, the type flavour (system, rounded or serif) and density, and the art idea.
   Recommend one and say why, then go on with it unless the person picks another.
 
-Stay away from what exists (D92 keeps four, each its own atmosphere, and drops look-alikes): Harbor (neutral graphite
-and paper, deep aqua: also the plain light and plain dark), Paper Garden (warm paper, hinoki wood, sage-matcha, serif,
+Stay away from what exists (D92, D130: each its own atmosphere, no look-alikes): Sidefolk (the default: navy and pale blue
+from the app's icon, Mochi in a tidy studio, soft 3D hills), Harbor (a painted harbor, lantern jetty, morning and night), Paper Garden (warm paper, hinoki wood, sage-matcha, serif,
 bamboo shadows), Night Studio (indigo glass over a dusk landscape, periwinkle, mint), Marshmallow (candy colours over
 cotton-candy clouds, rounded). A new theme earns its place only with an atmosphere none of them has; a sky on white
 cards (the retired Daylight) or a darker Harbor (Night Shift) doesn't. Never copy a brand, a trademarked character or art, or a specific game's, film's or product's look; describe
@@ -58,20 +59,21 @@ qualities in plain words instead (no "Ghibli", no "like Notion").
 Start the folder (a local theme anywhere; a gallery one in `../sidefolk-addons/themes/<folder>/`):
 
 ```sh
-.build/debug/sidefolk theme new "Tea House" <folder>    # theme.json = a copy of Harbor, and a README guide
+.build/debug/sidefolk theme new "Tea House" <folder>    # theme.json = a copy of the default, and a README guide
 ```
 
 Then fill `theme.json` (every key in `templates/roles.md`):
 
 1. **Surfaces first, by area:** the page (`surfaceSunken`) is the concept's main colour; cards (`surfaceRaised`) the
-   lightest in light, a step above the page in dark; the sidebar (`surface`) is the theme's furniture (a wood, a
-   slate); `well` a step from cards (darker in light, lighter in dark); `line` barely there. Keep surfaces quiet and
+   lightest in light, a step above the page in dark; the sidebar (`sidebar`, else `surface`) is for navigating, so keep it plain and easy to scan,
+   a wood or slate only if its text still reads; `sidebarSelected` is solid, 3:1 from the sidebar, with `onSidebarSelected`
+   on it; `well` a step from cards (darker in light, lighter in dark); `line` barely there. Keep surfaces quiet and
    low in saturation: the companion and its light are the warm things on screen.
 2. **Ink:** three steps from the page's own hue (a green-black for a green theme, not pure black). `inkFaint` is the
    tightest pair: check it on `surface` and `well`.
 3. **The accent:** the concept's one colour for action. Deep enough for a white label at 4.5:1 in light; light with
    a dark label in dark. `link` is the accent as text, `accentSoft` a pale tint for selection. Never red or amber.
-4. **Status (D78):** keep Harbor's danger, warning and success and only nudge lightness and a few degrees of hue
+4. **Status (D78):** keep the default's danger, warning and success and only nudge lightness and a few degrees of hue
    toward the mood. Keep success's hue away from the accent's and the glow's when they are both green.
 5. **The light:** `glow` (working) from the concept but not red or amber and not the same as success; `waitGlow`
    amber (it means "waits on you").
@@ -93,12 +95,14 @@ built-in image generation. Keep raw images in a scratch folder, never in the the
 | File | Key | Size | Note |
 |---|---|---|---|
 | `art/page.png`, `art/page-dark.png` | `material.page`, `material.pageDark` | 1600 × 533 | interest in the top half, the bottom third plain page colour, a soft top edge |
-| `art/nook.png`, `art/nook-dark.png` | `companion.backdrop`, `companion.backdropDark` | 640 × 228 | a calm crop of the wash; quiet on the leading side, where the portrait and name sit |
+| `art/scene.png`, `art/scene-dark.png` | `material.scene`, `material.sceneDark` | 1800 × 600 | Today only, behind the greeting and up under the toolbar; its top is the sky other pages keep behind the toolbar. Words on the leading 46%, so leave it empty, and objects between 30 and 62% from the top |
+| `art/header.png`, `art/header-dark.png` | `companion.header`, `companion.headerDark` | 800 × 566 | the sidebar's top, cropped to a wide band; the companion stands in the middle of the ground, seen straight on. The top quarter stays plain for the window's buttons. `companion.logo: true` adds the wordmark there |
+| `art/nook.png`, `art/nook-dark.png` | `companion.backdrop`, `companion.backdropDark` | 640 × 228 | only without a header: behind the companion's card; quiet on the leading side, where the portrait and name sit |
 | `art/grain.png` | `material.grain` | 256 × 256 seamless | drawn in code (`art-prompts.md` › Grain); only for paper-like concepts |
 | `art/empty.png` | `art.empty` | 240 × 240, transparent | optional; skip it unless the transparency is real |
 | `art/tile.png` | (none: the gallery reads the file) | 640 × 400 | the gallery's picture of the theme; gallery themes only |
 
-Rules: soft, low-contrast, no text, letters, logos, signatures or seals; no people; nothing bright in the dark
+Rules: read `LESSONS.md` › Art first. Soft, low-contrast, no text, letters, logos, signatures or seals; no people; nothing bright in the dark
 versions. Fit each with `templates/fit-art.py` (cover crop, `--fade-top`, `--tint`, `--colors 256`), then look at
 each fitted file. Budget: about 1.5 MB for all the art (each ≤ 2 MB and ≤ 2048 px a side is the hard limit).
 
@@ -117,7 +121,7 @@ The check errors on: a missing or unreadable image, contrast under 4.5:1 for any
 success included, on every surface, the label on each fill, and each chip's words on its soft fill), a status colour
 outside its hue (danger red 0–30/330–360°, warning amber 30–65°, success green 70–200°; their soft fills the same hue
 or grey), a bad id or name. It warns
-on: a missing colour (Harbor's is used), an unknown role, a value clamped. A new theme should have **no warnings**
+on: a missing colour (the default's is used), an unknown role, a value clamped. A new theme should have **no warnings**
 either: give every role in both appearances. `palette.py` lists what Lantern still wants; fix all of it.
 
 ## 5. Review
@@ -140,7 +144,11 @@ sidebar, the wash's top edge, selected cards), `window-home-onduty-empty-*` (an 
 (PIL `crop` then read the crop). Compare with the concept and references, write down what's wrong, change one
 thing, render again. Two or three rounds is normal.
 
-Look for: text on the wash or nook art that is hard to read; a seam where the wash starts; working, done and waiting
+Measure words on art with `templates/art-contrast.py`, in light, dark and Arabic. Then look in a real window (Live, below) at
+least once: snapshots draw an inactive window and hide the selected row's real colour. Before showing the person, have
+someone who didn't design it audit every screen by sampling pixels (`LESSONS.md`).
+
+Look for: a selected row, segment or list selection that isn't 3:1 from what's around it; icons under 3:1; text on the wash or nook art that is hard to read; a seam where the wash starts; working, done and waiting
 dots that look alike; the accent reading as disabled; a dark mode that is a different palette; art that draws the eye
 from the companion.
 
@@ -193,3 +201,17 @@ Commit (no Co-Authored-By), and in Sidefolk update docs/STATUS.md.
 - **Parallel snapshot runs in two languages** collide in `.build/debug/*.lproj` ("Directory not empty"): one at a time.
 - **`dev.sidefolk.` ids** can't be loaded from a folder; snapshots with `--theme` take any id.
 - **Raw images inside the theme folder** get packed: keep them in scratch.
+
+## 8. Keep this skill improving
+
+Read `LESSONS.md` before designing. **Before you finish any theme job, update this skill:**
+
+1. **What was new?** A correction from the person, a first-time decision, something a check missed, a rule that turned out
+   wrong. Most jobs have at least one.
+2. **Write it in `LESSONS.md`:** what to do, then why, with the person's words and the date when they said it. Fix or delete
+   a lesson that this job proved wrong.
+3. **Promote what's mechanical.** A lesson you can check by machine belongs in `ThemeCheck`, `palette.py` or
+   `art-contrast.py`; a repeated step belongs in the sections above. A rule that's enforced beats a rule that's remembered.
+4. **Update the skill's copies together** (`.claude/skills/`, `.agents/skills/`, and the public `skills/`, which has no
+   repository paths or decision numbers), in the same commit as the theme.
+5. **Say so in your report:** one line on what the skill learned, or that it learned nothing new.

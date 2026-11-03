@@ -1,4 +1,4 @@
-# Design: Lantern (D84)
+# Design: Lantern (D84, D130)
 
 Sidefolk looks like **Lantern**: native macOS surfaces, quiet and neutral, so the companion and its light are the
 only warm things on screen. State is light (a pool at the companion's feet), one deep aqua is the action colour, and
@@ -32,24 +32,26 @@ disagree, use the sheet's component; if the sheet looks wrong, fix the component
 
 ## Tokens
 
-Core values: `Sources/SidefolkCore/Themes/ThemeTokens.swift` (Harbor is Lantern). App names:
+Core values: `Sources/SidefolkCore/Themes/ThemeTokens.swift` (the default, Sidefolk, D130). App names:
 `Sources/SidefolkApp/DesignSystem/Theme.swift`, `ThemeStore.swift` (fonts) and `ThemeMetrics.swift` (sizes, depth,
 glass, symbols).
 
 | Group | Names | Notes |
 |---|---|---|
-| Ink | `Theme.ink`, `inkMuted` (ink 2), `inkFaint` (ink 3, meta) | navy #0F1E36 / #EEF2F8; all ≥ 4.5:1 on every surface |
+| Ink | `Theme.ink`, `inkMuted` (ink 2), `inkFaint` (ink 3, meta) | navy #1E3457 / #E2E8F2; all ≥ 4.5:1 on every surface |
 | Surfaces | `surfaceSunken` (the window's canvas), `surfaceRaised` (cards), `surface`, `well` (fields, chips, search, segmented track), `line` | `well` is new; a theme without it uses its `surfaceSunken` |
-| Action | `accent` (fills), `onAccent` (its label), `accentSoft` (selection, calm strip), `link` (accent as text) | deep aqua #0B7783 / #3CD6DB, label 5.3 and 8.8:1 |
+| Action | `accent` (fills), `onAccent` (its label), `accentSoft` (selection, calm strip), `link` (accent as text) | navy #2A4A7C / soft turquoise #7CC9CF, label 8.9 and 8.5:1 |
+| Sidebar (D130) | `Theme.sidebar`, `sidebarInk`, `sidebarInkMuted`, `sidebarSelected`, `onSidebarSelected` | a plain plane for navigating; the theme draws the selected row, 3:1 from the sidebar (`ThemeCheck.selectionProblems`) |
+| Scene (D130) | `Theme.sceneInk`, `sceneInkMuted`, `Theme.Art.scene(dark:)`, `Theme.Art.header(dark:)` | words over Today's art; each picture for its appearance |
 | Status | `danger`, `warning`, `success` (+ `Soft`, `on…`) | D78 meanings; theme check holds the hues |
 | Light | `glow` (working), `waitGlow` (waiting) | never text; optional theme roles |
 | Control border | `Theme.controlBorder` | ink 3 at 45%, for frames that aren't fills |
 | Folk accents | `Theme.folkColor(_:)` | Lantern's table: Tempo #5B8DEF, Scout #F2B33D, Byte #3B6FF5, Guard #1FA88A, Pip #FF7B6B, Play #F0524F, Nova #A68BFA, Seed #52C08A, Melody #8E6CF0, Brew #C99A5B |
 | Type | `Theme.Font.display` 30, `title1` 22, `title2` 17, `headline` 14, `body` 13, `bodyStrong`, `callout` 12, `caption` 11.5, `eyebrow` 11, `stateWord` 26, `number` 26 tabular, `bubble` 14, `bubbleTitle` 15, `input` 17, `mono` 12 | the theme face only on display, title1, stateWord, number (and `heading`); `hero`/`title` are display/title1 |
 | Spacing | `Theme.Space.xxs…xxl` 2 4 8 12 16 24 32, `xxxl` 48, `xxxxl` 64 | scaled by the theme's density |
-| Radii | `Theme.Radius.xs` 6, `control` 8, `card` 12, `panel` 18 (Sidecard, sheets, popovers), `bubble` 18 | capsules for chips, pins, the Say bar |
+| Radii | `Theme.Radius.xs` 8, `control` 10, `card` 16, `panel` 18 (Sidecard, sheets, popovers), `bubble` 18 | capsules for chips, pins, the Say bar |
 | Sizes | `Theme.Size.row` 44, `compactRow` 32, `sidebarRow` 30, `hitTarget` 28, `button` 28 / `buttonSmall` 24 / `buttonSidecard` 30 / `buttonLarge` 32, `field` 28, `chip` 22, `sayBarHome` 40 / `sayBarDesktop` 52, `sidebar` 232, `contentMaxWidth` 1080, `contentPadding` 32, `sheet` 520, `installSheet` 600, `sidecardMin…Max` 320–400, `sidecardAsk` 420, `stackBadge` 28, `pin` 36, `tileMin/Max` 160–240 | same in every theme |
-| Depth | `.elevation(.e0…e3)` | e1 cards, e2 popovers and hover, e3 Sidecard and sheets |
+| Depth | `.elevation(.e0…e3)` | e1 cards, e2 popovers and hover, e3 Sidecard and sheets; a theme's `material.depth` soft gives e1 a soft lift with no outline in light (D130) |
 | Glass | `.lanternGlass(radius:)` | material + tint + e3; opaque with Reduce Transparency |
 | Motion | `Theme.Motion.micro` 120 ms, `standard` 200 ms, `enter` spring 0.32/0.86, `exit` 160 ms, `breath` 3 s; `spring`, `ease` as before | nil when the theme's motion is none |
 | Symbols | `Theme.Symbol.focus`, `.quiet`, `.say` | |
@@ -116,7 +118,12 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | Component | File | Use |
 |---|---|---|
 | `HomePage` | `TodayView.swift` | a place's scrolling page: content ≤ `contentMaxWidth`, `contentPadding` (24 under 900) |
-| `.lanternTile(bar:)` | `TodayParts.swift` | a tile's surface with its 3 pt state bar (Today's watch and value tiles) |
+| `DayAgenda` | `DayAgenda.swift` | Today's day as a list: a marker at now, events in their calendars' colours, reminders moved by drag or ← → (⌘Z undoes) |
+| `NextUpRow`, `NowModel.todayQueue`, `forwardDecision` | `TodayRows.swift`, `NowModel.swift` | what waits after the decision in view, one line each; a click or ↩ brings it forward |
+| `OnDutyRow` (`WatchCard`, `ReportCard`) | `TodayParts.swift` | On duty on Today as quiet rows, in colour only when wrong, new or waiting |
+| `ThemeScene`, `\.pageHasScene`, `\.pageScrolled` | `Components.swift` | a theme's picture at the top of Today; mirrors in right to left, gone under 860 pt |
+| `SidebarHeader`, `SidebarHeaderArt`, `SidebarRowFill`, `SidebarHighlightOff` | `SidebarHeader.swift` | the sidebar's top with the companion in its scene, and the theme's selected row instead of macOS's |
+| `SelectedRail` | `ListRow.swift` | the edge of a selected row in a list: a tint alone is about 1.2:1 |
 | `NeedsYouCard` | `TodayView.swift` | one thing that waits: folk avatar, "who · time", the card's words, a 3 pt amber bar, the keyboard's ring |
 | `FolkCard` | `OnDutyView.swift` | a folk's group of rows: avatar with its live ring, name, role, count |
 | `SidebarSquircle`, `PageSquircle`, `SidebarNook` | `HomeSidebar.swift`, `ExtensionsSidebar.swift` | 20 pt tinted icons in the sidebar; the companion's nook, with the theme's `companion.backdrop` faded behind it |

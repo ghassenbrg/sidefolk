@@ -168,7 +168,8 @@ public struct ThemeLibrary: Sendable {
         and the text on them); link (the accent as text); danger, dangerSoft, onDanger; success, successSoft; warning,
         warningSoft, onWarning; well (fields, chips and the search, inside cards). Text must read at 4.5:1 on every
         surface; the check tells you which pair doesn't. `glow` and `waitGlow` are light, never text: the pool at the
-        companion's feet while it works and when something waits on you. well, glow and waitGlow may be left out.
+        companion's feet while it works and when something waits on you. well, glow, waitGlow, sidebar, sidebarInk, sidebarInkMuted,
+        sidebarSelected (3:1 from the sidebar), onSidebarSelected, sceneInk and sceneInkMuted may be left out.
         Status colours keep their meaning: danger looks red (an error or a real risk), warning amber (waiting, needs a
         look), success green (done, allowed, won).
 
@@ -179,9 +180,11 @@ public struct ThemeLibrary: Sendable {
         **shape**: corner radii for `control` (4 to 999), `card` and `window` (0 to 28).
 
         **motion**: calm, bouncy or none (Reduce Motion always wins). **material**: `sidebar` solid or translucent;
-        `grain`, a PNG tiled faintly over the pages; `page` and `pageDark`, a wide PNG washed in at the top of each page
-        and faded into it. **companion**: `backdrop` and `backdropDark`, a PNG faded behind the companion's card in
-        Home's sidebar; `suggests`, a companion the theme was drawn for. **art**: `empty`, a PNG for empty pages.
+        `depth` line or soft, how cards sit on a page; `grain`, a PNG tiled faintly over the pages; `page` and `pageDark`, a
+        wide PNG washed in at the top of each page and faded into it; `scene` and `sceneDark`, a wide PNG at the top of Today
+        whose sky stays behind the toolbar on every page. **companion**: `header` and `headerDark`, a PNG at the top of the
+        sidebar with the companion standing in it, and `logo` true for the wordmark there; `backdrop` and `backdropDark`, a
+        PNG faded behind the companion's card when there's no header; `suggests`, a companion the theme was drawn for. **art**: `empty`, a PNG for empty pages.
         A theme dresses Sidefolk, it doesn't arrange it: each place has one layout, and of `layout` only `icons`
         (simple or colorful) is read.
 

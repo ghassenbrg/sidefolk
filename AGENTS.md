@@ -55,7 +55,7 @@ Project skills, in `.claude/skills/` (Claude Code) and mirrored in `.agents/skil
 - `sidefolk-extension`: an extension end to end, to the gallery or a local folder.
 - `sidefolk-3d-character`, `sidefolk-2d-character`: a companion's 3D model and its 2D form.
 - `sidefolk-theme`: a theme from a concept or reference images ("brainstorm a theme around …"), checked, reviewed
-  in snapshots and delivered as a folder or a gallery theme.
+  in snapshots and delivered as a folder or a gallery theme. It keeps its own `LESSONS.md`: read it first, add what was new after each theme.
 - `sidefolk-coordinator`: coordinating parallel sessions here: repositories, numbers, release and gallery mechanics.
 
 `skills/` holds what ships to other people: `sidefolk` (Connect installs it for other agents, D42) and the public

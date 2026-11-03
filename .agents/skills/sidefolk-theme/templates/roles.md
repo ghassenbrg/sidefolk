@@ -25,6 +25,9 @@ role is ignored with a warning, an unknown top-level key is ignored silently. So
 | `surfaceRaised` | **cards**: Today's cards, tiles, settings groups, the Sidecard | the lightest in light, a step up from the page in dark |
 | `line` | hairlines: card edges, separators | barely there; Increase Contrast replaces it |
 | `well` | fields, the search, chips, a segmented control's track (inside cards) | darker than cards in light, lighter in dark. Optional (falls back to `surfaceSunken`) |
+| `sidebar`, `sidebarInk`, `sidebarInkMuted` | Home's and Settings' sidebar and its words; optional, else `surface`, `ink`, `inkMuted` | words ≥ 4.5:1; keep it plain, for navigating |
+| `sidebarSelected`, `onSidebarSelected` | the row the person is on, drawn by the theme rather than macOS, and its words and icon; optional, else `accent`, `onAccent` | row ≥ 3:1 from `sidebar`, words ≥ 4.5:1 on it |
+| `sceneInk`, `sceneInkMuted` | the greeting and the sentence on Today's scene; optional, else `ink`, `inkMuted` | ≥ 4.5:1 on the art: measure with `art-contrast.py` |
 | `accent` | the one action colour: primary buttons, selection, the focus ring, the sidebar's selected place | ≥ 3:1 on cards and page; never red (error) or amber (waiting) |
 | `onAccent` | the label on a primary button | ≥ 4.5:1 on `accent` (a dark label on a light accent is fine in dark) |
 | `accentSoft` | selection backgrounds, the calm strip on a slip ("Part of what you asked…") | a pale tint of the accent |
@@ -60,6 +63,10 @@ toward the theme's mood: a moss-tinted green, a rust-leaning red.
 | `material.grain` | a PNG tiled over Home's pages at 6% opacity, multiplied: paper or fibre texture | 256 × 256, seamless, light grey around 210/255; draw it in code |
 | `material.page` | a PNG washed in at the top of every Home and Settings page: drawn 420 pt tall, scaled to fill the page's width, faded to nothing downwards, at 55% opacity, clipped to the page | 1600 × 533 (3:1); interest in the top half, the bottom third plain page colour, a soft top edge |
 | `material.pageDark` | the same in dark; without it a dark page has no wash | same |
+| `material.depth` | `line` (a hairline and a trace of shadow) or `soft` (a soft lift, no outline in light) | |
+| `material.scene`, `material.sceneDark` | a wide PNG on Today only, up under the toolbar; its top stays behind the toolbar on other pages | 1800 × 600 |
+| `companion.header`, `companion.headerDark` | a PNG at the top of the sidebar, the companion standing in it, the plain list below | 800 × 566 |
+| `companion.logo` | `true`: the wordmark in the header's corner, navy on light, reversed on dark | |
 | `companion.backdrop` | a PNG behind the companion's card in Home's sidebar, at 35% opacity, filling the card | 640 × 228 (about 2.8:1); calm on the leading side, where the portrait and name sit |
 | `companion.backdropDark` | the same in dark; without it the light one is used | same |
 | `companion.suggests` | a companion the theme was drawn for (`mochi`, `spark`, `ember`…): offered in Settings, never chosen for the person | |
