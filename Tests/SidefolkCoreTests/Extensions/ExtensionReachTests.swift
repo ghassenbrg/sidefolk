@@ -336,10 +336,11 @@ struct ExtensionReachTests {
         #expect(focused.text.contains("Not said"))
         await settings.update { $0.focusUntil = nil }
         let stream2 = env.events.stream()
-        _ = try await tool.run(["text": "Time to stretch"], context: ToolContext(caller: .agent(runId: AgentRuntime.jobPrefix + "1"), now: Date()))
+        let run = AgentRuntime.jobRunId("1", extensionId: "com.example.a")
+        _ = try await tool.run(["text": "Time to stretch"], context: ToolContext(caller: .agent(runId: run), now: Date()))
         var fromAJob: String?
         for await event in stream2 { if case .speak(let line) = event { fromAJob = line; break } }
-        #expect(fromAJob?.contains("extension") == true, "a job an extension handed over says so: \(fromAJob ?? "")")
+        #expect(fromAJob?.contains("com.example.a says") == true, "a job an extension handed over says whose: \(fromAJob ?? "")")
     }
 
     @Test func whatThePersonMadeIsntAnExtensionsOrItsJobsToTakeOff() async throws {
@@ -391,6 +392,14 @@ struct ExtensionReachTests {
         await settings.update { $0.interruptions.set(.off, for: .extension(id)) }
         let out = try await tool.run(["text": "Hello"], context: ToolContext(caller: .extension(id: id), now: Date()))
         #expect(out.text.contains("Not said"), "\(out.text)")
+        // Nor through a job it handed the companion, for a voice or a notice.
+        let run = AgentRuntime.jobRunId("1", extensionId: id)
+        let job = try await tool.run(["text": "Hello"], context: ToolContext(caller: .agent(runId: run), now: Date()))
+        #expect(job.text.contains("Not said"), "\(job.text)")
+        #expect(AgentFacingTools.source(for: .agent(runId: run)) == "extension:\(id)")
+        #expect(AgentFacingTools.source(for: .agent(runId: AgentRuntime.jobRunId("2", extensionId: nil))) == "agent")
+        #expect(AgentFacingTools.source(for: .agent(runId: "plain-run")) == "agent")
+        #expect(AgentRuntime.jobOwner(of: "plain~com.example.a") == nil, "only a job's run has an owner")
     }
 
     @Test func howItLooksChangesOnlyToWhatIsThere() async throws {
@@ -465,11 +474,23 @@ struct ExtensionReachTests {
         for await _ in job.events {}
         #expect(job.threadId.hasPrefix(AgentRuntime.jobPrefix))
         #expect(job.runId.hasPrefix(AgentRuntime.jobPrefix))
+        #expect(AgentRuntime.jobOwner(of: job.runId) == nil)
         let next = await runtime.submit(AgentRequest(text: "Hello"))
         for await _ in next.events {}
         #expect(next.threadId != job.threadId, "the person's next words don't continue it")
         let said = try await world.exchanges.conversation(job.threadId).first?.content
         #expect(said?.contains("Tidy up") == true && said != "Tidy up", "in the record as someone else's words")
+    }
+
+    @Test func aJobCarriesTheExtensionThatHandedItOver() async throws {
+        let (_, runtime, _) = try await world([.turn(.reply("Done.")), .turn(.reply("Done."))])
+        let slot = CompanionAgentSlot()
+        slot.use(runtime)
+        let answer = try await CompanionJobTool(agent: slot).run(["job": "Tidy up"], context: ToolContext(caller: .extension(id: "com.example.a"), now: Date()))
+        #expect(!answer.text.isEmpty, "it ran, as the extension's job")
+        let job = await runtime.submit(AgentRequest(text: "Tidy up", job: AgentRequest.Job(read: true, extensionId: "com.example.a")))
+        #expect(AgentRuntime.jobOwner(of: job.runId) == "com.example.a")
+        for await _ in job.events {}
     }
 
     @Test func aJobCanUseWhatThePersonsOwnTurnCan() async throws {

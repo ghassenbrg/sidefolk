@@ -33,10 +33,10 @@ struct VoiceSayTool: Tool {
         }
         // Whose words these are, when they aren't the companion's: a voice can't carry a name any other way.
         var line = text
-        if case .extension(let id) = context.caller {
-            line = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) says: \(text)", comment: "Spoken aloud: an extension's name, then its words")
-        } else if context.caller.runId?.hasPrefix(AgentRuntime.jobPrefix) == true {
-            line = String(localized: "From an extension's job: \(text)", comment: "Spoken aloud: words from a job an extension handed the companion, which doesn't know which one")
+        let owner = context.caller.runId.flatMap(AgentRuntime.jobOwner(of:))
+        let speaker = if case .extension(let id) = context.caller { id } else { owner }
+        if let speaker {
+            line = String(localized: "\(AgentFacingTools.extensionName(speaker) ?? speaker) says: \(text)", comment: "Spoken aloud: an extension's name, then its words")
         }
         events.publish(.speak(line))
         // Whether it's heard is the voice's to say: replies off, a call, the person speaking.

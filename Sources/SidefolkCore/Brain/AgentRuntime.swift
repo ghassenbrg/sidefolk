@@ -17,7 +17,12 @@ public struct AgentRequest: Sendable {
 
     public struct Job: Sendable {
         public var read: Bool
-        public init(read: Bool) { self.read = read }
+        /// Whose job it is, so what it says keeps to how far the person lets that extension interrupt.
+        public var extensionId: String?
+        public init(read: Bool, extensionId: String? = nil) {
+            self.read = read
+            self.extensionId = extensionId
+        }
     }
 
     public init(text: String, attachment: AgentAttachment? = nil, threadId: String? = nil, thinkHarder: Bool = false,
@@ -117,7 +122,7 @@ public actor AgentRuntime {
         let kept = await isKept(request)
         let now = clock.now
         let threadId = resolveThread(request, now: now, kept: kept)
-        let runId = request.job == nil ? Identifier.make(now: now) : Self.jobPrefix + Identifier.make(now: now)
+        let runId = request.job.map { Self.jobRunId(Identifier.make(now: now), extensionId: $0.extensionId) } ?? Identifier.make(now: now)
         let (stream, continuation) = AsyncStream.makeStream(of: AgentEvent.self, bufferingPolicy: .unbounded)
         let previous = tails[threadId]
         let task = Task {
@@ -131,6 +136,17 @@ public actor AgentRuntime {
 
     /// What a job's run and conversation start with, so what it does can be told from what the person asked for.
     public static let jobPrefix = "job-"
+    private static let jobOwnerMark = "~"
+
+    static func jobRunId(_ id: String, extensionId: String?) -> String {
+        jobPrefix + id + (extensionId.map { jobOwnerMark + $0 } ?? "")
+    }
+
+    /// The extension that handed over the job this run is. Only `submit` writes a run's id: no extension or model chooses it.
+    public static func jobOwner(of runId: String) -> String? {
+        guard runId.hasPrefix(jobPrefix), let mark = runId.range(of: jobOwnerMark) else { return nil }
+        return String(runId[mark.upperBound...])
+    }
 
     /// Stops a run. A run still waiting behind another one on its conversation stops when it gets its turn.
     public func cancel(runId: String) { running[runId]?.cancel() }
