@@ -322,7 +322,7 @@ struct PageEditFieldRow: View {
                 .accessibilityLabel(Text(ext: field.label))
         default:
             TextField(text: $text, prompt: Text(verbatim: "")) { Text(ext: field.label) }
-                .fieldHint(Text(ext: field.placeholder ?? field.label), showing: text.isEmpty)
+                .fieldHint(Text(ext: field.placeholder ?? field.label), showing: text.isEmpty, spoken: field.placeholder != nil)
                 .lanternField()
                 .focused($focused)
                 .font(field.kind == .text ? Theme.Font.body : Theme.Font.mono)

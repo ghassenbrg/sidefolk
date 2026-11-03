@@ -372,7 +372,7 @@ final class VoiceController {
 
     /// A line a tool asked for (`voice.say`, D127): never over the person or the companion, never into a call, nothing if replies are off, and in the Mac's own voice, so nothing unattended can run up a paid one.
     func sayForATool(_ line: String, with settings: VoiceSettings) {
-        guard settings.replies != .off, !isActive, !isSpeaking, AudioDevices.microphoneUsers().recording.isEmpty else { return }
+        guard settings.replies != .off, !isActive, !isSpeaking, !awaitingSpokenReply, AudioDevices.microphoneUsers().recording.isEmpty else { return }
         // VoiceOver reads it in the person's own voice settings, instead of talking over it.
         if NSWorkspace.shared.isVoiceOverEnabled {
             NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,

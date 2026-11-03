@@ -64,6 +64,7 @@ struct AppearanceTool: Tool {
             if let chosen { $0.choose(chosen) }
         }
         events.publish(.settingsChangedByTool)
-        return ToolResult(text: summary(for: input))
+        // What it landed on, which an old id's successor makes different from what was asked.
+        return ToolResult(text: summary(for: theme.map { input.setting("theme", .string($0)) } ?? input))
     }
 }

@@ -327,7 +327,7 @@ struct ExtensionReachTests {
         var said: String?
         for await event in stream { if case .speak(let line) = event { said = line; break } }
         #expect(said?.contains("Time to stretch") == true)
-        #expect(said?.contains("says") == true, "a voice can't carry a name any other way")
+        #expect(said?.contains("com.example.a says") == true, "a voice can't carry a name any other way: \(said ?? "")")
         await settings.update { $0.quietUntil = Date().addingTimeInterval(600) }
         let quiet = try await tool.run(["text": "Hello"], context: ToolContext(caller: .user, now: Date()))
         #expect(quiet.text.contains("Not said"))
@@ -358,6 +358,39 @@ struct ExtensionReachTests {
         }
         _ = try await tool.run(["theme": "Paper Garden"], context: ToolContext(caller: .user, now: Date()))
         #expect(settings.current.themeFolder == nil, "the person may")
+
+        await settings.update { $0.localCompanion = "mine" }
+        let spark = try #require(CompanionChoice(rawValue: "spark"))
+        for caller in [Caller.extension(id: "e"), .agent(runId: AgentRuntime.jobPrefix + "1")] {
+            await #expect(throws: (any Error).self) { _ = try await tool.run(["companion": .string(spark.rawValue)], context: ToolContext(caller: caller, now: Date())) }
+            #expect(settings.current.localCompanion == "mine")
+        }
+    }
+
+    /// What a person calls a theme comes first: the word "harbor" once was the old default's id, and now names the painted theme (D130).
+    @Test func aThemeIsFoundByWhatItsCalledBeforeWhatItOnceWas() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let paths = SidefolkPaths(home: FileManager.default.temporaryDirectory.appendingPathComponent("sf-word-\(UUID().uuidString)", isDirectory: true))
+        let folder = paths.themes.appendingPathComponent("painted", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try ThemeFile(ThemeTokens.sidefolk, id: "dev.sidefolk.theme.harbor", name: "Harbor").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        let tool = AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { [] }, events: env.events)
+        let said = try await tool.run(["theme": "harbor"], context: ToolContext(caller: .user, now: Date()))
+        #expect(settings.current.theme == "dev.sidefolk.theme.harbor")
+        #expect(said.text.contains("dev.sidefolk.theme.harbor"), "it says where it landed: \(said.text)")
+        _ = try await tool.run(["theme": "dev.sidefolk.theme.daylight"], context: ToolContext(caller: .user, now: Date()))
+        #expect(settings.current.theme == ThemeTokens.sidefolk.id, "an old id follows on")
+    }
+
+    @Test func aVoiceKeepsToHowFarThePersonLetsAnExtensionInterrupt() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let tool = VoiceSayTool(settings: settings, events: env.events)
+        let id = "com.example.quiet"
+        await settings.update { $0.interruptions.set(.off, for: .extension(id)) }
+        let out = try await tool.run(["text": "Hello"], context: ToolContext(caller: .extension(id: id), now: Date()))
+        #expect(out.text.contains("Not said"), "\(out.text)")
     }
 
     @Test func howItLooksChangesOnlyToWhatIsThere() async throws {

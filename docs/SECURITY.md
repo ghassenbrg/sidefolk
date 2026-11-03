@@ -1204,7 +1204,7 @@ The budget bounds that to about nine characters per yes, then the person is aske
 |---|---|---|
 | `notes.save` | `text` | Stays in the notebook, marked with the extension as its source |
 | `notes.search` | `query` | Not contained: words from elsewhere choose which notes come back, the founder's choice (D127) |
-| `voice.say` | `text` | Said with the extension's name, in the Mac's own voice, never in Focus or Quiet, over the person or into a call |
+| `voice.say` | `text` | Said with the extension's name, in the Mac's own voice, never in Focus or Quiet, with spoken replies off, when the person has that extension off their desktop, over the person, or while something is using the microphone |
 | `reminders.create` | `title` | Shown to the person, under the extension's reminder. Not `notes`: they'd show in History when it fires, past the founder's answer, which was about the title |
 | `notify.user` | `title`, `body` | Shown to the person, with the extension's name |
 | `ask.user` | `question` | Shown to the person, with the extension's name |

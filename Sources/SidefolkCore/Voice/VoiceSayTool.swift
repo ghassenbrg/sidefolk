@@ -27,6 +27,10 @@ struct VoiceSayTool: Tool {
         guard !text.isEmpty else { throw ToolError.invalidInput("Say what to say.") }
         let now = context.now, current = settings.current
         guard !current.isQuiet(at: now), !current.isFocused(at: now) else { return ToolResult(text: "Not said: the person is in Focus or Quiet.") }
+        // Their word on how far it may interrupt counts for a voice as for a notice (D88).
+        guard case .deliver = current.interruptions.route(AttentionItem(level: .gentle, source: AgentFacingTools.source(for: context.caller), title: "")) else {
+            return ToolResult(text: "Not said: the person keeps this off their desktop.")
+        }
         // Whose words these are, when they aren't the companion's: a voice can't carry a name any other way.
         var line = text
         if case .extension(let id) = context.caller {
