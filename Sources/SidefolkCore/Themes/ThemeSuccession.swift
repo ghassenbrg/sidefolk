@@ -22,20 +22,6 @@ public enum ThemeSuccession {
         "harbor": Retired(name: "Harbor", successor: ThemeTokens.sidefolk.id, wasBuiltIn: true, nameLivesOn: true),
     ]
 
-    /// Built-ins that moved to the gallery (D130), by id, with their names. They aren't retired: someone wearing one keeps
-    /// it, fetched from the gallery at launch (`toFetch`), and their setting stays while it comes.
-    public static let movedToGallery = [
-        "dev.sidefolk.theme.paper-garden": "Paper Garden",
-        "dev.sidefolk.theme.night-studio": "Night Studio",
-        "dev.sidefolk.theme.marshmallow": "Marshmallow",
-    ]
-
-    /// The theme in `settings`, when it moved to the gallery and isn't on this Mac yet. A followed folder is left alone.
-    public static func toFetch(_ settings: AppSettings, installed: (String) -> Bool) -> String? {
-        guard settings.themeFolder == nil, movedToGallery[settings.theme] != nil, !installed(settings.theme) else { return nil }
-        return settings.theme
-    }
-
     public enum Step: Sendable, Equatable {
         /// The theme in use left the app: wear `to` instead (the settings already say so) and tell the person once.
         case moved(from: Retired, to: String)

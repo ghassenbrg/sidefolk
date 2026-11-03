@@ -31,7 +31,7 @@ public struct ThemeLibrary: Sendable {
     /// Ids that are Sidefolk's own: only its Resources and its signed gallery may use them.
     public static let ownPrefix = "dev.sidefolk."
     /// The built-ins in the order they're offered.
-    public static let builtInOrder = [ThemeTokens.sidefolk.id, "dev.sidefolk.theme.harbor"]
+    public static let builtInOrder = [ThemeTokens.sidefolk.id, "dev.sidefolk.theme.harbor", "dev.sidefolk.theme.paper-garden", "dev.sidefolk.theme.night-studio", "dev.sidefolk.theme.marshmallow"]
 
     let directory: URL
     let bundled: URL?

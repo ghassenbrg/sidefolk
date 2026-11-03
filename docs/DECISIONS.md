@@ -3015,7 +3015,7 @@ and `.restore`, the menu's Back Up Everything… and Restore from a Backup…; d
 
 
 ### D92 — Four themes, each its own atmosphere, all built in; retired themes move to their successor (2026-11-01)
-*Amended by D130:* Sidefolk is the default and Harbor a painted theme of its own, the only two built in; the others moved to the gallery.
+*Amended by D130:* Sidefolk is the default and Harbor a painted theme of its own, so five are built in.
 **Decision:** *narrows D58's set and D64's gallery themes; builds on D84 and D78.* Now that a theme only dresses the
 app (D84), seven themes were mostly the same few atmospheres. Sidefolk keeps four, each one nobody would mistake for
 another, and ships all four in the app:
@@ -3758,11 +3758,7 @@ mustn't tire the eyes. An independent pixel audit found what eyes had missed; `s
 and a strong midnight blue (too strong, kept in the local sandbox for possible themes); a meadow for the default's sidebar
 (pretty, but Sidefolk works beside you).
 
-**The other themes move to the gallery:** the founder chose two built-ins (narrowing D92, which kept them in the app so they'd
-work offline). Paper Garden, Night Studio and Marshmallow keep their ids in sidefolk-addons. Whoever wears one keeps it: their
-setting stays, and at launch it's fetched by itself while Update add-ons automatically is on, on any channel, since nobody chose
-to lose it by hiding snapshots (`ThemeSuccession.toFetch`, `fetchThemeThatMoved`). Until it comes they see the default, each launch
-tries again, and a whisper says so once. So the gallery must publish them before an app without them ships.
+**Paper Garden, Night Studio and Marshmallow stay built in for now:** the founder chose two built-ins, but moving the other three needs the gallery to publish them before an app without them ships. That move comes in a later snapshot; until then Settings lists all five (the founder's priority for the 2026-11-03 snapshot was the new default).
 
 **Brand art:** Mochi's solo portrait and full-body image follow the newer design too (masters `rabbit-portrait.png`, `mascot-mochi.png`; the old ones in `Brand/archive/mochi-2026-10/`). The app icon stays as approved.
 

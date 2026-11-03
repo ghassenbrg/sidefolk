@@ -20,8 +20,8 @@ and `templates/palette.py` with nothing listed, and its snapshots were read.
 | `Sources/SidefolkCore/Themes/` | `ThemeFile` (the format), `ThemeTokens` (roles, the default's values), `ThemeCheck` (the rules), `ThemeLibrary` (install, `theme new`) |
 | `docs/DESIGN.md` | Lantern's tokens and roles; `--only design-system` draws them in any theme |
 | `docs/DECISIONS.md` | D58 (themes are data), D64 → D84 (themes dress, one layout), D78 (colour meaning) |
-| `Resources/Themes/` | the two built-ins (D130): Sidefolk (the default; its values are also in code) and Harbor, the worked examples of scene and header art |
-| `../sidefolk-addons/themes/` | the gallery's themes (`addon.json`, `theme.json`, `art/*.png`): Paper Garden, the worked example of a full finish, Night Studio, Marshmallow |
+| `Resources/Themes/` | the built-ins (D92, D130): Sidefolk (the default; its values are also in code), Harbor, Paper Garden, Night Studio, Marshmallow. Sidefolk and Harbor are the worked examples of scene and header art; Paper Garden of a full finish |
+| `../sidefolk-addons/themes/` | the gallery's themes (`addon.json`, `theme.json`, `art/*.png`); empty since D92 |
 | This skill's `templates/` | `roles.md` (every key, where it shows, its rule), `art-prompts.md`, `fit-art.py`, `palette.py`, `art-contrast.py` |
 | `LESSONS.md` | what earlier themes taught us: read it first, add to it last (§8) |
 

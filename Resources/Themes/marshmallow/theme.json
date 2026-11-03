@@ -1,0 +1,85 @@
+{
+  "format": 1,
+  "id": "dev.sidefolk.theme.marshmallow",
+  "name": "Marshmallow",
+  "author": "Sidefolk",
+  "version": "2.0.0",
+  "summary": "For people who love their companion most: candy colours over cotton-candy clouds, squishy buttons, a rounded face.",
+  "type": {
+    "display": "rounded",
+    "text": "system",
+    "exact": "mono",
+    "scale": 1.05,
+    "density": "relaxed"
+  },
+  "shape": {
+    "control": 999,
+    "card": 22,
+    "window": 26
+  },
+  "motion": "bouncy",
+  "material": {
+    "sidebar": "solid",
+    "page": "art/page.png",
+    "pageDark": "art/page-dark.png"
+  },
+  "companion": {
+    "nook": "cushion",
+    "backdrop": "art/nook.png",
+    "backdropDark": "art/nook-dark.png",
+    "suggests": "mochi"
+  },
+  "layout": {
+    "icons": "colorful"
+  },
+  "colors": {
+    "light": {
+      "ink": "#4A3A5C",
+      "inkMuted": "#76668A",
+      "inkFaint": "#7A688B",
+      "surface": "#FFF9F6",
+      "surfaceSunken": "#FFF6F1",
+      "surfaceRaised": "#FFFFFF",
+      "line": "#F1E4EE",
+      "accent": "#C2418C",
+      "onAccent": "#FFFFFF",
+      "accentSoft": "#FFE3EB",
+      "link": "#A8357A",
+      "danger": "#C42B3A",
+      "dangerSoft": "#FFE3E3",
+      "onDanger": "#FFFFFF",
+      "success": "#237A59",
+      "successSoft": "#DFF7EC",
+      "warning": "#94570A",
+      "warningSoft": "#FFF0D9",
+      "onWarning": "#FFFFFF",
+      "well": "#FFF2F6",
+      "glow": "#F59AD0",
+      "waitGlow": "#F5A524"
+    },
+    "dark": {
+      "ink": "#F4ECFF",
+      "inkMuted": "#C3B5D9",
+      "inkFaint": "#B3A3CC",
+      "surface": "#2E2347",
+      "surfaceSunken": "#261C3D",
+      "surfaceRaised": "#3A2D58",
+      "line": "#4A3C6B",
+      "accent": "#F59AD0",
+      "onAccent": "#3A1426",
+      "accentSoft": "#4A3366",
+      "link": "#F7B3DB",
+      "danger": "#FF8F8F",
+      "dangerSoft": "#55292E",
+      "onDanger": "#2A1020",
+      "success": "#7FD8B4",
+      "successSoft": "#26443F",
+      "warning": "#FFD08A",
+      "warningSoft": "#4A3D2A",
+      "onWarning": "#2E2347",
+      "well": "#433463",
+      "glow": "#F59AD0",
+      "waitGlow": "#F5A524"
+    }
+  }
+}

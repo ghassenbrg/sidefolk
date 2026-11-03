@@ -1,0 +1,85 @@
+{
+  "format": 1,
+  "id": "dev.sidefolk.theme.night-studio",
+  "name": "Night Studio",
+  "author": "Sidefolk",
+  "version": "2.0.0",
+  "summary": "An evening workspace: indigo glass over a dusk landscape, periwinkle buttons, mint for good news, crisp corners for long sessions beside your agents.",
+  "type": {
+    "display": "system",
+    "text": "system",
+    "exact": "mono",
+    "scale": 1.0,
+    "density": "regular"
+  },
+  "shape": {
+    "control": 8,
+    "card": 12,
+    "window": 14
+  },
+  "motion": "calm",
+  "layout": {
+    "icons": "simple"
+  },
+  "material": {
+    "sidebar": "solid",
+    "page": "art/page.png",
+    "pageDark": "art/page-dark.png"
+  },
+  "companion": {
+    "nook": "cushion",
+    "backdrop": "art/nook.png",
+    "backdropDark": "art/nook-dark.png",
+    "suggests": "spark"
+  },
+  "colors": {
+    "light": {
+      "ink": "#1E2147",
+      "inkMuted": "#545A85",
+      "inkFaint": "#656991",
+      "surface": "#F8F7FF",
+      "surfaceSunken": "#F3F1FF",
+      "surfaceRaised": "#FFFFFF",
+      "line": "#E2E0F5",
+      "accent": "#5664F0",
+      "onAccent": "#FFFFFF",
+      "accentSoft": "#E6E8FF",
+      "link": "#4A56D8",
+      "danger": "#BF344B",
+      "dangerSoft": "#FDE6EA",
+      "onDanger": "#FFFFFF",
+      "success": "#1B795B",
+      "successSoft": "#DDF5EC",
+      "warning": "#8A4B00",
+      "warningSoft": "#FFF3DC",
+      "onWarning": "#FFFFFF",
+      "well": "#EEECFB",
+      "glow": "#8C9AFF",
+      "waitGlow": "#F5A524"
+    },
+    "dark": {
+      "ink": "#E9ECFF",
+      "inkMuted": "#9AA3C7",
+      "inkFaint": "#8D96B9",
+      "surface": "#11172F",
+      "surfaceSunken": "#0E1328",
+      "surfaceRaised": "#1A2140",
+      "line": "#29315A",
+      "accent": "#6B78FF",
+      "onAccent": "#0B1022",
+      "accentSoft": "#252E62",
+      "link": "#9AA4FF",
+      "danger": "#FF7A90",
+      "dangerSoft": "#40222E",
+      "onDanger": "#0B1022",
+      "success": "#5EE3B5",
+      "successSoft": "#173A36",
+      "warning": "#FFC266",
+      "warningSoft": "#3A2E17",
+      "onWarning": "#2A1A00",
+      "well": "#1F2746",
+      "glow": "#8C9AFF",
+      "waitGlow": "#F5A524"
+    }
+  }
+}
