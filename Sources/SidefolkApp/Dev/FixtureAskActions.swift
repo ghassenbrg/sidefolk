@@ -1,3 +1,4 @@
+import AppKit
 #if DEBUG
 import Foundation
 import SidefolkCore
@@ -44,6 +45,8 @@ final class FixtureAskActions: AskActions {
     func dropChoices(for attachment: Attachment) -> [DropChoice] {
         DropChoices.choices(for: attachment.dropKind, offers: extensionDrops(for: attachment).count)
     }
+    func packPicture(_ path: String, extensionId: String) async -> NSImage? { nil }
+
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction] {
         if attachment.dropKind == .file { return DropChoices.offers(forFiles: attachment.dropFiles, among: drops) }
         return DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)

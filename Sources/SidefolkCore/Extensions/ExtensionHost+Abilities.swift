@@ -34,7 +34,8 @@ extension ExtensionHost {
                                     tool: ExtensionTool.registryName(short: short, tool: d.tool), input: d.input, menu: d.menu,
                                     pathParameters: Set((m.tools[d.tool]?.paths.keys.map { $0 } ?? []) + (m.tools[d.tool]?.fileLists.keys.map { $0 } ?? [])),
                                     canSendAway: rt.pin.permissions.map { $0.network || $0.carriesOut } ?? false,
-                                    canSendAwayWithoutInternet: rt.pin.permissions.map { !$0.network && $0.carriesOut } ?? false)
+                                    canSendAwayWithoutInternet: rt.pin.permissions.map { !$0.network && $0.carriesOut } ?? false,
+                                    tag: d.tag, mark: d.mark.flatMap(PackAssets.picturePath))
             }
             settings += settingRows(rt)
         }

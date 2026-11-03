@@ -3890,6 +3890,24 @@ Converting a sound in the sandbox failed: writing AAC gave `fmt?`, and 24-bit WA
 
 **Implications:** `ResultCard.files` holds `PlacedFile`s and is saved with the conversation, so an old card re-checks identity at each click. A page's `file` action shows a save that failed. Dragging the file out of the card comes with D150's card. SECURITY T45.
 
+### D150 — A file's card is frosted from its own picture (2026-11-03)
+
+The founder approved the look ("your file sets the colour") and chose to wait for it before Formatic reaches the gallery: the plain cards didn't match its icon ("the book cover looks very nice, but when you open it's very different").
+
+**Decided:** for any extension's file offers, working card and saved-file card, Sidefolk draws a frost from the person's file. It's general, and the app names no extension.
+
+- **One picture per card, at thumbnail size.** The frost is only the background. Everything on it is white or neutral, never sampled from the picture, because the founder stopped a version that put the picture everywhere.
+- **Measured, not judged.** A picture counts only if it still has colour once blurred and under its scrim (average chroma at least 0.10 as shown), because an audit found stripes and pale tints passing a test made before the scrim and turning to grey on the card. The scrim is the least that keeps white text at 5.6:1 on the blur's brightest part (`FrostMeasure`).
+- **A file with no picture, or none with enough colour,** gets a frost from the extension's mark, never from its icon: reviews showed a few kilobytes of PDF can keep whoever draws them busy for minutes, and validating a PDF's cost didn't hold up. With no mark, a plain dark ground. With no picture at all, the small mark its manifest names (`mark`) stands in, inside the frame. With neither, a plain dark ground and an empty sheet.
+- **The picture comes from the system's thumbnail service, out of process,** and the card waits at most two seconds for it before using the fallback above. It's in Sidefolk's memory only for the card's life and never reaches the extension. The service keeps its own cache, as it does for Finder. Only a regular file Guard wouldn't keep private is drawn, and files another app sent through the Service, with no click behind them, get no picture.
+- **What Sidefolk says stays outside the frame:** the trust line, file names and counts, in Sidefolk's own type and colours. The frame carries only the extension's name and words. Open, Show and Undo are Sidefolk's own buttons. A pack picture appears only as a small mark inside the frame or beside the extension's name, never on Sidefolk's ground. A dull photo keeps its place on the sheet, on a frost from the mark, since showing a picture and frosting with it are two questions.
+- **New manifest keys on a drop:** `tag` (a format's name from a fixed list, so it can't say anything else and needs no translation) and `mark` (a picture in its pack, read through the same checks as any pack picture).
+- One file can be dragged off its saved-file card.
+
+**Security:** T46.
+
+**Not built:** the approved "Stop" on the working card. It would have to really stop the call, which hasn't been shown, so it isn't there. The bar doesn't claim progress: it moves without saying how far.
+
 ### D151 — Send to Sidefolk from Finder (2026-11-03)
 **Decision:** a macOS Service, "Send to Sidefolk", in Finder's right-click menu for files. macOS hands the selected files to Sidefolk as a drag does, and they arrive on the same drop card with the same grant (D141). The person can give it a keyboard shortcut in System Settings. It needs no permission of its own.
 

@@ -60,6 +60,12 @@ extension AppCoordinator {
     }
 
     /// What extensions offer for this dropped thing, in the order of their names.
+    func packPicture(_ path: String, extensionId: String) async -> NSImage? {
+        guard let reader = await runtime.extensions.assetReader(extensionId: extensionId) else { return nil }
+        let cg = await Task.detached { reader.image(path, maxSide: 256) }.value
+        return cg.map { NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height)) }
+    }
+
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction] {
         if attachment.dropKind == .file { return DropChoices.offers(forFiles: attachment.dropFiles, among: runtime.extensions.shelf.drops) }
         return DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: runtime.extensions.shelf.drops)
@@ -73,6 +79,11 @@ extension AppCoordinator {
             var call = ExtensionCommandCall(tool: action.tool, input: action.input(forFiles: files, choosing: item), extensionId: action.extensionId, said: "")
             call.handedOver = files
             call.fromDrop = true
+            call.mark = action.mark
+            model.working = files.first.map {
+                WorkingFile(path: $0, name: files.count == 1 ? DropChoices.shownName($0) : String(localized: "\(files.count) files", comment: "The drop card: how many files were dropped"),
+                            extensionId: action.extensionId, mark: action.mark, showsPicture: !attachment.fromAnotherApp)
+            }
             runLocal(.extensionCommand(call), caption: attachment.caption, into: model)
             return
         }

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import SidefolkCore
@@ -11,6 +12,8 @@ struct Attachment: Equatable {
     var text: String?
     /// Every file in the drag, when there was more than one. `kind` holds the first.
     var files: [URL] = []
+    /// Another app sent these through the Service, with no click behind them (D151).
+    var fromAnotherApp = false
 
     /// Files macOS handed over, from a drag or from Finder's Send to Sidefolk (D151).
     static func files(_ urls: [URL]) -> Attachment? {
@@ -99,6 +102,15 @@ struct AskEntry: Identifiable, Equatable {
 
 /// What the panel asks the rest of the app to do.
 @MainActor
+/// What the working card shows. Sidefolk's own words, about the person's file.
+struct WorkingFile: Equatable {
+    var path: String
+    var name: String
+    var extensionId: String
+    var mark: String?
+    var showsPicture = true
+}
+
 protocol AskActions: AnyObject {
     func hint(for text: String) -> String?
     /// What Return would do with these words, from the same parse that runs them (D84): nil while Sidefolk waits for
@@ -151,6 +163,8 @@ protocol AskActions: AnyObject {
     func dropChoices(for attachment: Attachment) -> [DropChoice]
     /// What extensions offer for it (D100).
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction]
+    /// A picture from an extension's pack, checked as any of its pictures is (D150).
+    func packPicture(_ path: String, extensionId: String) async -> NSImage?
     func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel)
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
@@ -208,6 +222,8 @@ final class AskModel {
         didSet { savePins() }
     }
     var busy = false
+    /// A file an extension is working on right now, from a choice on the drop card (D150).
+    var working: WorkingFile?
     var phase: String?
     /// Set while the person talks; the input is theirs again once it is nil.
     var voice: VoiceInput?

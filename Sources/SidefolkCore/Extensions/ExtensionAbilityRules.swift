@@ -9,6 +9,11 @@ enum ExtensionAbilityRules {
     static let maxEntryItems = 32
     static let maxDrops = 6
     static let maxDropMenu = 12
+
+    /// A fixed list and not macOS's own, which knows more on a Mac with more apps and includes words like PATCH and GUIDE.
+    static let formatNames: Set<String> = ["JPEG", "JPG", "PNG", "HEIC", "HEIF", "AVIF", "TIFF", "GIF", "BMP", "WEBP", "ICO", "PSD", "SVG", "PDF", "M4A", "MP3", "AAC", "FLAC", "WAV", "AIFF", "OPUS", "OGG", "CAF", "MP4", "M4V", "MOV", "MKV", "WEBM", "CSV", "TSV", "JSON", "PLIST", "XML", "YAML", "TXT", "RTF", "DOCX", "XLSX", "PPTX", "EPUB", "SRT", "VTT", "ZIP", "7Z", "TAR", "GZ", "TGZ", "BZ2", "XZ", "RAR", "TAR.GZ"]
+
+    static func isFormatName(_ tag: String) -> Bool { formatNames.contains(tag) }
     static let maxPatterns = 16
 
     static func check(_ m: ExtensionManifest) -> [ValidationIssue] {
@@ -135,6 +140,13 @@ enum ExtensionAbilityRules {
             guard let tool = m.tools[drop.tool] else {
                 issues.append(ValidationIssue(field: "\(field).tool", message: "“\(drop.tool)” isn't one of its tools."))
                 continue
+            }
+            // Only a format's name, from a fixed list, so a tag can't say anything else.
+            if let tag = drop.tag, !Self.isFormatName(tag) {
+                issues.append(ValidationIssue(field: "\(field).tag", message: "must be a file format's name in capitals, like JPEG or TAR.GZ."))
+            }
+            if let mark = drop.mark, PackAssets.picturePath(mark) == nil || m.assets == nil {
+                issues.append(ValidationIssue(field: "\(field).mark", message: "must be a picture in its assets folder."))
             }
             if drop.menu.count > Self.maxDropMenu { issues.append(ValidationIssue(field: "\(field).menu", message: "can hold at most \(Self.maxDropMenu) choices.")) }
             for (j, item) in drop.menu.enumerated() {

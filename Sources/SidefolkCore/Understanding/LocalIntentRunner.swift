@@ -176,6 +176,7 @@ public struct LocalIntentRunner: Sendable {
             let problems = result.notSaved
             var card = ResultCard(kind: .extensionResult, title: said.title, subtitle: name, detail: [said.detail, problems].compactMap { $0 }.joined(separator: "\n"), refId: tool.extensionId)
             card.files = result.placed
+            card.mark = call.mark
             return .answer(card, activityId: out.activity.id)
         }
         // A one-line answer is the card's title ("15% of 80 = 12"); a longer one is all there, under the tool's name.

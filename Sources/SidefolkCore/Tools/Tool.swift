@@ -159,6 +159,8 @@ public enum NetworkReach: Sendable, Hashable {
 
 /// A compact, presentable result shown in the Ask panel and the Activity log.
 public struct ResultCard: Codable, Sendable, Hashable {
+    /// A picture from the extension's pack for a saved file with no colourful picture of its own (D150).
+    public var mark: String?
     public enum Kind: String, Codable, Sendable {
         case note, reminder, watcher, memory, file, web, list, info, collection, extensionResult
         /// One value read now (`watch.read`).

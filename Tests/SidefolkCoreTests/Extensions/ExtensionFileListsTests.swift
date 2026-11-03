@@ -261,7 +261,8 @@ import Testing
     }
 
     @Test func aNameOnTheCardIsOneLine() {
-        #expect(DropChoices.shownName("/x/trip\nSidefolk checked this.jpg") == "trip Sidefolk checked this.jpg")
+        let shown = DropChoices.shownName("/x/trip\nSidefolk checked this.jpg")
+        #expect(shown == "\u{2068}trip Sidefolk checked this.jpg\u{2069}", "one line, in its own direction")
     }
 
     @Test func tooManyFilesGetNoOffers() {
@@ -285,6 +286,24 @@ import Testing
 
     @Test func aFileListIsReadOnly() throws {
         #expect(try !valid(tools: ["echo": ["file_lists": ["files": "write"]]], drops: []))
+    }
+
+    @Test func aTagIsOnlyAFormatsName() throws {
+        let tools: JSONValue = ["make": ["risk": "low", "file_lists": ["files": "read"]]]
+        func drops(_ extra: [String: JSONValue]) -> JSONValue {
+            var drop: [String: JSONValue] = ["id": "a", "title": "A", "kinds": ["file"], "tool": "make", "input": ["files": "{values}"]]
+            drop.merge(extra) { $1 }
+            return .array([.object(drop)])
+        }
+        #expect(try valid(tools: tools, drops: drops(["tag": "JPEG"])))
+        #expect(try valid(tools: tools, drops: drops(["tag": "TAR.GZ"])))
+        #expect(try !valid(tools: tools, drops: drops(["tag": "Allowed by Sidefolk"])), "too long")
+        #expect(try !valid(tools: tools, drops: drops(["tag": "O K"])), "not one word")
+        #expect(try !valid(tools: tools, drops: drops(["tag": "SAFE"])), "a word, not a format")
+        #expect(try !valid(tools: tools, drops: drops(["tag": "jpeg"])), "in capitals")
+        for format in ["JPEG", "PNG", "HEIC", "AVIF", "TIFF", "GIF", "PDF", "M4A", "FLAC", "WAV", "AIFF", "OPUS", "CSV", "TSV", "JSON", "PLIST", "ZIP", "7Z", "TAR", "TAR.GZ"] { #expect(ExtensionAbilityRules.isFormatName(format), "\(format)") }
+        for word in ["SAFE", "OK", "YES", "PASS", "TRUST", "SIGNED", "VERIFY", "PATCH", "GUIDE", "AGENT", "TOOL"] { #expect(!ExtensionAbilityRules.isFormatName(word), "\(word)") }
+        #expect(try !valid(tools: tools, drops: drops(["mark": "../icon.png"])), "out of its pack")
     }
 
     @Test func theMenuIsBounded() throws {

@@ -127,11 +127,15 @@ struct AskView: View {
             }
             .accessibilityLabel(Text("Ask \(companionName)"))
             if let attachment = model.attachment {
-                HStack(spacing: 6) {
-                    Chip(verbatim: attachment.label, tone: .accent, systemImage: icon(for: attachment))
-                    Button { model.attachment = nil } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.sfIcon(side: 22)).foregroundStyle(Theme.inkFaint)
-                        .accessibilityLabel("Remove attachment")
+                // A file with offers has its own row on the card, with its picture.
+                if !(model.text.isEmpty && !model.busy && attachment.dropKind == .file && attachment.dropFiles.count == 1
+                     && model.actions?.extensionDrops(for: attachment).isEmpty == false) {
+                    HStack(spacing: 6) {
+                        Chip(verbatim: attachment.label, tone: .accent, systemImage: icon(for: attachment))
+                        Button { model.attachment = nil } label: { Image(systemName: "xmark.circle.fill") }
+                            .buttonStyle(.sfIcon(side: 22)).foregroundStyle(Theme.inkFaint)
+                            .accessibilityLabel("Remove attachment")
+                    }
                 }
                 if model.text.isEmpty, !model.busy, let actions = model.actions {
                     // Drops work without AI: the likely things, one click or Return away (D84).
@@ -139,8 +143,14 @@ struct AskView: View {
                              offers: actions.extensionDrops(for: attachment),
                              choose: { actions.perform($0, with: attachment, in: model) },
                              chooseOffer: { actions.perform($0, choosing: $1, with: attachment, in: model) },
-                             openWith: { actions.open(attachment, with: $0, in: model) })
+                             openWith: { actions.open(attachment, with: $0, in: model) },
+                             removeFile: { model.attachment = nil }, looks: model.extensionLooks,
+                             packPicture: { await actions.packPicture($0, extensionId: $1) })
                 }
+            }
+            if let working = model.working {
+                FileWorkingCard(file: working, look: model.extensionLooks[working.extensionId],
+                                packPicture: { await model.actions?.packPicture($0, extensionId: $1) })
             }
             if let target = model.replyingTo {
                 HStack(spacing: 6) {
@@ -297,15 +307,11 @@ private struct RequestView: View {
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            HStack(spacing: 4) {
-                // The words that asked, as a quiet line inside the card, not above it (03-system › Sidecard).
-                if let caption = request.caption {
-                    Label { Text(verbatim: "“\(caption)”").lineLimit(1) } icon: { Image(systemName: "arrow.turn.down.left").imageScale(.small) }
-                        .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                }
-                Spacer(minLength: 0)
+    private var isSavedFile: Bool {
+        request.entries.allSatisfy { if case .result(let card, _, _) = $0.content { card.files?.isEmpty == false } else { false } } && !request.entries.isEmpty
+    }
+
+    @ViewBuilder private var controls: some View {
                 // Kept past its time (D90): shown while hovering, and always once pinned.
                 let pinned = model.pinnedRequests.contains(request.id)
                 Button { model.togglePin(request) } label: {
@@ -330,17 +336,36 @@ private struct RequestView: View {
                 .opacity(hovering ? 1 : 0)
                 .help("Remove")
                 .accessibilityLabel(request.caption.map { Text("Remove “\($0)”") } ?? Text("Remove this result"))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            if !isSavedFile {
+                HStack(spacing: 4) {
+                    // The words that asked, as a quiet line inside the card, not above it (03-system › Sidecard).
+                    if let caption = request.caption {
+                        Label { Text(verbatim: "“\(caption)”").lineLimit(1) } icon: { Image(systemName: "arrow.turn.down.left").imageScale(.small) }
+                            .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                    }
+                    Spacer(minLength: 0)
+                    controls
+                }
+                .frame(minHeight: 22)
             }
-            .frame(minHeight: 22)
             ForEach(request.entries) { entry in
                 EntryView(entry: entry, model: model, request: request.caption, retry: request.caption == nil ? nil : { model.retry(request) })
             }
         }
-        // One card per request: what came of it sits inside, without cards of its own.
-        .environment(\.flatCards, true)
-        .padding(Theme.Space.m)
+        // One card per request: what came of it sits inside, without cards of its own. A saved file's card is its own ground (D150).
+        .environment(\.flatCards, !isSavedFile)
+        .padding(isSavedFile ? 0 : Theme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardSurface()
+        .modifier(RequestSurface(on: !isSavedFile))
+        .overlay(alignment: .topTrailing) {
+            if isSavedFile {
+                HStack(spacing: 2) { controls }.padding(Theme.Space.xs).foregroundStyle(FrostInk.text).environment(\.colorScheme, .dark)
+            }
+        }
         .contentShape(Rectangle())
         .offset(x: offset)
         .opacity(1 - min(abs(offset) / 360, 0.8))
@@ -367,16 +392,11 @@ private struct EntryView: View {
 
     var body: some View {
         switch entry.content {
+        case .result(let card, let activityId, _) where card.files?.isEmpty == false:
+            FileReceiptCard(card: card, activityId: activityId, look: card.refId.flatMap { model.extensionLooks[$0] }, model: model)
         case .result(let card, let activityId, let undo):
             ResultCardView(card: card, look: card.kind == .extensionResult ? card.refId.flatMap { model.extensionLooks[$0] } : nil, actions: {
-                if let files = card.files, !files.isEmpty {
-                    if files.count == 1, let file = files.first, file.canOpen {
-                        Button("Open") { model.actions?.open(file: file) }.buttonStyle(.sf(.primary))
-                    }
-                    Button { model.actions?.show(files: files) } label: { Text("Show in Finder", comment: "On a saved file's card") }
-                        .buttonStyle(.sf(files.count == 1 && files[0].canOpen ? .secondary : .primary))
-                }
-                if undo || card.files?.isEmpty == false, let activityId {
+                if undo, let activityId {
                     Button("Undo") { model.actions?.undo(activityId: activityId, in: model) }.buttonStyle(.sf(.secondary))
                 }
                 if PrivacyPane.isKnown(card.url) {
@@ -783,5 +803,13 @@ private struct UnderstoodRow: View {
         }
         keys.append(.init(keys: "⌥↩", title: Text("Save as note", comment: "A key hint under the Say bar: ⌥Return keeps the words as a note")))
         return keys
+    }
+}
+
+private struct RequestSurface: ViewModifier {
+    var on: Bool
+
+    func body(content: Content) -> some View {
+        if on { content.cardSurface() } else { content }
     }
 }

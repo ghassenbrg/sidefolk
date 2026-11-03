@@ -1132,6 +1132,8 @@ extension AppCoordinator: CompanionDelegate {
     /// keyboard, and doesn't replace or join what the person is in the middle of. False: it was left alone.
     func filesFromAnotherApp(_ files: Attachment) -> Bool {
         guard ask.attachment == nil, ask.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        var files = files
+        files.fromAnotherApp = true
         receive(files, focus: false)
         return true
     }
