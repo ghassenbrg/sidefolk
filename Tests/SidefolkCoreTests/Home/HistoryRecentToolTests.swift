@@ -107,17 +107,40 @@ import Testing
         #expect(text.contains("a command ended") && text.contains("a watch had news"), "\(text)")
     }
 
-    /// However an address is spelled. Each of these got through a pattern that matched whole characters and known schemes.
+    /// However an address is spelled: each of these got through a list of what an address holds.
     @Test func anAddressGoesHoweverItsSpelled() async throws {
-        for address in ["https:/\u{0301}/u:canary-mark@h/a?k=v", "mailto:\u{0301}a@canary-mailmark.c", "https:\u{FE0F}//u:canary-selector@h", "ftp:u:canary-ftp@h", "sip:u:canary-sip@h",
-                        "[redacted]://u:canary-kept@h/a?k=v", "https%3A%2F%2Fu%3Acanary-percent%40h", "https：／／u：canary-wide＠h", "u：canary-colon",
-                        "example.com/reset?canary-bare", "example.com/canary-host-path", "h/a?token=canary-equals", "tel:canary-tel", "sms:canary-sms", "localhost:canary-port",
-                        "10:30:canary-clock", "１０：canary-widetime", String(repeating: "canary-long", count: 8)] {
+        let addresses = ["https:/\u{0301}/u:canary-mark@h/a?k=v", "mailto:\u{0301}a@canary-mailmark.c", "https:\u{FE0F}//u:canary-selector@h", "ftp:u:canary-ftp@h", "sip:u:canary-sip@h",
+                         "u/\u{0301}canary-slashmark", "u:\u{0301}canary-colonmark", "[redacted]://u:canary-kept@h/a?k=v", "https%3A%2F%2Fu%3Acanary-percent%40h", "https：／／u：canary-wide＠h", "u：canary-colon",
+                         "example.com/reset?canary-bare", "example.com/canary-host-path", "h/a?token=canary-equals", "tel:canary-tel", "sms:canary-sms", "localhost:canary-port",
+                         "10:30:canary-clock", "１０：canary-widetime", String(repeating: "canary-long", count: 8),
+                         "localhost/reset/canary-nodot", "intranet/canary-intranet", "//host/canary-slashes", "/Users/me/canary-path", "example.com#canary-hash", "example.com;canary-semi", "canary-sub.example.com",
+                         "example。canary-dot。com/x", "example.com∕canary-division", "https∶∕∕u∶canary-ratio∕h"]
+        for address in addresses {
             try await log("external:codex", "Remind at \(address) soon")
         }
         let text = await read(["limit": 50]).outcome.promptText
         #expect(!text.contains("canary"), "\(text)")
-        #expect(text.split(separator: "\n").filter { $0.hasPrefix("- ") }.allSatisfy { $0.contains("an address soon") }, "\(text)")
+        let lines = text.split(separator: "\n").filter { $0.hasPrefix("- ") }
+        #expect(lines.count == addresses.count, "\(text)")
+        #expect(lines.allSatisfy { $0.contains("[left out] soon") }, "\(text)")
+    }
+
+    /// What's left of a word once the redactor has been through it, and a line broken in the middle of an address.
+    @Test func whatTheRedactorLeavesGoesToo() async throws {
+        for words in ["token https://h/a,canary-comma", "token 'canary-quote", "bearer example.com/canary-bearer", "https:\n//host/canary-newline",
+                      "Aa1Bb2Cc3Dd4Ee5Ff6Gg7Hh8Ii9Jj0Kk1Ll2Mm3=canary-opaque"] {
+            try await log("external:codex", words)
+        }
+        let text = await read().outcome.promptText
+        #expect(!text.contains("canary"), "\(text)")
+    }
+
+    /// An invisible character can't split a key out of the redactor's sight.
+    @Test func aSecretSplitByAnInvisibleCharacterIsStillOne() async throws {
+        try await log("external:codex", "Save sk-ant-\u{200B}api03-abcdefghijklmnopqrstuvwxyz0123456789")
+        try await log("external:codex", "Save tok\u{AD}en: canary-soft")
+        let text = await read().outcome.promptText
+        #expect(!text.contains("abcdefghijklmnopqrstuvwxyz") && !text.contains("canary-soft"), "\(text)")
     }
 
     /// A word thousands of letters long can't hold the read up.
@@ -125,7 +148,7 @@ import Testing
         let long = String(repeating: "a", count: 200_000)
         try await log("external:codex", "Remind at \(long)")
         let started = ContinuousClock.now
-        #expect(await read().outcome.promptText.contains("an address"))
+        #expect(await read().outcome.promptText.contains("[left out]"))
         #expect(ContinuousClock.now - started < .seconds(5))
     }
 
@@ -134,8 +157,10 @@ import Testing
         #expect(await read().outcome.promptText.contains("Push now? Maybe later"))
         try await log("external:codex", "Remind at 10:30, note: call back")
         #expect(await read().outcome.promptText.contains("10:30, note: call back"))
-        try await log("external:codex", "Save 9:30 (soon) and/or 50%, AT&T v1.2 “done:” file.txt")
-        #expect(await read().outcome.promptText.contains("9:30 (soon) and/or 50%, AT&T v1.2 “done:” file.txt"))
+        for words in ["Save 9:30 (soon), 3:30pm 9:30-10:30 16:9 $45 50%, AT&T “done:” l’été ¿Qué?", "明日、会議：午後３時に行く？", "พรุ่งนี้ต้องโทรหาคุณหมอตอนบ่ายสามโมงแล้วก็ไปซื้อของที่ตลาดกับเพื่อนด้วย"] {
+            try await log("external:codex", words)
+            #expect(await read().outcome.promptText.contains(words), "\(words)")
+        }
     }
 
     /// A client's chosen name can't read as the person or Sidefolk, or forge a line.

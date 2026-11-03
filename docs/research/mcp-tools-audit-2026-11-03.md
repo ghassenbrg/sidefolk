@@ -50,7 +50,9 @@ runs, so a saved plan doesn't keep it. Two things it leaves, neither urgent:
 **Still limits, from D160.** A card isn't bound to the reminder as it stood: the person's edit while it waits runs under the
 card's words. A refusal by whole id says a reminder is important. A rename's card shows the name the agent used, which may be a
 loose match. `Redactor` is patterns, so a secret it doesn't know, in a notice's title or a note's title, can reach the model
-through `history.recent`; only addresses are taken out by shape.
+through `history.recent`; only words shaped like an address are left out, by shape.
+
+**`Redactor` reads what it's given.** `history.recent` found a key split by an invisible character (`sk-ant-\u{200B}…`) going past it, and now cleans first. Other callers pass raw text, so T20's other uses have the same gap. A fix: strip what can't be seen inside `Redactor.redact` itself, with one test, then drop the order here. Also seen, not reachable through a summary, which `ToolExecutor` clips to 240: `redactOpaque` looks quadratic on long non-ASCII text (500 KB, 50 s, debug build), so another caller with long text is worth one look.
 
 **Waiting on someone.**
 - A4, Codex's `tool_timeout_sec`, on `team/tools-a4`: needs one tiny live call, with the founder's yes, to learn the default.

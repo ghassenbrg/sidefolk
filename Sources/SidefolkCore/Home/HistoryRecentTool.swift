@@ -89,36 +89,44 @@ struct HistoryRecentTool: Tool {
         return safe(item.title)
     }
 
-    /// Words with any address taken out whole: its sign-in, path, query and fragment can each hold a secret, spelled more
-    /// ways than a parser here would catch, and a line doesn't need it.
+    /// Only words that read as plain words: an address can be spelled more ways than a list of its marks would catch, and its
+    /// sign-in, path, query and fragment can each hold a secret. Invisible characters go first, or a key split by one isn't
+    /// seen as a key.
     private static func safe(_ words: String) -> String {
-        let shown = Redactor.redact(words).displaySafe.split(separator: " ").map { looksLikeAnAddress($0) ? "an address" : String($0) }
+        let shown = Redactor.redact(words.displaySafe).split(separator: " ").map { isPlainWord($0) ? String($0) : "[left out]" }
         return ToolFormat.oneLine(shown.joined(separator: " "), 120)
     }
 
-    /// Over-reads on purpose: a plain word lost costs a line a word, an address kept can cost a password. It goes by scalars,
-    /// since a mark on a colon or a slash makes one character that no longer equals it, and by compatibility forms, so a
-    /// fullwidth colon or at sign counts. Each word is looked at once, however long.
-    private static func looksLikeAnAddress(_ word: Substring) -> Bool {
-        guard word.unicodeScalars.count <= longestWord else { return true }
+    /// Letters, numbers, marks and emoji, and in a word with no Latin letters also its own punctuation, so "3:30", "$45" and a
+    /// sentence in a language written without spaces stay. Goes by scalars in their compatibility forms: a mark on a slash makes
+    /// one character that no longer equals it, and a fullwidth colon is a colon. A plain word lost costs a line a word.
+    private static func isPlainWord(_ word: Substring) -> Bool {
         let scalars = Array(String(word).decomposedStringWithCompatibilityMapping.unicodeScalars)
-        if scalars.contains(where: { "@=\\".unicodeScalars.contains($0) }) { return true }
-        // What only opens or closes a word isn't inside it: "note:", "now?", "(soon)", "50%" and "10:30," are plain words.
-        let inner = scalars.drop { "\"'“‘([{<".unicodeScalars.contains($0) }
-        let core = inner.reversed().drop { "\"'”’)]}>,.;!?:%".unicodeScalars.contains($0) }.reversed().map(Character.init)
-        if core.contains(where: { $0 == "?" || $0 == "%" }) { return true }
-        if core.contains("/"), core.contains(".") { return true }
-        return core.contains(":") && !isAClockTime(String(core))
+        var core = Array(scalars.drop { opensAWord.contains($0) }.reversed().drop { closesAWord.contains($0) }.reversed())
+        // "3:30pm" is a time.
+        if ["am", "pm"].contains(String(String.UnicodeScalarView(core.suffix(2))).lowercased()) { core.removeLast(2) }
+        let latin = core.contains { $0.isASCII && $0.properties.isAlphabetic }
+        guard !latin || word.unicodeScalars.count <= longestWord else { return false }
+        return core.allSatisfy { scalar in
+            switch scalar.properties.generalCategory {
+            case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
+                 .nonspacingMark, .spacingMark, .enclosingMark, .decimalNumber, .letterNumber, .otherNumber:
+                true
+            case .otherSymbol, .modifierSymbol:
+                !scalar.isASCII
+            case .connectorPunctuation, .dashPunctuation, .openPunctuation, .closePunctuation, .initialPunctuation, .finalPunctuation, .otherPunctuation, .currencySymbol:
+                latin ? joinsAWord.contains(scalar) : !partOfAnAddress.contains(scalar)
+            default:
+                false
+            }
+        }
     }
 
     private static let longestWord = 64
-
-    /// "9:30" or "10:30:15": the one everyday word with a colon inside.
-    private static func isAClockTime(_ word: String) -> Bool {
-        let parts = word.split(separator: ":", omittingEmptySubsequences: false)
-        guard parts.count == 2 || parts.count == 3, (1...2).contains(parts[0].count) else { return false }
-        return parts.dropFirst().allSatisfy { $0.count == 2 } && parts.allSatisfy { $0.allSatisfy { $0.isASCII && $0.isNumber } }
-    }
+    private static let opensAWord = Set("\"'“‘«‹「『([{<¿¡".unicodeScalars)
+    private static let closesAWord = Set("\"'”’»›」』)]}>,.;:!?%、。".unicodeScalars)
+    private static let joinsAWord = Set("-–'’&".unicodeScalars)
+    private static let partOfAnAddress = Set("/\\@%#".unicodeScalars)
 
     private static func since(_ text: String?, now: Date, calendar: Calendar) throws -> Date {
         let today = calendar.startOfDay(for: now)
