@@ -165,7 +165,8 @@ If the red suite is in a reach or security path, a fix is the owner's, never you
 
 ## Pushing and releasing
 
-Only on the coordinator's `GO` for this exact commit, which carries the founder's yes and names what it covers (the push and
+Only on the coordinator's `GO` for this exact commit, which carries the founder's yes (or the words of a standing approval
+for while the founder is away) and names what it covers (the push and
 snapshot; any `addons_ref` or `seed_gallery` it may use; a gallery publish is separate). A different commit needs a new
 `RELEASE?`. One push at a time across the project; main stays still until the snapshot and its CI are confirmed.
 
@@ -174,7 +175,7 @@ C=<commit>
 git fetch -q origin && git merge-base --is-ancestor origin/main $C && echo FF-OK
 git -C ~/git/sidefolk-addons fetch -q origin && git -C ~/git/sidefolk-addons rev-parse origin/main   # still what you tested; if it moved, tell the coordinator
 gh run list --repo ghassenbrg/sidefolk --limit 5 --json status,workflowName,conclusion,headSha    # nothing in flight
-git push origin $C:refs/heads/main && git fetch -q origin && test "$(git rev-parse origin/main)" = "$C" &&
+git push origin "${C}:refs/heads/main" && git fetch -q origin && test "$(git rev-parse origin/main)" = "$C" &&
   gh workflow run release.yml --repo ghassenbrg/sidefolk --ref main -f channel=snapshot
 gh run list --repo ghassenbrg/sidefolk --workflow release.yml --limit 1 --json databaseId,status,headSha    # the run to watch: headSha is $C (a new run takes seconds to appear)
 ```
@@ -250,3 +251,5 @@ way: published before the app.
 - **Two kept hunks still went to the owner.** One conflict was two separate new functions. The integrator kept both, built,
   and asked the owner, who confirmed it and named a visual point nobody had checked; it went on the not-verified list.
 - **Cuts move.** The founder moved the cut by 45 minutes on the day. Read the time from the coordinator's latest message.
+- **A push during a pass** moves the fast-forward base and N, so the pass is run again, and it cancels the last push's CI. Ask
+  when pushes and add-ons `main` stop, and to hear of any push first.
