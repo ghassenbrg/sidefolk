@@ -95,7 +95,7 @@ import Testing
         }
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func aFirstRunHasNoPlaceAndNoInventedTime() async throws {
         let w = try await World(place: false)
         let page = try await w.page()
@@ -106,7 +106,7 @@ import Testing
         #expect(await w.pending() == 0)
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func everyPlaceDrawsWithinThePagesLimits() async throws {
         let w = try await World()
         let views: [JSONValue] = [["tab": "overview"], ["tab": "prayer"], ["tab": "prayer", "select": "maghrib"], ["tab": "calendar"], ["tab": "qibla"], ["tab": "names"], ["tab": "names", "q": "merciful"],
@@ -125,7 +125,7 @@ import Testing
         }
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func todayHomeAndAskAgreeAtTheSameInstant() async throws {
         let w = try await World()
         let summary = try #require(try await w.page().summary)
@@ -142,7 +142,7 @@ import Testing
         #expect(hijri.contains("22 ") && hijri.contains("1448") && hijri.contains("Umm al-Qura"))
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func readingAndDraftsScheduleNothing() async throws {
         let w = try await World()
         #expect(await w.consent(true).isOK)
@@ -152,7 +152,7 @@ import Testing
         #expect(await w.pending() == 0, "all of it is off until saved")
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func savedRemindersReachTheHostsTimerAndItsLifecycle() async throws {
         let w = try await World()
         let reminders: JSONValue = ["master": true, "companion": true, "system": false, "prayers": ["maghrib": ["before": 5, "at": true, "iqamah": -1]]]
@@ -182,7 +182,7 @@ import Testing
         #expect(await w.pending() == 0)
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func removalLeavesNothingScheduled() async throws {
         let w = try await World()
         try await w.run("save_reminders", ["master": true, "companion": true, "prayers": ["maghrib": ["before": -1, "at": true, "iqamah": -1]]])
@@ -193,7 +193,7 @@ import Testing
         #expect(status.pending == 0 && status.revision == 0)
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func onlyThePersonCanSayYes() async throws {
         let w = try await World()
         for caller in [Caller.extension(id: Self.id), .agent(runId: "r1")] {
@@ -204,7 +204,7 @@ import Testing
         #expect(!plan.isOK, "and only the extension plans")
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func aFileIsLookedOverBeforeAnythingIsKept() async throws {
         let w = try await World()
         let dir = try ExtFixtures.tempDir("timetable")
@@ -235,7 +235,7 @@ import Testing
         #expect(!dhuhr.lowercased().contains("iqamah"), "none given, none inferred")
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func savedNamesStayAcrossAnUpdate() async throws {
         let w = try await World()
         try await w.run("save_name", ["number": 3, "saved": true])
@@ -250,7 +250,7 @@ import Testing
         try await waitFor { await w.pending() == 2 }
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func withoutTodaysDaysGoodRemindersStay() async throws {
         let w = try await World()
         try await saveTwoReminders(w)
@@ -274,7 +274,7 @@ import Testing
         #expect(await w.pending() == 2)
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func changingTheConventionMovesTheRemindersAfterTheDaysCome() async throws {
         let w = try await World()
         try await saveTwoReminders(w)
@@ -284,7 +284,7 @@ import Testing
         #expect(await w.pending() == 2)
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func remindersCanBeTurnedOffInASentence() async throws {
         let w = try await World()
         try await saveTwoReminders(w)
@@ -293,7 +293,7 @@ import Testing
         #expect(try await w.run("pause_reminders").contains("nothing to pause"))
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func aPauseEndsWhereItCanBeSeen() async throws {
         let w = try await World()
         try await saveTwoReminders(w)
@@ -307,7 +307,7 @@ import Testing
         #expect(detail.contains("paused until"), "\(detail)")
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func aMosqueCanBeTheFirstThingSetUp() async throws {
         let w = try await World(place: false)
         let setup = String(describing: try await w.page())
@@ -317,7 +317,7 @@ import Testing
         #expect(review != setup)
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func clearingEverythingForgetsAFileBeingLookedOver() async throws {
         let w = try await World()
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("noor-\(UUID().uuidString)", isDirectory: true)
@@ -333,7 +333,7 @@ import Testing
         #expect(!outcome.isOK, "nothing is left to add")
     }
 
-    @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons))
+    @Test(.enabled(if: ExtFixtures.addonFolders.contains("prayer-times"), "the prayer pack is not on this add-ons checkout"))
     func anotherPlacesTimetableDoesNotStayListed() async throws {
         let w = try await World()
         try await w.run("choose_place", ["label": "Paris", "country": "France", "latitude": 48.8566, "longitude": 2.3522, "zone": "Europe/Paris"])
