@@ -251,7 +251,7 @@ public final class LocalAPIServer: Sendable {
         case .hello:
             conn.send(BridgeProtocol.failure(id: id, .badRequest, "Already said hello."))
         case .toolsList:
-            conn.send(BridgeProtocol.reply(id: id, result: ["tools": .array(specs(for: caller).map(Self.describe))]))
+            conn.send(BridgeProtocol.reply(id: id, result: ["tools": .array(specs(for: caller).map { Self.describe($0, for: caller) })]))
         case .toolsCall:
             guard let name = params.string("name") else {
                 conn.send(BridgeProtocol.failure(id: id, .badRequest, "tools/call needs a name."))
@@ -346,9 +346,11 @@ public final class LocalAPIServer: Sendable {
         }
     }
 
-    static func describe(_ spec: ToolSpec) -> JSONValue {
-        ["name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description),
-         "inputSchema": spec.inputSchema]
+    static func describe(_ spec: ToolSpec, for caller: BridgeCaller) -> JSONValue {
+        var fields: [String: JSONValue] = ["name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description),
+                                           "inputSchema": spec.inputSchema]
+        if case .external = caller { fields["annotations"] = ExternalToolPolicy.annotations(spec.name) }
+        return .object(fields)
     }
 
     /// Client names are shown to the user as unverified labels: printable, short.
