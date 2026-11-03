@@ -30,6 +30,7 @@ Agents can't see the screen. To check the running debug app:
   (read them as images); `swift scripts/dev.swift "ask:…"`, `respond:<action>`, `dismiss`, `approve`, `deny`,
   `home:<place>`, `settings:<tab>`, `pocket`, `find:<query>`, `drop:<url or path>`, `surface:<extension>/<surface>` drive it (list at
   the top of the script).
+- `snap` redraws each window, so it can't show something stale left on screen: for that, `screencapture -x -o -l<window number>` and look at the picture.
 - Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
   `dev.swift` refuses to send without it, since every running debug app would act, other sessions' too; `--all-apps` before the command overrides that.
 - The founder is usually working on this Mac: launch with `SIDEFOLK_QUIET_WINDOWS=1` so Home, Settings and the other normal
