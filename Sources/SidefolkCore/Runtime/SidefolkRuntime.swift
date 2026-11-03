@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Everything that makes up a running Sidefolk, assembled once. The app owns one; tests build one
 /// over an in-memory database and a temp home.
@@ -33,6 +34,8 @@ public final class SidefolkRuntime: Sendable {
     public let watchers: WatcherEngine
     public let tokens: BrainTokenRegistry
     public let gateway: ExternalToolGateway
+    /// What extensions with `permissions.act` use Sidefolk's tools through (D110).
+    public let actions: ExtensionActionGateway
     public let sessionTracker: SessionTracker
     public let jobTracker: JobTracker
     public let extensions: ExtensionHost
@@ -47,6 +50,9 @@ public final class SidefolkRuntime: Sendable {
     public let appleNotesLedger: AppleNotesLedger
     private let server: LocalAPIServer
     private let upkeep = DailyChore()
+    private let calendarHearing = Mutex<Task<Void, Never>?>(nil)
+    /// The companion's brain, once the app has made it: what `companion.job` hands a job to.
+    public let companionAgent = CompanionAgentSlot()
 
     /// - Parameters:
     ///   - bundledResources: the app's Resources folder (bundled skills, seed packs).
@@ -95,6 +101,8 @@ public final class SidefolkRuntime: Sendable {
         tokens = BrainTokenRegistry()
         gateway = ExternalToolGateway(registry: registry, permissions: permissions, broker: broker, activity: activity,
                                       events: events, clock: clock, access: { [settings] in settings.current.agentAccess })
+        let actions = ExtensionActionGateway(registry: registry, permissions: permissions, broker: broker, activity: activity, events: events, clock: clock)
+        self.actions = actions
         sessionTracker = SessionTracker(store: sessions, attention: attention, events: events, clock: clock,
                                         titles: ConversationTitles(locations: .forApp(paths: paths)), open: { session in
             let host = HostTrust.target(for: session)
@@ -105,6 +113,8 @@ public final class SidefolkRuntime: Sendable {
         hostConfiguration.runTool = { [executor] name, input, caller, timeout in
             await executor.execute(name: name, input: input, caller: caller, timeout: timeout)
         }
+        hostConfiguration.actions = actions
+        hostConfiguration.askEachTimeOnline = { [permissions, clock] in (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
         hostConfiguration.aiName = { [settings] in settings.current.provider.shortName }
         hostConfiguration.currentPlace = { [settings] in settings.current.location.current }
         hostConfiguration.companionName = { [settings] in settings.current.companionName }
@@ -121,6 +131,9 @@ public final class SidefolkRuntime: Sendable {
         }
         hostConfiguration.forgetGrants = { [permissions] id in
             for grant in (try? await permissions.grants()) ?? [] where grant.scope.string("extension") == id { try? await permissions.revokeGrant(id: grant.id) }
+        }
+        hostConfiguration.forgetWatches = { [watchers] id in
+            for watcher in await watchers.list() where watcher.source == "extension:\(id)" { _ = await watchers.remove(watcher.id) }
         }
         hostConfiguration.forgetOwnRows = { [activity] id in _ = try? await activity.delete(tool: ExtensionActivityTool.name, extensionId: id) }
         extensions = ExtensionHost(paths: paths, store: extensionStore, registry: registry, events: events, configuration: hostConfiguration,
@@ -157,6 +170,10 @@ public final class SidefolkRuntime: Sendable {
         registry.register(ExtensionConsentTool(host: host))
         registry.register(ExtensionOccurrencesTool(host: host))
         registry.register(ExtensionPlaceSearchTool(shelfName: { id in host.shelf.names[id] }))
+        registry.register(ExtensionPlanEndTool(host: host))
+        registry.register(CompanionJobTool(agent: companionAgent))
+        registry.register(AttentionSetTool(settings: settings, attention: attention, events: events))
+        AgentFacingTools.extensionNames.withLock { $0 = { id in host.shelf.names[id] } }
     }
 
     /// The local language understanding, configured with the user's idea of "morning" and "evening",
@@ -198,10 +215,33 @@ public final class SidefolkRuntime: Sendable {
         await attention.restoreWaiting()
         // The app tidied up at launch; this keeps doing it for as long as Sidefolk runs.
         await upkeep.start { [weak self] in await self?.housekeeping() }
+        startHearingTheCalendar()
+    }
+
+    /// Says when a meeting is five minutes away, each once, while anyone listens (D129): the calendar has no such event of its own.
+    private func startHearingTheCalendar() {
+        let hearing = Task { [weak self] in
+            var told = Set<String>()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                guard let self, await self.extensions.hearsHappenings else { continue }
+                // The person's switch for the calendar holds here too.
+                if (try? await self.permissions.policy())?.disabled.contains(.calendar) == true { continue }
+                let now = self.clock.now
+                for event in await self.calendarReader.events(from: now, to: now.addingTimeInterval(5 * 60)) ?? [] where !event.allDay && event.start > now {
+                    let key = "\(event.id)\(event.start.timeIntervalSince1970)"
+                    guard told.insert(key).inserted else { continue }
+                    self.events.publish(.happened(Happening(name: "calendar.starting", title: event.title)))
+                }
+                if told.count > 512 { told.removeAll() }
+            }
+        }
+        calendarHearing.withLock { $0 = hearing }
     }
 
     /// After sleep or a clock change: re-arm timers.
     public func rearm() async {
+        events.publish(.happened(Happening(name: "mac.woke")))
         await scheduler.reschedule()
         await watchers.rearm()
         await occurrences.reschedule()
@@ -211,6 +251,7 @@ public final class SidefolkRuntime: Sendable {
     /// Before quitting: stop timers and the socket, and return what system notifications should cover
     /// while Sidefolk is off.
     public func stop() async -> [FallbackNotification] {
+        calendarHearing.withLock { $0?.cancel() }
         let fallback = await scheduler.fallbackNotifications(horizon: 7 * 86400) + (await occurrences.fallbackNotifications())
         await scheduler.stop()
         await occurrences.stop()

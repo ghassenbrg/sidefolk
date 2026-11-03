@@ -56,17 +56,20 @@ struct PageChoiceView: View {
 
 /// The accent ring and tick of the picked option.
 private struct PickedMark: View {
+    @Environment(\.pageSelected) private var pageAccent
+    @Environment(\.colorScheme) private var colorScheme
+    private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var picked: Bool
 
     var body: some View {
         Image(systemName: picked ? "checkmark.circle.fill" : "circle")
             .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(picked ? Theme.accent : Theme.inkFaint.opacity(0.6))
+            .foregroundStyle(picked ? selection.fill : Theme.inkFaint.opacity(0.6))
             .background(Circle().fill(picked ? Theme.surfaceRaised : .clear).padding(2))
     }
 }
 
-private struct BadgeView: View {
+struct BadgeView: View {
     var badge: ExtensionPage.Badge
 
     var body: some View {
@@ -78,6 +81,9 @@ private struct BadgeView: View {
 }
 
 private struct OptionCard: View {
+    @Environment(\.pageSelected) private var pageAccent
+    @Environment(\.colorScheme) private var colorScheme
+    private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var option: ExtensionPage.Choice.Option
     var picked: Bool
     var action: () -> Void
@@ -86,7 +92,7 @@ private struct OptionCard: View {
         Button(action: action) {
             VStack(spacing: 2) {
                 if let symbol = option.symbol { Image(systemName: symbol).font(.system(size: 15)).padding(.bottom, 2) }
-                Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? Theme.accent : Theme.ink).lineLimit(1)
+                Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? selection.ink : Theme.ink).lineLimit(1)
                     .minimumScaleFactor(0.8)
                 if let detail = option.detail {
                     Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2).multilineTextAlignment(.center)
@@ -94,9 +100,9 @@ private struct OptionCard: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, Theme.Space.s).padding(.vertical, Theme.Space.m)
-            .background(picked ? Theme.accentSoft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+            .background(picked ? selection.soft : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous)
-                .strokeBorder(picked ? Theme.accent : Theme.line, lineWidth: picked ? 2 : 1))
+                .strokeBorder(picked ? selection.fill : Theme.line, lineWidth: picked ? 2 : 1))
             .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
         }
         .buttonStyle(.sfBare)
@@ -106,6 +112,9 @@ private struct OptionCard: View {
 }
 
 private struct OptionTile: View {
+    @Environment(\.pageSelected) private var pageAccent
+    @Environment(\.colorScheme) private var colorScheme
+    private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var option: ExtensionPage.Choice.Option
     var picked: Bool
     var folder: URL?
@@ -126,12 +135,12 @@ private struct OptionTile: View {
                             .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(Theme.line))
                             .padding(3)
                             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(picked ? Theme.accent : .clear, lineWidth: 2.5))
+                                .strokeBorder(picked ? selection.fill : .clear, lineWidth: 2.5))
                         if picked { PickedMark(picked: true).padding(8) }
                     }
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? Theme.accent : Theme.ink).lineLimit(1)
+                            Text(ext: option.label).font(Theme.Font.bodyStrong).foregroundStyle(picked ? selection.ink : Theme.ink).lineLimit(1)
                             if let detail = option.detail {
                                 Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                             }
@@ -164,6 +173,9 @@ private struct OptionTile: View {
 }
 
 private struct OptionRow: View {
+    @Environment(\.pageSelected) private var pageAccent
+    @Environment(\.colorScheme) private var colorScheme
+    private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var option: ExtensionPage.Choice.Option
     var picked: Bool
     var folder: URL?
@@ -180,7 +192,7 @@ private struct OptionRow: View {
                             .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                     } else if let symbol = option.symbol {
                         Image(systemName: symbol).font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(picked ? Theme.accent : Theme.inkMuted)
+                            .foregroundStyle(picked ? selection.fill : Theme.inkMuted)
                             .frame(width: 32, height: 32)
                             .background(picked ? Theme.surfaceRaised : Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
@@ -203,6 +215,6 @@ private struct OptionRow: View {
         }
         .padding(.horizontal, Theme.Space.m)
         .padding(.vertical, Theme.Space.s + 2)
-        .background(picked ? Theme.accentSoft.opacity(0.7) : .clear)
+        .background(picked ? selection.soft.opacity(0.7) : .clear)
     }
 }

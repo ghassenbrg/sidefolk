@@ -81,6 +81,7 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   `ApprovalBroker` (actor) parks requests until the UI answers or the wait ends (a no; for
   Sidefolk's own agent, a skipped step kept in `SkippedSteps` for "Run it now", or a stopped task);
   `GrantStore` persists "always allow" grants with scope (tool, folder, exact command, extension).
+- `ExtensionActionGateway` (D110) — what extensions with `permissions.act` use tools through: a `ToolExecutor` of its own over a closed registry, like other agents' `ExternalToolGateway`; plans (`ExtensionPlan`) are kept with the extension's preferences, and Guard's `standing` is the host's verdict that a call fits one.
 - `ToolExecutor` — the only path to run a tool: guard → (approval) → run with timeout → activity
   log → events. Every caller (agent loop, Claude Code brain via bridge, external MCP, slash
   command, routine) goes through it.

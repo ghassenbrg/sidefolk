@@ -25,6 +25,14 @@ public struct ToolActivity: Sendable, Hashable {
     public var mutates: Bool
     /// How Guard let it run, once it did. Auto and Full access acts are shown as done without asking (D37).
     public var decision: ActivityEntry.Decision?
+    /// What History keeps in place of the words a plan's step filled in (D127).
+    public var written: Written?
+
+    public struct Written: Sendable, Hashable {
+        public var summary: String
+        public var input: JSONValue
+        public var length: Int
+    }
 
     /// It ran without a question the person would have had to answer in their earlier mode.
     public var actedWithoutAsking: Bool {
@@ -49,6 +57,32 @@ public struct ToolActivity: Sendable, Hashable {
     }
 }
 
+/// Something that happened in Sidefolk, for extensions with `permissions.events` (D129). `title` and `detail` are the person's own words.
+public struct Happening: Sendable, Hashable {
+    /// What an extension may say it wants to hear.
+    public static let names = ["reminder.fired", "reminder.created", "note.saved", "calendar.starting", "companion.finished", "agent.finished", "attention.changed", "mac.woke"]
+
+    public var name: String
+    public var title: String?
+    public var detail: String?
+
+    public init(name: String, title: String? = nil, detail: String? = nil) {
+        self.name = name
+        self.title = title
+        self.detail = detail
+    }
+
+    /// What a tool's finishing says happened: only what the person or the companion did for them. What an extension did, or a job it handed over, doesn't count, or an extension could set itself off.
+    public init?(_ activity: ToolActivity) {
+        guard activity.caller.kind != "extension", activity.caller.runId?.hasPrefix(AgentRuntime.jobPrefix) != true else { return nil }
+        switch activity.tool {
+        case "notes.save", "notes.update": self.init(name: "note.saved", title: activity.summary)
+        case "reminders.create": self.init(name: "reminder.created", title: activity.summary)
+        default: return nil
+        }
+    }
+}
+
 public enum AppEvent: Sendable {
     case toolStarted(ToolActivity)
     case toolFinished(ToolActivity, ok: Bool)
@@ -67,6 +101,12 @@ public enum AppEvent: Sendable {
     case companion(CompanionAct)
     /// An extension's surface to open beside the companion (D99), from the person's words or the AI.
     case surface(SurfaceRequest)
+    /// A watch an extension made fired: it hears, instead of the person (D111).
+    case watchFired(extensionId: String, watch: String, title: String, summary: String)
+    /// A tool changed a setting the app has to act on (`attention.set`, D127).
+    case settingsChangedByTool
+    /// Something happened an extension with `permissions.events` may hear (D129).
+    case happened(Happening)
     /// The extension was turned off or removed: its surface goes with it, kept or not.
     case surfaceGone(extensionId: String)
     /// A tool's reply asked to put its surface away (`close_surface`, D100): kept, to come back to. Nil: whichever of its are open.

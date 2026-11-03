@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Tools that let an agent (Sidefolk's own brain or an external MCP client) reach the user:
 /// `notify.user`, `ask.user`, and a content-free `status`.
@@ -13,6 +14,16 @@ public enum AgentFacingTools {
 
     /// An answer the user typed (instead of picking an option) arrives as this prefix + the text.
     public static let typedAnswerPrefix = "text:"
+
+    /// An extension's name, for where its words are shown: the app sets this once its extensions are up (D110).
+    public static let extensionNames = Mutex<(@Sendable (String) -> String?)?>(nil)
+    /// What History says for a call whose words were filled in by a step (D127); nil for any other.
+    static func historyTitle(_ what: String, _ context: ToolContext) -> String? {
+        guard context.filledIn, case .extension(let id) = context.caller else { return nil }
+        return "\(extensionName(id) ?? id): \(what)"
+    }
+
+    static func extensionName(_ id: String) -> String? { extensionNames.withLock { $0 }?(id) }
 
     /// "Claude Code" for "claude-code", "Codex" for "codex"; other names as given.
     public static func displayName(_ client: String) -> String {
@@ -54,13 +65,16 @@ struct NotifyUserTool: Tool {
     func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        guard let title = input.string("title") else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
+        guard var title = input.string("title") else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
+        // An extension's words are named wherever they show, in Sidefolk's own bubble or a system notification: it can't pose as anyone (D110).
+        if case .extension(let id) = context.caller { title = "\(AgentFacingTools.extensionName(id) ?? id): \(title)" }
         // The schema only offers gentle and attention, so external agents stay capped at attention.
         let level: AttentionLevel = input.string("level") == "attention" ? .attention : .gentle
         let actions = level == .attention ? [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))] : []
         let item = await attention.post(AttentionRequest(level: level, source: AgentFacingTools.source(for: context.caller),
                                                          title: title.clipped(120), body: input.string("body")?.clipped(600),
-                                                         actions: actions, refKind: "notify"))
+                                                         actions: actions, refKind: "notify",
+                                                         historyTitle: AgentFacingTools.historyTitle(String(localized: "a notice", comment: "History, in place of a notice's words"), context)))
         // Saying so keeps a caller from sending it again, louder, because it seemed to go nowhere.
         switch item.state {
         case .kept:
@@ -108,8 +122,12 @@ struct AskUserTool: Tool {
         // Who is asking is shown with the question; agents must not pose as Sidefolk or the user.
         var asker: String?
         if case .external(let client) = context.caller { asker = String(localized: "\(AgentFacingTools.displayName(client)) asks") }
+        if case .extension(let id) = context.caller {
+            asker = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) asks", comment: "Under a question; an extension's name")
+        }
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
-                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask"),
+                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask",
+                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),
                                          timeout: max(10, timeout))
         guard let answer else { return ToolResult(text: "no answer") }
         if answer.hasPrefix(AgentFacingTools.typedAnswerPrefix) {

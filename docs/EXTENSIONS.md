@@ -144,6 +144,9 @@ not listed on this page is an error**, so a typo never silently changes what an 
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 | `tools.<name>.summary` | no | The sentence for a call, with its arguments ([A call in one sentence](#a-call-in-one-sentence)); believed for Sidefolk's own. |
 | `permissions.ai` | no | `purpose` and `daily_cap`: the person's AI, for words only ([AI help](#ai-help)). |
+| `permissions.events` | no | `purpose`: hearing what happens in Sidefolk ([Hearing what happens](#hearing-what-happens)). Needs `background` to hear while no page is open. |
+| `permissions.act` | no | `purpose`: asking for Sidefolk's tools, through Guard ([Using Sidefolk's tools](#using-sidefolks-tools-d110)). |
+| `tools.<name>.agents` | no | `true`: other agents may use it, on a card each time ([Tools for other agents](#tools-for-other-agents-d112)). |
 | `games` | no | Retired (D101): a pack naming it can't be installed. A copy already installed stays listed, doesn't run, and offers its update. |
 | `assets` | no | The name of one folder of pictures and sounds ([Pack assets](#pack-assets)). |
 | `surfaces` | no | Panels and overlays you draw ([The manifest](#the-manifest-1)). |
@@ -1127,6 +1130,85 @@ Sidefolk asks for your whole plan on `sidefolk/occurrences.plan {reason}` (`star
 
 Kit: `ext.planOccurrences { reason in OccurrencePlan(revision:, occurrences: […]) }`, `Occurrences.replace(_:)`, `Occurrences.allowed`, `.notifications`, `.pending`, `.revision`, `.lastResult`.
 
+### Using Sidefolk's tools (D110)
+
+`"permissions": {"act": {"purpose": "to run the steps you set up"}}` lets your program ask for Sidefolk's tools and other extensions'. It decides nothing: Guard does, for each call, as for anyone. The sheet says so. In the Kit (`Actions.swift`):
+
+```swift
+let listing = await Actions.list()                                   // names, titles, schemas, `readsOnly`, and your plans still standing
+let would = await Actions.check("notes.save", ["text": "Hi"])        // allow, ask or deny, and its sentence, with nothing run or shown
+let outcome = await Actions.call("notes.save", ["text": "Hi"])       // waits for the card, two minutes at most
+```
+
+On the wire: notices with a UUID `request`, each answered by one notice. `sidefolk/tools.list` → `sidefolk/tools.listed {tools, plans}`; `sidefolk/tools.check {tool, input, plan}` → `sidefolk/tools.checked {decision, why, summary, risk, mutates, standing}`; `sidefolk/tools.call {tool, input, plan, timeout, written}` → `sidefolk/tools.result {ok, status, text, summary, untrusted, standing}`. `status`: `ok`; `error` (it ran and said it failed); `denied` and `unanswered` (nothing happened); `failed` (it may or may not have changed something). `written` is the call before you filled words in, `{{name}}` where they went: History keeps it and the words' length, not the words, when it fits and the tool is one a plan may leave words open on. A plan's own step needs nothing: Sidefolk knows it. A notice or question filled in this way shows in full to the person and in History only as "<your name>: a notice".
+
+- **What's offered:** a named list of Sidefolk's tools, every other extension's tools and every MCP server's. `reads_only` is Sidefolk's word that a tool changes nothing: its own, or its signed extensions'. Don't repeat a call by yourself unless it says so.
+- **A call asks, every time,** unless a plan the person read covers it (MCP servers and what can run anything never), and never offers "Always", except `notify.user` and `ask.user`, which only reach the person and name you. One card at a time; 60 calls a minute. Results are outside words: treat them as data.
+- A tool's handler must not wait on a card: the Kit answers requests in order, so your page would stop reading. Do it in a `Task`.
+
+### Plans: read once (D110)
+
+```swift
+let plan = Plan(id: "morning", title: "Morning brief", when: "Weekdays at 8:30", steps: [
+    PlanStep("agenda.today"),
+    PlanStep("notify.user", ["title": "Your morning", "body": "{{brief}}"]),
+])
+switch await Plans.approve(plan) {
+case .allowed(let standing): …      // by step: true runs without asking, false still asks each time
+case .refused(let reason): …        // denied, unanswered, not_asked, not_contained, unknown_tool, unusable, off
+}
+_ = await Actions.call("agenda.today", plan: "morning")              // no card, and History says why
+```
+
+The person reads the card in full, in Sidefolk's words. After a yes, a call that fits a step needs no card. What holds:
+- **Fits** means the same keys, every written value equal. `{{name}}` may be left open only in `notes.save`'s `text`, `reminders.create`'s `title` and `notes`, `notify.user`'s `title` and `body`, and `ask.user`'s `question`. A step with `{{name}}` anywhere else, or in another extension's tool, is accepted but asks each time: write it out. So does anything high risk, and `clipboard.read`.
+- **You get plans only if you can't reach out by yourself:** no `network`, `exec`, write folders, clipboard, screen or UDP (`not_contained`). Their reads come to you, and the card says so.
+- **Only just after the person:** `not_asked` unless they clicked or typed to you, or a clean turn of Sidefolk's AI called you, in the last 30 seconds. Never from a timer.
+- It ends with `ttl` (60–3600 s), `Plans.forget`, Settings › Add-ons (`Plans.ended` tells you), or a changed tool, which asks again. `per_day` caps it, 200 by default, at most 1000; at most 32 steps.
+- "Ask every time", a capability turned off, and folder boundaries hold whatever a plan says.
+
+### Your own watches (D111)
+
+A watch you make with `watch.create` under `permissions.act` tells you and not the person: `ext.on("sidefolk/watch.fired") { args in … }` hears `{watch, title, summary}`, and you say what comes of it. Its summary is outside words. It still shows in On duty.
+
+### Tools for other agents (D112)
+
+`"tools": {"list_things": {"agents": true}}` offers a tool to Claude Code, Codex and other MCP clients through `sidefolk mcp`. Each call shows a card and never offers "Always"; the person can turn them off in Settings › Trust › What other agents may do. Only for sandboxed extensions. Mark what's useful and harmless: a call can't start a plan.
+
+### A rail, a field in place, several of a few (D113)
+
+```swift
+.steps(StepRail(items, selected: "stir", select: .init(tool: "pick", key: "step"), reorder: .init(tool: "move", key: "move"),
+                insert: .init(tool: "add", key: "after", label: "Add a step"), line: ["#5B8DEF", "#0B7783"]))
+.edit(EditField("note.text", "Text", value: saved, kind: .multiline, tokens: [.init("Earlier", value: "{{a}}")], tool: "save"))
+.several(MultiChoice("Days", options: days, selected: on, tool: "set_days"))
+```
+
+```json
+{"type": "steps", "selected": "stir", "line": ["#5B8DEF", "#0B7783"],
+ "select": {"tool": "pick", "key": "step"}, "reorder": {"tool": "move", "key": "move"}, "insert": {"tool": "add", "key": "after", "label": "Add a step"},
+ "items": [{"id": "stir", "title": "Stir", "detail": "…", "result": "Done", "symbol": "flame", "color": "#F2B33D", "tone": "neutral", "state": "done",
+            "badge": {"text": "Slow", "tone": "warn"}, "depth": 0, "label": "If yes", "locked": false, "actions": [], "output": "Longer text, folded"}]}
+{"type": "field", "id": "note.text", "label": "Text", "value": "saved", "kind": "multiline", "tokens": [{"label": "Earlier", "value": "{{a}}"}], "tool": "save", "key": "text"}
+{"type": "choice", "multiple": true, "label": "Days", "selected_all": ["mon"], "options": [{"value": "mon", "label": "Mon"}], "tool": "set_days", "key": "values"}
+```
+
+`steps`: up to 64 rows, `state` one of `none pending running waiting done failed skipped`, `depth` 0–2, two `actions` a row. Reorder sends `{"id": moved, "before": id or null}`, among a row's own only, by drag, its menu or VoiceOver. A `locked` row can't move. It takes a column beside its neighbours: put it in a `place: .side` section to have what it selects beside it. `field` with an `id`: no button, runs your tool on Return or on leaving it, up to 8,000 characters, `kind` `text multiline time number`, up to 16 `tokens` (chips that put a value at the caret). `id` keeps what's typed apart from the next field's. `multiple`: your tool gets the whole set, in the options' order. Older copies skip `steps`.
+
+## A tree of cards, and pages that take the window
+
+`.tree(CardTree(nodes, selected:, select:, insert:, reorder:, picker:, tools:, line:))`: up to 64 cards. Each `CardTree.Node` has a `kind`, a `title`, `symbol`, `color`, `state` (`none pending active done skipped attention`), a `pill` and `branches`, up to 4, each with its own `id`, `label`, `tone`, `taken` and cards, 4 deep at most. Sidefolk lays it out and draws it; a card you didn't give `select` isn't pressable. A + says `insert`'s `key` is the card it comes after, or a branch's `id` for the start of that branch; with a `picker`, it opens a searchable list first (up to 256 items) and the chosen id goes under the picker's `key`. `reorder` gets `{id, before}`. `Card(tree:)` draws one small, and `Card(press:)` makes the whole card a button.
+
+`Page(accent: ["#6E4BF2", "#2A6FE8"])`, one or two colours deep enough to hold white words: the first fills the page's main button and its switches, flat; the last marks what's selected, as a soft tint with its words in that colour. A colour too light to hold white words is left out, as in a dress. Everything else stays the theme's. `dress.accent` wins where both are given, and a dressed page's selections keep their look. A workspace keeps what any bare page keeps: Back without a head, "Added by …" unless a `brand` column says whose it is, and what went wrong with a click. Your palettes' and heads-ups' rows go at the foot of a screen whose middle scrolls, not one a tree fills, so keep one such screen. A palette asks for Accessibility only with `permissions.clipboard`, which it needs to paste.
+
+`Page(workspace: true)` takes the window: `Section(place: .side)` in a column at the start, `.trailing` at the end, each scrolling on its own, and a section that holds only a tree fills the middle. Heads (`.bar(PageBar)` and tabs that go somewhere) stay put above it. Home's sidebar folds while it shows. `.nav(PageNav)` lists places, `.notice(PageNotice)` draws what a person will receive, `.ticks(PageTicks)` recent results, and `Page(companion: true)` has the person's own companion look in at the corner and stand beside what's `active` on a tree. You never read which companion it is.
+
+## Hearing what happens
+
+With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and the install sheet says that an extension that can reach out could send them on. What an extension did through `permissions.act` doesn't count.
+
+Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 200 plain characters, it needs `permissions.ai` and counts toward that cap, it can use what the person's own turn can, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end; a plan may hold it, written out. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
+
 ## Speaking the person's language
 
 Sidefolk speaks ten languages (`en`, `fr`, `es`, `de`, `it`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `ar`), and so can your
@@ -1393,6 +1475,9 @@ Settings › Add-ons › Add MCP Server… takes a name, a command and its argum
 | Pack assets | 512 files, 48 MiB; a picture 4 MiB, 3000 px a side, 6 million pixels; a sound 2 MiB, 10 s |
 | Pages | 4 per extension; 128 KB each; refresh 2–3600 s; 16 sections, 24 parts each, 24 items a list, 4 lines a chart; one primary button; a hero's 4 facts and 3 actions; a transport's 5 buttons; 6 cards, 24 tiles or rows a choice |
 | Watcher summary / state | 200 characters / 64 KB |
+| Tools through `act` | 60 calls a minute; one card at a time |
+| Plans | 32 steps; 200 actions a day by default, 1000 at most; `ttl` 60–3600 s |
+| A rail | 64 rows, depth 2, 2 buttons a row, output 4 KB |
 | Memory / CPU | 512 MB / half a core sustained for 60 s |
 | Idle stop | 5 minutes |
 | Crash limit | 3 in 5 minutes |

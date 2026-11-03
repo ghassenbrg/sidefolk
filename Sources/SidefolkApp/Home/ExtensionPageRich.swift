@@ -22,6 +22,12 @@ struct RichBlockView: View {
         case .settings(let rows): PageSettings(rows: rows, model: model)
         case .scene(let scene): PageSceneBlock(block: scene, model: model)
         case .table(let table): PageTableView(table: table, model: model)
+        case .steps(let steps): PageStepsView(steps: steps, model: model)
+        case .tree(let tree): PageTreeView(tree: tree, model: model).frame(minHeight: 420)
+        case .bar(let bar): PageBarView(bar: bar, model: model)
+        case .nav(let nav): PageNavView(nav: nav, model: model)
+        case .notice(let notice): PageNoticeView(notice: notice, model: model)
+        case .ticks(let ticks): PageTicksView(ticks: ticks)
         default: EmptyView()
         }
     }
@@ -214,6 +220,31 @@ struct PageCard: View {
     private var side: CGFloat { size == .large ? 84 : 56 }
 
     var body: some View {
+        if let press = item.press {
+            // The whole card goes somewhere (D125).
+            card
+                .contentShape(Rectangle())
+                .onTapGesture { Task { await model.run(press, on: nil) } }
+                .accessibilityAction(named: Text(ext: press.label)) { Task { await model.run(press, on: nil) } }
+        } else {
+            card
+        }
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            plain
+            // Its tree's small drawing at its foot (D125).
+            if let tree = item.tree { TreeMini(tree: tree).frame(maxWidth: .infinity) }
+        }
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .cardSurface(radius: Theme.Radius.panel)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(ext: [item.title, item.detail].compactMap { $0 }.joined(separator: ", ")))
+    }
+
+    private var plain: some View {
         HStack(alignment: size == .large ? .top : .center, spacing: Theme.Space.m) {
             if let first = item.actions.first, !first.disabled {
                 Button { Task { await model.run(first, on: nil) } } label: { tile }.buttonStyle(.sfBare).accessibilityHidden(true)
@@ -225,9 +256,13 @@ struct PageCard: View {
                     Text(ext: item.title).font(size == .large ? .system(size: 16, weight: .heavy, design: .rounded) : Theme.Font.headline)
                         .foregroundStyle(Theme.ink).lineLimit(1)
                     if let badge = item.badge {
-                        Text(ext: badge.text).font(Theme.Font.caption.weight(.bold)).foregroundStyle(badge.tone == .neutral ? Theme.ink : badge.tone.color)
-                            .padding(.horizontal, 7).padding(.vertical, 2)
-                            .background(badge.tone == .neutral ? Theme.well : badge.tone.soft, in: Capsule())
+                        if item.press != nil {
+                            TreePill(badge: badge)
+                        } else {
+                            Text(ext: badge.text).font(Theme.Font.caption.weight(.bold)).foregroundStyle(badge.tone == .neutral ? Theme.ink : badge.tone.color)
+                                .padding(.horizontal, 7).padding(.vertical, 2)
+                                .background(badge.tone == .neutral ? Theme.well : badge.tone.soft, in: Capsule())
+                        }
                     }
                 }
                 if let detail = item.detail {
@@ -258,15 +293,14 @@ struct PageCard: View {
                 }
             }
         }
-        .padding(Theme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardSurface(radius: Theme.Radius.panel)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text(ext: [item.title, item.detail].compactMap { $0 }.joined(separator: ", ")))
     }
 
     @ViewBuilder private var tile: some View {
-        if let picture = item.picture {
+        // A card that's one whole button says what it's about quietly: the words and its tree are what's there to read (D125).
+        if item.press != nil, item.picture == nil {
+            TreeTile(symbol: item.symbol, color: item.color, side: 44)
+        } else if let picture = item.picture {
             // With a colour, the picture stands on a tile of it, a little inside its edges.
             let tile = item.color.flatMap { Color(extensionHex: $0) }
             PagePictureView(picture: picture, model: model, side: Int(side) * 2, fill: tile == nil, backing: tile, backingInset: tile == nil ? 0 : side * 0.07)

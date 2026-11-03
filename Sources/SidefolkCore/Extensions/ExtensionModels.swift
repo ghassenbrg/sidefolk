@@ -326,6 +326,8 @@ public struct ExtensionInfo: Sendable, Hashable, Identifiable {
     public var schedule: ExtensionConsentStatus? = nil
     /// This copy was made for an older Sidefolk and doesn't run (D101): the row and its page offer the update.
     public var needsAnUpdate: Bool = false
+    /// Plans the person allowed and may end here (D110).
+    public var plans: [ExtensionPlanInfo] = []
 
     public var hasPendingToolChanges: Bool { tools.contains(where: \.quarantined) }
 }

@@ -62,6 +62,10 @@ extension ExtensionPage {
             public var actions: [Control]
             /// A small menu beside them: "Level ▸ Easy, Fair, Hard".
             public var menu: Menu?
+            /// A small drawing of a tree, at the card's foot (D125).
+            public var tree: Tree?
+            /// What clicking anywhere on the card does (D125). Its label is what VoiceOver says the click does.
+            public var press: Control?
         }
 
         public struct Menu: Sendable, Hashable {
@@ -164,6 +168,12 @@ extension ExtensionPage {
                                       value: goal == nil ? nil : i["value"]?.intValue.map { max(0, min($0, goal ?? 0)) }, goal: goal)
             }
             return items.isEmpty ? nil : .badges(BadgeList(title: text(j["title"], 60), items: items))
+        case "steps":
+            return parseSteps(j).map(Block.steps)
+        case "tree":
+            return parseTree(j).map(Block.tree)
+        case "bar", "nav", "notice", "ticks":
+            return workspacePart(j)
         case "recent":
             let items = (j["items"]?.arrayValue ?? []).prefix(maxRecent).compactMap { i -> RecentList.Item? in
                 guard let title = text(i["title"], 80) else { return nil }
@@ -233,7 +243,8 @@ extension ExtensionPage {
         }
         return CardGrid.Item(title: title, detail: text(i["detail"], 120), meta: text(i["meta"], 120), at: date(i["at"]), picture: PagePicture.parse(i["picture"]),
                              symbol: symbol(i["symbol"]), color: color(i["color"]), badge: badge, done: i["done"]?.boolValue ?? false,
-                             actions: (i["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) }, menu: menu)
+                             actions: (i["actions"]?.arrayValue ?? []).prefix(3).compactMap { button($0, characters: 30) }, menu: menu,
+                             tree: i["tree"].flatMap(parseTree), press: i["press"].flatMap { button($0, characters: 30) })
     }
 
     /// Tabs hold sections, but no tabs within tabs: the page's caps still hold, its size being checked whole.

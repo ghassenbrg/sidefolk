@@ -150,6 +150,7 @@ enum Describe {
         case .skipped: String(localized: "Not run: nobody answered in time.")
         case .webSetting: String(localized: "Ran without asking because of your web setting.")
         case .research: String(localized: "A link on a page, read without asking because you allowed a few in this conversation.")
+        case .plan: String(localized: "Ran without asking because it fit a plan you read and allowed.")
         }
     }
 

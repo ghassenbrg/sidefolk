@@ -1,0 +1,155 @@
+import Foundation
+import Testing
+@testable import SidefolkCore
+
+@Suite("Page parts: a tree and a workspace (D125, D126)")
+struct ExtensionPageTreeTests {
+    private func page(_ blocks: [JSONValue], extra: [String: JSONValue] = [:]) throws -> ExtensionPage {
+        var object: [String: JSONValue] = ["sections": .array([.object(["blocks": .array(blocks)])])]
+        object.merge(extra) { _, new in new }
+        return try ExtensionPage.parse(.object(object))
+    }
+
+    private func node(_ id: String, state: String? = nil, branches: [JSONValue] = []) -> JSONValue {
+        var o: [String: JSONValue] = ["id": .string(id), "title": .string("Do \(id)")]
+        if let state { o["state"] = .string(state) }
+        if !branches.isEmpty { o["branches"] = .array(branches) }
+        return .object(o)
+    }
+
+    private func branch(_ id: String, _ nodes: [JSONValue], taken: Bool? = nil) -> JSONValue {
+        var o: [String: JSONValue] = ["id": .string(id), "label": .string(id), "nodes": .array(nodes)]
+        if let taken { o["taken"] = .bool(taken) }
+        return .object(o)
+    }
+
+    private func tree(_ nodes: [JSONValue], extra: [String: JSONValue] = [:]) throws -> ExtensionPage.Tree {
+        var o: [String: JSONValue] = ["type": .string("tree"), "nodes": .array(nodes)]
+        o.merge(extra) { _, new in new }
+        guard case .tree(let tree)? = try page([.object(o)]).sections.first?.blocks.first else { throw TreeTestFailure.notATree }
+        return tree
+    }
+
+    private enum TreeTestFailure: Error { case notATree }
+
+    @Test("A tree reads back in order, and a repeated id or an empty tree is dropped")
+    func parsing() throws {
+        let t = try tree([node("a"), node("a"), node("b", branches: [branch("yes", [node("c")]), branch("no", [node("d", state: "skipped")], taken: false)])])
+        #expect(t.reading.map(\.id) == ["a", "b", "c", "d"])
+        #expect(t.nodes[1].branches[1].taken == false)
+        #expect(t.nodes[1].branches[1].nodes[0].state == .skipped)
+        #expect(try page([.object(["type": .string("tree"), "nodes": .array([])])]).sections.isEmpty)
+    }
+
+    @Test("A tree holds 64 cards at most, and hooks name only the extension's own tools")
+    func limits() throws {
+        let t = try tree((0..<100).map { node("n\($0)") }, extra: ["select": ["tool": "ext.other.tool", "key": "target"], "insert": ["tool": "ui", "key": "target"]])
+        #expect(t.nodes.count == 64)
+        #expect(t.select == nil)
+        #expect(t.insert?.tool == "ui")
+    }
+
+    @Test("Cards in a run stand on one line and don't touch, each joined to the next")
+    func run() throws {
+        let t = try tree([node("a"), node("b"), node("c")])
+        let l = TreeLayout(t, editable: false)
+        #expect(Set(l.cards.map(\.frame.midX)).count == 1)
+        for (above, below) in zip(l.cards, l.cards.dropFirst()) { #expect(above.frame.maxY < below.frame.minY) }
+        #expect(l.lines.count == 2)
+        #expect(l.adds.isEmpty)
+    }
+
+    @Test("Editable, there's a + between cards and after the last, and each names the card before it")
+    func adds() throws {
+        let l = TreeLayout(try tree([node("a"), node("b")]), editable: true)
+        #expect(l.adds.map(\.target) == ["a", "b"])
+        #expect(l.size.height > (l.cards.last?.frame.maxY ?? 0))
+    }
+
+    @Test("Branches stand side by side, as far either side of their parent, without overlapping, and join again under the longest")
+    func branches() throws {
+        let t = try tree([node("top", branches: [branch("yes", [node("y1"), node("y2")]), branch("no", [node("n1")])]), node("end")])
+        let l = TreeLayout(t, editable: false)
+        func frame(_ id: String) throws -> CGRect { try #require(l.cards.first { $0.node.id == id }?.frame) }
+        let top = try frame("top"), y1 = try frame("y1"), y2 = try frame("y2"), n1 = try frame("n1"), end = try frame("end")
+        #expect(abs((top.midX - y1.midX) - (n1.midX - top.midX)) < 0.5)
+        #expect(!y1.intersects(n1))
+        #expect(end.midX == top.midX)
+        #expect(end.minY > y2.maxY)
+        #expect(l.labels.map(\.branch.id) == ["yes", "no"])
+    }
+
+    @Test("A branch inside a branch makes room, so nothing overlaps at any depth")
+    func nested() throws {
+        let inner = node("in", branches: [branch("a", [node("a1")]), branch("b", [node("b1")])])
+        let t = try tree([node("top", branches: [branch("yes", [inner]), branch("no", [node("n1")])])])
+        let l = TreeLayout(t, editable: true)
+        let frames = l.cards.map(\.frame)
+        for (i, f) in frames.enumerated() { for g in frames[(i + 1)...] { #expect(!f.intersects(g)) } }
+        #expect(frames.allSatisfy { $0.minX >= 0 && $0.maxX <= l.size.width && $0.maxY <= l.size.height })
+    }
+
+    @Test("An empty branch still has somewhere to add, under its own name")
+    func emptyBranch() throws {
+        let l = TreeLayout(try tree([node("top", branches: [branch("yes", []), branch("no", [node("n1")])])]), editable: true)
+        #expect(l.adds.contains { $0.target == "yes" && !$0.quiet })
+        #expect(l.adds.contains { $0.target == "no" && $0.quiet })
+    }
+
+    @Test("The line says what the card says: not done is dashed, a path not taken faded, what's happening live")
+    func lineStyles() throws {
+        let t = try tree([node("a"), node("b", state: "pending"), node("c", state: "active"), node("d", branches: [branch("no", [node("e", state: "skipped")], taken: false)])])
+        let styles = TreeLayout(t, editable: false).lines.map(\.style)
+        #expect(styles.prefix(3) == [.dashed, .live, .solid])
+        #expect(styles.dropFirst(3).allSatisfy { $0 == .faded })
+    }
+
+    @Test("Moving a card says what it now stands before, within its own run only")
+    func moving() throws {
+        let t = try tree([node("a"), node("b"), node("c", branches: [branch("yes", [node("y1"), node("y2")])])])
+        #expect(t.move("b", by: -1) == ["id": "b", "before": "a"])
+        #expect(t.move("b", by: 1) == ["id": "b", "before": .null])
+        #expect(t.move("a", by: -1) == nil)
+        #expect(t.move("y1", by: 1) == ["id": "y1", "before": .null])
+        #expect(t.siblings(of: "y2").map(\.id) == ["y1", "y2"])
+    }
+
+    @Test("A workspace is only for a bare page; the small parts read back")
+    func workspace() throws {
+        #expect(try page([], extra: ["workspace": true, "summary": ["title": "x"]]).workspace == false)
+        let press: JSONValue = ["label": "Open", "go": ["set": [:]]]
+        let p = try page([
+            ["type": "bar", "title": "Morning brief", "pill": ["text": "Practised", "tone": "good"], "detail": "Every weekday",
+             "actions": [["label": "A", "tool": "ui", "style": "primary"], ["label": "B", "tool": "ui", "style": "primary"]]],
+            ["type": "nav", "brand": true, "items": [["id": "a", "title": "Flows", "selected": true, "press": press]]],
+            ["type": "notice", "title": "Your morning", "body": "Three lines", "time": "08:30"],
+            ["type": "ticks", "items": [["tone": "good", "label": "Monday, done"], ["tone": "neutral", "label": "Tuesday, missed", "hollow": true]]],
+        ], extra: ["bare": true, "workspace": true, "companion": true])
+        #expect(p.workspace && p.companion)
+        guard case .bar(let bar) = p.sections[0].blocks[0], case .nav(let nav) = p.sections[0].blocks[1], case .notice(let notice) = p.sections[0].blocks[2], case .ticks(let ticks) = p.sections[0].blocks[3] else {
+            Issue.record("parts")
+            return
+        }
+        #expect(bar.pill?.text == "Practised")
+        #expect(bar.actions[0].style == .primary && bar.actions[1].style == .secondary, "one primary a page")
+        #expect(nav.items.first?.selected == true)
+        #expect(notice.time == "08:30")
+        #expect(ticks.items[1].hollow)
+    }
+
+    @Test("A picker reads back, and one with nothing in it is dropped")
+    func picker() throws {
+        let p: JSONValue = ["key": "kind", "placeholder": "What next?", "categories": [["id": "all", "label": "All"]],
+                            "items": [["id": "tool:notes.save", "title": "Save a note", "meta": "Changes things", "categories": ["all"]]]]
+        #expect(try tree([node("a")], extra: ["picker": p]).picker?.items.first?.id == "tool:notes.save")
+        #expect(try tree([node("a")], extra: ["picker": ["key": "kind", "items": []]]).picker == nil)
+    }
+
+    @Test("Kit's tiny drawing fits a small card")
+    func mini() throws {
+        let t = try tree([node("a"), node("b", branches: [branch("y", [node("c")]), branch("n", [node("d")])])])
+        let l = TreeLayout(t, editable: false, metrics: .mini)
+        #expect(l.size.height < 100)
+        #expect(l.size.width < 120)
+    }
+}

@@ -65,9 +65,15 @@ public struct Card {
     public var done: Bool
     public var actions: [Action]
     public var menu: (label: String, items: [Action])?
+    /// A small drawing of a tree, at the card's foot (D125).
+    public var tree: CardTree?
+    /// What clicking anywhere on the card does (D125).
+    public var press: Action?
 
     public init(_ title: String, detail: String? = nil, meta: String? = nil, at: Date? = nil, picture: Picture? = nil, symbol: String? = nil, color: String? = nil,
-                badge: Badge? = nil, done: Bool = false, actions: [Action] = [], menu: (label: String, items: [Action])? = nil) {
+                badge: Badge? = nil, done: Bool = false, actions: [Action] = [], menu: (label: String, items: [Action])? = nil, tree: CardTree? = nil, press: Action? = nil) {
+        self.tree = tree
+        self.press = press
         self.title = title
         self.detail = detail
         self.meta = meta
@@ -91,6 +97,8 @@ public struct Card {
         if let color { out["color"] = color }
         if let badge { out["badge"] = ["text": badge.text, "tone": badge.tone.rawValue] }
         if let menu { out["menu"] = ["label": menu.label, "items": menu.items.map(\.json)] as [String: Any] }
+        if let tree { out["tree"] = tree.json }
+        if let press { out["press"] = press.json }
         return out
     }
 }

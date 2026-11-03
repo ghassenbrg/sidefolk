@@ -39,6 +39,12 @@ public struct ApprovalReason: Sendable, Hashable {
             calm = false
             return
         }
+        // An extension asking for a tool is held to the same (D110): nothing was read, it may have read anything.
+        if let asker = request.asker {
+            text = String(localized: "\(asker.name) is asking to use this, so I check with you each time.", comment: "A permission slip; an extension's name")
+            calm = asker.firstParty
+            return
+        }
         var sentences = [Self.read(request.taintedBy), Self.matters(request.effect)]
         switch request.mode {
         case .fullAccess?: sentences.append(String(localized: "Full access never decides this for you after outside content."))
@@ -67,7 +73,7 @@ public struct ApprovalReason: Sendable, Hashable {
         case .changesFiles: String(localized: "This changes files, so I check with you first.")
         case .runsPrograms: String(localized: "This runs a program, so I check with you first.")
         case .usesExtension: String(localized: "This hands what it's given to an extension, so I check with you first.")
-        case .readsPrivateData, .readsFiles, .changesThings: String(localized: "This could act on what was read, so I check with you first.")
+        case .readsPrivateData, .readsFiles, .changesThings, .actsForYou: String(localized: "This could act on what was read, so I check with you first.")
         }
     }
 }

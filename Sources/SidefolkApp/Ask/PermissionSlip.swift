@@ -54,7 +54,9 @@ struct PermissionSlip: View {
                         Text(verbatim: request.title).font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)
                         if request.summary != request.title {
-                            Text(verbatim: request.summary).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                            // An extension's request shows whole: what's clipped here could still run.
+                            Text(verbatim: request.asker == nil ? request.summary : request.summary.split(whereSeparator: \.isNewline).joined(separator: " "))
+                                .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(request.asker == nil ? 3 : nil)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if let ends = request.expiresAt {
@@ -100,7 +102,11 @@ struct PermissionSlip: View {
             }
             .padding(Theme.Space.l)
         }
-        .onAppear { if exactOpen { exact = true } }
+        // Text the person has to read in full (a plan, a skill's instructions) doesn't wait to be unfolded.
+        .onAppear {
+            if exactOpen { exact = true }
+            if case .text = request.details { exact = true }
+        }
         .task {
             try? await Task.sleep(for: .milliseconds(800))
             armed = true
@@ -156,7 +162,7 @@ struct PermissionSlip: View {
         switch request.caller {
         case .external(let client): AgentFacingTools.displayName(client)
         // An extension's tool, whoever started it, is the extension acting ("Tea Timer wants to").
-        case .extension, .command, .user, .agent, .routine: look?.name ?? companionName
+        case .extension, .command, .user, .agent, .routine: request.asker?.name ?? look?.name ?? companionName
         }
     }
 
@@ -194,6 +200,8 @@ struct PermissionSlip: View {
     private var carriesExact: Bool {
         if request.input != nil { return true }
         if case .none = request.details { return false }
+        // Text to read in full is open already, and stays open.
+        if case .text = request.details { return false }
         return true
     }
 

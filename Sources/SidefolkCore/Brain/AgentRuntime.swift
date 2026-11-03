@@ -12,9 +12,17 @@ public struct AgentRequest: Sendable {
     public var newThread: Bool
     /// Said aloud with the talk key: the first sentence of the answer will be spoken (D34).
     public var spoken: Bool
+    /// A job an extension handed over (D128), not the person's own words. Its words prove nothing about what they asked for, and it has a conversation of its own. `read`: the person read exactly these words on a plan; otherwise the turn starts as one that has read something from outside.
+    public var job: Job?
+
+    public struct Job: Sendable {
+        public var read: Bool
+        public init(read: Bool) { self.read = read }
+    }
 
     public init(text: String, attachment: AgentAttachment? = nil, threadId: String? = nil, thinkHarder: Bool = false,
-                newThread: Bool = false, spoken: Bool = false) {
+                newThread: Bool = false, spoken: Bool = false, job: Job? = nil) {
+        self.job = job
         self.text = text
         self.attachment = attachment
         self.threadId = threadId
@@ -109,7 +117,7 @@ public actor AgentRuntime {
         let kept = await isKept(request)
         let now = clock.now
         let threadId = resolveThread(request, now: now, kept: kept)
-        let runId = Identifier.make(now: now)
+        let runId = request.job == nil ? Identifier.make(now: now) : Self.jobPrefix + Identifier.make(now: now)
         let (stream, continuation) = AsyncStream.makeStream(of: AgentEvent.self, bufferingPolicy: .unbounded)
         let previous = tails[threadId]
         let task = Task {
@@ -120,6 +128,9 @@ public actor AgentRuntime {
         tails[threadId] = task
         return AgentRunHandle(runId: runId, threadId: threadId, events: stream)
     }
+
+    /// What a job's run and conversation start with, so what it does can be told from what the person asked for.
+    public static let jobPrefix = "job-"
 
     /// Stops a run. A run still waiting behind another one on its conversation stops when it gets its turn.
     public func cancel(runId: String) { running[runId]?.cancel() }
@@ -317,13 +328,15 @@ public actor AgentRuntime {
         let opened = record
         await persist { try await runs.save(opened) }
         emit(.started(runId: runId, provider: provider, model: model))
-        let asked = Exchange(threadId: threadId, role: .user, content: request.text.trimmingCharacters(in: .whitespacesAndNewlines),
-                             meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted, spoken: request.spoken), now: start)
+        // In the record as what it is: someone else's words for the companion, not the person's.
+        let said = request.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let asked = Exchange(threadId: threadId, role: .user, content: request.job == nil ? said : String(localized: "An extension asked: \(said)", comment: "A conversation's record: a job an extension handed the companion"),
+                             meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted || request.job?.read == false, spoken: request.spoken), now: start)
         await persist { try await exchanges.append(asked) }
         events.changed(.conversations)
 
-        let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted,
-                                   mentions: Self.mentions(in: request), emit: emit)
+        let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted || request.job?.read == false,
+                                   mentions: request.job == nil ? Self.mentions(in: request) : UserMentions(text: ""), emit: emit)
         let task = BrainTask(runId: runId, threadId: threadId, system: built.system, messages: built.messages, model: choice.model,
                              effort: choice.effort, maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))
         var outcome = "ok"
@@ -404,6 +417,8 @@ public actor AgentRuntime {
     }
 
     private func resolveThread(_ request: AgentRequest, now: Date, kept: Bool) -> String {
+        // A job never becomes what the person's next words continue.
+        if request.job != nil { return Self.jobPrefix + Identifier.make(now: now) }
         threadActivity = threadActivity.filter { now.timeIntervalSince($0.value) < limits.threadWindow || tails[$0.key] != nil }
         let id: String
         if request.newThread {

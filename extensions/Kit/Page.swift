@@ -24,12 +24,21 @@ public struct Page {
     public var tile: Scene?
     /// How wide its column may grow, 640–1320 (D108).
     public var maxWidth: Double?
+    /// Takes the window (D126): `side` sections go in a column at the start, `trailing` ones at the end, each scrolling on its own; Home's sidebar folds while it shows.
+    public var workspace: Bool
+    /// The person's own companion looks in at the page's corner, and stands by what's `active` on a tree (D126). You never read it.
+    public var companion: Bool
+    /// `#RRGGBB`, one or two, deep enough to hold white words: the first fills the page's main button and switches, the last marks what's selected (D126). The rest stays the theme's.
+    public var accent: [String]
 
-    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil) {
+    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false, accent: [String] = []) {
+        self.accent = accent
+        self.workspace = workspace
+        self.companion = companion
         self.summary = summary
         self.sections = sections
         self.back = back
-        self.bare = bare || bleed
+        self.bare = bare || bleed || workspace
         self.bleed = bleed
         self.dress = dress
         self.tile = tile
@@ -45,6 +54,9 @@ public struct Page {
         if let dress { out["dress"] = dress.json }
         if let tile { out["tile"] = tile.json }
         if let maxWidth { out["max_width"] = maxWidth }
+        if workspace { out["workspace"] = true }
+        if companion { out["companion"] = true }
+        if !accent.isEmpty { out["accent"] = accent }
         return out
     }
 }
@@ -82,7 +94,7 @@ public struct Summary {
 public struct Section {
     /// `side`: in a wide window, in a column beside the main sections at the start edge (a list of devices to pick
     /// from); narrower, in the page's order.
-    public enum Place: String { case main, side, bottom }
+    public enum Place: String { case main, side, bottom, trailing }
 
     public var title: String?
     public var detail: String?
@@ -202,6 +214,22 @@ public enum Block {
     case stats([StatItem])
     /// A scene inside the page: `PageSceneBlock`.
     case scene(PageSceneBlock)
+    /// Things in order, on a line (D113).
+    case steps(StepRail)
+    /// A tree of cards that arranges itself (D125).
+    case tree(CardTree)
+    /// A compact head for a page that draws its own (D126).
+    case bar(PageBar)
+    /// A column of places to go (D126).
+    case nav(PageNav)
+    /// What a person will receive, drawn as it will arrive (D126).
+    case notice(PageNotice)
+    /// A row of recent results (D126).
+    case ticks(PageTicks)
+    /// A value edited in place (D113).
+    case edit(EditField)
+    /// Several of a few options (D113).
+    case several(MultiChoice)
     /// Cards in a grid, each with a picture from the pack, words, a badge and buttons (D100).
     case cards(size: CardSize = .large, [Card])
     /// Parts of the page one at a time, under tabs Sidefolk switches without asking the program (D100).
@@ -258,6 +286,17 @@ public enum Block {
             return transport.json
         case .scene(let block):
             return block.json
+        case .tree(let tree): return tree.json
+        case .bar(let bar): return bar.json
+        case .nav(let nav): return nav.json
+        case .notice(let notice): return notice.json
+        case .ticks(let ticks): return ticks.json
+        case .steps(let rail):
+            return rail.json
+        case .edit(let field):
+            return field.json
+        case .several(let choice):
+            return choice.json
         case .stats(let items):
             return ["type": "stats", "items": items.map(\.json)]
         case .cards(let size, let items):

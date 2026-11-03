@@ -26,6 +26,10 @@ public actor ExtensionHost {
         public var language: @Sendable () -> String = { ExtensionStrings.current }
         /// Runs a tool as the extension asks for it (one History row, a setting, a request to the AI), through the executor (D100).
         public var runTool: (@Sendable (_ name: String, _ input: JSONValue, _ caller: Caller, _ timeout: TimeInterval) async -> ToolOutcome)?
+        /// What extensions with `permissions.act` use Sidefolk's tools through (D110).
+        public var actions: ExtensionActionGateway?
+        /// The person said every page and online service asks, each time (D47).
+        public var askEachTimeOnline: @Sendable () async -> Bool = { false }
         /// The person's AI by name, nil without one: what an extension's label says (D100).
         public var aiName: @Sendable () -> String? = { nil }
         /// What the person calls their companion, for `{companion}` in the extension's words where Sidefolk writes them.
@@ -41,6 +45,8 @@ public actor ExtensionHost {
         public var aiHeldBack: @Sendable () -> String? = { nil }
         /// Forgets every "always" the person gave an extension: it is no longer the one they gave it to.
         public var forgetGrants: @Sendable (String) async -> Void = { _ in }
+        /// Removes the watches an extension made (D111), so none outlives it or tells a later pack under its id.
+        public var forgetWatches: @Sendable (String) async -> Void = { _ in }
         /// Takes rows in an extension's own words out of History when it goes (D100).
         public var forgetOwnRows: @Sendable (String) async -> Void = { _ in }
         /// Where the person is, as Sidefolk knows it (D106).
@@ -89,6 +95,11 @@ public actor ExtensionHost {
         /// The last plan of reminders asked for while one is being held back, and when one last went through (D107).
         var planWaiting: JSONValue?
         var lastPlan = Date.distantPast
+        /// When the person, or a clean request, last called one of its tools: what it may ask for a plan after (D110).
+        var lastPersonCall = Date.distantPast
+        var actionCalls: [Date] = []
+        /// A plan's card is up: the next waits, so what is saved is what was read.
+        var planAsking = false
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -167,6 +178,24 @@ public actor ExtensionHost {
         // A smaller extension loaded before the one that includes it registered its tools; it rests now (D67).
         reconsiderResting()
         events.changed(.extensions)
+        let stream = events.stream()
+        Task { [weak self] in
+            for await event in stream {
+                switch event {
+                case .watchFired(let id, let watch, let title, let summary):
+                    await self?.tellWatchFired(extensionId: id, watch: watch, title: title, summary: summary)
+                case .happened(let happening):
+                    await self?.tell(happening)
+                case .toolFinished(let activity, ok: true):
+                    if let happening = Happening(activity) { await self?.tell(happening) }
+                case .agent(let thread, .reply) where !thread.hasPrefix(AgentRuntime.jobPrefix):
+                    // That it finished, not what it said: an answer may hold anything of theirs.
+                    await self?.tell(Happening(name: "companion.finished"))
+                default:
+                    continue
+                }
+            }
+        }
     }
 
     /// Stops every running process.
@@ -299,7 +328,7 @@ public actor ExtensionHost {
                              examples: examples(rt), services: rt.manifest?.services ?? [], settings: settingRows(rt), ai: aiStatus(rt),
                              place: consentPurpose(.place, extensionId: id).map { ExtensionConsentStatus(purpose: $0, on: hasConsent(.place, extensionId: id)) },
                              schedule: consentPurpose(.schedule, extensionId: id).map { ExtensionConsentStatus(purpose: $0, on: hasConsent(.schedule, extensionId: id)) },
-                             needsAnUpdate: rt.outdatedWasOn != nil)
+                             needsAnUpdate: rt.outdatedWasOn != nil, plans: planInfos(id))
     }
 
     /// A tool's commands, in every language the extension has them in (D100). Compiled once a runtime: this is asked each time the extensions are
@@ -346,6 +375,8 @@ public actor ExtensionHost {
         if p.ai != nil, let purpose = words?.aiPurpose { p.ai?.purpose = purpose }
         if p.place != nil, let purpose = words?.placePurpose { p.place?.purpose = purpose }
         if p.schedule != nil, let purpose = words?.schedulePurpose { p.schedule?.purpose = purpose }
+        if p.act != nil, let purpose = words?.actPurpose { p.act?.purpose = purpose }
+        if p.events != nil, let purpose = words?.eventsPurpose { p.events?.purpose = purpose }
         return p
     }
 
@@ -461,6 +492,7 @@ public actor ExtensionHost {
             if previous?.pin.origin?.firstParty == true, origin?.firstParty != true {
                 await forgetPreferences(id)
                 await config.forgetGrants(id)
+                await config.forgetWatches(id)
             }
             // What the host keeps survives an update, and comes back with a restored backup's install (D100).
             runtimes[id] = Runtime(record: record, pin: pin, manifest: manifest, iconPath: final.iconPath, strings: final.strings,
@@ -509,6 +541,7 @@ public actor ExtensionHost {
         await forgetPreferences(id)
         await occurrences?.forget(id)
         await config.forgetOwnRows(id)
+        await config.forgetWatches(id)
         SeedPacks.removed(id, paths: paths)
         try await store.delete(id: id)
         reconsiderResting(was: rt.manifest?.replaces ?? [])
@@ -706,7 +739,7 @@ public actor ExtensionHost {
                 return ExtensionPageInfo(extensionId: id, extensionName: self.name(rt), page: name, title: words(rt)?.pages[name] ?? p.title,
                                          symbol: p.symbol, refresh: p.refresh ?? ExtensionManifest.PageMeta.defaultRefresh,
                                          history: p.history ?? false, widget: p.widget ?? false, iconPath: rt.iconPath,
-                                         needsAccessibility: !m.palettes.isEmpty || rt.pin.permissions?.power == true,
+                                         needsAccessibility: (!m.palettes.isEmpty && rt.pin.permissions?.clipboard == true) || rt.pin.permissions?.power == true,
                                          tagline: tagline(rt))
             }
         }
@@ -909,19 +942,28 @@ public actor ExtensionHost {
         } catch MCPError.toolFailed(let message) {
             // The tool's own explanation helps the model fix its call; it is the extension's text, so untrusted.
             let clean = ExtensionText.untrusted(message, bytes: 4_000)
-            return ToolResult(text: clean.isEmpty ? "(no explanation given)" : clean,
-                              card: ResultCard(kind: .extensionResult, title: String(localized: "“\(title)” reported a problem"), subtitle: rt.pin.name,
-                                               detail: clean.clipped(200), refId: id),
-                              untrusted: true, isError: true)
+            var failed = ToolResult(text: clean.isEmpty ? "(no explanation given)" : clean,
+                                    card: ResultCard(kind: .extensionResult, title: String(localized: "“\(title)” reported a problem"), subtitle: rt.pin.name,
+                                                     detail: clean.clipped(200), refId: id),
+                                    untrusted: true, isError: true)
+            if Self.holdsThePersonsWords(rt.pin.permissions) { failed.rowError = failed.card?.title }
+            return failed
         } catch let error as MCPError {
-            throw userFacing(error, action: "“\(title)”", name: rt.pin.name)
+            var failure = userFacing(error, action: "“\(title)”", name: rt.pin.name)
+            if Self.holdsThePersonsWords(rt.pin.permissions) { failure.detail = nil }
+            throw failure
+        } catch var failure as UserFacingError where Self.holdsThePersonsWords(rt.pin.permissions) {
+            // A start that failed quotes what it printed.
+            failure.detail = nil
+            throw failure
         }
         let clean = ExtensionText.untrusted(text, bytes: 20_000)
         var result = ToolResult(text: clean.isEmpty ? "(no output)" : clean,
                                 card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200), refId: id),
                                 untrusted: true)
-        // What it answered is what History keeps for a command (D136). Not what's been copied: History isn't a second clipboard.
-        if rt.pin.permissions?.clipboard != true, !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
+        // What it answered is what History keeps for a command (D136). Not what's been copied, nor what it may have read through Sidefolk or
+        // heard: History isn't a second clipboard, or a second notebook.
+        if !Self.holdsThePersonsWords(rt.pin.permissions), !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
         if let m = rt.manifest, let asks = ExtensionToolAsks(asked, manifest: m) {
             result.asks = asks
             result.card?.holdAnswer = asks.holdAnswer
@@ -994,6 +1036,11 @@ public actor ExtensionHost {
     }
 
     /// `action` is what was asked of it: a quoted tool title, or "checking “Disk space”".
+    /// What it says can carry what it copied, read through Sidefolk or heard, so History keeps none of it (T44).
+    static func holdsThePersonsWords(_ permissions: ExtensionPermissions?) -> Bool {
+        permissions?.clipboard == true || permissions?.act != nil || permissions?.events != nil
+    }
+
     func userFacing(_ error: MCPError, action: String, name: String) -> UserFacingError {
         switch error {
         case .server(_, let message), .toolFailed(let message):
@@ -1358,6 +1405,8 @@ public actor ExtensionHost {
             await programReplacesOccurrences(id, params: params)
         case .settingSet(let params):
             await programSetsSetting(id, params: params)
+        case .action(let method, let params):
+            await handleAction(id, method: method, params: params)
         case .rejectedServerRequest(let method):
             Log.shared.warning("extensions", "refused a request from the extension", ["id": id, "method": ExtensionText.line(method, characters: 80)])
         case .toolsChanged:
@@ -1513,6 +1562,8 @@ public actor ExtensionHost {
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },
                              service: Self.reachName(rt.manifest?.services ?? []), trustedOnly: meta?.trustedOnly ?? [],
+                             sandboxed: rt.record.kind == .sidefolk, forAgents: rt.record.kind == .sidefolk && meta?.agents == true,
+                             began: { [weak self] caller, tainted in await self?.notePersonCall(id, caller: caller, tainted: tainted) },
                              asking: { [weak self] asks, caller in await self?.performAsks(id, asks, caller: caller) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)

@@ -219,6 +219,8 @@ public struct ToolResult: Sendable {
     public var rowSummary: String?
     /// What History keeps as the result of a command the person ran, when the card's title only names the tool (D136).
     public var rowOutcome: String?
+    /// What History keeps for a failure, in place of its words, when those could be the person's (T44).
+    public var rowError: String?
 
     public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text
@@ -239,6 +241,10 @@ public struct ToolContext: Sendable {
     /// The one site this call may reach, when Guard let it through only because the person allowed that site for
     /// good while outside content was in play (D47): a redirect anywhere else is refused.
     public var site: String?
+    /// The call fits a plan the person read: its words are what they read (D110).
+    public var onPlan = false
+    /// Its words were filled in by a step: they stay out of History, wherever else they show (D127).
+    public var filledIn = false
     public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil) {
         self.caller = caller
         self.now = now

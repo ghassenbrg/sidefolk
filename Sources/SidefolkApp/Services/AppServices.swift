@@ -52,6 +52,7 @@ struct ExtensionInfo: Identifiable, Hashable {
     /// The person's yes to its use of their place and to its reminders (D106, D107).
     var placeStatus: ExtensionConsentStatus?
     var scheduleStatus: ExtensionConsentStatus?
+    var plans: [ExtensionPlanInfo] = []
 
     var look: ExtensionLook { ExtensionLook(name: name, iconPath: iconPath, folk: folk) }
 }

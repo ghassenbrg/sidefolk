@@ -68,7 +68,14 @@ public enum HistoryTimeline {
             events.append(HistoryEvent(.action(entry), at: entry.at))
         }
         events += conversations.map { HistoryEvent(.conversation($0), at: $0.updatedAt) }
-        events += alerts.map { HistoryEvent(.alert($0), at: $0.createdAt) }
+        events += alerts.map { alert in
+            var shown = alert
+            if let title = alert.historyTitle {
+                shown.title = title
+                shown.body = nil
+            }
+            return HistoryEvent(.alert(shown), at: alert.createdAt)
+        }
         return events.sorted { ($0.at, $0.id) > ($1.at, $1.id) }
     }
 

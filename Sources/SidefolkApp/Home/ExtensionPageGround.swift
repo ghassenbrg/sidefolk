@@ -36,6 +36,19 @@ struct PageGround: View {
 extension EnvironmentValues {
     /// Filled buttons and switches on a dressed page (D108).
     @Entry var pageAccent: Color?
+    /// What's selected on a page with its own accent (D126). Not a dressed page's: that keeps its look.
+    @Entry var pageSelected: Color?
+}
+
+/// What's selected on a page: its own accent where it has one, the theme's otherwise. As text it lightens in the dark, where a deep colour wouldn't read.
+struct PageSelection {
+    var accent: Color?
+    var dark: Bool
+
+    var fill: Color { accent ?? Theme.accent }
+    var soft: Color { accent?.opacity(dark ? 0.26 : 0.13) ?? Theme.accentSoft }
+    /// Mixed so it holds 4.5:1 on `soft` in either appearance.
+    var ink: Color { accent.map { dark ? $0.mix(with: .white, by: 0.45) : $0.mix(with: .black, by: 0.2) } ?? Theme.link }
 }
 
 extension View {

@@ -67,6 +67,8 @@ public enum MCPClientEvent: Sendable {
     case placeSearch(JSONValue)
     /// `sidefolk/occurrences.replace`: the extension's whole plan of reminders (D107); the host decides.
     case occurrences(JSONValue)
+    /// `sidefolk/tools.*` and `sidefolk/plan.*`: the extension asks to use Sidefolk's tools (D110); the host decides.
+    case action(method: String, params: JSONValue)
 }
 
 /// A minimal MCP client over an `ExtensionProcess` (JSON-RPC 2.0, one message per line). It advertises
@@ -343,6 +345,9 @@ public final class MCPClient: Sendable {
                 onEvent(.placeSearch(params))
             } else if method == "sidefolk/occurrences.replace", let params = message["params"] {
                 onEvent(.occurrences(params))
+            } else if ["sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.forget"].contains(method),
+                      let params = message["params"], method == "sidefolk/plan.forget" || params["request"]?.stringValue.flatMap(UUID.init(uuidString:)) != nil {
+                onEvent(.action(method: method, params: params))
             }
             return
         }

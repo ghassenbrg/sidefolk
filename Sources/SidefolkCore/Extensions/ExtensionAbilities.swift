@@ -19,6 +19,15 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
     /// What they said yes to: a change of it asks again.
     public var placeTerms: String?
     public var scheduleTerms: String?
+    /// Plans the person read and allowed, by id (D110).
+    public var plans: [String: ExtensionPlan] = [:]
+    /// How many actions each ran today.
+    public var planCalls: [String: PlanCount] = [:]
+
+    public struct PlanCount: Codable, Sendable, Equatable {
+        public var day: String
+        public var count: Int
+    }
 
     public init() {}
 
@@ -34,6 +43,8 @@ public struct ExtensionPreferences: Codable, Sendable, Equatable {
         scheduleOn = try? c.decodeIfPresent(Bool.self, forKey: .scheduleOn)
         placeTerms = try? c.decodeIfPresent(String.self, forKey: .placeTerms)
         scheduleTerms = try? c.decodeIfPresent(String.self, forKey: .scheduleTerms)
+        plans = (try? c.decode([String: ExtensionPlan].self, forKey: .plans)) ?? [:]
+        planCalls = (try? c.decode([String: PlanCount].self, forKey: .planCalls)) ?? [:]
     }
 
     static func key(_ id: String) -> String { "extension.preferences.\(id)" }

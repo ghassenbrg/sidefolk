@@ -8,9 +8,12 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sayFocus = 0
     @State private var detailWidth: CGFloat = 1000
+    /// Folded while a page that takes the window shows (D126), and back as the person had it after.
+    @State private var sidebar: NavigationSplitViewVisibility = .automatic
+    @State private var sidebarBefore: NavigationSplitViewVisibility?
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $sidebar) {
             HomeSidebar(model: model)
                 .navigationSplitViewColumnWidth(min: Theme.Size.sidebarMin, ideal: Theme.Size.sidebar, max: 320)
         } detail: {
@@ -116,6 +119,16 @@ struct HomeView: View {
             .accessibilityHidden(true)
     }
 
+    private func foldSidebar(_ takes: Bool) {
+        if takes, sidebarBefore == nil {
+            sidebarBefore = sidebar
+            sidebar = .detailOnly
+        } else if !takes, let before = sidebarBefore {
+            sidebar = before
+            sidebarBefore = nil
+        }
+    }
+
     /// The selected place, with the Say bar's panel over it while the bar has words.
     private var page: some View {
         detail
@@ -139,6 +152,9 @@ struct HomeView: View {
             }
             .animation(reduceMotion ? nil : Theme.Motion.micro, value: showsPanel)
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
+            .onPreferenceChange(PageTakesWindow.self) { takes in
+                Task { @MainActor in foldSidebar(takes) }
+            }
             // Where the toolbar ends, for the places' own titles (`homePageTitle`).
             .environment(model.pages)
             .environment(model.title)

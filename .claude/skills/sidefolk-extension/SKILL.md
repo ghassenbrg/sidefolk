@@ -315,6 +315,9 @@ definitions are held until approved.
 
 ## Newer features (D67, D68, D69, D74, D75, D76)
 
+- **Acting through Sidefolk's tools (D110-D113).** `permissions.act`, `Actions.list/check/call`, `Plans.approve` and `tools.<name>.agents`: docs/EXTENSIONS.md › Using Sidefolk's tools. Handlers never wait on a card (the Kit answers in order); plans need no `network` or `exec`. `.steps`, `.edit` and `.several` on a page. `extensions/sideflow` in the add-ons is the example.
+- **A tree of cards and pages that take the window (D125, D126).** `.tree(CardTree)`, `Page(workspace: true)` with `Section(place: .side)` and `.trailing`, `.bar`, `.nav`, `.notice`, `.ticks`, `Card(tree:, press:)`: docs/EXTENSIONS.md › A tree of cards. **Hearing what happens (D129):** `permissions.events`, `ext.on("sidefolk/happened")`.
+
 - **Games (D101).** A game is a surface like any other: nothing of it is the app's. Playtime (sidefolk-addons `extensions/playtime`: `Sources/GameKit` and `Sources/Games` for the rules, `Sources/Screens` and `Sources/Board` for what each shows, `Sources/Stage` drawing it into scenes, `Sources/Table` keeping the session) is the example. Hold a verdict back through its build-up in your own scenes; a loss is never the danger red (D78).
 - **The person's language (D76 over D75).** One way: `strings/<language>.json` and `L("English {name}", [...])`,
   `L(one:other:count:)`, `Format`. The Kit's `Localized(language, tables)` (D75) is the lower layer `L` reads through

@@ -622,6 +622,8 @@ enum UISnapshots {
             for sheet in DesignSystemSheet.Page.allCases {
                 try await page("design-system-\(sheet.rawValue)", DesignSystemSheet(page: sheet), width: 1600)
             }
+            // What a tree's + opens (D125): a popover, which a window's snapshot can't catch.
+            if let picker = SampleExtensionPage.treePicker() { try await page("panel-tree-picker", TreePicker(picker: picker) { _ in }, width: 520) }
             // Reduce Transparency with Increase Contrast (D84 phase 5): solid surfaces and edges at a control's strength.
             func accessible(_ name: String, _ view: some View, width: CGFloat) async throws {
                 // A view can't turn the system settings on; these stand in for them (the hairline colour itself follows

@@ -131,6 +131,7 @@ final class AppCoordinator {
         }
 
         agent = makeAgentRuntime()
+        runtime.companionAgent.use(agent)
         installAIHelp()
         ExtensionCompanionWords.set(runtime.settings.current.companionName)
         onboarding = Onboarding(coordinator: self)
@@ -612,6 +613,14 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("homeSize:") {
+            // homeSize:<width>x<height>: Home's window at this size, to see a page narrow and wide.
+            let sides = command.dropFirst("homeSize:".count).split(separator: "x").compactMap { Double($0) }
+            if sides.count == 2, let window = home.devWindow {
+                window.setContentSize(NSSize(width: sides[0], height: sides[1]))
+            }
+            return
+        }
         if command.hasPrefix("pageFile:") {
             // pageFile:<path>: the next page `file` panel takes this, there being no one to click in it (D105).
             PageFilePanel.choiceForTest = String(command.dropFirst("pageFile:".count))
@@ -625,6 +634,17 @@ final class AppCoordinator {
         if command.hasPrefix("paletteKey:") {
             // paletteKey:down | up | <key code>[:cmd][:opt][:shift]: a key in the open palette, as PaletteKeys reads it (D68).
             palettes.press(String(command.dropFirst("paletteKey:".count)))
+            return
+        }
+        if command.hasPrefix("mcpServer:") {
+            // mcpServer:<name>:<command>:<argument>: adds a plain MCP server, as Settings does once the person confirmed.
+            let parts = command.dropFirst("mcpServer:".count).split(separator: ":").map(String.init)
+            guard parts.count >= 2 else { return }
+            Task {
+                do { _ = try await runtime.extensions.addMCPServer(name: parts[0], command: parts[1], arguments: Array(parts.dropFirst(2))) } catch {
+                    Log.shared.warning("dev", "mcp server failed", ["error": String(describing: error)])
+                }
+            }
             return
         }
         if command.hasPrefix("installFolder:") {
@@ -902,6 +922,8 @@ final class AppCoordinator {
                 if !companion.isVisible { showCompanion(true) }
             }
             player.play(act)
+        case .settingsChangedByTool:
+            settingsChanged()
         case .surface(let request):
             openSurface(request)
         case .surfaceGone(let id):

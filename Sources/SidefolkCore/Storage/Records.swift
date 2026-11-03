@@ -367,6 +367,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case webSetting = "web_setting"
         /// A page a page linked to, read because the person said to keep reading in this conversation (D119).
         case research
+        /// Without a card, because it fit a plan the person read and allowed (D110).
+        case plan
     }
 
     public var id: Int64?
@@ -514,6 +516,8 @@ public struct AttentionItem: SidefolkRecord, Identifiable, Hashable {
     public var shownAt: Date?
     public var acknowledgedAt: Date?
     public var renudged: Bool
+    /// What History says in place of its words, for a step of a plan that filled them in (D127).
+    public var historyTitle: String?
 
     public init(
         id: String = Identifier.make(), level: AttentionLevel, source: String, title: String, body: String? = nil,

@@ -82,6 +82,8 @@ extension ExtensionPermissions {
         if flags.contains(where: { $0.0 && !$0.1 }) { return true }
         if let ai, ai.dailyCap > (old.ai?.dailyCap ?? 0) { return true }
         if (place != nil && old.place == nil) || (schedule != nil && old.schedule == nil) { return true }
+        if act != nil, old.act == nil { return true }
+        if events != nil, old.events == nil { return true }
         if !Set(read).isSubset(of: old.read) || !Set(write).isSubset(of: old.write) || !Set(exec).isSubset(of: old.exec) { return true }
         if !Set(programs.map(\.name)).isSubset(of: old.programs.map(\.name)) { return true }
         return Self.rank(folders) > Self.rank(old.folders)

@@ -36,6 +36,13 @@ public enum ExternalToolPolicy {
         return nil
     }
 
+    /// `permission` for a registered tool: the list above, or an extension's tool that opted in (`tools.<name>.agents`, D112), which only
+    /// the person's switch for them decides, and which never runs without a card.
+    static func permission(_ tool: any Tool, access: AgentAccess) -> AgentPermission? {
+        if let ext = tool as? ExtensionTool, ext.forAgents { return access.extensions == .off ? .off : .ask }
+        return permission(tool.spec.name, access: access)
+    }
+
     public static func isExposed(_ name: String, access: AgentAccess = AgentAccess()) -> Bool {
         guard let p = permission(name, access: access) else { return false }
         return p != .off
@@ -123,27 +130,36 @@ public final class ExternalToolGateway: Sendable {
     /// The tools an external agent sees, by their specs.
     public func specs() -> [ToolSpec] {
         let access = access()
-        return source.all.filter { ExternalToolPolicy.isExposed($0.spec.name, access: access) }
-            .map { ExternalToolPolicy.externalSpec($0.spec, access: access) }
+        return source.all.compactMap { tool in
+            guard let permission = ExternalToolPolicy.permission(tool, access: access), permission != .off else { return nil }
+            return facadeSpec(tool, access: access)
+        }
+    }
+
+    /// The spec an agent gets. An extension's opted-in tool asks every time, whatever its manifest says (D112).
+    private func facadeSpec(_ tool: any Tool, access: AgentAccess) -> ToolSpec {
+        var spec = ExternalToolPolicy.externalSpec(tool.spec, access: access)
+        if (tool as? ExtensionTool)?.forAgents == true { spec.risk = max(spec.risk, .medium) }
+        return spec
     }
 
     public func call(_ name: String, input: JSONValue, client: String) async -> ToolOutcome {
         let caller = Caller.external(client: client)
         let access = access()
-        if let base = source.tool(named: name), ExternalToolPolicy.permission(base.spec.name, access: access) == .off {
+        if let base = source.tool(named: name), ExternalToolPolicy.permission(base, access: access) == .off {
             Log.shared.info("bridge", "external tool turned off", ["client": client, "tool": name.clipped(80)])
             let act = ToolActivity(id: Identifier.make(), tool: name, title: base.spec.title, summary: "Turned off", category: .system,
                                    caller: caller, error: "Turned off in Settings")
             return ToolOutcome(activity: act, status: .failed(UserFacingError(
                 "The user turned this off for other agents in Sidefolk's Settings › Trust › What other agents may do. Ask them to do it in Sidefolk instead.")))
         }
-        guard let base = source.tool(named: name), ExternalToolPolicy.isExposed(base.spec.name, access: access) else {
+        guard let base = source.tool(named: name), let permission = ExternalToolPolicy.permission(base, access: access), permission != .off else {
             Log.shared.info("bridge", "external tool refused", ["client": client, "tool": name.clipped(80)])
             let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system,
                                    caller: caller, error: "Not exposed")
             return ToolOutcome(activity: act, status: .failed(UserFacingError("Sidefolk doesn't offer a tool called \(name) to other agents.")))
         }
-        let facade = ExternalFacade(base: base, spec: ExternalToolPolicy.externalSpec(base.spec, access: access))
+        let facade = ExternalFacade(base: base, spec: facadeSpec(base, access: access))
         exposed.register(facade)
         let input = ExternalToolPolicy.adjustedInput(base.spec.name, input: input, schema: facade.spec.inputSchema, client: client)
         // Evaluating medium calls as tainted makes Guard ask every time and never offer

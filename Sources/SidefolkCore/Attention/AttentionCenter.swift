@@ -10,9 +10,10 @@ public struct AttentionRequest: Sendable {
     public var actions: [AttentionAction]
     public var refKind: String?
     public var refId: String?
+    public var historyTitle: String?
 
     public init(level: AttentionLevel, source: String, title: String, body: String? = nil,
-                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil) {
+                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil, historyTitle: String? = nil) {
         self.level = level
         self.source = source
         self.title = title
@@ -20,6 +21,7 @@ public struct AttentionRequest: Sendable {
         self.actions = actions
         self.refKind = refKind
         self.refId = refId
+        self.historyTitle = historyTitle
     }
 }
 
@@ -74,6 +76,9 @@ public actor AttentionCenter {
         let before = env
         change(&env)
         guard env != before else { return }
+        if env.isQuiet != before.isQuiet || env.isFocused != before.isFocused {
+            events.publish(.happened(Happening(name: "attention.changed", title: env.isQuiet ? "quiet" : env.isFocused ? "focus" : "open")))
+        }
         let returned = before.away && !env.away && !idleAway
         let calmer = (before.isQuiet && !env.isQuiet) || (before.isFocused && !env.isFocused)
         // After Focus or Quiet, what waited comes as one card (D84), as it does after being away.
@@ -89,6 +94,7 @@ public actor AttentionCenter {
     /// `acknowledged` when it is Off).
     @discardableResult
     public func post(_ request: AttentionRequest) async -> AttentionItem {
+        if request.refKind == "reminder" { events.publish(.happened(Happening(name: "reminder.fired", title: request.title))) }
         let item = makeItem(request)
         return await deliver(item)
     }
@@ -177,9 +183,11 @@ public actor AttentionCenter {
     /// `critical` is kept only for the sources allowed to use it (AttentionPolicy.criticalSources).
     private func makeItem(_ request: AttentionRequest) -> AttentionItem {
         let level = request.level == .critical && !AttentionPolicy.criticalSources.contains(request.source) ? .attention : request.level
-        return AttentionItem(level: level, source: request.source, title: request.title.clipped(160),
-                             body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
-                             refId: request.refId, now: clock.now)
+        var item = AttentionItem(level: level, source: request.source, title: request.title.clipped(160),
+                                 body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
+                                 refId: request.refId, now: clock.now)
+        item.historyTitle = request.historyTitle
+        return item
     }
 
     @discardableResult
@@ -344,13 +352,15 @@ public actor AttentionCenter {
                 try? await store.save(settled)
             }
             let titles = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
-            let card = AttentionItem(level: .attention, source: "summary",
+            var card = AttentionItem(level: .attention, source: "summary",
                                         title: title,
                                         body: titles + (items.count > 4 ? "\n…" : ""),
                                         actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)],
                                         // The Sidecard says which moment ended ("Focus ended").
                                         refKind: summary == .away ? nil : "\(summary)",
                                         now: clock.now)
+            // It quotes their titles, so what stays out of History on its own stays out here too (D127).
+            if items.contains(where: { $0.historyTitle != nil }) { card.historyTitle = title }
             let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
             reserve(card.source, presentation, now: clock.now)
             try? await store.save(card)

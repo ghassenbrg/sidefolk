@@ -14,10 +14,11 @@ public struct PermissionEngine: Sendable {
     ///   - mentions: the links the user typed in the request this call serves (agent runs);
     ///     nil when there is no such request, so every link counts as model-built.
     ///   - answeredFolders: folders the person allowed in a card for this very call, whether once or for good.
+    ///   - standing: the call fits a plan the person read and allowed (`ExtensionPlan`).
     public func evaluate(
         spec: ToolSpec, input: JSONValue, summary: String, scope: ToolScope, caller: Caller, tainted: Bool,
         policy: GuardPolicy, grants: [Grant], folders: [GrantedFolder], mentions: UserMentions? = nil,
-        answeredFolders: [String] = []
+        answeredFolders: [String] = [], standing: Bool = false
     ) -> GuardDecision {
         if let off = spec.capabilities.first(where: { policy.disabled.contains($0) }) {
             return .deny(String(localized: "\(Self.capabilityName(off)) is turned off in Sidefolk's Permissions settings."))
@@ -85,6 +86,9 @@ public struct PermissionEngine: Sendable {
         case .low where !carriesTaint && !askEachTime:
             return .allow(.auto)
         case .low, .medium:
+            // A call that fits a plan the person read in full (D110, T44): its tool and values are what they read, and the host
+            // checked where it goes. Not when they asked to be asked every time.
+            if standing, honoursGrants, scope.text == nil { return .allow(.plan) }
             // Grants hold in a clean turn. After outside content was read, a grant the person gave in a clean turn
             // still holds where what the model writes can reach no one new: a built-in service, or reading a site
             // allowed for good (a site grant never covers a query, F1) (D47). "Always" is never offered then.
@@ -110,8 +114,8 @@ public struct PermissionEngine: Sendable {
                 extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
             ))
         case .high:
-            // Only an exact command may be granted "always"; everything else is asked every time.
-            let exactCommand = scope.command != nil
+            // Only an exact command may be granted "always"; everything else is asked every time. An extension gets no "always" for these at all (D127).
+            let exactCommand = scope.command != nil && caller.kind != "extension"
             if exactCommand, !tainted, honoursGrants,
                Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)
@@ -119,6 +123,7 @@ public struct PermissionEngine: Sendable {
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: .high, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: exactCommand && !tainted, tainted: tainted,
+                effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")),
                 extensionId: scope.extensionId
             ))
         }

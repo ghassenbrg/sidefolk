@@ -120,6 +120,9 @@ public struct PageDress: Sendable, Hashable {
         /// light, near-black for dark, whatever the hue.
         var readable: Bool { Self.luminance(light) >= 0.6 && Self.luminance(dark) <= 0.12 }
 
+        /// At or below this, white words read at 4.5:1.
+        static let holdsWhite = 0.183
+
         static func luminance(_ hex: String) -> Double {
             guard let value = UInt32(hex.dropFirst(), radix: 16) else { return 0.5 }
             func channel(_ shift: UInt32) -> Double {
