@@ -1,6 +1,7 @@
 // Drives a running debug build (build/Sidefolk-dev.app) without clicks, for agents and tests by hand.
-// Debug builds listen for these distributed notifications; release builds don't (`#if DEBUG`). Set SIDEFOLK_HOME to
-// the app's home so only that app acts (otherwise every running debug app does).
+// Debug builds listen for these distributed notifications; release builds don't (`#if DEBUG`). SIDEFOLK_HOME names the
+// app's home, so only that app acts. Without it this refuses to send: every running debug app would act, other sessions'
+// too, down to pressing their cards and spending their AI. `--all-apps` before the command says that's really meant.
 //
 //   swift scripts/dev.swift snap                 PNG of every visible window in $SIDEFOLK_HOME/snapshots
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
@@ -73,14 +74,23 @@
 //                           | undoRestore   (D91: a backup written; its restore sheet and its Replace; restored at once, with a relaunch; undone)
 import Foundation
 
-guard let argument = CommandLine.arguments.dropFirst().first else {
-    print("usage: swift scripts/dev.swift snap | <command>   (see the comment at the top of this file)")
+var arguments = Array(CommandLine.arguments.dropFirst())
+let allApps = arguments.first == "--all-apps"
+if allApps { arguments.removeFirst() }
+guard let argument = arguments.first else {
+    print("usage: SIDEFOLK_HOME=<home> swift scripts/dev.swift snap | <command>   (see the comment at the top of this file)")
     exit(2)
 }
 // Every debug app hears these notifications. With SIDEFOLK_HOME set, only the app using that home acts on them:
 // with several running side by side, one's `ask:` would otherwise reach the others (and their AI).
-let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"].map {
-    URL(fileURLWithPath: $0).standardizedFileURL.resolvingSymlinksInPath().path
+let home = ProcessInfo.processInfo.environment["SIDEFOLK_HOME"].flatMap { $0.isEmpty ? nil : URL(fileURLWithPath: $0).standardizedFileURL.resolvingSymlinksInPath().path }
+if home == nil, !allApps {
+    FileHandle.standardError.write(Data("""
+        dev.swift: SIDEFOLK_HOME isn't set, so nothing was sent. Without it every running debug app would act on "\(argument)".
+        Set it to the app's home, or pass --all-apps before the command if that's really meant.
+
+        """.utf8))
+    exit(2)
 }
 let target: [AnyHashable: Any]? = home.map { ["home": $0] }
 let center = DistributedNotificationCenter.default()

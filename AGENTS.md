@@ -31,6 +31,7 @@ Agents can't see the screen. To check the running debug app:
   `home:<place>`, `settings:<tab>`, `pocket`, `find:<query>`, `drop:<url or path>`, `surface:<extension>/<surface>` drive it (list at
   the top of the script).
 - Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
+  `dev.swift` refuses to send without it, since every running debug app would act, other sessions' too; `--all-apps` before the command overrides that.
 - The founder is usually working on this Mac: launch with `SIDEFOLK_QUIET_WINDOWS=1` so Home, Settings and the other normal
   windows draw off-screen and nothing is brought forward (`snap` still reads them). Leave it out only for a check that
   needs real clicks or keys. The companion and its panels still show.
