@@ -277,6 +277,17 @@ public enum ExtensionOutputs {
         for number in 1...999 {
             let candidate = number == 1 ? name : "\(base) \(number).\(ending)"
             if renameatx_np(folder, holding, folder, candidate, UInt32(RENAME_EXCL)) == 0 { return candidate }
+            if errno == ENOTSUP {
+                // Some disks (exFAT) have no exclusive rename. Claiming the name first is just as exclusive: it fails if anything is
+                // there, and the rename then only replaces the empty file this made.
+                let claim = openat(folder, candidate, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o644)
+                if claim >= 0 {
+                    close(claim)
+                    if renameat(folder, holding, folder, candidate) == 0 { return candidate }
+                    unlinkat(folder, candidate, 0)
+                    throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true)
+                }
+            }
             guard errno == EEXIST else { throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true) }
         }
         throw UserFacingError("Too many files already have that name.", changedNothing: true)
