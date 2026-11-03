@@ -35,6 +35,7 @@ enum QA {
         case .quiet(let until): return "quiet until \(until.map { TimeTest.show($0) } ?? "off")"
         case .quietOff: return "quietOff"
         case .find(let q, let kind, let collection): return "find “\(q)” kind=\(kind.map { "\($0)" } ?? "-") in \(collection ?? "-")"
+        case .listing(let listing): return "listing \(listing)"
         case .companion(let act): return "companion \(act.rawValue)"
         case .read(let source): return "read \(source)"
         case .newConversation: return "newConversation"

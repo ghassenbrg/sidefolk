@@ -123,6 +123,8 @@ public struct LocalIntentRunner: Sendable {
             return .card(ResultCard(kind: .info, title: String(localized: "Quiet is off.")), activityId: "", undo: false)
         case .find(let query, let kind, let collection):
             return await find(query: query, kind: kind, collection: collection)
+        case .listing(let listing):
+            return await list(listing)
         case .needsTime(let title, let reason, let important):
             return .needsTime(title: title, reason: reason, important: important)
         case .needsTarget(let kind, let becomes):
@@ -198,6 +200,33 @@ public struct LocalIntentRunner: Sendable {
             return .info(String(localized: "That could be \(Wording.list(titles)). Which one should I stop?"))
         }
         return await execute("watch.stop", ["id": .string(ids[0])])
+    }
+
+    private func list(_ listing: Listing) async -> LocalOutcome {
+        switch listing {
+        case .reminders(let day):
+            return await execute("reminders.list", .object(Self.window(day, from: "from", to: "to")))
+        case .watchers:
+            return await execute("watch.list", [:])
+        case .agenda(let day):
+            return await execute("agenda.today", day == .tomorrow ? ["day": "tomorrow"] : [:])
+        case .due(let day):
+            var input = Self.window(day, from: "due_after", to: "due_before")
+            input["kind"] = "task"
+            input["status"] = "open"
+            // With no day: everything with a date, the soonest first.
+            if day == nil { input["due_before"] = "in 365 days" }
+            return await execute("notes.list", .object(input))
+        }
+    }
+
+    private static func window(_ day: ListingDay?, from: String, to: String) -> [String: JSONValue] {
+        switch day {
+        case nil: [:]
+        case .today?: [from: "today", to: "today"]
+        case .tomorrow?: [from: "tomorrow", to: "tomorrow"]
+        case .thisWeek?: [from: "today", to: "in 7 days"]
+        }
     }
 
     private func execute(_ tool: String, _ input: JSONValue) async -> LocalOutcome {

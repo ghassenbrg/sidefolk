@@ -232,7 +232,11 @@ struct NotesListTool: Tool {
         return ToolResult(
             text: "\(ToolFormat.count(items.count, "item")) \(scope), \(due == nil ? "newest" : "soonest due") first:\n"
                 + items.map { NoteFormat.line($0, collections: collections, reminder: reminders[$0.id]) }.joined(separator: "\n"),
-            card: ResultCard(kind: .list, title: String(localized: "\(items.count) items"), subtitle: shownScope),
+            // A window is asked of the person's own words too, so its card says what's in it.
+            card: ResultCard(kind: .list, title: String(localized: "\(items.count) items"), subtitle: shownScope,
+                             detail: due == nil ? nil : items.prefix(8).map { item in
+                                 (item.dueAt.map { TimeFormat.day($0, now: context.now, calendar: .autoupdatingCurrent) + " " } ?? "") + item.title.clipped(60)
+                             }.joined(separator: "\n")),
             untrusted: foreignScope || NoteFormat.hasForeign(items, collections: collections))
     }
 }

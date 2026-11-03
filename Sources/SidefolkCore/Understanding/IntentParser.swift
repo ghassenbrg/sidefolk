@@ -57,7 +57,7 @@ public struct IntentParser: Sendable {
         // In two parts: one chain of twelve is more than the type checker will take in reasonable time. An extension's
         // command comes after every one of Sidefolk's own (D50).
         // So does a sentence that opens an extension's surface (T41).
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command)
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? listing(p.command)
         let own = quick ?? stopWatch(p.command, ctx) ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx)
             ?? remind(p.command, ctx) ?? note(p.typed, ctx) ?? find(p.command, ctx)
         return own ?? surface(p.command) ?? extensionCommand(p.command)
@@ -68,7 +68,7 @@ public struct IntentParser: Sendable {
     func claimsAsItsOwn(_ text: String, now: Date = Date()) -> Bool {
         guard let p = prepare(text) else { return true }
         let ctx = Context(now: now, known: [], watching: [])
-        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? stopWatch(p.command, ctx)
+        let quick = quiet(p.command, ctx) ?? conversation(p.command) ?? play(p.command) ?? listing(p.command) ?? stopWatch(p.command, ctx)
         return (quick ?? report(p.command, ctx) ?? reading(p.command) ?? watch(p.command, ctx) ?? remind(p.command, ctx) ?? note(p.typed, ctx)
             ?? find(p.command, ctx)) != nil
     }
