@@ -43,8 +43,22 @@ struct HomeView: View {
                         model.you.adding = true
                     }
                 } label: {
-                    Label("New", systemImage: "plus")
+                    // Its own chip, like the Say bar: the toolbar sits on the theme's picture, whatever the picture has there.
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus").font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+                    }
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 12)
+                    .frame(height: 32)
+                    .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 16, style: .circular))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .circular).strokeBorder(Theme.controlBorder))
+                    .contentShape(RoundedRectangle(cornerRadius: 16, style: .circular))
                 }
+                .menuStyle(.button)
+                .buttonStyle(.sfBare)
+                .menuIndicator(.hidden)
+                .accessibilityLabel("New")
                 .help("New note, reminder, watch or collection")
             }
         }

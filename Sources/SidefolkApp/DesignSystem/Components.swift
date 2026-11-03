@@ -856,7 +856,7 @@ struct ThemeScene: View {
 
     var body: some View {
         GeometryReader { g in
-            if g.size.width >= 860, let art = Theme.Art.scene(dark: scheme == .dark) {
+            if g.size.width >= 720, let art = Theme.Art.scene(dark: scheme == .dark) {
                 // Mirrored in right to left, so what's in the picture stays on the side away from the words.
                 Image(decorative: art, scale: 2).resizable().scaledToFill()
                     .flipsForRightToLeftLayoutDirection(true)
@@ -870,12 +870,14 @@ struct ThemeScene: View {
                                            startPoint: .leading, endPoint: UnitPoint(x: 0.72, y: 0.5))
                         }
                     }
+                    // A window too narrow for the full height ends the picture sooner: the fade ends with it, no edge.
+                    .frame(width: g.size.width, height: min(Self.height, g.size.width / 3 - Self.lift), alignment: .top)
+                    .clipped()
+                    .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.7), .init(color: .clear, location: 1)],
+                                         startPoint: .top, endPoint: .bottom))
             }
         }
         .frame(height: Self.height)
-        .clipped()
-        .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.7), .init(color: .clear, location: 1)],
-                             startPoint: .top, endPoint: .bottom))
     }
 }
 

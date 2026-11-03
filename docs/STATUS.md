@@ -41,10 +41,12 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 - **Theme redesign (D130) — built on `team/themes-two`, not merged or released:** Sidefolk is the new default and Harbor a painted theme, on
   one calm design: a plain sidebar with art in its header, a selected row the theme draws, a rebuilt Today, rounded sheets
-  with the theme's sky behind the toolbar. All ten languages. Verified: tests (add-on tests skipped with an empty
-  `SIDEFOLK_ADDONS_REPO`), `sidefolk theme check`, snapshots in light, dark, Arabic and German, a real window, the move off the old
-  id, and arrow keys against a control. Not verified: real clicks and drag, VoiceOver, Reduce Transparency, Increase Contrast.
-  Paper Garden, Night Studio and Marshmallow moved to the gallery (`team/themes-two` in sidefolk-addons, unpublished); the gallery must publish before this app ships. Mochi's brand images are redrawn in the newer design, and the live 3D Mochi is tuned toward them with the same model: all feelings and big moves reviewed, not yet watched in the running app. The edge check flags petting and the flip with or without this change (older issue). Next: founder tries it; a release needs their yes.
+  with the theme's sky behind the toolbar. All ten languages. Verified: tests with the add-ons worktree, the release build, `sidefolk theme check`,
+  snapshots in light, dark, Arabic and German and at the default window size, the move off the old id, and arrow keys against a control.
+  Paper Garden, Night Studio and Marshmallow moved to the gallery (`team/themes-two` in sidefolk-addons, unpublished); the gallery must publish before this app ships.
+  Mochi's brand images are redrawn in the newer design, and the live 3D Mochi is tuned toward them with the same model. Not verified, for the founder to
+  check on the snapshot: real clicks and drag, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
+  The edge check flags petting and the flip with or without this change (older issue). Next: a release needs the founder's yes, gallery first.
 
 - **Dev ideas (`sandbox/sidefolk-dev-ideas.md`), for the founder to look at:** batches 1 to 6 are done (HISTORY's top entries). **For the founder:** [the notebook proposal](research/notebook-proposal.md) needs a choice; [the wake word's measurements](research/wake-word-prototype.md) recommend not building it yet, and a minute's microphone test at the Mac decides it; windows opening in another app's full-screen space were diagnosed, not proven, and wait on the founder's confirmation of the case. D115 keeps D49's return of a reminder when its task reopens, where the handover recommended it stay cancelled.
 - **For the founder, from snapshot B (D101):** the reaction props the app still draws (D101's "Left for the founder"); in two-player rock, paper, scissors the reveal still says "You" and the companion's name with a winner's glow, as the old code did, against D96. Checks and what wasn't run: HISTORY's top entry. **Open, small:** with a surface panel open `snap` lists a 40×40 fully transparent `FloatingPanel` near the companion; not identified.

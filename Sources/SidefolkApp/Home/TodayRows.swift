@@ -519,31 +519,28 @@ struct NewReminderRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // In a narrow column the button goes under the two fields rather than squeezing them.
-            WrapRow(minimum: 300, spacing: Theme.Space.m, indent: 29) {
-                HStack(spacing: Theme.Space.m) {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 17)).foregroundStyle(Theme.folkColor("tempo"))
-                        .accessibilityHidden(true)
-                    TextField("New reminder", text: $model.newTitle, prompt: Text(verbatim: "")).fieldHint(Text("New reminder"), showing: model.newTitle.isEmpty, spoken: false)
-                        .textFieldStyle(.plain)
-                        .font(Theme.Font.body)
-                        .focused($focus, equals: .title)
-                        .onSubmit { focus = .when }
-                        .accessibilityLabel("New reminder")
-                        .frame(minWidth: 120)
-                    Rectangle().fill(Theme.line).frame(width: 1, height: 18)
-                    // Typed first; the calendar beside it for picking (WhenField).
-                    WhenField(text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"), parser: model.whenParser,
-                              focus: $focus, focusValue: .when) { Task { await model.addReminder() } }
-                        .textFieldStyle(.plain)
-                        .frame(minWidth: 150, idealWidth: 220, maxWidth: 230)
-                        .layoutPriority(1)
-                }
-                Button("Add reminder") { Task { await model.addReminder() } }
-                    .buttonStyle(.sf(.primary))
-                    .disabled(!model.canAddReminder)
-                    .fixedSize()
+            // The day's column is narrow, so each field gets its own line.
+            HStack(spacing: Theme.Space.m) {
+                Image(systemName: "plus.circle.fill").font(.system(size: 17)).foregroundStyle(Theme.folkColor("tempo"))
+                    .accessibilityHidden(true)
+                TextField("New reminder", text: $model.newTitle, prompt: Text(verbatim: "")).fieldHint(Text("New reminder"), showing: model.newTitle.isEmpty, spoken: false)
+                    .textFieldStyle(.plain)
+                    .font(Theme.Font.body)
+                    .focused($focus, equals: .title)
+                    .onSubmit { focus = .when }
+                    .accessibilityLabel("New reminder")
             }
+            // Typed first; the calendar beside it for picking (WhenField).
+            WhenField(text: $model.newWhen, prompt: Text("When, like “tomorrow 9:00”"), parser: model.whenParser,
+                      focus: $focus, focusValue: .when) { Task { await model.addReminder() } }
+                .textFieldStyle(.plain)
+                .padding(.leading, 29)
+            Button("Add reminder") { Task { await model.addReminder() } }
+                .buttonStyle(.sf(.primary))
+                .disabled(!model.canAddReminder)
+                .fixedSize()
+                .padding(.leading, 29)
+                .padding(.top, 2)
             if let error = model.newError {
                 InlineError(error: error).padding(.leading, 29)
             }

@@ -59,6 +59,9 @@ reason. Newest first within a section; delete a lesson when it stops being true.
 - **Try the narrow window.** Art collapsed into a flat band of colour until the scene dropped out under 860 pt.
 - **Test what you claim.** Simulated clicks can do nothing and look like a pass or a failure. Run a control without your
   change, and tell the person what stays unverified.
+- **Check at the window a new person gets.** Home opens 1080 wide; snapshots run at 1280. That hid a picture that didn't
+  show at all, then ended in a hard edge, a reminder field past its card, and the New button on a bright lantern. Art
+  moves under fixed controls as the window changes, so give controls over art their own chip.
 
 ## Working with the founder
 
