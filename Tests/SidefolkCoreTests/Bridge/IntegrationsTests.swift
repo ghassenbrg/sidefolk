@@ -300,7 +300,7 @@ struct FakeAgentHome {
         try tools.install(.codexMCP)
         let text = home.read(file)
         #expect(text.hasPrefix(Self.codex))
-        #expect(text.hasSuffix("[mcp_servers.sidefolk]\ncommand = \"\(home.helper)\"\nargs = [\"mcp\"]\ntool_timeout_sec = 630\n"))
+        #expect(text.hasSuffix("[mcp_servers.sidefolk]\ncommand = \"\(home.helper)\"\nargs = [\"mcp\"]\n"))
         #expect(tools.status(.codexMCP).state == .installed)
         #expect(TOMLSection.command(in: text, table: "mcp_servers.github") == "npx")
 
