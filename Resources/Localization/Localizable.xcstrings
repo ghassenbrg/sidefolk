@@ -83533,6 +83533,7 @@
     },
     "From a job you set up: %@" : {
       "comment" : "Spoken aloud: words from a job an extension handed the companion",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -83586,6 +83587,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来自你设置的任务：%@"
+          }
+        }
+      }
+    },
+    "From an extension's job: %@" : {
+      "comment" : "Spoken aloud: words from a job an extension handed the companion, which doesn't know which one",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من مهمة إضافة: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus dem Auftrag einer Erweiterung: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Del trabajo de una extensión: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’une tâche d’une extension : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dall’incarico di un’estensione: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能のジョブから: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램의 작업에서: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do trabalho de uma extensão: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自某个扩展的任务：%@"
           }
         }
       }

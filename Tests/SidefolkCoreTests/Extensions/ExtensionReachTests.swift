@@ -331,6 +331,33 @@ struct ExtensionReachTests {
         await settings.update { $0.quietUntil = Date().addingTimeInterval(600) }
         let quiet = try await tool.run(["text": "Hello"], context: ToolContext(caller: .user, now: Date()))
         #expect(quiet.text.contains("Not said"))
+        await settings.update { $0.quietUntil = nil; $0.focusUntil = Date().addingTimeInterval(600) }
+        let focused = try await tool.run(["text": "Hello"], context: ToolContext(caller: .user, now: Date()))
+        #expect(focused.text.contains("Not said"))
+        await settings.update { $0.focusUntil = nil }
+        let stream2 = env.events.stream()
+        _ = try await tool.run(["text": "Time to stretch"], context: ToolContext(caller: .agent(runId: AgentRuntime.jobPrefix + "1"), now: Date()))
+        var fromAJob: String?
+        for await event in stream2 { if case .speak(let line) = event { fromAJob = line; break } }
+        #expect(fromAJob?.contains("extension") == true, "a job an extension handed over says so: \(fromAJob ?? "")")
+    }
+
+    @Test func whatThePersonMadeIsntAnExtensionsOrItsJobsToTakeOff() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("sf-own-\(UUID().uuidString)", isDirectory: true)
+        let paths = SidefolkPaths(home: home)
+        let folder = paths.themes.appendingPathComponent("paper-garden", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try ThemeFile(ThemeTokens.harbor, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        let tool = AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { [] }, events: env.events)
+        await settings.update { $0.themeFolder = "/somewhere/mine" }
+        for caller in [Caller.extension(id: "e"), .agent(runId: AgentRuntime.jobPrefix + "1")] {
+            await #expect(throws: (any Error).self) { _ = try await tool.run(["theme": "Paper Garden"], context: ToolContext(caller: caller, now: Date())) }
+            #expect(settings.current.themeFolder == "/somewhere/mine")
+        }
+        _ = try await tool.run(["theme": "Paper Garden"], context: ToolContext(caller: .user, now: Date()))
+        #expect(settings.current.themeFolder == nil, "the person may")
     }
 
     @Test func howItLooksChangesOnlyToWhatIsThere() async throws {
@@ -351,6 +378,7 @@ struct ExtensionReachTests {
         _ = try await tool.run(["mode": "dark", "theme": "Paper Garden", "companion": "spark"], context: context)
         #expect(settings.current.appearance == .dark)
         #expect(settings.current.theme == "dev.sidefolk.theme.paper-garden", "by the name a person sees")
+        await settings.update { $0.theme = "harbor" }
         _ = try await tool.run(["theme": "dev.sidefolk.theme.field-notes"], context: context)
         #expect(settings.current.theme == "dev.sidefolk.theme.paper-garden", "an old id saved in a plan follows on")
         #expect(settings.current.companion == .spark)

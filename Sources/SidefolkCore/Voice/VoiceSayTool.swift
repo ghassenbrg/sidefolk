@@ -32,7 +32,7 @@ struct VoiceSayTool: Tool {
         if case .extension(let id) = context.caller {
             line = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) says: \(text)", comment: "Spoken aloud: an extension's name, then its words")
         } else if context.caller.runId?.hasPrefix(AgentRuntime.jobPrefix) == true {
-            line = String(localized: "From a job you set up: \(text)", comment: "Spoken aloud: words from a job an extension handed the companion")
+            line = String(localized: "From an extension's job: \(text)", comment: "Spoken aloud: words from a job an extension handed the companion, which doesn't know which one")
         }
         events.publish(.speak(line))
         // Whether it's heard is the voice's to say: replies off, a call, the person speaking.

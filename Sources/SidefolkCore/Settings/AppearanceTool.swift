@@ -50,8 +50,9 @@ struct AppearanceTool: Tool {
             companion = choice
         }
         let chosen = companion
-        // What the person made or followed themselves isn't an extension's to take off: there's no undo but picking it again.
-        if case .extension = context.caller {
+        // What the person made or followed themselves isn't an extension's to take off, or a job's one handed over: there's no undo but picking it again.
+        let handedOver = if case .extension = context.caller { true } else { context.caller.runId?.hasPrefix(AgentRuntime.jobPrefix) == true }
+        if handedOver {
             let current = settings.current
             if chosen != nil, current.customCompanion != nil || current.localCompanion != nil { throw ToolError.unavailable("You're wearing a companion of your own, so an extension leaves it alone.") }
             if theme != nil, current.themeFolder != nil { throw ToolError.unavailable("You're following a theme of your own, so an extension leaves it alone.") }
