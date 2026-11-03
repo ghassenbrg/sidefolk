@@ -126,7 +126,8 @@ import Testing
         let held = HeldDownload()
         let store = AddonStore(paths: g.paths, source: AddonSource(base: g.site, team: AddonStoreTests.team), downloader: held, checker: Trusting())
         let first = Task { try await store.catalog(refresh: true) }
-        while held.calls == 0 { await Task.yield() }
+        let giveUp = ContinuousClock.now + .seconds(30)
+        while held.calls == 0, ContinuousClock.now < giveUp { await Task.yield() }
         _ = try await store.catalog(refresh: true)
         held.letTheFirstGo()
         _ = try await first.value

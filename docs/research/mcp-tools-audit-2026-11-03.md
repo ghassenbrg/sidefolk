@@ -31,9 +31,9 @@ Written on `1d9f09a3`, for snapshot 1075 and after.
 **Decided: an important reminder holds its note (D160).** An agent's `reminders.cancel`, `complete`, `snooze` and `update`
 never touched an important reminder, but `notes_update` marking the task done and `notes_trash` could still end one: on Ask,
 after a card that says "Change a note (mark done)" or "Move a note to the Trash" and not the reminder; on Allow, the default, with
-no card. Both now refuse for another agent, card or no card, decided with the coordinator on the founder's standing instruction
+no card. Both now refuse for another agent, card or no card, and so does a new title, which a reminder carrying its note's title would follow, decided with the coordinator on the founder's standing instruction
 of 2026-11-03, the stricter of the two options. **For the founder to check when back:** whether a card naming the reminder
-would suit better, and extensions, which aren't held, so a plan the person read can still do this.
+would suit better, and extensions, which aren't held, on a card or on a plan the person read.
 
 **`media` and contained: closed.** The gap was `isContained` ignoring `media`, which D141 calls a way out. `79caa352` (T44)
 fixed it, with `mediaIsntContained`, and `ExtensionHost+Actions` reads `isContained` when a plan is approved and again when a step
@@ -60,7 +60,7 @@ through `history.recent`; only words shaped like an address are left out, by sha
 - What a turn costs (above): the five largest descriptions are the first place to look, only if it matters.
 
 **Add-on downloads share a folder by id.** The catalog's fetch raced itself (fixed: launch, the updater and the gallery could each
-pull another's folder away, and in a home with no catalog yet that showed as an error). `AddonStore.download` and the seed copy
+pull another's folder away, and in a home with no catalog yet that showed as an error). What's left of that: the fetch that ends last wins, so a slower one can put back a list a moment older, until the next refresh, at most 30 minutes. `AddonStore.download` and the seed copy
 still use `Downloads/<id>`, so two fetches of one pack at once could do the same. Not reproduced. The fix is the same, a folder per
 fetch, except that `fetch` hands back a folder inside it and `discard` finds it by id, so it needs a little more care.
 

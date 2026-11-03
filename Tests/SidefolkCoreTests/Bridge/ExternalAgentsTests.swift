@@ -780,8 +780,8 @@ import Testing
         await s.stop()
     }
 
-    /// `notes_update` and `notes_trash` end a note's reminders too, so an important one holds them back as well: on Allow with
-    /// no card, on Ask after a yes, and whoever set the note. The person, and a note with no important reminder, aren't held.
+    /// `notes_update` and `notes_trash` end a note's reminders too, and a new title rewords them, so an important one holds them
+    /// back as well: on Allow with no card, and on Ask after a yes. The person, and a note with no important reminder, aren't held.
     @Test func anImportantReminderHoldsItsNoteToo() async throws {
         let s = try await Stack()
         func task(_ title: String, kind: JSONValue = "task") async throws -> String {
@@ -807,16 +807,23 @@ import Testing
         try await holds()
 
         await s.runtime.settings.update { $0.agentAccess.change = .ask }
-        let yes = s.answerNextCard(.allowOnce)
-        let afterYes = try await s.call("notes_trash", ["id": .string(held)])
-        yes.cancel()
-        #expect(afterYes.isError && afterYes.text.contains("marked important"), "\(afterYes.text)")
-        try await holds()
+        for (tool, input) in [("notes_trash", ["id": JSONValue.string(held)]), ("notes_update", ["id": .string(held), "status": "done"]), ("notes_update", ["id": .string(held), "text": "Skip the pill"])] {
+            let yes = s.answerNextCard(.allowOnce)
+            let afterYes = try await s.call(tool, .object(input))
+            yes.cancel()
+            #expect(afterYes.isError && afterYes.text.contains("marked important"), "\(tool): \(afterYes.text)")
+            try await holds()
+        }
         await s.runtime.settings.update { $0.agentAccess.change = .allow }
 
-        // The rest of a change still works.
+        // A new title would reword it; the rest of a change still works.
+        let renamed = try await s.call("notes_update", ["id": .string(held), "text": "Skip the pill"])
+        #expect(renamed.isError && renamed.text.contains("marked important"), "\(renamed.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.title == "Pill now")
         let words = try await s.call("notes_update", ["id": .string(held), "append": "With water"])
         #expect(!words.isError, "\(words.text)")
+        let sameTitle = try await s.call("notes_update", ["id": .string(held), "text": "Take the pill\nWith water and food"])
+        #expect(!sameTitle.isError, "\(sameTitle.text)")
         try await holds()
 
         // An ordinary reminder holds nothing, and one that has ended holds nothing.
