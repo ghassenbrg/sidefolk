@@ -417,7 +417,7 @@ private struct FrostOfferRow: View {
             .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s + 1)
             .background(.black.opacity(hovering ? 0.14 : 0))
             // A darker row barely shows on a dark frost, so an edge says it too, and leaves the words' contrast alone.
-            .overlay { Rectangle().strokeBorder(.white.opacity(hovering ? 0.28 : 0), lineWidth: 1) }
+            .overlay { Rectangle().strokeBorder(.white.opacity(hovering ? 0.5 : 0), lineWidth: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.sfBare)

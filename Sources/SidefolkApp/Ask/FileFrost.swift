@@ -32,8 +32,11 @@ nonisolated struct FileFrost: @unchecked Sendable {
         if let path, let preset = await MainActor.run(body: { Self.preset[path] }) { return preset }
         var picture: NSImage?
         if let real = path.flatMap(showable) { picture = await thumbnail(of: URL(fileURLWithPath: real)) }
-        let shown = picture
-        return await Task.detached(priority: .userInitiated) { make(picture: shown, icon: icon) }.value
+        // Drawn by the same service: a crafted PDF can take minutes to draw, and there it costs a process that's cut off, not Sidefolk.
+        var ownIcon: NSImage?
+        if let icon { ownIcon = await thumbnail(of: URL(fileURLWithPath: icon)) }
+        let shown = picture, iconShown = ownIcon
+        return await Task.detached(priority: .userInitiated) { make(picture: shown, icon: iconShown) }.value
     }
 
     /// A plain file Guard wouldn't keep from anyone: never a picture of what's behind a link, or of a private place.
@@ -44,12 +47,18 @@ nonisolated struct FileFrost: @unchecked Sendable {
         return real
     }
 
-    static func make(picture: NSImage?, icon: String?) -> FileFrost {
-        if let picture, let frosted = blurred(picture, saturation: 1.15), let pixels = samples(frosted), FrostMeasure.hasColour(pixels) {
-            return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: picture)
+    /// Two questions: is there a picture worth showing on the sheet, and is its colour enough to frost a card with? A dull photo answers
+    /// yes and no: it keeps its place on the sheet, on a frost from the icon.
+    static func make(picture: NSImage?, icon: NSImage?) -> FileFrost {
+        let worthShowing = picture.flatMap(samples).map { FrostMeasure.chroma($0) >= FrostMeasure.minimumPictureChroma } == true
+        let shown = worthShowing ? picture : nil
+        if let shown, let frosted = blurred(shown, saturation: 1.15), let pixels = samples(frosted), FrostMeasure.hasColour(pixels) {
+            return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: shown)
         }
-        guard let icon, let image = NSImage(contentsOfFile: icon), let frosted = blurred(image, saturation: 0.55), let pixels = samples(frosted) else { return plain }
-        return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: nil)
+        guard let icon, let frosted = blurred(icon, saturation: 0.55), let pixels = samples(frosted) else {
+            return FileFrost(frost: plain.frost, scrim: plain.scrim, picture: shown)
+        }
+        return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: shown)
     }
 
     private static func thumbnail(of url: URL) async -> NSImage? {

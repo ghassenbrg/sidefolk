@@ -301,7 +301,8 @@ import Testing
         #expect(try !valid(tools: tools, drops: drops(["tag": "O K"])), "not one word")
         #expect(try !valid(tools: tools, drops: drops(["tag": "SAFE"])), "a word, not a format")
         #expect(try !valid(tools: tools, drops: drops(["tag": "jpeg"])), "in capitals")
-        for format in ["JPEG", "PNG", "HEIC", "M4A", "FLAC", "CSV", "JSON", "ZIP", "7Z", "PDF", "TAR"] { #expect(ExtensionAbilityRules.isFormatName(format), "\(format)") }
+        for format in ["JPEG", "PNG", "HEIC", "AVIF", "TIFF", "GIF", "PDF", "M4A", "FLAC", "WAV", "AIFF", "OPUS", "CSV", "TSV", "JSON", "PLIST", "ZIP", "7Z", "TAR", "TAR.GZ"] { #expect(ExtensionAbilityRules.isFormatName(format), "\(format)") }
+        for word in ["SAFE", "OK", "YES", "PASS", "TRUST", "SIGNED", "VERIFY", "PATCH", "GUIDE", "AGENT", "TOOL"] { #expect(!ExtensionAbilityRules.isFormatName(word), "\(word)") }
         #expect(try !valid(tools: tools, drops: drops(["mark": "../icon.png"])), "out of its pack")
     }
 

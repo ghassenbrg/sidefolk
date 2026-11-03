@@ -8,6 +8,8 @@ public enum FrostMeasure {
     /// What's left of a picture's colour once the scrim is over it. Below this it's grey mud on the card, whatever it was before: white
     /// pages, screenshots and pale tints, but also stripes and a dark photo with one bright spot, whose scrim is heavy.
     public static let minimumShownChroma = 0.10
+    /// Below this, a thumbnail is a page of text or a blank document, not a picture worth showing on the file's sheet.
+    public static let minimumPictureChroma = 0.06
     /// For white. It keeps the softer detail text, white at 92%, above 4.5:1 on the brightest part.
     public static let contrast = 5.6
 

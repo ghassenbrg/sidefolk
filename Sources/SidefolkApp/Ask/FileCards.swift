@@ -143,7 +143,7 @@ struct FileReceiptCard: View {
 /// A button's own fill can match a frost, so on one it gets an edge of its own.
 private extension View {
     func frostEdge() -> some View {
-        overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(.white.opacity(0.28), lineWidth: 1).allowsHitTesting(false))
+        overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(.white.opacity(0.5), lineWidth: 1).allowsHitTesting(false))
     }
 }
 
@@ -158,7 +158,7 @@ private struct FrostPlainButton: View {
             Text(title).font(Theme.Font.bodyStrong).foregroundStyle(FrostInk.text)
                 .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
                 .overlay {
-                    RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(.white.opacity(hovering ? 0.28 : 0), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(.white.opacity(hovering ? 0.5 : 0), lineWidth: 1)
                 }
                 .contentShape(Rectangle())
         }
