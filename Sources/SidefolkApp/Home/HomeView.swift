@@ -187,7 +187,8 @@ struct HomeView: View {
                 if info.needsAnUpdate {
                     ExtensionNeedsUpdateView(info: info, updates: model.services.updates)
                 } else {
-                    ExtensionPageView(model: model.pages.model(info))
+                    // Its own part for each page: what was typed on one must never carry to another extension's field of the same name.
+                    ExtensionPageView(model: model.pages.model(info)).id(info.id)
                 }
             } else {
                 Theme.surfaceSunken

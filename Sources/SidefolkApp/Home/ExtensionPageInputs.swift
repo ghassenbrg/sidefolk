@@ -226,7 +226,7 @@ private struct PageListCard: View {
         VStack(spacing: 0) {
             ForEach(Array(list.rows.enumerated()), id: \.offset) { i, row in
                 if i > 0, !row.selected, !list.rows[i - 1].selected { Rectangle().fill(Theme.line).frame(height: pixel * 2) }
-                PageListRow(row: row, model: model, pressed: { keys.armed = true }).padding(.vertical, row.press == nil ? 6 : 0).id(i)
+                PageListRow(row: row, model: model, pressed: { keys.arm() }).padding(.vertical, row.press == nil ? 6 : 0).id(i)
             }
         }
     }
@@ -281,20 +281,24 @@ private struct PageListCard: View {
 @MainActor
 private final class PageListKeys {
     var list: ExtensionPage.List?
-    var armed = false
+    /// The window the row was clicked in: a key pressed anywhere else, such as a panel that opened since, isn't for this list.
+    private weak var armed: NSWindow?
     private var monitor: Any?
+
+    func arm() { armed = NSApp.keyWindow }
 
     func start(_ model: ExtensionPageModel) {
         guard monitor == nil else { return }
-        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown]) { [weak self, weak model] event in
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self, weak model] event in
             guard let self else { return event }
-            if event.type == .leftMouseDown {
+            if event.type != .keyDown {
                 // The row's own click arms it again when it lands, after this.
-                self.armed = false
+                self.armed = nil
                 return event
             }
             let delta = event.keyCode == 125 ? 1 : event.keyCode == 126 ? -1 : 0
-            guard self.armed, delta != 0, let window = event.window, window.isKeyWindow, !(window.firstResponder is NSText),
+            guard delta != 0, let window = event.window, window === self.armed, !(window.firstResponder is NSText),
+                  event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
                   let rows = self.list?.rows, let at = rows.firstIndex(where: \.selected), rows.indices.contains(at + delta), let press = rows[at + delta].press else { return event }
             Task { await model?.run(press, on: nil) }
             return nil
@@ -304,6 +308,7 @@ private final class PageListKeys {
     func stop() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
+        armed = nil
     }
 }
 
