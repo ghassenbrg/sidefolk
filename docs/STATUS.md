@@ -75,7 +75,6 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
   - **Here:** saving beside the file the person gave (D140), file drops with a menu and several files (D141), Open, Show and Undo on a saved file (D142), Finder's Send to Sidefolk (D151). Sound under `media` is D143.
   - **Half done, local branches only:** the extension itself (add-ons `team/formatic`, in the gallery only after an app release carries these), its look (D150, `team/formatic-design` is the reference, after the themes work), the ring (D152: the founder's test passed, no go to build), and `team/sandbox-names` (failed its review once, fixed, needs another).
   - **Next:** another review of `team/sandbox-names`, then the extension to the gallery, then D150.
-  - **Open for the founder:** whether the card's "It can't use the internet" becomes "It can't go online by itself".
   - **Not verified:** the Service from a real Finder, including a cold launch; a real drag from Finder; Open, Show and Undo by real clicks. Checked by the suite and the debug app: every format through the real sandbox, a drop and a card choice by command. Drop menu titles can't be translated yet.
 
 ## Next

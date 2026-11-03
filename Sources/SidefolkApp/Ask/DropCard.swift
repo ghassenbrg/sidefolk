@@ -277,8 +277,8 @@ private struct FileOfferCard: View {
                     }
                 } else {
                     switch (many, offer.canSendAway) {
-                    case (false, false): Text("\(who) reads this file only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name")
-                    case (true, false): Text("\(who) reads these \(count) files only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
+                    case (false, false): Text("\(who) reads this file only if you choose below, and only this once. It can't go online by itself.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                    case (true, false): Text("\(who) reads these \(count) files only if you choose below, and only this once. It can't go online by itself.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
                     case (false, true): Text("\(who) reads this file only if you choose below. It can use the internet, so it could send the file anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name")
                     case (true, true): Text("\(who) reads these \(count) files only if you choose below. It can use the internet, so it could send them anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
                     }

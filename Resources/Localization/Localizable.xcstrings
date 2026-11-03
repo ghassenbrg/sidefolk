@@ -10047,67 +10047,67 @@
         }
       }
     },
-    "%@ reads these %lld files only if you choose below, and only this once. It can't use the internet." : {
+    "%@ reads these %lld files only if you choose below, and only this once. It can't go online by itself." : {
       "comment" : "The drop card, Sidefolk's own words: an extension's name and a count",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا تقرأ %@ هذه الملفات الـ %lld إلا إذا اخترت ذلك أدناه، ولمرة واحدة فقط. لا يمكنها استخدام الإنترنت."
+            "value" : "لا تقرأ %@ هذه الملفات الـ %lld إلا إذا اخترت ذلك أدناه، ولمرة واحدة فقط. لا يمكنها الاتصال بالإنترنت بمفردها."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ liest diese %lld Dateien nur, wenn du unten zustimmst, und nur dieses eine Mal. Es kann das Internet nicht nutzen."
+            "value" : "%@ liest diese %lld Dateien nur, wenn du unten zustimmst, und nur dieses eine Mal. Es kann nicht von selbst online gehen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ reads these %2$lld files only if you choose below, and only this once. It can't use the internet."
+            "value" : "%1$@ reads these %2$lld files only if you choose below, and only this once. It can't go online by itself."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ lee estos %lld archivos solo si lo eliges abajo, y solo esta vez. No puede usar internet."
+            "value" : "%@ lee estos %lld archivos solo si lo eliges abajo, y solo esta vez. No puede conectarse a internet por sí solo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ lit ces %lld fichiers seulement si vous le choisissez ci-dessous, et cette fois seulement. Il ne peut pas utiliser Internet."
+            "value" : "%@ lit ces %lld fichiers seulement si vous le choisissez ci-dessous, et cette fois seulement. Il ne peut pas aller en ligne par lui-même."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ legge questi %lld file solo se lo scegli qui sotto, e solo questa volta. Non può usare internet."
+            "value" : "%@ legge questi %lld file solo se lo scegli qui sotto, e solo questa volta. Non può andare online da solo."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@は、下で選んだときだけ、この1回だけ、この%lld個のファイルを読みます。インターネットは使えません。"
+            "value" : "%@は、下で選んだときだけ、この1回だけ、この%lld個のファイルを読みます。単独ではオンラインに接続できません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@은(는) 아래에서 선택할 때만, 이번 한 번만 이 파일 %lld개를 읽어요. 인터넷을 사용할 수 없어요."
+            "value" : "%@은(는) 아래에서 선택할 때만, 이번 한 번만 이 파일 %lld개를 읽어요. 혼자서는 온라인에 연결할 수 없어요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ lê estes %lld arquivos só se você escolher abaixo, e só desta vez. Ele não pode usar a internet."
+            "value" : "%@ lê estes %lld arquivos só se você escolher abaixo, e só desta vez. Ele não pode ficar on-line por conta própria."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "仅当你在下方选择时，%@ 才会读取这 %lld 个文件，而且只此一次。它无法访问互联网。"
+            "value" : "仅当你在下方选择时，%@ 才会读取这 %lld 个文件，而且只此一次。它无法自行联网。"
           }
         }
       }
@@ -10242,61 +10242,61 @@
         }
       }
     },
-    "%@ reads this file only if you choose below, and only this once. It can't use the internet." : {
+    "%@ reads this file only if you choose below, and only this once. It can't go online by itself." : {
       "comment" : "The drop card, Sidefolk's own words: an extension's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا تقرأ %@ هذا الملف إلا إذا اخترت ذلك أدناه، ولمرة واحدة فقط. لا يمكنها استخدام الإنترنت."
+            "value" : "لا تقرأ %@ هذا الملف إلا إذا اخترت ذلك أدناه، ولمرة واحدة فقط. لا يمكنها الاتصال بالإنترنت بمفردها."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ liest diese Datei nur, wenn du unten zustimmst, und nur dieses eine Mal. Es kann das Internet nicht nutzen."
+            "value" : "%@ liest diese Datei nur, wenn du unten zustimmst, und nur dieses eine Mal. Es kann nicht von selbst online gehen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ lee este archivo solo si lo eliges abajo, y solo esta vez. No puede usar internet."
+            "value" : "%@ lee este archivo solo si lo eliges abajo, y solo esta vez. No puede conectarse a internet por sí solo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ lit ce fichier seulement si vous le choisissez ci-dessous, et cette fois seulement. Il ne peut pas utiliser Internet."
+            "value" : "%@ lit ce fichier seulement si vous le choisissez ci-dessous, et cette fois seulement. Il ne peut pas aller en ligne par lui-même."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ legge questo file solo se lo scegli qui sotto, e solo questa volta. Non può usare internet."
+            "value" : "%@ legge questo file solo se lo scegli qui sotto, e solo questa volta. Non può andare online da solo."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@は、下で選んだときだけ、この1回だけ、このファイルを読みます。インターネットは使えません。"
+            "value" : "%@は、下で選んだときだけ、この1回だけ、このファイルを読みます。単独ではオンラインに接続できません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@은(는) 아래에서 선택할 때만, 이번 한 번만 이 파일을 읽어요. 인터넷을 사용할 수 없어요."
+            "value" : "%@은(는) 아래에서 선택할 때만, 이번 한 번만 이 파일을 읽어요. 혼자서는 온라인에 연결할 수 없어요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ lê este arquivo só se você escolher abaixo, e só desta vez. Ele não pode usar a internet."
+            "value" : "%@ lê este arquivo só se você escolher abaixo, e só desta vez. Ele não pode ficar on-line por conta própria."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "仅当你在下方选择时，%@ 才会读取这个文件，而且只此一次。它无法访问互联网。"
+            "value" : "仅当你在下方选择时，%@ 才会读取这个文件，而且只此一次。它无法自行联网。"
           }
         }
       }

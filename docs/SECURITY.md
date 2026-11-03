@@ -985,7 +985,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 - **`media` keeps the certificate service.** Writing HEIC or AVIF needs it (the encoder's signature is checked), and it can fetch from an address a certificate names, so data can leave that way. Those extensions show a warning instead of the promise.
 - **`ai` and `place` carry words out through Sidefolk,** by design: up to 8,000 characters to the person's AI, and 80 to the place search. Sidefolk warns about both on the drop card.
-- **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave.
+- **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave. That's why the drop card says an extension can't go online *by itself*.
 - **Anything can read** other same-user processes' command lines, the Mac's serial number and its MAC addresses. An extension with `network` could send those.
 - **File names:** a lookup by inode number resolves names under `/Users`, though not inside another extension's data folder or the contents of any file.
 
