@@ -137,7 +137,8 @@ struct ExtensionPageTests {
         // Read inside the sandbox: other apps' use, the disk's free space and the chip all came through.
         let all = page.sections.flatMap(\.blocks)
         let bars = all.compactMap { if case .bars(let b) = $0 { b } else { nil } }
-        #expect(bars.first?.items.isEmpty == false, "apps' use")
+        // Other apps' memory came through. Processor bars can be empty on a quiet Mac's first reading.
+        if !page.bare { #expect(bars.first { $0.title == "Memory" }?.items.isEmpty == false, "apps' memory") }
         let disk: String? = all.compactMap {
             switch $0 {
             case .metric(let m) where m.label == "Storage": m.value
@@ -154,6 +155,12 @@ struct ExtensionPageTests {
         let kept = await h.host.pageHistory.points(extensionId: info.id, page: "mac", key: "cpu/total", window: 600, now: Date())
         #expect(kept.count == 1)
         #expect(await h.host.latestPage(extensionId: info.id, page: "mac") != nil)
+        if page.bare {
+            // Its Top apps by memory, read after the history above, which every reading adds to.
+            let byMemory = try await h.host.renderPage(extensionId: info.id, page: "mac", state: ["apps": "memory"])
+            let apps = byMemory.sections.first { $0.title == "Top apps" }?.blocks.compactMap { if case .bars(let b) = $0 { b } else { nil } }.first
+            #expect(apps?.items.isEmpty == false, "apps' memory")
+        }
 
         // Its answers and heads-ups come from the same readings.
         let health = try #require(await h.call("ext.system-vitals-plus.health").okText)
