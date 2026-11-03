@@ -102,6 +102,35 @@ import Testing
         #expect(!SandboxProfile.baseRules.contains("notification_center"))
     }
 
+    /// Inside the checkout, the one folder under /Users a test may use: nothing here touches the person's own files.
+    @Test(.enabled(if: #filePath.hasPrefix("/Users/"), "needs a checkout under /Users"))
+    func peoplesFoldersAreClosedButTheWayDownToWhatItWasGiven() throws {
+        let checkout = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let root = checkout.appendingPathComponent(".build/sandbox-names-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let mine = root.appendingPathComponent("data/me"), other = root.appendingPathComponent("elsewhere")
+        for folder in [mine, other] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+        let theirs = other.appendingPathComponent("file"), own = mine.appendingPathComponent("file")
+        for file in [theirs, own] { try Data("x".utf8).write(to: file) }
+        func runs(_ program: String, _ arguments: String...) throws -> Bool {
+            let profile = try SandboxProfile.make(.init(extensionDir: (program as NSString).deletingLastPathComponent, dataDir: mine.path, executable: program,
+                                                        permissions: ExtensionPermissions()))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
+            process.arguments = ["-p", profile.text] + profile.arguments + [program] + arguments
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        }
+        #expect(try runs("/usr/bin/stat", own.path))
+        #expect(try runs("/bin/test", "-e", root.appendingPathComponent("data").path), "the way down")
+        #expect(try !runs("/usr/bin/stat", theirs.path))
+        #expect(try !runs("/bin/test", "-e", theirs.path))
+        #expect(try !runs("/bin/test", "-e", checkout.appendingPathComponent("Package.swift").path))
+    }
+
     @Test func anotherExtensionsDataCantEvenBeSeen() throws {
         let root = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                appropriateFor: FileManager.default.temporaryDirectory, create: true)

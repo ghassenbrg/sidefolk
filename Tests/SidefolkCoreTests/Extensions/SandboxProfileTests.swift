@@ -49,12 +49,20 @@ import Testing
         (allow mach-lookup
           (global-name (param "MACH_0")))
 
-        """ + SandboxProfile.networkRules)
+        """ + SandboxProfile.networkRules + """
+
+        ;; what it was given, and the folders above that, by name only
+        (allow file-read-metadata file-test-existence
+          (literal (param "WAY_0"))
+          (literal (param "WAY_1")))
+
+        """)
 
         #expect(profile.arguments == [
             "-D", "RT_0=/usr/lib", "-D", "EXT_DIR=\(ext)", "-D", "DATA_DIR=\(data)", "-D", "READ_0=\(docs)",
             "-D", "WRITE_0=\(notes)", "-D", "RUN_EXEC=/bin/sh", "-D", "RUN_EXEC_2=/bin/bash",
             "-D", "EXEC_0=/usr/bin/pmset", "-D", "EXEC_1=/usr/bin/true", "-D", "MACH_0=com.apple.PowerManagement.control",
+            "-D", "WAY_0=/Users", "-D", "WAY_1=\(NSHomeDirectory())",
         ])
     }
 
@@ -66,7 +74,7 @@ import Testing
         for absent in ["RT_", "READ_", "WRITE_", "EXEC_0", "RUN_EXEC_2", "MACH_", "network-outbound", "system-socket", "process-fork"] {
             #expect(!profile.text.contains(absent), "\(absent)")
         }
-        #expect(profile.parameters.map(\.key) == ["EXT_DIR", "DATA_DIR", "RUN_EXEC"])
+        #expect(profile.parameters.map(\.key) == ["EXT_DIR", "DATA_DIR", "RUN_EXEC", "WAY_0", "WAY_1"])
         // A shell may be allowed to fork for pipelines without listing any program.
         let shell = try SandboxProfile.make(.init(extensionDir: root.path, dataDir: root.path, executable: "/bin/sh",
                                                   permissions: ExtensionPermissions(), allowFork: true))

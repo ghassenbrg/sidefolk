@@ -137,6 +137,20 @@ public struct SandboxProfile: Sendable, Hashable {
         if inputs.permissions.network && inputs.permissions.udp {
             sb += udpRules
         }
+        // People's folders are denied in the base rules, and a `file-read*` doesn't undo that (measured), so what it was given
+        // opens by name here. Above each of those, only the folder itself: the way down, and no further.
+        var ways: Set<String> = ["/Users", NSHomeDirectory()]
+        let given = params.filter { $0.key != "ALL_DATA" && $0.value.hasPrefix("/Users/") }
+        for path in params.map(\.value) where path.hasPrefix("/Users/") {
+            var up = (path as NSString).deletingLastPathComponent
+            while up != "/" {
+                ways.insert(up)
+                up = (up as NSString).deletingLastPathComponent
+            }
+        }
+        sb += "\n;; what it was given, and the folders above that, by name only\n(allow file-read-metadata file-test-existence\n"
+        sb += given.map { "  (subpath (param \"\($0.key)\"))" }.joined(separator: "\n") + (given.isEmpty ? "" : "\n")
+        sb += ways.sorted().enumerated().map { "  (literal \(add("WAY_\($0.offset)", $0.element)))" }.joined(separator: "\n") + ")\n"
         return SandboxProfile(text: sb, parameters: params)
     }
 
@@ -158,6 +172,8 @@ public struct SandboxProfile: Sendable, Hashable {
 
     ;; what dyld, libSystem and interpreters need
     (allow file-read-metadata)
+    ;; nothing in people's folders can be seen by name or looked up by a file's number (fsgetpath); what it's given opens below
+    (deny file-read-metadata file-test-existence (subpath "/Users"))
     (allow file-read*
       (literal "/")
       (subpath "/usr/lib") (subpath "/usr/share") (subpath "/System") (subpath "/Library/Apple")
