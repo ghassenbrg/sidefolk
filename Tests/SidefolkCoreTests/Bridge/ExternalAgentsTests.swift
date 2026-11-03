@@ -64,9 +64,9 @@ import Testing
         let tools = list["result"]?["tools"]?.arrayValue ?? []
         let byName = Dictionary(uniqueKeysWithValues: tools.compactMap { t in t.string("name").map { ($0, t) } })
         #expect(Set(byName.keys) == Set((ExternalToolPolicy.all).map { $0.replacingOccurrences(of: ".", with: "_") }))
-        // Words written for other agents: they can't create collections, set critical alerts or read web values.
+        // Words written for other agents: making a collection asks, and they can't set critical alerts or read web values.
         let save = try #require(byName["notes_save"])
-        #expect(save.string("description")?.contains("can't create collections") == true)
+        #expect(save.string("description")?.contains("collections_create, which asks") == true)
         #expect(save["inputSchema"]?["properties"]?["collection_kind"] == nil)
         #expect(byName["reminders_create"]?["inputSchema"]?["properties"]?["level"]?["enum"] == ["gentle", "attention"])
         #expect(byName["watch_report"]?["inputSchema"]?["properties"]?["source"]?["enum"] == ["metric"])

@@ -74,19 +74,19 @@ extension ExternalToolPolicy {
 
     /// Add or arrange without taking anything away.
     private static let adding: Set<String> = [
-        "notify.user", "ask.user", "notes.save", "notes.restore", "notes.arrange", "reminders.create", "reminders.update", "reminders.snooze",
+        "notify.user", "ask.user", "notes.save", "notes.restore", "notes.arrange", "collections.create", "reminders.create", "reminders.update", "reminders.snooze",
         "reminders.complete", "watch.create", "watch.report",
         "watch.pause", "watch.resume", "watch.update", "watch.reorder", "watch.more_room",
     ]
     /// Calling again with the same words changes nothing more.
-    private static let sameAgain: Set<String> = ["notes.arrange", "notes.trash", "notes.restore", "reminders.cancel", "reminders.complete", "reminders.snooze", "reminders.update", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
+    private static let sameAgain: Set<String> = ["collections.create", "notes.arrange", "notes.trash", "notes.restore", "reminders.cancel", "reminders.complete", "reminders.snooze", "reminders.update", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
 
     static let descriptions: [String: String] = [
         "notes.save": """
             Save a note, idea, task or link in the user's Sidefolk notebook. The first line of `text` becomes the title, \
             the rest the body. It goes to the Inbox unless `collection` names one of the user's existing projects, topics or \
-            lists; other agents can't create collections, so when the name isn't found, save to the Inbox or ask the user to \
-            create it. Use kind task for to-dos and list items. Give `remind` a time when the user wants to be reminded about \
+            lists (collections_list says which); when the name isn't found, save to the Inbox, or make it with \
+            collections_create, which asks the user. Use kind task for to-dos and list items. Give `remind` a time when the user wants to be reminded about \
             it too: the reminder belongs to the note and stops when the task is done. Notes you save are tagged with your \
             name. The body may use simple Markdown (**bold**, *italic*, `## headings`, `- ` lists, `- [ ] ` checklists, links), \
             which the notebook shows formatted. Never save passwords, API keys, tokens or other secrets.
@@ -136,7 +136,7 @@ extension ExternalToolPolicy {
             """,
         "notes.collection": """
             Change one of the user's projects, topics or lists: its name, its icon (emoji, or symbol from the app's set) or its \
-            color (a name like blue, or #RRGGBB). You can't create one, or rename the Inbox or About you.
+            color (a name like blue, or #RRGGBB). To make one, collections_create. You can't rename the Inbox or About you.
             """,
         "notes.arrange": "Put the user's projects, topics and lists in this order, each by name. The Inbox stays first; any not named follow.",
         "watch.stop": "Stop one of your watchers or live values, by its id (or its title).",

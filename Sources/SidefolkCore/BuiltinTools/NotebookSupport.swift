@@ -53,7 +53,7 @@ public enum NotebookCollections {
         if isInboxName(name) { return (try await notebook.inbox(now: context.now), false) }
         if isProfileName(name) { throw profileRefusal }
         guard mayCreate(context.caller) else {
-            guard let found = try await resolve(name, notebook: notebook) else { throw creationRefusal(name) }
+            guard let found = try await resolve(name, notebook: notebook) else { throw creationRefusal(name, caller: context.caller) }
             return (found, false)
         }
         let (collection, created) = try await notebook.collection(named: name, kind: kind, excluding: [.profile],
@@ -70,7 +70,7 @@ public enum NotebookCollections {
             throw UserFacingError("“Inbox” is always there: it's where notes go when no collection is named.")
         }
         // Another agent, only on the person's yes on a card (D160); `notes.save` never makes one for it.
-        guard mayCreate(context.caller) || context.personWasAsked else { throw creationRefusal(clean) }
+        guard mayCreate(context.caller) || context.personWasAsked else { throw creationRefusal(clean, caller: context.caller) }
         return try await notebook.createCollection(name: clean, kind: kind, source: context.provenanceTag, now: context.now)
     }
 
@@ -79,8 +79,12 @@ public enum NotebookCollections {
     static func mayCreate(_ caller: Caller) -> Bool { caller.kind != "external" && caller.kind != "extension" }
 
     /// The way out is in the message itself: the agent that has to act on it reads the message, not the recovery.
-    static func creationRefusal(_ name: String) -> UserFacingError {
-        UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one. Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
+    static func creationRefusal(_ name: String, caller: Caller) -> UserFacingError {
+        // Another agent has a way to ask (D160), in English like everything written for it.
+        if case .external = caller {
+            return UserFacingError(verbatim: "There's no collection called “\(name.trimmedText.clipped(60))”, and saving a note doesn't make one. Save it without a collection (it goes to the Inbox), or make it with collections_create, which asks the user.")
+        }
+        return UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one. Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
     }
 
     /// The name people see: the Inbox and “About you” in the app's language, any other as it was named.
