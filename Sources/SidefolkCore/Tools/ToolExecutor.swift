@@ -317,7 +317,8 @@ public final class ToolExecutor: Sendable {
                 act.error = "\(tool.spec.title) reported a problem"
                 await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: result.text.clipped(300))
             } else if !tool.leavesNoRow(for: input, caller: caller) {
-                await log(tool.spec, act, caller: caller, input: input, decision: decision, outcome: result.card?.title ?? result.text.clipped(160),
+                await log(tool.spec, act, caller: caller, input: input, decision: decision,
+                          outcome: (caller.kind == "command" ? result.rowOutcome : nil) ?? result.card?.title ?? result.text.clipped(160),
                           error: nil, undoable: act.undoAvailable)
             }
             events.publish(.toolFinished(act, ok: !result.isError))

@@ -217,6 +217,8 @@ public struct ToolResult: Sendable {
     public var links: [String] = []
     /// What History says this call did, when that is better told afterwards than from its arguments (a signed extension's reply, D101).
     public var rowSummary: String?
+    /// What History keeps as the result of a command the person ran, when the card's title only names the tool (D136).
+    public var rowOutcome: String?
 
     public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text
