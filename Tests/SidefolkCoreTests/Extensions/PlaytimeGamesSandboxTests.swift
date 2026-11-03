@@ -8,6 +8,9 @@ struct PlaytimeGamesSandboxTests {
     static let games = ["daily_word", "trivia", "tictactoe", "copy_me", "quick_paws", "which_cup", "higher_lower", "guess_animal",
                         "balloon_words", "last_stick", "memory_pairs", "rock_paper_scissors", "plots", "seesaw", "sudoku", "blossoms"]
 
+    /// These test what Playtime answers, not how fast: a machine busy with other builds can take longer than the app's limit.
+    static let patientReply: TimeInterval = 30
+
     /// A move the scene offers, as a person might press.
     static func botMove(_ scene: SurfaceScene, step: Int) -> SurfaceMove? {
         if scene.after != nil { return .next }
@@ -19,13 +22,14 @@ struct PlaytimeGamesSandboxTests {
 
     @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons), arguments: ["en", "ja", "ar"])
     func everyGamesScenesRead(language: String) async throws {
-        let h = try HostEnv()
+        let h = try HostEnv { $0.surfaceReply = Self.patientReply }
         let installed = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
         let info = try #require(h.host.surfaceShelf.all.first { $0.extensionId == installed.id && $0.surface == "play" })
         #expect(info.sounds && !info.activity && info.height <= SurfaceLimits.maxHeight)
-        // The menu first: it offers every game.
+        // The menu first: it offers every game, and Surprise me.
         let (menuSession, menu) = try await h.host.openSurface(info, language: language)
-        #expect(Set(menu.areas.filter { $0.id == "open" }.compactMap(\.value)) == Set(Self.games))
+        let offered = Set(menu.areas.filter { $0.id == "open" }.compactMap(\.value))
+        #expect(offered.isSuperset(of: Self.games) && offered.subtracting(Self.games).isSubset(of: ["random"]))
         await h.host.closeSurface(info: info, session: menuSession, reason: .finished)
         var now = Date()
         for game in Self.games {
@@ -44,7 +48,7 @@ struct PlaytimeGamesSandboxTests {
     /// The desktop's coin, dice and hands: an overlay that plays what it was given, comes back when it has landed, offers Again where it should and goes by itself.
     @Test(.enabled(if: ExtFixtures.hasAddons, ExtFixtures.noAddons), arguments: ["en", "ar"])
     func theTossOverlay(language: String) async throws {
-        let h = try HostEnv()
+        let h = try HostEnv { $0.surfaceReply = Self.patientReply }
         let installed = try await h.host.install(from: ExtFixtures.builtIn("playtime"))
         let info = try #require(h.host.surfaceShelf.all.first { $0.extensionId == installed.id && $0.surface == "toss" })
         #expect(info.presentation == .overlay && !info.activity)
