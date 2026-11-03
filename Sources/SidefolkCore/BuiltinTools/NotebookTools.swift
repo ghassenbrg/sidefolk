@@ -426,6 +426,41 @@ struct NotesTrashTool: Tool {
     }
 }
 
+/// Brings a note back from the Trash by id: how a mistaken `notes.trash` is undone later. There's no listing of the
+/// Trash here: an agent restores what it already knows, and only the person sees what's in there.
+struct NotesRestoreTool: Tool {
+    let notebook: NotebookStore
+    let events: EventBus
+
+    let spec = ToolSpec(
+        name: "notes.restore", title: String(localized: "Restore a note"),
+        description: "Bring a note back from the Trash by id, where it was. Waiting reminders still ahead come back with it.",
+        inputSchema: Schema.object(["id": Schema.string("The note's id")], required: ["id"]),
+        risk: .low, capabilities: [.notebook], category: .notes, mutates: true)
+
+    func summary(for input: JSONValue) -> String { String(localized: "Restore a note") }
+
+    func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+        let id = try input.requiredText("id", limit: 64)
+        guard let item = try await notebook.item(id: id) else { throw ToolError.notFound(String(localized: "a note with that id")) }
+        guard item.deletedAt != nil else { throw UserFacingError("That note isn't in the Trash.") }
+        if try await NotebookCollections.isProfile(collectionId: item.collectionId, notebook: notebook) {
+            throw UserFacingError("That's a fact in “About you”. It can be restored from the Trash in Sidefolk.")
+        }
+        try await notebook.restore(itemId: id, now: context.now)
+        events.changed(.notebook)
+        let notebook = self.notebook, events = self.events
+        return ToolResult(
+            text: "Restored “\(item.title.clipped(80))” (id \(id)).",
+            card: ResultCard(kind: .note, title: String(localized: "Restored"), subtitle: item.title.clipped(80), refId: id, itemKind: item.kind),
+            undo: UndoAction(label: String(localized: "Moved to Trash")) {
+                _ = try await notebook.trash(itemId: id)
+                events.changed(.notebook)
+            },
+            untrusted: !ContextBuilder.isUserSourced(item.source))
+    }
+}
+
 struct CollectionsListTool: Tool {
     let notebook: NotebookStore
 

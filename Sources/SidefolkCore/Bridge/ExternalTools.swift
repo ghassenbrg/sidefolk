@@ -22,7 +22,7 @@ public enum ExternalToolPolicy {
     public static let reading: Set<String> = ["notes.search", "notes.list", "notes.get", "reminders.list", "agenda.today"]
     /// Changing the user's notes, or moving them to the Trash, where they stay restorable for 30 days.
     /// Never deleting for good: only the user empties the Trash.
-    public static let changing: Set<String> = ["notes.update", "notes.trash", "notes.arrange"]
+    public static let changing: Set<String> = ["notes.update", "notes.trash", "notes.restore", "notes.arrange"]
 
     public static var all: Set<String> { always.union(alwaysAsks).union(saving).union(reading).union(changing) }
 

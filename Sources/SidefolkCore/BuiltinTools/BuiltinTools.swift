@@ -22,6 +22,7 @@ public enum BuiltinTools {
             NotesArrangeTool(notebook: notebook, events: events),
             NotesUpdateTool(notebook: notebook, events: events, reminders: reminders),
             NotesTrashTool(notebook: notebook, events: events),
+            NotesRestoreTool(notebook: notebook, events: events),
             CollectionsListTool(notebook: notebook),
             CollectionsCreateTool(notebook: notebook, events: events),
             // About you
