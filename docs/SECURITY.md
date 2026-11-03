@@ -1161,7 +1161,7 @@ limit by limit in `ResearchModeTests`. *Residual:* a hostile page can list one l
 spell what's already in the prompt (About you, matching notes), about six bits a link. It needs no knowledge of the person.
 The budget bounds that to about nine characters per yes, then the person is asked again, and History shows the visits.
 
-**T42 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:
+**T43 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:
 - *`go`* only changes state the host keeps for that open page, 4 KB at most, and asks for another reading; nothing else happens, and nothing is in History because nothing was done.
 - *`copy`* runs `clipboard.write` as the person: the capability switch applies, History and the page show the exact words, and it hangs only on a button with a label, never a scene's area, so a command can't be planted for pasting behind nothing (T12).
 - *`file`* opens the system's panel; only then does a path exist, with a read of that one file for that one call. Other path parameters are stripped. Guard's forbidden places still hold.

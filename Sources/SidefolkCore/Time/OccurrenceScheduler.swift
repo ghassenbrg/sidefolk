@@ -1,7 +1,7 @@
 import Foundation
 
 /// One moment an extension asked Sidefolk to tell the person about (D107). The words are its author's, cleaned and clipped here, and go only
-/// to the person: nothing that builds a model's context reads attention items' words (SECURITY T42).
+/// to the person: nothing that builds a model's context reads attention items' words (SECURITY T43).
 public struct ScheduledOccurrence: Codable, Sendable, Hashable {
     public static let maxPending = 256
     public static let horizon: TimeInterval = 35 * 86400

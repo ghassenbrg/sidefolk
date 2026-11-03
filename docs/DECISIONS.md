@@ -3641,7 +3641,7 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 - **Identity is the id:** told or missed once, never again, whatever later plans say. A lower revision is refused. It lives in `KVStore`, so every wipe and export of Sidefolk's data has it.
 - **Late:** up to 2 minutes late it is still told; older is missed and silent, so waking never floods. Past `expires_at` a notice is taken back, even if it was only held. A new one of a `group` takes the last one's place.
 - **Off** means off at the moment of telling too: disabled, resting, failed its check on disk, the yes taken back. Removal forgets everything, its numbering too.
-- **Whose words:** the title is the extension's, so its name always goes in the body, on the desktop and in macOS. None of it reaches a model (T42).
+- **Whose words:** the title is the extension's, so its name always goes in the body, on the desktop and in macOS. None of it reaches a model (T43).
 - **`system_fallback`:** handed to macOS at quit (reminders first, at most 20, none from a source the person keeps off the desktop) and noted, so the next launch doesn't say it again. A click on one opens nothing: Sidefolk wasn't running.
 - **Changing T24, for the founder to look at:** these notices skip the 90-second spacing, as reminders do, and keep the budgets: at a prayer's time, after someone else's card, spacing would make it wrong. With `system_fallback` they reach macOS while the person is away from the keyboard, where anything else waits for their return; never in Quiet. The person's ceilings, Focus and Quiet hold on every road.
 
