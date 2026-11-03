@@ -79,19 +79,23 @@ public enum NotebookCollections {
     /// that look the same (a Cyrillic "Іnbox") aren't caught: a card shows them, and they're an accepted residual (D160).
     static func asItReads(_ name: String) -> String {
         let seen = String(String.UnicodeScalarView(cleanName(name, limit: .max).precomposedStringWithCompatibilityMapping.unicodeScalars.filter { !$0.properties.isDefaultIgnorableCodePoint }))
-        return seen.displaySafe.lowercased()
+        return seen.displaySafe.folding(options: [.caseInsensitive, .widthInsensitive], locale: nil)
     }
 
-    /// A collection's name with only what shows: no format, private or unassigned characters and none that draw nothing. What
-    /// the card says is then what's kept, and a twin can't hide behind a character the check doesn't know.
+    /// A collection's name with only what shows: what the card says is then what's kept, and a twin can't hide behind a
+    /// character the check doesn't know. An emoji keeps its variation selector; nothing else that draws nothing stays.
     static func cleanName(_ name: String, limit: Int = 60) -> String {
-        let shown = name.displaySafe.unicodeScalars.filter { scalar in
+        var shown = String.UnicodeScalarView()
+        for scalar in name.displaySafe.precomposedStringWithCanonicalMapping.unicodeScalars {
             switch scalar.properties.generalCategory {
-            case .format, .control, .privateUse, .surrogate, .unassigned, .lineSeparator, .paragraphSeparator: false
-            default: scalar.value != 0x2800 && scalar.value != 0xFFFC
+            case .format, .control, .privateUse, .surrogate, .unassigned, .lineSeparator, .paragraphSeparator: continue
+            default: break
             }
+            if scalar.value == 0x2800 || scalar.value == 0xFFFC { continue }
+            if scalar.properties.isDefaultIgnorableCodePoint, !(scalar.value == 0xFE0F && shown.last?.properties.isEmoji == true) { continue }
+            shown.append(scalar)
         }
-        return String(String.UnicodeScalarView(shown)).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ").clipped(limit)
+        return String(shown).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ").clipped(limit)
     }
 
     /// Another collection that reads the same as this name, whichever way it's spelled.

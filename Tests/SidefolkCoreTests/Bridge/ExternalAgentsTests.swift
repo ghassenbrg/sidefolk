@@ -264,7 +264,7 @@ import Testing
     @Test func aNameCantHideAnythingFromTheCard() async throws {
         let s = try await Stack()
         for twin in ["About you\u{200E}", "ABOUT\u{2060} YOU", "Inbox\u{2060}", "\u{202E}Inbox", "About you\u{00AD}", "Inbox\u{00AD}", "About\u{3000}you",
-                     "About\u{2003}you", "Inbox\u{034F}", "Inbox\u{FE0F}", "Inbox\u{3164}", "Inbox\u{061C}", "Ａｂｏｕｔ ｙｏｕ", "Inbox\u{0085}", "About you\u{FFF9}", "Inbox\u{FFFA}", "Inbox\u{FFFB}", "Inbox\u{FFFC}", "Inbox\u{2800}", "Inbox\u{E000}"] {
+                     "About\u{2003}you", "Inbox\u{034F}", "Inbox\u{FE0F}", "Inbox\u{3164}", "Inbox\u{061C}", "Ａｂｏｕｔ ｙｏｕ", "Inbox\u{0085}", "About you\u{FFF9}", "Inbox\u{FFFA}", "Inbox\u{FFFB}", "Inbox\u{FFFC}", "Inbox\u{2800}", "Inbox\u{E000}", "Inbox\u{FE00}", "Inbox\u{E0159}", "\u{FE00}"] {
             let answered = s.answerNextCard(.allowOnce)
             let refused = try await s.call("collections_create", ["name": .string(twin)])
             answered.cancel()
