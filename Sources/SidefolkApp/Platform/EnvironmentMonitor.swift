@@ -21,10 +21,16 @@ final class EnvironmentMonitor {
     func start() {
         let ws = NSWorkspace.shared.notificationCenter
         observers.append(ws.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshFullscreen() }
+            MainActor.assumeIsolated {
+                self?.refreshFullscreen()
+                self?.onSpaceChanged?()
+            }
         })
         observers.append(ws.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshFullscreen() }
+            MainActor.assumeIsolated {
+                self?.refreshFullscreen()
+                self?.onSpaceChanged?()
+            }
         })
         observers.append(ws.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.onWake?() }
@@ -75,6 +81,8 @@ final class EnvironmentMonitor {
     nonisolated static let signals: @Sendable () -> (secondsSinceKey: TimeInterval, secondsSinceInput: TimeInterval) = {
         (secondsSinceKey, secondsSinceInput)
     }
+
+    var onSpaceChanged: (() -> Void)?
 
     func refreshFullscreen() {
         let full = NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false

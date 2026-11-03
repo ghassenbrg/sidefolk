@@ -13,6 +13,10 @@ final class CompanionCaption {
         return hosted
     }()
     private var hiding: Task<Void, Never>?
+
+    /// Words beside the companion go where it goes (D138).
+    func joinsFullScreenSpaces(_ joins: Bool) { hosted.panel.joinsFullScreenSpaces(joins) }
+
     private var effectEnd: Task<Void, Never>?
     var anchorProvider: (() -> (NSRect, NSScreen)?)?
 

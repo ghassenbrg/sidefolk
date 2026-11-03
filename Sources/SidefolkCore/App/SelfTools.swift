@@ -75,6 +75,10 @@ public protocol SelfReporting: Sendable {
     func setAppearance(_ appearance: AppAppearance) async -> AppAppearance
     /// Sets the theme by name, returning its name and what it was; nil if there's none called that.
     func setTheme(_ name: String) async -> (name: String, was: String)?
+    /// Whether the companion and its small notices show over full-screen apps (D138); returns what it was.
+    func setShowsOverFullScreen(_ shows: Bool) async -> Bool
+    /// What happens when something needs the person in a full-screen app it stays off (D138); returns what it was.
+    func setFullScreenNotice(_ notice: FullScreenNotice) async -> FullScreenNotice
 }
 
 public enum SelfTools {
@@ -201,10 +205,13 @@ struct SelfLookTool: Tool {
 
     var spec: ToolSpec {
         ToolSpec(name: "sidefolk.look", title: String(localized: "Change how Sidefolk looks"),
-                 description: "Change the app's appearance (system, light or dark) or its theme, by name (Harbor, Paper Garden, Night Studio, Marshmallow, or one the user added).",
+                 description: "Change the app's appearance (system, light or dark), its theme, by name (Harbor, Paper Garden, Night Studio, Marshmallow, or one the user added), whether the companion shows over full-screen apps, or how it reaches them there when it doesn't.",
                  inputSchema: Schema.object([
                      "appearance": Schema.string("Light, dark or following the Mac.", enum: AppAppearance.allCases.map(\.rawValue)),
                      "theme": Schema.string("The theme's name."),
+                     "over_full_screen": Schema.boolean("Whether the companion shows over other apps' full-screen spaces. Off, it stays on ordinary desktops."),
+                     "full_screen_notice": Schema.string("With it off, how something that needs them reaches them in a full-screen app: the companion comes and goes back, a notification from the menu bar, or nothing until they leave.",
+                                                         enum: FullScreenNotice.allCases.map(\.rawValue)),
                  ]),
                  risk: .low, capabilities: [], category: .system, mutates: true)
     }
@@ -226,6 +233,19 @@ struct SelfLookTool: Tool {
             said.append("theme \(set.name)")
             let app = self.app
             undoing.append { _ = await app.setTheme(set.was) }
+        }
+        if let shows = input["over_full_screen"]?.boolValue {
+            let was = await app.setShowsOverFullScreen(shows)
+            said.append(shows ? "the companion shows over full-screen apps" : "the companion stays off full-screen apps")
+            let app = self.app
+            undoing.append { _ = await app.setShowsOverFullScreen(was) }
+        }
+        if let raw = input.string("full_screen_notice") {
+            guard let notice = FullScreenNotice(rawValue: raw) else { throw ToolError.invalidInput(String(localized: "“full_screen_notice” must be companion, menuBar or silent.")) }
+            let was = await app.setFullScreenNotice(notice)
+            said.append("in full-screen apps it reaches them by \(notice.rawValue)")
+            let app = self.app
+            undoing.append { _ = await app.setFullScreenNotice(was) }
         }
         guard !said.isEmpty else { throw ToolError.invalidInput(String(localized: "nothing to change. Give an appearance or a theme.")) }
         let steps = undoing

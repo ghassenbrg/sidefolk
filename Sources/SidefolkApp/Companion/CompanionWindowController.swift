@@ -490,6 +490,12 @@ final class CompanionWindowController {
 
     var isVisible: Bool { panel.isVisible }
 
+    /// Off: it stays on the person's ordinary desktops, and comes back by itself when they leave a full-screen app (D138).
+    func joinsFullScreenSpaces(_ joins: Bool) {
+        panel.joinsFullScreenSpaces(joins)
+        tip.panel.joinsFullScreenSpaces(joins)
+    }
+
     /// "Only when needed": only the top of the head shows until something needs the user.
     func setPeeking(_ peek: Bool, animated: Bool) {
         guard peek != peeking || !animated else { return }
@@ -748,7 +754,8 @@ final class CompanionWindowController {
     }
 
     private func pointerMoved(_ p: NSPoint) {
-        guard panel.isVisible else { return }
+        // Off this space (D138) there's nothing under the pointer to pet or fan out.
+        guard panel.isVisible, panel.isOnActiveSpace else { return }
         let frame = panel.frame
         // Click-through everywhere except the character's body and the folks. The silhouette is only
         // tested when the pointer is inside the character's box, and the flag only written on change.

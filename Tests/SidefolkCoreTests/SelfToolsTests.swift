@@ -35,6 +35,21 @@ import Testing
 
         func open(_ place: SelfPlace) async { opened.withLock { $0.append(place) } }
 
+        let overFullScreen = Mutex(true)
+        let notice = Mutex(FullScreenNotice.menuBar)
+        func setFullScreenNotice(_ next: FullScreenNotice) async -> FullScreenNotice {
+            notice.withLock { now in
+                defer { now = next }
+                return now
+            }
+        }
+        func setShowsOverFullScreen(_ shows: Bool) async -> Bool {
+            overFullScreen.withLock { now in
+                defer { now = shows }
+                return now
+            }
+        }
+
         func setAppearance(_ appearance: AppAppearance) async -> AppAppearance {
             look.withLock { l in
                 defer { l.appearance = appearance }
@@ -205,5 +220,23 @@ import Testing
                                 capabilities: [.calendar], category: .time, mutates: false)
         #expect(ContextBuilder.reach([]).contains("Calendar, "))
         #expect(!ContextBuilder.reach([calendar]).contains("Calendar, "))
+    }
+
+    /// D138: asked of the companion, off and back, and undone; the default is everywhere.
+    @Test func theCompanionCanStayOffFullScreenApps() async throws {
+        #expect(!AppSettings().hideOverFullScreen)
+        let oldFile = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+        #expect(!oldFile.hideOverFullScreen)
+        let app = App()
+        let e = try env(app)
+        let outcome = await run(e, "sidefolk.look", ["over_full_screen": false])
+        #expect(outcome.isOK)
+        #expect(!app.overFullScreen.withLock { $0 })
+        _ = try await e.executor.undo.undo(outcome.activity.id)
+        #expect(app.overFullScreen.withLock { $0 })
+        #expect(AppSettings().fullScreenNotice == .menuBar)
+        #expect(await run(e, "sidefolk.look", ["full_screen_notice": "silent"]).isOK)
+        #expect(app.notice.withLock { $0 } == .silent)
+        #expect(!(await run(e, "sidefolk.look", ["full_screen_notice": "loud"])).isOK)
     }
 }

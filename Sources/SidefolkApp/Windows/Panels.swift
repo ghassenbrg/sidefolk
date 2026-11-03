@@ -97,3 +97,10 @@ final class HostedPanel<Content: View> {
         onPlaced?(panel.frame, anchor)
     }
 }
+
+extension NSWindow {
+    /// Whether it shows on another app's full-screen space too (D138). It follows at once, on a window already up.
+    func joinsFullScreenSpaces(_ joins: Bool) {
+        if joins { collectionBehavior.insert(.fullScreenAuxiliary) } else { collectionBehavior.remove(.fullScreenAuxiliary) }
+    }
+}
