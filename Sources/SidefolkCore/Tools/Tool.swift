@@ -181,6 +181,8 @@ public struct ResultCard: Codable, Sendable, Hashable {
     public var holdAnswer: TimeInterval?
     /// Files Sidefolk saved for this result (D142). Only Sidefolk fills this, from what it placed itself.
     public var files: [PlacedFile]?
+    /// A small tree to draw on it (D125): an extension's, read again as a page part when it's drawn.
+    public var tree: JSONValue?
 
     public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil,
                 itemKind: NotebookItem.Kind? = nil) {

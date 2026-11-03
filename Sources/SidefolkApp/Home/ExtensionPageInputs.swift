@@ -128,7 +128,8 @@ private struct PageFieldRow: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             PageRowLabel(label: field.label, detail: field.detail)
             HStack(spacing: Theme.Space.s) {
-                TextField(text: $text) { Text(ext: field.placeholder ?? field.label) }
+                TextField(text: $text, prompt: Text(verbatim: "")) { Text(ext: field.label) }
+                    .fieldHint(Text(ext: field.placeholder ?? field.label), showing: text.isEmpty, spoken: field.placeholder != nil)
                     .lanternField()
                     .onSubmit(send)
                     .task(id: text) { await follow() }

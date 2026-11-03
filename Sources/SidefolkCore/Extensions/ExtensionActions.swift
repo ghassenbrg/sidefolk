@@ -16,19 +16,20 @@ public enum ExtensionActionPolicy {
         "web.fetch", "files.list", "files.read", "files.search", "files.mkdir", "files.move", "files.rename", "files.trash", "files.reveal",
         "clipboard.read", "clipboard.write", "open.url", "open.email", "open.app",
         "applenotes.list", "applenotes.read", "applenotes.copy", "applenotes.remove", "applereminders.list",
-        "companion.play", "surfaces.open", "status", CompanionJobTool.name, AttentionSetTool.name,
+        "companion.play", "surfaces.open", "status", CompanionJobTool.name, AttentionSetTool.name, VoiceSayTool.name, AppearanceTool.name,
     ])
 
     /// Never without a card, whatever a plan says: what someone copied is theirs alone, and silent reads of it are surveillance.
     static let neverStanding: Set<String> = ["clipboard.read"]
 
     /// The only places a plan may leave for filling in at run time. Each holds words that stay inside Sidefolk and are shown as the
-    /// extension's: a note's text, a reminder's title, a notice, a question. A note search's words are the founder's exception:
+    /// extension's: a note's text, a reminder's title, a notice, a question, a line said aloud. A note search's words are the founder's exception:
     /// they choose what comes back (D127). Anything parsed as a time, anything that could pick a target or carry words off the Mac, is written out or gets a card each time (T44).
     static let fillable: [String: Set<String>] = [
         "notes.save": ["text"],
         // The founder's choice, knowing words from elsewhere then choose which notes come back (D127).
         "notes.search": ["query"],
+        "voice.say": ["text"],
         "reminders.create": ["title"],
         "notify.user": ["title", "body"],
         "ask.user": ["question"],

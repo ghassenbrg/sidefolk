@@ -40,6 +40,11 @@ public enum ResultLifetime {
         Set(requests.filter { !$0.kept }.dropLast(limit).map(\.id))
     }
 
+    /// A card with a tree on it says what was just made (D125): that's worth the second look, whatever its kind.
+    public static func weight(of card: ResultCard) -> Weight {
+        card.tree == nil ? weight(of: card.kind) : .normal
+    }
+
     /// A result card's weight by its kind: values and lookups are quick; what was made or found to keep is
     /// normal.
     public static func weight(of card: ResultCard.Kind) -> Weight {

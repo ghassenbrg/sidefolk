@@ -318,6 +318,127 @@ struct ExtensionReachTests {
         #expect(line.contains("Got [filled in when it runs] and [filled in when it runs]"), "\(line)")
     }
 
+    @Test func aLineIsSaidWithItsExtensionsNameAndNotInFocusOrQuiet() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let tool = VoiceSayTool(settings: settings, events: env.events)
+        let stream = env.events.stream()
+        _ = try await tool.run(["text": "Time to stretch"], context: ToolContext(caller: .extension(id: "com.example.a"), now: Date()))
+        var said: String?
+        for await event in stream { if case .speak(let line) = event { said = line; break } }
+        #expect(said?.contains("Time to stretch") == true)
+        #expect(said?.contains("com.example.a says") == true, "a voice can't carry a name any other way: \(said ?? "")")
+        await settings.update { $0.quietUntil = Date().addingTimeInterval(600) }
+        let quiet = try await tool.run(["text": "Hello"], context: ToolContext(caller: .user, now: Date()))
+        #expect(quiet.text.contains("Not said"))
+        await settings.update { $0.quietUntil = nil; $0.focusUntil = Date().addingTimeInterval(600) }
+        let focused = try await tool.run(["text": "Hello"], context: ToolContext(caller: .user, now: Date()))
+        #expect(focused.text.contains("Not said"))
+        await settings.update { $0.focusUntil = nil }
+        let stream2 = env.events.stream()
+        _ = try await tool.run(["text": "Time to stretch"], context: ToolContext(caller: .agent(runId: AgentRuntime.jobPrefix + "1"), now: Date()))
+        var fromAJob: String?
+        for await event in stream2 { if case .speak(let line) = event { fromAJob = line; break } }
+        #expect(fromAJob?.contains("extension") == true, "a job an extension handed over says so: \(fromAJob ?? "")")
+    }
+
+    @Test func whatThePersonMadeIsntAnExtensionsOrItsJobsToTakeOff() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("sf-own-\(UUID().uuidString)", isDirectory: true)
+        let paths = SidefolkPaths(home: home)
+        let folder = paths.themes.appendingPathComponent("paper-garden", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try ThemeFile(ThemeTokens.sidefolk, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        let tool = AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { [] }, events: env.events)
+        await settings.update { $0.themeFolder = "/somewhere/mine" }
+        for caller in [Caller.extension(id: "e"), .agent(runId: AgentRuntime.jobPrefix + "1")] {
+            await #expect(throws: (any Error).self) { _ = try await tool.run(["theme": "Paper Garden"], context: ToolContext(caller: caller, now: Date())) }
+            #expect(settings.current.themeFolder == "/somewhere/mine")
+        }
+        _ = try await tool.run(["theme": "Paper Garden"], context: ToolContext(caller: .user, now: Date()))
+        #expect(settings.current.themeFolder == nil, "the person may")
+
+        await settings.update { $0.localCompanion = "mine" }
+        let spark = try #require(CompanionChoice(rawValue: "spark"))
+        for caller in [Caller.extension(id: "e"), .agent(runId: AgentRuntime.jobPrefix + "1")] {
+            await #expect(throws: (any Error).self) { _ = try await tool.run(["companion": .string(spark.rawValue)], context: ToolContext(caller: caller, now: Date())) }
+            #expect(settings.current.localCompanion == "mine")
+        }
+    }
+
+    /// What a person calls a theme comes first: the word "harbor" once was the old default's id, and now names the painted theme (D130).
+    @Test func aThemeIsFoundByWhatItsCalledBeforeWhatItOnceWas() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let paths = SidefolkPaths(home: FileManager.default.temporaryDirectory.appendingPathComponent("sf-word-\(UUID().uuidString)", isDirectory: true))
+        let folder = paths.themes.appendingPathComponent("painted", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try ThemeFile(ThemeTokens.sidefolk, id: "dev.sidefolk.theme.harbor", name: "Harbor").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        let tool = AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { [] }, events: env.events)
+        let said = try await tool.run(["theme": "harbor"], context: ToolContext(caller: .user, now: Date()))
+        #expect(settings.current.theme == "dev.sidefolk.theme.harbor")
+        #expect(said.text.contains("dev.sidefolk.theme.harbor"), "it says where it landed: \(said.text)")
+        _ = try await tool.run(["theme": "dev.sidefolk.theme.daylight"], context: ToolContext(caller: .user, now: Date()))
+        #expect(settings.current.theme == ThemeTokens.sidefolk.id, "an old id follows on")
+    }
+
+    @Test func aVoiceKeepsToHowFarThePersonLetsAnExtensionInterrupt() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let tool = VoiceSayTool(settings: settings, events: env.events)
+        let id = "com.example.quiet"
+        await settings.update { $0.interruptions.set(.off, for: .extension(id)) }
+        let out = try await tool.run(["text": "Hello"], context: ToolContext(caller: .extension(id: id), now: Date()))
+        #expect(out.text.contains("Not said"), "\(out.text)")
+    }
+
+    @Test func howItLooksChangesOnlyToWhatIsThere() async throws {
+        let env = try TestEnv()
+        let settings = await SettingsStore(db: env.db, events: env.events)
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("sf-look-\(UUID().uuidString)", isDirectory: true)
+        let paths = SidefolkPaths(home: home)
+        let tool = AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { ["ember"] }, events: env.events)
+        let context = ToolContext(caller: .user, now: Date())
+        // Not there yet: nothing is set, and it says so. Themes come and go from the app, so this one is the test's own.
+        let themeless = settings.current.theme
+        await #expect(throws: (any Error).self) { _ = try await tool.run(["theme": "Paper Garden", "mode": "dark"], context: context) }
+        #expect(settings.current.theme == themeless)
+        #expect(settings.current.appearance != .dark)
+        let folder = paths.themes.appendingPathComponent("paper-garden", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try ThemeFile(ThemeTokens.sidefolk, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        _ = try await tool.run(["mode": "dark", "theme": "Paper Garden", "companion": "spark"], context: context)
+        #expect(settings.current.appearance == .dark)
+        #expect(settings.current.theme == "dev.sidefolk.theme.paper-garden", "by the name a person sees")
+        await settings.update { $0.theme = ThemeTokens.sidefolk.id }
+        _ = try await tool.run(["theme": "dev.sidefolk.theme.field-notes"], context: context)
+        #expect(settings.current.theme == "dev.sidefolk.theme.paper-garden", "an old id saved in a plan follows on")
+        #expect(settings.current.companion == .spark)
+        _ = try await tool.run(["companion": "ember"], context: context)
+        #expect(settings.current.companion == .ember)
+        await #expect(throws: (any Error).self) { _ = try await tool.run(["companion": "kiko"], context: context) }
+        await #expect(throws: (any Error).self) { _ = try await tool.run(["companion": "guard"], context: context) }
+        await #expect(throws: (any Error).self) { _ = try await tool.run(["theme": "nonsense"], context: context) }
+        await #expect(throws: (any Error).self) { _ = try await tool.run(["mode": "nonsense"], context: context) }
+        await #expect(throws: (any Error).self) { _ = try await tool.run(.object([:]), context: context) }
+    }
+
+    @Test func howItLooksIsAllASettingsToolCanChange() async throws {
+        let env = try TestEnv()
+        let tool = AppearanceTool(settings: await SettingsStore(db: env.db, events: env.events), themes: ThemeLibrary(paths: SidefolkPaths(home: URL(fileURLWithPath: "/tmp"))), installedCompanions: { [] }, events: env.events)
+        #expect((tool.spec.inputSchema["properties"]?.objectValue ?? [:]).keys.sorted() == ["companion", "mode", "theme"])
+    }
+
+    @Test func aTreeOnACardIsReadAsAPagePartAndTooMuchIsLeftOut() throws {
+        let manifest = try ExtensionManifest.decode(Data(#"{"id":"com.example.a","name":"A","version":"1.0.0","run":{"command":"python3","args":["s.py"]},"tools":{}}"#.utf8))
+        let tree: JSONValue = ["type": "tree", "nodes": [["id": "a", "title": "Start"]]]
+        #expect(ExtensionToolAsks(["tree": tree], manifest: manifest)?.tree != nil)
+        #expect(ExtensionToolAsks(["tree": ["nodes": []], "row": "x"], manifest: manifest)?.tree == nil)
+        let huge: JSONValue = ["nodes": [["id": "a", "title": .string(String(repeating: "a", count: 20_000))]]]
+        #expect(ExtensionToolAsks(["tree": huge, "row": "x"], manifest: manifest)?.tree == nil)
+    }
+
     @Test func noBrainMeansNoJob() async throws {
         let tool = CompanionJobTool(agent: CompanionAgentSlot())
         await #expect(throws: (any Error).self) { _ = try await tool.run(["job": "Tidy up"], context: ToolContext(caller: .user, now: Date())) }

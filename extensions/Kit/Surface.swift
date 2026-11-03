@@ -64,6 +64,13 @@ public struct ToolReply {
         return copy
     }
 
+    /// A small drawing of a tree on the card this reply leaves in Ask, so what you made can be seen where it was asked for (D125).
+    public func showing(tree: CardTree) -> ToolReply {
+        var copy = self
+        copy.asks["tree"] = tree.json
+        return copy
+    }
+
     /// What History says this call did, in place of the tool's title and arguments. Sidefolk believes it only of packs it signed.
     public func row(_ words: String) -> ToolReply {
         var copy = self

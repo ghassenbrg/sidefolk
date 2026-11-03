@@ -53,4 +53,11 @@ import Testing
         #expect(ResultLifetime.weight(of: .reminder) == .normal)
         #expect(ResultLifetime.weight(of: .note) == .normal)
     }
+
+    @Test func aCardWithATreeSaysWhatWasMade() {
+        var card = ResultCard(kind: .extensionResult, title: "Make a routine")
+        #expect(ResultLifetime.weight(of: card) == .quick)
+        card.tree = ["nodes": []]
+        #expect(ResultLifetime.weight(of: card) == .normal)
+    }
 }

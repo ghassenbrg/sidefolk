@@ -14,6 +14,8 @@ public struct ExtensionToolAsks: Sendable, Hashable {
     public var holdAnswer: TimeInterval?
     /// What History says this call did, in place of the tool's title and arguments ("Heads!"). Believed only for packs Sidefolk signed, like `summary` (D98).
     public var row: String?
+    /// A tree for the card in Ask (D125), as the page part reads it.
+    public var tree: JSONValue?
 
     /// The longest an answer waits.
     public static let longestHold: TimeInterval = 5
@@ -28,13 +30,14 @@ public struct ExtensionToolAsks: Sendable, Hashable {
                 arguments = SurfacesOpenTool.arguments(open["arguments"])
             }
         }
+        if let tree = json["tree"], tree.jsonString.utf8.count <= 16_384, ExtensionPage.tree(from: tree) != nil { self.tree = tree }
         if let close = json["close_surface"] {
             if close.boolValue == true { closeSurface = "" } else if let name = close.stringValue, manifest.surfaces[name] != nil { closeSurface = name }
         }
         if let move = PageMove.parse(json["open_page"]), manifest.pages[move.page] != nil { openPage = move }
         if let ms = json["hold_answer_ms"]?.doubleValue, ms.isFinite, ms > 0 { holdAnswer = min(ms / 1000, Self.longestHold) }
         if let said = json["row"]?.stringValue { row = ExtensionText.line(said, characters: 120) }
-        guard openSurface != nil || closeSurface != nil || openPage != nil || holdAnswer != nil || row != nil else { return nil }
+        guard openSurface != nil || closeSurface != nil || openPage != nil || holdAnswer != nil || row != nil || tree != nil else { return nil }
     }
 }
 

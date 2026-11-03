@@ -972,6 +972,7 @@ public actor ExtensionHost {
         if let m = rt.manifest, let asks = ExtensionToolAsks(asked, manifest: m) {
             result.asks = asks
             result.card?.holdAnswer = asks.holdAnswer
+            result.card?.tree = asks.tree
             if rt.pin.origin?.firstParty == true, let row = asks.row, !row.isEmpty { result.rowSummary = row }
         }
         result.placing = placing(ExtensionOutput.list(asked), for: id, tool: remote, folders: folders)

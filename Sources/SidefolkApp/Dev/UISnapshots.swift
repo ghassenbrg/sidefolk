@@ -643,6 +643,10 @@ enum UISnapshots {
             for sheet in DesignSystemSheet.Page.allCases {
                 try await page("design-system-\(sheet.rawValue)", DesignSystemSheet(page: sheet), width: 1600)
             }
+            // A tool's card in Ask with a tree on it (D125).
+            if let tree = SampleExtensionPage.treeForAsk() {
+                try await page("panel-ask-tree", ResultCardView(card: tree, actions: { EmptyView() }), width: 400)
+            }
             // What a tree's + opens (D125): a popover, which a window's snapshot can't catch.
             if let picker = SampleExtensionPage.treePicker() { try await page("panel-tree-picker", TreePicker(picker: picker) { _ in }, width: 520) }
             // Reduce Transparency with Increase Contrast (D84 phase 5): solid surfaces and edges at a control's strength.

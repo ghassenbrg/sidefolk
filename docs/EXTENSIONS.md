@@ -1200,8 +1200,8 @@ _ = await Actions.call("agenda.today", plan: "morning")              // no card,
 ```
 
 The person reads the card in full, in Sidefolk's words. After a yes, a call that fits a step needs no card. What holds:
-- **Fits** means the same keys, every written value equal. `{{name}}` may be left open only in `notes.save`'s `text`, `reminders.create`'s `title` and `notes`, `notify.user`'s `title` and `body`, and `ask.user`'s `question`. A step with `{{name}}` anywhere else, or in another extension's tool, is accepted but asks each time: write it out. So does anything high risk, and `clipboard.read`.
-- **You get plans only if you can't reach out by yourself:** no `network`, `exec`, write folders, clipboard, screen or UDP (`not_contained`). Their reads come to you, and the card says so.
+- **Fits** means the same keys, every written value equal. `{{name}}` may be left open only in `notes.save`'s `text`, `notes.search`'s `query`, `reminders.create`'s `title`, `notify.user`'s `title` and `body`, `ask.user`'s `question`, and `voice.say`'s `text`. A step with `{{name}}` anywhere else, or in another extension's tool, is accepted but asks each time: write it out. So does anything high risk, and `clipboard.read`.
+- **You get plans only if you can't reach out by yourself:** no `network`, `media`, `exec`, write folders, clipboard, screen or UDP (`not_contained`). Their reads come to you, and the card says so.
 - **Only just after the person:** `not_asked` unless they clicked or typed to you, or a clean turn of Sidefolk's AI called you, in the last 30 seconds. Never from a timer.
 - It ends with `ttl` (60–3600 s), `Plans.forget`, Settings › Add-ons (`Plans.ended` tells you), or a changed tool, which asks again. `per_day` caps it, 200 by default, at most 1000; at most 32 steps.
 - "Ask every time", a capability turned off, and folder boundaries hold whatever a plan says.
@@ -1246,7 +1246,7 @@ A watch you make with `watch.create` under `permissions.act` tells you and not t
 
 With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and the install sheet says that an extension that can reach out could send them on. What an extension did through `permissions.act` doesn't count.
 
-Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 200 plain characters, it needs `permissions.ai` and counts toward that cap, it can use what the person's own turn can, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end; a plan may hold it, written out. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
+`ToolReply.showing(tree:)` puts a small tree on the card your tool's reply leaves in Ask. Through `permissions.act`, `voice.say {text}` says a line aloud with your name, in the Mac's own voice, not in Focus or Quiet, with spoken replies off, when the person has you off their desktop, over the person, or while something is using the microphone; `appearance.set {mode, theme, companion}` changes how Sidefolk looks; and `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 200 plain characters, it needs `permissions.ai` and counts toward that cap, it can use what the person's own turn can, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end; a plan may hold it, written out. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
 
 ## Speaking the person's language
 
