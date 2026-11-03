@@ -12,10 +12,10 @@ public enum ExternalToolPolicy {
     /// Always offered and always asked, whatever the settings say: how agents get past their shared room (D116), and
     /// changing a collection, since naming one is what they otherwise can't do (T4).
     public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection"]
-    /// Adding to what the user has: `watch.list` shows an agent only its own watchers, `reminders.cancel`
-    /// reaches only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
+    /// Adding to what the user has: `watch.list` shows an agent only its own watchers, the `reminders.*` that change
+    /// reach only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
     public static let saving: Set<String> = [
-        "notes.save", "reminders.create", "reminders.cancel", "watch.create", "watch.report", "watch.list", "watch.stop",
+        "notes.save", "reminders.create", "reminders.update", "reminders.snooze", "reminders.complete", "reminders.cancel", "watch.create", "watch.report", "watch.list", "watch.stop",
         "watch.pause", "watch.resume", "watch.update", "watch.reorder",
     ]
     /// Reading the user's data (notes, reminders, today's plan).

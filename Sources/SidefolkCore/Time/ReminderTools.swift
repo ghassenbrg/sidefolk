@@ -4,14 +4,16 @@ import Foundation
 /// ISO 8601, parsed by `WhenParser`, so a model can pass "tomorrow morning" without doing date math.
 public enum ReminderTools {
     /// - Parameter parser: called for every request so changes to the morning/afternoon/evening hours apply at once.
-    public static func make(scheduler: ReminderScheduler, parser: @escaping @Sendable () -> WhenParser) -> [any Tool] {
-        let shared = Shared(scheduler: scheduler, parser: parser)
-        return [CreateTool(shared), ListTool(shared), CancelTool(shared), CompleteTool(shared), SnoozeTool(shared)]
+    ///   `access`: what other agents may do with notes, since marking a reminder done can finish its task.
+    public static func make(scheduler: ReminderScheduler, parser: @escaping @Sendable () -> WhenParser,
+                            access: @escaping @Sendable () -> AgentAccess = { AgentAccess() }) -> [any Tool] {
+        let shared = Shared(scheduler: scheduler, parser: parser, access: access)
+        return [CreateTool(shared), ListTool(shared), CancelTool(shared), CompleteTool(shared), SnoozeTool(shared), UpdateTool(shared)]
     }
 
     /// Reads the day-part hours from the user's settings on every call.
     public static func make(scheduler: ReminderScheduler, settings: SettingsStore, calendar: Calendar = .autoupdatingCurrent) -> [any Tool] {
-        make(scheduler: scheduler, parser: { WhenParser(calendar: calendar, settings: settings.current) })
+        make(scheduler: scheduler, parser: { WhenParser(calendar: calendar, settings: settings.current) }, access: { settings.current.agentAccess })
     }
 
     /// What the notebook tools need to give a note or task its reminder (`remind`, D49).
@@ -39,12 +41,14 @@ public enum ReminderTools {
     public struct Shared: Sendable {
         let scheduler: ReminderScheduler
         let parser: @Sendable () -> WhenParser
+        let access: @Sendable () -> AgentAccess
         /// Quota checks and creation run one at a time, so parallel calls can't all see room.
         let quotas = AsyncGate()
 
-        init(scheduler: ReminderScheduler, parser: @escaping @Sendable () -> WhenParser) {
+        init(scheduler: ReminderScheduler, parser: @escaping @Sendable () -> WhenParser, access: @escaping @Sendable () -> AgentAccess = { AgentAccess() }) {
             self.scheduler = scheduler
             self.parser = parser
+            self.access = access
         }
 
         var calendar: Calendar { parser().calendar }
@@ -397,7 +401,8 @@ public enum ReminderTools {
                 description: "Mark a reminder as done by id. A repeating reminder keeps repeating; use reminders.cancel to stop it. "
                     + "One that belongs to an open task finishes the task too, and a series stops with it.",
                 inputSchema: Schema.object(["id": Schema.string("The reminder's id.")], required: ["id"]),
-                risk: .low, capabilities: [.time], category: .time, mutates: true
+                // Other agents reach only the reminders they set (`canManage`).
+                risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
             )
         }
 
@@ -410,6 +415,10 @@ public enum ReminderTools {
             // A cancelled reminder stays cancelled; saying "done" would claim a change that didn't happen.
             if r.state == .cancelled {
                 throw UserFacingError("That reminder was cancelled, so there's nothing to mark done.")
+            }
+            // Finishing a task is changing a note: another agent gets no way round the person's setting for that.
+            if case .external = context.caller, shared.access().change != .allow, await scheduler.linkedOpenTask(r) != nil {
+                throw UserFacingError("That reminder belongs to an open task, and the user keeps changing notes to themselves. Finish the task with notes_update, which may ask them, or cancel the reminder.")
             }
             let completed = try await scheduler.completeWithTask(id: r.id)
             guard let before = completed.before else { throw ToolError.notFound(String(localized: "a reminder with id \(r.id)")) }
@@ -446,7 +455,8 @@ public enum ReminderTools {
                     "id": Schema.string("The reminder's id."),
                     "when": Schema.string("When it should come back."),
                 ], required: ["id", "when"]),
-                risk: .low, capabilities: [.time], category: .time, mutates: true
+                // Other agents reach only the reminders they set (`canManage`).
+                risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
             )
         }
 
@@ -469,6 +479,80 @@ public enum ReminderTools {
                               card: ResultCard(kind: .reminder, title: r.title, subtitle: String(localized: "Snoozed to \(when)"), refId: r.id),
                               undo: UndoAction(label: String(localized: "Undo snooze")) { try await scheduler.restore(before) },
                               untrusted: Shared.isForeign(r))
+        }
+    }
+
+    // MARK: reminders.update
+
+    /// Changes a reminder and keeps what hangs on it: its id, its note or task, and where its series has got to.
+    struct UpdateTool: Tool {
+        let shared: Shared
+        init(_ shared: Shared) { self.shared = shared }
+
+        var spec: ToolSpec {
+            ToolSpec(
+                name: "reminders.update", title: String(localized: "Change a reminder"),
+                description: """
+                Change a reminder by id: its title, when it comes (plain language or ISO 8601; "every monday at 10am" changes the \
+                repeat, and a single time moves the next one), its notes (an empty string takes them away) or how loudly it tells. To \
+                only put it off, use reminders.snooze; to end it, reminders.cancel.
+                """,
+                inputSchema: Schema.object([
+                    "id": Schema.string("The reminder's id."),
+                    "title": Schema.string("Its new title."),
+                    "when": Schema.string("When: natural language or ISO 8601. May include a repeat."),
+                    "notes": Schema.string("Extra detail shown under the title."),
+                    "level": Schema.string("How loudly to interrupt.", enum: ["gentle", "attention", "critical"]),
+                ], required: ["id"]),
+                // Other agents reach only the reminders they set (`canManage`).
+                risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
+            )
+        }
+
+        func summary(for input: JSONValue) -> String { String(localized: "Change a reminder") }
+
+        func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+            let r = try await shared.existing(input, caller: context.caller)
+            guard r.state != .cancelled, r.state != .done else {
+                throw UserFacingError("“\(r.title)” has ended, so there's nothing to change. Set a new reminder instead.")
+            }
+            let now = context.now
+            var parsed: WhenResult?
+            var raised = false
+            if var text = input.string("when") {
+                raised = CreateTool.everyFewSeconds.found(in: text)
+                if raised { text = CreateTool.everyFewSeconds.replacing(in: text, with: "every minute") }
+                parsed = try shared.future(text, now: now)
+            }
+            var level: AttentionLevel?
+            if let word = input.string("level") {
+                guard let asked = AttentionLevel(rawValue: word.lowercased()), asked != .ambient else {
+                    throw ToolError.invalidInput(String(localized: "“level” must be gentle, attention or critical"))
+                }
+                // Only the user's own click sets critical (SECURITY T24).
+                level = context.caller == .user ? asked : min(asked, .attention)
+            }
+            let title = input.string("title"), notes = input.string("notes")
+            guard title != nil || notes != nil || parsed != nil || level != nil else {
+                throw ToolError.invalidInput(String(localized: "nothing to change. Give a title, a time, notes or a level."))
+            }
+            // Words written now are this caller's, however the reminder began (T3).
+            let scheduler = shared.scheduler
+            guard let before = try await scheduler.edit(id: r.id, title: title, fireAt: parsed?.date,
+                                                        recurrence: parsed?.recurrence.map { .some($0) },
+                                                        notes: notes, level: level,
+                                                        source: title != nil || notes != nil ? context.provenanceTag : nil) else {
+                throw ToolError.notFound(String(localized: "a reminder with id \(r.id)"))
+            }
+            let after = await scheduler.reminder(matching: r.id) ?? r
+            var text = "Changed “\(after.title)”: \(after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "no next time")"
+            if let rule = after.recurrence { text += ", repeating \(TimeFormat.recurrenceForModel(rule, calendar: shared.calendar))" }
+            if let level, level.rawValue != input.string("level")?.lowercased() { text += ", as an ordinary alert (only the user can set critical reminders)" }
+            text += ". id: \(after.id)"
+            if raised { text += ". Reminders repeat at most once a minute, so this one repeats every minute; tell the user." }
+            return ToolResult(text: text, card: shared.card(after, now: now, prefix: String(localized: "Changed")),
+                              undo: UndoAction(label: String(localized: "Undo change")) { try await scheduler.restore(before) },
+                              untrusted: Shared.isForeign(after))
         }
     }
 }

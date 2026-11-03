@@ -225,9 +225,11 @@ public actor ReminderScheduler {
         return changed?.before
     }
 
-    /// Changes a reminder's title and/or time (and repeat). Returns how it was before, for Undo.
+    /// Changes a reminder's title, time, repeat, notes and level. `source`, when given, says whose words it now holds (T3).
+    /// Returns how it was before, for Undo.
     @discardableResult
-    public func edit(id: String, title: String?, fireAt: Date?, recurrence: Recurrence??) async throws -> Reminder? {
+    public func edit(id: String, title: String?, fireAt: Date?, recurrence: Recurrence??, notes: String? = nil, level: AttentionLevel? = nil,
+                     source: String? = nil) async throws -> Reminder? {
         if let fireAt, fireAt <= clock.now { throw UserFacingError("That time has already passed.", recovery: "Pick a time in the future.") }
         let changed = try await update(id) { r in
             guard r.state != .cancelled, r.state != .done else { return false }
@@ -238,6 +240,9 @@ public actor ReminderScheduler {
                 r.snoozedUntil = nil
             }
             if let recurrence { r.recurrence = recurrence }
+            if let notes { r.notes = notes.isEmpty ? nil : notes }
+            if let level { r.level = level }
+            if let source { r.source = source }
             return true
         }
         if let fireAt, recurrence != nil { try? await kv.set(Self.anchorKey(id), fireAt.timeIntervalSince1970) }

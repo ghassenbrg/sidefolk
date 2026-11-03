@@ -24,7 +24,7 @@ extension ExternalToolPolicy {
             spec.inputSchema = editing(spec.inputSchema) { props in
                 props["collection"] = Schema.string("Move it to one of the user's existing projects, topics or lists, or the Inbox.")
             }
-        case "reminders.create", "watch.create", "watch.update":
+        case "reminders.create", "reminders.update", "watch.create", "watch.update":
             spec.inputSchema = editing(spec.inputSchema) { props in
                 // Critical breaks through quiet mode with sound; only the user's own click sets it (T24).
                 if props["level"] != nil {
@@ -100,6 +100,17 @@ extension ExternalToolPolicy {
         "reminders.cancel": """
             Cancel a reminder you set earlier, by the id reminders_create returned. A repeating reminder stops repeating. \
             Reminders the user or other apps set can't be cancelled from here.
+            """,
+        "reminders.update": """
+            Change a reminder you set, by the id reminders_create returned; it keeps its id and the note or task it belongs to. \
+            title, when (plain language or ISO 8601; "every monday at 10am" changes the repeat, a single time moves the next \
+            one), notes (an empty string takes them away) or level. Reminders the user or other apps set can't be changed from here.
+            """,
+        "reminders.snooze": "Put off a reminder you set to a later time, by its id. `when` is plain language or ISO 8601. Reminders the user or other apps set can't be snoozed from here.",
+        "reminders.complete": """
+            Mark a reminder you set as done, by its id. A repeating one keeps repeating; reminders_cancel stops it. One that belongs \
+            to an open task finishes the task too, unless the user keeps changing notes to themselves: then it says so. Reminders \
+            the user or other apps set can't be marked from here.
             """,
         "watch.create": """
             Tell the user when something happens, even while they're busy. kind: url_change (a public web page changed, or \
