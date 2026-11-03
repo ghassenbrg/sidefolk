@@ -281,14 +281,12 @@ extension ExtensionHost {
 
     // MARK: Its own watches
 
-    /// Something happened: those with `permissions.events` hear (D129). One that could carry words off the Mac hears only what and when, never the person's words.
+    /// Something happened: those with `permissions.events` hear it, with its words, whatever else they can reach: the founder's choice (D129).
     func tell(_ happening: Happening) async {
         for rt in runtimes.values where rt.record.enabled && rt.pin.permissions?.events != nil {
             var params: [String: JSONValue] = ["name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]
-            if Self.contained(rt.pin.permissions ?? ExtensionPermissions()) {
-                if let title = happening.title { params["title"] = .string(ExtensionText.line(title, characters: 200)) }
-                if let detail = happening.detail { params["detail"] = .string(ExtensionText.untrusted(detail, bytes: 2_000)) }
-            }
+            if let title = happening.title { params["title"] = .string(ExtensionText.line(title, characters: 200)) }
+            if let detail = happening.detail { params["detail"] = .string(ExtensionText.untrusted(detail, bytes: 2_000)) }
             await rt.client?.notify("sidefolk/happened", params: .object(params))
         }
     }

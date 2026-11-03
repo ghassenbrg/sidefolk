@@ -12,8 +12,7 @@ public struct AgentRequest: Sendable {
     public var newThread: Bool
     /// Said aloud with the talk key: the first sentence of the answer will be spoken (D34).
     public var spoken: Bool
-    /// A job an extension handed over (D128), not the person's own words. Its words prove nothing about what they asked for, it has a conversation of its own, and what can't
-    /// help but ask stays out of reach. `read`: the person read exactly these words on a plan; otherwise the turn starts as one that has read something from outside.
+    /// A job an extension handed over (D128), not the person's own words. Its words prove nothing about what they asked for, and it has a conversation of its own. `read`: the person read exactly these words on a plan; otherwise the turn starts as one that has read something from outside.
     public var job: Job?
 
     public struct Job: Sendable {
@@ -336,8 +335,7 @@ public actor AgentRuntime {
         await persist { try await exchanges.append(asked) }
         events.changed(.conversations)
 
-        let toolbox = BrainToolbox(runId: runId, specs: request.job == nil ? specs : specs.filter { spec in executor.registry.tool(named: spec.name).map { !ExtensionActionPolicy.alwaysAsks($0) } ?? false },
-                                   executor: executor, startTainted: built.tainted || request.job?.read == false,
+        let toolbox = BrainToolbox(runId: runId, specs: specs, executor: executor, startTainted: built.tainted || request.job?.read == false,
                                    mentions: request.job == nil ? Self.mentions(in: request) : UserMentions(text: ""), emit: emit)
         let task = BrainTask(runId: runId, threadId: threadId, system: built.system, messages: built.messages, model: choice.model,
                              effort: choice.effort, maxSteps: limits.maxSteps, deadline: start.addingTimeInterval(limits.runSeconds))

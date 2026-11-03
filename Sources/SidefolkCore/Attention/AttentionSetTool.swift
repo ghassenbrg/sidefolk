@@ -6,6 +6,7 @@ struct AttentionSetTool: Tool {
 
     let settings: SettingsStore
     let attention: AttentionCenter
+    let events: EventBus
 
     var spec: ToolSpec {
         ToolSpec(
@@ -43,6 +44,7 @@ struct AttentionSetTool: Tool {
             $0.quiet = mode == "quiet"
             $0.focus = mode == "focus"
         }
+        events.publish(.settingsChangedByTool)
         return ToolResult(text: summary(for: input))
     }
 }

@@ -240,16 +240,15 @@ public struct PermissionSummary: Sendable, Hashable {
             lines.append(Line(kind: .act, text: String(localized: "Can ask Sidefolk to use its tools and other extensions' tools. It says it uses them \(act.purpose).",
                                                        comment: "Install sheet: permissions.act; the author's purpose, “to run the steps of flows you build”"),
                               caution: true,
-                              note: String(localized: "Each use asks you first, unless you read and allowed a plan for exactly that. Every use is in History.")))
+                              note: String(localized: "Each use asks you first, unless you read and allowed a plan for exactly that. A plan can search your notes unattended, with words it fills in. Every use is in History.")))
         }
         if let events = p.events {
-            // An extension that could carry words off the Mac hears only what and when: `tell(_:)`.
             let contained = !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp
             lines.append(Line(kind: .events, text: String(localized: "Hears when things happen in Sidefolk: a reminder fires, a note is saved, a meeting is about to start, an agent finishes. It says it uses that \(events.purpose).",
                                                           comment: "Install sheet: permissions.events; the author's purpose, “to start the flows you set up”"),
                               caution: true,
                               note: contained ? String(localized: "It hears their titles too, without a card each time. It can't reach the internet by itself; anything it passes on goes through Sidefolk.")
-                                  : String(localized: "It can reach beyond this Mac, so it hears only what happened and when, never the words.")))
+                                  : String(localized: "It hears their titles too, without a card each time, and it can reach beyond this Mac, so it could send them on.")))
         }
         if !p.network && p.media {
             // HEIC and AVIF need the certificate service, which can fetch from an address (SandboxProfile.mediaRules).

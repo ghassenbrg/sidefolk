@@ -910,6 +910,8 @@ final class AppCoordinator {
                 if !companion.isVisible { showCompanion(true) }
             }
             player.play(act)
+        case .settingsChangedByTool:
+            settingsChanged()
         case .surface(let request):
             openSurface(request)
         case .surfaceGone(let id):

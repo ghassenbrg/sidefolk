@@ -23,10 +23,12 @@ public enum ExtensionActionPolicy {
     static let neverStanding: Set<String> = ["clipboard.read"]
 
     /// The only places a plan may leave for filling in at run time. Each holds words that stay inside Sidefolk and are shown as the
-    /// extension's: a note's text, a reminder's title, a notice, a question. Anything parsed as a time or a selector, anything that
-    /// could pick a target or carry words off the Mac, is written out in the plan or gets a card each time (T43).
+    /// extension's: a note's text, a reminder's title, a notice, a question. A note search's words are the founder's exception:
+    /// they choose what comes back (D127). Anything parsed as a time, anything that could pick a target or carry words off the Mac, is written out or gets a card each time (T43).
     static let fillable: [String: Set<String>] = [
         "notes.save": ["text"],
+        // The founder's choice, knowing words from elsewhere then choose which notes come back (D127).
+        "notes.search": ["query"],
         "reminders.create": ["title", "notes"],
         "notify.user": ["title", "body"],
         "ask.user": ["question"],

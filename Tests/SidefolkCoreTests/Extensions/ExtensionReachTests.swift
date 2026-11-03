@@ -44,10 +44,10 @@ struct ExtensionReachTests {
         #expect(words.contains("Call the bank"))
     }
 
-    @Test func oneThatCanReachOutHearsOnlyWhatAndWhen() async throws {
+    @Test func oneThatCanReachOutHearsTheWordsToo() async throws {
         let words = try await heard(["network": true, "network_purpose": "to look things up", "events": ["purpose": "to start what you set up"]], name: "outside")
         #expect(words.contains("reminder.fired"))
-        #expect(!words.contains("Call the bank"))
+        #expect(words.contains("Call the bank"), "the founder's choice (D129)")
     }
 
     @Test func withoutThePermissionNothingIsHeard() async throws {
@@ -75,7 +75,7 @@ struct ExtensionReachTests {
         #expect(line?.caution == true)
         #expect(line?.note?.contains("titles") == true)
         let outside = PermissionSummary.forExtension(ExtensionPermissions(network: true, events: ExtensionPurpose(purpose: "to start what you set up")))
-        #expect(outside.lines.first { $0.kind == .events }?.note?.contains("never the words") == true)
+        #expect(outside.lines.first { $0.kind == .events }?.note?.contains("could send them on") == true, "and the install sheet says so")
     }
 
     @Test func aPlanCantStandOnAnUpdateThatAddsHearing() throws {
@@ -86,7 +86,7 @@ struct ExtensionReachTests {
         let env = try TestEnv()
         let settings = await SettingsStore(db: env.db, events: env.events)
         let attention = AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock)
-        let tool = AttentionSetTool(settings: settings, attention: attention)
+        let tool = AttentionSetTool(settings: settings, attention: attention, events: env.events)
         let context = ToolContext(caller: .user, now: Date())
         await #expect(throws: (any Error).self) { _ = try await tool.run(["mode": "quiet"], context: context) }
         await #expect(throws: (any Error).self) { _ = try await tool.run(["mode": "focus", "minutes": 100_000], context: context) }
@@ -99,7 +99,7 @@ struct ExtensionReachTests {
 
     @Test func focusAndQuietMayStandOnAPlanButOnlyWrittenOut() async throws {
         let env = try TestEnv()
-        let tool = AttentionSetTool(settings: await SettingsStore(db: env.db, events: env.events), attention: AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock))
+        let tool = AttentionSetTool(settings: await SettingsStore(db: env.db, events: env.events), attention: AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock), events: env.events)
         #expect(ExtensionActionPolicy.spec(tool).risk == .medium)
         #expect(ExtensionPlanRules.standing(tool: ExternalFacade(base: tool, spec: ExtensionActionPolicy.spec(tool)), template: ["mode": "focus", "minutes": 30]))
         #expect(!ExtensionPlanRules.standing(tool: ExternalFacade(base: tool, spec: ExtensionActionPolicy.spec(tool)), template: ["mode": "{{what}}", "minutes": 30]))
@@ -177,6 +177,13 @@ struct ExtensionReachTests {
         #expect(Happening(activity) == nil)
     }
 
+    @Test func aSearchWithWordsFilledInMayStand() throws {
+        let env = try TestEnv()
+        let probe = ProbeTool(name: "notes.search", risk: .low, capabilities: [.notebook], result: { _ in ToolResult(text: "") })
+        env.registry.register(probe)
+        #expect(ExtensionPlanRules.standing(tool: ExternalFacade(base: probe, spec: ExtensionActionPolicy.spec(probe)), template: ["query": "{{trigger}}"]), "the founder's choice (D127)")
+    }
+
     @Test func noBrainMeansNoJob() async throws {
         let tool = CompanionJobTool(agent: CompanionAgentSlot())
         await #expect(throws: (any Error).self) { _ = try await tool.run(["job": "Tidy up"], context: ToolContext(caller: .user, now: Date())) }
@@ -210,13 +217,13 @@ struct ExtensionReachTests {
         #expect(said?.contains("Tidy up") == true && said != "Tidy up", "in the record as someone else's words")
     }
 
-    @Test func aJobCantUseWhatAlwaysAsksButThePersonsOwnTurnStillCan() async throws {
+    @Test func aJobCanUseWhatThePersonsOwnTurnCan() async throws {
         let (world, runtime, model) = try await world([.turn(.reply("Nothing to report.")), .turn(.reply("Hi."))])
         let spec = ToolSpec(name: "ext.mcp.exec", title: "x", description: "", inputSchema: .object([:]), risk: .medium, capabilities: [.network, .extensions], category: .extensions, mutates: true)
         world.registry.register(ExtensionTool(spec: spec, extensionId: "mcp.x", extensionName: "x", remoteName: "exec", sandboxed: false) { _, _ in ToolResult(text: "") })
         for await _ in await runtime.submit(AgentRequest(text: "Tidy up", job: AgentRequest.Job(read: true))).events {}
         for await _ in await runtime.submit(AgentRequest(text: "Hello", newThread: true)).events {}
-        #expect(model.requests[0].tools.contains { $0.name == "ext.mcp.exec" } == false)
+        #expect(model.requests[0].tools.contains { $0.name == "ext.mcp.exec" }, "the founder's choice (D128): under their trust settings")
         #expect(model.requests[1].tools.contains { $0.name == "ext.mcp.exec" })
     }
 

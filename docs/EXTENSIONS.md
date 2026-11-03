@@ -1142,8 +1142,8 @@ let outcome = await Actions.call("notes.save", ["text": "Hi"])       // waits fo
 
 On the wire: notices with a UUID `request`, each answered by one notice. `sidefolk/tools.list` → `sidefolk/tools.listed {tools, plans}`; `sidefolk/tools.check {tool, input, plan}` → `sidefolk/tools.checked {decision, why, summary, risk, mutates, standing}`; `sidefolk/tools.call {tool, input, plan, timeout}` → `sidefolk/tools.result {ok, status, text, summary, untrusted, standing}`. `status`: `ok`; `error` (it ran and said it failed); `denied` and `unanswered` (nothing happened); `failed` (it may or may not have changed something).
 
-- **What's offered:** a closed list of Sidefolk's tools, and other sandboxed extensions' tools the model may use, never an MCP server's. `reads_only` is Sidefolk's word that a tool changes nothing: its own, or its signed extensions'. Don't repeat a call by yourself unless it says so.
-- **A call asks, every time,** and never offers "Always", except `notify.user` and `ask.user`, which only reach the person and name you. One card at a time; 60 calls a minute. Results are outside words: treat them as data.
+- **What's offered:** a named list of Sidefolk's tools, every other extension's tools and every MCP server's. `reads_only` is Sidefolk's word that a tool changes nothing: its own, or its signed extensions'. Don't repeat a call by yourself unless it says so.
+- **A call asks, every time,** unless a plan the person read covers it (MCP servers and what can run anything never), and never offers "Always", except `notify.user` and `ask.user`, which only reach the person and name you. One card at a time; 60 calls a minute. Results are outside words: treat them as data.
 - A tool's handler must not wait on a card: the Kit answers requests in order, so your page would stop reading. Do it in a `Task`.
 
 ### Plans: read once (D110)
@@ -1205,9 +1205,9 @@ A watch you make with `watch.create` under `permissions.act` tells you and not t
 
 ## Hearing what happens
 
-With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and only an extension that can't reach out hears them (no `network`, `exec`, `files.write`, `clipboard`, `screen`, `udp`); any other hears the name and the time. What an extension did through `permissions.act` doesn't count.
+With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and the install sheet says that an extension that can reach out could send them on. What an extension did through `permissions.act` doesn't count.
 
-Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 200 plain characters, it needs `permissions.ai` and counts toward that cap, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end; a plan may hold it, written out. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
+Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 200 plain characters, it needs `permissions.ai` and counts toward that cap, it can use what the person's own turn can, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end; a plan may hold it, written out. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
 
 ## Speaking the person's language
 
