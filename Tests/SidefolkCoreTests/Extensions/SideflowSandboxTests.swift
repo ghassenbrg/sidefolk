@@ -211,7 +211,14 @@ import Testing
         #expect((try await w.h.env.activity.recent(limit: 5, tool: "notify.user")).isEmpty)
     }
 
-    @Test func makingAFlowLeavesItsTreeOnTheCardInAsk() async throws {
+    /// Whether this checkout's pack shows a tree: the app leads, and the gallery's pack follows it after the snapshot that has the ability.
+    static var packShowsATree: Bool {
+        let tools = ExtFixtures.addonsRepo.appendingPathComponent("extensions/sideflow/Sources/Tools.swift")
+        return (try? String(contentsOf: tools, encoding: .utf8))?.contains("showing(tree:") == true
+    }
+
+    @Test(.enabled(if: packShowsATree, "this checkout's Sideflow pack doesn't show a tree on its card yet"))
+    func makingAFlowLeavesItsTreeOnTheCardInAsk() async throws {
         let w = try await World()
         let out = await w.h.call("ext.sideflow.create_flow", ["name": "Shown", "definition": Self.definition])
         #expect(out.isOK, "\(w.text(out))")
