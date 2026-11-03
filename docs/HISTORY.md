@@ -7,6 +7,16 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Noor, a baby moth who carries his own light (D121)
+
+A gallery companion, 3D only, worn by name (D77), published as `1.0.0-snapshot.1`. The founder's approval hung on the quality
+being really reachable, so two proof rounds came before any rig: Meshy's raw model looked cheap beside its design image. He is
+made another way (D121): Meshy gives only the proportions, the rig builds wings, feathers and rosette from paintings, and his
+fur is drawn in shells. A companion's gallery page and install now use the catalog's words in the person's language.
+Verified: the window check returns `{}`, every move filmed, rests, colours against the sheet; cost against Spark in a debug
+app (D121). From the published gallery in a fresh debug app: found, installed and worn; in German, his page and tagline
+translated. Only the `de` words were seen on screen. Not done: a 2D form (D59), older Macs and battery.
+
 ## 2026-11-03: Dev ideas, batch 6: reading on without a card, and the wake word measured (items 13, 14; D119)
 
 **Item 13** is in D119 and T42. Verified: `ResearchModeTests`, a test per limit, and `swift test` in full. An adversarial review of the first version broke it (a message spelled in `%61`s of a listed host, a freeze on a page built for it, `%6Cocalhost` past T11, reads that didn't end it): the design was narrowed and each became a test. Not run: a live model following links. **Item 14:** a measurement only, `docs/research/wake-word-prototype.md`, nothing in the app; the founder's choice waits on a microphone test at the Mac.

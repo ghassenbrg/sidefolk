@@ -3604,6 +3604,6 @@ run an hour earlier, on the same geometry, read much the same difference at a hi
 **Alternatives:** tuning Meshy's texture and sculpt (the first proof: cheap up close); a second Meshy model (the same flat
 wings and crust); a `CompanionChoice` case (needs an app update and his name in `ExtensionReservedNames`, which would refuse
 the Noor extension's name).
-**Implications:** up close he is a very good real-time character, not the concept's painted stills: his fur is short pile
+**Implications:** a companion's gallery page and install read the catalog's translated words (D76), which they had ignored: until that reaches an app release, his page is in English on published copies. Up close he is a very good real-time character, not the concept's painted stills: his fur is short pile
 with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't made. The technique is in the
 `sidefolk-3d-character` skill. Fur costs the GPU, so a new companion that uses it is measured there, not only in `top`.

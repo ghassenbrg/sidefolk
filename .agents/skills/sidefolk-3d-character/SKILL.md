@@ -23,6 +23,10 @@ face: `spark`). Copy what fits rather than inventing.
 The founder's bar: movie-quality, cute, alive; it really sits, lies, sleeps, bows and waves; it
 looks like its sheet. Mouth and nose never touch.
 
+**Never show a companion, a still or a proof round, until the window check (§6, step 6) has passed in that same
+state of the model.** The founder has caught ears and feathers cut flat at the top, as if the character stood in a box,
+on more than one companion. On Noor's proof the cause was simply that the check hadn't been run.
+
 **What the founder catches on the desktop**, so check each before showing anything (§6 has the tools): a part cut
 off by the window's edge while it is petted, hops or lies down; a neck that bends oddly; a rest that looks like a doll
 thrown down instead of a creature resting; stair-stepped or speckled colour edges up close (a visor's rim); a logo or
@@ -171,13 +175,33 @@ Only a companion meant to ship inside the app goes in `Resources/Companions3D/`.
   thrown on the floor. Sitting with the feet swinging one after the other and the head looking around, dozing with
   the chin dipping a little on each slow breath (`POSTURES.sit` plus small sines) read as a creature resting. A big
   head never droops or rolls far: it reads as a broken neck. **skip**: moves the body can't do (`sniff` for a robot).
-- **Big heads and the window.** The app shows the character in a square that is `frame.sidefolk` units tall from
-  10% under the feet: a head as wide as the others are tall needs more (2.5). `pivot` is the height above the
+- **Room in the window (set it first, for every companion, not only big heads).** The app shows the character in a
+  square that is `frame.sidefolk` units tall from 10% under the feet, so the top of the window is `0.9 × frame.sidefolk`
+  above the floor, and the character has to fit well below it at rest. Measure from the tallest point of any part,
+  antenna, ear, feather or hair tip included, and leave room for what it does in motion: hops, stretches, and springy
+  parts that lag and swing up. Tall thin tips need room too (a 1.93-tall moth whose feathers touched the top at 2.3 needed
+  2.7), and a head as wide as the others are tall needs more (2.5). `roomAbove()`, which eases hops under the ceiling,
+  reads only the body mesh's bounding box: a part hung on a bone in `extras` isn't in it, so the engine won't lower a hop
+  for it. Skin tall parts into the body where you can; otherwise raise the box in `extras` (`body.geometry.boundingBox.max.y`, to the part's tip plus a little), and the shared hops, jumps and stretches then stay under the ceiling. `pivot` is the height above the
   floor that whole-body turns go round (flips, lying), in world units, **not** model coordinates: put it at the
   body's middle (about 0.9 for a 1.9-tall body); at the feet a flip swings through the floor. `petLean` (default 1)
   makes a big head lean less into a stroking hand (0.55: a full lean swung a big head's ears out of the window and bent its
   neck). Leaps can be lowered without touching their timing: wrap `ACTIONS.hop/jump/flip` and scale only what they
   add to `P.root.py`; stub arms want a lower `cheer` (`raise(P, s, -24)`). `edges()` (§6) says when it is enough.
+- **When the model can't reach the sheet (fur, fine inlay, feathers): build those parts instead of fighting the texture.**
+  Noor is the worked example (`rig_noor.py`, his character file, D121). Judge the raw model in the engine early: a flat
+  plate for a wing, carved slabs for feathers and a crust for fur don't get better with tuning. Cut them away by colour and
+  place, remesh the rest (octree, `SMOOTH`: voxel falls apart on open cuts), and build parts in the rig from a painting
+  each (Codex: flat, straight on, on a plain background, given the outline as a silhouette reference). Parts are skinned
+  meshes of their own in the GLB, named to sort before the body, because the engine takes the last skinned mesh as the
+  body; textures a glTF material can't carry ride on tiny `tx_*` quads the character file removes. A clean body needs no
+  texture: the rig marks zones in the AO colour's green and the material colours them. Fur is shells: copies of the
+  fur's triangles pushed out along the normal, each discarding what isn't strand, with strands leaning into clumps
+  toward the tip. Coarse strands read as fur and fine ones as sand. In a small canvas draw half the layers, coarsen the strands and
+  lower their contrast (thinner than a pixel, they turn to speckle: judge it in the app's own snapshot), turn sheen off on
+  the layers, and blur the zone marks over the mesh's edges or the fur's borders come out jagged. Draw a big colour shape like a
+  face in the surface too (`fwidth`), so the fur stops at a clean line. Then measure the GPU in the app (§8), not only the
+  CPU: fur costs the GPU, and `top` doesn't show it.
 - **Logos, letters, badges**: a decal in `extras(c, THREE)`: the body's triangles in a box on its surface (skinned
   like it, lifted a hair), its own 1024 px canvas, and the mark drawn as vector paths traced on the design image
   (px → units with the figure's top and bottom rows and its middle). Paint the texture's version out under it in the
@@ -220,14 +244,21 @@ Go through all of these before showing it; each caught a real mistake:
    Bring the white, red and black zones within a few points of the sheet, median brightness first (the "other" row
    is mostly anti-aliased edges): set colours by zone in the material, deepen reds, take blue out of blacks, then
    `light.env` for a white body that stays dim. Look at the two side by side after the numbers agree.
-6. **The window**: `edges(companion)` in a `?frame=sidefolk&capture` page must return `{}`: it plays idle, petting
-   from both sides, every move, posture and state in the app's square framing and names whatever touches an edge.
+6. **The window (a gate: nothing is shown until it passes)**: `edges(companion)` in a `?frame=sidefolk&capture` page must
+   return `{}`: it plays idle, petting from both sides, every move, posture and state in the app's square framing and
+   names whatever touches an edge. Run it again after anything that changes a silhouette, proportions, a chain or
+   `frame`, and on proof models too. It takes minutes on a heavy model: start it without awaiting
+   (`window.r = 'running'; (await import('./sheet.js')).edges(companion).then((e) => window.r = e)`) and read `window.r` later, or a console call
+   times out and the check looks done when it isn't. Portraits and tiles use this same framing, so a crop here shows
+   in Settings too.
 7. **Rests**: `restSheet(companion)` and `restFilm(companion, 'lie'|'sleep')`: alive, not dropped.
 
 Then save the portrait: `(await import('./sheet.js')).portrait(companion)` in a 512 px
 `?frame=sidefolk&capture` page (see how the existing ones were made in the README) and copy
 `build/companions-3d/portrait-<id>/00001.png` to `portraits/<id>.png` in its add-on folder. Save it again after
 anything that changes its look or framing.
+
+(A companion whose look changes with the canvas size, as fur does: render its portrait at twice the size and scale it down.)
 
 **Profile picture** (D54): painted, never a crop of a render, unless the character is a real person's likeness (no
 image generation of real people: then a render, cut round by `sidefolk-private/pipeline/make_avatar.py`). With `codex-imagegen`, `--ref` the new portrait, the sheet and
@@ -279,11 +310,12 @@ SIDEFOLK_HOME=$PWD/build/dev-home swift scripts/dev.swift snap     # twice, a se
 ```
 
 Read the `CompanionPanel` snapshot, and compare two snapshots a second apart: they must differ
-(it is animating, not frozen). Try `play:dance`, `click`, `settings:companion` (bring the app forward first:
+(it is animating, not frozen). **Look at the top of the figure in the app itself:** at rest there must be clear space
+above its tallest tip (with PIL, `getbbox()` of the snapshot's alpha must not start at row 0), and take snapshots during
+`play:dance` and a hop too: `edges()` runs in the browser at another size, and this is what the person really sees. Try `play:dance`, `click`, `settings:companion` (bring the app forward first:
 WebKit draws nothing in a background window). Several debug apps often run at once (other worktrees): use a fresh,
 short `SIDEFOLK_HOME` of your own (`build/qa-<name>`), leave the others alone, and activate yours by its process id,
 not its bundle id, which may pick another (`NSRunningApplication(processIdentifier:)?.activate()` from a tiny
-`swift` script; System Events needs accessibility access). A companion added from a folder is re-added after every
-change to its files. Measure cost with `top` over Sidefolk and the `com.apple.WebKit` processes started with it,
+`swift` script; System Events needs accessibility access). A companion added from a folder is re-added after every change to its files, **and the app restarted (by its pid)**: the running page keeps the character file it first loaded, so without a restart you judge the old version. Measure cost with `top` over Sidefolk and the `com.apple.WebKit` processes started with it,
 while it idles and animates, against Spark in the same app (about 18% of a core, D51). Commit in one coherent
 milestone, no Co-Authored-By trailer; push only when asked.
