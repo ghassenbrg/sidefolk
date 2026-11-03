@@ -110,6 +110,13 @@ final class AppCoordinator {
         askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.avatar(for: s, side: 26),
                                       hotkey: hotkeyLabel)
         ask.actions = self
+        let pins = PinnedAskStore(runtime.db)
+        let exchanges = runtime.exchanges
+        ask.restorePins(await pins.load(conversationKept: { (try? await exchanges.contains(threadId: $0)) ?? false }))
+        // One at a time and only the latest, so an older list can't land after a newer one.
+        let (saves, save) = AsyncStream.makeStream(of: [SavedAskRequest].self, bufferingPolicy: .bufferingNewest(1))
+        Task { for await saved in saves { try? await pins.save(saved) } }
+        ask.onPinsChanged = { save.yield($0) }
         // Esc silences the companion or drops what is being said before it closes anything.
         askPanel.onEscape = { [weak self] in self?.voice.cancel() ?? false }
         askPanel.onVisibilityChange = { [weak self] visible in
@@ -377,6 +384,10 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command == "askPinNewest" {
+            if let newest = ask.visibleRequests.first { ask.togglePin(newest) }
+            return
+        }
         if command.hasPrefix("home:") { home.showPlace(String(command.dropFirst(5))); return }
         if command == "homeSmall" { home.devWindow?.setContentSize(NSSize(width: 860, height: 612)); return }
         if command.hasPrefix("flip:") {

@@ -12,25 +12,32 @@ public enum ResultLifetime {
         case needsYou
     }
 
-    /// A quick result goes this long after it was first seen; so Ask opened again five minutes later is clear of it.
-    public static let quickAfterSeen: TimeInterval = 120
-    /// A normal one goes after half an hour, or with the day: the next day's first look starts clean.
-    public static let normal: TimeInterval = 1800
+    /// Ask is a shortcut, not an archive (D136): results go soon, and History keeps them. How soon depends on whether the
+    /// person was there. A result they watched arrive, or saw another way (an animation, said aloud), has done its job.
+    public static let quickWatched: TimeInterval = 20
+    public static let normalWatched: TimeInterval = 120
+    /// One that came while they were away gets longer from their first look, and nothing goes before that look.
+    public static let quickLater: TimeInterval = 60
+    public static let normalLater: TimeInterval = 600
+    /// First seen this soon after it appeared: they were there.
+    static let watchedWithin: TimeInterval = 5
 
-    /// Whether a result should go now. `seenAt`: when it was first on screen in Ask (a quick result nobody saw yet
-    /// waits for its look). `pinned`: the person kept it.
-    public static func expired(_ weight: Weight, createdAt: Date, seenAt: Date?, pinned: Bool, now: Date,
-                               calendar: Calendar = .autoupdatingCurrent) -> Bool {
-        guard !pinned else { return false }
-        switch weight {
-        case .needsYou:
-            return false
-        case .quick:
-            guard let seenAt else { return false }
-            return now.timeIntervalSince(seenAt) >= quickAfterSeen
-        case .normal:
-            return now.timeIntervalSince(createdAt) >= normal || !calendar.isDate(createdAt, inSameDayAs: now)
+    /// Whether a result should go now. `seenAt`: when it first reached the person. `pinned`: they kept it.
+    public static func expired(_ weight: Weight, createdAt: Date, seenAt: Date?, pinned: Bool, now: Date) -> Bool {
+        guard !pinned, let seenAt else { return false }
+        let watched = seenAt.timeIntervalSince(createdAt) <= watchedWithin
+        let age = now.timeIntervalSince(seenAt)
+        return switch weight {
+        case .needsYou: false
+        case .quick: age >= (watched ? quickWatched : quickLater)
+        case .normal: age >= (watched ? normalWatched : normalLater)
         }
+    }
+
+    /// Which requests go so Ask never holds more than `limit` (oldest first). The ones the person kept don't count and
+    /// never go; what waits for an answer isn't a request at all.
+    public static func overflow<ID: Hashable>(_ requests: [(id: ID, kept: Bool)], limit: Int) -> Set<ID> {
+        Set(requests.filter { !$0.kept }.dropLast(limit).map(\.id))
     }
 
     /// A result card's weight by its kind: values and lookups are quick; what was made or found to keep is

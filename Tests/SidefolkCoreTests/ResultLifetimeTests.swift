@@ -2,38 +2,49 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// Ask tidies itself by each result's weight (D90).
+/// Ask tidies itself by each result's weight (D90, D136).
 @Suite struct ResultLifetimeTests {
     let now = TimeTest.wednesday10
-    let calendar = TimeTest.calendar()
 
-    func gone(_ w: ResultLifetime.Weight, made: TimeInterval, seen: TimeInterval? = nil, pinned: Bool = false, at: Date? = nil) -> Bool {
-        ResultLifetime.expired(w, createdAt: now.addingTimeInterval(made), seenAt: seen.map { now.addingTimeInterval($0) }, pinned: pinned,
-                               now: at ?? now, calendar: calendar)
+    /// `seen` seconds ago; made at the same moment unless `made` says it came earlier, while they were away.
+    func gone(_ w: ResultLifetime.Weight, seen: TimeInterval?, made: TimeInterval? = nil, pinned: Bool = false) -> Bool {
+        ResultLifetime.expired(w, createdAt: now.addingTimeInterval(made ?? seen ?? -60), seenAt: seen.map { now.addingTimeInterval($0) },
+                               pinned: pinned, now: now)
     }
 
-    @Test func aQuickAnswerGoesTwoMinutesAfterItWasSeen() {
-        #expect(!gone(.quick, made: -90, seen: -90))
-        #expect(gone(.quick, made: -130, seen: -125))
-        // Not seen yet (it came while Ask was closed): it waits for its look.
-        #expect(!gone(.quick, made: -3600))
-        // Ask opened again ten minutes later: the battery level asked then is gone.
-        #expect(gone(.quick, made: -600, seen: -600))
+    @Test func whatTheyWatchedArriveGoesSoon() {
+        #expect(!gone(.quick, seen: -10))
+        #expect(gone(.quick, seen: -25))
+        #expect(!gone(.normal, seen: -100))
+        #expect(gone(.normal, seen: -130))
     }
 
-    @Test func aNormalAnswerStaysHalfAnHourOrTheDay() {
-        #expect(!gone(.normal, made: -1700, seen: -1700))
-        #expect(gone(.normal, made: -1900))
-        // Made last night at 23:50, looked at the next morning: gone even if not half an hour old.
-        let lateNight = calendar.date(bySettingHour: 23, minute: 50, second: 0, of: now)!
-        let morning = lateNight.addingTimeInterval(20 * 60)
-        #expect(ResultLifetime.expired(.normal, createdAt: lateNight, seenAt: lateNight, pinned: false, now: morning, calendar: calendar))
+    @Test func whatCameWhileTheyWereAwayGetsLongerFromTheirFirstLook() {
+        #expect(!gone(.quick, seen: -30, made: -3600))
+        #expect(gone(.quick, seen: -70, made: -3600))
+        #expect(!gone(.normal, seen: -500, made: -3600))
+        #expect(gone(.normal, seen: -700, made: -3600))
+    }
+
+    @Test func nothingGoesBeforeItReachedThem() {
+        #expect(!gone(.quick, seen: nil, made: -86_400))
+        #expect(!gone(.normal, seen: nil, made: -86_400))
     }
 
     @Test func whatNeedsThePersonAndWhatTheyPinnedStays() {
-        #expect(!gone(.needsYou, made: -86_400 * 3, seen: -86_400 * 3))
-        #expect(!gone(.quick, made: -3600, seen: -3600, pinned: true))
-        #expect(!gone(.normal, made: -86_400, pinned: true))
+        #expect(!gone(.needsYou, seen: -86_400 * 3))
+        #expect(!gone(.quick, seen: -3600, pinned: true))
+        #expect(!gone(.normal, seen: -86_400, pinned: true))
+    }
+
+    @Test func aHundredRequestsAreNeverAHundredCards() {
+        let many = (0..<100).map { (id: $0, kept: false) }
+        #expect(ResultLifetime.overflow(many, limit: 8) == Set(0..<92))
+        #expect(ResultLifetime.overflow(Array(many.prefix(8)), limit: 8).isEmpty)
+        // A pin isn't counted and never goes.
+        var pinned = many.suffix(10).map { $0 }
+        pinned[0].kept = true
+        #expect(ResultLifetime.overflow(pinned, limit: 8) == [91])
     }
 
     @Test func valuesAndLookupsAreQuickWhatWasMadeIsNot() {

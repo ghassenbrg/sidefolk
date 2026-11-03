@@ -3661,3 +3661,22 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 **Why:** the founder asked for a page to match its approved design, not resemble it. A column of Sidefolk's cards can't hold a search box inside a header band, a menu inside a calendar's head, or a two-event tile on Today.
 **Alternatives:** building those screens into the app (D98 rules that out); drawing fake fields in a scene (no typing, no VoiceOver); a whole web view (a second renderer, and pages stay data, D62).
 
+### D136 — Ask is a shortcut: results go soon, by whether they reached the person, and History keeps them (2026-11-03)
+
+**Decision:** *amends D90.* A result's time starts when it first reached the person, and how long it stays depends on whether they were there:
+
+| | Watched it arrive, or saw it another way | Came while they were away, from their first look |
+|---|---|---|
+| **Quick** (a value, a lookup, a roll) | 20 seconds | 1 minute |
+| **Answers and things made** | 2 minutes | 10 minutes |
+
+- **What counts as reaching them:** on screen in Ask's own tab (not behind Today or a lone permission slip); an animation that showed it (dice, a coin, `holdAnswer`); a surface or page the extension opened; the companion doing the trick; or the words said aloud. Being told "finished" isn't reading it, so that keeps the longer time.
+- **Nothing goes before it reached them,** and the midnight rule is gone.
+- **At most eight requests,** pins aside: a ninth pushes out the oldest, seen or not. A pin, and an approval or question waiting, never go that way. This replaces 40 entries.
+- **Asking something new tidies** what's past its time, wherever the pointer is. Otherwise nothing fades while the pointer is on Ask or Ask has the keyboard.
+- **Pins outlast quitting,** in the database's `kv` (so backups carry them, the export lists them and Delete everything takes them). A pin is an explicit keep: it stays past History's retention until unpinned, cleared or its conversation deleted (T19). What comes back is what it said: no undo or think harder, and Reply only while History still has the conversation. Notices, spoken lines and failures aren't saved.
+- **History keeps a command's answer:** an extension's command logged its tool's name ("Calculate"); it now logs what it answered ("2+2 = 4", at most 160 characters, redacted). Only for commands the person ran, since an AI's calls have their conversation. Never for an extension with clipboard access: History isn't a second clipboard, so those still log the tool's name.
+**Why:** the founder: "if I ask it like 100 time in 30 minutes... I will have 100 thing in the list", "this is like a shortcut... nothing is lost"; and "if I roll a dice and the animation appear... I see it". D90's 2 and 30 minutes were an archive's times. And the promise that everything is in History wasn't true for quick results.
+**Alternatives:** one short time for everything (an answer that arrived while away could go unread); fading while the panel has the keyboard (it would take text someone is reading); counting a whisper as seen (a "finished" doesn't carry the answer).
+**The numbers are constants in `ResultLifetime`,** and easy to change once they've been lived with.
+

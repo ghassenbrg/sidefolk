@@ -239,7 +239,9 @@ extension AppCoordinator: AskActions {
             switch outcome {
             case .card(let card, let activityId, let undo):
                 await held(card)
-                addResult(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), card: card, to: model, caption: caption)
+                // An extension that opened its surface or page, or the companion doing a trick: they saw it there (D136).
+                addResult(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: undo), card: card, to: model, caption: caption,
+                          seen: card.kind == .extensionResult || card.kind == .info)
                 say(SpokenLine.card(card))
                 // Quick intents close the panel a moment after their card appears, once their words are said.
                 try? await Task.sleep(for: .seconds(undo ? 2.5 : 1.2))
@@ -258,7 +260,8 @@ extension AppCoordinator: AskActions {
             case .answer(let card, let activityId):
                 // An answer is there to be read, so the panel stays until the person closes it (D50).
                 await held(card)
-                model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: false), caption: caption)
+                model.add(.result(card, activityId: activityId.isEmpty ? nil : activityId, undo: false), caption: caption,
+                          seen: card.holdAnswer != nil)
                 say(SpokenLine.line(card.detail ?? card.title))
             case .list(let title, let cards):
                 model.add(.list(title: title, cards: cards), caption: caption)
@@ -593,7 +596,7 @@ extension AppCoordinator: AskActions {
     }
 
     /// A result card for the panel. What the companion flipped or rolled waits until it lands on the desktop (D44).
-    func addResult(_ entry: AskEntry.Content, card: ResultCard, to model: AskModel, caption: String?) {
-        model.add(entry, caption: caption)
+    func addResult(_ entry: AskEntry.Content, card: ResultCard, to model: AskModel, caption: String?, seen: Bool = false) {
+        model.add(entry, caption: caption, seen: seen)
     }
 }

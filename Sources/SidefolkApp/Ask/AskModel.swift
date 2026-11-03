@@ -60,11 +60,14 @@ struct AskEntry: Identifiable, Equatable {
     var createdAt = Date()
     /// A notice that needs nothing from anyone ("Undone", a word about talking) goes away on its own then.
     var fadesAt: Date?
-    /// When it was first on screen in Ask: a quick result's lifetime starts there (D90).
+    /// When it first reached the person, on screen in Ask or another way: its lifetime starts there (D90, D136).
     var seenAt: Date?
+    /// Back from before quitting (D136): what's asked now doesn't join it.
+    var restored = false
+    /// Begins a request of its own without words to show.
+    var startsRequest = false
 
-    /// How long it stays in Ask (D90): what still needs the person stays, values and lookups go soon after they were
-    /// read, answers and things made after half an hour or with the day.
+    /// How long it stays in Ask (D90, D136): what still needs the person stays, the rest goes soon after it reached them.
     var weight: ResultLifetime.Weight {
         switch content {
         case .approval, .question: .needsYou
@@ -177,7 +180,9 @@ final class AskModel {
         }
     }
     /// The conversation or a compact Today under the field (D84).
-    var tab: AskTab = .ask
+    var tab: AskTab = .ask {
+        didSet { markSeen() }
+    }
     /// Extensions' tabs beside Ask's own (D100), as they were when it opened.
     var entryTabs: [ExtensionEntry] = []
     /// What the words typed so far match across Sidefolk, under the hint line (D58).
@@ -187,7 +192,9 @@ final class AskModel {
     /// How many wait on the person in all (the count on the companion's shoulder).
     var waiting = 0
     var attachment: Attachment?
-    var entries: [AskEntry] = []
+    var entries: [AskEntry] = [] {
+        didSet { savePins() }
+    }
     var busy = false
     var phase: String?
     /// Set while the person talks; the input is theirs again once it is nil.
@@ -223,8 +230,8 @@ final class AskModel {
     /// Where the Sidecard's tail points, toward the companion's head; set when the panel is placed.
     var tail: SidecardTail?
 
-    /// Results kept: the newest under the input, older ones a scroll away. Cards, not a chat (D5).
-    static let keptEntries = 40
+    /// Requests kept, pins aside: the newest under the input. It's a shortcut, and History has them all (D136).
+    static let keptRequests = 8
     /// How long a notice that needs nothing stays.
     static let noticeSeconds: TimeInterval = 20
     /// The pointer is over the panel: nothing fades while someone may be reading it.
@@ -234,7 +241,12 @@ final class AskModel {
     /// The request under the pointer, the one a two-finger swipe moves.
     var hoveredRequest: UUID?
     /// Results the person pinned: they stay until removed (D90).
-    var pinnedRequests: Set<UUID> = []
+    var pinnedRequests: Set<UUID> = [] {
+        didSet { savePins() }
+    }
+    /// Pinned results changed: they outlast quitting (D136).
+    var onPinsChanged: (([SavedAskRequest]) -> Void)?
+    private var savedPins: [SavedAskRequest] = []
     /// Results went on their own since Ask was cleared: a quiet line says they are in History.
     var tidied = false
     /// Ask is on screen, and has the keyboard: nothing is tidied away while someone may be reading.
@@ -276,7 +288,7 @@ final class AskModel {
     var requests: [Request] {
         var requests: [Request] = []
         for entry in entries where !entry.isPinned {
-            if entry.caption != nil || requests.isEmpty { requests.append(Request(entries: [entry])) } else { requests[requests.count - 1].entries.append(entry) }
+            if entry.caption != nil || entry.startsRequest || requests.isEmpty { requests.append(Request(entries: [entry])) } else { requests[requests.count - 1].entries.append(entry) }
         }
         return requests
     }
@@ -375,13 +387,36 @@ final class AskModel {
     var latestCaption: String? { entries.last { $0.caption != nil }?.caption }
 
     /// `fades`: a notice that needs nothing from anyone, gone after `noticeSeconds` unless someone is reading.
-    func add(_ content: AskEntry.Content, caption: String? = nil, fades: Bool = false) {
-        entries.append(AskEntry(caption: caption, content: content, fadesAt: fades ? Date().addingTimeInterval(Self.noticeSeconds) : nil))
-        if entries.count > Self.keptEntries { entries.removeFirst(entries.count - Self.keptEntries) }
-        if visible { entries[entries.count - 1].seenAt = Date() }
+    /// `seen`: it already reached the person some other way, as an animation they watched.
+    func add(_ content: AskEntry.Content, caption: String? = nil, fades: Bool = false, seen: Bool = false) {
+        // Asking something new is when what's past its time goes, with the pointer anywhere.
+        if caption != nil { tidy(force: true) }
+        var entry = AskEntry(caption: caption, content: content, fadesAt: fades ? Date().addingTimeInterval(Self.noticeSeconds) : nil)
+        entry.startsRequest = entries.last { !$0.isPinned }?.restored == true
+        entries.append(entry)
+        makeRoom()
         if fades { fadeLater() }
         // Something new shows where it can be seen: the conversation (D84).
         tab = .ask
+        markSeen()
+        // Said aloud reached them as much as read, and says the whole request.
+        var reached = seen
+        if case .spoken(_, muted: nil) = content { reached = true }
+        if reached, let request = requests.last { markSeen(request) }
+    }
+
+    private func markSeen(_ request: Request, at now: Date = Date()) {
+        let ids = Set(request.entries.map(\.id))
+        var marked = entries
+        for i in marked.indices where ids.contains(marked[i].id) && marked[i].seenAt == nil { marked[i].seenAt = now }
+        entries = marked
+    }
+
+    /// Over the limit, the oldest results go: never one that's pinned or still waiting for an answer (D136).
+    private func makeRoom() {
+        let all = requests
+        let gone = ResultLifetime.overflow(all.map { (id: $0.id, kept: pinnedRequests.contains($0.id)) }, limit: Self.keptRequests)
+        for request in all where gone.contains(request.id) { remove(request) }
     }
 
     /// Removes earlier notices under this caption: a new word about talking replaces the last one.
@@ -441,13 +476,21 @@ final class AskModel {
     func opened(at now: Date = Date()) {
         visible = true
         tidy(at: now, force: true)
-        for i in entries.indices where entries[i].seenAt == nil { entries[i].seenAt = now }
+        markSeen(at: now)
+    }
+
+    /// Results' time starts when they're really in front of the person: not behind another tab or a lone permission slip.
+    func markSeen(at now: Date = Date()) {
+        guard visible, tab == .ask, !showsSlipsOnly, entries.contains(where: { $0.seenAt == nil }) else { return }
+        var marked = entries
+        for i in marked.indices where marked[i].seenAt == nil { marked[i].seenAt = now }
+        entries = marked
     }
 
     /// Takes away the requests whose every result is past its lifetime, never a pinned one, never while the person may
     /// be reading (the pointer on Ask, or the keyboard in it) unless Ask is only now opening.
     func tidy(at now: Date = Date(), force: Bool = false) {
-        guard force || (!hovering && !focused), !busy else { return }
+        guard force || (!hovering && !focused && !busy) else { return }
         var gone = Set<UUID>()
         for request in requests where !pinnedRequests.contains(request.id) {
             let done = request.entries.allSatisfy {
@@ -463,5 +506,72 @@ final class AskModel {
 
     func togglePin(_ request: Request) {
         if pinnedRequests.remove(request.id) == nil { pinnedRequests.insert(request.id) }
+    }
+
+    // MARK: Pins across quitting (D136)
+
+    private func savePins() {
+        guard !pinnedRequests.isEmpty || !savedPins.isEmpty else { return }
+        let now = requests.filter { pinnedRequests.contains($0.id) }.compactMap(\.saved)
+        guard now != savedPins else { return }
+        savedPins = now
+        onPinsChanged?(now)
+    }
+
+    /// What was pinned before quitting comes back, oldest first, below anything already here.
+    func restorePins(_ saved: [SavedAskRequest]) {
+        savedPins = saved
+        var restored: [AskEntry] = []
+        var pins: Set<UUID> = []
+        for request in saved {
+            let parts = request.parts.map(AskEntry.Content.init(saved:))
+            guard let head = parts.first else { continue }
+            var first = AskEntry(caption: request.caption, content: head, createdAt: request.createdAt, seenAt: request.seenAt)
+            first.startsRequest = true
+            first.restored = true
+            pins.insert(first.id)
+            restored.append(first)
+            for part in parts.dropFirst() {
+                var entry = AskEntry(caption: nil, content: part, createdAt: request.createdAt, seenAt: request.seenAt)
+                entry.restored = true
+                restored.append(entry)
+            }
+        }
+        entries = restored + entries
+        pinnedRequests.formUnion(pins)
+    }
+}
+
+extension AskModel.Request {
+    /// nil when nothing in it can outlast the moment: a request to send again, a failure to retry, a passing notice.
+    var saved: SavedAskRequest? {
+        let parts = entries.filter { $0.fadesAt == nil }.compactMap(\.content.saved)
+        guard !parts.isEmpty else { return nil }
+        return SavedAskRequest(caption: caption, createdAt: entries[0].createdAt, seenAt: entries[0].seenAt, parts: parts)
+    }
+}
+
+extension AskEntry.Content {
+    var saved: SavedAskRequest.Part? {
+        switch self {
+        case .result(let card, _, _): .result(card)
+        case .answer(let text, _, let tainted, let thread): .answer(text, tainted: tainted, thread: thread)
+        case .list(let title, let cards): .list(title: title, cards: cards)
+        case .info(let text): .info(text)
+        case .doneWithoutAsking(let text, let fullAccess): .doneWithoutAsking(text, fullAccess: fullAccess)
+        case .skipped(let text, let why): .skipped(text, why: why)
+        case .approval, .question, .error, .needsBrain, .spoken: nil
+        }
+    }
+
+    init(saved part: SavedAskRequest.Part) {
+        self = switch part {
+        case .result(let card): .result(card, activityId: nil, undo: false)
+        case .answer(let text, let tainted, let thread): .answer(text, canThinkHarder: false, tainted: tainted, thread: thread)
+        case .list(let title, let cards): .list(title: title, cards: cards)
+        case .info(let text): .info(text)
+        case .doneWithoutAsking(let text, let fullAccess): .doneWithoutAsking(text, fullAccess: fullAccess)
+        case .skipped(let text, let why): .skipped(text, why: why)
+        }
     }
 }

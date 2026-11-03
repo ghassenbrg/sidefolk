@@ -28,6 +28,7 @@ public struct DataPorter: Sendable {
                 "grants": try all(Grant.self),
                 "folders": try all(GrantedFolder.self),
                 "extensions": try all(ExtensionRecord.self),
+                "pinnedInAsk": try KeyValue.fetchOne(db, key: PinnedAskStore.key)?.value ?? .array([]),
             ]
         }
         var object = payload.objectValue ?? [:]

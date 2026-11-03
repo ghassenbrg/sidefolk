@@ -397,7 +397,7 @@ private struct EntryView: View {
                 }
             }
         case .answer(let text, let canThinkHarder, let tainted, let thread):
-            AnswerCard(entry: entry.id, text: text, canThinkHarder: canThinkHarder, tainted: tainted, thread: thread, request: request, model: model)
+            AnswerCard(entry: entry.id, text: text, canThinkHarder: canThinkHarder, tainted: tainted, thread: thread, request: request, model: model, restored: entry.restored)
         case .approval(let request):
             PermissionSlip(request: request, look: request.extensionId.flatMap { model.extensionLooks[$0] }, companionName: model.companionName,
                            tail: tail, standalone: standalone) { decision in
@@ -559,6 +559,8 @@ private struct AnswerCard: View {
     var thread: String?
     var request: String?
     var model: AskModel
+    /// Back from before quitting (D136).
+    var restored = false
     @State private var expanded = false
     @State private var shownHeight: CGFloat = 0
     @State private var fullHeight: CGFloat = 0
@@ -590,9 +592,12 @@ private struct AnswerCard: View {
                 }
                 HStack(alignment: .top, spacing: Theme.Space.xs) {
                     ButtonRow {
-                        Button("Reply") { model.reply(to: entry, thread: thread, request: request) }
-                            .buttonStyle(.sf(asks || replying ? .primary : .secondary))
-                            .accessibilityAddTraits(replying ? .isSelected : [])
+                        // A pin whose conversation has gone from History has nothing to continue (D136).
+                        if thread != nil || !restored {
+                            Button("Reply") { model.reply(to: entry, thread: thread, request: request) }
+                                .buttonStyle(.sf(asks || replying ? .primary : .secondary))
+                                .accessibilityAddTraits(replying ? .isSelected : [])
+                        }
                         Button("Save") { model.actions?.saveAnswer(text, tainted: tainted, in: model) }.buttonStyle(.sf(.secondary))
                         if canThinkHarder {
                             Button("Think harder") { model.submitThinkHarder(about: text) }.buttonStyle(.sf(.secondary))

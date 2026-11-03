@@ -557,7 +557,7 @@ provider keys with their host bindings and each MCP server's `mcp.<id>` item, co
 extension rows go (`DataPorter.deleteEverything(secrets:)`). Whatever it can't remove is reported,
 not ignored. Conversation history can also be deleted on its own, one conversation or all of it (History,
 Settings › Trust, D45): the thread's runs stop first, then its exchanges go and the "last sent"
-preview with them; Activity keeps its audit record. Retention is applied at launch and then daily while Sidefolk
+preview with them; Activity keeps its audit record. A result pinned in Ask is kept on purpose until it is unpinned, cleared or its conversation deleted, past the retention below, as a note would be (D136). Retention is applied at launch and then daily while Sidefolk
 runs: conversation history (7 days by default), Activity and AI run records (90), finished `sidefolk run` jobs with their stderr tails (14), sessions
 (14), the notebook's Trash (30); log files after 7 days, at most 16 MB a day. Bound parameters only; FTS5 terms quoted. Encryption at rest
 relies on FileVault (stated on the Privacy page). P1: a Keychain-keyed HMAC over grants, folders,

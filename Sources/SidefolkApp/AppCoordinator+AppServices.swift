@@ -259,6 +259,8 @@ extension AppCoordinator: AppServices {
     func deleteAllData() async -> UserFacingError? {
         do {
             _ = await runtime.stop()
+            // Nothing kept in Ask is written back after this.
+            ask.onPinsChanged = nil
             // Also removes the provider keys and every extension's Keychain item (read before the rows go).
             try await DataPorter(runtime: runtime).deleteEverything(secrets: secrets)
             _ = LoginItem.set(false)

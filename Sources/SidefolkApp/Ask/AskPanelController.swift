@@ -46,9 +46,10 @@ final class AskPanelController {
     /// `slipsOnly`: a permission slip opened it while it was closed; it shows only that until the person opens Ask.
     func show(beside anchor: NSRect, on screen: NSScreen, focus: Bool = true, slipsOnly: Bool = false) {
         model.freshenIfStale()
-        if !isVisible { model.opened() }
-        tidyWhileOpen()
+        // Whether it's only a slip decides what counts as seen, so before opening.
         model.compact = slipsOnly && (!isVisible || model.compact)
+        if isVisible { model.markSeen() } else { model.opened() }
+        tidyWhileOpen()
         fit(on: screen)
         hosted.panel.setContentSize(hosted.fittingSize)
         place(anchor, screen)
