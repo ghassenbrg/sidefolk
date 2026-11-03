@@ -981,6 +981,14 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 ;; (allow file-read* (subpath "/private/etc/ssl") (subpath "/opt/homebrew/etc/ca-certificates"))
 ```
 
+**What "can't use the internet" promises** *(tested on macOS 27, 2026-11-03)*: an extension without `network`, `media`, `ai` or `place` has no way found to connect off the Mac on its own: TCP, UDP, DNS, URL loaders and every Mach service it can reach were tried. Real packets leaving the Mac, directory-bound Macs and interpreted runtimes weren't. The promise has limits, stated here so that no sheet or card says more:
+
+- **`media` keeps the certificate service.** Writing HEIC or AVIF needs it (the encoder's signature is checked), and it can fetch from an address a certificate names, so data can leave that way. Those extensions show a warning instead of the promise.
+- **`ai` and `place` carry words out through Sidefolk,** by design: up to 8,000 characters to the person's AI, and 80 to the place search. Sidefolk warns about both on the drop card.
+- **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave.
+- **Anything can read** other same-user processes' command lines, the Mac's serial number and its MAC addresses. An extension with `network` could send those.
+- **File names:** a lookup by inode number resolves names under `/Users`, though not inside another extension's data folder or the contents of any file.
+
 **What runtimes need to start** *(verified)*:
 - **Every runtime:** read on `/` itself (without it even `/bin/echo` aborts), `/usr/lib`,
   `/System` (holds the dyld shared cache) and `/usr/share`; map-executable on `/usr/lib` and

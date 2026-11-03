@@ -226,7 +226,10 @@ public struct PermissionSummary: Sendable, Hashable {
                               caution: false,
                               note: String(localized: "Off until you say yes. They follow your Focus, Quiet and Attention settings. A switch in Settings › Add-ons takes it back.")))
         }
-        if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
+        if !p.network && p.media {
+            // HEIC and AVIF need the certificate service, which can fetch from an address (SandboxProfile.mediaRules).
+            lines.append(Line(kind: .media, text: String(localized: "Can't connect to the internet directly, but a Mac service it uses could carry data out"), caution: true))
+        } else if !p.network && p.read.isEmpty && p.write.isEmpty && p.folders == nil {
             lines.append(Line(kind: .none, text: String(localized: "No access to your files or the internet"), caution: false))
         } else if !p.network {
             // What it can't do matters as much beside files: the sandbox has no network rule at all (SandboxProfile).

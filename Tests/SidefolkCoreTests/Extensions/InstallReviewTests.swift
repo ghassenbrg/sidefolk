@@ -49,7 +49,7 @@ struct InstallReviewTests {
         #expect(lines.first { $0.kind == .screen }?.note?.contains("Screen & System Audio Recording") == true)
         #expect(lines.first { $0.kind == .network }?.note == nil, "nothing keeps it to the local network, so nothing is claimed")
         // Without the network, saying so is the guard that matters most beside files.
-        let offline = review("dev.sidefolk.images", ExtensionPermissions(folders: .write, media: true), .gallery).lines.map(\.text)
+        let offline = review("dev.sidefolk.images", ExtensionPermissions(folders: .write), .gallery).lines.map(\.text)
         #expect(offline.last == "Can't use the internet")
         #expect(review("x.y", ExtensionPermissions(power: true), .folder).lines.map(\.text).last == "No access to your files or the internet")
     }

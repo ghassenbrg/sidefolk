@@ -41,7 +41,8 @@ import Testing
         #expect(vitals.text.contains("Valid."))
         let images = ExtensionValidator.validate(at: ExtFixtures.builtIn("images"), paths: paths, resolver: Self.resolver)
         #expect(images.summary?.texts == ["Can read and change files in a folder you name, for that request only",
-                                          "Can use the Mac's graphics hardware for pictures", "Can't use the internet"])
+                                          "Can use the Mac's graphics hardware for pictures",
+                                          "Can't connect to the internet directly, but a Mac service it uses could carry data out"])
     }
 
     /// A tool whose calls go to a device the person paired names the parameter that holds it (D72).

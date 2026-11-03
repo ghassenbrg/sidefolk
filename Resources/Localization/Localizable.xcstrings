@@ -50645,6 +50645,64 @@
         }
       }
     },
+    "Can't connect to the internet directly, but a Mac service it uses could carry data out" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكنه الاتصال بالإنترنت مباشرةً، لكن خدمة في الـ Mac يستخدمها قد تنقل البيانات إلى الخارج"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann sich nicht direkt mit dem Internet verbinden, aber ein genutzter Mac-Dienst könnte Daten nach außen tragen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No puede conectarse directamente a internet, pero un servicio del Mac que usa podría sacar datos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne peut pas se connecter directement à Internet, mais un service du Mac qu’il utilise pourrait transmettre des données"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non può connettersi direttamente a Internet, ma un servizio del Mac che usa potrebbe portare fuori dei dati"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネットに直接接続できませんが、使用するMacのサービスがデータを外部に運ぶ可能性があります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인터넷에 직접 연결할 수 없지만, 사용하는 Mac 서비스가 데이터를 밖으로 보낼 수 있음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não pode se conectar diretamente à internet, mas um serviço do Mac que ele usa poderia levar dados para fora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法直接连接互联网，但它使用的 Mac 服务可能会把数据带出去"
+          }
+        }
+      }
+    },
     "Can't use" : {
       "localizations" : {
         "ar" : {

@@ -5,6 +5,13 @@ import Testing
 @Suite struct PermissionSummaryTests {
     let home = FolderAccess.canonical(NSHomeDirectory())!
 
+    @Test func mediaDoesntPromiseTheInternetIsClosed() {
+        let lines = PermissionSummary.forExtension(ExtensionPermissions(media: true))
+        #expect(lines.texts == ["Can use the Mac's graphics hardware for pictures", "Can't connect to the internet directly, but a Mac service it uses could carry data out"])
+        #expect(lines.lines.last?.caution == true)
+        #expect(!PermissionSummary.forExtension(ExtensionPermissions(network: true, media: true)).texts.contains("Can't connect to the internet directly, but a Mac service it uses could carry data out"))
+    }
+
     @Test func nothingGranted() {
         let s = PermissionSummary.forExtension(ExtensionPermissions())
         #expect(s.texts == ["No access to your files or the internet"])
