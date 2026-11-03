@@ -661,6 +661,33 @@ import Testing
         await s.stop()
     }
 
+    /// The yes has to be for this: a card about the group, from "Ask each time", opens nothing of anyone else's.
+    @Test func aCardAboutTheGroupOpensNoOtherRecord() async throws {
+        let s = try await Stack()
+        await s.runtime.settings.update { $0.agentAccess.save = .ask }
+        let ended = try await s.runtime.scheduler.create(title: "Done one", at: Date().addingTimeInterval(3600), source: "user")
+        _ = try await s.runtime.scheduler.complete(id: ended.id)
+        let answer = s.answerNextCard(.allowOnce)
+        let refused = try await s.call("reminders_cancel", ["id": .string(ended.id)])
+        answer.cancel()
+        #expect(await answer.value != nil, "it asked, as that setting does")
+        #expect(refused.text.contains("couldn't find a reminder"), "\(refused.text)")
+        await s.stop()
+    }
+
+    /// A flow step isn't another agent: however its call is wrapped, a card doesn't reach the person's reminders (D160).
+    @Test func aFlowStepReachesOnlyItsOwn() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let base = try #require(s.runtime.registry.tool(named: "reminders.cancel"))
+        let context = ToolContext(caller: .extension(id: "dev.sidefolk.sideflow"), now: Date())
+        var told: Error?
+        do { _ = try await ExternalFacade(base: base, spec: base.spec, onCard: "Cancel your reminder").run(["id": .string(sam.id)], context: context) } catch { told = error }
+        #expect(told != nil, "refused")
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .scheduled)
+        await s.stop()
+    }
+
     /// "watch this all week": as long as it said when made, up to a week, and nothing else moves.
     @Test func aWatchCanSayHowLongItRuns() async throws {
         let s = try await Stack()
