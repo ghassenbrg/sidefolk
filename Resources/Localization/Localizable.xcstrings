@@ -3041,6 +3041,122 @@
         }
       }
     },
+    "%@ didn't ask for your place when you installed it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يطلب %@ موقعك عند تثبيته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat bei der Installation nicht nach deinem Standort gefragt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no pidió tu ubicación cuando la instalaste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’a pas demandé l’accès à votre position lors de son installation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non ha chiesto la tua posizione quando l'hai installata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、インストール時に位置情報を求めていませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 확장 프로그램은 설치할 때 위치를 요청하지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não pediu sua localização quando você a instalou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 在你安装时没有请求获取你的位置。"
+          }
+        }
+      }
+    },
+    "%@ didn't ask to schedule reminders when you installed it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يطلب %@ جدولة تذكيرات عند تثبيته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat bei der Installation nicht darum gebeten, Erinnerungen zu planen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no pidió programar recordatorios cuando la instalaste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’a pas demandé à programmer des rappels lors de son installation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non ha chiesto di pianificare promemoria quando l'hai installata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は、インストール時にリマインダーの予約を求めていませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 확장 프로그램은 설치할 때 미리 알림 예약을 요청하지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não pediu para programar lembretes quando você a instalou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 在你安装时没有请求安排提醒。"
+          }
+        }
+      }
+    },
     "%@ didn't list its models." : {
       "localizations" : {
         "ar" : {
@@ -8640,6 +8756,71 @@
         }
       }
     },
+    "%@ looked up “%@”" : {
+      "comment" : "History: an extension searched for a place by name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بحث %1$@ عن «%2$@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ hat nach „%2$@“ gesucht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ looked up “%2$@”"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ buscó “%2$@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a recherché « %2$@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ha cercato “%2$@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@が「%2$@」を検索しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 확장 프로그램이 “%2$@”을(를) 검색했어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ procurou “%2$@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 查找了“%2$@”"
+          }
+        }
+      }
+    },
     "%@ must be at least %@." : {
       "localizations" : {
         "ar" : {
@@ -9678,6 +9859,71 @@
         }
       }
     },
+    "%@ planned %lld reminders" : {
+      "comment" : "History: an extension replaced the reminders it scheduled",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التذكيرات التي خطط لها %1$@: %2$lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von %1$@ geplante Erinnerungen: %2$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ planned %2$lld reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorios planificados por %1$@: %2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappels planifiés par %1$@ : %2$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promemoria pianificati da %1$@: %2$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@がリマインダーを%2$lld件計画しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 확장 프로그램이 미리 알림 %2$lld개를 계획했어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lembretes planejados por %1$@: %2$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 计划了 %2$lld 个提醒"
+          }
+        }
+      }
+    },
     "%@ rejected your API key. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -9854,6 +10100,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 返回的监视状态数据太多。"
+          }
+        }
+      }
+    },
+    "%@ says it wants this %@." : {
+      "comment" : "Asked before an extension may have the person's place or schedule reminders: the extension's stated purpose",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقول %1$@ إنه يريد هذا %2$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ gibt an, dies zu wollen, %2$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ says it wants this %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dice que quiere esto %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dit vouloir cela %2$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dice di volere questo %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は、これを必要とする理由を次のように説明しています：%2$@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 확장 프로그램은 이 권한을 원하는 이유를 이렇게 설명해요: %2$@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ diz que quer isto %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 说明想要这项权限，用途为：%2$@。"
           }
         }
       }
@@ -37786,7 +38097,7 @@
       }
     },
     "Allow" : {
-      "comment" : "A permission slip's main button",
+      "comment" : "A permission slip's main button\nLetting an extension have the person's place or schedule reminders: the button",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -48980,6 +49291,124 @@
         }
       }
     },
+    "Can ask for your place. It says it uses it %@." : {
+      "comment" : "Install sheet: permissions.place; the author's purpose, “to show the weather where you are”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه طلب موقعك. ويقول إنه يستخدمه %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann nach deinem Standort fragen. Laut eigener Angabe nutzt sie ihn, %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede pedir tu ubicación. Dice que la usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut demander votre position. Elle dit l’utiliser %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può chiedere la tua posizione. Dice di usarla %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置情報を求めることがあります。用途の説明：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위치를 요청할 수 있어요. 용도 설명: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode pedir sua localização. Diz que a usa %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以请求获取你的位置。它说明用途为：%@。"
+          }
+        }
+      }
+    },
+    "Can ask to send you reminders at moments it plans. It says it uses them %@." : {
+      "comment" : "Install sheet: permissions.schedule; the author's purpose, “to remind you of the moments you choose”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه طلب إرسال تذكيرات إليك في أوقات يخطط لها. ويقول إنه يستخدمها %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kann anfragen, dir Erinnerungen zu Zeitpunkten zu senden, die sie selbst plant. Laut eigener Angabe nutzt sie diese, %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede pedir enviarte recordatorios en los momentos que planifica. Dice que los usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut demander à vous envoyer des rappels aux moments qu’elle planifie. Elle dit les utiliser %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può chiedere di inviarti promemoria nei momenti che pianifica. Dice di usarli %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能が計画したタイミングでリマインダーを送る許可を求めることがあります。用途の説明：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 계획한 시점에 미리 알림을 보내도록 요청할 수 있어요. 용도 설명: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode pedir para enviar lembretes nos momentos que planeja. Diz que os usa %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以请求在它计划的时间点向你发送提醒。它说明用途为：%@。"
+          }
+        }
+      }
+    },
     "Can ask your AI to write something, up to %lld times a day. It says it uses it %@." : {
       "comment" : "Install sheet: permissions.ai; the daily limit, then the author's purpose, “to write quiz questions”",
       "localizations" : {
@@ -52022,6 +52451,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改日程“%@”"
+          }
+        }
+      }
+    },
+    "Change what an extension may have" : {
+      "comment" : "A tool: the person's yes or no to an extension's place or reminders",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير ما يُسمح للملحق بالحصول عليه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändern, was eine Erweiterung haben darf"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar lo que una extensión puede tener"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier ce qu’une extension peut avoir"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia ciò che un'estensione può avere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能に許可する内容を変更"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램에 허용할 항목 변경"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar o que uma extensão pode ter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改扩展可以获得的权限"
           }
         }
       }
@@ -63764,6 +64252,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拷贝。"
+          }
+        }
+      }
+    },
+    "Copied: %@" : {
+      "comment" : "An extension's page: the exact words a button just put on the clipboard",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم النسخ: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiert: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiato: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピーしました：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사했어요: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已拷贝：%@"
           }
         }
       }
@@ -99159,6 +99706,65 @@
         }
       }
     },
+    "It can send you reminders at moments it plans, which follow your Focus, Quiet and Attention settings. It can't show them while Sidefolk is quit unless it asks macOS to. You can take this back in Settings › Add-ons." : {
+      "comment" : "Asked before an extension may schedule reminders",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنه إرسال تذكيرات إليك في أوقات يخطط لها، وهي تتبع إعدادات التركيز والهدوء والانتباه. ولا يمكنه عرضها أثناء إنهاء Sidefolk إلا إذا طلب ذلك من macOS. يمكنك سحب هذا الإذن من الإعدادات › الإضافات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie kann dir Erinnerungen zu Zeitpunkten senden, die sie selbst plant; diese folgen deinen Einstellungen für Fokus, Ruhemodus und Aufmerksamkeit. Sie kann sie nicht anzeigen, solange Sidefolk beendet ist, es sei denn, sie bittet macOS darum. Du kannst das in Einstellungen › Add-ons zurücknehmen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede enviarte recordatorios en los momentos que planifica, y siguen tus ajustes de Concentración, Silencio y Atención. No puede mostrarlos mientras Sidefolk esté cerrado, salvo que se lo pida a macOS. Puedes retirar este permiso en Ajustes › Complementos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle peut vous envoyer des rappels aux moments qu’elle planifie, et ils respectent vos réglages Concentration, Discret et Attention. Elle ne peut pas les afficher tant que Sidefolk est quitté, sauf si elle le demande à macOS. Vous pouvez retirer cette autorisation dans Réglages › Modules."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Può inviarti promemoria nei momenti che pianifica, e questi seguono le tue impostazioni di Concentrazione, Silenzio e Attenzione. Non può mostrarli mentre Sidefolk è chiuso, a meno che non lo chieda a macOS. Puoi revocare questo permesso in Impostazioni › Componenti aggiuntivi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能が計画したタイミングでリマインダーを送ります。リマインダーは「集中」「静か」「集中と通知」の設定に従います。Sidefolkを終了している間は、macOSに依頼しない限り表示できません。この許可は設定 › アドオンで取り消せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 계획한 시점에 미리 알림을 보낼 수 있어요. 미리 알림은 “집중”, “조용한 모드”, “집중과 알림” 설정을 따라요. Sidefolk가 종료되어 있는 동안에는 macOS에 요청하지 않는 한 표시할 수 없어요. 이 허용은 설정 › 애드온에서 되돌릴 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela pode enviar lembretes nos momentos que planeja, e eles seguem seus ajustes de Foco, Silêncio e Atenção. Não pode mostrá-los enquanto o Sidefolk estiver encerrado, a menos que peça ao macOS. Você pode retirar essa permissão em Ajustes › Complementos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它可以在自己计划的时间点向你发送提醒，这些提醒遵循你的“专注”“安静”和“专注与通知”设置。Sidefolk 退出期间它无法显示提醒，除非它请 macOS 来显示。你可以在设置 › 附加组件中收回这项权限。"
+          }
+        }
+      }
+    },
     "It can use the internet and run %@, so it could download and run other code." : {
       "localizations" : {
         "ar" : {
@@ -100399,6 +101005,65 @@
         }
       }
     },
+    "It says it uses it %@." : {
+      "comment" : "Under an extension's switch for the person's place: the author's purpose, “to show the weather where you are”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقول إنه يستخدمه %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laut eigener Angabe nutzt sie ihn, %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dice que la usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle dit l’utiliser %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dice di usarla %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用途の説明：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "용도 설명: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diz que a usa %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它说明用途为：%@。"
+          }
+        }
+      }
+    },
     "It says it uses it %@. %lld of %lld requests today." : {
       "comment" : "Under the AI switch of an extension: the author's purpose, “to write quiz questions”, then requests made today and the daily limit",
       "localizations" : {
@@ -100460,6 +101125,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它说用途是：%1$@。今天已请求 %2$lld / %3$lld 次。"
+          }
+        }
+      }
+    },
+    "It says it uses them %@." : {
+      "comment" : "Under an extension's switch for its reminders: the author's purpose, “to remind you of the moments you choose”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقول إنه يستخدمها %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laut eigener Angabe nutzt sie diese, %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dice que los usa %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle dit les utiliser %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dice di usarli %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用途の説明：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "용도 설명: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diz que os usa %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它说明用途为：%@。"
           }
         }
       }
@@ -101363,6 +102087,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它将能够"
+          }
+        }
+      }
+    },
+    "It will get your town and region, its coordinates to about a kilometre and its time zone, and hear when they change. With internet access it could send them on. You can take this back in Settings › Add-ons." : {
+      "comment" : "Asked before an extension may have the person's place",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيحصل على مدينتك ومنطقتك، وإحداثياتهما بدقة تقارب كيلومترًا واحدًا، ومنطقتك الزمنية، وسيعرف عندما تتغيّر. ومع إتاحة الوصول إلى الإنترنت يمكنه إرسالها إلى جهات أخرى. يمكنك سحب هذا الإذن من الإعدادات › الإضافات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie erhält deinen Ort und deine Region, deren Koordinaten auf etwa einen Kilometer genau und deine Zeitzone und erfährt, wenn sich diese ändern. Mit Internetzugriff könnte sie diese weitersenden. Du kannst das in Einstellungen › Add-ons zurücknehmen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recibirá tu localidad y región, sus coordenadas con una precisión de aproximadamente un kilómetro y tu zona horaria, y se enterará cuando cambien. Con acceso a internet, podría enviarlas a otro sitio. Puedes retirar este permiso en Ajustes › Complementos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle recevra votre ville et votre région, les coordonnées de ce lieu à environ un kilomètre près et votre fuseau horaire, et saura quand ils changent. Avec un accès à Internet, elle pourrait les transmettre ailleurs. Vous pouvez retirer cette autorisation dans Réglages › Modules."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riceverà la tua città e la tua regione, le loro coordinate con una precisione di circa un chilometro e il tuo fuso orario, e saprà quando cambiano. Con l'accesso a internet potrebbe inviarli altrove. Puoi revocare questo permesso in Impostazioni › Componenti aggiuntivi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お住まいの町と地域、約1キロメートル単位の座標、タイムゾーンを受け取り、それらが変わったことも知ります。インターネットにアクセスできる場合は、それらを外部に送れてしまいます。この許可は設定 › アドオンで取り消せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사는 도시와 지역, 약 1km 단위의 좌표, 시간대를 받고, 이 정보가 바뀌면 알게 돼요. 인터넷에 접근할 수 있으면 이 정보를 다른 곳으로 보낼 수 있어요. 이 허용은 설정 › 애드온에서 되돌릴 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ela vai receber sua cidade e sua região, as coordenadas delas com precisão de cerca de um quilômetro e seu fuso horário, e saber quando mudarem. Com acesso à internet, poderia enviá-los para outro lugar. Você pode retirar essa permissão em Ajustes › Complementos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它将获得你所在的城市和地区、精确到约一公里的坐标以及你的时区，并会在这些信息变化时得知。如果它能访问互联网，就可能把这些信息发送出去。你可以在设置 › 附加组件中收回这项权限。"
           }
         }
       }
@@ -105671,6 +106454,123 @@
         }
       }
     },
+    "Let %@ schedule reminders" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح لـ %@ بجدولة التذكيرات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ erlauben, Erinnerungen zu planen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar que %@ programe recordatorios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser %@ à programmer des rappels"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti a %@ di pianificare promemoria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@にリマインダーの予約を許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 미리 알림을 예약하도록 허용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar %@ programar lembretes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 %@ 安排提醒"
+          }
+        }
+      }
+    },
+    "Let %@ schedule reminders?" : {
+      "comment" : "Asked before an extension may schedule reminders",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تسمح لـ %@ بجدولة التذكيرات؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Darf %@ Erinnerungen planen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Dejar que %@ programe recordatorios?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser %@ à programmer des rappels ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentire a %@ di pianificare promemoria?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@にリマインダーの予約を許可しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 미리 알림을 예약하도록 허용할까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar %@ programar lembretes?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要让 %@ 安排提醒吗？"
+          }
+        }
+      }
+    },
     "Let %@ use its changed tools?" : {
       "localizations" : {
         "ar" : {
@@ -109522,6 +110422,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请在桌面或菜单栏中找它。这个副本将会关闭。"
+          }
+        }
+      }
+    },
+    "Look up a place" : {
+      "comment" : "A tool: an extension looks a town up by name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البحث عن مكان"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Ort nachschlagen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar un lugar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher un lieu"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca un luogo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "場所を検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "장소 검색"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar um lugar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找地点"
           }
         }
       }
@@ -121270,6 +122229,65 @@
         }
       }
     },
+    "Not Now" : {
+      "comment" : "Letting an extension have the person's place or schedule reminders: the button",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس الآن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas maintenant"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今はしない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나중에"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora não"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后再说"
+          }
+        }
+      }
+    },
     "Not a time I can read yet. Try “tomorrow 9:00”, or pick one." : {
       "localizations" : {
         "ar" : {
@@ -128725,6 +129743,180 @@
         }
       }
     },
+    "Off until you say yes. A switch in Settings › Add-ons takes it back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف إلى أن توافق. يسحبه مفتاح في الإعدادات › الإضافات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, bis du Ja sagst. Ein Schalter in Einstellungen › Add-ons nimmt es zurück."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado hasta que digas que sí. Un interruptor en Ajustes › Complementos lo retira."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé tant que vous n’avez pas dit oui. Un interrupteur dans Réglages › Modules le retire."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivato finché non dici di sì. Un interruttore in Impostazioni › Componenti aggiuntivi lo revoca."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「はい」と答えるまでオフです。設定 › アドオンのスイッチで取り消せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“예”라고 하기 전까지 꺼져 있어요. 설정 › 애드온의 스위치로 되돌릴 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado até você dizer sim. Um interruptor em Ajustes › Complementos retira a permissão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你说“好”之前保持关闭。可以在设置 › 附加组件中用开关收回。"
+          }
+        }
+      }
+    },
+    "Off until you say yes. They follow your Focus, Quiet and Attention settings. A switch in Settings › Add-ons takes it back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقفة إلى أن توافق. وهي تتبع إعدادات التركيز والهدوء والانتباه. يسحبها مفتاح في الإعدادات › الإضافات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, bis du Ja sagst. Sie folgen deinen Einstellungen für Fokus, Ruhemodus und Aufmerksamkeit. Ein Schalter in Einstellungen › Add-ons nimmt es zurück."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivados hasta que digas que sí. Siguen tus ajustes de Concentración, Silencio y Atención. Un interruptor en Ajustes › Complementos los retira."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivés tant que vous n’avez pas dit oui. Ils respectent vos réglages Concentration, Discret et Attention. Un interrupteur dans Réglages › Modules les retire."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivati finché non dici di sì. Seguono le tue impostazioni di Concentrazione, Silenzio e Attenzione. Un interruttore in Impostazioni › Componenti aggiuntivi li revoca."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「はい」と答えるまでオフです。リマインダーは「集中」「静か」「集中と通知」の設定に従います。設定 › アドオンのスイッチで取り消せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“예”라고 하기 전까지 꺼져 있어요. 미리 알림은 “집중”, “조용한 모드”, “집중과 알림” 설정을 따라요. 설정 › 애드온의 스위치로 되돌릴 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativados até você dizer sim. Eles seguem seus ajustes de Foco, Silêncio e Atenção. Um interruptor em Ajustes › Complementos retira a permissão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你说“好”之前保持关闭。提醒遵循你的“专注”“安静”和“专注与通知”设置。可以在设置 › 附加组件中用开关收回。"
+          }
+        }
+      }
+    },
+    "Off until you say yes. With its internet access it could send your town and coordinates anywhere. A switch in Settings › Add-ons takes it back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف إلى أن توافق. ومع وصوله إلى الإنترنت يمكنه إرسال مدينتك وإحداثياتك إلى أي مكان. يسحبه مفتاح في الإعدادات › الإضافات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, bis du Ja sagst. Mit ihrem Internetzugriff könnte sie deinen Ort und deine Koordinaten überallhin senden. Ein Schalter in Einstellungen › Add-ons nimmt es zurück."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado hasta que digas que sí. Con su acceso a internet, podría enviar tu localidad y tus coordenadas a cualquier sitio. Un interruptor en Ajustes › Complementos lo retira."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé tant que vous n’avez pas dit oui. Avec son accès à Internet, elle pourrait envoyer votre ville et vos coordonnées n’importe où. Un interrupteur dans Réglages › Modules le retire."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivato finché non dici di sì. Con il suo accesso a internet potrebbe inviare la tua città e le tue coordinate ovunque. Un interruttore in Impostazioni › Componenti aggiuntivi lo revoca."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「はい」と答えるまでオフです。インターネットにアクセスできるため、町と座標をどこにでも送れてしまいます。設定 › アドオンのスイッチで取り消せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“예”라고 하기 전까지 꺼져 있어요. 인터넷에 접근할 수 있어서 도시와 좌표를 어디로든 보낼 수 있어요. 설정 › 애드온의 스위치로 되돌릴 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado até você dizer sim. Com o acesso à internet, ela poderia enviar sua cidade e suas coordenadas para qualquer lugar. Um interruptor em Ajustes › Complementos retira a permissão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你说“好”之前保持关闭。它能访问互联网，所以可能把你所在的城市和坐标发送到任何地方。可以在设置 › 附加组件中用开关收回。"
+          }
+        }
+      }
+    },
     "Okay, no reminder." : {
       "localizations" : {
         "ar" : {
@@ -131294,7 +132486,7 @@
       }
     },
     "Open" : {
-      "comment" : "Attention: everything arrives as set",
+      "comment" : "A reminder from an extension: opens its page",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -139413,6 +140605,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只有这台 Mac 上的服务器才能使用普通 http。没有保存任何内容。"
+          }
+        }
+      }
+    },
+    "Plan an extension's reminders" : {
+      "comment" : "A tool: an extension replaces the reminders it scheduled",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التخطيط لتذكيرات ملحق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnerungen einer Erweiterung planen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planificar los recordatorios de una extensión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planifier les rappels d’une extension"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pianifica i promemoria di un'estensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能のリマインダーを計画"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램의 미리 알림 계획"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planejar os lembretes de uma extensão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安排扩展的提醒"
           }
         }
       }
@@ -148092,6 +149343,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "伙伴被隐藏或你在其他空间时，提醒也能送达。"
+          }
+        }
+      }
+    },
+    "Reminders from this extension aren't allowed." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التذكيرات من هذا الملحق غير مسموح بها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnerungen dieser Erweiterung sind nicht erlaubt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se permiten recordatorios de esta extensión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les rappels de cette extension ne sont pas autorisés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I promemoria di questa estensione non sono consentiti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この拡張機能のリマインダーは許可されていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 확장 프로그램의 미리 알림은 허용되지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lembretes desta extensão não são permitidos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不允许这个扩展发送提醒。"
           }
         }
       }
@@ -160698,6 +162007,65 @@
         }
       }
     },
+    "Send reminders" : {
+      "comment" : "An extension's row: the person's switch for the reminders it plans",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إرسال التذكيرات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnerungen senden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar recordatorios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer des rappels"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invia promemoria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リマインダーを送る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리 알림 보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar lembretes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送提醒"
+          }
+        }
+      }
+    },
     "Send your saved key to %@?" : {
       "localizations" : {
         "ar" : {
@@ -162103,6 +163471,182 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "共享文件夹"
+          }
+        }
+      }
+    },
+    "Share your place" : {
+      "comment" : "An extension's row: the person's switch for its use of their place",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة موقعك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Standort teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir tu ubicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager votre position"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi la tua posizione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置情報を共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 위치 공유"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar sua localização"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共享你的位置"
+          }
+        }
+      }
+    },
+    "Share your place with %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة موقعك مع %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Standort mit %@ teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir tu ubicación con %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager votre position avec %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi la tua posizione con %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@と位置情報を共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와(과) 내 위치 공유"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar sua localização com %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 %@ 共享你的位置"
+          }
+        }
+      }
+    },
+    "Share your place with %@?" : {
+      "comment" : "Asked before an extension may read the person's place",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تشارك موقعك مع %@؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Standort mit %@ teilen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Compartir tu ubicación con %@?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager votre position avec %@ ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividere la tua posizione con %@?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@と位置情報を共有しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와(과) 내 위치를 공유할까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar sua localização com %@?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要与 %@ 共享你的位置吗？"
           }
         }
       }
@@ -176010,6 +177554,64 @@
         }
       }
     },
+    "Stop %@'s reminders" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف تذكيرات %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnerungen von %@ beenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener los recordatorios de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter les rappels de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompi i promemoria di %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のリマインダーを停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 미리 알림 중지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar os lembretes de %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止 %@ 的提醒"
+          }
+        }
+      }
+    },
     "Stop Following" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -176298,6 +177900,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止重复"
+          }
+        }
+      }
+    },
+    "Stop sharing your place with %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مشاركة موقعك مع %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Standort nicht mehr mit %@ teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar de compartir tu ubicación con %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne plus partager votre position avec %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smetti di condividere la tua posizione con %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@との位置情報の共有を停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@와(과) 위치 공유 중지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de compartilhar sua localização com %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止与 %@ 共享你的位置"
           }
         }
       }
@@ -183765,6 +185425,64 @@
         }
       }
     },
+    "That plan can't be read." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّرت قراءة تلك الخطة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Plan kann nicht gelesen werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese plan no se puede leer."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce plan ne peut pas être lu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quel piano non può essere letto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その計画は読み取れません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 계획을 읽을 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esse plano não pode ser lido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取那份计划。"
+          }
+        }
+      }
+    },
     "That program" : {
       "localizations" : {
         "ar" : {
@@ -185328,6 +187046,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收件人太多了（上限为 10 个）。"
+          }
+        }
+      }
+    },
+    "That's too many reminders at once." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا عدد كبير جدًا من التذكيرات دفعة واحدة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das sind zu viele Erinnerungen auf einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son demasiados recordatorios a la vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela fait trop de rappels à la fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono troppi promemoria in una volta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一度に設定できるリマインダーの数を超えています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "한 번에 미리 알림이 너무 많아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "São lembretes demais de uma vez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次的提醒太多了。"
           }
         }
       }
@@ -194252,6 +196028,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有足够的空间来完成这项操作。"
+          }
+        }
+      }
+    },
+    "There's no such choice." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يوجد خيار كهذا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Auswahl gibt es nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esa opción no existe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce choix n’existe pas."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa scelta non esiste."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのような選択肢はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그런 선택지는 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essa opção não existe."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有这个选项。"
           }
         }
       }
