@@ -972,7 +972,8 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 ;; media=true adds (pictures on Apple silicon, measured on macOS 27; a VM's GPU is not among them):
 ;; (allow iokit-open (iokit-user-client-class "IOSurfaceRootUserClient" "AGXDeviceUserClient"))
-;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent"))
+;; (allow mach-lookup (global-name "com.apple.coremedia.videodecoder") (global-name "com.apple.trustd.agent")
+;;   (global-name "com.apple.audio.AudioComponentRegistrar"))
 
 ;; network=true adds (all-or-nothing, see limits):
 ;; (allow system-socket) (allow network-outbound (remote ip "*:*"))
@@ -996,7 +997,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
   `sysctl-read`.
 - **A compiled Swift program** (every one of Sidefolk's own extensions, D39): nothing beyond the base rules; Swift and
   Foundation load from `/usr/lib/swift` and `/System`. With `network`, `URLSession` works on the
-  `trustd.agent` lookup and the mDNSResponder socket. Core Image and HEIC or PNG output need `media`.
+  `trustd.agent` lookup and the mDNSResponder socket. Core Image, HEIC or PNG output, and writing compressed sound need `media`.
 - **sh:** `/bin/sh` reads `/private/var/select/sh` and execs `/bin/bash`, so allow both. A script's
   external commands must each be listed (`head` was denied).
 - **python3:** framework builds (Homebrew and Xcode) re-exec

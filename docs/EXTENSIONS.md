@@ -124,7 +124,7 @@ not listed on this page is an error**, so a typo never silently changes what an 
 | `permissions.exec` | no | Absolute paths of programs it may run, like `/usr/bin/pmset`, or `git` by name ([Programs by name](#programs-by-name)). |
 | `permissions.clipboard` | no | `true` lets it read and change the clipboard (D63). Its tools can't be below medium risk: what someone copies is theirs. |
 | `permissions.power` | no | `true` lets it keep the Mac awake (macOS power assertions) and ask Sidefolk to keep the person active (`sidefolk/nudge`, D63). |
-| `permissions.media` | no | `true` opens the Mac's graphics hardware and media decoders, which image code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo). No files or network come with it. |
+| `permissions.media` | no | `true` opens the Mac's graphics hardware, media decoders and audio codecs, which image and sound code needs on Apple silicon (Core Image, writing HEIC or PNG from a photo, AVAudioFile). No files or network come with it. |
 | `permissions.network_purpose` | no | With `network`: what you use it for, one line starting with "to" or "for" (≤ 120 characters), e.g. "to find TVs on your local network and stream to them". The sheet adds it to "Can use the network, the internet included": the sandbox can't keep you to the local network (D69). |
 | `permissions.udp` | no | With `network`: a UDP port of your own and the packets that come back to it, which live audio and video (WebRTC) needs; `network` alone refuses the bind. No listening TCP server. |
 | `permissions.screen` | no | `true` lets it record the screen and the sound the Mac plays (ScreenCaptureKit) and compress it with the hardware video encoder (D69). macOS asks the person to allow **Sidefolk** in Screen Recording: an extension runs as Sidefolk's child, so the permission is Sidefolk's, and this line is what keeps other extensions from using it. Pictures in IOSurfaces need `media` too. Its tools can't be below medium risk. |
@@ -239,6 +239,8 @@ Good to know:
   renderer, and ImageIO reads a photo the hardware decoded through the video decoder service; both fail in the
   sandbox without `"media": true`, which opens exactly those (two IOKit user clients and one service). A
   virtual machine's GPU isn't among them.
+- **Sound needs `media` too.** Core Audio finds its codecs through a registrar service; without it, writing compressed
+  or 24-bit sound fails (AVAudioFile). `media` opens that one service.
 - **System services for specific programs.** Some system programs need a system service to work.
   Sidefolk opens it only when that program is in `exec`: `/usr/bin/pmset` gets
   `com.apple.PowerManagement.control` (battery state).

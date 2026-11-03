@@ -41,7 +41,7 @@ import Testing
         #expect(vitals.text.contains("Valid."))
         let images = ExtensionValidator.validate(at: ExtFixtures.builtIn("images"), paths: paths, resolver: Self.resolver)
         #expect(images.summary?.texts == ["Can read and change files in a folder you name, for that request only",
-                                          "Can use the Mac's graphics hardware for pictures",
+                                          "Can use the Mac's media tools for pictures and sound",
                                           "Can't connect to the internet directly, but a Mac service it uses could carry data out"])
     }
 

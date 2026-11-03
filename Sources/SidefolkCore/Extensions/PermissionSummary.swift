@@ -206,7 +206,7 @@ public struct PermissionSummary: Sendable, Hashable {
                               note: String(localized: "Sidefolk found it on this Mac, and it may start only its own helper programs.")))
         }
         if p.media {
-            lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's graphics hardware for pictures"), caution: false))
+            lines.append(Line(kind: .media, text: String(localized: "Can use the Mac's media tools for pictures and sound"), caution: false))
         }
         if p.clipboard {
             lines.append(Line(kind: .clipboard, text: String(localized: "Can read and change what you copy (the clipboard), and see which app you copied in"), caution: true))

@@ -51558,60 +51558,61 @@
         }
       }
     },
-    "Can use the Mac's graphics hardware for pictures" : {
+    
+    "Can use the Mac's media tools for pictures and sound" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يمكنه استخدام عتاد الرسوميات في الـ Mac للصور"
+            "value" : "يمكنه استخدام أدوات الوسائط في الـ Mac للصور والصوت"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Darf die Grafikhardware des Mac für Bilder nutzen"
+            "value" : "Darf die Medienwerkzeuge des Mac für Bilder und Ton nutzen"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Puede usar el hardware gráfico del Mac para imágenes"
+            "value" : "Puede usar las herramientas multimedia del Mac para imágenes y sonido"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Peut utiliser le matériel graphique du Mac pour les images"
+            "value" : "Peut utiliser les outils multimédias du Mac pour les images et le son"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Può usare l’hardware grafico del Mac per le immagini"
+            "value" : "Può usare gli strumenti multimediali del Mac per immagini e suoni"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画像のためにMacのグラフィックハードウェアを使用できます"
+            "value" : "画像や音声のためにMacのメディアツールを使用できます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "사진 작업에 Mac의 그래픽 하드웨어를 사용할 수 있음"
+            "value" : "사진과 소리 작업에 Mac의 미디어 도구를 사용할 수 있음"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pode usar o hardware gráfico do Mac para imagens"
+            "value" : "Pode usar as ferramentas de mídia do Mac para imagens e som"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可以使用 Mac 的图形硬件处理图片"
+            "value" : "可以使用 Mac 的媒体工具处理图片和声音"
           }
         }
       }

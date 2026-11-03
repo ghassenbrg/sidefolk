@@ -152,8 +152,8 @@ public struct ExtensionManifest: Sendable, Hashable, Decodable {
         public var files: Files
         /// Absolute paths of programs it may run.
         public var exec: [String]
-        /// The Mac's graphics hardware and media decoders, which modern image code needs (resizing a photo,
-        /// rendering a QR code). No files or network come with it.
+        /// The Mac's graphics hardware, media decoders and audio codecs, which modern image and sound code needs
+        /// (resizing a photo, rendering a QR code, writing a sound file). No files or network come with it.
         public var media: Bool
         /// What the person copies: reading and changing the clipboard (D63).
         public var clipboard: Bool
