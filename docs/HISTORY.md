@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Dev ideas, batch 6: reading on without a card, and the wake word measured (items 13, 14; D119)
+
+**Item 13** is in D119 and T42. Verified: `ResearchModeTests`, a test per limit, and `swift test` in full. An adversarial review of the first version broke it (a message spelled in `%61`s of a listed host, a freeze on a page built for it, `%6Cocalhost` past T11, reads that didn't end it): the design was narrowed and each became a test. Not run: a live model following links. **Item 14:** a measurement only, `docs/research/wake-word-prototype.md`, nothing in the app; the founder's choice waits on a microphone test at the Mac.
+
 ## 2026-11-03: Dev ideas, batch 5: conversation titles and the companion's app icon (items 11, 12; D118)
 
 Decisions in D118; the founder's question took the recommended answer. Verified: `ConversationTitlesTests` with temp files (the person's name first, no title gives nothing, conversation words aren't titles, paths outside and links refused, a long file's end, Codex's index, rows, the tracker's throttle); this Mac's real transcript has `{"type":"custom-title","customTitle":…}` in the shape read. The icon rendered in `--ui-snapshots` (`companion-app-icon`). A review found that opening a named pipe would have hung every hook, `since` showed the oldest session in the folder, and a Pocket row lost why it needed you; all fixed; About, the Pocket and the update window keep Sidefolk's own icon. Not run: a live Claude Code hook through to a row, Codex's real index with a session, and the icon in the real Dock across becoming a regular app (it is set again then).
