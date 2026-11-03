@@ -251,9 +251,9 @@ public actor AddonStore {
         try FileManager.default.createDirectory(at: companionsFolder, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         // The files were checked against the signature; their copies lose the download mark, as a built-in's do.
         try ExtensionFiles.copy(from: resources.path, to: staged.path, quarantine: .none)
-        // Its tagline and body serve a companion this copy has no case for, worn by its folder's name.
+        // Its tagline (in the person's language now, D76) and body serve a companion this copy has no case for, worn by its folder's name.
         let installed = InstalledCompanion(id: entry.id, name: entry.name, companion: name, version: entry.version, author: entry.author,
-                                           tagline: entry.tagline.isEmpty ? nil : entry.tagline, body: entry.body)
+                                           tagline: entry.shownTagline.isEmpty ? nil : entry.shownTagline, body: entry.body)
         try JSONEncoder().encode(installed).write(to: staged.appendingPathComponent("addon.json"))
         try replace(companionsFolder.appendingPathComponent(name, isDirectory: true), with: staged)
         Log.shared.info("addons", "installed companion", ["id": entry.id, "version": entry.version])

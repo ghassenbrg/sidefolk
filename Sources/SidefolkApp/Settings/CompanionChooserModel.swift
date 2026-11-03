@@ -145,9 +145,10 @@ final class CompanionChooserModel {
     /// What the words, filters and order leave.
     var found: [AddonEntry] { browse.apply(galleryEntries, owned: ownedNames) { [Self.tagline($0)] } }
 
-    /// A gallery companion's line: Sidefolk's own in the person's language (D28), anyone else's as published.
+    /// A gallery companion's line: Sidefolk's own in the person's language (D28), anyone else's in the words its catalog
+    /// entry has for that language (D76), else as published.
     static func tagline(_ entry: AddonEntry) -> String {
-        entry.companion.flatMap(CompanionChoice.init(rawValue:)).map(CompanionArt.role).flatMap { $0.isEmpty ? nil : $0 } ?? entry.tagline
+        entry.companion.flatMap(CompanionChoice.init(rawValue:)).map(CompanionArt.role).flatMap { $0.isEmpty ? nil : $0 } ?? entry.shownTagline
     }
 
     /// How many the gallery has that aren't here yet, for the tile that leads to it.

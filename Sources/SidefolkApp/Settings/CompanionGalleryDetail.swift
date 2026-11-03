@@ -26,8 +26,8 @@ struct CompanionGalleryDetail: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if !entry.description.isEmpty {
-                Text(verbatim: entry.description).font(Theme.Font.body).foregroundStyle(Theme.ink)
+            if !entry.shownDescription.isEmpty {
+                Text(verbatim: entry.shownDescription).font(Theme.Font.body).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Label {

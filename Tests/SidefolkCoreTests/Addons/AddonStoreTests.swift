@@ -238,6 +238,20 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: folder.path))
     }
 
+    /// A gallery companion's catalog entry carries its words in other languages, as an extension's does (D76); English
+    /// is its own fields. (That the app shows them is checked by eye: the language here comes from the test bundle.)
+    @Test func aCompanionsCatalogEntryKeepsItsWordsInOtherLanguages() async throws {
+        let g = try Gallery()
+        try g.companion("otter")
+        g.entries[0]["localized"] = ["de": ["tagline": "Ein Testbegleiter", "description": "Ein längerer Text"], "en": ["tagline": "Ignored"]]
+        try g.publish()
+        let otter = try #require(try await g.store.catalog().companion("otter"))
+        #expect(otter.localized?.words(for: "de")?.tagline == "Ein Testbegleiter")
+        #expect(otter.localized?.words(for: "de")?.description == "Ein längerer Text")
+        #expect(otter.localized?.words(for: "en") == nil)
+        #expect(try await g.store.install(companion: otter).tagline == otter.shownTagline)
+    }
+
     /// A gallery companion this copy has no case for keeps its tagline and body, to be worn by its folder's name (D77);
     /// the person's own companion of that name, added from a folder, is never replaced; a retired
     /// character's name is never installed.
