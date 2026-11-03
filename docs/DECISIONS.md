@@ -3902,6 +3902,8 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 - **New manifest keys on a drop:** `tag` (a format's name from a fixed list, so it can't say anything else and needs no translation) and `mark` (a picture in its pack, read through the same checks as any pack picture).
 - One file can be dragged off its saved-file card.
 
+**Security:** T46.
+
 **Not built:** the approved "Stop" on the working card. It would have to really stop the call, which hasn't been shown, so it isn't there. The bar doesn't claim progress: it moves without saying how far.
 
 ### D151 — Send to Sidefolk from Finder (2026-11-03)
