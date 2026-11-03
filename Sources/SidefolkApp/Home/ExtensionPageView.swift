@@ -15,7 +15,7 @@ struct ExtensionPageView: View {
         }
         .environment(\.cardDress, cardDress)
         .environment(\.pageAccent, pageAccent)
-        .environment(\.pageAccentEnd, model.page?.dress?.accent == nil ? model.page?.accent.last.flatMap { Color(extensionHex: $0) } : nil)
+        .environment(\.pageSelected, model.page?.dress?.accent == nil ? model.page?.accent.last.flatMap { Color(extensionHex: $0) } : nil)
         .tint(pageAccent)
         .pageConsent(model: model)
         .task(id: model.info.id) { await model.run() }

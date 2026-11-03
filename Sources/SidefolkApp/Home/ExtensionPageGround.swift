@@ -36,8 +36,8 @@ struct PageGround: View {
 extension EnvironmentValues {
     /// Filled buttons and switches on a dressed page (D108).
     @Entry var pageAccent: Color?
-    /// A page's own accent as it runs from one colour to the other, on what's filled (D126).
-    @Entry var pageAccentEnd: Color?
+    /// What's selected on a page with its own accent (D126). Not a dressed page's: that keeps its look.
+    @Entry var pageSelected: Color?
 }
 
 /// What's selected on a page: its own accent where it has one, the theme's otherwise. As text it lightens in the dark, where a deep colour wouldn't read.
@@ -83,8 +83,6 @@ private struct PageConsentAsk: ViewModifier {
 /// A filled button in a dressed page's own colour: the size and press of the app's, only the fill is the page's.
 struct PageAccentButtonStyle: ButtonStyle {
     var accent: Color
-    /// Runs to this, left to right.
-    var end: Color?
     var large: Bool
     @Environment(\.isEnabled) private var enabled
 
@@ -95,7 +93,7 @@ struct PageAccentButtonStyle: ButtonStyle {
             .foregroundStyle(Color.white)
             .padding(.horizontal, large ? Theme.Space.xl : Theme.Space.l)
             .frame(minHeight: large ? 44 : Theme.Size.button)
-            .background(LinearGradient(colors: [accent, end ?? accent], startPoint: .leading, endPoint: .trailing), in: shape)
+            .background(accent, in: shape)
             .contentShape(shape)
             .scaleEffect(configuration.isPressed && enabled ? 0.98 : 1)
             .opacity(enabled ? 1 : 0.45)

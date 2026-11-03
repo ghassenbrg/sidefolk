@@ -28,7 +28,7 @@ public struct Page {
     public var workspace: Bool
     /// The person's own companion looks in at the page's corner, and stands by what's `active` on a tree (D126). You never read it.
     public var companion: Bool
-    /// `#RRGGBB`, one or two, deep enough to hold white words: filled buttons, what's selected, switches, running from one to the other (D126). The rest stays the theme's.
+    /// `#RRGGBB`, one or two, deep enough to hold white words: the first fills the page's main button and switches, the last marks what's selected (D126). The rest stays the theme's.
     public var accent: [String]
 
     public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false, accent: [String] = []) {

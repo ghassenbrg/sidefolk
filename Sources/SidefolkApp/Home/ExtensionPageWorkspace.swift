@@ -184,7 +184,7 @@ struct PageBarView: View {
 struct PageNavView: View {
     var nav: ExtensionPage.Nav
     var model: ExtensionPageModel
-    @Environment(\.pageAccent) private var accent
+    @Environment(\.pageSelected) private var accent
     @Environment(\.colorScheme) private var scheme
 
     private var selection: PageSelection { PageSelection(accent: accent, dark: scheme == .dark) }

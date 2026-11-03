@@ -210,8 +210,11 @@ private struct TreeCard: View {
     var line: TreeLine
     var model: ExtensionPageModel
     @State private var hovering = false
+    @Environment(\.pageSelected) private var chosen
 
     private var selected: Bool { tree.selected == node.id }
+    /// One colour on a card's edge: the line alone runs from one to the other.
+    private var edge: Color { chosen ?? line.to }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 14, style: .continuous) }
 
     var body: some View {
@@ -258,13 +261,13 @@ private struct TreeCard: View {
 
     @ViewBuilder private var outline: some View {
         if selected {
-            shape.strokeBorder(LinearGradient(colors: [line.from, line.to], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 2)
+            shape.strokeBorder(edge, lineWidth: 2)
         } else if node.state == .attention {
             shape.strokeBorder(ExtensionPage.Tone.warn.color, lineWidth: 1.5)
         } else if node.state == .pending {
-            shape.strokeBorder(LinearGradient(colors: [line.from, line.to], startPoint: .topLeading, endPoint: .bottomTrailing), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            shape.strokeBorder(edge.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
         } else if node.state == .active {
-            shape.strokeBorder(LinearGradient(colors: [line.from, line.to], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 2)
+            shape.strokeBorder(edge, lineWidth: 2)
         } else {
             shape.strokeBorder(Theme.line)
         }
@@ -316,7 +319,7 @@ struct TreeTile: View {
 /// A word and its colour, soft (D78).
 struct TreePill: View {
     var badge: ExtensionPage.Badge
-    @Environment(\.pageAccent) private var accent
+    @Environment(\.pageSelected) private var accent
     @Environment(\.colorScheme) private var scheme
 
     /// "Info" says nothing good or bad: on a page with its own accent, it's in that, not a second brand colour beside it.
@@ -367,7 +370,7 @@ private struct TreeAddButton: View {
     @State private var picking = false
     @FocusState private var focused: Bool
     // A popover has an environment of its own.
-    @Environment(\.pageAccent) private var accent
+    @Environment(\.pageSelected) private var accent
 
     var body: some View {
         Button {

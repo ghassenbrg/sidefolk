@@ -16,7 +16,6 @@ struct PageButton: View {
     var leads = false
     @State private var running = false
     @Environment(\.pageAccent) private var accent
-    @Environment(\.pageAccentEnd) private var accentEnd
 
     var body: some View {
         if control.round { roundButton } else { framedButton }
@@ -44,7 +43,7 @@ struct PageButton: View {
         Group {
             // A dressed page's filled button is in its own colour; everything else about it is the same (D108).
             if kind == .primary, let accent {
-                framed.buttonStyle(PageAccentButtonStyle(accent: accent, end: accentEnd, large: large))
+                framed.buttonStyle(PageAccentButtonStyle(accent: accent, large: large))
             } else {
                 framed.buttonStyle(.sf(kind, compact: !large && control.style != .primary && control.style != .accent, large: large))
             }

@@ -56,7 +56,7 @@ struct PageChoiceView: View {
 
 /// The accent ring and tick of the picked option.
 private struct PickedMark: View {
-    @Environment(\.pageAccent) private var pageAccent
+    @Environment(\.pageSelected) private var pageAccent
     @Environment(\.colorScheme) private var colorScheme
     private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var picked: Bool
@@ -81,7 +81,7 @@ struct BadgeView: View {
 }
 
 private struct OptionCard: View {
-    @Environment(\.pageAccent) private var pageAccent
+    @Environment(\.pageSelected) private var pageAccent
     @Environment(\.colorScheme) private var colorScheme
     private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var option: ExtensionPage.Choice.Option
@@ -112,7 +112,7 @@ private struct OptionCard: View {
 }
 
 private struct OptionTile: View {
-    @Environment(\.pageAccent) private var pageAccent
+    @Environment(\.pageSelected) private var pageAccent
     @Environment(\.colorScheme) private var colorScheme
     private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var option: ExtensionPage.Choice.Option
@@ -173,7 +173,7 @@ private struct OptionTile: View {
 }
 
 private struct OptionRow: View {
-    @Environment(\.pageAccent) private var pageAccent
+    @Environment(\.pageSelected) private var pageAccent
     @Environment(\.colorScheme) private var colorScheme
     private var selection: PageSelection { PageSelection(accent: pageAccent, dark: colorScheme == .dark) }
     var option: ExtensionPage.Choice.Option

@@ -19,7 +19,7 @@ public struct ExtensionPage: Sendable, Hashable {
     public static let tileSize = SceneSize(width: 720, height: 300)
     /// How wide its column may grow (D108).
     public var maxWidth: Double?
-    /// Its own colours, one or two, deep enough to hold white: filled buttons, what's selected, switches. The rest stays the theme's (D126).
+    /// Its own colours, one or two, deep enough to hold white: the first fills its main button and switches, the last marks what's selected. The rest stays the theme's (D126).
     public var accent: [String] = []
     /// The page takes the window (D126): its columns scroll on their own, and Home's sidebar folds while it shows. Only a bare page may.
     public var workspace = false

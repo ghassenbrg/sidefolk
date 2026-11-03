@@ -343,7 +343,7 @@ struct PageEditFieldRow: View {
 struct PageMultiChoiceRow: View {
     var choice: ExtensionPage.Choice
     var model: ExtensionPageModel
-    @Environment(\.pageAccent) private var accent
+    @Environment(\.pageSelected) private var accent
     @Environment(\.colorScheme) private var scheme
 
     /// What's picked is a state, not an action: on a page with an accent, a soft tint, so its one filled button stays the one thing that's filled.
@@ -364,9 +364,8 @@ struct PageMultiChoiceRow: View {
                             .padding(.horizontal, Theme.Space.m)
                             .frame(minWidth: Theme.Size.button, minHeight: Theme.Size.button)
                             .fontWeight(on && accent != nil ? .semibold : nil)
-                            // A tint alone is too faint a difference to tell picked from not: an edge too, and the heavier words.
-                            .background(Capsule().fill(on ? (accent == nil ? Theme.accent : selection.soft) : Theme.well)
-                                .overlay(Capsule().strokeBorder(on && accent != nil ? selection.ink.opacity(0.45) : .clear)))
+                            // A tint alone is too faint a difference to tell picked from not: the heavier words too.
+                            .background(Capsule().fill(on ? (accent == nil ? Theme.accent : selection.soft) : Theme.well))
                             .contrastEdge(radius: Theme.Size.button / 2)
                     }
                     .buttonStyle(.sfBare)
