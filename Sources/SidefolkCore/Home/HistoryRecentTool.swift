@@ -1,8 +1,10 @@
 import Foundation
 
 /// `history.recent`, for Sidefolk's own agent only (D160): "what did Claude Code do today", "what did I miss during Focus".
-/// What History already shows the person, as short lines: who did what, and what they were told. Not arguments, outcomes,
-/// a notice's body or conversations. Other agents' words are in it, so a read of it is outside content (T2), and it asks.
+/// Short lines of what History shows the person: who did what, and what they were told. Not arguments, outcomes, a notice's
+/// body or conversations. A row's summary can quote what it was given, and History never meant it for a model, so only the
+/// tools whose words the AI could read anyway are quoted, secrets and an address's query taken out, and the rest say only
+/// which tool ran (T20). Other agents' words are in it, so a read of it is outside content (T2), and it asks.
 struct HistoryRecentTool: Tool {
     let activity: ActivityStore
     let alerts: AttentionStore
@@ -39,11 +41,11 @@ struct HistoryRecentTool: Tool {
             let name = Self.name(ofCaller: entry.caller)
             guard who.map({ Self.folded(name).contains($0) || Self.folded(entry.caller).contains($0) }) ?? true else { continue }
             let result = entry.error == nil ? "" : " (didn't work)"
-            lines.append((entry.at, "\(name): \(ToolFormat.oneLine(entry.summary, 120))\(result)"))
+            lines.append((entry.at, "\(name): \(Self.what(entry))\(result)"))
         }
         if wantsNotices {
             for item in try await alerts.recent(limit: 200) where item.createdAt >= since {
-                lines.append((item.createdAt, "Told the user: \(ToolFormat.oneLine(item.title, 120))"))
+                lines.append((item.createdAt, "Told the user: \(Self.told(item))"))
             }
         }
         lines.sort { $0.at > $1.at }
@@ -57,6 +59,38 @@ struct HistoryRecentTool: Tool {
         if lines.count > limit { text += "\n… and \(lines.count - limit) more." }
         return ToolResult(text: text, card: ResultCard(kind: .list, title: String(localized: "From your History"), subtitle: String(localized: "\(shown.count) events")),
                           untrusted: true)
+    }
+
+    /// Tools whose summaries hold only what the AI may read through its own tools, or nothing of the person's.
+    private static let quoted: Set<String> = [
+        "notes.save", "notes.update", "notes.trash", "notes.restore", "notes.get", "notes.search", "notes.list", "notes.collection", "notes.arrange",
+        "collections.create", "collections.list", "reminders.create", "reminders.update", "reminders.snooze", "reminders.complete", "reminders.cancel",
+        "reminders.list", "agenda.today", "notify.user", "ask.user", "watch.create", "watch.report", "watch.list", "watch.stop", "watch.pause",
+        "watch.resume", "watch.update", "watch.reorder",
+    ]
+
+    private static func what(_ entry: ActivityEntry) -> String {
+        quoted.contains(entry.tool) ? safe(entry.summary) : "used \(entry.tool)"
+    }
+
+    /// A notice's title only where it holds nothing a command, a page or a flow filled in.
+    private static func told(_ item: AttentionItem) -> String {
+        let kept = ["reminder", "notify", "ask"].contains(item.refKind ?? "")
+        guard kept, !item.source.hasPrefix("extension") else {
+            return switch item.refKind {
+            case "job": "a command ended"
+            case "watcher": "a watch had news"
+            case "session": "an agent's session needed them"
+            case "brief": "the morning brief"
+            default: "a notice"
+            }
+        }
+        return safe(item.title)
+    }
+
+    private static func safe(_ words: String) -> String {
+        let noQuery = Redactor.redact(words).replacing(/\?[^\s”"]*/, with: "")
+        return ToolFormat.oneLine(noQuery.displaySafe, 120)
     }
 
     private static func since(_ text: String?, now: Date, calendar: Calendar) throws -> Date {
@@ -77,8 +111,11 @@ struct HistoryRecentTool: Tool {
     private static func name(ofCaller caller: String) -> String {
         if caller == "agent" { return "Sidefolk's AI" }
         if caller.hasPrefix("user") { return "The user" }
-        if let client = caller.split(separator: ":", maxSplits: 2).last, caller.hasPrefix("external") {
-            return AgentFacingTools.displayName(String(client))
+        if caller.hasPrefix("external:") {
+            // Names are self-chosen, so one that isn't a known agent's can't read as anyone's but its own (T4).
+            let client = String(caller.dropFirst("external:".count))
+            let shown = AgentFacingTools.displayName(client)
+            return ["Claude Code", "Codex"].contains(shown) ? shown : "An agent calling itself “\(shown.displaySafe)”"
         }
         if caller.hasPrefix("extension") { return "An extension" }
         return caller.clipped(40)
