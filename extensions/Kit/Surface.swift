@@ -71,6 +71,17 @@ public struct ToolReply {
         return copy
     }
 
+    /// Asks Sidefolk to save a file you made in your data folder beside the file the person handed over for this call (D140).
+    /// `data` is relative to your data folder and is moved, not copied; `name` is a bare name with an ending your manifest's
+    /// `outputs` lists. Sidefolk never overwrites: a name in use gets a number.
+    public func saving(data: String, as name: String, beside source: String) -> ToolReply {
+        var copy = self
+        var outputs = copy.asks["outputs"] as? [[String: Any]] ?? []
+        outputs.append(["data": data, "name": name, "source": source])
+        copy.asks["outputs"] = outputs
+        return copy
+    }
+
     /// The AI's words about this wait so long, at most 5 s, so they don't give away what an animation is still showing.
     public func holdingAnswer(ms: Int) -> ToolReply {
         var copy = self

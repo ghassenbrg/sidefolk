@@ -221,6 +221,10 @@ public struct ToolResult: Sendable {
     public var rowOutcome: String?
     /// What History keeps for a failure, in place of its words, when those could be the person's (T44).
     public var rowError: String?
+    /// Files Sidefolk saved beside what the person handed over, at the program's asking (D140).
+    public var placed: [PlacedFile] = []
+    /// Saves them, after the call: `ToolExecutor` runs it once, outside the call's timeout, so what is saved is always recorded.
+    public var placing: (@Sendable () async -> ExtensionPlacement)?
 
     public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text
@@ -245,7 +249,11 @@ public struct ToolContext: Sendable {
     public var onPlan = false
     /// Its words were filled in by a step: they stay out of History, wherever else they show (D127).
     public var filledIn = false
-    public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil) {
+    /// What the person dropped or picked for this one call (D105, D140), canonical. Only Sidefolk's own panel and drop code
+    /// can put anything here, never a tool's input; a retry or a plan has none.
+    public var handedOver: Set<String>
+    public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil, handedOver: Set<String> = []) {
+        self.handedOver = handedOver
         self.caller = caller
         self.now = now
         self.tainted = tainted

@@ -164,7 +164,7 @@ public struct ExtensionTool: Tool {
                   FolderAccess.allows(canon, write: write, folders: context.folders) else {
                 throw UserFacingError("\(FolderAccess.displayPath(path)) isn't shared with Sidefolk for this.", changedNothing: true)
             }
-            grants.append(ExtensionFolderGrant(path: canon, write: write))
+            grants.append(ExtensionFolderGrant(path: canon, write: write, handedOver: context.handedOver.contains(canon)))
             input = input.setting(param, .string(canon))
         }
         await began?(context.caller, context.tainted)
@@ -199,4 +199,6 @@ public struct PairedAnswer: Sendable, Hashable {
 public struct ExtensionFolderGrant: Sendable, Hashable {
     public var path: String
     public var write: Bool
+    /// The person dropped or picked this very file for this call, so a result may be saved beside it (D140).
+    public var handedOver = false
 }

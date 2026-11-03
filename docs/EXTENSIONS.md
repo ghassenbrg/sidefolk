@@ -279,6 +279,29 @@ For a call with such a parameter:
 The install sheet says "Can read and change files in a folder you name, for that request only, once you
 approve it". A `"write"` parameter raises every tool to at least medium risk, like a fixed write folder.
 
+### Saving a result beside a file
+
+A tool that makes a new file from one the person handed over declares the endings it makes, and Sidefolk saves the result (D140). Your program never gets to write in that folder:
+
+```json
+"tools": { "convert": { "title": "Convert a file", "paths": { "path": "read" }, "outputs": ["jpg", "png"], "timeout": 300 } }
+```
+
+Write the result in your data folder, then say so in the reply. In the Kit:
+
+```swift
+return ToolReply("Made trip.jpg.").saving(data: "out/1.jpg", as: "trip.jpg", beside: path)
+```
+
+Without the Kit, add `"sidefolk": {"outputs": [{"data": "out/1.jpg", "name": "trip.jpg", "source": "<the path you were given>"}]}` to the `tools/call` result.
+
+- **Beside what?** Only a file the person dropped or picked for this very call, as a page's `file` button gives. A path an AI named, or a file you can read because its folder is shared, isn't handed over, and the reply's text says it wasn't saved.
+- **Moved, not copied:** the data file is gone from your data folder once it's saved. If it can't be saved, it stays, so clean up after yourself.
+- **What's refused:** links, hard-linked files, a `data` path that leaves your folder, a `name` with a folder in it or a leading dot, a `name` that doesn't start with the source's name, an ending your tool didn't declare, and any ending that isn't on Sidefolk's list (`ExtensionOutputs.allowedEndings`: nothing that runs, no HTML or SVG). At most 64 files and 64 GB a call, 32 GB each.
+- **Never overwrites:** a name in use becomes `trip 2.jpg`. The file you made gets plain permissions and macOS's quarantine mark.
+
+The install sheet says "Can have Sidefolk save new files beside a file you give it". `outputs` puts the tool at medium risk or above. Your data folder itself is off limits: you can do anything inside it, but not remove or replace it.
+
 ### Programs by name
 
 Some programs live in different places on different Macs, and `/usr/bin/git` is a shim that fails inside

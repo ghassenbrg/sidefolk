@@ -10,6 +10,8 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public var programs: [ResolvedProgram]
     /// The most any tool does in a folder the person names in a call (`tools.<name>.paths`); nil when none does.
     public var folders: ExtensionManifest.FolderUse?
+    /// Sidefolk may save its results beside a file the person hands over (`tools.<name>.outputs`, D140).
+    public var placesFiles: Bool
     /// The graphics hardware and media decoders (`permissions.media`).
     public var media: Bool
     /// The clipboard, read and changed (`permissions.clipboard`, D63).
@@ -38,9 +40,11 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     public init(network: Bool = false, read: [String] = [], write: [String] = [], exec: [String] = [],
                 programs: [ResolvedProgram] = [], folders: ExtensionManifest.FolderUse? = nil, media: Bool = false,
                 clipboard: Bool = false, power: Bool = false, screen: Bool = false, udp: Bool = false, networkPurpose: String? = nil,
-                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil, act: ExtensionPurpose? = nil, events: ExtensionPurpose? = nil) {
+                outputMute: Bool = false, ai: ExtensionAIAccess? = nil, place: ExtensionPurpose? = nil, schedule: ExtensionPurpose? = nil, act: ExtensionPurpose? = nil, events: ExtensionPurpose? = nil,
+                placesFiles: Bool = false) {
         self.events = events
         self.act = act
+        self.placesFiles = placesFiles
         self.place = place
         self.schedule = schedule
         self.ai = ai
@@ -69,6 +73,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
         exec = try c.decode([String].self, forKey: .exec)
         programs = try c.decodeIfPresent([ResolvedProgram].self, forKey: .programs) ?? []
         folders = try c.decodeIfPresent(ExtensionManifest.FolderUse.self, forKey: .folders)
+        placesFiles = try c.decodeIfPresent(Bool.self, forKey: .placesFiles) ?? false
         media = try c.decodeIfPresent(Bool.self, forKey: .media) ?? false
         clipboard = try c.decodeIfPresent(Bool.self, forKey: .clipboard) ?? false
         power = try c.decodeIfPresent(Bool.self, forKey: .power) ?? false
@@ -89,7 +94,7 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
 
     /// Raises every tool to at least medium risk: it can reach the internet, change files or run anything.
     /// The clipboard counts: what someone copied (a password, an address) is theirs alone. So does the screen.
-    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || !dangerousExec.isEmpty || clipboard || screen || outputMute }
+    public var raisesRiskFloor: Bool { network || !write.isEmpty || folders == .write || placesFiles || !dangerousExec.isEmpty || clipboard || screen || outputMute }
 
     static let anythingRunners: Set<String> = [
         "sh", "bash", "zsh", "dash", "ksh", "csh", "tcsh", "fish", "env", "xargs", "nohup", "sudo", "su", "login",
@@ -180,6 +185,10 @@ public struct PermissionSummary: Sendable, Hashable {
             lines.append(Line(kind: .read, text: String(localized: "Can read a folder you name, for that request only"), caution: false, note: perCall))
         case nil:
             break
+        }
+        if p.placesFiles {
+            lines.append(Line(kind: .write, text: String(localized: "Can have Sidefolk save new files beside a file you give it"), caution: false,
+                              note: String(localized: "Sidefolk saves them itself and never replaces a file. The extension can't write in that folder.")))
         }
         let dangerous = Set(p.dangerousExec)
         for path in p.exec {

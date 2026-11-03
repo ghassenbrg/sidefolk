@@ -173,7 +173,8 @@ public final class ToolExecutor: Sendable {
         }
         var decisionTag: ActivityEntry.Decision = .auto
         // A file the person chose in the system's panel for this call: read of it alone, and only as themselves (SECURITY T12).
-        var extraFolders: [GrantedFolder] = caller == .user ? [pickedFile.flatMap(FolderAccess.canonical)].compactMap { $0.map { GrantedFolder(path: $0, access: .read) } } : []
+        let handedOver: Set<String> = caller == .user ? Set([pickedFile.flatMap(FolderAccess.canonical)].compactMap { $0 }) : []
+        var extraFolders = handedOver.sorted().map { GrantedFolder(path: $0, access: .read) }
         // Folders the person allowed in a card for this call: a file there was named for this call, not picked from a
         // folder shared for good (D72).
         var answeredFolders: [String] = []
@@ -211,7 +212,7 @@ public final class ToolExecutor: Sendable {
                 }
                 if decisionTag == .auto { decisionTag = tag }
                 return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag,
-                                 timeout: spec.timeout ?? timeout, folders: folders, site: site)
+                                 timeout: spec.timeout ?? timeout, folders: folders, site: site, handedOver: handedOver)
             case .deny(let why):
                 await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
                 act.error = why
@@ -288,7 +289,7 @@ public final class ToolExecutor: Sendable {
                     events.changed(.permissions)
                 }
                 return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag,
-                                 timeout: spec.timeout ?? timeout, folders: folders)
+                                 timeout: spec.timeout ?? timeout, folders: folders, handedOver: handedOver)
             }
         }
         act.error = "Permission loop"
@@ -328,18 +329,20 @@ public final class ToolExecutor: Sendable {
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,
-                     decision: ActivityEntry.Decision, timeout: TimeInterval, folders: [GrantedFolder], site: String? = nil) async -> ToolOutcome {
+                     decision: ActivityEntry.Decision, timeout: TimeInterval, folders: [GrantedFolder], site: String? = nil,
+                     handedOver: Set<String> = []) async -> ToolOutcome {
         var act = act
         act.decision = decision
         events.publish(.toolStarted(act))
         let context = {
-            var context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
+            var context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site, handedOver: handedOver)
             context.onPlan = decision == .plan
             context.filledIn = act.written != nil
             return context
         }()
         do {
             var result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
+            if let placing = result.placing { result.take(await placing()) }
             act.card = result.card
             if let row = result.rowSummary { act.summary = row }
             if let undo = result.undo {
@@ -353,6 +356,12 @@ public final class ToolExecutor: Sendable {
                 await log(tool.spec, act, caller: caller, input: input, decision: decision,
                           outcome: (caller.kind == "command" ? result.rowOutcome : nil) ?? result.card?.title ?? result.text.clipped(160),
                           error: nil, undoable: act.undoAvailable)
+            }
+            // Each saved file is its own row: what was written into the person's folder, and where (D140).
+            for file in result.placed {
+                var row = act
+                row.summary = String(localized: "Saved \((file.path as NSString).lastPathComponent) beside \((file.source as NSString).lastPathComponent)")
+                await log(tool.spec, row, caller: caller, input: ["path": .string(file.path)], decision: decision, outcome: file.path, error: nil)
             }
             events.publish(.toolFinished(act, ok: !result.isError))
             if let run = caller.runId, caller.kind == "agent" {
