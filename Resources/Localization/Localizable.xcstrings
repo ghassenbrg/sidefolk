@@ -77706,6 +77706,65 @@
         }
       }
     },
+    "Filled in when it ran, length %lld" : {
+      "comment" : "History: a step of a plan the person allowed, with what it filled in left out",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مُلئ عند التشغيل، الطول %lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Ausführen eingesetzt, Länge %lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completado al ejecutarse, longitud %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renseigné à l’exécution, longueur %lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserito durante l’esecuzione, lunghezza %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実行時に入力、長さ %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실행할 때 채워짐, 길이 %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preenchido ao executar, comprimento %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行时填入，长度 %lld"
+          }
+        }
+      }
+    },
     "Find" : {
       "localizations" : {
         "ar" : {

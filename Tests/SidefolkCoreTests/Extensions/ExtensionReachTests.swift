@@ -184,6 +184,21 @@ struct ExtensionReachTests {
         #expect(ExtensionPlanRules.standing(tool: ExternalFacade(base: probe, spec: ExtensionActionPolicy.spec(probe)), template: ["query": "{{trigger}}"]), "the founder's choice (D127)")
     }
 
+    @Test func aStepThatFilledWordsInIsKeptAsWritten() async throws {
+        let env = try TestEnv()
+        env.registry.register(ProbeTool(name: "test.probe", risk: .low, result: { _ in ToolResult(text: "Found: note words") }))
+        env.registry.register(ProbeTool(name: "test.failing", risk: .low, result: { _ in ToolResult(text: "Couldn't use note words", isError: true) }))
+        _ = await env.executor.execute(name: "test.probe", input: ["x": "note words"], caller: .extension(id: "e"), standing: true, written: ["x": "{{found}}"])
+        let row = try #require(try await env.activity.recent(limit: 1, tool: "test.probe").first)
+        #expect(row.summary == "Probe {{found}}")
+        #expect(row.args?["x"]?.stringValue == "{{found}}")
+        #expect(row.outcome?.contains("10") == true)
+        _ = await env.executor.execute(name: "test.failing", input: ["x": "note words"], caller: .extension(id: "e"), standing: true, written: ["x": "{{found}}"])
+        let failed = try #require(try await env.activity.recent(limit: 1, tool: "test.failing").first)
+        let kept = [row, failed].flatMap { [$0.summary, $0.args?.jsonString, $0.outcome, $0.error] }.compactMap { $0 }.joined()
+        #expect(!kept.contains("note words"), "\(kept)")
+    }
+
     @Test func noBrainMeansNoJob() async throws {
         let tool = CompanionJobTool(agent: CompanionAgentSlot())
         await #expect(throws: (any Error).self) { _ = try await tool.run(["job": "Tidy up"], context: ToolContext(caller: .user, now: Date())) }

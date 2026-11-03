@@ -66,6 +66,19 @@ enum ExtensionPlanRules {
         return out
     }
 
+    /// Whether a step leaves words to fill in.
+    static func fillsIn(_ template: JSONValue) -> Bool {
+        (template.objectValue ?? [:]).values.contains { $0.stringValue.map(hasSlot) ?? false }
+    }
+
+    /// How long the values a call filled in are, written parts and all.
+    static func filledLength(_ input: JSONValue, template: JSONValue) -> Int {
+        (template.objectValue ?? [:]).reduce(0) { sum, field in
+            guard let written = field.value.stringValue, hasSlot(written) else { return sum }
+            return sum + (input[field.key]?.stringValue?.count ?? 0)
+        }
+    }
+
     /// Whether two written values are the same bytes. Swift's `==` takes canonically equal strings as equal, and they aren't: `é` written two ways
     /// is two addresses, and a program could say something by which it writes.
     static func same(_ a: String, _ b: String) -> Bool { a.utf8.elementsEqual(b.utf8) }

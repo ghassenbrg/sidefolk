@@ -25,6 +25,14 @@ public struct ToolActivity: Sendable, Hashable {
     public var mutates: Bool
     /// How Guard let it run, once it did. Auto and Full access acts are shown as done without asking (D37).
     public var decision: ActivityEntry.Decision?
+    /// What History keeps in place of the words a plan's step filled in (D127).
+    public var written: Written?
+
+    public struct Written: Sendable, Hashable {
+        public var summary: String
+        public var input: JSONValue
+        public var length: Int
+    }
 
     /// It ran without a question the person would have had to answer in their earlier mode.
     public var actedWithoutAsking: Bool {

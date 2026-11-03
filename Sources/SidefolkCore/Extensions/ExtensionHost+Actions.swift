@@ -23,7 +23,7 @@ extension ExtensionHost {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
                 return
             }
-            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: false, gateway: gateway)
+            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: false, gateway: gateway) != nil
             guard let check = await gateway.check(tool, input: input, extensionId: id, standing: standing) else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unknown"])
                 return
@@ -53,12 +53,14 @@ extension ExtensionHost {
                 return
             }
             let timeout = params["timeout"]?.doubleValue.map { min(max($0, 1), 600) }
-            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
+            let step = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
+            let standing = step != nil
+            let written = step.flatMap { ExtensionPlanRules.fillsIn($0) ? $0 : nil }
             let asker = asker(rt)
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
             Task { [weak self] in
-                let outcome = await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, timeout: timeout)
+                let outcome = await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout)
                 await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool)
             }
         case "sidefolk/plan.approve":
@@ -198,25 +200,26 @@ extension ExtensionHost {
         events.changed(.extensions)
     }
 
-    private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, counting: Bool, gateway: ExtensionActionGateway) async -> Bool {
+    /// The step of a live plan this call fits, as it was written; nil when it fits none, and it asks.
+    private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, counting: Bool, gateway: ExtensionActionGateway) async -> JSONValue? {
         guard let rt = runtimes[id], let plan, let saved = rt.preferences.plans[plan], saved.live(at: Date(), owner: owner(rt)),
-              Self.contained(rt.pin.permissions ?? ExtensionPermissions()), let tool = gateway.tool(named: name, for: id) else { return false }
+              Self.contained(rt.pin.permissions ?? ExtensionPermissions()), let tool = gateway.tool(named: name, for: id) else { return nil }
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
         let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
-        let fits = saved.steps.contains { step in
+        let fits = saved.steps.first { step in
             step.standing && step.tool == tool.spec.name && step.definition == definition && ExtensionPlanRules.same(step.reach, reach)
                 && ExtensionPlanRules.matches(input, template: step.input, fillable: fillable)
         }
-        guard fits else { return false }
+        guard let fits else { return nil }
         // "Ask each time" for the internet is the person's word for every page, whoever asks (D47).
-        if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return false }
-        guard counting else { return true }
+        if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return nil }
+        guard counting else { return fits.input }
         // Read after the wait above, and kept: a burst, or a restart, doesn't buy a new budget.
         let day = AIHelper.dayKey(Date()), used = runtimes[id]?.preferences.planCalls[plan]
         let count = used?.day == day ? used?.count ?? 0 : 0
-        guard count < saved.perDay else { return false }
+        guard count < saved.perDay else { return nil }
         await updatePreferences(id) { $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1) }
-        return true
+        return fits.input
     }
 
     private func approvePlan(_ id: String, request: JSONValue, params: JSONValue, gateway: ExtensionActionGateway) async {

@@ -109,6 +109,11 @@ import Testing
         let row = try await w.h.env.activity.recent(limit: 1, tool: "notes.save").first
         #expect(row?.decision == .plan)
         #expect(row?.caller == "extension:dev.sidefolk.sideflow")
+        // As written, with how long it was: what a flow fills in stays out of History (D127).
+        #expect(row?.args?["text"]?.stringValue == "Saved: {{t}}")
+        let kept = [row?.summary, row?.args?.jsonString, row?.outcome].compactMap { $0 }.joined()
+        #expect(!kept.contains("From the companion"), "\(kept)")
+        #expect(row?.outcome?.contains("\("Saved: From the companion".count)") == true)
         let story = await w.h.call("ext.sideflow.get_run", ["flow": "Companion's"])
         #expect(story.okText?.contains("Save a note") == true)
     }

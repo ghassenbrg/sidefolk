@@ -113,8 +113,10 @@ public final class ExtensionActionGateway: Sendable {
         source.all.filter { ExtensionActionPolicy.offers($0, to: id) }.map { ExternalFacade(base: $0, spec: ExtensionActionPolicy.spec($0)) }
     }
 
-    /// - Parameter standing: the call fits a plan the person read and allowed.
-    func call(_ name: String, input: JSONValue, extensionId id: String, asker: ApprovalRequest.Asker, standing: Bool, timeout: TimeInterval?) async -> ToolOutcome {
+    /// - Parameters:
+    ///   - standing: the call fits a plan the person read and allowed.
+    ///   - written: the plan's step as written, when it filled words in: what History keeps.
+    func call(_ name: String, input: JSONValue, extensionId id: String, asker: ApprovalRequest.Asker, standing: Bool, written: JSONValue? = nil, timeout: TimeInterval?) async -> ToolOutcome {
         guard let facade = tool(named: name, for: id) else {
             let caller = Caller.extension(id: id)
             let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system, caller: caller, error: "Not offered")
@@ -125,7 +127,7 @@ public final class ExtensionActionGateway: Sendable {
         // Evaluating medium calls as tainted makes Guard ask every time and never offer "Always allow" (T1, as other agents): an
         // extension's calls can carry whatever it read.
         return await executor.execute(name: facade.spec.name, input: input, caller: .extension(id: id), tainted: facade.spec.risk >= .medium,
-                                      timeout: limit, standing: standing, asker: asker)
+                                      timeout: limit, standing: standing, written: written, asker: asker)
     }
 
     func check(_ name: String, input: JSONValue, extensionId id: String, standing: Bool) async -> ToolCheck? {

@@ -91,10 +91,10 @@ public final class ToolExecutor: Sendable {
     public func execute(
         name: String, input: JSONValue, caller: Caller, tainted: Bool = false, taintedBy: TaintSource? = nil, mentions: UserMentions? = nil,
         timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil, pickedFile: String? = nil,
-        onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil, standing: Bool = false, asker: ApprovalRequest.Asker? = nil
+        onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil, standing: Bool = false, written: JSONValue? = nil, asker: ApprovalRequest.Asker? = nil
     ) async -> ToolOutcome {
         await perform(name: name, input: input, caller: caller, tainted: tainted, taintedBy: taintedBy, mentions: mentions, timeout: timeout,
-                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile, standing: standing, asker: asker)
+                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile, standing: standing, written: written, asker: asker)
     }
 
     /// Guard's answer for this call, with nothing run, shown or logged (D110): what a card would be.
@@ -132,7 +132,7 @@ public final class ToolExecutor: Sendable {
     /// - Parameter answered: a question the person already said "Allow" to, outside a card.
     private func perform(
         name: String, input: JSONValue, caller: Caller, tainted: Bool, taintedBy: TaintSource?, mentions: UserMentions?, timeout: TimeInterval,
-        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil, standing: Bool = false, asker: ApprovalRequest.Asker? = nil
+        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil, standing: Bool = false, written: JSONValue? = nil, asker: ApprovalRequest.Asker? = nil
     ) async -> ToolOutcome {
         let callId = Identifier.make()
         guard let tool = registry.tool(named: name) else {
@@ -145,6 +145,9 @@ public final class ToolExecutor: Sendable {
         let summary = tool.summary(for: input).clipped(240)
         var act = ToolActivity(id: callId, tool: spec.name, title: spec.title, summary: summary, category: spec.category, caller: caller,
                                mutates: spec.mutates)
+        if let written {
+            act.written = .init(summary: tool.summary(for: written).clipped(240), input: written, length: ExtensionPlanRules.filledLength(input, template: written))
+        }
 
         if let missing = Self.missingRequired(spec.inputSchema, input) {
             act.error = "Missing \(missing)"
@@ -375,9 +378,13 @@ public final class ToolExecutor: Sendable {
     /// - Parameter undoable: the call's undo is registered; Activity offers it on this row too.
     private func log(_ spec: ToolSpec, _ act: ToolActivity, caller: Caller, input: JSONValue, decision: ActivityEntry.Decision,
                      outcome: String?, error: String?, undoable: Bool = false) async {
+        // A plan's step that filled words in is kept as written, and how long they were: what a flow found stays out of History, the founder's choice (D127).
+        let written = act.written
+        let outcome = written.flatMap { w in outcome.map { _ in String(localized: "Filled in when it ran, length \(w.length)", comment: "History: a step of a plan the person allowed, with what it filled in left out") } } ?? outcome
+        let error = written == nil ? error : error.map { _ in "\(spec.title) reported a problem" }
         let entry = ActivityEntry(at: clock.now, caller: caller.kind == "agent" ? "agent" : "\(caller.kind):\(caller)",
-                                  tool: spec.name, risk: spec.risk.rawValue, decision: decision, summary: act.summary,
-                                  args: Redactor.arguments(input), outcome: outcome.map { Redactor.redact($0).clipped(300) },
+                                  tool: spec.name, risk: spec.risk.rawValue, decision: decision, summary: written?.summary ?? act.summary,
+                                  args: Redactor.arguments(written?.input ?? input), outcome: outcome.map { Redactor.redact($0).clipped(300) },
                                   error: error.map { Redactor.redact($0).clipped(300) }, runId: caller.runId)
         // Detached so the audit row lands even when the run was just stopped: GRDB's async access throws once
         // its task is cancelled, and a step refused by Stop or Quit would vanish from Activity.
