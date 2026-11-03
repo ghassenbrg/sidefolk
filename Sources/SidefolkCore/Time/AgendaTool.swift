@@ -82,10 +82,10 @@ struct AgendaTool: Tool {
         lines += coming.map { "- " + reminders.line($0, item: $0.itemId.flatMap { items[$0] }) }
         lines.append(due.isEmpty ? "No tasks due." : "Tasks due (\(due.count)):")
         lines += due.map { "- " + NoteFormat.line($0, collections: collections, snippet: false) }
-        let detail = coming.prefix(5).map { "\(TimeFormat.clock($0.nextDue ?? $0.fireAt, calendar: calendar)) \($0.title)" }.joined(separator: "\n")
+        let shown = coming.prefix(5).map { "\(TimeFormat.clock($0.nextDue ?? $0.fireAt, calendar: calendar)) \($0.title)" } + due.prefix(5).map(\.title)
         return ToolResult(text: lines.joined(separator: "\n"),
-                          card: ResultCard(kind: .list, title: TimeFormat.when(day, now: context.now, calendar: calendar),
-                                           subtitle: String(localized: "\(coming.count) reminders, \(due.count) tasks due"), detail: detail.isEmpty ? nil : detail),
+                          card: ResultCard(kind: .list, title: TimeFormat.day(day, now: context.now, calendar: calendar),
+                                           subtitle: String(localized: "\(coming.count) reminders"), detail: shown.isEmpty ? nil : shown.joined(separator: "\n")),
                           untrusted: coming.contains(where: ReminderTools.Shared.isForeign) || NoteFormat.hasForeign(due, collections: collections))
     }
 }

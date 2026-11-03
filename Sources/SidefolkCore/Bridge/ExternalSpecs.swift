@@ -74,11 +74,12 @@ extension ExternalToolPolicy {
 
     /// Add or arrange without taking anything away.
     private static let adding: Set<String> = [
-        "notify.user", "ask.user", "notes.save", "notes.arrange", "reminders.create", "watch.create", "watch.report",
+        "notify.user", "ask.user", "notes.save", "notes.restore", "notes.arrange", "reminders.create", "reminders.update", "reminders.snooze",
+        "reminders.complete", "watch.create", "watch.report",
         "watch.pause", "watch.resume", "watch.update", "watch.reorder", "watch.more_room",
     ]
     /// Calling again with the same words changes nothing more.
-    private static let sameAgain: Set<String> = ["notes.arrange", "notes.trash", "reminders.cancel", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
+    private static let sameAgain: Set<String> = ["notes.arrange", "notes.trash", "notes.restore", "reminders.cancel", "reminders.complete", "reminders.snooze", "reminders.update", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
 
     static let descriptions: [String: String] = [
         "notes.save": """
