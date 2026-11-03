@@ -173,7 +173,7 @@ public struct LocalIntentRunner: Sendable {
         // Files saved: Sidefolk's own words, from the real files, and its own actions on them (D142).
         if !result.placed.isEmpty {
             let said = ExtensionOutputs.summary(of: result.placed)
-            let problems = text.components(separatedBy: "\n").last { $0.hasPrefix(String(localized: "Not saved:")) }
+            let problems = result.notSaved
             var card = ResultCard(kind: .extensionResult, title: said.title, subtitle: name, detail: [said.detail, problems].compactMap { $0 }.joined(separator: "\n"), refId: tool.extensionId)
             card.files = result.placed
             return .answer(card, activityId: out.activity.id)

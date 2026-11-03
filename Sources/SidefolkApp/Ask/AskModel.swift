@@ -15,7 +15,7 @@ struct Attachment: Equatable {
     /// Files macOS handed over, from a drag or from Finder's Send to Sidefolk (D151).
     static func files(_ urls: [URL]) -> Attachment? {
         guard let first = urls.first else { return nil }
-        return Attachment(kind: .file(first), label: urls.count == 1 ? first.lastPathComponent : String(localized: "\(urls.count) files", comment: "What several dropped files are called"),
+        return Attachment(kind: .file(first), label: urls.count == 1 ? DropChoices.shownName(first.path) : String(localized: "\(urls.count) files", comment: "What several dropped files are called"),
                           text: nil, files: urls)
     }
 }

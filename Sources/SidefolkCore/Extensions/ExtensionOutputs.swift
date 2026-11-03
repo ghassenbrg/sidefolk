@@ -63,6 +63,7 @@ extension ToolResult {
         if !placement.problems.isEmpty {
             let words = String(localized: "Not saved:") + " " + placement.problems.joined(separator: "; ")
             text += "\n" + words
+            notSaved = words
             card?.detail = words.clipped(200)
             isError = placement.placed.isEmpty
         }
@@ -350,7 +351,7 @@ extension ExtensionOutputs {
         for file in files {
             var info = stat()
             guard file.isStillThere, lstat(file.path, &info) == 0, info.st_size == file.size,
-                  abs(TimeInterval(info.st_mtimespec.tv_sec) + TimeInterval(info.st_mtimespec.tv_nsec) / 1e9 - file.modified.timeIntervalSince1970) < 1 else {
+                  abs(TimeInterval(info.st_mtimespec.tv_sec) + TimeInterval(info.st_mtimespec.tv_nsec) / 1e9 - file.modified.timeIntervalSince1970) < 0.001 else {
                 changed = true
                 continue
             }

@@ -55,13 +55,14 @@ import Testing
 
     /// What the drop card may promise comes from the permissions, not from the extension.
     @Test func theCardKnowsHowAFileCouldLeave() async throws {
-        try await card([:], canSendAway: false, onlyThroughMedia: false)
-        try await card(["media": true], canSendAway: true, onlyThroughMedia: true)
-        try await card(["network": true], canSendAway: true, onlyThroughMedia: false)
-        try await card(["media": true, "network": true], canSendAway: true, onlyThroughMedia: false)
+        try await card([:], canSendAway: false, withoutInternet: false)
+        try await card(["media": true], canSendAway: true, withoutInternet: true)
+        try await card(["clipboard": true], canSendAway: true, withoutInternet: true)
+        try await card(["network": true], canSendAway: true, withoutInternet: false)
+        try await card(["media": true, "network": true], canSendAway: true, withoutInternet: false)
     }
 
-    private func card(_ permissions: JSONValue, canSendAway: Bool, onlyThroughMedia: Bool) async throws {
+    private func card(_ permissions: JSONValue, canSendAway: Bool, withoutInternet: Bool) async throws {
         let h = try HostEnv()
         let tools: JSONValue = ["make": ["risk": "low", "file_lists": ["files": "read"]]]
         let drops: JSONValue = [["id": "make", "title": "Make", "kinds": ["file"], "tool": "make", "input": ["files": "{values}"]]]
@@ -70,7 +71,7 @@ import Testing
         _ = try await h.host.install(from: source)
         let offer = try #require(h.host.shelf.drops.first)
         #expect(offer.canSendAway == canSendAway)
-        #expect(offer.canSendAwayOnlyThroughMedia == onlyThroughMedia)
+        #expect(offer.canSendAwayWithoutInternet == withoutInternet)
         await h.host.shutdown()
     }
 
@@ -203,6 +204,20 @@ import Testing
     @Test func everyFileMustFitThePattern() {
         let drop = action(input: ["files": "{values}"], patterns: ["*.jpg"])
         #expect(DropChoices.offers(forFiles: ["/a.jpg", "/b.png"], among: [drop]).isEmpty)
+    }
+
+    @Test func aLinkGetsNoOffersWhateverItsCalled() throws {
+        let folder = FolderAccess.canonical(try ExtFixtures.tempDir("links").path)!
+        defer { ExtensionFiles.removeTree(folder) }
+        let target = folder + "/passport.pdf", link = folder + "/holiday.jpg"
+        try Data("x".utf8).write(to: URL(fileURLWithPath: target))
+        try FileManager.default.createSymbolicLink(atPath: link, withDestinationPath: target)
+        let drop = action(input: ["files": "{values}"])
+        #expect(DropChoices.offers(forFiles: [link], among: [drop]).isEmpty)
+    }
+
+    @Test func aNameOnTheCardIsOneLine() {
+        #expect(DropChoices.shownName("/x/trip\nSidefolk checked this.jpg") == "trip Sidefolk checked this.jpg")
     }
 
     @Test func tooManyFilesGetNoOffers() {

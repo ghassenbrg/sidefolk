@@ -246,6 +246,10 @@ public struct ManifestValidator: Sendable {
         if name.isEmpty || name.count > 60 || ExtensionText.clean(name) != name || name.contains(where: \.isNewline) {
             issues.append(ValidationIssue(field: "name", message: "must be 1–60 characters of plain text."))
         }
+        // The card says who reads a file by this name, so it can't read as Sidefolk saying so.
+        if name.caseInsensitiveCompare("Sidefolk") == .orderedSame {
+            issues.append(ValidationIssue(field: "name", message: "can't be Sidefolk's own name."))
+        }
         if m.version.range(of: #"^\d+\.\d+(\.\d+)?([-+][0-9A-Za-z.-]+)?$"#, options: .regularExpression) == nil {
             issues.append(ValidationIssue(field: "version", message: "must look like 1.0.0."))
         }

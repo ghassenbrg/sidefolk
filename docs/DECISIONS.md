@@ -3884,5 +3884,5 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 
 **Alternatives:** a global shortcut that asks Finder for its selection (needs Automation permission); the ring (D152, not built, waiting on a test).
 
-**Implications:** any app can send files this way, as any app can start a drag, so nothing runs until the person chooses on the card (SECURITY T43). Service names aren't translated yet.
+**Implications:** any app can send files this way, and unlike a drag it needs no click. So nothing runs until the person chooses on the card, it doesn't take the keyboard, and it leaves alone what the person is in the middle of (SECURITY T43). Service names aren't translated yet.
 

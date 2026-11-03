@@ -400,8 +400,10 @@ extension AppCoordinator: AskActions {
     }
 
     func open(file: PlacedFile) {
-        guard file.canOpen else { return }
-        NSWorkspace.shared.open(URL(fileURLWithPath: file.path))
+        let url = URL(fileURLWithPath: file.path)
+        // In the app for its ending, never launched as itself, so a swap after this check can't start a program.
+        guard file.canOpen, let app = NSWorkspace.shared.urlForApplication(toOpen: url) else { return }
+        NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
     func show(files: [PlacedFile]) {
@@ -416,6 +418,8 @@ extension AppCoordinator: AskActions {
                 } else {
                     model.add(.info(String(localized: "That can't be undone anymore.")), fades: true)
                 }
+            } catch let said as UserFacingError {
+                model.add(.error(said, retryable: false))
             } catch {
                 model.add(.error(UserFacingError("I couldn't undo that.", detail: String(describing: error)), retryable: false))
             }

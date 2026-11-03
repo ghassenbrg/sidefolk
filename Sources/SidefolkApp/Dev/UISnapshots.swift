@@ -579,7 +579,7 @@ enum UISnapshots {
             let networkActions = FixtureAskActions()
             networkActions.drops = offers(network: true)
             let mediaActions = FixtureAskActions()
-            mediaActions.drops = offers(network: false).map { var offer = $0; offer.canSendAway = true; offer.canSendAwayOnlyThroughMedia = true; return offer }
+            mediaActions.drops = offers(network: false).map { var offer = $0; offer.canSendAway = true; offer.canSendAwayWithoutInternet = true; return offer }
             // Today's tab with nothing in it (D84).
             let calmDay = AskModel()
             calmDay.actions = actions

@@ -1126,14 +1126,24 @@ extension AppCoordinator: CompanionDelegate {
         }
     }
 
-    func companionReceived(_ drop: Attachment) {
+    /// Finder's Send to Sidefolk (D151). Any app can call a Service, with no click behind it, unlike a drag: so it doesn't take the
+    /// keyboard, and doesn't replace or join what the person is in the middle of. False: it was left alone.
+    func filesFromAnotherApp(_ files: Attachment) -> Bool {
+        guard ask.attachment == nil, ask.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        receive(files, focus: false)
+        return true
+    }
+
+    func companionReceived(_ drop: Attachment) { receive(drop, focus: true) }
+
+    private func receive(_ drop: Attachment, focus: Bool) {
         var attachment = drop
         if case .file(let url) = drop.kind {
             // What the AI reads with the request (D28: text for models stays English).
             attachment.text = drop.files.count > 1 ? "Dropped files:\n" + drop.files.map(\.path).joined(separator: "\n") : "Dropped file: \(url.path)"
         }
         ask.attachment = attachment
-        showAsk()
+        showAsk(focus: focus)
     }
 
     func companionFolkClicked(_ folk: DutyFolk) { openHome() }

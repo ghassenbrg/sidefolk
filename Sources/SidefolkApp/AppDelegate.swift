@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let coordinator = AppCoordinator(runtime: runtime)
                 coordinator.restoreOutcome = restored
                 self.coordinator = coordinator
-                let sender = SendToSidefolk { [weak coordinator] files in coordinator?.companionReceived(files) }
+                let sender = SendToSidefolk { [weak coordinator] files in coordinator?.filesFromAnotherApp(files) ?? false }
                 self.sendToSidefolk = sender
                 NSApp.servicesProvider = sender
                 await coordinator.start()

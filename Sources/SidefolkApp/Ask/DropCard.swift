@@ -221,7 +221,7 @@ private struct FileOfferCard: View {
     @State private var ready = false
     @State private var showAll = false
 
-    private var names: [String] { attachment.dropFiles.map { ($0 as NSString).lastPathComponent } }
+    private var names: [String] { attachment.dropFiles.map(DropChoices.shownName) }
     private var groups: [[ExtensionDropAction]] { Dictionary(grouping: offers, by: \.extensionId).values.sorted { $0[0].extensionName < $1[0].extensionName } }
 
     var body: some View {
@@ -269,11 +269,11 @@ private struct FileOfferCard: View {
                 .font(.system(size: 10, weight: .semibold)).padding(.top, 2)
                 .foregroundStyle(offer.canSendAway ? Theme.warning : Theme.inkFaint)
             Group {
-                if offer.canSendAwayOnlyThroughMedia {
+                if offer.canSendAwayWithoutInternet {
                     if many {
-                        Text("\(who) reads these \(count) files only if you choose below. It has no internet access of its own, but a Mac service it uses could carry them out.", comment: "The drop card, Sidefolk's own words: an extension's name and how many files")
+                        Text("\(who) reads these \(count) files only if you choose below. It has no internet access of its own, but other things it's allowed to use could carry them out.", comment: "The drop card, Sidefolk's own words: an extension's name and how many files")
                     } else {
-                        Text("\(who) reads this file only if you choose below. It has no internet access of its own, but a Mac service it uses could carry the file out.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                        Text("\(who) reads this file only if you choose below. It has no internet access of its own, but other things it's allowed to use could carry the file out.", comment: "The drop card, Sidefolk's own words: an extension's name")
                     }
                 } else {
                     switch (many, offer.canSendAway) {
@@ -329,8 +329,19 @@ private struct FileOfferCard: View {
     private var own: some View {
         HStack(spacing: Theme.Space.xs) {
             ForEach(choices.filter { $0 != .ask && ($0 != .openWith || names.count == 1) }, id: \.self) { choice in
-                Button { chooseOwn(choice) } label: { DropCard.words(choice, kind: .file).title }
-                    .buttonStyle(.sf(.quiet, size: .small))
+                if choice == .openWith, case .file(let file) = attachment.kind {
+                    // Never the app macOS would pick by itself: a dropped `.command` would run.
+                    Menu {
+                        ForEach(DropCard.apps(for: file), id: \.self) { app in
+                            Button { openWith(app) } label: { Text(verbatim: FileManager.default.displayName(atPath: app.path)) }
+                        }
+                    } label: { DropCard.words(choice, kind: .file).title }
+                        .menuStyle(.button).menuIndicator(.hidden)
+                        .buttonStyle(.sf(.quiet, size: .small))
+                } else {
+                    Button { chooseOwn(choice) } label: { DropCard.words(choice, kind: .file).title }
+                        .buttonStyle(.sf(.quiet, size: .small))
+                }
             }
         }
     }

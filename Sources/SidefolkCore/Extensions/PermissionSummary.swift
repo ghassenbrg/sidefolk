@@ -65,6 +65,10 @@ public struct ExtensionPermissions: Codable, Sendable, Hashable {
     }
 
     /// Pins saved before programs, per-call folders, media, clipboard, power, screen and UDP existed have none of them.
+    /// Ways out other than its own internet: your AI, a place search, the certificate service under `media`, the clipboard, a folder
+    /// named at install, which may sync (the drop card, D141).
+    public var carriesOut: Bool { ai != nil || place != nil || media || clipboard || !write.isEmpty }
+
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         network = try c.decode(Bool.self, forKey: .network)

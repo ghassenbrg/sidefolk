@@ -225,6 +225,8 @@ public struct ToolResult: Sendable {
     public var rowError: String?
     /// Files Sidefolk saved beside what the person handed over, at the program's asking (D140).
     public var placed: [PlacedFile] = []
+    /// Sidefolk's own line about what it refused to save, kept apart from the program's words.
+    public var notSaved: String?
     /// Saves them, after the call: `ToolExecutor` runs it once, outside the call's timeout, so what is saved is always recorded.
     public var placing: (@Sendable () async -> ExtensionPlacement)?
 
