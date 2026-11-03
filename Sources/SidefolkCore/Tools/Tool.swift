@@ -256,6 +256,9 @@ public struct ToolContext: Sendable {
     /// What the person dropped or picked for this one call (D105, D140), canonical. Only Sidefolk's own panel and drop code
     /// can put anything here, never a tool's input; a retry or a plan has none.
     public var handedOver: Set<String>
+    /// Another agent's call that the person answered yes to on this call's own card. `ToolExecutor` sets it from what
+    /// happened, for an external caller only, and `ExternalFacade` keeps it only where that card asked about this (T4, D160).
+    public var personWasAsked = false
     public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil, handedOver: Set<String> = []) {
         self.handedOver = handedOver
         self.caller = caller

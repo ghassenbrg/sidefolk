@@ -19,6 +19,14 @@ The founder's choice of reading, and all three ways of being reached there, in D
 
 **Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.
 
+## 2026-11-03: The person's reminders on a card (D160, B4)
+
+Another agent can change the person's reminders, on a card every time that says which one and what changes. **Found in independent review, fixed:** a card that could cut off what it asked about, a yes that quietly ended an important reminder, an existence oracle by short ids, a card showing one time while another ran, a yes reading out a title, finishing a task ending an important reminder beside it. **Checked:** the suite, and tests that an agent, a client's words, a flow step, a model, a plan or an earlier yes can't set `personWasAsked`. **Not checked:** a real client on a real card.
+
+## 2026-11-03: Agents and the notebook's shape, and longer watches (D160, B1 to B3)
+
+Other agents can list the person's collections (a read, so a card by default, never About you), make one (a card every time) and say a watch runs up to a week. **Checked:** the suite, with real MCP over pipes to a whole Sidefolk. **Not checked:** a real Claude Code or Codex session as the client.
+
 ## 2026-11-03: MCP and in-app tools, batch A (D156–D159)
 
 From [the audit](research/mcp-tools-audit-2026-11-03.md), which called the tools through a debug app before anything was proposed. Tool annotations; a client's cancel takes its question or card away; a session started before Sidefolk gets its tools when it opens, and a call notices a Trust change. `watch.update` on any watcher, `reminders.update`, `reminders.snooze` and `reminders.complete` for an agent's own, `notes.restore`. Reads by date, `calendar.find` for the companion. `sidefolk notify`, `ask`, `remind`, `note`, `tools`, `call`, `status --json`. Typed reads without AI. Words that misled agents.

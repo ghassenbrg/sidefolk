@@ -53,7 +53,7 @@ public enum NotebookCollections {
         if isInboxName(name) { return (try await notebook.inbox(now: context.now), false) }
         if isProfileName(name) { throw profileRefusal }
         guard mayCreate(context.caller) else {
-            guard let found = try await resolve(name, notebook: notebook) else { throw creationRefusal(name) }
+            guard let found = try await resolve(name, notebook: notebook) else { throw creationRefusal(name, caller: context.caller) }
             return (found, false)
         }
         let (collection, created) = try await notebook.collection(named: name, kind: kind, excluding: [.profile],
@@ -62,15 +62,53 @@ public enum NotebookCollections {
     }
 
     static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, context: ToolContext) async throws -> NotebookCollection {
-        let clean = name.trimmedText.clipped(60)
+        // What can't be seen goes first, so a name that only looks like About you or the Inbox is taken for what it looks like.
+        let clean = cleanName(name)
         guard !clean.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
-        if isProfileName(clean) { throw profileRefusal }
+        if looksLikeProfile(clean) { throw profileRefusal }
         // The Inbox always exists (it is made on first use); a look-alike "inbox" project would split notes.
-        if isInboxName(clean) {
+        if looksLikeInbox(clean) {
             throw UserFacingError("“Inbox” is always there: it's where notes go when no collection is named.")
         }
-        guard mayCreate(context.caller) else { throw creationRefusal(clean) }
+        // Another agent, only on the person's yes on a card (D160); `notes.save` never makes one for it.
+        guard mayCreate(context.caller) || context.personWasAsked else { throw creationRefusal(clean, caller: context.caller) }
         return try await notebook.createCollection(name: clean, kind: kind, source: context.provenanceTag, now: context.now)
+    }
+
+    /// A name as it reads: compatibility forms folded, what can't be seen gone, case ignored. Letters from another script
+    /// that look the same (a Cyrillic "Іnbox") aren't caught: a card shows them, and they're an accepted residual (D160).
+    static func asItReads(_ name: String) -> String {
+        let seen = String(String.UnicodeScalarView(cleanName(name, limit: .max).precomposedStringWithCompatibilityMapping.unicodeScalars.filter { !$0.properties.isDefaultIgnorableCodePoint }))
+        return seen.displaySafe.folding(options: [.caseInsensitive, .widthInsensitive], locale: nil)
+    }
+
+    /// A collection's name with only what shows: what the card says is then what's kept, and a twin can't hide behind a
+    /// character the check doesn't know. An emoji keeps its variation selector; nothing else that draws nothing stays.
+    static func cleanName(_ name: String, limit: Int = 60) -> String {
+        var shown = String.UnicodeScalarView()
+        for scalar in name.displaySafe.precomposedStringWithCanonicalMapping.unicodeScalars {
+            switch scalar.properties.generalCategory {
+            case .format, .control, .privateUse, .surrogate, .unassigned, .lineSeparator, .paragraphSeparator: continue
+            default: break
+            }
+            if scalar.value == 0x2800 || scalar.value == 0xFFFC { continue }
+            if scalar.properties.isDefaultIgnorableCodePoint, !(scalar.value == 0xFE0F && shown.last?.properties.isEmoji == true) { continue }
+            shown.append(scalar)
+        }
+        return String(shown).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ").clipped(limit)
+    }
+
+    /// Another collection that reads the same as this name, whichever way it's spelled.
+    static func twin(of name: String, excluding id: String? = nil, notebook: NotebookStore) async throws -> NotebookCollection? {
+        try await notebook.collections(includeArchived: true).first { $0.id != id && asItReads($0.name) == asItReads(name) }
+    }
+
+    static func looksLikeProfile(_ name: String) -> Bool {
+        [profileName, String(localized: "About you")].contains { asItReads($0) == asItReads(name) }
+    }
+
+    static func looksLikeInbox(_ name: String) -> Bool {
+        [NotebookStore.inboxName, String(localized: "Inbox")].contains { asItReads($0) == asItReads(name) }
     }
 
     /// The notebook's shape is the user's: other agents and extensions file into what exists, and never
@@ -78,8 +116,12 @@ public enum NotebookCollections {
     static func mayCreate(_ caller: Caller) -> Bool { caller.kind != "external" && caller.kind != "extension" }
 
     /// The way out is in the message itself: the agent that has to act on it reads the message, not the recovery.
-    static func creationRefusal(_ name: String) -> UserFacingError {
-        UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one. Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
+    static func creationRefusal(_ name: String, caller: Caller) -> UserFacingError {
+        // Another agent has a way to ask (D160), in English like everything written for it.
+        if case .external = caller {
+            return UserFacingError(verbatim: "There's no collection called “\(name.trimmedText.clipped(60))”, and saving a note doesn't make one. Save it without a collection (it goes to the Inbox), or make it with collections_create, which asks the user.")
+        }
+        return UserFacingError("There's no collection called “\(name.trimmedText.clipped(60))”, and other apps can't create one. Save it without a collection (it goes to the Inbox), or ask the user to create it in Sidefolk first.")
     }
 
     /// The name people see: the Inbox and “About you” in the app's language, any other as it was named.

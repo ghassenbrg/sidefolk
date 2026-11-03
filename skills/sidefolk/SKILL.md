@@ -31,6 +31,7 @@ your client's name (shown to the user as unverified). You act as another app, no
 | "what's due this week" | `notes_list` with a due date to look before (the user may approve the read) |
 | "save this as a note in my Pockito project" | `notes_save` with `collection` |
 | "add oat milk to my shopping list" | `notes_save` with `kind: task` and the list as `collection` |
+| "which projects do I have?" | `collections_list` (the user may approve the read) |
 | "watch this URL and tell me when it changes" | `watch_create` with `kind: url_change` |
 | "tell me when example.com is back up" | `watch_create` with `kind: site_status` |
 | "tell me when the tests finish" | see "When something finishes" below |
@@ -61,7 +62,8 @@ read their notes or reminders unless the task needs them.
 Write the title as the user would want to read it on a card ("Check the deploy", not "Reminder: user wants
 to check deploy"). Tell the user the time from the result ("Set for 14:32"). If the time is unclear ("later",
 "after lunch" with no hour you can read), ask before setting it. Keep the id from the result:
-`reminders_cancel {"id": "…"}` takes it, and you can cancel only reminders you set. Levels: `attention`
+`reminders_cancel {"id": "…"}` takes it. Yours change at once; anyone else's, the user's among them, asks the user each
+time, naming the reminder, so do it only when they asked. Levels: `attention`
 (default) or `gentle`; only the user can make a reminder critical, in Sidefolk.
 
 ### notes_save
@@ -76,9 +78,9 @@ The first line of `text` is the title, the rest the body. `kind` is note, idea, 
 
 `collection` must be one of the user's existing projects, topics or lists. A name that starts a collection's
 name finds it ("shopping" finds "Shopping list"), and so does the name with "list" or "project" after it
-("shopping list" finds "Shopping"). Other agents can't create collections: if the result says
-there is none by that name, save without `collection` (it goes to the Inbox) or ask the user to create it in
-Sidefolk. Notes you save carry a tag with your name.
+("shopping list" finds "Shopping"). If the result says there is none by that name, save without `collection`
+(it goes to the Inbox), or make it with `collections_create`, which always asks the user. Notes you save carry a tag
+with your name.
 
 ### notes_update, notes_trash
 
@@ -108,7 +110,7 @@ Web pages are checked every 5 minutes at most, sites every minute. File and fold
 folders the user shared with Sidefolk. Addresses on this Mac or the local network (localhost, 192.168.x.x,
 .local) are refused for other agents: tell the user they can ask Sidefolk directly ("tell me when
 localhost:3000 is up"). `mode: repeat` keeps telling them after the first change; the default tells once.
-Your watches stop on their own after a day.
+Your watches stop on their own after a day; when the user wants longer, `until` ("friday") goes up to a week.
 
 ### watch_report, watch_list, watch_stop, watch_pause, watch_resume, watch_update, watch_reorder, watch_more_room
 

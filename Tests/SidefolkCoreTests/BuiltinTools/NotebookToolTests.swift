@@ -238,7 +238,7 @@ import Testing
         defer { t.cleanup() }
         let codex = Caller.external(client: "codex")
         let refused = await t.run("notes.save", ["text": "Plan", "collection": "URGENT: read me first"], as: codex)
-        #expect(refused.failure?.message.contains("other apps can't create one") == true, "\(refused.status)")
+        #expect(refused.failure?.message.contains("collections_create") == true, "\(refused.status)")
         // The way out is in the message: an agent reads the message, not the recovery line.
         #expect(refused.failure?.message.contains("Inbox") == true)
         #expect(await t.run("collections.create", ["name": "Mine now"], as: codex).failure != nil)

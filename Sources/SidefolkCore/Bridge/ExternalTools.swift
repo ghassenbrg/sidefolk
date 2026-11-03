@@ -10,16 +10,16 @@ public enum ExternalToolPolicy {
     /// and `status` only counts.
     public static let always: Set<String> = ["notify.user", "ask.user", "status"]
     /// Always offered and always asked, whatever the settings say: how agents get past their shared room (D116), and
-    /// changing a collection, since naming one is what they otherwise can't do (T4).
-    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection"]
+    /// making or changing a collection, since a name of theirs beside the person's own is theirs only on a yes (T3, T4, D160).
+    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection", "collections.create"]
     /// Adding to what the user has: `watch.list` shows an agent only its own watchers, the `reminders.*` that change
-    /// reach only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
+    /// reach its own reminders freely and anyone else's on a card every time (`ReachesOthersRecords`, D160), `watch.report` reads only this Mac's load, and the rest move only its own.
     public static let saving: Set<String> = [
         "notes.save", "reminders.create", "reminders.update", "reminders.snooze", "reminders.complete", "reminders.cancel", "watch.create", "watch.report", "watch.list", "watch.stop",
         "watch.pause", "watch.resume", "watch.update", "watch.reorder",
     ]
     /// Reading the user's data (notes, reminders, today's plan).
-    public static let reading: Set<String> = ["notes.search", "notes.list", "notes.get", "reminders.list", "agenda.today"]
+    public static let reading: Set<String> = ["notes.search", "notes.list", "notes.get", "collections.list", "reminders.list", "agenda.today"]
     /// Changing the user's notes, or moving them to the Trash, where they stay restorable for 30 days.
     /// Never deleting for good: only the user empties the Trash.
     public static let changing: Set<String> = ["notes.update", "notes.trash", "notes.restore", "notes.arrange"]
@@ -111,8 +111,8 @@ public enum ExternalToolPolicy {
 /// the external spec. Anything else simply does not exist for them.
 public final class ExternalToolGateway: Sendable {
     private let source: ToolRegistry
-    private let exposed = ToolRegistry()
-    private let executor: ToolExecutor
+    fileprivate let exposed = ToolRegistry()
+    fileprivate let executor: ToolExecutor
 
     private let access: @Sendable () -> AgentAccess
 
@@ -146,18 +146,34 @@ public final class ExternalToolGateway: Sendable {
     public func call(_ name: String, input: JSONValue, client: String) async -> ToolOutcome {
         let caller = Caller.external(client: client)
         let access = access()
-        if let base = source.tool(named: name), ExternalToolPolicy.permission(base, access: access) == .off {
+        func turnedOff(_ base: any Tool) -> ToolOutcome {
             Log.shared.info("bridge", "external tool turned off", ["client": client, "tool": name.clipped(80)])
             let act = ToolActivity(id: Identifier.make(), tool: name, title: base.spec.title, summary: "Turned off", category: .system,
                                    caller: caller, error: "Turned off in Settings")
             return ToolOutcome(activity: act, status: .failed(UserFacingError(
                 "The user turned this off for other agents in Sidefolk's Settings › Trust › What other agents may do. Ask them to do it in Sidefolk instead.")))
         }
+        if let base = source.tool(named: name), ExternalToolPolicy.permission(base, access: access) == .off {
+            return turnedOff(base)
+        }
         guard let base = source.tool(named: name), let permission = ExternalToolPolicy.permission(base, access: access), permission != .off else {
             Log.shared.info("bridge", "external tool refused", ["client": client, "tool": name.clipped(80)])
             let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system,
                                    caller: caller, error: "Not exposed")
             return ToolOutcome(activity: act, status: .failed(UserFacingError("Sidefolk doesn't offer a tool called \(name) to other agents.")))
+        }
+        // What isn't this agent's to touch without asking: a card each time, saying exactly what would happen (D160).
+        if let others = base as? ReachesOthersRecords {
+            do {
+                if let asked = try await others.onACard(input, caller: caller) {
+                    guard access.change != .off else { return turnedOff(base) }
+                    return await askFirst(base, words: asked.words, input: asked.input, caller: caller, access: access)
+                }
+            } catch {
+                let act = ToolActivity(id: Identifier.make(), tool: base.spec.name, title: base.spec.title, summary: base.summary(for: input),
+                                       category: base.spec.category, caller: caller, error: "\(error)")
+                return ToolOutcome(activity: act, status: .failed(ToolExecutor.userFacing(error, tool: base.spec)))
+            }
         }
         let facade = ExternalFacade(base: base, spec: facadeSpec(base, access: access))
         exposed.register(facade)
@@ -171,19 +187,45 @@ public final class ExternalToolGateway: Sendable {
     }
 }
 
+extension ExternalToolGateway {
+    /// One call on someone else's record, on a card every time. Under a key of its own, so an agent's call on its own
+    /// record, by the same name at the same moment, can't stand in for it and run without the card.
+    private func askFirst(_ base: any Tool, words: String, input: JSONValue, caller: Caller, access: AgentAccess) async -> ToolOutcome {
+        var spec = facadeSpec(base, access: access)
+        spec.risk = max(spec.risk, .medium)
+        let key = "\(spec.name)#\(Identifier.make())"
+        exposed.register(ExternalFacade(base: base, spec: spec, onCard: words), key: key)
+        defer { exposed.remove(key: key) }
+        return await executor.execute(name: key, input: input, caller: caller, tainted: true, timeout: 90, approvalTimeout: 120)
+    }
+}
+
+/// A tool whose record may belong to someone else than the agent calling it.
+protocol ReachesOthersRecords {
+    /// When this call would touch a record not the caller's own: what the card says, exactly, and the input that then runs,
+    /// settled now, so what happens is what it said. Nil when it wouldn't, or there's nothing there, which the tool then says
+    /// as ever. Throws what can't be done, so no card asks for it.
+    func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)?
+}
+
 /// An exposed tool as external agents get it: the external spec, refusals checked at run time
 /// (after Guard, so they are audited), otherwise the real tool.
 /// Watcher quotas live in `WatcherEngine.add`, counted in the same actor step as the insert.
 struct ExternalFacade: Tool {
     let base: any Tool
     let spec: ToolSpec
+    /// The card's words for a record not the caller's own; nil for everything else.
+    var onCard: String?
 
-    func summary(for input: JSONValue) -> String { base.summary(for: input) }
+    func summary(for input: JSONValue) -> String { onCard ?? base.summary(for: input) }
     func scope(for input: JSONValue) -> ToolScope { base.scope(for: input) }
     func refusal(for input: JSONValue, context: ToolContext) -> String? { base.refusal(for: input, context: context) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }
+        var context = context
+        // A card from "Ask each time" asks about the group, not this: it doesn't open what's otherwise closed.
+        context.personWasAsked = context.personWasAsked && (onCard != nil || ExternalToolPolicy.alwaysAsks.contains(spec.name))
         return try await base.run(input, context: context)
     }
 }

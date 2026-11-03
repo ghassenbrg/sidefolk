@@ -23,6 +23,16 @@ extension ReminderScheduler {
 
     /// Brings every reminder in line with its item: ends the ones whose item ended, brings back the ones whose item came
     /// back, and takes away the bubble of one that fired for a task done since.
+    /// Whether finishing this reminder's item would end an important reminder besides it, one that has fired and waits among them.
+    func wouldEndAnImportantOne(_ r: Reminder) async -> Bool {
+        guard let itemId = r.itemId else { return false }
+        let others = try? await store.db.writer.read { db in
+            try Reminder.filter(Column("item_id") == itemId && Column("id") != r.id)
+                .filter(["scheduled", "snoozed", "fired"].contains(Column("state"))).fetchAll(db)
+        }
+        return others?.contains { $0.level >= .critical } ?? true
+    }
+
     public func settleLinks() async {
         let now = clock.now
         let recently = now.addingTimeInterval(-86_400).timeIntervalSince1970

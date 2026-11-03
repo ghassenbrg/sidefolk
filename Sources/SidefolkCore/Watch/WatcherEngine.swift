@@ -193,7 +193,8 @@ public actor WatcherEngine {
     /// Starts watching. Fills in defaults, raises too-short intervals to the kind's floor and
     /// refuses what is not allowed; the error message is written for the user.
     @discardableResult
-    public func add(_ watcher: Watcher) async throws -> Watcher {
+    /// - Parameter until: when another agent's watch said it should stop, up to `externalLongest`; not for a live value.
+    public func add(_ watcher: Watcher, until: Date? = nil) async throws -> Watcher {
         await ensureLoaded()
         guard let probe = probes[watcher.kind] else { throw WatchError.unknownKind(watcher.kind) }
         let now = clock.now
@@ -219,10 +220,13 @@ public actor WatcherEngine {
         w.lastError = nil
         w.errorCount = 0
         w.fireCount = 0
-        // External agents' watchers never outlive a day, whatever they asked for (T4, T24).
+        // External agents' watchers end within a day, or at `until` up to `externalLongest` (T4, T24, D160).
         if let life = lifetime(w), w.expiresAt == nil || WatchSource.isExternal(w.source) {
             let end = now.addingTimeInterval(life)
             w.expiresAt = min(w.expiresAt ?? end, end)
+        }
+        if let until, WatchSource.isExternal(w.source), w.mode != .report {
+            w.expiresAt = min(until, now.addingTimeInterval(WatchLimits.externalLongest))
         }
         w.createdAt = now
         w.updatedAt = now
