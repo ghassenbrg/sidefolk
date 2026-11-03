@@ -6,7 +6,7 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest released is **snapshot 916**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
+until the founder releases it. The latest released is **snapshot 958**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -58,7 +58,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
   - **Known limits:** nothing is reminded while Sidefolk is quit or the Mac asleep unless macOS was asked to at quit (up to 20, within 7 days); the first question through `ask_noor` shows an approval card (network raises the floor), with Always; Noor's notices and Ask answers are Sidefolk's own surfaces, not the C01 board's richer ones; dial markers sit at real instants, unlike the boards' even spacing (the spec requires it).
   - **Before the gallery:** AlAdhan's and Open-Meteo's terms for caching and redistribution, which RESEARCH left open.
 
-- **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** the founder approved all of it, locally. Batch A is on `team/tools-batch-a`, not released (HISTORY's top entry). **Next:** release it on the founder's yes, then B1 to B6 in small batches, each with its own branch, commit and SECURITY entry, and B7 (`files.write`) last, after Formatic's D140 is on main. **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar.
+- **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** batch A is released in snapshot 958 (HISTORY). The founder approved group B too: B1 to B6 go in small batches, each with its own branch, commit and SECURITY entry, and B7 (`files.write`) last, after Formatic's D140 is on main. **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar.
 
 ## Next
 

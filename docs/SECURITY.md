@@ -148,6 +148,7 @@ They see descriptions and schemas written for them (`ExternalToolPolicy.external
 `collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
 to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
 result names the item by kind and id only.
+Reading adds `collections.list` (D160): another agent can now see the names of the person's projects, topics and lists with their counts, under the reading setting, so a card by default; never About you.
 The `sidefolk` command's `notify`, `ask`, `remind`, `note` and `call` (D159) are this same client by another door: through `ExternalToolGateway`, with these rules and nothing else, as `sidefolk-cli`. A program running as the person could already start `sidefolk mcp`.
 Reading user data (notes, reminders, `notes.get`, `agenda.today`) asks every time; an external caller never gets
 "Always". `notes.collection` (D117) always asks too, since naming a collection is what they otherwise can't do; the

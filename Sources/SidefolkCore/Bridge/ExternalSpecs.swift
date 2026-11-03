@@ -129,6 +129,7 @@ extension ExternalToolPolicy {
             """,
         "watch.list": "List the watchers and live values you started, with their ids and state. Other apps' and the user's don't show.",
         "notes.get": "Read one of the user's notes, ideas, tasks or links in full, by its id from notes_search or notes_list, which cut each to a line.",
+        "collections.list": "List the user's projects, topics and lists by name, with how many items each holds, so you can file a note in one. The user may be asked to allow it.",
         "notes.collection": """
             Change one of the user's projects, topics or lists: its name, its icon (emoji, or symbol from the app's set) or its \
             color (a name like blue, or #RRGGBB). You can't create one, or rename the Inbox or About you.

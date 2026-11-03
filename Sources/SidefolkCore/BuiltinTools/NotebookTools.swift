@@ -488,7 +488,9 @@ struct CollectionsListTool: Tool {
     func summary(for input: JSONValue) -> String { String(localized: "List your notebook collections") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        let collections = try await notebook.collections()
+        var collections = try await notebook.collections()
+        // What's known about the person isn't another agent's to size up (T4).
+        if case .external = context.caller { collections.removeAll { $0.kind == .profile } }
         let counts = try await NotebookCollections.itemCounts(notebook)
         guard !collections.isEmpty else {
             return ToolResult(text: "The notebook has no collections yet. Notes go to the Inbox.",

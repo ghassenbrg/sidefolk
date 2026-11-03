@@ -208,6 +208,26 @@ import Testing
         await s.stop()
     }
 
+    /// The names an agent needs to file a note, asked like any read, and never About you.
+    @Test func listCollectionsWithACardAndWithoutAboutYou() async throws {
+        let s = try await Stack()
+        _ = try await s.runtime.notebook.collection(named: "Pockito", kind: .project, now: Date())
+        _ = try await NotebookCollections.profile(s.runtime.notebook, create: true)
+        let answered = s.answerNextCard(.allowOnce)
+        let listed = try await s.call("collections_list")
+        #expect(await answered.value?.canAlways == false)
+        #expect(!listed.isError, "\(listed.text)")
+        #expect(listed.text.contains("Pockito"))
+        #expect(!listed.text.lowercased().contains("about you"), "\(listed.text)")
+
+        await s.runtime.settings.update { $0.agentAccess.read = .off }
+        #expect(try await s.call("collections_list").text.contains("What other agents may do"))
+        // Sidefolk's own agent still sees all of them.
+        let own = await s.runtime.executor.execute(name: "collections.list", input: [:], caller: .agent(runId: "r"))
+        #expect(own.promptText.lowercased().contains("about you"))
+        await s.stop()
+    }
+
     @Test func notesGoIntoTheUsersOwnCollections() async throws {
         let s = try await Stack()
         let notebook = s.runtime.notebook
