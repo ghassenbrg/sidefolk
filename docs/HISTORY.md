@@ -15,6 +15,10 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
 
 **Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.
 
+## 2026-11-03: The person's reminders on a card, and the companion reads History (D160, B4 to B6)
+
+Another agent can change the person's reminders, on a card every time that says which one and what changes; the companion can read short lines of History and see which agents are running. **Found in independent review, fixed:** a card that could cut off what it asked about, a yes that quietly ended a critical reminder, an existence oracle by short ids, secrets reaching the model through History's summaries, a client name reading as the person. **Checked:** the suite, and tests that an agent, a client's words, a flow step, a model, a plan or an earlier yes can't set `personWasAsked`. **Not checked:** a real client on a real card.
+
 ## 2026-11-03: Agents and the notebook's shape, and longer watches (D160, B1 to B3)
 
 Other agents can list the person's collections (a read, so a card by default, never About you), make one (a card every time) and say a watch runs up to a week. **Checked:** the suite, with real MCP over pipes to a whole Sidefolk. **Not checked:** a real Claude Code or Codex session as the client.

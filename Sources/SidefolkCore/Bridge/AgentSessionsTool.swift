@@ -33,10 +33,8 @@ struct AgentSessionsTool: Tool {
             }
             return "- \(AgentFacingTools.unverifiedName(s.agent))\(place): \(state), since \(s.startedAt.formatted(.dateTime.weekday(.abbreviated).hour().minute()))"
         }
-        let waiting = live.filter { $0.state == .needsYou }.count
         return ToolResult(text: lines.joined(separator: "\n"),
-                          card: ResultCard(kind: .list, title: String(localized: "\(live.count) sessions"),
-                                           subtitle: waiting == 0 ? nil : String(localized: "\(waiting) waiting for you")),
+                          card: ResultCard(kind: .list, title: String(localized: "\(live.count) sessions")),
                           untrusted: true)
     }
 }
