@@ -3680,3 +3680,11 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 **Alternatives:** one short time for everything (an answer that arrived while away could go unread); fading while the panel has the keyboard (it would take text someone is reading); counting a whisper as seen (a "finished" doesn't carry the answer).
 **The numbers are constants in `ResultLifetime`,** and easy to change once they've been lived with.
 
+### D137 — Sidefolk's normal windows don't land inside another app's full-screen space, and test runs stay out of the way (2026-11-03)
+
+**Decision:** Home, Settings and the other normal windows wait until the switch from a menu-bar app to a regular app has taken effect before they activate and order in (`WindowActivation`, at most a second). The companion, Ask and cards stay over full-screen apps on purpose. A debug run with `SIDEFOLK_QUIET_WINDOWS=1` draws normal windows off-screen and brings nothing forward; `snap` and the commands that read a page still work, and clicks and keys need a run without it (AGENTS.md).
+**Why:** the founder: "suddenly in Claude window itself, the application appears" while another session tests. Debug copies opened real windows on whatever space was active, and a menu-bar app's window may join a full-screen space.
+**Verification status:** see HISTORY. Moving spaces disturbs the screen, so the before-and-after check on a real full-screen space runs only once the Mac has been idle for ten minutes.
+**Limits:** quiet mode doesn't hide a test run's companion or panels. Sessions have to opt in.
+**Alternatives:** quiet by default for any `SIDEFOLK_HOME` (`make dev` is the founder's own use of a debug app, and other sessions' checks need real focus); `.moveToActiveSpace` (it would bring windows into the very space they shouldn't join).
+

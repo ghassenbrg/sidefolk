@@ -13,16 +13,44 @@ enum WindowActivation {
         NSWorkspace.shared.frontmostApplication?.processIdentifier == ProcessInfo.processInfo.processIdentifier
     }
 
+    #if DEBUG
+    /// A test run's windows stay out of the person's way (AGENTS.md): drawn off-screen, as the snapshots are, so they still
+    /// lay out and `snap` still reads them, with nothing brought forward. Clicks and keys need a run without it.
+    private static let quiet = ProcessInfo.processInfo.environment["SIDEFOLK_QUIET_WINDOWS"] == "1"
+    #endif
+
     /// Call when a window is shown on the user's request (menu, hotkey, click).
     static func show(_ window: NSWindow) {
+        #if DEBUG
+        if quiet {
+            // Not remembered, or the next run opens off-screen too.
+            window.setFrameAutosaveName("")
+            // Moved after it's up, unseen until then: AppKit brings a titled window back on screen as it's ordered in.
+            window.alphaValue = 0
+            window.orderFrontRegardless()
+            window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
+            window.alphaValue = 1
+            return
+        }
+        #endif
         if !isFrontmost { previous = NSWorkspace.shared.frontmostApplication }
         open.insert(ObjectIdentifier(window))
         if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
-        // Activating in the same turn as the policy switch can leave a stale menu bar.
         Task { @MainActor in
+            // A menu-bar app's window may open inside another app's full-screen space, and the switch to a regular app
+            // takes effect a moment later. Waiting also keeps the menu bar from going stale.
+            await untilRegular()
             NSApp.activate()
             CompanionAppIcon.reapply()
             window.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    private static func untilRegular() async {
+        let current = NSRunningApplication.current
+        let giveUp = ContinuousClock.now + .seconds(1)
+        while current.activationPolicy != .regular, ContinuousClock.now < giveUp {
+            try? await Task.sleep(for: .milliseconds(10))
         }
     }
 
