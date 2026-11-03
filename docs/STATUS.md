@@ -81,6 +81,9 @@ snapshots. **Playtime 1.0.0-snapshot.10** needs Sidefolk snapshot 958, and a cop
   - **Here:** saving beside the file the person gave (D140), file drops with a menu and several files (D141), Open, Show and Undo on a saved file (D142), Finder's Send to Sidefolk (D151). Sound under `media` is D143.
   - **Half done, local branches only:** the extension itself (add-ons `team/formatic`, in the gallery only after an app release carries these), its look (D150, `team/formatic-design` is the reference, after the themes work), the ring (D152: the founder's test passed, no go to build).
   - **Next:** the extension to the gallery, then D150.
+
+  - **Half done, local branches only:** the extension itself (add-ons `team/formatic`, in the gallery only after an app release carries these), its look (D150, `team/formatic-design` is the reference, after the themes work), the ring (D152: the founder's test passed, no go to build), and `team/sandbox-names` (failed its review once, fixed, needs another).
+  - **Next:** D150 (`team/formatic-look`), then Formatic to the gallery on the founder's yes: they chose to wait for the design.
   - **Not verified:** the Service from a real Finder, including a cold launch; a real drag from Finder; Open, Show and Undo by real clicks. Checked by the suite and the debug app: every format through the real sandbox, a drop and a card choice by command. Drop menu titles can't be translated yet.
 
 - **Noor, the extension (D105–D109, T43), not the companion of the same name (D121):** in the gallery since 2026-11-03 as `dev.sidefolk.prayer-times` `1.0.0-snapshot.1`, for snapshot 911 or newer, rebuilt at the founder's request to match its 20 approved boards. Snapshot add-ons are hidden until the person presses Show snapshots. The founder tests it next and comes back with findings.

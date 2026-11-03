@@ -1329,6 +1329,10 @@ longer used from every language); `extension-strings.py check <folder>` lists wh
 and copies the name, tagline and description per language into the catalog (`localized`), so the gallery speaks the
 person's language before anything is installed; an older Sidefolk ignores the key.
 
+## How a dropped file's card looks
+
+For a file offer, Sidefolk draws the frame, a working card and the saved-file card on a frost from the person's own file, or from your icon when the file has no colourful picture (D150). You can't change it, and you never get the picture. Two optional keys on a drop help: `tag`, a format's name for the row (`"JPEG"`, up to six letters, digits or dots), and `mark`, a picture in your `assets` for the small sheet when the file has none of its own.
+
 ## Testing locally
 
 1. **Run your program by hand.** Pipe messages in and read what comes out:

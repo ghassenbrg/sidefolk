@@ -3888,6 +3888,22 @@ Converting a sound in the sandbox failed: writing AAC gave `fmt?`, and 24-bit WA
 
 **Implications:** `ResultCard.files` holds `PlacedFile`s and is saved with the conversation, so an old card re-checks identity at each click. A page's `file` action shows a save that failed. Dragging the file out of the card comes with D150's card. SECURITY T45.
 
+### D150 — A file's card is frosted from its own picture (2026-11-03)
+
+The founder approved the look ("your file sets the colour") and chose to wait for it before Formatic reaches the gallery: the plain cards didn't match its icon ("the book cover looks very nice, but when you open it's very different").
+
+**Decided:** for any extension's file offers, working card and saved-file card, Sidefolk draws a frost from the person's file. It's general, and the app names no extension.
+
+- **One picture per card, at thumbnail size.** The frost is only the background. Everything on it is white or neutral, never sampled from the picture, because the founder stopped a version that put the picture everywhere.
+- **Measured, not judged.** A picture counts only if it still has colour once blurred (average chroma at least 0.14). The scrim is the least that keeps white text at 5.6:1 on the blur's brightest part (`FrostMeasure`).
+- **A file with no colourful picture** gets a frost from the extension's icon, and on its small sheet the pack picture its manifest names (`mark`). With neither, a plain dark ground and an empty sheet.
+- **The picture comes from the system's thumbnail service, out of process,** with a two-second limit and the fallback above. It stays in the view's memory, is never written, and never reaches the extension.
+- **What Sidefolk says stays outside the frame:** the trust line, file names and counts, in Sidefolk's own type and colours. The frame carries only the extension's name and words. Open, Show and Undo are Sidefolk's own buttons. A pack picture appears only as the small mark, so it can't fill a card to look like a permission slip.
+- **New manifest keys on a drop:** `tag` (one to six letters, digits or dots, a format's name, so it needs no translation) and `mark` (a picture in its pack, read through the same checks as any pack picture).
+- One file can be dragged off its saved-file card.
+
+**Not built:** the approved "Stop" on the working card. It would have to really stop the call, which hasn't been shown, so it isn't there. The bar doesn't claim progress: it moves without saying how far.
+
 ### D151 — Send to Sidefolk from Finder (2026-11-03)
 **Decision:** a macOS Service, "Send to Sidefolk", in Finder's right-click menu for files. macOS hands the selected files to Sidefolk as a drag does, and they arrive on the same drop card with the same grant (D141). The person can give it a keyboard shortcut in System Settings. It needs no permission of its own.
 

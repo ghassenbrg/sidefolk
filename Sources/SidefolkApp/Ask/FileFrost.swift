@@ -48,7 +48,8 @@ nonisolated struct FileFrost: @unchecked Sendable {
             QLThumbnailGenerator.shared.cancel(asked.request)
         }
         defer { clock.cancel() }
-        return (try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: asked.request))?.nsImage
+        guard let drawn = try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: asked.request) else { return nil }
+        return NSImage(cgImage: drawn.cgImage, size: NSSize(width: drawn.cgImage.width, height: drawn.cgImage.height))
     }
 
     private struct Asked: @unchecked Sendable { var request: QLThumbnailGenerator.Request }
