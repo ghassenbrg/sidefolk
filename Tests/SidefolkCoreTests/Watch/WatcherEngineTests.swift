@@ -641,9 +641,12 @@ import Testing
         await engine.start()
         try await Task.sleep(for: .milliseconds(1100))
         await engine.stop()
+        // A check that had already started finishes on its own thread: only new ones are what stop rules out. A timer that
+        // survived would still be firing every 0.2 s below, so this wait hides nothing.
+        try await Task.sleep(for: .milliseconds(300))
         let count = calls.count
-        #expect((3...8).contains(count), "expected about 6 checks in 1.1 s at 0.2 s apart, got \(count)")
-        try await Task.sleep(for: .milliseconds(400))
+        #expect((3...9).contains(count), "expected about 6 checks in 1.1 s at 0.2 s apart, got \(count)")
+        try await Task.sleep(for: .milliseconds(600))
         #expect(calls.count == count, "no checks after stop")
     }
 
