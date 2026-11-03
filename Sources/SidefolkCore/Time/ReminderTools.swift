@@ -167,7 +167,15 @@ public enum ReminderTools {
                   context.personWasAsked || ReminderTools.canManage(caller: context.caller, source: r.source) else {
                 throw ToolError.notFound(String(localized: "a reminder with id \(id)"))
             }
+            // The person may have made it important while the card waited.
+            if context.personWasAsked, !ReminderTools.canManage(caller: context.caller, source: r.source) { try notImportant(r) }
             return r
+        }
+
+        /// Whether this call is on the caller's own reminder: no card, and its rules are the ordinary ones.
+        func isOwn(_ input: JSONValue, caller: Caller) async -> Bool {
+            guard let id = input.string("id"), let r = await scheduler.reminder(matching: id) else { return false }
+            return ReminderTools.canManage(caller: caller, source: r.source)
         }
 
         /// The reminder an agent's call would touch when it isn't the agent's own and is still going: what its card names.
@@ -476,6 +484,8 @@ public enum ReminderTools {
             let note: String
             if task != nil {
                 note = "Its task is done too."
+            } else if context.personWasAsked {
+                note = ""
             } else if after.recurrence != nil {
                 note = "It will remind you again \(after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "later")."
             } else {
@@ -513,6 +523,7 @@ public enum ReminderTools {
         }
 
         func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)? {
+            if await shared.isOwn(input, caller: caller) { return nil }
             // Before looking: what's wrong with the words says nothing about whether the reminder is there.
             guard let whenText = input.string("when") else { throw ToolError.invalidInput(String(localized: "“when” is required")) }
             let now = Date()
@@ -531,6 +542,7 @@ public enum ReminderTools {
             guard parsed.recurrence == nil else { throw ToolError.invalidInput(String(localized: "snooze takes a single time, not a repeat")) }
             let scheduler = shared.scheduler
             guard let before = try await scheduler.snooze(id: r.id, until: parsed.date), before.state == .scheduled || before.state == .snoozed || before.state == .fired else {
+                if context.personWasAsked { throw UserFacingError(verbatim: "That reminder has ended, so there's nothing to snooze.") }
                 throw r.state == .cancelled ? UserFacingError("“\(r.title)” was cancelled, so it can't be snoozed.")
                     : UserFacingError("“\(r.title)” is done, so it can't be snoozed.")
             }
@@ -574,6 +586,7 @@ public enum ReminderTools {
         func summary(for input: JSONValue) -> String { String(localized: "Change a reminder") }
 
         func onACard(_ input: JSONValue, caller: Caller) async throws -> (words: String, input: JSONValue)? {
+            if await shared.isOwn(input, caller: caller) { return nil }
             // Before looking: what's wrong with the words says nothing about whether the reminder is there. One change on a
             // card, short enough to read whole: a card that can cut off what it asks about isn't asking. What runs is what
             // it showed: words cleaned as shown, a time settled now, and no change of repeat, which is the person's to make.
@@ -607,6 +620,7 @@ public enum ReminderTools {
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let r = try await shared.existing(input, context: context)
             guard r.state != .cancelled, r.state != .done else {
+                if context.personWasAsked { throw UserFacingError(verbatim: "That reminder has ended, so there's nothing to change.") }
                 throw UserFacingError("“\(r.title)” has ended, so there's nothing to change. Set a new reminder instead.")
             }
             let now = context.now
@@ -641,8 +655,15 @@ public enum ReminderTools {
                 throw ToolError.notFound(String(localized: "a reminder with id \(r.id)"))
             }
             let after = await scheduler.reminder(matching: r.id) ?? r
-            var text = "Changed \(shared.quoted(after, context)): \(after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "no next time")"
-            if let rule = after.recurrence { text += ", repeating \(TimeFormat.recurrenceForModel(rule, calendar: shared.calendar))" }
+            // Another agent's yes on a card isn't a read: it hears only what it asked for.
+            var text: String
+            if context.personWasAsked {
+                text = "Changed that reminder"
+                if let parsed { text += ": \(TimeFormat.full(parsed.date, calendar: shared.calendar))" }
+            } else {
+                text = "Changed \(shared.quoted(after, context)): \(after.nextDue.map { TimeFormat.full($0, calendar: shared.calendar) } ?? "no next time")"
+                if let rule = after.recurrence { text += ", repeating \(TimeFormat.recurrenceForModel(rule, calendar: shared.calendar))" }
+            }
             if let level, level.rawValue != input.string("level")?.lowercased() { text += ", as an ordinary alert (only the user can set critical reminders)" }
             text += ". id: \(after.id)"
             if raised { text += ". Reminders repeat at most once a minute, so this one repeats every minute; tell the user." }

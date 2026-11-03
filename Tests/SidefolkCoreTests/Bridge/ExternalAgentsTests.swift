@@ -574,6 +574,9 @@ import Testing
         #expect(moved.card?.summary.contains("Call Sam") == true)
         #expect(!moved.result.isError, "\(moved.result.text)")
         #expect(!moved.result.text.contains("Call Sam"), "a yes isn't a read")
+        let quiet = try await asked("reminders_update", ["id": .string(sam.id), "level": "gentle"], .allowOnce)
+        #expect(!quiet.result.isError, "\(quiet.result.text)")
+        #expect(!quiet.result.text.contains("Call Sam") && !quiet.result.text.contains("2026"), "only what it asked for: \(quiet.result.text)")
         #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .snoozed)
 
         // A yes is for that call: the next one asks again.
@@ -713,6 +716,20 @@ import Testing
         #expect(card?.summary.isEmpty == false)
         let after = try #require(await s.runtime.scheduler.reminder(matching: sam.id))
         #expect(after.notes == nil && after.source == "user", "blank words are no words")
+        await s.stop()
+    }
+
+    /// An agent's own stays under the ordinary rules: its repeat and long words are its own to change.
+    @Test func anAgentsOwnReminderKeepsItsOwnRules() async throws {
+        let s = try await Stack()
+        _ = try await s.call("reminders_create", ["title": "Mine", "when": "in 2 hours"])
+        let mine = try #require(await s.runtime.scheduler.upcoming().first)
+        let long = String(repeating: "x", count: 100)
+        let changed = try await s.call("reminders_update", ["id": .string(mine.id), "when": "every monday at 10am", "notes": .string(long), "title": "Mine still"])
+        #expect(!changed.isError, "\(changed.text)")
+        let after = try #require(await s.runtime.scheduler.reminder(matching: mine.id))
+        #expect(after.recurrence != nil && after.notes == long && after.title == "Mine still")
+        #expect(changed.text.contains("Mine still"))
         await s.stop()
     }
 
