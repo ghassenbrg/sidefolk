@@ -60,7 +60,9 @@ struct TodayView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
                 .homePageTitle()
-                .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in hasScene ? width * 0.62 : width }
+                // A share of the page, never all of it: the container includes the page's side padding, so its full width
+                // pushed Today wider than the window, and the sidebar with it.
+                .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in width * (hasScene ? 0.62 : 0.8) }
             (Text(verbatim: DayBrief.lead(needsYou: now.needsYouCount)).fontWeight(.semibold).foregroundStyle(Theme.sceneInk)
                 + Text(verbatim: " " + DayBrief.detail(next: now.nextUp, changed: now.changedWatches)).foregroundStyle(Theme.sceneInkMuted))
                 .font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale))
