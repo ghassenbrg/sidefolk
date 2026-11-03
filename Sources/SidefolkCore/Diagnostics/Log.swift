@@ -112,7 +112,7 @@ public enum Redactor {
         #"-----BEGIN [A-Z0-9 ]*PRIVATE KEY( BLOCK)?-----[\s\S]*?(-----END [A-Z0-9 ]*PRIVATE KEY( BLOCK)?-----|$)"#,   // PEM keys
         #"sk-[A-Za-z0-9_\-]{12,}"#,                       // OpenAI / Anthropic style keys
         #"sk-ant-[A-Za-z0-9_\-]{12,}"#,
-        #"(?i)(api[_-]?key|token|secret|password|authorization)(["'\s:=]+)([^\s"',}]{6,})"#,
+        #"(?i)(api[_-]?key|token|secret|password|authorization)(["'\s:=]+(?:(?:bearer|basic|token)\s+)?)([^\s"',}]{6,})"#,   // a scheme isn't the secret
         #"(?i)bearer\s+[A-Za-z0-9._\-]{10,}"#,
         #"gh[pousr]_[A-Za-z0-9]{20,}"#,
         #"github_pat_[A-Za-z0-9_]{20,}"#,
