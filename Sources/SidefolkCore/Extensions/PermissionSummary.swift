@@ -298,7 +298,7 @@ public struct PermissionSummary: Sendable, Hashable {
         if p.network, p.screen {
             warnings.append(String(localized: "It can record your screen and use the internet, so it could send what's on your screen elsewhere."))
         }
-        if p.act != nil, p.network || !p.exec.isEmpty || !p.programs.isEmpty {
+        if p.act != nil, p.network || p.media || !p.exec.isEmpty || !p.programs.isEmpty {
             warnings.append(String(localized: "It can use Sidefolk's tools and reach beyond this Mac by itself, so what they return could leave it. It gets no plans: every use asks you."))
         }
         if p.network, !p.write.isEmpty {

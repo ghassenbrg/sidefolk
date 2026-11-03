@@ -229,6 +229,8 @@ import Testing
         #expect(!media.isContained)
         #expect(!PermissionSummary.forExtension(media).lines.contains { $0.note?.contains("can't reach the internet by itself") == true })
         #expect(PermissionSummary.forExtension(media).lines.contains { $0.note?.contains("could send them on") == true })
+        let acting = ExtensionPermissions(media: true, act: ExtensionPurpose(purpose: "to act"))
+        #expect(PermissionSummary.forExtension(acting).warnings.contains { $0.contains("It gets no plans") })
     }
 
     /// Saving beside a dropped file can put what it read in a synced folder, as a write folder can: no plans, and no promise.

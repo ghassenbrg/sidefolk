@@ -1201,7 +1201,7 @@ _ = await Actions.call("agenda.today", plan: "morning")              // no card,
 
 The person reads the card in full, in Sidefolk's words. After a yes, a call that fits a step needs no card. What holds:
 - **Fits** means the same keys, every written value equal. `{{name}}` may be left open only in `notes.save`'s `text`, `reminders.create`'s `title` and `notes`, `notify.user`'s `title` and `body`, and `ask.user`'s `question`. A step with `{{name}}` anywhere else, or in another extension's tool, is accepted but asks each time: write it out. So does anything high risk, and `clipboard.read`.
-- **You get plans only if you can't reach out by yourself:** no `network`, `exec`, write folders, clipboard, screen or UDP (`not_contained`). Their reads come to you, and the card says so.
+- **You get plans only if you can't reach out by yourself:** no `network`, `media`, `exec`, write folders, clipboard, screen or UDP (`not_contained`). Their reads come to you, and the card says so.
 - **Only just after the person:** `not_asked` unless they clicked or typed to you, or a clean turn of Sidefolk's AI called you, in the last 30 seconds. Never from a timer.
 - It ends with `ttl` (60–3600 s), `Plans.forget`, Settings › Add-ons (`Plans.ended` tells you), or a changed tool, which asks again. `per_day` caps it, 200 by default, at most 1000; at most 32 steps.
 - "Ask every time", a capability turned off, and folder boundaries hold whatever a plan says.
