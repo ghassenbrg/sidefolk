@@ -27,6 +27,8 @@ public enum ExtensionActionPolicy {
     /// could pick a target or carry words off the Mac, is written out in the plan or gets a card each time (T43).
     static let fillable: [String: Set<String>] = [
         "notes.save": ["text"],
+        // Looks through their own notes; nothing leaves, and what it finds comes back as any read does.
+        "notes.search": ["query"],
         "reminders.create": ["title", "notes"],
         "notify.user": ["title", "body"],
         "ask.user": ["question"],

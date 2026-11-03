@@ -5,6 +5,22 @@ import SidefolkCore
 /// Mac Pulse+'s page as it reads on a typical afternoon, with ten minutes of history: what the UI snapshots show
 /// for extension pages (D62) without running the extension.
 enum SampleExtensionPage {
+    /// What can be added to a tree, as an extension says it.
+    static func treePicker() -> ExtensionPage.Tree.Picker? {
+        let json = #"""
+        {"sections": [{"blocks": [{"type": "tree", "nodes": [{"id": "a", "title": "Start"}], "picker": {"key": "kind", "placeholder": "What should it do next?", "note": "Add-ons you install appear here by themselves.",
+          "categories": [{"id": "suggested", "label": "Suggested", "symbol": "sparkles"}, {"id": "notes", "label": "Notes", "symbol": "note.text"}, {"id": "web", "label": "The web", "symbol": "globe"}, {"id": "logic", "label": "Logic", "symbol": "arrow.triangle.branch"}],
+          "items": [{"id": "job", "title": "Let your companion do it", "detail": "A whole job, with all its tools", "meta": "Your trust settings", "symbol": "wand.and.stars", "color": "#C65CD6", "categories": ["suggested"]},
+            {"id": "ai", "title": "Write with AI", "detail": "Summarise, rewrite, sum up", "meta": "No tools", "symbol": "sparkles", "color": "#C65CD6", "categories": ["suggested"]},
+            {"id": "tell", "title": "Tell me", "detail": "A notice from your companion", "meta": "Reaches you", "symbol": "bell", "color": "#FF7B6B", "categories": ["suggested"]},
+            {"id": "if", "title": "If…", "detail": "Do something only sometimes", "meta": "Logic", "symbol": "arrow.triangle.branch", "color": "#1FA88A", "categories": ["suggested", "logic"]},
+            {"id": "note", "title": "Save a note", "detail": "To your notebook", "meta": "Changes things", "symbol": "note.text", "color": "#52C08A", "categories": ["suggested", "notes"]},
+            {"id": "weather", "title": "Check the weather", "detail": "From your Weather add-on", "meta": "Only reads", "symbol": "cloud.sun", "color": "#5B8DEF", "categories": ["suggested", "web"]}]}}]}]}
+        """#
+        guard let value = try? JSONValue.parse(Data(json.utf8)), case .tree(let tree)? = (try? ExtensionPage.parse(value))?.sections.first?.blocks.first else { return nil }
+        return tree.picker
+    }
+
     static let info = ExtensionPageInfo(extensionId: SampleAddons.macPulsePlus, extensionName: "Mac Pulse+", page: "mac",
                                         title: "Mac Pulse", symbol: "gauge.with.dots.needle.67percent", refresh: 3, history: true, widget: true,
                                         iconPath: FixtureServices.sampleIcon)

@@ -225,6 +225,7 @@ private struct TreeCard: View {
                     if let kind = node.kind { Text(ext: kind).font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1) }
                     Text(ext: node.title).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(node.kind == nil ? 3 : 2)
                 }
+                .layoutPriority(1)
                 Spacer(minLength: 0)
                 trailing
             }
@@ -235,7 +236,8 @@ private struct TreeCard: View {
             .contentShape(shape)
         }
         .buttonStyle(.sfBare)
-        .disabled(tree.select == nil)
+        // Nothing to press on a tree that only shows, without looking pressed-out.
+        .allowsHitTesting(tree.select != nil)
         .opacity(node.state == .skipped ? 0.55 : 1)
         .elevation(node.state == .pending || node.state == .skipped ? .e0 : (hovering ? .e2 : .e1))
         .onHover { hovering = $0 }
@@ -391,7 +393,7 @@ private struct TreeAddButton: View {
 }
 
 /// What can be added, found by typing or by category, and picked with the arrows and Return.
-private struct TreePicker: View {
+struct TreePicker: View {
     var picker: ExtensionPage.Tree.Picker
     var choose: (String) -> Void
     @State private var words = ""

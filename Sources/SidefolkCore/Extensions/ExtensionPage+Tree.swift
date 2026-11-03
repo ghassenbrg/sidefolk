@@ -158,7 +158,7 @@ extension ExtensionPage {
 /// at commit 8611a90d, MIT, Copyright (c) 2020-2024 Activepieces Inc.: see THIRD_PARTY_NOTICES.md.
 public struct TreeLayout: Sendable {
     public struct Metrics: Sendable {
-        public var card = CGSize(width: 288, height: 72)
+        public var card = CGSize(width: 324, height: 72)
         /// Between one card and the next.
         public var gap: CGFloat = 54
         /// Between branches side by side.
