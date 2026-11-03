@@ -3838,7 +3838,7 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 **Decision:** a tool may declare `outputs`, the file endings it makes. Its program writes in its own data folder and names what it made in its reply (`sidefolk.outputs`, Kit: `ToolReply.saving(data:as:beside:)`). Sidefolk, not the sandbox, then moves the file beside the source. The sandbox gains no rule and never opens the person's folder for writing. Rules, all enforced by `ExtensionOutputs`, most of them the coordinator's:
 - Only beside a file the person dropped or picked for this very call (`ToolContext.handedOver`, set only by Sidefolk's own code, never from input, and gone on a retry or in a plan). Never a system, protected or hidden folder.
 - The data file: a regular file with one hard link, reached by walking down from the data folder with no link followed anywhere. Reading elsewhere through Sidefolk's own privileges is the main risk.
-- The name: bare, no path parts, no leading dot, no invisible or direction characters, at most 200 bytes, and starting with the source's name (so "trip small.jpg", never `CLAUDE.md`).
+- The name: bare, no path parts, no leading dot, no invisible or direction characters, at most 200 bytes, and starting with the source's whole name, followed by a space or a dot (so "trip small.jpg", never `CLAUDE.md`).
 - The ending: declared by the tool and on Sidefolk's own list, which holds nothing that runs. A manifest can't widen it.
 - At most 32 GB a file, 64 GB and 64 files a call. Never overwrites: placing is an exclusive rename, and a name in use gets a number.
 - The saved file is `0644`, loses the program's attributes and carries macOS's quarantine mark.
@@ -3848,7 +3848,7 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 
 **Alternatives:** a write grant on the parent folder (wider than the job, and prompts); a sandbox grant of one new path (only some rules could express it, and the program would choose the moment); saving only in the data folder (the person would have to fetch it).
 
-**Reviewed:** an independent security review found a critical hole in the first version: a data folder swapped for a link let a program have `~/.ssh` saved as a photo. It also found an older hole of the same kind in the data folder's own profile. Both are fixed, with tests, along with its other findings (SECURITY T45).
+**Reviewed:** an independent security review found a critical hole in the first version: a data folder swapped for a link let a program have `~/.ssh` saved as a photo. It also found an older hole of the same kind in the data folder's own profile. Both are fixed, with tests, along with its other findings. A second round found one medium race (a folder swapped during a save) and four small issues, also fixed (SECURITY T45).
 
 **Implications:** placing runs after the call, off the host's actor, so a file that appears always has its row. `outputs` raises the risk floor to medium. Output is written twice when the destination is on another disk. Conversion needs room on the home disk. Open, Show and Undo come later (D142) and build on `PlacedFile`, which records what was placed. The source still needs a `"read"` parameter in `paths`. SECURITY T45.
 

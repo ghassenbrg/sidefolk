@@ -178,13 +178,48 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: downloads + "/trip.jpg"))
     }
 
-    @Test(arguments: ["CLAUDE.md", "AGENTS.md", "package.json", "other.jpg"])
+    @Test(arguments: ["CLAUDE.md", "AGENTS.md", "package.json", "other.jpg", "tripper.jpg"])
     func aNameMustFollowItsSource(name: String) throws {
         try make()
         #expect(refused { try place(name: name, endings: ["md", "json", "jpg"]) })
     }
 
-    @Test(arguments: ["trip small.jpg", "TRIP-2.jpg"])
+    @Test func aShortSourceDoesntVouchForALongerWord() throws {
+        let short = downloads + "/c.png"
+        try Data("x".utf8).write(to: URL(fileURLWithPath: short))
+        try make()
+        #expect(refused { try place(name: "CLAUDE.md", source: short, handedOver: [short], endings: ["md"]) })
+    }
+
+    @Test func aSourceFolderReachedThroughALinkIsJudgedByWhereItReallyIs() throws {
+        // The race itself (a swap between check and use) needs a second process: the handle in `hold` closes it, checked in the security review.
+        let real = root.path + "/real"
+        try FileManager.default.createDirectory(atPath: real, withIntermediateDirectories: true)
+        let hidden = FolderAccess.canonical(root.path)! + "/.private"
+        try FileManager.default.createDirectory(atPath: hidden, withIntermediateDirectories: true)
+        try Data("x".utf8).write(to: URL(fileURLWithPath: hidden + "/trip.heic"))
+        let link = FolderAccess.canonical(root.path)! + "/swapped"
+        symlink(hidden, link)
+        try make()
+        // Handed over under the link's own name: canonical resolves it to the hidden folder, which is refused.
+        #expect(refused { try place(source: link + "/trip.heic", handedOver: [hidden + "/trip.heic"]) })
+        #expect(!FileManager.default.fileExists(atPath: hidden + "/trip.jpg"))
+    }
+
+    @Test func theSavedFileHasTodaysDates() throws {
+        try make()
+        var old = [timespec(tv_sec: 946_684_800, tv_nsec: 0), timespec(tv_sec: 946_684_800, tv_nsec: 0)]
+        utimensat(AT_FDCWD, data + "/out.bin", &old, 0)
+        let placed = try place()
+        #expect(abs(placed.modified.timeIntervalSinceNow) < 60)
+    }
+
+    @Test(arguments: ["doc", "odt", "ods", "odp"])
+    func documentsThatCanHoldMacrosAreRefused(ending: String) {
+        #expect(ExtensionOutputs.refusal(name: "trip.\(ending)", endings: [ending]) != nil)
+    }
+
+    @Test(arguments: ["trip small.jpg", "TRIP 2.jpg", "trip.large.jpg"])
     func aNameMayAddToItsSource(name: String) throws {
         try make()
         #expect(try place(name: name).path == downloads + "/" + name)

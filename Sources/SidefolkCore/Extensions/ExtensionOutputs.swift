@@ -79,7 +79,7 @@ public enum ExtensionOutputs {
     public static let allowedEndings: Set<String> = [
         "jpg", "jpeg", "png", "heic", "heif", "avif", "tif", "tiff", "gif", "bmp", "ico", "icns", "webp", "jp2", "psd", "tga",
         "pdf", "txt", "md", "rtf", "csv", "tsv", "json", "jsonl", "yaml", "yml", "toml", "xml", "plist",
-        "srt", "vtt", "ass", "doc", "docx", "odt", "xlsx", "ods", "pptx", "odp", "epub",
+        "srt", "vtt", "ass", "docx", "xlsx", "pptx", "epub",
         "mp3", "m4a", "aac", "flac", "opus", "ogg", "wav", "aif", "aiff", "caf", "mp4", "m4v", "mov", "webm", "mkv",
         "zip", "7z", "tar", "gz", "tgz", "bz2", "xz",
     ]
@@ -105,7 +105,10 @@ public enum ExtensionOutputs {
     /// could plant a file the folder's other programs read by name, like `CLAUDE.md` or `package.json` in a project.
     static func follows(name: String, source: String) -> Bool {
         func plain(_ text: String) -> String { (text as NSString).deletingPathExtension.precomposedStringWithCanonicalMapping.lowercased() }
-        return plain(name).hasPrefix(plain((source as NSString).lastPathComponent))
+        let made = plain(name), from = plain((source as NSString).lastPathComponent)
+        guard made.hasPrefix(from) else { return false }
+        // A whole word: "c.png" doesn't vouch for "CLAUDE.md".
+        return made.count == from.count || [" ", "."].contains(made.dropFirst(from.count).first)
     }
 
     /// Everything a call asked for, stopping between files if the person stopped it.
@@ -147,9 +150,6 @@ public enum ExtensionOutputs {
         guard lstat(source, &info) == 0, info.st_mode & S_IFMT == S_IFREG else {
             throw UserFacingError("The file it belongs beside is gone.", changedNothing: true)
         }
-        let folder = (source as NSString).deletingLastPathComponent
-        if let why = FolderAccess.forbiddenReason([folder]) { throw UserFacingError(verbatim: why, changedNothing: true) }
-
         let opened = try open(relative: output.data, in: dataFolder)
         defer { close(opened.file); close(opened.parent) }
         var file = stat()
@@ -157,30 +157,46 @@ public enum ExtensionOutputs {
             throw UserFacingError("It didn't make a plain file.", changedNothing: true)
         }
         guard file.st_size <= maxBytes else { throw UserFacingError("The file it made is too large to save.", changedNothing: true) }
+
+        // The folder is held open from here on and everything is done through that handle, never its path again: a program able
+        // to write above it could swap it for a link between a check and a use. Opening follows no link at any level.
+        let folder = try hold((source as NSString).deletingLastPathComponent)
+        defer { close(folder.handle) }
         var there = stat(), space = statfs()
-        if stat(folder, &there) == 0, there.st_dev != file.st_dev, statfs(folder, &space) == 0,
+        if fstat(folder.handle, &there) == 0, there.st_dev != file.st_dev, fstatfs(folder.handle, &space) == 0,
            Int64(space.f_bavail) * Int64(space.f_bsize) < file.st_size {
             throw UserFacingError("There isn't room to save it.", changedNothing: true)
         }
 
-        let holding = folder + "/.sidefolk-placing-" + UUID().uuidString
-        defer { unlink(holding) }
-        try copy(opened.file, size: file.st_size, to: holding)
-        var made = stat()
-        // A clone takes the file as it is now, which a second copy of the program may have grown since it was measured. A clone
-        // also keeps flags that would strand or hide it; only a disk's own compression stays.
-        guard lstat(holding, &made) == 0, made.st_size <= maxBytes, lchflags(holding, made.st_flags & UInt32(UF_COMPRESSED)) == 0, lchmod(holding, 0o644) == 0 else {
-            throw UserFacingError("The file it made is too large to save.", changedNothing: true)
-        }
-        try finish(holding, now: now)
-        let path = try moveIntoPlace(holding, name: output.name, folder: folder)
+        let holding = ".sidefolk-placing-" + UUID().uuidString
+        defer { unlinkat(folder.handle, holding, 0) }
+        try copy(opened.file, size: file.st_size, to: holding, in: folder.handle)
+        try finish(holding, in: folder.handle, maxBytes: maxBytes, now: now)
+        let name = try moveIntoPlace(holding, name: output.name, in: folder.handle)
 
         var placed = stat()
-        guard lstat(path, &placed) == 0 else { throw UserFacingError("It couldn't be saved.") }
+        guard fstatat(folder.handle, name, &placed, AT_SYMLINK_NOFOLLOW) == 0 else { throw UserFacingError("It couldn't be saved.") }
         // Best effort: the file is saved either way, and a program that kept its copy only keeps its own file.
         unlinkat(opened.parent, opened.last, 0)
-        return PlacedFile(path: path, source: source, device: placed.st_dev, inode: placed.st_ino, size: placed.st_size,
+        return PlacedFile(path: folder.path + "/" + name, source: source, device: placed.st_dev, inode: placed.st_ino, size: placed.st_size,
                           modified: Date(timeIntervalSince1970: TimeInterval(placed.st_mtimespec.tv_sec) + TimeInterval(placed.st_mtimespec.tv_nsec) / 1e9))
+    }
+
+    /// Opens the folder and asks the system where it really is, so the rules are judged on what is actually held.
+    private static func hold(_ path: String) throws -> (handle: Int32, path: String) {
+        let handle = Darwin.open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW_ANY | O_CLOEXEC)
+        guard handle >= 0 else { throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true) }
+        var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
+        guard fcntl(handle, F_GETPATH, &buffer) == 0 else {
+            close(handle)
+            throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true)
+        }
+        let real = String(cString: buffer)
+        if let why = FolderAccess.forbiddenReason([real]) {
+            close(handle)
+            throw UserFacingError(verbatim: why, changedNothing: true)
+        }
+        return (handle, real)
     }
 
     /// Walks down from the data folder one name at a time, following no link anywhere, so nothing a program did to the folder
@@ -206,9 +222,9 @@ public enum ExtensionOutputs {
     }
 
     /// A clone where the disk allows it (no extra space, instant), otherwise a copy.
-    private static func copy(_ file: Int32, size: Int64, to path: String) throws {
-        if fclonefileat(file, AT_FDCWD, path, UInt32(CLONE_NOFOLLOW) | UInt32(CLONE_NOOWNERCOPY)) == 0 { return }
-        let out = Darwin.open(path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o644)
+    private static func copy(_ file: Int32, size: Int64, to name: String, in folder: Int32) throws {
+        if fclonefileat(file, folder, name, UInt32(CLONE_NOFOLLOW) | UInt32(CLONE_NOOWNERCOPY)) == 0 { return }
+        let out = openat(folder, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o644)
         guard out >= 0 else { throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true) }
         defer { close(out) }
         var buffer = [UInt8](repeating: 0, count: 1024 * 1024), left = size
@@ -226,30 +242,41 @@ public enum ExtensionOutputs {
         }
     }
 
-    /// What a saved file carries: plain permissions, none of the program's attributes, and macOS's mark of a downloaded file,
-    /// so opening it gets the same care as anything else from outside.
-    private static func finish(_ path: String, now: Date) throws {
-        let fd = Darwin.open(path, O_RDWR | O_NOFOLLOW | O_CLOEXEC)
-        guard fd >= 0 else { throw UserFacingError("It couldn't be saved.") }
+    /// What a saved file carries: plain permissions and today's dates, none of the program's flags or attributes, and macOS's mark
+    /// of a downloaded file, so opening it gets the same care as anything else from outside. A clone takes the file as it is now,
+    /// which a second copy of the program may have grown since it was measured, so it is measured again.
+    private static func finish(_ name: String, in folder: Int32, maxBytes: Int64, now: Date) throws {
+        let failed = UserFacingError("It couldn't be saved.")
+        let fd = openat(folder, name, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+        guard fd >= 0 else { throw failed }
         defer { close(fd) }
+        var made = stat()
+        guard fstat(fd, &made) == 0 else { throw failed }
+        guard made.st_size <= maxBytes else { throw UserFacingError("The file it made is too large to save.", changedNothing: true) }
+        // Only a disk's own compression stays: an immutable flag would strand it, a hidden one hide it.
+        guard fchflags(fd, made.st_flags & UInt32(UF_COMPRESSED)) == 0, fchmod(fd, 0o644) == 0 else { throw failed }
         let size = flistxattr(fd, nil, 0, 0)
         if size > 0 {
             var names = [CChar](repeating: 0, count: size)
             flistxattr(fd, &names, size, 0)
-            for name in names.split(separator: 0).map({ Array($0) + [0] }) { fremovexattr(fd, name, 0) }
+            for attribute in names.split(separator: 0).map({ Array($0) + [0] }) { fremovexattr(fd, attribute, 0) }
         }
         let mark = String(format: "0081;%08x;Sidefolk;", Int(now.timeIntervalSince1970))
-        guard fsetxattr(fd, "com.apple.quarantine", mark, mark.utf8.count, 0, 0) == 0 else { throw UserFacingError("It couldn't be saved.") }
+        guard fsetxattr(fd, "com.apple.quarantine", mark, mark.utf8.count, 0, 0) == 0 else { throw failed }
+        var today = timespec(tv_sec: Int(now.timeIntervalSince1970), tv_nsec: 0)
+        var created = attrlist(bitmapcount: u_short(ATTR_BIT_MAP_COUNT), reserved: 0, commonattr: attrgroup_t(ATTR_CMN_CRTIME), volattr: 0, dirattr: 0, fileattr: 0, forkattr: 0)
+        fsetattrlist(fd, &created, &today, MemoryLayout<timespec>.size, 0)
+        var times = [today, today]
+        futimens(fd, &times)
         fsync(fd)
     }
 
     /// Atomic and exclusive: the name appears complete or not at all, and a file already there is never replaced.
-    private static func moveIntoPlace(_ holding: String, name: String, folder: String) throws -> String {
+    private static func moveIntoPlace(_ holding: String, name: String, in folder: Int32) throws -> String {
         let base = (name as NSString).deletingPathExtension, ending = (name as NSString).pathExtension
         for number in 1...999 {
             let candidate = number == 1 ? name : "\(base) \(number).\(ending)"
-            let path = folder + "/" + candidate
-            if renamex_np(holding, path, UInt32(RENAME_EXCL)) == 0 { return path }
+            if renameatx_np(folder, holding, folder, candidate, UInt32(RENAME_EXCL)) == 0 { return candidate }
             guard errno == EEXIST else { throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true) }
         }
         throw UserFacingError("Too many files already have that name.", changedNothing: true)
