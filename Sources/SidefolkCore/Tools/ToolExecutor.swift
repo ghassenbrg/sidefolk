@@ -348,7 +348,7 @@ public final class ToolExecutor: Sendable {
             }
             if result.isError {
                 act.error = "\(tool.spec.title) reported a problem"
-                await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: result.text.clipped(300))
+                await log(tool.spec, act, caller: caller, input: input, decision: .failed, outcome: nil, error: result.rowError ?? result.text.clipped(300))
             } else if !tool.leavesNoRow(for: input, caller: caller) {
                 await log(tool.spec, act, caller: caller, input: input, decision: decision,
                           outcome: (caller.kind == "command" ? result.rowOutcome : nil) ?? result.card?.title ?? result.text.clipped(160),
@@ -382,7 +382,8 @@ public final class ToolExecutor: Sendable {
         // A plan's step that filled words in is kept as written, and how long they were: what it found stays out of History, the founder's choice (D127).
         let written = act.written
         let outcome = written.flatMap { w in outcome.map { _ in String(localized: "Filled in when it ran, length \(w.length)", comment: "History: a step of a plan the person allowed, with what it filled in left out") } } ?? outcome
-        let error = written == nil ? error : error.map { _ in "\(spec.title) reported a problem" }
+        // A failure's words can quote the call's. "You said no" and Guard's reasons can't, and say what really happened.
+        let error = written == nil || decision != .failed ? error : error.map { _ in "\(spec.title) reported a problem" }
         let entry = ActivityEntry(at: clock.now, caller: caller.kind == "agent" ? "agent" : "\(caller.kind):\(caller)",
                                   tool: spec.name, risk: spec.risk.rawValue, decision: decision, summary: written?.summary ?? act.summary,
                                   args: Redactor.arguments(written?.input ?? input), outcome: outcome.map { Redactor.redact($0).clipped(300) },

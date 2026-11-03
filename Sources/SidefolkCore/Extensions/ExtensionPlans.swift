@@ -66,6 +66,11 @@ enum ExtensionPlanRules {
         return out
     }
 
+    /// Whether a program's own word for how a call was written is one to read: a size a card could show, and a call not so long that matching it is work.
+    static func readable(written template: JSONValue, for input: JSONValue) -> Bool {
+        input.jsonString.utf8.count <= 64_000 && written(template).allSatisfy { plain($0) && $0.count <= ExtensionPlanWords.valueLimit } && objectsFit(template)
+    }
+
     /// Whether a step leaves words to fill in.
     static func fillsIn(_ template: JSONValue) -> Bool {
         (template.objectValue ?? [:]).values.contains { $0.stringValue.map(hasSlot) ?? false }
@@ -102,7 +107,7 @@ enum ExtensionPlanRules {
     /// Where `part` ends, the first time it comes in `bytes` between these.
     private static func firstRange(of part: [UInt8], in bytes: [UInt8], from: Int, to end: Int) -> Int? {
         guard part.count <= end - from else { return nil }
-        for start in from...(end - part.count) where Array(bytes[start..<(start + part.count)]) == part { return start + part.count }
+        for start in from...(end - part.count) where bytes[start..<(start + part.count)].elementsEqual(part) { return start + part.count }
         return nil
     }
 

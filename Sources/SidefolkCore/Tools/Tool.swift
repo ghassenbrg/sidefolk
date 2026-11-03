@@ -219,6 +219,8 @@ public struct ToolResult: Sendable {
     public var rowSummary: String?
     /// What History keeps as the result of a command the person ran, when the card's title only names the tool (D136).
     public var rowOutcome: String?
+    /// What History keeps for a failure, in place of its words, when those could be the person's (T44).
+    public var rowError: String?
 
     public init(text: String, card: ResultCard? = nil, undo: UndoAction? = nil, untrusted: Bool = false, isError: Bool = false) {
         self.text = text

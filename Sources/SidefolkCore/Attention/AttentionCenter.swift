@@ -352,13 +352,15 @@ public actor AttentionCenter {
                 try? await store.save(settled)
             }
             let titles = items.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
-            let card = AttentionItem(level: .attention, source: "summary",
+            var card = AttentionItem(level: .attention, source: "summary",
                                         title: title,
                                         body: titles + (items.count > 4 ? "\n…" : ""),
                                         actions: [AttentionAction(id: "open", title: String(localized: "Show"), isPrimary: true)],
                                         // The Sidecard says which moment ended ("Focus ended").
                                         refKind: summary == .away ? nil : "\(summary)",
                                         now: clock.now)
+            // It quotes their titles, so what stays out of History on its own stays out here too (D127).
+            if items.contains(where: { $0.historyTitle != nil }) { card.historyTitle = title }
             let presentation = AttentionPresentation.attention(expandFor: AttentionPolicy.expandSeconds)
             reserve(card.source, presentation, now: clock.now)
             try? await store.save(card)

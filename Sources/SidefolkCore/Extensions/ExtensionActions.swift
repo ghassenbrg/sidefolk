@@ -29,7 +29,7 @@ public enum ExtensionActionPolicy {
         "notes.save": ["text"],
         // The founder's choice, knowing words from elsewhere then choose which notes come back (D127).
         "notes.search": ["query"],
-        "reminders.create": ["title", "notes"],
+        "reminders.create": ["title"],
         "notify.user": ["title", "body"],
         "ask.user": ["question"],
     ]

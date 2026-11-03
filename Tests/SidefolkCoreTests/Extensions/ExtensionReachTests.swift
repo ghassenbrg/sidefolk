@@ -193,9 +193,11 @@ struct ExtensionReachTests {
             if m.get("method") == "initialize":
                 send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "t", "version": "1"}}})
             elif m.get("method") == "tools/list":
-                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "say", "description": "", "inputSchema": {"type": "object", "properties": {}}}]}})
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": n, "description": "", "inputSchema": {"type": "object", "properties": {}}} for n in ("say", "fails", "breaks")]}})
+            elif m.get("method") == "tools/call" and m["params"]["name"] == "breaks":
+                send({"jsonrpc": "2.0", "id": m["id"], "error": {"code": -32000, "message": "the answer"}})
             elif m.get("method") == "tools/call":
-                send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "the answer"}]}})
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "the answer"}], "isError": m["params"]["name"] == "fails"}})
             elif "id" in m:
                 send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
         """
@@ -203,12 +205,19 @@ struct ExtensionReachTests {
         for (name, permissions, kept) in [("plain", JSONValue.object([:]), true), ("acting", ["act": purpose], false), ("hearing", ["events": purpose], false)] {
             let h = try HostEnv()
             let manifest: JSONValue = ["id": .string("com.example.\(name)"), "name": .string(name), "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
-                                       "permissions": permissions, "tools": ["say": ["title": "Say", "risk": "low", "mutates": false]]]
+                                       "permissions": permissions, "tools": ["say": ["title": "Say", "risk": "low", "mutates": false], "fails": ["title": "Fails", "risk": "low", "mutates": false], "breaks": ["title": "Breaks", "risk": "low", "mutates": false]]]
             try await h.host.install(from: h.source(name, manifest: manifest, files: ["server.py": answer]))
             let out = await h.env.executor.execute(name: "ext.\(name).say", input: .object([:]), caller: .command(extensionId: "com.example.\(name)"))
             #expect(out.okText == "the answer", "\(name)")
             let row = try await h.env.activity.recent(limit: 1, tool: "ext.\(name).say").first
             #expect(row?.outcome?.contains("the answer") == kept, "\(name): \(row?.outcome ?? "")")
+            // Nor as a failure, whichever way it fails.
+            for failing in ["fails", "breaks"] {
+                _ = await h.env.executor.execute(name: "ext.\(name).\(failing)", input: .object([:]), caller: .command(extensionId: "com.example.\(name)"))
+                let failed = try await h.env.activity.recent(limit: 1, tool: "ext.\(name).\(failing)").first
+                #expect(failed?.decision == .failed, "\(name) \(failing)")
+                #expect(failed?.error?.contains("the answer") == kept, "\(name) \(failing): \(failed?.error ?? "")")
+            }
         }
     }
 
@@ -244,6 +253,49 @@ struct ExtensionReachTests {
         #expect(!HistoryTimeline.shows(row, filter: .all, query: "words"), "search doesn't find what it filled in")
         #expect(!HistoryTimeline.shows(row, filter: .all, query: "Standup"))
         #expect(HistoryTimeline.shows(row, filter: .all, query: "notice"))
+    }
+
+    @Test func theCardThatSumsUpHeldNoticesKeepsTheirWordsOutOfHistory() async throws {
+        let env = try TestEnv()
+        let attention = AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock)
+        await attention.update { $0.away = true }
+        for title in ["first words", "second words"] {
+            _ = await attention.post(AttentionRequest(level: .attention, source: "extension:e", title: title, refKind: "notify", historyTitle: "E: a notice"))
+        }
+        await attention.update { $0.away = false }
+        var items: [AttentionItem] = []
+        for _ in 0..<60 where !items.contains(where: { $0.source == "summary" }) {
+            try await Task.sleep(for: .milliseconds(50))
+            items = try await AttentionStore(env.db).recent()
+        }
+        #expect(items.contains { $0.source == "summary" }, "the card that sums them up")
+        let history = HistoryTimeline.merge(activity: [], conversations: [], alerts: items, sessions: [])
+        for row in history { #expect(!HistoryTimeline.shows(row, filter: .all, query: "words"), "\(row.searchable)") }
+    }
+
+    @Test func aRefusalKeepsItsReasonWhenWordsWereFilledIn() async throws {
+        let env = try TestEnv()
+        env.registry.register(ProbeTool(name: "test.refused", risk: .high, result: { _ in ToolResult(text: "") }))
+        let answer = env.autoAnswer(.deny)
+        _ = await env.executor.execute(name: "test.refused", input: ["x": "note words"], caller: .extension(id: "e"), written: ["x": "{{found}}"])
+        _ = await answer.value
+        let row = try #require(try await env.activity.recent(limit: 1, tool: "test.refused").first)
+        #expect(row.decision == .denied)
+        #expect(row.error?.contains("reported a problem") == false, "\(row.error ?? "")")
+        #expect(row.args?["x"]?.stringValue == "{{found}}")
+    }
+
+    @Test func aReminderFilledInMayNotHoldNotesAndAProgramsWordIsBounded() throws {
+        let env = try TestEnv()
+        let probe = ProbeTool(name: "reminders.create", risk: .low, result: { _ in ToolResult(text: "") })
+        env.registry.register(probe)
+        let facade = ExternalFacade(base: probe, spec: ExtensionActionPolicy.spec(probe))
+        #expect(ExtensionPlanRules.standing(tool: facade, template: ["title": "{{x}}"]))
+        #expect(!ExtensionPlanRules.standing(tool: facade, template: ["notes": "{{x}}"]), "they'd show in History when it fires")
+        let short: JSONValue = ["title": "{{x}}"]
+        #expect(ExtensionPlanRules.readable(written: short, for: ["title": "words"]))
+        #expect(!ExtensionPlanRules.readable(written: .object(["title": .string("{{x}}" + String(repeating: "a", count: 400))]), for: ["title": "words"]))
+        #expect(!ExtensionPlanRules.readable(written: short, for: .object(["title": .string(String(repeating: "a", count: 70_000))])))
     }
 
     @Test func aPlansCardKeepsTheSpacesAroundWhatItFillsIn() throws {

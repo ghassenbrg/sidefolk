@@ -942,12 +942,16 @@ public actor ExtensionHost {
         } catch MCPError.toolFailed(let message) {
             // The tool's own explanation helps the model fix its call; it is the extension's text, so untrusted.
             let clean = ExtensionText.untrusted(message, bytes: 4_000)
-            return ToolResult(text: clean.isEmpty ? "(no explanation given)" : clean,
-                              card: ResultCard(kind: .extensionResult, title: String(localized: "“\(title)” reported a problem"), subtitle: rt.pin.name,
-                                               detail: clean.clipped(200), refId: id),
-                              untrusted: true, isError: true)
+            var failed = ToolResult(text: clean.isEmpty ? "(no explanation given)" : clean,
+                                    card: ResultCard(kind: .extensionResult, title: String(localized: "“\(title)” reported a problem"), subtitle: rt.pin.name,
+                                                     detail: clean.clipped(200), refId: id),
+                                    untrusted: true, isError: true)
+            if Self.holdsThePersonsWords(rt.pin.permissions) { failed.rowError = failed.card?.title }
+            return failed
         } catch let error as MCPError {
-            throw userFacing(error, action: "“\(title)”", name: rt.pin.name)
+            var failure = userFacing(error, action: "“\(title)”", name: rt.pin.name)
+            if Self.holdsThePersonsWords(rt.pin.permissions) { failure.detail = nil }
+            throw failure
         }
         let clean = ExtensionText.untrusted(text, bytes: 20_000)
         var result = ToolResult(text: clean.isEmpty ? "(no output)" : clean,
@@ -955,8 +959,7 @@ public actor ExtensionHost {
                                 untrusted: true)
         // What it answered is what History keeps for a command (D136). Not what's been copied, nor what it may have read through Sidefolk or
         // heard: History isn't a second clipboard, or a second notebook.
-        let reach = rt.pin.permissions
-        if reach?.clipboard != true, reach?.act == nil, reach?.events == nil, !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
+        if rt.pin.permissions?.clipboard != true, !Self.holdsThePersonsWords(rt.pin.permissions), !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
         if let m = rt.manifest, let asks = ExtensionToolAsks(asked, manifest: m) {
             result.asks = asks
             result.card?.holdAnswer = asks.holdAnswer
@@ -1029,6 +1032,11 @@ public actor ExtensionHost {
     }
 
     /// `action` is what was asked of it: a quoted tool title, or "checking “Disk space”".
+    /// What it says can carry what it read through Sidefolk or heard, so History keeps none of it (T44).
+    static func holdsThePersonsWords(_ permissions: ExtensionPermissions?) -> Bool {
+        permissions?.act != nil || permissions?.events != nil
+    }
+
     func userFacing(_ error: MCPError, action: String, name: String) -> UserFacingError {
         switch error {
         case .server(_, let message), .toolFailed(let message):
