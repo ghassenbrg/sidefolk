@@ -991,7 +991,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave. That's why the drop card says an extension can't go online *by itself*.
 - **Anything can read** other same-user processes' command lines, the Mac's serial number and its MAC addresses. An extension with `network` could send those.
 - **Other processes' paths:** an extension can read the working folders and open files of other processes of the same user. No sandbox rule fully stopped it.
-- **File names outside `/Users`:** a lookup by inode number still resolves names elsewhere on the disk, such as in `/Applications` and `/private/var`, though no file's contents. Under `/Users` it finds only what the extension was given.
+- **File names outside `/Users`:** a lookup by inode number still resolves names elsewhere on the disk, such as in `/Applications` and `/private/var`, though no file's contents. Under `/Users` it finds only what the extension was given, though it can tell a used file number from an unused one, so files can be counted, not named. A path that reaches something through a link outside what the extension was given no longer works.
 
 **What runtimes need to start** *(verified)*:
 - **Every runtime:** read on `/` itself (without it even `/bin/echo` aborts), `/usr/lib`,

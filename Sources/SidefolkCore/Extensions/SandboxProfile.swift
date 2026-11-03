@@ -134,7 +134,9 @@ public struct SandboxProfile: Sendable, Hashable {
             sb += udpRules
         }
         // People's folders are denied in the base rules, and a `file-read*` doesn't undo that (measured), so what it was given
-        // opens by name here. Above each of those, only the folder itself: the way down, and no further.
+        // opens by name here. Above each of those, only the folder itself: the way down, and no further. All of it twice, because
+        // the same folders also go by the data volume's own name, which `F_GETPATH_NOFIRMLINK` can hand back.
+        let dataVolume = "/System/Volumes/Data"
         var ways: Set<String> = ["/Users", NSHomeDirectory()]
         let given = params.filter { $0.key != "ALL_DATA" && $0.value.hasPrefix("/Users/") }
         for path in params.map(\.value) where path.hasPrefix("/Users/") {
@@ -145,13 +147,19 @@ public struct SandboxProfile: Sendable, Hashable {
             }
         }
         sb += "\n;; what it was given, and the folders above that, by name only\n(allow file-read-metadata file-test-existence\n"
-        sb += given.map { "  (subpath (param \"\($0.key)\"))" }.joined(separator: "\n") + (given.isEmpty ? "" : "\n")
-        sb += ways.sorted().enumerated().map { "  (literal \(add("WAY_\($0.offset)", $0.element)))" }.joined(separator: "\n") + ")\n"
+        for (index, path) in given.enumerated() {
+            sb += "  (subpath (param \"\(path.key)\"))\n  (subpath \(add("GIVEN_\(index)", dataVolume + path.value)))\n"
+        }
+        let everyWay = ways.union(ways.map { dataVolume + $0 }).sorted()
+        sb += everyWay.enumerated().map { "  (literal \(add("WAY_\($0.offset)", $0.element)))" }.joined(separator: "\n") + ")\n"
         // Everything else's data stays out of sight, whatever was given above it: even when a file changed is no business of
-        // another extension's. Last, so nothing opened here undoes it.
+        // another extension's. Last, so nothing opened here undoes it. Reading the folder itself would list who is installed.
         if let allData {
-            sb += "(deny file-read-metadata file-test-existence (subpath \(allData)))\n"
-            sb += "(allow file-read-metadata file-test-existence (literal \(allData)) (subpath (param \"DATA_DIR\")))\n"
+            let other = add("ALL_DATA_VOLUME", dataVolume + (params.first { $0.key == "ALL_DATA" }?.value ?? ""))
+            let mine = add("DATA_DIR_VOLUME", dataVolume + (params.first { $0.key == "DATA_DIR" }?.value ?? ""))
+            sb += "(deny file-read-metadata file-test-existence (subpath \(allData)) (subpath \(other)))\n"
+            sb += "(allow file-read-metadata file-test-existence (literal \(allData)) (literal \(other)) (subpath (param \"DATA_DIR\")) (subpath \(mine)))\n"
+            sb += "(deny file-read-data (literal \(allData)) (literal \(other)))\n"
         }
         return SandboxProfile(text: sb, parameters: params)
     }

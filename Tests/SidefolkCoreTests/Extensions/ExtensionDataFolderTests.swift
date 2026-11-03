@@ -133,6 +133,7 @@ import Testing
         let throughTheVolume = "/System/Volumes/Data" + theirs.path
         #expect(try !runs("/bin/test", "-e", throughTheVolume))
         #expect(try !runs("/bin/test", "-e", throughTheVolume + "-missing"))
+        #expect(try runs("/bin/test", "-e", "/System/Volumes/Data" + own.path), "what it was given, by that name too")
     }
 
     @Test func anotherExtensionsDataCantEvenBeSeen() throws {
