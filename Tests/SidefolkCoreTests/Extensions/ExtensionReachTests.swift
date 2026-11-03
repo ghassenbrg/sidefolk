@@ -227,6 +227,28 @@ struct ExtensionReachTests {
         #expect(!kept.contains("note words"), "\(kept)")
     }
 
+    @Test func aNoticeAStepFilledInStaysOutOfHistoryAndStillShows() async throws {
+        let env = try TestEnv()
+        var context = ToolContext(caller: .extension(id: "com.example.routines"), now: Date())
+        context.filledIn = true
+        let attention = AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock)
+        _ = try await NotifyUserTool(attention: attention).run(["title": "Standup", "body": "note words"], context: context)
+        let item = try #require(await attention.open().first)
+        #expect(item.body == "note words", "it still shows, on the desktop and in Today")
+        let history = HistoryTimeline.merge(activity: [], conversations: [], alerts: [item], sessions: [])
+        guard case .alert(let shown)? = history.first?.kind else { Issue.record("no row"); return }
+        #expect(shown.body == nil)
+        #expect(!shown.title.contains("Standup"))
+        #expect(shown.title.contains("a notice"))
+        #expect(!(history.first?.searchable.joined().contains("note words") ?? true))
+    }
+
+    @Test func aPlansCardKeepsTheSpacesAroundWhatItFillsIn() throws {
+        let probe = ProbeTool(name: "notify.user", risk: .low, result: { _ in ToolResult(text: "") })
+        let line = ExtensionPlanWords.line(tool: probe, template: ["body": "Got {{m}} and {{s}}"])
+        #expect(line.contains("Got [filled in when it runs] and [filled in when it runs]"), "\(line)")
+    }
+
     @Test func noBrainMeansNoJob() async throws {
         let tool = CompanionJobTool(agent: CompanionAgentSlot())
         await #expect(throws: (any Error).self) { _ = try await tool.run(["job": "Tidy up"], context: ToolContext(caller: .user, now: Date())) }

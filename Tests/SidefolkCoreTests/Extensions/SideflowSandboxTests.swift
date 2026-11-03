@@ -133,6 +133,21 @@ import Testing
         #expect(story.okText?.contains("Save a note") == true)
     }
 
+    /// A run from a draft has no plan to be held to: its program says what it filled in, and Sidefolk checks that fits.
+    @Test func aRunFromADraftKeepsWhatItFilledInOutOfHistoryToo() async throws {
+        let w = try await World()
+        _ = await w.h.call("ext.sideflow.create_flow", ["name": "Draft", "definition": Self.definition])
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        _ = await w.h.call("ext.sideflow.run_flow", ["flow": "Draft"])
+        _ = await answer.value
+        await w.until("the note") { w.saved.withLock { !$0.isEmpty } }
+        #expect(w.saved.withLock { $0.first?["text"]?.stringValue } == "Saved: From the companion")
+        await w.until("its row") { (try? await w.h.env.activity.recent(limit: 1, tool: "notes.save").first) != nil }
+        let row = try await w.h.env.activity.recent(limit: 1, tool: "notes.save").first
+        #expect(row?.args?["text"]?.stringValue == "Saved: {{t}}")
+        #expect(row?.decision != .plan)
+    }
+
     /// What a flow found stays out of History, by each way it could get there (D127, D136).
     @Test func whatAFlowFoundStaysOutOfHistory() async throws {
         let w = try await World()

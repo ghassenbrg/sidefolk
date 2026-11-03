@@ -17,6 +17,12 @@ public enum AgentFacingTools {
 
     /// An extension's name, for where its words are shown: the app sets this once its extensions are up (D110).
     public static let extensionNames = Mutex<(@Sendable (String) -> String?)?>(nil)
+    /// What History says for a call whose words were filled in by a step (D127); nil for any other.
+    static func historyTitle(_ what: String, _ context: ToolContext) -> String? {
+        guard context.filledIn, case .extension(let id) = context.caller else { return nil }
+        return "\(extensionName(id) ?? id): \(what)"
+    }
+
     static func extensionName(_ id: String) -> String? { extensionNames.withLock { $0 }?(id) }
 
     /// "Claude Code" for "claude-code", "Codex" for "codex"; other names as given.
@@ -67,7 +73,8 @@ struct NotifyUserTool: Tool {
         let actions = level == .attention ? [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))] : []
         let item = await attention.post(AttentionRequest(level: level, source: AgentFacingTools.source(for: context.caller),
                                                          title: title.clipped(120), body: input.string("body")?.clipped(600),
-                                                         actions: actions, refKind: "notify"))
+                                                         actions: actions, refKind: "notify",
+                                                         historyTitle: AgentFacingTools.historyTitle(String(localized: "a notice", comment: "History, in place of a notice's words"), context)))
         // Saying so keeps a caller from sending it again, louder, because it seemed to go nowhere.
         switch item.state {
         case .kept:
@@ -119,7 +126,8 @@ struct AskUserTool: Tool {
             asker = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) asks", comment: "Under a question; an extension's name")
         }
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
-                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask"),
+                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask",
+                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),
                                          timeout: max(10, timeout))
         guard let answer else { return ToolResult(text: "no answer") }
         if answer.hasPrefix(AgentFacingTools.typedAnswerPrefix) {

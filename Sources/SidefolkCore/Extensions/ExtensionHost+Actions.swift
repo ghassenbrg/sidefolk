@@ -55,7 +55,11 @@ extension ExtensionHost {
             let timeout = params["timeout"]?.doubleValue.map { min(max($0, 1), 600) }
             let step = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
             let standing = step != nil
-            let written = step.map(ExtensionPlanRules.fillsIn) == true ? step : nil
+            // A plan's step as written, or the program's word for a call it filled in without one (a run from a draft): checked against
+            // what it sent, and only where the closed table leaves words open. All it can do is keep those words out of History (D127).
+            let template = step ?? params["written"]
+            let filled = template.map { ExtensionPlanRules.fillsIn($0) && ExtensionPlanRules.matches(input, template: $0, fillable: ExtensionActionPolicy.fillable[tool] ?? []) } == true
+            let written = filled ? template : nil
             let asker = asker(rt)
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.

@@ -335,6 +335,7 @@ public final class ToolExecutor: Sendable {
         let context = {
             var context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
             context.onPlan = decision == .plan
+            context.filledIn = act.written != nil
             return context
         }()
         do {

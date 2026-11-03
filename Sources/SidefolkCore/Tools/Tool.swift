@@ -241,6 +241,8 @@ public struct ToolContext: Sendable {
     public var site: String?
     /// The call fits a plan the person read: its words are what they read (D110).
     public var onPlan = false
+    /// Its words were filled in by a step: they stay out of History, wherever else they show (D127).
+    public var filledIn = false
     public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil) {
         self.caller = caller
         self.now = now

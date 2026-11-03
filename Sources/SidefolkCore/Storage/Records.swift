@@ -516,6 +516,8 @@ public struct AttentionItem: SidefolkRecord, Identifiable, Hashable {
     public var shownAt: Date?
     public var acknowledgedAt: Date?
     public var renudged: Bool
+    /// What History says in place of its words, for a step of a plan that filled them in (D127).
+    public var historyTitle: String?
 
     public init(
         id: String = Identifier.make(), level: AttentionLevel, source: String, title: String, body: String? = nil,

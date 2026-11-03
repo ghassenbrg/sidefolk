@@ -136,11 +136,13 @@ import Foundation
         }
     }
 
-    /// Runs a tool and waits for what came of it. A card waits at most two minutes.
-    public static func call(_ tool: String, _ input: [String: Any] = [:], plan: String? = nil, seconds: Double = 300) async -> Outcome {
+    /// Runs a tool and waits for what came of it. A card waits at most two minutes. `written`: the call before you filled words in, `{{name}}` where
+    /// they went, for History to keep instead of them (only where a plan may leave words open; Sidefolk checks it fits).
+    public static func call(_ tool: String, _ input: [String: Any] = [:], plan: String? = nil, written: [String: Any]? = nil, seconds: Double = 300) async -> Outcome {
         let id = UUID().uuidString
         var params: [String: Any] = ["request": id, "tool": tool, "input": input, "timeout": seconds]
         if let plan { params["plan"] = plan }
+        if let written { params["written"] = written }
         return await withCheckedContinuation { (c: CheckedContinuation<Outcome, Never>) in
             calls[id] = c
             ExtensionServices.send?("sidefolk/tools.call", params)

@@ -10,9 +10,10 @@ public struct AttentionRequest: Sendable {
     public var actions: [AttentionAction]
     public var refKind: String?
     public var refId: String?
+    public var historyTitle: String?
 
     public init(level: AttentionLevel, source: String, title: String, body: String? = nil,
-                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil) {
+                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil, historyTitle: String? = nil) {
         self.level = level
         self.source = source
         self.title = title
@@ -20,6 +21,7 @@ public struct AttentionRequest: Sendable {
         self.actions = actions
         self.refKind = refKind
         self.refId = refId
+        self.historyTitle = historyTitle
     }
 }
 
@@ -181,9 +183,11 @@ public actor AttentionCenter {
     /// `critical` is kept only for the sources allowed to use it (AttentionPolicy.criticalSources).
     private func makeItem(_ request: AttentionRequest) -> AttentionItem {
         let level = request.level == .critical && !AttentionPolicy.criticalSources.contains(request.source) ? .attention : request.level
-        return AttentionItem(level: level, source: request.source, title: request.title.clipped(160),
-                             body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
-                             refId: request.refId, now: clock.now)
+        var item = AttentionItem(level: level, source: request.source, title: request.title.clipped(160),
+                                 body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
+                                 refId: request.refId, now: clock.now)
+        item.historyTitle = request.historyTitle
+        return item
     }
 
     @discardableResult

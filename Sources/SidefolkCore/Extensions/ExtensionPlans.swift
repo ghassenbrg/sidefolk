@@ -223,7 +223,12 @@ enum ExtensionPlanWords {
     private static func words(_ value: JSONValue) -> String? {
         switch value {
         case .string(let s) where ExtensionPlanRules.hasSlot(s):
-            let parts = ExtensionPlanRules.literals(s).map { ToolFormat.oneLine(ExtensionText.clean($0), valueLimit) }
+            // One line each, keeping the space a written part has next to a slot.
+            let parts = ExtensionPlanRules.literals(s).map { part -> String in
+                let said = ToolFormat.oneLine(ExtensionText.clean(part), valueLimit)
+                guard !said.isEmpty else { return said }
+                return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
+            }
             let filled = String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
             return "“\(parts.joined(separator: "[\(filled)]"))”"
         case .string(let s): return "“\(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))”"

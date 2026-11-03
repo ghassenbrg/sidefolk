@@ -338,6 +338,9 @@ public final class AppDatabase: Sendable {
         m.registerMigration("v9-session-title") { db in
             try db.alter(table: "sessions") { t in t.add(column: "conversation_title", .text) }
         }
+        m.registerMigration("attention-history-title") { db in
+            try db.alter(table: "attention") { t in t.add(column: "history_title", .text) }
+        }
         return m
     }
 }
