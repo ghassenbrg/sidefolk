@@ -329,8 +329,12 @@ public enum ReminderTools {
         var spec: ToolSpec {
             ToolSpec(
                 name: "reminders.list", title: String(localized: "List reminders"),
-                description: "List the user's upcoming reminders, soonest first, with their ids. Set include_done to also see recently finished ones.",
-                inputSchema: Schema.object(["include_done": Schema.boolean("Also list recently fired, done and cancelled reminders.")]),
+                description: "List the user's upcoming reminders, soonest first, with their ids. from and to keep those coming then. Set include_done to also see recently finished ones.",
+                inputSchema: Schema.object([
+                    "include_done": Schema.boolean("Also list recently fired, done and cancelled reminders."),
+                    "from": Schema.string("Only those coming from then on (\"tomorrow\", \"dec 5\" or ISO 8601). A day means from its start."),
+                    "to": Schema.string("Only those coming up to then (\"friday\", \"dec 5\" or ISO 8601). A day counts in full."),
+                ]),
                 risk: .low, capabilities: [.time], category: .time, mutates: false, external: true
             )
         }
@@ -339,7 +343,8 @@ public enum ReminderTools {
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
             let now = context.now
-            let upcoming = await shared.scheduler.upcoming()
+            let window = try DateWindow.read(from: input.string("from"), to: input.string("to"), parser: shared.parser(), now: now)
+            let upcoming = await shared.scheduler.upcoming().filter { window?.contains($0.nextDue ?? $0.fireAt) ?? true }
             let includeDone = input["include_done"]?.boolValue ?? false
             let finished = includeDone ? await shared.scheduler.recent(limit: 20) : []
             let items = await shared.items(for: upcoming + finished)
