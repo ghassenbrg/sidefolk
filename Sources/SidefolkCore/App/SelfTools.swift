@@ -205,7 +205,7 @@ struct SelfLookTool: Tool {
 
     var spec: ToolSpec {
         ToolSpec(name: "sidefolk.look", title: String(localized: "Change how Sidefolk looks"),
-                 description: "Change the app's appearance (system, light or dark), its theme, by name (Harbor, Paper Garden, Night Studio, Marshmallow, or one the user added), whether the companion shows over full-screen apps, or how it reaches them there when it doesn't.",
+                 description: "Change the app's appearance (system, light or dark), its theme, by name (Sidefolk, Harbor, or one the user added or got from the gallery), whether the companion shows over full-screen apps, or how it reaches them there when it doesn't.",
                  inputSchema: Schema.object([
                      "appearance": Schema.string("Light, dark or following the Mac.", enum: AppAppearance.allCases.map(\.rawValue)),
                      "theme": Schema.string("The theme's name."),

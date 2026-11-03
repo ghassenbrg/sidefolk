@@ -9003,6 +9003,124 @@
         }
       }
     },
+    "%@ moved to the gallery. Get it there to wear it again." : {
+      "comment" : "A whisper at launch: the theme the person wears left the app, and they turned off automatic add-on updates",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتقل %@ إلى المعرض. احصل عليه من هناك لتستخدمه مجددًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist in die Galerie umgezogen. Hol es dort, um es wieder zu nutzen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se ha movido a la galería. Consíguelo allí para volver a usarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a rejoint la galerie. Récupérez-le là-bas pour le porter à nouveau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ si è spostato nella galleria. Scaricalo da lì per usarlo di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ はギャラリーに移りました。もう一度使うにはそこから入手してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 테마가 갤러리로 옮겨졌습니다. 다시 사용하려면 갤러리에서 받으세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ foi para a galeria. Baixe-o lá para usá-lo de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 已移至图库。要再次使用,请到那里获取。"
+          }
+        }
+      }
+    },
+    "%@ moved to the gallery. It comes back when Sidefolk can reach it." : {
+      "comment" : "A whisper at launch: the theme the person wears left the app and couldn't be downloaded yet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتقل %@ إلى المعرض. سيعود حين يتمكن Sidefolk من الوصول إليه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist in die Galerie umgezogen. Es kommt zurück, sobald Sidefolk sie erreicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se ha movido a la galería. Volverá cuando Sidefolk pueda acceder a ella."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a rejoint la galerie. Il reviendra dès que Sidefolk pourra y accéder."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ si è spostato nella galleria. Tornerà appena Sidefolk potrà raggiungerla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ はギャラリーに移りました。Sidefolk が接続できたら戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 테마가 갤러리로 옮겨졌습니다. Sidefolk가 연결되면 돌아옵니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ foi para a galeria. Ele volta quando o Sidefolk conseguir acessá-la."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 已移至图库。Sidefolk 能连接时会自动恢复。"
+          }
+        }
+      }
+    },
     "%@ must be at least %@." : {
       "localizations" : {
         "ar" : {

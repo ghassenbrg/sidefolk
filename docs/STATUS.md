@@ -21,8 +21,8 @@ until the founder releases it. The latest released is **snapshot 1170**, on from
 - **Ask is a shortcut (D136):** results go seconds or minutes after they reached the person, eight requests at most, pins last until unpinned, and History keeps what a command answered.
 - **The menu bar** is the Pocket, a popover with the state, the Open/Focus/Quiet dial, Needs you, Next up, Agents
   and Ask.
-- **Themes dress the app only** (colours, faces, density, materials, the light): five, all built in (D92, D130): Sidefolk (the default, from the
-  app's icon), Harbor (a painted harbor), Paper Garden (warm paper and wood), Night Studio (indigo dusk) and Marshmallow (candy
+- **Themes dress the app only** (colours, faces, density, materials, the light): two built in (D130): Sidefolk (the default, from the
+  app's icon) and Harbor (a painted harbor), and in the gallery Paper Garden (warm paper and wood), Night Studio (indigo dusk) and Marshmallow (candy
   clouds); retired ones move to their successor. New themes start with the `sidefolk-theme` skill.
 - **Without AI:** notes, reminders, watches, live values, the calendar, search and extension commands (games among them, with Playtime). With
   the AI the person picks (Claude Code, Codex, an API key, Ollama or LM Studio), everything else, through Guard.
@@ -34,16 +34,16 @@ until the founder releases it. The latest released is **snapshot 1170**, on from
 Folio, Iris, Nori, Purl, Rune and Piko (a robot cat in Spark's colours, 3D only, no `CompanionChoice`: worn by name, D77,
 snapshot 1 needs Sidefolk snapshot 779; its pipeline isn't in this repository) and Noor (a baby moth, 3D only, worn by name, D121, snapshot 1 needs snapshot 779); extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
 fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
-Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes are the app's own (D92). Every add-on is in
+Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes Paper Garden, Night Studio and Marshmallow, once published (D130). Every add-on is in
 snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.5** needs snapshot 827.
 
 ## In progress
 
 - **Homepages for Miraya, Clipboard, Your Mac and Keep Awake (D170) — the general page abilities are in snapshot 1170; the four pages wait on add-ons `team/extension-homepages`, not published.** The founder's accepted designs, as native pages drawn from data: general page abilities here (`ExtensionPage+Compose`, `ExtensionPageCompose`, `Kit/PageCompose`), the pages in the add-ons. The handoff's id-routed `ExtensionPageExperiences.swift` stays out (D98). **Half done:** the four packs name the placeholder `minimum_sidefolk`, which becomes 1170 when they're built. **Next:** the packs to the gallery, on the coordinator's go. **Not verified, for the founder:** real mouse clicks and arrow keys, Copy (it would overwrite the real clipboard), VoiceOver by ear (`ax` doesn't reach into these pages), Increase Contrast and Reduce Transparency, a real TV, screen-recording permission and an app quitting under a session. **Result:** `sandbox/extension-homepage-implementation-handoff-2026-11-03/implementation/PARITY.md`, comparisons beside it. **Verify:** `SIDEFOLK_PAGE_DUMP=<dir> swift test --filter HomepageStatesTests` in the add-ons, then `SIDEFOLK_SNAPSHOT_PAGES=<dir> swift run SidefolkApp --ui-snapshots out --only page-file-<state>`.
 
-- **Theme redesign (D130): in snapshot 1075,** Sidefolk the new default and Harbor a painted theme, with Paper Garden, Night Studio and Marshmallow still built in. Their move to the gallery (`team/themes-two`) waits for the founder's word.
+- **Theme redesign (D130): in snapshot 1075,** Sidefolk the new default and Harbor a painted theme, with Paper Garden, Night Studio and Marshmallow still built in there.
   **The founder is checking on 1075:** real mouse clicks and drag, Delete and S on Next up, the New menu, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
-  **Next, prepared and not published:** the three themes' move to the gallery, on `team/themes-two` here and `team/themes-two` in sidefolk-addons. The add-ons name the placeholder minimum, so a signed build stops until Add-ons first sets the real snapshot (docs/RELEASE.md, D98): the gallery must publish before an app without them ships, and copies that still have them built in must not see them as Get. It needs the founder's yes for both.
+  **This branch, not published:** the three themes' move to the gallery, here and on `team/themes-two` in sidefolk-addons, on the founder's go of 2026-11-04. The add-ons name the placeholder minimum, so a signed build stops until Add-ons first sets the real snapshot (docs/RELEASE.md, D98): this app ships before the publish, and copies that still have them built in must not see them as Get. Whoever wears one gets it with no click while automatic add-on updates are on, at launch and after each add-on look (`fetchThemeThatMoved`, D70). **Not verified:** a real signed theme pack fetched that way, end to end.
   **Checked with synthetic clicks and keys:** ← → on a reminder in Your day, ⌘Z, a drag, the New menu opening, Next up's click, ↓, Delete and S. **Not pressed:** a real mouse and keyboard, a New menu item, a late reminder moved past now. **Known on Today:** the row with the keyboard shows no highlight (D130).
   The edge check flags petting and the flip with or without this change (older issue).
 

@@ -89,6 +89,15 @@ public struct AddonCatalog: Sendable, Equatable {
         return addons.compactMap { seen.insert($0.id).inserted ? entry($0.id, on: channel) : nil }
     }
 
+    /// The same, and the theme the person wears if it moved out of the app (D130), on any channel: a whisper sends them
+    /// here to get it, and nobody chose to lose it by hiding snapshots.
+    public func offered(on channel: UpdateChannel, wearing theme: String) -> [AddonEntry] {
+        let shown = offered(on: channel)
+        guard ThemeSuccession.movedToGallery[theme] != nil, !shown.contains(where: { $0.id == theme }),
+              let worn = entry(theme, on: .snapshots) else { return shown }
+        return shown + [worn]
+    }
+
     /// Whether `entry` is offered over an installed `version` on `channel`: a newer version, or any version the
     /// channel takes when the installed one is a release this gallery never listed at or above it (D80). Those are
     /// copies from before D65 renumbered every add-on to 1.0.0 snapshots (at 1.2.0, say),

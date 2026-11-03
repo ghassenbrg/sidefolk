@@ -44,6 +44,11 @@ reason. Newest first within a section; delete a lesson when it stops being true.
   on light and the reversed one on dark.
 - **Palette swaps aren't redesigns.** When asked for a rework, show structural change: layout, components, hierarchy.
 
+## Shipping
+
+- **Moving a theme out of the app must not take it from anyone.** Keep its id and setting, fetch it by itself, and only say so
+  when it can't come. The app ships before the gallery publishes, so try again after launch too, not only at it. *The founder moved three themes to the gallery, 2026-11-03.*
+
 ## Checking
 
 - **macOS ignores a text field's hint colour.** A `prompt` draws in the system's grey whatever style it's given: 3.15:1 on white.

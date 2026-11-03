@@ -292,8 +292,10 @@ public actor AddonStore {
     }
 
     /// The gallery's themes on this Mac that `catalog` has a newer version of, a snapshot only on `channel` snapshots.
-    public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary, channel: UpdateChannel) -> [AddonEntry] {
+    /// A theme that moved out of the app came on any channel (D130), so its updates do too.
+    public func themeUpdates(in catalog: AddonCatalog, library: ThemeLibrary, channel chosen: UpdateChannel) -> [AddonEntry] {
         library.all().compactMap { have in
+            let channel = ThemeSuccession.movedToGallery[have.id] != nil ? UpdateChannel.snapshots : chosen
             guard have.folder != nil, let entry = catalog.entry(have.id, on: channel), entry.kind == .theme,
                   let old = have.version, catalog.offers(entry, over: old, on: channel) else { return nil }
             return entry

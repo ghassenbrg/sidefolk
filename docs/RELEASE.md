@@ -144,7 +144,7 @@ that meets it exists. There is no rollback but a revert and new snapshots, so th
 - [ ] Push that add-ons branch, unmerged, so the tests read the packs this app goes with: until the gallery is published its `main` still holds the old ones.
 - [ ] Run the Release workflow with `seed_gallery` set to `https://github.com/ghassenbrg/sidefolk-addons/releases/download/gallery-next` and `addons_ref` to that branch.
       It carries those signed packs and makes the real notary submission with them inside. If Apple refuses them, no release appears and the
-      gallery hasn't changed. The new app reads the old gallery without trouble until the next step.
+      gallery hasn't changed. The new app reads the old gallery without trouble until the next step, except that someone wearing a theme that moved out of the app sees the default until then (D130).
 - [ ] `scripts/release.sh` has already run `extension-free-binary.sh --strict` on the app (D101); `sh scripts/extension-free-binary.sh --strict build/Sidefolk.app <add-ons>` runs it by hand.
 - [ ] Only now publish that same `dist/`: `scripts/publish.sh` there, then delete `gallery-next`. `python3 -I scripts/seed-packs.py fetch <temp> --required`
       proves the published gallery has the packs, as every later release needs.

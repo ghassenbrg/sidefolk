@@ -34,7 +34,7 @@ final class AddonGalleryModel {
     /// What the gallery offers of one kind, Sidefolk's own first, then by name: snapshots only on Releases and
     /// snapshots (D65).
     func entries(_ kind: AddonEntry.Kind) -> [AddonEntry] {
-        (catalog?.offered(on: channel) ?? []).filter { $0.kind == kind }
+        (catalog?.offered(on: channel, wearing: parent.settings.theme) ?? []).filter { $0.kind == kind }
             .sorted { ($0.official ? 0 : 1, $0.name) < ($1.official ? 0 : 1, $1.name) }
     }
 

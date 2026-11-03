@@ -19,6 +19,8 @@ final class AddonUpdateController: AddonUpdateActions {
     private var followed: (UpdateChannel, Bool)?
     /// Companions or themes changed on disk: the coordinator draws them again.
     var onUpdated: (AddonUpdateReport) -> Void = { _ in }
+    /// A look finished: the coordinator tries again what couldn't come until the gallery could be reached.
+    var onLooked: () async -> Void = {}
     /// Opens the install sheet for a checked folder.
     var openReview: (URL) -> Void = { _ in }
     /// Opens Settings › General, where every update waiting for a look is listed.
@@ -166,6 +168,7 @@ final class AddonUpdateController: AddonUpdateActions {
         model.addonReview = report.review
         await headsUp(report.review)
         await nudge(automatic: s.addons)
+        await onLooked()
     }
 
     /// Update all (D89), or one add-on's Update: each in turn, its row following along, then a summary (for one add-on

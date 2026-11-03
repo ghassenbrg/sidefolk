@@ -63,6 +63,8 @@ final class AppCoordinator {
     /// What is watched or reported, so "stop the Fukuoka temperature" can be understood without AI.
     var knownWatches: [WatchName] = []
     private var moodTimer: Task<Void, Never>?
+    /// The launch's try and a look's can overlap, and two downloads of one add-on share a folder.
+    var fetchingThemeThatMoved = false
     private var eventTask: Task<Void, Never>?
     /// Live reports and their latest values (AppCoordinator+Readouts).
     var reports: [Watcher] = []
@@ -157,6 +159,7 @@ final class AppCoordinator {
 
         installSidecard()
         if let succession { announceSuccession(succession) }
+        Task { await fetchThemeThatMoved() }
 
         let menuBarImage = BrandAsset.menuBar.image ?? NSImage(
             cgImage: CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2),

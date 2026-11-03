@@ -9,6 +9,7 @@ extension AppCoordinator {
         statusItem.waitingUpdate = { [weak self] in self?.updater.waitingVersion }
         updater.signals = { [weak self] in await self?.installSignals() ?? InstallMoment.Signals(conversation: true) }
         addonUpdater.onUpdated = { [weak self] report in self?.companionsUpdated(report.companions.map(\.companion)) }
+        addonUpdater.onLooked = { [weak self] in await self?.fetchThemeThatMoved() }
         addonUpdater.openReview = { [weak self] folder in self?.settingsWindow.review(folder: folder) }
         addonUpdater.openSettings = { [weak self] in self?.openSettings(tab: .general) }
         addonUpdater.openGallery = { [weak self] in self?.home.show(section: .gallery) }

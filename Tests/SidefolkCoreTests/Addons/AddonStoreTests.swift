@@ -192,6 +192,7 @@ import Testing
         #expect(catalog.addons.count == 3)
         #expect(catalog.offered(on: .releases).map(\.version) == ["1.0.0"])
         #expect(catalog.offered(on: .snapshots).map(\.version) == ["1.1.0-snapshot.2", "1.0.0-snapshot.4"])
+        #expect(catalog.offered(on: .releases, wearing: "dev.sidefolk.git").map(\.version) == ["1.0.0"], "only a theme that moved")
         #expect(catalog.entry("dev.sidefolk.git")?.version == "1.1.0-snapshot.2")
         #expect(catalog.entry("dev.sidefolk.git", on: .releases)?.version == "1.0.0")
         #expect(catalog.entry("dev.sidefolk.pdf", on: .releases) == nil)
@@ -380,6 +381,35 @@ import Testing
         try publishTheme(version: "1.2.0")
         newer = try await g.store.catalog(refresh: true)
         #expect(await g.store.themeUpdates(in: newer, library: library, channel: .releases).map(\.version) == ["1.2.0"])
+    }
+
+    /// A theme that moved out of the app (D130) shows to whoever wears it, and its updates reach them, on any channel:
+    /// they didn't choose snapshots, and nobody chose to lose it by not choosing them.
+    @Test func aThemeThatMovedShowsAndKeepsUpdatingOnAnyChannel() async throws {
+        let id = "dev.sidefolk.theme.marshmallow"
+        let g = try Gallery()
+        func publishTheme(version: String) throws {
+            var file = ThemeFile(.sidefolk, id: id, name: "Marshmallow")
+            file.version = version
+            let made = try g.pack("theme-marshmallow", id: id, version: version,
+                                  files: ["theme.json": String(decoding: try file.encoded(), as: UTF8.self)])
+            g.entries.removeAll { $0["id"] as? String == id }
+            g.entries.append(["id": id, "kind": "theme", "name": "Marshmallow", "tagline": "A test theme", "description": "",
+                              "author": "Sidefolk", "version": version, "file": made.file, "bytes": made.bytes, "sha256": made.sha])
+            try g.publish()
+        }
+        try publishTheme(version: "2.0.0-snapshot.1")
+        let catalog = try await g.store.catalog()
+        #expect(catalog.offered(on: .releases).isEmpty)
+        #expect(catalog.offered(on: .releases, wearing: ThemeTokens.sidefolk.id).isEmpty)
+        #expect(catalog.offered(on: .releases, wearing: id).map(\.id) == [id])
+        #expect(catalog.offered(on: .snapshots, wearing: id).map(\.id) == [id], "listed once")
+
+        let library = ThemeLibrary(paths: g.paths)
+        _ = try await g.store.install(theme: try #require(catalog.entry(id)), into: library)
+        try publishTheme(version: "2.0.0-snapshot.2")
+        let newer = try await g.store.catalog(refresh: true)
+        #expect(await g.store.themeUpdates(in: newer, library: library, channel: .releases).map(\.version) == ["2.0.0-snapshot.2"])
     }
 
     /// A companion already on this Mac gets the gallery's newer version by itself; a version this copy can't run

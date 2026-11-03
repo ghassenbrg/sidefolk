@@ -42,7 +42,45 @@ extension AppCoordinator {
         case .moved(_, let to): to
         case .offer(let old, _): old.successor
         }
-        sidecard.present(Self.successionItem(step, successorName: themes.theme(id: successor).tokens.name),
+        // A successor that moved to the gallery isn't here yet, and may be on its way (`fetchThemeThatMoved`).
+        let name = ThemeSuccession.movedToGallery[successor] ?? themes.theme(id: successor).tokens.name
+        sidecard.present(Self.successionItem(step, successorName: name),
+                         .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
+    }
+
+    /// A theme the person wears that moved from the app to the gallery (D130) comes back by itself, while Update add-ons
+    /// automatically is on. Until then they see the default, and their setting stays, so each launch and each add-on look try again:
+    /// Sidefolk can run for weeks, and the gallery publishes after the app that needs it. The first time it can't come, a whisper
+    /// says so once. A theme only draws, so this installs as an update does (D70).
+    func fetchThemeThatMoved() async {
+        guard !fetchingThemeThatMoved else { return }
+        fetchingThemeThatMoved = true
+        defer { fetchingThemeThatMoved = false }
+        let settings = runtime.settings.current
+        let installed = Set(themes.all().map(\.id))
+        guard let id = ThemeSuccession.toFetch(settings, installed: installed.contains),
+              let name = ThemeSuccession.movedToGallery[id] else { return }
+        if settings.updates.addons, runtime.addons.source != nil {
+            do {
+                // The theme someone already wears comes on any channel: nobody chose to lose it by hiding snapshots.
+                if let entry = try await runtime.addons.catalog().entry(id, on: .snapshots) {
+                    try await runtime.addons.install(theme: entry, into: themes)
+                    settingsChanged()
+                    return
+                }
+            } catch {
+                Log.shared.info("theme", "a theme that moved to the gallery couldn't come yet", ["id": id])
+            }
+        }
+        guard !settings.themeSuccessorsOffered.contains(id) else { return }
+        await runtime.settings.update { $0.themeSuccessorsOffered.append(id) }
+        sidecard.present(AttentionItem(level: .gentle, source: Self.ownVoice,
+                                       title: settings.updates.addons
+                                           ? String(localized: "\(name) moved to the gallery. It comes back when Sidefolk can reach it.",
+                                                    comment: "A whisper at launch: the theme the person wears left the app and couldn't be downloaded yet")
+                                           : String(localized: "\(name) moved to the gallery. Get it there to wear it again.",
+                                                    comment: "A whisper at launch: the theme the person wears left the app, and they turned off automatic add-on updates"),
+                                       refKind: Self.themeSuccessor),
                          .gentle(autoDismiss: AttentionPolicy.gentleSeconds))
     }
 
