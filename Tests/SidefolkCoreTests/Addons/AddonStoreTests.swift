@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import SidefolkCore
 
@@ -82,6 +83,67 @@ import Testing
     }
 
     // MARK: The catalog
+
+    /// Holds the first download until the second fetch has finished, and notes whether the first one's folder survived that.
+    final class HeldDownload: UpdateDownloading, @unchecked Sendable {
+        private let state = Mutex<(calls: Int, release: CheckedContinuation<Void, Never>?, released: Bool, folderGone: Bool)>((0, nil, false, false))
+        var folderGone: Bool { state.withLock { $0.folderGone } }
+        var calls: Int { state.withLock { $0.calls } }
+
+        func letTheFirstGo() {
+            state.withLock { s in
+                s.released = true
+                s.release?.resume()
+                s.release = nil
+            }
+        }
+
+        func download(_ url: URL, to destination: URL, expectedBytes: Int64, progress: @escaping @Sendable (Int64) -> Void) async throws {
+            let first = state.withLock { s in
+                s.calls += 1
+                return s.calls == 1
+            }
+            if first {
+                await withCheckedContinuation { continuation in
+                    let now = state.withLock { s in
+                        if s.released { return true }
+                        s.release = continuation
+                        return false
+                    }
+                    if now { continuation.resume() }
+                }
+                let gone = !FileManager.default.fileExists(atPath: destination.deletingLastPathComponent().path)
+                state.withLock { $0.folderGone = gone }
+            }
+            try FileManager.default.copyItem(at: url, to: destination)
+        }
+    }
+
+    /// The app's launch, the updater and the gallery can each ask at once: one fetch can't pull another's folder out from under it.
+    @Test func twoFetchesDontShareAFolder() async throws {
+        let g = try Gallery()
+        try g.publish()
+        let held = HeldDownload()
+        let store = AddonStore(paths: g.paths, source: AddonSource(base: g.site, team: AddonStoreTests.team), downloader: held, checker: Trusting())
+        let first = Task { try await store.catalog(refresh: true) }
+        while held.calls == 0 { await Task.yield() }
+        _ = try await store.catalog(refresh: true)
+        held.letTheFirstGo()
+        _ = try await first.value
+        #expect(!held.folderGone)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: g.paths.addons.appendingPathComponent("Downloads").path).isEmpty, "both cleaned up")
+    }
+
+    /// In a home with no catalog yet there's no last one to fall back on, so a fetch that loses a race is an error the person sees.
+    @Test func manyFetchesAtOnceAllGetTheCatalog() async throws {
+        let g = try Gallery()
+        try g.publish()
+        let store = g.store
+        try await withThrowingTaskGroup(of: AddonCatalog.self) { group in
+            for _ in 0..<8 { group.addTask { try await store.catalog(refresh: true) } }
+            for try await _ in group {}
+        }
+    }
 
     @Test func theCatalogKeepsGoodEntriesAndDropsTheRest() throws {
         func entry(_ id: String, _ change: (inout [String: Any]) -> Void = { _ in }) -> [String: Any] {

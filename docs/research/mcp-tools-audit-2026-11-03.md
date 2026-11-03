@@ -59,6 +59,11 @@ through `history.recent`; only words shaped like an address are left out, by sha
 - B8, web search: not built until the founder chooses a provider and who pays.
 - What a turn costs (above): the five largest descriptions are the first place to look, only if it matters.
 
+**Add-on downloads share a folder by id.** The catalog's fetch raced itself (fixed: launch, the updater and the gallery could each
+pull another's folder away, and in a home with no catalog yet that showed as an error). `AddonStore.download` and the seed copy
+still use `Downloads/<id>`, so two fetches of one pack at once could do the same. Not reproduced. The fix is the same, a folder per
+fetch, except that `fetch` hands back a folder inside it and `removeDownload` finds it by id, so it needs a little more care.
+
 **Never checked with a real client.** Claude Code or Codex as the client on the new tools, annotations, a cancelled call taking
 its card away, the tool list following the app, and the reminder and collection cards on screen. The MCP script and the suite
 cover the protocol, not what those clients do with it.
