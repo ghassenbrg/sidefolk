@@ -219,8 +219,8 @@ public struct ContextBuilder: Sendable {
                 + "place in Home), sidefolk_look (its appearance and theme). Use them, and never offer to build an extension for these.")
         }
         lines += [
-            "- Nothing else on this Mac unless one of your tools does it: not other apps' content (Mail, Messages, Calendar, Contacts, "
-                + "Photos, browsers), the screen, or online accounts. Extension tools (ext.<extension>.<tool>) are your tools too.",
+            "- Nothing else on this Mac unless one of your tools does it: not other apps' content (Mail, Messages, "
+                + (names.contains("calendar.today") ? "" : "Calendar, ") + "Contacts, Photos, browsers), the screen, or online accounts. Extension tools (ext.<extension>.<tool>) are your tools too.",
             "- When a request needs something you can't reach, " + missing + " Don't send the user off to export, copy or paste things "
                 + "by hand unless they ask how.",
             "- Big jobs (many notes) go in batches: do a batch, say what's done and what's left, and continue when the user asks.",

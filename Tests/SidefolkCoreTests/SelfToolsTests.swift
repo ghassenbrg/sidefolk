@@ -199,4 +199,11 @@ import Testing
         #expect(reach.contains("never offer to build an extension"))
         #expect(!ContextBuilder.reach([]).contains("sidefolk_about"))
     }
+
+    @Test func theCalendarIsOutOfReachOnlyWithoutItsTool() {
+        let calendar = ToolSpec(name: "calendar.today", title: "", description: "", inputSchema: Schema.object([:]), risk: .medium,
+                                capabilities: [.calendar], category: .time, mutates: false)
+        #expect(ContextBuilder.reach([]).contains("Calendar, "))
+        #expect(!ContextBuilder.reach([calendar]).contains("Calendar, "))
+    }
 }

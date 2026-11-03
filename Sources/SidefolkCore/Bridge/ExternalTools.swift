@@ -49,9 +49,25 @@ public enum ExternalToolPolicy {
         }
         // A web value would let an agent read pages through Sidefolk's network, and the weather reaches a
         // server too; this Mac's own load reaches nothing (T4).
+        // The tool's own refusal speaks for the companion ("ask me directly"); here the reader is another agent.
+        if name == "watch.create", let host = localHost(input) {
+            return "“\(host)” is on this Mac or the local network, which other agents can't watch. Ask the user to set it up in Sidefolk."
+        }
         if name == "watch.report", input.string("source") != "metric" {
             return "Other agents can show only this Mac's cpu, memory, battery, disk or network. Ask the user to set up anything else in Sidefolk."
         }
+        return nil
+    }
+
+    /// The local host a web watch would reach, if it would.
+    private static func localHost(_ input: JSONValue) -> String? {
+        guard [WatchKind.urlChange, WatchKind.siteStatus].contains(input.string("kind") ?? ""), let target = input.string("target") else { return nil }
+        let typed = target.contains("://") ? target : WebTarget.defaultScheme(for: target) + target
+        do {
+            try URLPolicy.checkHost(try URLPolicy.parseWebURL(typed))
+        } catch URLPolicy.Violation.privateDestination(let host) {
+            return host
+        } catch {}
         return nil
     }
 

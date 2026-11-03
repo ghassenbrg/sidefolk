@@ -225,6 +225,22 @@ import Testing
         await s.stop()
     }
 
+    @Test func wordsSayWhatToDoFromAnotherAgent() async throws {
+        let stack = try await Stack()
+        for target in ["http://localhost:3000", "127.0.0.1:8080", "printer.local"] {
+            let refused = try await stack.call("watch_create", ["kind": "url_change", "target": .string(target)])
+            #expect(refused.isError)
+            #expect(refused.text.contains("Ask the user to set it up in Sidefolk"), "\(target): \(refused.text)")
+            #expect(!refused.text.contains("Ask me"))
+        }
+        let list = try await stack.pipes.request(2, "tools/list", [:])
+        let tools = list["result"]?["tools"]?.arrayValue ?? []
+        let reminders = try #require(tools.first { $0.string("name") == "reminders_create" })
+        let item = reminders["inputSchema"]?["properties"]?["item"]?.string("description") ?? ""
+        #expect(item.contains("notes_search") && !item.contains("notes.search"))
+        await stack.stop()
+    }
+
     @Test func statusAnswersWithCountsOnly() async throws {
         let s = try await Stack()
         let status = try await s.call("status")

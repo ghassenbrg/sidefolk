@@ -30,6 +30,10 @@ extension ExternalToolPolicy {
                 if props["level"] != nil {
                     props["level"] = Schema.string("How loudly to tell the user (default attention).", enum: ["gentle", "attention"])
                 }
+                // These agents call tools by their MCP names.
+                if props["item"] != nil {
+                    props["item"] = Schema.string("The id of the note or task this reminder belongs to (from notes_search, notes_list or agenda_today).")
+                }
                 // Command watchers are the user's alone (T9), whatever kinds watch.create grows.
                 if case .object(var kind)? = props["kind"], case .array(let values)? = kind["enum"] {
                     kind["enum"] = .array(values.filter { !($0.stringValue ?? "").lowercased().contains("command") })

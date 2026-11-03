@@ -20,7 +20,16 @@ final class FakeProcessTable: ProcessTable {
         var config: [String: JSONValue] = [:]
         if let name { config["name"] = .string(name) }
         if let pid { config["pid"] = .number(Double(pid)) }
-        return try probe.made(.make(WatchKind.processExits, config: .object(config)))
+        return try probe.made(.make(WatchKind.processExits, config: .object(config), title: ""))
+    }
+
+    @Test func aNamedWatchSaysItsNameWhenTheProcessGoes() async throws {
+        var w = try watcher(pid: 77)
+        w.title = "sleep-proc"
+        table.set([ProcessEntry(pid: 77, name: "sleep", startedAt: 100)])
+        _ = try await probe.step(&w)
+        table.set([])
+        #expect(try await probe.step(&w).summary == "sleep-proc exited")
     }
 
     @Test func triggersWhenTheProcessIsGoneAfterBeingSeen() async throws {
@@ -96,7 +105,7 @@ final class FakeProcessTable: ProcessTable {
         defer { if child.isRunning { child.terminate() } }
         let real = ProcessExitsProbe(table: LibprocTable())
 
-        var w = try real.made(.make(WatchKind.processExits, config: ["pid": .number(Double(child.processIdentifier))]))
+        var w = try real.made(.make(WatchKind.processExits, config: ["pid": .number(Double(child.processIdentifier))], title: ""))
         #expect(try await !real.step(&w).triggered)
         #expect(w.lastState?["seen"]?.boolValue == true)
         #expect(real.eventTargets(for: w) == [.process(child.processIdentifier)])
@@ -119,7 +128,7 @@ final class FakeProcessTable: ProcessTable {
         defer { if child.isRunning { child.terminate() } }
         let real = ProcessExitsProbe(table: LibprocTable())
 
-        var w = try real.made(.make(WatchKind.processExits, config: ["name": .string(sleeper.name)]))
+        var w = try real.made(.make(WatchKind.processExits, config: ["name": .string(sleeper.name)], title: ""))
         #expect(try await !real.step(&w).triggered)
         #expect(w.lastState?["seen"]?.boolValue == true, "the table should find “\(sleeper.name)”")
 
@@ -134,7 +143,7 @@ final class FakeProcessTable: ProcessTable {
         child.arguments = ["1"]
         try SpawnLock.withLock { try child.run() }
         let real = ProcessExitsProbe(table: LibprocTable())
-        var w = try real.made(.make(WatchKind.processExits, config: ["pid": .number(Double(child.processIdentifier))]))
+        var w = try real.made(.make(WatchKind.processExits, config: ["pid": .number(Double(child.processIdentifier))], title: ""))
         #expect(try await !real.step(&w).triggered)
         child.waitUntilExit()
         #expect(try await real.step(&w).triggered)

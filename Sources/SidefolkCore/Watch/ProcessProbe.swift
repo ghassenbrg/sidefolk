@@ -105,7 +105,8 @@ public struct ProcessExitsProbe: WatcherProbe {
 
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
         let previous = w.lastState
-        let label = Self.label(w.config)
+        // The name it was given, when it has one: "sleep-proc exited" over "Process 66487 exited".
+        let label = w.title.isEmpty ? Self.label(w.config) : w.title.displaySafe.clipped(60)
         let wasSeen = previous?["seen"]?.boolValue ?? false
 
         var running: [ProcessEntry]
