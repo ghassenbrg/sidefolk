@@ -11,7 +11,7 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
 
 The companion can read short lines of History and see which agents are running, on a card, as outside content. **Found in independent review, fixed:** a row's summary quoting what a tool was given, a copied text or a command among them, on its way to the AI provider; secrets and addresses in the lines that are quoted, spelled ways a pattern missed (a mark on a slash, a fullwidth colon, percent escapes, schemes it didn't list); a very long word holding the read up; a client's name reading as the person. A line now keeps only words shaped like plain words, by each scalar, so everything else is left out and some ordinary words with it (`file.txt`, `and/or`). **Checked:** the suite, with canaries for each spelling. **Not checked:** the card on screen, and a live model reading the lines.
 
-Also, decided with the coordinator: another agent's `notes.update` marking a task done, and `notes.trash`, can no longer end an important reminder on that note (D160), and `Redactor` no longer takes an authorization scheme for the secret, which left a bearer token in the clear in History and the logs.
+Also, decided with the coordinator: another agent's `notes.update` marking a task done, and `notes.trash`, can no longer end an important reminder on that note (D160), and `Redactor` no longer takes an authorization scheme for the secret, which left a bearer token in the clear in History and the logs. Separately, the add-on catalog's fetch has a folder of its own: launch, the updater and the gallery could pull one out from under each other, which in a home with no catalog yet showed as an error (reproduced by test).
 
 ## 2026-11-03: A coordinator skill for this repository
 
