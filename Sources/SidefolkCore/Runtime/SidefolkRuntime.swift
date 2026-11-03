@@ -148,6 +148,7 @@ public final class SidefolkRuntime: Sendable {
         registry.register(AgentFacingTools.make(attention: attention))
         registry.register(AgentFacingTools.status(StatusReader(db: db)))
         registry.register(HistoryRecentTool(activity: activity, alerts: AttentionStore(db)))
+        registry.register(AgentSessionsTool(sessions: sessions))
         registry.register(SkillTools.all(skills))
         registry.register(ExtensionWatchTool(host: extensions, engine: watchers))
         registry.register(ExtensionBuilderTools.all(drafts: extensionDrafts, host: extensions, events: events))
