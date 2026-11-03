@@ -378,7 +378,7 @@ public final class ToolExecutor: Sendable {
     /// - Parameter undoable: the call's undo is registered; Activity offers it on this row too.
     private func log(_ spec: ToolSpec, _ act: ToolActivity, caller: Caller, input: JSONValue, decision: ActivityEntry.Decision,
                      outcome: String?, error: String?, undoable: Bool = false) async {
-        // A plan's step that filled words in is kept as written, and how long they were: what a flow found stays out of History, the founder's choice (D127).
+        // A plan's step that filled words in is kept as written, and how long they were: what it found stays out of History, the founder's choice (D127).
         let written = act.written
         let outcome = written.flatMap { w in outcome.map { _ in String(localized: "Filled in when it ran, length \(w.length)", comment: "History: a step of a plan the person allowed, with what it filled in left out") } } ?? outcome
         let error = written == nil ? error : error.map { _ in "\(spec.title) reported a problem" }

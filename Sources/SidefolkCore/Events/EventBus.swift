@@ -72,7 +72,7 @@ public struct Happening: Sendable, Hashable {
         self.detail = detail
     }
 
-    /// What a tool's finishing says happened: only what the person or the companion did for them. What an extension did, or a job it handed over, doesn't count, or a flow could set itself off.
+    /// What a tool's finishing says happened: only what the person or the companion did for them. What an extension did, or a job it handed over, doesn't count, or an extension could set itself off.
     public init?(_ activity: ToolActivity) {
         guard activity.caller.kind != "extension", activity.caller.runId?.hasPrefix(AgentRuntime.jobPrefix) != true else { return nil }
         switch activity.tool {
