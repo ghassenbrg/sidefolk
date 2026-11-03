@@ -15,6 +15,10 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
 
 **Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.
 
+## 2026-11-03: Agents and the notebook's shape, and longer watches (D160, B1 to B3)
+
+Other agents can list the person's collections (a read, so a card by default, never About you), make one (a card every time) and say a watch runs up to a week. **Checked:** the suite, with real MCP over pipes to a whole Sidefolk. **Not checked:** a real Claude Code or Codex session as the client.
+
 ## 2026-11-03: MCP and in-app tools, batch A (D156–D159)
 
 From [the audit](research/mcp-tools-audit-2026-11-03.md), which called the tools through a debug app before anything was proposed. Tool annotations; a client's cancel takes its question or card away; a session started before Sidefolk gets its tools when it opens, and a call notices a Trust change. `watch.update` on any watcher, `reminders.update`, `reminders.snooze` and `reminders.complete` for an agent's own, `notes.restore`. Reads by date, `calendar.find` for the companion. `sidefolk notify`, `ask`, `remind`, `note`, `tools`, `call`, `status --json`. Typed reads without AI. Words that misled agents.

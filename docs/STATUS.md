@@ -58,7 +58,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
   - **Known limits:** nothing is reminded while Sidefolk is quit or the Mac asleep unless macOS was asked to at quit (up to 20, within 7 days); the first question through `ask_noor` shows an approval card (network raises the floor), with Always; Noor's notices and Ask answers are Sidefolk's own surfaces, not the C01 board's richer ones; dial markers sit at real instants, unlike the boards' even spacing (the spec requires it).
   - **Before the gallery:** AlAdhan's and Open-Meteo's terms for caching and redistribution, which RESEARCH left open.
 
-- **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** batch A is released in snapshot 958 (HISTORY). The founder approved group B too: B1 to B6 go in small batches, each with its own branch, commit and SECURITY entry, and B7 (`files.write`) last, after Formatic's D140 is on main. **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar.
+- **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** batch A is released in snapshot 958 (HISTORY). The founder approved group B too (D160): B1 to B3 are on `team/tools-b3`, B4 to B6 follow in small batches, each with its own branch, commit and SECURITY entry, and B7 (`files.write`) comes last, after Formatic's D140 is on main. **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar.
 
 ## Next
 
