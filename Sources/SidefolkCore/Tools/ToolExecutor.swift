@@ -90,11 +90,11 @@ public final class ToolExecutor: Sendable {
     ///   - onWaiting: called when the call is parked waiting for the user's approval.
     public func execute(
         name: String, input: JSONValue, caller: Caller, tainted: Bool = false, taintedBy: TaintSource? = nil, mentions: UserMentions? = nil,
-        timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil, pickedFile: String? = nil,
+        timeout: TimeInterval = 90, approvalTimeout: TimeInterval? = nil, pickedFile: String? = nil, pickedFiles: [String] = [],
         onWaiting: (@Sendable (ApprovalRequest) -> Void)? = nil, standing: Bool = false, written: JSONValue? = nil, asker: ApprovalRequest.Asker? = nil
     ) async -> ToolOutcome {
         await perform(name: name, input: input, caller: caller, tainted: tainted, taintedBy: taintedBy, mentions: mentions, timeout: timeout,
-                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile, standing: standing, written: written, asker: asker)
+                      approvalTimeout: approvalTimeout, onWaiting: onWaiting, answered: nil, pickedFile: pickedFile, pickedFiles: pickedFiles, standing: standing, written: written, asker: asker)
     }
 
     /// Guard's answer for this call, with nothing run, shown or logged (D110): what a card would be.
@@ -132,7 +132,7 @@ public final class ToolExecutor: Sendable {
     /// - Parameter answered: a question the person already said "Allow" to, outside a card.
     private func perform(
         name: String, input: JSONValue, caller: Caller, tainted: Bool, taintedBy: TaintSource?, mentions: UserMentions?, timeout: TimeInterval,
-        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil, standing: Bool = false, written: JSONValue? = nil, asker: ApprovalRequest.Asker? = nil
+        approvalTimeout: TimeInterval?, onWaiting: (@Sendable (ApprovalRequest) -> Void)?, answered: ApprovalRequest?, pickedFile: String? = nil, pickedFiles: [String] = [], standing: Bool = false, written: JSONValue? = nil, asker: ApprovalRequest.Asker? = nil
     ) async -> ToolOutcome {
         let callId = Identifier.make()
         guard let tool = registry.tool(named: name) else {
@@ -173,7 +173,8 @@ public final class ToolExecutor: Sendable {
         }
         var decisionTag: ActivityEntry.Decision = .auto
         // A file the person chose in the system's panel for this call: read of it alone, and only as themselves (SECURITY T12).
-        let handedOver: Set<String> = caller == .user ? Set([pickedFile.flatMap(FolderAccess.canonical)].compactMap { $0 }) : []
+        // Set only by Sidefolk's own panel and drop code, from what the system handed over (D105, D141).
+        let handedOver: Set<String> = caller == .user ? Set(([pickedFile].compactMap { $0 } + pickedFiles).compactMap(FolderAccess.canonical)) : []
         var extraFolders = handedOver.sorted().map { GrantedFolder(path: $0, access: .read) }
         // Folders the person allowed in a card for this call: a file there was named for this call, not picked from a
         // folder shared for good (D72).

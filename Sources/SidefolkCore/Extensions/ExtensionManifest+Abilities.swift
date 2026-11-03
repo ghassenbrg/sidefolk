@@ -176,6 +176,25 @@ extension ExtensionManifest {
         public var patterns: [String]
         public var tool: String
         public var input: [String: JSONValue]
+        /// More choices in one menu on the same card, since what was dropped is only readable for the one call a choice makes (D141).
+        public var menu: [MenuItem] = []
+
+        public struct MenuItem: Sendable, Hashable, Decodable {
+            public var title: String
+            public var input: [String: JSONValue]
+
+            public init(title: String, input: [String: JSONValue]) {
+                self.title = title
+                self.input = input
+            }
+
+            public init(from decoder: Decoder) throws {
+                try decoder.rejectUnknownKeys(["title", "input"])
+                let c = try decoder.container(keyedBy: AnyKey.self)
+                title = try c.decode(String.self, forKey: "title")
+                input = try c.decode([String: JSONValue].self, forKey: "input")
+            }
+        }
 
         public init(id: String, title: String, detail: String? = nil, symbol: String? = nil, kinds: [Kind], patterns: [String] = [], tool: String,
                     input: [String: JSONValue]) {
@@ -190,7 +209,7 @@ extension ExtensionManifest {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["id", "title", "detail", "symbol", "kinds", "patterns", "tool", "input"])
+            try decoder.rejectUnknownKeys(["id", "title", "detail", "symbol", "kinds", "patterns", "tool", "input", "menu"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             id = try c.decode(String.self, forKey: "id")
             title = try c.decode(String.self, forKey: "title")
@@ -200,6 +219,7 @@ extension ExtensionManifest {
             patterns = try c.decodeIfPresent([String].self, forKey: "patterns") ?? []
             tool = try c.decode(String.self, forKey: "tool")
             input = try c.decode([String: JSONValue].self, forKey: "input")
+            menu = try c.decodeIfPresent([MenuItem].self, forKey: "menu") ?? []
         }
     }
 

@@ -243,7 +243,7 @@ public struct ManifestValidator: Sendable {
             }
         }
         let name = m.name.trimmingCharacters(in: .whitespaces)
-        if name.isEmpty || name.count > 60 || ExtensionText.clean(name) != name {
+        if name.isEmpty || name.count > 60 || ExtensionText.clean(name) != name || name.contains(where: \.isNewline) {
             issues.append(ValidationIssue(field: "name", message: "must be 1–60 characters of plain text."))
         }
         if m.version.range(of: #"^\d+\.\d+(\.\d+)?([-+][0-9A-Za-z.-]+)?$"#, options: .regularExpression) == nil {
@@ -540,9 +540,17 @@ public struct ManifestValidator: Sendable {
                 for ending in meta.outputs where !ExtensionOutputs.allowedEndings.contains(ending.lowercased()) {
                     issues.append(ValidationIssue(field: "\(field).outputs", message: "“\(ending)” isn't a kind of file Sidefolk saves for extensions."))
                 }
-                if !meta.paths.values.contains(.read) {
-                    issues.append(ValidationIssue(field: "\(field).outputs", message: "needs a \"read\" parameter in `paths`: a result is saved beside the file the person hands over."))
+                if !meta.paths.values.contains(.read), meta.fileLists.isEmpty {
+                    issues.append(ValidationIssue(field: "\(field).outputs", message: "needs a \"read\" parameter in `paths` or `file_lists`: a result is saved beside the file the person hands over."))
                 }
+            }
+            if meta.fileLists.count > 1 { issues.append(ValidationIssue(field: "\(field).file_lists", message: "can name one parameter.")) }
+            for (param, use) in meta.fileLists.sorted(by: { $0.key < $1.key }) {
+                if param.range(of: Self.namePattern, options: .regularExpression) == nil || meta.paths[param] != nil {
+                    issues.append(ValidationIssue(field: "\(field).file_lists.\(param)", message: "isn't a valid parameter name (lowercase letters, digits and _), or is also in `paths`."))
+                }
+                if use != .read { issues.append(ValidationIssue(field: "\(field).file_lists.\(param)", message: "can only be \"read\".")) }
+                if folders == nil { folders = .read }
             }
             for (param, use) in meta.paths.sorted(by: { $0.key < $1.key }) {
                 if param.range(of: Self.namePattern, options: .regularExpression) == nil {

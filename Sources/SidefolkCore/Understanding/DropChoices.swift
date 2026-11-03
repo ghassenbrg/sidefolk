@@ -25,6 +25,13 @@ public enum DropChoices {
         }
     }
 
+    /// What's on offer for dropped files: every file must fit, and several need an action that takes a list.
+    public static func offers(forFiles files: [String], among drops: [ExtensionDropAction]) -> [ExtensionDropAction] {
+        guard !files.isEmpty, files.count <= ExtensionOutputs.maxFiles else { return [] }
+        let many = files.count > 1
+        return Array(drops.filter { drop in (!many || drop.takesMany) && files.allSatisfy { drop.matches(kind: .file, value: $0) } }.prefix(mostOffers))
+    }
+
     /// What extensions that are on offer for this: its kind, and a pattern for a link's address or a file's name.
     public static func offers(for kind: DropKind, value: String, among drops: [ExtensionDropAction]) -> [ExtensionDropAction] {
         Array(drops.filter { $0.matches(kind: kind.manifestKind, value: value) }.prefix(mostOffers))

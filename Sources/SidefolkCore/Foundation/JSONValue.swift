@@ -83,6 +83,13 @@ public extension JSONValue {
     var isNull: Bool { if case .null = self { return true } else { return false } }
 
     /// Non-empty trimmed string for `key`, or nil.
+    /// The same object without these keys.
+    public func removing(_ keys: Set<String>) -> JSONValue {
+        guard !keys.isEmpty, case .object(var fields) = self else { return self }
+        for key in keys { fields[key] = nil }
+        return .object(fields)
+    }
+
     func string(_ key: String) -> String? {
         guard let s = self[key]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else { return nil }
         return s

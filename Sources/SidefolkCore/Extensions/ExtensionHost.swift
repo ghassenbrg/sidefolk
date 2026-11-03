@@ -770,7 +770,8 @@ public actor ExtensionHost {
 
     /// A tool's parameters that name files or folders (`paths`): a page's `file` fills one, and the rest stay out of its input (D105).
     public func pathParameters(extensionId id: String, tool: String) -> Set<String> {
-        Set((runtimes[id]?.manifest?.tools[tool]?.paths ?? [:]).keys)
+        let meta = runtimes[id]?.manifest?.tools[tool]
+        return Set((meta?.paths ?? [:]).keys).union((meta?.fileLists ?? [:]).keys)
     }
 
     /// What the page should take in before it reads again (D105), once.
@@ -1571,7 +1572,7 @@ public actor ExtensionHost {
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote,
-                             folderParameters: meta?.paths ?? [:], firstParty: firstParty,
+                             folderParameters: meta?.paths ?? [:], fileLists: Set((meta?.fileLists ?? [:]).keys), firstParty: firstParty,
                              commands: commandsOf(id, tool: def.name),
                              paired: paired,
                              sentence: meta?.summary.map { ExtensionTool.ToolSentence(summary: $0, texts: words(rt)?.toolSummaries[def.name]) },

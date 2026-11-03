@@ -9,6 +9,8 @@ struct Attachment: Equatable {
     var label: String
     /// Text handed to the brain (always treated as untrusted).
     var text: String?
+    /// Every file in the drag, when there was more than one. `kind` holds the first.
+    var files: [URL] = []
 }
 
 /// A reminder the local parser could make from words that didn't start with "remind me".
@@ -139,7 +141,7 @@ protocol AskActions: AnyObject {
     func dropChoices(for attachment: Attachment) -> [DropChoice]
     /// What extensions offer for it (D100).
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction]
-    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel)
+    func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel)
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
@@ -362,6 +364,8 @@ final class AskModel {
             return
         }
         guard !trimmed.isEmpty || attachment != nil, !busy else { return }
+        // Choosing an extension's offer is what lets it read the file, so Return never makes that choice for you (D141).
+        if trimmed.isEmpty, let attachment, attachment.dropKind == .file, actions?.extensionDrops(for: attachment).isEmpty == false { return }
         // Nothing typed with something dropped: Return is the drop card's first choice (D84).
         if trimmed.isEmpty, let attachment, let first = actions?.dropChoices(for: attachment).first {
             actions?.perform(first, with: attachment, in: self)

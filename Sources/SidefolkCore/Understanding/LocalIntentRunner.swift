@@ -159,12 +159,14 @@ public struct LocalIntentRunner: Sendable {
         guard let tool = runtime.registry.tool(named: call.tool) as? ExtensionTool, tool.extensionId == call.extensionId else {
             return .failed(UserFacingError("That extension is turned off now, so nothing ran.", changedNothing: true))
         }
-        let out = await runtime.executor.execute(name: call.tool, input: call.input, caller: .command(extensionId: call.extensionId),
-                                                 mentions: UserMentions(text: call.said))
+        let out = await runtime.executor.execute(name: call.tool, input: call.input,
+                                                 caller: call.handedOver.isEmpty ? .command(extensionId: call.extensionId) : .user,
+                                                 mentions: UserMentions(text: call.said), pickedFiles: call.handedOver)
         guard case .ok(let result) = out.status else { return .failed(out.problem!) }
         let name = tool.extensionName
         let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !result.isError else {
+            if call.fromDrop { return .failed(UserFacingError(verbatim: String(localized: "\(name) couldn't do that: \(text.clipped(300))", comment: "An extension's own explanation after its name"))) }
             return .declined(UserFacingError(verbatim: String(localized: "\(name) couldn't answer that: \(text.clipped(300))",
                                                               comment: "An extension's own explanation after its name")))
         }

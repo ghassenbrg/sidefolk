@@ -34,7 +34,10 @@ extension AppCoordinator {
         case .tool(let name, let input):
             askPanel.hide()
             Task {
-                let outcome = await runtime.executor.execute(name: name, input: input, caller: .user)
+                // A menu item is written by its author, not chosen by the person from what's on disk: it names no file (D141).
+                let remote = String(name.split(separator: ".").last ?? "")
+                let paths = await runtime.extensions.pathParameters(extensionId: entry.extensionId, tool: remote)
+                let outcome = await runtime.executor.execute(name: name, input: input.removing(paths), caller: .user)
                 if let problem = outcome.problem { runtime.events.publish(.notice(problem.message)) }
             }
         case .page(let page, let state):
@@ -58,14 +61,24 @@ extension AppCoordinator {
 
     /// What extensions offer for this dropped thing, in the order of their names.
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction] {
-        DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: runtime.extensions.shelf.drops)
+        if attachment.dropKind == .file { return DropChoices.offers(forFiles: attachment.dropFiles, among: runtime.extensions.shelf.drops) }
+        return DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: runtime.extensions.shelf.drops)
     }
 
-    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel) {
+    func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel) {
         model.attachment = nil
+        // Dropped files are the person's own act: a read of exactly those, for this one call (D141). The card said so before they chose.
+        if attachment.dropKind == .file {
+            let files = attachment.dropFiles
+            var call = ExtensionCommandCall(tool: action.tool, input: action.input(forFiles: files, choosing: item), extensionId: action.extensionId, said: "")
+            call.handedOver = files
+            call.fromDrop = true
+            runLocal(.extensionCommand(call), caption: attachment.caption, into: model)
+            return
+        }
         // Its own tool, as one of its sentences would run it: Guard asks as it always does, and the address counts as typed.
-        runLocal(.extensionCommand(ExtensionCommandCall(tool: action.tool, input: action.input(for: attachment.dropValue), extensionId: action.extensionId,
-                                                        said: attachment.dropValue)),
-                 caption: attachment.caption, into: model)
+        var call = ExtensionCommandCall(tool: action.tool, input: action.input(for: attachment.dropValue), extensionId: action.extensionId, said: attachment.dropValue)
+        call.fromDrop = true
+        runLocal(.extensionCommand(call), caption: attachment.caption, into: model)
     }
 }

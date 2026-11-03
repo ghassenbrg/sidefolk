@@ -8,6 +8,7 @@ enum ExtensionAbilityRules {
     static let maxEntries = 8
     static let maxEntryItems = 32
     static let maxDrops = 6
+    static let maxDropMenu = 12
     static let maxPatterns = 16
 
     static func check(_ m: ExtensionManifest) -> [ValidationIssue] {
@@ -135,8 +136,20 @@ enum ExtensionAbilityRules {
                 issues.append(ValidationIssue(field: "\(field).tool", message: "“\(drop.tool)” isn't one of its tools."))
                 continue
             }
+            if drop.menu.count > Self.maxDropMenu { issues.append(ValidationIssue(field: "\(field).menu", message: "can hold at most \(Self.maxDropMenu) choices.")) }
+            for (j, item) in drop.menu.enumerated() {
+                if !isPlain(item.title, 30) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].title", message: "must be one line of 1–30 characters of plain text.")) }
+                if item.input.values.contains(.string("{value}")) || item.input.values.contains(.string("{values}")) || item.input.count > 8 {
+                    issues.append(ValidationIssue(field: "\(field).menu[\(j)].input", message: "adds at most 8 arguments, and what was dropped goes in the action's own input."))
+                }
+            }
             let carriers = drop.input.filter { $0.value == .string("{value}") }.map(\.key)
-            if carriers.count != 1 {
+            let lists = drop.input.filter { $0.value == .string("{values}") }.map(\.key)
+            if !lists.isEmpty {
+                if lists.count != 1 || !carriers.isEmpty || tool.fileLists[lists[0]] == nil || drop.kinds != [.file] {
+                    issues.append(ValidationIssue(field: "\(field).input", message: "\"{values}\" goes under one argument the tool lists in `file_lists`, for dropped files only."))
+                }
+            } else if carriers.count != 1 {
                 issues.append(ValidationIssue(field: "\(field).input", message: "must put \"{value}\" under one argument: what was dropped goes there."))
             } else if !Set(drop.kinds).isDisjoint(with: [.file, .folder]), tool.paths[carriers[0]] == nil {
                 // The sandbox opens a file only through a declared path, and Guard checks it there first (D39).

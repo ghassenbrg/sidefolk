@@ -43,9 +43,10 @@ final class FixtureAskActions: AskActions {
         DropChoices.choices(for: attachment.dropKind, offers: extensionDrops(for: attachment).count)
     }
     func extensionDrops(for attachment: Attachment) -> [ExtensionDropAction] {
-        DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
+        if attachment.dropKind == .file { return DropChoices.offers(forFiles: attachment.dropFiles, among: drops) }
+        return DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
     }
-    func perform(_ action: ExtensionDropAction, with attachment: Attachment, in model: AskModel) {}
+    func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel) {}
     func open(_ entry: ExtensionEntry) {}
     func open(_ attachment: Attachment, with app: URL, in model: AskModel) {}
     func openPlay() {}

@@ -458,7 +458,7 @@ final class AppCoordinator {
                 if let choice = DropChoice(rawValue: name) {
                     perform(choice, with: attachment, in: ask)
                 } else if let offer = extensionDrops(for: attachment).first(where: { $0.key == name }) {
-                    perform(offer, with: attachment, in: ask)
+                    perform(offer, choosing: nil, with: attachment, in: ask)
                 }
             }
             return
@@ -1130,7 +1130,7 @@ extension AppCoordinator: CompanionDelegate {
         var attachment = drop
         if case .file(let url) = drop.kind {
             // What the AI reads with the request (D28: text for models stays English).
-            attachment.text = "Dropped file: \(url.path)"
+            attachment.text = drop.files.count > 1 ? "Dropped files:\n" + drop.files.map(\.path).joined(separator: "\n") : "Dropped file: \(url.path)"
         }
         ask.attachment = attachment
         showAsk()

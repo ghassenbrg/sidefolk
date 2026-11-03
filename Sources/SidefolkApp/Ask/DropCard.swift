@@ -15,9 +15,18 @@ extension Attachment {
         case .url: return .link
         case .text: return .text
         case .file(let url):
-            var folder: ObjCBool = false
-            return FileManager.default.fileExists(atPath: url.path, isDirectory: &folder) && folder.boolValue ? .folder : .file
+            let all = files.isEmpty ? [url] : files
+            return all.contains { url in
+                var folder: ObjCBool = false
+                return FileManager.default.fileExists(atPath: url.path, isDirectory: &folder) && folder.boolValue
+            } ? .folder : .file
         }
+    }
+
+    /// The dropped files' paths, as the system handed them over.
+    var dropFiles: [String] {
+        guard case .file(let url) = kind else { return [] }
+        return (files.isEmpty ? [url] : files).map(\.path)
     }
 
     /// What was dropped as an extension's drop action receives it (D100): the address, the path or the words.
@@ -39,10 +48,18 @@ struct DropCard: View {
     /// What extensions offer for it (D100), after Sidefolk's own.
     var offers: [ExtensionDropAction] = []
     var choose: (DropChoice) -> Void
-    var chooseOffer: (ExtensionDropAction) -> Void = { _ in }
+    var chooseOffer: (ExtensionDropAction, ExtensionManifest.DropMeta.MenuItem?) -> Void = { _, _ in }
     var openWith: (URL) -> Void
 
     var body: some View {
+        if attachment.dropKind == .file, !offers.isEmpty {
+            FileOfferCard(attachment: attachment, choices: choices, offers: offers, chooseOwn: choose, chooseOffer: chooseOffer, openWith: openWith)
+        } else {
+            grid
+        }
+    }
+
+    @ViewBuilder private var grid: some View {
         let cells = choices.map(Cell.own) + offers.map(Cell.offer)
         Grid(horizontalSpacing: Theme.Space.s, verticalSpacing: Theme.Space.s) {
             ForEach(Array(stride(from: 0, to: cells.count, by: 2)), id: \.self) { row in
@@ -67,7 +84,7 @@ struct DropCard: View {
 
     /// An extension's offer: its words, and its name under them so it can't pass for Sidefolk's own.
     private func offerCell(_ offer: ExtensionDropAction) -> some View {
-        Button { chooseOffer(offer) } label: {
+        Button { chooseOffer(offer, nil) } label: {
             DropChoiceLabel(symbol: offer.symbol ?? "puzzlepiece.extension", title: Text(ext: offer.title),
                             detail: Text(ext: offer.detail.map { "\($0) · \(offer.extensionName)" } ?? offer.extensionName), first: false)
         }
@@ -188,5 +205,125 @@ private struct DropChoiceLabel: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint(first ? Text("Return does this", comment: "VoiceOver: the drop card's first choice is what Return does") : Text(verbatim: ""))
+    }
+}
+
+/// Files dropped with an extension on offer (D141). Choosing is what lets it read them, so the card is the yes (SECURITY T43): Sidefolk's own
+/// words come first and say who reads what, the extension's offers sit apart under its name, nothing is chosen for you, and a
+/// click right after the drop doesn't count, because the card opens under a mouse that has just let go.
+private struct FileOfferCard: View {
+    var attachment: Attachment
+    var choices: [DropChoice]
+    var offers: [ExtensionDropAction]
+    var chooseOwn: (DropChoice) -> Void
+    var chooseOffer: (ExtensionDropAction, ExtensionManifest.DropMeta.MenuItem?) -> Void
+    var openWith: (URL) -> Void
+    @State private var ready = false
+    @State private var showAll = false
+
+    private var names: [String] { attachment.dropFiles.map { ($0 as NSString).lastPathComponent } }
+    private var groups: [[ExtensionDropAction]] { Dictionary(grouping: offers, by: \.extensionId).values.sorted { $0[0].extensionName < $1[0].extensionName } }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            if names.count > 1 { fileNames }
+            ForEach(groups, id: \.first?.extensionId) { group in
+                if let first = group.first {
+                    trust(first)
+                    frame(first, group)
+                }
+            }
+            own
+        }
+        // Also by keyboard and VoiceOver, and again if a new drop changes what's on the card under a waiting pointer.
+        .disabled(!ready)
+        .task(id: attachment.dropFiles) {
+            ready = false
+            try? await Task.sleep(for: .milliseconds(400))
+            if !Task.isCancelled { ready = true }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("What to do with \(attachment.label)", comment: "VoiceOver: the drop card's four choices"))
+    }
+
+    /// The exact count stays in sight, and every name can be reached: a drag can carry more than its picture shows.
+    private var fileNames: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("\(names.count) files", comment: "The drop card: how many files were dropped").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+            Text(verbatim: showAll ? names.joined(separator: ", ") : names.prefix(3).joined(separator: ", ") + (names.count > 3 ? "…" : ""))
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+            if names.count > 3 {
+                Button { showAll.toggle() } label: {
+                    if showAll { Text("Show fewer", comment: "The drop card: fold the list of dropped files") } else { Text("Show all", comment: "The drop card: list every dropped file") }
+                }
+                .buttonStyle(.sf(.quiet, size: .small))
+            }
+        }
+    }
+
+    /// Sidefolk's own line, from the extension's permissions and never its words.
+    private func trust(_ offer: ExtensionDropAction) -> some View {
+        let many = names.count > 1, count = names.count, who = offer.extensionName
+        return HStack(alignment: .top, spacing: Theme.Space.xs) {
+            Image(systemName: offer.canSendAway ? "exclamationmark.triangle.fill" : "lock.fill")
+                .font(.system(size: 10, weight: .semibold)).padding(.top, 2)
+                .foregroundStyle(offer.canSendAway ? Theme.warning : Theme.inkFaint)
+            Group {
+                switch (many, offer.canSendAway) {
+                case (false, false): Text("\(who) reads this file only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                case (true, false): Text("\(who) reads these \(count) files only if you choose below, and only this once. It can't use the internet.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
+                case (false, true): Text("\(who) reads this file only if you choose below. It can use the internet, so it could send the file anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name")
+                case (true, true): Text("\(who) reads these \(count) files only if you choose below. It can use the internet, so it could send them anywhere.", comment: "The drop card, Sidefolk's own words: an extension's name and a count")
+                }
+            }
+            .font(Theme.Font.caption).foregroundStyle(offer.canSendAway ? Theme.ink : Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The extension's words, framed apart and under its name, so a title can't read as Sidefolk's.
+    private func frame(_ first: ExtensionDropAction, _ group: [ExtensionDropAction]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(first.extensionName) says it can", comment: "The drop card: above what an extension offers, in its own words")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
+            ForEach(group) { offer in
+                Divider().overlay(Theme.line)
+                Button { chooseOffer(offer, nil) } label: {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(ext: offer.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                        if let detail = offer.detail { Text(ext: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted) }
+                    }
+                    .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.sfBare)
+            }
+            ForEach(group.filter { !$0.menu.isEmpty }) { offer in
+                Divider().overlay(Theme.line)
+                Menu {
+                    ForEach(offer.menu, id: \.self) { item in
+                        Button { chooseOffer(offer, item) } label: { Text(ext: item.title) }
+                    }
+                } label: {
+                    Text("Another choice", comment: "The drop card: a menu of more things an extension offers").font(Theme.Font.callout).foregroundStyle(Theme.link)
+                }
+                .menuStyle(.button).buttonStyle(.sfBare)
+                .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
+            }
+        }
+        .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contrastEdge(radius: Theme.Radius.card)
+    }
+
+    /// Sidefolk's own choices stay available, small, below.
+    private var own: some View {
+        HStack(spacing: Theme.Space.xs) {
+            ForEach(choices.filter { $0 != .ask && ($0 != .openWith || names.count == 1) }, id: \.self) { choice in
+                Button { chooseOwn(choice) } label: { DropCard.words(choice, kind: .file).title }
+                    .buttonStyle(.sf(.quiet, size: .small))
+            }
+        }
     }
 }

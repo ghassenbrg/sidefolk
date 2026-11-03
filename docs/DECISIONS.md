@@ -3852,3 +3852,16 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 
 **Implications:** placing runs after the call, off the host's actor, so a file that appears always has its row. `outputs` raises the risk floor to medium. Output is written twice when the destination is on another disk. Conversion needs room on the home disk. Open, Show and Undo come later (D142) and build on `PlacedFile`, which records what was placed. The source still needs a `"read"` parameter in `paths`. SECURITY T45.
 
+### D141 — A dropped file is the person's own act: one call's read, several files at once, and the card is the yes (2026-11-03)
+**Decision:** the founder's, for all file drops ("All drops"), against the reviewers' recommendation of the new kind only. No shipped or planned extension declares a file drop today, so the exposure is local third-party ones and future ones. An offer with `kinds: ["file"]` runs its tool as `Caller.user`, with `pickedFiles` set only by Sidefolk's drag code. New: `tools.<name>.file_lists` (one read-only list parameter, at most 64 regular files, each granted by itself), `{values}` in a drop's input, and a drop's `menu` (at most 12 choices of at most 30 characters, on the same card, since the read ends with the call). Link, text and folder drops are unchanged; a folder in a drag means no offers.
+
+**The card:** Noor's conditions. Sidefolk's own words come first and name who reads what and whether it could leave the Mac. The extension's offers sit apart under its name. Exact count and every name reachable. Nothing pre-selected, Return doesn't choose, clicks ignored for 400 ms. Sidefolk's own choices stay, smaller.
+
+**Why:** dropping a file is the person's explicit act on that file, and today's alternative for an unshared file is a card offering the whole folder. A list, not a higher cap on `paths`, because that cap counts parameters of one string each, and Sideflow's flows already go through `scope(for:)`, so each listed file gets Guard's normal check.
+
+**Alternatives:** the new kind only, leaving `{value}` drops as they were (the reviewers' choice); a higher `paths` cap; a second step for more choices (it would have no read).
+
+**Reviewed:** an independent security round found the card's internet claim false for one system service, which moved behind `network` as its own sandbox hardening. The card also counts `ai` and `place` as ways out. It found a file's name could reach the AI as the person's words after a refusal, so a drop's refusal now stops there. Menu items and page controls no longer carry paths (they could read in a shared folder with no card). The click guard re-arms on a new drop and covers keyboard and VoiceOver, an extension's name can't hold a line break, and a handed-over path must be a regular file on both routes.
+
+**Implications:** `ExtensionCommandCall.handedOver`, set only here. `ToolExecutor.execute` gains an additive `pickedFiles`, leaving Noor's `pickedFile` as it is. Lists in plans always ask on a card, since a list only matches byte for byte. The cap on list values in History's arguments rises from 20 to 64 **for every tool**, so that a drop's files all show. SECURITY T12, T43.
+

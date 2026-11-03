@@ -1071,6 +1071,19 @@ extensions claim goes to the AI, and the install sheet says so. Within one exten
 `places`: `companion` (its menu), `pocket` (the Pocket's ⋯ and the menu bar's right click), `ask` (a tab, one an extension; it opens a tool or a page). 8 entries, 32 items each, two levels. `kinds`: `file`, `folder`, `link`, `text`; `patterns` are globs on a link's address without its query, or a file's name; none means any of the kind. A file or
 folder goes under an argument the tool lists in `paths`. At most three offers show on the card, after Sidefolk's own, each with your name; a link's first offer takes its reminder's place. Words in `strings/`: `entries.<id>`, `drops.<id>.title|detail`. Everything runs your own tool as the person, through Guard.
 
+**Dropped files are the person's own act (D141).** An offer with `"kinds": ["file"]` runs your tool as the person, with a read of exactly the files dropped, for that one call, wherever they are. Sidefolk's card says so first, in its own words: your name, the file count and names, and whether you can use the internet. Your offers sit apart under your name. Nothing is chosen for them, and Return doesn't choose, so the card is the yes. A retry later has no read. Folders, links and text work as before.
+
+For several files, a tool lists a parameter in `file_lists` and an offer puts `{values}` under it. It's read only, at most 64 files, and each must be a regular file:
+
+```json
+"tools": { "convert": { "title": "Convert files", "file_lists": { "files": "read" }, "outputs": ["jpg", "png"], "timeout": 300 } },
+"drops": [{ "id": "photo", "title": "Opens anywhere", "detail": "JPEG. Any transparency becomes white.", "kinds": ["file"], "patterns": ["*.heic", "*.png"],
+            "tool": "convert", "input": { "files": "{values}", "format": "jpg" },
+            "menu": [{ "title": "PNG", "input": { "format": "png" } }, { "title": "TIFF", "input": { "format": "tiff" } }] }]
+```
+
+Every file must fit `patterns`. Several files only see offers with `{values}`, and more than 64 see none. `{value}` works as before for one file. `menu` (at most 12 choices of at most 30 characters) is more choices on the same card, drawn by Sidefolk: a second step wouldn't have the read, since it ends with the call. Any other argument of yours that names a path is taken out of what you receive for a drop, so only what was dropped can be there.
+
 ### Settings
 
 ```json
