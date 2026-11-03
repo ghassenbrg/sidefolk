@@ -3877,3 +3877,12 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 
 **Implications:** `ResultCard.files` holds `PlacedFile`s and is saved with the conversation, so an old card re-checks identity at each click. A page's `file` action shows a save that failed. Dragging the file out of the card comes with D150's card. SECURITY T45.
 
+### D151 — Send to Sidefolk from Finder (2026-11-03)
+**Decision:** a macOS Service, "Send to Sidefolk", in Finder's right-click menu for files. macOS hands the selected files to Sidefolk as a drag does, and they arrive on the same drop card with the same grant (D141). The person can give it a keyboard shortcut in System Settings. It needs no permission of its own.
+
+**Why:** the founder asked for an easier way in than dragging, in the spirit of Filee's. This is the smallest one, and it doesn't watch anything.
+
+**Alternatives:** a global shortcut that asks Finder for its selection (needs Automation permission); the ring (D152, not built, waiting on a test).
+
+**Implications:** any app can send files this way, as any app can start a drag, so nothing runs until the person chooses on the card (SECURITY T43). Service names aren't translated yet.
+

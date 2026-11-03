@@ -11,6 +11,13 @@ struct Attachment: Equatable {
     var text: String?
     /// Every file in the drag, when there was more than one. `kind` holds the first.
     var files: [URL] = []
+
+    /// Files macOS handed over, from a drag or from Finder's Send to Sidefolk (D151).
+    static func files(_ urls: [URL]) -> Attachment? {
+        guard let first = urls.first else { return nil }
+        return Attachment(kind: .file(first), label: urls.count == 1 ? first.lastPathComponent : String(localized: "\(urls.count) files", comment: "What several dropped files are called"),
+                          text: nil, files: urls)
+    }
 }
 
 /// A reminder the local parser could make from words that didn't start with "remind me".

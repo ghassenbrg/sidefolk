@@ -957,9 +957,8 @@ final class CompanionContainerView: NSView {
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         isDraggingFile = false
         let pb = sender.draggingPasteboard
-        if let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], let file = urls.first {
-            let label = urls.count == 1 ? file.lastPathComponent : String(localized: "\(urls.count) files", comment: "What several dropped files are called")
-            owner?.delegate?.companionReceived(Attachment(kind: .file(file), label: label, text: nil, files: urls))
+        if let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], let files = Attachment.files(urls) {
+            owner?.delegate?.companionReceived(files)
             return true
         }
         if let urls = pb.readObjects(forClasses: [NSURL.self], options: nil) as? [URL], let url = urls.first,

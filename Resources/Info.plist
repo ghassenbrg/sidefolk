@@ -48,6 +48,26 @@
 	<string>2XQJWQBD4W</string>
 	<key>LSFileQuarantineEnabled</key>
 	<true/>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Send to Sidefolk</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>sendToSidefolk</string>
+			<key>NSPortName</key>
+			<string>__NAME__</string>
+			<key>NSSendFileTypes</key>
+			<array>
+				<string>public.item</string>
+			</array>
+			<key>NSRequiredContext</key>
+			<dict/>
+		</dict>
+	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>
