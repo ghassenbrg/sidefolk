@@ -59,23 +59,15 @@ snapshots. **Playtime 1.0.0-snapshot.10** needs Sidefolk snapshot 958, and a cop
   deployed on every push to its `main`. It lives apart because this repository's build number is the commit count of
   `main`, so site commits here would change it. Live since 2026-11-03, checked there: pages, images and font
   load, every address redirects to the HTTPS one. There is no download button until 0.1.0, only a link to the test
-  builds. Its colours and Mochi are the new default theme's (D130), in snapshot 1075. Two extensions are shown ahead of
-  the gallery: Sideflow as available, by the founder's decision, and Formatic as "Coming soon", a label that comes off
-  when Formatic reaches the gallery. **Next, in the site:** real app screenshots from snapshot 1075, and a check of the
-  sample cards' wording in the running app. **For the founder:** turn off Pages on this repository, which still publishes from a
+  builds. Its colours and Mochi are the new default theme's (D130), in snapshot 1075. Home shows the real Today page,
+  light and dark, rendered from 1075's sources and captioned as sample data, and its sample cards use the app's wording
+  (checked in the debug app and in source; the cards weren't seen on screen). Sideflow's tile says to turn on Show
+  snapshots in Get add-ons and that it needs snapshot 1075 or newer. Formatic is shown ahead of the gallery as "Coming
+  soon", a label that comes off when it reaches the gallery. **For the founder:** turn off Pages on this repository, which still publishes from a
   branch; the bundle ID `app.sidefolk.*` against this domain (launch [CHECKLIST](launch/CHECKLIST.md) row 3); the
   similar AI companion the domain research found.
 
 - **Helper folks' art (D73 amended):** all ten paintings in `Sources/SidefolkCharacter/Art/folks/` are now generated transparent, not cut from a white sheet: same names, 384×384 and floor line, no loose notes or sparkles. Checked on magenta, dark and white, at the app's sizes against the old ones, and in `--ui-snapshots` (Today, the desktop floor); Scout, Pip, Byte and Guard are the site's art. `folk-family/<id>/<id>.png` were already clean. `Resources/Character/folks.png` still shows the vector folks from before D73. Next: the snapshot after the 2026-11-03 integration.
-
-- **Website:** `https://getsidefolk.com` (registered at GoDaddy, verified on the founder's GitHub account, HTTPS
-  enforced) serves a one-page placeholder with no download button, from the separate repository
-  [sidefolk-site](https://github.com/ghassenbrg/sidefolk-site): `public/`, deployed on every push to its `main`. It
-  lives apart because this repository's build number is the commit count of `main`, so site commits here would change
-  it. Checked 2026-11-03: every address redirects to the HTTPS one, and the certificate covers `www`. **For the
-  founder:** turn off Pages on this repository, which still publishes from a branch; the bundle ID `app.sidefolk.*`
-  against this domain (launch [CHECKLIST](launch/CHECKLIST.md) row 3); the similar AI companion the domain research
-  found. Next: the real page, from [LANDING-PAGE.md](launch/LANDING-PAGE.md).
 
 - **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** batch A is released in snapshot 958, B1 to B4 are in snapshot 1075 (HISTORY). The founder approved group B too (D160): B5 and B6 (the companion reading History and sessions) are in snapshot 1137, with an important reminder now holding its note against other agents, and B7 (`files.write`) comes last, with the founder's yes by name. **Next audit batch and the founder's open question:** the end of [the audit](research/mcp-tools-audit-2026-11-03.md). **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar; the History and sessions cards on screen, and a live model reading those lines.
 
