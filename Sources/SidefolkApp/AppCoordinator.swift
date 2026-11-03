@@ -15,6 +15,7 @@ extension KeyboardShortcuts.Name {
 final class AppCoordinator {
     let runtime: SidefolkRuntime
     let ask = AskModel()
+    var fullScreenVisit: Task<Void, Never>?
     private(set) var askPanel: AskPanelController!
     /// Whispers, cards and the stack above the companion (D84).
     let sidecard = SidecardController()
@@ -177,6 +178,11 @@ final class AppCoordinator {
 
         notifier.configure()
         monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
+        sidecard.holds = { [weak self] whisper in
+            guard let route = self?.fullScreenRoute(whisper: whisper) else { return false }
+            return route == .wait || route == .notify
+        }
+        monitor.onSpaceChanged = { [weak self] in self?.leftFullScreenMaybe() }
         monitor.onWake = { [weak self] in
             guard let self else { return }
             Task { await self.runtime.rearm() }
@@ -264,6 +270,8 @@ final class AppCoordinator {
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
+        applyFullScreenHiding()
+        sidecard.hidesOverFullScreen = s.hideOverFullScreen
         applyAppIcon(s)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
         companion.setBadges(watching: roster.activeWatchers > 0, busy: roster.liveAgentWork > 0)
@@ -384,6 +392,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command == "companionHide" { showCompanion(false); return }
         if command == "askPinNewest" {
             if let newest = ask.visibleRequests.first { ask.togglePin(newest) }
             return
@@ -874,12 +883,15 @@ final class AppCoordinator {
             ask.add(.approval(request))
             // Other apps' requests appear without taking the keyboard, so a stray Return can't approve them.
             let trusted = ["user", "agent", "command"].contains(request.caller.kind)
+            let notice = AttentionItem(id: Self.approvalNotice(request.id), level: .attention, source: "approval", title: request.summary)
+            guard reachInFullScreen(notice) else { break }
             if !askPanel.isVisible || ask.compact { showAsk(focus: trusted, slipsOnly: true) }
         case .toolFinished(let activity, let ok):
             creditExternal(activity, ok: ok)
             announceDoneWithoutAsking(activity, ok: ok)
         case .approvalResolved(let id, _):
             ask.removeApproval(id: id)
+            notifier.withdraw(id: Self.approvalNotice(id))
         case .reviewExtension(let folder):
             askPanel.hide()
             settingsWindow.review(folder: folder)
@@ -939,6 +951,7 @@ final class AppCoordinator {
         if item.refKind == "ask", item.source == "agent" || item.actions.isEmpty {
             ask.add(.question(item))
             let own = item.source == "agent"
+            guard reachInFullScreen(item) else { return }
             if !askPanel.isVisible { showAsk(focus: own) }
             if own { ask.focusRequest += 1 }
             return
@@ -949,7 +962,7 @@ final class AppCoordinator {
         case .gentle:
             sidecard.present(item, presentation)
         case .attention:
-            companion.stepForward()
+            if reachInFullScreen(item) { companion.stepForward() }
             sidecard.present(item, presentation)
         case .system(let sound, let alsoOnDesktop):
             notifier.show(item, sound: sound && runtime.settings.current.sounds)
@@ -985,6 +998,10 @@ final class AppCoordinator {
 
     /// A click on a notification: a reminder's opens its note or task.
     private func notificationOpened(_ attentionId: String) {
+        if attentionId.hasPrefix(Self.approvalNoticePrefix) {
+            showAsk(focus: false, slipsOnly: true)
+            return
+        }
         Task {
             guard let item = try? await AttentionStore(runtime.db).item(id: attentionId), item.refKind == "reminder", let id = item.refId else { return }
             openReminderItem(id)
@@ -1124,5 +1141,80 @@ final class ClosureTarget: NSObject {
         item.target = target
         item.representedObject = target
         return item
+    }
+}
+
+// MARK: - Over full-screen apps (D138)
+
+extension AppCoordinator {
+    static let approvalNoticePrefix = "approval."
+    static func approvalNotice(_ id: String) -> String { approvalNoticePrefix + id }
+    /// How long the companion stays on a full-screen space it came to, with nothing done and the pointer elsewhere.
+    static let visitSeconds: TimeInterval = 30
+
+    var inFullScreen: Bool {
+        NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false
+    }
+
+    /// What the person is on now decides whether the companion shows: while it visits, it does.
+    func applyFullScreenHiding() {
+        let hide = runtime.settings.current.hideOverFullScreen && inFullScreen
+        sidecard.overFullScreenNow = hide
+        companion.hideOverFullScreen(hide && fullScreenVisit == nil)
+        player.caption.hideOverFullScreen(hide && fullScreenVisit == nil)
+    }
+
+    func fullScreenRoute(whisper: Bool) -> FullScreenNotice.Route {
+        let s = runtime.settings.current
+        return FullScreenNotice.route(hidesOverFullScreen: s.hideOverFullScreen, inFullScreen: inFullScreen, notice: s.fullScreenNotice, whisper: whisper)
+    }
+
+    /// Something that needs the person came up. Whether to show it now; if not, a notification may go out, and it waits.
+    func reachInFullScreen(_ item: AttentionItem) -> Bool {
+        switch fullScreenRoute(whisper: false) {
+        case .asUsual:
+            return true
+        case .visit:
+            visitFullScreen()
+            return true
+        case .notify:
+            notifier.show(item, sound: runtime.settings.current.sounds)
+            return false
+        case .wait:
+            return false
+        }
+    }
+
+    /// The companion comes to the full-screen space, and goes back once it's answered or left alone.
+    private func visitFullScreen() {
+        fullScreenVisit?.cancel()
+        companion.hideOverFullScreen(false)
+        player.caption.hideOverFullScreen(false)
+        fullScreenVisit = Task { [weak self] in
+            let giveUp = Date().addingTimeInterval(Self.visitSeconds)
+            while let self, !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(500))
+                let waiting = self.sidecard.cardOut || (self.askPanel.isVisible && self.ask.compact)
+                let looking = self.sidecard.isUnderPointer || (self.askPanel.isVisible && self.askPanel.frame.contains(NSEvent.mouseLocation))
+                if !waiting || (Date() >= giveUp && !looking) { break }
+            }
+            guard let self, !Task.isCancelled else { return }
+            // Left alone it isn't lost: the card folds into the count, and a slip still waits for an answer there.
+            if let id = self.sidecard.currentId, self.sidecard.cardOut { self.sidecard.foldCurrent(id: id) }
+            if self.askPanel.isVisible, self.ask.compact { self.askPanel.hide() }
+            // A folded card flies to the companion's count: it leaves after that.
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            self.fullScreenVisit = nil
+            self.applyFullScreenHiding()
+        }
+    }
+
+    /// The space changed: what waited can show now, and a slip that waited opens.
+    func leftFullScreenMaybe() {
+        applyFullScreenHiding()
+        sidecard.spaceChanged()
+        guard !inFullScreen, runtime.settings.current.hideOverFullScreen else { return }
+        if !ask.pinnedEntries.isEmpty, !askPanel.isVisible { showAsk(focus: false, slipsOnly: true) }
     }
 }

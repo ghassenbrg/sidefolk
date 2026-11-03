@@ -44,6 +44,18 @@ struct CompanionSettingsView: View {
             SettingsToggle(.eyesFollow, isOn: setting(\.eyesFollowPointer))
             SettingsToggle(.folks, isOn: setting(\.showFolks))
             SettingsToggle(.companionAppIcon, isOn: setting(\.companionAppIcon))
+            SettingsToggle(.hideOverFullScreen, isOn: setting(\.hideOverFullScreen))
+            if model.settings.hideOverFullScreen {
+                SettingsRow(.fullScreenNotice) {
+                    Picker(selection: Binding(get: { model.settings.fullScreenNotice }, set: { n in model.update { $0.fullScreenNotice = n } })) {
+                        Text("A notification from the menu bar", comment: "Settings › Companion › When something needs you in a full-screen app").tag(FullScreenNotice.menuBar)
+                        Text("The companion comes, then goes back", comment: "Settings › Companion › When something needs you in a full-screen app").tag(FullScreenNotice.companion)
+                        Text("Nothing until I leave", comment: "Settings › Companion › When something needs you in a full-screen app").tag(FullScreenNotice.silent)
+                    } label: { Text(verbatim: SettingKey.fullScreenNotice.title) }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+            }
         }
 
         SettingsGroup(title: Text(verbatim: SettingKey.liveliness.section)) {

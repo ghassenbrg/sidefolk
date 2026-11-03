@@ -29909,6 +29909,65 @@
         }
       }
     },
+    "A notification from the menu bar" : {
+      "comment" : "Settings › Companion › When something needs you in a full-screen app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إشعار من شريط القوائم"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Mitteilung aus der Menüleiste"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una notificación desde la barra de menús"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une notification de la barre des menus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una notifica dalla barra dei menu"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーからの通知"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴 막대의 알림"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma notificação da barra de menus"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自菜单栏的通知"
+          }
+        }
+      }
+    },
     "A place I choose" : {
       "localizations" : {
         "ar" : {
@@ -86003,6 +86062,64 @@
         }
       }
     },
+    "Hide over full-screen apps" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإخفاء فوق التطبيقات بملء الشاشة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Vollbild-Apps ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar sobre apps a pantalla completa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer au-dessus des apps en plein écran"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nascondi sopra le app a schermo intero"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルスクリーンのアプリの上では隠す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 화면 앱 위에서 숨기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar sobre apps em tela cheia"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在全屏应用上方隐藏"
+          }
+        }
+      }
+    },
     "Hide yours" : {
       "comment" : "Gallery filter: leave out the companions already on this Mac",
       "localizations" : {
@@ -129160,6 +129277,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "目前没有可显示的内容。"
+          }
+        }
+      }
+    },
+    "Nothing until I leave" : {
+      "comment" : "Settings › Companion › When something needs you in a full-screen app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء حتى أغادر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts, bis ich sie verlasse"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada hasta que salga"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien tant que je n’en sors pas"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niente finché non esco"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "離れるまで何もしない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나갈 때까지 아무것도 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada até eu sair"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "离开之前什么都不做"
           }
         }
       }
@@ -174638,6 +174814,64 @@
         }
       }
     },
+    "Small notices that need nothing wait until you leave the full-screen app, whichever you choose." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنتظر الإشعارات الصغيرة التي لا تطلب شيئًا حتى تغادر التطبيق بملء الشاشة، أيًّا كان اختيارك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleine Hinweise, die nichts brauchen, warten, bis du die Vollbild-App verlässt, egal was du wählst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los avisos pequeños que no piden nada esperan a que salgas de la app a pantalla completa, elijas lo que elijas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les petites notifications sans action attendent que vous quittiez l’app en plein écran, quel que soit votre choix."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I piccoli avvisi che non chiedono nulla aspettano che tu esca dall’app a schermo intero, qualunque sia la scelta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何も求めない小さなお知らせは、どれを選んでもフルスクリーンのアプリを離れるまで待ちます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아무것도 요구하지 않는 작은 알림은 무엇을 고르든 전체 화면 앱을 나갈 때까지 기다립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pequenos avisos que não pedem nada esperam você sair do app em tela cheia, seja qual for a escolha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需操作的小通知,无论你选哪项,都会等到你离开全屏应用。"
+          }
+        }
+      }
+    },
     "Small, medium or large on the desktop." : {
       "comment" : "Settings › Companion: search",
       "localizations" : {
@@ -189690,6 +189924,123 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "The companion and its small notices stay on your ordinary desktops, and Ask still opens wherever you are." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبقى الرفيق وإشعاراته الصغيرة على أسطح المكتب العادية، ويُفتح Ask أينما كنت."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Begleiter und seine kleinen Hinweise bleiben auf deinen normalen Schreibtischen, und Ask öffnet sich immer dort, wo du bist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El compañero y sus pequeños avisos se quedan en tus escritorios normales, y Ask se abre siempre donde estés."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le compagnon et ses petites notifications restent sur vos bureaux ordinaires, et Ask s’ouvre toujours où que vous soyez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il compagno e i suoi piccoli avvisi restano sulle tue scrivanie normali, e Ask si apre sempre dove ti trovi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンと小さなお知らせは通常のデスクトップにとどまり、Ask はどこにいても開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동반자와 작은 알림은 일반 데스크탑에 머물고, Ask는 어디서든 열립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O companheiro e seus pequenos avisos ficam nas suas mesas comuns, e o Ask sempre abre onde você estiver."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴和它的小通知留在普通桌面上,Ask 则在你所在的任何地方都能打开。"
+          }
+        }
+      }
+    },
+    "The companion comes, then goes back" : {
+      "comment" : "Settings › Companion › When something needs you in a full-screen app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يأتي الرفيق ثم يعود"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Begleiter kommt und geht wieder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El compañero viene y luego se va"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le compagnon vient, puis repart"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il compagno arriva, poi torna indietro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンパニオンが来て、また戻る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동반자가 왔다가 돌아가요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O companheiro vem e depois volta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伙伴过来,然后回去"
           }
         }
       }
@@ -219546,6 +219897,64 @@
         }
       }
     },
+    "When something needs you there" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عندما يحتاج إليك شيء هناك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn dort etwas dich braucht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando algo te necesita allí"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand quelque chose vous attend là-bas"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando lì qualcosa ha bisogno di te"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そこであなたが必要なとき"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그곳에서 내가 필요할 때"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando algo precisa de você lá"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当那里有事需要你时"
+          }
+        }
+      }
+    },
     "When the companion is tucked away or in the menu bar, reminders arrive as notifications." : {
       "localizations" : {
         "ar" : {
@@ -248897,6 +249306,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“from”必须是日期。"
+          }
+        }
+      }
+    },
+    "“full_screen_notice” must be companion, menuBar or silent." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن يكون «full_screen_notice» إما companion أو menuBar أو silent."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„full_screen_notice“ muss companion, menuBar oder silent sein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«full_screen_notice» debe ser companion, menuBar o silent."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« full_screen_notice » doit être companion, menuBar ou silent."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«full_screen_notice» deve essere companion, menuBar o silent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「full_screen_notice」は companion、menuBar、silent のいずれかにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“full_screen_notice”는 companion, menuBar, silent 중 하나여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“full_screen_notice” deve ser companion, menuBar ou silent."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“full_screen_notice”必须是 companion、menuBar 或 silent。"
           }
         }
       }

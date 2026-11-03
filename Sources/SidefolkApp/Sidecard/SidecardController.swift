@@ -18,6 +18,21 @@ final class SidecardController {
     /// Cards that folded into the stack since it was last empty: when the last of them is answered, "All clear".
     private var folded: Set<String> = []
     var anchorProvider: (() -> (NSRect, NSScreen)?)?
+    /// The person chose not to have the companion over full-screen apps (D138): a card that needs them still goes there,
+    /// while whispers and the count stay with the companion.
+    var hidesOverFullScreen = false {
+        didSet {
+            followSpaces()
+            spaceChanged()
+        }
+    }
+    private var hiddenOverFullScreen = false
+    /// Right now the person is on a full-screen app it's kept off.
+    var overFullScreenNow = false {
+        didSet { followSpaces() }
+    }
+    /// Whether something of this kind waits for now (D138).
+    var holds: ((_ whisper: Bool) -> Bool)?
     var onRespond: ((AttentionItem, String?) -> Void)?
     /// A gentle notice faded on its own: it needed no decision, so it is done.
     var onAutoDismiss: ((AttentionItem) -> Void)?
@@ -87,6 +102,10 @@ final class SidecardController {
     func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
         if model.item?.id == item.id, model.shape != .stack { return }
         let card = Self.isCard(item, presentation)
+        if holds?(!card) == true {
+            if !queue.contains(where: { $0.0.id == item.id }) { queue.append((item, presentation)) }
+            return
+        }
         if hosted.panel.isVisible, model.shape != .stack, let current = model.item {
             // A whisper never pushes anything aside: it waits its turn.
             guard card else {
@@ -132,6 +151,7 @@ final class SidecardController {
         fanEnd?.cancel()
         model.item = item
         model.shape = card ? .card : .whisper
+        followSpaces()
         model.pausedLeft = nil
         timer?.cancel()
         switch presentation {
@@ -206,7 +226,8 @@ final class SidecardController {
     private func watchWhisper(_ item: AttentionItem) {
         timer = Task { [weak self] in
             while let self, !Task.isCancelled, self.model.item?.id == item.id, self.model.shape == .whisper {
-                if self.model.hovering {
+                // Nobody sees it over a full-screen app: its time doesn't run there (D138).
+                if self.model.hovering || (self.hidesOverFullScreen && self.overFullScreenNow) {
                     if self.model.pausedLeft == nil {
                         self.model.pausedLeft = max(0, self.model.deadline?.timeIntervalSinceNow ?? 0)
                         self.model.deadline = nil
@@ -227,6 +248,7 @@ final class SidecardController {
         guard let item = model.item, model.shape == .whisper else { return }
         timer?.cancel()
         model.shape = .card
+        followSpaces()
         model.pausedLeft = nil
         // Grown on purpose, it stays until answered or closed.
         appear()
@@ -280,9 +302,24 @@ final class SidecardController {
     }
 
     private func next() {
-        guard !queue.isEmpty else { return }
-        let (item, presentation) = queue.removeFirst()
+        guard let first = queue.firstIndex(where: { holds?(!Self.isCard($0.0, $0.1)) != true }) else { return }
+        let (item, presentation) = queue.remove(at: first)
         show(item, presentation, card: Self.isCard(item, presentation))
+    }
+
+    var isUnderPointer: Bool { hosted.panel.isVisible && hosted.panel.frame.contains(NSEvent.mouseLocation) }
+
+    /// The space or front app changed: what was held may have somewhere to show now.
+    func spaceChanged() {
+        followSpaces()
+        if !hosted.panel.isVisible { next() }
+    }
+
+    private func followSpaces() {
+        let hide = hidesOverFullScreen && overFullScreenNow && model.shape != .card
+        // Only ever undoing its own: the panel's fades are nobody else's business.
+        if hide { hosted.panel.alphaValue = 0 } else if hiddenOverFullScreen { hosted.panel.alphaValue = 1 }
+        hiddenOverFullScreen = hide
     }
 
     private func hide() {
@@ -295,7 +332,8 @@ final class SidecardController {
     /// Ask opened beside the companion: a card folds into the stack (Ask shows it on top, under "Needs you") and a
     /// whisper, which needed nothing, goes; one surface at a time.
     func yieldToAsk() {
-        queue.removeAll { !Self.isCard($0.0, $0.1) }
+        // What's held has yet to be seen, so it still waits (D138).
+        if holds?(true) != true { queue.removeAll { !Self.isCard($0.0, $0.1) } }
         guard hosted.panel.isVisible else { return }
         switch model.shape {
         case .card:
@@ -343,6 +381,7 @@ final class SidecardController {
                 self.model.stack = items
                 self.model.item = nil
                 self.model.shape = .stack
+                self.followSpaces()
                 self.appear()
                 self.fanOut()
             }

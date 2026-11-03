@@ -473,7 +473,7 @@ final class CompanionWindowController {
     func show(presence: PresenceMode) {
         self.presence = presence
         if presence == .menuBarOnly {
-            panel.orderOut(nil)
+            hide()
             return
         }
         if !panel.isVisible {
@@ -486,9 +486,23 @@ final class CompanionWindowController {
 
     func hide() {
         panel.orderOut(nil)
+        // The pointer stops being tracked with it, so its tip wouldn't go by itself.
+        if tipFor != nil { showTip(nil) }
     }
 
     var isVisible: Bool { panel.isVisible }
+
+    /// Kept off a full-screen app (D138). Still there, so everything placed beside it stays right and it comes straight back;
+    /// a window's Space behaviour doesn't do this, measured: it stays on a full-screen space all the same.
+    private(set) var hiddenOverFullScreen = false
+
+    func hideOverFullScreen(_ hide: Bool) {
+        guard hide != hiddenOverFullScreen else { return }
+        hiddenOverFullScreen = hide
+        panel.alphaValue = hide ? 0 : 1
+        panel.ignoresMouseEvents = hide || panel.ignoresMouseEvents
+        if hide, tipFor != nil { showTip(nil) }
+    }
 
     /// "Only when needed": only the top of the head shows until something needs the user.
     func setPeeking(_ peek: Bool, animated: Bool) {
@@ -748,7 +762,11 @@ final class CompanionWindowController {
     }
 
     private func pointerMoved(_ p: NSPoint) {
-        guard panel.isVisible else { return }
+        // Kept off a full-screen app (D138) there's nothing under the pointer to pet or fan out.
+        guard panel.isVisible, !hiddenOverFullScreen else {
+            if tipFor != nil { showTip(nil) }
+            return
+        }
         let frame = panel.frame
         // Click-through everywhere except the character's body and the folks. The silhouette is only
         // tested when the pointer is inside the character's box, and the flag only written on change.

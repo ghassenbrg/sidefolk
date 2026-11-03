@@ -77,6 +77,20 @@ final class SelfService: SelfReporting {
         return was
     }
 
+    func setShowsOverFullScreen(_ shows: Bool) async -> Bool {
+        let was = !runtime.settings.current.hideOverFullScreen
+        await runtime.settings.update { $0.hideOverFullScreen = !shows }
+        app.settingsChanged()
+        return was
+    }
+
+    func setFullScreenNotice(_ notice: FullScreenNotice) async -> FullScreenNotice {
+        let was = runtime.settings.current.fullScreenNotice
+        await runtime.settings.update { $0.fullScreenNotice = notice }
+        app.settingsChanged()
+        return was
+    }
+
     func setTheme(_ name: String) async -> (name: String, was: String)? {
         let wanted = name.lowercased()
         guard let theme = ThemeLibrary.app(runtime.paths).all().first(where: { $0.tokens.name.lowercased() == wanted || $0.id == name }) else { return nil }

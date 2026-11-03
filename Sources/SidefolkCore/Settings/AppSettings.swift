@@ -244,6 +244,9 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var showFolks = true
     /// The Dock shows the companion's icon rather than Sidefolk's while the app is open (D118).
     public var companionAppIcon = false
+    /// The companion and its small cards stay out of full-screen apps (D138). Ask and what waits for an answer still go there.
+    public var hideOverFullScreen = false
+    public var fullScreenNotice: FullScreenNotice = .menuBar
     public var sounds = true
     /// Quiet mode end; nil when off, `.distantFuture` until turned off.
     public var quietUntil: Date?
@@ -327,6 +330,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.sleepWhenIdle, &sleepWhenIdle)
         read(.showFolks, &showFolks)
         read(.companionAppIcon, &companionAppIcon)
+        read(.hideOverFullScreen, &hideOverFullScreen)
+        read(.fullScreenNotice, &fullScreenNotice)
         read(.sounds, &sounds)
         quietUntil = try? c.decodeIfPresent(Date.self, forKey: .quietUntil)
         focusUntil = try? c.decodeIfPresent(Date.self, forKey: .focusUntil)

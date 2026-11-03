@@ -87,6 +87,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## Known gaps
 
+- **Hide over full-screen apps (D138) isn't proven on a real full-screen space:** the check is armed for an idle Mac. The companion's visit, the notification and a real click need a person there.
 - **Normal windows still open inside another app's full-screen space** when no click asked for them (measured, D137): snapshot 916's change didn't cure it. A fix on `.fullScreenNone` is in progress. A real click hasn't been measured. Test copies' companions and panels still show, sessions have to opt in to `SIDEFOLK_QUIET_WINDOWS=1`, and in 916 macOS keeps a corner of a quiet window on screen.
 - **A web watch on a sign-in page that answers 200** watches the sign-in page: "any change" and `contains` can't tell (D135). A page with no text at all, and words never seen, now say so.
 - **Small things seen in phase 5:** the greeting says "Good evening" after midnight.

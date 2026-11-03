@@ -349,6 +349,7 @@ struct SettingInlineControl: View {
         case .eyesFollow: toggle(setting(\.eyesFollowPointer))
         case .folks: toggle(setting(\.showFolks))
         case .companionAppIcon: toggle(setting(\.companionAppIcon))
+        case .hideOverFullScreen: toggle(setting(\.hideOverFullScreen))
         case .sleep: toggle(setting(\.sleepWhenIdle))
         case .sounds: toggle(setting(\.sounds))
         case .hiddenNotifications: toggle(setting(\.useSystemNotificationsWhenHidden))

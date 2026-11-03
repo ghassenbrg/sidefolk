@@ -3763,3 +3763,15 @@ and a strong midnight blue (too strong, kept in the local sandbox for possible t
 **Brand art:** Mochi's solo portrait and full-body image follow the newer design too (masters `rabbit-portrait.png`, `mascot-mochi.png`; the old ones in `Brand/archive/mochi-2026-10/`). The app icon stays as approved.
 
 **The live 3D Mochi follows it, with the same model and rig:** deep navy ear tips, a deeper scarf, bigger darker eyes with quieter reflections, and an open smile at rest (`face.moods`, for Mochi only). Its portrait and avatar are redone. Its build stays slimmer than the art, since that would need a new model. The 2D Mochi stays the flat drawn style.
+
+### D138 — The companion can stay off full-screen apps, and the person chooses how it reaches them there (2026-11-03)
+
+**Decision:** a setting in Settings › Companion, also set by asking the companion (`sidefolk.look`), off by default so nobody sees a change: "Hide over full-screen apps". On, the companion and its words go invisible while the frontmost app is full screen, stay on ordinary desktops and over ordinary windows as today, and come back by themselves. Dropping `.fullScreenAuxiliary` was tried first and measured not to work: the panel stays on a full-screen space all the same. Ask, the menu bar, palettes and extensions' surfaces are opened on purpose and are unchanged.
+**When something needs them there,** cards, agents' approvals and questions go the way they chose (`FullScreenNotice`):
+- **A notification from the menu bar** (the default, the least in the way that still reaches them): `SystemNotifier`, Sidefolk's own notifications. Clicking one for an approval opens its slip there. If the Mac's notifications are off for Sidefolk, it reaches them as the third choice does.
+- **The companion comes, then goes back:** it joins that space with the card or slip, and leaves once it's answered, or after 30 seconds with nothing done and the pointer elsewhere. Left alone, a card folds into the count and a slip keeps waiting.
+- **Nothing until I leave:** no popup; what waits shows when they leave, and the count on the menu bar has it meanwhile.
+Whispers wait in all three: they need nothing, so they aren't worth interrupting a full-screen app. Critical alerts stay a notification, as today. An ordinary settings key, no migration.
+**Why:** the founder chose this reading, over "behind every window" (which would also cover Chrome in a normal window, and can still be added as a third choice), and asked for all three ways of being reached.
+**Whether it's full screen** uses the existing `Fullscreen.isFrontmostFullscreen`: a window of the frontmost app covering a whole screen. Something can wait for a maximised window that isn't really full screen; it shows on the next space change.
+**Verification status:** see HISTORY. Whether a space's panels actually leave and return is measured on an idle Mac.

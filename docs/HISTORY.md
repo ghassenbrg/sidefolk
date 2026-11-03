@@ -11,6 +11,10 @@ merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.
 
 `sidefolk-coordinator` (`.claude/skills/`, mirrored in `.agents/skills/`) holds what a session coordinating the others needs to know here: the repositories, how D, T and migration numbers are given out, the app and gallery release mechanics, the session messages, and lessons from past incidents. It holds nothing perishable and gives the commands to read today's state. Checked: its read-only commands were run against `origin/main`, the catalog diff against the live catalog, and an independent reader went through it cold. Not run: pushes, `gh workflow run`, `build.py --sidefolk-build`, `publish.sh`, which only a real release should run.
 
+## 2026-11-03: The companion can stay off full-screen apps (D138)
+
+The founder's choice of reading, and all three ways of being reached there, in D138. Verified: `FullScreenNoticeTests`, `SelfToolsTests`, `swift test` in full, and the debug app with the setting on, on an ordinary space. A review found: held whispers never drained when switching apps on one space, whispers timing out unseen, Ask dropping what was held, duplicates after a long hold, and hovering a companion that wasn't there. All fixed. **Not verified yet:** on a real full-screen space, that it leaves and comes back (a check is armed for an idle Mac), and the companion's visit, the notification and a real click, which need a person there.
+
 ## 2026-11-03: Sandbox data-folder hardening, and dev.swift aimed at one app
 
 **Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.

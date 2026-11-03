@@ -14,8 +14,8 @@ enum WindowActivation {
     }
 
     #if DEBUG
-    /// A test run's windows stay out of the person's way (AGENTS.md): drawn off-screen, as the snapshots are, so they still
-    /// lay out and `snap` still reads them, with nothing brought forward. Clicks and keys need a run without it.
+    /// A test run's windows stay out of the person's way (AGENTS.md): invisible, so they still lay out and `snap` still
+    /// reads them, with nothing brought forward. Clicks and keys need a run without it.
     private static let quiet = ProcessInfo.processInfo.environment["SIDEFOLK_QUIET_WINDOWS"] == "1"
     #endif
 
@@ -25,11 +25,10 @@ enum WindowActivation {
         if quiet {
             // Not remembered, or the next run opens off-screen too.
             window.setFrameAutosaveName("")
-            // Moved after it's up, unseen until then: AppKit brings a titled window back on screen as it's ordered in.
+            // Invisible where it is: AppKit won't let a titled window leave the screen.
             window.alphaValue = 0
+            window.ignoresMouseEvents = true
             window.orderFrontRegardless()
-            window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
-            window.alphaValue = 1
             return
         }
         #endif
@@ -37,12 +36,17 @@ enum WindowActivation {
         open.insert(ObjectIdentifier(window))
         if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
         Task { @MainActor in
-            // A menu-bar app's window may open inside another app's full-screen space, and the switch to a regular app
-            // takes effect a moment later. Waiting also keeps the menu bar from going stale.
+            // Waiting also keeps the menu bar from going stale.
             await untilRegular()
-            NSApp.activate()
+            // Measured (D137): without this a normal window lands inside another app's full-screen space, even active. Refused
+            // that space, it opens on the desktop, and macOS goes there; it was asked for, so activating may insist.
+            window.collectionBehavior = [.managed, .fullScreenNone]
+            NSApp.activate(ignoringOtherApps: true)
             CompanionAppIcon.reapply()
             window.makeKeyAndOrderFront(nil)
+            // Placed: it can go full screen itself like any window.
+            try? await Task.sleep(for: .milliseconds(300))
+            window.collectionBehavior = [.managed, .fullScreenPrimary]
         }
     }
 
