@@ -473,7 +473,7 @@ final class CompanionWindowController {
     func show(presence: PresenceMode) {
         self.presence = presence
         if presence == .menuBarOnly {
-            panel.orderOut(nil)
+            hide()
             return
         }
         if !panel.isVisible {
@@ -486,6 +486,8 @@ final class CompanionWindowController {
 
     func hide() {
         panel.orderOut(nil)
+        // The pointer stops being tracked with it, so its tip wouldn't go by itself.
+        if tipFor != nil { showTip(nil) }
     }
 
     var isVisible: Bool { panel.isVisible }
@@ -755,7 +757,10 @@ final class CompanionWindowController {
 
     private func pointerMoved(_ p: NSPoint) {
         // Off this space (D138) there's nothing under the pointer to pet or fan out.
-        guard panel.isVisible, panel.isOnActiveSpace else { return }
+        guard panel.isVisible, panel.isOnActiveSpace else {
+            if tipFor != nil { showTip(nil) }
+            return
+        }
         let frame = panel.frame
         // Click-through everywhere except the character's body and the folks. The silhouette is only
         // tested when the pointer is inside the character's box, and the flag only written on change.

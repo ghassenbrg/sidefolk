@@ -392,6 +392,7 @@ final class AppCoordinator {
     #if DEBUG
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
+        if command == "companionHide" { showCompanion(false); return }
         if command == "askPinNewest" {
             if let newest = ask.visibleRequests.first { ask.togglePin(newest) }
             return
