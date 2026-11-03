@@ -129,6 +129,10 @@ import Testing
         #expect(try !runs("/usr/bin/stat", theirs.path))
         #expect(try !runs("/bin/test", "-e", theirs.path))
         #expect(try !runs("/bin/test", "-e", checkout.appendingPathComponent("Package.swift").path))
+        // The same folders by the data volume's own name: an existing name and a missing one must look alike there too.
+        let throughTheVolume = "/System/Volumes/Data" + theirs.path
+        #expect(try !runs("/bin/test", "-e", throughTheVolume))
+        #expect(try !runs("/bin/test", "-e", throughTheVolume + "-missing"))
     }
 
     @Test func anotherExtensionsDataCantEvenBeSeen() throws {

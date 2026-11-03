@@ -81,11 +81,7 @@ public struct SandboxProfile: Sendable, Hashable {
         sb += "(allow file-read* file-write* (subpath \(add("DATA_DIR", try real(inputs.dataDir)))))\n"
         // What's inside is the program's; the folder itself is Sidefolk's.
         sb += "(deny file-write-unlink file-write-create (literal (param \"DATA_DIR\")))\n"
-        // Everything else's data stays out of sight: even when a file changed is no business of another extension's.
-        if let allData = inputs.allData {
-            sb += "(deny file-read-metadata file-test-existence (subpath \(add("ALL_DATA", try real(allData)))))\n"
-            sb += "(allow file-read-metadata file-test-existence (literal (param \"ALL_DATA\")) (subpath (param \"DATA_DIR\")))\n"
-        }
+        let allData = try inputs.allData.map { add("ALL_DATA", try real($0)) }
 
         let reads = try inputs.permissions.read.map(real)
         if !reads.isEmpty {
@@ -151,6 +147,12 @@ public struct SandboxProfile: Sendable, Hashable {
         sb += "\n;; what it was given, and the folders above that, by name only\n(allow file-read-metadata file-test-existence\n"
         sb += given.map { "  (subpath (param \"\($0.key)\"))" }.joined(separator: "\n") + (given.isEmpty ? "" : "\n")
         sb += ways.sorted().enumerated().map { "  (literal \(add("WAY_\($0.offset)", $0.element)))" }.joined(separator: "\n") + ")\n"
+        // Everything else's data stays out of sight, whatever was given above it: even when a file changed is no business of
+        // another extension's. Last, so nothing opened here undoes it.
+        if let allData {
+            sb += "(deny file-read-metadata file-test-existence (subpath \(allData)))\n"
+            sb += "(allow file-read-metadata file-test-existence (literal \(allData)) (subpath (param \"DATA_DIR\")))\n"
+        }
         return SandboxProfile(text: sb, parameters: params)
     }
 
@@ -173,7 +175,7 @@ public struct SandboxProfile: Sendable, Hashable {
     ;; what dyld, libSystem and interpreters need
     (allow file-read-metadata)
     ;; nothing in people's folders can be seen by name or looked up by a file's number (fsgetpath); what it's given opens below
-    (deny file-read-metadata file-test-existence (subpath "/Users"))
+    (deny file-read-metadata file-test-existence (subpath "/Users") (subpath "/System/Volumes/Data/Users"))
     (allow file-read*
       (literal "/")
       (subpath "/usr/lib") (subpath "/usr/share") (subpath "/System") (subpath "/Library/Apple")

@@ -937,7 +937,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 
 ;; what dyld/libSystem/interpreters need
 (allow file-read-metadata)                       ; stat for path resolution (leaks existence outside /Users)
-(deny file-read-metadata file-test-existence (subpath "/Users"))   ; opened again for what it was given and the folders above that
+(deny file-read-metadata file-test-existence (subpath "/Users") (subpath "/System/Volumes/Data/Users"))   ; opened again for what it was given and the folders above that
 (allow file-read*
   (literal "/")                                  ; required: without it even /bin/echo aborts
   (subpath "/usr/lib") (subpath "/usr/share") (subpath "/System") (subpath "/Library/Apple")
@@ -990,6 +990,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - **`ai` and `place` carry words out through Sidefolk,** by design: up to 8,000 characters to the person's AI, and 80 to the place search. Sidefolk warns about both on the drop card.
 - **Two extensions working together** can pass data through a process's command line, which other processes of the same user can read. No sandbox rule stopped it. If one of them has `network`, data can leave. That's why the drop card says an extension can't go online *by itself*.
 - **Anything can read** other same-user processes' command lines, the Mac's serial number and its MAC addresses. An extension with `network` could send those.
+- **Other processes' paths:** an extension can read the working folders and open files of other processes of the same user. No sandbox rule fully stopped it.
 - **File names outside `/Users`:** a lookup by inode number still resolves names elsewhere on the disk, such as in `/Applications` and `/private/var`, though no file's contents. Under `/Users` it finds only what the extension was given.
 
 **What runtimes need to start** *(verified)*:
