@@ -73,7 +73,7 @@ extension ExtensionHost {
 
     /// Why a job can't be paid for, or nil once it's counted.
     private func spendOnAI(_ id: String) async -> String? {
-        guard let rt = runtimes[id], let ai = rt.pin.permissions?.ai, rt.preferences.aiOn != false else { return "A job uses the person's AI, and this extension hasn't been given it." }
+        guard let rt = runtimes[id], let ai = rt.pin.permissions?.ai, rt.preferences.aiOn != false, configuration.aiName() != nil, configuration.aiHeldBack() == nil else { return "A job uses the person's AI, and this extension hasn't been given it." }
         let today = AIHelper.dayKey(Date())
         guard rt.preferences.calls(on: today) < ai.dailyCap else { return "Today's AI requests are used up." }
         await updatePreferences(id) { p in
@@ -82,6 +82,15 @@ extension ExtensionHost {
         }
         events.changed(.extensions)
         return nil
+    }
+
+    /// A job that never ran cost nothing: "Not now" doesn't use up the day's AI requests.
+    private func refundAI(_ id: String, tool: String) async {
+        guard tool == CompanionJobTool.name else { return }
+        let today = AIHelper.dayKey(Date())
+        await updatePreferences(id) { p in
+            if p.calls(on: today) > 0 { p.aiCalls = p.calls(on: today) - 1 }
+        }
     }
 
     private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "") async {
@@ -97,6 +106,7 @@ extension ExtensionHost {
             reply["text"] = .string(carries ? "Done." : result.text)
             reply["untrusted"] = .bool(result.untrusted)
         case .denied(let why):
+            await refundAI(id, tool: tool)
             reply["ok"] = false
             reply["status"] = "denied"
             reply["text"] = .string(why)
@@ -105,6 +115,7 @@ extension ExtensionHost {
             reply["status"] = "failed"
             reply["text"] = .string(error.message)
         case .unanswered:
+            await refundAI(id, tool: tool)
             reply["ok"] = false
             reply["status"] = "unanswered"
             reply["text"] = .string(outcome.problem?.message ?? "")

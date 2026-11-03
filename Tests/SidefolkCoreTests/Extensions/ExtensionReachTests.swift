@@ -142,12 +142,26 @@ struct ExtensionReachTests {
         #expect(ExtensionPlanRules.standing(tool: facade, template: ["opts": ["a": "short"]]))
     }
 
+    @Test func peoplesOwnWritingIsPlainAndHiddenCharactersArent() {
+        for words in ["Tidy up ❤️ today", "👩‍💻 at work", "❤️‍🔥 hot", "می‌خواهم", "क्‍ष", "Hello"] { #expect(ExtensionPlanRules.plain(words), "\(words)") }
+        for words in ["a\u{200D}", "\u{200D}a", "a\u{200D}\u{200D}b", "a\u{200C} b", "\u{FE0F}a", "a\u{FE0F}\u{FE0F}b", "a\u{00AD}b", "a\u{E0100}b", "a\u{202E}b", "a\u{200B}b"] {
+            #expect(!ExtensionPlanRules.plain(words), "\(words.unicodeScalars.map { String($0.value, radix: 16) })")
+        }
+    }
+
+    @Test func aJobThatWouldBeRefusedDoesntStand() {
+        let job = CompanionJobTool(agent: CompanionAgentSlot())
+        let facade = ExternalFacade(base: job, spec: ExtensionActionPolicy.spec(job))
+        #expect(!ExtensionPlanRules.standing(tool: facade, template: ["job": .string(String(repeating: "a", count: CompanionJobTool.longest + 1))]))
+        #expect(ExtensionPlanRules.standing(tool: facade, template: ["job": .string(String(repeating: "a", count: CompanionJobTool.longest))]))
+    }
+
     @Test func aFailedJobNobodyReadStaysMarkedAsOutsideWords() async throws {
         let (world, runtime, _) = try await world([.failure(UserFacingError("No."))])
         let job = await runtime.submit(AgentRequest(text: "Tidy up", job: AgentRequest.Job(read: false)))
         for await _ in job.events {}
         let first = try await world.exchanges.conversation(job.threadId).first
-        #expect(first?.meta["tainted"]?.boolValue == true)
+        #expect(first?.meta?["tainted"]?.boolValue == true)
     }
 
     @Test func aJobThatsTooLongOrHidesCharactersIsRefused() async throws {

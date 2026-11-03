@@ -112,6 +112,8 @@ enum ExtensionPlanRules {
         let name = tool.spec.name
         guard tool.spec.risk != .high, !ExtensionActionPolicy.neverStanding.contains(name), let fields = template.objectValue else { return false }
         guard tool.scope(for: template).text == nil else { return false }
+        // What would be refused when it runs doesn't stand on a card that promised it.
+        if name == CompanionJobTool.name, (fields["job"]?.stringValue?.count ?? 0) > CompanionJobTool.longest { return false }
         // What runs is what the card showed: nothing hidden in a written value, nothing past where the card stops.
         guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }),
               objectsFit(template) else { return false }
@@ -121,10 +123,25 @@ enum ExtensionPlanRules {
         }
     }
 
-    /// What shows is all there is: nothing the card would strip, nothing invisible, nothing so long in bytes that characters hide it.
+    /// What shows is all there is: nothing the card would strip, nothing invisible, nothing so long in bytes that characters hide it. What people's own writing needs stays:
+    /// a joiner between letters (Persian, Hindi) or in an emoji, and an emoji's variation selector, each where it joins something, so none can carry anything by itself.
     static func plain(_ text: String) -> Bool {
-        same(ExtensionText.clean(text), text) && text.utf8.count <= ExtensionPlanWords.valueLimit * 4
-            && !text.unicodeScalars.contains { $0.properties.isDefaultIgnorableCodePoint }
+        guard text.utf8.count <= ExtensionPlanWords.valueLimit * 4 else { return false }
+        let scalars = Array(text.unicodeScalars)
+        var rest = String.UnicodeScalarView()
+        for (i, s) in scalars.enumerated() {
+            let before = i > 0 ? scalars[i - 1] : nil, after = i + 1 < scalars.count ? scalars[i + 1] : nil
+            func shows(_ o: Unicode.Scalar?) -> Bool { o.map { !$0.properties.isDefaultIgnorableCodePoint && !$0.properties.isWhitespace } ?? false }
+            switch s.value {
+            case 0xFE0F where shows(before): continue
+            case 0x200C, 0x200D:
+                if shows(after), shows(before) || before?.value == 0xFE0F { continue }
+                return false
+            default: rest.append(s)
+            }
+        }
+        let shown = String(rest)
+        return same(ExtensionText.clean(shown), shown) && !shown.unicodeScalars.contains { $0.properties.isDefaultIgnorableCodePoint }
     }
 
     /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.
