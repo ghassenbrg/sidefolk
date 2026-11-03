@@ -23,6 +23,10 @@ face: `spark`). Copy what fits rather than inventing.
 The founder's bar: movie-quality, cute, alive; it really sits, lies, sleeps, bows and waves; it
 looks like its sheet. Mouth and nose never touch.
 
+**Never show a companion, a still or a proof round, until the window check (§6, step 6) has passed in that same
+state of the model.** The founder has caught ears and feathers cut flat at the top, as if the character stood in a box,
+on more than one companion. On Noor's proof the cause was simply that the check hadn't been run.
+
 **What the founder catches on the desktop**, so check each before showing anything (§6 has the tools): a part cut
 off by the window's edge while it is petted, hops or lies down; a neck that bends oddly; a rest that looks like a doll
 thrown down instead of a creature resting; stair-stepped or speckled colour edges up close (a visor's rim); a logo or
@@ -171,8 +175,14 @@ Only a companion meant to ship inside the app goes in `Resources/Companions3D/`.
   thrown on the floor. Sitting with the feet swinging one after the other and the head looking around, dozing with
   the chin dipping a little on each slow breath (`POSTURES.sit` plus small sines) read as a creature resting. A big
   head never droops or rolls far: it reads as a broken neck. **skip**: moves the body can't do (`sniff` for a robot).
-- **Big heads and the window.** The app shows the character in a square that is `frame.sidefolk` units tall from
-  10% under the feet: a head as wide as the others are tall needs more (2.5). `pivot` is the height above the
+- **Room in the window (set it first, for every companion, not only big heads).** The app shows the character in a
+  square that is `frame.sidefolk` units tall from 10% under the feet, so the top of the window is `0.9 × frame.sidefolk`
+  above the floor, and the character has to fit well below it at rest. Measure from the tallest point of any part,
+  antenna, ear, feather or hair tip included, and leave room for what it does in motion: hops, stretches, and springy
+  parts that lag and swing up. Tall thin tips need room too (a 1.93-tall moth whose feathers touched the top at 2.3 needed
+  2.7), and a head as wide as the others are tall needs more (2.5). `roomAbove()`, which eases hops under the ceiling,
+  reads only the body mesh's bounding box: a part hung on a bone in `extras` isn't in it, so the engine won't lower a hop
+  for it. Skin tall parts into the body where you can; otherwise raise the box in `extras` (`body.geometry.boundingBox.max.y`, to the part's tip plus a little), and the shared hops, jumps and stretches then stay under the ceiling. `pivot` is the height above the
   floor that whole-body turns go round (flips, lying), in world units, **not** model coordinates: put it at the
   body's middle (about 0.9 for a 1.9-tall body); at the feet a flip swings through the floor. `petLean` (default 1)
   makes a big head lean less into a stroking hand (0.55: a full lean swung a big head's ears out of the window and bent its
@@ -220,8 +230,13 @@ Go through all of these before showing it; each caught a real mistake:
    Bring the white, red and black zones within a few points of the sheet, median brightness first (the "other" row
    is mostly anti-aliased edges): set colours by zone in the material, deepen reds, take blue out of blacks, then
    `light.env` for a white body that stays dim. Look at the two side by side after the numbers agree.
-6. **The window**: `edges(companion)` in a `?frame=sidefolk&capture` page must return `{}`: it plays idle, petting
-   from both sides, every move, posture and state in the app's square framing and names whatever touches an edge.
+6. **The window (a gate: nothing is shown until it passes)**: `edges(companion)` in a `?frame=sidefolk&capture` page must
+   return `{}`: it plays idle, petting from both sides, every move, posture and state in the app's square framing and
+   names whatever touches an edge. Run it again after anything that changes a silhouette, proportions, a chain or
+   `frame`, and on proof models too. It takes minutes on a heavy model: start it without awaiting
+   (`window.r = 'running'; (await import('./sheet.js')).edges(companion).then((e) => window.r = e)`) and read `window.r` later, or a console call
+   times out and the check looks done when it isn't. Portraits and tiles use this same framing, so a crop here shows
+   in Settings too.
 7. **Rests**: `restSheet(companion)` and `restFilm(companion, 'lie'|'sleep')`: alive, not dropped.
 
 Then save the portrait: `(await import('./sheet.js')).portrait(companion)` in a 512 px
@@ -279,7 +294,9 @@ SIDEFOLK_HOME=$PWD/build/dev-home swift scripts/dev.swift snap     # twice, a se
 ```
 
 Read the `CompanionPanel` snapshot, and compare two snapshots a second apart: they must differ
-(it is animating, not frozen). Try `play:dance`, `click`, `settings:companion` (bring the app forward first:
+(it is animating, not frozen). **Look at the top of the figure in the app itself:** at rest there must be clear space
+above its tallest tip (with PIL, `getbbox()` of the snapshot's alpha must not start at row 0), and take snapshots during
+`play:dance` and a hop too: `edges()` runs in the browser at another size, and this is what the person really sees. Try `play:dance`, `click`, `settings:companion` (bring the app forward first:
 WebKit draws nothing in a background window). Several debug apps often run at once (other worktrees): use a fresh,
 short `SIDEFOLK_HOME` of your own (`build/qa-<name>`), leave the others alone, and activate yours by its process id,
 not its bundle id, which may pick another (`NSRunningApplication(processIdentifier:)?.activate()` from a tiny
