@@ -98,15 +98,15 @@ struct HistoryRecentTool: Tool {
         return ToolFormat.oneLine(shown.joined(separator: " "), 120)
     }
 
-    /// Letters, numbers, marks and emoji, and in a word with no Latin letters also its own punctuation, so "3:30", "$45" and a
+    /// Letters, numbers, marks and emoji, and in a word with no ASCII letters also its own punctuation, so "3:30", "$45" and a
     /// sentence in a language written without spaces stay. Goes by scalars: a mark on a slash makes one character that no longer
     /// equals it. A plain word lost costs a line a word.
     private static func isPlainWord(_ word: Substring) -> Bool {
         var core = Array(word.unicodeScalars.drop { opensAWord.contains($0) }.reversed().drop { closesAWord.contains($0) }.reversed())
         // "3:30pm" is a time.
         if ["am", "pm"].contains(String(String.UnicodeScalarView(core.suffix(2))).lowercased()) { core.removeLast(2) }
-        let latin = core.contains { $0.isASCII && $0.properties.isAlphabetic }
-        guard !latin || word.unicodeScalars.count <= longestWord else { return false }
+        let ascii = core.contains { $0.isASCII && $0.properties.isAlphabetic }
+        guard !ascii || word.unicodeScalars.count <= longestWord else { return false }
         return core.allSatisfy { scalar in
             switch scalar.properties.generalCategory {
             case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
@@ -115,7 +115,7 @@ struct HistoryRecentTool: Tool {
             case .otherSymbol, .modifierSymbol:
                 scalar.properties.isEmoji
             case .connectorPunctuation, .dashPunctuation, .openPunctuation, .closePunctuation, .initialPunctuation, .finalPunctuation, .otherPunctuation, .currencySymbol:
-                latin ? joinsAWord.contains(scalar) : !partOfAnAddress.contains(scalar)
+                ascii ? joinsAWord.contains(scalar) : !partOfAnAddress.contains(scalar)
             default:
                 false
             }
