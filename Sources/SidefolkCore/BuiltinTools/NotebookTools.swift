@@ -525,11 +525,11 @@ struct CollectionsCreateTool: Tool {
         ], required: ["name"]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: true)
 
-    func summary(for input: JSONValue) -> String { String(localized: "Create the collection “\((input.string("name") ?? "").displaySafe.clipped(60))”") }
+    func summary(for input: JSONValue) -> String { String(localized: "Create the collection “\(NotebookCollections.cleanName(input.string("name") ?? ""))”") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         // As the card showed it: no line breaks, nothing unseen.
-        let name = try input.requiredText("name", limit: 200).displaySafe.clipped(60)
+        let name = NotebookCollections.cleanName(try input.requiredText("name", limit: 200))
         guard !name.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
         var kind = NotebookCollection.Kind.project
         if let raw = input.string("kind") {
@@ -620,9 +620,9 @@ struct NotesCollectionTool: Tool {
     }
 
     func summary(for input: JSONValue) -> String {
-        let which = (input.string("collection") ?? "").displaySafe.clipped(60)
+        let which = NotebookCollections.cleanName(input.string("collection") ?? "")
         // The card has to say what a new name is: a yes to it is the only thing between an agent and a name beside the person's own.
-        if let name = input.string("name")?.displaySafe.clipped(60), !name.isEmpty { return String(localized: "Rename “\(which)” to “\(name)”") }
+        if let name = input.string("name").map({ NotebookCollections.cleanName($0) }), !name.isEmpty { return String(localized: "Rename “\(which)” to “\(name)”") }
         return String(localized: "Change “\(which)”")
     }
 
@@ -634,11 +634,11 @@ struct NotesCollectionTool: Tool {
         var c = found
         if let name = input.string("name")?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
             guard c.kind != .inbox, c.kind != .profile else { throw UserFacingError("The Inbox and About you keep their names.") }
-            let clean = name.displaySafe.clipped(60)
+            let clean = NotebookCollections.cleanName(name)
             guard !clean.isEmpty, !NotebookCollections.looksLikeProfile(clean), !NotebookCollections.looksLikeInbox(clean) else {
                 throw UserFacingError("That name is taken by the notebook's own: choose another.")
             }
-            if let taken = try await notebook.findCollection(named: clean), taken.id != c.id, taken.name.lowercased() == clean.lowercased() {
+            if try await NotebookCollections.twin(of: clean, excluding: c.id, notebook: notebook) != nil {
                 throw UserFacingError("There's already a collection called “\(clean)”.")
             }
             c.name = clean

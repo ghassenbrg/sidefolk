@@ -63,7 +63,7 @@ public enum NotebookCollections {
 
     static func create(_ name: String, kind: NotebookCollection.Kind, notebook: NotebookStore, context: ToolContext) async throws -> NotebookCollection {
         // What can't be seen goes first, so a name that only looks like About you or the Inbox is taken for what it looks like.
-        let clean = name.displaySafe.clipped(60)
+        let clean = cleanName(name)
         guard !clean.isEmpty else { throw ToolError.invalidInput(String(localized: "a collection needs a name.")) }
         if looksLikeProfile(clean) { throw profileRefusal }
         // The Inbox always exists (it is made on first use); a look-alike "inbox" project would split notes.
@@ -78,8 +78,25 @@ public enum NotebookCollections {
     /// A name as it reads: compatibility forms folded, what can't be seen gone, case ignored. Letters from another script
     /// that look the same (a Cyrillic "Іnbox") aren't caught: a card shows them, and they're an accepted residual (D160).
     static func asItReads(_ name: String) -> String {
-        let seen = String(String.UnicodeScalarView(name.precomposedStringWithCompatibilityMapping.unicodeScalars.filter { !$0.properties.isDefaultIgnorableCodePoint }))
+        let seen = String(String.UnicodeScalarView(cleanName(name, limit: .max).precomposedStringWithCompatibilityMapping.unicodeScalars.filter { !$0.properties.isDefaultIgnorableCodePoint }))
         return seen.displaySafe.lowercased()
+    }
+
+    /// A collection's name with only what shows: no format, private or unassigned characters and none that draw nothing. What
+    /// the card says is then what's kept, and a twin can't hide behind a character the check doesn't know.
+    static func cleanName(_ name: String, limit: Int = 60) -> String {
+        let shown = name.displaySafe.unicodeScalars.filter { scalar in
+            switch scalar.properties.generalCategory {
+            case .format, .control, .privateUse, .surrogate, .unassigned, .lineSeparator, .paragraphSeparator: false
+            default: scalar.value != 0x2800 && scalar.value != 0xFFFC
+            }
+        }
+        return String(String.UnicodeScalarView(shown)).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ").clipped(limit)
+    }
+
+    /// Another collection that reads the same as this name, whichever way it's spelled.
+    static func twin(of name: String, excluding id: String? = nil, notebook: NotebookStore) async throws -> NotebookCollection? {
+        try await notebook.collections(includeArchived: true).first { $0.id != id && asItReads($0.name) == asItReads(name) }
     }
 
     static func looksLikeProfile(_ name: String) -> Bool {

@@ -264,7 +264,7 @@ import Testing
     @Test func aNameCantHideAnythingFromTheCard() async throws {
         let s = try await Stack()
         for twin in ["About you\u{200E}", "ABOUT\u{2060} YOU", "Inbox\u{2060}", "\u{202E}Inbox", "About you\u{00AD}", "Inbox\u{00AD}", "About\u{3000}you",
-                     "About\u{2003}you", "Inbox\u{034F}", "Inbox\u{FE0F}", "Inbox\u{3164}", "Inbox\u{061C}", "Ａｂｏｕｔ ｙｏｕ", "Inbox\u{0085}"] {
+                     "About\u{2003}you", "Inbox\u{034F}", "Inbox\u{FE0F}", "Inbox\u{3164}", "Inbox\u{061C}", "Ａｂｏｕｔ ｙｏｕ", "Inbox\u{0085}", "About you\u{FFF9}", "Inbox\u{FFFA}", "Inbox\u{FFFB}", "Inbox\u{FFFC}", "Inbox\u{2800}", "Inbox\u{E000}"] {
             let answered = s.answerNextCard(.allowOnce)
             let refused = try await s.call("collections_create", ["name": .string(twin)])
             answered.cancel()
@@ -298,6 +298,15 @@ import Testing
         _ = await allowed.value
         #expect(twin.isError)
         #expect(try await s.runtime.notebook.findCollection(named: "Pockito") != nil)
+        // The person's own too: one that reads the same, however it's spelled.
+        _ = try await s.runtime.notebook.collection(named: "Work", kind: .project, now: Date())
+        for spelled in ["Work\u{FFF9}", "Ｗｏｒｋ", "Work\u{FE00}"] {
+            let again = s.answerNextCard(.allowOnce)
+            let same = try await s.call("notes_collection", ["collection": "Pockito", "name": .string(spelled)])
+            again.cancel()
+            _ = await again.value
+            #expect(same.isError, "\(spelled)")
+        }
         await s.stop()
     }
 
