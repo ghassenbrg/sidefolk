@@ -24,6 +24,11 @@ your client's name (shown to the user as unverified). You act as another app, no
 |---|---|
 | "remind me in 20 minutes to check the deploy" | `reminders_create` |
 | "never mind that reminder" (one you set) | `reminders_cancel` |
+| "move that reminder to 5" (one you set) | `reminders_update` or `reminders_snooze` |
+| "that one's done" (a reminder you set) | `reminders_complete` |
+| "bring that note back" | `notes_restore`, by the id you had |
+| "check that page every hour instead" | `watch_update` |
+| "what's due this week" | `notes_list` with a due date to look before (the user may approve the read) |
 | "save this as a note in my Pockito project" | `notes_save` with `collection` |
 | "add oat milk to my shopping list" | `notes_save` with `kind: task` and the list as `collection` |
 | "watch this URL and tell me when it changes" | `watch_create` with `kind: url_change` |
@@ -175,6 +180,7 @@ Counts only (sessions, jobs, reminders, watches): a cheap way to check that Side
   "3 tests failed in AuthTests").
 - **It runs elsewhere** (the user's terminal, a build already going): `watch_create` with `kind:
   process_exits` and the program's name or process number.
+- **A script should tell or ask them**: if the `sidefolk` command is installed, `sidefolk notify "Tests passed"`, or `sidefolk ask "Push?" --options yes,no`, which exits with the chosen option's place from 0 and 10 for no answer.
 - **The user wants Sidefolk to track a command**: if the `sidefolk` command is installed (Settings › Connections),
   `sidefolk run --title "Tests" -- npm test` runs it as usual (same output and exit code) and Sidefolk shows it
   on On duty and taps the user when it ends, with the last error lines if it failed. If Sidefolk can't be
