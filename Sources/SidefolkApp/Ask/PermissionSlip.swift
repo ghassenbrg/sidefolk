@@ -54,7 +54,9 @@ struct PermissionSlip: View {
                         Text(verbatim: request.title).font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)
                         if request.summary != request.title {
-                            Text(verbatim: request.summary).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                            // Another agent's card can't hide the end of what it asks about (D160).
+                            Text(verbatim: request.summary).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
+                                .lineLimit(request.caller.kind == "external" ? nil : 3)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if let ends = request.expiresAt {
