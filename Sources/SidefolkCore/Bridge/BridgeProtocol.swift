@@ -12,6 +12,7 @@ public enum BridgeProtocol {
         case hello
         case toolsList = "tools/list"
         case toolsCall = "tools/call"
+        case toolsCancel = "tools/cancel"
         case status
         case sessionEvent = "session/event"
         case jobStart = "job/start"

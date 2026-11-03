@@ -25,6 +25,8 @@ public actor MCPStdioBridge {
     private var connecting: Task<any BridgeChannel, Error>?
     /// MCP names ("notes_save") back to Sidefolk names ("notes.save").
     private var names: [String: String] = [:]
+    /// Requests the client cancelled that haven't ended yet.
+    private var cancelled: Set<String> = []
 
     /// - Parameters: `input`/`output` are file descriptors (stdin/stdout, or pipes in tests).
     public init(connector: any BridgeConnector, input: Int32 = STDIN_FILENO, output: Int32 = STDOUT_FILENO) {
@@ -58,7 +60,9 @@ public actor MCPStdioBridge {
         guard let method = message.string("method") else { return } // a response to us: we never ask
         let params = message["params"] ?? .object([:])
         guard let id = message["id"] else {
-            return // notifications (initialized, cancelled) need no answer
+            // Notifications need no answer; of them only a cancel changes anything.
+            if method == "notifications/cancelled", let target = params["requestId"] { await cancel(target) }
+            return
         }
         switch method {
         case "initialize":
@@ -78,10 +82,12 @@ public actor MCPStdioBridge {
             let text: String
             let isError: Bool
             if let name = params.string("name") {
-                (text, isError) = await callTool(name, arguments: params["arguments"] ?? .object([:]))
+                (text, isError) = await callTool(name, arguments: params["arguments"] ?? .object([:]), handle: Self.handle(id))
             } else {
                 (text, isError) = ("A tool name is required.", true)
             }
+            // MCP: no reply to a request the client cancelled.
+            if cancelled.remove(Self.handle(id)) != nil { return }
             write(Self.result(id: id, ["content": [["type": "text", "text": .string(text)]], "isError": .bool(isError)]))
         default:
             write(Self.error(id: id, code: -32601, message: "Method not found: \(method.clipped(60))"))
@@ -104,9 +110,23 @@ public actor MCPStdioBridge {
         return tools
     }
 
-    private func callTool(_ name: String, arguments: JSONValue) async -> (String, Bool) {
+    /// Tells the app the client gave up on a call, so a question or card it left on the desktop goes away. On the
+    /// connection that made the call, or not at all: a new connection wouldn't reach it.
+    private func cancel(_ target: JSONValue) async {
+        guard let channel, channel.isOpen else { return }
+        let handle = Self.handle(target)
+        cancelled.insert(handle)
+        _ = try? await channel.call(BridgeProtocol.Method.toolsCancel.rawValue, ["call": .string(handle)], timeout: 5)
+    }
+
+    /// A JSON-RPC id as text: `1` and `"1"` are different requests.
+    private static func handle(_ id: JSONValue) -> String {
+        id.stringValue.map { "s:" + $0 } ?? "n:" + String(id.intValue ?? 0)
+    }
+
+    private func callTool(_ name: String, arguments: JSONValue, handle: String) async -> (String, Bool) {
         do {
-            let reply = try await request("tools/call", ["name": .string(names[name] ?? name), "arguments": arguments])
+            let reply = try await request("tools/call", ["name": .string(names[name] ?? name), "arguments": arguments, "call": .string(handle)])
             return (reply.string("text") ?? "", reply["isError"]?.boolValue ?? false)
         } catch BridgeError.remote(_, let message) {
             return (message, true)
