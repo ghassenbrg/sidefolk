@@ -29,7 +29,7 @@ app icon and its preparation prompt are listed below.
 | Logos | `exports/logo-{stacked,horizontal}-{color,navy,white}.png` | Tightly framed transparent lockups; preserve aspect ratio. |
 | Icon marks | `exports/mark-{color,navy,white}.png` | Standalone rabbit portrait/monochrome mark without tile or lettering. |
 | Mascot vectors | `exports/mascot-{navy,white}.{svg,pdf,png}` | Hand-drawn rabbit mark for large monochrome use (lockups, print); the menu bar has its own reduced glyph. |
-| Full-body mascot | `exports/mascot-color.png` | Mochi character study, transparent and unframed. |
+| Full-body mascot | `exports/mascot-color.png` | Mochi waving, in the newer design (D130), transparent and unframed. |
 | Wordmarks | `exports/wordmark-{color,reversed,navy,white}.png` | Flat lettering, 4096 px wide; no bevel, glow or shadow. `color` is navy "Side" + aqua "folk" for light surfaces, `reversed` white "Side" + aqua "folk" for dark ones; the app uses only these two (D33). |
 | Vector wordmarks | `exports/wordmark-{color,reversed,navy,white}.{svg,pdf}` | One filled outline per letter built from strokes (below), canonical flat colors, no fonts, clipping masks, filters or embedded raster. The app draws the PDFs. |
 | Family art | `exports/family-color.png` | Mochi with Byte, Seed and Pip, without lettering: the first hello card and the About window. |
@@ -69,7 +69,7 @@ overlays the result on the reference and writes the difference with a per-letter
 M/L/C/Z paths directly for PNG and PDF, so the logo variants share the exact same geometry. PNG
 wordmarks are 4096 px wide.
 
-`masters/rabbit-family.png` supplies the full-color logo composition; `rabbit-portrait.png` supplies
+`masters/family-current.png` supplies the full-color logo composition and About's family (D130); `rabbit-portrait.png` supplies
 the transparent logo portrait. Their original imagegen outputs and exact prompts are retained alongside them. The logo portrait comes from `rabbit-portrait-source-v2.png`, following `rabbit-icon-refinement-prompt.json`; it matches the detail crop’s tilted face and asymmetric ears.
 The app icon instead uses `masters/mochi-app-icon.png` (approved 2026-10-29); its preparation prompt
 is retained in `masters/mochi-app-icon-prompt.json`. Rebuilding uses this committed image without a model call.
@@ -77,5 +77,5 @@ is retained in `masters/mochi-app-icon-prompt.json`. Rebuilding uses this commit
 from `RabbitBrandMark` in the native character target, using the monochrome close-up’s ear angles, side paw, two rays, and separated scarf tail. It is authored geometry, not a raster trace. Source masters and references
 are not bundled.
 
-On the desktop, Mochi is a live vector rig drawn after `masters/mascot-mochi.png` (D30); the
+On the desktop, Mochi is a live vector rig drawn after the older mascot, `archive/mochi-2026-10/mascot-mochi.png` (D30); the
 original robot's rig and Spark remain available. Saved explicit companion choices are preserved.

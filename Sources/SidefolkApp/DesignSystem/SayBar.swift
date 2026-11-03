@@ -42,8 +42,11 @@ struct SayBarField<Trailing: View>: View {
             Image(systemName: symbol).font(.system(size: size == .home ? 14 : 17, weight: .medium)).foregroundStyle(tint)
                 .symbolEffect(.variableColor.iterative, isActive: active)
                 .accessibilityHidden(true)
-            TextField(text: $text, prompt: prompt.foregroundStyle(Theme.inkFaint), axis: multiline ? .vertical : .horizontal) { prompt }
+            TextField(text: $text, prompt: Text(verbatim: ""), axis: multiline ? .vertical : .horizontal) { prompt }
                 .textFieldStyle(.plain)
+                .fieldHint(prompt, showing: text.isEmpty, alignment: multiline ? .topLeading : .leading, spoken: false)
+                // A plain field's label closure isn't read: its own words are its name.
+                .accessibilityLabel(prompt)
                 .font(size == .home ? .system(size: 15 * ThemeStore.shared.style.tokens.type.scale) : Theme.Font.input)
                 .foregroundStyle(Theme.ink)
                 .lineLimit(multiline ? 1...5 : 1...1)
@@ -68,7 +71,7 @@ struct SayBarField<Trailing: View>: View {
         .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: height / 2, style: .circular))
         .overlay {
             RoundedRectangle(cornerRadius: height / 2, style: .circular)
-                .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.line, lineWidth: binding.wrappedValue ? 2 : 1)
+                .strokeBorder(binding.wrappedValue ? Theme.accent : Theme.controlBorder, lineWidth: binding.wrappedValue ? 2 : 1)
         }
         .animation(Theme.Motion.micro, value: binding.wrappedValue)
         .onChange(of: focusTrigger) { binding.wrappedValue = true }

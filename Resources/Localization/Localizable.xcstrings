@@ -11770,6 +11770,7 @@
     },
     "%@ · late" : {
       "comment" : "A reminder on the day's line whose time passed",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -19169,6 +19170,7 @@
     },
     "%lld more can wait: %@" : {
       "comment" : "Today's queue, folded: “4 more can wait: Read the clipboard, Skipped, a reminder”",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -19233,7 +19235,7 @@
       }
     },
     "%lld more on duty" : {
-      "comment" : "Today: more watches than its tiles show",
+      "comment" : "Today: more watches than it shows",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -19478,6 +19480,65 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld more today" : {
+      "comment" : "Today's list of the day: what it doesn't show, opening the Calendar",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld أخرى اليوم"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute noch %lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld más hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld de plus aujourd’hui"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld in più oggi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日はあと %lld 件"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘 %lld개 더"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais %lld hoje"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天还有 %lld 项"
           }
         }
       }
@@ -37275,6 +37336,7 @@
       }
     },
     "Agents at work" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37980,6 +38042,7 @@
       }
     },
     "All day" : {
+      "comment" : "An event with no time, in the day's list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -48460,6 +48523,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "恢复提醒"
+          }
+        }
+      }
+    },
+    "Brings it forward to answer" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعرضه في المقدمة للإجابة عنه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Holt es nach vorn, um zu antworten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo trae al frente para responder"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’affiche devant pour y répondre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo porta in primo piano per rispondere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手前に表示して回答します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앞으로 가져와 답합니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traz para a frente para responder"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移到最前以便回答"
           }
         }
       }
@@ -118080,6 +118201,7 @@
       }
     },
     "Needs you" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -120244,7 +120366,7 @@
       }
     },
     "Next up" : {
-      "comment" : "Ask's resting state: what comes next in the day\nThe Pocket: a section of reminders coming",
+      "comment" : "Ask's resting state: what comes next in the day\nThe Pocket: a section of reminders coming\nToday: what waits after the decision in view",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -129855,6 +129977,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "偶尔伸个懒腰、打个哈欠，或看一眼你的工作；没事时就坐下。你打字时保持不动。"
+          }
+        }
+      }
+    },
+    "Now, %@" : {
+      "comment" : "VoiceOver: where now is in the day's list",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآن، %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt, %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora, %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenant, %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ora, %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在、%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금, %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora, %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现在,%@"
           }
         }
       }
@@ -165233,7 +165414,7 @@
       }
     },
     "Show all %lld" : {
-      "comment" : "A watch's timeline: show older checks\nToday's queue, folded: shows every card",
+      "comment" : "A watch's timeline: show older checks",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -165466,6 +165647,7 @@
       }
     },
     "Show fewer" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -167815,6 +167997,7 @@
     },
     "Showing all %lld." : {
       "comment" : "Today's queue, unfolded",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -170553,6 +170736,65 @@
         }
       }
     },
+    "Sidefolk has a new look. %@ is still in Settings › Appearance." : {
+      "comment" : "A whisper at launch after the default theme changed; the name is Harbor, now a theme of its own (D130)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لدى Sidefolk مظهر جديد. لا يزال %@ في الإعدادات › المظهر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk sieht jetzt neu aus. %@ findest du weiter unter Einstellungen › Erscheinungsbild."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk tiene un nuevo aspecto. %@ sigue en Ajustes › Apariencia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk a une nouvelle apparence. %@ reste dans Réglages › Apparence."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk ha un nuovo aspetto. %@ è ancora in Impostazioni › Aspetto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk のデザインが新しくなりました。%@ は 設定 › 外観 にあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 모습이 새로워졌습니다. %@ 테마는 설정 › 모양에 그대로 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk está com um visual novo. %@ continua em Ajustes › Aparência."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 换了新面貌。%@ 仍在“设置 › 外观”中。"
+          }
+        }
+      }
+    },
     "Sidefolk is already running" : {
       "localizations" : {
         "ar" : {
@@ -170961,6 +171203,7 @@
       }
     },
     "Sidefolk makes a folder with a copy of Harbor and a short guide, then follows it." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -171014,6 +171257,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 会创建一个文件夹，内含 Harbor 的副本和一份简短指南，然后跟随它。"
+          }
+        }
+      }
+    },
+    "Sidefolk makes a folder with a copy of the default theme and a short guide, then follows it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينشئ Sidefolk مجلدًا فيه نسخة من السمة الافتراضية ودليل قصير، ثم يتابعه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk legt einen Ordner mit einer Kopie des Standardthemes und einer kurzen Anleitung an und folgt ihm dann."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk crea una carpeta con una copia del tema predeterminado y una guía breve, y luego la sigue."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk crée un dossier avec une copie du thème par défaut et un petit guide, puis le suit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk crea una cartella con una copia del tema predefinito e una breve guida, poi la segue."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk が 標準テーマ のコピーと短いガイドの入ったフォルダを作り、追跡します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk가 기본 테마 사본과 짧은 안내가 담긴 폴더를 만들고 따라갑니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk cria uma pasta com uma cópia do tema padrão e um guia curto, e depois a acompanha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 会创建一个文件夹，内含 默认主题 的副本和一份简短指南，然后跟随它。"
           }
         }
       }
@@ -177437,6 +177738,7 @@
       }
     },
     "Start from a copy of Harbor in a folder, or use a theme folder you have. Sidefolk repaints each time you save." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -177490,6 +177792,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从文件夹中的 Harbor 副本开始，或使用你已有的主题文件夹。每次保存，Sidefolk 都会重新绘制。"
+          }
+        }
+      }
+    },
+    "Start from a copy of the default theme in a folder, or use a theme folder you have. Sidefolk repaints each time you save." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ من نسخة من السمة الافتراضية في مجلد، أو استخدم مجلد سمة لديك. يعيد Sidefolk الرسم في كل مرة تحفظ فيها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginne mit einer Kopie des Standardthemes in einem Ordner oder nutze einen vorhandenen Theme-Ordner. Sidefolk zeichnet sich bei jedem Sichern neu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza con una copia del tema predeterminado en una carpeta, o usa una carpeta de tema que ya tengas. Sidefolk se vuelve a pintar cada vez que guardas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partez d'une copie du thème par défaut dans un dossier, ou utilisez un dossier de thème existant. Sidefolk se redessine à chaque enregistrement."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parti da una copia del tema predefinito in una cartella, o usa una cartella di tema che hai già. Sidefolk si ridisegna a ogni salvataggio."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダに 標準テーマ のコピーを作って始めるか、手元のテーマフォルダを使います。保存するたびに Sidefolk が描き直します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더에 기본 테마 사본으로 시작하거나 가지고 있는 테마 폴더를 사용하세요. 저장할 때마다 Sidefolk가 다시 그려집니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comece com uma cópia do tema padrão em uma pasta, ou use uma pasta de tema que você já tem. O Sidefolk se redesenha a cada vez que você salva."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从文件夹中的 默认主题 副本开始，或使用你已有的主题文件夹。每次保存，Sidefolk 都会重新绘制。"
           }
         }
       }
@@ -231348,6 +231708,7 @@
     },
     "done today" : {
       "comment" : "Today's count: things done today",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -235451,7 +235812,7 @@
       }
     },
     "late" : {
-      "extractionState" : "stale",
+      "comment" : "A reminder in the day's list whose time passed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -237358,6 +237719,7 @@
     },
     "need you" : {
       "comment" : "Today's count: things that wait on the person",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -238653,6 +239015,7 @@
     },
     "on duty" : {
       "comment" : "Today's count: things working for the person",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

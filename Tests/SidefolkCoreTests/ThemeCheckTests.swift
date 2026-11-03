@@ -29,30 +29,34 @@ import UniformTypeIdentifiers
 
     func messages(_ report: ThemeReport) -> String { report.problems.map(\.description).joined(separator: "\n") }
 
-    @Test func aNewThemeIsHarborUnderItsOwnName() throws {
+    @Test func aNewThemeIsTheDefaultUnderItsOwnNameWithoutItsPictures() throws {
         _ = try ThemeLibrary.start("Sunset Glow", at: folder)
         let report = ThemeCheck.check(folder: folder)
         #expect(report.isUsable, "\(messages(report))")
         #expect(report.problems.isEmpty, "\(messages(report))")
         #expect(report.tokens.id == "com.example.sunset-glow" && report.tokens.name == "Sunset Glow")
-        var expected = ThemeTokens.harbor
+        var expected = ThemeTokens.sidefolk
         expected.id = report.tokens.id
         expected.name = report.tokens.name
+        // The pictures are the default's own; a new theme adds its own or goes without.
+        expected.material.scene = false
+        expected.nook.header = false
+        expected.nook.logo = false
         #expect(report.tokens == expected)
         #expect(FileManager.default.fileExists(atPath: folder.appendingPathComponent("README.md").path))
     }
 
     @Test func textThatDoesNotReadIsRefusedInWords() throws {
-        var file = ThemeFile(.harbor, id: "com.you.pale", name: "Pale")
+        var file = ThemeFile(.sidefolk, id: "com.you.pale", name: "Pale")
         file.colors?["light"]?["inkFaint"] = "#D0D0D0"
         try write(file)
         let report = ThemeCheck.check(folder: folder)
         #expect(!report.isUsable)
-        #expect(messages(report).contains("inkFaint on surface is 1.54:1 in light; text needs 4.5:1."))
+        #expect(messages(report).contains("inkFaint on surface is 1.50:1 in light; text needs 4.5:1."))
     }
 
     @Test func whatIsMissingOrOutOfReachIsFixedAndSaid() throws {
-        var file = ThemeFile(.harbor, id: "com.you.loose", name: "Loose")
+        var file = ThemeFile(.sidefolk, id: "com.you.loose", name: "Loose")
         file.colors?["dark"]?["link"] = nil
         file.type?.scale = 2
         file.shape?.card = 60
@@ -63,7 +67,7 @@ import UniformTypeIdentifiers
         let report = ThemeCheck.check(folder: folder)
         #expect(report.isUsable, "\(messages(report))")
         let said = messages(report)
-        #expect(said.contains("Harbor's colour is used for dark.link."))
+        #expect(said.contains("The default theme's colour is used for dark.link."))
         #expect(said.contains("type.scale 2.0 is kept between 0.9 and 1.15.") && report.tokens.type.scale == 1.15)
         #expect(said.contains("shape.card 60.0 is kept between 0.0 and 28.0.") && report.tokens.radius.card == 28)
         #expect(!said.contains("navigation"), "a retired layout key passes unsaid (D84)")
@@ -77,8 +81,8 @@ import UniformTypeIdentifiers
         #expect(messages(ThemeCheck.check(folder: folder)).contains("“id” is missing."))
 
         let library = ThemeLibrary(paths: SidefolkPaths(home: FileManager.default.temporaryDirectory.appendingPathComponent("sidefolk-themes-\(UUID().uuidString)")))
-        for id in ["harbor", "dev.sidefolk.theme.night-studio"] {
-            try write(ThemeFile(.harbor, id: id, name: "Borrowed"))
+        for id in ["sidefolk", "harbor", "dev.sidefolk.theme.night-studio"] {
+            try write(ThemeFile(.sidefolk, id: id, name: "Borrowed"))
             #expect(throws: UserFacingError.self) { try library.install(from: folder) }
         }
         #expect(throws: Never.self) { try library.install(from: folder, own: true) }
@@ -88,7 +92,7 @@ import UniformTypeIdentifiers
     }
 
     @Test func imagesMustBeSmallPNGsInsideTheFolder() throws {
-        var file = ThemeFile(.harbor, id: "com.you.paper", name: "Paper")
+        var file = ThemeFile(.sidefolk, id: "com.you.paper", name: "Paper")
         file.material?.grain = "../outside.png"
         file.companion?.backdrop = "art/huge.png"
         file.art = ThemeFile.Art(empty: "art/fake.png")
@@ -102,7 +106,7 @@ import UniformTypeIdentifiers
     }
 
     @Test func installingKeepsAFreshCopyOfEveryImage() throws {
-        var file = ThemeFile(.harbor, id: "com.you.paper", name: "Paper")
+        var file = ThemeFile(.sidefolk, id: "com.you.paper", name: "Paper")
         file.material?.grain = "grain.png"
         try write(file)
         try png("grain.png")
@@ -113,11 +117,11 @@ import UniformTypeIdentifiers
         let kept = try #require(theme.images["material.grain"])
         #expect(kept.path.hasPrefix(home.path) && kept.lastPathComponent == "grain.png")
         #expect(theme.tokens.material.grain)
-        #expect(library.all().map(\.id) == ["harbor", "com.you.paper"])
+        #expect(library.all().map(\.id) == ["sidefolk", "com.you.paper"])
         #expect(library.theme(id: "com.you.paper").tokens.name == "Paper")
 
         try library.remove(id: "com.you.paper")
-        #expect(library.theme(id: "com.you.paper").id == "harbor")
+        #expect(library.theme(id: "com.you.paper").id == "sidefolk")
     }
 
     // MARK: Layout (D64, retired by D84 but for the icons)
@@ -125,7 +129,7 @@ import UniformTypeIdentifiers
     /// A theme made for D64 still loads with every layout key it wrote, and none of them is a problem: only its icons
     /// (said, or its preset's) are read.
     @Test func anOlderLayoutLoadsAndOnlyItsIconsAreRead() throws {
-        var file = ThemeFile(.harbor, id: "com.you.layout", name: "Layout")
+        var file = ThemeFile(.sidefolk, id: "com.you.layout", name: "Layout")
         file.layout = ThemeFile.LayoutSection(preset: "stage", navigation: "pills", nook: "none",
                                               today: [[.block("queue:cards"), .column(width: 9, blocks: ["weather"])]],
                                               activity: "diary", editor: "markdown")
@@ -139,13 +143,13 @@ import UniformTypeIdentifiers
     }
 
     @Test func aStarterWritesOnlyItsIcons() throws {
-        let section = try #require(ThemeFile(.harbor, id: "com.you.a", name: "A").layout)
+        let section = try #require(ThemeFile(.sidefolk, id: "com.you.a", name: "A").layout)
         #expect(section == ThemeFile.LayoutSection(icons: "simple"))
     }
 
     /// Simple or colourful icons in Home (D67); anything else is said.
     @Test func iconsAreSimpleOrColorful() throws {
-        var file = ThemeFile(.harbor, id: "com.you.icons", name: "Icons")
+        var file = ThemeFile(.sidefolk, id: "com.you.icons", name: "Icons")
         file.layout?.icons = "colorful"
         try write(file)
         #expect(ThemeCheck.check(folder: folder).tokens.layout.icons == .colorful)
@@ -158,7 +162,7 @@ import UniformTypeIdentifiers
 
     /// Colours have meanings: a theme can't paint a win red, an error green or a warning grey.
     @Test func aStatusColourKeepsItsMeaning() throws {
-        var file = ThemeFile(.harbor, id: "com.you.upside", name: "Upside")
+        var file = ThemeFile(.sidefolk, id: "com.you.upside", name: "Upside")
         file.colors?["light"]?["success"] = "#C93F33"
         file.colors?["dark"]?["danger"] = "#7DD3A7"
         file.colors?["light"]?["warning"] = "#6B6B6B"
@@ -170,13 +174,13 @@ import UniformTypeIdentifiers
         #expect(text.contains("danger in dark must look red"), "\(text)")
         #expect(text.contains("warning in light must look amber"), "\(text)")
         // Rust reds, ochres and sage greens are still the right families.
-        #expect(ThemeCheck.meaningProblems(ThemeTokens.harbor.colors).isEmpty)
+        #expect(ThemeCheck.meaningProblems(ThemeTokens.sidefolk.colors).isEmpty)
     }
 
     /// Every role drawn as text is held to 4.5:1 where it is drawn: success on the surfaces (a "Connected" label) and
     /// each chip's words on its own soft fill.
     @Test func everyRoleDrawnAsTextMustRead() throws {
-        var file = ThemeFile(.harbor, id: "com.you.faint", name: "Faint")
+        var file = ThemeFile(.sidefolk, id: "com.you.faint", name: "Faint")
         file.colors?["light"]?["success"] = "#4CC48A"
         file.colors?["dark"]?["dangerSoft"] = "#B04A42"
         try write(file)
@@ -186,7 +190,7 @@ import UniformTypeIdentifiers
         #expect(text.contains("success on surfaceRaised is"), "\(text)")
         #expect(text.contains("success on successSoft is"), "\(text)")
         #expect(text.contains("danger on dangerSoft is"), "\(text)")
-        let labels = Set(ThemeCheck.contrastRows(ThemeTokens.harbor.colors).map(\.label))
+        let labels = Set(ThemeCheck.contrastRows(ThemeTokens.sidefolk.colors).map(\.label))
         for pair in ["success on well", "link on accentSoft", "warning on warningSoft", "success on successSoft"] {
             #expect(labels.contains(pair), "\(pair)")
         }
@@ -195,7 +199,7 @@ import UniformTypeIdentifiers
     /// A soft fill carries its status's hue: a purple danger fill would read as news. A grey one says nothing either
     /// way and passes.
     @Test func aSoftFillKeepsItsStatusHue() throws {
-        var c = ThemeTokens.harbor.colors
+        var c = ThemeTokens.sidefolk.colors
         c.dangerSoft.dark = 0x3A2240
         c.warningSoft.light = 0xE3F4EA
         #expect(ThemeCheck.meaningProblems(c).isEmpty)
@@ -211,7 +215,7 @@ import UniformTypeIdentifiers
     /// The rules added on 2026-11-01 refuse a theme being made or added from a folder, but a copy Sidefolk already
     /// keeps (it passed when it was added) stays, with warnings, until its update comes.
     @Test func aKeptThemeOutlivesANewerRule() throws {
-        var file = ThemeFile(.harbor, id: "com.you.minty", name: "Minty")
+        var file = ThemeFile(.sidefolk, id: "com.you.minty", name: "Minty")
         file.colors?["light"]?["success"] = "#4CC48A"
         file.colors?["dark"]?["dangerSoft"] = "#3A2240"
         try write(file)
@@ -246,21 +250,21 @@ import UniformTypeIdentifiers
     /// A theme made before the warning roles still works: Harbor's amber stands in (it reads on every gallery theme's
     /// surfaces too), and the check says so.
     @Test func aThemeWithoutTheWarningRolesStillWorks() throws {
-        var file = ThemeFile(.harbor, id: "com.you.older", name: "Older")
+        var file = ThemeFile(.sidefolk, id: "com.you.older", name: "Older")
         for appearance in ["light", "dark"] {
             for role in ["warning", "warningSoft", "onWarning"] { file.colors?[appearance]?[role] = nil }
         }
         try write(file)
         let report = ThemeCheck.check(folder: folder)
         #expect(report.isUsable, "\(messages(report))")
-        #expect(report.tokens.colors.warning == ThemeTokens.harbor.colors.warning)
+        #expect(report.tokens.colors.warning == ThemeTokens.sidefolk.colors.warning)
         #expect(messages(report).contains("light.warning"))
     }
 
     /// A theme made before Lantern (D84) has no well or lights: it keeps its own sunken surface for wells and gets
     /// Harbor's lights, and nothing is said, since nothing is wrong.
     @Test func aThemeWithoutTheLanternRolesKeepsItsLook() throws {
-        var file = ThemeFile(.harbor, id: "com.you.older", name: "Older")
+        var file = ThemeFile(.sidefolk, id: "com.you.older", name: "Older")
         file.colors?["light"]?["surfaceSunken"] = "#EFEAE0"
         for appearance in ["light", "dark"] {
             for role in ThemeTokens.Colors.optionalRoles { file.colors?[appearance]?[role] = nil }
@@ -269,8 +273,8 @@ import UniformTypeIdentifiers
         let report = ThemeCheck.check(folder: folder)
         #expect(report.isUsable && report.problems.isEmpty, "\(messages(report))")
         #expect(report.tokens.colors.well.light == 0xEFEAE0)
-        #expect(report.tokens.colors.well.dark == ThemeTokens.harbor.colors.surfaceSunken.dark)
-        #expect(report.tokens.colors.glow == ThemeTokens.harbor.colors.glow)
+        #expect(report.tokens.colors.well.dark == ThemeTokens.sidefolk.colors.surfaceSunken.dark)
+        #expect(report.tokens.colors.glow == ThemeTokens.sidefolk.colors.glow)
     }
 
     /// The themes Sidefolk ships (Resources/Themes) all pass their own check, contrast included, and come in order.
@@ -280,7 +284,7 @@ import UniformTypeIdentifiers
         for name in try FileManager.default.contentsOfDirectory(atPath: resources.path) where !name.hasPrefix(".") {
             let report = ThemeCheck.check(folder: resources.appendingPathComponent(name))
             #expect(report.isUsable && report.problems.isEmpty, "\(name): \(messages(report))")
-            #expect(report.tokens.id.hasPrefix(ThemeLibrary.ownPrefix), "\(name)")
+            #expect(ThemeLibrary.isOwn(report.tokens.id), "\(name)")
         }
         let library = ThemeLibrary(paths: SidefolkPaths(home: folder), bundled: resources)
         #expect(library.builtIns().map(\.id) == ThemeLibrary.builtInOrder)

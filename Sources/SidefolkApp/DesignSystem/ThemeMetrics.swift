@@ -90,14 +90,29 @@ private struct ElevationModifier: ViewModifier {
     func body(content: Content) -> some View {
         let dark = scheme == .dark
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        content
-            .overlay {
-                if level != .e0 {
-                    shape.strokeBorder(contrast == .increased ? Theme.controlBorder : dark ? Color.white.opacity(0.06) : Theme.line)
+        if soft, level == .e1 {
+            // A soft card (D130): its lift comes from its shape alone, so nothing on it casts a shadow, and only dark
+            // and Increase Contrast keep an edge.
+            let shadow = dark ? (color: Color.black.opacity(0.14), radius: 6.0, y: 2.0) : (color: Color(hex: 0x0F1E36).opacity(0.055), radius: 9.0, y: 2.0)
+            content
+                .overlay {
+                    if dark || contrast == .increased {
+                        shape.strokeBorder(contrast == .increased ? Theme.controlBorder : Color.white.opacity(0.06))
+                    }
                 }
-            }
-            .shadow(color: shadow(dark: dark).color, radius: shadow(dark: dark).radius, y: shadow(dark: dark).y)
+                .background(shape.fill(Theme.surfaceRaised).shadow(color: shadow.color, radius: shadow.radius, y: shadow.y))
+        } else {
+            content
+                .overlay {
+                    if level != .e0 {
+                        shape.strokeBorder(contrast == .increased ? Theme.controlBorder : dark ? Color.white.opacity(0.06) : Theme.line)
+                    }
+                }
+                .shadow(color: shadow(dark: dark).color, radius: shadow(dark: dark).radius, y: shadow(dark: dark).y)
+        }
     }
+
+    private var soft: Bool { ThemeStore.shared.style.tokens.material.depth == .soft }
 
     /// 03-system's elevation table, as SwiftUI radii (half the CSS blur).
     private func shadow(dark: Bool) -> (color: Color, radius: CGFloat, y: CGFloat) {

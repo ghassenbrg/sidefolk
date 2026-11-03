@@ -309,68 +309,60 @@ private struct WatchDutyRow: View {
 /// On duty at a glance on Today (A1): watches and live values as tiles, then the agents at work, with the way in.
 struct OnDutyGlance: View {
     var model: HomeModel
+    /// How many watches and live values show here; the page has the rest.
+    private static let shown = 5
 
     private var now: NowModel { model.now }
 
     var body: some View {
         let duty = now.onDuty
-        VStack(alignment: .leading, spacing: Theme.Space.m) {
-            SectionHeader(title: Text("On duty"), count: model.onDutyRunning) {
-                Button { model.selection = .onDuty } label: { Label("Open", systemImage: "chevron.forward").labelStyle(.titleAndIcon) }
-                    .buttonStyle(.sf(.quiet))
+        let tiles = duty.watches.count + duty.reports.count
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("On duty").font(Theme.Font.headline).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                Spacer()
+                Button("Open") { model.selection = .onDuty }.buttonStyle(.sf(.quiet))
             }
-            let tiles = duty.watches.count + duty.reports.count
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.top, Theme.Space.m)
+            .padding(.bottom, Theme.Space.s)
             if tiles == 0 && duty.sessions.isEmpty && duty.jobs.isEmpty {
-                RowsCard {
-                    InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
-                                systemImage: "binoculars", actionTitle: "Watch something…") {
-                        model.services.openAsk(prefill: "tell me when ")
-                    }
+                InlineEmpty(text: "Not watching anything. I can tell you when a page changes, a site goes down or a file arrives.",
+                            systemImage: "binoculars", actionTitle: "Watch something…") {
+                    model.services.openAsk(prefill: "tell me when ")
                 }
             }
-            if tiles > 0 {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: Theme.Space.m, alignment: .top)], alignment: .leading,
-                          spacing: Theme.Space.m) {
-                    ForEach(duty.watches.prefix(4)) { w in WatchCard(watcher: w, model: now) }
-                    ForEach(duty.reports.prefix(max(0, 4 - duty.watches.count))) { r in
-                        ReportCard(report: r, reading: now.readings[r.id], values: now.values[r.id] ?? [], model: now)
-                    }
-                }
-                if tiles > 4 {
-                    Button { model.selection = .onDuty } label: { Text("\(tiles - 4) more on duty", comment: "Today: more watches than its tiles show") }
-                        .buttonStyle(.sf(.quiet))
-                }
+            ForEach(duty.watches.prefix(Self.shown)) { WatchCard(watcher: $0, model: now) }
+            ForEach(duty.reports.prefix(max(0, Self.shown - duty.watches.count))) { r in
+                ReportCard(report: r, reading: now.readings[r.id], values: now.values[r.id] ?? [], model: now)
             }
-            if !duty.sessions.isEmpty || !duty.jobs.isEmpty {
-                Text("Agents at work").font(Theme.Font.headline).foregroundStyle(Theme.ink).padding(.top, Theme.Space.xs)
-                RowsCard {
-                    ForEach(AgentSessionGroup.of(duty.sessions)) { g in
-                        let s = g.session
-                        ListRow(title: Text(verbatim: Describe.session(g)),
-                                meta: Text(verbatim: [TimeText.span(Date().timeIntervalSince(s.startedAt)),
-                                                      now.lastCalls[s.agent].map { String(localized: "last: \($0.summary)", comment: "An agent's last call to Sidefolk") }]
-                                    .compactMap { $0 }.joined(separator: " · "))) {
-                            FolkAvatar(name: "byte", size: Theme.Size.avatar, live: s.state == .working)
-                        } trailing: {
-                            if s.state == .needsYou {
-                                StatusBadge(Text("needs you", comment: "An agent session waits on the person"), state: .tone(.warning))
-                            } else {
-                                StatusBadge(Text("working", comment: "An agent session is running"), state: .live)
-                            }
-                        } actions: {
-                            Button("Open session") { now.openSession(s) }
-                        }
-                    }
-                    ForEach(duty.jobs) { j in
-                        ListRow(title: Text(verbatim: j.title), meta: j.command.map { Text(verbatim: $0) }) {
-                            FolkAvatar(name: "byte", size: Theme.Size.avatar, live: true)
-                        } trailing: {
+            if tiles > Self.shown {
+                Button { model.selection = .onDuty } label: { Text("\(tiles - Self.shown) more on duty", comment: "Today: more watches than it shows") }
+                    .buttonStyle(.sf(.quiet))
+                    .padding(.horizontal, Theme.Space.s)
+            }
+            ForEach(AgentSessionGroup.of(duty.sessions)) { g in
+                Button { now.openSession(g.session) } label: {
+                    OnDutyRow(symbol: "sparkles", title: Describe.session(g)) {
+                        if g.session.state == .needsYou {
+                            StatusBadge(Text("needs you", comment: "An agent session waits on the person"), state: .tone(.warning))
+                        } else {
                             StatusBadge(Text("working", comment: "An agent session is running"), state: .live)
                         }
                     }
                 }
+                .buttonStyle(.sfBare)
+                .help(Text("Open session"))
             }
+            ForEach(duty.jobs) { j in
+                OnDutyRow(symbol: "sparkles", title: j.title) {
+                    StatusBadge(Text("working", comment: "An agent session is running"), state: .live)
+                }
+                .help(Text(verbatim: j.command ?? j.title))
+            }
+            Spacer().frame(height: Theme.Space.s)
         }
+        .cardSurface()
     }
 }
 

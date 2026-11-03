@@ -6,6 +6,8 @@
 //    `layout.brow: false` paints no brows. `paintRoughness` makes the painted layer matte (felt, linen,
 //    stone), `layout.mouth.cat` a cat's ω whenever it smiles closed, and `twinkle: false` drops the idle
 //    twinkle cross (engine.js) where only round highlights belong.
+//    Also: `moods` changes a feeling's face for this character (Mochi rests with an open smile), `twinkle: 'never'` drops every
+//    sparkle's cross, `iris.env` and `iris.coat` quiet an eye's reflections, `mouth.tongue` sets how far down the tongue rests.
 //  - screen: everything glows on a dark visor (Spark): eyes, lids and mouth are light, painted;
 //    `mouthGlow` gives the mouth a light of its own (a pink smile under blue-white eyes),
 //    `layout.mouth.scale` sizes it, and `softGlow` blurs the halos smoothly (the stepped passes read as rings up close).
@@ -359,9 +361,10 @@ export class Face {
     g.addColorStop(0, C.mouthDeep); g.addColorStop(1, C.mouth);
     ctx.fillStyle = g; ctx.fill(outline);
     const tg = ctx.createRadialGradient(cx, top + h * 0.95, 0, cx, top + h * 0.95, w * 0.42);
-    tg.addColorStop(0, C.tongue); tg.addColorStop(1, '#e8566a');
+    tg.addColorStop(0, C.tongue); tg.addColorStop(1, C.tongueEdge ?? '#e8566a');
     ctx.fillStyle = tg;
-    ctx.beginPath(); ctx.ellipse(cx, top + h * 0.98, w * 0.34, h * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+    // `mouth.tongue`: how far down it rests, as a share of the mouth's height.
+    ctx.beginPath(); ctx.ellipse(cx, top + h * (M.tongue ?? 0.98), w * 0.34, h * 0.4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     // A thin lip line around the mouth itself (never around the tongue).
     ctx.strokeStyle = C.lip; ctx.lineWidth = 4.5 * Math.sqrt(scale);
@@ -474,12 +477,12 @@ export class Face {
  */
 export function buildEye(side, eye, iris = {}) {
   const { w, h, depth } = eye;
-  const I = { deep: [0.004, 0.011, 0.045], rim: [0.015, 0.045, 0.16], glow: [0.03, 0.32, 0.7], glowAmt: 0.45, ...iris };
+  const I = { deep: [0.004, 0.011, 0.045], rim: [0.015, 0.045, 0.16], glow: [0.03, 0.32, 0.7], glowAmt: 0.45, env: 0.55, coat: 1, ...iris };
   const v3 = (a) => `vec3(${a.map((x) => x.toFixed(4)).join(',')})`;
   const geo = new THREE.SphereGeometry(1, 48, 32);
   geo.scale(w / 2, h / 2, depth);
   const mat = new THREE.MeshPhysicalMaterial({
-    color: 0x0b2d5b, roughness: 0.18, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.55,
+    color: 0x0b2d5b, roughness: 0.18, metalness: 0, clearcoat: I.coat, clearcoatRoughness: 0.04, envMapIntensity: I.env,
   });
   const u = {
     uLid: { value: new THREE.Vector4(0, 0, 0, 0) },   // top, top slant, bottom, bottom slant

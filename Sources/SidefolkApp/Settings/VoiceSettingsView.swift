@@ -246,7 +246,8 @@ private struct ElevenLabsSetup: View {
         } else {
             SetupLine(title: "API key") {
                 HStack(spacing: Theme.Space.s) {
-                    SecureField("API key", text: $draft, prompt: Text("Paste key"))
+                    SecureField("API key", text: $draft, prompt: Text(verbatim: "")).fieldHint(Text("Paste key"), showing: draft.isEmpty)
+                        .accessibilityLabel("API key")
                         .lanternField()
                         .frame(width: 170)
                         .onSubmit(save)

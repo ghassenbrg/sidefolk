@@ -142,7 +142,7 @@ private struct ItemList: View {
     private var searchBox: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search", text: $model.query, prompt: searchPrompt)
+            TextField("Search", text: $model.query, prompt: Text(verbatim: "")).fieldHint(searchPrompt, showing: model.query.isEmpty)
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
                 .focused($searchFocused)
@@ -314,6 +314,7 @@ private struct ItemRow: View {
         }
         .padding(.horizontal, Theme.Space.s + 2)
         .padding(.vertical, Theme.Space.s + 1)
+        .overlay(alignment: .leading) { if selected { SelectedRail() } }
         .background(selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .onTapGesture { model.select(item.id) }

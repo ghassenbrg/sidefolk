@@ -96,7 +96,7 @@ private struct SettingsSidebar: View {
         }
         .padding(.horizontal, Theme.Space.s)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background(Theme.surface)
+        .background(Theme.sidebar)
         .overlay(alignment: .trailing) { Rectangle().fill(Theme.line).frame(width: 1) }
     }
 
@@ -138,7 +138,7 @@ private struct SidebarTab: View {
                     .accessibilityHidden(true)
                 Text(verbatim: tab.title)
                     .font(selected ? Theme.Font.bodyStrong : Theme.Font.body)
-                    .foregroundStyle(selected ? Theme.link : Theme.ink)
+                    .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInk)
                     .lineLimit(1)
                 Spacer(minLength: Theme.Space.xs)
                 if let found {
@@ -153,7 +153,7 @@ private struct SidebarTab: View {
             .frame(height: Theme.Size.sidebarRow + 2)
             .background {
                 RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                    .fill(selected ? Theme.accentSoft : hovering ? Theme.well : .clear)
+                    .fill(selected ? Theme.sidebarSelected : hovering ? Theme.well : .clear)
             }
             .contentShape(Rectangle())
             .opacity(found == 0 ? 0.45 : 1)
@@ -174,8 +174,10 @@ private struct SettingsSearchField: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search settings", text: $navigation.query, prompt: Text("Search settings"))
+            TextField("Search settings", text: $navigation.query, prompt: Text(verbatim: ""))
                 .textFieldStyle(.plain)
+                .fieldHint(Text("Search settings"), showing: navigation.query.isEmpty, spoken: false)
+                .accessibilityLabel(Text("Search settings"))
                 .font(Theme.Font.body)
                 .focused(focused)
                 .onSubmit(open)

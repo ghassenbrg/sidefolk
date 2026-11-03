@@ -36,7 +36,8 @@ struct CalendarEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
-            TextField("Title", text: $title, prompt: Text(placeholder)).lanternField()
+            TextField("Title", text: $title, prompt: Text(verbatim: "")).fieldHint(Text(placeholder), showing: title.isEmpty).lanternField()
+                .accessibilityLabel("Title")
                 .font(Theme.Font.headline)
                 .focused($titleFocused)
                 .onSubmit(add)
@@ -60,7 +61,8 @@ struct CalendarEditor: View {
                 }
                 .font(Theme.Font.body)
                 CalendarPickerMenu(model: model, selection: $calendarId)
-                TextField("Location", text: $location, prompt: Text("Location", comment: "The Calendar's editor: where an event is")).lanternField()
+                TextField("Location", text: $location, prompt: Text(verbatim: "")).fieldHint(Text("Location", comment: "The Calendar's editor: where an event is"), showing: location.isEmpty, spoken: false).lanternField()
+                    .accessibilityLabel(Text("Location", comment: "The Calendar's editor: where an event is"))
                 if !model.writesOn {
                     Label { Text("Sidefolk asks once before it changes your calendars.") } icon: { Image(systemName: "lock") }
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)

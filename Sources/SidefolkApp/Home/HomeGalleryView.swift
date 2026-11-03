@@ -307,11 +307,13 @@ struct GalleryArt: View {
     var url: URL?
     var height: CGFloat
     @State private var image: NSImage?
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         ZStack {
             Theme.accentSoft
-            if let image { Image(nsImage: image).resizable().scaledToFill() }
+            // Pale pictures glare on a dark page.
+            if let image { Image(nsImage: image).resizable().scaledToFill().brightness(scheme == .dark ? -0.14 : 0) }
         }
         .frame(height: height)
         .frame(maxWidth: .infinity)

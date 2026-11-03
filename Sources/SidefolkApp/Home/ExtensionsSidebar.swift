@@ -6,6 +6,7 @@ import SwiftUI
 /// menu, and "Get add-ons", which opens the Gallery. There is no separate All Extensions page any more (D84).
 struct ExtensionsSidebarSection: View {
     var pages: ExtensionPagesModel
+    var selection: HomeSelection?
     var getAddOns: () -> Void
 
     var body: some View {
@@ -13,14 +14,17 @@ struct ExtensionsSidebarSection: View {
             ForEach(pages.shown) { p in
                 HStack(spacing: Theme.Space.s + 2) {
                     PageSquircle(info: p)
-                    Text(verbatim: p.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
+                    Text(verbatim: p.title).font(selection == .page(p.id) ? Theme.Font.bodyStrong : Theme.Font.body)
+                        .foregroundStyle(selection == .page(p.id) ? Theme.onSidebarSelected : Theme.sidebarInk).lineLimit(1)
                     if pages.services.updates.addonUpdate(for: p.extensionId) != nil { AddonUpdateDot() }
                     Spacer(minLength: Theme.Space.xs)
                     if let control = pages.summaries[p.id]?.control, case .toggle = control.kind {
                         QuickControl(info: p, control: control, pages: pages, small: true)
                     }
                 }
+                .background(SidebarHighlightOff())
                 .tag(HomeSelection.page(p.id))
+                .listRowBackground(SidebarRowFill(selected: selection == .page(p.id)))
                 .help(Text("Added by \(p.extensionName)", comment: "Under an extension page's title: the extension it comes from"))
                 .contextMenu { ExtensionPageMenu(info: p, pages: pages) }
             }
@@ -43,7 +47,7 @@ struct ExtensionsSidebarSection: View {
                     .font(Theme.Font.body)
                 }
                 .menuStyle(.borderlessButton)
-                .foregroundStyle(Theme.inkMuted)
+                .foregroundStyle(Theme.sidebarInkMuted)
                 .selectionDisabled()
             }
             Button(action: getAddOns) {
@@ -59,13 +63,15 @@ struct ExtensionsSidebarSection: View {
                             .accessibilityLabel(Text(verbatim: AddonUpdateWords.count(updates)))
                     }
                 }
-                .foregroundStyle(Theme.link)
+                .foregroundStyle(selection == .gallery ? Theme.onSidebarSelected : Theme.sidebarInkMuted)
             }
             .buttonStyle(.sfBare)
+            .background(SidebarHighlightOff())
             .tag(HomeSelection.gallery)
+            .listRowBackground(SidebarRowFill(selected: selection == .gallery))
             .help(Text("Companions, extensions and themes in the Gallery"))
         } header: {
-            Text("Extensions")
+            Text("Extensions").foregroundStyle(Theme.sidebarInkMuted)
         }
     }
 }

@@ -46,6 +46,7 @@ struct ListRow<Leading: View, Trailing: View, Actions: View>: View {
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, compact ? Theme.Space.xs : Theme.Space.s)
         .frame(minHeight: compact ? Theme.Size.compactRow : Theme.Size.row)
+        .overlay(alignment: .leading) { if selected { SelectedRail() } }
         .background(selected ? Theme.accentSoft : hovered ? Theme.ink.opacity(0.03) : .clear)
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
@@ -72,6 +73,14 @@ extension ListRow where Leading == EmptyView, Actions == EmptyView {
 struct RowChevron: View {
     var body: some View {
         Image(systemName: "chevron.forward").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.inkFaint)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The edge of a selected row in a list: its tint alone is about 1.2:1 from the card (D130).
+struct SelectedRail: View {
+    var body: some View {
+        Capsule().fill(Theme.accent).frame(width: 3).padding(.vertical, 8)
             .accessibilityHidden(true)
     }
 }

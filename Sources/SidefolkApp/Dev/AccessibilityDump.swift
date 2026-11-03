@@ -8,6 +8,12 @@ import AppKit
 enum AccessibilityDump {
     static func write(to folder: URL) {
         var lines: [String] = []
+        // Asking for this app's own tree is what makes SwiftUI build it: it builds only for an assistive app. The calls
+        // themselves are refused (this tool isn't trusted), and that's enough. It takes a moment to appear.
+        let app = AXUIElementCreateApplication(getpid())
+        AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+        AXUIElementSetAttributeValue(app, "AXEnhancedUserInterface" as CFString, kCFBooleanTrue)
+        RunLoop.main.run(until: Date().addingTimeInterval(2))
         for window in NSApp.windows where window.isVisible {
             lines.append("=== \(type(of: window)) \(Int(window.frame.minX)),\(Int(window.frame.minY)) \(Int(window.frame.width))×\(Int(window.frame.height))")
             walk(window, depth: 1, into: &lines)
@@ -21,7 +27,6 @@ enum AccessibilityDump {
         guard depth < 30, let node = element as? NSAccessibilityProtocol else { return }
         let ignored = node.isAccessibilityElement() == false
         let role = node.accessibilityRole()?.rawValue ?? "?"
-        // SwiftUI's hosting views build their part only for a connected assistive app, so they show as empty groups.
         let children = node.accessibilityChildren() ?? []
         // Containers VoiceOver skips are left out, their children kept, so the tree reads as it is heard.
         if !ignored || role == "AXWindow" {
@@ -31,6 +36,7 @@ enum AccessibilityDump {
             if let title = node.accessibilityTitle(), !title.isEmpty { parts.append("title=\"\(title.oneLine)\"") }
             if let value = node.accessibilityValue() { let v = "\(value)".oneLine; if !v.isEmpty { parts.append("value=\"\(v)\"") } }
             if let help = node.accessibilityHelp(), !help.isEmpty { parts.append("help=\"\(help.oneLine)\"") }
+            if let ph = node.accessibilityPlaceholderValue(), !ph.isEmpty { parts.append("placeholder=\"\(ph.oneLine)\"") }
             if node.isAccessibilitySelected() == true { parts.append("[selected]") }
             lines.append(String(repeating: "  ", count: depth) + parts.joined(separator: " "))
         }

@@ -17,7 +17,7 @@ struct CheckTicks: View {
         let shown = Array(ticks.suffix(slots))
         HStack(spacing: gap) {
             ForEach(0..<(slots - shown.count), id: \.self) { _ in
-                Circle().fill(Theme.line).frame(width: tick.width, height: tick.width).frame(height: tick.height)
+                Circle().fill(Theme.controlBorder).frame(width: tick.width, height: tick.width).frame(height: tick.height)
             }
             ForEach(Array(shown.enumerated()), id: \.offset) { _, result in
                 mark(result)
@@ -34,7 +34,7 @@ struct CheckTicks: View {
         // A pause is a gap in the watching: an outline, not a filled tick.
         case .paused: shape.strokeBorder(Theme.inkFaint, lineWidth: 1).frame(width: tick.width, height: tick.height * 0.6)
         // A quiet check is shorter, so the changes and failures stand up out of the line.
-        case .unchanged: shape.fill(Theme.inkFaint.opacity(0.55)).frame(width: tick.width, height: tick.height * 0.6)
+        case .unchanged: shape.fill(Theme.inkFaint.opacity(0.75)).frame(width: tick.width, height: tick.height * 0.6)
         case .changed, .failed: shape.fill(Theme.color(StatusTone.check(result))).frame(width: tick.width, height: tick.height)
         }
     }

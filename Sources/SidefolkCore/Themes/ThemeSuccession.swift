@@ -9,12 +9,17 @@ public enum ThemeSuccession {
         public var successor: String
         /// A built-in whose files are gone (moved), not a gallery theme that may still be installed (offered).
         public var wasBuiltIn: Bool
+        /// The name lives on in another theme (Harbor was the default's name until D130), so the move says so.
+        public var nameLivesOn = false
     }
 
     public static let retired: [String: Retired] = [
         "dev.sidefolk.theme.field-notes": Retired(name: "Field Notes", successor: "dev.sidefolk.theme.paper-garden", wasBuiltIn: true),
         "dev.sidefolk.theme.night-shift": Retired(name: "Night Shift", successor: "dev.sidefolk.theme.night-studio", wasBuiltIn: true),
-        "dev.sidefolk.theme.daylight": Retired(name: "Daylight", successor: ThemeTokens.harbor.id, wasBuiltIn: false),
+        "dev.sidefolk.theme.daylight": Retired(name: "Daylight", successor: ThemeTokens.sidefolk.id, wasBuiltIn: false),
+        // The old default's id: nothing tells who chose it and who was only given it, so everyone moves to the new default
+        // once (D130), and the painted Harbor is one click away under its own id.
+        "harbor": Retired(name: "Harbor", successor: ThemeTokens.sidefolk.id, wasBuiltIn: true, nameLivesOn: true),
     ]
 
     public enum Step: Sendable, Equatable {

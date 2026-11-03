@@ -41,7 +41,7 @@
 //                           | chooser:remove:local:cumulus | chooser:confirm (its Remove) | chooser:add | chooser:snapshots (Show Snapshots) | chooser:close
 //                           (Settings › Companion's chooser)
 //   swift scripts/dev.swift language:fr | language:system   (relaunches in that language)
-//   swift scripts/dev.swift theme:harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
+//   swift scripts/dev.swift theme:sidefolk | theme:dev.sidefolk.theme.harbor | themeFolder:/path/to/theme   (D58: a theme, or a folder followed as it's saved)
 //   swift scripts/dev.swift voice:file:/tmp/x.aiff | voice:stop   (talks with a file instead of the microphone, D34)
 //   swift scripts/dev.swift "brain:scripted:<answer>" | brain:scripted:off   (every AI request gets that fixed answer,
 //                           no network; only on a SIDEFOLK_HOME)

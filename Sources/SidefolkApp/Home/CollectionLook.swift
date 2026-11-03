@@ -62,10 +62,15 @@ struct CollectionIcon: View {
 struct CollectionTile: View {
     var collection: NotebookCollection
     var size: CGFloat = 34
+    /// In the sidebar with simple icons: the glyph alone (D130). Its pastel is too faint alone on a light sidebar, so it's
+    /// mixed with the ink there to reach 3:1, and takes the row's own colour on the selected row.
+    var bare = false
+    var selected = false
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
-            .fill(CollectionLook.color(collection).opacity(0.2))
+            .fill(bare ? .clear : CollectionLook.color(collection).opacity(0.2))
             .frame(width: size, height: size)
             .overlay {
                 if let emoji = collection.emoji, !emoji.isEmpty {
@@ -73,10 +78,16 @@ struct CollectionTile: View {
                 } else {
                     Image(systemName: CollectionLook.symbol(collection))
                         .font(.system(size: size * 0.46, weight: .semibold))
-                        .foregroundStyle(CollectionLook.color(collection))
+                        .foregroundStyle(glyph)
                 }
             }
             .accessibilityHidden(true)
+    }
+
+    private var glyph: Color {
+        let color = CollectionLook.color(collection)
+        if selected { return Theme.onSidebarSelected }
+        return bare && scheme == .light ? color.mix(with: Theme.ink, by: 0.45) : color
     }
 }
 
@@ -135,7 +146,9 @@ struct CollectionLookPicker: View {
             HStack(spacing: Theme.Space.s) {
                 CollectionTile(collection: preview, size: 30)
                 TextField("Emoji", text: Binding(get: { emoji }, set: { emoji = String($0.trimmingCharacters(in: .whitespaces).prefix(2)) }),
-                          prompt: Text("Or an emoji"))
+                          prompt: Text(verbatim: ""))
+                    .fieldHint(Text("Or an emoji"), showing: emoji.isEmpty)
+                        .accessibilityLabel("Emoji")
                     .lanternField()
                     .frame(width: 120)
                 Spacer()

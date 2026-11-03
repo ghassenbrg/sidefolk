@@ -17,7 +17,7 @@ struct ThemeSettingsGroup: View {
         SettingsGroup(title: "Theme", footer: "A theme changes colours, type, spacing and corners. It can't run anything.", anchor: .theme) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: Theme.Space.m)], spacing: Theme.Space.m) {
                 ForEach(themes, id: \.id) { theme in
-                    ThemeCard(tokens: theme.tokens, selected: theme.id == shown.id) { use(theme) }
+                    ThemeCard(theme: theme, selected: theme.id == shown.id) { use(theme) }
                         .contextMenu {
                             if theme.folder != nil {
                                 Button("Remove “\(theme.tokens.name)”…") { removing = theme }
@@ -164,7 +164,7 @@ struct ThemeSettingsGroup: View {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = String(localized: "My Theme", comment: "The folder name a new theme starts with")
         panel.prompt = String(localized: "Start Theme")
-        panel.message = String(localized: "Sidefolk makes a folder with a copy of Harbor and a short guide, then follows it.")
+        panel.message = String(localized: "Sidefolk makes a folder with a copy of the default theme and a short guide, then follows it.")
         Task {
             guard await run(panel) == .OK, let url = panel.url else { return }
             do {
@@ -184,9 +184,18 @@ struct ThemeSettingsGroup: View {
 
 /// A theme as a small window: its sidebar, a card with its accent, and its name in its own display face.
 private struct ThemeCard: View {
-    var tokens: ThemeTokens
+    @Environment(\.colorScheme) private var scheme
+    var theme: InstalledTheme
     var selected: Bool
     var action: () -> Void
+    @State private var scene: NSImage?
+
+    private var tokens: ThemeTokens { theme.tokens }
+    /// The picture Today opens on, in this appearance: two themes on one design differ most by it (D130).
+    private var sceneFile: URL? {
+        let light = theme.images["material.scene"], dark = theme.images["material.sceneDark"]
+        return tokens.material.scene ? (scheme == .dark ? dark ?? light : light ?? dark) : nil
+    }
 
     var body: some View {
         let c = tokens.colors
@@ -195,11 +204,12 @@ private struct ThemeCard: View {
                 HStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
                         Circle().fill(Color(c.accent)).frame(width: 8, height: 8)
-                        ForEach(0..<3, id: \.self) { _ in Capsule().fill(Color(c.inkFaint).opacity(0.5)).frame(width: 18, height: 3) }
+                        Capsule().fill(Color(c.sidebarSelected)).frame(width: 22, height: 6)
+                        ForEach(0..<2, id: \.self) { _ in Capsule().fill(Color(c.sidebarInkMuted).opacity(0.5)).frame(width: 18, height: 3) }
                     }
                     .padding(6)
                     .frame(width: 34, height: 64, alignment: .topLeading)
-                    .background(Color(c.surface))
+                    .background(Color(c.sidebar))
                     VStack(alignment: .leading, spacing: 4) {
                         Capsule().fill(Color(c.ink)).frame(width: 40, height: 4)
                         RoundedRectangle(cornerRadius: min(tokens.radius.card, 10) / 2, style: .continuous)
@@ -216,7 +226,14 @@ private struct ThemeCard: View {
                     }
                     .padding(6)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .background(Color(c.surfaceSunken))
+                    .background {
+                        if let scene {
+                            Image(nsImage: scene).resizable().scaledToFill()
+                        } else {
+                            Color(c.surfaceSunken)
+                        }
+                    }
+                    .clipped()
                 }
                 .frame(height: 64)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
@@ -236,6 +253,7 @@ private struct ThemeCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: tokens.name))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .task(id: sceneFile) { scene = sceneFile.flatMap(NSImage.init(contentsOf:)) }
     }
 
     private var design: Font.Design {

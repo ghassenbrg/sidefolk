@@ -2521,6 +2521,7 @@ they don't. Miraya's `addon.json` names 593.
 
 
 ### D84 — The Lantern revamp: one calm look, themes that dress, one layout per place; phase 1, the foundations (2026-11-01)
+*Amended by D130:* a new default theme, a theme-drawn selected row, a header in the sidebar and a rebuilt Today.
 *Amended by D87 and D88:* a watch has its own page in Home and On duty's rows a bar of its checks (D87); each source has its own level in Settings › Attention (D88).
 **Decision:** *narrows D58 and D64; builds on D71, D74, D77 and D78.* The founder approved the revamp design (a local
 design folder: brief, three directions, the design system, screens to design, an audit, 250 mockups) and chose:
@@ -3014,6 +3015,7 @@ and `.restore`, the menu's Back Up Everything… and Restore from a Backup…; d
 
 
 ### D92 — Four themes, each its own atmosphere, all built in; retired themes move to their successor (2026-11-01)
+*Amended by D130:* Sidefolk is the default and Harbor a painted theme of its own, so five are built in.
 **Decision:** *narrows D58's set and D64's gallery themes; builds on D84 and D78.* Now that a theme only dresses the
 app (D84), seven themes were mostly the same few atmospheres. Sidefolk keeps four, each one nobody would mistake for
 another, and ships all four in the app:
@@ -3726,3 +3728,38 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 **Why:** the founder wants Playtime in a language of its own, chosen in Playtime: an English Mac and the word of the day in Arabic. An extension's words were already its own to choose (`Language.use`), but the direction of its scenes followed the app, so Arabic drew left to right on an English app. The reverse already worked, through `"mirror": false`.
 **Alternatives:** the extension mirroring its own scene tree (a copy of `SurfaceScene.mirrored()` in a pack, with its animations, areas and drags); reversing only letter rows and leaving the rest (half a language); a per-extension language setting in the app (the app would then have to know every extension's languages, and the choice belongs with what is being played).
 **Implications:** the reader takes the keys it knows, so a copy from before this draws such a scene in the app's direction rather than refusing it (tested, and run with Playtime on the debug app from before this); an extension sends the key only when it differs from the app's. The frame stays in the app's language and direction, as do a page's parts outside a scene.
+
+### D130 — Two themes on one calm design: Sidefolk is the new default, Harbor a painted theme of its own (2026-11-03)
+**Decision:** *amends D84 and D92.* The founder found the old Harbor cold and its colours off, and approved a rework, then
+shaped it through several rounds:
+- **Sidefolk, the default:** colours from the app icon and logo (navy ink and action in light, the scarf's turquoise softened
+  for action in dark, a dim desaturated midnight), Mochi in a tidy studio in the sidebar, the helpers' places on soft 3D hills on
+  Today. Values in `ThemeTokens.sidefolk`, art in `Resources/Themes/sidefolk`.
+- **Harbor:** the painted harbor the founder picked, at night in dark and in a pale morning in light, with Mochi on the jetty.
+  It has the id `dev.sidefolk.theme.harbor` and lives in `Resources/Themes/harbor`.
+- **Calm first, for all-day use:** light is really light and dark really dark; everything follows the appearance setting.
+- **The sidebar is plain, with art only in its header:** the founder's idea, in every theme with a header. The theme draws
+  the selected row (`sidebarSelected`), solid and 3:1 from the sidebar, which `ThemeCheck` now holds; macOS's blue or grey
+  is off (`SidebarHighlightOff`), so it ignores the Mac's accent colour, a deliberate departure from Apple's guidance so
+  contrast is known. Arrow keys were checked against a control; real clicks and drag weren't.
+- **Today, in every theme:** a scene with the greeting, one decision in view with the rest as one line each under Next up,
+  the day as a vertical list with its moves kept (drag, ← →, ⌘Z), On duty as quiet rows, no count pills. `DayRail` and `DayLine`
+  are gone. The scene appears on Today only, its sky behind the toolbar on other pages, which are rounded sheets.
+- **New optional roles and keys, with stand-ins:** `sidebar*`, `onSidebarSelected`, `sceneInk*`; `material.depth`, `scene`,
+  `sceneDark`; `companion.header`, `headerDark`, `logo`. Older themes keep working. A theme without art gets a plain header.
+- **Moving:** nothing tells who chose the old `harbor` id and who was given it, so everyone on it moves to Sidefolk once
+  (`ThemeSuccession`), with a whisper saying Harbor is still in Settings › Appearance.
+- **Logos** now use About's family art.
+
+**Why:** the founder's reasons were UX before looks: "you are a UI UX designer", contrast and accessibility, an everyday tool that
+mustn't tire the eyes. An independent pixel audit found what eyes had missed; `sidefolk-theme`'s `LESSONS.md` keeps it all.
+
+**Alternatives:** a recolour of Harbor (the founder asked for real change); a dark sidebar in light mode, a whole-window scene
+and a strong midnight blue (too strong, kept in the local sandbox for possible themes); a meadow for the default's sidebar
+(pretty, but Sidefolk works beside you).
+
+**Paper Garden, Night Studio and Marshmallow stay built in for now:** the founder chose two built-ins, but moving the other three needs the gallery to publish them before an app without them ships. That move comes in a later snapshot; until then Settings lists all five (the founder's priority for the 2026-11-03 snapshot was the new default).
+
+**Brand art:** Mochi's solo portrait and full-body image follow the newer design too (masters `rabbit-portrait.png`, `mascot-mochi.png`; the old ones in `Brand/archive/mochi-2026-10/`). The app icon stays as approved.
+
+**The live 3D Mochi follows it, with the same model and rig:** deep navy ear tips, a deeper scarf, bigger darker eyes with quieter reflections, and an open smile at rest (`face.moods`, for Mochi only). Its portrait and avatar are redone. Its build stays slimmer than the art, since that would need a new model. The 2D Mochi stays the flat drawn style.

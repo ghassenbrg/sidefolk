@@ -253,7 +253,7 @@ The app's look is Lantern: tokens in `ThemeTokens` (Core) and `Theme` (app), sha
 faces, density, radii, materials, the light pool, the nook); each place has one layout.
 
 A theme is a `theme.json` with optional PNGs (D58), read by `ThemeCheck` (contrast, roles, images) and installed
-into `<home>/Themes/<id>/` with every image re-encoded. `sidefolk theme new "Name"` starts one from Harbor and
+into `<home>/Themes/<id>/` with every image re-encoded. `sidefolk theme new "Name"` starts one from the default and
 `sidefolk theme check <folder>` says what fails; a folder chosen in Settings › Appearance is followed as it is saved.
 Of the layout keys D64 added, only `layout.icons` is read now; the others still decode so older themes load (D84).
 
@@ -278,7 +278,7 @@ Colours say what happened, the same way on every screen and in every theme. The 
 - Every status colour comes with a word or an icon ("late", "Having trouble", ✓); colour is never the only signal.
 - The theme check holds the roles to their meaning: danger must look red, warning amber, success green (hue and
   saturation, both appearances), and `warning` must read at 4.5:1 on every surface like `danger`. A theme without the
-  warning roles gets Harbor's amber, which reads on any surface.
+  warning roles gets the default's amber, which reads on any surface.
 
 ## AI providers
 

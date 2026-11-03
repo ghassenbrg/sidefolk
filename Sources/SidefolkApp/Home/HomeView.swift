@@ -43,8 +43,22 @@ struct HomeView: View {
                         model.you.adding = true
                     }
                 } label: {
-                    Label("New", systemImage: "plus")
+                    // Its own chip, like the Say bar: the toolbar sits on the theme's picture, whatever the picture has there.
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus").font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+                    }
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 12)
+                    .frame(height: 32)
+                    .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 16, style: .circular))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .circular).strokeBorder(Theme.controlBorder))
+                    .contentShape(RoundedRectangle(cornerRadius: 16, style: .circular))
                 }
+                .menuStyle(.button)
+                .buttonStyle(.sfBare)
+                .menuIndicator(.hidden)
+                .accessibilityLabel("New")
                 .help("New note, reminder, watch or collection")
             }
         }
@@ -81,11 +95,33 @@ struct HomeView: View {
         .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
     }
 
+    /// A page with rounded corners under the toolbar: one sheet set into its frame, with the corner the cards use (D130). Today with a scene has the picture there instead, and a translucent sidebar has no colour to match.
+    private var framesPage: Bool {
+        let tokens = ThemeStore.shared.style.tokens
+        return tokens.material.sidebar == .solid && !((model.selection ?? .now) == .now && tokens.material.scene)
+    }
+
+    private var pageFrame: some View {
+        // The theme's sky stays behind the toolbar on every page, so the window reads as one place; without a scene, the
+        // sidebar's colour.
+        ZStack(alignment: .top) {
+            Theme.sidebar
+            if ThemeStore.shared.style.tokens.material.scene { ThemeScene() }
+        }
+        .frame(height: PageFrameShape.top + PageFrameShape.radius, alignment: .top)
+        .clipped()
+            .mask(alignment: .top) { PageFrameShape().fill(style: FillStyle(eoFill: true)) }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
     /// The selected place, with the Say bar's panel over it while the bar has words.
     private var page: some View {
         detail
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay { ThemeGrain() }
+            .overlay(alignment: .top) { if framesPage { pageFrame } }
             .overlay(alignment: .top) {
                 if showsPanel {
                     ZStack(alignment: .top) {
@@ -267,7 +303,8 @@ struct CollectionSheet: View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
             Text(isCreate ? "New collection" : "Edit collection").font(Theme.Font.heading).foregroundStyle(Theme.ink)
             if namable {
-                TextField("Name", text: $name, prompt: Text("Name"))
+                TextField("Name", text: $name, prompt: Text(verbatim: "")).fieldHint(Text("Name"), showing: name.isEmpty, spoken: false)
+                    .accessibilityLabel("Name")
                     .textFieldStyle(.plain)
                     .focused($nameFocused)
                     .onSubmit(save)
@@ -335,5 +372,19 @@ struct CollectionSheet: View {
                 dismiss()
             }
         }
+    }
+}
+
+/// The toolbar's strip with two curved corners below it.
+private nonisolated struct PageFrameShape: Shape {
+    static let top: CGFloat = 52
+    static let radius: CGFloat = 16
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addRect(CGRect(x: 0, y: 0, width: rect.width, height: Self.top + Self.radius))
+        path.addPath(UnevenRoundedRectangle(topLeadingRadius: Self.radius, topTrailingRadius: Self.radius, style: .continuous)
+            .path(in: CGRect(x: 0, y: Self.top, width: rect.width, height: Self.radius * 3)))
+        return path
     }
 }

@@ -8,7 +8,7 @@ import Testing
     final class App: SelfReporting, @unchecked Sendable {
         let opened = Mutex<[SelfPlace]>([])
         let installs = Mutex(0)
-        let look = Mutex((appearance: AppAppearance.system, theme: "harbor"))
+        let look = Mutex((appearance: AppAppearance.system, theme: "sidefolk"))
         let updates: SelfUpdates
         let failing: Bool
         var installing: SelfInstall = .nothingNewer
@@ -43,7 +43,7 @@ import Testing
         }
 
         func setTheme(_ name: String) async -> (name: String, was: String)? {
-            guard name.lowercased() == "paper garden" || name == "harbor" else { return nil }
+            guard name.lowercased() == "paper garden" || name == "sidefolk" else { return nil }
             return look.withLock { l in
                 defer { l.theme = name }
                 return (name, l.theme)
@@ -161,7 +161,7 @@ import Testing
         #expect(app.look.withLock { $0.appearance } == .dark)
         _ = try await e.executor.undo.undo(outcome.activity.id)
         #expect(app.look.withLock { $0.appearance } == .system)
-        #expect(app.look.withLock { $0.theme } == "harbor")
+        #expect(app.look.withLock { $0.theme } == "sidefolk")
         #expect(!(await run(e, "sidefolk.look", ["theme": "Neon"])).isOK)
         #expect(!(await run(e, "sidefolk.look")).isOK)
     }

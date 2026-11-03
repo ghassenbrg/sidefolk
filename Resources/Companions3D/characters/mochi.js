@@ -29,9 +29,9 @@ export default {
       float turq = smoothstep(0.07, 0.18, min(s.g - s.r, s.b - s.r));
       float pink = earM * smoothstep(0.03, 0.08, s.r - s.g) * (1.0 - navy);
       c = vec3(0.93, 0.925, 0.92);
-      c = mix(c, tex * vec3(0.97, 1.03, 1.03), turq);
+      c = mix(c, tex * vec3(0.42, 0.74, 0.74), turq);
       c = mix(c, mix(tex, vec3(1.0, 0.62, 0.68), 0.35), pink);
-      c = mix(c, vec3(0.010, 0.030, 0.19), navy);
+      c = mix(c, vec3(0.006, 0.012, 0.06), navy);
       float plushH = tri(uPlush, p, nR, 6.5);
       float knitH = tri(uKnit, p * vec3(1.0, 1.25, 1.0), nR, 4.2);
       bumpH = mix(plushH * 0.26, knitH, turq) * 0.012;
@@ -39,7 +39,7 @@ export default {
       c *= mix(0.985 + 0.03 * plushH, 0.72 + 0.4 * knitH, turq);
       rough = mix(0.8, 0.93, turq);
       // White velvet sheen would wash the navy tips out to lavender: tint it down there.
-      sheenTint = mix(vec3(1.0), vec3(0.12, 0.16, 0.35), navy);
+      sheenTint = mix(mix(vec3(1.0), vec3(0.3, 0.5, 0.5), turq), vec3(0.05, 0.07, 0.14), navy);
       inner = 1.0 - 0.6 * navy;
       // Light glowing through the thin ears, warm and pink at the inner ear.
       glow = earM * (1.0 - navy) * mix(vec3(0.05, 0.035, 0.035), vec3(0.11, 0.045, 0.06), pink);`,
@@ -52,10 +52,23 @@ export default {
     region: (x, y, z) => z > 0.08 && y > -0.3 && y < 0.26,
     // Nose and mouth keep a clear gap: the mouth never reaches up to the nose.
     layout: {
-      eye: { x: 0.2, y: -0.052, w: 0.148, h: 0.194, depth: 0.036 },
-      nose: { y: -0.116, w: 0.044, h: 0.027 },
-      mouth: { y: -0.168 },
-      blush: { x: 0.3, y: -0.142, w: 0.105, h: 0.062 },
+      eye: { x: 0.195, y: -0.05, w: 0.165, h: 0.224, depth: 0.042, sink: 0.34 },
+      nose: { y: -0.116, w: 0.05, h: 0.03, color: '#0a1638' },
+      mouth: { y: -0.176, scale: 1.35, tongue: 0.8 },
+      blush: { x: 0.31, y: -0.146, w: 0.105, h: 0.062 },
+    },
+    iris: { deep: [0.002, 0.006, 0.028], rim: [0.005, 0.016, 0.08], glow: [0.02, 0.2, 0.62], glowAmt: 0.4, env: 0.08, coat: 0.12 },
+    // A clean eye, as in the brand art: one big highlight and a small one. On this dark iris a sparkle's cross reads as a scratch.
+    twinkle: 'never',
+    colors: { mouth: '#d24d5c', mouthDeep: '#9c2a3b', tongue: '#ffa3a8', tongueEdge: '#f57f88', lip: '#7a1d30' },
+    // At rest and when smiling, an open smile, as in the brand art (D130). Every other feeling is the shared one.
+    moods: {
+      neutral: { mouthOpen: 0.42, smile: 0.95, mouthWidth: 0.5, blush: 0.8 },
+      smile: { mouthOpen: 0.46, smile: 1, mouthWidth: 0.52, blush: 0.85, lidBottom: 0 },
+      // The lower lid's edge is straight: on these bigger eyes it reads as a cut.
+      happy: { lidBottom: 0 },
+      shy: { lidBottom: 0 },
+      oops: { lidBottom: 0 },
     },
   },
 

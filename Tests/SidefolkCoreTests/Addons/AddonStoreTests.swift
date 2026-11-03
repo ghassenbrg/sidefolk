@@ -282,7 +282,7 @@ import Testing
     @Test func aThemeFromTheGalleryIsInstalledAndUpdated() async throws {
         let g = try Gallery()
         func publishTheme(version: String) throws {
-            var file = ThemeFile(.harbor, id: "dev.sidefolk.theme.dusk", name: "Dusk")
+            var file = ThemeFile(.sidefolk, id: "dev.sidefolk.theme.dusk", name: "Dusk")
             file.version = version
             let made = try g.pack("theme-dusk", id: "dev.sidefolk.theme.dusk", version: version,
                                   files: ["theme.json": String(decoding: try file.encoded(), as: UTF8.self)])

@@ -8,6 +8,8 @@ enum BrandAsset: String {
     case wordmarkColor = "wordmark-color"
     /// White "Side", aqua "folk": on dark surfaces.
     case wordmarkReversed = "wordmark-reversed"
+    /// All navy: the brand's own for light surfaces at small sizes, where the aqua doesn't read (D130).
+    case wordmarkNavy = "wordmark-navy"
     /// Mochi with Byte, Seed and Pip, the full-color family without lettering.
     case familyColor = "family-color"
     case menuBar = "SidefolkMenuBar"
