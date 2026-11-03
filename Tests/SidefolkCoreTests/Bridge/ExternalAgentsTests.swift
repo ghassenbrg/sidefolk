@@ -225,6 +225,35 @@ import Testing
         await s.stop()
     }
 
+    @Test func everyToolTellsClientsWhatItDoes() async throws {
+        let stack = try await Stack()
+        let list = try await stack.pipes.request(2, "tools/list", [:])
+        let tools = list["result"]?["tools"]?.arrayValue ?? []
+        #expect(!tools.isEmpty)
+        func hint(_ tool: String, _ name: String) -> Bool? {
+            tools.first { $0.string("name") == tool }?["annotations"]?[name]?.boolValue
+        }
+        for tool in tools {
+            for name in ["readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"] {
+                #expect(tool["annotations"]?[name]?.boolValue != nil, "\(tool.string("name") ?? "?") \(name)")
+            }
+        }
+        #expect(hint("status", "readOnlyHint") == true)
+        #expect(hint("notes_search", "readOnlyHint") == true)
+        // These reach the person, so a client mustn't take them for a read.
+        #expect(hint("notify_user", "readOnlyHint") == false)
+        #expect(hint("ask_user", "readOnlyHint") == false)
+        #expect(hint("notes_trash", "destructiveHint") == true)
+        #expect(hint("notes_save", "destructiveHint") == false)
+        #expect(hint("watch_create", "openWorldHint") == true)
+        #expect(hint("notes_save", "openWorldHint") == false)
+        await stack.stop()
+    }
+
+    @Test func aToolInNoListCountsAsDestructive() {
+        #expect(ExternalToolPolicy.annotations("a.new.tool")["destructiveHint"]?.boolValue == true)
+    }
+
     @Test func statusAnswersWithCountsOnly() async throws {
         let s = try await Stack()
         let status = try await s.call("status")

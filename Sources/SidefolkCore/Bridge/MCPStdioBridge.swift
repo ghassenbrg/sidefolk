@@ -98,6 +98,7 @@ public actor MCPStdioBridge {
             var tool: [String: JSONValue] = ["name": .string(mcpName), "inputSchema": spec["inputSchema"] ?? ["type": "object"]]
             tool["title"] = spec["title"]
             tool["description"] = spec["description"]
+            tool["annotations"] = spec["annotations"]
             tools.append(.object(tool))
         }
         return tools

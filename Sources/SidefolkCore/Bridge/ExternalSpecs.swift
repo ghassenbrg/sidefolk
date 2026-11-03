@@ -55,6 +55,27 @@ extension ExternalToolPolicy {
         return spec
     }
 
+    /// MCP's hints for a client, which may ask less on its own side for a read; Guard still decides here. By name, since
+    /// a spec's `mutates` says nothing about reaching the person. A tool in no list counts as destructive, as MCP's own default does.
+    static func annotations(_ name: String) -> JSONValue {
+        let readOnly = reading.contains(name) || ["status", "watch.list"].contains(name)
+        return [
+            "readOnlyHint": .bool(readOnly),
+            "destructiveHint": .bool(!readOnly && !adding.contains(name)),
+            "idempotentHint": .bool(readOnly || sameAgain.contains(name)),
+            // Only a web watch reaches beyond this Mac.
+            "openWorldHint": .bool(name == "watch.create"),
+        ]
+    }
+
+    /// Add or arrange without taking anything away.
+    private static let adding: Set<String> = [
+        "notify.user", "ask.user", "notes.save", "notes.arrange", "reminders.create", "watch.create", "watch.report",
+        "watch.pause", "watch.resume", "watch.update", "watch.reorder", "watch.more_room",
+    ]
+    /// Calling again with the same words changes nothing more.
+    private static let sameAgain: Set<String> = ["notes.arrange", "notes.trash", "reminders.cancel", "watch.pause", "watch.resume", "watch.update", "watch.reorder"]
+
     static let descriptions: [String: String] = [
         "notes.save": """
             Save a note, idea, task or link in the user's Sidefolk notebook. The first line of `text` becomes the title, \
