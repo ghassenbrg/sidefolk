@@ -191,7 +191,7 @@ public struct ManifestValidator: Sendable {
         var issues: [ValidationIssue] = []
         checkIdentity(manifest, folder: dir, mode: mode, issues: &issues, warnings: &report.warnings)
         report.launch = checkRun(manifest.run, folder: dir, issues: &issues)
-        report.iconPath = checkIcon(manifest.icon, folder: dir, issues: &issues)
+        report.iconPath = checkIcon(manifest.icon, folder: dir, mode: mode, issues: &issues)
         var permissions = checkPermissions(manifest.permissions, folder: dir, issues: &issues, warnings: &report.warnings)
         permissions.folders = checkTools(manifest, issues: &issues)
         permissions.placesFiles = manifest.tools.values.contains { !$0.outputs.isEmpty }
@@ -364,7 +364,7 @@ public struct ManifestValidator: Sendable {
     // MARK: Icon
 
     /// The icon's real path when it is a PNG or PDF inside the folder that passes `ExtensionIcon`'s checks.
-    private func checkIcon(_ icon: String?, folder: String, issues: inout [ValidationIssue]) -> String? {
+    private func checkIcon(_ icon: String?, folder: String, mode: Mode = .installed, issues: inout [ValidationIssue]) -> String? {
         guard let icon else { return nil }
         guard ExtensionIcon.fileTypes.contains((icon as NSString).pathExtension.lowercased()) else {
             issues.append(ValidationIssue(field: "icon", message: "must be a .png or .pdf file (SVG isn't accepted; export it as PDF)."))
@@ -384,8 +384,10 @@ public struct ManifestValidator: Sendable {
             issues.append(ValidationIssue(field: "icon", message: "“\(icon)” \(problem)"))
             return nil
         }
-        if (rel as NSString).pathExtension.lowercased() == "pdf", ExtensionIconBitmap.path(forPDF: path) == nil {
-            issues.append(ValidationIssue(field: "icon", message: "“\(icon)” takes too long or too much memory to draw."))
+        // Only before it's installed, and only for what the icon did itself: an extension already here never goes off over its icon,
+        // which at worst shows blank.
+        if mode == .source, (rel as NSString).pathExtension.lowercased() == "pdf", ExtensionIconBitmap.outcome(forPDF: path) == .tooCostly {
+            issues.append(ValidationIssue(field: "icon", message: "“\(icon)” takes too much work or memory to draw."))
             return nil
         }
         return path

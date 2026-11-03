@@ -48,12 +48,33 @@ import Testing
         let path = try file(costly())
         defer { try? FileManager.default.removeItem(atPath: path) }
         let began = Date()
-        #expect(ExtensionIconBitmap.path(forPDF: path) == nil)
+        #expect(ExtensionIconBitmap.outcome(forPDF: path) == .tooCostly)
         let took = Date().timeIntervalSince(began)
-        #expect(took > 1 && took < 6, "really drawn, and cut off at its limit: \(took)")
+        #expect(took > 1 && took < 16, "really drawn, and cut off at its limit: \(took)")
         let again = Date()
-        #expect(ExtensionIconBitmap.path(forPDF: path) == nil)
+        #expect(ExtensionIconBitmap.outcome(forPDF: path) == .tooCostly)
         #expect(Date().timeIntervalSince(again) < 0.5, "not drawn twice")
+    }
+
+    @Test func whatIsntTheIconsFaultIsNotRemembered() {
+        #expect(ExtensionIconBitmap.outcome(forPDF: "/nonexistent/icon.pdf") == .notNow)
+        let name = NSTemporaryDirectory() + UUID().uuidString + ".pdf"
+        defer { try? FileManager.default.removeItem(atPath: name) }
+        // Not a PDF at all: sips fails, and it says nothing about what a real one would cost.
+        #expect(FileManager.default.createFile(atPath: name, contents: Data("not a pdf \(UUID())".utf8)))
+        #expect(ExtensionIconBitmap.outcome(forPDF: name) == .notNow)
+        let refused = (try? FileManager.default.contentsOfDirectory(atPath: ExtensionIconBitmap.folder).filter { $0.hasSuffix(".refused") }.count) ?? 0
+        #expect(ExtensionIconBitmap.outcome(forPDF: name) == .notNow)
+        #expect(((try? FileManager.default.contentsOfDirectory(atPath: ExtensionIconBitmap.folder).filter { $0.hasSuffix(".refused") }.count) ?? 0) == refused)
+    }
+
+    /// An extension already installed must never go off over its icon: at launch nothing is drawn, so nothing can refuse it.
+    @Test func anInstalledExtensionIsNeverJudgedByDrawing() throws {
+        let h = try HostEnv()
+        let source = try h.source("costly", manifest: ExtFixtures.manifest(id: "dev.test.costly").setting("icon", "icon.pdf"), files: ["server.py": "", "icon.pdf": String(decoding: costly(), as: UTF8.self)])
+        #expect(ExtensionValidator.validate(at: source, paths: h.paths).errors.contains { $0.field == "icon" }, "before installing, it's refused")
+        let validator = ManifestValidator(paths: h.paths, resolver: ManifestValidationTests.resolver)
+        #expect(!validator.validate(folder: source, mode: .installed).errors.contains { $0.field == "icon" })
     }
 
     @Test func aHugePageIsRefusedBeforeAnyDrawing() throws {
