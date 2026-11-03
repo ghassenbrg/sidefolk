@@ -401,8 +401,7 @@ public enum ReminderTools {
                 description: "Mark a reminder as done by id. A repeating reminder keeps repeating; use reminders.cancel to stop it. "
                     + "One that belongs to an open task finishes the task too, and a series stops with it.",
                 inputSchema: Schema.object(["id": Schema.string("The reminder's id.")], required: ["id"]),
-                // Other agents reach only the reminders they set (`canManage`).
-                risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
+                risk: .low, capabilities: [.time], category: .time, mutates: true
             )
         }
 
@@ -455,8 +454,7 @@ public enum ReminderTools {
                     "id": Schema.string("The reminder's id."),
                     "when": Schema.string("When it should come back."),
                 ], required: ["id", "when"]),
-                // Other agents reach only the reminders they set (`canManage`).
-                risk: .low, capabilities: [.time], category: .time, mutates: true, external: true
+                risk: .low, capabilities: [.time], category: .time, mutates: true
             )
         }
 
