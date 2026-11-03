@@ -3763,6 +3763,7 @@ with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't 
 
 ### D126 — A page may take the window (2026-11-03)
 **Decision:** `workspace` on a bare page: `side` sections go in a column of places at the start, `trailing` ones in a column at the end, each scrolling on its own, and a tree in the middle fills what's left; Home's sidebar folds while it shows and comes back as the person had it, and the toolbar's button still opens it. Narrower, the places go first and then the end column sits under the middle. New parts for it, any page may use them: `bar` (a compact head: the way back, title, state, a sentence, actions, a ⋯ menu), `nav` (places, with the extension's own icon and name at the head if it asks), `notice` (what a person will receive, drawn as it arrives), `ticks` (recent results, each a mark and its word), and `companion` (the person's own companion at the page's corner, and beside what's active on a tree; the extension never reads it).
+- **`accent` (the founder, 2026-11-03: flat, "different colors from the shade for different purposes"):** one or two flat colours on a page: the first fills its main button and switches, the last marks what's selected. Without it, the theme's. `dress.accent` wins, and a dressed page's selections keep their look. Sideflow's are `#6E4BF2` and `#2A6FE8`, from its icon.
 - **Why general:** D98. Sidefolk draws all of it from data; an extension still says what's true, never how it looks. The Say bar and the toolbar stay Sidefolk's.
 
 ### D127 — A flow can reach every tool (2026-11-03)
