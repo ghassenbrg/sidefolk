@@ -190,7 +190,6 @@ enum ExtensionPlanWords {
     /// The whole card. Plans the person allowed before under the same id say what is new first.
     static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool) -> String {
         var out: [String] = []
-        if !when.isEmpty { out.append(String(localized: "When: \(when)", comment: "A plan's card; the extension's words for when it runs")) }
         func bullets(_ list: [(text: String, standing: Bool, new: Bool)]) -> String { list.map { "• \($0.text)" }.joined(separator: "\n") }
         let standing = lines.filter(\.standing)
         if revised {
@@ -220,16 +219,18 @@ struct ExtensionPlanTool: Tool {
 
     let extensionId: String
     let plan: String
+    /// The extension's words for when it runs.
+    var when = ""
     let body: String
 
     var spec: ToolSpec {
-        ToolSpec(name: Self.name, title: String(localized: "Do this without asking", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that"),
+        ToolSpec(name: Self.name, title: String(localized: "Run \(plan) without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that"),
                  description: "Lets an extension run what the person read, without further cards.",
                  inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id.")], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)
     }
 
-    func summary(for input: JSONValue) -> String { plan }
+    func summary(for input: JSONValue) -> String { when.isEmpty ? plan : when }
     func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body) }
 
     func refusal(for input: JSONValue, context: ToolContext) -> String? {

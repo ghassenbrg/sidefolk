@@ -67,17 +67,57 @@ struct ApprovalDetails: View {
                 if paths.count > 5 { Text("and \(paths.count - 5) more").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint) }
             }
         case .text(let text):
-            ScrollView {
-                Text(text).font(Theme.Font.caption).foregroundStyle(Theme.ink).textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxHeight: 260)
-            .padding(Theme.Space.s)
-            .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
+            ReadInFull(text: text)
         case .folderAccess(let folder, let write):
             let path = FolderAccess.displayPath(folder)
             (write ? Text("Read and change files in \(path)") : Text("Read files in \(path)"))
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
         }
+    }
+}
+
+/// Text the person has to read in full (a plan, a skill's instructions), laid out by how it's written: a paragraph that ends in a colon and has "•" lines under it reads as a heading
+/// and its rows. All of it, in order, nothing folded (T43): only the look changes.
+private struct ReadInFull: View {
+    var text: String
+
+    private struct Part: Identifiable {
+        var id: Int
+        var heading: String?
+        var rows: [String]
+    }
+
+    private var parts: [Part] {
+        text.components(separatedBy: "\n\n").enumerated().map { i, paragraph in
+            let lines = paragraph.components(separatedBy: "\n")
+            let rows = lines.filter { $0.hasPrefix("• ") }.map { String($0.dropFirst(2)) }
+            if rows.isEmpty || rows.count != lines.count - 1 || lines[0].hasPrefix("• ") { return Part(id: i, heading: nil, rows: [paragraph]) }
+            return Part(id: i, heading: lines[0], rows: rows)
+        }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                ForEach(parts) { part in
+                    if let heading = part.heading {
+                        VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+                            Text(verbatim: heading).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                            ForEach(Array(part.rows.enumerated()), id: \.offset) { _, row in
+                                Text(verbatim: row).font(Theme.Font.callout).foregroundStyle(Theme.ink)
+                                    .padding(.horizontal, Theme.Space.s).padding(.vertical, Theme.Space.xs)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous))
+                            }
+                        }
+                    } else {
+                        Text(verbatim: part.rows.joined()).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: 300)
     }
 }

@@ -220,7 +220,7 @@ extension ExtensionHost {
         let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
         let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 200)
         let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl, revised: previous != nil)
-        let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, body: body)
+        let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, when: when, body: body)
         let asker = asker(rt)
         runtimes[id]?.planAsking = true
         Task { [weak self] in

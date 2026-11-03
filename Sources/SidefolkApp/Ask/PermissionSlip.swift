@@ -198,6 +198,8 @@ struct PermissionSlip: View {
     private var carriesExact: Bool {
         if request.input != nil { return true }
         if case .none = request.details { return false }
+        // Text to read in full is open already, and stays open.
+        if case .text = request.details { return false }
         return true
     }
 
