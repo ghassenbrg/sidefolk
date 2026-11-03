@@ -17,6 +17,11 @@ public final class ToolRegistry: Sendable {
         for t in list { register(t, owner: owner) }
     }
 
+    /// For one call: a tool under a key of its own, so two calls with one name can't take each other's place.
+    public func register(_ tool: any Tool, key: String) { tools.withLock { $0[key] = tool } }
+
+    public func remove(key: String) { tools.withLock { $0[key] = nil } }
+
     /// Removes every tool an owner (an extension) contributed.
     public func unregister(owner: String) {
         let names = owners.withLock { o in o.filter { $0.value == owner }.map(\.key) }

@@ -138,7 +138,7 @@ tainted turns need approval showing the full text.
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
 without asking: `notes.save` (Inbox or a collection that already exists, tagged; it never creates
 a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
-together), `reminders.cancel` (only reminders that client name set; others read as not found),
+together), `reminders.cancel` (only reminders that client name set, without a card; D160: anyone else's, the person's among them, on a card every time, with "Change notes" not Off, naming the reminder and exactly what would change, and never "Always"; a hostile repo can ask to silence a real reminder, and the card is where the person says no),
 `reminders.update`, `reminders.snooze` and `reminders.complete` (D157: the same; a reminder tied to an open task can't be finished unless "Change notes" is on Allow, since that finishes the task), `notes.restore` by id under "Change notes", notify/`ask_user`, `status`, non-command watchers (25 active for all clients together, more only when the
 person says yes to `watch.more_room`, which always asks, D116; each stopping
 after 24 h, or at `until` if it said so when made, up to 7 days (D160: a watch of another agent's can now run that long with no card, and a page it watches is checked for that long; the room is the same, and a live value keeps its own ends. The week is for one start: an agent can resume or make a watcher again, within the room, as it always could, so what bounds it is the room and the floors, not the clock); `WatcherEngine.add` counts and inserts in one actor step, so parallel calls can't
