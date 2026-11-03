@@ -109,7 +109,7 @@ Web pages are checked every 5 minutes at most, sites every minute. File and fold
 folders the user shared with Sidefolk. Addresses on this Mac or the local network (localhost, 192.168.x.x,
 .local) are refused for other agents: tell the user they can ask Sidefolk directly ("tell me when
 localhost:3000 is up"). `mode: repeat` keeps telling them after the first change; the default tells once.
-Your watches stop on their own after a day.
+Your watches stop on their own after a day; when the user wants longer, `until` ("friday") goes up to a week.
 
 ### watch_report, watch_list, watch_stop, watch_pause, watch_resume, watch_update, watch_reorder, watch_more_room
 
