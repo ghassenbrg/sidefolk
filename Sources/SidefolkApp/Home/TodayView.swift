@@ -68,7 +68,7 @@ struct TodayView: View {
                 .font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale))
                 .fixedSize(horizontal: false, vertical: true)
                 // Words stay over the scene's empty side, however long they run in any language (D130).
-                .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in min(560, hasScene ? width * 0.46 : width) }
+                .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in min(560, width * (hasScene ? 0.46 : 0.8)) }
         }
     }
 

@@ -148,6 +148,7 @@ struct CollectionLookPicker: View {
                 TextField("Emoji", text: Binding(get: { emoji }, set: { emoji = String($0.trimmingCharacters(in: .whitespaces).prefix(2)) }),
                           prompt: Text(verbatim: ""))
                     .fieldHint(Text("Or an emoji"), showing: emoji.isEmpty)
+                        .accessibilityLabel("Emoji")
                     .lanternField()
                     .frame(width: 120)
                 Spacer()

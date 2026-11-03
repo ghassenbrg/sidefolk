@@ -16,6 +16,8 @@ struct DayAgenda: View {
     private static let step: TimeInterval = 15 * 60
     /// How much of the day shows at once: a day of repeats shouldn't push On duty out of sight.
     private static let pastShown = 2, nextShown = 6
+    /// The + was pressed on a day that already has things in it, so the row for a new reminder shows.
+    @State private var adding = false
 
     var model: NowModel
     var edit: (Reminder) -> Void
@@ -53,11 +55,20 @@ struct DayAgenda: View {
             + model.doneToday.map { Item.done($0, at: $0.lastFiredAt ?? $0.fireAt) })
             .sorted { $0.at < $1.at }
         let past = items.filter { $0.at <= now }, next = items.filter { $0.at > now }
-        let hidden = max(0, past.count - Self.pastShown) + max(0, next.count - Self.nextShown)
+        // What's still waiting stays in view however many came after it: a late reminder, a meeting under way.
+        let recent = Set(past.suffix(Self.pastShown).map(\.id))
+        let shownPast = past.filter { item in
+            switch item {
+            case .reminder: true
+            case .event(let e): e.end > now || recent.contains(item.id)
+            case .done: recent.contains(item.id)
+            }
+        }
+        let hidden = past.count - shownPast.count + max(0, next.count - Self.nextShown)
         VStack(alignment: .leading, spacing: 0) {
             header
             ForEach(events.filter(\.allDay)) { allDay($0) }
-            ForEach(past.suffix(Self.pastShown)) { row($0, now: now) }
+            ForEach(shownPast) { row($0, now: now) }
             nowLine(now)
             ForEach(next.prefix(Self.nextShown)) { row($0, now: now) }
             if hidden > 0 {
@@ -72,12 +83,15 @@ struct DayAgenda: View {
                 InlineEmpty(text: "Show your Mac calendar here too, beside your reminders.", systemImage: "calendar",
                             actionTitle: "Allow") { Task { await model.showCalendar() } }
             }
-            if items.isEmpty && events.isEmpty { NewReminderRow(model: model) }
+            if adding || (items.isEmpty && events.isEmpty) { NewReminderRow(model: model, focusAtOnce: adding) }
             Spacer().frame(height: Theme.Space.s)
         }
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { addReminder() }
         .cardSurface()
+        // The new reminder is on the list now, so its row goes.
+        .onChange(of: items.count) { adding = false }
+        .onExitCommand { adding = false }
     }
 
     private var header: some View {
@@ -97,7 +111,10 @@ struct DayAgenda: View {
     }
 
     /// A reminder at the next quarter hour, as double-clicking an empty time always made.
-    private func addReminder() { model.newReminder(at: Self.snap(Date().addingTimeInterval(Self.step / 2))) }
+    private func addReminder() {
+        adding = true
+        model.newReminder(at: Self.snap(Date().addingTimeInterval(Self.step / 2)))
+    }
 
     private static func snap(_ date: Date) -> Date {
         Date(timeIntervalSinceReferenceDate: (date.timeIntervalSinceReferenceDate / step).rounded() * step)

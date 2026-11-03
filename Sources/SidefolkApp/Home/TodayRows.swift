@@ -514,6 +514,8 @@ struct ItemLink: View {
 
 struct NewReminderRow: View {
     @Bindable var model: NowModel
+    /// It appeared because the person asked for it, so typing starts here.
+    var focusAtOnce = false
     @FocusState private var focus: Field?
     private enum Field { case title, when }
 
@@ -548,6 +550,7 @@ struct NewReminderRow: View {
         .nowRow()
         .onChange(of: model.newWhen) { model.clearError() }
         .onChange(of: model.newReminderFocus) { focus = .title }
+        .task { if focusAtOnce { focus = .title } }
     }
 }
 
