@@ -87,13 +87,16 @@ import Testing
         await run("notes.search", ["query": "canary-search"])
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "notes.save", risk: "low", decision: .failed, summary: "Save canary-failed", error: "no"))
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at https://u:canary-pass@example.com/a#canary-fragment"))
+        _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at HTTPS://bob:canary-case@host/a?code=canary-code"))
+        _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at postgres://admin:canary-db@db/prod"))
+        _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at https://bob:p@canary-at@host/"))
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "notes.save", risk: "low", decision: .auto,
                                                          summary: "Save sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789 at https://example.com/a?key=canary-key"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "job", title: "deploy --token canary-job finished", refKind: "job"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "extension:dev.sidefolk.sideflow", title: "Filled in canary-flow", refKind: "notify"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "watcher", title: "canary-watch exited", refKind: "watcher"))
         let text = await read(["limit": 50]).outcome.promptText
-        for canary in ["hunter2-canary", "canary-query", "canary-command", "canary-userinfo", "canary-search", "canary-failed", "canary-pass", "canary-fragment", "sk-ant-api03", "canary-key", "canary-job", "canary-flow", "canary-watch"] {
+        for canary in ["hunter2-canary", "canary-query", "canary-command", "canary-userinfo", "canary-search", "canary-failed", "canary-pass", "canary-fragment", "canary-case", "canary-code", "canary-db", "canary-at", "sk-ant-api03", "canary-key", "canary-job", "canary-flow", "canary-watch"] {
             #expect(!text.contains(canary), "\(canary) in \(text)")
         }
         #expect(text.contains("used clipboard.write"), "\(text)")

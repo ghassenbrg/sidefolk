@@ -92,8 +92,8 @@ struct HistoryRecentTool: Tool {
     private static func safe(_ words: String) -> String {
         // In an address only: a sign-in, a query, a fragment. A question mark in plain words stays.
         let address = Redactor.redact(words)
-            .replacing(/(https?:\/\/)[^\/\s”"@]+@/, with: { $0.output.1 })
-            .replacing(/(https?:\/\/[^\s”"?#]*)[?#][^\s”"]*/, with: { $0.output.1 })
+            .replacing(/([a-zA-Z][a-zA-Z0-9+.-]*:\/\/)[^\/\s”"]*@/, with: { $0.output.1 })
+            .replacing(/([a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s”"?#]*)[?#][^\s”"]*/, with: { $0.output.1 })
         return ToolFormat.oneLine(address.displaySafe, 120)
     }
 
