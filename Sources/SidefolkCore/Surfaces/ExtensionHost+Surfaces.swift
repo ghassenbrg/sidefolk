@@ -96,7 +96,7 @@ extension ExtensionHost {
 
     private func askSurface(_ client: MCPClient, _ method: String, _ params: [String: JSONValue], name: String) async throws -> JSONValue {
         do {
-            return try await client.request(method, params: .object(params), timeout: Self.surfaceReplySeconds)
+            return try await client.request(method, params: .object(params), timeout: surfaceReplyLimit)
         } catch is MCPError {
             throw UserFacingError(verbatim: Self.surfaceNoAnswer(name))
         }

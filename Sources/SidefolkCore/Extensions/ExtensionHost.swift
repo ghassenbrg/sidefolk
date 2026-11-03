@@ -11,6 +11,8 @@ public actor ExtensionHost {
     public struct Configuration: Sendable {
         public var idleTimeout: TimeInterval = 300
         public var callTimeout: TimeInterval = 30
+        /// How long a surface may take to answer before it's closed (D99). Tests on a loaded machine wait longer; the app never changes it.
+        var surfaceReply: TimeInterval = ExtensionHost.surfaceReplySeconds
         public var crashLimit = 3
         public var crashWindow: TimeInterval = 300
         public var limits = ExtensionProcessLimits.standard
@@ -107,6 +109,8 @@ public actor ExtensionHost {
     private let registry: ToolRegistry
     nonisolated let events: EventBus
     private let config: Configuration
+    /// For the surface channel, in its own file.
+    var surfaceReplyLimit: TimeInterval { config.surfaceReply }
     /// For what lives beside this file.
     var configuration: Configuration { config }
     var preferencesDatabase: AppDatabase { store.db }
