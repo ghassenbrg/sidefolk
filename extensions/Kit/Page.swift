@@ -28,8 +28,11 @@ public struct Page {
     public var workspace: Bool
     /// The person's own companion looks in at the page's corner, and stands by what's `active` on a tree (D126). You never read it.
     public var companion: Bool
+    /// `#RRGGBB`, one or two, deep enough to hold white words: filled buttons, what's selected, switches, running from one to the other (D126). The rest stays the theme's.
+    public var accent: [String]
 
-    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false) {
+    public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false, accent: [String] = []) {
+        self.accent = accent
         self.workspace = workspace
         self.companion = companion
         self.summary = summary
@@ -53,6 +56,7 @@ public struct Page {
         if let maxWidth { out["max_width"] = maxWidth }
         if workspace { out["workspace"] = true }
         if companion { out["companion"] = true }
+        if !accent.isEmpty { out["accent"] = accent }
         return out
     }
 }

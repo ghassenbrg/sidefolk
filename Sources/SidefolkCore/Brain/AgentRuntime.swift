@@ -332,7 +332,7 @@ public actor AgentRuntime {
         // In the record as what it is: someone else's words for the companion, not the person's.
         let said = request.text.trimmingCharacters(in: .whitespacesAndNewlines)
         let asked = Exchange(threadId: threadId, role: .user, content: request.job == nil ? said : String(localized: "An extension asked: \(said)", comment: "A conversation's record: a job an extension handed the companion"),
-                             meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted, spoken: request.spoken), now: start)
+                             meta: ExchangeMeta.user(attachment: request.attachment, tainted: built.tainted || request.job?.read == false, spoken: request.spoken), now: start)
         await persist { try await exchanges.append(asked) }
         events.changed(.conversations)
 

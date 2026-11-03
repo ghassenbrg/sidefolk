@@ -280,6 +280,7 @@ private struct TreeCard: View {
         if selected, tree.reorder != nil, tree.move(node.id, by: -1) != nil || tree.move(node.id, by: 1) != nil {
             Menu { moves } label: { Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.inkMuted).frame(width: 24, height: 24) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .tint(Theme.inkMuted)
                 .accessibilityLabel(Text("More", comment: "A card on an extension's page: its menu"))
         }
     }
@@ -315,12 +316,17 @@ struct TreeTile: View {
 /// A word and its colour, soft (D78).
 struct TreePill: View {
     var badge: ExtensionPage.Badge
+    @Environment(\.pageAccent) private var accent
+    @Environment(\.colorScheme) private var scheme
+
+    /// "Info" says nothing good or bad: on a page with its own accent, it's in that, not a second brand colour beside it.
+    private var selection: PageSelection? { badge.tone == .info && accent != nil ? PageSelection(accent: accent, dark: scheme == .dark) : nil }
 
     var body: some View {
         Text(ext: badge.text).font(Theme.Font.caption.weight(.medium)).lineLimit(1)
-            .foregroundStyle(badge.tone == .neutral ? Theme.inkMuted : badge.tone.color)
+            .foregroundStyle(selection?.ink ?? (badge.tone == .neutral ? Theme.inkMuted : badge.tone.color))
             .padding(.horizontal, Theme.Space.s).padding(.vertical, 3)
-            .background(badge.tone == .neutral ? Theme.well : badge.tone.soft, in: Capsule())
+            .background(selection?.soft ?? (badge.tone == .neutral ? Theme.well : badge.tone.soft), in: Capsule())
             .fixedSize()
     }
 }
@@ -360,6 +366,8 @@ private struct TreeAddButton: View {
     @State private var hovering = false
     @State private var picking = false
     @FocusState private var focused: Bool
+    // A popover has an environment of its own.
+    @Environment(\.pageAccent) private var accent
 
     var body: some View {
         Button {
@@ -383,7 +391,7 @@ private struct TreeAddButton: View {
         .accessibilityLabel(Text(ext: hook.label ?? ""))
         .popover(isPresented: $picking, arrowEdge: .bottom) {
             if let picker {
-                TreePicker(picker: picker) { id in
+                TreePicker(picker: picker, accent: accent) { id in
                     picking = false
                     Task { await model.run(tool: hook.tool, input: hook.input(.string(add.target)).setting(picker.key, .string(id))) }
                 }
@@ -395,11 +403,15 @@ private struct TreeAddButton: View {
 /// What can be added, found by typing or by category, and picked with the arrows and Return.
 struct TreePicker: View {
     var picker: ExtensionPage.Tree.Picker
+    var accent: Color?
     var choose: (String) -> Void
+    @Environment(\.colorScheme) private var scheme
     @State private var words = ""
     @State private var category: String?
     @State private var at = 0
     @FocusState private var typing: Bool
+
+    private var selection: PageSelection { PageSelection(accent: accent, dark: scheme == .dark) }
 
     private var shown: [ExtensionPage.Tree.Picker.Item] {
         let wanted = words.trimmingCharacters(in: .whitespaces).lowercased()
@@ -434,10 +446,10 @@ struct TreePicker: View {
                                 at = 0
                             } label: {
                                 Label { Text(ext: c.label).lineLimit(1) } icon: { Image(systemName: c.symbol ?? "circle") }
-                                    .font(Theme.Font.callout).foregroundStyle(on ? Theme.link : Theme.ink)
+                                    .font(Theme.Font.callout).foregroundStyle(on ? selection.ink : Theme.ink)
                                     .padding(.horizontal, Theme.Space.s).padding(.vertical, 5)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(on ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous))
+                                    .background(on ? selection.soft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous))
                                     .contentShape(Rectangle())
                             }
                             .buttonStyle(.sfBare)
@@ -482,7 +494,7 @@ struct TreePicker: View {
                 if let meta = item.meta { TreePill(badge: ExtensionPage.Badge(text: meta, tone: .neutral)) }
             }
             .padding(Theme.Space.xs)
-            .background(on ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+            .background(on ? selection.soft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(.sfBare)

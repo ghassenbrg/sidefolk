@@ -19,6 +19,8 @@ public struct ExtensionPage: Sendable, Hashable {
     public static let tileSize = SceneSize(width: 720, height: 300)
     /// How wide its column may grow (D108).
     public var maxWidth: Double?
+    /// Its own colours, one or two, deep enough to hold white: filled buttons, what's selected, switches. The rest stays the theme's (D126).
+    public var accent: [String] = []
     /// The page takes the window (D126): its columns scroll on their own, and Home's sidebar folds while it shows. Only a bare page may.
     public var workspace = false
     /// The person's own companion looks in at the page's corner (D126). Sidefolk places it; the extension never reads it.
@@ -458,6 +460,7 @@ public struct ExtensionPage: Sendable, Hashable {
         page.maxWidth = object["max_width"]?.doubleValue.flatMap { $0.isFinite ? min(1320, max(640, $0)) : nil }
         page.workspace = page.bare && (object["workspace"]?.boolValue ?? false)
         page.companion = object["companion"]?.boolValue ?? false
+        page.accent = Array((object["accent"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2))
         page.keepOnePrimary()
         return page
     }

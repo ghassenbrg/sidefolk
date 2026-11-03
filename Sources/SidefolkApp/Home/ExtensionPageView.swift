@@ -15,6 +15,7 @@ struct ExtensionPageView: View {
         }
         .environment(\.cardDress, cardDress)
         .environment(\.pageAccent, pageAccent)
+        .environment(\.pageAccentEnd, model.page?.dress?.accent == nil ? model.page?.accent.last.flatMap { Color(extensionHex: $0) } : nil)
         .tint(pageAccent)
         .pageConsent(model: model)
         .task(id: model.info.id) { await model.run() }
@@ -90,7 +91,8 @@ struct ExtensionPageView: View {
 
     /// A dressed page's filled buttons and switches (D108).
     private var pageAccent: Color? {
-        model.page?.dress?.accent.flatMap { Color(extensionHex: scheme == .dark ? $0.dark : $0.light) }
+        if let dressed = model.page?.dress?.accent { return Color(extensionHex: scheme == .dark ? dressed.dark : dressed.light) }
+        return model.page?.accent.first.flatMap { Color(extensionHex: $0) }
     }
 
     /// A dressed page's cards (D108).

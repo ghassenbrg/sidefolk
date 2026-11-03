@@ -216,7 +216,7 @@ public final class ToolExecutor: Sendable {
             case .ask(var request):
                 // What the card needs to explain itself (D71); Guard's question is the same without it.
                 let ext = ((tool as? ExternalFacade)?.base ?? tool) as? ExtensionTool
-                if ext != nil, input.objectValue?.isEmpty == false { request.input = input.prettyString }
+                if ext != nil || spec.name == CompanionJobTool.name, input.objectValue?.isEmpty == false { request.input = input.prettyString }
                 request.firstParty = ext?.firstParty ?? true
                 request.mode = policy.mode(for: caller)
                 if tainted { request.taintedBy = taintedBy }

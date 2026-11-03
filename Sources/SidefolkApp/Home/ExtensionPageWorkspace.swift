@@ -29,7 +29,10 @@ struct PageWorkspace: View {
             let beside = geo.size.width >= 780
             HStack(spacing: 0) {
                 if showsPlaces {
-                    column(leading, padded: Theme.Space.m).frame(width: Self.places)
+                    column(leading, padded: Theme.Space.m)
+                        // At the foot of the places, where nothing it stands on can be pressed.
+                        .safeAreaInset(edge: .bottom, spacing: 0) { if standsBy { companion } }
+                        .frame(width: Self.places)
                     Divider()
                 }
                 VStack(spacing: 0) {
@@ -62,14 +65,20 @@ struct PageWorkspace: View {
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .background { PageGround(dress: page.dress, model: model) }
-        .overlay(alignment: .bottomTrailing) {
-            if page.companion, !middle.contains(where: { $0.blocks.contains { if case .tree(let t) = $0 { t.reading.contains { $0.state == .active } } else { false } } }) {
-                PagePictureView(picture: .companion(.full), model: model, side: 180, fill: false)
-                    .frame(width: 72, height: 72).offset(x: 6, y: 16).clipped()
-                    .allowsHitTesting(false).accessibilityHidden(true)
-            }
-        }
         .preference(key: PageTakesWindow.self, value: true)
+    }
+
+    /// While something's happening on a tree, it stands there instead.
+    private var standsBy: Bool {
+        page.companion && !middle.contains { $0.blocks.contains { if case .tree(let t) = $0 { t.reading.contains { $0.state == .active } } else { false } } }
+    }
+
+    private var companion: some View {
+        PagePictureView(picture: .companion(.full), model: model, side: 180, fill: false)
+            .frame(width: 64, height: 64)
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, Theme.Space.s)
+            .allowsHitTesting(false).accessibilityHidden(true)
     }
 
     /// What went wrong with a click, and the words a click just copied, are Sidefolk's to say whatever the page draws (D105).
@@ -107,8 +116,6 @@ struct PageWorkspace: View {
                 ForEach(Array(sections.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
             }
             .padding(padded)
-            // Room for the companion at the corner, under what the column holds.
-            .padding(.bottom, page.companion && sections.first?.place == .trailing ? 64 : 0)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollContentBackground(.hidden)
@@ -163,6 +170,7 @@ struct PageBarView: View {
                     Image(systemName: "ellipsis").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink).frame(width: 32, height: 28)
                 }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .tint(Theme.ink)
                 .accessibilityLabel(Text("More", comment: "A card on an extension's page: its menu"))
             }
             ForEach(Array(bar.actions.enumerated()), id: \.offset) { _, control in PageButton(control: control, model: model).fixedSize() }
@@ -176,6 +184,10 @@ struct PageBarView: View {
 struct PageNavView: View {
     var nav: ExtensionPage.Nav
     var model: ExtensionPageModel
+    @Environment(\.pageAccent) private var accent
+    @Environment(\.colorScheme) private var scheme
+
+    private var selection: PageSelection { PageSelection(accent: accent, dark: scheme == .dark) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
@@ -207,9 +219,9 @@ struct PageNavView: View {
                 HStack(spacing: Theme.Space.xs) {
                     ForEach(nav.filters) { filter in
                         Button { Task { await model.run(filter.press, on: nil) } } label: {
-                            Text(ext: filter.title).font(Theme.Font.caption.weight(.medium)).lineLimit(1).foregroundStyle(filter.selected ? Theme.link : Theme.inkMuted)
+                            Text(ext: filter.title).font(Theme.Font.caption.weight(.medium)).lineLimit(1).foregroundStyle(filter.selected ? Theme.ink : Theme.inkMuted)
                                 .padding(.horizontal, Theme.Space.s).padding(.vertical, 3)
-                                .background(filter.selected ? Theme.accentSoft : Theme.surfaceRaised, in: Capsule())
+                                .background(filter.selected ? Theme.well : Theme.surfaceRaised, in: Capsule())
                                 .overlay(Capsule().strokeBorder(Theme.line))
                                 .contentShape(Capsule())
                         }
@@ -232,13 +244,13 @@ struct PageNavView: View {
                 if item.color != nil {
                     TreeTile(symbol: item.symbol, color: item.color, side: 30)
                 } else if let symbol = item.symbol {
-                    Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(item.selected ? Theme.link : Theme.ink).frame(width: 22).accessibilityHidden(true)
+                    Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(item.selected ? selection.ink : Theme.ink).frame(width: 22).accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(ext: item.title).font(Theme.Font.body.weight(.medium)).foregroundStyle(item.selected && item.color == nil ? Theme.link : Theme.ink).lineLimit(1)
+                    Text(ext: item.title).font(Theme.Font.body.weight(.medium)).foregroundStyle(item.selected && item.color == nil ? selection.ink : Theme.ink).lineLimit(1)
                     if let status = item.status {
                         HStack(spacing: 4) {
-                            Circle().fill(item.tone == .neutral ? Theme.inkFaint : item.tone.color).frame(width: 6, height: 6).accessibilityHidden(true)
+                            Circle().fill(item.tone == .neutral ? Theme.inkFaint : item.tone == .info ? selection.ink : item.tone.color).frame(width: 6, height: 6).accessibilityHidden(true)
                             Text(ext: status).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
                         }
                     }
@@ -247,7 +259,7 @@ struct PageNavView: View {
             }
             .padding(.horizontal, Theme.Space.xs).padding(.vertical, Theme.Space.xs)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(item.selected ? Theme.accentSoft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+            .background(item.selected ? selection.soft : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(.sfBare)

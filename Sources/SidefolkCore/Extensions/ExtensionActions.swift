@@ -12,7 +12,7 @@ public enum ExtensionActionPolicy {
         "agenda.today", "calendar.today", "calendar.create", "calendar.update", "calendar.delete",
         "notes.save", "notes.search", "notes.list", "notes.update", "notes.trash", "collections.list", "collections.create",
         "reminders.create", "reminders.list", "reminders.cancel", "reminders.complete", "reminders.snooze",
-        "watch.create", "watch.list", "watch.pause", "watch.resume", "watch.stop", "watch.report", "watch.command",
+        "watch.create", "watch.list", "watch.pause", "watch.resume", "watch.stop", "watch.report",
         "web.fetch", "files.list", "files.read", "files.search", "files.mkdir", "files.move", "files.rename", "files.trash", "files.reveal",
         "clipboard.read", "clipboard.write", "open.url", "open.email", "open.app",
         "applenotes.list", "applenotes.read", "applenotes.copy", "applenotes.remove", "applereminders.list",
@@ -38,11 +38,9 @@ public enum ExtensionActionPolicy {
         return builtIn.contains(tool.spec.name)
     }
 
-    /// Whether a card is all there can be: it runs outside any sandbox, can run anything, or turns down what reaches the person. It stays a card every time (D127).
+    /// Whether a card is all there can be: it runs outside any sandbox, or can run anything. It stays a card every time (D127).
     static func alwaysAsks(_ tool: any Tool) -> Bool {
         if !tool.spec.capabilities.isDisjoint(with: [.shell]) { return true }
-        // It turns down what may interrupt the person, so it could silence a notice without their noticing: their yes each time, until they say otherwise.
-        if tool.spec.name == AttentionSetTool.name { return true }
         if let ext = tool as? ExtensionTool { return !ext.sandboxed }
         return false
     }

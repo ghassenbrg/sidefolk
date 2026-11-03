@@ -142,6 +142,14 @@ import Testing
         #expect(ExtensionActionPolicy.offers(pageOnly, to: "com.example.other"), "kept from the model isn't kept from what the person builds")
     }
 
+    @Test func aJobByItsModelNameIsStillAJob() async throws {
+        let w = try await World()
+        w.h.env.registry.register(CompanionJobTool(agent: CompanionAgentSlot()))
+        let tool = try await w.install(["act": ["purpose": "to run what you set up"]], name: "nomind")
+        let reply = await w.ask(tool, "sidefolk/tools.call", ["tool": "companion_job", "input": ["job": "Tidy up"]])
+        #expect(reply["status"]?.stringValue == "denied", "it has no AI to spend, whichever name it's asked by")
+    }
+
     @Test func anExtensionNeverGetsAlwaysForWhatAlwaysAsks() {
         let spec = ToolSpec(name: "watch.command", title: "x", description: "", inputSchema: .object([:]), risk: .high, capabilities: [.watch, .shell], category: .watch, mutates: true)
         let decision = PermissionEngine().evaluate(spec: spec, input: .object([:]), summary: "x", scope: ToolScope(command: "/bin/echo hi"), caller: .extension(id: "com.example.a"), tainted: false,

@@ -1199,13 +1199,15 @@ A watch you make with `watch.create` under `permissions.act` tells you and not t
 
 `.tree(CardTree(nodes, selected:, select:, insert:, reorder:, picker:, tools:, line:))`: up to 64 cards. Each `CardTree.Node` has a `kind`, a `title`, `symbol`, `color`, `state` (`none pending active done skipped attention`), a `pill` and `branches`, up to 4, each with its own `id`, `label`, `tone`, `taken` and cards, 4 deep at most. Sidefolk lays it out and draws it; a card you didn't give `select` isn't pressable. A + says `insert`'s `key` is the card it comes after, or a branch's `id` for the start of that branch; with a `picker`, it opens a searchable list first (up to 256 items) and the chosen id goes under the picker's `key`. `reorder` gets `{id, before}`. `Card(tree:)` draws one small, and `Card(press:)` makes the whole card a button.
 
+`Page(accent: ["#2A6FE8", "#6E4BF2"])`, one or two colours deep enough to hold white words, colours the page's filled buttons, what's selected and its switches, running from the first to the second. Everything else stays the theme's. `dress.accent` wins where both are given.
+
 `Page(workspace: true)` takes the window: `Section(place: .side)` in a column at the start, `.trailing` at the end, each scrolling on its own, and a section that holds only a tree fills the middle. Heads (`.bar(PageBar)` and tabs that go somewhere) stay put above it. Home's sidebar folds while it shows. `.nav(PageNav)` lists places, `.notice(PageNotice)` draws what a person will receive, `.ticks(PageTicks)` recent results, and `Page(companion: true)` has the person's own companion look in at the corner and stand beside what's `active` on a tree. You never read which companion it is.
 
 ## Hearing what happens
 
 With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and only an extension that can't reach out hears them (no `network`, `exec`, `files.write`, `clipboard`, `screen`, `udp`); any other hears the name and the time. What an extension did through `permissions.act` doesn't count.
 
-Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 300 plain characters, it needs `permissions.ai` and counts toward that cap, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end, on a card every time. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
+Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 200 plain characters, it needs `permissions.ai` and counts toward that cap, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end; a plan may hold it, written out. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
 
 ## Speaking the person's language
 

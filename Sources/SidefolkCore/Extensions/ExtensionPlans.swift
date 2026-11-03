@@ -113,10 +113,28 @@ enum ExtensionPlanRules {
         guard tool.spec.risk != .high, !ExtensionActionPolicy.neverStanding.contains(name), let fields = template.objectValue else { return false }
         guard tool.scope(for: template).text == nil else { return false }
         // What runs is what the card showed: nothing hidden in a written value, nothing past where the card stops.
-        guard written(template).allSatisfy({ same(ExtensionText.clean($0), $0) && $0.count <= ExtensionPlanWords.valueLimit }) else { return false }
+        guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }),
+              objectsFit(template) else { return false }
         let fillable = ExtensionActionPolicy.fillable[name] ?? []
         return fields.allSatisfy { key, value in
             !hasSlot(key) && slotless(value, unless: fillable.contains(key))
+        }
+    }
+
+    /// What shows is all there is: nothing the card would strip, nothing invisible, nothing so long in bytes that characters hide it.
+    static func plain(_ text: String) -> Bool {
+        same(ExtensionText.clean(text), text) && text.utf8.count <= ExtensionPlanWords.valueLimit * 4
+            && !text.unicodeScalars.contains { $0.properties.isDefaultIgnorableCodePoint }
+    }
+
+    /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.
+    private static func objectsFit(_ value: JSONValue) -> Bool {
+        guard let fields = value.objectValue else { return true }
+        return fields.values.allSatisfy { field in
+            switch field {
+            case .object, .array: field.jsonString.count <= ExtensionPlanWords.valueLimit
+            default: true
+            }
         }
     }
 

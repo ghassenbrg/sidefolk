@@ -27,8 +27,8 @@ struct CompanionJobTool: Tool {
             risk: .medium, capabilities: [.system], category: .agents, mutates: true, external: false, timeout: Self.seconds, offeredToModel: false)
     }
 
-    /// As long as a card shows in full: what it can't show can't be asked for.
-    static let longest = ExtensionPlanWords.valueLimit
+    /// As long as a card shows in full, with room for its words around it: what it can't show can't be asked for.
+    static let longest = 200
 
     func summary(for input: JSONValue) -> String {
         String(localized: "Let your companion: \(ToolFormat.oneLine(ExtensionText.clean(input.string("job") ?? ""), Self.longest))", comment: "A tool's row: “Let your companion: tidy my Downloads”")
@@ -38,7 +38,7 @@ struct CompanionJobTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let job = input.string("job")?.trimmingCharacters(in: .whitespacesAndNewlines), !job.isEmpty else { throw ToolError.invalidInput("Say what the job is.") }
-        guard job.count <= Self.longest, ExtensionText.clean(job) == job else { throw ToolError.invalidInput("A job is at most \(Self.longest) plain characters, so a card can show all of it.") }
+        guard job.count <= Self.longest, ExtensionPlanRules.plain(job) else { throw ToolError.invalidInput("A job is at most \(Self.longest) plain characters, so a card can show all of it.") }
         guard let agent = agent.current else { throw ToolError.unavailable("The companion can't take a job right now.") }
         // Only words the person read on a plan count as clean; anything else may have come from outside.
         let handle = await agent.submit(AgentRequest(text: job, job: AgentRequest.Job(read: context.onPlan)))

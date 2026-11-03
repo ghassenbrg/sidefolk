@@ -97,11 +97,18 @@ struct ExtensionReachTests {
         #expect(settings.current.quietUntil == nil)
     }
 
-    @Test func focusAndQuietAreACardEveryTimeForAnExtension() async throws {
+    @Test func focusAndQuietMayStandOnAPlanButOnlyWrittenOut() async throws {
         let env = try TestEnv()
         let tool = AttentionSetTool(settings: await SettingsStore(db: env.db, events: env.events), attention: AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock))
-        #expect(ExtensionActionPolicy.spec(tool).risk == .high)
-        #expect(!ExtensionPlanRules.standing(tool: ExternalFacade(base: tool, spec: ExtensionActionPolicy.spec(tool)), template: ["mode": "focus", "minutes": 30]))
+        #expect(ExtensionActionPolicy.spec(tool).risk == .medium)
+        #expect(ExtensionPlanRules.standing(tool: ExternalFacade(base: tool, spec: ExtensionActionPolicy.spec(tool)), template: ["mode": "focus", "minutes": 30]))
+        #expect(!ExtensionPlanRules.standing(tool: ExternalFacade(base: tool, spec: ExtensionActionPolicy.spec(tool)), template: ["mode": "{{what}}", "minutes": 30]))
+    }
+
+    @Test func aPageSaysItsAccentAndAnythingElseIsDropped() throws {
+        let page = try ExtensionPage.parse(["sections": [], "accent": ["#2A6FE8", "#6E4BF2", "#000000"]])
+        #expect(page.accent == ["#2A6FE8", "#6E4BF2"])
+        #expect(try ExtensionPage.parse(["sections": [], "accent": ["nonsense"]]).accent.isEmpty)
     }
 
     @Test func aJobIsNeverOfferedToTheModelAndAsksWithoutAPlan() {
@@ -123,6 +130,24 @@ struct ExtensionReachTests {
         let parts = ApprovalText.parts(plan)
         #expect(parts.contains { $0.rows.contains("Save a note · text: “Hello”") })
         #expect(parts.contains { $0.rows.contains("Delete it · id: “7”") })
+    }
+
+    @Test func whatACardCantShowCantStand() {
+        let job = CompanionJobTool(agent: CompanionAgentSlot())
+        let facade = ExternalFacade(base: job, spec: ExtensionActionPolicy.spec(job))
+        #expect(!ExtensionPlanRules.standing(tool: facade, template: ["job": "Tidy\u{E0100}up"]), "a variation selector shows as nothing")
+        #expect(!ExtensionPlanRules.standing(tool: facade, template: ["job": "Tidy\u{00AD}up"]), "nor does a soft hyphen")
+        let long = String(repeating: "a", count: 290)
+        #expect(!ExtensionPlanRules.standing(tool: facade, template: ["opts": ["a": .string(long), "url": "https://example.com/more"]]), "an object is clipped whole")
+        #expect(ExtensionPlanRules.standing(tool: facade, template: ["opts": ["a": "short"]]))
+    }
+
+    @Test func aFailedJobNobodyReadStaysMarkedAsOutsideWords() async throws {
+        let (world, runtime, _) = try await world([.failure(UserFacingError("No."))])
+        let job = await runtime.submit(AgentRequest(text: "Tidy up", job: AgentRequest.Job(read: false)))
+        for await _ in job.events {}
+        let first = try await world.exchanges.conversation(job.threadId).first
+        #expect(first?.meta["tainted"]?.boolValue == true)
     }
 
     @Test func aJobThatsTooLongOrHidesCharactersIsRefused() async throws {

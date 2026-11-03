@@ -33,10 +33,12 @@ extension ExtensionHost {
             if let why = check.why { reply["why"] = .string(why) }
             await client.notify("sidefolk/tools.checked", params: .object(reply))
         case "sidefolk/tools.call":
-            guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
+            guard let asked = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
                 await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "failed", "text": "That call wasn't usable."])
                 return
             }
+            // By its one real name: a tool also answers to the name a model knows it by, and what's checked below goes by this.
+            let tool = gateway.tool(named: asked, for: id)?.spec.name ?? asked
             let now = Date()
             let recent = (runtimes[id]?.actionCalls ?? []).filter { now.timeIntervalSince($0) < 60 }
             guard recent.count < Self.callsPerMinute else {
