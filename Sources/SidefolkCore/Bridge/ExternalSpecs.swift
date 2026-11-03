@@ -38,6 +38,7 @@ extension ExternalToolPolicy {
                 if case .object(var kind)? = props["kind"], case .array(let values)? = kind["enum"] {
                     kind["enum"] = .array(values.filter { !($0.stringValue ?? "").lowercased().contains("command") })
                     props["kind"] = .object(kind)
+                    props["until"] = Schema.string("When to stop, in the user's words (\"friday\", \"in 3 days\"), when they asked for longer than a day. \(Int(WatchLimits.externalLongest / 86400)) days at most.")
                 }
             }
         case "watch.report":
@@ -119,7 +120,7 @@ extension ExternalToolPolicy {
             or came back up), file_appears, file_changes and folder_new_file (only inside folders the user shared with \
             Sidefolk; target is the full path), process_exits (a program on this Mac quit; target is its name or process \
             number). Addresses on this Mac or the local network (localhost, 192.168.x.x, .local) are refused: ask the user to \
-            set those up in Sidefolk. Your watchers stop on their own after a day; watch_stop ends one sooner.
+            set those up in Sidefolk. Your watchers stop on their own after a day, or at `until` when the user wants longer, up to a week; watch_stop ends one sooner.
             """,
         "watch.report": """
             Show a live value of this Mac beside the user's companion, updated in place (not a notification): cpu, memory, \

@@ -533,6 +533,38 @@ import Testing
         #expect(ExternalToolPolicy.annotations("a.new.tool")["destructiveHint"]?.boolValue == true)
     }
 
+    /// "watch this all week": as long as it said when made, up to a week, and nothing else moves.
+    @Test func aWatchCanSayHowLongItRuns() async throws {
+        let s = try await Stack()
+        func make(_ title: String, _ until: String?) async throws -> Watcher {
+            var input: [String: JSONValue] = ["kind": "process_exits", "target": .string(title), "title": .string(title)]
+            if let until { input["until"] = .string(until) }
+            let made = try await s.call("watch_create", .object(input))
+            #expect(!made.isError, "\(made.text)")
+            return try #require(await s.runtime.watchers.list().first { $0.title == title })
+        }
+        func hours(_ w: Watcher) -> Double { ((w.expiresAt ?? .distantPast).timeIntervalSince(w.createdAt) / 3600).rounded() }
+
+        #expect(hours(try await make("one", nil)) == 24)
+        // A day counts in full, so "in 3 days" runs to that day's end.
+        #expect((72...96).contains(hours(try await make("three", "in 3 days"))))
+        #expect(hours(try await make("month", "in 30 days")) == 168, "a week at most")
+
+        let passed = try await s.call("watch_create", ["kind": "process_exits", "target": "x", "until": "whenever"])
+        #expect(passed.isError)
+
+        // A live value keeps its own ends, and takes no `until` of this kind.
+        let tool = try #require(s.runtime.registry.tool(named: "watch.create"))
+        #expect(tool.spec.inputSchema["properties"]?["until"] == nil, "the spec a standing plan fits is unchanged")
+        #expect(ExternalToolPolicy.externalSpec(tool.spec).inputSchema["properties"]?["until"] != nil)
+
+        // Changing it never makes it longer.
+        let three = try #require(await s.runtime.watchers.list().first { $0.title == "three" })
+        #expect(try await !s.call("watch_update", ["id": .string(three.id), "mode": "repeat"]).isError)
+        #expect(await s.runtime.watchers.watcher(id: three.id)?.expiresAt == three.expiresAt)
+        await s.stop()
+    }
+
     @Test func statusAnswersWithCountsOnly() async throws {
         let s = try await Stack()
         let status = try await s.call("status")
