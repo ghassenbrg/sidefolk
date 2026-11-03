@@ -349,7 +349,7 @@ struct ExtensionReachTests {
         let paths = SidefolkPaths(home: home)
         let folder = paths.themes.appendingPathComponent("paper-garden", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        try ThemeFile(ThemeTokens.harbor, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        try ThemeFile(ThemeTokens.sidefolk, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
         let tool = AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { [] }, events: env.events)
         await settings.update { $0.themeFolder = "/somewhere/mine" }
         for caller in [Caller.extension(id: "e"), .agent(runId: AgentRuntime.jobPrefix + "1")] {
@@ -374,11 +374,11 @@ struct ExtensionReachTests {
         #expect(settings.current.appearance != .dark)
         let folder = paths.themes.appendingPathComponent("paper-garden", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        try ThemeFile(ThemeTokens.harbor, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
+        try ThemeFile(ThemeTokens.sidefolk, id: "dev.sidefolk.theme.paper-garden", name: "Paper Garden").encoded().write(to: folder.appendingPathComponent("theme.json"))
         _ = try await tool.run(["mode": "dark", "theme": "Paper Garden", "companion": "spark"], context: context)
         #expect(settings.current.appearance == .dark)
         #expect(settings.current.theme == "dev.sidefolk.theme.paper-garden", "by the name a person sees")
-        await settings.update { $0.theme = "harbor" }
+        await settings.update { $0.theme = ThemeTokens.sidefolk.id }
         _ = try await tool.run(["theme": "dev.sidefolk.theme.field-notes"], context: context)
         #expect(settings.current.theme == "dev.sidefolk.theme.paper-garden", "an old id saved in a plan follows on")
         #expect(settings.current.companion == .spark)
