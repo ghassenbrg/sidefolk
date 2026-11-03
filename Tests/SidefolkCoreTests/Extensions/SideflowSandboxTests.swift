@@ -62,6 +62,21 @@ import Testing
         }
     }
 
+    /// A search that finds a note's words, and says so as a command's answer would.
+    struct SearchProbe: Tool {
+        var spec: ToolSpec {
+            ToolSpec(name: "notes.search", title: "Search notebook", description: "", inputSchema: Schema.object(["query": Schema.string("What to look for.")], required: ["query"]),
+                     risk: .low, capabilities: [.notebook], category: .notes, mutates: false)
+        }
+
+        func summary(for input: JSONValue) -> String { "Search" }
+        func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
+            var result = ToolResult(text: "the note's own words", card: ResultCard(kind: .list, title: "1 match"))
+            result.rowOutcome = "the note's own words"
+            return result
+        }
+    }
+
     struct NoticeProbe: Tool {
         var spec: ToolSpec {
             ToolSpec(name: "notify.user", title: "Notify the user", description: "", inputSchema: Schema.object(["title": Schema.string("t"), "body": Schema.string("b"), "level": Schema.string("l")], required: ["title"]),
@@ -116,6 +131,33 @@ import Testing
         #expect(row?.outcome?.contains("\("Saved: From the companion".count)") == true)
         let story = await w.h.call("ext.sideflow.get_run", ["flow": "Companion's"])
         #expect(story.okText?.contains("Save a note") == true)
+    }
+
+    /// What a flow found stays out of History, by each way it could get there (D127, D136).
+    @Test func whatAFlowFoundStaysOutOfHistory() async throws {
+        let w = try await World()
+        w.h.env.registry.register(SearchProbe())
+        let definition: JSONValue = ["trigger": ["type": "manual"], "steps": [["id": "found", "do": "notes.search", "with": ["query": "the meeting"], "name": "Find my notes"]]]
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        let create = ToolCall(id: "c", name: "ext_sideflow_create_flow", input: ["name": "Finder", "definition": definition, "start": true])
+        _ = try await LoopBackend(model: w.model([create]), checkModel: "m", clock: w.h.env.clock).run(brainTask(w.h.env, text: "make me a flow"), toolbox: toolbox(w.h.env), emit: { _ in })
+        _ = await answer.value
+        await w.until("it to be on") { await w.flow("Finder")?["state"]?.stringValue == "on" }
+        _ = await w.h.call("ext.sideflow.run_flow", ["flow": "Finder"])
+        await w.until("the run to end") { (await w.h.call("ext.sideflow.get_run", ["flow": "Finder"])).okText?.contains("the note's own words") == true }
+
+        // The step, as a flow runs it, isn't a command: its row is its card's title.
+        let step = try await w.h.env.activity.recent(limit: 1, tool: "notes.search").first
+        #expect(step?.caller == "extension:dev.sidefolk.sideflow")
+        #expect(step?.args?["query"]?.stringValue == "the meeting", "nothing was filled in, so it logs as any call does")
+        #expect(step?.outcome == "1 match")
+
+        // Typed, "how did Finder go" answers with it. History keeps the tool's name, not the answer.
+        let asked = await w.h.env.executor.execute(name: "ext.sideflow.get_run", input: ["flow": "Finder"], caller: .command(extensionId: "dev.sidefolk.sideflow"))
+        #expect(asked.okText?.contains("the note's own words") == true)
+        let row = try await w.h.env.activity.recent(limit: 1, tool: "ext.sideflow.get_run").first
+        #expect(row?.caller.hasPrefix("command:") == true)
+        #expect(row?.outcome?.contains("the note's own words") == false, "\(row?.outcome ?? "")")
     }
 
     @Test func aModelThatReadOutsideWordsCantStartACard() async throws {

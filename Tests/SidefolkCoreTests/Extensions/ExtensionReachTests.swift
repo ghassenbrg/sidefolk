@@ -184,6 +184,34 @@ struct ExtensionReachTests {
         #expect(ExtensionPlanRules.standing(tool: ExternalFacade(base: probe, spec: ExtensionActionPolicy.spec(probe)), template: ["query": "{{trigger}}"]), "the founder's choice (D127)")
     }
 
+    @Test func aCommandsAnswerStaysOutOfHistoryForOneThatCouldHoldThePersonsWords() async throws {
+        let answer = """
+        import json, sys
+        def send(o): sys.stdout.write(json.dumps(o) + "\\n"); sys.stdout.flush()
+        for line in sys.stdin:
+            m = json.loads(line)
+            if m.get("method") == "initialize":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "t", "version": "1"}}})
+            elif m.get("method") == "tools/list":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "say", "description": "", "inputSchema": {"type": "object", "properties": {}}}]}})
+            elif m.get("method") == "tools/call":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "the answer"}]}})
+            elif "id" in m:
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+        """
+        let purpose: JSONValue = ["purpose": "to test"]
+        for (name, permissions, kept) in [("plain", JSONValue.object([:]), true), ("acting", ["act": purpose], false), ("hearing", ["events": purpose], false)] {
+            let h = try HostEnv()
+            let manifest: JSONValue = ["id": .string("com.example.\(name)"), "name": .string(name), "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                       "permissions": permissions, "tools": ["say": ["title": "Say", "risk": "low", "mutates": false]]]
+            try await h.host.install(from: h.source(name, manifest: manifest, files: ["server.py": answer]))
+            let out = await h.env.executor.execute(name: "ext.\(name).say", input: .object([:]), caller: .command(extensionId: "com.example.\(name)"))
+            #expect(out.okText == "the answer", "\(name)")
+            let row = try await h.env.activity.recent(limit: 1, tool: "ext.\(name).say").first
+            #expect(row?.outcome?.contains("the answer") == kept, "\(name): \(row?.outcome ?? "")")
+        }
+    }
+
     @Test func aStepThatFilledWordsInIsKeptAsWritten() async throws {
         let env = try TestEnv()
         env.registry.register(ProbeTool(name: "test.probe", risk: .low, result: { _ in ToolResult(text: "Found: note words") }))

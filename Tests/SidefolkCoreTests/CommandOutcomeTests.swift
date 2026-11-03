@@ -19,6 +19,13 @@ import Testing
         #expect(try await env.activity.recent().first?.outcome == "2+2 = 4")
     }
 
+    @Test func aToolAnExtensionRanKeepsWhatItAlwaysDid() async throws {
+        let env = try TestEnv()
+        probe(env)
+        _ = await env.executor.execute(name: "ext.calc.work", input: .object([:]), caller: .extension(id: "routines"))
+        #expect(try await env.activity.recent().first?.outcome == "Calculate")
+    }
+
     @Test func aToolAnAIRanKeepsWhatItAlwaysDid() async throws {
         let env = try TestEnv()
         probe(env)

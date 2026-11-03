@@ -953,8 +953,10 @@ public actor ExtensionHost {
         var result = ToolResult(text: clean.isEmpty ? "(no output)" : clean,
                                 card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200), refId: id),
                                 untrusted: true)
-        // What it answered is what History keeps for a command (D136). Not what's been copied: History isn't a second clipboard.
-        if rt.pin.permissions?.clipboard != true, !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
+        // What it answered is what History keeps for a command (D136). Not what's been copied, nor what it may have read through Sidefolk or
+        // heard: History isn't a second clipboard, or a second notebook.
+        let reach = rt.pin.permissions
+        if reach?.clipboard != true, reach?.act == nil, reach?.events == nil, !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
         if let m = rt.manifest, let asks = ExtensionToolAsks(asked, manifest: m) {
             result.asks = asks
             result.card?.holdAnswer = asks.holdAnswer

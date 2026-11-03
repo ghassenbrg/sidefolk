@@ -55,7 +55,7 @@ extension ExtensionHost {
             let timeout = params["timeout"]?.doubleValue.map { min(max($0, 1), 600) }
             let step = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
             let standing = step != nil
-            let written = step.flatMap { ExtensionPlanRules.fillsIn($0) ? $0 : nil }
+            let written = step.map(ExtensionPlanRules.fillsIn) == true ? step : nil
             let asker = asker(rt)
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
