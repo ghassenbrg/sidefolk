@@ -12,6 +12,8 @@ struct Attachment: Equatable {
     var text: String?
     /// Every file in the drag, when there was more than one. `kind` holds the first.
     var files: [URL] = []
+    /// Another app sent these through the Service, with no click behind them (D151).
+    var fromAnotherApp = false
 
     /// Files macOS handed over, from a drag or from Finder's Send to Sidefolk (D151).
     static func files(_ urls: [URL]) -> Attachment? {
@@ -106,6 +108,7 @@ struct WorkingFile: Equatable {
     var name: String
     var extensionId: String
     var mark: String?
+    var showsPicture = true
 }
 
 protocol AskActions: AnyObject {

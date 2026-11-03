@@ -39,6 +39,8 @@ public enum ExtensionIcon {
         guard !document.isEncrypted else { return "is an encrypted PDF." }
         guard document.numberOfPages == 1, let box = document.page(at: 1)?.getBoxRect(.mediaBox),
               box.width > 0, box.height > 0 else { return "must be a PDF with exactly one page." }
+        // A page draws at its own size, so a few bytes could ask for gigabytes of bitmap.
+        guard box.width <= 2048, box.height <= 2048 else { return "is too large: its page must be at most 2048 points on a side." }
         let ratio = box.width / box.height
         guard (0.95...1.05).contains(ratio) else { return "must be square; its page is \(Int(box.width))×\(Int(box.height)) points." }
         return nil

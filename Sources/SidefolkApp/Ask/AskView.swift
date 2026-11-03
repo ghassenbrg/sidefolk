@@ -128,7 +128,7 @@ struct AskView: View {
             .accessibilityLabel(Text("Ask \(companionName)"))
             if let attachment = model.attachment {
                 // A file with offers has its own row on the card, with its picture.
-                if !(attachment.dropKind == .file && attachment.dropFiles.count == 1 && model.text.isEmpty && !model.busy
+                if !(model.text.isEmpty && !model.busy && attachment.dropKind == .file && attachment.dropFiles.count == 1
                      && model.actions?.extensionDrops(for: attachment).isEmpty == false) {
                     HStack(spacing: 6) {
                         Chip(verbatim: attachment.label, tone: .accent, systemImage: icon(for: attachment))

@@ -228,6 +228,8 @@ private struct FileOfferCard: View {
     @State private var ready = FileOfferGuard.skipped
     @State private var showAll = false
 
+    /// Files another app sent with no click behind them get no picture: it could put a private photo on the screen (D151).
+    private var picturePath: String? { attachment.fromAnotherApp ? nil : attachment.dropFiles.first }
     private var names: [String] { attachment.dropFiles.map(DropChoices.shownName) }
     private var groups: [[ExtensionDropAction]] { Dictionary(grouping: offers, by: \.extensionId).values.sorted { $0[0].extensionName < $1[0].extensionName } }
 
@@ -300,9 +302,10 @@ private struct FileOfferCard: View {
     /// The file itself, on Sidefolk's own ground: its picture at thumbnail size, or a mark saying what kind it is.
     private var fileRow: some View {
         let first = groups.first?.first
-        return FrostLoader(path: attachment.dropFiles.first, icon: first.flatMap { looks[$0.extensionId]?.iconPath }) { frost in
+        return FrostLoader(path: picturePath, icon: first.flatMap { looks[$0.extensionId]?.iconPath }) { frost in
             HStack(spacing: Theme.Space.s) {
-                FileSheetLoading(frost: frost, mark: first?.mark, extensionId: first?.extensionId, side: 32, packPicture: packPicture)
+                // On Sidefolk's own ground: the person's picture or an empty sheet, never an extension's mark.
+                FileSheet(frost: frost, mark: nil, side: 32)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: names.first ?? "").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
                     if let size = attachment.dropFiles.first.flatMap(Self.size) {
@@ -325,13 +328,17 @@ private struct FileOfferCard: View {
     /// The extension's words, framed apart and under its name, so a title can't read as Sidefolk's. On a frost from the person's file
     /// (D150), in white and neutrals only; nothing Sidefolk says is on it.
     private func frame(_ first: ExtensionDropAction, _ group: [ExtensionDropAction]) -> some View {
-        FrostLoader(path: attachment.dropFiles.first, icon: looks[first.extensionId]?.iconPath) { frost in
+        FrostLoader(path: picturePath, icon: looks[first.extensionId]?.iconPath) { frost in
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: Theme.Space.xs) {
                     if let look = looks[first.extensionId] { ExtensionBadge(look: look, size: 18) }
                     Text("\(first.extensionName) says it can", comment: "The drop card: above what an extension offers, in its own words")
                         .font(Theme.Font.caption.weight(.semibold)).foregroundStyle(FrostInk.muted)
                     Spacer(minLength: 0)
+                    // Its mark is its own words: inside its frame, small, and only when the file has no picture to show.
+                    if frost.picture == nil, first.mark != nil {
+                        FileSheetLoading(frost: frost, mark: first.mark, extensionId: first.extensionId, side: 18, packPicture: packPicture)
+                    }
                 }
                 .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s + 2)
                 ForEach(group) { offer in
@@ -426,9 +433,11 @@ struct FileSheetLoading: View {
 
     var body: some View {
         FileSheet(frost: frost, mark: image, side: side)
-            .task(id: mark) {
+            .task(id: "\(extensionId ?? "")|\(mark ?? "")") {
+                image = nil
                 guard let mark, let extensionId else { return }
-                image = await packPicture(mark, extensionId)
+                let loaded = await packPicture(mark, extensionId)
+                if !Task.isCancelled { image = loaded }
             }
     }
 }

@@ -80,7 +80,10 @@ extension AppCoordinator {
             call.handedOver = files
             call.fromDrop = true
             call.mark = action.mark
-            model.working = files.first.map { WorkingFile(path: $0, name: DropChoices.shownName($0), extensionId: action.extensionId, mark: action.mark) }
+            model.working = files.first.map {
+                WorkingFile(path: $0, name: files.count == 1 ? DropChoices.shownName($0) : String(localized: "\(files.count) files", comment: "The drop card: how many files were dropped"),
+                            extensionId: action.extensionId, mark: action.mark, showsPicture: !attachment.fromAnotherApp)
+            }
             runLocal(.extensionCommand(call), caption: attachment.caption, into: model)
             return
         }

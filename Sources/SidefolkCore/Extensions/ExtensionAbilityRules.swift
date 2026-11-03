@@ -1,3 +1,4 @@
+import UniformTypeIdentifiers
 import Foundation
 
 /// What `ManifestValidator` checks in what an extension declares beyond its tools (D100): its settings, entries, drop
@@ -9,6 +10,14 @@ enum ExtensionAbilityRules {
     static let maxEntryItems = 32
     static let maxDrops = 6
     static let maxDropMenu = 12
+
+    static func isFormatName(_ tag: String) -> Bool {
+        guard (1...6).contains(tag.count), tag == tag.uppercased() else { return false }
+        return tag.split(separator: ".", omittingEmptySubsequences: false).allSatisfy { part in
+            guard !part.isEmpty, let type = UTType(filenameExtension: part.lowercased()) else { return false }
+            return !type.isDynamic
+        }
+    }
     static let maxPatterns = 16
 
     static func check(_ m: ExtensionManifest) -> [ValidationIssue] {
@@ -136,9 +145,9 @@ enum ExtensionAbilityRules {
                 issues.append(ValidationIssue(field: "\(field).tool", message: "“\(drop.tool)” isn't one of its tools."))
                 continue
             }
-            // Letters and digits only, so a tag can't say anything but a format's name.
-            if let tag = drop.tag, tag.isEmpty || tag.count > 6 || !tag.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == ".") }) {
-                issues.append(ValidationIssue(field: "\(field).tag", message: "must be 1–6 letters or digits."))
+            // Only a format's name, each part a file type macOS knows, so a tag can't say anything else.
+            if let tag = drop.tag, !Self.isFormatName(tag) {
+                issues.append(ValidationIssue(field: "\(field).tag", message: "must be a file format's name in capitals, like JPEG or TAR.GZ."))
             }
             if let mark = drop.mark, PackAssets.picturePath(mark) == nil || m.assets == nil {
                 issues.append(ValidationIssue(field: "\(field).mark", message: "must be a picture in its assets folder."))

@@ -226,7 +226,7 @@ extension AppCoordinator: AskActions {
         let runner = LocalIntentRunner(runtime: runtime)
         Task {
             let outcome = await runner.run(intent)
-            model.working = nil
+            if case .extensionCommand(let call) = intent, !call.handedOver.isEmpty { model.working = nil }
             @MainActor func say(_ line: String) {
                 if let reply { voice.reply(line, to: reply, in: model) }
             }

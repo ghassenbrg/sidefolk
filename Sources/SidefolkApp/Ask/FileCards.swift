@@ -11,10 +11,17 @@ struct FileWorkingCard: View {
     @State private var moving = false
 
     var body: some View {
-        FrostLoader(path: file.path, icon: look?.iconPath) { frost in
+        FrostLoader(path: file.showsPicture ? file.path : nil, icon: look?.iconPath) { frost in
             HStack(spacing: Theme.Space.m) {
                 FileSheetLoading(frost: frost, mark: file.mark, extensionId: file.extensionId, side: 32, packPicture: packPicture)
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
+                    // Who's working on it, since the mark is its picture.
+                    if let look {
+                        HStack(spacing: Theme.Space.xs) {
+                            ExtensionBadge(look: look, size: 14)
+                            Text(verbatim: look.name).font(Theme.Font.caption).foregroundStyle(FrostInk.muted).lineLimit(1)
+                        }
+                    }
                     Text("Working on \(file.name)", comment: "The working card: an extension is making something from this file")
                         .font(Theme.Font.bodyStrong).foregroundStyle(FrostInk.text).lineLimit(1).truncationMode(.middle)
                     bar
@@ -32,7 +39,8 @@ struct FileWorkingCard: View {
         GeometryReader { space in
             Capsule().fill(.white.opacity(0.18))
                 .overlay(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.9)).frame(width: space.size.width * 0.35)
+                    // Still, it fills the whole track, so it can't read as how far along this is.
+                    Capsule().fill(.white.opacity(still ? 0.5 : 0.9)).frame(width: space.size.width * (still ? 1 : 0.35))
                         .offset(x: moving && !still ? space.size.width * 0.65 : 0)
                 }
                 .clipShape(Capsule())

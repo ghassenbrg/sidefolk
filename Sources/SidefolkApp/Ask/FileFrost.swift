@@ -6,7 +6,7 @@ import SwiftUI
 
 /// What a file brings to the card made for it (D150): a frost from its picture, or from the extension's icon when the picture has no
 /// colour or there is none. The picture is the person's: it comes from the system's own thumbnail service, out of process, stays
-/// in memory for the card's life, and never reaches the extension.
+/// in Sidefolk's memory for the card's life (the service keeps its own cache, as it does for Finder), and never reaches the extension.
 nonisolated struct FileFrost: @unchecked Sendable {
     var frost: NSImage
     var scrim: Double
@@ -27,10 +27,21 @@ nonisolated struct FileFrost: @unchecked Sendable {
     /// A file the service can't draw soon enough gets the fallback, and the card still works.
     private static let patience: Duration = .seconds(2)
 
-    static func load(path: String, icon: String?) async -> FileFrost {
-        if let preset = await MainActor.run(body: { Self.preset[path] }) { return preset }
-        let picture = await thumbnail(of: URL(fileURLWithPath: path))
-        return await Task.detached(priority: .userInitiated) { make(picture: picture, icon: icon) }.value
+    /// `path` nil: the extension's icon alone, for files another app sent with no click behind them (D151).
+    static func load(path: String?, icon: String?) async -> FileFrost {
+        if let path, let preset = await MainActor.run(body: { Self.preset[path] }) { return preset }
+        var picture: NSImage?
+        if let real = path.flatMap(showable) { picture = await thumbnail(of: URL(fileURLWithPath: real)) }
+        let shown = picture
+        return await Task.detached(priority: .userInitiated) { make(picture: shown, icon: icon) }.value
+    }
+
+    /// A plain file Guard wouldn't keep from anyone: never a picture of what's behind a link, or of a private place.
+    private static func showable(_ path: String) -> String? {
+        var info = stat()
+        guard let real = FolderAccess.canonical(path), FolderAccess.forbiddenReason([real]) == nil,
+              lstat(path, &info) == 0, info.st_mode & S_IFMT == S_IFREG else { return nil }
+        return real
     }
 
     static func make(picture: NSImage?, icon: String?) -> FileFrost {
@@ -57,7 +68,9 @@ nonisolated struct FileFrost: @unchecked Sendable {
     /// A real blur, once, into a small image that's cheap to draw large. It keeps only the broad shapes, and what is measured is what is shown.
     private static func blurred(_ image: NSImage, saturation: Double) -> NSImage? {
         let size = CGSize(width: side, height: side)
-        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        // Asked for at this size: an image drawn at its own could be a PDF as large as it says it is.
+        var rect = CGRect(origin: .zero, size: size)
+        guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return nil }
         var input = CIImage(cgImage: cg)
         input = input.transformed(by: CGAffineTransform(scaleX: size.width / input.extent.width, y: size.height / input.extent.height))
         let output = input.clampedToExtent().applyingGaussianBlur(sigma: 44)
@@ -68,7 +81,8 @@ nonisolated struct FileFrost: @unchecked Sendable {
 
     private static func samples(_ image: NSImage) -> [FrostMeasure.Pixel]? {
         let count = 28
-        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+        var rect = CGRect(x: 0, y: 0, width: count, height: count)
+        guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil),
               let context = CGContext(data: nil, width: count, height: count, bitsPerComponent: 8, bytesPerRow: count * 4,
                                       space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
         context.interpolationQuality = .high
@@ -110,8 +124,10 @@ struct FrostLoader<Content: View>: View {
 
     var body: some View {
         content(frost).task(id: path) {
-            guard let path else { return }
-            frost = await FileFrost.load(path: path, icon: icon)
+            // Never another file's picture on this one's card, even for a moment.
+            frost = .plain
+            let loaded = await FileFrost.load(path: path, icon: icon)
+            if !Task.isCancelled { frost = loaded }
         }
     }
 }
@@ -165,7 +181,7 @@ struct FileSheet: View {
                     .overlay { FoldShape().fill(.white.opacity(0.92)) }
                     .overlay { SheetShape().stroke(.white.opacity(0.5), lineWidth: 0.5) }
             } else if let mark {
-                Image(nsImage: mark).resizable().scaledToFit().frame(width: side * 1.3, height: side * 1.3)
+                Image(nsImage: mark).resizable().scaledToFit().frame(width: min(side * 1.3, 44), height: min(side * 1.3, 44))
             } else {
                 SheetShape().fill(.white.opacity(0.14)).frame(width: side, height: side * 1.22)
                     .overlay { SheetShape().stroke(.white.opacity(0.35), lineWidth: 0.5) }

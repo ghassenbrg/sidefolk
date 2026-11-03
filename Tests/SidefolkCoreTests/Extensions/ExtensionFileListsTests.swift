@@ -298,6 +298,9 @@ import Testing
         #expect(try valid(tools: tools, drops: drops(["tag": "TAR.GZ"])))
         #expect(try !valid(tools: tools, drops: drops(["tag": "Allowed by Sidefolk"])), "too long")
         #expect(try !valid(tools: tools, drops: drops(["tag": "O K"])), "not one word")
+        #expect(try !valid(tools: tools, drops: drops(["tag": "SAFE"])), "a word, not a format")
+        #expect(try !valid(tools: tools, drops: drops(["tag": "jpeg"])), "in capitals")
+        for format in ["JPEG", "PNG", "HEIC", "M4A", "FLAC", "CSV", "JSON", "ZIP", "7Z", "PDF", "TAR"] { #expect(ExtensionAbilityRules.isFormatName(format), "\(format)") }
         #expect(try !valid(tools: tools, drops: drops(["mark": "../icon.png"])), "out of its pack")
     }
 

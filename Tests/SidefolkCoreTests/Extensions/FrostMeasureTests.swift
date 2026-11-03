@@ -1,3 +1,5 @@
+import CoreGraphics
+import Foundation
 import Testing
 @testable import SidefolkCore
 
@@ -14,6 +16,23 @@ struct FrostMeasureTests {
         let pixels: [FrostMeasure.Pixel] = [(0, 0, 0), (r: colour.0, g: colour.1, b: colour.2)]
         let scrim = FrostMeasure.scrim(pixels)
         #expect(FrostMeasure.worst(pixels, scrim: scrim) >= FrostMeasure.contrast)
+    }
+
+    /// A few bytes of PDF can ask for gigabytes of bitmap, on any card with no colourful picture.
+    @Test func anIconCantAskForAnEnormousPage() throws {
+        func pdf(_ side: CGFloat) throws -> URL {
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
+            var box = CGRect(x: 0, y: 0, width: side, height: side)
+            let context = try #require(CGContext(url as CFURL, mediaBox: &box, nil))
+            context.beginPDFPage(nil)
+            context.endPDFPage()
+            context.closePDF()
+            return url
+        }
+        let large = try pdf(14400), fine = try pdf(512)
+        defer { for url in [large, fine] { try? FileManager.default.removeItem(at: url) } }
+        #expect(ExtensionIcon.problem(try Data(contentsOf: large), fileName: "icon.pdf")?.contains("too large") == true)
+        #expect(ExtensionIcon.problem(try Data(contentsOf: fine), fileName: "icon.pdf") == nil)
     }
 
     @Test func theBrightestPartDecides() {
