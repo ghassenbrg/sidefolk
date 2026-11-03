@@ -220,7 +220,7 @@ public actor WatcherEngine {
         w.lastError = nil
         w.errorCount = 0
         w.fireCount = 0
-        // External agents' watchers never outlive a day, whatever they asked for (T4, T24).
+        // External agents' watchers end within a day, or at `until` up to `externalLongest` (T4, T24, D160).
         if let life = lifetime(w), w.expiresAt == nil || WatchSource.isExternal(w.source) {
             let end = now.addingTimeInterval(life)
             w.expiresAt = min(w.expiresAt ?? end, end)

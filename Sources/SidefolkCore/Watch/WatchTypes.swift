@@ -271,7 +271,7 @@ public enum WatchLimits {
     /// than once a minute, after a day otherwise (D35).
     public static let fastReportLifetime: TimeInterval = 3600
     public static let reportLifetime: TimeInterval = 86400
-    /// External agents' watchers stop after a day, however they were set up (T4).
+    /// External agents' watchers stop after a day unless they said `until` when made (T4, D160).
     public static let externalExpiry: TimeInterval = 86400
     /// How long one may run when it says so at the start (`until`, D160), and no longer however it's changed.
     public static let externalLongest: TimeInterval = 7 * 86400

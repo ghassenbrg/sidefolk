@@ -553,10 +553,20 @@ import Testing
         let passed = try await s.call("watch_create", ["kind": "process_exits", "target": "x", "until": "whenever"])
         #expect(passed.isError)
 
-        // A live value keeps its own ends, and takes no `until` of this kind.
+        // Sidefolk's own agent has no such word: its watches don't end soon, and this is for those that do.
+        let own = await s.runtime.executor.execute(name: "watch.create", input: ["kind": "process_exits", "target": "y", "until": "friday"], caller: .agent(runId: "r"))
+        #expect(!own.isOK)
+
         let tool = try #require(s.runtime.registry.tool(named: "watch.create"))
         #expect(tool.spec.inputSchema["properties"]?["until"] == nil, "the spec a standing plan fits is unchanged")
         #expect(ExternalToolPolicy.externalSpec(tool.spec).inputSchema["properties"]?["until"] != nil)
+
+        // Resuming gives it a day from now at most, never its week again.
+        let one = try #require(await s.runtime.watchers.list().first { $0.title == "one" })
+        #expect(try await !s.call("watch_pause", ["id": .string(one.id)]).isError)
+        #expect(try await !s.call("watch_resume", ["id": .string(one.id)]).isError)
+        let resumed = try #require(await s.runtime.watchers.watcher(id: one.id))
+        #expect((resumed.expiresAt ?? .distantFuture).timeIntervalSinceNow <= WatchLimits.externalExpiry + 5)
 
         // Changing it never makes it longer.
         let three = try #require(await s.runtime.watchers.list().first { $0.title == "three" })
