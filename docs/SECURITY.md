@@ -165,6 +165,8 @@ external clients together, and 600 session/job/status messages a minute for the 
 External callers can never answer approvals. E9 ("ping me when tests pass") needs only notify or a
 process-exit watcher, not command watchers.
 
+*Sidefolk's own agent reading History (D160).* `history.recent` lets the companion read short lines of what each agent and Sidefolk did and what the person was told, not arguments, outcomes, a notice's body or conversations. New data for the model, so medium risk with a card (once per kind unless they choose otherwise), and always outside content, since other agents and pages wrote those words (T2). Other agents never get it: `ExternalToolPolicy` is by name and closed.
+
 `sidefolk run -- <cmd>` (D12) must exec the command itself, in the caller's process and sandbox,
 and only report start and exit over the socket; the app never runs it. Claude Code hook payloads
 (D12) are untrusted input: they are parsed with size caps, the hooks fail open, and they never
