@@ -90,19 +90,19 @@ struct HistoryRecentTool: Tool {
     }
 
     /// Only words that read as plain words: an address can be spelled more ways than a list of its marks would catch, and its
-    /// sign-in, path, query and fragment can each hold a secret. Invisible characters go first, or a key split by one isn't
-    /// seen as a key.
+    /// sign-in, path, query and fragment can each hold a secret. What can't be seen goes first and fullwidth forms fold, or a
+    /// key written that way isn't seen as a key.
     private static func safe(_ words: String) -> String {
-        let shown = Redactor.redact(words.displaySafe).split(separator: " ").map { isPlainWord($0) ? String($0) : "[left out]" }
+        let seen = String(String.UnicodeScalarView(words.displaySafe.unicodeScalars.filter { !$0.properties.isDefaultIgnorableCodePoint }))
+        let shown = Redactor.redact(seen.precomposedStringWithCompatibilityMapping).split(separator: " ").map { isPlainWord($0) ? String($0) : "[left out]" }
         return ToolFormat.oneLine(shown.joined(separator: " "), 120)
     }
 
     /// Letters, numbers, marks and emoji, and in a word with no Latin letters also its own punctuation, so "3:30", "$45" and a
-    /// sentence in a language written without spaces stay. Goes by scalars in their compatibility forms: a mark on a slash makes
-    /// one character that no longer equals it, and a fullwidth colon is a colon. A plain word lost costs a line a word.
+    /// sentence in a language written without spaces stay. Goes by scalars: a mark on a slash makes one character that no longer
+    /// equals it. A plain word lost costs a line a word.
     private static func isPlainWord(_ word: Substring) -> Bool {
-        let scalars = Array(String(word).decomposedStringWithCompatibilityMapping.unicodeScalars)
-        var core = Array(scalars.drop { opensAWord.contains($0) }.reversed().drop { closesAWord.contains($0) }.reversed())
+        var core = Array(word.unicodeScalars.drop { opensAWord.contains($0) }.reversed().drop { closesAWord.contains($0) }.reversed())
         // "3:30pm" is a time.
         if ["am", "pm"].contains(String(String.UnicodeScalarView(core.suffix(2))).lowercased()) { core.removeLast(2) }
         let latin = core.contains { $0.isASCII && $0.properties.isAlphabetic }
@@ -113,7 +113,7 @@ struct HistoryRecentTool: Tool {
                  .nonspacingMark, .spacingMark, .enclosingMark, .decimalNumber, .letterNumber, .otherNumber:
                 true
             case .otherSymbol, .modifierSymbol:
-                !scalar.isASCII
+                scalar.properties.isEmoji
             case .connectorPunctuation, .dashPunctuation, .openPunctuation, .closePunctuation, .initialPunctuation, .finalPunctuation, .otherPunctuation, .currencySymbol:
                 latin ? joinsAWord.contains(scalar) : !partOfAnAddress.contains(scalar)
             default:
@@ -123,9 +123,9 @@ struct HistoryRecentTool: Tool {
     }
 
     private static let longestWord = 64
-    private static let opensAWord = Set("\"'“‘«‹「『([{<¿¡".unicodeScalars)
-    private static let closesAWord = Set("\"'”’»›」』)]}>,.;:!?%、。".unicodeScalars)
-    private static let joinsAWord = Set("-–'’&".unicodeScalars)
+    private static let opensAWord = Set("\"'“‘”’„‚«»‹›「『([{<¿¡#".unicodeScalars)
+    private static let closesAWord = Set("\"'“‘”’«»‹›」』)]}>,.;:!?%、。".unicodeScalars)
+    private static let joinsAWord = Set("-–'’&、・".unicodeScalars)
     private static let partOfAnAddress = Set("/\\@%#".unicodeScalars)
 
     private static func since(_ text: String?, now: Date, calendar: Calendar) throws -> Date {
