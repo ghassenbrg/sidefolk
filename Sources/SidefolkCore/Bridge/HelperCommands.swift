@@ -17,7 +17,7 @@ public enum HelperCommands {
           sidefolk tools [--json]                   what other agents may call, as Trust has it
           sidefolk call <tool> ['{"json": "arguments"}']                   call one of them; exits 11 when it fails, 69 when Sidefolk isn't running
           sidefolk ext validate [--no-run] <folder> check an extension, then start it in its sandbox and list its tools
-          sidefolk theme new "Name" [folder]        start a theme: a copy of Harbor and a short guide
+          sidefolk theme new "Name" [folder]        start a theme: a copy of the default and a short guide
           sidefolk theme check <folder>             say what's wrong with a theme, and how well its text reads
           sidefolk --version
         """

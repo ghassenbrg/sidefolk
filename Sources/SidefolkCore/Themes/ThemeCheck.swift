@@ -45,8 +45,8 @@ public enum ThemeCheck {
 
     /// Reads and checks the theme in `folder` (its `theme.json` and the images it names). `strict` is for a theme being
     /// made or added from a folder; a copy Sidefolk already keeps, or one from its own gallery, is read with the rules
-    /// added on 2026-11-01 (success and chips as text, soft fills' hues) as warnings, so a theme that passed when it
-    /// was added keeps working until its update comes.
+    /// added on 2026-11-01 (success and chips as text, soft fills' hues) and failures that come from a colour it leaves
+    /// out as warnings, so a theme that passed when it was added keeps working until its update comes.
     public static func check(folder: URL, strict: Bool = true) -> ThemeReport {
         var report = ThemeReport(tokens: .sidefolk)
         let manifest = folder.appendingPathComponent("theme.json")
@@ -105,7 +105,7 @@ public enum ThemeCheck {
             for role in ThemeTokens.Colors.roles {
                 guard let text = given[role.name] else {
                     if ThemeTokens.Colors.optionalRoles.contains(role.name) {
-                        missingOptional.insert(role.name)
+                        missingOptional.insert("\(appearance).\(role.name)")
                     } else {
                         missing.append("\(appearance).\(role.name)")
                     }
@@ -120,13 +120,25 @@ public enum ThemeCheck {
         }
         t.colors.fillOptional(missing: missingOptional)
         if !missing.isEmpty { problem(.warning, "The default theme's colour is used for \(missing.joined(separator: ", ")).") }
+        // What a theme leaves out comes from the default, which can change under it: that never takes a kept copy away,
+        // and when a theme is being added the words say which role it would have to write.
+        let inherited = missingOptional.union(missing)
+        func unset(_ roles: [String]) -> String {
+            roles.isEmpty ? "" : " This theme doesn't set \(roles.joined(separator: " or ")): write it in theme.json."
+        }
         for row in contrastRows(t.colors) where !row.passes {
-            problem(strict || !row.newer ? .error : .warning,
-                    "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1.")
+            let failing = [("light", row.light), ("dark", row.dark)].filter { $0.1 < textContrast }.map(\.0)
+            let left = row.roles.filter { role in failing.contains { inherited.contains("\($0).\(role)") } }
+            problem(strict || !(row.newer || !left.isEmpty) ? .error : .warning,
+                    "\(row.label) is \(String(format: "%.2f", min(row.light, row.dark))):1 in \(row.light < row.dark ? "light" : "dark"); text needs \(textContrast):1."
+                        + unset(left))
         }
         for message in meaningProblems(t.colors) { problem(.error, message) }
         for message in softMeaningProblems(t.colors) { problem(strict ? .error : .warning, message) }
-        for message in selectionProblems(t.colors) { problem(strict ? .error : .warning, message) }
+        for message in selectionProblems(t.colors) {
+            let appearance = message.contains(" in dark;") ? "dark" : "light"
+            problem(strict ? .error : .warning, message + unset(["sidebarSelected", "sidebar"].filter { inherited.contains("\(appearance).\($0)") }))
+        }
 
         // Type, shape, motion, material, nook and icons: from the app's own sets, within its limits.
         func pick<E: RawRepresentable & CaseIterable>(_ text: String?, _ key: String, _ fallback: E, level: ThemeReport.Problem.Level = .warning) -> E
@@ -200,6 +212,8 @@ public enum ThemeCheck {
         /// Held since 2026-11-01 (success and chips as text): only a warning for a theme Sidefolk already keeps.
         public var newer = false
         public var passes: Bool { min(light, dark) >= ThemeCheck.textContrast }
+        /// The text's role, then what it's drawn on.
+        var roles: [String] { label.components(separatedBy: " on ") }
     }
 
     /// Every pair of text and what it's drawn on that the app uses: each text role on every surface (success too: a

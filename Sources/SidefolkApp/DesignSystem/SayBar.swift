@@ -60,6 +60,9 @@ struct SayBarField<Trailing: View>: View {
                     return onModifiedReturn(press.modifiers) ? .handled : .ignored
                 }
                 .onExitCommand { onEscape?() }
+                // A new field each time it locks and frees. Locked while it has the keyboard, the old one keeps showing on
+                // screen the words it was just told to clear, under the prompt, and only a redraw takes them away.
+                .id(disabled)
             if let hint, text.isEmpty { KeyHint(hint) }
             trailing
         }

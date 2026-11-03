@@ -39,15 +39,11 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## In progress
 
-- **Theme redesign (D130) — the default theme is in snapshot 1075 (`team/themes-default`); the move of the other themes to the gallery, on `team/themes-two`, is not merged or published:** Sidefolk is the new default and Harbor a painted theme, on
-  one calm design: a plain sidebar with art in its header, a selected row the theme draws, a rebuilt Today, rounded sheets
-  with the theme's sky behind the toolbar. All ten languages. Verified: tests with the add-ons worktree, the release build, `sidefolk theme check`,
-  snapshots in light, dark, Arabic and German and at the default window size (all five themes, light and dark), the move off the old id, arrow keys against a control, and synthetic clicks in a debug app: Your day's +, Add reminder, a drag in the day and ⌘Z.
-  Paper Garden, Night Studio and Marshmallow stay built in for now; their move to the gallery is on `team/themes-two` (with `team/themes-two` in sidefolk-addons, unpublished), and the gallery must publish before an app without them ships.
-  Mochi's brand images are redrawn in the newer design, and the live 3D Mochi is tuned toward them with the same model. Not verified, for the founder to
-  check on snapshot 1075: real mouse clicks and drag, Delete and S on Next up, the New menu, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
-  The edge check flags petting and the flip with or without this change (older issue). Next: the gallery move.
-
+- **Theme redesign (D130): in snapshot 1075,** Sidefolk the new default and Harbor a painted theme, with Paper Garden, Night Studio and Marshmallow still built in.
+  **The founder is checking on 1075:** real mouse clicks and drag, Delete and S on Next up, the New menu, VoiceOver by ear, Reduce Transparency, Increase Contrast, the tuned Mochi moving in the running app.
+  **Next, prepared and not published:** the three themes' move to the gallery, on `team/themes-two` here and `team/themes-two` in sidefolk-addons. The add-ons name the placeholder minimum, so a signed build stops until Add-ons first sets the real snapshot (docs/RELEASE.md, D98): the gallery must publish before an app without them ships, and copies that still have them built in must not see them as Get. It needs the founder's yes for both.
+  **Not pressed yet, on the fixes after 1075:** ← and → on a reminder in Your day, and a late one moved past now (a reminder fires within moments of its time, so a late row is rare and short).
+  The edge check flags petting and the flip with or without this change (older issue).
 
 - **Sideflow (D110-D114, D125-D129): the first landing shipped in snapshot 1075, and the add-on is in the gallery as `sideflow-1.0.0-snapshot.1` (needs 1075; add-ons main 607614a, published 2026-11-03), under Show snapshots.** Second landing, `team/sideflow-extras` with `team/sideflow-job-owner`: `voice.say`, `appearance.set`, a tree on Ask's card, a job carrying its extension's id, the Activity tab. Its add-on (`team/sideflow-extras`, needs merging with add-ons main) goes out after the snapshot that carries it. **Known:** a tool line can slip in during a spoken local command (`runLocal` never sets busy); a job's notices show as the companion's, named nowhere; `TreeCompact` doesn't draw done or skipped. **Not verified, for the founder:** a real schedule over hours or with the Mac asleep, a live AI step and a real companion job end to end, the tree on a real card in Ask, drag, keyboard and VoiceOver by hand, Arabic on the new screens. **Verify:** `swift test --no-parallel` with `SIDEFOLK_ADDONS_REPO` at an add-ons checkout that has Sideflow; add-ons `swift test --filter Sideflow`.
 

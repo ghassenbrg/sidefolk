@@ -88,19 +88,32 @@ public struct ThemeTokens: Sendable, Equatable {
         public static let optionalRoles: Set<String> = ["well", "glow", "waitGlow", "sidebar", "sidebarInk", "sidebarInkMuted", "sidebarSelected",
                                                          "onSidebarSelected", "sceneInk", "sceneInkMuted"]
 
-        /// The stand-ins for optional roles a theme left out: its own sunken surface for wells, its surface, inks and
-        /// accent for the sidebar and the scene, the default's lights.
+        /// The stand-ins for optional roles a theme left out, each named with its appearance ("dark.sidebar"): its own
+        /// sunken surface for wells, its surface, inks and accent for the sidebar and the scene, the default's lights.
+        /// One that wouldn't read on what the theme did write gives way to one that does, so nobody is refused over a role
+        /// they never wrote.
         mutating func fillOptional(missing: Set<String>) {
-            if missing.contains("well") { well = surfaceSunken }
-            if missing.contains("glow") { glow = ThemeTokens.sidefolk.colors.glow }
-            if missing.contains("waitGlow") { waitGlow = ThemeTokens.sidefolk.colors.waitGlow }
-            if missing.contains("sidebar") { sidebar = surface }
-            if missing.contains("sidebarInk") { sidebarInk = ink }
-            if missing.contains("sidebarInkMuted") { sidebarInkMuted = inkMuted }
-            if missing.contains("sidebarSelected") { sidebarSelected = accent }
-            if missing.contains("onSidebarSelected") { onSidebarSelected = onAccent }
-            if missing.contains("sceneInk") { sceneInk = ink }
-            if missing.contains("sceneInkMuted") { sceneInkMuted = inkMuted }
+            let appearances: [(String, WritableKeyPath<Pair, UInt32>)] = [("light", \.light), ("dark", \.dark)]
+            for (appearance, side) in appearances {
+                let left = { (role: String) in missing.contains("\(appearance).\(role)") }
+                if left("well") { well[keyPath: side] = surfaceSunken[keyPath: side] }
+                if left("glow") { glow[keyPath: side] = ThemeTokens.sidefolk.colors.glow[keyPath: side] }
+                if left("waitGlow") { waitGlow[keyPath: side] = ThemeTokens.sidefolk.colors.waitGlow[keyPath: side] }
+                if left("sidebar") { sidebar[keyPath: side] = surface[keyPath: side] }
+                let plane = sidebar[keyPath: side]
+                func readable(_ colours: [UInt32], on back: UInt32) -> UInt32? { colours.first { ThemeCheck.contrast($0, back) >= ThemeCheck.textContrast } }
+                if left("sidebarInk") { sidebarInk[keyPath: side] = readable([ink[keyPath: side], surface[keyPath: side]], on: plane) ?? ink[keyPath: side] }
+                if left("sidebarInkMuted") { sidebarInkMuted[keyPath: side] = readable([inkMuted[keyPath: side], sidebarInk[keyPath: side]], on: plane) ?? inkMuted[keyPath: side] }
+                let labels = left("onSidebarSelected") ? [onAccent[keyPath: side], surface[keyPath: side], ink[keyPath: side]] : [onSidebarSelected[keyPath: side]]
+                if left("sidebarSelected") {
+                    // A pale accent still marks the row in the theme's own colour: it moves toward the ink until it stands out.
+                    let fills = (0...10).map { CalendarPalette.mix(accent[keyPath: side], ink[keyPath: side], Double($0) / 10) }
+                    sidebarSelected[keyPath: side] = fills.first { ThemeCheck.contrast($0, plane) >= ThemeCheck.stateContrast && readable(labels, on: $0) != nil } ?? accent[keyPath: side]
+                }
+                if left("onSidebarSelected") { onSidebarSelected[keyPath: side] = readable(labels, on: sidebarSelected[keyPath: side]) ?? onAccent[keyPath: side] }
+                if left("sceneInk") { sceneInk[keyPath: side] = ink[keyPath: side] }
+                if left("sceneInkMuted") { sceneInkMuted[keyPath: side] = inkMuted[keyPath: side] }
+            }
         }
     }
 
