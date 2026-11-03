@@ -35,6 +35,14 @@ extension ParsedIntent {
             return IntentPlan(kind: String(localized: "Read now"), title: hint, chips: [], tool: "watch.read")
         case .companion:
             return IntentPlan(kind: String(localized: "Play"), title: hint, chips: [], tool: "companion.play")
+        case .listing(let listing):
+            let tool = switch listing {
+            case .reminders: "reminders.list"
+            case .watchers: "watch.list"
+            case .agenda: "agenda.today"
+            case .due: "notes.list"
+            }
+            return IntentPlan(kind: String(localized: "Read now"), title: hint, chips: [], tool: tool)
         default:
             return IntentPlan(kind: hint, title: "", chips: [], tool: nil)
         }

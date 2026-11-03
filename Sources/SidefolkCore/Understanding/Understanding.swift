@@ -106,6 +106,8 @@ extension ParsedIntent {
             return String(localized: "I'll stop keeping quiet.")
         case .find:
             return String(localized: "I'll look through your notebook.")
+        case .listing:
+            return String(localized: "I'll read it now.")
         case .needsTime:
             return String(localized: "I'll ask when to remind you.")
         case .needsTarget:
@@ -142,6 +144,7 @@ extension ParsedIntent {
         case .surface: "puzzlepiece.extension"
         case .quiet, .quietOff: "moon"
         case .find: "magnifyingglass"
+        case .listing: "list.bullet"
         case .newConversation: "square.and.pencil"
         case .extensionCommand: "puzzlepiece.extension"
         }

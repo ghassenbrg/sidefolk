@@ -64,6 +64,8 @@ public enum LocalIntent: Sendable, Equatable {
     /// Quiet mode until a time; nil means until the user turns it off.
     case quiet(until: Date?)
     case quietOff
+    /// "list my reminders", "what am I watching", "what's on my plate", "what's due this week".
+    case listing(Listing)
     /// An empty `query` with a `kind` or `collection` means "list them".
     case find(query: String, kind: NotebookItem.Kind?, collection: String?)
     /// A reminder was asked for without a usable time; the app should ask when. `title` is clean (no time words).

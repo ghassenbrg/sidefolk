@@ -99,7 +99,7 @@ import Testing
     @Test func wordsAroundRemindDoNotTrigger() {
         #expect(parse("the reminder app is broken") == nil)
         #expect(parse("reminders are annoying") == nil)
-        #expect(parse("what reminders do I have") == nil)
+        #expect(parse("what reminders do I need") == nil)
         #expect(parse("don't remind me to call mom") == nil)
         #expect(parse("remind me") == nil)
         #expect(parse("remind me tomorrow") == nil)
