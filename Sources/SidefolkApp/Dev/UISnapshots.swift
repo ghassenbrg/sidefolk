@@ -969,13 +969,13 @@ enum UISnapshots {
             NSGradient(colors: [NSColor(red: 0.95, green: 0.55, blue: 0.3, alpha: 1), NSColor(red: 0.2, green: 0.45, blue: 0.6, alpha: 1)])?.draw(in: rect, angle: 70)
             return true
         }
-        for name in ["trip.heic", "trip.jpg"] { FileFrost.preset[NSTemporaryDirectory() + name] = FileFrost.make(picture: drawn, icon: nil) }
+        for name in ["trip.heic", "trip.jpg"] { FileFrost.preset[NSTemporaryDirectory() + name] = FileFrost.make(picture: drawn, mark: nil) }
         let page = NSImage(size: NSSize(width: 340, height: 440), flipped: false) { rect in
             NSColor.white.setFill()
             rect.fill()
             return true
         }
-        FileFrost.preset[NSTemporaryDirectory() + "notes.csv"] = FileFrost.make(picture: page, icon: nil)
+        FileFrost.preset[NSTemporaryDirectory() + "notes.csv"] = FileFrost.make(picture: page, mark: environment["SIDEFOLK_SNAPSHOT_MARK"].flatMap { NSImage(contentsOfFile: $0) })
     }
 
     private static func fileWorking() -> AskModel {

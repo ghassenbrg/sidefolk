@@ -4,7 +4,7 @@ import QuickLookThumbnailing
 import SidefolkCore
 import SwiftUI
 
-/// What a file brings to the card made for it (D150): a frost from its picture, or from the extension's icon when the picture has no
+/// What a file brings to the card made for it (D150): a frost from its picture, or from the extension's mark when the picture has no
 /// colour or there is none. The picture is the person's: it comes from the system's own thumbnail service, out of process, stays
 /// in Sidefolk's memory for the card's life (the service keeps its own cache, as it does for Finder), and never reaches the extension.
 nonisolated struct FileFrost: @unchecked Sendable {
@@ -27,16 +27,14 @@ nonisolated struct FileFrost: @unchecked Sendable {
     /// A file the service can't draw soon enough gets the fallback, and the card still works.
     private static let patience: Duration = .seconds(2)
 
-    /// `path` nil: the extension's icon alone, for files another app sent with no click behind them (D151).
-    static func load(path: String?, icon: String?) async -> FileFrost {
+    /// `path` nil: no picture at all, for files another app sent with no click behind them (D151). `mark` is the extension's picture from
+    /// its pack, already checked and capped. Never its icon: a PDF can take minutes to draw, whoever draws it.
+    static func load(path: String?, mark: NSImage?) async -> FileFrost {
         if let path, let preset = await MainActor.run(body: { Self.preset[path] }) { return preset }
         var picture: NSImage?
         if let real = path.flatMap(showable) { picture = await thumbnail(of: URL(fileURLWithPath: real)) }
-        // Drawn by the same service: a crafted PDF can take minutes to draw, and there it costs a process that's cut off, not Sidefolk.
-        var ownIcon: NSImage?
-        if let icon { ownIcon = await thumbnail(of: URL(fileURLWithPath: icon)) }
-        let shown = picture, iconShown = ownIcon
-        return await Task.detached(priority: .userInitiated) { make(picture: shown, icon: iconShown) }.value
+        let shown = picture
+        return await Task.detached(priority: .userInitiated) { make(picture: shown, mark: mark) }.value
     }
 
     /// A plain file Guard wouldn't keep from anyone: never a picture of what's behind a link, or of a private place.
@@ -48,28 +46,56 @@ nonisolated struct FileFrost: @unchecked Sendable {
     }
 
     /// Two questions: is there a picture worth showing on the sheet, and is its colour enough to frost a card with? A dull photo answers
-    /// yes and no: it keeps its place on the sheet, on a frost from the icon.
-    static func make(picture: NSImage?, icon: NSImage?) -> FileFrost {
-        let worthShowing = picture.flatMap(samples).map { FrostMeasure.chroma($0) >= FrostMeasure.minimumPictureChroma } == true
-        let shown = worthShowing ? picture : nil
+    /// yes and no: it keeps its place on the sheet, on a frost from the mark.
+    static func make(picture: NSImage?, mark: NSImage?) -> FileFrost {
+        let shown = picture.flatMap(samples).map(FrostMeasure.isPicture) == true ? picture : nil
         if let shown, let frosted = blurred(shown, saturation: 1.15), let pixels = samples(frosted), FrostMeasure.hasColour(pixels) {
             return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: shown)
         }
-        guard let icon, let frosted = blurred(icon, saturation: 0.55), let pixels = samples(frosted) else {
+        guard let mark, let frosted = blurred(onDark(mark), saturation: 0.8), let pixels = samples(frosted) else {
             return FileFrost(frost: plain.frost, scrim: plain.scrim, picture: shown)
         }
         return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: shown)
     }
 
+    /// A mark has clear parts and is small: large on a dark ground, its colours reach the card's edges.
+    private static func onDark(_ mark: NSImage) -> NSImage {
+        NSImage(size: NSSize(width: side, height: side), flipped: false) { rect in
+            NSColor(white: 0.1, alpha: 1).setFill()
+            rect.fill()
+            mark.draw(in: rect.insetBy(dx: -CGFloat(side) * 0.15, dy: -CGFloat(side) * 0.15))
+            return true
+        }
+    }
+
+    /// First of the picture and the clock: a crafted file can keep the service drawing long after it's asked to stop, and the card
+    /// doesn't wait for that.
     private static func thumbnail(of url: URL) async -> NSImage? {
         let asked = Asked(request: QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: side, height: side), scale: 2, representationTypes: .thumbnail))
-        let clock = Task {
-            try? await Task.sleep(for: patience)
-            QLThumbnailGenerator.shared.cancel(asked.request)
+        return await withCheckedContinuation { (continuation: CheckedContinuation<NSImage?, Never>) in
+            let once = Once(continuation)
+            QLThumbnailGenerator.shared.generateBestRepresentation(for: asked.request) { drawn, _ in
+                once.finish(drawn.map { NSImage(cgImage: $0.cgImage, size: NSSize(width: $0.cgImage.width, height: $0.cgImage.height)) })
+            }
+            Task {
+                try? await Task.sleep(for: patience)
+                QLThumbnailGenerator.shared.cancel(asked.request)
+                once.finish(nil)
+            }
         }
-        defer { clock.cancel() }
-        guard let drawn = try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: asked.request) else { return nil }
-        return NSImage(cgImage: drawn.cgImage, size: NSSize(width: drawn.cgImage.width, height: drawn.cgImage.height))
+    }
+
+    private final class Once: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<NSImage?, Never>?
+        init(_ continuation: CheckedContinuation<NSImage?, Never>) { self.continuation = continuation }
+        func finish(_ image: NSImage?) {
+            lock.lock()
+            let waiting = continuation
+            continuation = nil
+            lock.unlock()
+            waiting?.resume(returning: image)
+        }
     }
 
     private struct Asked: @unchecked Sendable { var request: QLThumbnailGenerator.Request }
@@ -127,7 +153,8 @@ struct FrostGround: View {
 /// Loads a file's frost and gives it to `content`, the plain one until it's there.
 struct FrostLoader<Content: View>: View {
     var path: String?
-    var icon: String?
+    /// The extension's mark, from its pack, for when the file has no picture with colour.
+    var mark: (() async -> NSImage?)?
     @ViewBuilder var content: (FileFrost) -> Content
     @State private var frost = FileFrost.plain
 
@@ -135,7 +162,8 @@ struct FrostLoader<Content: View>: View {
         content(frost).task(id: path) {
             // Never another file's picture on this one's card, even for a moment.
             frost = .plain
-            let loaded = await FileFrost.load(path: path, icon: icon)
+            let image = await mark?()
+            let loaded = await FileFrost.load(path: path, mark: image)
             if !Task.isCancelled { frost = loaded }
         }
     }

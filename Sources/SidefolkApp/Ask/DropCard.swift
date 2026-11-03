@@ -302,7 +302,7 @@ private struct FileOfferCard: View {
     /// The file itself, on Sidefolk's own ground: its picture at thumbnail size, or a mark saying what kind it is.
     private var fileRow: some View {
         let first = groups.first?.first
-        return FrostLoader(path: picturePath, icon: first.flatMap { looks[$0.extensionId]?.iconPath }) { frost in
+        return FrostLoader(path: picturePath) { frost in
             HStack(spacing: Theme.Space.s) {
                 // On Sidefolk's own ground: the person's picture or an empty sheet, never an extension's mark.
                 FileSheet(frost: frost, mark: nil, side: 32)
@@ -328,7 +328,7 @@ private struct FileOfferCard: View {
     /// The extension's words, framed apart and under its name, so a title can't read as Sidefolk's. On a frost from the person's file
     /// (D150), in white and neutrals only; nothing Sidefolk says is on it.
     private func frame(_ first: ExtensionDropAction, _ group: [ExtensionDropAction]) -> some View {
-        FrostLoader(path: picturePath, icon: looks[first.extensionId]?.iconPath) { frost in
+        FrostLoader(path: picturePath, mark: first.mark.map { mark in { await packPicture(mark, first.extensionId) } }) { frost in
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: Theme.Space.xs) {
                     if let look = looks[first.extensionId] { ExtensionBadge(look: look, size: 18) }

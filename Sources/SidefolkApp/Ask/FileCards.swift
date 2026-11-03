@@ -11,7 +11,7 @@ struct FileWorkingCard: View {
     @State private var moving = false
 
     var body: some View {
-        FrostLoader(path: file.showsPicture ? file.path : nil, icon: look?.iconPath) { frost in
+        FrostLoader(path: file.showsPicture ? file.path : nil, mark: file.mark.map { mark in { await packPicture(mark, file.extensionId) } }) { frost in
             HStack(spacing: Theme.Space.m) {
                 FileSheetLoading(frost: frost, mark: file.mark, extensionId: file.extensionId, side: 32, packPicture: packPicture)
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -63,8 +63,13 @@ struct FileReceiptCard: View {
 
     private var files: [PlacedFile] { card.files ?? [] }
 
+    private var packMark: (() async -> NSImage?)? {
+        guard let mark = card.mark, let id = card.refId else { return nil }
+        return { await model.actions?.packPicture(mark, extensionId: id) }
+    }
+
     var body: some View {
-        FrostLoader(path: files.first?.path, icon: look?.iconPath) { frost in
+        FrostLoader(path: files.first?.path, mark: packMark) { frost in
             VStack(alignment: .leading, spacing: Theme.Space.m) {
                 HStack(alignment: .top, spacing: Theme.Space.l) {
                     sheets(frost)

@@ -10,6 +10,13 @@ public enum FrostMeasure {
     public static let minimumShownChroma = 0.10
     /// Below this, a thumbnail is a page of text or a blank document, not a picture worth showing on the file's sheet.
     public static let minimumPictureChroma = 0.06
+
+    /// Colour, or tones across the range as a black-and-white photo has: a page is nearly all paper.
+    public static func isPicture(_ pixels: [Pixel]) -> Bool {
+        if chroma(pixels) >= minimumPictureChroma { return true }
+        let mid = pixels.filter { let v = ($0.r + $0.g + $0.b) / 3; return v > 0.15 && v < 0.85 }
+        return Double(mid.count) >= Double(pixels.count) * 0.4
+    }
     /// For white. It keeps the softer detail text, white at 92%, above 4.5:1 on the brightest part.
     public static let contrast = 5.6
 
