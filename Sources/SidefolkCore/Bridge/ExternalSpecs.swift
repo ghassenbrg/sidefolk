@@ -24,7 +24,7 @@ extension ExternalToolPolicy {
             spec.inputSchema = editing(spec.inputSchema) { props in
                 props["collection"] = Schema.string("Move it to one of the user's existing projects, topics or lists, or the Inbox.")
             }
-        case "reminders.create", "watch.create":
+        case "reminders.create", "watch.create", "watch.update":
             spec.inputSchema = editing(spec.inputSchema) { props in
                 // Critical breaks through quiet mode with sound; only the user's own click sets it (T24).
                 if props["level"] != nil {
@@ -126,10 +126,13 @@ extension ExternalToolPolicy {
         "watch.pause": "Pause one of your watchers or live values without stopping it, by its id (or its title).",
         "watch.resume": "Start one of your paused or finished watchers or live values again, by its id (or its title).",
         "watch.update": """
-            Change how one of your live values shows; it goes on running whichever. display: beside (always beside the \
-            companion; other agents share \(WatchLimits.maxExternalBeside) places, and past that it runs quietly), notify (hidden, appears for a \
-            moment at each reading, once a minute at most), quiet (hidden; the user checks it from a menu). prefix and suffix \
-            stand around the value, like "$" or "GPU", \(WatchLimits.maxAffix) characters at most; an empty string takes one away.
+            Change one of your watchers or live values in place; it keeps its history. Any: title, interval_minutes, level. A \
+            watch: mode (once or repeat), contains and not_contains (a web page; an empty string takes one away), becomes (a \
+            site). A live value: display: beside (always beside the companion; other agents share \(WatchLimits.maxExternalBeside) \
+            places, and past that it runs quietly), notify (hidden, appears for a moment at each reading, once a minute at \
+            most), quiet (hidden; the user checks it from a menu); prefix and suffix stand around the value, like "$" or "GPU", \
+            \(WatchLimits.maxAffix) characters at most; an empty string takes one away. Checks can't go faster than their kind \
+            allows, and changing a watcher never makes it last longer.
             """,
         "watch.reorder": "Put your watchers in this order, each given by id. Others, the user's among them, keep their places.",
         "watch.more_room": """
