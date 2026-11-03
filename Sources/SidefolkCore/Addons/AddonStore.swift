@@ -99,7 +99,8 @@ public actor AddonStore {
 
     private func fetchCatalog() async throws -> AddonCatalog {
         guard let source else { throw UserFacingError("This copy of Sidefolk has no add-on gallery.") }
-        let work = try fresh(downloads.appendingPathComponent("catalog", isDirectory: true))
+        // A folder of its own: launch, the updater and the gallery can each ask at once, and this actor lets them in at every await.
+        let work = try fresh(downloads.appendingPathComponent("catalog-\(UUID().uuidString)", isDirectory: true))
         defer { try? FileManager.default.removeItem(at: work) }
         let zip = work.appendingPathComponent(AddonSource.catalogFile)
         try await downloader.download(source.base.appendingPathComponent(AddonSource.catalogFile), to: zip,

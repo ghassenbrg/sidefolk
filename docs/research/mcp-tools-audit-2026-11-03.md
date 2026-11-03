@@ -23,3 +23,47 @@ ARCHITECTURE says Codex doesn't list its tools up front. The rest is Codex's own
 **Not known:** how much of it Codex caches and bills less for, and what Claude Code does with the same list. Measuring that
 takes live calls, so this stops here. Nothing changed. If it matters, the first thing to look at is the five largest
 descriptions, which D116 and D157 have made longer.
+
+## For the next audit batch
+
+Written on `1d9f09a3`, for snapshot 1075 and after.
+
+**Decided: an important reminder holds its note (D160).** An agent's `reminders.cancel`, `complete`, `snooze` and `update`
+never touched an important reminder, but `notes_update` marking the task done and `notes_trash` could still end one: on Ask,
+after a card that says "Change a note (mark done)" or "Move a note to the Trash" and not the reminder; on Allow, the default, with
+no card. Both now refuse for another agent, card or no card, and so does a new title, which a reminder carrying its note's title would follow, decided with the coordinator on the founder's standing instruction
+of 2026-11-03, the stricter of the two options. **For the founder to check when back:** whether a card naming the reminder
+would suit better, and extensions, which aren't held, on a card or on a plan the person read.
+
+**`media` and contained: closed.** The gap was `isContained` ignoring `media`, which D141 calls a way out. `79caa352` (T44)
+fixed it, with `mediaIsntContained`, and `ExtensionHost+Actions` reads `isContained` when a plan is approved and again when a step
+runs, so a saved plan doesn't keep it. Two things it leaves, neither urgent:
+- `isContained` is a list someone has to remember: a new ability counts as contained until it's added, which is how this gap
+  came about. A fix: one test that turns on each ability in `ExtensionPermissions` and requires it to be either in the list or in
+  a named set of those that stay contained, so a new one fails until someone decides.
+- `carriesOut` counts `ai` and `place`, and `isContained` doesn't. SECURITY calls them ways out by design on the drop card; I
+  didn't find that written down for plans, and an extension with `events` and `place` hears titles and can send 80 characters
+  to the place search. Not tested. It needs one look by whoever owns D129, and a line in SECURITY either way.
+
+**Still limits, from D160.** A card isn't bound to the reminder as it stood: the person's edit while it waits runs under the
+card's words. A refusal by whole id says a reminder is important. A rename's card shows the name the agent used, which may be a
+loose match. `Redactor` is patterns, so a secret it doesn't know, in a notice's title or a note's title, can reach the model
+through `history.recent`; only words shaped like an address are left out, by shape.
+
+**`Redactor` reads what it's given.** `history.recent` found a key split by an invisible character (`sk-ant-\u{200B}…`) going past it, and now cleans first: what can't be seen, and fullwidth forms. Other callers pass raw text, so T20's other uses have the same gap. A fix: strip what can't be seen inside `Redactor.redact` itself, with one test, then drop the order here. Also seen, not reachable through a summary, which `ToolExecutor` clips to 240: `redactOpaque` looks quadratic on long non-ASCII text (500 KB, 50 s, debug build), so another caller with long text is worth one look.
+
+**Waiting on someone.**
+- A4, Codex's `tool_timeout_sec`, on `team/tools-a4`: needs one tiny live call, with the founder's yes, to learn the default.
+- B7, `files.write`: D140 is on main now, so this is only waiting for the founder's yes by name. It must not share `placed`,
+  `placing` or `handedOver`.
+- B8, web search: not built until the founder chooses a provider and who pays.
+- What a turn costs (above): the five largest descriptions are the first place to look, only if it matters.
+
+**Add-on downloads share a folder by id.** The catalog's fetch raced itself (fixed: launch, the updater and the gallery could each
+pull another's folder away, and in a home with no catalog yet that showed as an error). What's left of that: the fetch that ends last wins, so a slower one can put back a list a moment older, until the next refresh, at most 30 minutes. `AddonStore.download` and the seed copy
+still use `Downloads/<id>`, so two fetches of one pack at once could do the same. Not reproduced. The fix is the same, a folder per
+fetch, except that `fetch` hands back a folder inside it and `discard` finds it by id, so it needs a little more care.
+
+**Never checked with a real client.** Claude Code or Codex as the client on the new tools, annotations, a cancelled call taking
+its card away, the tool list following the app, and the reminder and collection cards on screen. The MCP script and the suite
+cover the protocol, not what those clients do with it.
