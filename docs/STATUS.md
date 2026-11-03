@@ -6,7 +6,7 @@ before, and how each piece was verified at the time, is in [HISTORY.md](HISTORY.
 ## Where Sidefolk is
 
 Version **0.1.0**, not released: everything published is a snapshot (D62 amended, D65), and the version stays 0.1.0
-until the founder releases it. The latest is **snapshot 867** (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
+until the founder releases it. The latest released is **snapshot 911**, on from snapshot 867 (snapshot B: Playtime runs entirely from its pack and the app has no games, D98–D101), with the gallery published for it.
 
 - **On the desktop:** the companion (Mochi or Spark built in, 3D or 2D; eight more from the gallery) stands on its
   light pool, which shows its state (working, waiting with a count, Focus, Quiet). Everything it says is the
@@ -18,6 +18,7 @@ until the founder releases it. The latest is **snapshot 867** (snapshot B: Playt
 - **Settings:** eight tabs with search: General, Companion, Attention (Open, Focus, Quiet, quiet hours), Brain (AI
   and voice), Trust (approval modes, Full access with an end), Connections (Claude Code, Codex, other MCP clients,
   the `sidefolk` command), Add-ons and Appearance (theme, light or dark, density).
+- **Ask is a shortcut (D136):** results go seconds or minutes after they reached the person, eight requests at most, pins last until unpinned, and History keeps what a command answered.
 - **The menu bar** is the Pocket, a popover with the state, the Open/Focus/Quiet dial, Needs you, Next up, Agents
   and Ask.
 - **Themes dress the app only** (colours, faces, density, materials, the light): four, all built in (D92): Harbor
