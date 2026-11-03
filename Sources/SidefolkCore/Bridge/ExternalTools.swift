@@ -169,7 +169,8 @@ struct ExternalFacade: Tool {
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }
         var context = context
-        context.personWasAsked = ExternalToolPolicy.alwaysAsks.contains(spec.name)
+        // A card from "Ask each time" asks about the group, not this: it doesn't open what's otherwise closed.
+        context.personWasAsked = context.personWasAsked && ExternalToolPolicy.alwaysAsks.contains(spec.name)
         return try await base.run(input, context: context)
     }
 }

@@ -206,6 +206,7 @@ public final class ToolExecutor: Sendable {
                     request.canKeepReading = await research.canOffer(run: run, for: reading)
                 }
                 var readByResearch = false
+                var thePersonAnswered = false
                 let wait = approvalTimeout.map { (seconds: min($0, Self.approvalTimeout), whenTimeIsUp: UnansweredRule.Action?.none) }
                     ?? Self.wait(for: caller, policy: policy, present: present, minute: minute)
                 let answer: ApprovalDecision
@@ -226,6 +227,7 @@ public final class ToolExecutor: Sendable {
                         return ToolOutcome(activity: act, status: .denied(why))
                     }
                     answer = reply
+                    thePersonAnswered = true
                 }
                 // An answer that arrives after the caller gave up (its run ended) never acts for it.
                 guard answer.allowed, !Task.isCancelled else {
@@ -260,7 +262,7 @@ public final class ToolExecutor: Sendable {
                     events.changed(.permissions)
                 }
                 return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag,
-                                 timeout: spec.timeout ?? timeout, folders: folders)
+                                 timeout: spec.timeout ?? timeout, folders: folders, personWasAsked: thePersonAnswered)
             }
         }
         act.error = "Permission loop"
@@ -300,11 +302,15 @@ public final class ToolExecutor: Sendable {
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,
-                     decision: ActivityEntry.Decision, timeout: TimeInterval, folders: [GrantedFolder], site: String? = nil) async -> ToolOutcome {
+                     decision: ActivityEntry.Decision, timeout: TimeInterval, folders: [GrantedFolder], site: String? = nil,
+                     personWasAsked: Bool = false) async -> ToolOutcome {
         var act = act
         act.decision = decision
         events.publish(.toolStarted(act))
-        let context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
+        var made = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
+        // What happened here, not what anyone says: this call's own card, answered yes, for another agent (D160).
+        if case .external = caller { made.personWasAsked = personWasAsked }
+        let context = made
         do {
             var result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
             act.card = result.card

@@ -239,8 +239,8 @@ public struct ToolContext: Sendable {
     /// The one site this call may reach, when Guard let it through only because the person allowed that site for
     /// good while outside content was in play (D47): a redirect anywhere else is refused.
     public var site: String?
-    /// Another agent's call that Guard put to the person on a card, for what its caller otherwise may not do. Only
-    /// `ExternalFacade` sets it, for a spec that always asks (T4).
+    /// Another agent's call that the person answered yes to on this call's own card. `ToolExecutor` sets it from what
+    /// happened, for an external caller only, and `ExternalFacade` keeps it only where that card asked about this (T4, D160).
     public var personWasAsked = false
     public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil) {
         self.caller = caller
