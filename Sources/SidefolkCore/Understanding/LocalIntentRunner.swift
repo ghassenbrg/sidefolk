@@ -170,6 +170,14 @@ public struct LocalIntentRunner: Sendable {
             return .declined(UserFacingError(verbatim: String(localized: "\(name) couldn't answer that: \(text.clipped(300))",
                                                               comment: "An extension's own explanation after its name")))
         }
+        // Files saved: Sidefolk's own words, from the real files, and its own actions on them (D142).
+        if !result.placed.isEmpty {
+            let said = ExtensionOutputs.summary(of: result.placed)
+            let problems = text.components(separatedBy: "\n").last { $0.hasPrefix(String(localized: "Not saved:")) }
+            var card = ResultCard(kind: .extensionResult, title: said.title, subtitle: name, detail: [said.detail, problems].compactMap { $0 }.joined(separator: "\n"), refId: tool.extensionId)
+            card.files = result.placed
+            return .answer(card, activityId: out.activity.id)
+        }
         // A one-line answer is the card's title ("15% of 80 = 12"); a longer one is all there, under the tool's name.
         let short = !text.contains("\n") && text.count <= 100
         var card = ResultCard(kind: .extensionResult, title: short ? text : tool.spec.title, subtitle: name,

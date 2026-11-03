@@ -369,7 +369,14 @@ private struct EntryView: View {
         switch entry.content {
         case .result(let card, let activityId, let undo):
             ResultCardView(card: card, look: card.kind == .extensionResult ? card.refId.flatMap { model.extensionLooks[$0] } : nil, actions: {
-                if undo, let activityId {
+                if let files = card.files, !files.isEmpty {
+                    if files.count == 1, let file = files.first, file.canOpen {
+                        Button("Open") { model.actions?.open(file: file) }.buttonStyle(.sf(.primary))
+                    }
+                    Button { model.actions?.show(files: files) } label: { Text("Show in Finder", comment: "On a saved file's card") }
+                        .buttonStyle(.sf(files.count == 1 && files[0].canOpen ? .secondary : .primary))
+                }
+                if undo || card.files?.isEmpty == false, let activityId {
                     Button("Undo") { model.actions?.undo(activityId: activityId, in: model) }.buttonStyle(.sf(.secondary))
                 }
                 if PrivacyPane.isKnown(card.url) {

@@ -120,6 +120,9 @@ protocol AskActions: AnyObject {
     func undo(activityId: String, in model: AskModel)
     func answer(approval: ApprovalRequest, decision: ApprovalDecision)
     func open(card: ResultCard)
+    /// A file Sidefolk saved: opened in its default app, or shown in Finder (D142). Only on the person's click.
+    func open(file: PlacedFile)
+    func show(files: [PlacedFile])
     /// `tainted`: the words came from a turn that read outside content.
     func saveAnswer(_ text: String, tainted: Bool, in model: AskModel)
     func saveAsTask(_ text: String, in model: AskModel)

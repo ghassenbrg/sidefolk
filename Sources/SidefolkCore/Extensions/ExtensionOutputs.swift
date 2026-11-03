@@ -24,9 +24,11 @@ public struct ExtensionOutput: Sendable, Hashable {
 }
 
 /// A file Sidefolk placed for an extension. Identity, size and time let a later step tell this is still that file.
-public struct PlacedFile: Sendable, Hashable {
+public struct PlacedFile: Sendable, Hashable, Codable {
     public var path: String
     public var source: String
+    /// How large the source was when this was saved, for saying what changed.
+    public var sourceSize: Int64 = 0
     public var device: Int32
     public var inode: UInt64
     public var size: Int64
@@ -52,6 +54,12 @@ extension ToolResult {
     mutating func take(_ placement: ExtensionPlacement) {
         placing = nil
         placed = placement.placed
+        if !placement.placed.isEmpty {
+            let files = placement.placed, names = files.map { ($0.path as NSString).lastPathComponent }
+            undo = UndoAction(label: files.count == 1 ? String(localized: "saving \(names[0])") : String(localized: "saving \(files.count) files")) {
+                try ExtensionOutputs.moveToTrash(files)
+            }
+        }
         if !placement.problems.isEmpty {
             let words = String(localized: "Not saved:") + " " + placement.problems.joined(separator: "; ")
             text += "\n" + words
@@ -178,8 +186,10 @@ public enum ExtensionOutputs {
         guard fstatat(folder.handle, name, &placed, AT_SYMLINK_NOFOLLOW) == 0 else { throw UserFacingError("It couldn't be saved.") }
         // Best effort: the file is saved either way, and a program that kept its copy only keeps its own file.
         unlinkat(opened.parent, opened.last, 0)
-        return PlacedFile(path: folder.path + "/" + name, source: source, device: placed.st_dev, inode: placed.st_ino, size: placed.st_size,
-                          modified: Date(timeIntervalSince1970: TimeInterval(placed.st_mtimespec.tv_sec) + TimeInterval(placed.st_mtimespec.tv_nsec) / 1e9))
+        var result = PlacedFile(path: folder.path + "/" + name, source: source, device: placed.st_dev, inode: placed.st_ino, size: placed.st_size,
+                                modified: Date(timeIntervalSince1970: TimeInterval(placed.st_mtimespec.tv_sec) + TimeInterval(placed.st_mtimespec.tv_nsec) / 1e9))
+        result.sourceSize = info.st_size
+        return result
     }
 
     /// Opens the folder and asks the system where it really is, so the rules are judged on what is actually held.
@@ -291,5 +301,73 @@ public enum ExtensionOutputs {
             guard errno == EEXIST else { throw UserFacingError("It couldn't be saved in that folder.", changedNothing: true) }
         }
         throw UserFacingError("Too many files already have that name.", changedNothing: true)
+    }
+}
+
+/// What the person may do with a file Sidefolk saved (D142): Sidefolk draws these and runs them, only on the person's click, and
+/// only on a file it placed itself. Extensions can't ask for any of it, so D63 otherwise stands.
+extension PlacedFile {
+    /// What Open may launch. Anything else gets Show in Finder only: Office files, archives, anything that could hold script.
+    static let openEndings: Set<String> = [
+        "jpg", "jpeg", "png", "heic", "heif", "avif", "tif", "tiff", "gif", "bmp", "webp", "jp2", "ico", "icns",
+        "mp3", "m4a", "aac", "flac", "opus", "ogg", "wav", "aif", "aiff", "caf", "mp4", "m4v", "mov", "webm", "mkv",
+        "pdf", "txt", "csv",
+    ]
+
+    /// This is still the very file that was placed, not something put in its place.
+    public var isStillThere: Bool {
+        var info = stat()
+        return lstat(path, &info) == 0 && info.st_mode & S_IFMT == S_IFREG && info.st_dev == device && info.st_ino == inode
+    }
+
+    /// Open is only drawn for this: an ending on the list, contents that aren't a program, and for formats with a fixed start, that start.
+    public var canOpen: Bool {
+        let ending = (path as NSString).pathExtension.lowercased()
+        guard Self.openEndings.contains(ending), isStillThere else { return false }
+        return Self.contents(of: path, fit: ending)
+    }
+
+    static func contents(of path: String, fit ending: String) -> Bool {
+        let fd = open(path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
+        guard fd >= 0 else { return false }
+        defer { close(fd) }
+        var head = [UInt8](repeating: 0, count: 8)
+        let count = read(fd, &head, head.count)
+        guard count > 0 else { return true }
+        let start = Array(head.prefix(count))
+        let programs: [[UInt8]] = [[0x23, 0x21], [0xCF, 0xFA, 0xED, 0xFE], [0xCE, 0xFA, 0xED, 0xFE], [0xFE, 0xED, 0xFA, 0xCE], [0xFE, 0xED, 0xFA, 0xCF], [0xCA, 0xFE, 0xBA, 0xBE]]
+        if programs.contains(where: { start.starts(with: $0) }) { return false }
+        let expected: [String: [UInt8]] = ["pdf": [0x25, 0x50, 0x44, 0x46], "png": [0x89, 0x50, 0x4E, 0x47], "jpg": [0xFF, 0xD8], "jpeg": [0xFF, 0xD8], "gif": [0x47, 0x49, 0x46]]
+        return expected[ending].map { start.starts(with: $0) } ?? true
+    }
+}
+
+extension ExtensionOutputs {
+    /// Undo: to the Trash, only what is still exactly what was placed. A file changed since is left where it is and said so; the
+    /// original was never touched.
+    static func moveToTrash(_ files: [PlacedFile]) throws {
+        var changed = false
+        for file in files {
+            var info = stat()
+            guard file.isStillThere, lstat(file.path, &info) == 0, info.st_size == file.size,
+                  abs(TimeInterval(info.st_mtimespec.tv_sec) + TimeInterval(info.st_mtimespec.tv_nsec) / 1e9 - file.modified.timeIntervalSince1970) < 1 else {
+                changed = true
+                continue
+            }
+            try FileManager.default.trashItem(at: URL(fileURLWithPath: file.path), resultingItemURL: nil)
+        }
+        if changed { throw UserFacingError("A file has changed since it was saved, so it was left where it is.") }
+    }
+
+    /// The words on a result card, measured by Sidefolk from the real files.
+    public static func summary(of files: [PlacedFile]) -> (title: String, detail: String?) {
+        func size(_ bytes: Int64) -> String { ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) }
+        let before = files.reduce(0) { $0 + $1.sourceSize }, after = files.reduce(0) { $0 + $1.size }
+        var change = "\(size(before)) → \(size(after))"
+        if before > 0, after < before {
+            change += " · " + String(localized: "\(Int((1 - Double(after) / Double(before)) * 100))% smaller", comment: "How much smaller a saved file is")
+        }
+        guard let first = files.first else { return ("", nil) }
+        return (files.count == 1 ? String(localized: "\((first.path as NSString).lastPathComponent) is ready") : String(localized: "\(files.count) files are ready"), change)
     }
 }

@@ -399,6 +399,15 @@ extension AppCoordinator: AskActions {
         Task { await agent.cancelAll() }
     }
 
+    func open(file: PlacedFile) {
+        guard file.canOpen else { return }
+        NSWorkspace.shared.open(URL(fileURLWithPath: file.path))
+    }
+
+    func show(files: [PlacedFile]) {
+        NSWorkspace.shared.activateFileViewerSelecting(files.filter(\.isStillThere).map { URL(fileURLWithPath: $0.path) })
+    }
+
     func undo(activityId: String, in model: AskModel) {
         Task {
             do {

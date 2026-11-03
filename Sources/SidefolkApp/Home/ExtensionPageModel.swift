@@ -378,6 +378,8 @@ final class ExtensionPageModel {
             let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: .object(input), caller: .user, pickedFile: path)
             await refresh()
             if let why = outcome.problem?.message { problem = why }
+            // Reported in its own words, since the call itself went through (D140).
+            if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
         case .allow(let consent):
             asking = consent
         case .settings(let pane):

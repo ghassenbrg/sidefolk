@@ -298,6 +298,7 @@ Without the Kit, add `"sidefolk": {"outputs": [{"data": "out/1.jpg", "name": "tr
 - **Beside what?** Only a file the person dropped or picked for this very call, as a page's `file` button gives. A path an AI named, or a file you can read because its folder is shared, isn't handed over, and the reply's text says it wasn't saved.
 - **Moved, not copied:** the data file is gone from your data folder once it's saved. If it can't be saved, it stays, so clean up after yourself.
 - **What's refused:** links, hard-linked files, a `data` path that leaves your folder, a `name` with a folder in it or a leading dot, a `name` that doesn't start with the source's name, an ending your tool didn't declare, and any ending that isn't on Sidefolk's list (`ExtensionOutputs.allowedEndings`: nothing that runs, no HTML or SVG). At most 64 files and 64 GB a call, 32 GB each.
+- **What the person sees:** Sidefolk's own card, with sizes measured from the real files, Show in Finder, Undo, and Open for images, audio, video, PDF, plain text and CSV. You can't open anything yourself.
 - **Never overwrites:** a name in use becomes `trip 2.jpg`. The file you made gets plain permissions and macOS's quarantine mark.
 
 The install sheet says "Can have Sidefolk save new files beside a file you give it". `outputs` puts the tool at medium risk or above. Your data folder itself is off limits: you can do anything inside it, but not remove or replace it.

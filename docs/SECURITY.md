@@ -1177,6 +1177,8 @@ The budget bounds that to about nine characters per yes, then the person is aske
 - *Records:* placing runs after the call and outside its timeout, so a file saved in a running Sidefolk has its own row in History. A crash between the rename and the row leaves none. The tool counts as changing things whatever its manifest says. Adding `outputs` in an update asks again.
 - *The data folder itself* was already a risk before this: a program could remove its folder and put a link there, and the next start's profile, built from the real path, would open the link's target read-write with no one asked. The profile now denies creating or removing that one path, and a link found there at start is removed (`prepareDataFolder`).
 
+- *Open, Show and Undo (D142):* Sidefolk's own actions on a file it placed, on a click, never available to a program. Open has a short list (images, audio, video, PDF, plain text, CSV) checked by ending and by contents, and re-checks at each click that this is the same file (device and inode), so a link or a replacement isn't launched, including from a card saved in an old conversation. Undo acts only if size and time match too.
+
 *Residual:* a source already named `CLAUDE.txt` still allows `CLAUDE.md`. A saved file is the program's content under an honest name, and could still be false or exploit a bug in whatever opens it, as with any download. Hence the quarantine mark, and D142's short list of what Open may launch. A program may keep its own copy if removing the data file fails.
 
 **T43 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:

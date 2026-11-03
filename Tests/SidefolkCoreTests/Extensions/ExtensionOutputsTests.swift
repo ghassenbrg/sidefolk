@@ -288,6 +288,81 @@ import Testing
         #expect(!ExtensionPermissions().widens(ExtensionPermissions(placesFiles: true)))
     }
 
+    // MARK: Open, Show and Undo (D142)
+
+    @Test func undoTrashesExactlyWhatWasPlaced() throws {
+        try make()
+        let placed = try place()
+        try ExtensionOutputs.moveToTrash([placed])
+        #expect(!FileManager.default.fileExists(atPath: placed.path))
+        #expect(contents(source) == "original")
+    }
+
+    @Test func undoLeavesAFileThatChanged() throws {
+        try make()
+        let placed = try place()
+        try Data("the person edited this".utf8).write(to: URL(fileURLWithPath: placed.path))
+        #expect(throws: (any Error).self) { try ExtensionOutputs.moveToTrash([placed]) }
+        #expect(FileManager.default.fileExists(atPath: placed.path))
+    }
+
+    @Test func undoLeavesASwappedFile() throws {
+        try make()
+        let placed = try place()
+        try FileManager.default.removeItem(atPath: placed.path)
+        try Data("made".utf8).write(to: URL(fileURLWithPath: placed.path))
+        #expect(!placed.isStillThere)
+        #expect(throws: (any Error).self) { try ExtensionOutputs.moveToTrash([placed]) }
+        #expect(FileManager.default.fileExists(atPath: placed.path))
+    }
+
+    @Test(arguments: [("photo.jpg", [0xFF, 0xD8, 0xFF]), ("doc.pdf", Array("%PDF-1.7".utf8)), ("a.txt", Array("hello".utf8)), ("a.csv", Array("a,b".utf8)), ("clip.mov", [0, 0, 0, 20])] as [(String, [UInt8])])
+    func openIsDrawnForTheseKinds(name: String, bytes: [UInt8]) throws {
+        #expect(try planted(name, bytes).canOpen)
+    }
+
+    @Test(arguments: [("a.docx", Array("PK".utf8)), ("a.zip", Array("PK".utf8)), ("a.html", Array("<html>".utf8)), ("a.svg", Array("<svg>".utf8)), ("a.md", Array("#".utf8)),
+                      ("fake.jpg", Array("#!/bin/sh".utf8)), ("fake.png", Array("not png".utf8)), ("fake.pdf", [0xCF, 0xFA, 0xED, 0xFE]), ("a.txt", Array("#!/bin/sh".utf8))] as [(String, [UInt8])])
+    func openIsNotDrawnForThese(name: String, bytes: [UInt8]) throws {
+        #expect(try !planted(name, bytes).canOpen)
+    }
+
+    @Test func openIsNotDrawnForALinkPutInItsPlace() throws {
+        var file = try planted("photo.jpg", [0xFF, 0xD8, 0xFF])
+        try FileManager.default.removeItem(atPath: file.path)
+        symlink(source, file.path)
+        #expect(!file.canOpen)
+        #expect(!file.isStillThere)
+        file.path = "/nowhere/photo.jpg"
+        #expect(!file.canOpen)
+    }
+
+    private func planted(_ name: String, _ bytes: [UInt8]) throws -> PlacedFile {
+        let path = downloads + "/" + name
+        try Data(bytes).write(to: URL(fileURLWithPath: path))
+        var info = stat()
+        lstat(path, &info)
+        return PlacedFile(path: path, source: source, device: info.st_dev, inode: info.st_ino, size: info.st_size, modified: Date())
+    }
+
+    @Test func aResultCardSaysWhatChangedFromTheRealFiles() {
+        var file = PlacedFile(path: "/d/trip.jpg", source: "/d/trip.heic", device: 1, inode: 1, size: 1_000, modified: Date())
+        file.sourceSize = 4_000
+        let said = ExtensionOutputs.summary(of: [file])
+        #expect(said.title.contains("trip.jpg"))
+        #expect(said.detail?.contains("75%") == true)
+        file.size = 9_000
+        #expect(ExtensionOutputs.summary(of: [file]).detail?.contains("smaller") == false)
+    }
+
+    @Test func aPlacedFileSurvivesBeingSavedInACard() throws {
+        var card = ResultCard(kind: .extensionResult, title: "x")
+        card.files = [PlacedFile(path: "/d/a.jpg", source: "/d/a.heic", device: 1, inode: 2, size: 3, modified: Date(timeIntervalSince1970: 100))]
+        let back = try JSONDecoder().decode(ResultCard.self, from: JSONEncoder().encode(card))
+        #expect(back.files == card.files)
+        #expect(try JSONDecoder().decode(ResultCard.self, from: Data(#"{"kind":"info","title":"old"}"#.utf8)).files == nil)
+    }
+
     @Test func aProgramsListIsReadStrictly() {
         let reply: JSONValue = ["outputs": [["data": "a", "name": "b.jpg", "source": "/c"], ["data": "only"], "text"]]
         #expect(ExtensionOutput.list(reply) == [ExtensionOutput(data: "a", name: "b.jpg", source: "/c")])

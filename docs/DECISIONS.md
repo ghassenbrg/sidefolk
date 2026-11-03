@@ -3865,3 +3865,15 @@ Whispers wait in all three: they need nothing, so they aren't worth interrupting
 
 **Implications:** `ExtensionCommandCall.handedOver`, set only here. `ToolExecutor.execute` gains an additive `pickedFiles`, leaving Noor's `pickedFile` as it is. Lists in plans always ask on a card, since a list only matches byte for byte. The cap on list values in History's arguments rises from 20 to 64 **for every tool**, so that a drop's files all show. SECURITY T12, T43.
 
+### D142 — Open, Show in Finder and Undo on a file Sidefolk saved (2026-11-03)
+**Decision:** a result that saved files (D140) gets Sidefolk's own card: its title and sizes measured from the real files, not the extension's words, and three actions. The founder's words on Open and Show, asked "May Sidefolk open and show files that an extension just created?": "Allow both". Sidefolk draws them, they run only on the person's click, only on a file Sidefolk placed itself, and an extension can't ask for them, so D63 otherwise stands.
+- **Open** is drawn only for images, audio, video, PDF, plain text and CSV, and only if the contents fit: not a program or script, and the right start for formats that have one. Anything else gets Show in Finder alone.
+- **Show in Finder** only reveals the file.
+- **Undo** moves the file to the Trash through the undo path every tool uses, so History offers it too. It acts only on what is still exactly what was placed (same device, inode, size and time). A file changed since stays, and the card says so. The original is never touched.
+
+**Why:** the person wants the new file at once, and an extension must not be able to launch things.
+
+**Alternatives:** Show only (safer, one more step; the founder chose both); letting extensions ask for Open (D63 keeps that closed).
+
+**Implications:** `ResultCard.files` holds `PlacedFile`s and is saved with the conversation, so an old card re-checks identity at each click. A page's `file` action shows a save that failed. Dragging the file out of the card comes with D150's card. SECURITY T45.
+

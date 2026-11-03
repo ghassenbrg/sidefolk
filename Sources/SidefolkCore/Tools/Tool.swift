@@ -179,6 +179,8 @@ public struct ResultCard: Codable, Sendable, Hashable {
     public var itemKind: NotebookItem.Kind?
     /// How long the AI's words about this wait, so they don't give away what an animation is still showing (D100).
     public var holdAnswer: TimeInterval?
+    /// Files Sidefolk saved for this result (D142). Only Sidefolk fills this, from what it placed itself.
+    public var files: [PlacedFile]?
 
     public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil,
                 itemKind: NotebookItem.Kind? = nil) {

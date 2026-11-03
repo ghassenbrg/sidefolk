@@ -27,6 +27,8 @@ final class FixtureAskActions: AskActions {
     func undo(activityId: String, in model: AskModel) {}
     func answer(approval: ApprovalRequest, decision: ApprovalDecision) {}
     func open(card: ResultCard) {}
+    func open(file: PlacedFile) {}
+    func show(files: [PlacedFile]) {}
     func saveAnswer(_ text: String, tainted: Bool, in model: AskModel) {}
     func saveAsTask(_ text: String, in model: AskModel) {}
     func remind(_ guess: ReminderGuess, in model: AskModel) {}
