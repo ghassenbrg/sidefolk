@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Normal windows and full-screen spaces, and test runs out of the way (D137)
+
+The founder's report of Sidefolk appearing inside full-screen Claude. Verified: the debug app with `SIDEFOLK_QUIET_WINDOWS=1` (the frontmost app stayed Claude while Home and Settings opened; both rendered for `snap`), and `swift test` in full. **Not verified yet:** the fix on a real full-screen space. A before-and-after check is ready and runs only once the Mac has been idle for ten minutes, since it switches spaces; this release went out ahead of it, for the founder to try.
+
 ## 2026-11-03: Ask is a shortcut: shorter times, a limit of eight, pins that last, and answers in History (D136)
 
 The founder's feedback on the rules of Ask, in D136. Verified: `ResultLifetimeTests`, `PinnedAskTests`, `CommandOutcomeTests`, `swift test` in full, and the debug app: a pinned reminder came back after a real restart with its pin and Open, and "what is 2+2" now reads "2+2 = 4" in Activity. Not timed by hand: the fades themselves, which are the tested constants. A review found: Reply on a purged conversation, a result stamped seen when a lone slip was answered, a captionless pin merging into the one before, saves landing out of order, retention docs and the export not knowing about pins, and restored muted lines reading "Said aloud". All fixed. SECURITY T19 gains one sentence: a pin stays past History's retention until it's unpinned, cleared or its conversation deleted. A command's answer in Activity is logged only for `Caller.command`, what the person ran themself, so nothing a flow or an AI's tool call read reaches that row.

@@ -67,6 +67,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## Known gaps
 
+- **D137 isn't proven on a real full-screen space:** Home and Settings should no longer open inside another app's full-screen space, but the before-and-after check hasn't run (it needs an idle Mac). Test copies' companions and panels still show, and sessions have to opt in to `SIDEFOLK_QUIET_WINDOWS=1`.
 - **A web watch on a sign-in page that answers 200** watches the sign-in page: "any change" and `contains` can't tell (D135). A page with no text at all, and words never seen, now say so.
 - **Small things seen in phase 5:** the greeting says "Good evening" after midnight.
 - **Not yet tried by hand with the real thing:** the microphone (permission prompt, hold to talk, AirPods), a live
