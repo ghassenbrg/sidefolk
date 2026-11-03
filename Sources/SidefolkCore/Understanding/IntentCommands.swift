@@ -14,6 +14,8 @@ public struct ExtensionCommandCall: Sendable, Hashable {
     /// It came from a drop card, not a sentence: the caption is a file's name or a link, never the person's words, so a refusal
     /// stops here and doesn't go on to the AI as if they'd typed it.
     public var fromDrop = false
+    /// The picture from its pack for a saved file's card (D150), from its manifest and never its answer.
+    public var mark: String?
 
     public init(tool: String, input: JSONValue, extensionId: String, said: String) {
         self.tool = tool

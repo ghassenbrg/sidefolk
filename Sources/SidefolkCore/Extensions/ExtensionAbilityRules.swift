@@ -136,6 +136,13 @@ enum ExtensionAbilityRules {
                 issues.append(ValidationIssue(field: "\(field).tool", message: "“\(drop.tool)” isn't one of its tools."))
                 continue
             }
+            // Letters and digits only, so a tag can't say anything but a format's name.
+            if let tag = drop.tag, tag.isEmpty || tag.count > 6 || !tag.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == ".") }) {
+                issues.append(ValidationIssue(field: "\(field).tag", message: "must be 1–6 letters or digits."))
+            }
+            if let mark = drop.mark, PackAssets.picturePath(mark) == nil || m.assets == nil {
+                issues.append(ValidationIssue(field: "\(field).mark", message: "must be a picture in its assets folder."))
+            }
             if drop.menu.count > Self.maxDropMenu { issues.append(ValidationIssue(field: "\(field).menu", message: "can hold at most \(Self.maxDropMenu) choices.")) }
             for (j, item) in drop.menu.enumerated() {
                 if !isPlain(item.title, 30) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].title", message: "must be one line of 1–30 characters of plain text.")) }

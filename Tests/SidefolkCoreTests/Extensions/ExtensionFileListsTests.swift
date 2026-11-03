@@ -287,6 +287,20 @@ import Testing
         #expect(try !valid(tools: ["echo": ["file_lists": ["files": "write"]]], drops: []))
     }
 
+    @Test func aTagIsOnlyAFormatsName() throws {
+        let tools: JSONValue = ["make": ["risk": "low", "file_lists": ["files": "read"]]]
+        func drops(_ extra: [String: JSONValue]) -> JSONValue {
+            var drop: [String: JSONValue] = ["id": "a", "title": "A", "kinds": ["file"], "tool": "make", "input": ["files": "{values}"]]
+            drop.merge(extra) { $1 }
+            return .array([.object(drop)])
+        }
+        #expect(try valid(tools: tools, drops: drops(["tag": "JPEG"])))
+        #expect(try valid(tools: tools, drops: drops(["tag": "TAR.GZ"])))
+        #expect(try !valid(tools: tools, drops: drops(["tag": "Allowed by Sidefolk"])), "too long")
+        #expect(try !valid(tools: tools, drops: drops(["tag": "O K"])), "not one word")
+        #expect(try !valid(tools: tools, drops: drops(["mark": "../icon.png"])), "out of its pack")
+    }
+
     @Test func theMenuIsBounded() throws {
         let tools: JSONValue = ["echo": ["file_lists": ["files": "read"]]]
         func drops(_ count: Int, title: String = "PNG") -> JSONValue {

@@ -178,6 +178,10 @@ extension ExtensionManifest {
         public var input: [String: JSONValue]
         /// More choices in one menu on the same card, since what was dropped is only readable for the one call a choice makes (D141).
         public var menu: [MenuItem] = []
+        /// What it makes, in a few letters on the card ("JPEG"): the format's name, so it needs no translation (D150).
+        public var tag: String?
+        /// A picture from its pack for the small sheet when a file has no colourful picture of its own (D150).
+        public var mark: String?
 
         public struct MenuItem: Sendable, Hashable, Decodable {
             public var title: String
@@ -209,7 +213,7 @@ extension ExtensionManifest {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["id", "title", "detail", "symbol", "kinds", "patterns", "tool", "input", "menu"])
+            try decoder.rejectUnknownKeys(["id", "title", "detail", "symbol", "kinds", "patterns", "tool", "input", "menu", "tag", "mark"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             id = try c.decode(String.self, forKey: "id")
             title = try c.decode(String.self, forKey: "title")
@@ -219,6 +223,8 @@ extension ExtensionManifest {
             patterns = try c.decodeIfPresent([String].self, forKey: "patterns") ?? []
             tool = try c.decode(String.self, forKey: "tool")
             input = try c.decode([String: JSONValue].self, forKey: "input")
+            tag = try c.decodeIfPresent(String.self, forKey: "tag")
+            mark = try c.decodeIfPresent(String.self, forKey: "mark")
             menu = try c.decodeIfPresent([MenuItem].self, forKey: "menu") ?? []
         }
     }

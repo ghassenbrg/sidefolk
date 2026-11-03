@@ -569,11 +569,12 @@ enum UISnapshots {
                 let more = network ? [] : [ExtensionManifest.DropMeta.MenuItem(title: "PNG", input: ["format": "png"]), ExtensionManifest.DropMeta.MenuItem(title: "TIFF", input: ["format": "tiff"])]
                 func offer(_ key: String, _ title: String, _ detail: String) -> ExtensionDropAction {
                     ExtensionDropAction(extensionId: "dev.example.\(name.lowercased())", extensionName: name, key: key, title: title, detail: detail, kinds: [.file],
-                                        tool: "ext.\(name.lowercased()).make", input: ["files": "{values}"], menu: key == "any" ? more : [], pathParameters: ["files"], canSendAway: network)
+                                        tool: "ext.\(name.lowercased()).make", input: ["files": "{values}"], menu: key == "any" ? more : [], pathParameters: ["files"], canSendAway: network, tag: network ? nil : "JPEG")
                 }
                 return network ? [offer("send", "Send to my server", "Uploads it and copies a link.")]
                     : [offer("any", "Opens anywhere", "JPEG. Any transparency becomes white."), offer("mail", "Small enough to email", "JPEG, at most 2,000 pixels wide.")]
             }
+            snapshotFrosts()
             let offerActions = FixtureAskActions()
             offerActions.drops = offers(network: false)
             let networkActions = FixtureAskActions()
@@ -599,6 +600,8 @@ enum UISnapshots {
                           ("desktop-ask-drop-offer-network", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", networkActions)),
                           ("desktop-ask-drop-offer-media", dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "trip.heic", mediaActions)),
                           ("desktop-ask-drop-offer-many", droppedMany(offerActions)),
+                          ("desktop-ask-file-working", fileWorking()), ("desktop-ask-file-receipt", fileReceipt()),
+                          ("desktop-ask-file-receipt-plain", fileReceipt(path: NSTemporaryDirectory() + "notes.csv")),
                           ("desktop-ask-drop-text", dropped(.text, "“Ask Priya about the venue deposit”", actions,
                                                             text: "Ask Priya about the venue deposit")),
                           ("desktop-ask-drop-video", dropped(.url(URL(string: "https://cdn.example.com/films/trip.mp4")!), "cdn.example.com",
@@ -958,6 +961,39 @@ enum UISnapshots {
     }
 
     /// Something just dropped on the companion, nothing typed: the drop card (D84).
+    /// A photo for the frost, drawn here or `SIDEFOLK_SNAPSHOT_PICTURE` for checking contrast on a real one (D150).
+    private static func snapshotFrosts() {
+        FileOfferGuard.skipped = true
+        let environment = ProcessInfo.processInfo.environment
+        let drawn = environment["SIDEFOLK_SNAPSHOT_PICTURE"].flatMap { NSImage(contentsOfFile: $0) } ?? NSImage(size: NSSize(width: 480, height: 360), flipped: false) { rect in
+            NSGradient(colors: [NSColor(red: 0.95, green: 0.55, blue: 0.3, alpha: 1), NSColor(red: 0.2, green: 0.45, blue: 0.6, alpha: 1)])?.draw(in: rect, angle: 70)
+            return true
+        }
+        for name in ["trip.heic", "trip.jpg"] { FileFrost.preset[NSTemporaryDirectory() + name] = FileFrost.make(picture: drawn, icon: nil) }
+        let page = NSImage(size: NSSize(width: 340, height: 440), flipped: false) { rect in
+            NSColor.white.setFill()
+            rect.fill()
+            return true
+        }
+        FileFrost.preset[NSTemporaryDirectory() + "notes.csv"] = FileFrost.make(picture: page, icon: nil)
+    }
+
+    private static func fileWorking() -> AskModel {
+        let ask = AskModel()
+        ask.working = WorkingFile(path: NSTemporaryDirectory() + "trip.heic", name: "trip.heic", extensionId: "dev.example.reshaper", mark: nil)
+        return ask
+    }
+
+    private static func fileReceipt(path: String = NSTemporaryDirectory() + "trip.jpg") -> AskModel {
+        let ask = AskModel()
+        var card = ResultCard(kind: .extensionResult, title: "\((path as NSString).lastPathComponent) is ready", subtitle: "Reshaper", detail: "4.2 MB → 1.1 MB · 74% smaller", refId: "dev.example.reshaper")
+        var file = PlacedFile(path: path, source: NSHomeDirectory() + "/Downloads/trip.heic", device: 0, inode: 0, size: 1_100_000, modified: Date())
+        file.sourceSize = 4_200_000
+        card.files = [file]
+        ask.add(.result(card, activityId: "sample", undo: true))
+        return ask
+    }
+
     private static func droppedMany(_ actions: FixtureAskActions) -> AskModel {
         let ask = dropped(.file(URL(fileURLWithPath: NSTemporaryDirectory() + "trip.heic")), "12 files", actions)
         ask.attachment?.files = ["trip", "harbour", "boats", "market", "sunset", "church", "lunch", "steps", "ferry", "beach", "alley", "hills"]
