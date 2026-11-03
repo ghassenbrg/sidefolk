@@ -81545,6 +81545,7 @@
       }
     },
     "From your History" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -112882,6 +112883,64 @@
         }
       }
     },
+    "Mark your reminder %@ done, and the task it belongs to, which ends all its reminders and repeats" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد تذكيرك %@ كمنجز مع مهمته، مما ينهي كل تذكيراتها وتكراراتها"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Erinnerung %@ als erledigt markieren, samt ihrer Aufgabe, womit alle ihre Erinnerungen und Wiederholungen enden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar tu recordatorio %@ como hecho, y también su tarea, lo que termina todos sus recordatorios y repeticiones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquer votre rappel %@ comme fait, ainsi que sa tâche, ce qui met fin à tous ses rappels et répétitions"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segna il tuo promemoria %@ come fatto, insieme al suo compito, il che termina tutti i suoi promemoria e le ripetizioni"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リマインダー%@とそのタスクを完了にする(そのタスクのリマインダーと繰り返しはすべて終了します)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리 알림 %@와(과) 해당 할 일을 완료로 표시 (그 할 일의 모든 미리 알림과 반복이 끝나요)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar seu lembrete %@ como feito, e também a tarefa dele, o que encerra todos os lembretes e repetições dela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将你的提醒 %@ 及其任务标记为完成,这会结束该任务的所有提醒和重复"
+          }
+        }
+      }
+    },
     "Mark “%@” done" : {
       "localizations" : {
         "ar" : {
@@ -121067,6 +121126,7 @@
       }
     },
     "No agent sessions running" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -127519,6 +127579,7 @@
       }
     },
     "Nothing in History for that" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -147021,6 +147082,7 @@
       }
     },
     "Read your History" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -163131,6 +163193,7 @@
       }
     },
     "See which agent sessions are running" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -163189,6 +163252,7 @@
       }
     },
     "See your agents' sessions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -250413,6 +250477,7 @@
       }
     },
     "“since” must be today, yesterday, this week or an ISO 8601 time." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

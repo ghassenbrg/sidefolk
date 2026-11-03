@@ -167,6 +167,8 @@ public enum ReminderTools {
                   context.personWasAsked || ReminderTools.canManage(caller: context.caller, source: r.source) else {
                 throw ToolError.notFound(String(localized: "a reminder with id \(id)"))
             }
+            // Another agent has the whole id: a short one that fails only when someone else's shares it would say when theirs was made.
+            if case .external = context.caller, r.id != id { throw ToolError.notFound(String(localized: "a reminder with id \(id)")) }
             // The person may have made it important while the card waited.
             if context.personWasAsked, !ReminderTools.canManage(caller: context.caller, source: r.source) { try notImportant(r) }
             return r
@@ -174,7 +176,7 @@ public enum ReminderTools {
 
         /// Whether this call is on the caller's own reminder: no card, and its rules are the ordinary ones.
         func isOwn(_ input: JSONValue, caller: Caller) async -> Bool {
-            guard let id = input.string("id"), let r = await scheduler.reminder(matching: id) else { return false }
+            guard let id = input.string("id"), let r = await scheduler.reminder(matching: id), r.id == id else { return false }
             return ReminderTools.canManage(caller: caller, source: r.source)
         }
 
@@ -461,8 +463,14 @@ public enum ReminderTools {
             guard let r = await shared.othersRecord(input, caller: caller) else { return nil }
             try shared.notImportant(r)
             let name = shared.named(r, now: Date())
-            return (await shared.scheduler.linkedOpenTask(r) == nil ? String(localized: "Mark your reminder \(name) done")
-                : String(localized: "Mark your reminder \(name) done, and the task it belongs to"), input)
+            guard let task = await shared.scheduler.linkedOpenTask(r) else {
+                return (String(localized: "Mark your reminder \(name) done"), input)
+            }
+            // Finishing the task ends every reminder it has (D115), so the card says so, and an important one holds it back.
+            let others = await shared.scheduler.upcoming().filter { $0.itemId == task.id && $0.id != r.id }
+            for other in others { try shared.notImportant(other) }
+            return (others.isEmpty && r.recurrence == nil ? String(localized: "Mark your reminder \(name) done, and the task it belongs to")
+                : String(localized: "Mark your reminder \(name) done, and the task it belongs to, which ends all its reminders and repeats"), input)
         }
 
         func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -608,8 +616,9 @@ public enum ReminderTools {
                 guard notes.count <= Self.shownOnACard else { throw UserFacingError(verbatim: "Notes for someone else's reminder must be at most \(Self.shownOnACard) characters, so the card can show them whole.") }
                 change = notes.isEmpty ? String(localized: "no notes") : String(localized: "its notes to “\(notes)”")
                 settled = settled.setting("notes", .string(notes))
-            } else if let level = input.string("level") {
+            } else if let level = input.string("level")?.lowercased() {
                 change = level == "gentle" ? String(localized: "telling you gently") : String(localized: "telling you so you look")
+                settled = settled.setting("level", .string(level))
             }
             guard let r = await shared.othersRecord(input, caller: caller) else { return nil }
             guard given.count == 1 else { throw UserFacingError(verbatim: "Someone else's reminder takes one change per call, so each card can show it whole: \(given.joined(separator: ", ")).") }

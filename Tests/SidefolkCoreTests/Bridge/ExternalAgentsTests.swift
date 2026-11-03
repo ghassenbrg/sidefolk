@@ -733,6 +733,55 @@ import Testing
         await s.stop()
     }
 
+    /// The card's word for the level is what's set, whatever its case.
+    @Test func aLevelInCapitalsReadsAndRunsTheSame() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let answer = s.answerNextCard(.allowOnce)
+        _ = try await s.call("reminders_update", ["id": .string(sam.id), "level": "GENTLE"])
+        answer.cancel()
+        #expect(await answer.value?.summary.contains("gently") == true)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.level == .gentle)
+        await s.stop()
+    }
+
+    /// Finishing a task ends all its reminders: the card says so, and an important one of them holds it back.
+    @Test func aTasksOtherRemindersAreOnTheCard() async throws {
+        let s = try await Stack()
+        func task(_ title: String) async throws -> String {
+            let saved = await s.runtime.executor.execute(name: "notes.save", input: ["text": .string(title), "kind": "task"], caller: .user)
+            guard case .ok(let made) = saved.status, let id = made.card?.refId else { throw CancellationError() }
+            return id
+        }
+        let first = try await task("Send the invoice")
+        let one = try await s.runtime.scheduler.create(title: "Invoice", at: Date().addingTimeInterval(3600), source: "user", itemId: first)
+        _ = try await s.runtime.scheduler.create(title: "Invoice again", at: Date().addingTimeInterval(7200), source: "user", itemId: first)
+        let answer = s.answerNextCard(.deny)
+        _ = try await s.call("reminders_complete", ["id": .string(one.id)])
+        answer.cancel()
+        #expect(await answer.value?.summary.contains("ends all its reminders") == true)
+
+        let second = try await task("Take the pill")
+        let plain = try await s.runtime.scheduler.create(title: "Pill soon", at: Date().addingTimeInterval(3600), source: "user", itemId: second)
+        let vital = try await s.runtime.scheduler.create(title: "Pill now", at: Date().addingTimeInterval(7200), level: .critical, source: "user", itemId: second)
+        let refused = try await s.call("reminders_complete", ["id": .string(plain.id)])
+        #expect(refused.text.contains("marked that reminder important"), "\(refused.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == .scheduled)
+        #expect(try await s.runtime.notebook.item(id: second)?.status == .open)
+        await s.stop()
+    }
+
+    /// Whole ids only: a short one tells nothing, even of its own.
+    @Test func anAgentUsesTheWholeIdEvenForItsOwn() async throws {
+        let s = try await Stack()
+        _ = try await s.call("reminders_create", ["title": "Mine", "when": "in 2 hours"])
+        let mine = try #require(await s.runtime.scheduler.upcoming().first)
+        let short = try await s.call("reminders_cancel", ["id": .string(String(mine.id.prefix(8)))])
+        #expect(short.text.contains("couldn't find a reminder"), "\(short.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: mine.id)?.state == .scheduled)
+        await s.stop()
+    }
+
     /// Taking notes away adds no one's words, so a reminder stays the person's.
     @Test func noNewWordsLeaveItThePersons() async throws {
         let s = try await Stack()
