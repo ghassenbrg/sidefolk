@@ -3607,3 +3607,17 @@ the Noor extension's name).
 **Implications:** a companion's gallery page and install read the catalog's translated words (D76), which they had ignored: until that reaches an app release, his page is in English on published copies. Up close he is a very good real-time character, not the concept's painted stills: his fur is short pile
 with soft tufts, not long silky strands. 3D only for now: a 2D form (D59) isn't made. The technique is in the
 `sidefolk-3d-character` skill. Fur costs the GPU, so a new companion that uses it is measured there, not only in `top`.
+
+### D134 — The Notebook is a place of its own, not a jump to a collection (2026-11-03)
+
+**Decision:** Home's Notebook row and ⌘3 open the Notebook's own page. In order: its count, a search across everything, the open tasks that are late or due within a week (five at most, finished with a click), every collection as a tile (what's in it, open tasks, last change) with New collection last, what's pinned anywhere (six at most), and Trash and Archived. ⌘N there and New › Note from any other place make a note in the Inbox. Deleting or archiving the collection on screen lands here. The sidebar's section under the places is now called Collections. This narrows D84, where the row stood for "wherever the Notebook was".
+**Why:** the founder: "you click there, then the selector jump to another sidebar icon... If I want that thing in the sidebar, I would just click it." The row was a redirect, with the same word twice in a row. It leads with what the sidebar can't show, so it's worth a click with two collections as well as with twenty, and it is the first part of direction A in `docs/research/notebook-proposal.md`: the view across collections, without bulk selection or quick dates.
+**Alternatives:** removing the row (⌘3 and "open Notebook" would have nowhere to go); a list of everything (Search everywhere and Today's captured list do that); a stats dashboard (counts that nobody acts on); a recent feed (Today has one). A due date further than a week off is the Calendar's.
+**Worked out from what's loaded:** `NotebookOverview` in Core, from the live items `NotebookModel` already reads, with no new query. It's computed when the Notebook changes and when the page opens, so a page left open over midnight shows yesterday's "late" until then.
+
+### D135 — A web watch's first look says what it couldn't see (2026-11-03)
+
+**Decision:** a watch must have something to watch (PRODUCT E5). A first look with no text at all is a failed check: no baseline is kept, the card says "I can't read <site>", On duty shows the reason, and it keeps trying with the usual backoff. "Tell me when these words go" with the words absent on the first look doesn't fire: the card says they aren't on the page as Sidefolk sees it, and it fires only after they were seen and then went. HTML with under 80 characters of text gets a note on its first look and is watched. A `contains` already true on the first look still tells at once, as designed. A blank baseline kept from an earlier version counts as no baseline.
+**Why:** a page that needs JavaScript or a sign-in was confirmed as working and then watched nothing, or fired "“X” is gone" about words it had never seen.
+**Known gap, kept rather than guessed at:** a sign-in page that answers 200 with text looks like any page, so "any change" and `contains` on it watch the sign-in page. There's no reliable general way to tell, and a guess would wrongly flag real pages.
+

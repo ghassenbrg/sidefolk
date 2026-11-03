@@ -44,6 +44,8 @@ final class NotebookModel {
     var collections: [NotebookCollection] = []
     private(set) var archived: [NotebookCollection] = []
     private(set) var counts: [String: Int] = [:]
+    /// What the Notebook's own page shows (D134).
+    private(set) var overview = NotebookOverview()
     private(set) var trash: [NotebookItem] = []
     private(set) var items: [NotebookItem] = []
     private(set) var collectionId: String?
@@ -83,6 +85,7 @@ final class NotebookModel {
     private var store: NotebookStore { runtime.notebook }
     private var saveTask: Task<Void, Never>?
     private var itemsTask: Task<Void, Never>?
+    private var showing: Task<Void, Never>?
     private var toastTask: Task<Void, Never>?
 
     init(services: AppServices) {
@@ -122,6 +125,12 @@ final class NotebookModel {
         archived = sorted.filter { $0.archivedAt != nil }
         let live = (try? await store.items(limit: 100_000)) ?? []
         counts = Dictionary(grouping: live, by: \.collectionId).mapValues(\.count)
+        overview = NotebookOverview(collections: collections, items: live)
+    }
+
+    /// Everything that matches, whichever collection it's in, for the Notebook's own page.
+    func searchEverything(_ query: String) async -> [NotebookItem] {
+        (try? await store.search(query.trimmingCharacters(in: .whitespacesAndNewlines), limit: 50)) ?? []
     }
 
     /// The name people see (the Inbox and “About you” in the app's language).
@@ -181,14 +190,20 @@ final class NotebookModel {
 
     // MARK: Selection and editing
 
+    /// One at a time: choosing a place opens its collection, and whoever chose it may then wait for the same one and add to it.
     func show(collectionId id: String) async {
+        await showing?.value
         guard id != collectionId else { return }
-        await flush()
-        collectionId = id
-        query = ""
-        filter = .all
-        select(nil)
-        await reloadItems()
+        let opening = Task {
+            await flush()
+            collectionId = id
+            query = ""
+            filter = .all
+            select(nil)
+            await reloadItems()
+        }
+        showing = opening
+        await opening.value
     }
 
     func select(_ id: String?) {

@@ -17,6 +17,10 @@ Verified: the window check returns `{}`, every move filmed, rests, colours again
 app (D121). From the published gallery in a fresh debug app: found, installed and worn; in German, his page and tagline
 translated. Only the `de` words were seen on screen. Not done: a 2D form (D59), older Macs and battery.
 
+## 2026-11-03: The Notebook's own page, Settings' sidebar, and what a web watch's first look says (D134, D135)
+
+**The Notebook row** opens its own page (D134): the founder's note that clicking it just jumped to another row. **Settings' sidebar** runs to the window's edges with one line beside it, as Home's does, instead of a floating rounded card whose corner ran behind the window's buttons (the founder's picture). **Web watches** (D135), asked for through the Chrome extension session from a code read. Regression tests failed first on the three first-look cases, and pass now. Verified: `NotebookOverviewTests`, new cases in `UrlChangeProbeTests` and `WatchToolsTests`, `swift test` in full, snapshots of the page in light, dark, small and empty, and Settings. A review found: search results going stale after finishing a task, ⌘N making a task when the Inbox's tab was left on Tasks, a race opening a collection twice that could lose a new note, an empty new note counted on the page, and old blank baselines. All fixed.
+
 ## 2026-11-03: Dev ideas, batch 6: reading on without a card, and the wake word measured (items 13, 14; D119)
 
 **Item 13** is in D119 and T42. Verified: `ResearchModeTests`, a test per limit, and `swift test` in full. An adversarial review of the first version broke it (a message spelled in `%61`s of a listed host, a freeze on a page built for it, `%6Cocalhost` past T11, reads that didn't end it): the design was narrowed and each became a test. Not run: a live model following links. **Item 14:** a measurement only, `docs/research/wake-word-prototype.md`, nothing in the app; the founder's choice waits on a microphone test at the Mac.

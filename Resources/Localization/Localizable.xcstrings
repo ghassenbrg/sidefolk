@@ -60476,7 +60476,6 @@
       }
     },
     "Collections" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -86970,6 +86969,64 @@
         }
       }
     },
+    "I can't read %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أستطيع قراءة %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich kann %@ nicht lesen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No puedo leer %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’arrive pas à lire %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non riesco a leggere %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を読み取れません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 읽을 수 없어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não consigo ler %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我无法读取 %@"
+          }
+        }
+      }
+    },
     "I can't read the folder %@." : {
       "localizations" : {
         "ar" : {
@@ -92436,6 +92493,64 @@
         }
       }
     },
+    "I only see a few words on this page. If the rest needs a browser or a sign-in, I won't see it change." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا أرى سوى كلمات قليلة في هذه الصفحة. إن كان الباقي يحتاج إلى متصفح أو تسجيل دخول، فلن أرى تغيّره."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich sehe auf dieser Seite nur wenige Wörter. Wenn der Rest einen Browser oder eine Anmeldung braucht, sehe ich nicht, wenn er sich ändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo veo unas pocas palabras en esta página. Si el resto necesita un navegador o iniciar sesión, no veré sus cambios."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je ne vois que quelques mots sur cette page. Si le reste demande un navigateur ou une connexion, je ne le verrai pas changer."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedo solo poche parole in questa pagina. Se il resto richiede un browser o un accesso, non lo vedrò cambiare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このページには少しの言葉しか見えません。残りにブラウザやサインインが必要な場合、その変化は検知できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 페이지에서 단어가 몇 개밖에 보이지 않아요. 나머지에 브라우저나 로그인이 필요하다면 변화를 볼 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só vejo poucas palavras nesta página. Se o resto precisar de um navegador ou de login, não vou ver as mudanças."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我在这个页面上只看到几个词。如果其余内容需要浏览器或登录,我就看不到它的变化。"
+          }
+        }
+      }
+    },
     "I only talk to AI services over https, except on this Mac." : {
       "localizations" : {
         "ar" : {
@@ -95823,6 +95938,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我现在没有在显示或监视任何东西。"
+          }
+        }
+      }
+    },
+    "I'm watching %@, but it may not show me everything" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أراقب %@، لكن قد لا أرى كل شيء فيه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich beobachte %@, sehe aber vielleicht nicht alles"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estoy vigilando %@, pero puede que no lo vea todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je surveille %@, mais je n’en vois peut-être pas tout"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sto controllando %@, ma forse non ne vedo tutto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を見守っていますが、すべては見えていないかもしれません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 지켜보고 있지만 전부 보이지는 않을 수 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estou monitorando %@, mas talvez não veja tudo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我正在关注 %@,但可能看不到全部内容"
           }
         }
       }
@@ -116534,6 +116707,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要留意（%lld）"
+          }
+        }
+      }
+    },
+    "Needs doing" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما يجب إنجازه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu erledigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por hacer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À faire"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da fare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "やること"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "할 일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A fazer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待办"
           }
         }
       }
@@ -160118,6 +160349,64 @@
         }
       }
     },
+    "See in Calendar" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض في التقويم"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Kalender ansehen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver en el calendario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir dans le calendrier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedi nel calendario"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カレンダーで見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "캘린더에서 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver no calendário"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在日历中查看"
+          }
+        }
+      }
+    },
     "See the change" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -196768,6 +197057,64 @@
         }
       }
     },
+    "This page shows no text I can read. It may need a browser or a sign-in." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تعرض هذه الصفحة نصًا أستطيع قراءته. قد تحتاج إلى متصفح أو تسجيل دخول."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Seite zeigt keinen Text, den ich lesen kann. Vielleicht braucht sie einen Browser oder eine Anmeldung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta página no muestra texto que yo pueda leer. Puede que necesite un navegador o iniciar sesión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page n’affiche aucun texte que je puisse lire. Elle demande peut-être un navigateur ou une connexion."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa pagina non mostra testo che io possa leggere. Forse richiede un browser o un accesso."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このページには読み取れるテキストがありません。ブラウザやサインインが必要かもしれません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 페이지에는 읽을 수 있는 글이 없어요. 브라우저나 로그인이 필요할 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta página não mostra nenhum texto que eu consiga ler. Talvez precise de um navegador ou de login."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个页面没有我能读取的文字。它可能需要浏览器或登录。"
+          }
+        }
+      }
+    },
     "This removes every note, reminder, watcher, folder grant and extension, your history and logs, and the keys saved in your Keychain. Sidefolk starts fresh. This can't be undone." : {
       "localizations" : {
         "ar" : {
@@ -206116,6 +206463,65 @@
         }
       }
     },
+    "Updated %@" : {
+      "comment" : "A collection: when something in it last changed",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُدِّث %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualisiert %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizado %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mis à jour %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornato %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizado %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新于 %@"
+          }
+        }
+      }
+    },
     "Updated idea" : {
       "localizations" : {
         "ar" : {
@@ -214607,6 +215013,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在此 Mac 上理解你声音的部分。"
+          }
+        }
+      }
+    },
+    "What you and %@ save lands here. New notes go to the Inbox." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما تحفظه أنت و%@ يصل إلى هنا. تذهب الملاحظات الجديدة إلى الوارد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was du und %@ speichert, landet hier. Neue Notizen kommen in den Eingang."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que tú y %@ guardáis llega aquí. Las notas nuevas van a la bandeja de entrada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que vous et %@ enregistrez arrive ici. Les nouvelles notes vont dans la boîte de réception."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quello che tu e %@ salvate arriva qui. Le nuove note vanno in “In arrivo”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたと%@が保存したものはここに届きます。新しいメモはインボックスに入ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나와 %@이(가) 저장한 것이 여기에 모입니다. 새 메모는 수신함으로 갑니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que você e %@ salvam chega aqui. As notas novas vão para a caixa de entrada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你和 %@ 保存的内容都在这里。新笔记会进入收件箱。"
           }
         }
       }
@@ -243077,6 +243541,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”不是我能使用的地址。"
+          }
+        }
+      }
+    },
+    "“%@” isn't on the page as I see it. It may already be gone, or need a sign-in I don't have. I'll tell you if it shows up and then goes." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» ليس في الصفحة كما أراها. ربما اختفى بالفعل، أو يحتاج إلى تسجيل دخول ليس لدي. سأخبرك إن ظهر ثم اختفى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ steht nicht auf der Seite, so wie ich sie sehe. Es ist vielleicht schon weg, oder es braucht eine Anmeldung, die ich nicht habe. Ich sage Bescheid, wenn es auftaucht und dann verschwindet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» no está en la página tal como yo la veo. Puede que ya no esté, o que haga falta iniciar una sesión que no tengo. Te avisaré si aparece y luego desaparece."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » n’est pas sur la page telle que je la vois. Il a peut-être déjà disparu, ou il faut une connexion que je n’ai pas. Je vous préviendrai s’il apparaît puis disparaît."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» non è nella pagina come la vedo io. Forse non c’è già più, o serve un accesso che non ho. Ti avviso se compare e poi sparisce."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "私から見えるページに「%@」はありません。すでになくなったか、私にはないサインインが必要なのかもしれません。表示されてから消えたらお知らせします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제가 보는 페이지에는 “%@”이(가) 없어요. 이미 사라졌거나 제게 없는 로그인이 필요할 수 있어요. 나타났다가 사라지면 알려 드릴게요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” não está na página como eu a vejo. Talvez já tenha sumido, ou precise de um login que não tenho. Vou avisar se aparecer e depois sumir."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在我看到的页面上没有“%@”。它可能已经不在了,或者需要我没有的登录。如果它出现后又消失,我会告诉你。"
           }
         }
       }

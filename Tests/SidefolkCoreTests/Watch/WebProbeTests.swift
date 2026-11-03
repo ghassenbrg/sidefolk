@@ -101,6 +101,73 @@ import Testing
         #expect(r.summary == "“Sold out” is gone from example.com/pricing")
     }
 
+    // A page Sidefolk can't read (it needs JavaScript or comes back blank) must not be confirmed as watched: PRODUCT E5.
+    @Test func aFirstLookWithNoTextIsAProblemNotABaseline() async throws {
+        for condition: JSONValue in [.object([:]), ["contains": "Open"], ["not_contains": "Sold out"]] {
+            var w = try watcher(condition)
+            fetcher.reset()
+            fetcher.say("<html><body><div id=\"root\"></div><script>start()</script></body></html>")
+            await #expect(throws: ProbeError.failed(UrlChangeProbe.noReadableText)) { try await probe.step(&w) }
+            #expect(w.lastState == nil)
+        }
+    }
+
+    @Test func aBlankKeptFromBeforeIsNoBaseline() async throws {
+        var w = try watcher()
+        w.lastState = ["text": "", "hash": "0"]
+        let words = "<h1>Pricing</h1><p>Pro costs nineteen dollars a month, and the team plan costs twenty-nine for each person.</p>"
+        fetcher.say(page(words))
+        #expect(try await !probe.step(&w).triggered)
+        #expect(w.lastState?["text"]?.stringValue?.isEmpty == false)
+    }
+
+    @Test func wordsNeverSeenAreNotGone() async throws {
+        var w = try watcher(["not_contains": "Sold out"])
+        fetcher.say(page("<h1>Sign in</h1><p>Enter your email and password to carry on to your account.</p><p>Forgot your password?</p>"))
+        let first = try await probe.step(&w)
+        #expect(!first.triggered)
+        #expect(first.firstLookNote?.contains("“Sold out”") == true)
+        // Nothing to tell while they stay away.
+        let still = try await probe.step(&w, at: t0.addingTimeInterval(600))
+        #expect(!still.triggered && still.firstLookNote == nil)
+        // Seen, then gone: that is what was asked for.
+        fetcher.reset()
+        fetcher.say(page("<p>Sold out, sorry. Everything in this size has gone and more is on its way to the shop soon.</p>"))
+        #expect(try await !probe.step(&w, at: t0.addingTimeInterval(1200)).triggered)
+        fetcher.reset()
+        fetcher.say(page("<p>Available now, in every size, with delivery tomorrow to anywhere in the country you choose.</p>"))
+        let gone = try await probe.step(&w, at: t0.addingTimeInterval(1800))
+        #expect(gone.triggered)
+        #expect(gone.summary == "“Sold out” is gone from example.com/pricing")
+    }
+
+    @Test func wordsAlreadyThereStillTellAtTheFirstLook() async throws {
+        var w = try watcher(["contains": "In stock"])
+        fetcher.say(page("<p>In stock</p>"))
+        let first = try await probe.step(&w)
+        #expect(first.triggered && first.firstLookNote == nil)
+    }
+
+    @Test func aPageWithHardlyAnyTextSaysSoOnItsFirstLook() async throws {
+        var w = try watcher()
+        fetcher.say(page("<p>Loading…</p>"))
+        let first = try await probe.step(&w)
+        #expect(!first.triggered)
+        #expect(first.firstLookNote != nil)
+        #expect(try await probe.step(&w, at: t0.addingTimeInterval(600)).firstLookNote == nil)
+
+        var fine = try watcher()
+        fetcher.reset()
+        fetcher.say(page("<h1>Pricing</h1><p>Pro costs nineteen dollars a month, and the team plan costs twenty-nine for each person on it.</p>"))
+        #expect(try await probe.step(&fine).firstLookNote == nil)
+
+        // A plain answer is short by nature.
+        var plain = try watcher()
+        fetcher.reset()
+        fetcher.say("OK", headers: ["content-type": "text/plain"])
+        #expect(try await probe.step(&plain).firstLookNote == nil)
+    }
+
     @Test func badAnswersAreFailuresWithFriendlyMessages() async throws {
         var w = try watcher()
         fetcher.say("nope", status: 404)

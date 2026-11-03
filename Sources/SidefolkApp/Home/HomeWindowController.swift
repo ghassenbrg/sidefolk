@@ -34,7 +34,7 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         case .onDuty: model.selection = .onDuty
         case .history: model.selection = .history
         case .gallery: model.selection = .gallery
-        case .notebook: Task { await model.showNotebook() }
+        case .notebook: model.showNotebook()
         case .page(let id):
             Task {
                 await model.pages.reload()
@@ -119,7 +119,7 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         switch parts.first {
         case "today": model.selection = .now
         case "calendar": model.selection = .calendar
-        case "notebook": Task { await model.showNotebook() }
+        case "notebook": model.showNotebook()
         case "onduty": model.selection = .onDuty
         case "watchers": model.selection = .watchers
         case "history":

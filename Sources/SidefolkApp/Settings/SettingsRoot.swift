@@ -13,7 +13,6 @@ struct SettingsRoot: View {
         HStack(spacing: 0) {
             SettingsSidebar(model: model, searchFocused: $searchFocused)
                 .frame(width: Theme.Size.sidebar)
-                .padding(Theme.Space.s)
             VStack(alignment: .leading, spacing: 0) {
                 header
                 Group {
@@ -75,8 +74,8 @@ private struct SettingsSidebar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xxs) {
-            // Room for the window's buttons.
-            Color.clear.frame(height: 30)
+            // Room for the window's buttons, which sit on the sidebar as they do in Home.
+            Color.clear.frame(height: 44)
             SettingsSearchField(navigation: navigation, focused: searchFocused)
                 .padding(.bottom, Theme.Space.s)
             ForEach(SettingsTab.allCases) { tab in
@@ -97,8 +96,8 @@ private struct SettingsSidebar: View {
         }
         .padding(.horizontal, Theme.Space.s)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.card + 2, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card + 2, style: .continuous).strokeBorder(Theme.line))
+        .background(Theme.surface)
+        .overlay(alignment: .trailing) { Rectangle().fill(Theme.line).frame(width: 1) }
     }
 
     /// What waits in a tab: a version of Sidefolk to install, add-ons that need a look.

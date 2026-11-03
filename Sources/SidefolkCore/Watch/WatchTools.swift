@@ -457,6 +457,14 @@ struct WatchTrouble {
                 ? String(localized: "\(Self.sentence(why)) It's already down, so I'll tell you if it comes back and goes down again.")
                 : String(localized: "\(Self.sentence(why)) I'll keep checking and tell you when it's back up.")
             forTheModel = "it isn't answering right now (\(Self.plain(why))). I'll keep checking."
+        case WatchKind.urlChange where look.problem == nil:
+            title = String(localized: "I'm watching \(name), but it may not show me everything")
+            subtitle = why
+            forTheModel = "I'm watching it, but: \(Self.plain(why))."
+        case WatchKind.urlChange where why == UrlChangeProbe.noReadableText:
+            title = String(localized: "I can't read \(name)")
+            subtitle = String(localized: "\(Self.sentence(why)) I'll keep trying.")
+            forTheModel = "I can't read it (\(Self.plain(why))), so nothing is being watched yet. I'll keep trying."
         case WatchKind.urlChange:
             title = String(localized: "I can't reach \(name) right now")
             subtitle = String(localized: "\(Self.sentence(why)) I'll keep trying.")

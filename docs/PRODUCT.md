@@ -86,7 +86,7 @@ Updated after the product review (docs/DECISIONS.md D4–D12).
 - P0 Drag and drop onto the companion: Save · Remind me · Watch (URLs/files) · Ask.
 - P0 The menu bar's Pocket (state, Open/Focus/Quiet, Needs you, Next up, Agents, Ask); global hotkey ⌘⇧Space
   (configurable, registration checked).
-- P0 Home window: Today, Calendar, Notebook (with You and the Trash), On duty, History, extension pages and the
+- P0 Home window: Today, Calendar, Notebook (its own page, with You and the Trash), On duty, History, extension pages and the
   Gallery, with the Say bar (⌘K). One layout per place in every theme (D84; docs/DESIGN.md).
 - P1 Folks on duty: Tempo, Scout, Byte beside the companion while their job is live (max 3).
 - P2 Voice input (push-to-talk, on-device speech recognition).

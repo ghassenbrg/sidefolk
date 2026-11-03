@@ -144,6 +144,9 @@ enum UISnapshots {
             full.calendar.toggleSidebar()
             full.calendar.mode = .agenda
             await full.calendar.reload()
+            full.selection = .notebook
+            await full.notebook.reloadCollections()
+            try await homeShot("notebook-overview")
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook")
             await full.reveal(sample.remindedTask)
@@ -235,6 +238,8 @@ enum UISnapshots {
                 crowd.uncrowd()
             }
             full.calendar.mode = .agenda
+            full.selection = .notebook
+            try await homeShot("notebook-overview-small", size: small)
             await full.reveal(sample.selectedItem)
             try await homeShot("notebook-small", size: small)
             home.orderOut(nil)
@@ -247,6 +252,9 @@ enum UISnapshots {
             }
             empty.selection = .now
             try await emptyShot("today")
+            empty.selection = .notebook
+            await empty.notebook.reloadCollections()
+            try await emptyShot("notebook-overview")
             if let inbox = empty.notebook.inboxId {
                 empty.selection = .collection(inbox)
                 await empty.notebook.show(collectionId: inbox)

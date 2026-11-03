@@ -30,7 +30,10 @@ final class FakeFetcher: WatchFetcher {
     func fetch(_ request: FetchRequest) async throws -> FetchResponse {
         let step: Step = state.withLock { s in
             s.requests.append(request)
-            guard let first = s.script.first else { return .page("", status: 200, headers: [:]) }
+            // Nothing scripted: an ordinary page, with enough words to count as one.
+            guard let first = s.script.first else {
+                return .page("<p>An ordinary page, with enough words on it to be read and compared from one look to the next.</p>", status: 200, headers: [:])
+            }
             if s.script.count > 1 { s.script.removeFirst() }
             return first
         }

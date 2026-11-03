@@ -218,6 +218,26 @@ import Testing
         #expect(r.undo != nil)
     }
 
+    @Test func aPageWithNoTextIsNotConfirmedAsWatched() async throws {
+        env.fetcher.say("<html><body><div id=\"root\"></div><script>start()</script></body></html>")
+        let r = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/app"]))
+        let card = try #require(r.card)
+        #expect(card.title == "I can't read example.com/app")
+        #expect(card.subtitle == "This page shows no text I can read. It may need a browser or a sign-in. I'll keep trying.")
+        #expect(r.text.contains("nothing is being watched yet"))
+        #expect(try #require(await engine.watcher(id: card.refId!)).errorCount == 1)
+    }
+
+    @Test func wordsNotThereToBeginWithAreSaidAndNotFired() async throws {
+        env.fetcher.say("<html><body><h1>Sign in</h1><p>Enter your email and password to carry on to your account page here.</p></body></html>")
+        let r = try result(await run("watch.create", ["kind": "url_change", "target": "example.com/shop", "not_contains": "sold out"]))
+        let card = try #require(r.card)
+        #expect(card.title == "I'm watching example.com/shop, but it may not show me everything")
+        #expect(card.subtitle?.contains("“sold out” isn't on the page as I see it") == true)
+        let w = try #require(await engine.watcher(id: card.refId!))
+        #expect(w.fireCount == 0 && w.errorCount == 0)
+    }
+
     @Test func anUnknownSiteIsReportedBeforeTheCardPromisesAnything() async throws {
         env.fetcher.fail(URLError(.cannotFindHost))
         let r = try result(await run("watch.create", ["kind": "site_status", "target": "doesnotexist.invalid/pricing", "becomes": "up"]))

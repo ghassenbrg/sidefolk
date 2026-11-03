@@ -8,6 +8,8 @@ import SwiftUI
 enum HomeSelection: Hashable {
     case now, calendar, onDuty, history, you, trash, gallery
     case collection(String)
+    /// The Notebook's own page (D134): what needs doing, every collection, what's pinned.
+    case notebook
     /// An extension's page (D62), by `ExtensionPageInfo.id`.
     case page(String)
     /// A watch's own page (D87), by `Watcher.id`; it belongs to On duty.
@@ -15,14 +17,14 @@ enum HomeSelection: Hashable {
     /// Every watcher in one list, to arrange (D116); it belongs to On duty.
     case watchers
 
-    /// The places, in ⌘1–5 order (D84); `.collection("")` stands for the Notebook, which opens where it was.
-    static let places: [HomeSelection] = [.now, .calendar, .collection(""), .onDuty, .history]
+    /// The places, in ⌘1–5 order (D84).
+    static let places: [HomeSelection] = [.now, .calendar, .notebook, .onDuty, .history]
 
     var title: LocalizedStringKey {
         switch self {
         case .now: "Today"
         case .calendar: "Calendar"
-        case .collection, .trash, .you: "Notebook"
+        case .notebook, .collection, .trash, .you: "Notebook"
         case .onDuty, .watch, .watchers: "On duty"
         case .history: "History"
         case .page: "Extensions"
@@ -35,7 +37,7 @@ enum HomeSelection: Hashable {
         switch self {
         case .now: "sun.max"
         case .calendar: "calendar"
-        case .collection, .trash, .you: "book.closed"
+        case .notebook, .collection, .trash, .you: "book.closed"
         case .onDuty, .watch, .watchers: "dot.radiowaves.left.and.right"
         case .history: "clock.arrow.circlepath"
         case .page: "puzzlepiece.extension"
@@ -46,7 +48,7 @@ enum HomeSelection: Hashable {
     /// The same place, whichever collection is open.
     func isPlace(_ place: HomeSelection) -> Bool {
         switch (self, place) {
-        case (.collection, .collection), (.trash, .collection), (.you, .collection), (.watch, .onDuty), (.watchers, .onDuty): true
+        case (.collection, .notebook), (.trash, .notebook), (.you, .notebook), (.watch, .onDuty), (.watchers, .onDuty): true
         default: self == place
         }
     }
@@ -79,12 +81,6 @@ final class HomeModel {
 
     var selection: HomeSelection? = .now {
         didSet {
-            // The Notebook's place row stands for wherever the Notebook was.
-            if selection == .collection("") {
-                selection = oldValue
-                Task { await showNotebook() }
-                return
-            }
             if selection != oldValue { selectionChanged() }
         }
     }
@@ -192,25 +188,32 @@ final class HomeModel {
         if let thread { history.open(conversation: thread) }
     }
 
-    /// Goes to one of the places; the Notebook opens where it was.
-    func go(to place: HomeSelection) {
-        if case .collection = place { Task { await showNotebook() } } else { selection = place }
-    }
+    /// Goes to one of the places.
+    func go(to place: HomeSelection) { selection = place }
 
     /// A new note in the collection on screen, or the Inbox.
     func newNote() async {
-        await showNotebook()
+        if notebook.collections.isEmpty { await notebook.reloadCollections() }
+        if case .collection = selection {} else if let inbox = notebook.inboxId {
+            // A tab left on Tasks last time can't be seen from here, so it doesn't decide what this is.
+            notebook.filter = .all
+            selection = .collection(inbox)
+        }
+        if case .collection(let id) = selection { await notebook.show(collectionId: id) }
         await notebook.newItem()
     }
 
-    func showNotebook() async {
-        if case .collection(let id) = selection, !id.isEmpty { return }
-        if notebook.collections.isEmpty { await notebook.reloadCollections() }
-        if let id = notebook.collectionId ?? notebook.inboxId { selection = .collection(id) }
-    }
+    func showNotebook() { selection = .notebook }
 
     private func selectionChanged() {
         switch selection {
+        case .notebook:
+            // Leaving a note: a new one with nothing in it goes, and isn't counted here.
+            notebook.select(nil)
+            Task {
+                await notebook.flush()
+                await notebook.reloadCollections()
+            }
         case .collection(let id): Task { await notebook.show(collectionId: id) }
         case .trash: Task { await notebook.reloadTrash() }
         case .history: Task { await history.reload() }

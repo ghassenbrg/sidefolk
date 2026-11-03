@@ -140,6 +140,8 @@ struct HomeView: View {
             } else {
                 Theme.surfaceSunken
             }
+        case .notebook:
+            NotebookOverviewView(home: model)
         case .collection(let id):
             if let collection = model.notebook.collection(id: id) {
                 NotebookView(model: model.notebook, collection: collection)
@@ -184,6 +186,7 @@ private struct PlaceTitle: View {
         case .trash: String(localized: "Trash")
         case .gallery: String(localized: "Gallery")
         case .page(let id): model.pages.info(id)?.title ?? String(localized: "Extensions")
+        case .notebook: String(localized: "Notebook")
         case .collection(let id): model.notebook.collection(id: id).map(NotebookCollections.shownName) ?? String(localized: "Notebook")
         }
     }
@@ -218,6 +221,8 @@ private struct PlaceTitle: View {
         case .page(let id):
             // A name over the same name says nothing: the extension only when the page has another name.
             return model.pages.info(id).flatMap { $0.extensionName == $0.title ? nil : $0.extensionName }
+        case .notebook:
+            return NotebookOverviewWords.count(model.notebook.overview)
         case .collection(let id):
             let n = model.notebook.counts[id] ?? 0
             return String(localized: "Notebook · \(n) items", comment: "Under a collection's title")

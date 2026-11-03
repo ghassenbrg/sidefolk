@@ -148,6 +148,11 @@ public struct UrlChangeProbe: WatcherProbe {
         return w
     }
 
+    /// Why a first look can't start: nothing on the page to compare, which a watch must say rather than confirm (PRODUCT E5).
+    static var noReadableText: String {
+        String(localized: "This page shows no text I can read. It may need a browser or a sign-in.")
+    }
+
     public func check(_ w: Watcher, now: Date) async throws -> ProbeResult {
         guard let url = WebTarget.url(in: w.config) else { throw ProbeError.failed(String(localized: "This watcher has no web address.")) }
         let condition = PageCondition(w.condition)
@@ -166,8 +171,8 @@ public struct UrlChangeProbe: WatcherProbe {
 
         let text = PageText.normalise(response.body, contentType: response.contentType)
         let name = WebTarget.displayName(url)
-        if text.isEmpty, previous?["text"]?.stringValue?.isEmpty == false {
-            throw ProbeError.failed(String(localized: "The page came back empty."))
+        if text.isEmpty {
+            throw ProbeError.failed(previous?["text"]?.stringValue?.isEmpty == false ? String(localized: "The page came back empty.") : Self.noReadableText)
         }
 
         var state: [String: JSONValue] = [
@@ -180,8 +185,12 @@ public struct UrlChangeProbe: WatcherProbe {
         if let kept = previous?["change"] { state["change"] = kept }
         let open = url.absoluteString
         // The watch keeps the text it compared (D87): its first look, then each change with what it was before.
-        let beforeText = previous?["text"]?.stringValue
+        // A blank kept from before first looks had to read something is no first look.
+        let beforeText = previous?["text"]?.stringValue.flatMap { $0.isEmpty ? nil : $0 }
         let baseline = beforeText == nil ? ComparedText(text) : nil
+        // Fetches carry no cookies and run no scripts, so what's seen here may not be what the person sees.
+        let thin = beforeText == nil && Self.isThin(text, contentType: response.contentType)
+            ? String(localized: "I only see a few words on this page. If the rest needs a browser or a sign-in, I won't see it change.") : nil
 
         if condition.hasText {
             let hasContains = condition.contains.map { TextDiff.contains(text, $0) } ?? true
@@ -189,7 +198,11 @@ public struct UrlChangeProbe: WatcherProbe {
             let matched = hasContains && hasNot
             state["matched"] = .bool(matched)
             let wasMatched = previous?["matched"]?.boolValue ?? false
-            guard matched, !wasMatched else { return ProbeResult(state: .object(state), compared: baseline) }
+            guard matched, !wasMatched else { return ProbeResult(state: .object(state), firstLookNote: thin, compared: baseline) }
+            // Words never seen aren't gone. The state stays matched, so seeing them and then not is what tells.
+            if beforeText == nil, let never = condition.notContains, condition.contains == nil {
+                return ProbeResult(state: .object(state), compared: baseline, note: never)
+            }
             let summary: String
             if let want = condition.contains, condition.notContains == nil {
                 summary = String(localized: "\(name) now says “\(want.clipped(60))”")
@@ -204,7 +217,7 @@ public struct UrlChangeProbe: WatcherProbe {
         }
 
         guard let before = beforeText else {
-            return ProbeResult(state: .object(state), compared: baseline) // first look: this is what "unchanged" means from now on
+            return ProbeResult(state: .object(state), firstLookNote: thin, compared: baseline) // first look: this is what "unchanged" means from now on
         }
         let change = TextDiff.compare(old: before, new: text)
         guard change.isSignificant else { return ProbeResult(state: .object(state)) }
@@ -213,8 +226,21 @@ public struct UrlChangeProbe: WatcherProbe {
                            compared: ComparedText(text, before: before))
     }
 
+    /// A web page with hardly anything on it is usually a shell its scripts fill in. A plain answer is short by nature.
+    static func isThin(_ text: String, contentType: String?) -> Bool {
+        text.count < 80 && (contentType ?? "text/html").lowercased().contains("html")
+    }
+
     static func hash(_ text: String) -> String {
         SHA256.hash(data: Data(text.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+private extension ProbeResult {
+    /// The first look at "tell me when these words go", with the words not there to begin with.
+    init(state: JSONValue, compared: ComparedText?, note words: String) {
+        self.init(state: state, firstLookNote: String(localized: "“\(words.clipped(60))” isn't on the page as I see it. It may already be gone, or need a sign-in I don't have. I'll tell you if it shows up and then goes."),
+                  compared: compared)
     }
 }
 

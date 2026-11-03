@@ -13,7 +13,7 @@ until the founder releases it. The latest is **snapshot 867** (snapshot B: Playt
   **Sidecard**: whispers, cards that fold into the count, Ask (⌘⇧Space or a click) with its understanding row, and
   permission slips for approvals (firm ones never take Return). Pins (live values) and the agents lane sit beside
   it, and extensions' **surfaces** (D99), always framed with their name: Playtime's eleven games and five puzzles among them.
-- **Home:** Today, Calendar, Notebook (with You and the Trash), On duty, History, extension pages arranged by the
+- **Home:** Today, Calendar, Notebook (its own page, D134; with You and the Trash), On duty, History, extension pages arranged by the
   person, and the **Gallery** (companions, extensions, themes). The Say bar (⌘K) is in the toolbar.
 - **Settings:** eight tabs with search: General, Companion, Attention (Open, Focus, Quiet, quiet hours), Brain (AI
   and voice), Trust (approval modes, Full access with an end), Connections (Claude Code, Codex, other MCP clients,
@@ -60,6 +60,7 @@ snapshots. **Playtime 1.0.0-snapshot.9** needs Sidefolk snapshot 867, and a copy
 
 ## Known gaps
 
+- **A web watch on a sign-in page that answers 200** watches the sign-in page: "any change" and `contains` can't tell (D135). A page with no text at all, and words never seen, now say so.
 - **Small things seen in phase 5:** the greeting says "Good evening" after midnight.
 - **Not yet tried by hand with the real thing:** the microphone (permission prompt, hold to talk, AirPods), a live
   ElevenLabs voice, Location Services naming the town, an update's swap and reopen between two published snapshots,

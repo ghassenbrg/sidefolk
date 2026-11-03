@@ -3,7 +3,7 @@ import SidefolkCore
 import SwiftUI
 
 /// Home's sidebar (D84): the companion live in its nook, on its light, in the same state as on the desktop; the five
-/// places; the Notebook (You, the Inbox and collections, the Trash last); the person's extension pages, arranged by
+/// places; the collections (You, the Inbox and the rest, the Trash last); the person's extension pages, arranged by
 /// dragging; and Quiet and Settings at the foot. One layout in every theme (themes dress it).
 struct HomeSidebar: View {
     @Bindable var model: HomeModel
@@ -28,7 +28,7 @@ struct HomeSidebar: View {
             get: { deleting != nil }, set: { if !$0 { deleting = nil } }
         ), presenting: deleting) { c in
             Button("Delete collection", role: .destructive) {
-                if model.selection == .collection(c.id) { model.selection = .now }
+                if model.selection == .collection(c.id) { model.selection = .notebook }
                 Task { await notebook.delete(c) }
             }
             Button("Cancel", role: .cancel) {}
@@ -65,7 +65,7 @@ struct HomeSidebar: View {
                 .tag(HomeSelection.trash)
             } header: {
                 HStack {
-                    Text("Notebook")
+                    Text("Collections")
                     Spacer()
                     Button { model.collectionSheet = .create } label: { Image(systemName: "plus").font(.system(size: 11, weight: .semibold)) }
                         .buttonStyle(.sfIcon(side: 22))
@@ -118,7 +118,7 @@ struct HomeSidebar: View {
         case .onDuty: model.onDutyRunning
         default: 0
         }
-        let selected = (model.selection ?? .now).isPlace(place) && !(place == .collection("") && model.selection == .you)
+        let selected = (model.selection ?? .now).isPlace(place) && !(place == .notebook && model.selection == .you)
         row(Text(place.title), count: count, waiting: place == .now) {
             Image(systemName: place.symbol).font(.system(size: 14, weight: .medium))
                 .foregroundStyle(selected ? Theme.link : Theme.inkMuted).frame(width: 20)
@@ -135,7 +135,7 @@ struct HomeSidebar: View {
                 Button("Edit…") { model.collectionSheet = .edit(c) }
                 if c.kind != .inbox {
                     Button("Archive") {
-                        if model.selection == .collection(c.id) { model.selection = .now }
+                        if model.selection == .collection(c.id) { model.selection = .notebook }
                         Task { await notebook.setArchived(c, true) }
                     }
                     Divider()

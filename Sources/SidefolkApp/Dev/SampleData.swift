@@ -57,11 +57,15 @@ enum SampleData {
 
         func item(_ c: NotebookCollection, _ kind: NotebookItem.Kind, _ title: String, body: String = "", url: String? = nil,
                   tags: [String] = [], source: String = "user", run: String? = nil, created: Date, edited: Date? = nil,
-                  done: Bool = false) async throws -> NotebookItem {
+                  done: Bool = false, dueInDays: Int? = nil) async throws -> NotebookItem {
             var i = NotebookItem(collectionId: c.id, kind: kind, title: title, body: body, url: url, tags: tags, source: source,
                                  runId: run, now: created)
             i.updatedAt = edited ?? created
             if done { i.status = .done }
+            if let dueInDays, let day = Calendar.current.date(byAdding: .day, value: dueInDays, to: Date()) {
+                i.dueAt = NoteDue.dayInstant(day, calendar: .current)
+                i.dueAllDay = true
+            }
             try await rt.notebook.add(i)
             return i
         }
@@ -70,7 +74,7 @@ enum SampleData {
                            tags: ["folks", "sound"], source: "external:claude-code", created: ago(35))
         let karim = try await item(inbox, .note, "Karim's new address", body: "12 rue Oberkampf, 75011 Paris", source: "user:agent",
                                    run: "r-karim", created: ago(60 * 26))
-        let passport = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50))
+        let passport = try await item(inbox, .task, "Renew passport", body: "Appointment needed at the mairie.", created: ago(60 * 50), dueInDays: -2)
         _ = try await item(inbox, .link, "Swift Testing", url: "https://developer.apple.com/xcode/swift-testing/", created: ago(60 * 70))
 
         let profileItem = try await item(profile, .note, "Prefers short, direct answers", body: "No preamble. Lead with the answer, then one line of why.",
@@ -104,7 +108,7 @@ enum SampleData {
         _ = try await item(sidefolk, .link, "Notarizing macOS software", url: "https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution",
                            created: ago(60 * 120))
         _ = try await item(sidefolk, .idea, "Morning brief could mention the weather", source: "user", created: ago(60 * 140))
-        _ = try await item(pockito, .task, "Fix the sync conflict on rename", tags: ["bug"], source: "external:codex", created: ago(60 * 5))
+        _ = try await item(pockito, .task, "Fix the sync conflict on rename", tags: ["bug"], source: "external:codex", created: ago(60 * 5), dueInDays: 3)
         _ = try await item(pockito, .note, "Pricing thoughts", body: "Free for one device; $3/month for sync.", created: ago(60 * 60))
         _ = try await item(reading, .link, "The Mythical Man-Month", url: "https://en.wikipedia.org/wiki/The_Mythical_Man-Month", created: ago(60 * 200))
         for (i, thing) in ["Oat milk", "Coffee beans", "Lemons", "Basil"].enumerated() {
