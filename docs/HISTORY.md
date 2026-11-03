@@ -7,6 +7,14 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-04: Formatic in the gallery (D140–D143, D150, D151)
+
+**What:** `dev.sidefolk.formatic` `1.0.0-snapshot.1`, which needs snapshot 1170 (add-ons main da92622), under Show snapshots. It turns a dropped file into another format with what macOS has, no third-party conversion engine: pictures, PDF pages, sound, data tables and archives. New files appear beside the originals. The cards are the designed ones from snapshot 1170 (D150). Nothing in the app changed for this listing.
+
+**How it was checked:** the app's suite at snapshot 1170 against the pack (2392 + 38), including `theSignedGalleryPassesTheRealChecks`, and the gallery's suite (487). Before publishing, the catalog against the live one: only Formatic added. After it, the pack and catalog downloaded back from the public URL are byte-identical to the signed build (pack sha256 `8826a682145f28c9d7b4a9f728640c32027184ed39ef10dfb6fc0b36e229e81a`), with 30 add-ons and none other changed. Installed from the live gallery in a debug build of 1170 with its own `SIDEFOLK_HOME`: enabled, signature valid, and HEIC to JPEG, MP3 to M4A, TAR to ZIP and JSON to CSV by a drop and a card choice by command, in the real sandbox.
+
+**Limits and what wasn't verified:** STATUS has both. In short: no video, no Stop button, the amber warning on every drop; Finder's Send to Sidefolk, a real drag and real clicks on the cards still need a person, and the install wasn't tried from a released copy.
+
 ## 2026-11-03: Pages composed like an app's screen, and four homepages (D170)
 
 General page abilities (sections as cards, rows and joined panes, a branded head, metrics, a ring on a plain hero, selectable scrolling rows, a preview pane, search, placed heads-ups and host controls, `palette` and `refresh`, an installed app's icon), and the founder's accepted designs for Miraya, Clipboard, Your Mac and Keep Awake built on them in sidefolk-addons. Checked: both suites with the real packs, state tests in the add-ons, 39 states rendered in light and dark, the live app in English, Arabic and German and at a narrow window, a cold security review and the audit session's read. Parity and limits: `sandbox/extension-homepage-implementation-handoff-2026-11-03/implementation/PARITY.md`.

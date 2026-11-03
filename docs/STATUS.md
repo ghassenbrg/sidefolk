@@ -35,7 +35,7 @@ Folio, Iris, Nori, Purl, Rune and Piko (a robot cat in Spark's colours, 3D only,
 snapshot 1 needs Sidefolk snapshot 779; its pipeline isn't in this repository) and Noor (a baby moth, 3D only, worn by name, D121, snapshot 1 needs snapshot 779); extensions World Clock, System Vitals, Weather and Calculator (on `team/ext-move`, also a
 fresh Mac's seed packs, D98), Git, Currency, Playtime, Images, PDF Tools, QR Codes, Archives, Dev
 Toolbox, Feeds, Your Mac (System Vitals+), Clipboard, Keep Awake and Miraya. Themes Paper Garden, Night Studio and Marshmallow, once published (D130). Every add-on is in
-snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.5** needs snapshot 827.
+snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a copy from before shows "Update Playtime" there (D101); **Miraya 1.0.0-snapshot.5** needs snapshot 827. **Formatic 1.0.0-snapshot.1** needs snapshot 1170.
 
 ## In progress
 
@@ -71,11 +71,10 @@ snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a cop
 
 - **MCP and in-app tools (D156–D160, [the audit](research/mcp-tools-audit-2026-11-03.md)):** batch A is released in snapshot 958, B1 to B4 are in snapshot 1075 (HISTORY). The founder approved group B too (D160): B5 and B6 (the companion reading History and sessions) are in snapshot 1137, with an important reminder now holding its note against other agents, and B7 (`files.write`) comes last, with the founder's yes by name. **Next audit batch and the founder's open question:** the end of [the audit](research/mcp-tools-audit-2026-11-03.md). **Waiting:** Codex's tool timeout on `team/tools-a4`, until a live call measures its default (D156). **Not verified:** a real Claude Code or Codex session as the client; a real calendar; the History and sessions cards on screen, and a live model reading those lines.
 
-- **Formatic, a file-conversion extension (D140–D143, D150–D152):** the host abilities it needs are here; its designed cards (D150) are in snapshot 1170.
-  - **Here:** saving beside the file the person gave (D140), file drops with a menu and several files (D141), Open, Show and Undo on a saved file (D142), Finder's Send to Sidefolk (D151), sound under `media` (D143).
-  - **Half done, local branches only:** the extension itself (add-ons `team/formatic`, for the gallery, now that snapshot 1170 carries D150), and the ring (D152: the founder's test passed, no go to build).
-  - **Next:** Formatic to the gallery on the coordinator's go. The founder chose to wait for the design, and the site says "Coming soon" until it's there.
-  - **Not verified:** Send to Sidefolk from a real Finder, including a cold launch: `NSPerformService` can't be aimed at a debug app while an installed copy runs. A real drag from Finder; Open, Show and Undo by real clicks. Checked by the suite and the debug app: every format through the real sandbox, a drop and a card choice by command. Drop menu titles can't be translated yet.
+- **Formatic, a file-conversion extension (D140–D143, D150–D152): in the gallery since 2026-11-04 as `dev.sidefolk.formatic` `1.0.0-snapshot.1`, which needs snapshot 1170 (add-ons main da92622), under Show snapshots.** HISTORY's top entry has what it is and how it was checked.
+  - **Limits:** no video. A CSV, ZIP or M4A dropped on its own default offer is refused with a pointer to the other choices. Opus saves as `.caf`. Every Formatic drop shows the amber warning. Files sent by Send to Sidefolk get no picture on the card. The working card has no Stop button. Drop menu titles can't be translated yet.
+  - **Not decided:** the ring (D152: the founder's test passed, no go to build), video (the rest of D143).
+  - **Not verified:** Send to Sidefolk from a real Finder, including a cold launch: `NSPerformService` can't be aimed at a debug app while an installed copy runs. A real drag from Finder; Open, Show and Undo by real clicks; the cards seen on screen in a released copy. The live gallery's install was checked on a debug build of 1170, not a released copy.
 
 - **Noor, the extension (D105–D109, T43), not the companion of the same name (D121):** in the gallery since 2026-11-03 as `dev.sidefolk.prayer-times` `1.0.0-snapshot.1`, for snapshot 911 or newer, rebuilt at the founder's request to match its 20 approved boards. Snapshot add-ons are hidden until the person presses Show snapshots. The founder tests it next and comes back with findings.
   - **Checked:** two independent reviews pressed controls and walked a new person's journey; `pageInlay:` presses native controls through what their click runs; a real reminder at its minute; Ask's answers; a live place search; the signed pack installed from the live gallery, verified, and opened on first run. `NoorSceneTests` fails on any control the host would drop.
