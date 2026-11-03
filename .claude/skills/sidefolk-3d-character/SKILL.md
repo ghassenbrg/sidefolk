@@ -300,7 +300,6 @@ above its tallest tip (with PIL, `getbbox()` of the snapshot's alpha must not st
 WebKit draws nothing in a background window). Several debug apps often run at once (other worktrees): use a fresh,
 short `SIDEFOLK_HOME` of your own (`build/qa-<name>`), leave the others alone, and activate yours by its process id,
 not its bundle id, which may pick another (`NSRunningApplication(processIdentifier:)?.activate()` from a tiny
-`swift` script; System Events needs accessibility access). A companion added from a folder is re-added after every
-change to its files. Measure cost with `top` over Sidefolk and the `com.apple.WebKit` processes started with it,
+`swift` script; System Events needs accessibility access). A companion added from a folder is re-added after every change to its files, **and the app restarted (by its pid)**: the running page keeps the character file it first loaded, so without a restart you judge the old version. Measure cost with `top` over Sidefolk and the `com.apple.WebKit` processes started with it,
 while it idles and animates, against Spark in the same app (about 18% of a core, D51). Commit in one coherent
 milestone, no Co-Authored-By trailer; push only when asked.
