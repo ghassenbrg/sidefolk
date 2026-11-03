@@ -23,7 +23,8 @@ struct WhenField<Focus: Hashable>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             let row = HStack(spacing: Theme.Space.xs) {
-                TextField("When", text: $text, prompt: prompt)
+                TextField("When", text: $text, prompt: Text(verbatim: ""))
+                    .fieldHint(prompt, showing: text.isEmpty)
                     .font(Theme.Font.body)
                     .focused(focus, equals: focusValue)
                     .onSubmit(submit)

@@ -763,9 +763,10 @@ struct CommitField: View {
     }
 
     var body: some View {
-        TextField(text: $draft, prompt: prompt) { label }
+        TextField(text: $draft, prompt: Text(verbatim: "")) { label }
             .labelsHidden()
             .textFieldStyle(.plain)
+            .fieldHint(prompt ?? Text(verbatim: ""), showing: draft.isEmpty)
             .font(monospaced ? Theme.Font.mono : Theme.Font.body)
             .focused($focused)
             .padding(.horizontal, Theme.Space.s)

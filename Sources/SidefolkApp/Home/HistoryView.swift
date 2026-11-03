@@ -429,7 +429,8 @@ private struct InlineConversation: View {
             HStack(spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     Image(systemName: "bubble.left").foregroundStyle(Theme.inkFaint)
-                    TextField("Reply", text: $model.draft, prompt: Text("Reply to \(model.companionName)…"), axis: .vertical)
+                    TextField("Reply", text: $model.draft, prompt: Text(verbatim: ""), axis: .vertical)
+                        .fieldHint(Text("Reply to \(model.companionName)…"), showing: model.draft.isEmpty, alignment: .topLeading)
                         .textFieldStyle(.plain)
                         .font(Theme.Font.body)
                         .lineLimit(1...6)

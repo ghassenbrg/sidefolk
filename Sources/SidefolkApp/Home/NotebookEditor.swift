@@ -15,7 +15,8 @@ struct NotebookEditor: View {
                 topBar(item)
                 Rectangle().fill(Theme.line).frame(height: 1)
                 VStack(alignment: .leading, spacing: Theme.Space.m) {
-                    TextField("Title", text: field(item, \.title, ""), prompt: Text("Untitled"), axis: .vertical)
+                    TextField("Title", text: field(item, \.title, ""), prompt: Text(verbatim: ""), axis: .vertical)
+                        .fieldHint(Text("Untitled"), showing: item.title.isEmpty, alignment: .topLeading)
                         .textFieldStyle(.plain)
                         .font(Theme.Font.title)
                         .foregroundStyle(Theme.ink)
@@ -168,7 +169,8 @@ struct NotebookEditor: View {
             TextField("Link", text: Binding(
                 get: { url.wrappedValue ?? "" },
                 set: { url.wrappedValue = $0.isEmpty ? nil : $0 }
-            ), prompt: Text(verbatim: "https://…"))
+            ), prompt: Text(verbatim: ""))
+            .fieldHint(Text(verbatim: "https://…"), showing: (url.wrappedValue ?? "").isEmpty)
             .textFieldStyle(.plain)
             .font(Theme.Font.body)
             .accessibilityLabel("Link")
@@ -185,7 +187,8 @@ struct NotebookEditor: View {
             TextField("Tags", text: Binding(
                 get: { tags.wrappedValue },
                 set: { tags.wrappedValue = $0.replacingOccurrences(of: ",", with: " ") }
-            ), prompt: Text("Tags, separated by spaces"))
+            ), prompt: Text(verbatim: ""))
+            .fieldHint(Text("Tags, separated by spaces"), showing: tags.wrappedValue.isEmpty)
             .textFieldStyle(.plain)
             .font(Theme.Font.body)
             .foregroundStyle(Theme.inkMuted)

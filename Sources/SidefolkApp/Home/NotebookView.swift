@@ -142,7 +142,7 @@ private struct ItemList: View {
     private var searchBox: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search", text: $model.query, prompt: searchPrompt)
+            TextField("Search", text: $model.query, prompt: Text(verbatim: "")).fieldHint(searchPrompt, showing: model.query.isEmpty)
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
                 .focused($searchFocused)

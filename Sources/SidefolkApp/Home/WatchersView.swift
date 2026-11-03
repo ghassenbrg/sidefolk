@@ -214,8 +214,9 @@ struct ValueAffixFields: View {
     }
 
     private func field(_ title: Text, _ text: Binding<String>) -> some View {
-        TextField(text: Binding(get: { text.wrappedValue }, set: { text.wrappedValue = String($0.prefix(WatchLimits.maxAffix)) }), prompt: title) { title }
-            .textFieldStyle(.roundedBorder).frame(width: 90)
+        TextField(text: Binding(get: { text.wrappedValue }, set: { text.wrappedValue = String($0.prefix(WatchLimits.maxAffix)) }), prompt: Text(verbatim: "")) { title }
+            .fieldHint(title, showing: text.wrappedValue.isEmpty)
+            .lanternField().frame(width: 90)
     }
 
     private func save() {

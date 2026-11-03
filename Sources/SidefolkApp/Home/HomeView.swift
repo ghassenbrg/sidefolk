@@ -289,7 +289,7 @@ struct CollectionSheet: View {
         VStack(alignment: .leading, spacing: Theme.Space.l) {
             Text(isCreate ? "New collection" : "Edit collection").font(Theme.Font.heading).foregroundStyle(Theme.ink)
             if namable {
-                TextField("Name", text: $name, prompt: Text("Name"))
+                TextField("Name", text: $name, prompt: Text(verbatim: "")).fieldHint(Text("Name"), showing: name.isEmpty)
                     .textFieldStyle(.plain)
                     .focused($nameFocused)
                     .onSubmit(save)

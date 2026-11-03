@@ -174,8 +174,9 @@ private struct SettingsSearchField: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search settings", text: $navigation.query, prompt: Text("Search settings"))
+            TextField("Search settings", text: $navigation.query, prompt: Text(verbatim: ""))
                 .textFieldStyle(.plain)
+                .fieldHint(Text("Search settings"), showing: navigation.query.isEmpty)
                 .font(Theme.Font.body)
                 .focused(focused)
                 .onSubmit(open)

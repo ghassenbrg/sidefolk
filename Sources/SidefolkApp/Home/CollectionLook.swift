@@ -146,7 +146,8 @@ struct CollectionLookPicker: View {
             HStack(spacing: Theme.Space.s) {
                 CollectionTile(collection: preview, size: 30)
                 TextField("Emoji", text: Binding(get: { emoji }, set: { emoji = String($0.trimmingCharacters(in: .whitespaces).prefix(2)) }),
-                          prompt: Text("Or an emoji"))
+                          prompt: Text(verbatim: ""))
+                    .fieldHint(Text("Or an emoji"), showing: emoji.isEmpty)
                     .lanternField()
                     .frame(width: 120)
                 Spacer()

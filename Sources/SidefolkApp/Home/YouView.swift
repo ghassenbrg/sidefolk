@@ -70,7 +70,7 @@ struct YouView: View {
 
     private var addField: some View {
         HStack(spacing: Theme.Space.s) {
-            TextField("New fact", text: $draft, prompt: Text("Something to keep in mind, like “I prefer short answers”"))
+            TextField("New fact", text: $draft, prompt: Text(verbatim: "")).fieldHint(Text("Something to keep in mind, like “I prefer short answers”"), showing: draft.isEmpty)
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
                 .focused($addFocused)

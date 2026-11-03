@@ -291,7 +291,7 @@ struct DeleteAllSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 6) {
                 Text("Type “\(Self.word)” to confirm.").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                TextField("Confirmation", text: $typed, prompt: Text(verbatim: Self.word))
+                TextField("Confirmation", text: $typed, prompt: Text(verbatim: "")).fieldHint(Text(verbatim: Self.word), showing: typed.isEmpty)
                     .lanternField()
                     .accessibilityLabel(Text("Type “\(Self.word)” to confirm."))
             }

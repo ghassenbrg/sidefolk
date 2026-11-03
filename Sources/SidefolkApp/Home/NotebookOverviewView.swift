@@ -60,7 +60,7 @@ struct NotebookOverviewView: View {
     private var searchBox: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search", text: $query, prompt: Text("Search everything"))
+            TextField("Search", text: $query, prompt: Text(verbatim: "")).fieldHint(Text("Search everything"), showing: query.isEmpty)
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
                 .focused($searchFocused)

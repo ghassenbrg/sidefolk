@@ -65,7 +65,7 @@ private struct ChosenPlaceRows: View {
         }
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HStack(spacing: Theme.Space.s) {
-                TextField("Town or city", text: $model.query, prompt: Text("Town or city, like Fukuoka or Austin, Texas"))
+                TextField("Town or city", text: $model.query, prompt: Text(verbatim: "")).fieldHint(Text("Town or city, like Fukuoka or Austin, Texas"), showing: model.query.isEmpty)
                     .textFieldStyle(.plain)
                     .focused($searchFocused)
                     .onSubmit { Task { await model.search() } }

@@ -413,7 +413,7 @@ struct AddServerSheet: View {
     private func field(_ label: LocalizedStringKey, text: Binding<String>, prompt: String, monospaced: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(Theme.Font.captionStrong).foregroundStyle(Theme.inkMuted)
-            TextField(label, text: text, prompt: Text(verbatim: prompt))
+            TextField(label, text: text, prompt: Text(verbatim: "")).fieldHint(Text(verbatim: prompt), showing: text.wrappedValue.isEmpty)
                 .lanternField()
                 .font(monospaced ? .system(size: 12, design: .monospaced) : Theme.Font.body)
                 .accessibilityLabel(label)

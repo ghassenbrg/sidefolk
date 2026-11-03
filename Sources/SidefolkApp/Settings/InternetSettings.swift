@@ -42,7 +42,7 @@ struct InternetGroup: View {
             }
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
-                    TextField("Site", text: $newSite, prompt: Text(verbatim: "example.com"))
+                    TextField("Site", text: $newSite, prompt: Text(verbatim: "")).fieldHint(Text(verbatim: "example.com"), showing: newSite.isEmpty)
                         .lanternField()
                         .frame(maxWidth: 260)
                         .onSubmit(addSite)

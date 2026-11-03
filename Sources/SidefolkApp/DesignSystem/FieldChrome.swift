@@ -54,4 +54,16 @@ struct LanternField: ViewModifier {
 
 extension View {
     func lanternField(problem: Bool = false) -> some View { modifier(LanternField(problem: problem)) }
+
+    /// A field's hint in the theme's faint ink, drawn over a field whose own prompt is empty: macOS paints a TextField's
+    /// `prompt` in its system grey whatever style it's given, 3.15:1 on white (D130). The field keeps its label for VoiceOver.
+    func fieldHint(_ hint: Text, showing: Bool, alignment: Alignment = .leading) -> some View {
+        overlay(alignment: alignment) {
+            if showing {
+                hint.foregroundStyle(Theme.inkFaint).lineLimit(1)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
 }

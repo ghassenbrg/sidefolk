@@ -42,8 +42,9 @@ struct SayBarField<Trailing: View>: View {
             Image(systemName: symbol).font(.system(size: size == .home ? 14 : 17, weight: .medium)).foregroundStyle(tint)
                 .symbolEffect(.variableColor.iterative, isActive: active)
                 .accessibilityHidden(true)
-            TextField(text: $text, prompt: prompt.foregroundStyle(Theme.inkFaint), axis: multiline ? .vertical : .horizontal) { prompt }
+            TextField(text: $text, prompt: Text(verbatim: ""), axis: multiline ? .vertical : .horizontal) { prompt }
                 .textFieldStyle(.plain)
+                .fieldHint(prompt, showing: text.isEmpty, alignment: multiline ? .topLeading : .leading)
                 .font(size == .home ? .system(size: 15 * ThemeStore.shared.style.tokens.type.scale) : Theme.Font.input)
                 .foregroundStyle(Theme.ink)
                 .lineLimit(multiline ? 1...5 : 1...1)

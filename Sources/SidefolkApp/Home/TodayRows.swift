@@ -524,7 +524,7 @@ struct NewReminderRow: View {
                 HStack(spacing: Theme.Space.m) {
                     Image(systemName: "plus.circle.fill").font(.system(size: 17)).foregroundStyle(Theme.folkColor("tempo"))
                         .accessibilityHidden(true)
-                    TextField("New reminder", text: $model.newTitle, prompt: Text("New reminder"))
+                    TextField("New reminder", text: $model.newTitle, prompt: Text(verbatim: "")).fieldHint(Text("New reminder"), showing: model.newTitle.isEmpty)
                         .textFieldStyle(.plain)
                         .font(Theme.Font.body)
                         .focused($focus, equals: .title)
