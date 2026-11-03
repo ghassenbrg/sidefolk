@@ -627,6 +627,17 @@ final class AppCoordinator {
             palettes.press(String(command.dropFirst("paletteKey:".count)))
             return
         }
+        if command.hasPrefix("mcpServer:") {
+            // mcpServer:<name>:<command>:<argument>: adds a plain MCP server, as Settings does once the person confirmed.
+            let parts = command.dropFirst("mcpServer:".count).split(separator: ":").map(String.init)
+            guard parts.count >= 2 else { return }
+            Task {
+                do { _ = try await runtime.extensions.addMCPServer(name: parts[0], command: parts[1], arguments: Array(parts.dropFirst(2))) } catch {
+                    Log.shared.warning("dev", "mcp server failed", ["error": String(describing: error)])
+                }
+            }
+            return
+        }
         if command.hasPrefix("installFolder:") {
             // installFolder:<folder>: installs an extension as Settings does once the person approved its preview.
             let folder = URL(fileURLWithPath: String(command.dropFirst("installFolder:".count)))

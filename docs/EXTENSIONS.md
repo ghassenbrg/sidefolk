@@ -1205,7 +1205,7 @@ A watch you make with `watch.create` under `permissions.act` tells you and not t
 
 With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and only an extension that can't reach out hears them (no `network`, `exec`, `files.write`, `clipboard`, `screen`, `udp`); any other hears the name and the time. What an extension did through `permissions.act` doesn't count.
 
-Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings and returns its answer, and `attention.set {mode, minutes}` sets Focus or Quiet with an end. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
+Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings: at most 300 plain characters, it needs `permissions.ai` and counts toward that cap, and it returns the answer, or only "Done." to an extension that can reach out. `attention.set {mode, minutes}` sets Focus or Quiet with an end, on a card every time. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
 
 ## Speaking the person's language
 

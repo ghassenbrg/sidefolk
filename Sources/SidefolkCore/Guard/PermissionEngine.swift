@@ -123,6 +123,7 @@ public struct PermissionEngine: Sendable {
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: .high, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: exactCommand && !tainted, tainted: tainted,
+                effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")),
                 extensionId: scope.extensionId
             ))
         }

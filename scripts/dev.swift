@@ -25,6 +25,7 @@
 //                           debug app with SIDEFOLK_SAMPLE_CALENDAR=1 to use a sample calendar instead of the person's)
 //   swift scripts/dev.swift review:<draft name>    (opens the install preview of ExtensionDrafts/local.<name>)
 //   swift scripts/dev.swift installFolder:/path/to/extension | page:<extension id>/<page>   (D62)
+//                           | mcpServer:<name>:<command>:<argument>   (a plain MCP server, as Settings adds one)
 //                           | pageState:<extension id>/<page>:<json> (D105) | pageFile:<path>   (a page's next file panel takes this)
 //                           | pageTool:<extension id>/<page>:<tool>:<json>   (that tool as the person, as a click runs it) | pageWidth:<points> | pageLook:dark|light|system | pageKey:<scene>:focus|tab|backtab|press
 //                           | pageInlay:<extension id>/<page>:<label>   (D109: a button or switch laid into the open page's scene, pressed as its click runs)
