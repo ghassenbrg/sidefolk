@@ -7,6 +7,12 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: An integrator skill, and two roles for a merge day
+
+`sidefolk-integrator` (`.claude/skills/`, mirrored in `.agents/skills/`) holds what the session merging ready branches into one snapshot needs here: the clean built add-ons tree, the final pass, doc-loss and number checks, conflict hot spots, push and Release, confirming a snapshot, and who does which step of Add-ons first. `sidefolk-coordinator` now describes the split: sessions send MERGE-READY to the coordinator and never to the integrator, the coordinator relays it, and the integrator pushes only on a GO naming the exact commit and what it covers. The generic skills are `integrator` and `coordinator` in the founder's agent-skills repository.
+
+**How it was checked:** two independent readers went through each role's skills cold, and their gaps were fixed; a third read those fixes cold, and its findings were fixed too (the last round of fixes has had no further reader). Paths and greps were checked read-only against `main`; the catalog union was run on the two sides of a real merge and lost nothing. Neither skill has run a real pass yet, and the push, watch and notes steps come from earlier snapshots, not from the integration they were written during.
+
 ## 2026-11-03: A coordinator skill for this repository
 
 `sidefolk-coordinator` (`.claude/skills/`, mirrored in `.agents/skills/`) holds what a session coordinating the others needs to know here: the repositories, how D, T and migration numbers are given out, the app and gallery release mechanics, the session messages, and lessons from past incidents. It holds nothing perishable and gives the commands to read today's state. Checked: its read-only commands were run against `origin/main`, the catalog diff against the live catalog, and an independent reader went through it cold. Not run: pushes, `gh workflow run`, `build.py --sidefolk-build`, `publish.sh`, which only a real release should run.

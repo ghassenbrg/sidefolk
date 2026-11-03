@@ -57,6 +57,7 @@ Project skills, in `.claude/skills/` (Claude Code) and mirrored in `.agents/skil
 - `sidefolk-theme`: a theme from a concept or reference images ("brainstorm a theme around …"), checked, reviewed
   in snapshots and delivered as a folder or a gallery theme. It keeps its own `LESSONS.md`: read it first, add what was new after each theme.
 - `sidefolk-coordinator`: coordinating parallel sessions here: repositories, numbers, release and gallery mechanics.
+- `sidefolk-integrator`: merging ready branches into one snapshot and releasing it, on the coordinator's go.
 
 `skills/` holds what ships to other people: `sidefolk` (Connect installs it for other agents, D42) and the public
 `sidefolk-extension` and `sidefolk-theme` for anyone building with the app, without this repository.

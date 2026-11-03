@@ -1,6 +1,6 @@
 ---
 name: sidefolk-coordinator
-description: Coordinate the parallel Claude sessions working on Sidefolk - its repositories and stale checkout, how the release and gallery mechanics work (snapshot numbers from main's commit count, one release at a time, Add-ons first, addons_ref, build.py and publish.sh, minimum_sidefolk), how decision (D), security (T) and migration (v) numbers are given out, the project rules a session must keep, the RELEASE?/READY/PUSH? messages, and lessons from past incidents. Use with the global `coordinator` skill when the founder asks for a coordinator on Sidefolk, to line up Sidefolk releases or gallery publishes across sessions, or to register a new session here. Not for doing the feature work itself (sidefolk-extension, sidefolk-theme, sidefolk-3d-character, sidefolk-2d-character).
+description: Coordinate the parallel Claude sessions working on Sidefolk - its repositories and stale checkout, how the release and gallery mechanics work (snapshot numbers from main's commit count, one release at a time, Add-ons first, addons_ref, build.py and publish.sh, minimum_sidefolk), how decision (D), security (T) and migration (v) numbers are given out, the project rules a session must keep, the MERGE-READY/RELEASE?/READY/PUSH? messages, the integrator hand-off, and lessons from past incidents. Use with the global `coordinator` skill when the founder asks for a coordinator on Sidefolk, to line up Sidefolk releases or gallery publishes across sessions, or to register a new session here. Not for doing the feature work itself (sidefolk-extension, sidefolk-theme, sidefolk-3d-character, sidefolk-2d-character).
 ---
 
 # Sidefolk coordinator
@@ -9,7 +9,7 @@ The Sidefolk facts for a session coordinating the others. The role, startup, led
 message habits are in the global `coordinator` skill; load it first. If it isn't installed: you don't implement, you
 never turn a relayed yes into a permission, and you verify everything below instead of trusting a report.
 
-This file holds nothing perishable. Find today's branches, numbers and sessions with the commands here. Read
+This file keeps no state; ids and figures in it are examples to check live. Find today's branches, numbers and sessions with the commands here. Read
 `docs/STATUS.md` and `docs/RELEASE.md` from `origin/main`. When things disagree, trust live git and `gh` first, then those
 docs, then this file.
 
@@ -122,10 +122,24 @@ From `AGENTS.md`, which sessions should read themselves:
   not the session's conclusion.
 - **Real checks count.** A session names what it ran for real and what it didn't. "Not verified" lists are expected.
 
+**With an integrator** (global skills `coordinator` and `integrator`, Sidefolk facts in `sidefolk-integrator`), sessions
+don't land their own work: each sends you MERGE-READY in the global skill's form, and you check it and pass it on. Sidefolk's
+own checks before passing: the Kit pair, the migration name (`vN-name`, unique), the add-ons ref it needs, the T entry and the
+founder's yes for anything that widens reach. From the cut on, `PUSH?` and `READY` wait or become MERGE-READY. The answer to
+the integrator's `RELEASE?` is `GO` (the global skill's form), not `RELEASE OK`, and a yes belongs to that commit. A gallery
+publish needs its own yes: it comes after the snapshot that carries its host abilities or, for a pack the app no longer
+bundles, before that snapshot.
+
 Starter for a new session's rules message: the global skill's template, filled in with the base commit, a D block, the
 migrations taken, the overlaps nearby, and the "Shared machine" list above.
+With an integrator present, say: "Send me MERGE-READY (not RELEASE?), in this form: <the global form>. Don't message the
+integrator; I relay and bring its questions to you. After MERGE-READY, new commits or a measured failure mean UPDATE, with
+suite and review for the new tip, or WITHDRAWN, at once."
+
 
 ## Releasing an app snapshot
+
+With an integrator, it is "the session" in the steps below for the combined commit, and your `GO` stands for `RELEASE OK`.
 
 The tag is `v0.1.0-snapshot.<build>`, and the build number is `git rev-list --count` of the commit. **Only one at a time**,
 and main stays still from `RELEASE OK` until the snapshot and its CI are confirmed.
@@ -147,8 +161,8 @@ trailers, nothing running and the last runs green, on `--repo ghassenbrg/sidefol
 **The session lands it:**
 
 ```bash
-git push origin <commit>:refs/heads/main
-gh workflow run release.yml --repo ghassenbrg/sidefolk --ref main -f channel=snapshot
+git push origin <commit>:refs/heads/main && git fetch -q origin && test "$(git rev-parse origin/main)" = "<commit>" &&
+  gh workflow run release.yml --repo ghassenbrg/sidefolk --ref main -f channel=snapshot
 ```
 
 **Confirm** (a run that started isn't a release):
@@ -170,7 +184,15 @@ long time on notarization; check why before rerunning.
 
 When a gallery change needs a new app (`docs/RELEASE.md`, "Add-ons first", D98). Publishing replaces the gallery's packs,
 and there's no rollback but a revert, so the app is proved first. One `RELEASE?` covers all these steps and needs the
-founder's yes for both the app and the gallery. **Main is frozen from step 1 until step 8.**
+founder's yes for both the app and the gallery, asked before step 1 (steps 1, 4 and 5 are public). **Main is frozen from
+step 1 until step 8.**
+
+With an integrator, `sidefolk-integrator` has the order, and it differs in two ways: step 1 stays local until step 6, with
+the same number, and the founder's yes comes after the add-ons commit exists, before steps 3 to 5. It does the app side
+(steps 1 and 6) and the add-ons owner, through you, the rest. You freeze main on its `N <n> on <commit>`, pass N to the
+owner, pass back `ADDONS-READY <branch>, <commit>` and later `ADDONS-HELD <branch>, <commit>`. Your `GO` names the commit,
+N, each step, the add-ons branch and its commit, and the owner gets its own go for the publish. CI on the pushed commit
+tests add-ons `main`, so it may be red until step 8; rerun after step 8, and that run is the confirmation.
 
 1. Merge to `main`, read `git rev-list --count origin/main`. `N` is that plus one more commit, the last before the build
    (a `docs/STATUS.md` line naming `N`). Before step 6, check that `git rev-list --count origin/main` equals `N`.
@@ -191,7 +213,7 @@ When no new app is needed. The queue has one slot, separate from the app's, but 
 run together. A session holding the founder's yes, in a **clean add-ons worktree** (`build.py` packs the whole checkout):
 
 1. `swift test --no-parallel`, then `python3 scripts/build.py --unsigned`, `SIDEFOLK_APP=<clean app worktree> scripts/check.sh`, and
-   `<app>/scripts/extension-strings.py check`.
+   `<app>/scripts/extension-strings.py check <extension folder>…`.
 2. `RELEASE? <branch>, <commit>, tests green`. The coordinator checks it fast-forwards add-ons `origin/main`, then answers.
 3. Merge to add-ons `main`, push, `python3 scripts/build.py --sidefolk-build <latest snapshot>`. A signed build uses the
    Developer ID in this Mac's keychain, and only runs after the founder's yes for the publish. The app's own signing and
