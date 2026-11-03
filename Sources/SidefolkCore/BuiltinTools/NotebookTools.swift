@@ -173,14 +173,18 @@ struct NotesSearchTool: Tool {
 
 struct NotesListTool: Tool {
     let notebook: NotebookStore
+    /// Reads a due date as the person's calendar and day-part hours do.
+    var reminders: ReminderTools.Shared?
 
     let spec = ToolSpec(
         name: "notes.list", title: String(localized: "List notes"),
-        description: "List the newest notes, ideas, tasks and links, optionally for one collection, kind or status.",
+        description: "List the newest notes, ideas, tasks and links, optionally for one collection, kind or status. With due_before or due_after, only what's due then, soonest first.",
         inputSchema: Schema.object([
             "collection": Schema.string("Only this project, topic or list"),
             "kind": kindSchema,
             "status": Schema.string("open or done (for tasks)", enum: ["open", "done"]),
+            "due_after": Schema.string("Only what's due from then on (\"today\", \"dec 5\" or ISO 8601). A day means from its start."),
+            "due_before": Schema.string("Only what's due up to then (\"friday\", \"dec 5\" or ISO 8601). A day counts in full."),
             "limit": Schema.integer("Maximum items (default 20)", minimum: 1, maximum: 50),
         ]),
         risk: .low, capabilities: [.notebook], category: .notes, mutates: false)
@@ -216,7 +220,9 @@ struct NotesListTool: Tool {
             shownScope = String(localized: "in \(NotebookCollections.shownName(c))")
             foreignScope = NotebookCollections.isForeign(c)
         }
-        let items = try await notebook.items(collectionId: collectionId, kinds: kind.map { [$0] }, status: status, limit: limit)
+        let due = try DateWindow.read(from: input.string("due_after"), to: input.string("due_before"), parser: reminders?.parser() ?? WhenParser(), now: context.now)
+        let items = try await notebook.items(collectionId: collectionId, kinds: kind.map { [$0] }, status: status,
+                                             dueFrom: due?.start, dueBefore: due?.end, limit: limit)
         guard !items.isEmpty else {
             return ToolResult(text: "Nothing found \(scope).", card: ResultCard(kind: .list, title: String(localized: "Nothing here yet"), subtitle: shownScope),
                               untrusted: foreignScope)
@@ -224,7 +230,7 @@ struct NotesListTool: Tool {
         let collections = try await NotebookCollections.byId(notebook)
         let reminders = await NoteFormat.reminders(items, notebook: notebook)
         return ToolResult(
-            text: "\(ToolFormat.count(items.count, "item")) \(scope), newest first:\n"
+            text: "\(ToolFormat.count(items.count, "item")) \(scope), \(due == nil ? "newest" : "soonest due") first:\n"
                 + items.map { NoteFormat.line($0, collections: collections, reminder: reminders[$0.id]) }.joined(separator: "\n"),
             card: ResultCard(kind: .list, title: String(localized: "\(items.count) items"), subtitle: shownScope),
             untrusted: foreignScope || NoteFormat.hasForeign(items, collections: collections))

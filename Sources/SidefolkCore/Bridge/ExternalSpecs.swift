@@ -174,11 +174,11 @@ extension ExternalToolPolicy {
             """,
         "notes.restore": "Bring a note back from Sidefolk's Trash by its id, when you moved it there by mistake or the user asks. You can't list what's in the Trash.",
         "notes.search": "Full-text search over the user's notes, ideas, tasks and links, with their ids. The user may be asked to allow it.",
-        "notes.list": "List the user's newest notes, ideas, tasks and links with their ids, optionally for one collection, kind or status. The user may be asked to allow it.",
-        "reminders.list": "List the user's upcoming reminders, soonest first, with their ids. The user may be asked to allow it.",
+        "notes.list": "List the user's newest notes, ideas, tasks and links with their ids, optionally for one collection, kind or status. With due_before or due_after, only what's due then, soonest first. The user may be asked to allow it.",
+        "reminders.list": "List the user's upcoming reminders, soonest first, with their ids; from and to keep those coming then. The user may be asked to allow it.",
         "agenda.today": """
             What's on the user's plate today: today's reminders with their times, open tasks and how many watches are \
-            running. The user may be asked to allow it.
+            running. With day ("tomorrow", "friday"), that day's reminders and the tasks due then. The user may be asked to allow it.
             """,
     ]
 

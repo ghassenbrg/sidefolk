@@ -237,15 +237,23 @@ public struct NotebookStore: Sendable {
 
     public func items(
         collectionId: String? = nil, kinds: [NotebookItem.Kind]? = nil, status: NotebookItem.Status? = nil,
-        includeDeleted: Bool = false, limit: Int = 200
+        includeDeleted: Bool = false, dueFrom: Date? = nil, dueBefore: Date? = nil, limit: Int = 200
     ) async throws -> [NotebookItem] {
         try await db.writer.read { db in
             var r = NotebookItem.all()
+            // By due date, soonest first; what has none doesn't count.
+            if dueFrom != nil || dueBefore != nil {
+                r = r.filter(Column("due_at") != nil)
+                if let dueFrom { r = r.filter(Column("due_at") >= dueFrom.timeIntervalSince1970) }
+                if let dueBefore { r = r.filter(Column("due_at") < dueBefore.timeIntervalSince1970) }
+                r = r.order(Column("due_at"))
+            }
             if let collectionId { r = r.filter(Column("collection_id") == collectionId) }
             if let kinds { r = r.filter(kinds.map(\.rawValue).contains(Column("kind"))) }
             if let status { r = r.filter(Column("status") == status.rawValue) }
             if !includeDeleted { r = r.filter(Column("deleted_at") == nil) }
-            return try r.order(sql: "pinned_at IS NULL, pinned_at DESC, created_at DESC").limit(limit).fetchAll(db)
+            if dueFrom == nil, dueBefore == nil { r = r.order(sql: "pinned_at IS NULL, pinned_at DESC, created_at DESC") }
+            return try r.limit(limit).fetchAll(db)
         }
     }
 
