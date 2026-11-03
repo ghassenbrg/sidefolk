@@ -3764,4 +3764,4 @@ setting stays, and at launch it's fetched by itself while Update add-ons automat
 to lose it by hiding snapshots (`ThemeSuccession.toFetch`, `fetchThemeThatMoved`). Until it comes they see the default, each launch
 tries again, and a whisper says so once. So the gallery must publish them before an app without them ships.
 
-**Open:** Mochi's solo portrait and full-body image still use the older design.
+**Brand art:** Mochi's solo portrait and full-body image follow the newer design too (masters `rabbit-portrait.png`, `mascot-mochi.png`; the old ones in `Brand/archive/mochi-2026-10/`). The app icon stays as approved.

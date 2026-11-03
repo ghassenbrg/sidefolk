@@ -38,6 +38,8 @@ reason. Newest first within a section; delete a lesson when it stops being true.
   house read as repetition.
 - **Same place, two times of day.** Generate the light version, then pass it as `--ref` for the dark one with "keep the
   exact composition", which keeps them matched and gets night right.
+- **Clean every generated cut-out.** "Transparent" images come back with specks and a rough fringe that only show on a real
+  background. Keep the largest piece, smooth the edge, and check on white, dark and a colour before using one.
 - **A full colour logo may fail at small size.** The aqua "folk" is 1.6:1 on a light sidebar. Use the brand's navy version
   on light and the reversed one on dark.
 - **Palette swaps aren't redesigns.** When asked for a rework, show structural change: layout, components, hierarchy.
