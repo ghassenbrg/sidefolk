@@ -148,7 +148,7 @@ struct CalendarUpdateTool: Tool {
         name: "calendar.update", title: String(localized: "Change an event"),
         description: """
             Change an event on the user's Mac calendar: its title, time, calendar, place or notes. `id` comes from \
-            calendar.today. Only this one time of a repeating event changes. Events with other people invited can't be \
+            calendar.today or calendar.find. Only this one time of a repeating event changes. Events with other people invited can't be \
             changed here.
             """,
         inputSchema: Schema.object(fieldSchemas.merging(["id": Schema.string("The event's id.")]) { a, _ in a }, required: ["id"]),
@@ -196,7 +196,7 @@ struct CalendarDeleteTool: Tool {
     let spec = ToolSpec(
         name: "calendar.delete", title: String(localized: "Delete an event"),
         description: """
-            Delete an event from the user's Mac calendar (`id` from calendar.today). Only this one time of a repeating \
+            Delete an event from the user's Mac calendar (`id` from calendar.today or calendar.find). Only this one time of a repeating \
             event. Events with other people invited can't be deleted here.
             """,
         inputSchema: Schema.object(["id": Schema.string("The event's id.")], required: ["id"]),

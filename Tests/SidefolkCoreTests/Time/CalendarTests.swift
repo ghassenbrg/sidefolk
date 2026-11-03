@@ -72,6 +72,60 @@ import Testing
         #expect(try await offered())
     }
 
+    /// Answers one card at a time, for as long as the test runs.
+    private func find(_ input: JSONValue) async -> (outcome: ToolOutcome, asked: ApprovalRequest?) {
+        let stream = runtime.events.stream()
+        let broker = runtime.broker
+        let asked = Task { () -> ApprovalRequest? in
+            for await event in stream {
+                if case .approvalRequested(let r) = event {
+                    await broker.resolve(id: r.id, decision: .allowOnce)
+                    return r
+                }
+            }
+            return nil
+        }
+        let outcome = await runtime.executor.execute(name: "calendar.find", input: input, caller: .agent(runId: "r1"))
+        asked.cancel()
+        return (outcome, await asked.value)
+    }
+
+    @Test func theAIFindsAnyDayWithACardAndGetsOutsideContent() async throws {
+        await runtime.settings.update { $0.showCalendar = true }
+        let far = await find(["from": "in 7 days"])
+        #expect(far.asked?.effect == .readsPrivateData)
+        guard case .ok(let result) = far.outcome.status else {
+            Issue.record("expected a result, got \(far.outcome.status)")
+            return
+        }
+        #expect(result.untrusted)
+        #expect(result.text.contains("Next week"))
+        #expect(!result.text.contains("Team standup"))
+
+        let word = await find(["query": "STANDUP"])
+        #expect(word.outcome.promptText.contains("Team standup"))
+        #expect(!word.outcome.promptText.contains("Lunch with Priya"))
+
+        let tooLong = await find(["from": "today", "to": "in 120 days"])
+        #expect(!tooLong.outcome.isOK)
+        #expect(tooLong.outcome.promptText.contains("more than 90 days"))
+    }
+
+    @Test func findingAsksNothingOfACalendarThatIsOff() async {
+        let off = await find(["from": "today"])
+        #expect(!off.outcome.isOK)
+        #expect(off.outcome.promptText.contains("calendar is off"))
+    }
+
+    /// Other agents get no tool that reads the calendar (T4).
+    @Test func otherAgentsNeverGetFind() async throws {
+        let gateway = runtime.gateway
+        #expect(!ExternalToolPolicy.isExposed("calendar.find"))
+        #expect(!gateway.specs().contains { $0.name.hasPrefix("calendar") })
+        let refused = await gateway.call("calendar.find", input: ["from": "today"], client: "codex")
+        #expect(refused.promptText.contains("doesn't offer"))
+    }
+
     @Test func theAIAsksAndGetsOutsideContent() async throws {
         await runtime.settings.update { $0.showCalendar = true }
         let stream = runtime.events.stream()

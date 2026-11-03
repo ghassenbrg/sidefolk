@@ -225,9 +225,9 @@ import Testing
             for await _ in await agent.submit(AgentRequest(text: "Add lunch tomorrow")).events {}
             return Set(try #require(model.requests.first).tools.map(\.name).filter { $0.hasPrefix("calendar") })
         }
-        #expect(try await offered() == ["calendar.today"])
+        #expect(try await offered() == ["calendar.today", "calendar.find"])
         await runtime.settings.update { $0.calendarPage.writes = true }
-        #expect(try await offered() == ["calendar.today", "calendar.create", "calendar.update", "calendar.delete"])
+        #expect(try await offered() == ["calendar.today", "calendar.find", "calendar.create", "calendar.update", "calendar.delete"])
     }
 
     /// The calendar syncs and may be shared: after outside content (an invitation's title) Full access still asks.
