@@ -13,7 +13,7 @@ struct SearchBox<Focus: Hashable>: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
-            TextField("Search", text: $text, prompt: prompt)
+            TextField("Search", text: $text, prompt: prompt.foregroundStyle(Theme.inkFaint))
                 .textFieldStyle(.plain)
                 .font(Theme.Font.body)
                 .focused(focus, equals: focusValue)

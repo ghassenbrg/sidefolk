@@ -258,10 +258,10 @@ extension ThemeTokens {
             well: Pair(light: 0xEBEFF7, dark: 0x1F2A3B),
             glow: Pair(0x2ED4D9),
             waitGlow: Pair(0xF5A524),
-            sidebar: Pair(light: 0xFFFFFF, dark: 0x0C131F),
+            sidebar: Pair(light: 0xFFFFFF, dark: 0x0A101A),
             sidebarInk: Pair(light: 0x1E3457, dark: 0xD9E0EB),
             sidebarInkMuted: Pair(light: 0x4C5D7B, dark: 0x9AA7BB),
-            sidebarSelected: Pair(light: 0x2A4A7C, dark: 0x48638F),
+            sidebarSelected: Pair(light: 0x2A4A7C, dark: 0x466189),
             onSidebarSelected: Pair(0xFFFFFF),
             sceneInk: Pair(light: 0x1E3457, dark: 0xE2E8F2),
             sceneInkMuted: Pair(light: 0x3F5070, dark: 0xCBD4E2)
