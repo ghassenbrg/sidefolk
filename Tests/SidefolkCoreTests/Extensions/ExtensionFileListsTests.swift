@@ -206,6 +206,11 @@ import Testing
         #expect(DropChoices.offers(forFiles: ["/a.jpg", "/b.png"], among: [drop]).isEmpty)
     }
 
+    @Test func usingSidefolksToolsCountsAsAWayOut() {
+        #expect(ExtensionPermissions(act: ExtensionPurpose(purpose: "to save notes")).carriesOut)
+        #expect(!ExtensionPermissions(events: ExtensionPurpose(purpose: "to hear what happens")).carriesOut, "it only hears")
+    }
+
     @Test func aLinkGetsNoOffersWhateverItsCalled() throws {
         let folder = FolderAccess.canonical(try ExtFixtures.tempDir("links").path)!
         defer { ExtensionFiles.removeTree(folder) }
