@@ -9,7 +9,13 @@ public enum HelperCommands {
           sidefolk mcp                              MCP server on stdio for Claude Code, Codex or any MCP client
           sidefolk run [--title "..."] -- <cmd> …   run a command; Sidefolk tells you when it ends
           sidefolk hook <EventName> [--agent codex] for Claude Code and Codex hooks (reads the payload on stdin)
-          sidefolk status                           is Sidefolk running, and what it keeps track of
+          sidefolk status [--json]                  is Sidefolk running, and what it keeps track of
+          sidefolk notify "title" [--body text] [--attention]              show the user a short message
+          sidefolk ask "question" [--options a,b] [--timeout seconds]      ask and wait; exits with the option's place from 0, 10 for no answer
+          sidefolk remind "title" --at "in 20 minutes" [--notes text] [--gentle]
+          sidefolk note "text" [--task|--idea|--link] [--collection name] [--tag t]… [--due when] [--remind when]
+          sidefolk tools [--json]                   what other agents may call, as Trust has it
+          sidefolk call <tool> ['{"json": "arguments"}']                   call one of them; exits 11 when it fails, 69 when Sidefolk isn't running
           sidefolk ext validate [--no-run] <folder> check an extension, then start it in its sandbox and list its tools
           sidefolk theme new "Name" [folder]        start a theme: a copy of Harbor and a short guide
           sidefolk theme check <folder>             say what's wrong with a theme, and how well its text reads
@@ -88,6 +94,15 @@ public enum HelperCommands {
         } catch {
             return ("Sidefolk isn't reachable: \(error)", false)
         }
+    }
+
+    /// `sidefolk status --json`, for scripts: the same counts, and whether it's running.
+    public static func statusJSON(paths: SidefolkPaths) async -> (text: String, running: Bool) {
+        guard let reply = try? await send(.status, .object([:]), socket: paths.socket.path, timeout: 3), case .object(var fields) = reply else {
+            return (JSONValue.object(["running": false]).jsonString, false)
+        }
+        fields["running"] = true
+        return (JSONValue.object(fields).jsonString, true)
     }
 
     /// One request on a fresh connection.

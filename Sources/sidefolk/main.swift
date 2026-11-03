@@ -49,9 +49,21 @@ case "hook":
 
 case "status":
     signal(SIGPIPE, SIG_IGN)
-    let (text, running) = await HelperCommands.status(paths: paths)
+    let (text, running) = arguments.dropFirst().contains("--json") ? await HelperCommands.statusJSON(paths: paths) : await HelperCommands.status(paths: paths)
     print(text)
     exit(running ? 0 : 1)
+
+case let verb? where ToolVerbs.verbs.contains(verb):
+    signal(SIGPIPE, SIG_IGN)
+    switch ToolVerbs.parse(arguments) {
+    case .failure(let usage):
+        fail(usage.message)
+    case .success(let request):
+        let output = await ToolVerbs.run(request, paths: paths)
+        if !output.out.isEmpty { print(output.out) }
+        if !output.error.isEmpty { try? FileHandle.standardError.write(contentsOf: Data((output.error + "\n").utf8)) }
+        exit(output.code)
+    }
 
 case "ext":
     let options = Array(arguments.dropFirst(2))
