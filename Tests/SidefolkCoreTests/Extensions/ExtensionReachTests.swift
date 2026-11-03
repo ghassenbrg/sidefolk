@@ -240,7 +240,10 @@ struct ExtensionReachTests {
         #expect(shown.body == nil)
         #expect(!shown.title.contains("Standup"))
         #expect(shown.title.contains("a notice"))
-        #expect(!(history.first?.searchable.joined().contains("note words") ?? true))
+        let row = try #require(history.first)
+        #expect(!HistoryTimeline.shows(row, filter: .all, query: "words"), "search doesn't find what it filled in")
+        #expect(!HistoryTimeline.shows(row, filter: .all, query: "Standup"))
+        #expect(HistoryTimeline.shows(row, filter: .all, query: "notice"))
     }
 
     @Test func aPlansCardKeepsTheSpacesAroundWhatItFillsIn() throws {
