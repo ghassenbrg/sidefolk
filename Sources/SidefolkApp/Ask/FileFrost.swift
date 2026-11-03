@@ -13,7 +13,7 @@ nonisolated struct FileFrost: @unchecked Sendable {
     /// Shown on the small sheet, only when it's colourful. Otherwise the extension's mark says what kind of file this is.
     var picture: NSImage?
 
-    /// No picture and no icon, or still on the way: quiet, and readable.
+    /// No picture and no mark, or still on the way: quiet, and readable.
     static let plain = FileFrost(frost: NSImage(size: NSSize(width: 1, height: 1), flipped: false) { rect in
         NSColor(white: 0.16, alpha: 1).setFill()
         rect.fill()
@@ -32,7 +32,7 @@ nonisolated struct FileFrost: @unchecked Sendable {
     static func load(path: String?, mark: NSImage?) async -> FileFrost {
         if let path, let preset = await MainActor.run(body: { Self.preset[path] }) { return preset }
         var picture: NSImage?
-        if let real = path.flatMap(showable) { picture = await thumbnail(of: URL(fileURLWithPath: real)) }
+        if let real = path.flatMap(showable) { picture = await shared(real) }
         let shown = picture
         return await Task.detached(priority: .userInitiated) { make(picture: shown, mark: mark) }.value
     }
@@ -48,11 +48,12 @@ nonisolated struct FileFrost: @unchecked Sendable {
     /// Two questions: is there a picture worth showing on the sheet, and is its colour enough to frost a card with? A dull photo answers
     /// yes and no: it keeps its place on the sheet, on a frost from the mark.
     static func make(picture: NSImage?, mark: NSImage?) -> FileFrost {
-        let shown = picture.flatMap(samples).map(FrostMeasure.isPicture) == true ? picture : nil
+        // Sharp, not averaged: small type blurred together reads as mid-grey, like a photo.
+        let shown = picture.flatMap { samples($0, smooth: false) }.map(FrostMeasure.isPicture) == true ? picture : nil
         if let shown, let frosted = blurred(shown, saturation: 1.15), let pixels = samples(frosted), FrostMeasure.hasColour(pixels) {
             return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: shown)
         }
-        guard let mark, let frosted = blurred(onDark(mark), saturation: 0.8), let pixels = samples(frosted) else {
+        guard let mark, let frosted = blurred(onDark(mark), saturation: 0.8), let pixels = samples(frosted), FrostMeasure.hasColour(pixels) else {
             return FileFrost(frost: plain.frost, scrim: plain.scrim, picture: shown)
         }
         return FileFrost(frost: frosted, scrim: FrostMeasure.scrim(pixels), picture: shown)
@@ -66,6 +67,24 @@ nonisolated struct FileFrost: @unchecked Sendable {
             mark.draw(in: rect.insetBy(dx: -CGFloat(side) * 0.15, dy: -CGFloat(side) * 0.15))
             return true
         }
+    }
+
+    /// One card holds several loaders for one file, and they share one request.
+    @MainActor private static var asking: [String: Task<ImageBox, Never>] = [:]
+    private struct ImageBox: @unchecked Sendable { var image: NSImage? }
+
+    private static func shared(_ path: String) async -> NSImage? {
+        let task = await MainActor.run { () -> Task<ImageBox, Never> in
+            if let task = asking[path] { return task }
+            let task = Task { () -> ImageBox in
+                let image = await thumbnail(of: URL(fileURLWithPath: path))
+                await MainActor.run { asking[path] = nil }
+                return ImageBox(image: image)
+            }
+            asking[path] = task
+            return task
+        }
+        return await task.value.image
     }
 
     /// First of the picture and the clock: a crafted file can keep the service drawing long after it's asked to stop, and the card
@@ -103,7 +122,7 @@ nonisolated struct FileFrost: @unchecked Sendable {
     /// A real blur, once, into a small image that's cheap to draw large. It keeps only the broad shapes, and what is measured is what is shown.
     private static func blurred(_ image: NSImage, saturation: Double) -> NSImage? {
         let size = CGSize(width: side, height: side)
-        // Asked for at this size: an image drawn at its own could be a PDF as large as it says it is.
+        // Asked for at this size, not its own.
         var rect = CGRect(origin: .zero, size: size)
         guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return nil }
         var input = CIImage(cgImage: cg)
@@ -114,13 +133,13 @@ nonisolated struct FileFrost: @unchecked Sendable {
         return NSImage(cgImage: done, size: size)
     }
 
-    private static func samples(_ image: NSImage) -> [FrostMeasure.Pixel]? {
+    private static func samples(_ image: NSImage, smooth: Bool = true) -> [FrostMeasure.Pixel]? {
         let count = 28
         var rect = CGRect(x: 0, y: 0, width: count, height: count)
         guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil),
               let context = CGContext(data: nil, width: count, height: count, bitsPerComponent: 8, bytesPerRow: count * 4,
                                       space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        context.interpolationQuality = .high
+        context.interpolationQuality = smooth ? .high : .none
         context.draw(cg, in: CGRect(x: 0, y: 0, width: count, height: count))
         guard let data = context.data else { return nil }
         let p = data.bindMemory(to: UInt8.self, capacity: count * count * 4)
@@ -155,11 +174,13 @@ struct FrostLoader<Content: View>: View {
     var path: String?
     /// The extension's mark, from its pack, for when the file has no picture with colour.
     var mark: (() async -> NSImage?)?
+    /// What the mark is, so a different one loads anew on the same file.
+    var markKey: String?
     @ViewBuilder var content: (FileFrost) -> Content
     @State private var frost = FileFrost.plain
 
     var body: some View {
-        content(frost).task(id: path) {
+        content(frost).task(id: "\(path ?? "")|\(markKey ?? "")") {
             // Never another file's picture on this one's card, even for a moment.
             frost = .plain
             let image = await mark?()

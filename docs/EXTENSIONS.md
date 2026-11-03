@@ -1331,7 +1331,7 @@ person's language before anything is installed; an older Sidefolk ignores the ke
 
 ## How a dropped file's card looks
 
-For a file offer, Sidefolk draws the frame, a working card and the saved-file card on a frost from the person's own file, or from your icon when the file has no colourful picture (D150). You can't change it, and you never get the picture. Two optional keys on a drop help: `tag`, a format's name for the row (`"JPEG"`, up to six letters, digits or dots), and `mark`, a picture in your `assets` for the small sheet when the file has none of its own.
+For a file offer, Sidefolk draws the frame, a working card and the saved-file card on a frost from the person's own file (D150). You can't change it, and you never get the picture. Two optional keys on a drop help: `tag`, a format's name for the row (`"JPEG"`, from a fixed list of formats), and `mark`, a picture in your `assets` that stands in for a file with no picture of its own and colours its frost. Without a `mark`, such a file gets a plain dark card.
 
 ## Testing locally
 

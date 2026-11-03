@@ -328,7 +328,8 @@ private struct FileOfferCard: View {
     /// The extension's words, framed apart and under its name, so a title can't read as Sidefolk's. On a frost from the person's file
     /// (D150), in white and neutrals only; nothing Sidefolk says is on it.
     private func frame(_ first: ExtensionDropAction, _ group: [ExtensionDropAction]) -> some View {
-        FrostLoader(path: picturePath, mark: first.mark.map { mark in { await packPicture(mark, first.extensionId) } }) { frost in
+        FrostLoader(path: picturePath, mark: first.mark.map { mark in { await packPicture(mark, first.extensionId) } },
+                    markKey: first.mark.map { first.extensionId + $0 }) { frost in
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: Theme.Space.xs) {
                     if let look = looks[first.extensionId] { ExtensionBadge(look: look, size: 18) }

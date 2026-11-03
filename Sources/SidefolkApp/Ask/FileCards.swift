@@ -11,7 +11,8 @@ struct FileWorkingCard: View {
     @State private var moving = false
 
     var body: some View {
-        FrostLoader(path: file.showsPicture ? file.path : nil, mark: file.mark.map { mark in { await packPicture(mark, file.extensionId) } }) { frost in
+        FrostLoader(path: file.showsPicture ? file.path : nil, mark: file.mark.map { mark in { await packPicture(mark, file.extensionId) } },
+                    markKey: file.mark.map { file.extensionId + $0 }) { frost in
             HStack(spacing: Theme.Space.m) {
                 FileSheetLoading(frost: frost, mark: file.mark, extensionId: file.extensionId, side: 32, packPicture: packPicture)
                 VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -69,7 +70,7 @@ struct FileReceiptCard: View {
     }
 
     var body: some View {
-        FrostLoader(path: files.first?.path, mark: packMark) { frost in
+        FrostLoader(path: files.first?.path, mark: packMark, markKey: card.mark.map { (card.refId ?? "") + $0 }) { frost in
             VStack(alignment: .leading, spacing: Theme.Space.m) {
                 HStack(alignment: .top, spacing: Theme.Space.l) {
                     sheets(frost)
