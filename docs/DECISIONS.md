@@ -3901,3 +3901,28 @@ Converting a sound in the sandbox failed: writing AAC gave `fmt?`, and 24-bit WA
 **Why:** "add this to my shopping list" failed when the agent couldn't see the list's name or make it, "watch this all week" meant coming back every day, and an agent told to cancel the dentist reminder could only say no.
 **Alternatives:** *the refusal naming the collections*: a read with no card. *A setting for making collections*: a standing yes for what a hostile repo would want. *Longer than a week*: an agent's watch outliving the task it was for.
 **Not done:** a card isn't bound to the reminder as it stood: the person editing it while the card waits runs under the card's words on the newer reminder. A refusal by whole id says a reminder is important. A rename's card shows the name the agent used, which may be a loose match for the collection. `history.recent` and `agents.sessions` (B5, B6) wait for their review; B7, `files.write`, waits for Formatic's D140.
+
+### D145 — Playtime's accepted redesign is a remaster, and stays in its pack (2026-11-03)
+**Decision:** the redesign the founder accepted on 2026-11-03 is what ships, in the add-ons repository: Playtime's own palette and clay art, the 26 concepts as the target, and one layout rule for all sixteen games: fixed zones (header, stage with a bubble of one size, play room, dock, footer), so nothing moves when words or state change. A companion stands in one place per game, as a whole figure, and reacts by moving. Clicks that build toward a rule break hold its warning for a second, so a double click to reach a mark doesn't flash an error.
+**Why:** the founder judged the experience, not the pictures: "not just the reskin". Their example was the bubble going from one line to two and moving the board's border during play.
+**Alternatives:** new images on the old screens; a bigger scene language in the app for it. Scenes already had what it needed, except direction (D144).
+**Implications:** no app change but D144. The frame stays the app's (D99), so concepts' "Playtime" bar doesn't appear. Result and limitations are recorded in the hand-off's `implementation/RESULT.md`.
+
+### D146 — Rock, Paper, Scissors is Pop-up Toys (2026-11-03)
+**Decision:** *the founder's choice, direction B, replacing concept 13's hands.* Rock, a paper and scissors are toys on the mat. The chosen one travels into its box, the others leave, and the two boxes open on a spring to act on each other. Nothing stays behind faded.
+**Why:** the founder found the old round cheap and gave permission to propose better.
+**Alternatives:** the proposal's other directions, in the hand-off's `rps-proposal`.
+**Implications:** the game's rules and records are unchanged. The toss tool's manifest words say toys and Rock, Paper, Scissors, not hands.
+
+### D147 — Coin and dice are real 3D toys, rendered ahead (2026-11-03)
+**Decision:** *the founder's choice, direction C.* The toss on the desktop plays frames of clay coins and dice rendered in Blender, one real rotation per frame, through `Anim.frames`. The coin's heads wears the companion's portrait. The result is drawn first and the frames lead to it.
+**Why:** the founder wanted it to "look like animation and 3D stuff". Scenes have no live 3D (D99), and the pack can carry pictures.
+**Alternatives:** adding live 3D to scenes: a large ability for one toy; keeping the drawn coin and die.
+**Implications:** the pack grows by the frames, to about 8.7 MB zipped. Blender sources are in the hand-off's `toss-source`.
+
+### D148 — Game language (2026-11-03)
+**Decision:** *the founder's choice: "All of Playtime".* A setting, `game_language`, and a globe on Playtime's menu put everything Playtime draws in a language of its own: menus, games, the page and the toss. Sidefolk's frame, sidebar and Ask stay in the app's language. "As Sidefolk" is the default.
+**Why:** an English Mac and the word of the day in Arabic.
+**Alternatives:** a setting per game; following only the Daily Word.
+**Implications:** uses D144 when the direction differs from the app's, and says nothing otherwise. The page's summary for the app stays in the app's language.
+
