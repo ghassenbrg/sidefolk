@@ -138,7 +138,8 @@ public final class SidefolkRuntime: Sendable {
                                             reminders: ReminderTools.shared(scheduler: scheduler, settings: settings)))
         registry.register(MacAppTools.make(runner: appleEvents, notebook: notebook, events: events, ledger: appleNotesLedger, clock: clock))
         registry.register(ReminderTools.make(scheduler: scheduler, settings: settings))
-        registry.register([CalendarTodayTool(reader: calendarReader)])
+        registry.register([CalendarTodayTool(reader: calendarReader),
+                           CalendarFindTool(reader: calendarReader, parser: { [settings] in WhenParser(settings: settings.current) })])
         registry.register(CalendarWriteTools.make(reader: calendarReader, platform: platform, settings: settings))
         registry.register(WatchTools.make(engine: watchers, parser: { [settings] in WhenParser(settings: settings.current) },
                                           here: { [settings] in settings.current.location.current }))
