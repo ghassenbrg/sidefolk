@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-03: Sandbox data-folder hardening, and dev.swift aimed at one app
+
+**Sandbox data-folder hardening,** with tests on the real host and a negative control. **`dev.swift`** now refuses to send without `SIDEFOLK_HOME` (`--all-apps` overrides): unscoped commands were reaching other sessions' debug apps, down to pressing their cards. Verified: `swift test` in full and the release build on the exact commit; `dev.swift`'s refusal by hand, its `--all-apps` path read but not run.
+
 ## 2026-11-03: Normal windows and full-screen spaces: a change that didn't work, and test runs out of the way (D137)
 
 The founder's report of Sidefolk appearing inside full-screen Claude. Released in snapshot 916 ahead of its check, labelled unproven. **The check then showed it doesn't work:** on a real full-screen space the old build and the new one both open Home on that space, 3 of 3 each. 916's release notes were corrected. The first version of the check reported the same for every build, quiet mode included, because it counted any Sidefolk window; it now looks only at the copy under test. Verified otherwise: with `SIDEFOLK_QUIET_WINDOWS=1` the frontmost app stayed where it was while Home and Settings opened, and both rendered for `snap`; `swift test` in full. Next: `.fullScreenNone` kept the window off that space in 2 of 2 tries, and the fix is being built on it.

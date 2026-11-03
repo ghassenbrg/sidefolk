@@ -105,8 +105,14 @@ struct ExtensionInstaller: Sendable {
     /// The extension's private folder (with `tmp/`), created 0700; returns its real path.
     func prepareDataFolder(_ id: String) throws -> String {
         let dir = dataFolder(id)
+        // It must be a folder of its own, at exactly this place. Anything else in its place is taken away, never followed.
+        if let st = ExtensionFS.lstat(dir.path), !ExtensionFS.isDirectory(st) {
+            Log.shared.warning("extensions", "replaced what stood in place of a data folder", ["extension": id])
+            _ = unlink(dir.path)
+        }
         try ExtensionFS.makePrivateDirectory(dir.appendingPathComponent("tmp", isDirectory: true))
-        guard let real = ExtensionFS.realpath(dir.path), let st = ExtensionFS.lstat(real), ExtensionFS.isDirectory(st) else {
+        guard let root = ExtensionFS.realpath(paths.extensionData.path), let real = ExtensionFS.realpath(dir.path), real == root + "/" + id,
+              let st = ExtensionFS.lstat(real), ExtensionFS.isDirectory(st) else {
             throw ExtensionError.io("The extension's data folder is missing.")
         }
         return real

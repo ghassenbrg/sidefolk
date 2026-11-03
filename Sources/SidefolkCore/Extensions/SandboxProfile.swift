@@ -76,6 +76,8 @@ public struct SandboxProfile: Sendable, Hashable {
         sb += "\n;; the extension (read-only) and its data folder (read-write)\n"
         sb += "(allow file-read* (subpath \(add("EXT_DIR", try real(inputs.extensionDir)))))\n"
         sb += "(allow file-read* file-write* (subpath \(add("DATA_DIR", try real(inputs.dataDir)))))\n"
+        // What's inside is the program's; the folder itself is Sidefolk's.
+        sb += "(deny file-write-unlink file-write-create (literal (param \"DATA_DIR\")))\n"
 
         let reads = try inputs.permissions.read.map(real)
         if !reads.isEmpty {
