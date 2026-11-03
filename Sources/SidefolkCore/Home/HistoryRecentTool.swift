@@ -63,14 +63,15 @@ struct HistoryRecentTool: Tool {
 
     /// Tools whose summaries hold only what the AI may read through its own tools, or nothing of the person's.
     private static let quoted: Set<String> = [
-        "notes.save", "notes.update", "notes.trash", "notes.restore", "notes.get", "notes.search", "notes.list", "notes.collection", "notes.arrange",
+        "notes.save", "notes.update", "notes.trash", "notes.restore", "notes.get", "notes.list", "notes.collection", "notes.arrange",
         "collections.create", "collections.list", "reminders.create", "reminders.update", "reminders.snooze", "reminders.complete", "reminders.cancel",
-        "reminders.list", "agenda.today", "notify.user", "ask.user", "watch.create", "watch.report", "watch.list", "watch.stop", "watch.pause",
+        "reminders.list", "agenda.today", "notify.user", "ask.user", "watch.report", "watch.list", "watch.stop", "watch.pause",
         "watch.resume", "watch.update", "watch.reorder",
     ]
 
     private static func what(_ entry: ActivityEntry) -> String {
-        quoted.contains(entry.tool) ? safe(entry.summary) : "used \(entry.tool)"
+        // A call that failed or was refused quotes words nothing ever accepted, a bad address's password among them.
+        quoted.contains(entry.tool) && entry.error == nil ? safe(entry.summary) : "used \(entry.tool)"
     }
 
     /// A notice's title only where it holds nothing a command, a page or a flow filled in.
@@ -89,8 +90,11 @@ struct HistoryRecentTool: Tool {
     }
 
     private static func safe(_ words: String) -> String {
-        let noQuery = Redactor.redact(words).replacing(/\?[^\s”"]*/, with: "")
-        return ToolFormat.oneLine(noQuery.displaySafe, 120)
+        // In an address only: a sign-in, a query, a fragment. A question mark in plain words stays.
+        let address = Redactor.redact(words)
+            .replacing(/(https?:\/\/)[^\/\s”"@]+@/, with: { $0.output.1 })
+            .replacing(/(https?:\/\/[^\s”"?#]*)[?#][^\s”"]*/, with: { $0.output.1 })
+        return ToolFormat.oneLine(address.displaySafe, 120)
     }
 
     private static func since(_ text: String?, now: Date, calendar: Calendar) throws -> Date {
@@ -112,10 +116,7 @@ struct HistoryRecentTool: Tool {
         if caller == "agent" { return "Sidefolk's AI" }
         if caller.hasPrefix("user") { return "The user" }
         if caller.hasPrefix("external:") {
-            // Names are self-chosen, so one that isn't a known agent's can't read as anyone's but its own (T4).
-            let client = String(caller.dropFirst("external:".count))
-            let shown = AgentFacingTools.displayName(client)
-            return ["Claude Code", "Codex"].contains(shown) ? shown : "An agent calling itself “\(shown.displaySafe)”"
+            return AgentFacingTools.unverifiedName(String(caller.dropFirst("external:".count)))
         }
         if caller.hasPrefix("extension") { return "An extension" }
         return caller.clipped(40)

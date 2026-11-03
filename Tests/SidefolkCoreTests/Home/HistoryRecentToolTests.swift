@@ -83,17 +83,26 @@ import Testing
         await run("clipboard.write", ["text": "hunter2-canary"])
         await run("web.fetch", ["url": "https://example.com/?token=canary-query"])
         await run("watch.command", ["command": "deploy --password canary-command", "every_seconds": 60])
+        await run("watch.create", ["kind": "url_change", "target": "https://deploy:canary-userinfo@example.com/x"])
+        await run("notes.search", ["query": "canary-search"])
+        _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "notes.save", risk: "low", decision: .failed, summary: "Save canary-failed", error: "no"))
+        _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "reminders.create", risk: "low", decision: .auto, summary: "Remind at https://u:canary-pass@example.com/a#canary-fragment"))
         _ = try await runtime.activity.log(ActivityEntry(at: clock.now, caller: "external:codex", tool: "notes.save", risk: "low", decision: .auto,
                                                          summary: "Save sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789 at https://example.com/a?key=canary-key"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "job", title: "deploy --token canary-job finished", refKind: "job"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "extension:dev.sidefolk.sideflow", title: "Filled in canary-flow", refKind: "notify"))
         await runtime.attention.post(AttentionRequest(level: .gentle, source: "watcher", title: "canary-watch exited", refKind: "watcher"))
         let text = await read(["limit": 50]).outcome.promptText
-        for canary in ["hunter2-canary", "canary-query", "canary-command", "sk-ant-api03", "canary-key", "canary-job", "canary-flow", "canary-watch"] {
+        for canary in ["hunter2-canary", "canary-query", "canary-command", "canary-userinfo", "canary-search", "canary-failed", "canary-pass", "canary-fragment", "sk-ant-api03", "canary-key", "canary-job", "canary-flow", "canary-watch"] {
             #expect(!text.contains(canary), "\(canary) in \(text)")
         }
         #expect(text.contains("used clipboard.write"), "\(text)")
         #expect(text.contains("a command ended") && text.contains("a watch had news"), "\(text)")
+    }
+
+    @Test func aQuestionMarkInPlainWordsStays() async throws {
+        try await log("external:codex", "Save “Push now? Maybe later”")
+        #expect(await read().outcome.promptText.contains("Push now? Maybe later"))
     }
 
     /// A client's chosen name can't read as the person or Sidefolk, or forge a line.

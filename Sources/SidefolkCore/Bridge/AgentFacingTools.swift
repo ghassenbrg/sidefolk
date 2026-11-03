@@ -23,6 +23,13 @@ public enum AgentFacingTools {
         }
     }
 
+    /// A client's name for the model to read: names are self-chosen, so one that isn't a known agent's can't read as anyone's
+    /// but its own (T4).
+    static func unverifiedName(_ client: String) -> String {
+        let shown = displayName(client)
+        return ["Claude Code", "Codex"].contains(shown) ? shown : "An agent calling itself “\(shown.displaySafe)”"
+    }
+
     /// Where an attention item from this caller says it comes from.
     static func source(for caller: Caller) -> String {
         switch caller {
