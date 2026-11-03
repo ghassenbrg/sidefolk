@@ -15,7 +15,8 @@ final class CompanionCaption {
     private var hiding: Task<Void, Never>?
 
     /// Words beside the companion go where it goes (D138).
-    func joinsFullScreenSpaces(_ joins: Bool) { hosted.panel.joinsFullScreenSpaces(joins) }
+    func hideOverFullScreen(_ hide: Bool) { if hide || hiddenBefore { hosted.panel.alphaValue = hide ? 0 : 1; hiddenBefore = hide } }
+    private var hiddenBefore = false
 
     private var effectEnd: Task<Void, Never>?
     var anchorProvider: (() -> (NSRect, NSScreen)?)?

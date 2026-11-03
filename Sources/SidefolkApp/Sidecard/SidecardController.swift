@@ -26,6 +26,11 @@ final class SidecardController {
             spaceChanged()
         }
     }
+    private var hiddenOverFullScreen = false
+    /// Right now the person is on a full-screen app it's kept off.
+    var overFullScreenNow = false {
+        didSet { followSpaces() }
+    }
     /// Whether something of this kind waits for now (D138).
     var holds: ((_ whisper: Bool) -> Bool)?
     var onRespond: ((AttentionItem, String?) -> Void)?
@@ -221,8 +226,8 @@ final class SidecardController {
     private func watchWhisper(_ item: AttentionItem) {
         timer = Task { [weak self] in
             while let self, !Task.isCancelled, self.model.item?.id == item.id, self.model.shape == .whisper {
-                // Nobody sees it on another space: its time doesn't run there (D138).
-                if self.model.hovering || (self.hidesOverFullScreen && !self.hosted.panel.isOnActiveSpace) {
+                // Nobody sees it over a full-screen app: its time doesn't run there (D138).
+                if self.model.hovering || (self.hidesOverFullScreen && self.overFullScreenNow) {
                     if self.model.pausedLeft == nil {
                         self.model.pausedLeft = max(0, self.model.deadline?.timeIntervalSinceNow ?? 0)
                         self.model.deadline = nil
@@ -304,13 +309,17 @@ final class SidecardController {
 
     var isUnderPointer: Bool { hosted.panel.isVisible && hosted.panel.frame.contains(NSEvent.mouseLocation) }
 
-    /// The space changed: what was held may have somewhere to show now.
+    /// The space or front app changed: what was held may have somewhere to show now.
     func spaceChanged() {
+        followSpaces()
         if !hosted.panel.isVisible { next() }
     }
 
     private func followSpaces() {
-        hosted.panel.joinsFullScreenSpaces(!hidesOverFullScreen || model.shape == .card)
+        let hide = hidesOverFullScreen && overFullScreenNow && model.shape != .card
+        // Only ever undoing its own: the panel's fades are nobody else's business.
+        if hide { hosted.panel.alphaValue = 0 } else if hiddenOverFullScreen { hosted.panel.alphaValue = 1 }
+        hiddenOverFullScreen = hide
     }
 
     private func hide() {

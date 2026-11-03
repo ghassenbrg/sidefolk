@@ -492,10 +492,16 @@ final class CompanionWindowController {
 
     var isVisible: Bool { panel.isVisible }
 
-    /// Off: it stays on the person's ordinary desktops, and comes back by itself when they leave a full-screen app (D138).
-    func joinsFullScreenSpaces(_ joins: Bool) {
-        panel.joinsFullScreenSpaces(joins)
-        tip.panel.joinsFullScreenSpaces(joins)
+    /// Kept off a full-screen app (D138). Still there, so everything placed beside it stays right and it comes straight back;
+    /// a window's Space behaviour doesn't do this, measured: it stays on a full-screen space all the same.
+    private(set) var hiddenOverFullScreen = false
+
+    func hideOverFullScreen(_ hide: Bool) {
+        guard hide != hiddenOverFullScreen else { return }
+        hiddenOverFullScreen = hide
+        panel.alphaValue = hide ? 0 : 1
+        panel.ignoresMouseEvents = hide || panel.ignoresMouseEvents
+        if hide, tipFor != nil { showTip(nil) }
     }
 
     /// "Only when needed": only the top of the head shows until something needs the user.
@@ -756,8 +762,8 @@ final class CompanionWindowController {
     }
 
     private func pointerMoved(_ p: NSPoint) {
-        // Off this space (D138) there's nothing under the pointer to pet or fan out.
-        guard panel.isVisible, panel.isOnActiveSpace else {
+        // Kept off a full-screen app (D138) there's nothing under the pointer to pet or fan out.
+        guard panel.isVisible, !hiddenOverFullScreen else {
             if tipFor != nil { showTip(nil) }
             return
         }

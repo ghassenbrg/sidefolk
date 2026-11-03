@@ -270,7 +270,7 @@ final class AppCoordinator {
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
         companion.show(presence: s.presence)
         companion.setFolks(roster.onDuty, visible: s.showFolks)
-        setCompanionJoinsFullScreen(!s.hideOverFullScreen)
+        applyFullScreenHiding()
         sidecard.hidesOverFullScreen = s.hideOverFullScreen
         applyAppIcon(s)
         // A folk chosen as the companion carries its own duty as a badge (setFolks leaves it out).
@@ -1152,10 +1152,16 @@ extension AppCoordinator {
     /// How long the companion stays on a full-screen space it came to, with nothing done and the pointer elsewhere.
     static let visitSeconds: TimeInterval = 30
 
-    /// The companion being off this space says it plainly, Split View included; with it hidden, the frontmost app's window is all there is.
     var inFullScreen: Bool {
-        if companion.isVisible { return !companion.panel.isOnActiveSpace }
-        return NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false
+        NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false
+    }
+
+    /// What the person is on now decides whether the companion shows: while it visits, it does.
+    func applyFullScreenHiding() {
+        let hide = runtime.settings.current.hideOverFullScreen && inFullScreen
+        sidecard.overFullScreenNow = hide
+        companion.hideOverFullScreen(hide && fullScreenVisit == nil)
+        player.caption.hideOverFullScreen(hide && fullScreenVisit == nil)
     }
 
     func fullScreenRoute(whisper: Bool) -> FullScreenNotice.Route {
@@ -1181,8 +1187,9 @@ extension AppCoordinator {
 
     /// The companion comes to the full-screen space, and goes back once it's answered or left alone.
     private func visitFullScreen() {
-        setCompanionJoinsFullScreen(true)
         fullScreenVisit?.cancel()
+        companion.hideOverFullScreen(false)
+        player.caption.hideOverFullScreen(false)
         fullScreenVisit = Task { [weak self] in
             let giveUp = Date().addingTimeInterval(Self.visitSeconds)
             while let self, !Task.isCancelled {
@@ -1198,19 +1205,14 @@ extension AppCoordinator {
             // A folded card flies to the companion's count: it leaves after that.
             try? await Task.sleep(for: .milliseconds(700))
             guard !Task.isCancelled else { return }
-            self.setCompanionJoinsFullScreen(!self.runtime.settings.current.hideOverFullScreen)
+            self.fullScreenVisit = nil
+            self.applyFullScreenHiding()
         }
-    }
-
-    func setCompanionJoinsFullScreen(_ joins: Bool) {
-        // As made they join: nobody who leaves it alone has anything touched, or built early.
-        guard joins != companion.panel.collectionBehavior.contains(.fullScreenAuxiliary) else { return }
-        companion.joinsFullScreenSpaces(joins)
-        player.caption.joinsFullScreenSpaces(joins)
     }
 
     /// The space changed: what waited can show now, and a slip that waited opens.
     func leftFullScreenMaybe() {
+        applyFullScreenHiding()
         sidecard.spaceChanged()
         guard !inFullScreen, runtime.settings.current.hideOverFullScreen else { return }
         if !ask.pinnedEntries.isEmpty, !askPanel.isVisible { showAsk(focus: false, slipsOnly: true) }
