@@ -86,8 +86,26 @@ import Testing
         #expect(try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8)).theme == ThemeTokens.sidefolk.id)
     }
 
+    /// Moving a built-in to the gallery must not take it from whoever wears it: the setting stays, and it's fetched (D130).
+    @Test func aThemeThatMovedToTheGalleryIsFetchedAndNotLost() {
+        for id in ThemeSuccession.movedToGallery.keys {
+            var s = settings(id)
+            #expect(ThemeSuccession.step(&s) { _ in false } == nil, "it isn't retired")
+            #expect(s.theme == id)
+            #expect(ThemeSuccession.toFetch(s) { _ in false } == id)
+            #expect(ThemeSuccession.toFetch(s) { _ in true } == nil, "already here")
+            s.themeFolder = "/Users/you/Themes/mine"
+            #expect(ThemeSuccession.toFetch(s) { _ in false } == nil)
+        }
+        #expect(ThemeSuccession.toFetch(settings(ThemeTokens.sidefolk.id)) { _ in false } == nil)
+        // A retired theme whose successor moved reaches it in two steps.
+        var old = settings("dev.sidefolk.theme.field-notes")
+        _ = ThemeSuccession.step(&old) { _ in false }
+        #expect(ThemeSuccession.toFetch(old) { _ in false } == "dev.sidefolk.theme.paper-garden")
+    }
+
     @Test func currentThemesAndFollowedFoldersAreLeftAlone() {
-        for id in ThemeLibrary.builtInOrder + ["com.you.sunset"] {
+        for id in ThemeLibrary.builtInOrder + Array(ThemeSuccession.movedToGallery.keys) + ["com.you.sunset"] {
             var s = settings(id)
             #expect(ThemeSuccession.step(&s) { _ in true } == nil, "\(id)")
             #expect(s.theme == id)
@@ -97,10 +115,10 @@ import Testing
         #expect(ThemeSuccession.step(&followed) { _ in false } == nil)
     }
 
-    /// Every successor is a theme this Sidefolk carries, and no retired id is still built in.
-    @Test func everySuccessorShipsWithTheApp() {
+    /// Every successor is a theme this Sidefolk carries or fetches for whoever wears it (D130), and no retired id is still built in.
+    @Test func everySuccessorCanBeWorn() {
         for (id, old) in ThemeSuccession.retired {
-            #expect(ThemeLibrary.builtInOrder.contains(old.successor), "\(id) → \(old.successor)")
+            #expect(ThemeLibrary.builtInOrder.contains(old.successor) || ThemeSuccession.movedToGallery[old.successor] != nil, "\(id) → \(old.successor)")
             #expect(!ThemeLibrary.builtInOrder.contains(id))
         }
     }

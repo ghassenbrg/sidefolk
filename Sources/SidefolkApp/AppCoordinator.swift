@@ -155,6 +155,7 @@ final class AppCoordinator {
 
         installSidecard()
         if let succession { announceSuccession(succession) }
+        Task { await fetchThemeThatMoved() }
 
         let menuBarImage = BrandAsset.menuBar.image ?? NSImage(
             cgImage: CharacterRenderer.menuBarTemplate(size: CGSize(width: 18, height: 18), scale: 2),
