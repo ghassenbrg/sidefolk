@@ -162,7 +162,7 @@ struct PageStepsView: View {
         Group {
             if let select = steps.select {
                 Button { Task { await model.run(tool: select.tool, input: select.input(.string(item.id))) } } label: { words.contentShape(Rectangle()) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfBare)
             } else {
                 words
             }
@@ -200,7 +200,7 @@ struct PageStepsView: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.link)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.sfBare)
         .padding(.leading, Theme.Space.s)
         .padding(.vertical, 3)
     }
@@ -214,7 +214,7 @@ struct PageStepsView: View {
                 Label { Text(open ? "Hide what it gave" : "See what it gave", comment: "A step rail: the text a step produced, folded") } icon: { Image(systemName: open ? "chevron.down" : "chevron.right") }
                     .font(Theme.Font.caption).foregroundStyle(Theme.link)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.sfBare)
             if open {
                 Text(ext: output).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
@@ -281,7 +281,7 @@ struct PageEditFieldRow: View {
                                 .frame(height: Theme.Size.chip)
                                 .background(Capsule().fill(Theme.well))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.sfBare)
                         .accessibilityHint(Text("Puts this value in the field", comment: "VoiceOver: a chip beside a field"))
                     }
                 }
@@ -363,7 +363,7 @@ struct PageMultiChoiceRow: View {
                             .background(Capsule().fill(on ? Theme.accent : Theme.well))
                             .contrastEdge(radius: Theme.Size.button / 2)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.sfBare)
                     .disabled(choice.disabled)
                     .accessibilityAddTraits(on ? .isSelected : [])
                 }

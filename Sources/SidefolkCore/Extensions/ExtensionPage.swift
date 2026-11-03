@@ -19,6 +19,10 @@ public struct ExtensionPage: Sendable, Hashable {
     public static let tileSize = SceneSize(width: 720, height: 300)
     /// How wide its column may grow (D108).
     public var maxWidth: Double?
+    /// The page takes the window (D119): its columns scroll on their own, and Home's sidebar folds while it shows. Only a bare page may.
+    public var workspace = false
+    /// The person's own companion looks in at the page's corner (D119). Sidefolk places it; the extension never reads it.
+    public var companion = false
 
     public init(summary: Summary? = nil, sections: [Section] = []) {
         self.summary = summary
@@ -51,7 +55,8 @@ public struct ExtensionPage: Sendable, Hashable {
     public struct Section: Sendable, Hashable {
         /// Where a section goes in a wide window (D74): with the page's main sections, or in a column beside them at
         /// the start edge (a list of devices or accounts to pick from). A narrow window keeps the page's order.
-        public enum Place: String, Sendable, Hashable { case main, side, bottom }
+        /// `trailing`, on a workspace page (D119): a column on the far side from `side`. On any other page it's with the main ones.
+        public enum Place: String, Sendable, Hashable { case main, side, bottom, trailing }
 
         public var title: String?
         public var detail: String?
@@ -129,12 +134,27 @@ public struct ExtensionPage: Sendable, Hashable {
         case table(PageTable)
         /// Things in order on a line, with their states (D113).
         case steps(Steps)
+        /// A tree of cards that arranges itself (D118).
+        case tree(Tree)
+        /// A compact head for a page that draws its own: its title, state, one sentence and actions (D119).
+        case bar(PageHead)
+        /// A column of places to go (D119).
+        case nav(Nav)
+        /// What a person will receive, drawn as it will arrive (D119).
+        case notice(Notice)
+        /// A row of recent results, each a mark and its word (D119).
+        case ticks(Ticks)
     }
 
     /// A small label beside an option: "Paired", "New", "Off".
     public struct Badge: Sendable, Hashable {
         public var text: String
         public var tone: Tone
+
+        public init(text: String, tone: Tone) {
+            self.text = text
+            self.tone = tone
+        }
     }
 
     public struct Hero: Sendable, Hashable {
@@ -436,6 +456,8 @@ public struct ExtensionPage: Sendable, Hashable {
         page.dress = PageDress.parse(object["dress"])
         page.tile = object["tile"].flatMap { try? SurfaceScene.parse($0, within: tileSize) }
         page.maxWidth = object["max_width"]?.doubleValue.flatMap { $0.isFinite ? min(1320, max(640, $0)) : nil }
+        page.workspace = page.bare && (object["workspace"]?.boolValue ?? false)
+        page.companion = object["companion"]?.boolValue ?? false
         page.keepOnePrimary()
         return page
     }
@@ -476,6 +498,7 @@ public struct ExtensionPage: Sendable, Hashable {
                 for b in list[s].blocks.indices {
                     switch list[s].blocks[b] {
                     case .control(var c): keep(&c); list[s].blocks[b] = .control(c)
+                    case .bar(var bar): for i in bar.actions.indices { keep(&bar.actions[i]) }; list[s].blocks[b] = .bar(bar)
                     case .hero(var h): for i in h.actions.indices { keep(&h.actions[i]) }; list[s].blocks[b] = .hero(h)
                     case .transport(var t): for i in t.buttons.indices { keep(&t.buttons[i]) }; list[s].blocks[b] = .transport(t)
                     case .cards(var grid):

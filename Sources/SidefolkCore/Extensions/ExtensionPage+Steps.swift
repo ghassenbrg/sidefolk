@@ -82,11 +82,6 @@ extension ExtensionPage {
                               output: i["output"]?.stringValue.map { ExtensionText.untrusted($0, bytes: 4_000) })
         }
         guard !items.isEmpty else { return nil }
-        func hook(_ h: JSONValue?) -> Steps.Hook? {
-            guard let h, let tool = toolName(h["tool"]), let input = smallInput(h["input"]), let key = h["key"]?.stringValue,
-                  key.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil, key != "on" else { return nil }
-            return Steps.Hook(tool: tool, input: input, key: key, label: text(h["label"], 30))
-        }
         return Steps(title: text(j["title"], 60), caption: text(j["caption"], 240), items: items, selected: j["selected"]?.stringValue, select: hook(j["select"]), reorder: hook(j["reorder"]),
                      insert: hook(j["insert"]), line: Array((j["line"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2)))
     }

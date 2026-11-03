@@ -367,7 +367,7 @@ public enum WatchContext {
 
 extension JSONValue {
     /// A copy of an object with `key` set (or removed when `value` is nil).
-    func setting(_ key: String, _ value: JSONValue?) -> JSONValue {
+    public func setting(_ key: String, _ value: JSONValue?) -> JSONValue {
         var o = objectValue ?? [:]
         o[key] = value
         return .object(o)

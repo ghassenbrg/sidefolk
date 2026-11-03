@@ -23,6 +23,11 @@ struct RichBlockView: View {
         case .scene(let scene): PageSceneBlock(block: scene, model: model)
         case .table(let table): PageTableView(table: table, model: model)
         case .steps(let steps): PageStepsView(steps: steps, model: model)
+        case .tree(let tree): PageTreeView(tree: tree, model: model).frame(minHeight: 420)
+        case .bar(let bar): PageBarView(bar: bar, model: model)
+        case .nav(let nav): PageNavView(nav: nav, model: model)
+        case .notice(let notice): PageNoticeView(notice: notice, model: model)
+        case .ticks(let ticks): PageTicksView(ticks: ticks)
         default: EmptyView()
         }
     }
@@ -215,6 +220,28 @@ struct PageCard: View {
     private var side: CGFloat { size == .large ? 84 : 56 }
 
     var body: some View {
+        if item.tree != nil || item.press != nil {
+            pressable
+        } else {
+            plain
+        }
+    }
+
+    /// The whole card goes somewhere, with its tree's small drawing at its foot (D118).
+    private var pressable: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            plain
+            if let tree = item.tree {
+                TreeMini(tree: tree).frame(maxWidth: .infinity).padding(.bottom, Theme.Space.s)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { if let press = item.press { Task { await model.run(press, on: nil) } } }
+        .accessibilityElement(children: .contain)
+        .accessibilityAction(named: Text(ext: item.press?.label ?? item.title)) { if let press = item.press { Task { await model.run(press, on: nil) } } }
+    }
+
+    private var plain: some View {
         HStack(alignment: size == .large ? .top : .center, spacing: Theme.Space.m) {
             if let first = item.actions.first, !first.disabled {
                 Button { Task { await model.run(first, on: nil) } } label: { tile }.buttonStyle(.sfBare).accessibilityHidden(true)

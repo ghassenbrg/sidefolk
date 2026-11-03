@@ -10,6 +10,17 @@ struct ExtensionPageView: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
+        Group {
+            if let page = model.page, page.workspace { PageWorkspace(page: page, model: model) } else { scrolling }
+        }
+        .environment(\.cardDress, cardDress)
+        .environment(\.pageAccent, pageAccent)
+        .tint(pageAccent)
+        .pageConsent(model: model)
+        .task(id: model.info.id) { await model.run() }
+    }
+
+    private var scrolling: some View {
         // A page of numbers and charts may use a wide window; a page of switches stays a readable column. Either is
         // centred, so a wide window never leaves the page on one side.
         PageScroll(maxWidth: model.page?.maxWidth.map { CGFloat($0) } ?? (model.page?.isRich == true ? 1320 : 860), bleed: model.page?.bleed == true) {
@@ -75,11 +86,6 @@ struct ExtensionPageView: View {
         } ground: {
             PageGround(dress: model.page?.dress, model: model)
         }
-        .environment(\.cardDress, cardDress)
-        .environment(\.pageAccent, pageAccent)
-        .tint(pageAccent)
-        .pageConsent(model: model)
-        .task(id: model.info.id) { await model.run() }
     }
 
     /// A dressed page's filled buttons and switches (D108).
@@ -372,7 +378,7 @@ struct SectionView: View {
                 out.append(.hero(h))
             case .transport(let t):
                 out.append(.transport(t))
-            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps:
+            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks:
                 out.append(.rich(block))
             case .control(let c):
                 if case .toggle = c.kind {
@@ -400,7 +406,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks: EmptyView()
         }
     }
 }
@@ -459,7 +465,7 @@ private struct StatView: View {
     }
 }
 
-private struct NoteView: View {
+struct NoteView: View {
     var note: ExtensionPage.Note
 
     var body: some View {
