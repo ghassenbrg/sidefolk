@@ -41,7 +41,8 @@ public enum DropChoices {
 
     /// A file's name for the card: one plain line, whatever the file was called.
     public static func shownName(_ path: String) -> String {
-        ExtensionText.line((path as NSString).lastPathComponent, characters: 120)
+        // Isolated, so a file's name keeps its own order inside a sentence in any language.
+        ExtensionText.line((path as NSString).lastPathComponent, characters: 120, isolates: true)
     }
 
     /// What extensions that are on offer for this: its kind, and a pattern for a link's address or a file's name.

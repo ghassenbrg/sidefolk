@@ -261,7 +261,8 @@ import Testing
     }
 
     @Test func aNameOnTheCardIsOneLine() {
-        #expect(DropChoices.shownName("/x/trip\nSidefolk checked this.jpg") == "trip Sidefolk checked this.jpg")
+        let shown = DropChoices.shownName("/x/trip\nSidefolk checked this.jpg")
+        #expect(shown == "\u{2068}trip Sidefolk checked this.jpg\u{2069}", "one line, in its own direction")
     }
 
     @Test func tooManyFilesGetNoOffers() {

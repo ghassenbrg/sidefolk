@@ -90,7 +90,7 @@ struct FileReceiptCard: View {
                 if let look { ExtensionBadge(look: look, size: 14) }
                 if let name = card.subtitle { Text(verbatim: name).font(Theme.Font.caption).foregroundStyle(FrostInk.muted).lineLimit(1) }
             }
-            Text(verbatim: card.title).font(Theme.Font.headline).foregroundStyle(FrostInk.text).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: card.title).font(Theme.Font.headline).foregroundStyle(FrostInk.text).lineLimit(2).truncationMode(.middle).fixedSize(horizontal: false, vertical: true)
             if let detail = card.detail {
                 Text(verbatim: detail).font(Theme.Font.caption.weight(.semibold)).foregroundStyle(FrostInk.text).lineLimit(4).fixedSize(horizontal: false, vertical: true)
             }
@@ -127,15 +127,42 @@ struct FileReceiptCard: View {
     private var actions: some View {
         HStack(spacing: Theme.Space.s) {
             if files.count == 1, let file = files.first, file.canOpen {
-                Button("Open") { model.actions?.open(file: file) }.buttonStyle(.sf(.primary, size: .sidecard))
+                Button("Open") { model.actions?.open(file: file) }.buttonStyle(.sf(.primary, size: .sidecard)).frostEdge()
             }
             Button { model.actions?.show(files: files) } label: { Text("Show in Finder", comment: "On a saved file's card") }
-                .buttonStyle(.sf(files.count == 1 && files[0].canOpen ? .secondary : .primary, size: .sidecard))
+                .buttonStyle(.sf(files.count == 1 && files[0].canOpen ? .secondary : .primary, size: .sidecard)).frostEdge()
             Spacer(minLength: 0)
             if let activityId {
-                Button("Undo") { model.actions?.undo(activityId: activityId, in: model) }.buttonStyle(.sf(.plain, size: .sidecard))
+                FrostPlainButton(title: "Undo") { model.actions?.undo(activityId: activityId, in: model) }
             }
         }
         .environment(\.colorScheme, .dark)
+    }
+}
+
+/// A button's own fill can match a frost, so on one it gets an edge of its own.
+private extension View {
+    func frostEdge() -> some View {
+        overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(.white.opacity(0.28), lineWidth: 1).allowsHitTesting(false))
+    }
+}
+
+/// White on any frost, with an edge on hover: the plain style's colours are for Sidefolk's own grounds.
+private struct FrostPlainButton: View {
+    var title: LocalizedStringKey
+    var action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(Theme.Font.bodyStrong).foregroundStyle(FrostInk.text)
+                .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s)
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(.white.opacity(hovering ? 0.28 : 0), lineWidth: 1)
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.sfBare)
+        .onHover { hovering = $0 }
     }
 }

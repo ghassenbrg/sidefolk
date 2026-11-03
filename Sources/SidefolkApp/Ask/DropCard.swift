@@ -399,6 +399,7 @@ private struct FrostOfferRow: View {
             HStack(spacing: Theme.Space.m) {
                 if let tag = offer.tag {
                     Text(verbatim: tag).font(.system(size: 10.5, weight: .bold, design: .rounded)).foregroundStyle(FrostInk.text)
+                        .lineLimit(1).minimumScaleFactor(0.7).padding(.horizontal, 3)
                         .frame(width: 42, height: 22)
                         .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous).stroke(.white.opacity(0.28), lineWidth: 1))
@@ -415,6 +416,8 @@ private struct FrostOfferRow: View {
             }
             .padding(.horizontal, Theme.Space.m).padding(.vertical, Theme.Space.s + 1)
             .background(.black.opacity(hovering ? 0.14 : 0))
+            // A darker row barely shows on a dark frost, so an edge says it too, and leaves the words' contrast alone.
+            .overlay { Rectangle().strokeBorder(.white.opacity(hovering ? 0.28 : 0), lineWidth: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.sfBare)

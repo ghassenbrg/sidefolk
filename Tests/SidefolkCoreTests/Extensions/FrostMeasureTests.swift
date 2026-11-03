@@ -9,6 +9,8 @@ struct FrostMeasureTests {
         #expect(!FrostMeasure.hasColour(Array(repeating: (0.98, 0.98, 0.98), count: 10)), "a white page")
         #expect(!FrostMeasure.hasColour(Array(repeating: (0.4, 0.42, 0.41), count: 10)), "a grey blur")
         #expect(FrostMeasure.hasColour(Array(repeating: (0.8, 0.4, 0.2), count: 10)), "a sunset")
+        // Colourful enough before the scrim, grey after it: bright stripes need so much black that nothing is left.
+        #expect(!FrostMeasure.hasColour(Array(repeating: (0.98, 0.9, 0.9), count: 10)), "a pale tint")
     }
 
     @Test(arguments: [(1.0, 1.0, 1.0), (1.0, 0.9, 0.2), (0.2, 1.0, 0.9), (0.5, 0.5, 0.5), (0.05, 0.05, 0.1)])

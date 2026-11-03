@@ -5,8 +5,9 @@ import Foundation
 public enum FrostMeasure {
     public typealias Pixel = (r: Double, g: Double, b: Double)
 
-    /// Below this, a blurred picture is grey mud: white pages, screenshots, scans.
-    public static let minimumChroma = 0.14
+    /// What's left of a picture's colour once the scrim is over it. Below this it's grey mud on the card, whatever it was before: white
+    /// pages, screenshots and pale tints, but also stripes and a dark photo with one bright spot, whose scrim is heavy.
+    public static let minimumShownChroma = 0.10
     /// For white. It keeps the softer detail text, white at 92%, above 4.5:1 on the brightest part.
     public static let contrast = 5.6
 
@@ -14,7 +15,7 @@ public enum FrostMeasure {
         pixels.map { max($0.r, $0.g, $0.b) - min($0.r, $0.g, $0.b) }.reduce(0, +) / Double(max(pixels.count, 1))
     }
 
-    public static func hasColour(_ pixels: [Pixel]) -> Bool { chroma(pixels) >= minimumChroma }
+    public static func hasColour(_ pixels: [Pixel]) -> Bool { chroma(pixels) * (1 - scrim(pixels)) >= minimumShownChroma }
 
     /// White against the brightest pixel, under this much black.
     public static func worst(_ pixels: [Pixel], scrim: Double) -> Double {
