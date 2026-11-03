@@ -44,7 +44,9 @@ struct SayBarField<Trailing: View>: View {
                 .accessibilityHidden(true)
             TextField(text: $text, prompt: Text(verbatim: ""), axis: multiline ? .vertical : .horizontal) { prompt }
                 .textFieldStyle(.plain)
-                .fieldHint(prompt, showing: text.isEmpty, alignment: multiline ? .topLeading : .leading)
+                .fieldHint(prompt, showing: text.isEmpty, alignment: multiline ? .topLeading : .leading, spoken: false)
+                // A plain field's label closure isn't read: its own words are its name.
+                .accessibilityLabel(prompt)
                 .font(size == .home ? .system(size: 15 * ThemeStore.shared.style.tokens.type.scale) : Theme.Font.input)
                 .foregroundStyle(Theme.ink)
                 .lineLimit(multiline ? 1...5 : 1...1)

@@ -56,8 +56,9 @@ extension View {
     func lanternField(problem: Bool = false) -> some View { modifier(LanternField(problem: problem)) }
 
     /// A field's hint in the theme's faint ink, drawn over a field whose own prompt is empty: macOS paints a TextField's
-    /// `prompt` in its system grey whatever style it's given, 3.15:1 on white (D130). The field keeps its label for VoiceOver.
-    func fieldHint(_ hint: Text, showing: Bool, alignment: Alignment = .leading) -> some View {
+    /// `prompt` in its system grey whatever style it's given, 3.15:1 on white (D130). VoiceOver hears the same words from the
+    /// field itself, as it heard a prompt, while the field is empty; `spoken: false` where its label already says them.
+    func fieldHint(_ hint: Text, showing: Bool, alignment: Alignment = .leading, spoken: Bool = true) -> some View {
         overlay(alignment: alignment) {
             if showing {
                 hint.foregroundStyle(Theme.inkFaint).lineLimit(1)
@@ -65,5 +66,6 @@ extension View {
                     .accessibilityHidden(true)
             }
         }
+        .accessibilityHint(showing && spoken ? hint : Text(verbatim: ""))
     }
 }

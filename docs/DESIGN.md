@@ -74,7 +74,7 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `StatusBadge` (dot + word, `BadgeState.tone/.live`), `CountBadge`, `StateWord`, `StateTile`, `PinCapsule`, `FolkAvatar` | `StateViews.swift` | `Sparkline` is in `Home/TodayParts.swift` |
 | `EmptyState` (with its one action) | `Components.swift` | |
 | `SearchBox`, `.fieldChrome(focused:problem:)`, `.lanternField()`, `WhenField(boxed:)`, `CommitField` | `SearchBox.swift`, `FieldChrome.swift`, `WhenField.swift`, `Components.swift` | a well, no border until focus; `.lanternField()` keeps its own focus (no `.roundedBorder` anywhere) |
-| `.fieldHint(_:showing:alignment:)` | `FieldChrome.swift` | a field's hint in `inkFaint`, with the field's own `prompt` empty: macOS draws a prompt in its system grey whatever style it's given (3.15:1 on white) |
+| `.fieldHint(_:showing:alignment:)` | `FieldChrome.swift` | a field's hint in `inkFaint`, with the field's own `prompt` empty: macOS draws a prompt in its system grey whatever style it's given (3.15:1 on white). VoiceOver hears it as the field's hint, or `spoken: false` where the label says the same |
 | `.contrastEdge(radius:)` | `FieldChrome.swift` | a border under Increase Contrast only, for fills that have none |
 | `SayBarField` (.home / .desktop), `KeyHint`, `UnderstandingRow` | `SayBar.swift` | the Say bar's shell; behaviour is the screen's |
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |

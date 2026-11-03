@@ -15,7 +15,7 @@ struct SearchBox<Focus: Hashable>: View {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.inkFaint).accessibilityHidden(true)
             TextField("Search", text: $text, prompt: Text(verbatim: ""))
                 .textFieldStyle(.plain)
-                .fieldHint(prompt, showing: text.isEmpty)
+                .fieldHint(prompt, showing: text.isEmpty, spoken: false)
                 .font(Theme.Font.body)
                 .focused(focus, equals: focusValue)
                 .accessibilityLabel(prompt)
