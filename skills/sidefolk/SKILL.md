@@ -77,9 +77,9 @@ The first line of `text` is the title, the rest the body. `kind` is note, idea, 
 
 `collection` must be one of the user's existing projects, topics or lists. A name that starts a collection's
 name finds it ("shopping" finds "Shopping list"), and so does the name with "list" or "project" after it
-("shopping list" finds "Shopping"). Other agents can't create collections: if the result says
-there is none by that name, save without `collection` (it goes to the Inbox) or ask the user to create it in
-Sidefolk. Notes you save carry a tag with your name.
+("shopping list" finds "Shopping"). If the result says there is none by that name, save without `collection`
+(it goes to the Inbox), or make it with `collections_create`, which always asks the user. Notes you save carry a tag
+with your name.
 
 ### notes_update, notes_trash
 
