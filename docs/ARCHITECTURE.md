@@ -32,7 +32,7 @@ the MCP bridge, and one process per running extension.
 | `SidefolkCore` | library | GRDB | Everything that is not UI. No AppKit. Fully unit tested. |
 | `SidefolkCharacter` | library | — (AppKit, QuartzCore) | Character rig, poses, choreography, folks, icon rendering. |
 | `SidefolkApp` | executable | Core, Character, KeyboardShortcuts | App delegate, windows, SwiftUI views, platform services. |
-| `sidefolk` | executable | Core (protocol types only) | CLI: `sidefolk mcp` bridge, `run`, `hook`, `status`, `ext validate`, `theme new/check`. |
+| `sidefolk` | executable | Core (protocol types only) | CLI: `sidefolk mcp` bridge, `run`, `hook`, `status`, `notify`, `ask`, `remind`, `note`, `tools`, `call` (D159), `ext validate`, `theme new/check`. |
 | `sidefolk-render` | executable (dev) | Character | Renders every pose and folk to PNG contact sheets for visual review. |
 | `SidefolkCoreTests` | tests | Core | Swift Testing. |
 
@@ -173,7 +173,8 @@ user folders or agent configs, and neither can an app on such a folder (D86, bel
   `status`; peer uid check; tokens map brain runs to `Caller.agent`.
 - Other agents (D42): `sidefolk mcp` (`MCPStdioBridge`) reaches `ExternalToolGateway`, an executor whose
   registry holds only `ExternalToolPolicy`'s tools, each with its external spec (`ExternalSpecs.swift`:
-  descriptions and schemas for what other agents may do). `AgentIntegrations` (Connect, after a
+  descriptions and schemas for what other agents may do, and their MCP annotations, D156). The bridge tells a client when
+  the list changes and passes on a cancel; `ToolVerbs` is the same gateway from a shell (D159). `AgentIntegrations` (Connect, after a
   confirmation and backups) writes the MCP entry, the Sidefolk skill and session hooks into Claude Code
   and Codex (`codexHooks`: `$CODEX_HOME/hooks.json`, `sidefolk hook <Event> --agent codex`), and
   `setupInstructions` gives other MCP apps the command. Hook events feed `SessionTracker` (the agents lane, On duty,

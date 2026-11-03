@@ -139,15 +139,16 @@ folder grants, network or commands to escape its own sandbox. The `.external` pr
 without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create
 a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
 together), `reminders.cancel` (only reminders that client name set; others read as not found),
-notify/`ask_user`, `status`, non-command watchers (25 active for all clients together, more only when the
+`reminders.update`, `reminders.snooze` and `reminders.complete` (D157: the same; a reminder tied to an open task can't be finished unless "Change notes" is on Allow, since that finishes the task), `notes.restore` by id under "Change notes", notify/`ask_user`, `status`, non-command watchers (25 active for all clients together, more only when the
 person says yes to `watch.more_room`, which always asks, D116; each stopping
 after 24 h; `WatcherEngine.add` counts and inserts in one actor step, so parallel calls can't
-overshoot), their own watchers' pause, resume, display, order and formatting (`canManage`), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
+overshoot), their own watchers' pause, resume, display, order and formatting and, by `watch.update`, their name, interval, level and what they look for (`canManage`; D157: no floor, level or lifetime moves that way), and `watch.report` for this Mac's own metrics (cpu, memory, battery, disk, network: no
 web values and no weather, which would reach a server; a fast one stops within the hour) (D42).
 They see descriptions and schemas written for them (`ExternalToolPolicy.externalSpec`): no
 `collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
 to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
 result names the item by kind and id only.
+The `sidefolk` command's `notify`, `ask`, `remind`, `note` and `call` (D159) are this same client by another door: through `ExternalToolGateway`, with these rules and nothing else, as `sidefolk-cli`. A program running as the person could already start `sidefolk mcp`.
 Reading user data (notes, reminders, `notes.get`, `agenda.today`) asks every time; an external caller never gets
 "Always". `notes.collection` (D117) always asks too, since naming a collection is what they otherwise can't do; the
 name it gives reads as theirs. `notes.update` and `notes.trash` change or trash one note by id (never in "About you",
@@ -761,7 +762,7 @@ runtime's `com.apple.security.personal-information.calendars`); reading the stat
 - *Hidden calendars* are left out of everything that reads (Today, the brief, `calendar.today`).
 - *Where events go.* Today and the morning brief, on this Mac. Attention items, where the brief lands, never reach
   the model's context.
-- *What the AI hears.* Only through `calendar.today`: medium risk, "Reads private data", through Guard like any
+- *What the AI hears.* Only through `calendar.today` and `calendar.find` (D158, any stretch up to 90 days, or by its words): medium risk, "Reads private data", through Guard like any
   tool, so the person is asked (once per kind unless they choose otherwise). The result is untrusted (T2): an
   invitation's title is written by whoever sent it. Other agents get no tool that reads it (`external: false`).
 *Residual:* once allowed for good, the AI may read the day's events in any later clean turn, and add or move events
