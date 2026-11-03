@@ -136,7 +136,7 @@ tainted turns need approval showing the full text.
 
 **T4 Confused deputy via external MCP clients (H/H).** An agent in a hostile repo uses Sidefolk's
 folder grants, network or commands to escape its own sandbox. The `.external` profile allows,
-without asking: `notes.save` (Inbox or a collection that already exists, tagged; they never create
+without asking: `notes.save` (Inbox or a collection that already exists, tagged; it never creates
 a collection), `reminders.create` (at most `attention`, 20 active per client and 50 for all clients
 together), `reminders.cancel` (only reminders that client name set; others read as not found),
 `reminders.update`, `reminders.snooze` and `reminders.complete` (D157: the same; a reminder tied to an open task can't be finished unless "Change notes" is on Allow, since that finishes the task), `notes.restore` by id under "Change notes", notify/`ask_user`, `status`, non-command watchers (25 active for all clients together, more only when the
@@ -148,7 +148,7 @@ They see descriptions and schemas written for them (`ExternalToolPolicy.external
 `collection_kind`, no critical level, no command kinds, `source: metric` only. A reminder they tie
 to a note or task (`item`, D49) needs its own title: the item's words are never its default, and the
 result names the item by kind and id only.
-Reading adds `collections.list` (D160): another agent can now see the names of the person's projects, topics and lists with their counts, under the reading setting, so a card by default; never About you.
+`collections.create` (D160, reversing D42's "never"): another agent can now make a project, topic or list, on a card every time whatever Settings say, and never with "Always". Its name is recorded as that agent's, so it is quoted to Sidefolk's model as outside words (T3). Reading adds `collections.list` (D160): another agent can now see the names of the person's projects, topics and lists with their counts, under the reading setting, so a card by default; never About you.
 The `sidefolk` command's `notify`, `ask`, `remind`, `note` and `call` (D159) are this same client by another door: through `ExternalToolGateway`, with these rules and nothing else, as `sidefolk-cli`. A program running as the person could already start `sidefolk mcp`.
 Reading user data (notes, reminders, `notes.get`, `agenda.today`) asks every time; an external caller never gets
 "Always". `notes.collection` (D117) always asks too, since naming a collection is what they otherwise can't do; the

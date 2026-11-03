@@ -69,7 +69,8 @@ public enum NotebookCollections {
         if isInboxName(clean) {
             throw UserFacingError("“Inbox” is always there: it's where notes go when no collection is named.")
         }
-        guard mayCreate(context.caller) else { throw creationRefusal(clean) }
+        // Another agent, only on the person's yes on a card (D160); `notes.save` never makes one for it.
+        guard mayCreate(context.caller) || context.personWasAsked else { throw creationRefusal(clean) }
         return try await notebook.createCollection(name: clean, kind: kind, source: context.provenanceTag, now: context.now)
     }
 

@@ -10,8 +10,8 @@ public enum ExternalToolPolicy {
     /// and `status` only counts.
     public static let always: Set<String> = ["notify.user", "ask.user", "status"]
     /// Always offered and always asked, whatever the settings say: how agents get past their shared room (D116), and
-    /// changing a collection, since naming one is what they otherwise can't do (T4).
-    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection"]
+    /// making or changing a collection, since a name of theirs beside the person's own is theirs only on a yes (T3, T4, D160).
+    public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection", "collections.create"]
     /// Adding to what the user has: `watch.list` shows an agent only its own watchers, the `reminders.*` that change
     /// reach only its own reminders, `watch.report` reads only this Mac's load, and the rest move only its own.
     public static let saving: Set<String> = [
@@ -168,6 +168,8 @@ struct ExternalFacade: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }
+        var context = context
+        context.personWasAsked = ExternalToolPolicy.alwaysAsks.contains(spec.name)
         return try await base.run(input, context: context)
     }
 }

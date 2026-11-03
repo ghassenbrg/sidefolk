@@ -228,6 +228,38 @@ import Testing
         await s.stop()
     }
 
+    /// "make me a Pockito project": never without the person, whatever Settings say, and its name stays the agent's.
+    @Test func makeACollectionOnACardEveryTime() async throws {
+        let s = try await Stack()
+        await s.runtime.settings.update { $0.agentAccess.save = .allow; $0.agentAccess.change = .allow }
+        #expect(ExternalToolPolicy.permission("collections.create", access: AgentAccess()) == .ask)
+
+        let refused = s.answerNextCard(.deny)
+        let no = try await s.call("collections_create", ["name": "URGENT", "kind": "project"])
+        let asked = await refused.value
+        #expect(asked?.canAlways == false)
+        #expect(asked?.summary.contains("URGENT") == true)
+        #expect(no.isError)
+        #expect(try await s.runtime.notebook.findCollection(named: "URGENT") == nil)
+
+        let allowed = s.answerNextCard(.allowOnce)
+        let made = try await s.call("collections_create", ["name": "Pockito", "kind": "project"])
+        #expect(await allowed.value != nil)
+        #expect(!made.isError, "\(made.text)")
+        let pockito = try #require(try await s.runtime.notebook.findCollection(named: "Pockito"))
+        #expect(pockito.source == "external:codex-mcp-client")
+        #expect(NotebookCollections.isForeign(pockito))
+        let saved = try await s.call("notes_save", ["text": "Offline cache", "collection": "Pockito"])
+        #expect(saved.text.contains("to Pockito"), "\(saved.text)")
+
+        // It may not stand in for what's Sidefolk's own.
+        let answered = s.answerNextCard(.allowOnce)
+        let about = try await s.call("collections_create", ["name": "About you"])
+        _ = await answered.value
+        #expect(about.isError)
+        await s.stop()
+    }
+
     @Test func notesGoIntoTheUsersOwnCollections() async throws {
         let s = try await Stack()
         let notebook = s.runtime.notebook
