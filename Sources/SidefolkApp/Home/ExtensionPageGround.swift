@@ -85,12 +85,13 @@ struct PageAccentButtonStyle: ButtonStyle {
     var accent: Color
     var large: Bool
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.pageAccentWords) private var words
 
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
         configuration.label
             .font(Theme.Font.bodyStrong)
-            .foregroundStyle(Color.white)
+            .foregroundStyle(words)
             .padding(.horizontal, large ? Theme.Space.xl : Theme.Space.l)
             .frame(minHeight: large ? 44 : Theme.Size.button)
             .background(accent, in: shape)

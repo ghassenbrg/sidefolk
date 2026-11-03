@@ -170,7 +170,8 @@ struct ExtensionScreenUDPTests {
         #expect(info.tools.allSatisfy { $0.risk != .low }, "the network raises every tool to medium")
         let page = try await h.host.renderPage(extensionId: info.id, page: "miraya")
         #expect(page.summary != nil, "\(String(describing: page.summary))")
-        let hero = try #require(page.hero)
+        // With no TV in reach there's a hero saying so; with one, the picker stands in its place.
+        let hero = try #require(page.sections.flatMap(\.blocks).compactMap { if case .hero(let h) = $0 { h } else { nil } }.first)
         if hero.title == "No TV found yet" {
             #expect(!page.hasSide, "manual connection uses the full width until a TV is found")
             #expect(page.sections.flatMap(\.blocks).contains { if case .field = $0 { true } else { false } })

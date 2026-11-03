@@ -129,14 +129,14 @@ struct ExtensionPageTests {
         let summary = try #require(page.summary)
         #expect(!summary.title.isEmpty && summary.detail.contains("CPU"), "\(summary)")
         let titles = page.sections.compactMap(\.title)
-        for expected in ["Right now", "Over time", "What's using your Mac", "Memory", "Storage", "Network", "This Mac"] {
+        for expected in ["Processor & graphics", "Top apps", "Heads-ups", "Over time", "Memory", "Storage", "Network", "This Mac"] {
             #expect(titles.contains(expected), "\(titles)")
         }
         // Read inside the sandbox: other apps' use, the disk's free space and the chip all came through.
         let all = page.sections.flatMap(\.blocks)
         let bars = all.compactMap { if case .bars(let b) = $0 { b } else { nil } }
-        #expect(bars.first { $0.title == "Memory" }?.items.isEmpty == false, "apps' memory")
-        let disk = all.compactMap { if case .gauge(let g) = $0, g.label == "Disk" { g } else { nil } }.first
+        #expect(bars.first?.items.isEmpty == false, "apps' use")
+        let disk = all.compactMap { if case .metric(let m) = $0, m.label == "Storage" { m } else { nil } }.first
         // Free space as System Settings counts it (what macOS can clear counts as free), read inside the sandbox.
         let settings = try URL(fileURLWithPath: "/").resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
             .volumeAvailableCapacityForImportantUsage.map { Double($0) / 1e9 } ?? 0

@@ -14,11 +14,34 @@ struct PageButton: View {
     var model: ExtensionPageModel
     var large = false
     var leads = false
+    /// Full height though not large: a hero's strip keeps its buttons the same size.
+    var full = false
     @State private var running = false
     @Environment(\.pageAccent) private var accent
 
     var body: some View {
-        if control.round { roundButton } else { framedButton }
+        if control.iconOnly { iconButton } else if control.round { roundButton } else { framedButton }
+    }
+
+    /// Its symbol in a framed square, for what a head keeps small.
+    private var iconButton: some View {
+        Button {
+            running = true
+            Task {
+                await model.run(control, on: nil)
+                running = false
+            }
+        } label: {
+            Image(systemName: control.symbol ?? "circle").font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.ink)
+                .frame(width: 34, height: 34)
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.line))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.sfBare)
+        .disabled(running || control.disabled)
+        // Its name first: this is the only place its words are drawn.
+        .help(Text(ext: [control.label, control.detail].compactMap { $0 }.joined(separator: ": ")))
+        .accessibilityLabel(Text(ext: control.label))
     }
 
     /// Its symbol in a circle, for a card whose whole point is this one action.
@@ -45,7 +68,7 @@ struct PageButton: View {
             if kind == .primary, let accent {
                 framed.buttonStyle(PageAccentButtonStyle(accent: accent, large: large))
             } else {
-                framed.buttonStyle(.sf(kind, compact: !large && control.style != .primary && control.style != .accent, large: large))
+                framed.buttonStyle(.sf(kind, compact: !large && !full && control.style != .primary && control.style != .accent, large: large))
             }
         }
         .disabled(running || control.disabled)
@@ -67,7 +90,9 @@ struct PageButton: View {
                     Image(systemName: symbol)
                 }
                 Text(ext: control.label)
+                if case .palette(let palette)? = control.act { PageShortcutCap(palette: palette, model: model) }
             }
+            .frame(maxWidth: control.fill ? .infinity : nil)
         }
     }
 
@@ -84,7 +109,7 @@ struct PageButton: View {
 extension ExtensionPage {
     /// Whether any button on the page is primary: when none is, a destructive one in the hero leads (D74).
     var hasPrimary: Bool {
-        if hero == nil, summary?.control?.style == .primary { return true }
+        if hero == nil, !bare, summary?.control?.style == .primary { return true }
         return sections.contains { s in
             s.blocks.contains { b in
                 switch b {
@@ -108,7 +133,9 @@ struct HeroView: View {
     var model: ExtensionPageModel
 
     var body: some View {
-        if hero.scene != nil || hero.figure != nil {
+        if hero.plain {
+            PageHeroStrip(hero: hero, model: model)
+        } else if hero.scene != nil || hero.figure != nil {
             PageSceneHero(hero: hero, model: model)
         } else if hero.code == nil && hero.facts.isEmpty && hero.image == nil && !hero.busy {
             ViewThatFits(in: .horizontal) {

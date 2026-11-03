@@ -397,9 +397,13 @@ extension EnvironmentValues {
 private struct CardSurface: ViewModifier {
     var radius: CGFloat
     @Environment(\.cardDress) private var dress
+    @Environment(\.pageFlat) private var flat
 
     func body(content: Content) -> some View {
-        if let dress {
+        // Already inside a section's card.
+        if flat {
+            content
+        } else if let dress {
             let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
             content.background(dress.fill, in: shape).overlay(shape.strokeBorder(dress.line ?? Theme.line).allowsHitTesting(false))
         } else {
@@ -413,13 +417,14 @@ private struct CardSurface: ViewModifier {
 struct RowsCard<Content: View>: View {
     @ViewBuilder var content: Content
     @Environment(\.pixelLength) private var pixel
+    @Environment(\.pageFlat) private var flat
 
     var body: some View {
         Group(subviews: content) { rows in
             VStack(spacing: 0) {
                 ForEach(rows) { row in
                     if row.id != rows.first?.id {
-                        Rectangle().fill(Theme.line).frame(height: pixel * 2).padding(.leading, Theme.Space.l)
+                        Rectangle().fill(Theme.line).frame(height: pixel * 2).padding(.leading, flat ? 0 : Theme.Space.l)
                     }
                     row.frame(maxWidth: .infinity, alignment: .leading)
                 }

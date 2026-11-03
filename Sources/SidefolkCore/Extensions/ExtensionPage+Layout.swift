@@ -25,6 +25,8 @@ extension ExtensionPage {
         for (i, section) in sections.enumerated() {
             if i == 0, hero != nil {
                 out.append((.top, [section]))
+            } else if let last = out.last, let first = last.sections.first, ExtensionPage.sameRow(first, section) {
+                out[out.count - 1].sections.append(section)
             } else if bottom || section.place == .bottom {
                 bottom = true
                 out.append((.bottom, [section]))
@@ -49,7 +51,7 @@ extension ExtensionPage.Section {
     }
 
     public var isWide: Bool {
-        if wide { return true }
+        if wide || standsAlone { return true }
         if blocks.contains(where: { $0.isMetric || ["hero", "transport", "tiles", "cards", "stats", "grid", "tabs", "badges", "recent", "scene", "table", "tree", "bar", "ticks"].contains($0.kind) }) { return true }
         if blocks.filter(\.isCard).count >= 2 { return true }
         let kinds = Set(blocks.map(\.kind))
@@ -90,6 +92,11 @@ extension ExtensionPage.Block {
         case .recent: "recent"
         case .table: "table"
         case .settings: "settings"
+        case .metric: "metric"
+        case .heading: "heading"
+        case .headsUps: "heads_ups"
+        case .hostControls: "host_controls"
+        case .preview: "preview"
         }
     }
 }

@@ -11,6 +11,14 @@ public enum PagePicture: Sendable, Hashable {
     case data(String)
     case companion(Figure)
     case person
+    /// An app's icon, from where it is installed. Only its icon: an extension learns nothing back.
+    case app(String)
+
+    /// Where apps are installed. Nothing else is looked at: not a volume that could hang, a folder of the pack's own, or anything merely named like an app.
+    public static func isAppPath(_ path: String) -> Bool {
+        let places = ["/Applications/", "/System/Applications/", "/System/Cryptexes/App/System/Applications/", "/System/Library/CoreServices/", NSHomeDirectory() + "/Applications/"]
+        return path.count <= 512 && path.hasSuffix(".app") && places.contains { path.hasPrefix($0) } && !path.split(separator: "/").contains { $0 == ".." || $0 == "." }
+    }
 
     /// `{"pack": "cards/a.webp", "dark": "cards/a-night.webp"}`, `{"data": "cover.jpg"}`, `{"companion": "face"}` or `{"person": true}`. A
     /// bad one is left out, never the part it is on.
@@ -22,6 +30,7 @@ public enum PagePicture: Sendable, Hashable {
         if let name = j["data"]?.stringValue, ExtensionDataFile.isValidName(name) { return .data(name) }
         if let figure = j["companion"]?.stringValue.flatMap(Figure.init(rawValue:)) { return .companion(figure) }
         if j["person"]?.boolValue == true { return .person }
+        if let path = j["app"]?.stringValue, isAppPath(path) { return .app(path) }
         return nil
     }
 }
@@ -228,7 +237,7 @@ extension ExtensionPage {
             return .settings(SettingsRows(title: text(j["title"], 60), keys: keys, ai: j["ai"]?.boolValue ?? false, aiTitle: text(j["ai_title"], 60), aiDetail: text(j["ai_detail"], 240),
                                           grid: j["grid"]?.boolValue ?? false, pictures: pictures))
         default:
-            return nil
+            return composedBlock(j)
         }
     }
 

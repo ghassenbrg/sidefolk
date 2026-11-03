@@ -149,7 +149,7 @@ struct ExtensionServiceTests {
         #expect(held.hasPrefix("Awake until") && held.contains("Screen may sleep"), "\(held)")
         let page = try await h.host.renderPage(extensionId: info.id, page: "awake")
         #expect(page.summary?.title.hasPrefix("Awake until") == true)
-        #expect(page.sections.flatMap(\.blocks).contains { if case .control(let c) = $0 { c.tool == "stop_keeping_awake" } else { false } })
+        #expect(page.sections.flatMap(\.blocks).contains { if case .hero(let h) = $0 { h.actions.contains { $0.tool == "stop_keeping_awake" } } else { false } })
         let nowhere = await h.call("ext.keep-awake.keep_awake", ["while_app": "No Such App Anywhere"])
         #expect(nowhere.okText == nil || nowhere.okText?.contains("isn't open") == true)
         let stopped = try #require(await h.call("ext.keep-awake.stop_keeping_awake").okText)
