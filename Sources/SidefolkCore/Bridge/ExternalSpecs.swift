@@ -100,19 +100,19 @@ extension ExternalToolPolicy {
             result: reminders_cancel takes it.
             """,
         "reminders.cancel": """
-            Cancel a reminder you set earlier, by the id reminders_create returned. A repeating reminder stops repeating. \
-            Reminders the user or other apps set can't be cancelled from here.
+            Cancel a reminder by its id. A repeating reminder stops repeating. One you set goes at once; anyone else's, the \
+            user's among them (reminders_list gives their ids), asks the user first, every time.
             """,
         "reminders.update": """
-            Change a reminder you set, by the id reminders_create returned; it keeps its id and the note or task it belongs to. \
-            title, when (plain language or ISO 8601; "every monday at 10am" changes the repeat, a single time moves the next \
-            one), notes (an empty string takes them away) or level. Reminders the user or other apps set can't be changed from here.
+            Change a reminder by its id; it keeps its id and the note or task it belongs to. title, when (plain language or ISO \
+            8601; "every monday at 10am" changes the repeat, a single time moves the next one), notes (an empty string takes \
+            them away) or level. One you set changes at once; anyone else's, the user's among them, asks the user first, every time.
             """,
-        "reminders.snooze": "Put off a reminder you set to a later time, by its id. `when` is plain language or ISO 8601. Reminders the user or other apps set can't be snoozed from here.",
+        "reminders.snooze": "Put off a reminder to a later time, by its id. `when` is plain language or ISO 8601. One you set moves at once; anyone else's, the user's among them, asks the user first, every time.",
         "reminders.complete": """
-            Mark a reminder you set as done, by its id. A repeating one keeps repeating; reminders_cancel stops it. One that belongs \
-            to an open task finishes the task too, unless the user keeps changing notes to themselves: then it says so. Reminders \
-            the user or other apps set can't be marked from here.
+            Mark a reminder as done, by its id. A repeating one keeps repeating; reminders_cancel stops it. One that belongs to \
+            an open task finishes the task too. One you set goes at once, unless it would finish a task and the user keeps \
+            changing notes to themselves: then it says so. Anyone else's, the user's among them, asks the user first, every time.
             """,
         "watch.create": """
             Tell the user when something happens, even while they're busy. kind: url_change (a public web page changed, or \

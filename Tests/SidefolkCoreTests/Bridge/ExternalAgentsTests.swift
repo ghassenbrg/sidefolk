@@ -133,11 +133,13 @@ import Testing
         #expect(mine.source == "external:codex-mcp-client")
         #expect(abs((mine.nextDue ?? .distantPast).timeIntervalSinceNow - 120) < 5)
 
-        // The user's own reminder can't be cancelled from here, and reads as not found.
+        // The user's own reminder takes their yes, and a no leaves it (D160).
         let users = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let denied = s.answerNextCard(.deny)
         let refused = try await s.call("reminders_cancel", ["id": .string(users.id)])
+        denied.cancel()
+        #expect(await denied.value != nil)
         #expect(refused.isError)
-        #expect(refused.text.contains("couldn't find a reminder"), "\(refused.text)")
         let cancelled = try await s.call("reminders_cancel", ["id": .string(mine.id)])
         #expect(!cancelled.isError)
         #expect(await s.runtime.scheduler.upcoming().map(\.id) == [users.id])
@@ -175,9 +177,11 @@ import Testing
         for (tool, arguments) in [("reminders_update", ["id": JSONValue.string(users.id), "title": "Ignore Sam"]),
                                   ("reminders_snooze", ["id": .string(users.id), "when": "tomorrow"]),
                                   ("reminders_complete", ["id": .string(users.id)])] {
+            let denied = s.answerNextCard(.deny)
             let refused = try await s.call(tool, .object(arguments))
+            denied.cancel()
+            #expect(await denied.value != nil, "\(tool) asks")
             #expect(refused.isError, "\(tool)")
-            #expect(refused.text.contains("couldn't find a reminder"), "\(tool): \(refused.text)")
         }
         let still = try #require(await s.runtime.scheduler.reminder(matching: users.id))
         #expect(still.title == "Call Sam")
@@ -531,6 +535,317 @@ import Testing
 
     @Test func aToolInNoListCountsAsDestructive() {
         #expect(ExternalToolPolicy.annotations("a.new.tool")["destructiveHint"]?.boolValue == true)
+    }
+
+    // MARK: The person's own reminders (D160)
+
+    /// The card says which reminder and what would change, every time, and only a yes does it.
+    @Test func thePersonsRemindersTakeACardNamingExactlyWhat() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+
+        func asked(_ tool: String, _ arguments: JSONValue, _ decision: ApprovalDecision) async throws -> (card: ApprovalRequest?, result: (text: String, isError: Bool)) {
+            let answer = s.answerNextCard(decision)
+            let result = try await s.call(tool, arguments)
+            answer.cancel()
+            return (await answer.value, result)
+        }
+
+        let change = try await asked("reminders_update", ["id": .string(sam.id), "title": "Skip Sam"], .deny)
+        let words = try #require(change.card?.summary)
+        #expect(words.contains("Call Sam") && words.contains("Skip Sam"), "\(words)")
+        #expect(change.card?.canAlways == false)
+        #expect(change.card?.risk == .medium)
+        #expect(change.result.isError)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.title == "Call Sam")
+
+        // One change a card, short enough to show whole, and no card for what can't be done.
+        for (arguments, says) in [(["id": JSONValue.string(sam.id), "title": "Skip Sam", "level": "gentle"], "one change"),
+                                  (["id": .string(sam.id), "title": .string(String(repeating: "x", count: 61))], "characters"),
+                                  (["id": .string(sam.id), "notes": .string(String(repeating: "x", count: 61))], "characters"),
+                                  (["id": .string(sam.id), "title": "\u{200B} "], "characters")] {
+            let refused = try await s.call("reminders_update", .object(arguments))
+            #expect(refused.isError)
+            #expect(refused.text.contains(says), "\(refused.text)")
+            #expect(await s.runtime.broker.pending().isEmpty)
+        }
+
+        let moved = try await asked("reminders_snooze", ["id": .string(sam.id), "when": "in 3 hours"], .allowOnce)
+        #expect(moved.card?.summary.contains("Call Sam") == true)
+        #expect(!moved.result.isError, "\(moved.result.text)")
+        #expect(!moved.result.text.contains("Call Sam"), "a yes isn't a read")
+        let quiet = try await asked("reminders_update", ["id": .string(sam.id), "level": "gentle"], .allowOnce)
+        #expect(!quiet.result.isError, "\(quiet.result.text)")
+        #expect(!quiet.result.text.contains("Call Sam") && !quiet.result.text.contains("2026"), "only what it asked for: \(quiet.result.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .snoozed)
+
+        // A yes is for that call: the next one asks again.
+        let renamed = try await asked("reminders_update", ["id": .string(sam.id), "title": "Ring Sam"], .allowOnce)
+        #expect(renamed.card != nil)
+        #expect(!renamed.result.isError, "\(renamed.result.text)")
+        let after = try #require(await s.runtime.scheduler.reminder(matching: sam.id))
+        #expect(after.title == "Ring Sam")
+        #expect(!ContextBuilder.isUserSourced(after.source), "the new words are outside words (T3)")
+        #expect(after.source != "external:codex-mcp-client", "a yes doesn't make it the agent's: the next change asks too")
+
+        let gone = try await asked("reminders_cancel", ["id": .string(sam.id)], .allowOnce)
+        #expect(gone.card?.summary.contains("Ring Sam") == true)
+        #expect(!gone.result.isError)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .cancelled)
+        await s.stop()
+    }
+
+    /// Finishing a reminder that belongs to a task says so on the card, and goes the one path (D115).
+    @Test func finishingThePersonsReminderSaysItsTaskToo() async throws {
+        let s = try await Stack()
+        let saved = await s.runtime.executor.execute(name: "notes.save", input: ["text": "Send the invoice", "kind": "task"], caller: .user)
+        guard case .ok(let made) = saved.status, let taskId = made.card?.refId else {
+            Issue.record("\(saved.status)")
+            return
+        }
+        let r = try await s.runtime.scheduler.create(title: "Send the invoice", at: Date().addingTimeInterval(3600), source: "user", itemId: taskId)
+        let answer = s.answerNextCard(.allowOnce)
+        let done = try await s.call("reminders_complete", ["id": .string(r.id)])
+        answer.cancel()
+        #expect(await answer.value?.summary.contains("task") == true)
+        #expect(!done.isError, "\(done.text)")
+        #expect(try await s.runtime.notebook.item(id: taskId)?.status == .done)
+        await s.stop()
+    }
+
+    /// No mode, grant or setting makes it automatic, and Off refuses before any card.
+    @Test func noSettingMakesThePersonsRemindersAutomatic() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        try await s.runtime.permissions.updatePolicy { $0.mode = .fullAccess }
+        await s.runtime.settings.update { $0.agentAccess.save = .allow; $0.agentAccess.change = .allow }
+        let denied = s.answerNextCard(.deny)
+        let refused = try await s.call("reminders_cancel", ["id": .string(sam.id)])
+        denied.cancel()
+        #expect(await denied.value != nil, "Full access answers for Sidefolk's own agent, not this")
+        #expect(refused.isError)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .scheduled)
+
+        await s.runtime.settings.update { $0.agentAccess.change = .off }
+        let off = try await s.call("reminders_cancel", ["id": .string(sam.id)])
+        #expect(off.text.contains("What other agents may do"), "\(off.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .scheduled)
+        await s.stop()
+    }
+
+    /// An agent's call on its own reminder, by the same name at the same moment, can't carry the other past its card.
+    @Test func anOwnReminderAtTheSameMomentDoesntStandIn() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let stream = s.runtime.events.stream()
+        let broker = s.runtime.broker
+        let waiting = Task<ApprovalRequest?, Never> {
+            for await e in stream { if case .approvalRequested(let r) = e { return r } }
+            return nil
+        }
+        // The person's first: it waits on its card while the agent's own go through.
+        s.pipes.send(["jsonrpc": "2.0", "id": 70, "method": "tools/call", "params": ["name": "reminders_cancel", "arguments": ["id": .string(sam.id)]]])
+        let card = try #require(await waiting.value)
+        var ownIds: [String] = []
+        for n in 0..<5 {
+            _ = n
+            let own = try await s.runtime.scheduler.create(title: "Mine", at: Date().addingTimeInterval(7200), source: "external:codex-mcp-client")
+            ownIds.append(own.id)
+        }
+        for (n, id) in ownIds.enumerated() {
+            let ownReply = try await s.pipes.request(80 + n, "tools/call", ["name": "reminders_cancel", "arguments": ["id": .string(id)]])
+            #expect(ownReply["result"]?["isError"] == false, "no card for its own")
+        }
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .scheduled, "still on its card")
+        await broker.resolve(id: card.id, decision: .deny)
+        #expect(try await s.pipes.receive()["id"] == 70)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .scheduled)
+        await s.stop()
+    }
+
+    @Test func aBadTimeIsSaidWithoutACard() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let bad = try await s.call("reminders_snooze", ["id": .string(sam.id), "when": "whenever"])
+        #expect(bad.isError)
+        #expect(bad.text.contains("couldn't read"), "\(bad.text)")
+        #expect(await s.runtime.broker.pending().isEmpty)
+        let ended = try await s.runtime.scheduler.create(title: "Done one", at: Date().addingTimeInterval(3600), source: "user")
+        _ = try await s.runtime.scheduler.complete(id: ended.id)
+        #expect(try await s.call("reminders_cancel", ["id": .string(ended.id)]).text.contains("couldn't find a reminder"))
+        await s.stop()
+    }
+
+    /// Only the person says what breaks through Quiet: no card asks to end, move or reword an important reminder of theirs.
+    @Test func anImportantReminderStaysWhatThePersonSaid() async throws {
+        let s = try await Stack()
+        let vital = try await s.runtime.scheduler.create(title: "Take the pill", at: Date().addingTimeInterval(3600), level: .critical, source: "user")
+        for (tool, arguments) in [("reminders_update", ["id": JSONValue.string(vital.id), "title": "Skip it"]), ("reminders_update", ["id": .string(vital.id), "level": "attention"]),
+                                  ("reminders_update", ["id": .string(vital.id), "notes": "new words"]), ("reminders_cancel", ["id": .string(vital.id)]),
+                                  ("reminders_complete", ["id": .string(vital.id)]), ("reminders_snooze", ["id": .string(vital.id), "when": "in 3 hours"])] {
+            let refused = try await s.call(tool, .object(arguments))
+            #expect(refused.text.contains("marked that reminder important"), "\(tool): \(refused.text)")
+        }
+        #expect(await s.runtime.broker.pending().isEmpty)
+        let after = try #require(await s.runtime.scheduler.reminder(matching: vital.id))
+        #expect(after.level == .critical && after.title == "Take the pill" && after.source == "user")
+        await s.stop()
+    }
+
+    /// What runs is what the card showed: a time as settled when asked, no repeat, words as they read.
+    @Test func whatRunsIsWhatTheCardShowed() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        for repeating in ["every 5 seconds tomorrow at 9am", "every monday at 10am", "every minute"] {
+            let refused = try await s.call("reminders_update", ["id": .string(sam.id), "when": .string(repeating)])
+            #expect(refused.text.contains("how it repeats"), "\(repeating): \(refused.text)")
+        }
+        let answer = s.answerNextCard(.allowOnce)
+        let moved = try await s.call("reminders_update", ["id": .string(sam.id), "when": "in 3 hours"])
+        answer.cancel()
+        #expect(await answer.value != nil)
+        #expect(!moved.isError, "\(moved.text)")
+        let due = try #require(await s.runtime.scheduler.reminder(matching: sam.id)?.nextDue)
+        #expect(abs(due.timeIntervalSinceNow - 3 * 3600) < 5)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.recurrence == nil)
+
+        let again = s.answerNextCard(.allowOnce)
+        _ = try await s.call("reminders_update", ["id": .string(sam.id), "notes": "\u{200B}  "])
+        again.cancel()
+        let card = await again.value
+        #expect(card?.summary.isEmpty == false)
+        let after = try #require(await s.runtime.scheduler.reminder(matching: sam.id))
+        #expect(after.notes == nil && after.source == "user", "blank words are no words")
+        await s.stop()
+    }
+
+    /// An agent's own stays under the ordinary rules: its repeat and long words are its own to change.
+    @Test func anAgentsOwnReminderKeepsItsOwnRules() async throws {
+        let s = try await Stack()
+        _ = try await s.call("reminders_create", ["title": "Mine", "when": "in 2 hours"])
+        let mine = try #require(await s.runtime.scheduler.upcoming().first)
+        let long = String(repeating: "x", count: 100)
+        let changed = try await s.call("reminders_update", ["id": .string(mine.id), "when": "every monday at 10am", "notes": .string(long), "title": "Mine still"])
+        #expect(!changed.isError, "\(changed.text)")
+        let after = try #require(await s.runtime.scheduler.reminder(matching: mine.id))
+        #expect(after.recurrence != nil && after.notes == long && after.title == "Mine still")
+        #expect(changed.text.contains("Mine still"))
+        await s.stop()
+    }
+
+    /// The card's word for the level is what's set, whatever its case.
+    @Test func aLevelInCapitalsReadsAndRunsTheSame() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let answer = s.answerNextCard(.allowOnce)
+        _ = try await s.call("reminders_update", ["id": .string(sam.id), "level": "GENTLE"])
+        answer.cancel()
+        #expect(await answer.value?.summary.contains("gently") == true)
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.level == .gentle)
+        await s.stop()
+    }
+
+    /// Finishing a task ends all its reminders: the card says so, and an important one of them holds it back.
+    @Test func aTasksOtherRemindersAreOnTheCard() async throws {
+        let s = try await Stack()
+        func task(_ title: String) async throws -> String {
+            let saved = await s.runtime.executor.execute(name: "notes.save", input: ["text": .string(title), "kind": "task"], caller: .user)
+            guard case .ok(let made) = saved.status, let id = made.card?.refId else { throw CancellationError() }
+            return id
+        }
+        let first = try await task("Send the invoice")
+        let one = try await s.runtime.scheduler.create(title: "Invoice", at: Date().addingTimeInterval(3600), source: "user", itemId: first)
+        _ = try await s.runtime.scheduler.create(title: "Invoice again", at: Date().addingTimeInterval(7200), source: "user", itemId: first)
+        let answer = s.answerNextCard(.deny)
+        _ = try await s.call("reminders_complete", ["id": .string(one.id)])
+        answer.cancel()
+        #expect(await answer.value?.summary.contains("ends all its reminders") == true)
+
+        let second = try await task("Take the pill")
+        let plain = try await s.runtime.scheduler.create(title: "Pill soon", at: Date().addingTimeInterval(3600), source: "user", itemId: second)
+        let vital = try await s.runtime.scheduler.create(title: "Pill now", at: Date().addingTimeInterval(7200), level: .critical, source: "user", itemId: second)
+        let refused = try await s.call("reminders_complete", ["id": .string(plain.id)])
+        #expect(refused.text.contains("marked important"), "\(refused.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == .scheduled)
+        #expect(try await s.runtime.notebook.item(id: second)?.status == .open)
+
+        // Its own reminder, tied to that task, is no way round: no card, and no finishing it.
+        let own = try await s.call("reminders_create", ["title": "Mine", "when": "in 3 hours", "item": .string(second)])
+        #expect(!own.isError, "\(own.text)")
+        let mine = try #require(await s.runtime.scheduler.upcoming().first { $0.source.hasPrefix("external:") })
+        let notMine = try await s.call("reminders_complete", ["id": .string(mine.id)])
+        #expect(notMine.text.contains("marked important"), "\(notMine.text)")
+        #expect(try await s.runtime.notebook.item(id: second)?.status == .open)
+        #expect(await s.runtime.scheduler.reminder(matching: vital.id)?.state == .scheduled)
+        await s.stop()
+    }
+
+    /// Whole ids only: a short one tells nothing, even of its own.
+    @Test func anAgentUsesTheWholeIdEvenForItsOwn() async throws {
+        let s = try await Stack()
+        _ = try await s.call("reminders_create", ["title": "Mine", "when": "in 2 hours"])
+        let mine = try #require(await s.runtime.scheduler.upcoming().first)
+        let short = try await s.call("reminders_cancel", ["id": .string(String(mine.id.prefix(8)))])
+        #expect(short.text.contains("couldn't find a reminder"), "\(short.text)")
+        #expect(await s.runtime.scheduler.reminder(matching: mine.id)?.state == .scheduled)
+        await s.stop()
+    }
+
+    /// Taking notes away adds no one's words, so a reminder stays the person's.
+    @Test func noNewWordsLeaveItThePersons() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), notes: "Old", source: "user")
+        let answer = s.answerNextCard(.allowOnce)
+        #expect(try await !s.call("reminders_update", ["id": .string(sam.id), "notes": ""]).isError)
+        answer.cancel()
+        _ = await answer.value
+        let after = try #require(await s.runtime.scheduler.reminder(matching: sam.id))
+        #expect(after.notes == nil && after.source == "user")
+        await s.stop()
+    }
+
+    /// Nothing about the person's reminders is told before a card and without the whole id: not by a short one, or bad words.
+    @Test func thereIsNoProbingForThePersonsReminders() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let short = String(sam.id.prefix(6))
+        let there = try await s.call("reminders_cancel", ["id": .string(short)])
+        let notThere = try await s.call("reminders_cancel", ["id": "000000"])
+        #expect(there.text.replacingOccurrences(of: short, with: "000000") == notThere.text)
+        let emptyThere = try await s.call("reminders_update", ["id": .string(sam.id)])
+        let emptyNot = try await s.call("reminders_update", ["id": "nope"])
+        #expect(emptyThere.text == emptyNot.text, "\(emptyThere.text) / \(emptyNot.text)")
+        let badThere = try await s.call("reminders_snooze", ["id": .string(sam.id), "when": "whenever"])
+        let badNot = try await s.call("reminders_snooze", ["id": "nope", "when": "whenever"])
+        #expect(badThere.text == badNot.text)
+        await s.stop()
+    }
+
+    /// The yes has to be for this: a card about the group, from "Ask each time", opens nothing of anyone else's.
+    @Test func aCardAboutTheGroupOpensNoOtherRecord() async throws {
+        let s = try await Stack()
+        await s.runtime.settings.update { $0.agentAccess.save = .ask }
+        let ended = try await s.runtime.scheduler.create(title: "Done one", at: Date().addingTimeInterval(3600), source: "user")
+        _ = try await s.runtime.scheduler.complete(id: ended.id)
+        let answer = s.answerNextCard(.allowOnce)
+        let refused = try await s.call("reminders_cancel", ["id": .string(ended.id)])
+        answer.cancel()
+        #expect(await answer.value != nil, "it asked, as that setting does")
+        #expect(refused.text.contains("couldn't find a reminder"), "\(refused.text)")
+        await s.stop()
+    }
+
+    /// A flow step isn't another agent: however its call is wrapped, a card doesn't reach the person's reminders (D160).
+    @Test func aFlowStepReachesOnlyItsOwn() async throws {
+        let s = try await Stack()
+        let sam = try await s.runtime.scheduler.create(title: "Call Sam", at: Date().addingTimeInterval(3600), source: "user")
+        let base = try #require(s.runtime.registry.tool(named: "reminders.cancel"))
+        let context = ToolContext(caller: .extension(id: "dev.sidefolk.sideflow"), now: Date())
+        var told: Error?
+        do { _ = try await ExternalFacade(base: base, spec: base.spec, onCard: "Cancel your reminder").run(["id": .string(sam.id)], context: context) } catch { told = error }
+        #expect(told != nil, "refused")
+        #expect(await s.runtime.scheduler.reminder(matching: sam.id)?.state == .scheduled)
+        await s.stop()
     }
 
     /// "watch this all week": as long as it said when made, up to a week, and nothing else moves.

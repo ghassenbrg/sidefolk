@@ -62,7 +62,8 @@ read their notes or reminders unless the task needs them.
 Write the title as the user would want to read it on a card ("Check the deploy", not "Reminder: user wants
 to check deploy"). Tell the user the time from the result ("Set for 14:32"). If the time is unclear ("later",
 "after lunch" with no hour you can read), ask before setting it. Keep the id from the result:
-`reminders_cancel {"id": "…"}` takes it, and you can cancel only reminders you set. Levels: `attention`
+`reminders_cancel {"id": "…"}` takes it. Yours change at once; anyone else's, the user's among them, asks the user each
+time, naming the reminder, so do it only when they asked. Levels: `attention`
 (default) or `gentle`; only the user can make a reminder critical, in Sidefolk.
 
 ### notes_save
