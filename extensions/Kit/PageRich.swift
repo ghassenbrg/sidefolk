@@ -65,9 +65,9 @@ public struct Card {
     public var done: Bool
     public var actions: [Action]
     public var menu: (label: String, items: [Action])?
-    /// A small drawing of a tree, at the card's foot (D118).
+    /// A small drawing of a tree, at the card's foot (D125).
     public var tree: CardTree?
-    /// What clicking anywhere on the card does (D118).
+    /// What clicking anywhere on the card does (D125).
     public var press: Action?
 
     public init(_ title: String, detail: String? = nil, meta: String? = nil, at: Date? = nil, picture: Picture? = nil, symbol: String? = nil, color: String? = nil,

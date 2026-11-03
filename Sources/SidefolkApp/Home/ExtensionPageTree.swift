@@ -1,7 +1,7 @@
 import SidefolkCore
 import SwiftUI
 
-/// A tree of cards that arranges itself (D118): where everything goes is `TreeLayout`'s, what a click means is the extension's tool. Native buttons, read top to bottom,
+/// A tree of cards that arranges itself (D125): where everything goes is `TreeLayout`'s, what a click means is the extension's tool. Native buttons, read top to bottom,
 /// so the keyboard and VoiceOver go through it like any list. Zoom and the small map are only for looking: nothing here changes anything until a card or a + is pressed.
 struct PageTreeView: View {
     var tree: ExtensionPage.Tree

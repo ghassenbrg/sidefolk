@@ -62,9 +62,9 @@ extension ExtensionPage {
             public var actions: [Control]
             /// A small menu beside them: "Level ▸ Easy, Fair, Hard".
             public var menu: Menu?
-            /// A small drawing of a tree, at the card's foot (D118).
+            /// A small drawing of a tree, at the card's foot (D125).
             public var tree: Tree?
-            /// What clicking anywhere on the card does (D118). Its label is what VoiceOver says the click does.
+            /// What clicking anywhere on the card does (D125). Its label is what VoiceOver says the click does.
             public var press: Control?
         }
 

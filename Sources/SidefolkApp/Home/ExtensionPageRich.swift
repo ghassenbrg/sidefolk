@@ -221,7 +221,7 @@ struct PageCard: View {
 
     var body: some View {
         if let press = item.press {
-            // The whole card goes somewhere (D118).
+            // The whole card goes somewhere (D125).
             card
                 .contentShape(Rectangle())
                 .onTapGesture { Task { await model.run(press, on: nil) } }
@@ -234,7 +234,7 @@ struct PageCard: View {
     private var card: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             plain
-            // Its tree's small drawing at its foot (D118).
+            // Its tree's small drawing at its foot (D125).
             if let tree = item.tree { TreeMini(tree: tree).frame(maxWidth: .infinity) }
         }
         .padding(Theme.Space.m)

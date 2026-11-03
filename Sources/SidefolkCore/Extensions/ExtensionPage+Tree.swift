@@ -1,6 +1,6 @@
 import Foundation
 
-/// A tree of cards that arranges itself (`tree`, D118): steps one under another, branches that split and join again. For anything that goes one way or
+/// A tree of cards that arranges itself (`tree`, D125): steps one under another, branches that split and join again. For anything that goes one way or
 /// another: a flow, a decision, a recipe with a choice, an onboarding. Read like any page part: what is off is dropped, nothing here reaches a model, and
 /// each hook runs one of the extension's own tools as the person, through Guard. It holds no meaning of its own: cards, lines, and what a click means is the tool's.
 extension ExtensionPage {

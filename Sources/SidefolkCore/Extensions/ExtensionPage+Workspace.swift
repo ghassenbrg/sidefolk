@@ -1,6 +1,6 @@
 import Foundation
 
-/// The small parts a page needs when it takes the window (D119): a head, a column of places, what a person will receive and a row of recent results. Any page may use them.
+/// The small parts a page needs when it takes the window (D126): a head, a column of places, what a person will receive and a row of recent results. Any page may use them.
 extension ExtensionPage {
     public struct PageHead: Sendable, Hashable {
         public var title: String

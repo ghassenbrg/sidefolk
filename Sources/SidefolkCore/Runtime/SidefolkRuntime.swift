@@ -218,13 +218,15 @@ public final class SidefolkRuntime: Sendable {
         startHearingTheCalendar()
     }
 
-    /// Says when a meeting is five minutes away, each once, while anyone listens (D123): the calendar has no such event of its own.
+    /// Says when a meeting is five minutes away, each once, while anyone listens (D129): the calendar has no such event of its own.
     private func startHearingTheCalendar() {
         let hearing = Task { [weak self] in
             var told = Set<String>()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
                 guard let self, await self.extensions.hearsHappenings else { continue }
+                // The person's switch for the calendar holds here too.
+                if (try? await self.permissions.policy())?.disabled.contains(.calendar) == true { continue }
                 let now = self.clock.now
                 for event in await self.calendarReader.events(from: now, to: now.addingTimeInterval(5 * 60)) ?? [] where !event.allDay && event.start > now {
                     let key = "\(event.id)\(event.start.timeIntervalSince1970)"

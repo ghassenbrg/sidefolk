@@ -45,6 +45,11 @@ extension ExtensionHost {
                 return
             }
             runtimes[id]?.actionCalls = recent + [now]
+            // A job uses the person's AI: only with leave to, and it counts toward the same day's cap.
+            if tool == CompanionJobTool.name, let why = await spendOnAI(id) {
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "denied", "text": .string(why)])
+                return
+            }
             let timeout = params["timeout"]?.doubleValue.map { min(max($0, 1), 600) }
             let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
             let asker = asker(rt)
@@ -52,7 +57,7 @@ extension ExtensionHost {
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
             Task { [weak self] in
                 let outcome = await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, timeout: timeout)
-                await self?.finishAction(id, request: request, standing: standing, outcome: outcome)
+                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool)
             }
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
@@ -64,7 +69,20 @@ extension ExtensionHost {
         }
     }
 
-    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome) async {
+    /// Why a job can't be paid for, or nil once it's counted.
+    private func spendOnAI(_ id: String) async -> String? {
+        guard let rt = runtimes[id], let ai = rt.pin.permissions?.ai, rt.preferences.aiOn != false else { return "A job uses the person's AI, and this extension hasn't been given it." }
+        let today = AIHelper.dayKey(Date())
+        guard rt.preferences.calls(on: today) < ai.dailyCap else { return "Today's AI requests are used up." }
+        await updatePreferences(id) { p in
+            p.aiCalls = p.calls(on: today) + 1
+            p.aiDay = today
+        }
+        events.changed(.extensions)
+        return nil
+    }
+
+    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "") async {
         end(id)
         let summary = ToolFormat.oneLine(ExtensionText.clean(outcome.activity.summary), 240)
         var reply: [String: JSONValue] = ["request": request, "summary": .string(summary), "standing": .bool(standing), "undoable": .bool(outcome.activity.undoAvailable)]
@@ -72,7 +90,9 @@ extension ExtensionHost {
         case .ok(let result):
             reply["ok"] = .bool(!result.isError)
             reply["status"] = .string(result.isError ? "error" : "ok")
-            reply["text"] = .string(result.text)
+            // What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done.
+            let carries = tool == CompanionJobTool.name && !Self.contained(runtimes[id]?.pin.permissions ?? ExtensionPermissions())
+            reply["text"] = .string(carries ? "Done." : result.text)
             reply["untrusted"] = .bool(result.untrusted)
         case .denied(let why):
             reply["ok"] = false
@@ -125,7 +145,7 @@ extension ExtensionHost {
     func notePersonCall(_ id: String, caller: Caller, tainted: Bool) {
         switch caller {
         case .user, .command: runtimes[id]?.lastPersonCall = Date()
-        case .agent where !tainted: runtimes[id]?.lastPersonCall = Date()
+        case .agent(let run) where !tainted && !run.hasPrefix(AgentRuntime.jobPrefix): runtimes[id]?.lastPersonCall = Date()
         default: break
         }
     }
@@ -219,7 +239,7 @@ extension ExtensionHost {
         }
         let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
         let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 200)
-        let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl, revised: previous != nil)
+        let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl, revised: previous != nil, holdsJob: steps.contains { $0.tool == CompanionJobTool.name })
         let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, when: when, body: body)
         let asker = asker(rt)
         runtimes[id]?.planAsking = true
@@ -248,7 +268,7 @@ extension ExtensionHost {
 
     // MARK: Its own watches
 
-    /// Something happened: those with `permissions.events` hear (D123). One that could carry words off the Mac hears only what and when, never the person's words.
+    /// Something happened: those with `permissions.events` hear (D129). One that could carry words off the Mac hears only what and when, never the person's words.
     func tell(_ happening: Happening) async {
         for rt in runtimes.values where rt.record.enabled && rt.pin.permissions?.events != nil {
             var params: [String: JSONValue] = ["name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]

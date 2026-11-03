@@ -10,7 +10,7 @@ public final class CompanionAgentSlot: Sendable {
     var current: AgentRuntime? { agent.withLock { $0 } }
 }
 
-/// `companion.job`: hands the companion a whole job, written out, to do with its tools (D121). It runs as any request to it does, in a conversation of its own, under the person's
+/// `companion.job`: hands the companion a whole job, written out, to do with its tools (D128). It runs as any request to it does, in a conversation of its own, under the person's
 /// own trust settings, so each thing it does passes Guard as Sidefolk's agent and shows in History. Never offered to the model: it can't start one of itself.
 struct CompanionJobTool: Tool {
     static let name = "companion.job"
@@ -27,26 +27,35 @@ struct CompanionJobTool: Tool {
             risk: .medium, capabilities: [.system], category: .agents, mutates: true, external: false, timeout: Self.seconds, offeredToModel: false)
     }
 
+    /// As long as a card shows in full: what it can't show can't be asked for.
+    static let longest = ExtensionPlanWords.valueLimit
+
     func summary(for input: JSONValue) -> String {
-        String(localized: "Let your companion: \(ToolFormat.oneLine(input.string("job") ?? "", 200))", comment: "A tool's row: “Let your companion: tidy my Downloads”")
+        String(localized: "Let your companion: \(ToolFormat.oneLine(ExtensionText.clean(input.string("job") ?? ""), Self.longest))", comment: "A tool's row: “Let your companion: tidy my Downloads”")
     }
 
     func scope(for input: JSONValue) -> ToolScope { ToolScope() }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let job = input.string("job")?.trimmingCharacters(in: .whitespacesAndNewlines), !job.isEmpty else { throw ToolError.invalidInput("Say what the job is.") }
+        guard job.count <= Self.longest, ExtensionText.clean(job) == job else { throw ToolError.invalidInput("A job is at most \(Self.longest) plain characters, so a card can show all of it.") }
         guard let agent = agent.current else { throw ToolError.unavailable("The companion can't take a job right now.") }
-        var answer: String?
-        // Its own conversation: whatever the person was saying in Ask stays as it was.
-        for await event in await agent.handle(AgentRequest(text: job, threadId: "job-\(Identifier.make())")) {
-            switch event {
-            case .reply(let reply): answer = reply.text
-            case .failed(let problem): throw ToolError.unavailable(problem.message)
-            default: break
+        // Only words the person read on a plan count as clean; anything else may have come from outside.
+        let handle = await agent.submit(AgentRequest(text: job, job: AgentRequest.Job(read: context.onPlan)))
+        return try await withTaskCancellationHandler {
+            var answer: String?
+            for await event in handle.events {
+                switch event {
+                case .reply(let reply): answer = reply.text
+                case .failed(let problem): throw ToolError.unavailable(problem.message)
+                default: break
+                }
             }
+            guard let answer else { throw ToolError.unavailable("The companion didn't answer.") }
+            // What it read on the way may be in its words.
+            return ToolResult(text: answer, untrusted: true)
+        } onCancel: {
+            Task { await agent.cancel(runId: handle.runId) }
         }
-        guard let answer else { throw ToolError.unavailable("The companion didn't answer.") }
-        // What it read on the way may be in its words.
-        return ToolResult(text: answer, untrusted: true)
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-/// `attention.set`: Open, Focus or Quiet, always with an end for the last two, so nothing is left silenced by a job that forgot (D122).
+/// `attention.set`: Open, Focus or Quiet, always with an end for the last two, so nothing is left silenced by a job that forgot (D127).
 struct AttentionSetTool: Tool {
     static let name = "attention.set"
 

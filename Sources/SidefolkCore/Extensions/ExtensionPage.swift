@@ -19,9 +19,9 @@ public struct ExtensionPage: Sendable, Hashable {
     public static let tileSize = SceneSize(width: 720, height: 300)
     /// How wide its column may grow (D108).
     public var maxWidth: Double?
-    /// The page takes the window (D119): its columns scroll on their own, and Home's sidebar folds while it shows. Only a bare page may.
+    /// The page takes the window (D126): its columns scroll on their own, and Home's sidebar folds while it shows. Only a bare page may.
     public var workspace = false
-    /// The person's own companion looks in at the page's corner (D119). Sidefolk places it; the extension never reads it.
+    /// The person's own companion looks in at the page's corner (D126). Sidefolk places it; the extension never reads it.
     public var companion = false
 
     public init(summary: Summary? = nil, sections: [Section] = []) {
@@ -55,7 +55,7 @@ public struct ExtensionPage: Sendable, Hashable {
     public struct Section: Sendable, Hashable {
         /// Where a section goes in a wide window (D74): with the page's main sections, or in a column beside them at
         /// the start edge (a list of devices or accounts to pick from). A narrow window keeps the page's order.
-        /// `trailing`, on a workspace page (D119): a column on the far side from `side`. On any other page it's with the main ones.
+        /// `trailing`, on a workspace page (D126): a column on the far side from `side`. On any other page it's with the main ones.
         public enum Place: String, Sendable, Hashable { case main, side, bottom, trailing }
 
         public var title: String?
@@ -134,15 +134,15 @@ public struct ExtensionPage: Sendable, Hashable {
         case table(PageTable)
         /// Things in order on a line, with their states (D113).
         case steps(Steps)
-        /// A tree of cards that arranges itself (D118).
+        /// A tree of cards that arranges itself (D125).
         case tree(Tree)
-        /// A compact head for a page that draws its own: its title, state, one sentence and actions (D119).
+        /// A compact head for a page that draws its own: its title, state, one sentence and actions (D126).
         case bar(PageHead)
-        /// A column of places to go (D119).
+        /// A column of places to go (D126).
         case nav(Nav)
-        /// What a person will receive, drawn as it will arrive (D119).
+        /// What a person will receive, drawn as it will arrive (D126).
         case notice(Notice)
-        /// A row of recent results, each a mark and its word (D119).
+        /// A row of recent results, each a mark and its word (D126).
         case ticks(Ticks)
     }
 

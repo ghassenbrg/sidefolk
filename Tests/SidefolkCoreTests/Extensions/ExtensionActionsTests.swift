@@ -217,7 +217,7 @@ import Testing
         async let answer = w.ask(tool, "sidefolk/plan.approve", ["plan": w.morning])
         let card = await w.answerCard(.allowOnce)
         guard case .text(let words)? = card?.details else { Issue.record("the card must show the plan in full"); return }
-        #expect(words.contains("Weekdays at 8:30"))
+        #expect(card?.summary == "Weekdays at 8:30")
         #expect(words.contains("filled in when it runs"))
         #expect(card?.canAlways == false)
         let reply = await answer

@@ -49,7 +49,7 @@ public struct ToolActivity: Sendable, Hashable {
     }
 }
 
-/// Something that happened in Sidefolk, for extensions with `permissions.events` (D123). `title` and `detail` are the person's own words.
+/// Something that happened in Sidefolk, for extensions with `permissions.events` (D129). `title` and `detail` are the person's own words.
 public struct Happening: Sendable, Hashable {
     /// What an extension may say it wants to hear.
     public static let names = ["reminder.fired", "reminder.created", "note.saved", "calendar.starting", "companion.finished", "agent.finished", "attention.changed", "mac.woke"]
@@ -64,9 +64,9 @@ public struct Happening: Sendable, Hashable {
         self.detail = detail
     }
 
-    /// What a tool's finishing says happened: only what the person or the companion did. What an extension did doesn't count, or a flow could set itself off.
+    /// What a tool's finishing says happened: only what the person or the companion did for them. What an extension did, or a job it handed over, doesn't count, or a flow could set itself off.
     public init?(_ activity: ToolActivity) {
-        guard activity.caller.kind != "extension" else { return nil }
+        guard activity.caller.kind != "extension", activity.caller.runId?.hasPrefix(AgentRuntime.jobPrefix) != true else { return nil }
         switch activity.tool {
         case "notes.save", "notes.update": self.init(name: "note.saved", title: activity.summary)
         case "reminders.create": self.init(name: "reminder.created", title: activity.summary)
@@ -95,7 +95,7 @@ public enum AppEvent: Sendable {
     case surface(SurfaceRequest)
     /// A watch an extension made fired: it hears, instead of the person (D111).
     case watchFired(extensionId: String, watch: String, title: String, summary: String)
-    /// Something happened an extension with `permissions.events` may hear (D123).
+    /// Something happened an extension with `permissions.events` may hear (D129).
     case happened(Happening)
     /// The extension was turned off or removed: its surface goes with it, kept or not.
     case surfaceGone(extensionId: String)

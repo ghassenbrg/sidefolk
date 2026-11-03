@@ -239,6 +239,8 @@ public struct ToolContext: Sendable {
     /// The one site this call may reach, when Guard let it through only because the person allowed that site for
     /// good while outside content was in play (D47): a redirect anywhere else is refused.
     public var site: String?
+    /// The call fits a plan the person read: its words are what they read (D110).
+    public var onPlan = false
     public init(caller: Caller, now: Date, tainted: Bool = false, folders: [GrantedFolder] = [], site: String? = nil) {
         self.caller = caller
         self.now = now

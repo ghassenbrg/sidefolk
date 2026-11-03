@@ -24,9 +24,9 @@ public struct Page {
     public var tile: Scene?
     /// How wide its column may grow, 640–1320 (D108).
     public var maxWidth: Double?
-    /// Takes the window (D119): `side` sections go in a column at the start, `trailing` ones at the end, each scrolling on its own; Home's sidebar folds while it shows.
+    /// Takes the window (D126): `side` sections go in a column at the start, `trailing` ones at the end, each scrolling on its own; Home's sidebar folds while it shows.
     public var workspace: Bool
-    /// The person's own companion looks in at the page's corner, and stands by what's `active` on a tree (D119). You never read it.
+    /// The person's own companion looks in at the page's corner, and stands by what's `active` on a tree (D126). You never read it.
     public var companion: Bool
 
     public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false) {
@@ -212,15 +212,15 @@ public enum Block {
     case scene(PageSceneBlock)
     /// Things in order, on a line (D113).
     case steps(StepRail)
-    /// A tree of cards that arranges itself (D118).
+    /// A tree of cards that arranges itself (D125).
     case tree(CardTree)
-    /// A compact head for a page that draws its own (D119).
+    /// A compact head for a page that draws its own (D126).
     case bar(PageBar)
-    /// A column of places to go (D119).
+    /// A column of places to go (D126).
     case nav(PageNav)
-    /// What a person will receive, drawn as it will arrive (D119).
+    /// What a person will receive, drawn as it will arrive (D126).
     case notice(PageNotice)
-    /// A row of recent results (D119).
+    /// A row of recent results (D126).
     case ticks(PageTicks)
     /// A value edited in place (D113).
     case edit(EditField)

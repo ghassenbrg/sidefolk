@@ -188,8 +188,9 @@ public actor ExtensionHost {
                     await self?.tell(happening)
                 case .toolFinished(let activity, ok: true):
                     if let happening = Happening(activity) { await self?.tell(happening) }
-                case .agent(_, .reply(let reply)):
-                    await self?.tell(Happening(name: "companion.finished", title: String(reply.text.prefix(200))))
+                case .agent(let thread, .reply) where !thread.hasPrefix(AgentRuntime.jobPrefix):
+                    // That it finished, not what it said: an answer may hold anything of theirs.
+                    await self?.tell(Happening(name: "companion.finished"))
                 default:
                     continue
                 }

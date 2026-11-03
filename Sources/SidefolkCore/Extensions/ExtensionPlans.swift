@@ -188,7 +188,7 @@ enum ExtensionPlanWords {
     }
 
     /// The whole card. Plans the person allowed before under the same id say what is new first.
-    static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool) -> String {
+    static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool, holdsJob: Bool = false) -> String {
         var out: [String] = []
         func bullets(_ list: [(text: String, standing: Bool, new: Bool)]) -> String { list.map { "• \($0.text)" }.joined(separator: "\n") }
         let standing = lines.filter(\.standing)
@@ -202,6 +202,9 @@ enum ExtensionPlanWords {
         let asking = lines.filter { !$0.standing }
         if !asking.isEmpty { out.append(String(localized: "It will still ask you each time:", comment: "A plan's card") + "\n" + bullets(asking)) }
         out.append(String(localized: "What these return goes to \(name), which can't reach the internet by itself.", comment: "A plan's card; the extension's name"))
+        if holdsJob {
+            out.append(String(localized: "A job for your companion uses your AI and its tools, under your own trust settings. What it does is in History.", comment: "A plan's card"))
+        }
         if let ttl {
             let minutes = max(1, ttl / 60)
             out.append(String(localized: "This ends by itself in \(minutes) minutes.", comment: "A plan's card"))

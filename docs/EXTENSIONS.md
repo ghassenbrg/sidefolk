@@ -144,6 +144,7 @@ not listed on this page is an error**, so a typo never silently changes what an 
 | `watchers.<name>.config.<key>` | no | `type` (`integer`, `number`, `string`, `boolean`), and optionally `description`, `default`, `required`, `minimum`, `maximum`. |
 | `tools.<name>.summary` | no | The sentence for a call, with its arguments ([A call in one sentence](#a-call-in-one-sentence)); believed for Sidefolk's own. |
 | `permissions.ai` | no | `purpose` and `daily_cap`: the person's AI, for words only ([AI help](#ai-help)). |
+| `permissions.events` | no | `purpose`: hearing what happens in Sidefolk ([Hearing what happens](#hearing-what-happens)). Needs `background` to hear while no page is open. |
 | `permissions.act` | no | `purpose`: asking for Sidefolk's tools, through Guard ([Using Sidefolk's tools](#using-sidefolks-tools-d110)). |
 | `tools.<name>.agents` | no | `true`: other agents may use it, on a card each time ([Tools for other agents](#tools-for-other-agents-d112)). |
 | `games` | no | Retired (D101): a pack naming it can't be installed. A copy already installed stays listed, doesn't run, and offers its update. |
@@ -1193,6 +1194,18 @@ A watch you make with `watch.create` under `permissions.act` tells you and not t
 ```
 
 `steps`: up to 64 rows, `state` one of `none pending running waiting done failed skipped`, `depth` 0–2, two `actions` a row. Reorder sends `{"id": moved, "before": id or null}`, among a row's own only, by drag, its menu or VoiceOver. A `locked` row can't move. It takes a column beside its neighbours: put it in a `place: .side` section to have what it selects beside it. `field` with an `id`: no button, runs your tool on Return or on leaving it, up to 8,000 characters, `kind` `text multiline time number`, up to 16 `tokens` (chips that put a value at the caret). `id` keeps what's typed apart from the next field's. `multiple`: your tool gets the whole set, in the options' order. Older copies skip `steps`.
+
+## A tree of cards, and pages that take the window
+
+`.tree(CardTree(nodes, selected:, select:, insert:, reorder:, picker:, tools:, line:))`: up to 64 cards. Each `CardTree.Node` has a `kind`, a `title`, `symbol`, `color`, `state` (`none pending active done skipped attention`), a `pill` and `branches`, up to 4, each with its own `id`, `label`, `tone`, `taken` and cards, 4 deep at most. Sidefolk lays it out and draws it; a card you didn't give `select` isn't pressable. A + says `insert`'s `key` is the card it comes after, or a branch's `id` for the start of that branch; with a `picker`, it opens a searchable list first (up to 256 items) and the chosen id goes under the picker's `key`. `reorder` gets `{id, before}`. `Card(tree:)` draws one small, and `Card(press:)` makes the whole card a button.
+
+`Page(workspace: true)` takes the window: `Section(place: .side)` in a column at the start, `.trailing` at the end, each scrolling on its own, and a section that holds only a tree fills the middle. Heads (`.bar(PageBar)` and tabs that go somewhere) stay put above it. Home's sidebar folds while it shows. `.nav(PageNav)` lists places, `.notice(PageNotice)` draws what a person will receive, `.ticks(PageTicks)` recent results, and `Page(companion: true)` has the person's own companion look in at the corner and stand beside what's `active` on a tree. You never read which companion it is.
+
+## Hearing what happens
+
+With `permissions.events`, a running program hears `sidefolk/happened {name, at, title?, detail?}`: `reminder.fired`, `reminder.created`, `note.saved`, `calendar.starting`, `companion.finished`, `agent.finished`, `attention.changed`, `mac.woke`. `ext.on("sidefolk/happened") { args in … }`. The words are the person's own, and only an extension that can't reach out hears them (no `network`, `exec`, `files.write`, `clipboard`, `screen`, `udp`); any other hears the name and the time. What an extension did through `permissions.act` doesn't count.
+
+Through `permissions.act`, `companion.job {job}` hands the companion a whole job under the person's trust settings and returns its answer, and `attention.set {mode, minutes}` sets Focus or Quiet with an end. MCP servers' tools and programs that can run anything are reachable too, on a card every time.
 
 ## Speaking the person's language
 

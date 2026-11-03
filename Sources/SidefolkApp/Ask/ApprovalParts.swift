@@ -81,25 +81,10 @@ struct ApprovalDetails: View {
 private struct ReadInFull: View {
     var text: String
 
-    private struct Part: Identifiable {
-        var id: Int
-        var heading: String?
-        var rows: [String]
-    }
-
-    private var parts: [Part] {
-        text.components(separatedBy: "\n\n").enumerated().map { i, paragraph in
-            let lines = paragraph.components(separatedBy: "\n")
-            let rows = lines.filter { $0.hasPrefix("• ") }.map { String($0.dropFirst(2)) }
-            if rows.isEmpty || rows.count != lines.count - 1 || lines[0].hasPrefix("• ") { return Part(id: i, heading: nil, rows: [paragraph]) }
-            return Part(id: i, heading: lines[0], rows: rows)
-        }
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
-                ForEach(parts) { part in
+                ForEach(Array(ApprovalText.parts(text).enumerated()), id: \.offset) { _, part in
                     if let heading = part.heading {
                         VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                             Text(verbatim: heading).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)

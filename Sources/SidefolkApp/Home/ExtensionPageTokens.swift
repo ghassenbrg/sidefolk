@@ -2,7 +2,7 @@ import AppKit
 import SidefolkCore
 import SwiftUI
 
-/// Words with values among them, each value a chip that moves and deletes as one (D118): the person sees "Today's plan", never the `{{plan}}` it stands for. What goes to
+/// Words with values among them, each value a chip that moves and deletes as one (D125): the person sees "Today's plan", never the `{{plan}}` it stands for. What goes to
 /// the tool is the plain text, values written as they came. Anything that isn't one of the field's own tokens stays plain text, so nothing typed can be lost.
 struct TokenTextEditor: NSViewRepresentable {
     @Binding var text: String

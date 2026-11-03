@@ -1,13 +1,13 @@
 import SidefolkCore
 import SwiftUI
 
-/// Says that the page showing takes the window (D119): Home folds its sidebar while it does. The person can still open it with the toolbar's button.
+/// Says that the page showing takes the window (D126): Home folds its sidebar while it does. The person can still open it with the toolbar's button.
 struct PageTakesWindow: PreferenceKey {
     static let defaultValue = false
     static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
 }
 
-/// A page that takes the window (D119): a column of places at the start, the main part in the middle and what's selected at the end. Each scrolls on its own, and a tree in
+/// A page that takes the window (D126): a column of places at the start, the main part in the middle and what's selected at the end. Each scrolls on its own, and a tree in
 /// the middle fills what's left. Narrower, the places go first; narrower still, the end column sits under the main part. What goes where stays the extension's word.
 struct PageWorkspace: View {
     var page: ExtensionPage
@@ -124,7 +124,7 @@ extension ExtensionPage.Section {
 
 // MARK: The head
 
-/// A page's own compact head (D119): the way back, its title and state, one sentence, and what can be done from here.
+/// A page's own compact head (D126): the way back, its title and state, one sentence, and what can be done from here.
 struct PageBarView: View {
     var bar: ExtensionPage.PageHead
     var model: ExtensionPageModel
@@ -172,7 +172,7 @@ struct PageBarView: View {
 
 // MARK: Places
 
-/// A column of places to go (D119). It may be headed by the extension's own icon and name, as Sidefolk knows them.
+/// A column of places to go (D126). It may be headed by the extension's own icon and name, as Sidefolk knows them.
 struct PageNavView: View {
     var nav: ExtensionPage.Nav
     var model: ExtensionPageModel
@@ -258,7 +258,7 @@ struct PageNavView: View {
 
 // MARK: What arrives
 
-/// What a person will receive, drawn as it will arrive (D119).
+/// What a person will receive, drawn as it will arrive (D126).
 struct PageNoticeView: View {
     var notice: ExtensionPage.Notice
     var model: ExtensionPageModel
@@ -309,7 +309,7 @@ struct PageNoticeView: View {
     }
 }
 
-/// A row of recent results (D119): each a mark, its word on hover and to VoiceOver.
+/// A row of recent results (D126): each a mark, its word on hover and to VoiceOver.
 struct PageTicksView: View {
     var ticks: ExtensionPage.Ticks
 

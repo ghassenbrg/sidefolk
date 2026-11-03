@@ -1,6 +1,6 @@
 import Foundation
 
-/// A tree of cards that arranges itself (`tree`, D118): steps one under another, branches that split and join again. For anything that goes one way or another: a flow,
+/// A tree of cards that arranges itself (`tree`, D125): steps one under another, branches that split and join again. For anything that goes one way or another: a flow,
 /// a decision, a recipe with a choice. Sidefolk lays it out and draws it, with zoom, a small map, keyboard and VoiceOver; what a click means is your tools'.
 public struct CardTree {
     public struct Node {
@@ -154,7 +154,7 @@ public struct CardTree {
     }
 }
 
-/// A compact head for a page that draws its own (D119): the way back comes from `Page.back`.
+/// A compact head for a page that draws its own (D126): the way back comes from `Page.back`.
 public struct PageBar {
     public var title: String
     public var pill: Badge?
@@ -178,7 +178,7 @@ public struct PageBar {
     }
 }
 
-/// A column of places to go (D119). `brand` heads it with your icon and name, as Sidefolk knows them.
+/// A column of places to go (D126). `brand` heads it with your icon and name, as Sidefolk knows them.
 public struct PageNav {
     public struct Item {
         public var id: String
@@ -236,7 +236,7 @@ public struct PageNav {
     }
 }
 
-/// What a person will receive, drawn as it will arrive (D119). `placeholder`: nothing to show yet.
+/// What a person will receive, drawn as it will arrive (D126). `placeholder`: nothing to show yet.
 public struct PageNotice {
     public var title: String?
     public var body: String?
@@ -265,7 +265,7 @@ public struct PageNotice {
     }
 }
 
-/// A row of recent results (D119): each a mark, its word on hover and to VoiceOver.
+/// A row of recent results (D126): each a mark, its word on hover and to VoiceOver.
 public struct PageTicks {
     public struct Item {
         public var tone: Tone

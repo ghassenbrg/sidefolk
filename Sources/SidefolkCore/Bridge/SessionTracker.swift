@@ -194,7 +194,7 @@ public actor SessionTracker {
     /// session that resumes by itself (its own background work, the founder's case) stopped many times an hour and
     /// each stop read as something to answer.
     private func tapFinished(_ s: AgentSession) async {
-        events.publish(.happened(Happening(name: "agent.finished", title: "\(Self.agentName(s.agent)) · \(Self.project(s))", detail: s.title)))
+        events.publish(.happened(Happening(name: "agent.finished", title: "\(Self.agentName(s.agent)) · \(Self.project(s))")))
         await withdrawFinished(s.id)
         let item = await attention.post(AttentionRequest(
             level: .gentle, source: Self.source(s),

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-@Suite("Page parts: a tree and a workspace (D118, D119)")
+@Suite("Page parts: a tree and a workspace (D125, D126)")
 struct ExtensionPageTreeTests {
     private func page(_ blocks: [JSONValue], extra: [String: JSONValue] = [:]) throws -> ExtensionPage {
         var object: [String: JSONValue] = ["sections": .array([.object(["blocks": .array(blocks)])])]

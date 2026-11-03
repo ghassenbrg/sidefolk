@@ -329,7 +329,11 @@ public final class ToolExecutor: Sendable {
         var act = act
         act.decision = decision
         events.publish(.toolStarted(act))
-        let context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
+        let context = {
+            var context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site)
+            context.onPlan = decision == .plan
+            return context
+        }()
         do {
             var result = try await withTimeout(timeout) { try await tool.run(input, context: context) }
             act.card = result.card

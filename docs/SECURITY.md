@@ -1186,6 +1186,7 @@ The budget bounds that to about nine characters per yes, then the person is aske
 | Tool | May be filled in when it runs | Why that's contained |
 |---|---|---|
 | `notes.save` | `text` | Stays in the notebook, marked with the extension as its source |
+| `notes.search` | `query` | Looks through their own notes; nothing leaves, and what it finds comes back as any read does |
 | `reminders.create` | `title`, `notes` | Shown to the person, under the extension's reminder |
 | `notify.user` | `title`, `body` | Shown to the person, with the extension's name |
 | `ask.user` | `question` | Shown to the person, with the extension's name |

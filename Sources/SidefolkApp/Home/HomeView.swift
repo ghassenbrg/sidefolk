@@ -8,7 +8,7 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var sayFocus = 0
     @State private var detailWidth: CGFloat = 1000
-    /// Folded while a page that takes the window shows (D119), and back as the person had it after.
+    /// Folded while a page that takes the window shows (D126), and back as the person had it after.
     @State private var sidebar: NavigationSplitViewVisibility = .automatic
     @State private var sidebarBefore: NavigationSplitViewVisibility?
 

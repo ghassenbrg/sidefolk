@@ -1,8 +1,8 @@
 import Foundation
 
-/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, D120, SECURITY T43). Sidefolk's own are listed by
+/// Which of Sidefolk's tools an extension with `permissions.act` may ask to run, and how (D110, D127, SECURITY T43). Sidefolk's own are listed by
 /// name, as `ExternalToolPolicy` lists them for other agents; what could widen an extension's own reach (other extensions' settings, skills, memory, Sidefolk's own
-/// host tools) simply doesn't exist for it. Every other extension's tools and every MCP server's are reachable, the person's call on the founder's word (D120); those
+/// host tools) simply doesn't exist for it. Every other extension's tools and every MCP server's are reachable, the person's call on the founder's word (D127); those
 /// that run outside a sandbox or can run anything are on a card every single time, never in a plan and never "Always".
 public enum ExtensionActionPolicy {
     /// Reaching the person is all they do, so they keep their risk: the words are shown as the extension's.
@@ -12,7 +12,7 @@ public enum ExtensionActionPolicy {
         "agenda.today", "calendar.today", "calendar.create", "calendar.update", "calendar.delete",
         "notes.save", "notes.search", "notes.list", "notes.update", "notes.trash", "collections.list", "collections.create",
         "reminders.create", "reminders.list", "reminders.cancel", "reminders.complete", "reminders.snooze",
-        "watch.create", "watch.list", "watch.pause", "watch.resume", "watch.stop", "watch.read", "watch.report", "watch.command",
+        "watch.create", "watch.list", "watch.pause", "watch.resume", "watch.stop", "watch.report", "watch.command",
         "web.fetch", "files.list", "files.read", "files.search", "files.mkdir", "files.move", "files.rename", "files.trash", "files.reveal",
         "clipboard.read", "clipboard.write", "open.url", "open.email", "open.app",
         "applenotes.list", "applenotes.read", "applenotes.copy", "applenotes.remove", "applereminders.list",
@@ -40,9 +40,11 @@ public enum ExtensionActionPolicy {
         return builtIn.contains(tool.spec.name)
     }
 
-    /// Whether a card can't really say what it will do: it runs outside any sandbox, or can run anything. It stays a card every time (D120).
+    /// Whether a card is all there can be: it runs outside any sandbox, can run anything, or turns down what reaches the person. It stays a card every time (D127).
     static func alwaysAsks(_ tool: any Tool) -> Bool {
         if !tool.spec.capabilities.isDisjoint(with: [.shell]) { return true }
+        // It turns down what may interrupt the person, so it could silence a notice without their noticing: their yes each time, until they say otherwise.
+        if tool.spec.name == AttentionSetTool.name { return true }
         if let ext = tool as? ExtensionTool { return !ext.sandboxed }
         return false
     }
