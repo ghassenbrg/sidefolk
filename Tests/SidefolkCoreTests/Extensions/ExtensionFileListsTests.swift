@@ -223,6 +223,18 @@ import Testing
         #expect(DropChoices.offers(forFiles: ["/a.jpg", "/b.png"], among: [drop]).isEmpty)
     }
 
+    /// Saving beside a dropped file can put what it read in a synced folder, as a write folder can: no plans, and no promise.
+    @Test func savingBesideAFileIsntContained() {
+        #expect(ExtensionPermissions().isContained)
+        let saves = ExtensionPermissions(events: ExtensionPurpose(purpose: "to hear what happens"), placesFiles: true)
+        #expect(!saves.isContained)
+        #expect(!PermissionSummary.forExtension(saves).lines.contains { $0.note?.contains("can't reach the internet by itself") == true })
+    }
+
+    @Test func runningAProgramCountsAsAWayOut() {
+        #expect(ExtensionPermissions(exec: ["/usr/bin/true"]).carriesOut)
+    }
+
     @Test func usingSidefolksToolsCountsAsAWayOut() {
         #expect(ExtensionPermissions(act: ExtensionPurpose(purpose: "to save notes")).carriesOut)
         #expect(!ExtensionPermissions(events: ExtensionPurpose(purpose: "to hear what happens")).carriesOut, "it only hears")

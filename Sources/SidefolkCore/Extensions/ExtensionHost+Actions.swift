@@ -108,7 +108,7 @@ extension ExtensionHost {
             reply["ok"] = .bool(!result.isError)
             reply["status"] = .string(result.isError ? "error" : "ok")
             // What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done.
-            let carries = tool == CompanionJobTool.name && !Self.contained(runtimes[id]?.pin.permissions ?? ExtensionPermissions())
+            let carries = tool == CompanionJobTool.name && !(runtimes[id]?.pin.permissions ?? ExtensionPermissions()).isContained
             reply["text"] = .string(carries ? "Done." : result.text)
             reply["untrusted"] = .bool(result.untrusted)
         case .denied(let why):
@@ -169,12 +169,6 @@ extension ExtensionHost {
         }
     }
 
-    /// An extension that could carry what it reads out by itself gets no plans, only cards: what a plan's reads return goes to its program, and a
-    /// plan's point is that from there it can reach only what the person read.
-    private static func contained(_ p: ExtensionPermissions) -> Bool {
-        !p.network && p.exec.isEmpty && p.programs.isEmpty && p.write.isEmpty && p.folders != .write && !p.clipboard && !p.screen && !p.udp && !p.placesFiles
-    }
-
     /// Who a plan was allowed for.
     private func owner(_ rt: Runtime) -> String {
         let encoder = JSONEncoder()
@@ -207,7 +201,7 @@ extension ExtensionHost {
     /// The step of a live plan this call fits, as it was written; nil when it fits none, and it asks.
     private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, counting: Bool, gateway: ExtensionActionGateway) async -> JSONValue? {
         guard let rt = runtimes[id], let plan, let saved = rt.preferences.plans[plan], saved.live(at: Date(), owner: owner(rt)),
-              Self.contained(rt.pin.permissions ?? ExtensionPermissions()), ExtensionPlanRules.short(input), let tool = gateway.tool(named: name, for: id) else { return nil }
+              (rt.pin.permissions ?? ExtensionPermissions()).isContained, ExtensionPlanRules.short(input), let tool = gateway.tool(named: name, for: id) else { return nil }
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
         let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
         let fits = saved.steps.first { step in
@@ -233,7 +227,7 @@ extension ExtensionHost {
         guard let rt = runtimes[id], let plan = params["plan"] else { return await refuse("unusable") }
         // One card at a time for a plan: what the person is reading is what is saved.
         guard !rt.planAsking else { return await refuse("busy") }
-        guard Self.contained(rt.pin.permissions ?? ExtensionPermissions()) else { return await refuse("not_contained") }
+        guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
         guard let planId = plan["id"]?.stringValue, planId.range(of: #"^[A-Za-z0-9._:-]{1,64}$"#, options: .regularExpression) != nil,
               let rawSteps = plan["steps"]?.arrayValue, (1...ExtensionPlanRules.maxSteps).contains(rawSteps.count) else { return await refuse("unusable") }
