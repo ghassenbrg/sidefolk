@@ -526,6 +526,7 @@ struct ResultCardView<Actions: View>: View {
                     Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                if let tree = card.tree.flatMap(ExtensionPage.tree(from:)) { TreeCompact(tree: tree) }
                 // At the trailing end, as every card's answers are (b07).
                 ButtonRow { actions }.frame(maxWidth: .infinity, alignment: .trailing)
             }

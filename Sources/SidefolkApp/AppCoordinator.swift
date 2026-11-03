@@ -922,6 +922,8 @@ final class AppCoordinator {
                 if !companion.isVisible { showCompanion(true) }
             }
             player.play(act)
+        case .speak(let line):
+            voice.sayForATool(line, with: runtime.settings.current.voice)
         case .settingsChangedByTool:
             settingsChanged()
         case .surface(let request):

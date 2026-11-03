@@ -10783,7 +10783,7 @@
       }
     },
     "%@ says: %@" : {
-      "comment" : "VoiceOver: what an extension's panel announces, always with the extension's name",
+      "comment" : "Spoken aloud: an extension's name, then its words\nVoiceOver: what an extension's panel announces, always with the extension's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -54266,6 +54266,7 @@
       }
     },
     "Change how Sidefolk looks" : {
+      "comment" : "A tool: light or dark, a theme, which companion",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -54319,6 +54320,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改 Sidefolk 的外观"
+          }
+        }
+      }
+    },
+    "Change how Sidefolk looks: %@" : {
+      "comment" : "A tool's row; what changes: “dark, harbor”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير مظهر Sidefolk: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändern, wie Sidefolk aussieht: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar el aspecto de Sidefolk: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changer l’apparence de Sidefolk : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia l’aspetto di Sidefolk: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkの見た目を変える：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 모양 바꾸기: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar a aparência do Sidefolk: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改 Sidefolk 的外观：%@"
           }
         }
       }
@@ -83467,6 +83527,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来自这台 Mac 上的文件夹"
+          }
+        }
+      }
+    },
+    "From a job you set up: %@" : {
+      "comment" : "Spoken aloud: words from a job an extension handed the companion",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من مهمة أعددتها: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus einem Auftrag, den du eingerichtet hast: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De un trabajo que configuraste: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’une tâche que vous avez configurée : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da un incarico che hai impostato: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたが設定したジョブから: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 설정한 작업에서: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De um trabalho que você configurou: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自你设置的任务：%@"
           }
         }
       }
@@ -165189,6 +165308,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "说"
+          }
+        }
+      }
+    },
+    "Say aloud: %@" : {
+      "comment" : "A tool's row: “Say aloud: time to stretch”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قول بصوت عالٍ: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laut sagen: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decir en voz alta: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dire à voix haute : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dire ad alta voce: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "声に出す：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "소리 내어 말하기: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dizer em voz alta: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "朗读：%@"
+          }
+        }
+      }
+    },
+    "Say something aloud" : {
+      "comment" : "A tool: speaks a line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قول شيء بصوت عالٍ"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwas laut sagen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decir algo en voz alta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dire quelque chose à voix haute"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dire qualcosa ad alta voce"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "声に出して言う"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "소리 내어 말하기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dizer algo em voz alta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "朗读一句话"
           }
         }
       }

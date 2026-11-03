@@ -109,6 +109,9 @@ extension ExtensionPage {
         return Steps.Hook(tool: tool, input: input, key: key, label: text(h["label"], 30))
     }
 
+    /// A tree a tool's reply showed on its card.
+    public static func tree(from j: JSONValue) -> Tree? { parseTree(j) }
+
     static func parseTree(_ j: JSONValue) -> Tree? {
         var seen = Set<String>()
         var left = maxTreeNodes
@@ -174,6 +177,20 @@ public struct TreeLayout: Sendable {
         public var margin: CGFloat = 32
 
         public init() {}
+        /// With words on its cards, small: a card in Ask.
+        public static var compact: Metrics {
+            var m = Metrics()
+            m.card = CGSize(width: 216, height: 40)
+            m.gap = 14
+            m.gutter = 10
+            m.split = 8
+            m.drop = 22
+            m.join = 8
+            m.empty = 60
+            m.margin = 2
+            return m
+        }
+
         /// A card's small drawing of itself (`Card.tree`).
         public static var mini: Metrics {
             var m = Metrics()

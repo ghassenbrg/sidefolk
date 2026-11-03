@@ -5,6 +5,20 @@ import SidefolkCore
 /// Mac Pulse+'s page as it reads on a typical afternoon, with ten minutes of history: what the UI snapshots show
 /// for extension pages (D62) without running the extension.
 enum SampleExtensionPage {
+    /// The card a tool leaves in Ask with a tree on it.
+    static func treeForAsk() -> ResultCard? {
+        let json = #"""
+        {"type": "tree", "line": ["#4FA8F5", "#7C5CFC"], "nodes": [
+          {"id": "start", "title": "Every Friday at 16:00", "symbol": "calendar.badge.clock", "color": "#4FA8F5", "state": "pending"},
+          {"id": "sum", "title": "Write a summary with AI", "symbol": "sparkles", "color": "#C65CD6", "state": "pending"},
+          {"id": "save", "title": "Save a note", "symbol": "note.text", "color": "#52C08A", "state": "pending"}]}
+        """#
+        guard let tree = try? JSONValue.parse(Data(json.utf8)) else { return nil }
+        var card = ResultCard(kind: .extensionResult, title: "Make a routine", subtitle: "A sample extension", detail: "Saved “Friday notes” as a draft. Nothing runs until you turn it on.")
+        card.tree = tree
+        return card
+    }
+
     /// What can be added to a tree, as an extension says it.
     static func treePicker() -> ExtensionPage.Tree.Picker? {
         let json = #"""

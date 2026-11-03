@@ -569,6 +569,47 @@ struct TreeMini: View {
     }
 }
 
+/// A tree small enough for a card in Ask (D125), with its words: what was just made, where it was asked for. Fits the width it's given.
+struct TreeCompact: View {
+    var tree: ExtensionPage.Tree
+
+    var body: some View {
+        let layout = TreeLayout(tree, editable: false, metrics: .compact)
+        let line = TreeLine(tree.line)
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                TreeLines(lines: layout.lines, line: line, size: layout.size, corner: 8)
+                TreeBoard(size: layout.size) {
+                    ForEach(layout.cards, id: \.node.id) { card in
+                        HStack(spacing: Theme.Space.xs) {
+                            TreeTile(symbol: card.node.symbol, color: card.node.color, side: 24, tone: card.node.state == .attention ? .warn : nil)
+                            Text(ext: card.node.title).font(Theme.Font.caption).foregroundStyle(Theme.ink).lineLimit(2)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, Theme.Space.xs)
+                        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                                .strokeBorder(card.node.state == .pending ? line.to.opacity(0.7) : Theme.line, style: StrokeStyle(lineWidth: 1, dash: card.node.state == .pending ? [4, 3] : []))
+                        }
+                        .treeFrame(card.frame)
+                    }
+                    ForEach(layout.labels, id: \.branch.id) { label in
+                        TreeBranchLabel(branch: label.branch).fixedSize().treeFrame(CGRect(x: label.point.x - 40, y: label.point.y - 9, width: 80, height: 18))
+                    }
+                }
+            }
+            .frame(width: layout.size.width, height: layout.size.height, alignment: .topLeading)
+            .scaleEffect(min(1, geo.size.width / max(1, layout.size.width), geo.size.height / max(1, layout.size.height)), anchor: .topLeading)
+            .frame(width: geo.size.width, alignment: .leading)
+        }
+        .aspectRatio(layout.size.width / max(1, layout.size.height), contentMode: .fit)
+        // However long the tree: what's under it stays in reach.
+        .frame(maxWidth: layout.size.width, maxHeight: min(layout.size.height, 280))
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// A page's faint dots: paper for the tree to stand on.
 struct DotGrid: View {
     var body: some View {

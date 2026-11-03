@@ -173,6 +173,8 @@ public final class SidefolkRuntime: Sendable {
         registry.register(ExtensionPlanEndTool(host: host))
         registry.register(CompanionJobTool(agent: companionAgent))
         registry.register(AttentionSetTool(settings: settings, attention: attention, events: events))
+        registry.register(VoiceSayTool(settings: settings, events: events))
+        registry.register(AppearanceTool(settings: settings, themes: ThemeLibrary(paths: paths), installedCompanions: { [addons] in await addons.installedCompanions().map(\.companion) }, events: events))
         AgentFacingTools.extensionNames.withLock { $0 = { id in host.shelf.names[id] } }
     }
 

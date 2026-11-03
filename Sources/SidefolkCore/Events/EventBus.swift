@@ -103,7 +103,9 @@ public enum AppEvent: Sendable {
     case surface(SurfaceRequest)
     /// A watch an extension made fired: it hears, instead of the person (D111).
     case watchFired(extensionId: String, watch: String, title: String, summary: String)
-    /// A tool changed a setting the app has to act on (`attention.set`, D127).
+    /// A line to say aloud (`voice.say`, D127).
+    case speak(String)
+    /// A tool changed a setting the app has to act on (`appearance.set`, `attention.set`, D127).
     case settingsChangedByTool
     /// Something happened an extension with `permissions.events` may hear (D129).
     case happened(Happening)

@@ -211,6 +211,15 @@ import Testing
         #expect((try await w.h.env.activity.recent(limit: 5, tool: "notify.user")).isEmpty)
     }
 
+    @Test func makingAFlowLeavesItsTreeOnTheCardInAsk() async throws {
+        let w = try await World()
+        let out = await w.h.call("ext.sideflow.create_flow", ["name": "Shown", "definition": Self.definition])
+        #expect(out.isOK, "\(w.text(out))")
+        let tree = out.activity.card?.tree.flatMap(ExtensionPage.tree(from:))
+        #expect(tree?.reading.isEmpty == false)
+        #expect(tree?.reading.allSatisfy { $0.state == .pending } == true, "dashed: nothing has run")
+    }
+
     @Test func thePageRendersAndALargeFlowFits() async throws {
         let w = try await World()
         var steps: [JSONValue] = []

@@ -370,6 +370,14 @@ final class VoiceController {
         await player.finished()
     }
 
+    /// A line a tool asked for (`voice.say`, D127): never over the person or the companion, never into a call, nothing if replies are off, and in the Mac's own voice, so nothing unattended can run up a paid one.
+    func sayForATool(_ line: String, with settings: VoiceSettings) {
+        guard settings.replies != .off, !isActive, !isSpeaking, AudioDevices.microphoneUsers().recording.isEmpty else { return }
+        var own = settings
+        own.engine = .apple
+        say(line, with: own)
+    }
+
     func say(_ line: String, with settings: VoiceSettings, done: (@MainActor (Error?) -> Void)? = nil) {
         guard let engine = engine(for: settings) else {
             let error = UserFacingError("Spoken replies need your ElevenLabs key and a voice.", recovery: "Add them in Settings › Brain.")

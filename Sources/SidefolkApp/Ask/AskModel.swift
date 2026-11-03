@@ -81,7 +81,7 @@ struct AskEntry: Identifiable, Equatable {
         switch content {
         case .approval, .question: .needsYou
         case .error(_, let retryable): retryable ? .needsYou : .normal
-        case .result(let card, _, _): ResultLifetime.weight(of: card.kind)
+        case .result(let card, _, _): ResultLifetime.weight(of: card)
         case .info, .spoken: .quick
         case .answer, .list, .needsBrain, .doneWithoutAsking, .skipped: .normal
         }
