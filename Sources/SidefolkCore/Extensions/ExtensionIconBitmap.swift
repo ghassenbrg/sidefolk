@@ -3,7 +3,7 @@ import Darwin
 import Foundation
 
 /// An extension's PDF icon, as a picture Sidefolk can draw without running the PDF. A few kilobytes of PDF can take minutes or gigabytes
-/// to draw, and no reading of the file can tell (SECURITY). So macOS's own `sips` draws it once, in a process of its own, sandboxed,
+/// to draw, and no reading of the file can tell (SECURITY T47). So macOS's own `sips` draws it once, in a process of its own, sandboxed,
 /// watched and killed past its limits, and everything else draws only that bitmap.
 public enum ExtensionIconBitmap {
     public static let side = 256

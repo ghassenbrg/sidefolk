@@ -1189,6 +1189,8 @@ The budget bounds that to about nine characters per yes, then the person is aske
 
 **T46 A file's card (M/L), D150.** Sidefolk draws an extension's file offers, working card and saved-file card on a frost from the person's own file. The picture comes from the system's thumbnail service, out of process, and the card waits at most two seconds for it. It's in Sidefolk's memory only for the card's life and never reaches the extension. Only a regular file that Guard wouldn't keep private is drawn, and files another app sent with no click behind them get no picture. Sidefolk's own lines stay outside the frame in its own type and colours. Two manifest keys feed it: `tag`, a format's name from a fixed list, and `mark`, a pack picture read through the same checks as any other, shown small inside the frame or beside the extension's name.
 
+**T47 Extension icons (L).** Drawing an icon is bounded and out of process. A PDF icon is drawn once by a system tool in its own tightly sandboxed process, under limits on its CPU and memory, and everything else shows only the resulting picture. An icon past its limits can't be installed. An extension already installed is never turned off over its icon, which at worst shows blank.
+
 *Residual:* a source already named `CLAUDE.txt` still allows `CLAUDE.md`. A saved file is the program's content under an honest name, and could still be false or exploit a bug in whatever opens it, as with any download. Hence the quarantine mark, and D142's short list of what Open may launch. A program may keep its own copy if removing the data file fails.
 
 **T43 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:
