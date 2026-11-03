@@ -7,6 +7,10 @@ Conversations and Activity (now Today, On duty and History), theme layouts (reti
 merged. What holds today is in [STATUS.md](STATUS.md), [DECISIONS.md](DECISIONS.md) and [DESIGN.md](DESIGN.md).
 
 
+## 2026-11-04: The four homepages in the gallery (D170)
+
+On the founder's word: Clipboard, Keep Awake and Your Mac 1.0.0-snapshot.5 and Miraya 1.0.0-snapshot.6 published from add-ons `21534b8`, needing snapshot 1170. Before: rebased over Formatic and signed again; the app suite at `48656bdf` against those packs (2392 plus 38), the add-ons suite (492), `check.sh`, and the catalog compared with the live one: only those four entries changed. After: all 31 live files downloaded and identical to the signed build, every catalog hash matching its file, and Keep Awake installed from the live gallery in a throwaway home on a debug app, Developer ID signed, its page drawn.
+
 ## 2026-11-04: Formatic in the gallery (D140–D143, D150, D151)
 
 **What:** `dev.sidefolk.formatic` `1.0.0-snapshot.1`, which needs snapshot 1170 (add-ons main da92622), under Show snapshots. It turns a dropped file into another format with what macOS has, no third-party conversion engine: pictures, PDF pages, sound, data tables and archives. New files appear beside the originals. The cards are the designed ones from snapshot 1170 (D150). Nothing in the app changed for this listing.
