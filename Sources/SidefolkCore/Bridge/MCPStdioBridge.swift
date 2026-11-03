@@ -25,12 +25,24 @@ public actor MCPStdioBridge {
     private var connecting: Task<any BridgeChannel, Error>?
     /// MCP names ("notes_save") back to Sidefolk names ("notes.save").
     private var names: [String: String] = [:]
+    /// What the client last heard the tools were; nil until it asks.
+    private var listed: Set<String>?
+    /// Looks for the app while it isn't there, which a client that got an empty list has no reason to do.
+    private var waitingForApp: Task<Void, Never>?
+    private var lastListCheck = Date.distantPast
+    private let appCheckEvery: TimeInterval
+    private let listCheckEvery: TimeInterval
 
     /// - Parameters: `input`/`output` are file descriptors (stdin/stdout, or pipes in tests).
-    public init(connector: any BridgeConnector, input: Int32 = STDIN_FILENO, output: Int32 = STDOUT_FILENO) {
+    ///   `appCheckEvery`: how often to look for an app that isn't running. `listCheckEvery`: how often a call
+    ///   also checks the list, which a setting may have changed.
+    public init(connector: any BridgeConnector, input: Int32 = STDIN_FILENO, output: Int32 = STDOUT_FILENO,
+                appCheckEvery: TimeInterval = 5, listCheckEvery: TimeInterval = 30) {
         self.connector = connector
         self.input = input
         self.output = output
+        self.appCheckEvery = appCheckEvery
+        self.listCheckEvery = listCheckEvery
         _ = fcntl(output, F_SETNOSIGPIPE, 1)
     }
 
@@ -47,6 +59,7 @@ public actor MCPStdioBridge {
                 group.addTask { await self.handle(bytes) }
             }
         }
+        waitingForApp?.cancel()
         channel?.close()
     }
 
@@ -66,7 +79,7 @@ public actor MCPStdioBridge {
             let version = params.string("protocolVersion") ?? Self.fallbackProtocolVersion
             write(Self.result(id: id, [
                 "protocolVersion": .string(version),
-                "capabilities": ["tools": ["listChanged": false]],
+                "capabilities": ["tools": ["listChanged": true]],
                 "serverInfo": ["name": "sidefolk", "title": "Sidefolk", "version": .string(SidefolkVersion.current)],
                 "instructions": .string(Self.instructions),
             ]))
@@ -83,13 +96,56 @@ public actor MCPStdioBridge {
                 (text, isError) = ("A tool name is required.", true)
             }
             write(Self.result(id: id, ["content": [["type": "text", "text": .string(text)]], "isError": .bool(isError)]))
+            await checkListAfterCall()
         default:
             write(Self.error(id: id, code: -32601, message: "Method not found: \(method.clipped(60))"))
         }
     }
 
     private func listTools() async -> [JSONValue] {
-        guard let reply = try? await request("tools/list", .object([:])) else { return [] }
+        guard let reply = try? await request("tools/list", .object([:])) else {
+            listed = []
+            waitForApp()
+            return []
+        }
+        let tools = describe(reply)
+        listed = Set(tools.compactMap { $0.string("name") })
+        return tools
+    }
+
+    /// Tells the client to ask again when the tools aren't what it last heard.
+    private func announceIfChanged(_ reply: JSONValue) {
+        guard let listed else { return }
+        let now = Set(describe(reply).compactMap { $0.string("name") })
+        guard now != listed else { return }
+        self.listed = now
+        write(["jsonrpc": "2.0", "method": "notifications/tools/list_changed"])
+    }
+
+    /// Ends when the app answers. A connection is held only once it has: 8 waiting sessions must not fill the app's room.
+    private func waitForApp() {
+        guard waitingForApp == nil else { return }
+        let every = appCheckEvery
+        waitingForApp = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(every))
+                if let reply = try? await request("tools/list", .object([:])) {
+                    announceIfChanged(reply)
+                    break
+                }
+            }
+            waitingForApp = nil
+        }
+    }
+
+    /// Only alongside a call, so an idle session still lets its connection go.
+    private func checkListAfterCall() async {
+        guard listed != nil, Date().timeIntervalSince(lastListCheck) >= listCheckEvery else { return }
+        lastListCheck = Date()
+        if let reply = try? await request("tools/list", .object([:])) { announceIfChanged(reply) }
+    }
+
+    private func describe(_ reply: JSONValue) -> [JSONValue] {
         var tools: [JSONValue] = []
         for spec in reply["tools"]?.arrayValue ?? [] {
             guard let name = spec.string("name") else { continue }

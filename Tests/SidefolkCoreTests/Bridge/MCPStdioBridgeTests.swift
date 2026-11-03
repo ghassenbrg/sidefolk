@@ -11,9 +11,10 @@ struct MCPPipes {
     let task: Task<Void, Never>
     private let lines: DescriptorLineReader
 
-    init(connector: any BridgeConnector) {
+    init(connector: any BridgeConnector, appCheckEvery: TimeInterval = 5, listCheckEvery: TimeInterval = 30) {
         let bridge = MCPStdioBridge(connector: connector, input: toBridge.fileHandleForReading.fileDescriptor,
-                                    output: fromBridge.fileHandleForWriting.fileDescriptor)
+                                    output: fromBridge.fileHandleForWriting.fileDescriptor,
+                                    appCheckEvery: appCheckEvery, listCheckEvery: listCheckEvery)
         task = Task { await bridge.run() }
         lines = DescriptorLineReader(fd: fromBridge.fileHandleForReading.fileDescriptor, limit: 1 << 20)
     }
@@ -40,6 +41,27 @@ struct MCPPipes {
 /// A connector that is never connected: the app isn't running.
 struct NotRunning: BridgeConnector {
     func open(client: String) async throws -> any BridgeChannel { throw BridgeError.notRunning }
+}
+
+/// An app the test starts, whose tools the test changes.
+final class ChangingApp: BridgeConnector, Sendable {
+    let running = Mutex(false)
+    let tools = Mutex<[String]>(["notes.save"])
+
+    func open(client: String) async throws -> any BridgeChannel {
+        guard running.withLock({ $0 }) else { throw BridgeError.notRunning }
+        return Channel(app: self)
+    }
+
+    struct Channel: BridgeChannel {
+        let app: ChangingApp
+        var isOpen: Bool { true }
+        func close() {}
+        func call(_ method: String, _ params: JSONValue, timeout: TimeInterval?) async throws -> JSONValue {
+            guard method == "tools/list" else { return ["text": "ok", "isError": false] }
+            return ["tools": .array(app.tools.withLock { $0 }.map { ["name": .string($0), "inputSchema": ["type": "object"]] })]
+        }
+    }
 }
 
 /// Records the client name and answers from a fixed tool list.
@@ -112,6 +134,39 @@ final class FakeConnector: BridgeConnector, Sendable {
         let call = try await pipes.request(3, "tools/call", ["name": "notes_save", "arguments": [:]])
         #expect(call["result"]?["isError"] == true)
         #expect(call["result"]?["content"]?.arrayValue?.first?.string("text") == MCPStdioBridge.notRunningMessage)
+        await pipes.finish()
+    }
+
+    /// A session that starts before Sidefolk gets its tools when Sidefolk opens.
+    @Test func theClientHearsWhenTheAppArrives() async throws {
+        let app = ChangingApp()
+        let pipes = MCPPipes(connector: app, appCheckEvery: 0.02)
+        let hello = try await pipes.request(1, "initialize", ["protocolVersion": "2025-06-18", "clientInfo": ["name": "codex"]])
+        #expect(hello["result"]?["capabilities"]?["tools"]?["listChanged"] == true)
+        #expect(try await pipes.request(2, "tools/list")["result"]?["tools"] == [])
+        app.running.withLock { $0 = true }
+        #expect(try await pipes.receive().string("method") == "notifications/tools/list_changed")
+        let list = try await pipes.request(3, "tools/list")
+        #expect(list["result"]?["tools"]?.arrayValue?.first?.string("name") == "notes_save")
+        // It told once and stopped looking.
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(try await pipes.request(4, "ping")["id"] == 4)
+        await pipes.finish()
+    }
+
+    /// A setting changed in Trust shows up without reconnecting, and only when something did change.
+    @Test func aCallNoticesWhenTheToolsChanged() async throws {
+        let app = ChangingApp()
+        app.running.withLock { $0 = true }
+        let pipes = MCPPipes(connector: app, listCheckEvery: 0)
+        _ = try await pipes.request(1, "initialize", ["protocolVersion": "2025-06-18", "clientInfo": ["name": "codex"]])
+        _ = try await pipes.request(2, "tools/list")
+        _ = try await pipes.request(3, "tools/call", ["name": "notes_save", "arguments": [:]])
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(try await pipes.request(4, "ping")["id"] == 4)
+        app.tools.withLock { $0.append("notes.search") }
+        _ = try await pipes.request(5, "tools/call", ["name": "notes_save", "arguments": [:]])
+        #expect(try await pipes.receive().string("method") == "notifications/tools/list_changed")
         await pipes.finish()
     }
 
