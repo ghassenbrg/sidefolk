@@ -96,6 +96,11 @@ struct NotesSaveTool: Tool {
 
         let where_ = "\(NotebookCollections.shownName(target.collection)) › \(NoteText.plural(finalKind))"
         var message = "Saved \(finalKind.rawValue) “\(title.clipped(80))” to \(target.collection.name) (id \(item.id))."
+        // Said, so a caller doesn't set it again or tell the person something else.
+        if case .set(let date, let allDay)? = due {
+            let calendar = reminders?.calendar ?? .autoupdatingCurrent
+            message += " Due \(allDay ? date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).year()) : TimeFormat.full(date, calendar: calendar))."
+        }
         var details: [String] = []
         if target.created {
             message += " “\(target.collection.name)” didn't exist, so I created it as a new \(target.collection.kind.rawValue)."

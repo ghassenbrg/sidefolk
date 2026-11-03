@@ -227,6 +227,9 @@ import Testing
 
     @Test func wordsSayWhatToDoFromAnotherAgent() async throws {
         let stack = try await Stack()
+        let due = try await stack.call("notes_save", ["text": "Send the invoice", "kind": "task", "due": "friday"])
+        #expect(due.text.contains(" Due "), "\(due.text)")
+        #expect(try await !stack.call("notes_save", ["text": "No date"]).text.contains(" Due "))
         for target in ["http://localhost:3000", "127.0.0.1:8080", "printer.local"] {
             let refused = try await stack.call("watch_create", ["kind": "url_change", "target": .string(target)])
             #expect(refused.isError)
