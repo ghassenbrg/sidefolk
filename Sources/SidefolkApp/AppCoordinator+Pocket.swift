@@ -30,9 +30,10 @@ extension AppCoordinator {
             },
             turnOffFullAccess: { [weak self] in
                 guard let self else { return }
+                let permissions = runtime.permissions, events = runtime.events
                 Task {
-                    let before = (try? await self.runtime.permissions.policy())?.beforeFullAccess ?? .askOncePerKind
-                    self.setMode(before)
+                    try? await permissions.turnOffFullAccess()
+                    events.changed(.permissions)
                 }
             },
             showCompanion: { [weak self] in

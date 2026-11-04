@@ -173,7 +173,7 @@ import Testing
 
     @Test func aTVThatIsntPairedStillAsks() async throws {
         for (firstParty, answer) in [(true, PairedAnswer(paired: false)), (false, PairedAnswer(paired: true, device: "tv-1"))] {
-            let env = try await env(.fullAccess)
+            let env = try await env(.auto)
             let probe = Probe()
             env.registry.register(Self.tool(firstParty: firstParty, answer: answer, probe: probe))
             let answered = env.autoAnswer(.deny)
@@ -191,7 +191,7 @@ import Testing
         let film = movies.appendingPathComponent("Holiday.mp4").path
         let answer = PairedAnswer(paired: true, device: "tv-1")
 
-        let env = try await env(.fullAccess)
+        let env = try await env(.auto)
         let probe = Probe()
         env.registry.register(Self.tool(firstParty: true, answer: answer, probe: probe, files: ["file": .read]))
         let card = env.autoAnswer(.allowOnce)
@@ -202,7 +202,7 @@ import Testing
         #expect(try await env.activity.recent()[0].decision == .allowed, "the person answered a card for this call")
         #expect(probe.ranWith?["tv"] == "tv-1")
 
-        let shared = try await self.env(.fullAccess)
+        let shared = try await self.env(.auto)
         try await shared.permissions.grantFolder(movies.path, access: .read)
         shared.registry.register(Self.tool(firstParty: true, answer: answer, files: ["file": .read]))
         let asked = shared.autoAnswer(.deny)

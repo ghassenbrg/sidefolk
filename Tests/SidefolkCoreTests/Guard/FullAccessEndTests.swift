@@ -60,3 +60,59 @@ import Testing
         #expect(!after.isOK)
     }
 }
+
+/// Every way out of Full access ends where the person was (D185): Today's banner, the Pocket, the expiry, and choosing a mode.
+@Suite struct FullAccessWayBackTests {
+    static let before: [GuardMode] = [.askEveryTime, .askOncePerKind, .auto]
+
+    @Test func turningItOffGoesBackToWhatItReplaced() async throws {
+        for mode in Self.before {
+            let env = try TestEnv()
+            try await env.permissions.updatePolicy { $0.choose(mode) }
+            try await env.permissions.updatePolicy { $0.choose(.fullAccess, fullAccessEnds: nil) }
+            #expect(try await env.permissions.policy().mode == .fullAccess)
+            // The banner on Today and the Pocket both call this.
+            try await env.permissions.turnOffFullAccess()
+            let policy = try await env.permissions.policy()
+            #expect(policy.mode == mode && policy.fullAccessEnds == nil, "\(mode)")
+            // Turning off what is already off changes nothing.
+            try await env.permissions.turnOffFullAccess()
+            #expect(try await env.permissions.policy().mode == mode)
+        }
+    }
+
+    @Test func theEndGoesBackToTheSameMode() async throws {
+        for mode in Self.before {
+            let env = try TestEnv()
+            let ends = TestEnv.referenceDate.addingTimeInterval(3600)
+            try await env.permissions.updatePolicy { $0.choose(mode) }
+            try await env.permissions.updatePolicy { $0.choose(.fullAccess, fullAccessEnds: ends) }
+            #expect(try await env.permissions.policy(now: ends.addingTimeInterval(-1)).mode == .fullAccess)
+            #expect(try await env.permissions.policy(now: ends).mode == mode, "\(mode)")
+        }
+    }
+
+    @Test func choosingAModeInSettingsOrTheMenuIsThatMode() async throws {
+        for mode in Self.before {
+            let env = try TestEnv()
+            try await env.permissions.updatePolicy { $0.choose(.auto) }
+            try await env.permissions.updatePolicy { $0.choose(.fullAccess) }
+            try await env.permissions.updatePolicy { $0.choose(mode) }
+            let policy = try await env.permissions.policy()
+            #expect(policy.mode == mode && policy.fullAccessEnds == nil)
+        }
+    }
+
+    /// No screen sets a mode directly when it turns Full access off: they go through `turnOffFullAccess`.
+    @Test func noScreenTurnsItOffToAFixedMode() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Sources/SidefolkApp")
+        let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
+        var fixed: [String] = []
+        for case let file as URL in files where file.pathExtension == "swift" && !file.path.contains("/Dev/") {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            if text.contains("$0.mode = .askOncePerKind") || text.contains("$0.mode = .askEveryTime") || text.contains("$0.mode = .auto") { fixed.append(file.lastPathComponent) }
+        }
+        #expect(fixed.isEmpty, "turn Full access off with PermissionStore.turnOffFullAccess: \(fixed)")
+    }
+}

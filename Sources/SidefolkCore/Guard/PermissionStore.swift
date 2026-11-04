@@ -86,5 +86,8 @@ public struct PermissionStore: Sendable {
         }
     }
 
+    /// Turns Full access off, back to the mode it replaced (`GuardPolicy.endFullAccess`).
+    public func turnOffFullAccess() async throws { try await updatePolicy { $0.endFullAccess() } }
+
     static let policyKey = "guard.policy"
 }

@@ -45,7 +45,7 @@ struct BuiltExtensionTaintTests {
                 ])
             },
             .turn(.reply("Hello, Ada!")),
-        ], mode: .fullAccess)
+        ], mode: .auto)
         let host = ExtensionHost(paths: paths, store: ExtensionStore(world.env.db), registry: world.env.registry, events: world.env.events)
         let drafts = ExtensionDrafts(directory: paths.extensionDrafts) { url in ExtensionFiles.removeTree(url.path) }
         world.env.registry.register(ExtensionBuilderTools.all(drafts: drafts, host: host, events: world.env.events))
