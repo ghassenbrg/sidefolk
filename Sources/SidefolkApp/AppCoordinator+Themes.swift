@@ -53,9 +53,21 @@ extension AppCoordinator {
     /// Sidefolk can run for weeks, and the gallery publishes after the app that needs it. The first time it can't come, a whisper
     /// says so once. A theme only draws, so this installs as an update does (D70).
     func fetchThemeThatMoved() async {
-        guard !fetchingThemeThatMoved else { return }
+        // A look that ends while a fetch runs asks again afterwards: that fetch may have read the list before it was fresh,
+        // or failed where this look's connection works.
+        guard !fetchingThemeThatMoved else {
+            fetchThemeAgain = true
+            return
+        }
         fetchingThemeThatMoved = true
         defer { fetchingThemeThatMoved = false }
+        repeat {
+            fetchThemeAgain = false
+            await fetchThemeThatMovedOnce()
+        } while fetchThemeAgain
+    }
+
+    private func fetchThemeThatMovedOnce() async {
         let settings = runtime.settings.current
         let installed = Set(themes.all().map(\.id))
         guard let id = ThemeSuccession.toFetch(settings, installed: installed.contains),
@@ -72,7 +84,8 @@ extension AppCoordinator {
                 Log.shared.info("theme", "a theme that moved to the gallery couldn't come yet", ["id": id])
             }
         }
-        guard !settings.themeSuccessorsOffered.contains(id) else { return }
+        // A copy with no gallery (a build from source) can never fetch it, so "it comes back" would promise what won't happen.
+        guard runtime.addons.source != nil, !settings.themeSuccessorsOffered.contains(id) else { return }
         await runtime.settings.update { $0.themeSuccessorsOffered.append(id) }
         sidecard.present(AttentionItem(level: .gentle, source: Self.ownVoice,
                                        title: settings.updates.addons
