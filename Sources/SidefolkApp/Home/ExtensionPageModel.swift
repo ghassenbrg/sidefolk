@@ -18,6 +18,8 @@ final class ExtensionPagesModel {
     var problem: String?
     /// Today's tiles follow what changed here; set by Home.
     var changed: (() -> Void)?
+    /// A heads-up switched off stops its watch, which Home asks about first, as for every watch (`WatchStopAsk`).
+    var askToStop: ((_ id: String, _ title: String) -> Void)?
     private var models: [String: ExtensionPageModel] = [:]
 
     init(services: AppServices) {
@@ -66,6 +68,7 @@ final class ExtensionPagesModel {
     func model(_ info: ExtensionPageInfo) -> ExtensionPageModel {
         if let m = models[info.id] { return m }
         let m = ExtensionPageModel(info: info, services: services)
+        m.askToStop = { [weak self] id, title in self?.askToStop?(id, title) }
         m.onControl = { [weak self] in
             Task {
                 await self?.refreshSummaries()
@@ -74,6 +77,11 @@ final class ExtensionPagesModel {
         }
         models[info.id] = m
         return m
+    }
+
+    /// A watch was stopped from Home's question: the switches of the pages open now stop showing it on.
+    func alertsChanged() async {
+        for model in models.values { await model.loadAlerts() }
     }
 
     /// The page was asked to show something else (D105), and may be open already.
@@ -259,6 +267,8 @@ final class ExtensionPageModel {
     private(set) var palettes: [ExtensionPaletteInfo] = []
     /// Home hears when a switch on the page ran, so the sidebar and Today's tile show the new state.
     var onControl: (() -> Void)?
+    /// Set by the pages model; a page with nobody to ask leaves its watch running.
+    var askToStop: ((_ id: String, _ title: String) -> Void)?
     /// Folding sections the person opened or closed (D74), by title, while Home is open.
     private(set) var opened: Set<String> = []
     /// Which tab each set of tabs shows (D100), while Home is open.
@@ -509,7 +519,8 @@ final class ExtensionPageModel {
             let outcome = await services.runtime.executor.execute(name: "watch.extension", input: input, caller: .user)
             if let problem = outcome.problem { alertProblem = problem.message }
         } else if let id = alert.watcherId {
-            await services.stopWatcher(id)
+            // The switch stays on until the answer: Home's question stops it (`NowModel.confirmStop`) and `stopped` shows it off.
+            askToStop?(id, alert.kind.title)
         }
         await loadAlerts()
     }

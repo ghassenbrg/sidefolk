@@ -112,6 +112,9 @@ final class HomeModel {
             // Opening the watch from its tile, row or card is seeing what it noticed, as the tile's popover was.
             Task { await self.now.seen(watcherId: id) }
         }
+        // An extension page's heads-up switch stops its watch through the same question as every other Stop.
+        pages.askToStop = { [weak self] id, title in self?.now.stopAsk.ask(id: id, title: title) }
+        now.stopped = { [weak self] in await self?.pages.alertsChanged() }
         you.trash = { [weak self] item in await self?.notebook.moveToTrash(item) }
         // A switch flipped or a page arranged on one side shows on the other (D67).
         pages.changed = { [weak self] in Task { await self?.now.reloadWidgets() } }
