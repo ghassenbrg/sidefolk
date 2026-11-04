@@ -33,7 +33,7 @@
 //                           | pageAsk:<extension id>/<page>:place|schedule | pageConsent:<extension id>:place|schedule:on|off   (D106, D107)
 //                           | homeSize:1320x860   (Home's window at this size)
 //   swift scripts/dev.swift home:today | home:calendar | home:notebook | home:onduty | home:history[:agents] | home:you
-//                           | home:trash | home:gallery   (D84: Home's places) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
+//                           | home:trash | home:gallery   (D84: Home's places) | home:note:<id> (that note open in the Notebook) | flip:dev.sidefolk.keep-awake/awake:off   (D67)
 //   swift scripts/dev.swift homeSmall   (Home at its smallest size)
 //   swift scripts/dev.swift home:watch[:<id>[:check|:sidebyside]]   (D87: a watch's page, its Check now, its change in two columns)
 //   swift scripts/dev.swift palette:dev.sidefolk.clipboard/history | paletteKey:down | paletteKey:35:opt   (D63, D68: ⌥P)

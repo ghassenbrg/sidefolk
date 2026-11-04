@@ -75,6 +75,9 @@ final class NotebookModel {
     var draft: NotebookItem? {
         didSet { if draft != oldValue, draft != nil, draft?.id == oldValue?.id { scheduleSave() } }
     }
+    /// The draft as it was last stored or read from the store: what the person has changed is the difference, and only
+    /// that is written back, over whatever an agent or another part of the app stored meanwhile (`NoteEdits`).
+    private var base: NotebookItem?
     /// An item created here and not yet given any content; dropped if left empty.
     private var freshId: String?
 
@@ -107,6 +110,7 @@ final class NotebookModel {
     func reload() async {
         await reloadCollections()
         await reloadItems()
+        await adoptStoredChanges()
         await reloadTrash()
         await reloadReminders()
         loadConversations()
@@ -208,12 +212,27 @@ final class NotebookModel {
 
     func select(_ id: String?) {
         guard id != selectedId else { return }
-        let leaving = draft
+        let leaving = draft, leavingBase = base
         saveTask?.cancel()
         selectedId = id
         draft = items.first { $0.id == id }
-        if let leaving { Task { await write(leaving) } }
+        base = draft
+        if let leaving, let leavingBase { Task { await write(leaving, from: leavingBase) } }
         loadConversations()
+        // The list may be a moment behind the store: show what is stored.
+        Task { await adoptStoredChanges() }
+    }
+
+    /// Takes in what was stored since the draft was read (an agent's `notes_update`, a change from another part of the
+    /// app): the fields the person hasn't touched show it, the ones they have keep their words. Without this the open
+    /// note kept showing, and later saved, the old text.
+    func adoptStoredChanges() async {
+        guard let mine = draft, let was = base, mine.id == was.id,
+              let stored = try? await store.item(id: mine.id), stored.deletedAt == nil, !NoteEdits.same(stored, was) else { return }
+        // The draft's own change is what saves next, so the base moves first: a save in between sees only the person's edits.
+        base = stored
+        let merged = NoteEdits.apply(mine, since: was, onto: stored)
+        if merged != mine, draft?.id == mine.id { draft = merged }
     }
 
     private func loadConversations() {
@@ -232,19 +251,19 @@ final class NotebookModel {
     /// Saves the draft now (window closing, collection switch).
     func flush() async {
         saveTask?.cancel()
-        if let draft { await write(draft) }
+        if let draft, let base { await write(draft, from: base) }
     }
 
     private func scheduleSave() {
         saveTask?.cancel()
         saveTask = Task {
             try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled, let draft else { return }
-            await write(draft)
+            guard !Task.isCancelled, let draft, let base else { return }
+            await write(draft, from: base)
         }
     }
 
-    private func write(_ edited: NotebookItem) async {
+    private func write(_ edited: NotebookItem, from base: NotebookItem) async {
         guard let stored = try? await store.item(id: edited.id), stored.deletedAt == nil else { return }
         let isEmpty = edited.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && edited.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -255,18 +274,22 @@ final class NotebookModel {
             runtime.events.changed(.notebook)
             return
         }
-        guard !stored.sameContent(as: edited) else { return }
-        var item = edited
-        item.updatedAt = Date()
+        guard !NoteEdits.same(stored, edited) else { return }
+        // Only what the person changed since `base`, over what is stored now: an agent's change to the other fields stays.
+        guard let item = try? await store.save(edited, from: base), item != stored else { return }
         if !isEmpty, item.id == freshId { freshId = nil }
-        try? await store.update(item)
-        if item.id == draft?.id { draft?.updatedAt = item.updatedAt }
+        if item.id == draft?.id {
+            // What was saved is the new base; fields the person hasn't touched since this save began show what is stored.
+            self.base = item
+            draft = NoteEdits.apply(draft ?? item, since: edited, onto: item)
+        }
         if let i = items.firstIndex(where: { $0.id == item.id }) { items[i] = item }
         if item.collectionId != stored.collectionId, item.collectionId != collectionId {
             let name = collectionName(item.collectionId) ?? String(localized: "another collection")
             if selectedId == item.id {
                 selectedId = nil
                 draft = nil
+                self.base = nil
             }
             items.removeAll { $0.id == item.id }
             showToast(String(localized: "Moved to \(name)."))
@@ -301,7 +324,11 @@ final class NotebookModel {
         let pinned = item.pinnedAt == nil
         await flush()
         try? await store.setPinned(itemId: item.id, pinned)
-        if draft?.id == item.id { draft?.pinnedAt = pinned ? Date() : nil }
+        if draft?.id == item.id {
+            let at = pinned ? Date() : nil
+            draft?.pinnedAt = at
+            base?.pinnedAt = at
+        }
         runtime.events.changed(.notebook)
         await reloadItems()
     }

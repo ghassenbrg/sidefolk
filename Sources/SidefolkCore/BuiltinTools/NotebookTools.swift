@@ -111,7 +111,7 @@ struct NotesSaveTool: Tool {
             details.append(reminders.cardLine(reminder, now: context.now))
         }
         let notebook = self.notebook, events = self.events, id = item.id
-        let scheduler = reminders?.scheduler, reminderId = reminder?.id
+        let scheduler = reminders?.scheduler, reminderId = reminder?.id, after = item
         return ToolResult(
             text: message,
             card: ResultCard(kind: .note, title: String(localized: "Saved to \(where_)"), subtitle: title.clipped(80),
@@ -379,15 +379,19 @@ struct NotesUpdateTool: Tool {
         }
 
         if !changed.isEmpty {
-            item.updatedAt = context.now
-            try await notebook.update(item)
+            // Over the note as it is stored now: the person may be typing in it, and their words stay (the Notebook's
+            // draft saves by the same rule), so only what this changed is written.
+            guard let saved = try await notebook.save(item, from: previous, now: context.now) else {
+                throw UserFacingError("That note went to the Trash while I was changing it, so I left it alone.", recovery: "Restore it from the Trash first.")
+            }
+            item = saved
         }
         var reminder: Reminder?
         if let remindAt, let reminders {
             do {
                 reminder = try await reminders.remind(about: item, when: remindAt, context: context)
             } catch {
-                if !changed.isEmpty { try? await notebook.update(previous) }
+                if !changed.isEmpty { _ = try? await notebook.save(previous, from: item, now: context.now) }
                 throw error
             }
             shownChanged.append(reminders.cardLine(reminder!, now: context.now))
@@ -400,7 +404,7 @@ struct NotesUpdateTool: Tool {
             message += " Reminder set for \(TimeFormat.full(reminder.fireAt, calendar: reminders.calendar)) (reminder \(reminder.id))."
         }
         let notebook = self.notebook, events = self.events, wordsChanged = !changed.isEmpty
-        let scheduler = reminders?.scheduler, reminderId = reminder?.id
+        let scheduler = reminders?.scheduler, reminderId = reminder?.id, after = item
         return ToolResult(
             text: message,
             card: ResultCard(kind: .note, title: changed.isEmpty ? NoteText.reminded : NoteText.updated(item.kind), subtitle: item.title.clipped(80),
@@ -408,10 +412,9 @@ struct NotesUpdateTool: Tool {
             undo: UndoAction(label: wordsChanged ? String(localized: "Restored “\(previous.title.clipped(40))”") : String(localized: "Cancel reminder")) {
                 if let scheduler, let reminderId { _ = try await scheduler.cancel(id: reminderId) }
                 guard wordsChanged else { return }
-                // Put the words back, not the note itself: if it was moved to the Trash since, it stays there.
-                var back = previous
-                if let current = try await notebook.item(id: previous.id) { back.deletedAt = current.deletedAt }
-                try await notebook.update(back)
+                // Put back what this changed, not the note itself: later edits stay, and if it was moved to the Trash
+                // since, it stays there.
+                _ = try await notebook.save(previous, from: after, inTheTrash: true)
                 events.changed(.notebook)
             },
             untrusted: movedTo.map { NotebookCollections.isForeign($0.collection) } == true)

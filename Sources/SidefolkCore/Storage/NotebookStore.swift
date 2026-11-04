@@ -213,16 +213,20 @@ public struct NotebookStore: Sendable {
         try await db.writer.write { db in try item.insert(db) }
     }
 
-    /// Saves an edited item. Reminders that carry the item's own title follow a rename (D49); one given words of its
-    /// own ("send it to Anna") keeps them.
+    /// Saves an edited item whole, for what holds the current copy; what someone else may have changed meanwhile is saved
+    /// with `save(_:from:)`. Reminders that carry the item's own title follow a rename (D49); one given words of its own
+    /// ("send it to Anna") keeps them.
     public func update(_ item: NotebookItem) async throws {
         try await db.writer.write { db in
-            let before = try NotebookItem.fetchOne(db, key: item.id)
-            try item.update(db)
-            guard let before, before.title != item.title, !item.title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-            try db.execute(sql: "UPDATE reminders SET title = ? WHERE item_id = ? AND title = ?",
-                           arguments: [item.title.clipped(200), item.id, before.title.clipped(200)])
+            try Self.write(item, over: try NotebookItem.fetchOne(db, key: item.id), in: db)
         }
+    }
+
+    static func write(_ item: NotebookItem, over before: NotebookItem?, in db: Database) throws {
+        try item.update(db)
+        guard let before, before.title != item.title, !item.title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        try db.execute(sql: "UPDATE reminders SET title = ? WHERE item_id = ? AND title = ?",
+                       arguments: [item.title.clipped(200), item.id, before.title.clipped(200)])
     }
 
     public func item(id: String) async throws -> NotebookItem? {

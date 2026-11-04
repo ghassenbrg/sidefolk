@@ -972,4 +972,97 @@ import Testing
         #expect(status.text.hasPrefix("Sidefolk \(SidefolkVersion.current) is running"))
         await s.stop()
     }
+
+    // MARK: A note the app has open while an agent changes it (B2)
+
+    /// The founder's report: `notes_update` said it worked, and the app still showed the old words, then put them back. The
+    /// Notebook keeps the open note as a draft and saves it when the person leaves it; that save must not undo the agent's.
+    @Test func aNoteTheAppHasOpenKeepsAnAgentsUpdateWhenTheAppSaves() async throws {
+        let s = try await Stack()
+        let saved = try await s.call("notes_save", ["text": "Draft the RCPAI plan\none-line body", "kind": "task"])
+        let id = try #require(saved.text.firstMatch(of: /\(id ([^)]+)\)/)?.1).description
+        let notebook = s.runtime.notebook
+        // The Notebook opens it: this is its draft, and what the store held when it was read.
+        let draft = try #require(try await notebook.item(id: id))
+        let base = draft
+
+        let update = try await s.call("notes_update", ["id": .string(id), "text": "New title\n\n- [ ] step one\n- [ ] step two"])
+        #expect(!update.isError && update.text.contains("New title"), "\(update.text)")
+
+        // The person leaves the note without typing: the draft is saved, and it changes nothing.
+        let afterLeaving = try #require(try await notebook.save(draft, from: base))
+        #expect(afterLeaving.title == "New title" && afterLeaving.body == "- [ ] step one\n- [ ] step two")
+        let stored = try #require(try await notebook.item(id: id))
+        #expect(stored.title == "New title" && stored.body == "- [ ] step one\n- [ ] step two")
+        #expect(stored.source.hasPrefix("external:"), "whoever last wrote the words is who they are attributed to")
+
+        // The title the Trash reports is the stored one, and so is what comes back.
+        let trashed = try await s.call("notes_trash", ["id": .string(id)])
+        #expect(trashed.text.contains("“New title”"), "\(trashed.text)")
+        await s.stop()
+    }
+
+    @Test func whatThePersonTypedAndWhatTheAgentChangedBothStay() async throws {
+        let s = try await Stack()
+        let saved = try await s.call("notes_save", ["text": "Call Sam\nabout the move", "kind": "task"])
+        let id = try #require(saved.text.firstMatch(of: /\(id ([^)]+)\)/)?.1).description
+        let notebook = s.runtime.notebook
+        let base = try #require(try await notebook.item(id: id))
+
+        // The agent marks it done while the person is typing more in the body.
+        _ = try await s.call("notes_update", ["id": .string(id), "status": "done"])
+        var draft = base
+        draft.body = "about the move, and the deposit"
+        _ = try await notebook.save(draft, from: base)
+        let stored = try #require(try await notebook.item(id: id))
+        #expect(stored.status == .done && stored.body == "about the move, and the deposit", "the person's words and the agent's status")
+
+        // The other way round: the agent's read is older than the person's save, and the person's words still stay.
+        let read = stored
+        var typed = stored
+        typed.title = "Call Sam about the move"
+        _ = try await notebook.save(typed, from: stored)
+        var agents = read
+        agents.tags = "moving"
+        let after = try #require(try await notebook.save(agents, from: read))
+        #expect(after.title == "Call Sam about the move" && after.tagList == ["moving"])
+        await s.stop()
+    }
+
+    @Test func aSaveNeverBringsBackANoteFromTheTrashAndAChangeNothingWritesNothing() async throws {
+        let s = try await Stack()
+        let saved = try await s.call("notes_save", ["text": "Old note", "kind": "note"])
+        let id = try #require(saved.text.firstMatch(of: /\(id ([^)]+)\)/)?.1).description
+        let notebook = s.runtime.notebook
+        let base = try #require(try await notebook.item(id: id))
+
+        let same = try #require(try await notebook.save(base, from: base))
+        #expect(same.updatedAt == base.updatedAt, "nothing changed, so nothing was written")
+
+        _ = try await notebook.trash(itemId: id)
+        var edited = base
+        edited.title = "Edited after the Trash"
+        #expect(try await notebook.save(edited, from: base) == nil)
+        let still = try #require(try await notebook.item(id: id))
+        #expect(still.title == "Old note" && still.deletedAt != nil)
+        await s.stop()
+    }
+
+    @Test func undoingAnAgentsUpdateKeepsWhatWasTypedSince() async throws {
+        let s = try await Stack()
+        let made = await s.runtime.executor.execute(name: "notes.save", input: ["text": "Plan\nfirst words", "kind": "note"], caller: .user)
+        guard case .ok(let result) = made.status, let id = result.card?.refId else { throw CancellationError() }
+        let notebook = s.runtime.notebook
+        let updated = await s.runtime.executor.execute(name: "notes.update", input: ["id": .string(id), "text": "Plan B\nsecond words"], caller: .user)
+        guard case .ok = updated.status else { throw CancellationError() }
+        // The person adds a tag after the update; undoing the update puts the words back and keeps the tag.
+        let now = try #require(try await notebook.item(id: id))
+        var tagged = now
+        tagged.tags = "kept"
+        _ = try await notebook.save(tagged, from: now)
+        _ = try await s.runtime.executor.undo.undo(updated.activity.id)
+        let back = try #require(try await notebook.item(id: id))
+        #expect(back.title == "Plan" && back.body == "first words" && back.tagList == ["kept"])
+        await s.stop()
+    }
 }
