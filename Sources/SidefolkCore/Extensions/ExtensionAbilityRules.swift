@@ -7,7 +7,7 @@ enum ExtensionAbilityRules {
     static let maxSettings = 64
     static let maxEntries = 8
     static let maxEntryItems = 32
-    static let maxDrops = 16
+    static let maxDrops = 20
     static let maxDropMenu = 12
 
     /// A fixed list and not macOS's own, which knows more on a Mac with more apps and includes words like PATCH and GUIDE.

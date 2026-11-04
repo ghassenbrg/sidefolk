@@ -26,7 +26,7 @@ struct FileWaysPart: View {
                 .labelsHidden().toggleStyle(.switch)
             }
             .padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.s + 2)
-            row(symbol: nil, text: Text("Hold this while dragging a file, and the ring opens at the pointer.", comment: "The ring: its key during a drag")) {
+            row(symbol: nil, text: Text("Drag a file, pause and hold this: the ring opens at the pointer.", comment: "The ring: its key during a drag")) {
                 Picker(selection: Binding(get: { ring.dragKey }, set: { key in change { $0.dragKey = key } })) {
                     ForEach(FileRingSettings.DragKey.allCases, id: \.self) { Text(verbatim: $0.keycap).tag($0) }
                 } label: { Text("Key", comment: "The ring: the menu choosing its key") }
@@ -43,7 +43,7 @@ struct FileWaysPart: View {
             if ring.enabled, let conflict {
                 row(symbol: "exclamationmark.triangle", text: Text(verbatim: conflict)) { EmptyView() }
             }
-            row(symbol: "contextualmenu.and.cursorarrow", text: Text("Right-click a file in Finder and choose Send to Sidefolk.", comment: "A way to hand a file over: Finder's Service")) { EmptyView() }
+            row(symbol: "contextualmenu.and.cursorarrow", text: Text("Right-click a file in Finder and choose Send to Sidefolk, under Services.", comment: "A way to hand a file over: Finder's Service")) { EmptyView() }
         }
         .onAppear {
             ring = services?.runtime.settings.current.fileRing ?? FileRingSettings()

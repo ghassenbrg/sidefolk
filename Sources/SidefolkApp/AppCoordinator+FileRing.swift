@@ -40,8 +40,9 @@ extension AppCoordinator {
         // Only what each already has on: this turns nothing on that was off. Done after the library has finished with its change.
         Task { [weak self] in
             guard let self else { return }
-            KeyboardShortcuts.enable(.ask)
+            // The talk key first, as settings do: turning it off unregisters its keys, and Ask may hold them. Not before Ask's own keys are set up.
             self.applyVoiceKeys()
+            if self.talkKeysInstalled { KeyboardShortcuts.enable(.ask) }
             self.refreshCardKeys()
             self.palettes.reclaimShortcuts()
             self.fileRing.apply(self.runtime.settings.current.fileRing)

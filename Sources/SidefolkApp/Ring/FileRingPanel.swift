@@ -33,7 +33,7 @@ final class FileRingSurface: NSView {
     var follow: ((NSPoint) -> Bool)?
     var left: (() -> Void)?
     var dropped: (([URL]) -> Bool)?
-    var clicked: (() -> Void)?
+    var clicked: ((NSPoint) -> Void)?
     var scrolled: ((NSEvent) -> Void)?
 
     override init(frame: NSRect) {
@@ -58,8 +58,13 @@ final class FileRingSurface: NSView {
 
     override func mouseMoved(with event: NSEvent) { _ = track(event.locationInWindow) }
     override func scrollWheel(with event: NSEvent) { scrolled?(event) }
-    /// What's lit is what a click chooses: it was seen, and Sidefolk's line was about it. Moving is what lights a slice.
-    override func mouseUp(with event: NSEvent) { clicked?() }
+    // All of it answers here: the words and pictures on the ring take nothing themselves.
+    override func hitTest(_ point: NSPoint) -> NSView? { frame.contains(point) ? self : nil }
+    override func mouseDown(with event: NSEvent) {}
+
+    /// What's lit is what a click chooses: it was seen, and Sidefolk's line was about it. Moving is what lights a slice, and letting go
+    /// anywhere else is how a click is taken back.
+    override func mouseUp(with event: NSEvent) { clicked?(convert(event.locationInWindow, from: nil)) }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }
     override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }

@@ -111,6 +111,14 @@ struct FileRingTests {
         #expect(DropChoices.namesFit(["wide " + String(repeating: "x", count: 40)], within: 400, width: width), "one always has room")
     }
 
+    @Test func aClickLetGoAnywhereButTheLitSliceIsTakenBack() {
+        #expect(RingGeometry.clickCounts(at: 2, lit: 2))
+        #expect(!RingGeometry.clickCounts(at: nil, lit: 2), "the middle or the outside")
+        #expect(!RingGeometry.clickCounts(at: 3, lit: 2), "another slice")
+        #expect(!RingGeometry.clickCounts(at: 2, lit: nil), "never lit")
+        #expect(!RingGeometry.clickCounts(at: nil, lit: nil))
+    }
+
     @Test func tooSoonAfterOpeningCountsForNothing() {
         var aim = RingAim(openedAt: 10, x: 0, y: 0)
         #expect(aim.follow(x: 0, y: 30, slice: 0, at: 10.05) == 0)

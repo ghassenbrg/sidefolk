@@ -252,7 +252,8 @@ extension KeyboardShortcuts.Name {
         panel.ignoresMouseEvents = model.note != nil
         aim = RingAim(openedAt: ProcessInfo.processInfo.systemUptime, x: pointer.x, y: pointer.y)
         panel.orderFrontRegardless()
-        if byClick { panel.makeKey() }
+        // Only words have no use for the keyboard, which stays with the app in front.
+        if byClick, model.note == nil { panel.makeKey() }
         if let monitor = NSEvent.addGlobalMonitorForEvents(matching: .scrollWheel, handler: { [weak self] event in
             MainActor.assumeIsolated { self?.scrolled(event) }
         }) { openMonitors.append(monitor) }
@@ -287,6 +288,7 @@ extension KeyboardShortcuts.Name {
 
     private func turn() {
         model.turn()
+        model.hovered = nil
         aim.turned(at: ProcessInfo.processInfo.systemUptime)
     }
 
@@ -332,18 +334,26 @@ extension KeyboardShortcuts.Name {
             self?.model.hovered = nil
             self?.model.overMiddle = false
         }
-        surface.clicked = { [weak self] in self?.click() }
+        surface.clicked = { [weak self] point in
+            guard let self, RingGeometry.clickCounts(at: self.slice(at: point), lit: self.model.hovered) else { return }
+            self.click()
+        }
         surface.scrolled = { [weak self] in self?.scrolled($0) }
         surface.dropped = { [weak self] urls in self?.dropped(urls) ?? false }
         panel.onKey = { [weak self] in self?.pressedKey($0) ?? false }
         return panel
     }
 
+    private func slice(at point: NSPoint) -> Int? {
+        RingGeometry.slice(dx: Double(point.x - RingLayout.side / 2), dy: Double(point.y - RingLayout.below - RingLayout.side / 2), count: model.shown.count,
+                           inner: Double(RingLayout.inner), outer: Double(RingLayout.outer))
+    }
+
     /// The pointer is at this point in the ring's own view. Returns whether it's on a slice that would take a drop.
     private func follow(_ point: NSPoint) -> Bool {
         guard model.note == nil else { return false }
         let dx = Double(point.x - RingLayout.side / 2), dy = Double(point.y - RingLayout.below - RingLayout.side / 2)
-        let index = RingGeometry.slice(dx: dx, dy: dy, count: model.shown.count, inner: Double(RingLayout.inner), outer: Double(RingLayout.outer))
+        let index = slice(at: point)
         let screen = NSEvent.mouseLocation, now = ProcessInfo.processInfo.systemUptime
         let aimed = aim.follow(x: screen.x, y: screen.y, slice: index, at: now)
         overSlice = index != nil

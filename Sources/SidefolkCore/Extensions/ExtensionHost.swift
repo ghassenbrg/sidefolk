@@ -1013,8 +1013,6 @@ public actor ExtensionHost {
     /// A call that works in folders the person named gets a process of its own: its sandbox adds exactly
     /// those folders, and it stops when the call ends, so the extension never keeps that access (D39).
     /// It lists its tools first, so a tool that changed since install is held as it would be otherwise.
-    private var oneShotCount = 0
-
     private func callInOwnProcess(_ id: String, remote: String, title: String, input: JSONValue,
                                   folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> (text: String, asks: JSONValue?) {
         guard let rt = runtimes[id], rt.record.kind == .sidefolk else {
@@ -1521,6 +1519,8 @@ public actor ExtensionHost {
         runtimes[id]?.oneShotFiles[key] = nil
         await client.shutdown()
     }
+
+    private var oneShotCount = 0
 
     /// That work ended, so a Stop that came as it finished holds nothing back from the next use of those files.
     public func forgetEarlyStop(extensionId id: String) {

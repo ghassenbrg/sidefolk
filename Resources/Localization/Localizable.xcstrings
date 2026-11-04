@@ -75082,6 +75082,65 @@
         }
       }
     },
+    "Drag a file, pause and hold this: the ring opens at the pointer." : {
+      "comment" : "The ring: its key during a drag",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب ملفًا، وتوقف قليلًا واضغط هذا المفتاح باستمرار: تفتح الحلقة عند المؤشر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zieh eine Datei, halte kurz inne und halte diese Taste: Der Ring öffnet sich am Zeiger."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra un archivo, haz una pausa y mantén esta tecla: el anillo se abre en el puntero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser un fichier, marquez une pause et maintenez cette touche : l'anneau s'ouvre au pointeur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina un file, fermati e tieni premuto questo tasto: l'anello si apre al puntatore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルをドラッグして止め、このキーを押し続けると、ポインタの位置にリングが開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일을 끌다가 멈추고 이 키를 누르고 있으면 포인터 위치에 링이 열립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste um arquivo, pare e segure esta tecla: o anel abre no ponteiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖动文件,停一下并按住此键:圆环会在指针处打开。"
+          }
+        }
+      }
+    },
     "Drag from corner to corner, click a plot to clear it" : {
       "comment" : "Keys in the Play panel: Garden Plots, drawing rectangles",
       "extractionState" : "stale",
@@ -91678,6 +91737,7 @@
     },
     "Hold this while dragging a file, and the ring opens at the pointer." : {
       "comment" : "The ring: its key during a drag",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -165221,8 +165281,68 @@
         }
       }
     },
+    "Right-click a file in Finder and choose Send to Sidefolk, under Services." : {
+      "comment" : "A way to hand a file over: Finder's Service",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر بزر الفأرة الأيمن على ملف في Finder واختر Send to Sidefolk من الخدمات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klick im Finder mit der rechten Maustaste auf eine Datei und wähl unter „Dienste“ „Send to Sidefolk“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic derecho en un archivo en el Finder y elige Send to Sidefolk, en Servicios."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites un clic droit sur un fichier dans le Finder et choisissez Send to Sidefolk, dans Services."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic destro su un file nel Finder e scegli Send to Sidefolk, in Servizi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finderでファイルを右クリックし、「サービス」の Send to Sidefolk を選びます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder에서 파일을 오른쪽 클릭하고 서비스에서 Send to Sidefolk를 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique com o botão direito em um arquivo no Finder e escolha Send to Sidefolk, em Serviços."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中右键点按文件,然后在“服务”中选择 Send to Sidefolk。"
+          }
+        }
+      }
+    },
     "Right-click a file in Finder and choose Send to Sidefolk." : {
       "comment" : "A way to hand a file over: Finder's Service",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

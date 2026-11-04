@@ -14,6 +14,11 @@ public enum RingGeometry {
         return Int(angle / step) % count
     }
 
+    /// A click counts where it's let go on the slice that's lit: anywhere else is how a click is taken back.
+    public static func clickCounts(at slice: Int?, lit: Int?) -> Bool {
+        slice != nil && slice == lit
+    }
+
     /// The middle of a slice, in the same frame.
     public static func centre(of index: Int, count: Int, radius: Double) -> (dx: Double, dy: Double) {
         let angle = 2 * Double.pi * Double(index) / Double(max(count, 1))
