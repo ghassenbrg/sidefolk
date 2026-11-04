@@ -391,10 +391,7 @@ extension KeyboardShortcuts.Name {
 
     private func pressedKey(_ event: NSEvent) -> Bool {
         let count = model.shown.count
-        guard count > 0 else {
-            if event.keyCode == 53 { close() }
-            return true
-        }
+        guard count > 0 else { return false }
         switch event.keyCode {
         case 53: close()
         case 48: turn()

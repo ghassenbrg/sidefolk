@@ -82,7 +82,7 @@ snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a cop
 
 - **Formatic, a file-conversion extension (D140–D143, D150–D152):** the founder tested snapshot 1177: "now there is no ring, it doesn't work, it's not clear, a lot of things are not working".
   - **In the gallery:** `dev.sidefolk.formatic` `1.0.0-snapshot.1` needs 1170. Stage 1, `1.0.0-snapshot.2` (add-ons `team/formatic-fixes` 9983db7, same minimum), waits on the coordinator's go: no row offers a file its own format, Choose a file works on every kind, the page says how to use it and what it can make.
-  - **This branch:** the ring (D152) and general abilities for it: `menu_title`, a menu choice's `tag`, `detail` and `skip`, 16 offers, `drop_card`, `file_ways`, a whole-corner drop target, a card that comes back after a failed choice, a real Stop. Its pack is on add-ons `team/formatic-ring`, held for the snapshot after this lands.
+  - **This branch:** the ring (D152) and general abilities for it: `menu_title`, a menu choice's `tag`, `detail` and `skip`, 20 offers, `drop_card`, `file_ways`, a whole-corner drop target, a card that comes back after a failed choice, a real Stop. Its pack is on add-ons `team/formatic-ring`, held for the snapshot after this lands.
   - **Next:** independent security review (T49), then MERGE-READY; pack to the gallery with that snapshot as its minimum.
   - **Not decided:** video and FFmpeg (the rest of D143), documents like Word files.
   - **Limits:** Opus saves as `.caf`. Every Formatic drop shows the amber warning. Files sent by Send to Sidefolk get no picture on the card. Drop menu titles of plain choices aren't translated.

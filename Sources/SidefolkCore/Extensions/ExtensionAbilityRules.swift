@@ -11,7 +11,7 @@ enum ExtensionAbilityRules {
     static let maxDropMenu = 12
 
     /// A fixed list and not macOS's own, which knows more on a Mac with more apps and includes words like PATCH and GUIDE.
-    static let formatNames: Set<String> = ["JPEG", "JPG", "PNG", "HEIC", "HEIF", "AVIF", "TIFF", "GIF", "BMP", "WEBP", "ICO", "PSD", "SVG", "PDF", "M4A", "MP3", "AAC", "FLAC", "WAV", "AIFF", "OPUS", "OGG", "CAF", "MP4", "M4V", "MOV", "MKV", "WEBM", "CSV", "TSV", "JSON", "PLIST", "XML", "YAML", "TXT", "RTF", "DOCX", "XLSX", "PPTX", "EPUB", "SRT", "VTT", "ZIP", "7Z", "TAR", "GZ", "TGZ", "BZ2", "XZ", "RAR", "TAR.GZ"]
+    static let formatNames: Set<String> = ["JPEG", "JPG", "PNG", "HEIC", "HEIF", "AVIF", "TIFF", "GIF", "BMP", "WEBP", "ICO", "PSD", "SVG", "PDF", "M4A", "MP3", "AAC", "FLAC", "ALAC", "WAV", "AIFF", "OPUS", "OGG", "CAF", "MP4", "M4V", "MOV", "MKV", "WEBM", "CSV", "TSV", "JSON", "PLIST", "XML", "YAML", "TXT", "RTF", "DOCX", "XLSX", "PPTX", "EPUB", "SRT", "VTT", "ZIP", "7Z", "TAR", "GZ", "TGZ", "BZ2", "XZ", "RAR", "TAR.GZ"]
 
     static func isFormatName(_ tag: String) -> Bool { formatNames.contains(tag) }
     static let maxPatterns = 16
