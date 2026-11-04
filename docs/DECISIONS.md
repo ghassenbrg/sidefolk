@@ -4057,3 +4057,9 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 **Alternatives:** an instant Stop that only changes a label, which the roadmap rules out. Durable job handles that survive a restart, with status and results fetched later: a bigger contract no tool here needs yet, so left out.
 **Implications:** cancelling a card makes it go away and nothing happens. Past that the tool is only told. The caller stops waiting, and a server may finish anyway, so the answer can only say "may or may not have happened", and Sideflow records it that way. Progress is the tool's own words: cleaned, 120 characters, at most one a second, heard only by the caller, never by a model or History. A call is still limited to 10 minutes, and one under way when Sidefolk quits comes back as "interrupted", as before.
 
+### D196 — An event says which one it is (2026-11-04)
+**Decision:** *the roadmap's event ids.* `sidefolk/happened` carries an `id`, the same for everyone who hears that happening. Sideflow keeps the last 300 on disk and acts on each once, and a flow can have several ways to start (`also_when`, schedules and events, up to 8 in all), with one run per moment however many match.
+**Why:** "told twice" shouldn't mean "ran twice", and a flow that runs at 9 and when a note is saved shouldn't take two flows.
+**Alternatives:** a replay of events missed while off (more than anything here needs, and it would run things long after). Several watches on one flow (each watch has a title and a plan step to look after, so a watch stays the first way only).
+**Implications:** no new reach: the card lists every way it starts, and adding one is a change that needs the card again. An extension that ignores `id` hears what it did before.
+

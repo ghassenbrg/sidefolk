@@ -335,8 +335,10 @@ extension ExtensionHost {
 
     /// Something happened: those with `permissions.events` hear it, with its words, whatever else they can reach: the founder's choice (D129).
     func tell(_ happening: Happening) async {
+        // One id for one happening, whoever hears it and however often: telling something twice mustn't make it happen twice.
+        let id = UUID().uuidString
         for rt in runtimes.values where rt.record.enabled && rt.pin.permissions?.events != nil {
-            var params: [String: JSONValue] = ["name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]
+            var params: [String: JSONValue] = ["id": .string(id), "name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]
             if let title = happening.title { params["title"] = .string(ExtensionText.line(title, characters: 200)) }
             if let detail = happening.detail { params["detail"] = .string(ExtensionText.untrusted(detail, bytes: 2_000)) }
             await rt.client?.notify("sidefolk/happened", params: .object(params))
