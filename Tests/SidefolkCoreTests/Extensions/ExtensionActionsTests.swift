@@ -10,7 +10,7 @@ import Testing
     def send(m): sys.stdout.write(json.dumps(m) + "\\n"); sys.stdout.flush()
     answers = {"sidefolk/tools.list": "sidefolk/tools.listed", "sidefolk/tools.check": "sidefolk/tools.checked",
                "sidefolk/tools.call": "sidefolk/tools.result", "sidefolk/plan.approve": "sidefolk/plan.result"}
-    tools = [{"name": "ask_host", "title": "Ask the host", "description": "", "inputSchema": {"type": "object", "properties": {"method": {"type": "string"}, "params": {"type": "object"}}}}]
+    tools = [{"name": "ask_host", "title": "Ask the host", "description": "", "inputSchema": {"type": "object", "properties": {"cancel": {"type": "boolean"}, "method": {"type": "string"}, "params": {"type": "object"}}}}]
     for line in sys.stdin:
         m = json.loads(line)
         if m.get("method") == "initialize":
@@ -22,8 +22,16 @@ import Testing
             p = dict(a.get("params", {})); p["request"] = str(uuid.uuid4())
             send({"jsonrpc": "2.0", "method": a["method"], "params": p})
             want = answers[a["method"]]
+            heard = None
             for reply in sys.stdin:
                 r = json.loads(reply)
+                if a.get("cancel") and r.get("method") == "sidefolk/tools.progress" and r["params"].get("request") == p["request"]:
+                    heard = r["params"]
+                    send({"jsonrpc": "2.0", "method": "sidefolk/tools.cancel", "params": {"request": p["request"]}})
+                    continue
+                if heard and r.get("method") == want and r["params"].get("request") == p["request"]:
+                    send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": json.dumps({"progress": heard, "result": r["params"]})}]}})
+                    break
                 if r.get("method") == want and r["params"].get("request") == p["request"]:
                     send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": json.dumps(r["params"])}]}})
                     break
@@ -57,8 +65,10 @@ import Testing
         }
 
         /// What the host answered, asked from the program. `caller` is who started the tool.
-        func ask(_ tool: String, _ method: String, _ params: JSONValue = .object([:]), caller: Caller = .user) async -> JSONValue {
-            let outcome = await h.env.executor.execute(name: tool, input: ["method": .string(method), "params": params], caller: caller, timeout: 30)
+        func ask(_ tool: String, _ method: String, _ params: JSONValue = .object([:]), caller: Caller = .user, cancel: Bool = false) async -> JSONValue {
+            var input: [String: JSONValue] = ["method": .string(method), "params": params]
+            if cancel { input["cancel"] = true }
+            let outcome = await h.env.executor.execute(name: tool, input: .object(input), caller: caller, timeout: 30)
             guard case .ok(let r) = outcome.status, let json = try? JSONValue.parse(Data(r.text.utf8)) else { return .null }
             return json
         }
@@ -307,6 +317,43 @@ import Testing
         #expect(reply["data"]?["secret_word"]?.stringValue == "plover")
         let rows = try await w.h.env.activity.recent(limit: 20)
         #expect(!String(describing: rows).contains("plover"), "History keeps the words it would have, never the fields")
+    }
+
+    /// A tool that says how far along it is, then waits, and says whether it was told to stop.
+    static let slowServer = #"""
+    import json, sys, threading, time, os
+    def send(r): print(json.dumps(r), flush=True)
+    calls = {}
+    for line in sys.stdin:
+        m = json.loads(line)
+        if m.get("method") == "initialize":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "s", "version": "1"}}})
+        elif m.get("method") == "tools/list":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "slow", "title": "Slow", "inputSchema": {"type": "object", "additionalProperties": False}}]}})
+        elif m.get("method") == "tools/call":
+            token = m["params"].get("_meta", {}).get("progressToken")
+            if token: send({"jsonrpc": "2.0", "method": "notifications/progress", "params": {"progressToken": token, "progress": 2, "total": 5, "message": "two done"}})
+            calls[m["id"]] = True
+        elif m.get("method") == "notifications/cancelled":
+            open(os.environ["SIDEFOLK_DATA_DIR"] + "/told", "w").write("yes")
+        elif "id" in m:
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+    """#
+
+    @Test func aProgramHearsHowFarAlongACallIsAndCanStopIt() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let manifest: JSONValue = ["id": "com.example.slowly", "name": "Slowly", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["slow": ["title": "Slow", "risk": "low", "mutates": false, "timeout": 60]]]
+        try await w.h.host.install(from: w.h.source("slowly", manifest: manifest, files: ["server.py": ExtensionActionsTests.slowServer]))
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.slowly.slow", "input": .object([:])], cancel: true) }
+        _ = await w.answerCard(.allowOnce)
+        let reply = await task.value
+        #expect(reply["progress"]?["message"]?.stringValue == "two done")
+        #expect(reply["progress"]?["progress"]?.doubleValue == 2)
+        #expect(reply["progress"]?["total"]?.doubleValue == 5)
+        #expect(reply["result"]?["ok"]?.boolValue == false, "stopped before it answered")
+        #expect(reply["result"]?["status"]?.stringValue != "ok")
     }
 
     @Test func aPageCanOpenAddons() {

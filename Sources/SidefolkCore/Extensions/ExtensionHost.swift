@@ -104,6 +104,8 @@ public actor ExtensionHost {
         /// When the person, or a clean request, last called one of its tools: what it may ask for a plan after (D110).
         var lastPersonCall = Date.distantPast
         var actionCalls: [Date] = []
+        /// Calls under way, by the request that made them: what a program can ask to stop.
+        var actionTasks: [String: Task<Void, Never>] = [:]
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
     }

@@ -1,3 +1,4 @@
+import Synchronization
 import Foundation
 
 /// An extension using Sidefolk's tools through Guard (`permissions.act`, D110): the list, Guard's answer without running, a call, and
@@ -69,10 +70,17 @@ extension ExtensionHost {
             let asker = asker(rt)
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
-            Task { [weak self] in
-                let outcome = await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout)
-                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool)
+            let key = request.stringValue ?? UUID().uuidString
+            runtimes[id]?.actionTasks[key] = Task { [weak self] in
+                let following = ExtensionHost.following(request: request, client: client)
+                let outcome = await ToolProgress.$report.withValue(following) {
+                    await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout)
+                }
+                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, key: key)
             }
+        case "sidefolk/tools.cancel":
+            // Told, not done: it says so by answering, and that answer can only say it may or may not have happened.
+            if let key = params["request"]?.stringValue { runtimes[id]?.actionTasks[key]?.cancel() }
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.forget":
@@ -105,8 +113,27 @@ extension ExtensionHost {
         }
     }
 
-    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "") async {
+    /// Passes on how far along a call is: its own words, cleaned, at most once a second. It's only ever heard by the program that made the call.
+    private static func following(request: JSONValue, client: MCPClient) -> ToolProgress.Report {
+        let last = Mutex(Date.distantPast)
+        return { progress, total, message in
+            let due = last.withLock { at -> Bool in
+                guard Date().timeIntervalSince(at) >= 1 else { return false }
+                at = Date()
+                return true
+            }
+            guard due else { return }
+            var params: [String: JSONValue] = ["request": request]
+            if let progress, progress.isFinite { params["progress"] = .number(progress) }
+            if let total, total.isFinite { params["total"] = .number(total) }
+            if let message { params["message"] = .string(ExtensionText.line(message, characters: 120)) }
+            Task { await client.notify("sidefolk/tools.progress", params: .object(params)) }
+        }
+    }
+
+    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "", key: String? = nil) async {
         end(id)
+        if let key { runtimes[id]?.actionTasks[key] = nil }
         let summary = ToolFormat.oneLine(ExtensionText.clean(outcome.activity.summary), 240)
         var reply: [String: JSONValue] = ["request": request, "summary": .string(summary), "standing": .bool(standing), "undoable": .bool(outcome.activity.undoAvailable)]
         switch outcome.status {
