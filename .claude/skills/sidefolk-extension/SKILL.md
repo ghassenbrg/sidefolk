@@ -383,7 +383,7 @@ Prefer these to asking for app changes: an extension owns its screens and words 
 
 - **A page like an app's own screen:** `hero` with `scene`, `figure`, `says`; `stats`; `cards` with pack pictures; `tabs`; `badges`; `recent`; `settings`. Kit: `.stats`, `.cards`, `.tabs`, `.badges`, `.recent`, `.settings`.
 - **Commands that work without AI in the ten languages:** give each a `name`, translate under `commands.<name>` in `strings/`; say it by `names` with shared `parts` around it, `choices` for enums, `carry` for carrying words, bounds like `{n:integer:1-50}`. Run `sidefolk ext validate`: it lists sentences Sidefolk answers itself. Never a word that answers an approval.
-- **Places in Sidefolk:** `entries` (`companion`, `pocket`, `ask`), `drops` (`kinds`, `patterns`, `tool`, `input` with `{value}`).
+- **Places in Sidefolk:** `entries` (`companion`, `pocket`, `ask`), `drops` (`kinds`, `patterns`, `tool`, `input` with `{value}`, for a file under a `read` path).
 - **Settings:** declare `settings`; never keep your own store of what could be one. Read with `ExtensionSettings`; they come with every request.
 - **The person's AI:** `permissions.ai` with an honest `purpose` and a small `daily_cap`. `await AI.ask(...)`; validate the answer yourself; label who wrote it; have a way to work without it.
 - **History:** `Activity.add(...)` for what a surface finished, not for every step.

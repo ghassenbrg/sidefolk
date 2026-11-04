@@ -430,7 +430,7 @@ Sidefolk sends to that app works, so what is sent is fixed:
 
 *Residual:* the Automation grant covers anything Sidefolk sends to that app, so a flaw in a fixed script, or
 a child of Sidefolk that sends Apple Events itself (an approved command watcher, an MCP server the person
-added), reaches the app with Sidefolk's grant. Recently Deleted is recognised by its name (English, and Notes'
+added), reaches the app with Sidefolk's grant. The same goes for Finder once the person has said yes for the ring's shortcut (T49). Recently Deleted is recognised by its name (English, and Notes'
 word for the Mac's language); a person's own top-level folder with exactly that name would be taken for it,
 and its notes would not be listed.
 
@@ -636,7 +636,7 @@ paths and queries are dropped, hosts stay.
 - Helpers are signed by the same team. The CLI link goes into `~/.local/bin` only.
 - TCC: Notifications, Local Network only for user-created LAN watchers or a model server the person
   pointed at another computer (`NSLocalNetworkUsageDescription` says so), the microphone while the talk key
-  is held (T26), and Automation for Notes and Reminders only (T25). Never Full Disk Access, Accessibility or
+  is held (T26), and Automation for Notes and Reminders (T25) and for Finder once the person presses the ring's shortcut (T49). Never Full Disk Access, Accessibility or
   Screen Recording.
 
 **T23 Supply chain (L/H).** GRDB and KeyboardShortcuts use `from:` ranges, and
@@ -1172,7 +1172,7 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 - Never fetches non-http(s) URLs, or private addresses from model-built URLs; never loads remote
   images.
 - Never asks for admin rights, Full Disk Access, Accessibility or Screen Recording; Automation only
-  for Notes and Reminders, driven by fixed scripts (T25). Location Services only once the person chose
+  for Notes and Reminders, and for Finder on the ring's shortcut, driven by fixed scripts (T25, T49). Location Services only once the person chose
   their Mac's location, and never coordinates to an AI (T30).
 - Never removes anything from another app unless its whole copy is in the notebook and the person
   approved that removal (T25), or it is a calendar event the person deleted or approved deleting, whose copy Undo
@@ -1220,6 +1220,9 @@ The budget bounds that to about nine characters per yes, then the person is aske
 - *A drag another app starts* can carry more than its picture shows. The middle gives the first name and how many more, and every name over the middle, one to a line, as far as the card shows it (120 characters); past five, or with a name too wide for its line by its measured width, the ring offers nothing and the card shows them all. Only what the ring read when it opened runs: a different list at the drop closes it.
 - *What's seen is what runs:* the ring stays left to right in every language, since its slices are found by a fixed geometry.
 - *The shortcut* reads Finder's selection by Apple Events only on the person's press, with Finder in front, from a child process with a deadline, and macOS asks once. It needs a click or Return to run anything. Names arrive as addresses in JSON, and nothing is built from them.
+- *That yes outlasts the shortcut* (residual): Automation for Finder covers anything Sidefolk sends it, and by T25's reading anything a child of Sidefolk sends, such as a command watcher or an MCP server the person added. Finder can do far more than Notes can: move and trash files, open them. No new macOS question comes first, and in Full access a clean turn can make such a watcher without a card (T48). Taken only by those who press the shortcut and say yes; whether macOS credits a child's events to this grant isn't measured here.
+- *A slice or an offer is a read.* A dropped file goes only under an argument the tool lists as `read`, so a choice can't become a card about sharing its whole folder for good, which Return may answer (D185). A copy installed before this rule gets no offers for files.
+- *Full access and Auto* don't reach a slice or an offer for files: it runs as the person (`.user`), never with a mode, with the same one read and the same refusals of hidden and protected files. Offers for links, text and folders run as an extension's command (D185's rules for that caller), and the ring has none.
 - *A picture in the ring* comes from the system's thumbnail service, under the same rules as the card (T46). The panel never activates Sidefolk. Words on a slice are the extension's, within a ring Sidefolk draws, under Sidefolk's own line: from its permissions, naming it, with the amber warning when it applies, and following the slice under the pointer. Extensions take turns on the ring, so one with many offers can't push another off it, whatever its id.
 - *Choosing what's dragged* (measured 2026-11-04, a real program in the real profile): an extension with `clipboard` can clear and rewrite the system's drag pasteboard, since `com.apple.pasteboard.1` carries every pasteboard. Without it, it can't. It could swap a file being dragged for one of its choosing, and the read would then be its own on a careless release. So an extension allowed the clipboard gets no offers for dropped files, on the card or the ring (`canWriteDrags`). None shipped has both. What remains: such an extension can still change what's dragged for another extension's offer, whose grant it doesn't get. The name shows in the middle, and on the card.
 - *Not covered:* VoiceOver during a drag (the card stays the complete way). An extension's slice can use persuasive words, as an offer on the card can. A file swapped for a link after the choice's own check, in the moment before Guard's, is limited by Guard's forbidden places.

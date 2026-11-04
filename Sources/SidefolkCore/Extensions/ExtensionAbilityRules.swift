@@ -174,6 +174,9 @@ enum ExtensionAbilityRules {
             } else if !Set(drop.kinds).isDisjoint(with: [.file, .folder]), tool.paths[carriers[0]] == nil {
                 // The sandbox opens a file only through a declared path, and Guard checks it there first (D39).
                 issues.append(ValidationIssue(field: "\(field).input", message: "a file or folder goes under an argument the tool lists in `paths`, so Guard can check it."))
+            } else if drop.kinds.contains(.file), tool.paths[carriers[0]] != .read {
+                // A drop hands over one read. Asking to write would turn the person's choice into a card about the whole folder.
+                issues.append(ValidationIssue(field: "\(field).input", message: "a dropped file goes under an argument the tool lists as `read`."))
             }
         }
         return issues

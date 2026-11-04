@@ -215,6 +215,9 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     /// It may use the clipboard, and that also lets it write the system's drag pasteboard (measured, SECURITY T49): it could swap what's
     /// being dragged for a file of its choosing, so it gets no offers for dropped files.
     public var canWriteDrags = false
+    /// Its tool would write to the dropped file, which the validator now refuses. A copy installed before that gets no offers for
+    /// files: the drop hands over one read, so Guard would ask to share the file's whole folder for what looked like one choice.
+    public var writesTheFile = false
     /// What it reads could leave the Mac: it has the internet; can have your AI or a place search carry its words; uses `media`, whose
     /// certificate service can fetch from an address (SandboxProfile.mediaRules); or can put it on the clipboard or in a folder
     /// named at install, which may sync. The card says so.

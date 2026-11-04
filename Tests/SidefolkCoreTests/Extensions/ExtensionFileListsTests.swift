@@ -138,6 +138,21 @@ import Testing
         if case .ok(let r) = outcome.status { #expect(!r.text.contains("key")) }
     }
 
+    @Test func fullAccessChangesNothingForADrop() async throws {
+        let (h, folder) = try await installed()
+        try await h.env.permissions.updatePolicy { $0.mode = .fullAccess }
+        let files = ["\(folder)/a.txt"]
+        let input: JSONValue = ["files": .array(files.map { .string($0) }), "sibling": .string("\(folder)/other.txt")]
+        let outcome = await h.env.executor.execute(name: "ext.lister.make", input: input, caller: .user, pickedFiles: files)
+        #expect(answer(outcome)?["read"] == ["a"], "still the one file it was handed")
+        #expect(answer(outcome)?["sibling"]?.stringValue == "refused")
+
+        let hidden = "\(folder)/.key.txt"
+        try Data("key".utf8).write(to: URL(fileURLWithPath: hidden))
+        let refused = await h.env.executor.execute(name: "ext.lister.make", input: ["files": [.string(hidden)]], caller: .user, approvalTimeout: 0.2, pickedFiles: [hidden])
+        guard case .denied = refused.status else { Issue.record("a hidden file stays refused, not asked about: \(refused.status)"); return }
+    }
+
     @Test func aFolderInTheListIsRefused() async throws {
         let (h, folder) = try await installed()
         let inside = "\(folder)/sub"
@@ -282,6 +297,24 @@ import Testing
         #expect(try valid(tools: ["echo": ["file_lists": ["files": "read"]]], drops: [["id": "d", "title": "Do", "kinds": ["file"], "tool": "echo", "input": ["files": "{values}"]]]))
         #expect(try !valid(tools: ["echo": ["paths": ["files": "read"]]], drops: [["id": "d", "title": "Do", "kinds": ["file"], "tool": "echo", "input": ["files": "{values}"]]]))
         #expect(try !valid(tools: ["echo": ["file_lists": ["files": "read"]]], drops: [["id": "d", "title": "Do", "kinds": ["link"], "tool": "echo", "input": ["files": "{values}"]]]))
+    }
+
+    @Test func aDroppedFileIsOnlyEverRead() throws {
+        func carrier(_ use: JSONValue, kinds: JSONValue = ["file"]) throws -> Bool {
+            try valid(tools: ["echo": ["paths": ["path": use]]], drops: [["id": "d", "title": "Do", "kinds": kinds, "tool": "echo", "input": ["path": "{value}"]]])
+        }
+        #expect(try carrier("read"))
+        #expect(try !carrier("write"))
+        #expect(try !carrier("write", kinds: ["file", "folder"]))
+        #expect(try carrier("write", kinds: ["folder"]), "a folder has its own card")
+    }
+
+    @Test func aCopyThatWouldWriteToTheFileGetsNoOffers() {
+        var drop = action(input: ["path": "{value}"], paths: ["path"])
+        #expect(DropChoices.offers(forFiles: ["/d/a.jpg"], among: [drop]).count == 1)
+        drop.writesTheFile = true
+        #expect(DropChoices.offers(forFiles: ["/d/a.jpg"], among: [drop]).isEmpty)
+        #expect(DropChoices.ringChoices(forFiles: ["/d/a.jpg"], among: [drop]).isEmpty)
     }
 
     @Test func aFileListIsReadOnly() throws {

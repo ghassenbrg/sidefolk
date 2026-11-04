@@ -42,6 +42,7 @@ extension ExtensionHost {
                                     canSendAwayWithoutInternet: rt.pin.permissions.map { !$0.network && $0.carriesOut } ?? false,
                                     tag: d.tag, mark: d.mark.flatMap(PackAssets.picturePath), menuTitle: w?.dropMenuTitles[d.id] ?? d.menuTitle)
                 action.canWriteDrags = rt.pin.permissions?.clipboard ?? false
+                action.writesTheFile = d.input.contains { $0.value == .string("{value}") && m.tools[d.tool]?.paths[$0.key] == .write }
                 return action
             }
             settings += settingRows(rt)
