@@ -108,7 +108,8 @@ import Testing
         let r = card(decide(Self.forecast, scope: Self.weather, tainted: true))
         #expect(r?.canAlways == false)
         #expect(r?.canAllowForRequest == false)
-        _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .fullAccess))
+        // Full access answers it (D185): the person chose to be asked about nothing.
+        #expect(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .fullAccess) == .allow(.fullAccess))
         _ = card(decide(Self.forecast, scope: Self.weather, tainted: true, mode: .auto))
         // A grant for the tool with no service in it never stands for one.
         let unscoped = Grant(tool: "ext.sky-watch.forecast", callerKind: "agent")
@@ -124,7 +125,7 @@ import Testing
             let r = card(decide(Self.poster, scope: scope, tainted: true, rule: rule, grants: [grant]))
             #expect(r?.canAlways == false)
         }
-        _ = card(decide(Self.poster, scope: scope, tainted: true, mode: .fullAccess, grants: [grant]))
+        #expect(decide(Self.poster, scope: scope, tainted: true, mode: .fullAccess, grants: [grant]) == .allow(.fullAccess), "Full access answers it (D185)")
         _ = card(decide(Self.poster, scope: scope, rule: .withoutAsking))
     }
 

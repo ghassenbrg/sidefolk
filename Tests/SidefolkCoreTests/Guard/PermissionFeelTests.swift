@@ -3,10 +3,9 @@ import Testing
 @testable import SidefolkCore
 
 /// The modes after D185: Full access is full access, and Auto is easygoing. These are the new rows of `ModeMatrixTests`,
-/// written before the engine change so the change has to meet them; they are switched on with it.
+/// independent of the table in `ModeMatrixTests`, so a slip in one shows against the other.
 @Suite struct PermissionFeelTests {
     typealias Outcome = ModeMatrixTests.Outcome
-    static let engineStep = Comment("D185: waits for the engine step (after Sideflow's stage 1 touches PermissionEngine and FolderAccess)")
 
     /// What Sidefolk's own agent gets in Full access: nothing asks, except text to read in full (a skill). A low-risk step that
     /// can't carry anything still just runs.
@@ -28,7 +27,7 @@ import Testing
         }
     }
 
-    @Test(.disabled(engineStep)) func fullAccessAsksNothing() {
+    @Test func fullAccessAsksNothing() {
         let matrix = ModeMatrixTests()
         for shape in ModeMatrixTests.Shape.allCases {
             for risk in Risk.allCases {
@@ -40,7 +39,7 @@ import Testing
         }
     }
 
-    @Test(.disabled(engineStep)) func autoOnlyAsksForWhatCanLeaveOrBeLost() {
+    @Test func autoOnlyAsksForWhatCanLeaveOrBeLost() {
         let matrix = ModeMatrixTests()
         for shape in ModeMatrixTests.Shape.allCases {
             for risk in Risk.allCases {

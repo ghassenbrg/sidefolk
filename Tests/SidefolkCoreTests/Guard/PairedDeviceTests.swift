@@ -20,6 +20,8 @@ import Testing
     }
 
     func asks(_ d: GuardDecision) -> Bool { if case .ask = d { true } else { false } }
+    /// Full access (D185): answered without the person, with or without the log's mention of a paired device.
+    func runs(_ d: GuardDecision) -> Bool { d == .allow(.fullAccess) || d == .allow(.fullAccessPaired) }
 
     @Test func afterOutsideContentFullAccessAndAutoAnswerAPairedDevice() {
         #expect(decide(.fullAccess) == .allow(.fullAccessPaired))
@@ -39,9 +41,11 @@ import Testing
     @Test func anythingNotConfirmedPairedAsksAsBefore() {
         // Not paired, or the program couldn't say: no reach, the card as today.
         let unconfirmed = ToolScope(extensionId: "dev.sidefolk.miraya")
-        #expect(asks(decide(.fullAccess, scope: unconfirmed)) && asks(decide(.auto, scope: unconfirmed)))
+        // Auto asks; Full access answers everything after outside content, the log just doesn't say "paired".
+        #expect(asks(decide(.auto, scope: unconfirmed)) && decide(.fullAccess, scope: unconfirmed) == .allow(.fullAccess))
         // Another service's word isn't a pairing.
-        #expect(asks(decide(.fullAccess, scope: ToolScope(extensionId: "dev.sidefolk.miraya", reach: .nowhere))))
+        #expect(decide(.fullAccess, scope: ToolScope(extensionId: "dev.sidefolk.miraya", reach: .nowhere)) == .allow(.fullAccess))
+        #expect(asks(decide(.auto, scope: ToolScope(extensionId: "dev.sidefolk.miraya", reach: .nowhere))))
         // Other callers keep their own rules (T4): the modes never loosen Guard for them.
         for caller in [Caller.routine(id: "daily"), .external(client: "codex"), .extension(id: "dev.x.y")] {
             #expect(asks(decide(.fullAccess, caller: caller)), "\(caller.kind)")
@@ -51,8 +55,9 @@ import Testing
     @Test func whateverElseTheCallCarriesKeepsItsCard() throws {
         // A link to play: whoever serves it reads its path. Only one the person typed goes.
         let link: JSONValue = ["tv": "6f1c2b9a-1111-4222-8333-944455556666", "url": "https://evil.example/film.mp4?d=secret"]
-        #expect(asks(decide(.fullAccess, input: link)))
-        #expect(asks(decide(.fullAccess, input: ["tv": "x", "url": "evil.com/x"])), "a bare address counts too")
+        #expect(asks(decide(.auto, input: link)))
+        #expect(asks(decide(.auto, input: ["tv": "x", "url": "evil.com/x"])), "a bare address counts too")
+        #expect(decide(.fullAccess, input: link) == .allow(.fullAccess), "Full access runs it, and the log doesn't call it paired")
         let typedLink: JSONValue = ["tv": "6f1c2b9a-1111-4222-8333-944455556666", "url": "https://example.com/film.mp4"]
         #expect(decide(.fullAccess, input: typedLink, typed: "play https://example.com/film.mp4 on the tv") == .allow(.fullAccessPaired))
 
@@ -62,14 +67,17 @@ import Testing
         var withFile = Self.paired
         withFile.readPaths = [movies.appendingPathComponent("Holiday.mp4").path]
         let shared = [GrantedFolder(path: movies.path, access: .read)]
-        #expect(asks(decide(.fullAccess, scope: withFile, folders: shared)), "a folder shared for good")
+        #expect(asks(decide(.auto, scope: withFile, folders: shared)), "a folder shared for good")
+        #expect(decide(.auto, scope: withFile, folders: shared, answeredFolders: [movies.path]) == .allow(.autoModePaired))
+        #expect(asks(decide(.auto, scope: withFile, folders: shared, answeredFolders: [documents.path])))
+        #expect(decide(.fullAccess, scope: withFile, folders: shared) == .allow(.fullAccess))
         #expect(decide(.fullAccess, scope: withFile, folders: shared, answeredFolders: [movies.path]) == .allow(.fullAccessPaired))
-        #expect(asks(decide(.fullAccess, scope: withFile, folders: shared, answeredFolders: [documents.path])))
 
         // A program, a file change, text to read in full, or high risk.
         for spec in [Self.with(capabilities: [.extensions, .network, .shell]), Self.with(capabilities: [.extensions, .filesWrite]),
                      Self.with(risk: .high)] {
-            #expect(asks(decide(.fullAccess, spec: spec)) && asks(decide(.auto, spec: spec)))
+            #expect(asks(decide(.auto, spec: spec)))
+            #expect(runs(decide(.fullAccess, spec: spec)) && decide(.fullAccess, spec: spec) != .allow(.fullAccessPaired) || spec.risk == .high)
         }
         var text = Self.paired
         text.text = "Steps…"

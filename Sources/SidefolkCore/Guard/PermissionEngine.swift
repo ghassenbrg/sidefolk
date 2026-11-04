@@ -125,13 +125,13 @@ public struct PermissionEngine: Sendable {
             // A call that can't carry anything off the Mac may instead be allowed for the rest of Sidefolk's
             // run (D37): a library of Apple Notes copied in batches is one card per kind, not one per batch.
             // An extension's tool, once, for the same extension's tool for the rest of the run (D185): no wider than the "Always" a
-            // clean turn offers for it, and never one that runs outside a sandbox.
+            // clean turn offers for it, never one that runs outside a sandbox, and not one that names an address or a service (D47).
             let carriesOut = Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, staysInShared: staysInShared)
-            let forExtension = scope.extensionId != nil && !spec.capabilities.contains(.shell) && !outwardUntyped
+            let forExtension = scope.extensionId != nil && !spec.capabilities.contains(.shell) && scope.url == nil && scope.reach == nil
             let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil && (!carriesOut || forExtension)
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
-                details: Self.details(spec: spec, scope: scope), canAlways: (clean || service != nil || site != nil) && scope.text == nil && !askEachTime, tainted: tainted,
+                details: Self.details(spec: spec, scope: scope), canAlways: clean && scope.text == nil && !askEachTime, tainted: tainted,
                 effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")), canAllowForRequest: forRequest,
                 extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
             ))
