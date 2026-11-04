@@ -253,17 +253,17 @@ import Testing
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func mirayaAnswersThePairedCheckInItsSandbox() async throws {
         let h = try HostEnv()
-        try await h.env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+        try await h.env.permissions.setPolicy(GuardPolicy(mode: .auto))
         let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"), origin: .official)
         // No TV is paired: sharing isn't confirmed; stopping what isn't running reaches no device.
         #expect(await h.host.pairedCheck(info.id, tool: "share_screen", input: ["tv": "living room"]) == PairedAnswer(paired: false))
         #expect(await h.host.pairedCheck(info.id, tool: "stop", input: [:]) == PairedAnswer(paired: true))
         #expect(await h.host.pairedCheck(info.id, tool: "pair_tv", input: ["tv": "living room"]) == PairedAnswer(paired: false))
 
-        // After outside content, in Full access: stopping runs without a card; sharing to a TV that isn't paired asks.
+        // After outside content, in Auto: stopping runs without a card; sharing to a TV that isn't paired asks (Full access answers both, D185).
         let stop = await h.env.executor.execute(name: "ext.miraya.stop", input: [:], caller: .agent(runId: "r"), tainted: true)
         #expect(stop.okText == "Nothing is on the TV from this Mac.", "\(stop.status)")
-        #expect(try await h.env.activity.recent()[0].decision == .fullAccessPaired)
+        #expect(try await h.env.activity.recent()[0].decision == .autoModePaired)
         let answered = h.env.autoAnswer(.deny)
         let share = await h.env.executor.execute(name: "ext.miraya.share_screen", input: ["tv": "living room"], caller: .agent(runId: "r"),
                                                  tainted: true)
@@ -275,7 +275,7 @@ import Testing
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func aCopyFromAFolderIsNeverAsked() async throws {
         let h = try HostEnv()
-        try await h.env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+        try await h.env.permissions.setPolicy(GuardPolicy(mode: .auto))
         let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"))
         #expect(await h.host.pairedCheck(info.id, tool: "stop", input: [:]) == nil)
         let answered = h.env.autoAnswer(.deny)
