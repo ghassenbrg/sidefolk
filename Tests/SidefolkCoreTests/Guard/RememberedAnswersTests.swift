@@ -90,4 +90,37 @@ import Testing
         _ = await box.call("clipboard.read", input: [:])
         #expect(cards.value == 2)
     }
+
+    /// The folder card's main button is "Share folder" (it answers Always): the next call in that folder doesn't ask. "Just this time" doesn't remember.
+    @Test func aSharedFolderIsNotAskedAboutAgainAndOnceIsNot() async throws {
+        for (decision, remembered) in [(ApprovalDecision.allowAlways, true), (.allowOnce, false)] {
+            let env = try TestEnv()
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sf-share-\(UUID().uuidString)")
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: folder) }
+            env.registry.register(ProbeTool(name: "files.move", risk: .medium, capabilities: [.filesWrite],
+                                            scope: { _ in ToolScope(writePaths: [folder.path + "/a.txt"]) }))
+            try await env.permissions.setPolicy(GuardPolicy(mode: .auto))
+            let cards = CallCounter()
+            let stream = env.events.stream()
+            let broker = env.broker
+            let answering = Task {
+                for await e in stream {
+                    guard case .approvalRequested(let r) = e else { continue }
+                    cards.bump()
+                    if case .folderAccess = r.details { await broker.resolve(id: r.id, decision: decision) } else { await broker.resolve(id: r.id, decision: .deny) }
+                }
+            }
+            defer { answering.cancel() }
+            for _ in 1...2 { #expect(await env.executor.execute(name: "files.move", input: ["x": "1"], caller: .agent(runId: "r")).isOK) }
+            #expect(cards.value == (remembered ? 1 : 2), "\(decision)")
+            #expect(try await env.permissions.folders().count == (remembered ? 1 : 0))
+            // Taking it back from Trust (Remove) asks again.
+            if remembered {
+                try await env.permissions.revokeFolder(try #require(try await env.permissions.folders().first).path)
+                _ = await env.executor.execute(name: "files.move", input: ["x": "1"], caller: .agent(runId: "r"))
+                #expect(cards.value == 2)
+            }
+        }
+    }
 }
