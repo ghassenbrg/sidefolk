@@ -2,12 +2,20 @@ import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
-/// Home's sidebar (D84): the companion live in its nook, on its light, in the same state as on the desktop; the five
-/// places; the collections (You, the Inbox and the rest, the Trash last); the person's extension pages, arranged by
-/// dragging; and Quiet and Settings at the foot. One layout in every theme (themes dress it).
+/// Home's sidebar (D84, D220): the companion live in its nook, on its light, in the same state as on the desktop; the five
+/// places; the collections (You, the first few, the rest and the Trash a click away); the person's extension pages, arranged by
+/// dragging; and the Gallery, Settings and Attention at the foot. One layout in every theme (themes dress it).
 struct HomeSidebar: View {
     @Bindable var model: HomeModel
     @State private var deleting: NotebookCollection?
+    @State private var height: CGFloat = 800
+    /// Saved with the window's other choices, so the sidebar opens as the person left it.
+    @AppStorage("home.sidebar.moreCollections") private var moreCollections = false
+    /// Collections shown before "More collections"; with one or two more than this, all of them show.
+    private static let collectionsShown = 3
+    private static let room = 2
+    /// Under this, the sidebar's picture gives its height to the rows.
+    private static let studioHeight: CGFloat = 680
 
     private var notebook: NotebookModel { model.notebook }
     private var now: NowModel { model.now }
@@ -19,7 +27,7 @@ struct HomeSidebar: View {
         // Above the list, not in it: only the list scrolls, however many collections and pages it holds.
         VStack(spacing: 0) {
             if tokens.nook.header {
-                Button { model.selection = .now } label: { SidebarHeader(model: now) }
+                Button { model.selection = .now } label: { SidebarHeader(model: now, compact: height < Self.studioHeight) }
                     .buttonStyle(.sfBare)
             } else {
                 Button { model.selection = .now } label: { SidebarNook(model: now) }
@@ -30,7 +38,8 @@ struct HomeSidebar: View {
             }
             list
         }
-        .background(alignment: .top) { if tokens.nook.header { SidebarHeaderArt().ignoresSafeArea() } }
+        .background(alignment: .top) { if tokens.nook.header { SidebarLogo().ignoresSafeArea() } }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         // A translucent theme leaves the sidebar to the Mac's own material, the desktop showing faintly through.
         .background(tokens.material.sidebar == .solid ? Theme.sidebar : .clear)
         .alert("Delete “\(deleting?.name ?? "")”?", isPresented: Binding(
@@ -52,6 +61,25 @@ struct HomeSidebar: View {
     }
 
     private var list: some View {
+        // The place the person is on stays in view, whatever opened it: a fold opening for the Trash can put its row below
+        // the edge. A turn later, because that row only exists once this update has drawn the fold open; longer when the
+        // window has just opened on that place, because its list has laid out no rows yet.
+        ScrollViewReader { proxy in
+            rows
+                .onChange(of: model.selection) { _, place in reveal(place, with: proxy) }
+                .onAppear { reveal(model.selection, with: proxy, after: .milliseconds(200)) }
+        }
+    }
+
+    private func reveal(_ place: HomeSelection?, with proxy: ScrollViewProxy, after wait: Duration = .zero) {
+        guard let place else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: wait)
+            proxy.scrollTo(place, anchor: .center)
+        }
+    }
+
+    private var rows: some View {
         List(selection: $model.selection) {
             Section {
                 ForEach(Array(HomeSelection.places.enumerated()), id: \.offset) { i, place in
@@ -68,13 +96,17 @@ struct HomeSidebar: View {
                     }
                 }
                 .help(Text("What \(model.companionName) keeps in mind about you, and where each fact came from."))
-                ForEach(notebook.collections.filter { $0.kind != .profile }) { c in
+                // Only the end of the list folds away, so a drag among what shows still lands where `arrange` counts from.
+                ForEach(shownCollections) { c in
                     collectionRow(c).moveDisabled(c.kind == .inbox)
                 }
                 .onMove { from, to in notebook.arrange(from: from, to: to) }
-                row(Text("Trash"), count: notebook.trashCount, quiet: true, tag: .trash) {
-                    Image(systemName: "trash").font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(model.selection == .trash ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
+                if foldsCollections { moreRow }
+                if !foldsCollections || collectionsOpen {
+                    row(Text("Trash"), count: notebook.trashCount, quiet: true, tag: .trash) {
+                        Image(systemName: "trash").font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(model.selection == .trash ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
+                    }
                 }
             } header: {
                 HStack {
@@ -87,7 +119,7 @@ struct HomeSidebar: View {
                         .accessibilityLabel("New collection")
                 }
             }
-            ExtensionsSidebarSection(pages: model.pages, selection: model.selection) { model.selection = .gallery }
+            ExtensionsSidebarSection(pages: model.pages, selection: model.selection)
             if !notebook.archived.isEmpty {
                 Section {
                     ForEach(notebook.archived) { c in
@@ -107,23 +139,89 @@ struct HomeSidebar: View {
         }
         .listStyle(.sidebar)
         .scrollContentBackground(.hidden)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            HStack {
-                QuietPill(model: model)
+        .safeAreaInset(edge: .bottom, spacing: 0) { foot }
+    }
+
+    private var collections: [NotebookCollection] { notebook.collections.filter { $0.kind != .profile } }
+
+    /// Enough that folding saves a line or two; the Trash folds with them.
+    private var foldsCollections: Bool { collections.count > Self.collectionsShown + Self.room }
+
+    /// Open by choice, or because the place the person is on is in there: a selected row never hides.
+    private var collectionsOpen: Bool {
+        if moreCollections || model.selection == .trash { return true }
+        guard case .collection(let id) = model.selection else { return false }
+        return collections.dropFirst(Self.collectionsShown).contains { $0.id == id }
+    }
+
+    private var shownCollections: [NotebookCollection] {
+        foldsCollections && !collectionsOpen ? Array(collections.prefix(Self.collectionsShown)) : collections
+    }
+
+    private var moreRow: some View {
+        Button { withAnimation(Theme.Motion.standard) { moreCollections.toggle() } } label: {
+            HStack(spacing: Theme.Space.s + 2) {
+                Image(systemName: collectionsOpen ? "chevron.down" : "chevron.forward").font(.system(size: 10, weight: .semibold)).frame(width: 20)
+                Text(collectionsOpen ? "Fewer collections" : "More collections", comment: "Home's sidebar: shows or folds the collections past the first few, and the Trash")
+                    .font(Theme.Font.callout.weight(.medium))
                 Spacer(minLength: Theme.Space.xs)
-                // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window is in front.
-                Button { model.services.openSettings(tab: nil) } label: {
-                    Image(systemName: "gearshape").font(.system(size: 14))
+                if !collectionsOpen {
+                    Text(verbatim: (collections.count - Self.collectionsShown).formatted()).font(Theme.Font.caption.monospacedDigit())
                 }
-                .buttonStyle(.sfIcon)
-                .foregroundStyle(Theme.sidebarInkMuted)
-                .help("Settings (⌘,)")
-                .accessibilityLabel("Settings")
             }
-            .padding(.horizontal, Theme.Space.m)
-            .padding(.vertical, Theme.Space.s)
-            .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 1).padding(.horizontal, Theme.Space.m) }
+            .foregroundStyle(Theme.sidebarInkMuted)
+            .frame(maxWidth: .infinity, minHeight: Theme.Size.sidebarRow - 6)
         }
+        .buttonStyle(.sfBare)
+        .selectionDisabled()
+        .moveDisabled(true)
+        .background(SidebarHighlightOff())
+        .accessibilityValue(collectionsOpen ? Text("Unfolded", comment: "VoiceOver: a fold that is open") : Text("\(collections.count - Self.collectionsShown) more", comment: "Home's sidebar: extension pages put out of it"))
+    }
+
+    /// Below the list, always in reach however long it runs: the Gallery, Settings and how much may interrupt.
+    private var foot: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            footRow(Text("Get add-ons", comment: "Home's sidebar: opens the Gallery of companions, extensions and themes"), symbol: "puzzlepiece.extension", selected: model.selection == .gallery) {
+                model.selection = .gallery
+            } trailing: {
+                let updates = model.services.updates.addonPending.count
+                if updates > 0 {
+                    CountBadge(count: updates, waiting: false)
+                        .help(Text(verbatim: AddonUpdateWords.count(updates)))
+                        .accessibilityLabel(Text(verbatim: AddonUpdateWords.count(updates)))
+                }
+            }
+            .help(Text("Companions, extensions and themes in the Gallery"))
+            // Sidefolk lives in the menu bar, so the app menu (and ⌘,) is only there while a window is in front.
+            footRow(Text("Settings"), symbol: "gearshape", selected: false) { model.services.openSettings(tab: nil) } trailing: { EmptyView() }
+                .help("Settings (⌘,)")
+            QuietPill(model: model).padding(.horizontal, Theme.Space.m).padding(.top, Theme.Space.s)
+        }
+        .padding(.vertical, Theme.Space.s)
+        .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 1).padding(.horizontal, Theme.Space.m) }
+        .background(tokens.material.sidebar == .solid ? Theme.sidebar : .clear)
+    }
+
+    private func footRow<Trailing: View>(_ title: Text, symbol: String, selected: Bool, action: @escaping () -> Void,
+                                         @ViewBuilder trailing: () -> Trailing) -> some View {
+        Button(action: action) {
+            HStack(spacing: Theme.Space.s + 2) {
+                Image(systemName: symbol).font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
+                title.font(selected ? Theme.Font.bodyStrong : Theme.Font.body)
+                    .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInk).lineLimit(1)
+                Spacer(minLength: Theme.Space.xs)
+                trailing()
+            }
+            .padding(.horizontal, Theme.Space.s + 2)
+            .frame(minHeight: Theme.Size.sidebarRow)
+            .background(selected ? Theme.sidebarSelected : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.sfBare)
+        .padding(.horizontal, Theme.Space.s + 2)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     /// A place, with its shortcut in its help; Today counts what needs you (amber, as the shoulder badge), On duty what runs.
@@ -183,6 +281,7 @@ struct HomeSidebar: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? .isSelected : [])
         .tag(tag)
+        .id(tag)
         .listRowBackground(SidebarRowFill(selected: selected))
     }
 }
@@ -273,8 +372,6 @@ struct SidebarNook: View {
     }
 }
 
-/// Open, Focus or Quiet at the sidebar's foot (D84), with the half circle and the moon (`Theme.Symbol`): the same choice
-/// and ends as Settings › Attention and the Pocket.
 /// The theme's nook art (`companion.backdrop`, D84: themes dress the nook) behind the companion's card, faded so its
 /// name and line still read, and clipped to the card: scaled to fill, it would spill over the sidebar otherwise.
 private struct NookBackdrop: View {
@@ -292,6 +389,8 @@ private struct NookBackdrop: View {
     }
 }
 
+/// Open, Focus or Quiet at the sidebar's foot (D84), with the half circle and the moon (`Theme.Symbol`): the same choice
+/// and ends as Settings › Attention and the Pocket.
 struct QuietPill: View {
     var model: HomeModel
 
@@ -334,12 +433,14 @@ struct QuietPill: View {
                     else { Text("Quiet until you turn it off", comment: "Settings › Attention") }
                 }
             }
-            .font(Theme.Font.callout)
+            .font(Theme.Font.callout.weight(.medium))
             .foregroundStyle(Theme.ink)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .menuStyle(.button)
-        .buttonStyle(.sf(.secondary, size: .small))
-        .fixedSize()
+        .menuIndicator(.hidden)
+        .buttonStyle(.sf(.secondary, size: .regular))
         .help(Text("How much \(model.companionName) may interrupt you"))
     }
 

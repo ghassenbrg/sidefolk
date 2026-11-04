@@ -157,7 +157,7 @@ struct QueueRow: View {
         case .session(let session):
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 Text(verbatim: session.detail.flatMap { $0.isEmpty ? nil : $0 } ?? Describe.session(session))
-                    .font(Theme.Font.headline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                    .font(Theme.Font.title2).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 WrapRow(minimum: 220, spacing: Theme.Space.s) {
                     Text("Answer in its own window. Sidefolk only lets you know.").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,7 +167,7 @@ struct QueueRow: View {
             }
         case .attention(let item):
             VStack(alignment: .leading, spacing: Theme.Space.s) {
-                Text(item.title).font(Theme.Font.headline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                Text(item.title).font(Theme.Font.title2).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 if let body = item.body, !body.isEmpty {
                     Text(body).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
@@ -739,6 +739,28 @@ extension NowModel.Decision {
         case .attention, .skipped: false
         }
     }
+
+    /// What colour its label says it in (D78): waiting on the person amber, a watch's change news, the rest quiet.
+    var statusTone: StatusTone {
+        if isFirm { return .warning }
+        if case .attention(let item) = self, item.refKind == "watcher" { return .news }
+        return .neutral
+    }
+
+    /// Beside the label, so the colour is never all that says it.
+    var statusSymbol: String {
+        switch self {
+        case .approval: isFirm ? "clock" : "checkmark.shield"
+        case .session: "clock"
+        case .attention(let item):
+            switch item.refKind {
+            case "watcher": "arrow.left.arrow.right"
+            case "reminder": "bell"
+            default: "sparkle"
+            }
+        case .skipped: "forward.end"
+        }
+    }
 }
 
 /// What waits after the decision in view (D130): who asks and what, in one line. A click or Return brings it forward, where
@@ -764,16 +786,25 @@ struct NextUpRow: View {
                 }
                 Text(verbatim: decision.title).font(Theme.Font.body.weight(.medium)).foregroundStyle(Theme.ink).lineLimit(1)
                 Spacer(minLength: Theme.Space.s)
-                Text(verbatim: decision.cardLabel(model)).font(Theme.Font.callout)
-                    .foregroundStyle(decision.isFirm ? Theme.warning : Theme.inkMuted).lineLimit(1)
-                Image(systemName: "chevron.forward").font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.inkFaint)
-                    .accessibilityHidden(true)
+                // The status keeps its room and its whole words; the title gives way first.
+                HStack(spacing: Theme.Space.xs) {
+                    Image(systemName: decision.statusSymbol).font(.system(size: 12, weight: .medium)).accessibilityHidden(true)
+                    Text(verbatim: decision.cardLabel(model)).font(Theme.Font.callout.weight(decision.statusTone == .neutral ? .regular : .medium)).lineLimit(1)
+                }
+                .foregroundStyle(Theme.color(decision.statusTone))
+                .fixedSize()
+                RowChevron()
             }
             .padding(.horizontal, Theme.Space.l)
-            .padding(.vertical, 9)
+            .padding(.vertical, Theme.Space.s + 2)
             .contentShape(Rectangle())
-            .background(isFocused ? Theme.accentSoft.opacity(0.6) : .clear)
-            .overlay(alignment: .leading) { if isFocused { SelectedRail() } }
+            // Inside the row: the card clips what reaches past it.
+            .overlay {
+                if isFocused {
+                    RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous).strokeBorder(Theme.focus, lineWidth: 2).padding(3)
+                        .accessibilityHidden(true)
+                }
+            }
         }
         .buttonStyle(.sfBare)
         .focusable(interactions: .edit)

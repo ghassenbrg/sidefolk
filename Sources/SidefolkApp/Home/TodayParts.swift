@@ -289,13 +289,14 @@ struct OnDutyRow<Trailing: View>: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
-            Image(systemName: symbol).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.inkMuted).frame(width: 18)
+            Image(systemName: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.inkMuted).frame(width: 20)
             Text(verbatim: title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
             Spacer(minLength: Theme.Space.s)
             trailing
+            RowChevron()
         }
         .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, 7)
+        .padding(.vertical, Theme.Space.s)
         .contentShape(Rectangle())
     }
 }

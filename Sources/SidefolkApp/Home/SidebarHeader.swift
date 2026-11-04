@@ -3,28 +3,38 @@ import SidefolkCharacter
 import SidefolkCore
 import SwiftUI
 
-/// The top of Home's sidebar in a theme with a header picture (D130): the companion stands in the scene on its light, and
-/// its name and state are on the plain sidebar below, where they always read. The picture ends here, and everything under
-/// it is plain, for reading and scrolling. A click goes to Today. The picture itself is `SidebarHeaderArt`, up under the
-/// toolbar behind the window's buttons.
+/// The top of Home's sidebar in a theme with a header picture (D130, D220): the companion stands on its light in a small
+/// strip of its studio, and its name and state are on the plain sidebar below, where they always read. A short window has
+/// no room for the picture, so it goes without, and the companion's face takes one line beside its name. Everything under
+/// it is plain, for reading and scrolling. A click goes to Today.
 struct SidebarHeader: View {
     var model: NowModel
+    var compact = false
 
     var body: some View {
         let settings = model.services.runtime.settings.current
-        VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            ZStack(alignment: .bottom) {
-                LightPool(state: model.poolState, width: 104, still: true).offset(y: 6)
-                CompanionPortrait(settings: settings, state: pose, side: 84)
-            }
-            .overlay(alignment: .topTrailing) { if model.poolState == .quiet { ShoulderBadge(state: .quiet).scaleEffect(0.7) } }
-            .frame(width: 110, height: 88)
-            .frame(maxWidth: .infinity)
-            .frame(height: SidebarHeaderArt.height - SidebarHeaderArt.toolbar - 4, alignment: .bottom)
-            .padding(.bottom, Theme.Space.xs)
-            // Always under the name: beside it where it fit, a long "next:" dropped it a line and moved every row below.
-            VStack(alignment: .leading, spacing: 2) { name(settings); state }
+        Group {
+            if compact {
+                HStack(spacing: Theme.Space.s + 2) {
+                    CompanionPortrait(settings: settings, state: pose, side: 34).frame(width: 36, height: 36)
+                    words(settings)
+                }
                 .padding(.horizontal, Theme.Space.l)
+                .padding(.vertical, Theme.Space.xs)
+            } else {
+                VStack(alignment: .leading, spacing: Theme.Space.s) {
+                    SidebarStudio()
+                        .overlay(alignment: .bottom) {
+                            ZStack(alignment: .bottom) {
+                                LightPool(state: model.poolState, width: 92, still: true).offset(y: 5)
+                                CompanionPortrait(settings: settings, state: pose, side: 72)
+                            }
+                            .overlay(alignment: .topTrailing) { if model.poolState == .quiet { ShoulderBadge(state: .quiet).scaleEffect(0.7) } }
+                            .frame(width: 96, height: 76)
+                        }
+                    words(settings).padding(.horizontal, Theme.Space.l)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, Theme.Space.xs)
@@ -35,8 +45,12 @@ struct SidebarHeader: View {
         .accessibilityHint(Text("Opens Today"))
     }
 
-    private func name(_ settings: AppSettings) -> some View {
-        Text(verbatim: settings.companionName).font(Theme.Font.heading).foregroundStyle(Theme.sidebarInk).lineLimit(1).fixedSize()
+    // Always under the name: beside it where it fit, a long "next:" dropped it a line and moved every row below.
+    private func words(_ settings: AppSettings) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(verbatim: settings.companionName).font(Theme.Font.headline).foregroundStyle(Theme.sidebarInk).lineLimit(1).fixedSize()
+            state
+        }
     }
 
     /// What it's waiting on or doing, else what's next; the rest is in the help, not cut off here.
@@ -68,30 +82,48 @@ struct SidebarHeader: View {
     }
 }
 
-/// The header's picture, behind the window's buttons, its foot fading into the sidebar. The logo, when the theme has one,
-/// sits in the empty space beside those buttons: the brand's navy on light (its aqua "folk" doesn't read there, D130), the
-/// reversed one on dark.
-struct SidebarHeaderArt: View {
-    static let height: CGFloat = 164
-    /// Where the toolbar's row ends.
-    static let toolbar: CGFloat = 52
+/// The header's picture as a strip the sidebar's width: the furniture and the floor from a taller painting, its top and foot
+/// fading into the sidebar so there's no seam (D220). Its height follows the width, so a wider sidebar doesn't crop it.
+struct SidebarStudio: View {
+    /// The strip's shape, and where it sits in the painting: from just above the furniture to just under the rug's middle.
+    private static let shape: CGFloat = 2.3
+    private static let foot: CGFloat = 0.9
+    private static let painting: CGFloat = 800.0 / 566.0
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        if let art = Theme.Art.header(dark: scheme == .dark) {
-            Color.clear.frame(height: Self.height)
-                .overlay { Image(decorative: art, scale: 2).resizable().scaledToFill() }
-                .clipped()
-                .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.86), .init(color: .clear, location: 1)],
-                                     startPoint: .top, endPoint: .bottom))
-                .overlay(alignment: .topTrailing) {
-                    if ThemeStore.shared.style.tokens.nook.logo, let mark = (scheme == .dark ? BrandAsset.wordmarkReversed : BrandAsset.wordmarkNavy).image {
-                        Image(nsImage: mark).resizable().scaledToFit().frame(height: 19)
-                            .padding(.top, 15).padding(.trailing, Theme.Space.m)
-                            .accessibilityLabel("Sidefolk")
+        Color.clear
+            .aspectRatio(Self.shape, contentMode: .fit)
+            .overlay {
+                if let art = Theme.Art.header(dark: scheme == .dark) {
+                    GeometryReader { g in
+                        let height = g.size.width / Self.painting
+                        Image(decorative: art, scale: 2).resizable()
+                            .frame(width: g.size.width, height: height)
+                            .offset(y: g.size.height - height * Self.foot)
                     }
+                    .clipped()
+                    .mask(LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.16),
+                                                 .init(color: .black, location: 0.82), .init(color: .clear, location: 1)],
+                                         startPoint: .top, endPoint: .bottom))
                 }
+            }
+            .allowsHitTesting(false)
+    }
+}
+
+/// The logo beside the window's buttons, when the theme has one: the brand's navy on light (its aqua "folk" doesn't read
+/// there, D130), the reversed one on dark.
+struct SidebarLogo: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        if ThemeStore.shared.style.tokens.nook.logo, let mark = (scheme == .dark ? BrandAsset.wordmarkReversed : BrandAsset.wordmarkNavy).image {
+            Image(nsImage: mark).resizable().scaledToFit().frame(height: 18)
+                .padding(.top, 16).padding(.trailing, Theme.Space.m)
+                .frame(maxWidth: .infinity, alignment: .trailing)
                 .allowsHitTesting(false)
+                .accessibilityLabel("Sidefolk")
         }
     }
 }

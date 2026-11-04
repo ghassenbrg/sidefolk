@@ -3,13 +3,17 @@ import SwiftUI
 
 /// Extensions' pages in Home's sidebar (D62, D67, D84): a group that folds away, each page where the person put it (drag,
 /// or Move Up and Down), an on/off feature's switch or state right on its row, the pages put out of the sidebar in one
-/// menu, and "Get add-ons", which opens the Gallery. There is no separate All Extensions page any more (D84).
+/// menu. There is no separate All Extensions page any more (D84), and "Get add-ons" is at the sidebar's foot (D220), so
+/// without a page there's no group.
 struct ExtensionsSidebarSection: View {
     var pages: ExtensionPagesModel
     var selection: HomeSelection?
-    var getAddOns: () -> Void
 
     var body: some View {
+        if !pages.shown.isEmpty || !pages.hidden.isEmpty { group }
+    }
+
+    private var group: some View {
         Section(isExpanded: Binding(get: { !pages.layout.collapsed }, set: { pages.setCollapsed(!$0) })) {
             ForEach(pages.shown) { p in
                 HStack(spacing: Theme.Space.s + 2) {
@@ -24,6 +28,7 @@ struct ExtensionsSidebarSection: View {
                 }
                 .background(SidebarHighlightOff())
                 .tag(HomeSelection.page(p.id))
+                .id(HomeSelection.page(p.id))
                 .listRowBackground(SidebarRowFill(selected: selection == .page(p.id)))
                 .help(Text("Added by \(p.extensionName)", comment: "Under an extension page's title: the extension it comes from"))
                 .contextMenu { ExtensionPageMenu(info: p, pages: pages) }
@@ -50,26 +55,6 @@ struct ExtensionsSidebarSection: View {
                 .foregroundStyle(Theme.sidebarInkMuted)
                 .selectionDisabled()
             }
-            Button(action: getAddOns) {
-                HStack(spacing: Theme.Space.s + 2) {
-                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).frame(width: 20)
-                    Text("Get add-ons", comment: "Home's sidebar: opens the Gallery of companions, extensions and themes")
-                        .font(Theme.Font.body)
-                    let updates = pages.services.updates.addonPending.count
-                    if updates > 0 {
-                        Spacer(minLength: Theme.Space.xs)
-                        CountBadge(count: updates, waiting: false)
-                            .help(Text(verbatim: AddonUpdateWords.count(updates)))
-                            .accessibilityLabel(Text(verbatim: AddonUpdateWords.count(updates)))
-                    }
-                }
-                .foregroundStyle(selection == .gallery ? Theme.onSidebarSelected : Theme.sidebarInkMuted)
-            }
-            .buttonStyle(.sfBare)
-            .background(SidebarHighlightOff())
-            .tag(HomeSelection.gallery)
-            .listRowBackground(SidebarRowFill(selected: selection == .gallery))
-            .help(Text("Companions, extensions and themes in the Gallery"))
         } header: {
             Text("Extensions").foregroundStyle(Theme.sidebarInkMuted)
         }
