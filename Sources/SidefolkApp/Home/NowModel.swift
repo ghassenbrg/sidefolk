@@ -420,7 +420,7 @@ final class NowModel {
 
     /// Answers Guard's question, the same way the Ask panel's card does.
     func answer(_ request: ApprovalRequest, _ decision: ApprovalDecision) async {
-        await runtime.broker.resolve(id: request.id, decision: decision)
+        await runtime.answer(request, decision)
         await reload()
     }
 

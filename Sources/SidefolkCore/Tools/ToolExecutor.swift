@@ -249,6 +249,8 @@ public final class ToolExecutor: Sendable {
                 if let reading, let run = caller.runId, policy.internet(for: caller) != .askEachTime {
                     request.canKeepReading = await research.canOffer(run: run, for: reading)
                 }
+                // Another agent reading the notebook asks each time unless that group is allowed; say how to allow it (D185).
+                request.canAllowAgentsToRead = caller.kind == "external" && ExternalToolPolicy.reading.contains(spec.name)
                 var readByResearch = false
                 if let asker {
                     request.asker = asker
