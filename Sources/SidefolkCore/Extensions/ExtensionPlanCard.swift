@@ -154,7 +154,6 @@ extension ExtensionPlanWords {
         let why: String? = switch line.verdict.why {
         case "code_field"?: String(localized: "words from outside can't go in a field that runs something", comment: "A plan's card: why a line asks")
         case "reach_field"?: String(localized: "where it goes comes from outside content", comment: "A plan's card: why a line asks")
-        case "crossing"?: String(localized: "it reads your own things and outside content, then sends words on", comment: "A plan's card: why a line asks")
         case "private_read"?: String(localized: "what you copied is yours alone", comment: "A plan's card: why a line asks")
         case "filled_value"?: String(localized: "a value filled in from outside content", comment: "A plan's card: why a line asks")
         case "server_unpinned"?: String(localized: "its program can't be checked", comment: "A plan's card: why a line asks")
@@ -209,8 +208,8 @@ extension ExtensionPlanWords {
     private static func limits(_ plan: ExtensionPlan) -> String {
         let perRun = plan.perRun ?? ExtensionPlanRules.defaultPerRun
         var out = plan.goesRound == true
-            ? String(localized: "It goes round a list: at most \(plan.perDay) actions a day, and \(perRun) in a run as the extension counts runs.", comment: "A plan's card: its limits")
-            : String(localized: "At most \(plan.perDay) actions a day, and \(perRun) in a run as the extension counts runs.", comment: "A plan's card: its limits")
+            ? String(localized: "It goes round a list. Limit a day: \(plan.perDay). Limit in a run, as the extension counts runs: \(perRun).", comment: "A plan's card: its limits")
+            : String(localized: "Limit a day: \(plan.perDay). Limit in a run, as the extension counts runs: \(perRun).", comment: "A plan's card: its limits")
         if let ttl = plan.ttl {
             out += " " + String(localized: "This plan ends by itself in about \(max(1, Int((Double(ttl) / 60).rounded(.up)))) minutes; what it set up, a watch or a reminder, stays until it is removed.", comment: "A plan's card")
         } else {
