@@ -297,15 +297,31 @@ import Testing
         #expect(!UpdateDownloader.allowed(URL(string: "https://evilgithubusercontent.com/x")!))
     }
 
-    /// A real disk image through hdiutil: made, mounted out of sight, read and detached.
+    /// A real disk image through hdiutil: made, mounted out of sight, read and detached. hdiutil answers "resource busy"
+    /// now and then when the Mac is loaded or another session is mounting disks, so making and mounting get three tries,
+    /// a second or two apart, each with a fresh image; only a Mac that fails all three fails the test, and says why.
     @Test func mountsADiskImage() async throws {
         let scene = try Scene()
-        let image = scene.root.appendingPathComponent("test.dmg")
-        let made = try await SystemTool.run("/usr/bin/hdiutil", ["create", "-quiet", "-volname", "SidefolkTest", "-srcfolder",
-                                                                 scene.mount.path, "-format", "UDZO", image.path], timeout: 120)
-        try #require(made.status == 0)
         try FileManager.default.createDirectory(at: scene.work, withIntermediateDirectories: true)
-        let mount = try await DiskImages().attach(image, under: scene.work)
+        var failures: [String] = []
+        var found: URL?
+        for attempt in 1...3 {
+            let image = scene.root.appendingPathComponent("test-\(attempt).dmg")
+            do {
+                let made = try await SystemTool.run("/usr/bin/hdiutil", ["create", "-quiet", "-volname", "SidefolkTest", "-srcfolder",
+                                                                         scene.mount.path, "-format", "UDZO", image.path], timeout: 120)
+                if made.status == 0 {
+                    found = try await DiskImages().attach(image, under: scene.work)
+                    break
+                }
+                failures.append("create \(attempt): hdiutil exited \(made.status)")
+            } catch {
+                failures.append("attach \(attempt): \(error)")
+            }
+            try? FileManager.default.removeItem(at: image)
+            try await Task.sleep(for: .seconds(attempt))
+        }
+        let mount = try #require(found, "no disk image could be made and mounted: \(failures.joined(separator: "; "))")
         // Under the work folder (hdiutil names it by its real path, /private/var/…).
         #expect(mount.deletingLastPathComponent().path.hasSuffix(scene.root.lastPathComponent + "/Work"), "\(mount.path)")
         #expect(scene.marker(mount.appendingPathComponent("Sidefolk.app")) == "new")
