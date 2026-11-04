@@ -75,7 +75,7 @@ struct Chip: View {
             if let systemImage { Image(systemName: systemImage).font(.system(size: 10, weight: .semibold)) }
             text.lineLimit(1)
         }
-        .font(.system(size: 11 * ThemeStore.shared.style.tokens.type.scale, weight: .medium))
+        .font(.system(size: 12 * ThemeStore.shared.style.tokens.type.scale, weight: .medium))
         .foregroundStyle(ink)
         .padding(.horizontal, 8)
         .frame(minHeight: Theme.Size.chip)
@@ -367,6 +367,39 @@ struct SectionHeader<Trailing: View>: View {
     }
 }
 
+/// A section of a page's own (D220): its name large enough to find the section by, a quiet count, and anything small at the
+/// end. `SectionHeader` is for groups inside a section or a card.
+struct PageSectionTitle<Trailing: View>: View {
+    var title: Text
+    var count: Int?
+    @ViewBuilder var trailing: Trailing
+
+    init(title: Text, count: Int? = nil, @ViewBuilder trailing: () -> Trailing) {
+        self.title = title
+        self.count = count
+        self.trailing = trailing()
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
+            title.font(Theme.Font.title2).foregroundStyle(Theme.ink).lineLimit(1)
+                .accessibilityAddTraits(.isHeader)
+            if let count, count > 0 {
+                Text(verbatim: count.formatted()).font(Theme.Font.body.weight(.medium)).monospacedDigit().foregroundStyle(Theme.inkMuted)
+            }
+            Spacer(minLength: Theme.Space.s)
+            trailing
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+extension PageSectionTitle where Trailing == EmptyView {
+    init(title: Text, count: Int? = nil) {
+        self.init(title: title, count: count) { EmptyView() }
+    }
+}
+
 extension SectionHeader where Trailing == EmptyView {
     init(title: LocalizedStringKey, folk: String? = nil, count: Int? = nil, detail: Text? = nil) {
         self.init(title: Text(title), folk: folk, count: count, detail: detail) { EmptyView() }
@@ -509,6 +542,7 @@ struct PageTitle: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title).font(Theme.Font.title).foregroundStyle(Theme.ink)
                 .accessibilityAddTraits(.isHeader)
+                .homePageTitle()
             if let subtitle {
                 Text(subtitle).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
             }
@@ -611,7 +645,7 @@ struct SettingsGroup<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            Eyebrow(title).padding(.leading, Theme.Space.xs)
+            title.font(Theme.Font.headline).foregroundStyle(Theme.ink).padding(.leading, Theme.Space.xxs)
                 .accessibilityAddTraits(.isHeader)
             RowsCard { content }
             if let footer {

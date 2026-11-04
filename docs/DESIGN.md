@@ -1,7 +1,7 @@
-# Design: Lantern (D84, D130)
+# Design: Lantern (D84, D130, D220)
 
-Sidefolk looks like **Lantern**: native macOS surfaces, quiet and neutral, so the companion and its light are the
-only warm things on screen. State is light (a pool at the companion's feet), one deep aqua is the action colour, and
+Sidefolk looks like **Lantern**, and its default theme is **Studio** (D220): native macOS surfaces, quiet and neutral
+work surfaces with no picture behind them, so the companion and its light are the only warm things on screen. State is light (a pool at the companion's feet), one deep aqua is the action colour, and
 everything on the desktop is one surface family, the Sidecard. This page lists the tokens and shared components in
 the app so every screen uses the same ones. The full system (with the reasoning, every ratio and the mockups) is the
 founder's local design folder, not in the repository; the decision is D84.
@@ -19,6 +19,9 @@ disagree, use the sheet's component; if the sheet looks wrong, fix the component
 - **Colour meaning is D78's** (`StatusTone` → `Theme.color(_:)`, `Theme.soft(_:)`, `ChipTone(_:)`); always with a
   word or icon. Glow and folk colours are light and identity, never text and never status.
 - **Sentence case everywhere**, eyebrows included. No ALL CAPS (some scripts have none; capitals shout).
+- **The keyboard's ring is always visible** (D220): `.focusRing(_:radius:)` draws 2 pt in `Theme.focus`, 2 pt outside what it
+  marks, and takes no room. `.sf`, `.sfBare` and `.sfIcon` draw it themselves.
+- **No essential action only on hover** (D220): `ListRow`'s actions are also in its ⋯ menu.
 - **Firm cards never take Return** (another app's approval, agents' questions, after outside content): ⌘Return or a
   click. Calm cards may.
 - **Focus is a half circle (`circle.lefthalf.filled`), Quiet a moon (`moon.fill`)**, everywhere: `Theme.Symbol`.
@@ -38,19 +41,20 @@ glass, symbols).
 
 | Group | Names | Notes |
 |---|---|---|
-| Ink | `Theme.ink`, `inkMuted` (ink 2), `inkFaint` (ink 3, meta) | navy #1E3457 / #E2E8F2; all ≥ 4.5:1 on every surface |
-| Surfaces | `surfaceSunken` (the window's canvas), `surfaceRaised` (cards), `surface`, `well` (fields, chips, search, segmented track), `line` | `well` is new; a theme without it uses its `surfaceSunken` |
-| Action | `accent` (fills), `onAccent` (its label), `accentSoft` (selection, calm strip), `link` (accent as text) | navy #2A4A7C / soft turquoise #7CC9CF, label 8.9 and 8.5:1 |
+| Ink | `Theme.ink`, `inkMuted` (ink 2), `inkFaint` (ink 3, meta) | navy #243B5A / #E2E8F0, secondary #566579 / #A8B5C7; all ≥ 4.5:1 on every surface |
+| Surfaces | `surfaceSunken` (the window's canvas), `surfaceRaised` (cards), `surface`, `well` (fields, chips, search, segmented track), `line` | #F5F7FA / #151B24, #FFFFFF / #1D2633, well #E9EEF4 / #222D3C; a theme without `well` uses its `surfaceSunken` |
+| Action | `accent` (fills), `onAccent` (its label), `accentSoft` (selection, calm strip), `link` (accent as text) | navy #304E78 / soft turquoise #8BCED0, label 8.45 and 8.46:1 |
+| Focus (D220) | `Theme.focus`, `.focusRing(_:radius:)` | #64748B / #89A2C4, 3:1 from a card and the page (`ThemeCheck.focusProblems`); a theme without it uses its accent, or its ink where the accent is too pale |
 | Sidebar (D130) | `Theme.sidebar`, `sidebarInk`, `sidebarInkMuted`, `sidebarSelected`, `onSidebarSelected` | a plain plane for navigating; the theme draws the selected row, 3:1 from the sidebar (`ThemeCheck.selectionProblems`) |
 | Scene (D130) | `Theme.sceneInk`, `sceneInkMuted`, `Theme.Art.scene(dark:)`, `Theme.Art.header(dark:)` | words over Today's art; each picture for its appearance |
 | Status | `danger`, `warning`, `success` (+ `Soft`, `on…`) | D78 meanings; theme check holds the hues |
 | Light | `glow` (working), `waitGlow` (waiting) | never text; optional theme roles |
-| Control border | `Theme.controlBorder` | ink 3 at 45%, for frames that aren't fills |
+| Control border | `Theme.controlBorder` | ink 3 at 70%, about 3:1 from a card, for frames that aren't fills, in both appearances |
 | Folk accents | `Theme.folkColor(_:)` | Lantern's table: Tempo #5B8DEF, Scout #F2B33D, Byte #3B6FF5, Guard #1FA88A, Pip #FF7B6B, Play #F0524F, Nova #A68BFA, Seed #52C08A, Melody #8E6CF0, Brew #C99A5B |
-| Type | `Theme.Font.display` 30, `title1` 22, `title2` 17, `headline` 14, `body` 13, `bodyStrong`, `callout` 12, `caption` 11.5, `eyebrow` 11, `stateWord` 26, `number` 26 tabular, `bubble` 14, `bubbleTitle` 15, `input` 17, `mono` 12 | the theme face only on display, title1, stateWord, number (and `heading`); `hero`/`title` are display/title1 |
+| Type | `Theme.Font.display` 30, `greeting` 32, `title1` 24, `title2` 18, `heading` 16, `headline` 15, `body` 14, `bodyStrong`, `callout` 12, `caption` 12, `eyebrow` 12, `stateWord` 26, `number` 26 tabular, `bubble` 14, `bubbleTitle` 15, `input` 17, `mono` 12 | the theme face only on display, title1, stateWord, number (and `heading`); `hero`/`title` are display/title1 |
 | Spacing | `Theme.Space.xxs…xxl` 2 4 8 12 16 24 32, `xxxl` 48, `xxxxl` 64 | scaled by the theme's density |
-| Radii | `Theme.Radius.xs` 8, `control` 10, `card` 16, `panel` 18 (Sidecard, sheets, popovers), `bubble` 18 | capsules for chips, pins, the Say bar |
-| Sizes | `Theme.Size.row` 44, `compactRow` 32, `sidebarRow` 30, `hitTarget` 28, `button` 28 / `buttonSmall` 24 / `buttonSidecard` 30 / `buttonLarge` 32, `field` 28, `chip` 22, `sayBarHome` 40 / `sayBarDesktop` 52, `sidebar` 232, `contentMaxWidth` 1080, `contentPadding` 32, `sheet` 520, `installSheet` 600, `sidecardMin…Max` 320–400, `sidecardAsk` 420, `stackBadge` 28, `pin` 36, `tileMin/Max` 160–240 | same in every theme |
+| Radii | `Theme.Radius.xs` 8, `control` 10, `card` 14, `panel` 16 (Sidecard, sheets, popovers), `bubble` 16 (the default theme's; a theme sets its own) | capsules for chips, pins, the Say bar |
+| Sizes | `Theme.Size.row` 44, `compactRow` 34, `sidebarRow` 32, `hitTarget` 28, `button` 30 / `buttonSmall` 26 / `buttonSidecard` 32 / `buttonLarge` 36, `field` 30, `chip` 24, `sayBarHome` 36 / `sayBarDesktop` 52, `sidebar` 224, `contentMaxWidth` 1080, `contentPadding` 32, `sheet` 520, `installSheet` 600, `sidecardMin…Max` 320–400, `sidecardAsk` 420, `stackBadge` 28, `pin` 36, `tileMin/Max` 160–240 | same in every theme |
 | Depth | `.elevation(.e0…e3)` | e1 cards, e2 popovers and hover, e3 Sidecard and sheets; a theme's `material.depth` soft gives e1 a soft lift with no outline in light (D130) |
 | Glass | `.lanternGlass(radius:)` | material + tint + e3; opaque with Reduce Transparency |
 | Motion | `Theme.Motion.micro` 120 ms, `standard` 200 ms, `enter` spring 0.32/0.86, `exit` 160 ms, `breath` 3 s; `spring`, `ease` as before | nil when the theme's motion is none |
@@ -62,13 +66,14 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 
 | Component | File | Use |
 |---|---|---|
-| Buttons: `.sf(.primary / .secondary / .quiet / .destructive / .danger / .plain, size: .small/.regular/.sidecard/.large, working:)`; `.sf(kind)` (small, as before), `.sfPrimary`… | `Buttons.swift` | hover and press veil, 0.98 press, 40% disabled, spinner while working. `.destructive` is quiet danger ink; `.danger` the red fill that confirms |
+| Buttons: `.sf(.primary / .secondary / .quiet / .destructive / .danger / .plain, size: .small/.regular/.sidecard/.large, working:, join:)` (`join` makes the halves of a split button); `.sf(kind)` (small, as before), `.sfPrimary`… | `Buttons.swift` | hover and press veil, 0.98 press, 40% disabled, spinner while working. `.destructive` is quiet danger ink; `.danger` the red fill that confirms |
 | Buttons with no look: `.sfBare` for a row, tile, card or words; `.sfIcon` / `.sfIcon(side:)` for a button that is only a symbol | `Buttons.swift` | **Never `.buttonStyle(.plain)`:** it takes clicks only on the drawn lines and letters, whatever its frame (`ButtonHitAreaTests` fails on it). `.sfBare` takes them anywhere in its frame. `.sfIcon` is at least `hitTarget` 28 square (22 where a row or field is tight), click and hover the same area. A hit area can't reach past a view's frame, so the size is real layout |
 | Chip, `ChipTone` (fill + ink) | `Components.swift` | 22 tall, sentence case |
 | `TouchChip(Touch)` "what it touches" | `TouchChip.swift` | `Touch(ApprovalRequest.Effect)`; amber for what reaches the person's things or leaves the Mac |
 | Card surface: `.cardSurface()`, `SFCard`, `RowsCard` | `Components.swift` | e1, hairline |
-| `ListRow` (+ `RowChevron`) | `ListRow.swift` | 44/32 rows, icon, title, meta, trailing value, ≤ 2 hover actions, selected state |
-| `SectionHeader` (title, folk, count, detail, trailing) | `Components.swift` | |
+| `ListRow` (+ `RowChevron`) | `ListRow.swift` | 44/34 rows, icon, title, meta, trailing value, ≤ 2 actions on hover and always in its ⋯ menu, selected state |
+| `PageSectionTitle` (title, count, trailing) | `Components.swift` | a section of a page |
+| `SectionHeader` (title, folk, count, detail, trailing) | `Components.swift` | a group inside a section or a card |
 | `Eyebrow` | `Components.swift` | sentence case, no tracking in Arabic and CJK |
 | `SegmentedPicker` | `SegmentedPicker.swift` | 2–5 choices; `small`, `equalWidths`; replaces every `.pickerStyle(.segmented)` |
 | `StatusBadge` (dot + word, `BadgeState.tone/.live`), `CountBadge`, `StateWord`, `StateTile`, `PinCapsule`, `FolkAvatar` | `StateViews.swift` | `Sparkline` is in `Home/TodayParts.swift` |

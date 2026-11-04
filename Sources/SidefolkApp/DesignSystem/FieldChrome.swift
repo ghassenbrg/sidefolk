@@ -9,7 +9,7 @@ extension View {
         return background(Theme.well, in: shape)
             .overlay {
                 if focused {
-                    shape.strokeBorder(Theme.accent, lineWidth: 2)
+                    shape.strokeBorder(Theme.focus, lineWidth: 2)
                 } else if problem {
                     shape.strokeBorder(Theme.danger, lineWidth: 1)
                 }

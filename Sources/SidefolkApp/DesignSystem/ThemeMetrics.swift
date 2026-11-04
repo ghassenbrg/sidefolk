@@ -7,29 +7,29 @@ extension Theme {
     enum Size {
         /// Rows: a list row, a compact row, a row in Home's sidebar.
         static let row: CGFloat = 44
-        static let compactRow: CGFloat = 32
-        static let sidebarRow: CGFloat = 30
+        static let compactRow: CGFloat = 34
+        static let sidebarRow: CGFloat = 32
         /// The least a click target may be, and an icon-only button.
         static let hitTarget: CGFloat = 28
         /// Buttons: small, in a window, in the Sidecard, large (a page's one main action).
-        static let buttonSmall: CGFloat = 24
-        static let button: CGFloat = 28
-        static let buttonSidecard: CGFloat = 30
-        static let buttonLarge: CGFloat = 32
+        static let buttonSmall: CGFloat = 26
+        static let button: CGFloat = 30
+        static let buttonSidecard: CGFloat = 32
+        static let buttonLarge: CGFloat = 36
         /// A text field and the search, in a window.
-        static let field: CGFloat = 28
+        static let field: CGFloat = 30
         /// The Say bar: in Home's toolbar, and on the desktop.
-        static let sayBarHome: CGFloat = 40
+        static let sayBarHome: CGFloat = 36
         static let sayBarDesktop: CGFloat = 52
         static let sayBarHomeMaxWidth: CGFloat = 560
-        static let chip: CGFloat = 22
+        static let chip: CGFloat = 24
         /// A row's leading icon, and a folk's avatar in its three sizes.
         static let rowIcon: CGFloat = 24
         static let avatarSmall: CGFloat = 24
         static let avatar: CGFloat = 32
         static let avatarLarge: CGFloat = 48
         /// Home: the sidebar, the content's widest and its padding (24 under 900 points).
-        static let sidebar: CGFloat = 232
+        static let sidebar: CGFloat = 224
         static let sidebarMin: CGFloat = 200
         static let contentMaxWidth: CGFloat = 1080
         static let contentPadding: CGFloat = 32
@@ -79,6 +79,20 @@ extension View {
     func lanternGlass(radius: CGFloat = Theme.Radius.panel, elevation: Theme.Elevation = .e3) -> some View {
         modifier(GlassModifier(radius: radius, elevation: elevation))
     }
+
+    /// The keyboard's ring (D220): 2 pt in the theme's focus colour, 2 pt outside what it marks, drawn only while `on`. It
+    /// takes no room and no clicks, so nothing moves when the keyboard arrives.
+    func focusRing(_ on: Bool, radius: CGFloat = Theme.Radius.control) -> some View {
+        overlay {
+            if on {
+                RoundedRectangle(cornerRadius: radius + 2, style: .continuous)
+                    .strokeBorder(Theme.focus, lineWidth: 2)
+                    .padding(-4)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
 }
 
 private struct ElevationModifier: ViewModifier {
@@ -105,7 +119,7 @@ private struct ElevationModifier: ViewModifier {
             content
                 .overlay {
                     if level != .e0 {
-                        shape.strokeBorder(contrast == .increased ? Theme.controlBorder : dark ? Color.white.opacity(0.06) : Theme.line)
+                        shape.strokeBorder(contrast == .increased ? Theme.controlBorder : Theme.line)
                     }
                 }
                 .shadow(color: shadow(dark: dark).color, radius: shadow(dark: dark).radius, y: shadow(dark: dark).y)
@@ -119,7 +133,7 @@ private struct ElevationModifier: ViewModifier {
         let ink = Color(hex: 0x0F1E36)
         switch level {
         case .e0: return (.clear, 0, 0)
-        case .e1: return dark ? (.clear, 0, 0) : (ink.opacity(0.05), 1, 1)
+        case .e1: return dark ? (.clear, 0, 0) : (ink.opacity(0.04), 2, 1)
         case .e2: return (dark ? .black.opacity(0.4) : ink.opacity(0.10), 9, 6)
         case .e3: return (dark ? .black.opacity(0.55) : ink.opacity(0.18), 24, 18)
         }
@@ -130,6 +144,8 @@ extension EnvironmentValues {
     /// Glass drawn as solid surfaces, as Reduce Transparency has it; for snapshots of that setting, which a view can't
     /// set. The system's own setting is read beside it.
     @Entry var solidSurfaces = false
+    /// Draws a control's keyboard ring without the keyboard, as the design-system sheet does: a snapshot's window can't hold focus.
+    @Entry var showsFocusRing = false
 }
 
 private struct GlassModifier: ViewModifier {

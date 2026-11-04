@@ -14,11 +14,15 @@ struct SFButtonStyle: ButtonStyle {
     var size: Size = .regular
     /// Working: the label stays and a small spinner takes the leading icon's place ("Installing").
     var working = false
+    /// One half of a split button (Allow and its menu): square on the side it meets the other half, and tighter.
+    enum Join { case leading, trailing }
+    var join: Join?
 
-    init(kind: Kind = .secondary, size: Size = .regular, working: Bool = false) {
+    init(kind: Kind = .secondary, size: Size = .regular, working: Bool = false, join: Join? = nil) {
         self.kind = kind
         self.size = size
         self.working = working
+        self.join = join
     }
 
     /// The names call sites used before Lantern: compact is small, large is large.
@@ -36,10 +40,15 @@ struct SFButtonStyle: ButtonStyle {
         var configuration: Configuration
         @Environment(\.isEnabled) private var isEnabled
         @Environment(\.colorScheme) private var scheme
+        @Environment(\.isFocused) private var isFocused
+        @Environment(\.showsFocusRing) private var showsRing
         @State private var hovered = false
 
         var body: some View {
-            let shape = RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+            let r = Theme.Radius.control
+            let shape = UnevenRoundedRectangle(topLeadingRadius: style.join == .trailing ? 0 : r, bottomLeadingRadius: style.join == .trailing ? 0 : r,
+                                               bottomTrailingRadius: style.join == .leading ? 0 : r, topTrailingRadius: style.join == .leading ? 0 : r,
+                                               style: .continuous)
             HStack(spacing: 6) {
                 if style.working {
                     ProgressView().controlSize(.mini).tint(style.foreground)
@@ -51,7 +60,7 @@ struct SFButtonStyle: ButtonStyle {
             }
             .font(style.font)
             .lineLimit(1)
-            .padding(.horizontal, style.padding)
+            .padding(.horizontal, style.join == .trailing ? Theme.Space.s : style.padding)
             .frame(minHeight: style.height)
             .foregroundStyle(style.foreground)
             .background(style.fill(dark: scheme == .dark), in: shape)
@@ -59,12 +68,14 @@ struct SFButtonStyle: ButtonStyle {
             .overlay(shape.fill(Theme.ink.opacity(veil)))
             .overlay {
                 if style.kind == .secondary {
-                    shape.strokeBorder(scheme == .dark ? Color.white.opacity(0.08) : Theme.controlBorder)
+                    shape.strokeBorder(Theme.controlBorder)
                 }
             }
             .contentShape(shape)
             .scaleEffect(configuration.isPressed && isEnabled ? 0.98 : 1)
             .opacity(isEnabled ? 1 : 0.4)
+            .focusRing(isFocused || showsRing)
+            .focusEffectDisabled()
             .onHover { hovered = $0 }
             .animation(Theme.Motion.micro, value: configuration.isPressed)
             .animation(Theme.Motion.micro, value: hovered)
@@ -136,11 +147,14 @@ struct SFBareButtonStyle: ButtonStyle {
     private struct Bare: View {
         var configuration: Configuration
         @Environment(\.isEnabled) private var isEnabled
+        @Environment(\.isFocused) private var isFocused
 
         var body: some View {
             configuration.label
                 .contentShape(Rectangle())
                 .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+                .focusRing(isFocused, radius: Theme.Radius.xs)
+                .focusEffectDisabled()
         }
     }
 }
@@ -159,6 +173,7 @@ struct SFIconButtonStyle: ButtonStyle {
         var side: CGFloat
         var configuration: Configuration
         @Environment(\.isEnabled) private var isEnabled
+        @Environment(\.isFocused) private var isFocused
         @State private var hovered = false
 
         var body: some View {
@@ -168,6 +183,8 @@ struct SFIconButtonStyle: ButtonStyle {
                 .background(Theme.ink.opacity(isEnabled ? (configuration.isPressed ? 0.12 : hovered ? 0.06 : 0) : 0), in: shape)
                 .contentShape(shape)
                 .opacity(isEnabled ? 1 : 0.4)
+                .focusRing(isFocused)
+                .focusEffectDisabled()
                 .onHover { hovered = $0 }
                 .animation(Theme.Motion.micro, value: configuration.isPressed)
                 .animation(Theme.Motion.micro, value: hovered)
@@ -195,7 +212,7 @@ extension ButtonStyle where Self == SFButtonStyle {
     }
 
     /// A Lantern button by size, optionally working.
-    static func sf(_ kind: SFButtonStyle.Kind, size: SFButtonStyle.Size, working: Bool = false) -> SFButtonStyle {
-        SFButtonStyle(kind: kind, size: size, working: working)
+    static func sf(_ kind: SFButtonStyle.Kind, size: SFButtonStyle.Size, working: Bool = false, join: SFButtonStyle.Join? = nil) -> SFButtonStyle {
+        SFButtonStyle(kind: kind, size: size, working: working, join: join)
     }
 }
