@@ -236,6 +236,16 @@ import Testing
         #expect(after != before, "the tool's words didn't change, so no one is asked, and what it answers with is its latest word")
     }
 
+    @Test func fieldsComeCleanedOfWhatTheEyeCantSee() throws {
+        let raw: JSONValue = ["who\u{202E}": "\u{202E}eteled", "line": "a\u{0}b\nc", "list": ["\u{200B}x", 3, true, ["deep\u{2066}": "y\u{E0001}"]]]
+        let clean = try #require(ToolResult.fields(raw))
+        #expect(clean["who"]?.stringValue == "eteled")
+        #expect(clean["line"]?.stringValue == "ab\nc")
+        #expect(clean["list"]?.arrayValue?[0].stringValue == "x")
+        #expect(clean["list"]?.arrayValue?[1].doubleValue == 3)
+        #expect(clean["list"]?.arrayValue?[3]["deep"]?.stringValue == "y")
+    }
+
     @Test func aServerSayingAnythingAsFieldsIsNotPassedOn() async throws {
         let w = try await World()
         let tool = try await w.install(["act": ["purpose": "to use what others offer"]], name: "asker")
