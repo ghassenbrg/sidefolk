@@ -318,7 +318,8 @@ public final class ToolExecutor: Sendable {
                     let access: GrantedFolder.Access = write ? .readwrite : .read
                     answeredFolders.append(FolderAccess.canonical(folder) ?? folder)
                     if answer == .allowAlways {
-                        try? await permissions.grantFolder(folder, access: access)
+                        // What they read is what's shared (D180): a link swapped in since the question gets nothing, and the call asks again.
+                        try? await permissions.grantFolder(folder, access: access, exactly: true)
                         events.changed(.permissions)
                     } else {
                         extraFolders.append(GrantedFolder(path: FolderAccess.canonical(folder) ?? folder, access: access))

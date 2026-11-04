@@ -126,4 +126,32 @@ import Testing
             }
         }
     }
+
+    /// "Share folder" shares the folder the card named: a link put there between the question and the yes shares nothing.
+    @Test func aFolderSwappedForALinkAfterTheQuestionIsNotShared() async throws {
+        let env = try TestEnv()
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent("sf-swap-\(UUID().uuidString)")
+        let folder = base.appendingPathComponent("work"), elsewhere = base.appendingPathComponent("elsewhere")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let target = folder.path
+        env.registry.register(ProbeTool(name: "files.move", risk: .medium, capabilities: [.filesWrite],
+                                        scope: { _ in ToolScope(writePaths: [target + "/a.txt"]) }))
+        try await env.permissions.setPolicy(GuardPolicy(mode: .auto))
+        let stream = env.events.stream()
+        let broker = env.broker
+        let swapping = Task {
+            for await e in stream {
+                guard case .approvalRequested(let r) = e else { continue }
+                try? FileManager.default.removeItem(at: folder)
+                try? FileManager.default.createSymbolicLink(at: folder, withDestinationURL: elsewhere)
+                await broker.resolve(id: r.id, decision: .allowAlways)
+            }
+        }
+        defer { swapping.cancel() }
+        let out = await env.executor.execute(name: "files.move", input: ["x": "1"], caller: .agent(runId: "r"))
+        #expect(!out.isOK)
+        #expect(try await env.permissions.folders().isEmpty, "nothing was shared")
+    }
 }
