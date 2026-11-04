@@ -215,7 +215,7 @@ public final class Extension {
         case "ping":
             return [:]
         case "tools/list":
-            return ["tools": tools.map { ["name": $0.name, "title": $0.title, "description": $0.description, "inputSchema": $0.input].merging($0.output.map { ["outputSchema": $0] } ?? [:]) { own, _ in own } }]
+            return ["tools": tools.map { ["name": $0.name, "title": $0.title, "description": $0.description, "inputSchema": $0.input].merging($0.output.flatMap { JSONSerialization.isValidJSONObject($0) ? ["outputSchema": $0] : nil } ?? [:]) { own, _ in own } }]
         case "tools/call":
             let called = params["name"] as? String ?? ""
             guard let tool = tools.first(where: { $0.name == called }) else { return Self.text("Unknown tool: \(called)", error: true) }
@@ -223,7 +223,7 @@ public final class Extension {
                 let reply = try await tool.run(Arguments(params["arguments"] as? [String: Any] ?? [:]))
                 var result = Self.text(reply.text, error: false)
                 if !reply.asks.isEmpty { result["sidefolk"] = reply.asks }
-                if let data = reply.data { result["structuredContent"] = data }
+                if let data = reply.data, JSONSerialization.isValidJSONObject(data) { result["structuredContent"] = data }
                 return result
             } catch let problem as Problem {
                 return Self.text(problem.message, error: true)
