@@ -31,6 +31,7 @@ extension ExtensionHost {
             var reply: [String: JSONValue] = ["request": request, "ok": true, "decision": .string(check.decision.rawValue), "summary": .string(check.summary),
                                               "risk": .string(check.risk.rawValue), "mutates": .bool(check.mutates), "standing": .bool(standing)]
             if let why = check.why { reply["why"] = .string(why) }
+            if let share = check.share { reply["share"] = ["path": .string(share.path), "write": .bool(share.write)] }
             await client.notify("sidefolk/tools.checked", params: .object(reply))
         case "sidefolk/tools.call":
             guard let asked = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {

@@ -286,6 +286,15 @@ public enum WatchLimits {
     public static let readingLimit = 80
 }
 
+extension Watcher {
+    /// When a repeating watch that just fired looks again, if that's later than its schedule says: read from the watch itself, so it holds after a restart.
+    public func restingUntil(now: Date) -> Date? {
+        guard state == .active, mode == .repeat, errorCount == 0, fireCount > 0, let next = nextCheckAt, let last = lastCheckedAt,
+              next > now, next.timeIntervalSince(last) > intervalS * 1.5 + 5 else { return nil }
+        return next
+    }
+}
+
 /// The built-in watcher kinds.
 public enum WatchKind {
     public static let urlChange = "url_change"

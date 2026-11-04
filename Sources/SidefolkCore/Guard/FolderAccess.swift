@@ -51,7 +51,8 @@ public enum FolderAccess {
     static let privateScratch = ["/private/tmp", "/private/var/folders"]
 
     /// Locations tools never touch, even inside a granted folder. The reason is worded for people.
-    public static func forbiddenReason(_ paths: [String]) -> String? {
+    /// With `hiddenFine`, a hidden place alone doesn't refuse it: for a call that reads no more than a file's size and time.
+    public static func forbiddenReason(_ paths: [String], hiddenFine: Bool = false) -> String? {
         let home = self.home
         let sidefolk = [SidefolkPaths.standard().home.path, ProcessInfo.processInfo.environment["SIDEFOLK_HOME"]]
             .compactMap { $0 }.compactMap { canonical($0) }
@@ -70,10 +71,31 @@ public enum FolderAccess {
                 return String(localized: "Sidefolk only works inside your own home folder.")
             }
             // Hidden files and folders (.ssh, .git, .env, .claude …) are off limits.
-            if p.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
+            if !hiddenFine || isSecretStore(p, home: home), isHidden(p) {
                 return String(localized: "Sidefolk doesn't touch hidden files or folders.")
             }
         }
+        return nil
+    }
+
+    /// Whether the path has a hidden file or folder in it (.ssh, .git, .env, .claude …).
+    public static func isHidden(_ path: String) -> Bool {
+        (canonical(path) ?? path).split(separator: "/").contains { $0.hasPrefix(".") }
+    }
+
+    /// Where keys and agents' settings live: not even a file's size and time. A second wall, not the first: a card still asks about any other hidden file.
+    private static let secretStores = [".ssh", ".gnupg", ".aws", ".kube", ".docker", ".config", ".local", ".claude", ".codex"]
+
+    private static func isSecretStore(_ path: String, home: String) -> Bool {
+        secretStores.contains { path == home + "/" + $0 || path.hasPrefix(home + "/" + $0 + "/") }
+    }
+
+    /// The path a refused call would need shared, as the call named it, when that's all that's in its way and sharing could help. Says nothing of what's on disk beyond
+    /// what the refusal does: a page asks with this path, and Sidefolk works out the folder only on the person's click.
+    public static func sharingNeeded(read: [String], write: [String], folders: [GrantedFolder]) -> (path: String, write: Bool)? {
+        guard forbiddenReason(read + write) == nil else { return nil }
+        if let path = write.first(where: { !allows($0, write: true, folders: folders) }) { return suggestedFolder(for: path) == nil ? nil : (path, true) }
+        if let path = read.first(where: { !allows($0, write: false, folders: folders) }) { return suggestedFolder(for: path) == nil ? nil : (path, false) }
         return nil
     }
 

@@ -32,6 +32,28 @@ struct ExtensionPageTreeTests {
 
     private enum TreeTestFailure: Error { case notATree }
 
+    @Test func whatSetsItOffStaysAndTheRestMove() throws {
+        var start = node("start").objectValue ?? [:]
+        start["fixed"] = true
+        let hook: JSONValue = ["tool": "ui", "key": "move"]
+        let t = try tree([.object(start), node("a"), node("b", branches: [branch("then:b", [node("c"), node("d")]), branch("else:b", [])]), node("e")], extra: ["reorder": hook, "remove": ["tool": "ui", "key": "step"]])
+        #expect(t.remove?.key == "step")
+        #expect(t.reading.first?.fixed == true)
+        #expect(t.move("a", by: -1) == nil, "nothing goes above what sets it off")
+        #expect(t.move("start", by: 1) == nil, "and it doesn't move")
+        #expect(t.move("a", by: 1) == ["id": "a", "before": "e"])
+        #expect(t.move("e", by: -1) == ["id": "e", "before": "b"])
+        #expect(t.place("start", after: "e") == nil)
+        #expect(t.place("e", after: "start") == ["id": "e", "after": "start"], "a drag may go anywhere")
+        #expect(t.place("a", after: "then:b") == ["id": "a", "after": "then:b"], "into a branch too")
+        #expect(t.place("c", after: "b") == ["id": "c", "after": "b"], "and out of one")
+        #expect(t.place("a", after: "start") == nil, "where it is already")
+        #expect(t.place("c", after: "then:b") == nil, "the first of its branch already")
+        #expect(t.place("b", after: "c") == nil, "not inside itself")
+        #expect(t.place("b", after: "else:b") == nil, "nor its own branch")
+        #expect(t.place("nothing", after: "a") == nil)
+    }
+
     @Test("A tree reads back in order, and a repeated id or an empty tree is dropped")
     func parsing() throws {
         let t = try tree([node("a"), node("a"), node("b", branches: [branch("yes", [node("c")]), branch("no", [node("d", state: "skipped")], taken: false)])])

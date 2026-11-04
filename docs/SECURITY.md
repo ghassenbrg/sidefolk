@@ -330,6 +330,19 @@ group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; a
    `$SIDEFOLK_HOME`. Never grantable as a whole: `/`, `/Users`, `/Volumes` and each volume's root,
    `$HOME` itself, `/private/tmp`, `/private/var/folders`. The same check gates extension
    `files.read`/`files.write` and file watchers.
+   - *One hidden file by its facts (D180).* A `watch.create` of kind `file_changes` or `file_appears` may name a path with a hidden part, which `ToolScope.factsOnly`
+     says. It reads size and time only: no text is read or kept (`FileChangesProbe`), nothing is offered to open, and every other rule in this list still refuses it (other
+     homes, `~/Library`, the Sidefolk root). Guard asks on a card with no "Always", or the call fits a plan the person read that names the path; the person's own request
+       runs; other agents are refused. A hidden folder is never watched, and never grantable. `folder_new_file` stays refused, since names are more than facts. Nothing in the
+     stores of keys and agents' settings (`~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.kube`, `~/.docker`, `~/.config`, `~/.local`, `~/.claude`, `~/.codex`) is watched even so.
+     Accepted: a process already writing as the person can swap the file for a link between the card and the watch being made, and the plan holds the path as written. Each
+     look after that stops if a link appeared (`WatchedPath.resolved`).
+   - *A folder asked for from a page (D180).* A page's `share` names a path; Sidefolk works out the folder with `suggestedFolder` (so the rules above apply) and asks in its
+     own words, naming the extension. The extension's words aren't in the question, it can't press the button itself, and only `.user` reaches `folders.share`, which
+     `grantFolder` checks again. It's a grant like Settings', without the open panel: TCC still asks for Documents, Desktop and Downloads on the first read. Before the click
+     `sidefolk/tools.check` tells an extension only that the path it named needs sharing, not the folder or what the path resolves to: its sandbox can't look there.
+   - *A watch's rest (D180).* `cooldown_minutes` lets Sidefolk's agent and other agents (T4) shorten a watch's quiet after it fires from 30 minutes to 5, no further; an extension's
+     own watch, which rings no one, has none unless it asks. Each still keeps its kind's shortest interval.
 3. Check: reject NUL, relative paths and `.`/`..` components. Do not collapse them lexically:
    `standardizedFileURL` turns `granted/link/../x` into `granted/x`, but the kernel resolves
    `link` first. Walk up to the deepest existing ancestor using **lstat** semantics, `realpath`

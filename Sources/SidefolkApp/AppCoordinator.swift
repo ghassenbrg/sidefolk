@@ -577,6 +577,16 @@ final class AppCoordinator {
             if rest.count == 2, let consent = PageConsent(rawValue: rest[1]) { home.pageAsks(rest[0], consent) }
             return
         }
+        if command.hasPrefix("pageShare:") {
+            // pageShare:<extension id>/<page>:<path>: a press of a page's `share`; pageShare:<extension id>/<page>:yes: the person's yes to the question.
+            let rest = command.dropFirst("pageShare:".count).split(separator: ":", maxSplits: 1).map(String.init)
+            if rest.count == 2 {
+                Task {
+                    if rest[1] == "yes" { await home.pageAnswersShare(rest[0]) } else { await home.pageAsksToShare(rest[0], path: rest[1]) }
+                }
+            }
+            return
+        }
         if command.hasPrefix("pageConsent:") {
             // pageConsent:<extension id>:place|schedule:on|off: the person's answer, through the tool that records it.
             let rest = command.dropFirst("pageConsent:".count).split(separator: ":").map(String.init)

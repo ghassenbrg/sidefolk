@@ -168,6 +168,13 @@ enum WatchInput {
         return mode
     }
 
+    /// How long a repeating watch stays quiet after it fires, if the call says. Only an extension's, which tells no one but it, may go below 5 minutes.
+    static func rest(_ input: JSONValue, caller: Caller) throws -> Double? {
+        guard let minutes = input["cooldown_minutes"]?.doubleValue else { return nil }
+        guard minutes >= 0, minutes <= 7 * 24 * 60 else { throw ToolError.invalidInput(String(localized: "“cooldown_minutes” must be between 0 and 7 days.")) }
+        return caller.kind == "extension" ? minutes : max(minutes, 5)
+    }
+
     static func interval(_ input: JSONValue) throws -> TimeInterval {
         guard let minutes = input["interval_minutes"]?.doubleValue else { return 0 }
         guard minutes > 0, minutes <= 7 * 24 * 60 else { throw ToolError.invalidInput(String(localized: "“interval_minutes” must be between a fraction of a minute and 7 days.")) }
@@ -204,7 +211,8 @@ enum WatchInput {
         }
         if ref.count >= 4, let w = try pick(mine.filter { $0.id.hasPrefix(ref) }) { return w }
         if let w = try pick(mine.filter { $0.title.caseInsensitiveCompare(ref) == .orderedSame }) { return w }
-        if ref.count >= 3, let w = try pick(mine.filter { $0.title.range(of: ref, options: .caseInsensitive) != nil }) { return w }
+        // A program names what it made: “Report” gone mustn't find “Daily Report”.
+        if caller.kind != "extension", ref.count >= 3, let w = try pick(mine.filter { $0.title.range(of: ref, options: .caseInsensitive) != nil }) { return w }
         throw ToolError.notFound(String(localized: "a watcher called “\(ref.clipped(60))”"))
     }
 }
@@ -235,6 +243,7 @@ struct WatchCreateTool: Tool {
                 "gone": Schema.boolean("file_appears: tell me when the file disappears instead."),
                 "pattern": Schema.string("folder_new_file: only files matching this pattern, like *.pdf."),
                 "interval_minutes": Schema.number("Minutes between checks. Web pages: at least 5, sites: at least 1. Usually leave it out."),
+                "cooldown_minutes": Schema.number("With mode repeat: minutes it stays quiet after it fires, 30 if left out (at least 5). Usually leave it out."),
                 "mode": Schema.string("once (default) stops after telling the user; repeat keeps going.", enum: ["once", "repeat"]),
                 "level": Schema.string("How loudly to tell the user (default attention).", enum: ["gentle", "attention", "critical"]),
             ], required: ["kind", "target"]),
@@ -250,7 +259,9 @@ struct WatchCreateTool: Tool {
         case WatchKind.siteStatus: return String(localized: "Watch whether \(target) is up")
         case WatchKind.fileAppears:
             return input["gone"]?.boolValue == true ? String(localized: "Watch for \(target) to disappear") : String(localized: "Watch for \(target) to appear")
-        case WatchKind.fileChanges: return String(localized: "Watch \(target) for changes")
+        case WatchKind.fileChanges:
+            if FolderAccess.isHidden((target as NSString).expandingTildeInPath) { return String(localized: "Watch hidden file \(target) for changes, its size and time only") }
+            return String(localized: "Watch \(target) for changes")
         case WatchKind.folderNewFile: return String(localized: "Watch \(target) for new files")
         case WatchKind.processExits: return String(localized: "Tell you when \(target) quits")
         default: return String(localized: "Watch \(target)")
@@ -263,7 +274,11 @@ struct WatchCreateTool: Tool {
         case WatchKind.urlChange, WatchKind.siteStatus:
             let text = target.contains("://") ? target : WebTarget.defaultScheme(for: target) + target
             return ToolScope(url: URL(string: text)?.absoluteString ?? text)
-        case WatchKind.fileAppears, WatchKind.fileChanges, WatchKind.folderNewFile:
+        case WatchKind.fileAppears, WatchKind.fileChanges:
+            let path = (target as NSString).expandingTildeInPath
+            // One file: a hidden folder stays refused, like the rest of what's hidden.
+            return ToolScope(readPaths: [path], factsOnly: FolderAccess.isHidden(path) && FileFacts.read(path)?.isDirectory != true)
+        case WatchKind.folderNewFile:
             return ToolScope(readPaths: [(target as NSString).expandingTildeInPath])
         default:
             return .none
@@ -306,6 +321,8 @@ struct WatchCreateTool: Tool {
         if context.caller == .user, !context.tainted, kind == WatchKind.urlChange || kind == WatchKind.siteStatus {
             config = config.setting("allow_local", true)
         }
+
+        if let rest = try WatchInput.rest(input, caller: context.caller) { config = config.setting("cooldown_minutes", .number(rest)) }
 
         let title = input.string("title") ?? WatchWords.defaultTitle(kind: kind, config: config)
         let requested = try WatchInput.interval(input)

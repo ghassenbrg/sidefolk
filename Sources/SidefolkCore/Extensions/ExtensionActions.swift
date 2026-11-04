@@ -76,6 +76,13 @@ public struct ToolCheck: Sendable {
     public var summary: String
     public var risk: Risk
     public var mutates: Bool
+    /// What it would need shared, when that's all that's in its way: the path as the call named it, for a page's `share`.
+    public struct Share: Sendable, Hashable {
+        public var path: String
+        public var write: Bool
+    }
+
+    public var share: Share?
 
     public init(decision: Decision, why: String? = nil, summary: String, risk: Risk, mutates: Bool) {
         self.decision = decision

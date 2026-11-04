@@ -83,6 +83,9 @@ struct WatchDetailView: View {
         ButtonRow(spacing: Theme.Space.m) {
             fact(kind.symbol, Text(verbatim: kind.label))
             fact("clock", Text(verbatim: Describe.interval(w.intervalS).capitalizedFirst))
+            if let until = w.restingUntil(now: Date()) {
+                fact("moon.zzz", Text("It told you, so it rests until \(TimeFormat.moment(until, now: Date(), calendar: .autoupdatingCurrent))", comment: "A watch's page: after it fires it stays quiet for a while. “It told you, so it rests until 14:53”"))
+            }
             HStack(spacing: Theme.Space.xs) {
                 FolkAvatar(name: "scout", size: 18)
                 Text("Scout watches it", comment: "A watch's page: the folk who does the watching")
@@ -170,6 +173,7 @@ struct WatchDetailView: View {
     private func emptyChange(_ w: Watcher) -> LocalizedStringKey {
         if model.versions.count == 1 { return "Scout keeps what it read. The next change shows here, line by line." }
         if w.lastCheckedAt == nil { return "Not checked yet." }
+        if w.kind == WatchKind.fileChanges, FolderAccess.isHidden(w.config.string("resolved") ?? "") { return "This file is hidden, so Scout looks at its size and time only, never what's in it." }
         if w.kind == WatchKind.fileChanges { return "This file isn't plain text, so Scout compares its size and time only." }
         return "Scout keeps what it reads from now on. The next change shows here, line by line."
     }

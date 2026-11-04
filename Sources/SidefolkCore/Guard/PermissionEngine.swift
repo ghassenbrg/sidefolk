@@ -8,6 +8,9 @@ public enum GuardDecision: Sendable, Equatable {
 
 /// Deterministic permission decisions. The model never decides what it may do; this does.
 public struct PermissionEngine: Sendable {
+    /// Why a call was refused when all that's in its way is a folder that isn't shared: other agents' and extensions' calls get no card for it.
+    static var notShared: String { String(localized: "That folder hasn't been shared with Sidefolk.") }
+
     public init() {}
 
     /// - Parameters:
@@ -27,12 +30,23 @@ public struct PermissionEngine: Sendable {
         // Folder boundary: file tools act only inside folders the user granted.
         let unreadable = scope.readPaths.filter { !FolderAccess.allows($0, write: false, folders: folders) }
         let unwritable = scope.writePaths.filter { !FolderAccess.allows($0, write: true, folders: folders) }
-        if let blocked = FolderAccess.forbiddenReason(scope.readPaths + scope.writePaths) {
+        if let blocked = FolderAccess.forbiddenReason(scope.readPaths + scope.writePaths, hiddenFine: scope.factsOnly) {
             return .deny(blocked)
+        }
+        // One hidden file, its size and time only (D180). A hidden folder can't be shared, so the person says yes to this file each time it's
+        // asked for: a card, or a plan they read that names it. No grant covers it, and other agents keep the plain refusal.
+        if scope.factsOnly {
+            guard caller.kind != "external" else { return .deny(String(localized: "Sidefolk doesn't touch hidden files or folders.")) }
+            if caller == .user { return .allow(.auto) }
+            if standing, policy.mode(for: caller) != .askEveryTime { return .allow(.plan) }
+            return .ask(ApprovalRequest(
+                tool: spec.name, title: String(localized: "Watch a hidden file?"), summary: summary, risk: max(spec.risk, .medium), caller: caller,
+                details: Self.details(spec: spec, scope: scope), canAlways: false, tainted: tainted, extensionId: scope.extensionId
+            ))
         }
         if !unreadable.isEmpty || !unwritable.isEmpty {
             guard caller.kind != "external", caller.kind != "extension" else {
-                return .deny(String(localized: "That folder hasn't been shared with Sidefolk."))
+                return .deny(Self.notShared)
             }
             guard let folder = FolderAccess.suggestedFolder(for: (unwritable + unreadable)[0]) else {
                 return .deny(String(localized: "That location is too broad to share. Add a specific folder in Settings › Trust."))

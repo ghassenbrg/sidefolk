@@ -92,6 +92,13 @@ struct WatcherRow: View {
         }
     }
 
+    /// How often, and that it's resting when it told the person a moment ago: the schedule alone would say it looks when it doesn't.
+    private var schedule: String {
+        let every = Describe.interval(watcher.intervalS).capitalizedFirst
+        guard let until = watcher.restingUntil(now: Date()) else { return every }
+        return String(localized: "\(every), resting until \(TimeFormat.moment(until, now: Date(), calendar: .autoupdatingCurrent))", comment: "A watch in a list: “Every 30 s, resting until 14:53”")
+    }
+
     var body: some View {
         HStack(spacing: Theme.Space.m) {
             Image(systemName: "line.3.horizontal").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.inkFaint)
@@ -100,7 +107,7 @@ struct WatcherRow: View {
                 .frame(width: 20)
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: reading?.label ?? watcher.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
-                Text(verbatim: watcher.mode == .report ? Describe.reportSchedule(watcher) : Describe.interval(watcher.intervalS).capitalizedFirst)
+                Text(verbatim: watcher.mode == .report ? Describe.reportSchedule(watcher) : schedule)
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
             }
             .contentShape(Rectangle())

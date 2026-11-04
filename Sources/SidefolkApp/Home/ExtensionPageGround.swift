@@ -54,7 +54,7 @@ struct PageSelection {
 extension View {
     /// Sidefolk's own question when a page asks for something the person must agree to (D106, D107): its words, never the extension's,
     /// beyond the purpose the install preview showed, labelled as that.
-    func pageConsent(model: ExtensionPageModel) -> some View { modifier(PageConsentAsk(model: model)) }
+    func pageConsent(model: ExtensionPageModel) -> some View { modifier(PageConsentAsk(model: model)).modifier(PageFolderShareAsk(model: model)) }
 }
 
 private struct PageConsentAsk: ViewModifier {
@@ -77,6 +77,27 @@ private struct PageConsentAsk: ViewModifier {
         case .schedule: String(localized: "Let \(model.info.extensionName) schedule reminders?", comment: "Asked before an extension may schedule reminders")
         case nil: ""
         }
+    }
+}
+
+/// Sidefolk's own question when a page's button asks to share a folder: the folder and what it means in its words, none of the extension's.
+private struct PageFolderShareAsk: ViewModifier {
+    var model: ExtensionPageModel
+
+    func body(content: Content) -> some View {
+        content.alert(title, isPresented: Binding(get: { model.sharing != nil }, set: { if !$0 { model.sharing = nil } }), presenting: model.sharing) { question in
+            Button(String(localized: "Share Folder", comment: "A page asks to share a folder with Sidefolk: the button")) { Task { await model.share(question) } }
+            Button(String(localized: "Not Now", comment: "A page asks to share a folder with Sidefolk: the button"), role: .cancel) {}
+        } message: { question in
+            Text(verbatim: question.write
+                ? String(localized: "\(model.info.extensionName) asks for this. What you allow to use your shared folders can then read and change the files in it. You can stop sharing it in Settings › Trust.", comment: "A page asks to share a folder with Sidefolk")
+                : String(localized: "\(model.info.extensionName) asks for this. What you allow to use your shared folders can then read the files in it. You can stop sharing it in Settings › Trust.", comment: "A page asks to share a folder with Sidefolk"))
+        }
+    }
+
+    private var title: String {
+        guard let folder = model.sharing?.folder else { return "" }
+        return String(localized: "Share \(PageShareAsk.shown(folder)) with Sidefolk?", comment: "A page asks to share a folder with Sidefolk")
     }
 }
 

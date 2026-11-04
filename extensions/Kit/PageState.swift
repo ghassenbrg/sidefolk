@@ -33,6 +33,8 @@ public enum PageAct {
     case file(tool: String, param: String, types: [String], input: [String: Any] = [:])
     /// Sidefolk asks the person, in its own words, to let you have this: `place` or `schedule`.
     case allow(String)
+    /// Sidefolk asks the person, in its own words, to share the folder this path is in with Sidefolk. Nothing changes until they say yes.
+    case share(path: String, write: Bool = false)
     /// Opens `notifications` (the Mac's), `attention` or `place` (Sidefolk's).
     case settings(String)
     /// Opens one of your own palettes, as its shortcut does. The button shows that shortcut.
@@ -46,6 +48,7 @@ public enum PageAct {
         case .copy(let words): out["copy"] = words
         case .file(let tool, let param, let types, let input): out["file"] = ["tool": tool, "param": param, "types": types, "input": input] as [String: Any]
         case .allow(let what): out["allow"] = what
+        case .share(let path, let write): out["share"] = ["path": path, "write": write] as [String: Any]
         case .settings(let pane): out["settings"] = pane
         case .palette(let name): out["palette"] = name
         case .refresh: out["refresh"] = true
