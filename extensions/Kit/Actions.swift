@@ -234,6 +234,9 @@ public struct Plan: @unchecked Sendable {
 /// Plans the person read, so that exactly that needs no more cards (D110). Only an extension that can't reach beyond this Mac by itself gets
 /// them, and only just after the person's click or request, never from a timer.
 @MainActor public enum Plans {
+    /// The most lines a plan may hold; Sidefolk refuses more, and a plan with none.
+    public nonisolated static let maxSteps = 32
+
     public struct Standing: Sendable, Hashable {
         public var id: String
         public var title: String
