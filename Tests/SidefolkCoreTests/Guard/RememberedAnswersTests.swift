@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import SidefolkCore
 
@@ -162,5 +163,77 @@ import Testing
         #expect(!out.isOK)
         #expect(cards.value == 2, "the yes shared nothing, so it asked again, about the real folder")
         #expect(try await env.permissions.folders().isEmpty, "nothing was shared")
+    }
+
+    /// What the folder card's answers do when its folder has become a link: "Just this time" gives that one call nothing it wasn't asked about.
+    @Test func aSwappedFolderGetsNoYesJustThisTimeEither() async throws {
+        let env = try TestEnv()
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent("sf-once-\(UUID().uuidString)")
+        let folder = base.appendingPathComponent("work"), elsewhere = base.appendingPathComponent("elsewhere")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let target = folder.path
+        let ran = CallCounter()
+        env.registry.register(ProbeTool(name: "files.move", risk: .medium, capabilities: [.filesWrite],
+                                        scope: { _ in ToolScope(writePaths: [target + "/a.txt"]) }, result: { _ in ran.bump(); return ToolResult(text: "ok") }))
+        try await env.permissions.setPolicy(GuardPolicy(mode: .auto))
+        let stream = env.events.stream()
+        let broker = env.broker
+        let cards = CallCounter()
+        let named = Mutex<[String]>([])
+        let swapping = Task {
+            for await e in stream {
+                guard case .approvalRequested(let r) = e else { continue }
+                cards.bump()
+                if case .folderAccess(let f, _) = r.details { named.withLock { $0.append(f) } }
+                if cards.value == 1 {
+                    try? FileManager.default.removeItem(at: folder)
+                    try? FileManager.default.createSymbolicLink(at: folder, withDestinationURL: elsewhere)
+                    await broker.resolve(id: r.id, decision: .allowOnce)
+                } else {
+                    await broker.resolve(id: r.id, decision: .deny)
+                }
+            }
+        }
+        defer { swapping.cancel() }
+        let out = await env.executor.execute(name: "files.move", input: ["x": "1"], caller: .agent(runId: "r"))
+        #expect(!out.isOK && ran.value == 0, "the target of a link nobody asked about is not reachable for the call")
+        #expect(cards.value == 2)
+        let names = named.withLock { $0 }
+        #expect(names.count == 2 && names[1] == FolderAccess.canonical(elsewhere.path), "the second card names where the link leads: \(names)")
+        #expect(try await env.activity.recent().first?.decision == .denied)
+    }
+
+    /// A grant that fails leaves no "Always" on a row, and a call that can't settle is a row too.
+    @Test func aFailedShareLeavesNoAlwaysAndAnEndlessSwapIsLogged() async throws {
+        let env = try TestEnv()
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent("sf-loop-\(UUID().uuidString)")
+        let work = base.appendingPathComponent("work")
+        let hops = (0..<4).map { base.appendingPathComponent("hop\($0)") }
+        for d in [work] + hops { try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true) }
+        defer { try? FileManager.default.removeItem(at: base) }
+        let target = work.path
+        env.registry.register(ProbeTool(name: "files.move", risk: .medium, capabilities: [.filesWrite], scope: { _ in ToolScope(writePaths: [target + "/a.txt"]) }))
+        try await env.permissions.setPolicy(GuardPolicy(mode: .auto))
+        let stream = env.events.stream()
+        let broker = env.broker
+        let swapping = Task {
+            var hop = 0
+            for await e in stream {
+                guard case .approvalRequested(let r) = e, case .folderAccess(let named, _) = r.details else { continue }
+                // Each yes comes after the named folder was replaced by a link to the next place.
+                try? FileManager.default.removeItem(atPath: named)
+                try? FileManager.default.createSymbolicLink(atPath: named, withDestinationPath: hops[min(hop, 3)].path)
+                hop += 1
+                await broker.resolve(id: r.id, decision: .allowAlways)
+            }
+        }
+        defer { swapping.cancel() }
+        let out = await env.executor.execute(name: "files.move", input: ["x": "1"], caller: .agent(runId: "r"))
+        guard case .denied = out.status else { Issue.record("\(out.status)"); return }
+        #expect(try await env.permissions.folders().isEmpty)
+        let row = try await env.activity.recent().first
+        #expect(row?.decision == .blocked && row?.tool == "files.move", "an unsettled call is a row: \(String(describing: row?.decision))")
     }
 }

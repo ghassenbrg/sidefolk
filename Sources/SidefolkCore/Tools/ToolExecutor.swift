@@ -316,14 +316,17 @@ public final class ToolExecutor: Sendable {
                 }
                 if case .folderAccess(let folder, let write) = request.details {
                     let access: GrantedFolder.Access = write ? .readwrite : .read
-                    answeredFolders.append(FolderAccess.canonical(folder) ?? folder)
+                    // The card named a canonical folder. If it isn't one now (a link swapped in since the question), the yes was to something
+                    // that is no longer there: nothing is recorded or shared, the row won't say "Always", and the call asks again about where
+                    // it leads (D180).
+                    guard FolderAccess.canonical(folder) == folder else { decisionTag = .auto; continue }
                     if answer == .allowAlways {
-                        // What they read is what's shared (D180): a link swapped in since the question gets nothing, and the call asks again.
-                        try? await permissions.grantFolder(folder, access: access, exactly: true)
+                        do { try await permissions.grantFolder(folder, access: access, exactly: true) } catch { decisionTag = .auto; continue }
                         events.changed(.permissions)
                     } else {
-                        extraFolders.append(GrantedFolder(path: FolderAccess.canonical(folder) ?? folder, access: access))
+                        extraFolders.append(GrantedFolder(path: folder, access: access))
                     }
+                    answeredFolders.append(folder)
                     continue
                 }
                 if answer == .allowAlways {
@@ -335,6 +338,7 @@ public final class ToolExecutor: Sendable {
             }
         }
         act.error = "Permission loop"
+        await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: act.error)
         return ToolOutcome(activity: act, status: .denied(String(localized: "Sidefolk couldn't settle the permissions for this action.")))
     }
 
