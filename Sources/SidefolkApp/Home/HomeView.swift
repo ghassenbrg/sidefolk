@@ -96,6 +96,13 @@ struct HomeView: View {
             }
         }
         .animation(Theme.Motion.spring(0.3), value: model.notebook.toast?.id)
+        .confirmationDialog(Text(verbatim: WatchStopAsk.question(model.now.stopAsk.pending?.title ?? "")),
+                            isPresented: Binding(get: { model.now.stopAsk.pending != nil },
+                                                 set: { if !$0 { model.now.cancelStop() } })) {
+            Button("Stop watching", role: .destructive) { model.now.confirmStop() }
+        } message: {
+            Text("Its checks and the text it kept are deleted with it.")
+        }
     }
 
     /// A page with rounded corners under the toolbar: one sheet set into its frame, with the corner the cards use (D130). Today with a scene has the picture there instead, and a translucent sidebar has no colour to match.

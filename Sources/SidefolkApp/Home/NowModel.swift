@@ -105,6 +105,8 @@ final class NowModel {
     private(set) var steps: [String: [ActivityEntry]] = [:]
     /// What the Console's filter shows (D64).
     var focus: Focus = .all
+    /// The watch someone pressed Stop on and hasn't answered for yet.
+    var stopAsk = WatchStopAsk()
 
     enum Focus: String, CaseIterable, Identifiable {
         case all, agents, mine, watches
@@ -528,8 +530,20 @@ final class NowModel {
         await reload()
     }
 
+    /// Today's tile, On duty's row and Watches' menu all press this, and it only asks: Home shows the one question
+    /// (`WatchStopAsk`) and `confirmStop` does the stop, as the watch's own page does.
     func stop(_ w: Watcher) async {
-        await services.stopWatcher(w.id)
-        await reload()
+        stopAsk.ask(id: w.id, title: w.title)
     }
+
+    /// Takes the answer at once: the dialog closing right after the button would otherwise cancel it first.
+    func confirmStop() {
+        guard let id = stopAsk.confirm() else { return }
+        Task {
+            await services.stopWatcher(id)
+            await reload()
+        }
+    }
+
+    func cancelStop() { stopAsk.cancel() }
 }
