@@ -238,12 +238,12 @@ private struct DSControls: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xl) {
-            DSBoard(title: "Buttons", detail: "28 tall in windows, 30 in the Sidecard, 32 large, 24 small; one primary per card, sheet or page") {
+            DSBoard(title: "Buttons", detail: "30 tall in windows, 32 in the Sidecard, 36 large, 26 small; one primary per card, sheet or page; the ring is the keyboard's") {
                 buttons
             }
             HStack(alignment: .top, spacing: Theme.Space.xl) {
                 DSBoard(title: "Fields", detail: "a well, no border until focus") { fields }
-                DSBoard(title: "Chips and states", detail: "22 tall, sentence case; colour always with a word") { chips }
+                DSBoard(title: "Chips and states", detail: "24 tall, sentence case; colour always with a word") { chips }
             }
             HStack(alignment: .top, spacing: Theme.Space.xl) {
                 DSBoard(title: "Choices", detail: "segmented, switch, radio") { choices }
@@ -269,6 +269,11 @@ private struct DSControls: View {
             GridRow {
                 Color.clear.frame(width: 1, height: 1)
                 ForEach(["Default", "Disabled", "Working", "Small", "Sidecard", "Large"], id: \.self) { DSLabel($0) }
+            }
+            GridRow {
+                Text(verbatim: "With the keyboard").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                Button {} label: { Text(verbatim: "Allow") }.buttonStyle(.sf(.primary, size: .regular)).environment(\.showsFocusRing, true)
+                Button {} label: { Text(verbatim: "Not now") }.buttonStyle(.sf(.secondary, size: .regular)).environment(\.showsFocusRing, true)
             }
             ForEach(kinds, id: \.0) { kind in
                 GridRow {
@@ -303,7 +308,7 @@ private struct DSControls: View {
                         .font(Theme.Font.callout).foregroundStyle(Theme.danger)
                 }
             }
-            DSLabel("Say bar, Home (40) and desktop (52)")
+            DSLabel("Say bar, Home (36) and desktop (52)")
             SayBarField(text: $say, prompt: Text(verbatim: "Ask Mochi, or type a reminder, note or watch…"), tint: Theme.link)
             SayBarField(text: .constant("remind me tomorrow at 9 to send the deck"), prompt: Text(verbatim: ""), size: .desktop, hint: nil)
             UnderstandingRow(symbol: "bell", sentence: Text(verbatim: "I'll remind you tomorrow at 09:00 to send the deck."),
@@ -394,7 +399,7 @@ private struct DSControls: View {
             ListRow(title: Text(verbatim: "Time Zones"), meta: Text(verbatim: "With a state"),
                     leading: { IconTile(symbol: "clock", folk: "tempo", size: Theme.Size.rowIcon) },
                     trailing: { StatusBadge(Text(verbatim: "Stopped after crashing"), state: .tone(.danger)) })
-            ListRow(title: Text(verbatim: "Compact row, 32"), compact: true) { Text(verbatim: "09:00").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted) }
+            ListRow(title: Text(verbatim: "Compact row, 34"), compact: true) { Text(verbatim: "09:00").font(Theme.Font.callout).foregroundStyle(Theme.inkMuted) }
         }
     }
 

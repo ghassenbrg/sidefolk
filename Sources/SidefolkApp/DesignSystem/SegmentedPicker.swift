@@ -52,7 +52,7 @@ struct SegmentedPicker<Value: Hashable>: View {
 
     var body: some View {
         let inner = RoundedRectangle(cornerRadius: Theme.Radius.control - 2, style: .continuous)
-        HStack(spacing: 2) {
+        SegmentRow(equal: equalWidths) {
             ForEach(segments.indices, id: \.self) { index in
                 let segment = segments[index]
                 let chosen = segment.value == selection
@@ -65,7 +65,9 @@ struct SegmentedPicker<Value: Hashable>: View {
                     }
                     .font(.system(size: small ? 12 : 13, weight: chosen ? .semibold : .medium))
                     .foregroundStyle(chosen ? (chosenFill == nil ? Theme.ink : Color.white) : Theme.inkMuted)
-                    .padding(.horizontal, small ? Theme.Space.s + 2 : Theme.Space.m)
+                    // Sharing a narrow row, the words get the room: "Notes" before "No…". Never under the 11 pt floor.
+                    .padding(.horizontal, equalWidths ? Theme.Space.xxs : small ? Theme.Space.s + 2 : Theme.Space.m)
+                    .minimumScaleFactor(small ? 0.92 : 0.85)
                     .frame(maxWidth: equalWidths ? .infinity : nil, minHeight: (small ? Theme.Size.buttonSmall : Theme.Size.button) - 4)
                     .background {
                         if chosen {
@@ -91,4 +93,39 @@ struct SegmentedPicker<Value: Hashable>: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(label)
     }
+}
+
+/// The segments side by side, 2 apart. With `equal`, each as wide as the widest while they all fit; in a row too narrow for that,
+/// each gets its own word's width and a share of what's left, so "Aufgaben" takes room from "Alle" before it's cut.
+private struct SegmentRow: Layout {
+    var equal: Bool
+    private static let spacing: CGFloat = 2
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let height = sizes.map(\.height).max() ?? 0
+        let natural = sizes.map(\.width).reduce(0, +) + Self.gaps(subviews.count)
+        guard equal, let width = proposal.width, width.isFinite else { return CGSize(width: natural, height: height) }
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        for (subview, width) in zip(subviews, widths(subviews, in: bounds.width)) {
+            subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(width: width, height: bounds.height))
+            x += width + Self.spacing
+        }
+    }
+
+    private func widths(_ subviews: Subviews, in width: CGFloat) -> [CGFloat] {
+        let natural = subviews.map { $0.sizeThatFits(.unspecified).width }
+        guard equal, !natural.isEmpty else { return natural }
+        let room = width - Self.gaps(subviews.count)
+        let share = room / CGFloat(natural.count)
+        if (natural.max() ?? 0) <= share { return natural.map { _ in share } }
+        let left = (room - natural.reduce(0, +)) / CGFloat(natural.count)
+        return natural.map { max(0, $0 + left) }
+    }
+
+    private static func gaps(_ count: Int) -> CGFloat { spacing * CGFloat(max(0, count - 1)) }
 }

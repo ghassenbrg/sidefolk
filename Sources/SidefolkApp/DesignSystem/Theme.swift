@@ -55,9 +55,11 @@ enum Theme {
     static var onSidebarSelected: Color { style.onSidebarSelected }
     static var sceneInk: Color { style.sceneInk }
     static var sceneInkMuted: Color { style.sceneInkMuted }
-    /// The border of a control that has no fill of its own (a secondary button, an unchecked box): 3:1 where it must
-    /// be seen, faint where a hairline is enough.
-    static var controlBorder: Color { style.inkFaint.opacity(0.45) }
+    /// The keyboard's ring (`.focusRing`), 3:1 from a card and the page (D220).
+    static var focus: Color { style.focus }
+    /// The border of a control that has no fill of its own (a secondary button, an unchecked box): about 3:1 from a card,
+    /// so the control can be found without its words (D220).
+    static var controlBorder: Color { style.inkFaint.opacity(0.7) }
 
     /// A status's colour for text and icons, and its soft fill (StatusTone, docs/ARCHITECTURE.md › Colour meaning).
     /// Pair it with a word or an icon: colour is never the only signal.

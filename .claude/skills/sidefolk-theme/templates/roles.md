@@ -28,7 +28,8 @@ role is ignored with a warning, an unknown top-level key is ignored silently. So
 | `sidebar`, `sidebarInk`, `sidebarInkMuted` | Home's and Settings' sidebar and its words; optional, else `surface`, `ink`, `inkMuted` | words ≥ 4.5:1; keep it plain, for navigating |
 | `sidebarSelected`, `onSidebarSelected` | the row the person is on, drawn by the theme rather than macOS, and its words and icon; optional, else `accent`, `onAccent` | row ≥ 3:1 from `sidebar`, words ≥ 4.5:1 on it |
 | `sceneInk`, `sceneInkMuted` | the greeting and the sentence on Today's scene; optional, else `ink`, `inkMuted` | ≥ 4.5:1 on the art: measure with `art-contrast.py` |
-| `accent` | the one action colour: primary buttons, selection, the focus ring, the sidebar's selected place | ≥ 3:1 on cards and page; never red (error) or amber (waiting) |
+| `focus` | the keyboard's ring; optional, else `accent` (or `ink` where the accent is too pale) | ≥ 3:1 on cards and page |
+| `accent` | the one action colour: primary buttons, selection, the sidebar's selected place | ≥ 3:1 on cards and page; never red (error) or amber (waiting) |
 | `onAccent` | the label on a primary button | ≥ 4.5:1 on `accent` (a dark label on a light accent is fine in dark) |
 | `accentSoft` | selection backgrounds, the calm strip on a slip ("Part of what you asked…") | a pale tint of the accent |
 | `link` | the accent as text ("Open Calendar", "Answer") | ≥ 4.5:1 on every surface and on `accentSoft`; usually a touch darker (light) or lighter (dark) than `accent` |

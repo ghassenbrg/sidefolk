@@ -68,6 +68,9 @@ public struct ThemeTokens: Sendable, Equatable {
         /// Words over Today's scene. Optional: a theme without them uses its inks.
         public var sceneInk = Pair(0)
         public var sceneInkMuted = Pair(0)
+        /// The keyboard's ring, and the edge of a control that must be seen (D220). Stands 3:1 from a card and the page.
+        /// Optional: a theme without it uses its accent.
+        public var focus = Pair(0)
 
         /// Every role by its name in a theme file, in this order.
         public static var roles: [(name: String, key: WritableKeyPath<Colors, Pair>)] { [
@@ -80,13 +83,13 @@ public struct ThemeTokens: Sendable, Equatable {
             ("well", \.well), ("glow", \.glow), ("waitGlow", \.waitGlow),
             ("sidebar", \.sidebar), ("sidebarInk", \.sidebarInk), ("sidebarInkMuted", \.sidebarInkMuted),
             ("sidebarSelected", \.sidebarSelected), ("onSidebarSelected", \.onSidebarSelected),
-            ("sceneInk", \.sceneInk), ("sceneInkMuted", \.sceneInkMuted),
+            ("sceneInk", \.sceneInk), ("sceneInkMuted", \.sceneInkMuted), ("focus", \.focus),
         ] }
 
         /// Roles a theme may leave out without a warning: themes made before D84 and D130 didn't have them, and each
         /// has a fitting stand-in (`fillOptional`).
         public static let optionalRoles: Set<String> = ["well", "glow", "waitGlow", "sidebar", "sidebarInk", "sidebarInkMuted", "sidebarSelected",
-                                                         "onSidebarSelected", "sceneInk", "sceneInkMuted"]
+                                                         "onSidebarSelected", "sceneInk", "sceneInkMuted", "focus"]
 
         /// The stand-ins for optional roles a theme left out, each named with its appearance ("dark.sidebar"): its own
         /// sunken surface for wells, its surface, inks and accent for the sidebar and the scene, the default's lights.
@@ -113,6 +116,12 @@ public struct ThemeTokens: Sendable, Equatable {
                 if left("onSidebarSelected") { onSidebarSelected[keyPath: side] = readable(labels, on: sidebarSelected[keyPath: side]) ?? onAccent[keyPath: side] }
                 if left("sceneInk") { sceneInk[keyPath: side] = ink[keyPath: side] }
                 if left("sceneInkMuted") { sceneInkMuted[keyPath: side] = inkMuted[keyPath: side] }
+                // A pale accent can't mark what has the keyboard: then the ink does.
+                if left("focus") {
+                    let card = surfaceRaised[keyPath: side], page = surfaceSunken[keyPath: side], own = accent[keyPath: side]
+                    let seen = ThemeCheck.contrast(own, card) >= ThemeCheck.stateContrast && ThemeCheck.contrast(own, page) >= ThemeCheck.stateContrast
+                    focus[keyPath: side] = seen ? own : ink[keyPath: side]
+                }
             }
         }
     }
@@ -238,28 +247,28 @@ public struct ThemeTokens: Sendable, Equatable {
 }
 
 extension ThemeTokens {
-    /// The default theme (D130): Sidefolk's own world, calm for all-day use. Colours come from the app icon and logo:
-    /// the wordmark's navy for ink and action in light, the scarf's turquoise softened for action in dark, a dim
-    /// desaturated midnight for dark's surfaces. The brand aqua and amber stay light, the pool at the companion's feet.
-    /// Every text role reads at 4.5:1 or more on every surface; a selected row stands 3:1 from its sidebar. Its art is
-    /// in `Resources/Themes/sidefolk`, whose theme.json says these same values.
+    /// The default theme (D130, Studio since D220): Sidefolk's own world, calm for all-day use. Colours come from the app
+    /// icon and logo: a quiet navy for ink and action in light, the scarf's turquoise softened for action in dark, cool
+    /// charcoal for dark's surfaces, and plain work surfaces with no picture behind them. The brand's aqua and amber stay
+    /// light, the pool at the companion's feet. Every text role reads at 4.5:1 or more on every surface; a selected row
+    /// stands 3:1 from its sidebar. Its art is in `Resources/Themes/sidefolk`, whose theme.json says these same values.
     public static let sidefolk = ThemeTokens(
         id: "sidefolk",
         name: "Sidefolk",
         colors: Colors(
-            ink: Pair(light: 0x1E3457, dark: 0xE2E8F2),
-            inkMuted: Pair(light: 0x4C5D7B, dark: 0xA7B3C6),
-            inkFaint: Pair(light: 0x55667F, dark: 0x9AA6B9),
-            surface: Pair(light: 0xFBFCFE, dark: 0x141D2C),
+            ink: Pair(light: 0x243B5A, dark: 0xE2E8F0),
+            inkMuted: Pair(light: 0x566579, dark: 0xA8B5C7),
+            inkFaint: Pair(light: 0x5A697D, dark: 0x9FACBF),
+            surface: Pair(light: 0xFBFCFD, dark: 0x18202B),
             // The window's canvas, under the cards.
-            surfaceSunken: Pair(light: 0xF1F4FC, dark: 0x101825),
+            surfaceSunken: Pair(light: 0xF5F7FA, dark: 0x151B24),
             // Cards.
-            surfaceRaised: Pair(light: 0xFFFFFF, dark: 0x182232),
-            line: Pair(light: 0xE3E8F2, dark: 0x25303F),
-            accent: Pair(light: 0x2A4A7C, dark: 0x7CC9CF),
-            onAccent: Pair(light: 0xFFFFFF, dark: 0x0D2529),
-            accentSoft: Pair(light: 0xD5E6F3, dark: 0x20344A),
-            link: Pair(light: 0x2B66AD, dark: 0x8FC8DA),
+            surfaceRaised: Pair(light: 0xFFFFFF, dark: 0x1D2633),
+            line: Pair(light: 0xE1E6ED, dark: 0x2C3746),
+            accent: Pair(light: 0x304E78, dark: 0x8BCED0),
+            onAccent: Pair(light: 0xFFFFFF, dark: 0x122A30),
+            accentSoft: Pair(light: 0xE0E9F4, dark: 0x243B50),
+            link: Pair(light: 0x2C5C96, dark: 0x8FD0D6),
             danger: Pair(light: 0xB42318, dark: 0xFF8A80),
             dangerSoft: Pair(light: 0xFDECEA, dark: 0x45201D),
             onDanger: Pair(light: 0xFFFFFF, dark: 0x2A0B08),
@@ -268,21 +277,22 @@ extension ThemeTokens {
             warning: Pair(light: 0x8A4B00, dark: 0xFFC266),
             warningSoft: Pair(light: 0xFFF3DC, dark: 0x3A2E17),
             onWarning: Pair(light: 0xFFFFFF, dark: 0x2A1A00),
-            well: Pair(light: 0xEBEFF7, dark: 0x1F2A3B),
-            glow: Pair(0x2ED4D9),
+            well: Pair(light: 0xE9EEF4, dark: 0x222D3C),
+            glow: Pair(0x62BFC7),
             waitGlow: Pair(0xF5A524),
-            sidebar: Pair(light: 0xFFFFFF, dark: 0x0A101A),
-            sidebarInk: Pair(light: 0x1E3457, dark: 0xD9E0EB),
-            sidebarInkMuted: Pair(light: 0x4C5D7B, dark: 0x9AA7BB),
-            sidebarSelected: Pair(light: 0x2A4A7C, dark: 0x466189),
+            sidebar: Pair(light: 0xF8FAFC, dark: 0x121923),
+            sidebarInk: Pair(light: 0x243B5A, dark: 0xDCE3ED),
+            sidebarInkMuted: Pair(light: 0x566579, dark: 0xA8B5C7),
+            sidebarSelected: Pair(light: 0x304E78, dark: 0x4A6792),
             onSidebarSelected: Pair(0xFFFFFF),
-            sceneInk: Pair(light: 0x1E3457, dark: 0xE2E8F2),
-            sceneInkMuted: Pair(light: 0x3F5070, dark: 0xCBD4E2)
+            sceneInk: Pair(light: 0x243B5A, dark: 0xE2E8F0),
+            sceneInkMuted: Pair(light: 0x566579, dark: 0xA8B5C7),
+            focus: Pair(light: 0x64748B, dark: 0x89A2C4)
         ),
         space: Space(xxs: 2, xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32),
-        radius: Radius(control: 10, card: 16, panel: 18, bubble: 18),
-        type: Typography(display: .rounded, scale: 1, density: .regular),
-        material: Material(sidebar: .solid, grain: false, depth: .soft, scene: true),
+        radius: Radius(control: 10, card: 14, panel: 16, bubble: 16),
+        type: Typography(display: .system, scale: 1, density: .regular),
+        material: Material(sidebar: .solid, grain: false, depth: .line),
         nook: Nook(style: .cushion, suggests: nil, header: true, logo: true)
     )
 }

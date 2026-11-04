@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Lantern's row (D84): 44 tall (32 compact), 16 at the sides, a 24 pt icon, a title and one meta line, then a value
 /// or a control at the trailing edge. Up to two actions appear in the trailing value's place while the pointer is on
-/// the row or the keyboard is in it, and stay for VoiceOver as actions. Chosen: the accent's soft fill with the title
-/// in the link colour. Put rows in a `RowsCard` for the hairlines between them.
+/// the row, and are always in the ⋯ menu beside it, so neither the keyboard nor VoiceOver has to hover (D220). Chosen: the
+/// accent's soft fill with the title in the link colour. Put rows in a `RowsCard` for the hairlines between them.
 struct ListRow<Leading: View, Trailing: View, Actions: View>: View {
     var title: Text
     var meta: Text?
@@ -41,6 +41,18 @@ struct ListRow<Leading: View, Trailing: View, Actions: View>: View {
                 if hovered {
                     HStack(spacing: Theme.Space.xs) { actions }.buttonStyle(.sf(.quiet))
                 }
+            }
+            if Actions.self != EmptyView.self {
+                Menu { actions } label: {
+                    Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.inkMuted)
+                        .frame(width: Theme.Size.hitTarget - 4, height: Theme.Size.hitTarget)
+                        .contentShape(Rectangle())
+                }
+                .menuStyle(.button)
+                .buttonStyle(.sfBare)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .accessibilityLabel(Text("More", comment: "A row's menu of what can be done with it"))
             }
         }
         .padding(.horizontal, Theme.Space.l)

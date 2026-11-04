@@ -135,6 +135,7 @@ public enum ThemeCheck {
         }
         for message in meaningProblems(t.colors) { problem(.error, message) }
         for message in softMeaningProblems(t.colors) { problem(strict ? .error : .warning, message) }
+        for message in focusProblems(t.colors) { problem(strict ? .error : .warning, message) }
         for message in selectionProblems(t.colors) {
             let appearance = message.contains(" in dark;") ? "dark" : "light"
             problem(strict ? .error : .warning, message + unset(["sidebarSelected", "sidebar"].filter { inherited.contains("\(appearance).\($0)") }))
@@ -249,6 +250,17 @@ public enum ThemeCheck {
     public static let stateContrast = 3.0
 
     /// A selected row the person can't tell from the rows around it, in plain words (D130).
+    /// The keyboard's ring has to show on a card and on the page (D220): what a theme writes for it, or the stand-in.
+    public static func focusProblems(_ colors: ThemeTokens.Colors) -> [String] {
+        let appearances: [(String, KeyPath<ThemeTokens.Pair, UInt32>)] = [("light", \.light), ("dark", \.dark)]
+        return appearances.compactMap { name, side in
+            let ring = colors.focus[keyPath: side]
+            let least = min(contrast(ring, colors.surfaceRaised[keyPath: side]), contrast(ring, colors.surfaceSunken[keyPath: side]))
+            guard least < stateContrast else { return nil }
+            return "focus is \(String(format: "%.2f", least)):1 from a card or the page in \(name); the keyboard's ring needs \(stateContrast):1."
+        }
+    }
+
     public static func selectionProblems(_ c: ThemeTokens.Colors) -> [String] {
         [("light", c.sidebarSelected.light, c.sidebar.light), ("dark", c.sidebarSelected.dark, c.sidebar.dark)].compactMap { appearance, row, sidebar in
             let ratio = contrast(row, sidebar)

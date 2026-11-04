@@ -60,7 +60,7 @@ struct ThemeStyle: Sendable {
     let ink, inkMuted, inkFaint, surface, surfaceSunken, surfaceRaised, line: Color
     let accent, onAccent, accentSoft, link, danger, dangerSoft, onDanger, success, successSoft, warning, warningSoft, onWarning: Color
     let well, glow, waitGlow: Color
-    let sidebar, sidebarInk, sidebarInkMuted, sidebarSelected, onSidebarSelected, sceneInk, sceneInkMuted: Color
+    let sidebar, sidebarInk, sidebarInkMuted, sidebarSelected, onSidebarSelected, sceneInk, sceneInkMuted, focus: Color
     /// The person's density over the theme's, if they chose one (Settings › Appearance).
     let density: ThemeTokens.Density?
     /// Spacing after the density.
@@ -85,10 +85,10 @@ struct ThemeStyle: Sendable {
             let heads: Font.Design = type.display == .serif ? .serif : .default
             let k = type.scale
             display = .system(size: 30 * k, weight: .semibold, design: d)
-            greeting = .system(size: 36 * k, weight: .semibold, design: d)
-            title1 = .system(size: 22 * k, weight: .semibold, design: d)
-            title2 = .system(size: 17 * k, weight: .semibold, design: heads)
-            headline = .system(size: 14 * k, weight: .semibold)
+            greeting = .system(size: 32 * k, weight: .semibold, design: d)
+            title1 = .system(size: 24 * k, weight: .semibold, design: d)
+            title2 = .system(size: 18 * k, weight: .semibold, design: heads)
+            headline = .system(size: 15 * k, weight: .semibold)
             callout = .system(size: 12 * k)
             stateWord = .system(size: 26 * k, weight: .semibold, design: d)
             number = .system(size: 26 * k, weight: .medium, design: d).monospacedDigit()
@@ -96,15 +96,15 @@ struct ThemeStyle: Sendable {
             bubble = .system(size: 14 * k)
             bubbleTitle = .system(size: 15 * k, weight: .semibold)
             input = .system(size: 17 * k)
-            hint = .system(size: 11.5 * k, weight: .medium)
+            hint = .system(size: 12 * k, weight: .medium)
             hero = display
             title = title1
-            heading = .system(size: 15 * k, weight: .semibold, design: d)
-            body = .system(size: 13 * k)
-            bodyStrong = .system(size: 13 * k, weight: .semibold)
-            caption = .system(size: 11.5 * k)
-            captionStrong = .system(size: 11.5 * k, weight: .semibold)
-            eyebrow = .system(size: 11 * k, weight: .semibold)
+            heading = .system(size: 16 * k, weight: .semibold, design: d)
+            body = .system(size: 14 * k)
+            bodyStrong = .system(size: 14 * k, weight: .semibold)
+            caption = .system(size: 12 * k)
+            captionStrong = .system(size: 12 * k, weight: .semibold)
+            eyebrow = .system(size: 12 * k, weight: .semibold)
         }
     }
 
@@ -142,6 +142,7 @@ struct ThemeStyle: Sendable {
         onSidebarSelected = Color(c.onSidebarSelected)
         sceneInk = Color(c.sceneInk)
         sceneInkMuted = Color(c.sceneInkMuted)
+        focus = Color(c.focus)
         // Whole and half points, so a compact or relaxed theme still lands on the pixel grid.
         let f = (density ?? tokens.type.density).factor, s = tokens.space
         func scaled(_ v: Double) -> Double { (v * f * 2).rounded() / 2 }
