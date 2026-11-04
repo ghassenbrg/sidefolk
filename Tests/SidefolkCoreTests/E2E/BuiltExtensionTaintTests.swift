@@ -74,8 +74,8 @@ struct BuiltExtensionTaintTests {
         let cards = person.seen
         #expect(cards.map(\.tool) == ["ext.greeter.greet", "web.fetch"])
         #expect(cards.allSatisfy { $0.tainted && !$0.canAlways })
-        // For this request, an extension's own tool may be allowed once (D185); an address the model wrote never.
-        #expect(cards.map(\.canAllowForRequest) == [true, false])
+        // This extension reaches the network, so no "for this request" for it (D185): a yes given while a page steers would cover later calls.
+        #expect(cards.map(\.canAllowForRequest) == [false, false])
         #expect(world.web.requested.map(\.absoluteString) == ["https://example.com/guest"], "nothing went to evil.example")
         let blocked = try await world.activity().first { $0.tool == "extensions.draft" && $0.decision == .blocked }
         #expect(blocked?.error?.contains("outside content") == true)
