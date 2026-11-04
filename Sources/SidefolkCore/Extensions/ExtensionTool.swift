@@ -8,6 +8,9 @@ public struct ExtensionTool: Tool {
     public let extensionName: String
     /// The tool's name on the extension's side of the protocol.
     public let remoteName: String
+    /// Which extension this is, as a plan keeps it (`ExtensionPlan.Step.provider`): its id and the kind of pack or server it was installed
+    /// as, which the id alone doesn't say once an extension has been taken away and another has taken its name.
+    public let provider: String
     /// Parameters naming a folder the person chooses (`tools.<name>.paths`): Guard checks them like any
     /// file tool's paths, and the sandbox opens exactly those for this call.
     public let folderParameters: [String: ExtensionManifest.FolderUse]
@@ -57,7 +60,7 @@ public struct ExtensionTool: Tool {
     /// Seconds a manifest may give one call (`tools.<name>.timeout`).
     public static let timeouts = 1...300
 
-    init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String,
+    init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String, provider: String = "",
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], fileLists: Set<String> = [], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
          sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> Void)? = nil,
@@ -67,6 +70,7 @@ public struct ExtensionTool: Tool {
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.remoteName = remoteName
+        self.provider = provider.isEmpty ? ExtensionHash.sha256(Data(extensionId.utf8)) : provider
         self.folderParameters = folderParameters
         self.fileLists = fileLists
         self.firstParty = firstParty
