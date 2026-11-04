@@ -270,6 +270,11 @@ public final class MCPClient: Sendable {
                     c.resume(throwing: closed)
                     return
                 }
+                // Stopped before it went out: the handler below found nothing to finish, and the server need never hear of it.
+                if Task.isCancelled {
+                    _ = finish(id, .failure(CancellationError()))
+                    return
+                }
                 let timer = Task { [weak self] in
                     try? await Task.sleep(for: .seconds(timeout))
                     guard !Task.isCancelled, let self, self.finish(id, .failure(MCPError.timeout(method: method))) else { return }

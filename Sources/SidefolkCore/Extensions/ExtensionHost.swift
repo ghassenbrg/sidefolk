@@ -1538,6 +1538,9 @@ public actor ExtensionHost {
         let client = runtimes[id]?.client
         runtimes[id]?.client = nil
         runtimes[id]?.idleTask?.cancel()
+        // Whoever asked is gone: a card up for it goes too, and a later Allow can't act for nobody.
+        for task in runtimes[id]?.actionTasks.values.map({ $0 }) ?? [] { task.cancel() }
+        runtimes[id]?.actionTasks = [:]
         let oneShots = runtimes[id]?.oneShots.values.map { $0 } ?? []
         runtimes[id]?.oneShots = [:]
         if let generation { await releaseOutputMute(id: id, generation: generation) }

@@ -356,6 +356,66 @@ import Testing
         #expect(reply["result"]?["status"]?.stringValue != "ok")
     }
 
+    @Test func aCallStoppedBeforeItWentOutIsNeverSent() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let heard = folder.appendingPathComponent("heard")
+        let process = try ExtensionProcess(spec: ExtensionProcessSpec(executable: "/bin/sh", arguments: ["-c", "while read -r line; do echo \"$line\" >> \"$0\"; done", heard.path], environment: [:]))
+        let client = MCPClient(process: process)
+        try client.start()
+        let task = Task<Bool, Never> {
+            while !Task.isCancelled { await Task.yield() }
+            do {
+                _ = try await client.request("tools/call", params: .object([:]), timeout: 5)
+                return false
+            } catch {
+                return error is CancellationError
+            }
+        }
+        task.cancel()
+        #expect(await task.value)
+        await client.notify("marker")
+        var words = ""
+        for _ in 0..<200 where !words.contains("marker") {
+            try await Task.sleep(for: .milliseconds(10))
+            words = (try? String(contentsOf: heard, encoding: .utf8)) ?? ""
+        }
+        #expect(words.contains("marker"))
+        #expect(!words.contains("tools/call"), "the person pressed Stop first: it never starts")
+        _ = await client.shutdown()
+    }
+
+    @Test func whatACompanionFindsDoesntReachAProgramThatCouldCarryItOffOnTheWayEither() {
+        let name = CompanionJobTool.name
+        #expect(ExtensionHost.hearsOnlyThatItsDone(tool: name, permissions: ExtensionPermissions(network: true)))
+        #expect(ExtensionHost.hearsOnlyThatItsDone(tool: name, permissions: nil) == !ExtensionPermissions().isContained)
+        #expect(!ExtensionHost.hearsOnlyThatItsDone(tool: "ext.slowly.slow", permissions: ExtensionPermissions(network: true)))
+    }
+
+    @Test func aProgramStoppingTakesItsCardWithIt() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let manifest: JSONValue = ["id": "com.example.slowly", "name": "Slowly", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["slow": ["title": "Slow", "risk": "low", "mutates": false, "timeout": 60]]]
+        try await w.h.host.install(from: w.h.source("slowly", manifest: manifest, files: ["server.py": ExtensionActionsTests.slowServer]))
+        let asking = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.slowly.slow", "input": .object([:])]) }
+        var card: ApprovalRequest?
+        for _ in 0..<200 where card == nil {
+            card = await w.h.env.broker.pending().first
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(card != nil)
+        try await w.h.host.setEnabled(false, id: "com.example.actor")
+        var gone = false
+        for _ in 0..<200 where !gone {
+            gone = await w.h.env.broker.pending().isEmpty
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(gone, "nobody's left to act for")
+        asking.cancel()
+    }
+
     @Test func aPageCanOpenAddons() {
         #expect(PageSettingsPane(rawValue: "addons") == .addons)
     }

@@ -71,8 +71,9 @@ extension ExtensionHost {
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
             let key = request.stringValue ?? UUID().uuidString
+            let keptFrom = Self.hearsOnlyThatItsDone(tool: tool, permissions: rt.pin.permissions)
             runtimes[id]?.actionTasks[key] = Task { [weak self] in
-                let following = ExtensionHost.following(request: request, client: client)
+                let following = keptFrom ? nil : ExtensionHost.following(request: request, client: client)
                 let outcome = await ToolProgress.$report.withValue(following) {
                     await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout)
                 }
@@ -113,6 +114,11 @@ extension ExtensionHost {
         }
     }
 
+    /// What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done, and nothing on the way.
+    static func hearsOnlyThatItsDone(tool: String, permissions: ExtensionPermissions?) -> Bool {
+        tool == CompanionJobTool.name && !(permissions ?? ExtensionPermissions()).isContained
+    }
+
     /// Passes on how far along a call is: its own words, cleaned, at most once a second. It's only ever heard by the program that made the call.
     private static func following(request: JSONValue, client: MCPClient) -> ToolProgress.Report {
         let last = Mutex(Date.distantPast)
@@ -140,8 +146,7 @@ extension ExtensionHost {
         case .ok(let result):
             reply["ok"] = .bool(!result.isError)
             reply["status"] = .string(result.isError ? "error" : "ok")
-            // What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done.
-            let carries = tool == CompanionJobTool.name && !(runtimes[id]?.pin.permissions ?? ExtensionPermissions()).isContained
+            let carries = Self.hearsOnlyThatItsDone(tool: tool, permissions: runtimes[id]?.pin.permissions)
             reply["text"] = .string(carries ? "Done." : result.text)
             if !carries, let data = result.data { reply["data"] = data }
             reply["untrusted"] = .bool(result.untrusted)
