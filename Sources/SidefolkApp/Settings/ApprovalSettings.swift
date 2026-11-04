@@ -201,7 +201,7 @@ struct FullAccessSheet: View {
                 section(Text("Still true", comment: "The Full access sheet")) {
                     line("switch.2", Text("What you switched off under “What Sidefolk may do” stays off, and system, hidden and other people's folders are never touched.", comment: "The Full access sheet"), nil)
                     line("text.badge.checkmark", Text("Saving a new skill, or removing notes from Apple Notes, still asks: both show what they are in full first, and a skill outlasts Full access.", comment: "The Full access sheet"), nil)
-                    line("externaldrive", Text("A folder outside your home, such as an external drive, still asks.", comment: "The Full access sheet"), nil)
+                    line("externaldrive", Text("A folder outside your home that can be shared, such as an external drive, still asks; system and hidden places are never touched.", comment: "The Full access sheet"), nil)
                     line("person.2", Text("Other agents and extensions keep their own rules.", comment: "The Full access sheet"), nil)
                     line("doc.badge.clock", Text("Watching one hidden file, by its size and time, still asks.", comment: "The Full access sheet: D180's card"), nil)
                     if model.policy.internet == .askEachTime {

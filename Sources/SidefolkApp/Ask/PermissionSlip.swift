@@ -165,10 +165,10 @@ struct PermissionSlip: View {
     }
 
     /// The card asks to share a folder: its main button remembers it, and "Just this time" is in the menu.
-    /// Not when the request read outside content first: then a page may be steering which folder, so the main button is "Allow" (this
+    /// Not in Ask every time, where the person chose to be asked each time, and not when the request read outside content first: then a page may be steering which folder, so the main button is "Allow" (this
     /// call) and sharing for good is a deliberate choice in the menu.
     private var sharesFolder: Bool {
-        if case .folderAccess = request.details { request.canAlways && !request.tainted } else { false }
+        if case .folderAccess = request.details { request.canAlways && !request.tainted && request.mode != .askEveryTime } else { false }
     }
 
     private var isFolderCard: Bool {
