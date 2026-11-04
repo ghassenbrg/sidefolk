@@ -119,6 +119,14 @@ struct FileRingTests {
         #expect(!RingGeometry.clickCounts(at: nil, lit: nil))
     }
 
+    @Test func macOSsQuestionAboutFinderIsExplainedOnce() throws {
+        let suite = "ring-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        #expect(FinderSelection.wordsBeforeFirstRead(defaults) != nil)
+        #expect(FinderSelection.wordsBeforeFirstRead(defaults) == nil)
+    }
+
     @Test func tooSoonAfterOpeningCountsForNothing() {
         var aim = RingAim(openedAt: 10, x: 0, y: 0)
         #expect(aim.follow(x: 0, y: 30, slice: 0, at: 10.05) == 0)

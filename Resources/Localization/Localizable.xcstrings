@@ -137823,6 +137823,65 @@
         }
       }
     },
+    "Off until you turn on the ring. Then it opens the ring for the files selected in Finder." : {
+      "comment" : "The ring: its shortcut, while the ring is off",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مطفأ حتى تشغّل الحلقة. بعدها يفتح الحلقة للملفات المحددة في Finder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, bis du den Ring einschaltest. Dann öffnet es den Ring für die im Finder ausgewählten Dateien."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado hasta que actives el anillo. Después abre el anillo para los archivos seleccionados en el Finder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé tant que vous n'activez pas l'anneau. Ouvre ensuite l'anneau pour les fichiers sélectionnés dans le Finder."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spento finché non accendi l'anello. Poi apre l'anello per i file selezionati nel Finder."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リングをオンにするまでオフです。オンにすると、Finderで選択したファイルのリングを開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "링을 켜기 전까지는 꺼져 있습니다. 켜면 Finder에서 선택한 파일의 링을 엽니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligado até você ligar o anel. Depois abre o anel para os arquivos selecionados no Finder."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你打开圆环之前保持关闭。打开后,它会为访达中选中的文件打开圆环。"
+          }
+        }
+      }
+    },
     "Okay, no reminder." : {
       "localizations" : {
         "ar" : {
@@ -250557,6 +250616,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOS 正在把它下载到系统自己的存储空间，而不是 Sidefolk 中。"
+          }
+        }
+      }
+    },
+    "macOS may ask to let Sidefolk control Finder. Sidefolk uses that only to read what you selected." : {
+      "comment" : "The ring's shortcut, said once before macOS's question about Finder",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قد يسأل macOS عن السماح لـ Sidefolk بالتحكم في Finder. يستخدم Sidefolk ذلك فقط لقراءة ما حددته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS fragt vielleicht, ob Sidefolk den Finder steuern darf. Sidefolk nutzt das nur, um zu lesen, was du ausgewählt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede que macOS pregunte si Sidefolk puede controlar el Finder. Sidefolk lo usa solo para leer lo que has seleccionado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS peut demander d'autoriser Sidefolk à contrôler le Finder. Sidefolk s'en sert uniquement pour lire ce que vous avez sélectionné."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS potrebbe chiedere se Sidefolk può controllare il Finder. Sidefolk lo usa solo per leggere ciò che hai selezionato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSから、SidefolkによるFinderの操作を許可するか確認されることがあります。Sidefolkは選択した項目を読み取るためだけに使います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS에서 Sidefolk이 Finder를 제어하도록 허용할지 물을 수 있습니다. Sidefolk은 선택한 항목을 읽는 데만 이 권한을 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O macOS pode perguntar se o Sidefolk pode controlar o Finder. O Sidefolk usa isso só para ler o que você selecionou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 可能会询问是否允许 Sidefolk 控制访达。Sidefolk 只用它来读取你选中的内容。"
           }
         }
       }

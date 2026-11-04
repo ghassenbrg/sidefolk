@@ -193,6 +193,7 @@ extension KeyboardShortcuts.Name {
         guard !readingFinder else { return }
         let first = String(localized: "Select a file in Finder first, then press the shortcut.", comment: "The ring's shortcut, from another app")
         guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return say(first) }
+        if let words = FinderSelection.wordsBeforeFirstRead() { say(words) }
         readingFinder = true
         Task { [weak self] in
             let answer = await FinderSelection.read()

@@ -33,7 +33,8 @@ struct FileWaysPart: View {
                     .labelsHidden().fixedSize()
             }
             .disabled(!ring.enabled)
-            row(symbol: nil, text: Text("Opens the ring for the files selected in Finder.", comment: "The ring: its shortcut")) {
+            row(symbol: nil, text: ring.enabled ? Text("Opens the ring for the files selected in Finder.", comment: "The ring: its shortcut")
+                : Text("Off until you turn on the ring. Then it opens the ring for the files selected in Finder.", comment: "The ring: its shortcut, while the ring is off")) {
                 KeyboardShortcuts.Recorder(for: .fileRing) { _ in
                     services?.settingsChanged()
                     conflict = services?.fileRingConflict()

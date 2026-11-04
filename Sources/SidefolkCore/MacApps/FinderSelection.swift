@@ -21,6 +21,14 @@ public enum FinderSelection {
     /// Long enough for the person to answer macOS's question the first time.
     static let deadline: Duration = .seconds(60)
 
+    /// Said once, before the first read: macOS's question says "control Finder", which sounds like more than this is for (SECURITY T49).
+    public static func wordsBeforeFirstRead(_ defaults: UserDefaults = .standard) -> String? {
+        let said = "fileRing.finderExplained"
+        guard !defaults.bool(forKey: said) else { return nil }
+        defaults.set(true, forKey: said)
+        return String(localized: "macOS may ask to let Sidefolk control Finder. Sidefolk uses that only to read what you selected.", comment: "The ring's shortcut, said once before macOS's question about Finder")
+    }
+
     public static func read() async -> Answer {
         guard let child = try? PipedChild.spawn(OsascriptRunner.executable, arguments: ["-l", "JavaScript", "-"], environment: OsascriptRunner.environment(),
                                                 cwd: NSTemporaryDirectory()) else { return .failed }
