@@ -307,4 +307,6 @@ A gallery yes doesn't cover an app release, or the other way round.
   clicks and some typing. Debug runs use `SIDEFOLK_QUIET_WINDOWS=1`: windows off every screen, no key focus, no clicks, never above
   his other windows (a full-screen browser, say). Renders (`--ui-snapshots`, `dev.swift snap`) and state reads come first; a check
   that truly needs the screen is asked of the coordinator, and he accepts a limited test over a disturbed screen.
+- **The founder's own testing never blocks landing**: it happens after he installs a released snapshot. Sessions keep working,
+  merge and release little by little, and keep an honest not-verified list for him.
 - **Security text in this public repository** follows the global skill's hygiene section. This file is public too.

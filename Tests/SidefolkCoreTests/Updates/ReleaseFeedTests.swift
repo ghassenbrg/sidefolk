@@ -118,6 +118,20 @@ import Testing
         #expect(chosen.effectiveChannel == .snapshots)
     }
 
+    @Test func aSnapshotStartsOnSnapshotsUnlessThePersonChose() {
+        let fresh = UpdateSettings()
+        #expect(fresh.effectiveChannel(running: "0.1.0-snapshot.1202") == .snapshots, "a fresh snapshot sees the snapshots")
+        #expect(fresh.effectiveChannel(running: "0.1.0") == .releases, "an official release offers releases")
+        var chose = UpdateSettings()
+        chose.channel = .releases
+        #expect(chose.effectiveChannel(running: "0.1.0-snapshot.1202") == .releases, "an old choice is kept")
+        chose.channel = .snapshots
+        #expect(chose.effectiveChannel(running: "0.1.0") == .snapshots)
+        #expect(fresh.effectiveChannel(running: "not a version") == .releases, "an unreadable version is no snapshot")
+        // A home written by a snapshot without a choice stays unset, so a release later offers releases.
+        #expect(fresh.channel == nil)
+    }
+
     @Test func settingsFromBeforeUpdatesExistedDecodeWithDefaults() throws {
         let s = try JSONDecoder().decode(AppSettings.self, from: Data(#"{"companionName": "Pip"}"#.utf8))
         #expect(s.updates == UpdateSettings())

@@ -3978,6 +3978,12 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 **Alternatives:** refusing an agent's update while the note is open in Home (an agent can't know, and the person loses the update); reloading the note without merging (loses what the person types meanwhile); locking a note while it is open.
 **Implications:** nothing is lost by either side's edit to a field the other didn't touch. The words of a note both changed at once are the later save's. Still read-then-write whole: `ProfileFacts.keep` and `write`, `NotebookModel.setDue` (a window of milliseconds). A word that only an extension's description holds finds it but never makes it the one Return opens.
 
+### D191 — A snapshot build starts on the snapshots channel (2026-11-04)
+**Decision:** *amends D46 and D65.* "Versions to offer" that the person never set follows the build that runs: a snapshot (`0.1.0-snapshot.N`) offers snapshots, an official release offers releases. A choice already made is kept whatever the build (`UpdateSettings.effectiveChannel(running:)`). Nothing is written to the settings, so the default stays a default: a person who moves from a snapshot to the release is on releases, and one who chose still has their choice.
+**Why:** a fresh install of a snapshot landed on Releases, where nothing is released yet, so the gallery, add-on updates and the Say bar's extension search showed nothing until Show snapshots was found and turned on. Everyone who installs a snapshot is, by that, someone who wants snapshots.
+**Alternatives:** writing `.snapshots` into the settings at first launch (loses "never chose", so the release would keep them on snapshots); a build-time default in the image (a second place that has to agree with the version).
+**Implications:** the Settings wording ("Snapshots are test builds that come out before a release. Add-ons follow this too.") still fits and is unchanged. A build made on this Mac has no release stamp, so it reads as a release and keeps releases only.
+
 ### D220 — Studio: the default theme and the shared parts it needs (2026-11-04)
 **Decision:** *amends D130 and D84's sizes.* The founder asked for the Studio direction (a calm, professional refinement; seven boards in the local handoff) to be built with every existing feature kept: the images are a design direction, not a feature list. It lands in stages, tokens and shared components first, so this entry grows with them.
 - **Theme data (the default only):** the palette (page #F5F7FA / #151B24, cards #FFFFFF / #1D2633, sidebar #F8FAFC / #121923, wells #E9EEF4 / #222D3C, ink #243B5A / #E2E8F0, action #304E78 / #8BCED0, light #62BFC7), the system face for titles, cards at 14 and panels at 16, line depth and no scene on Today. Its theme.json and `ThemeTokens.sidefolk` say the same values.
@@ -3985,4 +3991,3 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 - **Shared, in every theme (D84):** a type scale with 14 pt reading text and 12 pt metadata; taller buttons, fields and rows; a control border at about 3:1; `.focusRing` on the shared buttons.
 - **Hover isn't the only way:** a `ListRow`'s actions are also in its ⋯ menu, for the keyboard and VoiceOver. It adds a small menu to rows the boards draw bare; an action a person can't reach wasn't worth the cleaner picture.
 - **Themes with a scene** (Harbor) keep it, and Today and the sky behind the toolbar work as they did.
-
