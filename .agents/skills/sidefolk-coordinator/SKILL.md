@@ -303,4 +303,8 @@ A gallery yes doesn't cover an app release, or the other way round.
 - **A cause found by reading the code is not a finding** until a run or a test shows it: ask which it is.
 - **Every new rule or lesson goes into the skills the same day**: the global ones in the `agent-skills` repository
   (`~/.claude/skills` links to it), the project ones here.
+- **Test apps never show windows over the founder's screen.** A debug app's panel appeared under his real pointer and took two
+  clicks and some typing. Debug runs use `SIDEFOLK_QUIET_WINDOWS=1`: windows off every screen, no key focus, no clicks, never above
+  his other windows (a full-screen browser, say). Renders (`--ui-snapshots`, `dev.swift snap`) and state reads come first; a check
+  that truly needs the screen is asked of the coordinator, and he accepts a limited test over a disturbed screen.
 - **Security text in this public repository** follows the global skill's hygiene section. This file is public too.
