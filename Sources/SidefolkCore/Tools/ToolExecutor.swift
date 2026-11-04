@@ -47,6 +47,21 @@ public struct ToolOutcome: Sendable {
     }
 }
 
+/// A yes that holds only for now (a run, a conversation), listed beside "Always allowed" so it can be taken back.
+public enum AllowedForNow: Sendable, Hashable, Identifiable {
+    /// "Allow for this request" (D37): this tool, until Sidefolk's run ends.
+    case tool(String)
+    /// "Allow, and read pages it links to" (D119).
+    case readingOn
+
+    public var id: String {
+        switch self {
+        case .tool(let name): "tool:" + name
+        case .readingOn: "reading-on"
+        }
+    }
+}
+
 /// The only path by which anything runs a tool: Guard, approval, execution, audit, events.
 public final class ToolExecutor: Sendable {
     public let registry: ToolRegistry
@@ -108,8 +123,8 @@ public final class ToolExecutor: Sendable {
         if let problem = InputSchema.problem(spec.inputSchema, input, unknownKeys: false) { return result(.deny, problem) }
         if let why = tool.refusal(for: input, context: ToolContext(caller: caller, now: clock.now, tainted: tainted)) { return result(.deny, why) }
         guard let policy = try? await permissions.policy(now: clock.now) else { return result(.deny) }
-        let grants = (try? await permissions.grants()) ?? [], folders = (try? await permissions.folders()) ?? []
-        let scope = tool.scope(for: input)
+        let grants = (try? await permissions.grants()) ?? [], scope = tool.scope(for: input)
+        let folders = ((try? await permissions.folders()) ?? []) + Self.fullAccessFolders(scope, caller: caller, policy: policy)
         switch engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller, tainted: tainted,
                                policy: policy, grants: grants, folders: folders, standing: standing) {
         case .allow: return result(.allow)
@@ -118,6 +133,17 @@ public final class ToolExecutor: Sendable {
             var check = result(.deny, why)
             if why == PermissionEngine.notShared { check.share = FolderAccess.sharingNeeded(read: scope.readPaths, write: scope.writePaths, folders: folders).map { .init(path: $0.path, write: $0.write) } }
             return check
+        }
+    }
+
+    /// In Full access, the paths of this call that are in the person's home, as folders for this call alone (D185): nothing is
+    /// added to the list Trust shows. They also reach the tool, which checks the folders Guard let it have. Nothing for anyone
+    /// but Sidefolk's own agent: not a typed extension command, whose folder is the extension's to name (`GuardPolicy.mode(for:)`
+    /// gives it the mode, not the home), and nothing outside the home or in a protected place.
+    static func fullAccessFolders(_ scope: ToolScope, caller: Caller, policy: GuardPolicy) -> [GrantedFolder] {
+        guard case .agent = caller, policy.mode(for: caller) == .fullAccess else { return [] }
+        return Set(scope.readPaths + scope.writePaths).compactMap { path in
+            FolderAccess.isOpenToFullAccess(path) ? FolderAccess.canonical(path).map { GrantedFolder(path: $0, access: .readwrite) } : nil
         }
     }
 
@@ -199,7 +225,7 @@ public final class ToolExecutor: Sendable {
                 return ToolOutcome(activity: act, status: .denied(why))
             }
             let grants = (try? await permissions.grants()) ?? []
-            let folders = ((try? await permissions.folders()) ?? []) + extraFolders
+            let folders = ((try? await permissions.folders()) ?? []) + extraFolders + Self.fullAccessFolders(scope, caller: caller, policy: policy)
             let decision = engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller,
                                            tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions,
                                            answeredFolders: answeredFolders, standing: standing)
@@ -234,7 +260,10 @@ public final class ToolExecutor: Sendable {
                 if let reading, let run = caller.runId, policy.internet(for: caller) != .askEachTime {
                     request.canKeepReading = await research.canOffer(run: run, for: reading)
                 }
+                // Another agent reading the notebook asks each time unless that group is allowed; say how to allow it (D185).
+                request.canAllowAgentsToRead = caller.kind == "external" && ExternalToolPolicy.reading.contains(spec.name)
                 var readByResearch = false
+                var carriedOver = false
                 if let asker {
                     request.asker = asker
                     request.firstParty = asker.firstParty
@@ -249,6 +278,7 @@ public final class ToolExecutor: Sendable {
                     answer = .allowOnce
                 } else if request.canAllowForRequest, let run = caller.runId, await forRequest.covers(spec.name, run: run) {
                     answer = .allowOnce
+                    carriedOver = true
                 } else if let reading, let run = caller.runId, policy.internet(for: caller) != .askEachTime, await research.take(reading, run: run, now: clock.now) {
                     answer = .allowOnce
                     readByResearch = true
@@ -275,20 +305,28 @@ public final class ToolExecutor: Sendable {
                     act.error = why
                     return ToolOutcome(activity: act, status: .denied(why))
                 }
-                decisionTag = readByResearch ? .research : answer == .allowAlways ? .always : .allowed
-                if answer == .keepReading, request.canKeepReading, let run = caller.runId { await research.grant(run: run, now: clock.now) }
+                decisionTag = readByResearch ? .research : carriedOver ? .allowedForRequest : answer == .allowAlways ? .always : .allowed
+                if answer == .keepReading, request.canKeepReading, let run = caller.runId {
+                    await research.grant(run: run, now: clock.now)
+                    events.changed(.permissions)
+                }
                 if answer == .allowForRequest, request.canAllowForRequest, let run = caller.runId {
                     await forRequest.allow(spec.name, run: run)
+                    events.changed(.permissions)
                 }
                 if case .folderAccess(let folder, let write) = request.details {
                     let access: GrantedFolder.Access = write ? .readwrite : .read
-                    answeredFolders.append(FolderAccess.canonical(folder) ?? folder)
+                    // The card named a canonical folder. If it isn't one now (a link swapped in since the question), the yes was to something
+                    // that is no longer there: nothing is recorded or shared, the row won't say "Always", and the call asks again about where
+                    // it leads (D180).
+                    guard FolderAccess.canonical(folder) == folder else { decisionTag = .auto; continue }
                     if answer == .allowAlways {
-                        try? await permissions.grantFolder(folder, access: access)
+                        do { try await permissions.grantFolder(folder, access: access, exactly: true) } catch { decisionTag = .auto; continue }
                         events.changed(.permissions)
                     } else {
-                        extraFolders.append(GrantedFolder(path: FolderAccess.canonical(folder) ?? folder, access: access))
+                        extraFolders.append(GrantedFolder(path: folder, access: access))
                     }
+                    answeredFolders.append(folder)
                     continue
                 }
                 if answer == .allowAlways {
@@ -300,6 +338,7 @@ public final class ToolExecutor: Sendable {
             }
         }
         act.error = "Permission loop"
+        await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: act.error)
         return ToolOutcome(activity: act, status: .denied(String(localized: "Sidefolk couldn't settle the permissions for this action.")))
     }
 
@@ -327,12 +366,34 @@ public final class ToolExecutor: Sendable {
         return ToolOutcome(activity: act, status: .unanswered(stop: stop))
     }
 
+    /// What the person said yes to for the length of a run or a conversation, and that is still holding (Trust › Allowed for
+    /// now): tools allowed "for this request", and reading pages on.
+    public func allowedForNow() async -> [AllowedForNow] {
+        let tools = await forRequest.allTools().sorted().map(AllowedForNow.tool)
+        return tools + (await research.isGranted(now: clock.now) ? [.readingOn] : [])
+    }
+
+    /// Takes one such yes back: the next call asks again.
+    public func stopAllowing(_ item: AllowedForNow) async {
+        switch item {
+        case .tool(let name): await forRequest.revoke(tool: name)
+        case .readingOn: await research.revokeAll()
+        }
+    }
+
+    /// Takes every such yes back.
+    public func stopAllowingAnything() async {
+        await forRequest.revokeAll()
+        await research.revokeAll()
+    }
+
     /// Denies the cards an agent run is still waiting on, and ends what was allowed "for this
     /// request"; call it when the run ends.
     public func cancelApprovals(runId: String) async {
         await broker.cancel(runId: runId)
         await forRequest.end(run: runId)
         await research.end(run: runId)
+        events.changed(.permissions)
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,

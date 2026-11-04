@@ -919,6 +919,7 @@
     },
     "%@ acts without asking until it ends." : {
       "comment" : "The Full access sheet, under its title",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -972,6 +973,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在结束前，%@ 会直接行动，不再询问。"
+          }
+        }
+      }
+    },
+    "%@ acts without asking while it is on." : {
+      "comment" : "The Full access sheet, under its title",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتصرف %@ دون سؤال ما دام الخيار مفعّلًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ handelt ohne zu fragen, solange es eingeschaltet ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ actúa sin preguntar mientras esté activado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ agit sans demander tant que c’est activé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ agisce senza chiedere finché è attivo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オンの間、%@は確認せずに動きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "켜져 있는 동안 %@은(는) 묻지 않고 움직여요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ age sem perguntar enquanto estiver ativado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启期间，%@不会询问就直接行动。"
           }
         }
       }
@@ -30304,6 +30364,65 @@
         }
       }
     },
+    "A folder outside your home that can be shared, such as an external drive, still asks; system and hidden places are never touched." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجلد خارج مجلد المنزل يمكن مشاركته، مثل قرص خارجي، ما زال يُسأل عنه؛ أما أماكن النظام والأماكن المخفية فلا تُمَسّ أبدًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Ordner außerhalb deines Benutzerordners, der geteilt werden kann, etwa eine externe Festplatte, fragt weiterhin; System- und versteckte Orte werden nie angefasst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una carpeta fuera de tu carpeta personal que se puede compartir, como un disco externo, sigue preguntando; los lugares del sistema y ocultos nunca se tocan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un dossier hors de votre dossier personnel qui peut être partagé, comme un disque externe, demande toujours ; les lieux système et masqués ne sont jamais touchés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una cartella fuori dalla tua cartella Home che può essere condivisa, come un disco esterno, chiede ancora; i luoghi di sistema e nascosti non vengono mai toccati."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共有できるホームフォルダ外のフォルダ(外付けディスクなど)は、引き続き確認します。システムや非表示の場所には一切触れません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유할 수 있는, 홈 폴더 밖의 폴더(외장 디스크 등)는 계속 물어봐요. 시스템이나 숨김 위치는 절대 건드리지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma pasta fora da sua pasta pessoal que pode ser compartilhada, como um disco externo, continua perguntando; locais do sistema e ocultos nunca são tocados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主文件夹之外、可以共享的文件夹（如外接磁盘）仍会询问；系统和隐藏位置永远不会被触碰。"
+          }
+        }
+      }
+    },
     "A folder with a species.json and SVG shapes, saved in your companions folder. It appears here by itself." : {
       "localizations" : {
         "ar" : {
@@ -31293,6 +31412,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来自菜单栏的通知"
+          }
+        }
+      }
+    },
+    "A page or file %@ reads can hide instructions written by someone else. In Full access nothing stops %@ from following them." : {
+      "comment" : "The Full access sheet: the risk, said plainly; the companion's name twice",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قد تخفي صفحة أو ملف يقرؤه %1$@ تعليمات كتبها شخص آخر. في الوصول الكامل لا شيء يمنع %2$@ من اتباعها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Seite oder Datei, die %1$@ liest, kann Anweisungen von jemand anderem verstecken. Bei Vollzugriff hindert nichts %2$@ daran, ihnen zu folgen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A page or file %1$@ reads can hide instructions written by someone else. In Full access nothing stops %2$@ from following them."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una página o un archivo que %1$@ lee puede esconder instrucciones escritas por otra persona. Con acceso total, nada impide que %2$@ las siga."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une page ou un fichier que %1$@ lit peut cacher des instructions écrites par quelqu’un d’autre. En accès complet, rien n’empêche %2$@ de les suivre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una pagina o un file che %1$@ legge può nascondere istruzioni scritte da qualcun altro. Con l'accesso completo niente impedisce a %2$@ di seguirle."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@が読むページやファイルには、他の人が書いた指示が隠れていることがあります。フルアクセスでは、%2$@がそれに従うのを止めるものはありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@이(가) 읽는 페이지나 파일에는 다른 사람이 쓴 지시가 숨어 있을 수 있어요. 전체 접근에서는 %2$@이(가) 그걸 따르는 것을 막는 것이 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma página ou arquivo que %1$@ lê pode esconder instruções escritas por outra pessoa. Com acesso total, nada impede %2$@ de segui-las."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@读取的页面或文件里可能藏着别人写的指令。在完全访问下，没有什么能阻止%2$@照做。"
           }
         }
       }
@@ -33411,6 +33595,7 @@
       }
     },
     "Acts on its own. Still asks before high-risk actions and anything a web page, file or extension could have steered." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -33469,6 +33654,7 @@
       }
     },
     "Acts without asking. Still asks before anything a web page, file or extension steered could send your data out." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -40306,6 +40492,65 @@
         }
       }
     },
+    "Allow, and let other agents read my notes and reminders" : {
+      "comment" : "In Allow's menu when another agent reads the notebook: sets “Read your notes and reminders” to Allow in Trust",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السماح، وترك الوكلاء الآخرين يقرؤون ملاحظاتي وتذكيراتي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlauben, und andere Agenten meine Notizen und Erinnerungen lesen lassen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir, y dejar que otros agentes lean mis notas y recordatorios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser, et laisser les autres agents lire mes notes et rappels"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti, e lascia che altri agenti leggano le mie note e i miei promemoria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可して、他のエージェントにもメモとリマインダーの読み取りを許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "허용하고, 다른 에이전트도 내 메모와 미리 알림을 읽게 하기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir, e deixar outros agentes lerem minhas notas e lembretes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许，并让其他代理读取我的笔记和提醒事项"
+          }
+        }
+      }
+    },
     "Allow, and read a few pages it links to without asking" : {
       "comment" : "In Allow's menu when the AI reads a page. For this conversation: an hour and twelve pages at most, and it stops if the AI uses anything else",
       "localizations" : {
@@ -40477,6 +40722,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "由你之前设置的“始终允许”允许。"
+          }
+        }
+      }
+    },
+    "Allowed for now" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسموح به الآن"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorerst erlaubt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido por ahora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé pour l’instant"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentito per ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今は許可中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금만 허용됨"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido por enquanto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时允许"
           }
         }
       }
@@ -43694,6 +43997,7 @@
       }
     },
     "Anything a web page, file or extension it read could be steering to send your data out: an address you didn't type, a command, a file change, an extension, your clipboard or memory." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -43753,6 +44057,7 @@
     },
     "Anything deleted goes to the Trash." : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -56033,6 +56338,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会做更改"
+          }
+        }
+      }
+    },
+    "Changes, moves and trashes files in any of your folders" : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يغيّر الملفات وينقلها ويرسلها إلى سلة المهملات في أي من مجلداتك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändert, verschiebt und legt Dateien in jedem deiner Ordner in den Papierkorb"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia, mueve y manda a la papelera archivos en cualquiera de tus carpetas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifie, déplace et met à la corbeille des fichiers dans n’importe lequel de vos dossiers"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifica, sposta e cestina file in qualsiasi tua cartella"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたのどのフォルダでも、ファイルの変更・移動・ゴミ箱への移動をします"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 모든 폴더에서 파일을 바꾸고, 옮기고, 휴지통으로 보내요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altera, move e manda para o lixo arquivos em qualquer uma das suas pastas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你的任何文件夹中更改、移动文件并移到废纸篓"
           }
         }
       }
@@ -72761,6 +73125,65 @@
         }
       }
     },
+    "Does what you ask without asking, even after reading a web page or file. Only your off switches and protected places hold." : {
+      "comment" : "Settings › Trust: Full access's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يفعل ما تطلبه دون سؤال، حتى بعد قراءة صفحة ويب أو ملف. لا يبقى ساريًا إلا ما أوقفته وأماكن الحماية."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tut, was du verlangst, ohne zu fragen, auch nachdem eine Webseite oder Datei gelesen wurde. Nur deine Schalter und geschützte Orte gelten weiter."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hace lo que pides sin preguntar, incluso después de leer una página web o un archivo. Solo tus interruptores y los lugares protegidos se mantienen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fait ce que vous demandez sans demander, même après avoir lu une page web ou un fichier. Seuls vos interrupteurs et les lieux protégés tiennent."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fa quello che chiedi senza chiedere, anche dopo aver letto una pagina web o un file. Restano solo i tuoi interruttori e i luoghi protetti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認せずに頼まれたことをします。Webページやファイルを読んだ後でも同じです。効くのは、オフにした項目と保護された場所だけです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웹 페이지나 파일을 읽은 뒤에도 요청한 일을 묻지 않고 해요. 꺼 둔 항목과 보호된 위치만 그대로 지켜져요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faz o que você pede sem perguntar, mesmo depois de ler uma página web ou um arquivo. Só os seus interruptores e os locais protegidos continuam valendo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再询问，直接按你的要求做事，读取网页或文件之后也一样。只有你关掉的开关和受保护的位置依然有效。"
+          }
+        }
+      }
+    },
     "Don't ask before reading" : {
       "localizations" : {
         "ar" : {
@@ -77649,6 +78072,65 @@
         }
       }
     },
+    "Every “Always allow”, and everything allowed for now, is taken back and Sidefolk asks again. Folders you shared and sites listed under “Using the internet” stay." : {
+      "comment" : "Settings › Trust: the question under “Forget everything you allowed?”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُسحب كل حالات «السماح دائمًا» وكل ما سُمح به الآن، ويعود Sidefolk إلى السؤال. تبقى المجلدات المشتركة والمواقع المدرجة تحت «استخدام الإنترنت»."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes „Immer erlauben“ und alles, was vorerst erlaubt ist, wird zurückgenommen, und Sidefolk fragt wieder. Geteilte Ordner und Seiten unter „Internetnutzung“ bleiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se retiran todos los «Permitir siempre» y todo lo permitido por ahora, y Sidefolk vuelve a preguntar. Las carpetas compartidas y los sitios de «Uso de internet» se quedan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les « Toujours autoriser » et tout ce qui est autorisé pour l’instant sont retirés, et Sidefolk redemande. Les dossiers partagés et les sites listés sous « Utilisation d’Internet » restent."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni «Consenti sempre» e tutto ciò che è consentito per ora viene ritirato e Sidefolk chiede di nuovo. Le cartelle condivise e i siti elencati in «Uso di internet» restano."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての「常に許可」と、今だけ許可しているものを取り消し、Sidefolkはまた確認します。共有したフォルダと「インターネットの利用」にあるサイトはそのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 ‘항상 허용’과 지금만 허용한 것이 취소되고, Sidefolk가 다시 물어봐요. 공유한 폴더와 ‘인터넷 사용’에 있는 사이트는 그대로예요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo “Sempre permitir” e tudo o que está permitido por enquanto é retirado, e o Sidefolk volta a perguntar. As pastas compartilhadas e os sites listados em “Uso da internet” ficam."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有“始终允许”和暂时允许的内容都会被收回，Sidefolk 会重新询问。已共享的文件夹和“使用互联网”下列出的网站保持不变。"
+          }
+        }
+      }
+    },
     "Everyday" : {
       "comment" : "A shelf of the add-on gallery: currency, news feeds…",
       "extractionState" : "stale",
@@ -78291,6 +78773,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "本地功能都会照常运行。提问要等你选好 AI 后才能处理。"
+          }
+        }
+      }
+    },
+    "Everything shows in History, and Undo lasts 15 minutes." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يظهر كل شيء في السجل، ويبقى التراجع متاحًا 15 دقيقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles erscheint im Verlauf, und Widerrufen geht 15 Minuten lang."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo aparece en el historial, y Deshacer dura 15 minutos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout apparaît dans l’historique, et Annuler reste possible 15 minutes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutto compare nella cronologia e Annulla resta disponibile per 15 minuti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて履歴に残り、取り消しは15分間できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 것이 기록에 남고, 실행 취소는 15분 동안 가능해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo aparece no histórico, e Desfazer vale por 15 minutos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一切都会出现在历史记录里，撤销可在 15 分钟内使用。"
           }
         }
       }
@@ -82807,6 +83348,64 @@
         }
       }
     },
+    "Forget Everything" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسيان كل شيء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles vergessen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olvidar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout oublier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimentica tutto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて忘れる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 잊기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esquecer tudo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部忘记"
+          }
+        }
+      }
+    },
     "Forget a fact" : {
       "localizations" : {
         "ar" : {
@@ -82977,6 +83576,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "先忘掉几条不再重要的，再试一次。"
+          }
+        }
+      }
+    },
+    "Forget everything I allowed…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسيان كل ما سمحت به…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles vergessen, was ich erlaubt habe …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olvidar todo lo que permití…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier tout ce que j’ai autorisé…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimentica tutto ciò che ho consentito…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可したことをすべて忘れる…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "허용한 것 모두 잊기…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esquecer tudo o que permiti…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘记我允许的一切…"
+          }
+        }
+      }
+    },
+    "Forget everything you allowed?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تنسى كل ما سمحت به؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles vergessen, was du erlaubt hast?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Olvidar todo lo que permitiste?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier tout ce que vous avez autorisé ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimenticare tutto ciò che hai consentito?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可したことをすべて忘れますか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "허용한 것을 모두 잊을까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esquecer tudo o que você permitiu?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘记你允许的一切？"
           }
         }
       }
@@ -85010,6 +85725,7 @@
       }
     },
     "Full access never decides this for you after outside content." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85063,6 +85779,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“完全访问”在读取外部内容后，从不替你决定这件事。"
+          }
+        }
+      }
+    },
+    "Full access still asks about this one." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوصول الكامل ما زال يسأل عن هذا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollzugriff fragt bei diesem trotzdem."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El acceso total sigue preguntando por este."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’accès complet demande quand même pour celui-ci."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'accesso completo chiede comunque per questo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルアクセスでも、これは確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 접근에서도 이 항목은 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O acesso total continua perguntando sobre este."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对于这一项，完全访问仍会询问。"
+          }
+        }
+      }
+    },
+    "Full access still asks before saving a skill: it outlasts Full access." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوصول الكامل ما زال يسأل قبل حفظ مهارة: فهي تبقى بعد انتهائه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollzugriff fragt trotzdem, bevor ein Skill gespeichert wird: Er überdauert den Vollzugriff."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El acceso total sigue preguntando antes de guardar una habilidad: le sobrevive."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’accès complet demande quand même avant d’enregistrer une compétence : elle lui survit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'accesso completo chiede comunque prima di salvare un'abilità: sopravvive all'accesso completo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルアクセスでも、スキルの保存前には確認します。スキルはフルアクセスの後も残るためです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 접근에서도 스킬을 저장하기 전에는 물어봐요. 스킬은 전체 접근이 끝난 뒤에도 남기 때문이에요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O acesso total continua perguntando antes de salvar uma habilidade: ela sobrevive ao acesso total."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存新技能前，完全访问仍会询问：技能在完全访问结束后依然存在。"
           }
         }
       }
@@ -86119,6 +86951,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请从画廊获取最新版本。"
+          }
+        }
+      }
+    },
+    "Gets on with it. Asks before deleting things you can't get back, before sending anything out after reading outside content, and for folders you haven't shared." : {
+      "comment" : "Settings › Trust: Auto's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتولى الأمر بنفسه. يسأل قبل حذف ما لا يمكن استرجاعه، وقبل إرسال أي شيء بعد قراءة محتوى خارجي، وبشأن المجلدات غير المشتركة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Packt an. Fragt vor dem Löschen von Unwiederbringlichem, vor allem, was nach dem Lesen fremder Inhalte hinausgeht, und bei Ordnern, die nicht geteilt sind."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se pone manos a la obra. Pregunta antes de borrar lo que no se puede recuperar, antes de enviar nada tras leer contenido externo y por las carpetas que no has compartido."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avance seul. Demande avant de supprimer ce qu’on ne peut pas récupérer, avant d’envoyer quoi que ce soit après avoir lu du contenu extérieur, et pour les dossiers non partagés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si dà da fare. Chiede prima di eliminare ciò che non si può recuperare, prima di inviare qualcosa fuori dopo aver letto contenuti esterni e per le cartelle non condivise."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分で進めます。取り戻せないものを削除する前、外部の内容を読んだ後で何かを送る前、共有していないフォルダに対して確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알아서 진행해요. 되돌릴 수 없는 삭제, 외부 콘텐츠를 읽은 뒤 무언가를 내보내는 일, 공유하지 않은 폴더에는 먼저 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vai em frente. Pergunta antes de apagar o que não dá para recuperar, antes de enviar qualquer coisa depois de ler conteúdo externo e sobre pastas não compartilhadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自己动手。删除无法恢复的东西前、读取外部内容后要向外发送任何东西前，以及遇到未共享的文件夹时会询问。"
           }
         }
       }
@@ -105957,6 +106848,65 @@
         }
       }
     },
+    "It stays shared until you remove it in Settings › Trust." : {
+      "comment" : "On a permission slip that asks to share a folder: the main button remembers it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبقى مشتركًا إلى أن تزيله من الإعدادات › الثقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er bleibt geteilt, bis du ihn in Einstellungen › Vertrauen entfernst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigue compartida hasta que la quites en Ajustes › Confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il reste partagé jusqu’à ce que vous le retiriez dans Réglages › Confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resta condivisa finché non la rimuovi in Impostazioni › Fiducia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定 › 信頼で外すまで、共有されたままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 › 신뢰에서 제거할 때까지 공유된 채로 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fica compartilhada até você removê-la em Ajustes › Confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在设置 › 信任里移除之前，它会一直保持共享。"
+          }
+        }
+      }
+    },
     "It still asks before" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -108956,6 +109906,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只显示菜单栏图标。提醒会以通知的形式送达。"
+          }
+        }
+      }
+    },
+    "Just this time" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه المرة فقط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur diesmal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo esta vez"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juste cette fois"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo questa volta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今回のみ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이번만"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só desta vez"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅这一次"
           }
         }
       }
@@ -121903,6 +122911,7 @@
     },
     "Moves, renames and trashes files in the folders you shared" : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -129726,6 +130735,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未登录"
+          }
+        }
+      }
+    },
+    "Not system, hidden or other people's folders. Anything deleted goes to the Trash." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس مجلدات النظام أو المخفية أو مجلدات الآخرين. ما يُحذف يذهب إلى سلة المهملات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine System-, versteckten oder fremden Ordner. Gelöschtes kommt in den Papierkorb."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No las carpetas del sistema, ocultas ni de otras personas. Lo que se borra va a la papelera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ni les dossiers système, masqués ou d’autres personnes. Tout ce qui est supprimé va à la corbeille."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non le cartelle di sistema, nascoste o di altre persone. Ciò che elimina va nel Cestino."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システム、非表示、他の人のフォルダは対象外です。削除したものはゴミ箱に入ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템, 숨김, 다른 사람의 폴더는 제외돼요. 삭제한 것은 휴지통으로 가요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nunca pastas do sistema, ocultas ou de outras pessoas. O que for apagado vai para o lixo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不包括系统、隐藏或他人的文件夹。删除的内容会进入废纸篓。"
           }
         }
       }
@@ -141337,8 +142405,68 @@
         }
       }
     },
+    "Opens apps and links, reaches any website, uses extensions and other tools" : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يفتح التطبيقات والروابط، ويصل إلى أي موقع ويب، ويستخدم الإضافات والأدوات الأخرى"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet Apps und Links, ruft jede Website auf, nutzt Erweiterungen und andere Werkzeuge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre apps y enlaces, accede a cualquier sitio web, usa extensiones y otras herramientas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre des apps et des liens, accède à n’importe quel site, utilise des extensions et d’autres outils"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apre app e link, raggiunge qualsiasi sito web, usa estensioni e altri strumenti"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリやリンクを開き、どのWebサイトにも接続し、機能拡張やその他のツールを使います"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱과 링크를 열고, 모든 웹사이트에 접속하고, 확장 프로그램과 다른 도구를 써요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre apps e links, acessa qualquer site, usa extensões e outras ferramentas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 App 和链接，访问任何网站，使用扩展和其他工具"
+          }
+        }
+      }
+    },
     "Opens apps and links, reads pages and your Apple Notes, uses extensions" : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -142538,6 +143666,7 @@
       }
     },
     "Other agents and extensions keep their own rules." : {
+      "comment" : "The Full access sheet",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -149778,6 +150907,65 @@
         }
       }
     },
+    "Ran without asking: you allowed this for the request it belongs to." : {
+      "comment" : "History: a step covered by an earlier yes in the same request",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُفّذ دون سؤال: كنت قد سمحت به للطلب الذي ينتمي إليه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Nachfrage ausgeführt: Du hattest es für die zugehörige Anfrage erlaubt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hecho sin preguntar: lo permitiste para la petición a la que pertenece."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuté sans demander : vous l’aviez autorisé pour la demande en cours."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseguito senza chiedere: lo avevi consentito per la richiesta a cui appartiene."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認せずに実行しました。このリクエストについて許可されていました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "묻지 않고 실행했어요. 이 요청에 대해 허용해 두셨어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feito sem perguntar: você permitiu para o pedido a que pertence."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未询问就执行了：你已为它所属的请求允许过。"
+          }
+        }
+      }
+    },
     "Read %@ now" : {
       "comment" : "“Read CPU now”",
       "localizations" : {
@@ -152762,6 +153950,65 @@
         }
       }
     },
+    "Reading the pages a page links to" : {
+      "comment" : "Settings › Trust › Allowed for now: a yes to reading on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قراءة الصفحات التي ترتبط بها الصفحة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Seiten lesen, auf die eine Seite verweist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer las páginas a las que enlaza una página"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire les pages vers lesquelles une page renvoie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leggere le pagine a cui rimanda una pagina"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ページがリンクしているページを読む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지가 연결한 페이지 읽기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ler as páginas para as quais uma página aponta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取一个页面所链接的页面"
+          }
+        }
+      }
+    },
     "Reading the page…" : {
       "localizations" : {
         "ar" : {
@@ -152936,6 +154183,65 @@
         }
       }
     },
+    "Reads a page, then renames 3 files **on its own**. **Asks** before deleting for good or sending anything out." : {
+      "comment" : "Settings › Trust: an example of Auto; keep the ** marks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ صفحة، ثم يعيد تسمية 3 ملفات **من تلقاء نفسه**. **يسأل** قبل الحذف النهائي أو إرسال أي شيء إلى الخارج."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liest eine Seite und benennt dann 3 Dateien **von allein** um. **Fragt** vor dem endgültigen Löschen oder bevor etwas hinausgeht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee una página y luego renombra 3 archivos **por su cuenta**. **Pregunta** antes de borrar del todo o de enviar algo fuera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lit une page, puis renomme 3 fichiers **seul**. **Demande** avant de supprimer pour de bon ou d’envoyer quoi que ce soit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legge una pagina, poi rinomina 3 file **da solo**. **Chiede** prima di eliminare per sempre o di inviare qualcosa fuori."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ページを読んでから、3つのファイルの名前を**自分で**変更します。完全な削除や外への送信の前には**確認します**。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지를 읽은 뒤 파일 3개의 이름을 **알아서** 바꿔요. 완전히 삭제하거나 무언가를 내보내기 전에는 **물어봐요**."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lê uma página e depois renomeia 3 arquivos **por conta própria**. **Pergunta** antes de apagar de vez ou de enviar qualquer coisa para fora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取页面后，**自行**重命名 3 个文件。彻底删除或向外发送任何东西前会**询问**。"
+          }
+        }
+      }
+    },
     "Reads files" : {
       "comment" : "What an action touches, on a chip: it reads files in a shared folder",
       "localizations" : {
@@ -153050,6 +154356,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会读取私密数据"
+          }
+        }
+      }
+    },
+    "Reads your Apple Notes, clipboard and calendar, and changes your calendar and notebook" : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ ملاحظات Apple والحافظة والتقويم، ويغيّر تقويمك والدفتر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liest deine Apple Notizen, die Zwischenablage und den Kalender und ändert deinen Kalender und das Notizbuch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee tus Notas de Apple, el portapapeles y el calendario, y cambia tu calendario y el cuaderno"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lit vos notes Apple, le presse-papiers et le calendrier, et modifie votre calendrier et le carnet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legge le tue Note di Apple, gli appunti e il calendario, e cambia il tuo calendario e il taccuino"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appleのメモとクリップボードとカレンダーを読み、カレンダーとノートブックを変更します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple 메모, 클립보드, 캘린더를 읽고, 캘린더와 수첩을 바꿔요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lê suas Notas da Apple, a área de transferência e o calendário, e altera seu calendário e o caderno"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取你的 Apple 备忘录、剪贴板和日历，并更改你的日历和笔记本"
           }
         }
       }
@@ -158391,6 +159756,7 @@
     },
     "Renames 3 files **on its own**. After reading a web page, it **asks** before acting." : {
       "comment" : "Settings › Trust: an example of Auto; keep the ** marks",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -162241,6 +163607,7 @@
       }
     },
     "Revoke any of these and Sidefolk asks again next time." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -162294,6 +163661,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "撤回其中任何一项后，Sidefolk 下次会再次询问。"
+          }
+        }
+      }
+    },
+    "Revoke any of these and Sidefolk asks again next time. “Forget everything I allowed” takes back all of them." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب أحدها ويعود Sidefolk إلى السؤال في المرة القادمة. «نسيان كل ما سمحت به» يسحبها كلها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entziehe eines davon, und Sidefolk fragt beim nächsten Mal wieder. „Alles vergessen, was ich erlaubt habe“ nimmt alle zurück."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revoca cualquiera y Sidefolk vuelve a preguntar la próxima vez. «Olvidar todo lo que permití» las retira todas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révoquez-en un et Sidefolk redemande la prochaine fois. « Oublier tout ce que j’ai autorisé » les retire tous."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revocane uno e Sidefolk chiede di nuovo la prossima volta. «Dimentica tutto ciò che ho consentito» li ritira tutti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どれかを解除すると、次回からSidefolkはまた確認します。「許可したことをすべて忘れる」で全部が解除されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "하나를 해제하면 다음부터 Sidefolk가 다시 물어봐요. ‘허용한 것 모두 잊기’는 전부 거둬요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revogue um e o Sidefolk pergunta de novo da próxima vez. “Esquecer tudo o que permiti” retira todos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤回其中一项，下次 Sidefolk 会重新询问。“忘记我允许的一切”会全部收回。"
           }
         }
       }
@@ -164328,8 +165753,68 @@
         }
       }
     },
+    "Runs `npm test` **without asking**, even after reading a web page. Nothing asks." : {
+      "comment" : "Settings › Trust: an example of Full access; keep the ** marks and the command as it is",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشغّل `npm test` **دون سؤال**، حتى بعد قراءة صفحة ويب. لا شيء يسأل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Führt `npm test` **ohne Nachfrage** aus, auch nach dem Lesen einer Webseite. Nichts fragt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecuta `npm test` **sin preguntar**, incluso después de leer una página web. Nada pregunta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécute `npm test` **sans demander**, même après avoir lu une page web. Rien ne demande."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegue `npm test` **senza chiedere**, anche dopo aver letto una pagina web. Niente chiede."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webページを読んだ後でも、`npm test` を**確認せずに**実行します。確認は何もありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웹 페이지를 읽은 뒤에도 `npm test`를 **묻지 않고** 실행해요. 묻는 것이 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executa `npm test` **sem perguntar**, mesmo depois de ler uma página web. Nada pergunta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取网页之后，也**不询问**直接运行 `npm test`。什么都不会询问。"
+          }
+        }
+      }
+    },
     "Runs `npm test` **without asking**. Still asks before your data could leave the Mac." : {
       "comment" : "Settings › Trust: an example of Full access; keep the ** marks and the command as it is",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -164446,7 +165931,67 @@
         }
       }
     },
+    "Runs commands" : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشغّل الأوامر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Führt Befehle aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecuta comandos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécute des commandes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegue comandi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コマンドを実行します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 실행"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executa comandos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行命令"
+          }
+        }
+      }
+    },
     "Runs commands without asking" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -166315,6 +167860,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已保存到 %@"
+          }
+        }
+      }
+    },
+    "Saving a new skill, or removing notes from Apple Notes, still asks: both show what they are in full first, and a skill outlasts Full access." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ مهارة جديدة، أو إزالة ملاحظات من ملاحظات Apple، ما زال يسأل: كلاهما يُعرض كاملًا أولًا، والمهارة تبقى بعد انتهاء الوصول الكامل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen neuen Skill speichern oder Notizen aus Apple Notizen entfernen fragt weiterhin: Beides wird vorher vollständig gezeigt, und ein Skill überdauert den Vollzugriff."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar una habilidad nueva, o quitar notas de Notas de Apple, sigue preguntando: ambas se muestran completas antes, y una habilidad sobrevive al acceso total."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer une nouvelle compétence, ou retirer des notes d’Apple Notes, demande quand même : les deux se montrent en entier d’abord, et une compétence survit à l’accès complet."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvare una nuova abilità, o rimuovere note da Note di Apple, chiede comunque: entrambe vengono mostrate per intero prima, e un'abilità sopravvive all'accesso completo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいスキルの保存や、Appleのメモからのメモの削除は、引き続き確認します。どちらも先に全文を表示し、スキルはフルアクセスの後も残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 스킬을 저장하거나 Apple 메모에서 메모를 지우는 일은 계속 물어봐요. 둘 다 먼저 전체 내용을 보여 주고, 스킬은 전체 접근이 끝난 뒤에도 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvar uma habilidade nova, ou remover notas das Notas da Apple, continua perguntando: as duas são mostradas por inteiro antes, e uma habilidade sobrevive ao acesso total."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存新技能，或从 Apple 备忘录中移除备忘录，仍会询问：两者都会先完整显示，而技能在完全访问结束后依然存在。"
           }
         }
       }
@@ -170776,6 +172380,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "与 Sidefolk 共享文件夹"
+          }
+        }
+      }
+    },
+    "Share folder" : {
+      "comment" : "A permission slip's main button when it asks to share a folder: remembered until removed in Trust",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة المجلد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir carpeta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager le dossier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi cartella"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダを共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더 공유"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar pasta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共享文件夹"
           }
         }
       }
@@ -185098,6 +186761,65 @@
         }
       }
     },
+    "Still true" : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما زال ساريًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiterhin gilt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigue siendo así"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours vrai"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale ancora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今も変わらないこと"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그대로인 것"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continua valendo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍然成立"
+          }
+        }
+      }
+    },
     "Stop" : {
       "localizations" : {
         "ar" : {
@@ -185444,6 +187166,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止显示"
+          }
+        }
+      }
+    },
+    "Stop allowing %@" : {
+      "comment" : "VoiceOver: a button that takes back a yes that holds for now",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف السماح بـ %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ nicht mehr erlauben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar de permitir %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter d’autoriser %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smetti di consentire %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の許可を終了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 허용 중단"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de permitir %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止允许%@"
           }
         }
       }
@@ -199210,6 +200991,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画廊还没有更新的版本。"
+          }
+        }
+      }
+    },
+    "The honest part" : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجزء الصريح"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ehrliche Teil"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La parte sincera"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La part d’honnêteté"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La parte onesta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正直なところ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "솔직한 이야기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A parte sincera"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "坦白说"
           }
         }
       }
@@ -218716,6 +220556,65 @@
         }
       }
     },
+    "Use it for work you'd trust %@ to do alone, and turn it off when you're done." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدمه في عمل تأتمن %@ على إنجازه وحده، وأوقفه عند الانتهاء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutze ihn für Arbeit, die du %@ allein anvertrauen würdest, und schalte ihn aus, wenn du fertig bist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úsalo para trabajo que confiarías a %@ sin supervisión, y desactívalo cuando termines."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réservez-le aux tâches que vous confieriez à %@ sans surveillance, et désactivez-le quand vous avez fini."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usalo per un lavoro che affideresti a %@ da solo, e disattivalo quando hai finito."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@に任せきりでよい作業に使い、終わったらオフにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에게 혼자 맡겨도 될 일에만 쓰고, 끝나면 꺼 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use para trabalho que você confiaria a %@ sozinho, e desative quando terminar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把它用在你放心交给%@独自完成的工作上，做完就关掉。"
+          }
+        }
+      }
+    },
     "Use my Mac's location" : {
       "localizations" : {
         "ar" : {
@@ -223810,6 +225709,65 @@
         }
       }
     },
+    "Watching one hidden file, by its size and time, still asks." : {
+      "comment" : "The Full access sheet: D180's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مراقبة ملف مخفي واحد بحجمه ووقته فقط ما زالت تسأل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine einzelne versteckte Datei zu beobachten, nur nach Größe und Zeit, fragt weiterhin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vigilar un solo archivo oculto, por su tamaño y su fecha, sigue preguntando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveiller un seul fichier masqué, par sa taille et sa date, demande toujours."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osservare un solo file nascosto, per dimensione e ora, chiede comunque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非表示のファイル1つを、サイズと時刻だけで見守る場合は、引き続き確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "숨김 파일 하나를 크기와 시간만으로 지켜보는 일은 계속 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observar um único arquivo oculto, pelo tamanho e pela hora, continua perguntando."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅凭大小和时间监视单个隐藏文件，仍会询问。"
+          }
+        }
+      }
+    },
     "Watching pages, sites and files" : {
       "localizations" : {
         "ar" : {
@@ -225451,6 +227409,7 @@
     },
     "What changes" : {
       "comment" : "The Full access sheet: what it does without asking",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -225979,6 +227938,7 @@
     },
     "What still asks" : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -226272,6 +228232,64 @@
         }
       }
     },
+    "What you allowed for one request or conversation. Stop one and Sidefolk asks again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما سمحت به لطلب واحد أو محادثة واحدة. أوقف واحدًا ويعود Sidefolk إلى السؤال."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was du für eine Anfrage oder ein Gespräch erlaubt hast. Beende eines, und Sidefolk fragt wieder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que permitiste para una petición o una conversación. Detén una y Sidefolk vuelve a preguntar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que vous avez autorisé pour une demande ou une conversation. Arrêtez-en un et Sidefolk redemande."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciò che hai consentito per una richiesta o una conversazione. Ferma una voce e Sidefolk chiede di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1つのリクエストや会話のために許可したものです。1つ止めると、Sidefolkはまた確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "요청 하나나 대화 하나를 위해 허용한 것이에요. 하나를 중단하면 Sidefolk가 다시 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que você permitiu para um pedido ou uma conversa. Pare um e o Sidefolk volta a perguntar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你为一次请求或一次对话允许的内容。停止其中一项，Sidefolk 会重新询问。"
+          }
+        }
+      }
+    },
     "What you and %@ save lands here. New notes go to the Inbox." : {
       "localizations" : {
         "ar" : {
@@ -226444,6 +228462,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你可以对 %@ 做什么"
+          }
+        }
+      }
+    },
+    "What you switched off under “What Sidefolk may do” stays off, and system, hidden and other people's folders are never touched." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما أوقفته تحت «ما يُسمح لـ Sidefolk بفعله» يبقى موقوفًا، ولا تُمَسّ مجلدات النظام أو المخفية أو مجلدات الآخرين أبدًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was du unter „Was Sidefolk darf“ ausgeschaltet hast, bleibt aus, und System-, versteckte und fremde Ordner werden nie angefasst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que desactivaste en «Lo que Sidefolk puede hacer» sigue desactivado, y las carpetas del sistema, ocultas o de otras personas nunca se tocan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que vous avez désactivé sous « Ce que Sidefolk peut faire » reste désactivé, et les dossiers système, masqués ou d’autres personnes ne sont jamais touchés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciò che hai disattivato in «Cosa può fare Sidefolk» resta disattivato, e le cartelle di sistema, nascoste o di altre persone non vengono mai toccate."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「Sidefolkにできること」でオフにしたものはオフのままで、システム、非表示、他の人のフォルダには一切触れません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘Sidefolk가 할 수 있는 일’에서 꺼 둔 것은 꺼진 채로 있고, 시스템, 숨김, 다른 사람의 폴더는 절대 건드리지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que você desativou em “O que o Sidefolk pode fazer” continua desativado, e pastas do sistema, ocultas ou de outras pessoas nunca são tocadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在“Sidefolk 可以做的事”里关掉的内容保持关闭，系统、隐藏和他人的文件夹永远不会被触碰。"
           }
         }
       }
@@ -228862,8 +230939,68 @@
         }
       }
     },
+    "While it's on, the Ask panel shows a red “Full access” and the menu bar icon turns orange. Turn it off there with one click." : {
+      "comment" : "The Full access sheet, under Ends",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما دام الخيار مفعّلًا، تعرض لوحة اسأل «الوصول الكامل» باللون الأحمر وتتحول أيقونة شريط القوائم إلى البرتقالي. أوقفه من هناك بنقرة واحدة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solange er an ist, zeigt das Fragen-Fenster ein rotes „Vollzugriff“, und das Menüleistensymbol wird orange. Schalte ihn dort mit einem Klick aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mientras está activado, el panel Preguntar muestra «Acceso total» en rojo y el icono de la barra de menús se vuelve naranja. Desactívalo ahí con un clic."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tant que c’est activé, le panneau Demander affiche « Accès complet » en rouge et l’icône de la barre des menus devient orange. Désactivez-le là d’un clic."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finché è attivo, il pannello Chiedi mostra «Accesso completo» in rosso e l'icona nella barra dei menu diventa arancione. Disattivalo lì con un clic."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オンの間は、質問パネルに赤い「フルアクセス」が表示され、メニューバーのアイコンがオレンジになります。そこから1クリックでオフにできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "켜져 있는 동안 묻기 패널에 빨간 ‘전체 접근’이 보이고 메뉴 막대 아이콘이 주황색이 돼요. 거기서 한 번 눌러 끌 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enquanto está ativado, o painel Perguntar mostra “Acesso total” em vermelho e o ícone da barra de menus fica laranja. Desative por lá com um clique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启期间，“提问”面板会以红色显示“完全访问”，菜单栏图标会变成橙色。点一下就能在那里关掉。"
+          }
+        }
+      }
+    },
     "While it's on, the menu bar shows it. Turn it off there with one click. What you switched off under “What Sidefolk may do” stays off." : {
       "comment" : "The Full access sheet, under Ends",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -229945,6 +232082,65 @@
         }
       }
     },
+    "Without asking" : {
+      "comment" : "The Full access sheet: what it does without asking",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دون سؤال"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne zu fragen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin preguntar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans demander"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza chiedere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認なしでできること"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "묻지 않고 하는 일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem perguntar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不询问"
+          }
+        }
+      }
+    },
     "Without asking you, it will:" : {
       "comment" : "A plan's card",
       "localizations" : {
@@ -230123,6 +232319,7 @@
       }
     },
     "Working in a folder you haven't shared, saving a new skill, or removing notes from Apple Notes." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -232407,6 +234604,123 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你可以在“设置 › 信任 › 你的日历”中关闭此项。"
+          }
+        }
+      }
+    },
+    "You chose to be asked before it reads pages: that stays." : {
+      "comment" : "The Full access sheet: shown when “Using the internet” is Ask each time",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اخترت أن تُسأل قبل قراءة الصفحات، وهذا يبقى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast gewählt, vor dem Lesen von Seiten gefragt zu werden: Das bleibt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegiste que se te pregunte antes de leer páginas: eso se mantiene."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez choisi d’être sollicité avant la lecture de pages : cela reste."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai scelto di essere interpellato prima della lettura di pagine: questo resta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ページを読む前に確認する設定にしているので、それは維持されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지를 읽기 전에 묻도록 하셨고, 그 설정은 그대로 유지돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você escolheu ser perguntado antes de páginas serem lidas: isso continua."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你选择了读取页面前先询问：这一点会保留。"
+          }
+        }
+      }
+    },
+    "You chose to be asked before pages are read, and Full access keeps that." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اخترت أن تُسأل قبل قراءة الصفحات، والوصول الكامل يحافظ على ذلك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast gewählt, vor dem Lesen von Seiten gefragt zu werden, und der Vollzugriff behält das bei."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegiste que se te pregunte antes de leer páginas, y el acceso total lo respeta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez choisi d’être sollicité avant la lecture de pages, et l’accès complet le garde."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai scelto di essere interpellato prima della lettura di pagine e l'accesso completo lo mantiene."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ページを読む前に確認する設定にしているので、フルアクセスでもそれは維持されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지를 읽기 전에 묻도록 하셨고, 전체 접근에서도 그 설정은 유지돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você escolheu ser perguntado antes de páginas serem lidas, e o acesso total mantém isso."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你选择了读取页面前先询问，完全访问也会保留这一点。"
           }
         }
       }
@@ -242977,6 +245291,65 @@
         }
       }
     },
+    "for the request %@ is working on" : {
+      "comment" : "Settings › Trust › Allowed for now: a tool allowed for one request",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للطلب الذي يعمل عليه %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "für die Anfrage, an der %@ gerade arbeitet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "para la petición en la que %@ está trabajando"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pour la demande sur laquelle %@ travaille"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "per la richiesta su cui %@ sta lavorando"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が取り組んでいるリクエストの間"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 작업 중인 요청 동안"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "para o pedido em que %@ está trabalhando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "针对%@正在处理的请求"
+          }
+        }
+      }
+    },
     "from %@" : {
       "localizations" : {
         "ar" : {
@@ -244048,6 +246421,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在例行任务中"
+          }
+        }
+      }
+    },
+    "in this conversation, for up to an hour" : {
+      "comment" : "Settings › Trust › Allowed for now: reading on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في هذه المحادثة، لمدة تصل إلى ساعة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in diesem Gespräch, bis zu einer Stunde"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en esta conversación, hasta una hora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dans cette conversation, jusqu’à une heure"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in questa conversazione, fino a un'ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この会話の間、最長1時間"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 대화에서, 최대 한 시간"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nesta conversa, por até uma hora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这次对话中，最长一小时"
           }
         }
       }

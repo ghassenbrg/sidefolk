@@ -230,7 +230,7 @@ import Testing
         #expect(try await offered() == ["calendar.today", "calendar.find", "calendar.create", "calendar.update", "calendar.delete"])
     }
 
-    /// The calendar syncs and may be shared: after outside content (an invitation's title) Full access still asks.
+    /// The calendar syncs and may be shared: after outside content (an invitation's title) Auto still asks, and Full access doesn't (D185).
     @Test func aSteeredTurnNeverChangesTheCalendarWithoutThePerson() {
         let spec = ToolSpec(name: "calendar.create", title: "Add", description: "", inputSchema: .object([:]), risk: .medium,
                             capabilities: [.calendarWrite], category: .time, mutates: true)
@@ -238,8 +238,10 @@ import Testing
         let clean = engine.evaluate(spec: spec, input: .object([:]), summary: "s", scope: .none, caller: .agent(runId: "r"), tainted: false,
                                     policy: GuardPolicy(mode: .fullAccess), grants: [], folders: [])
         #expect(clean == .allow(.fullAccess))
+        #expect(engine.evaluate(spec: spec, input: .object([:]), summary: "s", scope: .none, caller: .agent(runId: "r"), tainted: true,
+                                policy: GuardPolicy(mode: .fullAccess), grants: [], folders: []) == .allow(.fullAccess))
         guard case .ask = engine.evaluate(spec: spec, input: .object([:]), summary: "s", scope: .none, caller: .agent(runId: "r"), tainted: true,
-                                          policy: GuardPolicy(mode: .fullAccess), grants: [], folders: []) else {
+                                          policy: GuardPolicy(mode: .auto), grants: [], folders: []) else {
             Issue.record("expected the person to be asked")
             return
         }

@@ -10,6 +10,7 @@ struct TrustSettingsView: View {
     var model: SettingsModel
     @State private var confirmingDelete = false
     @State private var confirmingHistory = false
+    @State private var confirmingForget = false
 
     /// The capabilities a person can switch off, in the words the Settings page uses.
     private static let switches: [(Capability, LocalizedStringKey, LocalizedStringKey)] = [
@@ -160,7 +161,7 @@ struct TrustSettingsView: View {
     private var grants: some View {
         // Sites and extensions' services are listed under "Using the internet" (D47).
         let others = model.grants.filter { !InternetGrants.isInternet($0, extensions: model.extensions) }
-        return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time.", anchor: .alwaysAllowed) {
+        return SettingsGroup(title: "Always allowed", footer: "Revoke any of these and Sidefolk asks again next time. “Forget everything I allowed” takes back all of them.", anchor: .alwaysAllowed) {
             if others.isEmpty {
                 InlineEmpty(text: "Nothing yet. When you choose “Always allow”, it's listed here.", systemImage: "checkmark.shield")
             }
@@ -177,6 +178,57 @@ struct TrustSettingsView: View {
                 .padding(.horizontal, Theme.Space.l)
                 .padding(.vertical, Theme.Space.s + 2)
             }
+            // Everything remembered in one click; folders are their own list above, and stay.
+            if !others.isEmpty || !model.allowedForNow.isEmpty {
+                Button("Forget everything I allowed…") { confirmingForget = true }.buttonStyle(.sf(.secondary))
+                    .padding(.horizontal, Theme.Space.l)
+                    .padding(.vertical, Theme.Space.m)
+                    .confirmationDialog("Forget everything you allowed?", isPresented: $confirmingForget, titleVisibility: .visible) {
+                        Button("Forget Everything", role: .destructive) { Task { await model.forgetEverythingAllowed() } }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("Every “Always allow”, and everything allowed for now, is taken back and Sidefolk asks again. Folders you shared and sites listed under “Using the internet” stay.",
+                             comment: "Settings › Trust: the question under “Forget everything you allowed?”")
+                    }
+            }
+        }
+    }
+
+    // MARK: Allowed for now
+
+    /// What the person said yes to for the length of a request or a conversation, while it holds: shown so it can be taken back.
+    @ViewBuilder private var allowedNow: some View {
+        if !model.allowedForNow.isEmpty {
+            SettingsGroup(title: "Allowed for now", footer: "What you allowed for one request or conversation. Stop one and Sidefolk asks again.",
+                          anchor: .allowedForNow) {
+                ForEach(model.allowedForNow) { item in
+                    HStack(spacing: Theme.Space.m) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: title(of: item)).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                            Text(verbatim: detail(of: item)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                        }
+                        Spacer(minLength: Theme.Space.s)
+                        Button("Stop") { Task { await model.stopAllowing(item) } }.buttonStyle(.sf(.secondary))
+                            .accessibilityLabel(Text("Stop allowing \(title(of: item))", comment: "VoiceOver: a button that takes back a yes that holds for now"))
+                    }
+                    .padding(.horizontal, Theme.Space.l)
+                    .padding(.vertical, Theme.Space.s + 2)
+                }
+            }
+        }
+    }
+
+    private func title(of item: AllowedForNow) -> String {
+        switch item {
+        case .tool(let name): model.toolTitle(name)
+        case .readingOn: String(localized: "Reading the pages a page links to", comment: "Settings › Trust › Allowed for now: a yes to reading on")
+        }
+    }
+
+    private func detail(of item: AllowedForNow) -> String {
+        switch item {
+        case .tool: String(localized: "for the request \(model.settings.companionName) is working on", comment: "Settings › Trust › Allowed for now: a tool allowed for one request")
+        case .readingOn: String(localized: "in this conversation, for up to an hour", comment: "Settings › Trust › Allowed for now: reading on")
         }
     }
 
@@ -208,6 +260,7 @@ struct TrustSettingsView: View {
             InternetGroup(model: model)
             folders
             grants
+            allowedNow
             UnansweredGroup(model: model)
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.",
                           anchor: .capabilities) {

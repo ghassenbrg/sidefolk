@@ -74,7 +74,10 @@ public enum FolderAccess {
             }
             if p == "/" { return String(localized: "Sidefolk doesn't work on the whole disk.") }
             let scratch = privateScratch.contains { p == $0 || p.hasPrefix($0 + "/") }
-            for prefix in protectedRoots(home: home) + sidefolk where p == prefix || p.hasPrefix(prefix + "/") {
+            // Compared without case: on a Mac's usual volume `~/BIN` is `~/bin`, and a protected place that doesn't exist yet can be made in
+            // another spelling (D185).
+            let folded = p.lowercased()
+            for prefix in protectedRoots(home: home) + sidefolk where folded == prefix.lowercased() || folded.hasPrefix(prefix.lowercased() + "/") {
                 if scratch, prefix == "/private" { continue }
                 return String(localized: "Sidefolk doesn't touch \(displayPath(prefix)) — it's protected.")
             }
@@ -138,6 +141,15 @@ public enum FolderAccess {
         let parts = f.split(separator: "/")
         let volumeRoot = parts.count == 2 && parts[0] == "Volumes"
         return !tooBroad.contains(f) && !volumeRoot && forbiddenReason([f]) == nil
+    }
+
+    /// Where Full access works without a folder being shared (D185): strictly inside the person's own home, once symlinks are
+    /// resolved, and not in any place `forbiddenReason` names. The home folder itself is not (that is "too broad" for a
+    /// share, and for this): what is in it is. Other volumes, other users' homes, `~/Library`, hidden files, Sidefolk's own data
+    /// and everything outside the home never qualify, so a link out of the home doesn't either.
+    public static func isOpenToFullAccess(_ path: String) -> Bool {
+        guard let p = canonical(path), p.hasPrefix(home + "/"), forbiddenReason([p]) == nil else { return false }
+        return true
     }
 
     /// The folder to offer when a path is outside every grant: the path itself if it is a folder,

@@ -135,6 +135,14 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         self.mode = mode
     }
 
+    /// Turns Full access off the way its end does: back to the mode it replaced, whatever that was, with no end left over. Every way
+    /// the person turns it off (Today's banner, the Pocket, the Ask panel) goes through this, so none of them ends on a laxer mode.
+    public mutating func endFullAccess() {
+        guard mode == .fullAccess else { return }
+        mode = beforeFullAccess
+        fullAccessEnds = nil
+    }
+
     /// The mode Guard applies to `caller`. Only Sidefolk's own agent, which acts on the person's own
     /// request from the Ask panel, is ever asked less, and a command the person typed acts as it (D50). Asking
     /// every time applies to every caller Guard asks for; other agents and extensions otherwise keep their own

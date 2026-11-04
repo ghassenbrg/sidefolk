@@ -60,7 +60,9 @@ import Testing
         }
         #expect(copied.value == 4)
         #expect(cards.withLock { $0.count } == 1)
-        #expect(try await env.activity.recent().allSatisfy { $0.decision == .allowed })
+        // The first call has the person's yes; the rest say they ran on it, so History can tell a click from a carried-over yes.
+        let rows = try await env.activity.recent().sorted { ($0.id ?? 0) < ($1.id ?? 0) }
+        #expect(rows.map(\.decision) == [.allowed, .allowedForRequest, .allowedForRequest, .allowedForRequest])
 
         // It ends with the run: the next request asks again.
         await box.close()

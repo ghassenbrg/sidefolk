@@ -61,55 +61,58 @@ import Testing
 
     // Read across: what Sidefolk's own agent gets in each mode. Other callers always get the first
     // column (Ask every time) or the second (every other mode): modes never loosen their rules.
+    // D185: Full access answers everything but text to read in full, after outside content too; Auto, after outside
+    // content, answers what can't carry data out (a file change asks here only because no folder is named: see
+    // `PermissionFeelTests` for the folders), and still asks for high risk.
     static let rows: [Row] = [
         Row(shape: .plain, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
         Row(shape: .plain, risk: .low, tainted: true, agent: [.run, .run, .run, .run]),
         Row(shape: .plain, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .plain, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
+        Row(shape: .plain, risk: .medium, tainted: true, agent: [.ask, .ask, .auto, .full]),
         Row(shape: .plain, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .plain, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .network, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
-        Row(shape: .network, risk: .low, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .network, risk: .low, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .network, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .network, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .network, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .network, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
-        Row(shape: .network, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .network, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .typedLink, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
         Row(shape: .typedLink, risk: .low, tainted: true, agent: [.run, .run, .run, .run]),
         Row(shape: .typedLink, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .typedLink, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
+        Row(shape: .typedLink, risk: .medium, tainted: true, agent: [.ask, .ask, .auto, .full]),
         Row(shape: .typedLink, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .typedLink, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .files, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
         Row(shape: .files, risk: .low, tainted: true, agent: [.run, .run, .run, .run]),
         Row(shape: .files, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .files, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .files, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .files, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
-        Row(shape: .files, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .files, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .memory, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
-        Row(shape: .memory, risk: .low, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .memory, risk: .low, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .memory, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .memory, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .memory, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .memory, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
-        Row(shape: .memory, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .memory, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .shell, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
         Row(shape: .shell, risk: .low, tainted: true, agent: [.run, .run, .run, .run]),
         Row(shape: .shell, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .shell, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .shell, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .shell, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
-        Row(shape: .shell, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .shell, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .extensionTool, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
         Row(shape: .extensionTool, risk: .low, tainted: true, agent: [.run, .run, .run, .run]),
         Row(shape: .extensionTool, risk: .medium, tainted: false, agent: [.ask, .ask, .auto, .full]),
-        Row(shape: .extensionTool, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .extensionTool, risk: .medium, tainted: true, agent: [.ask, .ask, .ask, .full]),
         Row(shape: .extensionTool, risk: .high, tainted: false, agent: [.ask, .ask, .ask, .full]),
-        Row(shape: .extensionTool, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .ask]),
+        Row(shape: .extensionTool, risk: .high, tainted: true, agent: [.ask, .ask, .ask, .full]),
 
         Row(shape: .fullText, risk: .low, tainted: false, agent: [.run, .run, .run, .run]),
         Row(shape: .fullText, risk: .low, tainted: true, agent: [.run, .run, .run, .run]),
@@ -220,10 +223,11 @@ import Testing
                                         caller: .agent(runId: "r"), tainted: tainted, policy: GuardPolicy(mode: mode), grants: [],
                                         folders: [], mentions: UserMentions(text: "what's new?"))
         }
-        // A model-built address is at least medium (T1), so Auto answers it only in a clean turn.
+        // A model-built address is at least medium (T1), so Auto answers it only in a clean turn; Full access answers it always (D185).
         #expect(fetch(.auto, tainted: false) == .allow(.autoMode))
         #expect(fetch(.fullAccess, tainted: false) == .allow(.fullAccess))
-        for mode in Self.modes {
+        #expect(fetch(.fullAccess, tainted: true) == .allow(.fullAccess))
+        for mode in Self.modes where mode != .fullAccess {
             guard case .ask(let r) = fetch(mode, tainted: true) else { Issue.record("\(mode): steered fetch must ask"); continue }
             #expect(r.tainted && !r.canAlways)
         }

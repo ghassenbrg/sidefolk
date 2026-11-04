@@ -455,7 +455,7 @@ extension AppCoordinator: AskActions {
 
     func answer(approval: ApprovalRequest, decision: ApprovalDecision) {
         ask.removeApproval(id: approval.id)
-        Task { await runtime.broker.resolve(id: approval.id, decision: decision) }
+        Task { await runtime.answer(approval, decision) }
     }
 
     func open(card: ResultCard) {

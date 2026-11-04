@@ -51,6 +51,9 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var canAllowForRequest: Bool
     /// The card may offer to keep reading linked pages for this conversation (D119).
     public var canKeepReading = false
+    /// Another agent reading the person's notes and reminders: the card may offer to open that group for all of them, which is
+    /// the Trust setting "Read your notes and reminders" (D185); never a grant for this one agent, whose name is its own (T4).
+    public var canAllowAgentsToRead = false
     /// The extension whose tool this is, so the card can show its icon and name.
     public var extensionId: String?
     /// The site an address Sidefolk wrote itself reaches ("example.com"), which "Always allow" would cover (D47).
@@ -129,10 +132,12 @@ public enum ApprovalDecision: Sendable, Hashable {
     case allowForRequest
     /// This page, and pages it and those link to, for this conversation (`ResearchMode`, D119).
     case keepReading
+    /// Allow this call and set "Read your notes and reminders" to Allow for other agents (`canAllowAgentsToRead`).
+    case allowAgentsToRead
     case deny
     case expired
 
-    public var allowed: Bool { self == .allowOnce || self == .allowAlways || self == .allowForRequest || self == .keepReading }
+    public var allowed: Bool { self == .allowOnce || self == .allowAlways || self == .allowForRequest || self == .keepReading || self == .allowAgentsToRead }
 }
 
 /// The tools the person allowed "for this request" (D37), by the run that asked. They end with the run.
@@ -142,6 +147,12 @@ actor RequestAllowances {
     func allow(_ tool: String, run: String) { tools[run, default: []].insert(tool) }
     func covers(_ tool: String, run: String) -> Bool { tools[run]?.contains(tool) == true }
     func end(run: String) { tools[run] = nil }
+
+    /// Every tool allowed for a run that is still going, once each however many runs allowed it (Trust › Allowed for now).
+    func allTools() -> Set<String> { tools.values.reduce(into: []) { $0.formUnion($1) } }
+    /// Takes one tool back from every run: its next call asks again.
+    func revoke(tool: String) { for run in tools.keys { tools[run]?.remove(tool) } }
+    func revokeAll() { tools = [:] }
 }
 
 /// Parks approval requests until the user answers in the UI, or they expire.

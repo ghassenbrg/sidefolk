@@ -55,7 +55,7 @@ public struct PermissionEngine: Sendable {
                 tool: spec.name, title: String(localized: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?"),
                 summary: summary, risk: max(spec.risk, .medium), caller: caller,
                 details: .folderAccess(folder: folder, write: !unwritable.isEmpty),
-                canAlways: true, extensionId: scope.extensionId
+                canAlways: true, tainted: tainted, extensionId: scope.extensionId
             ))
         }
 
@@ -95,6 +95,11 @@ public struct PermissionEngine: Sendable {
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard])))
         let mode = policy.mode(for: caller)
         let honoursGrants = mode != .askEveryTime && !askEachTime
+        // Every path of a file change is inside a folder the person shared with write access (or allowed in a card for this
+        // call, or, in Full access, in their home): the folder check above is what let it get here. Sharing a folder for
+        // changes is the consent to change files there, so that alone isn't what a steered turn could carry out (D185, T21).
+        let staysInShared = spec.capabilities.contains(.filesWrite) && !scope.writePaths.isEmpty
+            && scope.writePaths.allSatisfy { FolderAccess.allows($0, write: true, folders: folders) }
         let decision: GuardDecision
         switch risk {
         case .low where !carriesTaint && !askEachTime:
@@ -119,8 +124,12 @@ public struct PermissionEngine: Sendable {
             }
             // A call that can't carry anything off the Mac may instead be allowed for the rest of Sidefolk's
             // run (D37): a library of Apple Notes copied in batches is one card per kind, not one per batch.
-            let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil
-                && !Self.couldCarryOut(spec, outwardUntyped: outwardUntyped)
+            // An extension's tool, once, for the same extension's tool for the rest of the run (D185): only one that reaches nothing
+            // (no network, no program, no address or service named, D47), since a yes given while a page steers could cover later
+            // calls the same page steers.
+            let carriesOut = Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, staysInShared: staysInShared)
+            let forExtension = scope.extensionId != nil && !spec.capabilities.contains(.shell) && scope.url == nil && scope.reach == nil && !spec.capabilities.contains(.network)
+            let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil && (!carriesOut || forExtension)
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: clean && scope.text == nil && !askEachTime, tainted: tainted,
@@ -134,10 +143,14 @@ public struct PermissionEngine: Sendable {
                Self.matchingGrant(spec: spec, scope: scope, caller: caller, grants: grants) != nil {
                 return .allow(.always)
             }
+            // What goes to the Trash, or to Recently Deleted, can be taken back: in Auto it asks once for the rest of the run, not
+            // for every file (D185). Irreversible steps (a calendar event, a command) ask every time.
+            let recoverable = mode == .auto && Self.recoverable.contains(spec.name) && scope.text == nil
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: .high, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: exactCommand && !tainted, tainted: tainted,
                 effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")),
+                canAllowForRequest: recoverable && caller.runId != nil,
                 extensionId: scope.extensionId
             ))
         }
@@ -146,30 +159,30 @@ public struct PermissionEngine: Sendable {
         let paired = Self.reachesOnlyPaired(spec: spec, scope: scope, input: input, risk: risk, mentions: mentions,
                                             answeredFolders: answeredFolders)
         if !askEachTime, let tag = Self.answeredByMode(mode, risk: risk, spec: spec, scope: scope, tainted: tainted,
-                                                       outwardUntyped: outwardUntyped, paired: paired) {
+                                                       outwardUntyped: outwardUntyped, paired: paired, staysInShared: staysInShared) {
             return .allow(tag)
         }
         return decision
     }
 
-    /// The question Auto or Full access answers without the person (D37), with the tag Activity shows,
-    /// or nil when the person must answer. Text to read in full (a new skill: instructions for later
-    /// runs) always waits for them. Auto acts on medium risk in a clean turn. Full access acts on
-    /// anything, except, in a turn that read outside content, what could carry data out. A call that reaches
-    /// only a device the person paired carries nothing out (D72): after outside content too, Full access
-    /// answers it, and so does Auto (never high risk: such a call isn't one).
+    /// The question Auto or Full access answers without the person (D37, D185), with the tag Activity shows, or nil when the
+    /// person must answer. Text to read in full (a new skill: instructions for later runs, which outlast the mode) always waits
+    /// for them. Full access answers everything else, after outside content too: the person chose it knowing a page can steer
+    /// it. Auto answers medium risk, and after outside content only what can't carry data out (`couldCarryOut`): the rest
+    /// still asks, and so does high risk. A call that reaches only a device the person paired (D72) carries nothing out: Auto
+    /// answers it after outside content too (never high risk: such a call isn't one).
     static func answeredByMode(_ mode: GuardMode, risk: Risk, spec: ToolSpec, scope: ToolScope, tainted: Bool,
-                               outwardUntyped: Bool, paired: Bool = false) -> ActivityEntry.Decision? {
+                               outwardUntyped: Bool, paired: Bool = false, staysInShared: Bool = false) -> ActivityEntry.Decision? {
         guard scope.text == nil else { return nil }
         switch mode {
         case .askEveryTime, .askOncePerKind:
             return nil
         case .auto:
-            if tainted { return paired ? .autoModePaired : nil }
+            if tainted, Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, staysInShared: staysInShared) { return paired ? .autoModePaired : nil }
             return risk == .medium ? .autoMode : nil
         case .fullAccess:
-            guard tainted && couldCarryOut(spec, outwardUntyped: outwardUntyped) else { return .fullAccess }
-            return paired ? .fullAccessPaired : nil
+            // The log still says when a call went to the person's own device (D72); everything else is just Full access.
+            return tainted && paired && couldCarryOut(spec, outwardUntyped: outwardUntyped) ? .fullAccessPaired : .fullAccess
         }
     }
 
@@ -203,11 +216,16 @@ public struct PermissionEngine: Sendable {
     /// didn't type, run a program, change files (a shared folder may sync them anywhere), hand input to
     /// an extension or MCP server, or write the clipboard or memory, which carry it into later moments, or the
     /// person's calendar, which syncs to their accounts and may be shared (D97).
-    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool) -> Bool {
+    static func couldCarryOut(_ spec: ToolSpec, outwardUntyped: Bool, staysInShared: Bool = false) -> Bool {
         outwardUntyped
-            || !spec.capabilities.isDisjoint(with: [.shell, .filesWrite, .extensions, .calendarWrite])
-            || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
+            || !spec.capabilities.isDisjoint(with: [.shell, .extensions, .calendarWrite])
+            || (spec.capabilities.contains(.filesWrite) && !staysInShared)
+            || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard, .system]))
     }
+
+    /// High-risk steps that put things where they can be taken back: the Trash (D185). Removing Apple Notes shows its list to read in full, so it
+    /// stays a card every time.
+    static let recoverable: Set<String> = ["files.trash"]
 
     /// What a call can do, for the card's label, from what Sidefolk lets it do: an extension's capabilities come
     /// from its sandbox (network, folders, programs), so its own word that it changes nothing is never taken; a

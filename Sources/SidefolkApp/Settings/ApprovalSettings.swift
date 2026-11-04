@@ -170,7 +170,7 @@ struct FullAccessSheet: View {
     @Environment(\.dismiss) private var dismiss
     /// Inert for a moment, like an approval card, so a stray keypress can't turn it on.
     @State private var armed = false
-    @State private var end: FullAccessEnd = .inAnHour
+    @State private var end: FullAccessEnd = .never
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -179,29 +179,40 @@ struct FullAccessSheet: View {
                     FolkAvatar(name: "guard", size: 48)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Turn on Full access?").font(Theme.Font.title2).foregroundStyle(Theme.ink)
-                        Text("\(model.settings.companionName) acts without asking until it ends.", comment: "The Full access sheet, under its title")
+                        Text("\(model.settings.companionName) acts without asking while it is on.", comment: "The Full access sheet, under its title")
                             .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     }
                 }
-                section(Text("What changes", comment: "The Full access sheet: what it does without asking")) {
-                    line("terminal", Text("Runs commands without asking"), Text("You still see each one in History, word for word.", comment: "The Full access sheet"))
-                    line("folder", Text("Moves, renames and trashes files in the folders you shared", comment: "The Full access sheet"),
-                         Text("Anything deleted goes to the Trash.", comment: "The Full access sheet"))
-                    line("arrow.up.right", Text("Opens apps and links, reads pages and your Apple Notes, uses extensions", comment: "The Full access sheet"), nil)
+                section(Text("Without asking", comment: "The Full access sheet: what it does without asking")) {
+                    line("terminal", Text("Runs commands", comment: "The Full access sheet"), Text("You still see each one in History, word for word.", comment: "The Full access sheet"))
+                    line("folder", Text("Changes, moves and trashes files in any of your folders", comment: "The Full access sheet"),
+                         Text("Not system, hidden or other people's folders. Anything deleted goes to the Trash.", comment: "The Full access sheet"))
+                    line("arrow.up.right", Text("Opens apps and links, reaches any website, uses extensions and other tools", comment: "The Full access sheet"), nil)
+                    line("doc.on.clipboard", Text("Reads your Apple Notes, clipboard and calendar, and changes your calendar and notebook", comment: "The Full access sheet"), nil)
                 }
-                section(Text("What still asks", comment: "The Full access sheet")) {
+                section(Text("The honest part", comment: "The Full access sheet")) {
                     VStack(alignment: .leading, spacing: Theme.Space.s) {
-                        line("globe", Text("Anything a web page, file or extension it read could be steering to send your data out: an address you didn't type, a command, a file change, an extension, your clipboard or memory."), nil)
-                        line("folder.badge.questionmark", Text("Working in a folder you haven't shared, saving a new skill, or removing notes from Apple Notes."), nil)
-                        line("person.2", Text("Other agents and extensions keep their own rules."), nil)
+                        line("exclamationmark.triangle", Text("A page or file \(model.settings.companionName) reads can hide instructions written by someone else. In Full access nothing stops \(model.settings.companionName) from following them.", comment: "The Full access sheet: the risk, said plainly; the companion's name twice"), nil)
+                        line("person.fill.checkmark", Text("Use it for work you'd trust \(model.settings.companionName) to do alone, and turn it off when you're done.", comment: "The Full access sheet"), nil)
                     }
                     .padding(Theme.Space.m)
                     .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 }
+                section(Text("Still true", comment: "The Full access sheet")) {
+                    line("switch.2", Text("What you switched off under “What Sidefolk may do” stays off, and system, hidden and other people's folders are never touched.", comment: "The Full access sheet"), nil)
+                    line("text.badge.checkmark", Text("Saving a new skill, or removing notes from Apple Notes, still asks: both show what they are in full first, and a skill outlasts Full access.", comment: "The Full access sheet"), nil)
+                    line("externaldrive", Text("A folder outside your home that can be shared, such as an external drive, still asks; system and hidden places are never touched.", comment: "The Full access sheet"), nil)
+                    line("person.2", Text("Other agents and extensions keep their own rules.", comment: "The Full access sheet"), nil)
+                    line("doc.badge.clock", Text("Watching one hidden file, by its size and time, still asks.", comment: "The Full access sheet: D180's card"), nil)
+                    if model.policy.internet == .askEachTime {
+                        line("globe", Text("You chose to be asked before it reads pages: that stays.", comment: "The Full access sheet: shown when “Using the internet” is Ask each time"), nil)
+                    }
+                    line("clock.arrow.circlepath", Text("Everything shows in History, and Undo lasts 15 minutes.", comment: "The Full access sheet"), nil)
+                }
                 section(Text("Ends", comment: "The Full access sheet: when Full access turns itself off")) {
                     SegmentedPicker(Text("Ends", comment: "The Full access sheet: when Full access turns itself off"), selection: $end,
                                     segments: FullAccessEnd.offered().map { .init($0, verbatim: $0.title) })
-                    Text("While it's on, the menu bar shows it. Turn it off there with one click. What you switched off under “What Sidefolk may do” stays off.",
+                    Text("While it's on, the Ask panel shows a red “Full access” and the menu bar icon turns orange. Turn it off there with one click.",
                          comment: "The Full access sheet, under Ends")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)

@@ -1027,17 +1027,19 @@ enum UISnapshots {
                 caption: "tidy up my invoices and check the pricing page")
         ask.add(.doneWithoutAsking("Rename 3 files in ~/Documents/Invoices", fullAccess: full))
         if full {
+            // Full access asks about nothing, after reading a page too (D185).
             ask.add(.doneWithoutAsking("Move 2 files in ~/Downloads to the Trash", fullAccess: true))
+            ask.add(.doneWithoutAsking("Read https://example.com/pricing", fullAccess: true))
+            ask.add(.answer("I renamed the invoices, trashed two duplicates and read the pricing page: it lists three plans.", canThinkHarder: false, tainted: false))
         } else {
-            // After a note was read, a step that keeps everything on the Mac can be allowed for the request.
-            ask.add(.approval(ApprovalRequest(tool: "applenotes.copy", title: String(localized: "Copy Apple Notes to the notebook"),
-                                              summary: "Copy 50 notes from Apple Notes into “Cooking”, “Travel”", risk: .medium,
-                                              caller: .agent(runId: "r"), details: .none, canAlways: false, tainted: true,
-                                              canAllowForRequest: true)))
+            // Auto, after the page was read: what could carry something out still asks; the rest ran.
+            ask.add(.approval(ApprovalRequest(tool: "open.url", title: String(localized: "Open a link"), summary: "Open https://forum.example.net/thread/42",
+                                              risk: .medium, caller: .agent(runId: "r"), details: .url("https://forum.example.net/thread/42"), canAlways: false,
+                                              tainted: true, effect: .opensApps)))
+            ask.add(.skipped("Open https://forum.example.net/thread/42", why: "You didn't answer in time, so this step was skipped."))
+            ask.add(.answer("I renamed the invoices and read the pricing page. I didn't open the forum thread: you weren't there to say yes, so it's waiting in Now.",
+                            canThinkHarder: false, tainted: false))
         }
-        ask.add(.skipped("Read https://example.com/pricing", why: "You didn't answer in time, so this step was skipped."))
-        ask.add(.answer("I renamed the invoices. I didn't read the pricing page: you weren't there to say yes, so it's waiting in Now.",
-                        canThinkHarder: false, tainted: false))
         return ask
     }
 

@@ -292,4 +292,19 @@ public final class SidefolkRuntime: Sendable {
         _ = try? await AttentionStore(db).purge(olderThan: now.addingTimeInterval(-30 * 86400))
         _ = try? await WatchHistoryStore(db).purge(olderThan: now.addingTimeInterval(-Double(WatchHistoryLimits.keepDays) * 86400))
     }
+
+    /// The person's answer to a card. One choice does more than answer it: "Let agents read my notes" sets that group to Allow
+    /// (D185), the same setting Trust shows. Only here, and only for the card that offered it, so nothing but the person's own
+    /// click on that card can open the group.
+    public func answer(_ request: ApprovalRequest, _ decision: ApprovalDecision) async {
+        var decision = decision
+        if decision == .allowAgentsToRead {
+            if request.canAllowAgentsToRead, request.caller.kind == "external" {
+                await settings.update { $0.agentAccess.read = .allow }
+            } else {
+                decision = .allowOnce
+            }
+        }
+        await broker.resolve(id: request.id, decision: decision)
+    }
 }

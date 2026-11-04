@@ -82,6 +82,10 @@ struct PermissionSlip: View {
                     }
                 }
                 if exact { exactRequest }
+                if sharesFolder {
+                    Text("It stays shared until you remove it in Settings › Trust.", comment: "On a permission slip that asks to share a folder: the main button remembers it")
+                        .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
+                }
                 if let alwaysNote {
                     Text(verbatim: alwaysNote).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                 }
@@ -119,8 +123,12 @@ struct PermissionSlip: View {
     /// Allow, with "Always…" and "for this request" in its menu when the mode permits them (b08).
     private var allow: some View {
         HStack(spacing: 1) {
-            let button = Button { answer(.allowOnce) } label: { Text("Allow", comment: "A permission slip's main button") }
-                .buttonStyle(.sf(.primary, size: .sidecard))
+            // A folder is shared for good by the main button (D185): the person is asked once, not again for every call in it.
+            let button = Button { answer(sharesFolder ? .allowAlways : .allowOnce) } label: {
+                if sharesFolder { Text("Share folder", comment: "A permission slip's main button when it asks to share a folder: remembered until removed in Trust") }
+                else { Text("Allow", comment: "A permission slip's main button") }
+            }
+            .buttonStyle(.sf(.primary, size: .sidecard))
             if !keys {
                 button
             } else if request.takesReturn {
@@ -128,14 +136,17 @@ struct PermissionSlip: View {
             } else {
                 button.keyboardShortcut(.return, modifiers: .command)
             }
-            if request.canAlways || request.canAllowForRequest || request.canKeepReading {
+            if request.canAlways || request.canAllowForRequest || request.canKeepReading || request.canAllowAgentsToRead {
                 Menu {
-                    Button { answer(.allowOnce) } label: { Text("Allow once") }
+                    Button { answer(.allowOnce) } label: { if sharesFolder { Text("Just this time") } else { Text("Allow once") } }
                     if request.canKeepReading {
                         Button { answer(.keepReading) } label: { Text("Allow, and read a few pages it links to without asking", comment: "In Allow's menu when the AI reads a page. For this conversation: an hour and twelve pages at most, and it stops if the AI uses anything else") }
                     }
-                    if request.canAlways {
-                        Button { answer(.allowAlways) } label: { Text(alwaysTitle) }
+                    if request.canAllowAgentsToRead {
+                        Button { answer(.allowAgentsToRead) } label: { Text("Allow, and let other agents read my notes and reminders", comment: "In Allow's menu when another agent reads the notebook: sets “Read your notes and reminders” to Allow in Trust") }
+                    }
+                    if request.canAlways, !sharesFolder {
+                        Button { answer(.allowAlways) } label: { Text(isFolderCard ? "Share folder" : alwaysTitle) }
                     } else if request.canAllowForRequest {
                         Button { answer(.allowForRequest) } label: { Text("Allow for this request") }
                     }
@@ -151,6 +162,17 @@ struct PermissionSlip: View {
                 .accessibilityLabel(Text("More ways to allow", comment: "VoiceOver: the menu beside Allow on a permission slip"))
             }
         }
+    }
+
+    /// The card asks to share a folder: its main button remembers it, and "Just this time" is in the menu.
+    /// Not in Ask every time, where the person chose to be asked each time, and not when the request read outside content first: then a page may be steering which folder, so the main button is "Allow" (this
+    /// call) and sharing for good is a deliberate choice in the menu.
+    private var sharesFolder: Bool {
+        if case .folderAccess = request.details { request.canAlways && !request.tainted && request.mode != .askEveryTime } else { false }
+    }
+
+    private var isFolderCard: Bool {
+        if case .folderAccess = request.details { true } else { false }
     }
 
     /// An answer counts once the slip has been in view for a moment.

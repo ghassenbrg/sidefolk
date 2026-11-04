@@ -19,8 +19,10 @@ import Testing
                 #expect(results[0].content.contains("the user didn't answer in time, so this step was skipped"))
                 return .reply("I didn't copy your recipes: you weren't there to say yes. The copy is waiting in Now.")
             },
-        ], mode: .auto, unanswered: UnansweredRule(action: .skip, minutes: 10), minute: 0.01)
+        ], mode: .askOncePerKind, unanswered: UnansweredRule(action: .skip, minutes: 10), minute: 0.01)
 
+        // Listing was allowed for good earlier, so only the copy asks, after the list was read (Auto copies without asking, D185).
+        try await world.env.permissions.addGrant(Grant(tool: "applenotes.list", callerKind: "agent"))
         // Eleven minutes pass while the copy's card waits.
         let away = Away(world.env, for: 11 * 60)
         let events = await world.ask("copy my Apple Notes recipes into a Cooking collection")
@@ -29,7 +31,7 @@ import Testing
         #expect(events.compactMap(\.failure).isEmpty)
         #expect(events.replyText?.hasPrefix("I didn't copy your recipes") == true)
         let card = try #require(away.missed)
-        #expect(card.tool == "applenotes.copy" && card.tainted, "Auto listed without a card, then asked once a note had been read")
+        #expect(card.tool == "applenotes.copy" && card.tainted, "listing went on a grant, then the copy asked once a note had been read")
         #expect(try await world.notebook.items().isEmpty, "nothing was copied while the person was away")
 
         // Back at the Mac: the step is in Now with the card's own words, and one click runs it.
@@ -45,7 +47,7 @@ import Testing
         #expect(Set(items.map(\.title)) == ["Pasta carbonara", "Sourdough"])
         #expect(items.allSatisfy { $0.source == "app:notes" })
         #expect(try await world.notebook.findCollection(named: "Cooking") != nil)
-        // Activity tells the story: listed by Auto, skipped, then allowed by the click.
+        // Activity tells the story: listed on a grant, skipped, then allowed by the click.
         let copies = try await world.activity().filter { $0.tool == "applenotes.copy" }.map(\.decision)
         #expect(copies == [.allowed, .skipped])
         #expect(await world.executor.skipped.list().isEmpty)

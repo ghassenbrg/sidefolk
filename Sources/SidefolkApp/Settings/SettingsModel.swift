@@ -39,6 +39,8 @@ final class SettingsModel {
     private(set) var storage: StorageSummary?
     private(set) var folders: [GrantedFolder] = []
     private(set) var grants: [Grant] = []
+    /// Yeses that hold only for a run or a conversation, and are still holding (Trust › Allowed for now).
+    private(set) var allowedForNow: [AllowedForNow] = []
     private(set) var policy = GuardPolicy()
     /// The sheet that says what Full access means is showing (from Settings or the menu bar).
     var confirmingFullAccess = false
@@ -126,6 +128,7 @@ final class SettingsModel {
     func loadPermissions() async {
         folders = (try? await runtime.permissions.folders()) ?? []
         grants = (try? await runtime.permissions.grants()) ?? []
+        allowedForNow = await runtime.executor.allowedForNow()
         policy = (try? await runtime.permissions.policy()) ?? GuardPolicy()
     }
 
@@ -219,6 +222,23 @@ final class SettingsModel {
 
     func revoke(_ grant: Grant) async {
         try? await runtime.permissions.revokeGrant(id: grant.id)
+        runtime.events.changed(.permissions)
+        await loadPermissions()
+    }
+
+    func stopAllowing(_ item: AllowedForNow) async {
+        await runtime.executor.stopAllowing(item)
+        runtime.events.changed(.permissions)
+        await loadPermissions()
+    }
+
+    /// Takes back every "Always allow" and every yes for now. Folders stay: they are their own list, with their own Remove.
+    func forgetEverythingAllowed() async {
+        // Sites and services are listed under "Using the internet", not here, and stay (the dialog says so).
+        let current = (try? await runtime.permissions.grants()) ?? grants
+        let forgotten = Set(current.filter { !InternetGrants.isInternet($0, extensions: extensions) }.map(\.id))
+        try? await runtime.permissions.revokeGrants { forgotten.contains($0.id) }
+        await runtime.executor.stopAllowingAnything()
         runtime.events.changed(.permissions)
         await loadPermissions()
     }

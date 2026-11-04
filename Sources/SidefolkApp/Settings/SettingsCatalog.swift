@@ -14,7 +14,7 @@ enum SettingKey: String, CaseIterable, Hashable {
     // Brain
     case provider, lastRequest, voiceInput, spokenReplies, voice, speechModel
     // Trust
-    case approvalMode, internet, folders, alwaysAllowed, unanswered, capabilities, agentAccess, location, calendar,
+    case approvalMode, internet, folders, alwaysAllowed, allowedForNow, unanswered, capabilities, agentAccess, location, calendar,
          keeps, history, backUp, restore, exportData, diagnostics, debugLogging, deleteAll
     // Connections
     case claudeCode, codex, commandLine, otherApps
@@ -30,7 +30,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .attentionMode, .interruptions, .quietHours, .fullScreen, .sounds, .systemNotifications, .hiddenNotifications, .morningBrief:
             .attention
         case .provider, .lastRequest, .voiceInput, .spokenReplies, .voice, .speechModel: .brain
-        case .approvalMode, .internet, .folders, .alwaysAllowed, .unanswered, .capabilities, .agentAccess, .location, .calendar,
+        case .approvalMode, .internet, .folders, .alwaysAllowed, .allowedForNow, .unanswered, .capabilities, .agentAccess, .location, .calendar,
              .keeps, .history, .backUp, .restore, .exportData, .diagnostics, .debugLogging, .deleteAll: .trust
         case .claudeCode, .codex, .commandLine, .otherApps: .connections
         case .addons, .addFolder, .skills: .addons
@@ -56,7 +56,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .provider, .lastRequest: String(localized: "Who answers", comment: "Settings › Brain: a group")
         case .voiceInput, .spokenReplies, .voice, .speechModel: String(localized: "Voice")
         case .approvalMode: String(localized: "How much Sidefolk asks")
-        case .internet, .folders, .alwaysAllowed, .unanswered, .capabilities:
+        case .internet, .folders, .alwaysAllowed, .allowedForNow, .unanswered, .capabilities:
             String(localized: "What Sidefolk may do")
         case .agentAccess: String(localized: "What other agents may do", comment: "Settings › Trust: a group")
         case .location, .calendar: String(localized: "What Sidefolk can see", comment: "Settings › Trust: location and calendar")
@@ -107,6 +107,7 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .internet: String(localized: "Using the internet")
         case .folders: String(localized: "Folders Sidefolk can use")
         case .alwaysAllowed: String(localized: "Always allowed")
+        case .allowedForNow: String(localized: "Allowed for now")
         case .unanswered: String(localized: "If I don't answer")
         case .capabilities: String(localized: "What Sidefolk may do")
         case .agentAccess: String(localized: "What other agents may do", comment: "Settings › Trust: a group")
@@ -181,7 +182,8 @@ enum SettingKey: String, CaseIterable, Hashable {
         case .approvalMode: String(localized: "Ask every time, once per kind, Auto, or Full access with an end.", comment: "Settings › Trust: search")
         case .internet: String(localized: "Pages and online services Sidefolk picks itself, and the sites you allowed.", comment: "Settings › Trust: search")
         case .folders: String(localized: "Sidefolk only touches files inside these folders. Anything it deletes goes to the Trash.")
-        case .alwaysAllowed: String(localized: "Revoke any of these and Sidefolk asks again next time.")
+        case .alwaysAllowed: String(localized: "Revoke any of these and Sidefolk asks again next time. “Forget everything I allowed” takes back all of them.")
+        case .allowedForNow: String(localized: "What you allowed for one request or conversation. Stop one and Sidefolk asks again.")
         case .unanswered: String(localized: "When Sidefolk waits for your OK on something you asked for. Other agents' questions count as a no after two minutes.")
         case .capabilities: String(localized: "Commands, the internet, the clipboard, files, apps, Apple Notes and Reminders.", comment: "Settings › Trust: search")
         case .agentAccess: String(localized: "What Claude Code, Codex and other apps may save, change and read.", comment: "Settings › Trust: search")

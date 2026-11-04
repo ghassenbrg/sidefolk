@@ -20,6 +20,8 @@ import Testing
     }
 
     func asks(_ d: GuardDecision) -> Bool { if case .ask = d { true } else { false } }
+    /// Full access (D185): answered without the person, with or without the log's mention of a paired device.
+    func runs(_ d: GuardDecision) -> Bool { d == .allow(.fullAccess) || d == .allow(.fullAccessPaired) }
 
     @Test func afterOutsideContentFullAccessAndAutoAnswerAPairedDevice() {
         #expect(decide(.fullAccess) == .allow(.fullAccessPaired))
@@ -39,9 +41,11 @@ import Testing
     @Test func anythingNotConfirmedPairedAsksAsBefore() {
         // Not paired, or the program couldn't say: no reach, the card as today.
         let unconfirmed = ToolScope(extensionId: "dev.sidefolk.miraya")
-        #expect(asks(decide(.fullAccess, scope: unconfirmed)) && asks(decide(.auto, scope: unconfirmed)))
+        // Auto asks; Full access answers everything after outside content, the log just doesn't say "paired".
+        #expect(asks(decide(.auto, scope: unconfirmed)) && decide(.fullAccess, scope: unconfirmed) == .allow(.fullAccess))
         // Another service's word isn't a pairing.
-        #expect(asks(decide(.fullAccess, scope: ToolScope(extensionId: "dev.sidefolk.miraya", reach: .nowhere))))
+        #expect(decide(.fullAccess, scope: ToolScope(extensionId: "dev.sidefolk.miraya", reach: .nowhere)) == .allow(.fullAccess))
+        #expect(asks(decide(.auto, scope: ToolScope(extensionId: "dev.sidefolk.miraya", reach: .nowhere))))
         // Other callers keep their own rules (T4): the modes never loosen Guard for them.
         for caller in [Caller.routine(id: "daily"), .external(client: "codex"), .extension(id: "dev.x.y")] {
             #expect(asks(decide(.fullAccess, caller: caller)), "\(caller.kind)")
@@ -51,8 +55,9 @@ import Testing
     @Test func whateverElseTheCallCarriesKeepsItsCard() throws {
         // A link to play: whoever serves it reads its path. Only one the person typed goes.
         let link: JSONValue = ["tv": "6f1c2b9a-1111-4222-8333-944455556666", "url": "https://evil.example/film.mp4?d=secret"]
-        #expect(asks(decide(.fullAccess, input: link)))
-        #expect(asks(decide(.fullAccess, input: ["tv": "x", "url": "evil.com/x"])), "a bare address counts too")
+        #expect(asks(decide(.auto, input: link)))
+        #expect(asks(decide(.auto, input: ["tv": "x", "url": "evil.com/x"])), "a bare address counts too")
+        #expect(decide(.fullAccess, input: link) == .allow(.fullAccess), "Full access runs it, and the log doesn't call it paired")
         let typedLink: JSONValue = ["tv": "6f1c2b9a-1111-4222-8333-944455556666", "url": "https://example.com/film.mp4"]
         #expect(decide(.fullAccess, input: typedLink, typed: "play https://example.com/film.mp4 on the tv") == .allow(.fullAccessPaired))
 
@@ -62,14 +67,18 @@ import Testing
         var withFile = Self.paired
         withFile.readPaths = [movies.appendingPathComponent("Holiday.mp4").path]
         let shared = [GrantedFolder(path: movies.path, access: .read)]
-        #expect(asks(decide(.fullAccess, scope: withFile, folders: shared)), "a folder shared for good")
+        #expect(asks(decide(.auto, scope: withFile, folders: shared)), "a folder shared for good")
+        #expect(decide(.auto, scope: withFile, folders: shared, answeredFolders: [movies.path]) == .allow(.autoModePaired))
+        #expect(asks(decide(.auto, scope: withFile, folders: shared, answeredFolders: [documents.path])))
+        #expect(decide(.fullAccess, scope: withFile, folders: shared) == .allow(.fullAccess))
         #expect(decide(.fullAccess, scope: withFile, folders: shared, answeredFolders: [movies.path]) == .allow(.fullAccessPaired))
-        #expect(asks(decide(.fullAccess, scope: withFile, folders: shared, answeredFolders: [documents.path])))
 
         // A program, a file change, text to read in full, or high risk.
         for spec in [Self.with(capabilities: [.extensions, .network, .shell]), Self.with(capabilities: [.extensions, .filesWrite]),
                      Self.with(risk: .high)] {
-            #expect(asks(decide(.fullAccess, spec: spec)) && asks(decide(.auto, spec: spec)))
+            #expect(asks(decide(.auto, spec: spec)))
+            // Full access answers it too, and the log doesn't call it paired: what it carries isn't confined to the TV.
+            #expect(decide(.fullAccess, spec: spec) == .allow(.fullAccess), "\(spec.capabilities) \(spec.risk)")
         }
         var text = Self.paired
         text.text = "Steps…"
@@ -165,7 +174,7 @@ import Testing
 
     @Test func aTVThatIsntPairedStillAsks() async throws {
         for (firstParty, answer) in [(true, PairedAnswer(paired: false)), (false, PairedAnswer(paired: true, device: "tv-1"))] {
-            let env = try await env(.fullAccess)
+            let env = try await env(.auto)
             let probe = Probe()
             env.registry.register(Self.tool(firstParty: firstParty, answer: answer, probe: probe))
             let answered = env.autoAnswer(.deny)
@@ -183,7 +192,7 @@ import Testing
         let film = movies.appendingPathComponent("Holiday.mp4").path
         let answer = PairedAnswer(paired: true, device: "tv-1")
 
-        let env = try await env(.fullAccess)
+        let env = try await env(.auto)
         let probe = Probe()
         env.registry.register(Self.tool(firstParty: true, answer: answer, probe: probe, files: ["file": .read]))
         let card = env.autoAnswer(.allowOnce)
@@ -194,7 +203,7 @@ import Testing
         #expect(try await env.activity.recent()[0].decision == .allowed, "the person answered a card for this call")
         #expect(probe.ranWith?["tv"] == "tv-1")
 
-        let shared = try await self.env(.fullAccess)
+        let shared = try await self.env(.auto)
         try await shared.permissions.grantFolder(movies.path, access: .read)
         shared.registry.register(Self.tool(firstParty: true, answer: answer, files: ["file": .read]))
         let asked = shared.autoAnswer(.deny)
@@ -244,17 +253,17 @@ import Testing
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func mirayaAnswersThePairedCheckInItsSandbox() async throws {
         let h = try HostEnv()
-        try await h.env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+        try await h.env.permissions.setPolicy(GuardPolicy(mode: .auto))
         let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"), origin: .official)
         // No TV is paired: sharing isn't confirmed; stopping what isn't running reaches no device.
         #expect(await h.host.pairedCheck(info.id, tool: "share_screen", input: ["tv": "living room"]) == PairedAnswer(paired: false))
         #expect(await h.host.pairedCheck(info.id, tool: "stop", input: [:]) == PairedAnswer(paired: true))
         #expect(await h.host.pairedCheck(info.id, tool: "pair_tv", input: ["tv": "living room"]) == PairedAnswer(paired: false))
 
-        // After outside content, in Full access: stopping runs without a card; sharing to a TV that isn't paired asks.
+        // After outside content, in Auto: stopping runs without a card; sharing to a TV that isn't paired asks (Full access answers both, D185).
         let stop = await h.env.executor.execute(name: "ext.miraya.stop", input: [:], caller: .agent(runId: "r"), tainted: true)
         #expect(stop.okText == "Nothing is on the TV from this Mac.", "\(stop.status)")
-        #expect(try await h.env.activity.recent()[0].decision == .fullAccessPaired)
+        #expect(try await h.env.activity.recent()[0].decision == .autoModePaired)
         let answered = h.env.autoAnswer(.deny)
         let share = await h.env.executor.execute(name: "ext.miraya.share_screen", input: ["tv": "living room"], caller: .agent(runId: "r"),
                                                  tainted: true)
@@ -266,7 +275,7 @@ import Testing
     @Test(.enabled(if: ExtFixtures.addonFolders.contains("miraya"), ExtFixtures.noAddons))
     func aCopyFromAFolderIsNeverAsked() async throws {
         let h = try HostEnv()
-        try await h.env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+        try await h.env.permissions.setPolicy(GuardPolicy(mode: .auto))
         let info = try await h.host.install(from: ExtFixtures.builtIn("miraya"))
         #expect(await h.host.pairedCheck(info.id, tool: "stop", input: [:]) == nil)
         let answered = h.env.autoAnswer(.deny)

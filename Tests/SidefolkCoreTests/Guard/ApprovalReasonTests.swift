@@ -31,7 +31,7 @@ struct ApprovalReasonTests {
     @Test func theReasonNamesWhatWasReadAndWhyItMatters() throws {
         let miraya = try #require(ApprovalReason(request(source: .extension(name: "Miraya", official: true), mode: .fullAccess)))
         #expect(miraya.text == "This request read results from Miraya first. This can send what it's given off this Mac, so I check with you first. "
-                + "Full access never decides this for you after outside content.")
+                + "You chose to be asked before pages are read, and Full access keeps that.")
         #expect(miraya.calm, "Sidefolk's own extension acting on Sidefolk's own extension's answer")
 
         let web = try #require(ApprovalReason(request(source: .web, mode: .askOncePerKind)))
@@ -41,6 +41,14 @@ struct ApprovalReasonTests {
         #expect(ApprovalReason(request(source: nil, mode: .auto))?.text.hasSuffix("Auto never decides this for you after outside content.") == true)
         #expect(ApprovalReason(request(risk: .high, source: nil, mode: .auto))?.text.contains("Auto") == false, "Auto never answers high risk anyway")
         #expect(ApprovalReason(request(source: .file, mode: .askEveryTime))?.text.contains("Full access") == false)
+    }
+
+    /// What Full access still asks about says why: a skill outlasts it.
+    @Test func fullAccessSaysItAsksBeforeASkill() throws {
+        var skill = request(effect: .changesThings, source: .web, mode: .fullAccess)
+        skill.details = .text("Skill “weekly-plan”\nSteps…")
+        let reason = try #require(ApprovalReason(skill))
+        #expect(reason.text.hasSuffix("Full access still asks before saving a skill: it outlasts Full access."))
     }
 
     @Test func strongUnlessBothSidesAreSidefolksOwn() {
@@ -58,7 +66,7 @@ struct ApprovalReasonTests {
     /// The executor hands the card what it needs: the first outside source of the run, the exact request, the mode.
     @Test func aTaintedRunsCardKnowsWhatWasReadFirst() async throws {
         let env = try TestEnv()
-        try await env.permissions.setPolicy(GuardPolicy(mode: .fullAccess))
+        try await env.permissions.setPolicy(GuardPolicy(mode: .auto))
         func tool(_ name: String, risk: Risk, untrusted: Bool) -> ExtensionTool {
             let spec = ToolSpec(name: "ext.miraya.\(name)", title: name == "share" ? "Share screen to TV" : "TVs around", description: "",
                                 inputSchema: ["type": "object"], risk: risk, capabilities: [.extensions, .network], category: .extensions, mutates: true)
@@ -75,10 +83,10 @@ struct ApprovalReasonTests {
         let asked = env.autoAnswer(.deny)
         let outcome = await box.call(share.spec.name, input: ["tv": "living room"])
         let card = try #require(await asked.value)
-        #expect(!outcome.isOK, "Full access still asks after outside content, and no means no")
+        #expect(!outcome.isOK, "Auto still asks after outside content, and no means no")
         #expect(card.summary == "Share screen to TV (Miraya) · tv: “living room”")
         #expect(card.input?.contains("\"tv\" : \"living room\"") == true)
-        #expect(card.taintedBy == .extension(name: "Miraya", official: true) && card.mode == .fullAccess && card.firstParty)
+        #expect(card.taintedBy == .extension(name: "Miraya", official: true) && card.mode == .auto && card.firstParty)
         #expect(!card.canAlways, "never offered after outside content")
     }
 }

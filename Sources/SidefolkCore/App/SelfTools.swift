@@ -155,7 +155,7 @@ struct SelfInstallUpdateTool: Tool {
     var spec: ToolSpec {
         ToolSpec(name: "sidefolk.install_update", title: String(localized: "Update Sidefolk"),
                  description: "Download and install the newest Sidefolk, only when the user asks. It shows the update window, checks the download's signature and asks before restarting.",
-                 inputSchema: Schema.object([:]), risk: .medium, capabilities: [], category: .system, mutates: true)
+                 inputSchema: Schema.object([:]), risk: .medium, capabilities: [.system], category: .system, mutates: true)
     }
 
     func summary(for input: JSONValue) -> String { String(localized: "Update Sidefolk") }
