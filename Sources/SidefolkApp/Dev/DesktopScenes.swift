@@ -157,8 +157,12 @@ enum DesktopScenes {
                                      summary: "Move 2 notes in Apple Notes to Recently Deleted", risk: .high, caller: .user,
                                      details: .text("“Pasta carbonara” (iCloud › Recipes)\n“Sourdough” (iCloud › Recipes)"), canAlways: false,
                                      effect: .changesThings)
+        var folder = ApprovalRequest(tool: "files.move", title: "Let Mochi work in ~/Downloads?", summary: "Move 12 PDFs from Downloads to Documents › Invoices",
+                                     risk: .medium, caller: .agent(runId: "r"), details: .folderAccess(folder: "\(home)/Downloads", write: true), canAlways: true,
+                                     effect: .changesFiles)
+        folder.expiresAt = now.addingTimeInterval(15 * 60)
         return [("calm", move, false), ("firm-app", clipboard, false), ("firm-app-exact", clipboard, true), ("firm-outside", share, false),
-                ("high-risk", remove, false)]
+                ("high-risk", remove, false), ("folder", folder, false)]
     }
 
     // MARK: The companion on its floor

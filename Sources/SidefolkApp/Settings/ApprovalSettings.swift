@@ -202,6 +202,7 @@ struct FullAccessSheet: View {
                     line("switch.2", Text("What you switched off under “What Sidefolk may do” stays off, and system, hidden and other people's folders are never touched.", comment: "The Full access sheet"), nil)
                     line("text.badge.checkmark", Text("Saving a new skill still asks: it outlasts Full access and steers later requests.", comment: "The Full access sheet"), nil)
                     line("person.2", Text("Other agents and extensions keep their own rules.", comment: "The Full access sheet"), nil)
+                    line("doc.badge.clock", Text("Watching one hidden file, by its size and time, still asks.", comment: "The Full access sheet: D180's card"), nil)
                     if model.policy.internet == .askEachTime {
                         line("globe", Text("You chose to be asked before it reads pages: that stays.", comment: "The Full access sheet: shown when “Using the internet” is Ask each time"), nil)
                     }
