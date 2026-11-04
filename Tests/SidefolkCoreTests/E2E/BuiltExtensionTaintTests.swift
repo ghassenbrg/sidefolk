@@ -2,9 +2,9 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// The extension builder (D39) meets taint (T2) and Full access (D37): Sidefolk's AI writes an extension in a
+/// The extension builder (D39) meets taint (T2) and Auto (D37): Sidefolk's AI writes an extension in a
 /// clean request, the person installs it, and in a later request that read a web page the model wants to hand the
-/// page's words to it. Even in Full access that waits for the person, its description never reaches the model,
+/// page's words to it. Even in Auto that waits for the person, its description never reaches the model,
 /// and a tainted request can't commission new code.
 @Suite(.enabled(if: ExtFixtures.hasPython, ExtFixtures.noPython))
 struct BuiltExtensionTaintTests {
@@ -73,7 +73,9 @@ struct BuiltExtensionTaintTests {
         #expect(events.replyText == "Hello, Ada!")
         let cards = person.seen
         #expect(cards.map(\.tool) == ["ext.greeter.greet", "web.fetch"])
-        #expect(cards.allSatisfy { $0.tainted && !$0.canAlways && !$0.canAllowForRequest })
+        #expect(cards.allSatisfy { $0.tainted && !$0.canAlways })
+        // For this request, an extension's own tool may be allowed once (D185); an address the model wrote never.
+        #expect(cards.map(\.canAllowForRequest) == [true, false])
         #expect(world.web.requested.map(\.absoluteString) == ["https://example.com/guest"], "nothing went to evil.example")
         let blocked = try await world.activity().first { $0.tool == "extensions.draft" && $0.decision == .blocked }
         #expect(blocked?.error?.contains("outside content") == true)
