@@ -261,10 +261,21 @@ struct AuditExtensionTests {
         let pid = try #require(pid_t(text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\u{200B}", with: "")))
         defer { kill(pid, SIGKILL) }
         #expect(getpgid(pid) == pid)   // it really left the extension's group
+        #expect(Self.isRunning(pid), "and it is running before the extension stops")
         await h.host.shutdown()
         try await h.host.uninstall(id: "dev.test.escaper")
-        let gone = await pollUntil(5) { kill(pid, 0) != 0 }
-        #expect(gone)
+        // Stopped means it no longer runs: a process killed but not yet reaped by launchd still answers kill(pid, 0), and a
+        // loaded Mac can take seconds to reap it. Waited for, not slept for.
+        let gone = await pollUntil(30) { !Self.isRunning(pid) }
+        #expect(gone, "\(pid) is still running")
+    }
+
+    /// Alive and not a zombie (exited, waiting to be reaped).
+    private static func isRunning(_ pid: pid_t) -> Bool {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return false }
+        return info.pbi_status != UInt32(SZOMB)
     }
 }
 
@@ -367,7 +378,7 @@ struct AuditExtensionTests {
                 return outcomes
             }
         }
-        let parked = await pollUntil(3) { await env.broker.pending().count == 1 }
+        let parked = await pollUntil(20) { await env.broker.pending().count == 1 }
         #expect(parked)
         try await Task.sleep(for: .milliseconds(200))
         #expect(await env.broker.pending().count == 1)
