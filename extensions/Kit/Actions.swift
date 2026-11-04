@@ -245,6 +245,13 @@ public struct Plan: @unchecked Sendable {
         /// By step, in order: true runs without asking.
         public var standing: [Bool]
         public var expires: Date?
+
+        public init(id: String, title: String, standing: [Bool], expires: Date? = nil) {
+            self.id = id
+            self.title = title
+            self.standing = standing
+            self.expires = expires
+        }
     }
 
     public enum Answer: Sendable, Hashable {
