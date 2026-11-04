@@ -296,6 +296,47 @@ import Testing
         #expect(watcher.lastState?.jsonString.contains("private") != true)
     }
 
+    static var packKnowsThePlanLimit: Bool {
+        let catalog = ExtFixtures.addonsRepo.appendingPathComponent("extensions/sideflow/Sources/Catalog.swift")
+        return (try? String(contentsOf: catalog, encoding: .utf8))?.contains("Plans.maxSteps") == true
+    }
+
+    /// The Kit's word for the limit is Sidefolk's, and a flow right at it, watch and all, is really allowed: the page and the host give one answer.
+    @Test(.enabled(if: packKnowsThePlanLimit, "this checkout's Sideflow pack doesn't know the plan limit yet"))
+    func aFlowAtTheLimitTurnsOnAndOverItIsMarkedFirst() async throws {
+        let kit = try String(contentsOf: ExtFixtures.addonsRepo.appendingPathComponent("Kit/Actions.swift"), encoding: .utf8)
+        #expect(kit.contains("maxSteps = \(ExtensionPlanRules.maxSteps)"))
+        let w = try await World()
+        _ = Self.realWatches(w.h.env)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("flow-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try await w.h.env.permissions.grantFolder(folder.path, access: .read)
+        func flow(_ actions: Int) -> JSONValue {
+            ["trigger": ["type": "watch", "kind": "file_changes", "target": .string(folder.appendingPathComponent("a.txt").path)],
+             "steps": .array((0..<actions).map { ["id": .string("s\($0)"), "do": "notify.user", "with": ["title": .string("Line \($0)")]] })]
+        }
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        let fits = await w.h.call("ext.sideflow.create_flow", ["name": "Fits", "definition": flow(ExtensionPlanRules.maxSteps - 4), "start": true])
+        #expect(fits.isOK, "\(w.text(fits))")
+        _ = await answer.value
+        await w.until("it to be on") { await w.flow("Fits")?["state"]?.stringValue == "on" }
+
+        let over = await w.h.call("ext.sideflow.create_flow", ["name": "Over", "definition": flow(ExtensionPlanRules.maxSteps - 3)])
+        let read = await w.flow("Over")?.jsonString ?? ""
+        #expect(w.text(over).contains("different things to allow") || read.contains("different things to allow"), "\(w.text(over)) \(read.prefix(200))")
+    }
+
+    /// Nothing to allow: Sidefolk has no card for that, and the flow turns on.
+    @Test(.enabled(if: packKnowsThePlanLimit, "this checkout's Sideflow pack doesn't know the plan limit yet"))
+    func aFlowWithNothingToAllowTurnsOn() async throws {
+        let w = try await World()
+        let made = await w.h.call("ext.sideflow.create_flow", ["name": "Words", "definition": ["trigger": ["type": "manual"], "steps": [["id": "t", "text": "Only words"]]], "start": true])
+        #expect(made.isOK, "\(w.text(made))")
+        await w.until("it to be on") { await w.flow("Words")?["state"]?.stringValue == "on" }
+        #expect(await w.h.env.broker.pending().isEmpty)
+    }
+
     @Test func thePageRendersAndALargeFlowFits() async throws {
         let w = try await World()
         var steps: [JSONValue] = []
