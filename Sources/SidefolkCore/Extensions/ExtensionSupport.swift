@@ -45,7 +45,9 @@ enum ExtensionText {
     /// on a page or a board keep the Kit's isolates (`shown`).
     static func line(_ text: String, characters: Int, isolates: Bool = false) -> String {
         let cleaned = isolates ? shown(text) : clean(text)
-        return clip(cleaned.replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\t", with: " "), characters)
+        // Every kind of line break, so a title can't start a paragraph on a card.
+        let flat = cleaned.unicodeScalars.map { ["\n", "\t", "\u{2028}", "\u{2029}", "\u{85}", "\r"].contains($0) ? " " : String($0) }.joined()
+        return clip(flat, characters)
     }
 
     /// Text shown to people, never passed on: hidden characters removed, except first-strong isolates (FSI … PDI) that

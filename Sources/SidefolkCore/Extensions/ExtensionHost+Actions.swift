@@ -72,7 +72,7 @@ extension ExtensionHost {
             // History keeps the step as written, and where its filled words came from.
             var written = filled ? template : nil
             if let prov = found.provenance, var fields = written?.objectValue {
-                fields["filled_from"] = .string(prov)
+                fields["_filled_from"] = .string(prov)
                 written = .object(fields)
             }
             let asker = asker(rt)
@@ -259,6 +259,8 @@ extension ExtensionHost {
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
         let provider = ExtensionPlanRules.provider(tool)
         let flow = await configuration.flowPolicy()
+        // Full access answered it and nobody read it: it stands while Full access is on, and asks for a card first otherwise (D188).
+        if saved.answeredUnread == true, flow.mode != .fullAccess { return Standing() }
         let ext = ExtensionPlanRules.extensionTool(tool)
         let command = ext?.program, arguments = ext?.programArguments ?? []
         let program = await command.asyncMap { path in await Task.detached { ProgramPin.hash(of: path, arguments: arguments) }.value } ?? nil
@@ -297,7 +299,7 @@ extension ExtensionHost {
         let parts = (step.input.objectValue ?? [:]).keys.sorted().compactMap { field -> String? in
             guard let text = step.input[field]?.stringValue, ExtensionPlanRules.hasSlot(text) else { return nil }
             let source = step.sources?[field]
-            let kind = source == "outside" ? "outside content" : source == nil ? "filled in" : "the person's own words"
+            let kind = source == "outside" ? "outside content" : source == "claimed" ? "said by the extension to be the person's own" : source == nil ? "filled in" : "the person's own words"
             return "\(field) from \(ExtensionPlanRules.roots(text).joined(separator: ", ")) (\(kind))"
         }
         return parts.isEmpty ? nil : parts.joined(separator: "; ")
@@ -312,6 +314,7 @@ extension ExtensionHost {
         guard !rt.planAsking else { return await refuse("busy") }
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        guard spendCall(id) else { return await refuse("busy") }
         runtimes[id]?.planAsking = true
         let evaluation: PlanEvaluation
         switch await evaluatePlan(id, plan: plan, gateway: gateway) {
@@ -328,7 +331,7 @@ extension ExtensionHost {
         let asker = asker(rt)
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: ["extension": .string(id), "plan": .string(evaluation.plan.id)], extensionId: id, asker: asker)
-            await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation)
+            await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer)
         }
     }
 
@@ -347,20 +350,27 @@ extension ExtensionHost {
         return nil
     }
 
-    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation) async {
+    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?) async {
         runtimes[id]?.planAsking = false
         guard outcome.isOK, let rt = runtimes[id] else {
             let reason = if case .unanswered = outcome.status { "unanswered" } else { "denied" }
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
             return
         }
+        // The extension that was read is the one that is saved for: if it was replaced or changed meanwhile, what the person read isn't its plan.
+        guard owner(rt) == evaluation.plan.owner else {
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
+            return
+        }
         var plan = evaluation.plan
-        plan.owner = owner(rt)
-        // Nothing new was read, so nothing was renewed: a plan that ends by itself ends when it was going to, however often its program asks again.
-        if evaluation.covered, let was = evaluation.previous {
+        // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
+        // when it was going to, however often its program asks again, and one nobody read stays one nobody read.
+        if answer == .covered, let was = evaluation.previous {
             plan.approvedAt = was.approvedAt
             plan.expiresAt = was.expiresAt
+            plan.answeredUnread = was.answeredUnread
         }
+        if answer == .fullAccess { plan.answeredUnread = true }
         await updatePreferences(id) { $0.plans[plan.id] = plan }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),

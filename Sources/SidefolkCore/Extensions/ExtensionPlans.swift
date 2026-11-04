@@ -34,6 +34,9 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
         public var title: String?
         /// For an "ai" step: the names of the steps whose words it reads, when its extension says.
         public var reads: [String]?
+        /// What each filled field is fed by, as a fingerprint of the steps it points at (their tool, provider, definition and kind): an edit that points the
+        /// same words at another kind of step is something new, though the step itself is unchanged (D187).
+        public var feeds: [String: String]?
 
         var isInFullAccessOnly: Bool { fullAccessOnly == true }
     }
@@ -53,6 +56,10 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
     public var ttl: Int?
     /// It goes round a list: what its lines do, they do many times a run.
     public var goesRound: Bool?
+    /// Allowed by Full access with no card: nobody read it. It stands only while Full access is on, and any other mode asks for a card first (D188).
+    public var answeredUnread: Bool?
+    /// It read the person's own things and outside content and fills a server line from them (the card's warning): becoming so is new.
+    public var crossing: Bool?
 
     public func live(at now: Date, owner: String) -> Bool { self.owner == owner && (expiresAt.map { $0 > now } ?? true) }
 }
@@ -303,12 +310,12 @@ enum ExtensionPlanRules {
 enum ExtensionPlanWords {
     static let valueLimit = 300
 
-    static func line(tool: any Tool, template: JSONValue, from: [String: String] = [:], program: String? = nil) -> String {
+    static func line(tool: any Tool, template: JSONValue, from: [String: String] = [:], program: String? = nil, whole: Set<String> = []) -> String {
         let fields = template.objectValue ?? [:]
-        let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
+        // The field's own name, as the tool takes it: a schema's title is its author's, and could name one field after another.
         let values = fields.keys.sorted().compactMap { key -> String? in
-            guard let value = fields[key], let said = words(value, from: from[key]) else { return nil }
-            return "\(ArgumentWords.label(key, properties[key])): \(said)"
+            guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key)) else { return nil }
+            return "\(ToolFormat.oneLine(ExtensionText.clean(key), 40)): \(said)"
         }
         var title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
         // A plan holds for the extension that offered the tool, so the card says whose it is (as a call's own card does).
@@ -325,24 +332,32 @@ enum ExtensionPlanWords {
         return values.isEmpty ? title : "\(title) · \(values.joined(separator: ", "))"
     }
 
-    private static func words(_ value: JSONValue, from: String? = nil) -> String? {
+    /// A written value as the card shows it: the quotes it is wrapped in can't be written inside it, so it can't pass for two fields.
+    private static func quoted(_ text: String) -> String { "“" + unquoted(text) + "”" }
+
+    private static func unquoted(_ text: String) -> String { text.replacingOccurrences(of: "“", with: "‘").replacingOccurrences(of: "”", with: "’") }
+
+    private static func words(_ value: JSONValue, from: String? = nil, whole: Bool = false) -> String? {
         switch value {
         case .string(let s) where ExtensionPlanRules.hasSlot(s):
-            // One line each, keeping the space a written part has next to a slot.
+            // One line each, keeping the space a written part has next to a slot (a lone space between two slots too).
             let parts = ExtensionPlanRules.literals(s).map { part -> String in
-                let said = ToolFormat.oneLine(ExtensionText.clean(part), valueLimit)
-                guard !said.isEmpty else { return said }
+                let said = unquoted(ToolFormat.oneLine(ExtensionText.clean(part), valueLimit))
+                guard !said.isEmpty else { return part.isEmpty ? "" : " " }
                 return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
             }
-            let filled = from.map { String(localized: "from “\($0)”", comment: "A plan's card: where words filled in at run time come from, a step's own title") }
+            var filled = from.map { String(localized: "from “\($0)”", comment: "A plan's card: where words filled in at run time come from, a step's own title") }
                 ?? String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
-            return "“\(parts.joined(separator: "[\(filled)]"))”"
-        case .string(let s): return "“\(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))”"
+            if whole { filled += "; " + String(localized: "it may also be a list, a record, a number, or left out", comment: "A plan's card: a field filled with one value of any kind") }
+            return "“" + parts.joined(separator: "[\(filled)]") + "”"
+        case .string(let s): return quoted(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))
         // What clears a field is something the person reads too: a null or an empty list sets it to nothing.
         case .null: return String(localized: "nothing", comment: "A plan's card: a value written as null")
         case .array(let items):
-            return items.isEmpty ? String(localized: "an empty list", comment: "A plan's card: a value written as an empty list")
-                : items.map { words($0) ?? String(localized: "nothing", comment: "A plan's card: a value written as null") }.joined(separator: ", ")
+            if items.isEmpty { return String(localized: "an empty list", comment: "A plan's card: a value written as an empty list") }
+            // A list of lists keeps its shape: it shows as written.
+            if items.contains(where: { $0.arrayValue != nil || $0.objectValue != nil }) { return ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit) }
+            return items.map { words($0) ?? String(localized: "nothing", comment: "A plan's card: a value written as null") }.joined(separator: ", ")
         case .object(let o):
             return o.isEmpty ? String(localized: "an empty record", comment: "A plan's card: a value written as an empty object") : ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit)
         default: return ArgumentWords.words(value)

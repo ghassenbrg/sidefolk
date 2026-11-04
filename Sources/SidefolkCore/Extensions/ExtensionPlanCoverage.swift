@@ -83,12 +83,21 @@ extension ExtensionPlanRules {
         "cc", "bcc", "chat", "user", "phone", "number", "attendee", "invitee", "location", "workspace", "account", "device", "tv",
     ]
     private static let freeTextWords: Set<String> = [
-        "text", "message", "msg", "body", "content", "title", "subject", "summary", "note", "comment", "description", "caption", "label", "name", "reason",
-        "detail", "remark",
+        "text", "message", "msg", "body", "content", "title", "subject", "summary", "note", "comment", "description", "caption", "reason", "detail", "remark",
     ]
+    /// Words that may sit beside a free-text word without making it something else (`long_description`, `plain_text`).
+    private static let neutralWords: Set<String> = ["short", "long", "full", "plain", "rich", "first", "last", "new", "custom", "extra", "main", "issue"]
 
     /// A name in lower-case words: camel case, acronyms (`URLPath` is `url`, `path`), digits and plurals taken apart.
     static func words(in key: String) -> [String] {
+        rawWords(in: key).flatMap { w -> [String] in
+            guard w.count > 3, w.hasSuffix("s"), !w.hasSuffix("ss") else { return [w] }
+            return w.hasSuffix("es") ? [w, String(w.dropLast()), String(w.dropLast(2))] : [w, String(w.dropLast())]
+        }
+    }
+
+    /// The words of a name as written, each once.
+    private static func rawWords(in key: String) -> [String] {
         let chars = Array(key)
         var words: [String] = [], word = ""
         func flush() { if !word.isEmpty { words.append(word.lowercased()); word = "" } }
@@ -102,10 +111,7 @@ extension ExtensionPlanRules {
             word.append(ch)
         }
         flush()
-        return words.flatMap { w -> [String] in
-            guard w.count > 3, w.hasSuffix("s"), !w.hasSuffix("ss") else { return [w] }
-            return [w, String(w.dropLast())]
-        }
+        return words
     }
 
     /// What kind of place a parameter is, by its name and the schema: a closed guess and the second line behind the card's own words (T53). Only a plain
@@ -113,12 +119,14 @@ extension ExtensionPlanRules {
     static func fieldClass(_ key: String, schema: JSONValue?, whole: Bool = false) -> FieldClass {
         let lower = key.lowercased()
         let tokens = Set(words(in: key))
-        if !tokens.isDisjoint(with: codeWords) || ["script", "command", "shell"].contains(where: lower.contains) { return .code }
+        if !tokens.isDisjoint(with: codeWords) || lower.contains("command") || lower.contains("shell") || lower.hasSuffix("script") || lower.hasPrefix("script") { return .code }
         if !tokens.isDisjoint(with: placeWords) { return .other }
-        let type = schema?["type"]?.stringValue
-        let plain = (type == "string" || (type == nil && !whole)) && schema?["enum"] == nil && schema?["format"] == nil && schema?["pattern"] == nil
-            && schema?["anyOf"] == nil && schema?["oneOf"] == nil
-        return plain && !tokens.isDisjoint(with: freeTextWords) ? .freeText : .other
+        // Free text is a declared plain string, named only with words for what people read: every word of the name, so `appName` or `functionBody` is not.
+        let allowed = freeTextWords.union(neutralWords)
+        func isAllowed(_ word: String) -> Bool { allowed.contains(word) || allowed.contains(String(word.dropLast())) || allowed.contains(String(word.dropLast(2))) }
+        guard let schema, schema["type"]?.stringValue == "string", !["enum", "format", "pattern", "anyOf", "oneOf", "allOf", "$ref", "const", "not", "contentMediaType", "contentEncoding"].contains(where: { schema[$0] != nil }),
+              !tokens.isDisjoint(with: freeTextWords), rawWords(in: key).allSatisfy(isAllowed) else { return .other }
+        return .freeText
     }
 
     // MARK: Standing
@@ -186,7 +194,7 @@ extension ExtensionPlanRules {
         if let kind = step.kind {
             guard old.kind == kind else { return false }
             if kind == "flow" { return step.input["name"]?.stringValue == old.input["name"]?.stringValue }
-            return Set(step.reads ?? ["*"]).isSubset(of: Set(old.reads ?? ["*"]))
+            return Set(step.reads ?? ["*"]).isSubset(of: Set(old.reads ?? ["*"])) && (step.feeds ?? [:]).allSatisfy { old.feeds?[$0.key] == $0.value }
         }
         guard old.kind == nil, old.tool == step.tool, (old.provider ?? "") == (step.provider ?? ""), old.definition == step.definition else { return false }
         // It asks each time: there is nothing silent to read again.
@@ -202,10 +210,11 @@ extension ExtensionPlanRules {
             }
             guard let was = before[key], same(was, value) else { return false }
         }
-        for (key, source) in step.sources ?? [:] where source == "outside" {
+        // What a word-filled value came from: no further out than before, and the same kind of step behind it.
+        for (key, source) in step.sources ?? [:] where source == "outside" && !open.contains(key) {
             guard old.sources?[key] == "outside" else { return false }
         }
-        return true
+        return (step.feeds ?? [:]).allSatisfy { old.feeds?[$0.key] == $0.value }
     }
 
     /// Whether the terms themselves are wider than the person read: more actions, a longer time, or another way of starting.
@@ -216,7 +225,7 @@ extension ExtensionPlanRules {
         case (.some, nil): false
         case (let a?, let b?): b <= a
         }
-        return !fewer || !ends || !same(old.when, new.when)
+        return !fewer || !ends || !same(old.when, new.when) || (new.goesRound == true && old.goesRound != true)
     }
 
     static let defaultPerRun = 50

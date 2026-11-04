@@ -6,7 +6,7 @@ import Synchronization
 /// instead of showing a check it can't keep.
 enum ProgramPin {
     private static let launchers: Set<String> = [
-        "csh", "tcsh", "ksh", "lua", "awk", "gawk", "rscript", "julia", "pwsh", "xcrun", "arch", "sudo", "nohup", "expect", "tclsh", "groovy", "kotlin",
+        "time", "nice", "caffeinate", "xargs", "ssh", "script", "sandbox-exec", "volta", "mise", "asdf", "jruby", "luajit", "sbcl", "racket", "elixir", "erl", "tsx", "ts-node", "csh", "tcsh", "ksh", "lua", "awk", "gawk", "rscript", "julia", "pwsh", "xcrun", "arch", "sudo", "nohup", "expect", "tclsh", "groovy", "kotlin",
         "node", "nodejs", "npx", "npm", "pnpm", "pnpx", "yarn", "bun", "bunx", "deno", "uv", "uvx", "pipx", "python", "python2", "python3", "ruby", "perl",
         "php", "java", "dotnet", "docker", "podman", "sh", "bash", "zsh", "dash", "fish", "env", "osascript", "swift", "go", "cargo", "dart", "npm-exec",
     ]
@@ -28,11 +28,15 @@ enum ProgramPin {
     static func hash(of command: String, arguments: [String] = []) -> String? {
         guard command.hasPrefix("/"), let real = ExtensionFS.realpath(command) else { return nil }
         // An argument that names something on this Mac is something the program loads (a script, a config, a folder): the hash would say less than it seems.
-        for argument in arguments where !argument.hasPrefix("-") && FileManager.default.fileExists(atPath: (argument as NSString).expandingTildeInPath) { return nil }
+        // `--config=/path` too, and any argument with a slash in it, since where it points is not Sidefolk's to know.
+        for argument in arguments {
+            let value = argument.split(separator: "=", maxSplits: 1).last.map(String.init) ?? argument
+            if argument.contains("/") || value.contains("/") || argument.hasPrefix("~") || FileManager.default.fileExists(atPath: (value as NSString).expandingTildeInPath) { return nil }
+        }
         let name = (real as NSString).lastPathComponent.lowercased()
         // Versioned names too: `ruby3.2`, `node20`, `python3.11`.
         let stem = String(name.prefix { $0.isLetter || $0 == "-" || $0 == "_" })
-        if launchers.contains(name) || launchers.contains(stem) || stem.hasPrefix("python") { return nil }
+        if launchers.contains(name) || launchers.contains(stem) || stem.hasPrefix("python") || stem.hasPrefix("pypy") { return nil }
         var info = stat()
         guard stat(real, &info) == 0, (info.st_mode & UInt16(S_IFMT)) == UInt16(S_IFREG) else { return nil }
         let seen = Seen(modified: Date(timeIntervalSince1970: TimeInterval(info.st_mtimespec.tv_sec) + TimeInterval(info.st_mtimespec.tv_nsec) / 1e9),

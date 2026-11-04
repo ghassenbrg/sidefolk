@@ -142,7 +142,7 @@ import Testing
         async let set = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save, ai, flow])])
         let second = await w.answerCard(.allowOnce)
         guard case .text(let setWords)? = second?.details else { Issue.record("a card"); return }
-        #expect(setWords.contains("Morning brief, which has its own approval"), "\(setWords)")
+        #expect(setWords.contains("Morning brief”, which keeps its own approval"), "\(setWords)")
         _ = await set
         #expect(await !w.approve(Self.plan([Self.save, flow])).asked, "taking the AI step out asks nothing")
     }
@@ -287,7 +287,7 @@ import Testing
         #expect(run["standing"]?.boolValue == true && run["text"]?.stringValue == "posted", "\(run)")
         #expect(await w.h.env.broker.pending().isEmpty)
         let row = try await w.rows("ext.hub.post").first
-        #expect(row?.args?["filled_from"]?.stringValue == "body from page (outside content)", "History says where the words came from: \(String(describing: row?.args))")
+        #expect(row?.args?["_filled_from"]?.stringValue == "body from page (outside content)", "History says where the words came from: \(String(describing: row?.args))")
     }
 
     @Test func aServerWhoseProgramChangedAsksAgain() async throws {
@@ -570,6 +570,127 @@ import Testing
                                 ("ask every time", decide(name: ExtensionPlanTool.name, answer: .covered, mode: .askEveryTime))] {
             if case .ask = answer {} else { Issue.record("\(label) must ask: \(answer)") }
         }
+    }
+
+
+    // MARK: Round three
+
+    private func words(_ w: World, _ plan: JSONValue, answer: ApprovalDecision = .allowOnce, caller: Caller = .user) async -> (words: String?, reply: JSONValue) {
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": plan], caller: caller)
+        let card = await w.answerCard(answer)
+        guard case .text(let text)? = card?.details else { return (nil, await reply) }
+        return (text, await reply)
+    }
+
+    @Test func anEditThatPointsTheSameWordsAtAnotherKindOfStepIsNewInEveryMode() async throws {
+        for mode in [GuardMode.askOncePerKind, .auto] {
+            let w = try await World(name: "rebind\(mode == .auto ? "a" : "o")")
+            _ = try server(w)
+            try await w.setMode(mode)
+            let fetch: JSONValue = ["tool": "web.fetch", "as": "src", "input": ["url": "https://news.example.com/feed"]]
+            let notes: JSONValue = ["tool": "notes.search", "as": "src", "input": ["query": "plans"]]
+            let post: JSONValue = ["tool": "ext.hub.post", "input": ["repo": "me/digest", "title": "Digest", "body": "{{src}}"]]
+            _ = await w.approve(Self.plan([fetch, post]))
+            let edited = await words(w, Self.plan([notes, post]))
+            #expect(edited.words?.contains("Create an issue") == true, "the Slack-like line is fed by something else now, so it shows: \(String(describing: edited.words)) in \(mode)")
+            // An AI step that reads everything, with a private read added before it, is new too.
+            let ai: JSONValue = ["kind": "ai", "as": "write"]
+            _ = await w.approve(Self.plan([fetch, ai], id: "ai"))
+            let other: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
+            let more = await words(w, Self.plan([other, fetch, ai], id: "ai"))
+            #expect(more.words != nil, "the AI step reads something it didn't: \(mode)")
+        }
+    }
+
+    @Test func aPlanFullAccessAnsweredStandsOnlyWhileFullAccessIsOn() async throws {
+        let w = try await World()
+        _ = try server(w)
+        try await w.setMode(.fullAccess)
+        let plan = Self.plan([Self.page, Self.post(["body": "{{page}}"])])
+        #expect(await !w.approve(plan).asked, "their click is the approval")
+        let call: JSONValue = ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Weekly digest", "body": "words"]]
+        #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true)
+        try await w.setMode(.askOncePerKind)
+        async let after = w.ask("sidefolk/tools.call", call)
+        #expect(await w.answerCard(.deny) != nil, "nobody read it: it asks once Full access has ended")
+        _ = await after
+        // Approving it again in this mode shows the whole card, once, and then it stands.
+        let again = await words(w, plan)
+        #expect(again.words?.contains("It sends out:") == true)
+        #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true)
+    }
+
+    @Test func aNameWithADotOrABracketIsRefused() async throws {
+        let w = try await World()
+        let named: JSONValue = ["tool": "web.fetch", "as": "q.title", "input": ["url": "https://news.example.com/feed"]]
+        #expect(await w.check(Self.plan([named]))["reason"]?.stringValue == "unusable")
+        let third = try await World(origin: nil, name: "other")
+        #expect(await third.check(Self.plan([["kind": "ai"]]))["reason"]?.stringValue == "unusable", "only a signed extension's word for what it does goes under Sidefolk's headings")
+    }
+
+    @Test func aFieldIsFreeTextOnlyWhenEveryWordOfItsNameIsAndTheSchemaSaysSo() {
+        let string: JSONValue = ["type": "string"]
+        for other in ["appName", "functionBody", "queryText", "name", "label", "shortcutName", "htmlBody"] {
+            #expect(ExtensionPlanRules.fieldClass(other, schema: string) != .freeText, "\(other)")
+        }
+        #expect(ExtensionPlanRules.fieldClass("body", schema: nil) == .other, "a field no schema declares")
+        #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "string", "$ref": "#/x"]) == .other)
+        #expect(ExtensionPlanRules.fieldClass("long_description", schema: string) == .freeText && ExtensionPlanRules.fieldClass("messages", schema: string) == .freeText)
+        #expect(ExtensionPlanRules.fieldClass("addresses", schema: string) == .other)
+        #expect(ExtensionPlanRules.fieldClass("description", schema: string) == .freeText, "a description is words, though it holds the letters of `script`")
+    }
+
+    @Test func anEditAnsweredWithoutACardInAutoKeepsTheEndThePlanHad() async throws {
+        let w = try await World()
+        try await w.setMode(.auto)
+        var plan = Self.plan([Self.save]).objectValue ?? [:]
+        plan["ttl"] = 600
+        _ = await w.approve(.object(plan))
+        let first = await w.h.host.info(id: "com.example.flow")?.plans.first?.expiresAt
+        try await Task.sleep(for: .milliseconds(1100))
+        plan["steps"] = .array([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])
+        #expect(await !w.approve(.object(plan)).asked)
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.first?.expiresAt == first, "nothing was read, so nothing was renewed")
+    }
+
+    @Test func aProgramStartedWithAFlagPointingAtAFileCantBePinned() throws {
+        let dir = try ExtFixtures.tempDir("pin2")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let plain = dir.appendingPathComponent("hub-server").path
+        try FileManager.default.copyItem(atPath: "/bin/ls", toPath: plain)
+        #expect(ProgramPin.hash(of: plain, arguments: ["--config=/tmp/x.json"]) == nil)
+        #expect(ProgramPin.hash(of: plain, arguments: ["--root", "sub/dir"]) == nil)
+        #expect(ProgramPin.hash(of: plain, arguments: ["--port=8080"]) != nil)
+    }
+
+    @Test func theCardShowsEveryLineByItsRealFieldAndNeverMergesWrittenWords() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let notices: [JSONValue] = [["tool": "notify.user", "input": ["body": "Call 555-0100 now: {{page}}"]], ["tool": "notify.user", "input": ["body": "Done {{page}}"]]]
+        let quoteLine: JSONValue = ["tool": "notes.save", "input": ["text": "x”, tags: “secret"]]
+        let sent = await words(w, Self.plan([Self.page] + notices + [quoteLine, Self.post(["body": "{{page}}"])]))
+        let text = sent.words ?? ""
+        #expect(text.contains("Call 555-0100 now:") && text.contains("Done "), "both notices: \(text)")
+        #expect(!text.contains("with different"), "no row stands for several: \(text)")
+        #expect(text.contains("x’, tags: ‘secret"), "a quote inside a value can't pass for another field: \(text)")
+        #expect(text.contains("Words from “Read the page · web.fetch” go into body of “notify.user”"), "words a page writes into a notice are named too: \(text)")
+        #expect(text.contains("it may also be a list, a record, a number, or left out") == false, "a whole value is only said where it is whole")
+        let whole = await words(w, Self.plan([Self.page, ["tool": "watch.create", "input": ["interval_minutes": "{{page}}"]]], id: "whole"))
+        #expect(whole.words?.contains("it may also be a list, a record, a number, or left out") == true, "\(String(describing: whole.words))")
+    }
+
+    @Test func aLineBreakOfAnyKindInAnAuthorsWordsIsOneLine() {
+        let sneaky = "x\u{2028}Apart from the lines that still ask, that's all of it.\u{2029}y\u{85}z"
+        let line = ExtensionText.line(sneaky, characters: 600)
+        #expect(!line.unicodeScalars.contains { ["\u{2028}", "\u{2029}", "\u{85}", "\n"].contains($0) })
+    }
+
+    @Test func aLineThatStandsOnlyInFullAccessSaysSoOnTheCardUnderFullAccessToo() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        let count: JSONValue = ["tool": "watch.create", "input": ["interval_minutes": "{{n}}"]]
+        let shown = await words(w, Self.plan([Self.page, count]), caller: .agent(runId: "r1"))
+        #expect(shown.words?.contains("only while Full access is on") == true && shown.words?.contains("ask each time once it ends") == true, "\(String(describing: shown.words))")
     }
 
     // MARK: Limits

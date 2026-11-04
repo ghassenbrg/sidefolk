@@ -275,7 +275,7 @@ import Testing
         let card = await w.answerCard(.allowOnce)
         guard case .text(let words)? = card?.details else { Issue.record("the card must show the plan in full"); return }
         #expect(card?.summary == "Weekdays at 8:30")
-        #expect(words.contains("filled in when it runs"))
+        #expect(words.contains("a value named brief that no step makes"), "\(words)")
         #expect(card?.canAlways == false)
         let reply = await answer
         #expect(reply["ok"]?.boolValue == true)
