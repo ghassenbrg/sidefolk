@@ -17,7 +17,7 @@ public struct UpdateSettings: Codable, Sendable, Equatable {
     /// Gallery add-ons update by themselves (D70): companions, themes, and extensions whose update asks for
     /// nothing new. On by default, as companions always did (D55).
     public var addons = true
-    /// nil means releases only, whatever build runs: snapshots are for people who choose them.
+    /// nil means the person never chose: a snapshot build then follows snapshots, any other build releases only (D191).
     public var channel: UpdateChannel?
     /// "Skip this version": never offered again; a newer one is.
     public var skipped: ReleaseVersion?
@@ -54,5 +54,11 @@ public struct UpdateSettings: Codable, Sendable, Equatable {
     /// Looks by itself, a minute after launch and daily.
     public var automatic: Bool { app != .off }
 
-    public var effectiveChannel: UpdateChannel { channel ?? .releases }
+    public var effectiveChannel: UpdateChannel { effectiveChannel(running: SidefolkVersion.running) }
+
+    /// What is offered for the build `running` (a version as `SidefolkVersion.running` says it): the person's choice, kept
+    /// whatever the build, else snapshots on a snapshot, where nothing is released yet, and releases on a release.
+    public func effectiveChannel(running: String) -> UpdateChannel {
+        channel ?? (ReleaseVersion(running)?.isPrerelease == true ? .snapshots : .releases)
+    }
 }
