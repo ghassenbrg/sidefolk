@@ -17,6 +17,7 @@ enum Found: Identifiable {
     case reminder(Reminder)
     case watch(Watcher)
     case activity(ActivityEntry)
+    case `extension`(ExtensionHit)
 
     var id: String {
         switch self {
@@ -25,6 +26,7 @@ enum Found: Identifiable {
         case .reminder(let r): "r" + r.id
         case .watch(let w): "w" + w.id
         case .activity(let a): "a" + (a.id.map(String.init) ?? "\(a.at.timeIntervalSince1970)")
+        case .extension(let e): "e" + e.id
         }
     }
 }
@@ -79,6 +81,7 @@ struct FoundList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
+            group("Extensions", results.extensions.prefix(each).map(Found.extension))
             group("Notes", results.notes.prefix(each).map(Found.note))
             group("Conversations", results.conversations.prefix(each).map(Found.conversation))
             group("Reminders", results.reminders.prefix(each).map(Found.reminder))
@@ -124,6 +127,7 @@ private struct FoundRow: View {
         case .reminder: "alarm"
         case .watch: "binoculars"
         case .activity: "list.bullet.rectangle"
+        case .extension: "puzzlepiece.extension"
         }
     }
 
@@ -134,6 +138,7 @@ private struct FoundRow: View {
         case .reminder(let r): r.title
         case .watch(let w): w.title
         case .activity(let a): a.summary
+        case .extension(let e): e.name
         }
     }
 
@@ -144,6 +149,12 @@ private struct FoundRow: View {
         case .reminder(let r): ReminderBadge.when(r)
         case .watch: nil
         case .activity(let a): TimeText.short(a.at)
+        case .extension(let e):
+            switch e.place {
+            case .installed(enabled: true): String(localized: "Installed", comment: "A search result: an extension already on this Mac")
+            case .installed(enabled: false): String(localized: "Installed, off", comment: "A search result: an extension on this Mac that is switched off")
+            case .gallery: String(localized: "In the gallery", comment: "A search result: an extension the gallery offers that isn't installed")
+            }
         }
     }
 }

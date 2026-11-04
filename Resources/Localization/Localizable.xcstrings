@@ -6174,6 +6174,65 @@
         }
       }
     },
+    "%@ is in the gallery, not installed yet." : {
+      "comment" : "Said after the words named an extension only the gallery has",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⁨%@⁩ موجود في المعرض لكنه غير مثبّت بعد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist in der Galerie, aber noch nicht installiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ está en la galería, pero aún no está instalado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est dans la galerie, mais n’est pas encore installé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ è nella galleria, ma non è ancora installato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ はギャラリーにありますが、まだインストールされていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 갤러리에 있지만 아직 설치되지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ está na galeria, mas ainda não foi instalado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 在画廊中，但尚未安装。"
+          }
+        }
+      }
+    },
     "%@ is keeping time" : {
       "localizations" : {
         "ar" : {
@@ -78637,7 +78696,7 @@
       }
     },
     "Extension" : {
-      "comment" : "An add-on's kind, in its update row",
+      "comment" : "An add-on's kind, in its update row\nThe Say bar's chip for an extension",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -98322,6 +98381,65 @@
         }
       }
     },
+    "I'll open %@." : {
+      "comment" : "The Say bar: the words name an extension that is installed, “I'll open Tea Timer.”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سأفتح ⁨%@⁩."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich öffne %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abriré %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J’ouvrirai %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprirò %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 열게요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vou abrir %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我会打开 %@。"
+          }
+        }
+      }
+    },
     "I'll read it now." : {
       "localizations" : {
         "ar" : {
@@ -98865,6 +98983,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我会把这个保存到%@。"
+          }
+        }
+      }
+    },
+    "I'll show %@ in the gallery." : {
+      "comment" : "The Say bar: the words name an extension only the gallery has",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سأعرض ⁨%@⁩ في المعرض."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich zeige dir %@ in der Galerie."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te mostraré %@ en la galería."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je vous montrerai %@ dans la galerie."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ti mostrerò %@ nella galleria."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーで%@を表示します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리에서 %@을(를) 보여 드릴게요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vou mostrar %@ na galeria."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我会在画廊中显示 %@。"
           }
         }
       }
@@ -101001,6 +101178,65 @@
         }
       }
     },
+    "In the gallery" : {
+      "comment" : "A search result: an extension the gallery offers that isn't installed",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في المعرض"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Galerie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En la galería"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans la galerie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nella galleria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーにあります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리에 있음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na galeria"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在画廊中"
+          }
+        }
+      }
+    },
     "In the menu bar's menu: %@" : {
       "comment" : "Install sheet: items an extension adds; their titles",
       "localizations" : {
@@ -102293,7 +102529,7 @@
       }
     },
     "Installed" : {
-      "comment" : "Settings › Extensions: the title over the extensions and skills on this Mac",
+      "comment" : "A search result: an extension already on this Mac",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -102522,6 +102758,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已安装，但它的服务器没有开启。请在 LM Studio 中启动服务器（Developer 标签页），然后点按“重新查找”。"
+          }
+        }
+      }
+    },
+    "Installed, off" : {
+      "comment" : "A search result: an extension on this Mac that is switched off",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مثبّت، متوقف"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installiert, aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalado, desactivado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installé, désactivé"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installato, disattivato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インストール済み・オフ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설치됨, 꺼짐"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalado, desativado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装，已关闭"
           }
         }
       }
@@ -137640,7 +137935,7 @@
       }
     },
     "Open" : {
-      "comment" : "A reminder from an extension: opens its page",
+      "comment" : "A reminder from an extension: opens its page\nThe Say bar's Return: open the extension the words name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -140332,7 +140627,7 @@
       }
     },
     "Opened %@." : {
-      "comment" : "Ask, after the drop card's Open with…",
+      "comment" : "Ask, after the drop card's Open with…\nSaid after the words named an extension that is installed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -192190,6 +192485,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那条笔记不在废纸篓里。"
+          }
+        }
+      }
+    },
+    "That note went to the Trash while I was changing it, so I left it alone." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتقلت هذه الملاحظة إلى سلة المهملات أثناء تغييري لها، لذا لم ألمسها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Notiz ist in den Papierkorb gewandert, während ich sie geändert habe, deshalb habe ich sie nicht angerührt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esa nota pasó a la Papelera mientras la cambiaba, así que no la toqué."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette note est passée à la Corbeille pendant que je la modifiais, je l’ai donc laissée telle quelle."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quella nota è finita nel Cestino mentre la modificavo, quindi non l'ho toccata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更している間にそのメモがゴミ箱に移されたため、そのままにしました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제가 바꾸는 동안 그 메모가 휴지통으로 옮겨져서 그대로 두었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essa nota foi para o Lixo enquanto eu a alterava, então não mexi nela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我修改时那条笔记被移到了废纸篓，所以我没有动它。"
           }
         }
       }

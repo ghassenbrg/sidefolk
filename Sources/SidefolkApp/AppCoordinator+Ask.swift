@@ -129,6 +129,32 @@ extension AppCoordinator: AskActions {
             runLocal(Self.withAttachment(parsed.intent, attachment), caption: text, into: model, reply: reply)
             return
         }
+        // An extension named in the words is on this Mac or in the gallery: open it before spending the person's AI (B1).
+        // ⌘Return, a dropped item, a conversation going on and spoken words still go to the AI.
+        if !thinkHarder, !askAI, !spoken, attachment == nil, followUp == nil {
+            Task {
+                if let hit = await extensionNamed(in: text) {
+                    open(extension: hit)
+                    model.add(.info(Self.opened(hit)), caption: text, fades: true)
+                } else {
+                    askTheAI(text, attachment: attachment, thinkHarder: thinkHarder, followUp: followUp, into: model, reply: reply)
+                }
+            }
+            return
+        }
+        askTheAI(text, attachment: attachment, thinkHarder: thinkHarder, followUp: followUp, into: model, reply: reply)
+    }
+
+    private static func opened(_ hit: ExtensionHit) -> String {
+        switch hit.place {
+        case .installed: String(localized: "Opened \(hit.name).", comment: "Said after the words named an extension that is installed")
+        case .gallery: String(localized: "\(hit.name) is in the gallery, not installed yet.", comment: "Said after the words named an extension only the gallery has")
+        }
+    }
+
+    /// The words go to the AI, or say it isn't set up.
+    private func askTheAI(_ text: String, attachment: Attachment?, thinkHarder: Bool, followUp: String?, into model: AskModel,
+                          reply: ReplyContext) {
         guard runtime.settings.current.provider.kind != .none else {
             let full = attachment?.text.map { "\(text)\n\n\($0)" } ?? text
             let request = NoAIRequest(text: full, guess: reminderGuess(text), request: text, attachment: attachment)

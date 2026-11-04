@@ -13,7 +13,7 @@ struct SayPanel: View {
     var open: (Found) -> Void
 
     var body: some View {
-        let words = SayWords(text: find.query, services: services)
+        let words = SayWords(text: find.query, services: services, found: find.results)
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: Theme.Space.m) {
                 if words.blocked {
@@ -52,7 +52,7 @@ struct SayPanel: View {
     private func keys(_ words: SayWords) -> some View {
         ButtonRow(spacing: Theme.Space.m) {
             keyButton("↩", words.doTitle, primary: true) { send(.auto) }
-            if words.understood && words.hasAI {
+            if words.asksOnlyOnRequest && words.hasAI {
                 keyButton("⌘↩", Text("Ask \(words.companion)"), primary: false) { send(.ai) }
                     .keyboardShortcut(.return, modifiers: .command)
             }
@@ -86,22 +86,30 @@ struct SayWords {
     let plan: IntentPlan?
     let companion: String
     let provider: ProviderKind
+    /// An extension, installed or in the gallery, whose name the words spell out: Return opens it, the AI is only
+    /// asked on ⌘Return (B1).
+    let named: ExtensionHit?
 
-    init(text: String, services: AppServices) {
+    init(text: String, services: AppServices, found: SearchResults = SearchResults()) {
         self.text = text
         plan = services.understands(text) ? services.plan(for: text) : nil
+        // The search runs a moment behind the typing: only what the words now spell out counts.
+        named = found.extensions.first { $0.byName && ExtensionListQuery(text: text).matches([$0.name]) }
         companion = services.runtime.settings.current.companionName
         provider = services.runtime.settings.current.provider.kind
     }
 
     var understood: Bool { plan?.tool != nil }
     var hasAI: Bool { provider != .none }
-    var usesAI: Bool { !understood }
+    var usesAI: Bool { !understood && named == nil }
+    /// Return does it on this Mac, and the AI is a second key.
+    var asksOnlyOnRequest: Bool { understood || named != nil }
     /// Words only the AI could do, with no AI set up: the panel says what still works instead.
-    var blocked: Bool { !understood && !hasAI }
+    var blocked: Bool { usesAI && !hasAI }
 
     var symbol: String {
-        switch plan?.tool {
+        if named != nil, plan == nil { return "puzzlepiece.extension" }
+        return switch plan?.tool {
         case "reminders.create": "bell"
         case "notes.save": "note.text"
         case "profile.remember": "person"
@@ -114,6 +122,13 @@ struct SayWords {
 
     /// The sentence: what happens, in plain words, with the parts that matter in bold.
     var sentence: Text {
+        if plan == nil, let named {
+            let name = Text(verbatim: named.name).bold()
+            return switch named.place {
+            case .installed: Text("I'll open \(name).", comment: "The Say bar: the words name an extension that is installed, “I'll open Tea Timer.”")
+            case .gallery: Text("I'll show \(name) in the gallery.", comment: "The Say bar: the words name an extension only the gallery has")
+            }
+        }
         guard let plan, let tool = plan.tool else {
             return Text("\(companion) will ask the AI and answer here.",
                         comment: "The Say bar: words not understood on the Mac go to the AI; a chip beside it says which AI")
@@ -149,6 +164,7 @@ struct SayWords {
 
     /// The kind, with its symbol.
     var kindChip: (String, String)? {
+        if plan == nil, named != nil { return (String(localized: "Extension", comment: "The Say bar's chip for an extension"), symbol) }
         guard let plan, plan.tool != nil else { return nil }
         return (plan.kind, symbol)
     }
@@ -160,6 +176,7 @@ struct SayWords {
 
     /// What Return does, on its key.
     var doTitle: Text {
+        if plan == nil, named != nil { return Text("Open", comment: "The Say bar's Return: open the extension the words name") }
         guard let tool = plan?.tool else { return Text("Ask \(companion)") }
         return switch tool {
         case "reminders.create": Text("Set it", comment: "The Say bar's Return: set the reminder")
