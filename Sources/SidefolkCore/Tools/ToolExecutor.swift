@@ -123,8 +123,8 @@ public final class ToolExecutor: Sendable {
         if let problem = InputSchema.problem(spec.inputSchema, input, unknownKeys: false) { return result(.deny, problem) }
         if let why = tool.refusal(for: input, context: ToolContext(caller: caller, now: clock.now, tainted: tainted)) { return result(.deny, why) }
         guard let policy = try? await permissions.policy(now: clock.now) else { return result(.deny) }
-        let grants = (try? await permissions.grants()) ?? [], folders = (try? await permissions.folders()) ?? []
-        let scope = tool.scope(for: input)
+        let grants = (try? await permissions.grants()) ?? [], scope = tool.scope(for: input)
+        let folders = ((try? await permissions.folders()) ?? []) + Self.fullAccessFolders(scope, caller: caller, policy: policy)
         switch engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller, tainted: tainted,
                                policy: policy, grants: grants, folders: folders, standing: standing) {
         case .allow: return result(.allow)
@@ -133,6 +133,16 @@ public final class ToolExecutor: Sendable {
             var check = result(.deny, why)
             if why == PermissionEngine.notShared { check.share = FolderAccess.sharingNeeded(read: scope.readPaths, write: scope.writePaths, folders: folders).map { .init(path: $0.path, write: $0.write) } }
             return check
+        }
+    }
+
+    /// In Full access, the paths of this call that are in the person's home, as folders for this call alone (D185): nothing is
+    /// added to the list Trust shows. They also reach the tool, which checks the folders Guard let it have. Nothing for anyone
+    /// but Sidefolk's own agent (`GuardPolicy.mode(for:)`), and nothing outside the home or in a protected place.
+    static func fullAccessFolders(_ scope: ToolScope, caller: Caller, policy: GuardPolicy) -> [GrantedFolder] {
+        guard policy.mode(for: caller) == .fullAccess else { return [] }
+        return Set(scope.readPaths + scope.writePaths).compactMap { path in
+            FolderAccess.isOpenToFullAccess(path) ? FolderAccess.canonical(path).map { GrantedFolder(path: $0, access: .readwrite) } : nil
         }
     }
 
@@ -214,7 +224,7 @@ public final class ToolExecutor: Sendable {
                 return ToolOutcome(activity: act, status: .denied(why))
             }
             let grants = (try? await permissions.grants()) ?? []
-            let folders = ((try? await permissions.folders()) ?? []) + extraFolders
+            let folders = ((try? await permissions.folders()) ?? []) + extraFolders + Self.fullAccessFolders(scope, caller: caller, policy: policy)
             let decision = engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller,
                                            tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions,
                                            answeredFolders: answeredFolders, standing: standing)
