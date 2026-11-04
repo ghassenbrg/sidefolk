@@ -168,6 +168,29 @@ import Testing
         #expect(!failure.notFound, "a failure that may have done something, or found two, isn't that")
     }
 
+    @Test func aToolThatIsntHereSaysSoAndNothingHappens() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let reply = await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.gone.make", "input": .object([:]), "plan": "x"])
+        #expect(reply["status"]?.stringValue == "unavailable")
+        #expect(reply["ok"]?.boolValue == false)
+    }
+
+    @Test func aToolSaysWhoOffersItInTheirOwnName() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        _ = try await w.install(name: "other")
+        let listed = await w.ask(tool, "sidefolk/tools.list")
+        let other = listed["tools"]?.arrayValue?.first { $0["name"]?.stringValue == "ext.other.ask_host" }
+        #expect(other?["extension"]?.stringValue == "other")
+        #expect(other?["extension_title"]?.stringValue == "Other")
+        #expect(other?["from_server"] == nil)
+    }
+
+    @Test func aPageCanOpenAddons() {
+        #expect(PageSettingsPane(rawValue: "addons") == .addons)
+    }
+
     @Test func aJobByItsModelNameIsStillAJob() async throws {
         let w = try await World()
         w.h.env.registry.register(CompanionJobTool(agent: CompanionAgentSlot()))

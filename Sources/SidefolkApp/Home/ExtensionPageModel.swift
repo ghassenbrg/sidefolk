@@ -425,6 +425,7 @@ final class ExtensionPageModel {
             switch pane {
             case .attention: services?.openSettings(tab: .attention)
             case .place: services?.openSettings(tab: .privacy)
+            case .addons: services?.openSettings(tab: .addons)
             case .notifications:
                 if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") { NSWorkspace.shared.open(url) }
             }
