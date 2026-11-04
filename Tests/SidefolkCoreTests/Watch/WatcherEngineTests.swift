@@ -225,6 +225,53 @@ import Testing
         #expect(try await stored(v.id).nextCheckAt == now.addingTimeInterval(600), "never sooner than its own interval")
     }
 
+    @Test func aWatchAnExtensionMadeLooksAgainAtItsNextCheck() async throws {
+        let engine = env.engine(probes: [fake { _, _ in ProbeResult(state: .object([:]), triggered: true, summary: "x") }])
+        let theirs = try await engine.add(.make("fake", interval: 60, mode: .repeat, source: "extension:dev.test.flows", now: now))
+        let mine = try await engine.add(.make("fake", interval: 60, mode: .repeat, now: now))
+        await engine.tick()
+        #expect(try await stored(theirs.id).nextCheckAt == now.addingTimeInterval(60), "it tells only the extension, so nothing to spare the person")
+        #expect(try await stored(mine.id).nextCheckAt == now.addingTimeInterval(WatchLimits.defaultCooldown))
+        #expect(try await stored(mine.id).restingUntil(now: now) == now.addingTimeInterval(WatchLimits.defaultCooldown), "and it says so")
+        #expect(try await stored(theirs.id).restingUntil(now: now) == nil)
+        #expect(try await stored(mine.id).restingUntil(now: now.addingTimeInterval(WatchLimits.defaultCooldown)) == nil, "over")
+    }
+
+    @Test func anExtensionCanAskForARestAndOnlyItCanGoShort() throws {
+        #expect(try WatchInput.rest(["cooldown_minutes": 1], caller: .extension(id: "dev.test.flows")) == 1)
+        #expect(try WatchInput.rest(["cooldown_minutes": 0], caller: .extension(id: "dev.test.flows")) == 0)
+        #expect(try WatchInput.rest(["cooldown_minutes": 1], caller: .agent(runId: "r")) == 5)
+        #expect(try WatchInput.rest(["cooldown_minutes": 0], caller: .external(client: "codex")) == 5)
+        #expect(try WatchInput.rest(.object([:]), caller: .user) == nil)
+        #expect(throws: (any Error).self) { try WatchInput.rest(["cooldown_minutes": -1], caller: .user) }
+    }
+
+    @Test func aHiddenFileIsWatchedByItsSizeAndTimeOnly() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hidden-\(UUID().uuidString)")
+        let hidden = root.appendingPathComponent(".tmp/status.txt"), plain = root.appendingPathComponent("plain/status.txt")
+        for file in [hidden, plain] {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try "secret".write(to: file, atomically: true, encoding: .utf8)
+        }
+        defer { try? FileManager.default.removeItem(at: root) }
+        let probe = FileChangesProbe()
+        func look(_ file: URL, after state: JSONValue?) async throws -> ProbeResult {
+            var w = try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(file.path)], now: now))
+            w.lastState = state
+            return try await probe.check(w, now: now)
+        }
+        #expect(try await look(plain, after: nil).compared != nil, "a shared file's lines are kept")
+        let first = try await look(hidden, after: nil)
+        #expect(first.compared == nil)
+        #expect(!first.state.jsonString.contains("secret"))
+        try "secret, longer".write(to: hidden, atomically: true, encoding: .utf8)
+        let fired = try await look(hidden, after: first.state)
+        #expect(fired.triggered)
+        #expect(fired.compared == nil)
+        #expect(fired.openTarget == nil)
+        #expect(throws: (any Error).self) { try FolderNewFileProbe().prepare(.make(WatchKind.folderNewFile, config: ["path": .string(root.appendingPathComponent(".tmp").path)], now: now)) }
+    }
+
     @Test func twoWatchersOnOneHostTakeTurnsAndCheckNowDoesNotWait() async throws {
         env.fetcher.say("<p>hello</p>")
         let engine = env.engine()

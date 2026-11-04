@@ -170,6 +170,7 @@ public final class SidefolkRuntime: Sendable {
         registry.register(ExtensionSettingTool(host: host))
         registry.register(ExtensionActivityTool(shelfName: { id in host.shelf.names[id] }))
         registry.register(ExtensionConsentTool(host: host))
+        registry.register(FolderShareTool(permissions: permissions, events: events))
         registry.register(ExtensionOccurrencesTool(host: host))
         registry.register(ExtensionPlaceSearchTool(shelfName: { id in host.shelf.names[id] }))
         registry.register(ExtensionPlanEndTool(host: host))

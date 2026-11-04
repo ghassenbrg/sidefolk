@@ -22,14 +22,15 @@ struct FileFacts: Equatable, Sendable {
 enum WatchedPath {
     /// A path typed by a person, made absolute and canonical. The canonical form is what gets watched,
     /// so later changes to links in between cannot redirect the watcher (docs/SECURITY.md T10).
-    static func prepare(_ config: JSONValue) throws -> JSONValue {
+    /// `factsOnly`: this watcher looks no further than a file's size and time, so Guard has asked about a hidden file by name.
+    static func prepare(_ config: JSONValue, factsOnly: Bool = false) throws -> JSONValue {
         guard let raw = config.string("path") else { throw WatchError.invalid(String(localized: "Tell me which file or folder to watch.")) }
         let expanded = (raw as NSString).expandingTildeInPath
         guard expanded.hasPrefix("/") else { throw WatchError.invalid(String(localized: "I need the full path, like ~/Downloads/report.pdf.")) }
         guard let canonical = FolderAccess.canonical(expanded) else {
             throw WatchError.invalid(String(localized: "That path isn't allowed (it has “..” in it, or a link that goes nowhere)."))
         }
-        if let why = FolderAccess.forbiddenReason([canonical]) { throw WatchError.invalid(why) }
+        if let why = FolderAccess.forbiddenReason([canonical], hiddenFine: factsOnly) { throw WatchError.invalid(why) }
         return config.setting("path", .string(expanded)).setting("resolved", .string(canonical))
     }
 
@@ -115,7 +116,7 @@ public struct FileAppearsProbe: WatcherProbe {
 
     public func prepare(_ watcher: Watcher) throws -> Watcher {
         var w = watcher
-        w.config = try WatchedPath.prepare(w.config)
+        w.config = try WatchedPath.prepare(w.config, factsOnly: true)
         w.condition = w.condition["gone"]?.boolValue == true ? ["gone": true] : .object([:])
         return w
     }
@@ -144,12 +145,12 @@ public struct FileAppearsProbe: WatcherProbe {
         if gone {
             return ProbeResult(state: .object(state), triggered: true,
                                summary: firstLook ? String(localized: "\(name) isn't there") : String(localized: "\(name) is gone"),
-                               openTarget: (path as NSString).deletingLastPathComponent)
+                               openTarget: FolderAccess.isHidden(path) ? nil : (path as NSString).deletingLastPathComponent)
         }
         let detail = facts.map { $0.isDirectory ? String(localized: "\(WatchedPath.size($0.size)) (folder)") : WatchedPath.size($0.size) }
         return ProbeResult(state: .object(state), triggered: true,
                            summary: firstLook ? String(localized: "\(name) is already there") : String(localized: "\(name) appeared"),
-                           detail: detail, openTarget: WatchedPath.openable(path))
+                           detail: detail, openTarget: FolderAccess.isHidden(path) ? nil : WatchedPath.openable(path))
     }
 
     public func eventTargets(for watcher: Watcher) -> [WatchEventTarget] {
@@ -174,7 +175,7 @@ public struct FileChangesProbe: WatcherProbe {
 
     public func prepare(_ watcher: Watcher) throws -> Watcher {
         var w = watcher
-        w.config = try WatchedPath.prepare(w.config)
+        w.config = try WatchedPath.prepare(w.config, factsOnly: true)
         return w
     }
 
@@ -186,12 +187,14 @@ public struct FileChangesProbe: WatcherProbe {
 
         // A text file's lines are kept as the watch's versions (D87): on the first look, and each time it changes. What
         // it was before is the version kept last time, so it isn't held in the state as well. Read only then, not at every look.
-        let text = { facts.flatMap { FileText.read(path, facts: $0) }.map { ComparedText($0) } }
+        // A hidden file: its size and time, never its words (D-SHARE).
+        let hidden = FolderAccess.isHidden(path)
+        let text = { hidden ? nil : facts.flatMap { FileText.read(path, facts: $0) }.map { ComparedText($0) } }
         guard let previous = w.lastState else { return ProbeResult(state: .object(state), compared: text()) } // the first look is the baseline
         let existed = previous["exists"]?.boolValue == true
         let before = FileAppearsProbe.facts(previous)
         let name = WatchedPath.name(path)
-        let open = WatchedPath.openable(path)
+        let open = hidden ? nil : WatchedPath.openable(path)
 
         switch (existed, facts) {
         case (false, nil): return ProbeResult(state: .object(state))
@@ -200,7 +203,7 @@ public struct FileChangesProbe: WatcherProbe {
                                detail: WatchedPath.size(now.size), openTarget: open, compared: text())
         case (true, nil):
             return ProbeResult(state: .object(state), triggered: true, summary: String(localized: "\(name) was deleted"),
-                               openTarget: (path as NSString).deletingLastPathComponent)
+                               openTarget: hidden ? nil : (path as NSString).deletingLastPathComponent)
         case (true, let now?):
             guard let before, !now.sameContent(as: before) else { return ProbeResult(state: .object(state)) }
             let sizes = before.size == now.size ? String(localized: "Size unchanged") : "\(WatchedPath.size(before.size)) → \(WatchedPath.size(now.size))"

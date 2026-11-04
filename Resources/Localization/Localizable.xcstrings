@@ -1590,6 +1590,124 @@
         }
       }
     },
+    "%@ asks for this. What you allow to use your shared folders can then read and change the files in it. You can stop sharing it in Settings › Trust." : {
+      "comment" : "A page asks to share a folder with Sidefolk",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يطلب %@ هذا. ما تسمح له باستخدام مجلداتك المشاركة سيتمكن من قراءة ملفاته وتغييرها. يمكنك إيقاف المشاركة من الإعدادات › الثقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ bittet darum. Was du deine geteilten Ordner nutzen lässt, kann dann die Dateien darin lesen und ändern. Du kannst das Teilen in Einstellungen › Vertrauen beenden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lo pide. Lo que permitas usar tus carpetas compartidas podrá leer y cambiar sus archivos. Puedes dejar de compartirla en Ajustes › Confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ le demande. Ce que vous autorisez à utiliser vos dossiers partagés pourra alors lire et modifier ses fichiers. Vous pouvez arrêter le partage dans Réglages › Confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lo chiede. Ciò a cui permetti di usare le cartelle condivise potrà leggere e modificare i file che contiene. Puoi smettere di condividerla in Impostazioni › Fiducia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ からの依頼です。共有フォルダの利用を許可したものが、このフォルダのファイルを読み取り、変更できるようになります。共有は設定 › 信頼 でやめられます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서 요청합니다. 공유 폴더 사용을 허용한 항목이 이 폴더의 파일을 읽고 바꿀 수 있게 됩니다. 공유는 설정 › 신뢰에서 중단할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ está pedindo isto. O que você permite usar suas pastas compartilhadas poderá ler e alterar os arquivos dela. Você pode parar de compartilhar em Ajustes › Confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 请求此操作。你允许使用共享文件夹的内容将能读取和更改其中的文件。你可以在“设置 › 信任”中停止共享。"
+          }
+        }
+      }
+    },
+    "%@ asks for this. What you allow to use your shared folders can then read the files in it. You can stop sharing it in Settings › Trust." : {
+      "comment" : "A page asks to share a folder with Sidefolk",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يطلب %@ هذا. ما تسمح له باستخدام مجلداتك المشاركة سيتمكن من قراءة ملفاته. يمكنك إيقاف المشاركة من الإعدادات › الثقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ bittet darum. Was du deine geteilten Ordner nutzen lässt, kann dann die Dateien darin lesen. Du kannst das Teilen in Einstellungen › Vertrauen beenden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lo pide. Lo que permitas usar tus carpetas compartidas podrá leer sus archivos. Puedes dejar de compartirla en Ajustes › Confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ le demande. Ce que vous autorisez à utiliser vos dossiers partagés pourra alors lire ses fichiers. Vous pouvez arrêter le partage dans Réglages › Confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lo chiede. Ciò a cui permetti di usare le cartelle condivise potrà leggere i file che contiene. Puoi smettere di condividerla in Impostazioni › Fiducia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ からの依頼です。共有フォルダの利用を許可したものが、このフォルダのファイルを読み取れるようになります。共有は設定 › 信頼 でやめられます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서 요청합니다. 공유 폴더 사용을 허용한 항목이 이 폴더의 파일을 읽을 수 있게 됩니다. 공유는 설정 › 신뢰에서 중단할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ está pedindo isto. O que você permite usar suas pastas compartilhadas poderá ler os arquivos dela. Você pode parar de compartilhar em Ajustes › Confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 请求此操作。你允许使用共享文件夹的内容将能读取其中的文件。你可以在“设置 › 信任”中停止共享。"
+          }
+        }
+      }
+    },
     "%@ belongs to another user" : {
       "localizations" : {
         "ar" : {
@@ -13278,6 +13396,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@，已接通电源"
+          }
+        }
+      }
+    },
+    "%@, resting until %@" : {
+      "comment" : "A watch in a list: “Every 30 s, resting until 14:53”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@، في استراحة حتى %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, Pause bis %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, resting until %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, descansando hasta las %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, au repos jusqu'à %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, a riposo fino alle %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@、%2$@ まで休止中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@까지 쉬는 중"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, descansando até %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@，休息至 %2$@"
           }
         }
       }
@@ -105726,6 +105909,65 @@
         }
       }
     },
+    "It told you, so it rests until %@" : {
+      "comment" : "A watch's page: after it fires it stays quiet for a while. “It told you, so it rests until 14:53”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخبرك، لذا يستريح حتى %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er hat dir Bescheid gesagt und pausiert bis %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya te avisó, así que descansa hasta las %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il vous a prévenu, il se repose donc jusqu'à %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ti ha avvisato, quindi riposa fino alle %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お知らせしたので、%@ まで休みます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알려 드렸으니 %@까지 쉽니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já avisou você, então descansa até %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已经告诉你了，所以休息到 %@"
+          }
+        }
+      }
+    },
     "It used more than %llu MB of memory." : {
       "localizations" : {
         "ar" : {
@@ -126917,7 +127159,7 @@
       }
     },
     "Not Now" : {
-      "comment" : "Letting an extension have the person's place or schedule reminders: the button",
+      "comment" : "A page asks to share a folder with Sidefolk: the button\nLetting an extension have the person's place or schedule reminders: the button",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -155208,6 +155450,7 @@
       }
     },
     "Remove" : {
+      "comment" : "A card on an extension's page: its menu",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -169948,7 +170191,126 @@
         }
       }
     },
+    "Share %@ with Sidefolk" : {
+      "comment" : "A row in History: a folder was shared",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة %@ مع Sidefolk"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ mit Sidefolk teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir %@ con Sidefolk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager %@ avec Sidefolk"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi %@ con Sidefolk"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ をSidefolkと共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) Sidefolk와 공유"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar %@ com o Sidefolk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 Sidefolk 共享 %@"
+          }
+        }
+      }
+    },
+    "Share %@ with Sidefolk?" : {
+      "comment" : "A page asks to share a folder with Sidefolk",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تريد مشاركة %@ مع Sidefolk؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ mit Sidefolk teilen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Compartir %@ con Sidefolk?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager %@ avec Sidefolk ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividere %@ con Sidefolk?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ をSidefolkと共有しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) Sidefolk와 공유할까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar %@ com o Sidefolk?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 Sidefolk 共享 %@？"
+          }
+        }
+      }
+    },
     "Share Folder" : {
+      "comment" : "A page asks to share a folder with Sidefolk: the button",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -170002,6 +170364,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "共享文件夹"
+          }
+        }
+      }
+    },
+    "Share a folder with Sidefolk" : {
+      "comment" : "A tool: the person's yes to a page asking to share a folder",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة مجلد مع Sidefolk"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Ordner mit Sidefolk teilen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir una carpeta con Sidefolk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager un dossier avec Sidefolk"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi una cartella con Sidefolk"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダをSidefolkと共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더를 Sidefolk와 공유"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar uma pasta com o Sidefolk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 Sidefolk 共享文件夹"
           }
         }
       }
@@ -187585,6 +188006,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "告诉我要监视哪个文件或文件夹。"
+          }
+        }
+      }
+    },
+    "Tell me which folder." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخبرني أي مجلد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sag mir, welcher Ordner."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dime qué carpeta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dites-moi quel dossier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimmi quale cartella."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どのフォルダか教えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어떤 폴더인지 알려 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diga qual pasta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "告诉我是哪个文件夹。"
           }
         }
       }
@@ -206432,6 +206911,64 @@
         }
       }
     },
+    "This file is hidden, so Scout looks at its size and time only, never what's in it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الملف مخفي، لذا ينظر Scout إلى حجمه ووقته فقط، ولا ينظر إلى محتواه أبدًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist versteckt: Scout sieht nur ihre Größe und Zeit, nie ihren Inhalt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este archivo está oculto: Scout solo mira su tamaño y su fecha, nunca su contenido."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier est masqué : Scout regarde seulement sa taille et sa date, jamais son contenu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo file è nascosto: Scout guarda solo dimensione e data, mai il contenuto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このファイルは隠しファイルなので、Scoutはサイズと時刻だけを見て、中身は見ません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 파일은 숨김 파일이라 Scout는 크기와 시간만 보고 내용은 보지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este arquivo está oculto: o Scout olha só o tamanho e a data, nunca o conteúdo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此文件是隐藏的，Scout 只查看其大小和时间，绝不查看内容。"
+          }
+        }
+      }
+    },
     "This file isn't plain text, so Scout compares its size and time only." : {
       "localizations" : {
         "ar" : {
@@ -221132,6 +221669,64 @@
         }
       }
     },
+    "Watch a hidden file?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تريد مراقبة ملف مخفي؟"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine versteckte Datei beobachten?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Vigilar un archivo oculto?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveiller un fichier masqué ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osservare un file nascosto?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隠しファイルを見守りますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "숨김 파일을 지켜볼까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observar um arquivo oculto?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "监视隐藏文件？"
+          }
+        }
+      }
+    },
     "Watch a page" : {
       "localizations" : {
         "ar" : {
@@ -221418,6 +222013,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "监视 %@ 何时消失"
+          }
+        }
+      }
+    },
+    "Watch hidden file %@ for changes, its size and time only" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مراقبة تغيّرات الملف المخفي %@، حجمه ووقته فقط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versteckte Datei %@ auf Änderungen beobachten, nur Größe und Zeit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vigilar cambios en el archivo oculto %@, solo su tamaño y su fecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveiller les changements du fichier masqué %@, sa taille et sa date seulement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osserva le modifiche del file nascosto %@, solo dimensione e data"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隠しファイル %@ の変更を見守る（サイズと時刻のみ）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "숨김 파일 %@의 변경을 지켜보기(크기와 시간만)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observar mudanças no arquivo oculto %@, só o tamanho e a data"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "监视隐藏文件 %@ 的变化，仅大小和时间"
           }
         }
       }
@@ -256552,6 +257205,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "“contains”和“not_contains”用于网页。"
+          }
+        }
+      }
+    },
+    "“cooldown_minutes” must be between 0 and 7 days." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن تكون “cooldown_minutes” بين 0 و7 أيام."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„cooldown_minutes“ muss zwischen 0 und 7 Tagen liegen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“cooldown_minutes” debe estar entre 0 y 7 días."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« cooldown_minutes » doit être compris entre 0 et 7 jours."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“cooldown_minutes” deve essere tra 0 e 7 giorni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“cooldown_minutes” は0から7日の間で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“cooldown_minutes”는 0에서 7일 사이여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“cooldown_minutes” deve ficar entre 0 e 7 dias."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“cooldown_minutes”必须在 0 到 7 天之间。"
           }
         }
       }

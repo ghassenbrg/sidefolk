@@ -19,6 +19,8 @@ extension ExtensionPage {
             public var state: State
             public var pill: Badge?
             public var branches: [Branch]
+            /// Stays where it is, first in its run: what sets the rest off. Nothing moves or removes it.
+            public var fixed = false
         }
 
         public struct Branch: Sendable, Hashable, Identifiable {
@@ -64,6 +66,8 @@ extension ExtensionPage {
         public var select: Steps.Hook?
         public var insert: Steps.Hook?
         public var reorder: Steps.Hook?
+        /// Takes a card away: its id goes under the hook's key. On a card's menu.
+        public var remove: Steps.Hook?
         public var picker: Picker?
         /// Small buttons floating beside it, each drawn as its symbol.
         public var tools: [Control]
@@ -79,11 +83,36 @@ extension ExtensionPage {
         /// The cards that move together with `id`: those beside it in one run of the tree.
         public func siblings(of id: String) -> [Node] {
             func find(_ nodes: [Node]) -> [Node]? {
-                if nodes.contains(where: { $0.id == id }) { return nodes }
+                if nodes.contains(where: { $0.id == id }) { return nodes.filter { !$0.fixed } }
                 for node in nodes { for branch in node.branches { if let found = find(branch.nodes) { return found } } }
                 return nil
             }
             return find(nodes) ?? []
+        }
+
+        /// The card and all that hangs from it. A card can't be put inside itself.
+        public func family(of id: String) -> Set<String> {
+            guard let node = reading.first(where: { $0.id == id }) else { return [] }
+            func walk(_ node: Node) -> [String] { [node.id] + node.branches.flatMap { [$0.id] + $0.nodes.flatMap(walk) } }
+            return Set(walk(node))
+        }
+
+        /// What putting `id` at a + spot says: `{"id", "after"}`, with the spot's own target. Nil when it stands there already, or the spot is inside it.
+        public func place(_ id: String, after target: String) -> JSONValue? {
+            guard reorder != nil, let node = reading.first(where: { $0.id == id }), !node.fixed, !family(of: id).contains(target), spot(of: id) != target else { return nil }
+            return ["id": .string(id), "after": .string(target)]
+        }
+
+        /// The + spot a card comes straight after: the card before it, or the start of its branch.
+        func spot(of id: String) -> String? {
+            func find(_ nodes: [Node], first: String?) -> String? {
+                for (at, node) in nodes.enumerated() {
+                    if node.id == id { return at == 0 ? first : nodes[at - 1].id }
+                    for branch in node.branches { if let found = find(branch.nodes, first: branch.id) { return found } }
+                }
+                return nil
+            }
+            return find(nodes, first: nil)
         }
 
         /// What moving `id` by one place among its own says: the id it now stands before, or `.null` at the end. Nil when it can't go there.
@@ -130,7 +159,7 @@ extension ExtensionPage {
                     return Tree.Branch(id: bid, label: label, tone: tone(b["tone"]), taken: b["taken"]?.boolValue, nodes: nodes(b["nodes"], depth: depth + 1))
                 }
                 return Tree.Node(id: id, kind: text(n["kind"], 30), title: title, symbol: symbol(n["symbol"]), color: color(n["color"]),
-                                 state: n["state"]?.stringValue.flatMap(Tree.Node.State.init(rawValue:)) ?? .none, pill: pill, branches: Array(branches))
+                                 state: n["state"]?.stringValue.flatMap(Tree.Node.State.init(rawValue:)) ?? .none, pill: pill, branches: Array(branches), fixed: n["fixed"]?.boolValue ?? false)
             }
         }
         let list = nodes(j["nodes"], depth: 0)
@@ -148,7 +177,7 @@ extension ExtensionPage {
             }
             if !items.isEmpty { picker = Tree.Picker(placeholder: text(p["placeholder"], 60), note: text(p["note"], 120), key: key, categories: categories, items: items) }
         }
-        return Tree(nodes: list, selected: j["selected"]?.stringValue, select: hook(j["select"]), insert: hook(j["insert"]), reorder: hook(j["reorder"]), picker: picker,
+        return Tree(nodes: list, selected: j["selected"]?.stringValue, select: hook(j["select"]), insert: hook(j["insert"]), reorder: hook(j["reorder"]), remove: hook(j["remove"]), picker: picker,
                     tools: (j["tools"]?.arrayValue ?? []).prefix(6).compactMap { button($0, characters: 30) },
                     line: Array((j["line"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2)))
     }

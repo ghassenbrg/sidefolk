@@ -125,9 +125,11 @@ public struct ToolScope: Sendable, Hashable {
     /// Where this call goes on the network when Sidefolk's own code fixes it, whatever the model writes (D47).
     /// Nil leaves it to `url` (an address the model may have chosen) and to the tool's capabilities.
     public var reach: NetworkReach?
+    /// The call learns only a hidden file's size and time, never what's in it (D-SHARE). Guard then asks about that one file instead of refusing.
+    public var factsOnly: Bool
 
     public init(readPaths: [String] = [], writePaths: [String] = [], command: String? = nil, url: String? = nil,
-                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil) {
+                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil, factsOnly: Bool = false) {
         self.readPaths = readPaths
         self.writePaths = writePaths
         self.command = command
@@ -135,6 +137,7 @@ public struct ToolScope: Sendable, Hashable {
         self.extensionId = extensionId
         self.text = text
         self.reach = reach
+        self.factsOnly = factsOnly
     }
 
     public static let none = ToolScope()

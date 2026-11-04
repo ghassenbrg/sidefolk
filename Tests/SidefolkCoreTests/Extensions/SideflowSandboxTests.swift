@@ -227,6 +227,75 @@ import Testing
         #expect(tree?.reading.allSatisfy { $0.state == .pending } == true, "dashed: nothing has run")
     }
 
+    static var packAsksToShare: Bool {
+        let inspector = ExtFixtures.addonsRepo.appendingPathComponent("extensions/sideflow/Sources/Inspector.swift")
+        return (try? String(contentsOf: inspector, encoding: .utf8))?.contains(".share(path:") == true
+    }
+
+    /// Sidefolk's own watch tools, for what a flow's trigger makes.
+    private static func realWatches(_ env: TestEnv) -> WatcherEngine {
+        let watchers = WatcherEngine(store: WatcherStore(env.db), attention: AttentionCenter(store: AttentionStore(env.db), events: env.events, clock: env.clock), events: env.events, clock: env.clock,
+                                     opener: { _ in }, probes: WatchProbes.standard(fetcher: FakeFetcher(), throttle: HostThrottle()))
+        env.registry.register(WatchTools.make(engine: watchers))
+        return watchers
+    }
+
+    private static func watching(_ path: String) -> JSONValue {
+        ["trigger": ["type": "watch", "kind": "file_changes", "target": .string(path)], "steps": [["id": "t", "do": "notify.user", "with": ["title": "Changed"]]]]
+    }
+
+    /// The folder isn't shared: the flow says so where the person is and offers to, and once it's shared it goes on by itself.
+    @Test(.enabled(if: packAsksToShare, "this checkout's Sideflow pack doesn't ask to share a folder yet"))
+    func aFolderThatIsntSharedIsAskedForRightThere() async throws {
+        let w = try await World()
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("flow-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("status.txt").path
+        FileManager.default.createFile(atPath: file, contents: Data("one".utf8))
+        _ = Self.realWatches(w.h.env)
+
+        let check = await w.h.env.executor.check(name: "watch.create", input: ["kind": "file_changes", "target": .string(file), "mode": "repeat", "title": "t"],
+                                                 caller: .extension(id: "dev.sidefolk.sideflow"), tainted: false, standing: false)
+        #expect(check?.decision == .deny)
+        #expect(check?.share == FolderAccess.canonical(folder.path))
+
+        let made = await w.h.call("ext.sideflow.create_flow", ["name": "Status", "definition": Self.watching(file)])
+        #expect(made.isOK, "\(w.text(made))")
+        guard let id = await w.flow("Status")?["id"]?.stringValue else { Issue.record("no flow"); return }
+        func page() async -> String { (try? await w.h.host.renderPage(extensionId: "dev.sidefolk.sideflow", page: "flows", state: ["flow": .string(id)]))?.sections.description ?? "" }
+        await w.until("the card to say it", seconds: 12) { await page().contains("Needs a folder") }
+
+        try await w.h.env.permissions.grantFolder(folder.path, access: .read)
+        await w.until("the card to stop saying it", seconds: 12) { await !page().contains("Needs a folder") }
+    }
+
+    /// One hidden file: the plan they read names it, the watch is made, and no words of it are kept.
+    @Test(.enabled(if: packAsksToShare, "this checkout's Sideflow pack doesn't ask to share a folder yet"))
+    func aHiddenFileWatchedByAPlanKeepsNoWords() async throws {
+        let w = try await World()
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("flow-\(UUID().uuidString)/.tmp")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder.deletingLastPathComponent()) }
+        let file = folder.appendingPathComponent("status.txt").path
+        FileManager.default.createFile(atPath: file, contents: Data("private words".utf8))
+
+        let watchers = Self.realWatches(w.h.env)
+
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        let made = await w.h.call("ext.sideflow.create_flow", ["name": "Hidden", "definition": Self.watching(file), "start": true])
+        #expect(made.isOK, "\(w.text(made))")
+        _ = await answer.value
+        await w.until("it to be on") { await w.flow("Hidden")?["state"]?.stringValue == "on" }
+        let row = try await w.h.env.activity.recent(limit: 1, tool: "watch.create").first
+        #expect(row?.decision == .plan)
+        #expect(row?.summary.contains("size and time only") == true)
+        let list = await watchers.list()
+        let watcher = try #require(list.first { $0.title == "Hidden · Sideflow" })
+        #expect(watcher.state == .active)
+        #expect(watcher.lastState?.jsonString.contains("private") != true)
+    }
+
     @Test func thePageRendersAndALargeFlowFits() async throws {
         let w = try await World()
         var steps: [JSONValue] = []

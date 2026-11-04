@@ -60,8 +60,11 @@ import Foundation
         public var mutates: Bool
         /// It fits a plan, so no card.
         public var standing: Bool
+        /// The folder that would let it through, when all that's in the way is that it isn't shared: for a button with `PageAct.share`.
+        public var share: String?
 
-        public init(decision: Decision, why: String? = nil, summary: String, mutates: Bool, standing: Bool) {
+        public init(decision: Decision, why: String? = nil, summary: String, mutates: Bool, standing: Bool, share: String? = nil) {
+            self.share = share
             self.decision = decision
             self.why = why
             self.summary = summary
@@ -176,7 +179,7 @@ import Foundation
         guard let id = args.string("request"), let c = checks.removeValue(forKey: id) else { return }
         guard args.bool("ok") == true else { return c.resume(returning: nil) }
         c.resume(returning: Check(decision: Check.Decision(rawValue: args.string("decision") ?? "") ?? .unknown, why: args.string("why"), summary: args.string("summary") ?? "",
-                                  mutates: args.bool("mutates") ?? true, standing: args.bool("standing") ?? false))
+                                  mutates: args.bool("mutates") ?? true, standing: args.bool("standing") ?? false, share: args.string("share")))
     }
 
     static func receiveResult(_ args: Arguments) {

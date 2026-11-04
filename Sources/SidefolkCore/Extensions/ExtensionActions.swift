@@ -76,6 +76,8 @@ public struct ToolCheck: Sendable {
     public var summary: String
     public var risk: Risk
     public var mutates: Bool
+    /// The folder that would let it through, when all that's in the way is that it isn't shared.
+    public var share: String?
 
     public init(decision: Decision, why: String? = nil, summary: String, risk: Risk, mutates: Bool) {
         self.decision = decision

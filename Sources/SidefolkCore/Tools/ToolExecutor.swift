@@ -109,11 +109,15 @@ public final class ToolExecutor: Sendable {
         if let why = tool.refusal(for: input, context: ToolContext(caller: caller, now: clock.now, tainted: tainted)) { return result(.deny, why) }
         guard let policy = try? await permissions.policy(now: clock.now) else { return result(.deny) }
         let grants = (try? await permissions.grants()) ?? [], folders = (try? await permissions.folders()) ?? []
-        switch engine.evaluate(spec: spec, input: input, summary: summary, scope: tool.scope(for: input), caller: caller, tainted: tainted,
+        let scope = tool.scope(for: input)
+        switch engine.evaluate(spec: spec, input: input, summary: summary, scope: scope, caller: caller, tainted: tainted,
                                policy: policy, grants: grants, folders: folders, standing: standing) {
         case .allow: return result(.allow)
         case .ask: return result(.ask)
-        case .deny(let why): return result(.deny, why)
+        case .deny(let why):
+            var check = result(.deny, why)
+            check.share = FolderAccess.folderToShare(read: scope.readPaths, write: scope.writePaths, folders: folders)
+            return check
         }
     }
 

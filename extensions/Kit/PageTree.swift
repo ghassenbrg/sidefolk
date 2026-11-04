@@ -18,8 +18,11 @@ public struct CardTree {
         public var state: State
         public var pill: Badge?
         public var branches: [Branch]
+        /// Stays where it is, first in its run: what sets the rest off. Nothing moves or removes it.
+        public var fixed: Bool
 
-        public init(_ id: String, _ title: String, kind: String? = nil, symbol: String? = nil, color: String? = nil, state: State = .none, pill: Badge? = nil, branches: [Branch] = []) {
+        public init(_ id: String, _ title: String, kind: String? = nil, symbol: String? = nil, color: String? = nil, state: State = .none, pill: Badge? = nil, branches: [Branch] = [], fixed: Bool = false) {
+            self.fixed = fixed
             self.id = id
             self.title = title
             self.kind = kind
@@ -37,6 +40,7 @@ public struct CardTree {
             if let color { out["color"] = color }
             if let pill { out["pill"] = ["text": pill.text, "tone": pill.tone.rawValue] }
             if !branches.isEmpty { out["branches"] = branches.map(\.json) }
+            if fixed { out["fixed"] = true }
             return out
         }
     }
@@ -126,13 +130,17 @@ public struct CardTree {
     public var selected: String?
     public var select: StepRail.Hook?
     public var insert: StepRail.Hook?
+    /// Gets `{"id", "before"}` from Move up and down, `{"id", "after"}` when a card is dragged, under its key.
     public var reorder: StepRail.Hook?
+    /// Takes a card away, from its menu: its id goes under the key.
+    public var remove: StepRail.Hook?
     public var picker: Picker?
     public var tools: [Action]
     /// `#RRGGBB`, one or two: the line, running from one to the other.
     public var line: [String]
 
-    public init(_ nodes: [Node], selected: String? = nil, select: StepRail.Hook? = nil, insert: StepRail.Hook? = nil, reorder: StepRail.Hook? = nil, picker: Picker? = nil, tools: [Action] = [], line: [String] = []) {
+    public init(_ nodes: [Node], selected: String? = nil, select: StepRail.Hook? = nil, insert: StepRail.Hook? = nil, reorder: StepRail.Hook? = nil, remove: StepRail.Hook? = nil, picker: Picker? = nil, tools: [Action] = [], line: [String] = []) {
+        self.remove = remove
         self.nodes = nodes
         self.selected = selected
         self.select = select
@@ -149,6 +157,7 @@ public struct CardTree {
         if let select { out["select"] = select.json }
         if let insert { out["insert"] = insert.json }
         if let reorder { out["reorder"] = reorder.json }
+        if let remove { out["remove"] = remove.json }
         if let picker { out["picker"] = picker.json }
         return out
     }

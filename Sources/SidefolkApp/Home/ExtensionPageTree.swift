@@ -134,7 +134,7 @@ private struct TreeCanvas: View {
                 }
                 if let insert = tree.insert {
                     ForEach(layout.adds, id: \.target) { add in
-                        TreeAddButton(add: add, hook: insert, picker: tree.picker, line: line, model: model).treeCenter(add.point, side: 24)
+                        TreeAddButton(add: add, hook: insert, picker: tree.picker, tree: tree, line: line, model: model).treeCenter(add.point, side: 36)
                     }
                 }
                 if model.page?.companion == true, let active = layout.cards.first(where: { $0.node.state == .active }) {
@@ -210,9 +210,11 @@ private struct TreeCard: View {
     var line: TreeLine
     var model: ExtensionPageModel
     @State private var hovering = false
+    @State private var dropping = false
     @Environment(\.pageSelected) private var chosen
 
     private var selected: Bool { tree.selected == node.id }
+    private var hasActions: Bool { !node.fixed && (tree.reorder != nil || tree.remove != nil) }
     /// One colour on a card's edge: the line alone runs from one to the other.
     private var edge: Color { chosen ?? line.to }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 14, style: .continuous) }
@@ -243,12 +245,16 @@ private struct TreeCard: View {
         .allowsHitTesting(tree.select != nil)
         .opacity(node.state == .skipped ? 0.55 : 1)
         .elevation(node.state == .pending || node.state == .skipped ? .e0 : (hovering ? .e2 : .e1))
-        .onHover { hovering = $0 }
-        .contextMenu { moves }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(ext: spoken))
         .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityActions { moves }
+        .accessibilityActions { actions }
+        // Beside the card's button, not in it: a control inside a button's label isn't sure to get its click.
+        .overlay(alignment: .trailing) { menu }
+        .overlay { if dropping { shape.strokeBorder(line.to, style: StrokeStyle(lineWidth: 2, dash: [5, 4])) } }
+        .onHover { hovering = $0 }
+        .contextMenu { actions }
+        .modifier(TreeCardDrag(node: node, tree: tree, model: model, dropping: $dropping))
     }
 
     /// Its kind, what it does and its state: what the card shows, said in that order.
@@ -280,16 +286,23 @@ private struct TreeCard: View {
             Image(systemName: ExtensionPage.Tone.good.symbol).font(.system(size: 18)).foregroundStyle(ExtensionPage.Tone.good.color)
                 .accessibilityLabel(Text("Done", comment: "A card on an extension's page: what it is about is done for today"))
         }
-        if selected, tree.reorder != nil, tree.move(node.id, by: -1) != nil || tree.move(node.id, by: 1) != nil {
-            Menu { moves } label: { Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.inkMuted).frame(width: 24, height: 24) }
+        // Room for the menu, so a pill doesn't run under it.
+        if hasActions { Color.clear.frame(width: 16, height: 1) }
+    }
+
+    @ViewBuilder private var menu: some View {
+        if hasActions, hovering || selected {
+            Menu { actions } label: { Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.inkMuted).frame(width: 24, height: 24) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                 .tint(Theme.inkMuted)
+                .padding(.trailing, Theme.Space.xs)
+                .help(Text("More", comment: "A card on an extension's page: its menu"))
                 .accessibilityLabel(Text("More", comment: "A card on an extension's page: its menu"))
         }
     }
 
-    @ViewBuilder private var moves: some View {
-        if let reorder = tree.reorder {
+    @ViewBuilder private var actions: some View {
+        if let reorder = tree.reorder, !node.fixed {
             if let up = tree.move(node.id, by: -1) {
                 Button { Task { await model.run(tool: reorder.tool, input: reorder.input(up)) } } label: { Text("Move up", comment: "A row or card on an extension's page: its menu") }
             }
@@ -297,6 +310,37 @@ private struct TreeCard: View {
                 Button { Task { await model.run(tool: reorder.tool, input: reorder.input(down)) } } label: { Text("Move down", comment: "A row or card on an extension's page: its menu") }
             }
         }
+        if let remove = tree.remove, !node.fixed {
+            Button(role: .destructive) { Task { await model.run(tool: remove.tool, input: remove.input(.string(node.id))) } } label: { Text("Remove", comment: "A card on an extension's page: its menu") }
+        }
+    }
+}
+
+/// Picks a card up, and takes one dropped on it to stand right after it. The system's own drag: the words carried are only the card's id, and only a card of this tree lands.
+private struct TreeCardDrag: ViewModifier {
+    var node: ExtensionPage.Tree.Node
+    var tree: ExtensionPage.Tree
+    var model: ExtensionPageModel
+    @Binding var dropping: Bool
+
+    func body(content: Content) -> some View {
+        if let reorder = tree.reorder {
+            content
+                .treeDraggable(node.fixed ? nil : node.id)
+                .dropDestination(for: String.self) { ids, _ in
+                    guard let id = ids.first, let place = tree.place(id, after: node.id) else { return false }
+                    Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
+                    return true
+                } isTargeted: { dropping = $0 }
+        } else {
+            content
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder func treeDraggable(_ id: String?) -> some View {
+        if let id { draggable(id) } else { self }
     }
 }
 
@@ -364,10 +408,13 @@ private struct TreeAddButton: View {
     var add: TreeLayout.Add
     var hook: ExtensionPage.Steps.Hook
     var picker: ExtensionPage.Tree.Picker?
+    var tree: ExtensionPage.Tree
     var line: TreeLine
     var model: ExtensionPageModel
     @State private var hovering = false
     @State private var picking = false
+    @State private var dropping = false
+    private var reorder: ExtensionPage.Steps.Hook? { tree.reorder }
     @FocusState private var focused: Bool
     // A popover has an environment of its own.
     @Environment(\.pageSelected) private var accent
@@ -383,15 +430,24 @@ private struct TreeAddButton: View {
             Image(systemName: "plus").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.ink)
                 .frame(width: 22, height: 22)
                 .background(Theme.surfaceRaised, in: Circle())
-                .overlay(Circle().strokeBorder(hovering ? line.to : Theme.line))
+                .overlay(Circle().strokeBorder(hovering || dropping ? line.to : Theme.line, lineWidth: dropping ? 2 : 1))
+                .scaleEffect(dropping ? 1.4 : 1)
                 .contentShape(Circle())
         }
         .buttonStyle(.sfBare)
         .focused($focused)
         .onHover { hovering = $0 }
-        .opacity(add.quiet && !hovering && !focused && !picking ? 0 : 1)
+        .opacity(add.quiet && !hovering && !focused && !picking && !dropping ? 0 : 1)
         .help(Text(ext: hook.label ?? ""))
         .accessibilityLabel(Text(ext: hook.label ?? ""))
+        // A card dragged here lands at this spot: on either side of the +, so it needn't be hit exactly.
+        .frame(width: 36, height: 36)
+        .contentShape(Rectangle())
+        .dropDestination(for: String.self) { ids, _ in
+            guard let reorder, let id = ids.first, let place = tree.place(id, after: add.target) else { return false }
+            Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
+            return true
+        } isTargeted: { dropping = $0 }
         .popover(isPresented: $picking, arrowEdge: .bottom) {
             if let picker {
                 TreePicker(picker: picker, accent: accent) { id in

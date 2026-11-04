@@ -51,7 +51,8 @@ public enum FolderAccess {
     static let privateScratch = ["/private/tmp", "/private/var/folders"]
 
     /// Locations tools never touch, even inside a granted folder. The reason is worded for people.
-    public static func forbiddenReason(_ paths: [String]) -> String? {
+    /// With `hiddenFine`, a hidden place alone doesn't refuse it: for a call that reads no more than a file's size and time.
+    public static func forbiddenReason(_ paths: [String], hiddenFine: Bool = false) -> String? {
         let home = self.home
         let sidefolk = [SidefolkPaths.standard().home.path, ProcessInfo.processInfo.environment["SIDEFOLK_HOME"]]
             .compactMap { $0 }.compactMap { canonical($0) }
@@ -70,11 +71,24 @@ public enum FolderAccess {
                 return String(localized: "Sidefolk only works inside your own home folder.")
             }
             // Hidden files and folders (.ssh, .git, .env, .claude …) are off limits.
-            if p.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
+            if !hiddenFine, isHidden(p) {
                 return String(localized: "Sidefolk doesn't touch hidden files or folders.")
             }
         }
         return nil
+    }
+
+    /// Whether the path has a hidden file or folder in it (.ssh, .git, .env, .claude …).
+    public static func isHidden(_ path: String) -> Bool {
+        (canonical(path) ?? path).split(separator: "/").contains { $0.hasPrefix(".") }
+    }
+
+    /// The folder that would let these paths through: what to offer when the only thing in the way is that it isn't shared.
+    /// Nil when one is already allowed for this, or a rule sharing can't change refuses them.
+    public static func folderToShare(read: [String], write: [String], folders: [GrantedFolder]) -> String? {
+        guard forbiddenReason(read + write) == nil else { return nil }
+        let blocked = write.filter { !allows($0, write: true, folders: folders) } + read.filter { !allows($0, write: false, folders: folders) }
+        return blocked.first.flatMap(suggestedFolder)
     }
 
     /// Folders that can never be granted as a whole (too broad): the disk, home itself, a whole

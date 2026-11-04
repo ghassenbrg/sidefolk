@@ -11,6 +11,8 @@ public enum PageAct: Sendable, Hashable {
     case file(PageFileAsk)
     /// Asks the person, in Sidefolk's words, to let this extension have something (D106, D107).
     case allow(PageConsent)
+    /// Asks the person, in Sidefolk's words, to share the folder a path is in with Sidefolk (D-SHARE).
+    case share(PageShareAsk)
     /// One of Sidefolk's or the Mac's settings panes.
     case settings(PageSettingsPane)
     /// Opens one of this extension's own palettes, as its shortcut does. The button shows that shortcut.
@@ -18,12 +20,13 @@ public enum PageAct: Sendable, Hashable {
     /// Reads the page again now.
     case refresh
 
-    /// The control's own: `go`, `copy`, `file`, `allow` or `settings`. Exactly one, or it isn't drawn as one.
+    /// The control's own: `go`, `copy`, `file`, `allow`, `share` or `settings`. Exactly one, or it isn't drawn as one.
     static func parse(_ j: JSONValue) -> PageAct? {
         if let go = PageGo.parse(j["go"]) { return .go(go) }
         if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(2000))) }
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
         if let consent = j["allow"]?.stringValue.flatMap(PageConsent.init(rawValue:)) { return .allow(consent) }
+        if let share = PageShareAsk.parse(j["share"]) { return .share(share) }
         if let pane = j["settings"]?.stringValue.flatMap(PageSettingsPane.init(rawValue:)) { return .settings(pane) }
         if let palette = j["palette"]?.stringValue, palette.range(of: ManifestValidator.namePattern, options: .regularExpression) != nil { return .palette(palette) }
         if j["refresh"]?.boolValue == true { return .refresh }
@@ -66,6 +69,32 @@ public struct PageFileAsk: Sendable, Hashable {
               let input = ExtensionPage.smallInput(j["input"]) else { return nil }
         let types = (j["types"]?.arrayValue ?? []).prefix(8).compactMap { $0.stringValue }.filter { $0.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil }
         return PageFileAsk(tool: tool, param: param, types: Array(types), input: input)
+    }
+}
+
+/// `{"path": "~/ws/report.txt", "write": false}`. The extension names a path; Sidefolk works out the folder, says it, and the person answers.
+public struct PageShareAsk: Sendable, Hashable {
+    public var path: String
+    public var write: Bool
+
+    public init(path: String, write: Bool = false) {
+        self.path = path
+        self.write = write
+    }
+
+    /// The folder to ask about, or why there's nothing to ask.
+    public func folder() -> Result<String, UserFacingError> {
+        let path = (path as NSString).expandingTildeInPath
+        if let why = FolderAccess.forbiddenReason([path]) { return .failure(UserFacingError(verbatim: why)) }
+        guard let folder = FolderAccess.suggestedFolder(for: path) else {
+            return .failure(UserFacingError("That location is too broad to share. Add a specific folder in Settings › Trust."))
+        }
+        return .success(folder)
+    }
+
+    static func parse(_ j: JSONValue?) -> PageShareAsk? {
+        guard let j, let path = j["path"]?.stringValue, !path.isEmpty, path.utf8.count <= 1024 else { return nil }
+        return PageShareAsk(path: path, write: j["write"]?.boolValue ?? false)
     }
 }
 

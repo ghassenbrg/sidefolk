@@ -82,6 +82,14 @@ final class ExtensionPagesModel {
     #if DEBUG
     func asks(_ id: String, _ consent: PageConsent) { models[id]?.asking = consent }
 
+    /// The debug app's stand-in for a press of a page's `share`, then for the person's yes.
+    func asksToShare(_ id: String, path: String) async { await models[id]?.perform(.share(PageShareAsk(path: path))) }
+    func answersShare(_ id: String) async {
+        guard let model = models[id], let question = model.sharing else { return }
+        model.sharing = nil
+        await model.share(question)
+    }
+
     func pressInlay(_ id: String, label: String) async -> Bool {
         guard let model = models[id], let page = model.page else { return false }
         for section in page.sections {
@@ -192,6 +200,12 @@ enum ExtensionControl {
     }
 }
 
+/// Which folder a page's `share` is asking about: worked out by Sidefolk, whatever path the extension named.
+struct PageFolderQuestion: Sendable, Hashable {
+    var folder: String
+    var write: Bool
+}
+
 /// The system's open panel for a page's `file` (D105): the person chooses, and only then does the tool hear of a path.
 enum PageFilePanel {
     @MainActor
@@ -261,6 +275,8 @@ final class ExtensionPageModel {
     private(set) var copied: String?
     /// Waiting for the person to answer Sidefolk's question (D106, D107).
     var asking: PageConsent?
+    /// The folder Sidefolk is asking to share, for a page's `share`.
+    var sharing: PageFolderQuestion?
     private var placePurpose: String?
     private var schedulePurpose: String?
     /// The extension's settings and its use of the AI, as the host keeps them (D100).
@@ -382,6 +398,11 @@ final class ExtensionPageModel {
             if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
         case .allow(let consent):
             asking = consent
+        case .share(let ask):
+            switch ask.folder() {
+            case .success(let folder): sharing = PageFolderQuestion(folder: folder, write: ask.write)
+            case .failure(let why): problem = why.message
+            }
         case .palette(let name):
             services?.openPalette("\(info.extensionId)/\(name)")
         case .refresh:
@@ -516,6 +537,14 @@ final class ExtensionPageModel {
     }
 
     /// The person's answer to Sidefolk's question (D106, D107), through the tool that records it.
+    /// The person said yes to sharing the folder. Their click alone reaches this tool, and it's in History.
+    func share(_ question: PageFolderQuestion) async {
+        guard let services else { return }
+        let outcome = await services.runtime.executor.execute(name: FolderShare.toolName, input: ["folder": .string(question.folder), "write": .bool(question.write)], caller: .user)
+        await refresh()
+        if let why = outcome.problem?.message { problem = why }
+    }
+
     func answer(_ consent: PageConsent, allow: Bool) async {
         guard let services else { return }
         let what = consent == .place ? "place" : "schedule"

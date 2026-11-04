@@ -330,6 +330,13 @@ group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; a
    `$SIDEFOLK_HOME`. Never grantable as a whole: `/`, `/Users`, `/Volumes` and each volume's root,
    `$HOME` itself, `/private/tmp`, `/private/var/folders`. The same check gates extension
    `files.read`/`files.write` and file watchers.
+   - *One hidden file by its facts (D-SHARE).* A `watch.create` of kind `file_changes` or `file_appears` may name a path with a hidden part, which `ToolScope.factsOnly`
+     says. It reads size and time only: no text is read or kept (`FileChangesProbe`), nothing is offered to open, and every other rule in this list still refuses it (other
+     homes, `~/Library`, the Sidefolk root). Guard asks on a card with no "Always", or the call fits a plan the person read that names the path; the person's own request
+     runs; other agents are refused. `folder_new_file` stays refused, since names are more than facts, and a hidden folder is never grantable.
+   - *A folder asked for from a page (D-SHARE).* A page's `share` names a path; Sidefolk works out the folder with `suggestedFolder` (so the rules above apply) and asks in its
+     own words, naming the extension. The extension's words aren't in the question, it can't press the button itself, and only `.user` reaches `folders.share`, which
+     `grantFolder` checks again. It's a grant like Settings', without the open panel: TCC still asks for Documents, Desktop and Downloads on the first read.
 3. Check: reject NUL, relative paths and `.`/`..` components. Do not collapse them lexically:
    `standardizedFileURL` turns `granted/link/../x` into `granted/x`, but the kernel resolves
    `link` first. Walk up to the deepest existing ancestor using **lstat** semantics, `realpath`

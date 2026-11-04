@@ -155,6 +155,8 @@ extension WatcherEngine {
 
     func cooldown(for w: Watcher, _ probe: any WatcherProbe) -> TimeInterval {
         if let minutes = w.config["cooldown_minutes"]?.doubleValue, minutes >= 0 { return minutes * 60 }
+        // The rest spares the person a watch that keeps ringing. One an extension made rings no one: it tells that extension (D111), which decides.
+        if w.source.hasPrefix("extension:") { return 0 }
         return probe.repeatCooldown
     }
 
