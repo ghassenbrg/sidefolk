@@ -107,6 +107,8 @@ final class NowModel {
     var focus: Focus = .all
     /// The watch someone pressed Stop on and hasn't answered for yet.
     var stopAsk = WatchStopAsk()
+    /// Told after a watch was stopped from the question, for pages that show it.
+    var stopped: (() async -> Void)?
 
     enum Focus: String, CaseIterable, Identifiable {
         case all, agents, mine, watches
@@ -542,6 +544,7 @@ final class NowModel {
         Task {
             await services.stopWatcher(id)
             await reload()
+            await stopped?()
         }
     }
 
