@@ -329,6 +329,90 @@ import Testing
         #expect(!outcome.isOK)
     }
 
+    // MARK: A plan names who offers the tool (T52)
+
+    /// A provider of tools for the plan, under `id`, with the same short name and the same tool whoever publishes it.
+    private func provide(_ w: World, id: String) async throws {
+        try await w.h.host.install(from: w.h.source(id, manifest: ExtFixtures.manifest(id: id, tools: ["echo": ["risk": "low"]])))
+    }
+
+    private func echoPlan(_ w: World, _ tool: String) async -> JSONValue {
+        async let answer = w.ask(tool, "sidefolk/plan.approve", ["plan": ["id": "echoes", "title": "Echoes", "steps": [["tool": "ext.echoer.echo", "input": ["text": "hi"]]]]])
+        _ = await w.answerCard(.allowOnce)
+        return await answer
+    }
+
+    private func callEcho(_ w: World, _ tool: String) async -> (reply: JSONValue, asked: Bool) {
+        async let reply = w.ask(tool, "sidefolk/tools.call", ["tool": "ext.echoer.echo", "plan": "echoes", "input": ["text": "hi"]])
+        let card = await w.answerCard(.deny)
+        return (await reply, card != nil)
+    }
+
+    @Test func aPlanForOneProvidersToolStandsForNoOtherThatTakesItsName() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        try await provide(w, id: "com.alice.echoer")
+        let approved = await echoPlan(w, tool)
+        #expect(approved["standing"]?.arrayValue?.compactMap(\.boolValue) == [true])
+        let before = await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.echoer.echo", "plan": "echoes", "input": ["text": "hi"]])
+        #expect(before["standing"]?.boolValue == true, "the provider the person read: no card")
+
+        // Taking it away frees its short name; someone else's extension with the same tool takes it.
+        try await w.h.host.uninstall(id: "com.alice.echoer")
+        try await provide(w, id: "com.bob.echoer")
+        let after = await callEcho(w, tool)
+        #expect(after.asked, "a different extension behind the same name is not what the person read")
+        #expect(after.reply["standing"]?.boolValue == false)
+    }
+
+    @Test func aPlanStandsAgainWhenTheSameProviderComesBack() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        try await provide(w, id: "com.alice.echoer")
+        _ = await echoPlan(w, tool)
+        try await w.h.host.uninstall(id: "com.alice.echoer")
+        try await provide(w, id: "com.alice.echoer")
+        let again = await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.echoer.echo", "plan": "echoes", "input": ["text": "hi"]])
+        #expect(again["standing"]?.boolValue == true, "same id, same kind of pack, same tool: still the plan the person read")
+    }
+
+    @Test func theSameIdInstalledAsSomethingElseIsAnotherProvider() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        try await provide(w, id: "com.alice.echoer")
+        _ = await echoPlan(w, tool)
+        // A copy under the same id that Sidefolk's AI wrote, not the pack that was there.
+        try await w.h.host.install(from: w.h.source("copy", manifest: ExtFixtures.manifest(id: "com.alice.echoer", tools: ["echo": ["risk": "low"]])), origin: .draft)
+        let after = await callEcho(w, tool)
+        #expect(after.asked)
+        #expect(after.reply["standing"]?.boolValue == false)
+    }
+
+    @Test func aPlanWrittenBeforeProvidersAsksUntilItIsApprovedAgain() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        try await provide(w, id: "com.alice.echoer")
+        _ = await echoPlan(w, tool)
+        await w.h.host.updatePreferences("com.example.actor") { $0.plans["echoes"]?.steps[0].provider = nil }
+        let old = await callEcho(w, tool)
+        #expect(old.asked, "no provider kept: it can't be told who the person read")
+        let renewed = await echoPlan(w, tool)
+        #expect(renewed["ok"]?.boolValue == true)
+        let again = await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.echoer.echo", "plan": "echoes", "input": ["text": "hi"]])
+        #expect(again["standing"]?.boolValue == true)
+    }
+
+    @Test func theCardNamesWhoseToolItIs() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        try await provide(w, id: "com.alice.echoer")
+        async let answer = w.ask(tool, "sidefolk/plan.approve", ["plan": ["id": "echoes", "steps": [["tool": "ext.echoer.echo", "input": ["text": "hi"]]]]])
+        let card = await w.answerCard(.allowOnce)
+        _ = await answer
+        guard case .text(let words)? = card?.details else { Issue.record("the card must show the plan in full"); return }
+        #expect(words.contains("Sample"), "the provider's name is in the line: \(words)")
+    }
+
     // MARK: What a plan may leave open
 
     @Test func wordsAreFilledInOnlyWhereTheyStayInside() {

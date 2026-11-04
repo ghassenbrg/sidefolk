@@ -1614,7 +1614,7 @@ public actor ExtensionHost {
         let paired = firstParty && meta?.reach == .paired
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
-        return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote,
+        return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote, provider: Self.provider(rt),
                              folderParameters: meta?.paths ?? [:], fileLists: Set((meta?.fileLists ?? [:]).keys), firstParty: firstParty,
                              commands: commandsOf(id, tool: def.name),
                              paired: paired,
@@ -1668,6 +1668,13 @@ public actor ExtensionHost {
     /// The manifest's services as one name for an approval card ("Open-Meteo"; "A and B"), nil without any.
     private static func reachName(_ services: [ExtensionManifest.Service]) -> String? {
         services.isEmpty ? nil : Wording.list(services.map(\.name))
+    }
+
+    /// Who a plan means by this extension's tools: its id and what it was installed as, so a different extension that takes the same name
+    /// later is another provider (T52). A newer version of the same pack is the same one; a copy that isn't signed, or another command, isn't.
+    static func provider(_ rt: Runtime) -> String {
+        let server = rt.pin.server?.commandLine ?? ""
+        return ExtensionHash.sha256(Data([rt.record.id, "\(rt.record.kind)", rt.pin.origin?.rawValue ?? "none", server].joined(separator: "\u{1}").utf8))
     }
 
     func shortName(_ rt: Runtime) -> String {

@@ -14,6 +14,10 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
         public var reach: String
         /// False: it was shown as asking each time, so it asks (`ExtensionActionPolicy`).
         public var standing: Bool
+        /// Who offered the tool when it was allowed (`ExtensionTool.provider`; empty for Sidefolk's own). A short name is free again once
+        /// its extension is gone, so a tool of the same name and shape from another extension is not what the person read (T52). A plan
+        /// written before this has none: its steps on an extension's tool ask until the plan is approved again.
+        public var provider: String?
     }
 
     public var id: String
@@ -205,6 +209,16 @@ enum ExtensionPlanRules {
             .joined(separator: "\u{1}")
     }
 
+    /// Who offers `tool`, as a plan keeps it: nothing for Sidefolk's own tools.
+    static func provider(_ tool: any Tool) -> String {
+        extensionTool(tool)?.provider ?? ""
+    }
+
+    /// The extension's tool behind a tool as an extension is offered it.
+    static func extensionTool(_ tool: any Tool) -> ExtensionTool? {
+        ((tool as? ExternalFacade)?.base ?? tool) as? ExtensionTool
+    }
+
     /// The tool as the person read it. The schema and its risk count: a tool that came to take more isn't what they allowed.
     static func definition(_ spec: ToolSpec) -> String {
         let can = spec.capabilities.map(\.rawValue).sorted().joined(separator: ",")
@@ -224,7 +238,11 @@ enum ExtensionPlanWords {
             guard let value = fields[key], let said = words(value) else { return nil }
             return "\(ArgumentWords.label(key, properties[key])): \(said)"
         }
-        let title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
+        var title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
+        // A plan holds for the extension that offered the tool, so the card says whose it is (as a call's own card does).
+        if let ext = ExtensionPlanRules.extensionTool(tool) {
+            title += " (\(ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40)))"
+        }
         return values.isEmpty ? title : "\(title) · \(values.joined(separator: ", "))"
     }
 

@@ -205,9 +205,11 @@ extension ExtensionHost {
         guard let rt = runtimes[id], let plan, let saved = rt.preferences.plans[plan], saved.live(at: Date(), owner: owner(rt)),
               (rt.pin.permissions ?? ExtensionPermissions()).isContained, ExtensionPlanRules.short(input), let tool = gateway.tool(named: name, for: id) else { return nil }
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
+        let provider = ExtensionPlanRules.provider(tool)
         let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
         let fits = saved.steps.first { step in
-            step.standing && step.tool == tool.spec.name && step.definition == definition && ExtensionPlanRules.same(step.reach, reach)
+            step.standing && step.tool == tool.spec.name && step.definition == definition && (step.provider ?? "") == provider
+                && ExtensionPlanRules.same(step.reach, reach)
                 && ExtensionPlanRules.matches(input, template: step.input, fillable: fillable)
         }
         guard let fits else { return nil }
@@ -249,10 +251,11 @@ extension ExtensionHost {
             }
             let stands = ExtensionPlanRules.standing(tool: tool, template: input)
             let step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: ExtensionPlanRules.definition(tool.spec),
-                                          reach: ExtensionPlanRules.reach(tool.scope(for: input)), standing: stands)
+                                          reach: ExtensionPlanRules.reach(tool.scope(for: input)), standing: stands,
+                                          provider: ExtensionPlanRules.provider(tool))
             guard !steps.contains(step) else { continue }
             steps.append(step)
-            let seen = previous?.steps.contains { $0.tool == step.tool && $0.input == step.input } ?? false
+            let seen = previous?.steps.contains { $0.tool == step.tool && $0.input == step.input && $0.provider == step.provider } ?? false
             lines.append((ExtensionPlanWords.line(tool: tool, template: input), stands, previous != nil && !seen))
         }
         let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
