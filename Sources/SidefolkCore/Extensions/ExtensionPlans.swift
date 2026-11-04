@@ -71,12 +71,16 @@ enum ExtensionPlanRules {
     /// The most distinct lines a plan may hold, and the most rows the program may send for them (the same line once, D186).
     static let maxSteps = 64
     static let maxRows = 256
+    /// The most a plan may weigh as sent, so working it out stays small on the host's own actor.
+    static let maxPlanBytes = 256_000
     static let ttls = 60...3600
     static let perDays = 1...1000
     static let defaultPerDay = 200
     /// How far past the person's click, command or clean request an extension may still ask for a plan: a card is never started by
     /// a timer, a page's words or a model steered by what it read (T3).
     static let personWindow: TimeInterval = 30
+    /// How long the person's own click may be used to answer a plan under Full access: a click and the plan it started come close together.
+    static let clickWindow: TimeInterval = 10
 
     static let slot = try! NSRegularExpression(pattern: #"\{\{\s*[A-Za-z0-9_.\[\]-]{1,60}\s*\}\}"#)
 
@@ -210,13 +214,31 @@ enum ExtensionPlanRules {
             switch s.value {
             case 0xFE0F where shows(before): continue
             case 0x200C, 0x200D:
-                if shows(after), shows(before) || before?.value == 0xFE0F { continue }
+                // A joiner joins writing that has joiners (an emoji, Persian, Hindi): between two ASCII letters it would only change what a card shows.
+                func beyondASCII(_ o: Unicode.Scalar?) -> Bool { o.map { !$0.isASCII } ?? false }
+                if shows(after), shows(before) || before?.value == 0xFE0F, beyondASCII(after), beyondASCII(before) { continue }
                 return false
             default: rest.append(s)
             }
         }
         let shown = String(rest)
-        return same(ExtensionText.clean(shown), shown) && !shown.unicodeScalars.contains { $0.properties.isDefaultIgnorableCodePoint }
+        guard same(ExtensionText.clean(shown), shown), !shown.unicodeScalars.contains(where: { $0.properties.isDefaultIgnorableCodePoint }) else { return false }
+        // What the card shows is the bytes: one plain space between words, none at the ends, no other kind of space, no tab or line break, and no pile of
+        // marks past what the card keeps on a letter.
+        var previous: Unicode.Scalar?, marks = 0
+        for scalar in shown.unicodeScalars {
+            if scalar.properties.isWhitespace || scalar.properties.generalCategory == .spaceSeparator {
+                guard scalar == " ", let last = previous, last != " " else { return false }
+            }
+            switch scalar.properties.generalCategory {
+            case .nonspacingMark, .enclosingMark, .spacingMark:
+                marks += 1
+                if marks > 8 { return false }
+            default: marks = 0
+            }
+            previous = scalar
+        }
+        return previous != " "
     }
 
     /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.
@@ -316,10 +338,13 @@ enum ExtensionPlanWords {
                 ?? String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
             return "“\(parts.joined(separator: "[\(filled)]"))”"
         case .string(let s): return "“\(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))”"
+        // What clears a field is something the person reads too: a null or an empty list sets it to nothing.
+        case .null: return String(localized: "nothing", comment: "A plan's card: a value written as null")
         case .array(let items):
-            let said = items.compactMap { words($0) }
-            return said.isEmpty ? nil : said.joined(separator: ", ")
-        case .object(let o): return o.isEmpty ? nil : ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit)
+            return items.isEmpty ? String(localized: "an empty list", comment: "A plan's card: a value written as an empty list")
+                : items.map { words($0) ?? String(localized: "nothing", comment: "A plan's card: a value written as null") }.joined(separator: ", ")
+        case .object(let o):
+            return o.isEmpty ? String(localized: "an empty record", comment: "A plan's card: a value written as an empty object") : ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit)
         default: return ArgumentWords.words(value)
         }
     }
@@ -342,9 +367,9 @@ struct ExtensionPlanTool: Tool {
 
     private var title: String {
         switch intent {
-        case "run"?: String(localized: "Run \(plan)", comment: "A tool, after “<an extension> wants to”: the person runs a flow, and reads what it will do")
-        case "turn_on"?: String(localized: "Turn on \(plan)", comment: "A tool, after “<an extension> wants to”: the person turns a flow on, and reads what it will do")
-        default: String(localized: "Run \(plan) without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that")
+        case "run"?: String(localized: "Run “\(plan)”", comment: "A tool, after “<an extension> wants to”: the person runs a flow, and reads what it will do")
+        case "turn_on"?: String(localized: "Turn on “\(plan)”", comment: "A tool, after “<an extension> wants to”: the person turns a flow on, and reads what it will do")
+        default: String(localized: "Run “\(plan)” without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that")
         }
     }
 

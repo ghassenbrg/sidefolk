@@ -16,11 +16,20 @@ extension ExtensionPlanRules {
         var fullAccessOnly = false
         /// Why it asks or only stands in Full access, as the editor's marks say it (`sidefolk/plan.check`); nil when it stands.
         var why: String?
+        /// A plain warning on the card for a line that stands (`crossing`: it reads the person's own things and outside words and sends words on).
+        var warning: String?
         /// It stands in no mode: the person's own words are needed there.
         var refused = false
     }
 
-    enum FieldClass { case code, reach, text }
+    enum FieldClass {
+        /// Runs something: outside words never go here, in any mode.
+        case code
+        /// A plain text the receiver shows or stores: where outside words may go.
+        case freeText
+        /// Anything else, and so a place or a choice outside words may not make: only in Full access.
+        case other
+    }
 
     // MARK: Where a filled value comes from
 
@@ -33,49 +42,83 @@ extension ExtensionPlanRules {
         }
     }
 
-    /// For each field a step fills in, whether the words come from inside (the person's own typed answer, or the clock) or outside (anything else).
-    /// Outside is the default: a name the host can't place is outside. A signed extension may name more that are inside (`inside`).
+    /// Names a step can't take, because the host reads them as something else.
+    static let reservedNames: Set<String> = ["today", "now"]
+
+    /// For each field a step fills in: "inside" when the person's own typed answer (an earlier `ask.user` step) or the clock fills it, "claimed" when
+    /// a signed extension says it comes from the person (believed, except where code runs), and "outside" otherwise, which is also what any name the host
+    /// can't place is. A step's name is the host's to read first: a name two steps share, or a step called `now`, never counts as inside.
     static func sources(of template: JSONValue, earlier: [(name: String?, tool: String)], inside: Set<String>, fromPerson: Set<String> = []) -> [String: String] {
         var out: [String: String] = [:]
         for (key, value) in template.objectValue ?? [:] {
             guard let text = value.stringValue, hasSlot(text) else { continue }
-            if fromPerson.contains(key) { out[key] = "inside"; continue }
-            let roots = roots(text)
-            let isInside = roots.allSatisfy { root in
-                inside.contains(root) || ["today", "now"].contains(root) || earlier.contains { $0.name == root && $0.tool == "ask.user" }
+            if fromPerson.contains(key) { out[key] = "claimed"; continue }
+            var claimed = false, outside = false
+            for root in roots(text) {
+                let named = earlier.filter { $0.name == root }
+                if !named.isEmpty {
+                    if !named.allSatisfy({ $0.tool == "ask.user" }) { outside = true }
+                } else if reservedNames.contains(root) {
+                    continue
+                } else if inside.contains(root) {
+                    claimed = true
+                } else {
+                    outside = true
+                }
             }
-            out[key] = isInside ? "inside" : "outside"
+            out[key] = outside ? "outside" : claimed ? "claimed" : "inside"
         }
         return out
     }
 
     // MARK: Fields that decide where a call goes or what it runs
 
-    private static let codeWords: Set<String> = ["command", "cmd", "script", "code", "exec", "execute", "eval", "expression", "sql", "shell", "statement", "program"]
-    private static let reachWords: Set<String> = [
+    private static let codeWords: Set<String> = [
+        "command", "cmd", "script", "code", "exec", "execute", "eval", "expression", "sql", "shell", "statement", "program", "snippet", "args", "argv",
+        "regex", "js", "python", "bash", "zsh", "powershell", "applescript", "javascript",
+    ]
+    private static let placeWords: Set<String> = [
         "url", "uri", "link", "href", "host", "hostname", "domain", "address", "endpoint", "path", "file", "filename", "filepath", "dir", "directory",
-        "folder", "recipient", "recipients", "to", "cc", "bcc", "email", "repo", "repository", "branch", "channel", "webhook", "target", "destination",
-        "server", "origin", "redirect",
+        "folder", "recipient", "email", "repo", "repository", "branch", "channel", "webhook", "target", "destination", "server", "origin", "redirect", "to",
+        "cc", "bcc", "chat", "user", "phone", "number", "attendee", "invitee", "location", "workspace", "account", "device", "tv",
+    ]
+    private static let freeTextWords: Set<String> = [
+        "text", "message", "msg", "body", "content", "title", "subject", "summary", "note", "comment", "description", "caption", "label", "name", "reason",
+        "detail", "remark",
     ]
 
-    /// What kind of place a parameter is, by its name and the schema's hints: a closed guess, the second line behind the card's own words (T53).
-    static func fieldClass(_ key: String, schema: JSONValue?) -> FieldClass {
+    /// A name in lower-case words: camel case, acronyms (`URLPath` is `url`, `path`), digits and plurals taken apart.
+    static func words(in key: String) -> [String] {
+        let chars = Array(key)
         var words: [String] = [], word = ""
-        var previous: Character?
-        for ch in key {
-            if !ch.isLetter && !ch.isNumber {
-                if !word.isEmpty { words.append(word.lowercased()); word = "" }
-            } else {
-                if ch.isUppercase, let p = previous, p.isLowercase, !word.isEmpty { words.append(word.lowercased()); word = "" }
-                word.append(ch)
+        func flush() { if !word.isEmpty { words.append(word.lowercased()); word = "" } }
+        for (i, ch) in chars.enumerated() {
+            guard ch.isLetter || ch.isNumber else { flush(); continue }
+            if let last = word.last {
+                let boundary = (last.isLowercase && ch.isUppercase) || (last.isNumber != ch.isNumber)
+                    || (last.isUppercase && ch.isUppercase && i + 1 < chars.count && chars[i + 1].isLowercase)
+                if boundary { flush() }
             }
-            previous = ch
+            word.append(ch)
         }
-        if !word.isEmpty { words.append(word.lowercased()) }
-        if words.contains(where: codeWords.contains) { return .code }
-        if words.contains(where: reachWords.contains) { return .reach }
-        if let format = schema?["format"]?.stringValue, ["uri", "uri-reference", "iri", "hostname", "email", "idn-email"].contains(format) { return .reach }
-        return .text
+        flush()
+        return words.flatMap { w -> [String] in
+            guard w.count > 3, w.hasSuffix("s"), !w.hasSuffix("ss") else { return [w] }
+            return [w, String(w.dropLast())]
+        }
+    }
+
+    /// What kind of place a parameter is, by its name and the schema: a closed guess and the second line behind the card's own words (T53). Only a plain
+    /// string with a name for words people read is free text; everything else outside words might choose is another place, and code is refused.
+    static func fieldClass(_ key: String, schema: JSONValue?, whole: Bool = false) -> FieldClass {
+        let lower = key.lowercased()
+        let tokens = Set(words(in: key))
+        if !tokens.isDisjoint(with: codeWords) || ["script", "command", "shell"].contains(where: lower.contains) { return .code }
+        if !tokens.isDisjoint(with: placeWords) { return .other }
+        let type = schema?["type"]?.stringValue
+        let plain = (type == "string" || (type == nil && !whole)) && schema?["enum"] == nil && schema?["format"] == nil && schema?["pattern"] == nil
+            && schema?["anyOf"] == nil && schema?["oneOf"] == nil
+        return plain && !tokens.isDisjoint(with: freeTextWords) ? .freeText : .other
     }
 
     // MARK: Standing
@@ -111,13 +154,17 @@ extension ExtensionPlanRules {
                 continue
             }
             if open.contains(key) { continue }
-            guard sources[key] != "inside" else { continue }
-            switch fieldClass(key, schema: properties[key]) {
+            let source = sources[key] ?? "outside"
+            let kind = fieldClass(key, schema: properties[key], whole: isWholeSlot(text))
+            // A signed extension's word for the person's own is believed, but never where code runs.
+            if kind == .code, source != "inside" { return asks("code_field", refused: true) }
+            guard source == "outside" else { continue }
+            switch kind {
             case .code: return asks("code_field", refused: true)
-            case .reach:
+            case .other:
                 fullOnly = true
                 why = "reach_field"
-            case .text:
+            case .freeText:
                 if ext != nil {
                     // Another extension's tool or a server: free words may go in, as the card says, unless the person switched that off.
                     guard context.mayPassToServers else { return asks("switch_off") }
@@ -148,7 +195,11 @@ extension ExtensionPlanRules {
               let before = old.input.objectValue, let now = step.input.objectValue, Set(before.keys) == Set(now.keys) else { return false }
         let open = ExtensionActionPolicy.fillable[step.tool] ?? []
         for (key, value) in now {
-            if open.contains(key), before[key]?.stringValue != nil, value.stringValue != nil { continue }
+            if open.contains(key), let was = before[key]?.stringValue, let now = value.stringValue {
+                // Other words are fine; words that were written and are now filled in from elsewhere are not the same thing.
+                if hasSlot(now), !hasSlot(was) { return false }
+                continue
+            }
             guard let was = before[key], same(was, value) else { return false }
         }
         for (key, source) in step.sources ?? [:] where source == "outside" {

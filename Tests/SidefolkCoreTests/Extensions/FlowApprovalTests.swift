@@ -104,7 +104,7 @@ import Testing
         guard case .text(let words)? = card?.details else { Issue.record("a card, read in full"); return }
         #expect(words.contains("https://other.example.com"))
         #expect(!words.contains("news.example.com"), "what they read before isn't shown again: \(words)")
-        #expect(words.contains("Already allowed, unchanged: 2 things"), "\(words)")
+        #expect(words.contains("Lines already allowed, unchanged: 2"), "\(words)")
         #expect(await reply["new"]?.intValue == 1)
     }
 
@@ -176,7 +176,7 @@ import Testing
         #expect(checked["ok"]?.boolValue == true)
         let states = checked["steps"]?.arrayValue?.compactMap { $0["state"]?.stringValue }
         #expect(states == ["stands", "stands", "stands_in_full_access", "listed"], "\(checked)")
-        #expect(checked["steps"]?.arrayValue?[2]["why"]?.stringValue == "filled_value")
+        #expect(checked["steps"]?.arrayValue?[2]["why"]?.stringValue == "reach_field")
         #expect(checked["new"]?.arrayValue?.compactMap(\.intValue) == [1, 2, 3])
         #expect(checked["silent"]?.boolValue == false)
         #expect(await w.h.env.broker.pending().isEmpty, "no card")
@@ -280,12 +280,14 @@ import Testing
         let card = await w.answerCard(.allowOnce)
         guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
         #expect(words.contains("It sends out:") && words.contains("a server on this Mac, program "), "\(words)")
-        #expect(words.contains("body: “[from “Read the page”]”"), "\(words)")
-        #expect(words.contains("Outside content: Words from “Read the page” go into body of “Create an issue”"), "\(words)")
+        #expect(words.contains("body: “[from “Read the page · web.fetch”]”"), "\(words)")
+        #expect(words.contains("Outside content: Words from “Read the page · web.fetch” go into body of “Create an issue”"), "\(words)")
         #expect(await reply["standing"]?.arrayValue?.compactMap(\.boolValue) == [true, true])
         let run = await w.ask("sidefolk/tools.call", ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Weekly digest", "body": "page words"]])
         #expect(run["standing"]?.boolValue == true && run["text"]?.stringValue == "posted", "\(run)")
         #expect(await w.h.env.broker.pending().isEmpty)
+        let row = try await w.rows("ext.hub.post").first
+        #expect(row?.args?["filled_from"]?.stringValue == "body from page (outside content)", "History says where the words came from: \(String(describing: row?.args))")
     }
 
     @Test func aServerWhoseProgramChangedAsksAgain() async throws {
@@ -334,9 +336,9 @@ import Testing
     @Test func aPersonsOwnAnswerMayFillAPlaceButOutsideWordsMayNot() {
         let ask: [(name: String?, tool: String)] = [("who", "ask.user"), ("page", "web.fetch")]
         let inside = ExtensionPlanRules.sources(of: ["repo": "{{who}}", "body": "{{page}} and {{today}}", "title": "{{form.name}}"], earlier: ask, inside: ["form"])
-        #expect(inside == ["repo": "inside", "body": "outside", "title": "inside"])
+        #expect(inside == ["repo": "inside", "body": "outside", "title": "claimed"], "the clock and a typed answer are inside; a signed extension's word is claimed")
         #expect(ExtensionPlanRules.sources(of: ["repo": "{{form.x}}"], earlier: ask, inside: [])["repo"] == "outside", "a name the host can't place is outside")
-        #expect(ExtensionPlanRules.sources(of: ["repo": "{{x}}"], earlier: ask, inside: [], fromPerson: ["repo"])["repo"] == "inside")
+        #expect(ExtensionPlanRules.sources(of: ["repo": "{{x}}"], earlier: ask, inside: [], fromPerson: ["repo"])["repo"] == "claimed")
     }
 
     @Test func theSwitchTurnsOffPassingWhatItReadsOnToServers() async throws {
@@ -351,25 +353,32 @@ import Testing
         _ = await off
     }
 
-    @Test func readingYourOwnThingsAndOutsideWordsThenSendingThemOnStandsOnlyInFullAccess() async throws {
+    @Test func readingYourOwnThingsAndOutsideWordsThenSendingThemOnStandsWithAWarning() async throws {
         let w = try await World()
         _ = try server(w)
         let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
         let plan = Self.plan([notes, Self.page, Self.post(["body": "{{page}}"])])
         let asked = await w.check(plan)
         let last = asked["steps"]?.arrayValue?.last
-        #expect(last?["state"]?.stringValue == "stands_in_full_access" && last?["why"]?.stringValue == "crossing", "\(asked)")
-        // Drop one leg and it stands.
-        #expect(await w.check(Self.plan([Self.page, Self.post(["body": "{{page}}"])]))["steps"]?.arrayValue?.last?["state"]?.stringValue == "stands")
-        try await w.setMode(.fullAccess)
-        #expect(await w.check(plan)["steps"]?.arrayValue?.last?["state"]?.stringValue == "stands")
+        #expect(last?["state"]?.stringValue == "stands" && last?["warning"]?.stringValue == "crossing", "it stands, and the editor can warn: \(asked)")
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": plan])
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        #expect(words.contains("reads things of yours and outside content") && words.contains("they go to GitHub"), "\(words)")
+        _ = await reply
+        // Drop one leg and there is nothing to warn of.
+        #expect(await w.check(Self.plan([Self.page, Self.post(["body": "{{page}}"])]))["steps"]?.arrayValue?.last?["warning"] == nil)
+        // The person's switch turns it back to asking.
+        try await w.h.env.permissions.updatePolicy { $0.flowsMayPassToServers = false }
+        #expect(await w.check(plan)["steps"]?.arrayValue?.last?["state"]?.stringValue == "asks")
+        try await w.h.env.permissions.updatePolicy { $0.flowsMayPassToServers = true }
         // An AI step is a conduit: it counts as reading what it names, and everything before it when it names nothing.
         try await w.setMode(.askOncePerKind)
         let named: JSONValue = ["kind": "ai", "as": "write", "reads": ["page"]]
         #expect(await w.check(Self.plan([Self.page, named, Self.post(["body": "{{write}}"])]))["steps"]?.arrayValue?.last?["state"]?.stringValue == "stands")
         let everything: JSONValue = ["kind": "ai", "as": "write"]
-        #expect(await w.check(Self.plan([notes, Self.page, everything, Self.post(["body": "{{write}}"])]))["steps"]?.arrayValue?.last?["why"]?.stringValue == "crossing")
-        #expect(await w.check(Self.plan([Self.page, everything, Self.post(["body": "{{write}}"])]))["steps"]?.arrayValue?.last?["why"]?.stringValue == "crossing",
+        #expect(await w.check(Self.plan([notes, Self.page, everything, Self.post(["body": "{{write}}"])]))["steps"]?.arrayValue?.last?["warning"]?.stringValue == "crossing")
+        #expect(await w.check(Self.plan([Self.page, everything, Self.post(["body": "{{write}}"])]))["steps"]?.arrayValue?.last?["warning"]?.stringValue == "crossing",
                 "no names: it may have read your own things too")
     }
 
@@ -378,6 +387,189 @@ import Testing
         _ = try server(w)
         let checked = await w.check(Self.plan([Self.post([:])]))
         #expect(checked["steps"]?.arrayValue?.first?["state"]?.stringValue == "asks", "\(checked)")
+    }
+
+
+    // MARK: What the reads found (T53)
+
+    @Test func aNameTwoStepsShareOrTheClocksNameIsNeverTakenForTheirs() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let fetchAsNow: JSONValue = ["tool": "web.fetch", "as": "now", "input": ["url": "https://news.example.com/feed"]]
+        #expect(await w.check(Self.plan([fetchAsNow, Self.post(["repo": "{{now.x}}"])]))["reason"]?.stringValue == "unusable", "a step can't be called the clock")
+        let ask: JSONValue = ["tool": "notify.user", "as": "q", "input": ["title": "x"]]
+        let again: JSONValue = ["tool": "web.fetch", "as": "q", "input": ["url": "https://news.example.com/feed"]]
+        #expect(await w.check(Self.plan([ask, again]))["reason"]?.stringValue == "unusable", "one name for two steps")
+        let named = ExtensionPlanRules.sources(of: ["repo": "{{q.x}}"], earlier: [("q", "ask.user"), ("q", "web.fetch")], inside: [])
+        #expect(named["repo"] == "outside", "even if one of them is a question")
+    }
+
+    @Test func aSignedExtensionsWordForTheMostIsBelievedExceptWhereCodeRuns() async throws {
+        let w = try await World()
+        _ = try server(w)
+        func state(_ key: String) async -> String? {
+            var step = Self.post([key: "{{form.x}}"])
+            step = .object(["tool": "ext.hub.post", "as": "issue", "input": step["input"] ?? .null, "from": .object([key: "person"])])
+            return await w.check(Self.plan([step]))["steps"]?.arrayValue?.first?["state"]?.stringValue
+        }
+        #expect(await state("body") == "stands")
+        #expect(await state("repo") == "stands", "a place the person typed")
+        #expect(await state("command") == "refused", "never where code runs")
+    }
+
+    @Test func fieldNamesAreReadAsWordsNotAsLetters() {
+        for place in ["urls", "paths", "URLPath", "HTTPEndpoint", "url2", "targetUrl", "recipients_list", "chat_id", "attendees", "workspace"] {
+            #expect(ExtensionPlanRules.fieldClass(place, schema: ["type": "string"]) == .other, "\(place)")
+        }
+        for code in ["command", "commands", "applescript", "sql_statement", "SQLStatement", "args", "run_script", "jsCode"] {
+            #expect(ExtensionPlanRules.fieldClass(code, schema: ["type": "string"]) == .code, "\(code)")
+        }
+        for text in ["body", "message", "issue_body", "title", "commentText"] {
+            #expect(ExtensionPlanRules.fieldClass(text, schema: ["type": "string"]) == .freeText, "\(text)")
+        }
+        #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "string", "format": "uri"]) == .other, "the schema says it is an address")
+        #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "string", "enum": ["a"]]) == .other)
+        #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "object"], whole: true) == .other, "a whole value of any other kind may carry a place inside")
+        #expect(ExtensionPlanRules.fieldClass("payload", schema: ["type": "string"]) == .other, "a name for words nobody reads is not free text")
+    }
+
+    @Test func aWholeObjectIsNeverFreeText() async throws {
+        let w = try await World()
+        let spec = ToolSpec(name: "ext.hub.request", title: "Send a request", description: "", inputSchema: Schema.object(["message": ["type": "object"]]),
+                            risk: .medium, capabilities: [.network, .extensions], category: .extensions, mutates: true)
+        w.h.env.registry.register(ExtensionTool(spec: spec, extensionId: "com.example.hub", extensionName: "Hub", remoteName: "request") { _, _ in ToolResult(text: "") })
+        let step: JSONValue = ["tool": "ext.hub.request", "input": ["message": "{{page}}"]]
+        let state = await w.check(Self.plan([Self.page, step]))["steps"]?.arrayValue?.last?["state"]?.stringValue
+        #expect(state == "stands_in_full_access", "a whole value can hold anything, nested places included")
+    }
+
+    @Test func whatTheCardShowsIsTheBytesThatRun() {
+        for odd in ["a\u{00A0}b", "a\tb", "a\nb", "a  b", " a", "a ", "a\u{3000}b", "e\u{200D}vil", "a\u{200C}b"] {
+            #expect(!ExtensionPlanRules.plain(odd), "\(odd.unicodeScalars.map { String($0.value, radix: 16) })")
+        }
+        #expect(ExtensionPlanRules.plain("Reports final") && ExtensionPlanRules.plain("👩‍💻 at work") && ExtensionPlanRules.plain("می‌خواهم"))
+        #expect(!ExtensionPlanRules.plain("a" + String(repeating: "\u{0301}", count: 12)), "a pile of marks the card would cut")
+        let line = ExtensionPlanWords.line(tool: ExtensionActionsTests.Probe(name: "notes.save", risk: .low, capabilities: [], mutates: true), template: ["tags": .null, "list": [], "id": "7"])
+        #expect(line.contains("tags: nothing") && line.contains("list: an empty list"), "\(line)")
+    }
+
+    @Test func aCoveredReapprovalKeepsTheEndItHad() async throws {
+        let w = try await World()
+        var plan = Self.plan([Self.save]).objectValue ?? [:]
+        plan["ttl"] = 600
+        _ = await w.approve(.object(plan))
+        let first = await w.h.host.info(id: "com.example.flow")?.plans.first?.expiresAt
+        try await Task.sleep(for: .milliseconds(1100))
+        #expect(await !w.approve(.object(plan)).asked)
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.first?.expiresAt == first, "asking again is not a new yes")
+    }
+
+    @Test func oneCardAtATimeEvenWhileTheFirstIsBeingWorkedOut() async throws {
+        let w = try await World()
+        await w.h.host.notePersonCall("com.example.flow", caller: .user, tainted: false)
+        func ask(_ id: String) async {
+            await w.h.host.handleAction("com.example.flow", method: "sidefolk/plan.approve", params: ["request": .string(id), "plan": Self.plan([Self.save, Self.fetch], id: id)])
+        }
+        async let one: Void = ask("one")
+        async let two: Void = ask("two")
+        _ = await (one, two)
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(await w.h.env.broker.pending().count == 1, "the second ask met the first's flag, not a second card")
+        _ = await w.answerCard(.allowOnce)
+        try await Task.sleep(for: .milliseconds(300))
+        let plans = await w.h.host.info(id: "com.example.flow")?.plans.map(\.id)
+        #expect(plans?.count == 1, "\(String(describing: plans))")
+    }
+
+    @Test func lookingIsBudgetedLikeCalling() async throws {
+        let w = try await World()
+        var busy = 0
+        for _ in 0..<70 where await w.check(Self.plan([Self.save]))["reason"]?.stringValue == "busy" { busy += 1 }
+        #expect(busy >= 5, "a loop of plan.check can't starve the host: \(busy)")
+        let huge = String(repeating: "a", count: 300_000)
+        #expect(await w.check(Self.plan([["tool": "notes.save", "input": ["text": .string(huge)]]]))["ok"]?.boolValue == false)
+    }
+
+    @Test func aCommandSentToAnotherExtensionIsNotThePersonsClick() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        #expect(await w.approve(Self.plan([Self.save]), caller: .command(extensionId: "com.example.other")).asked)
+        #expect(await !w.approve(Self.plan([Self.save], id: "own"), caller: .command(extensionId: "com.example.flow")).asked, "their own typed command to it is")
+    }
+
+    @Test func theCardShowsEveryWrittenNoticeAndSaysWhoseAndWhy() async throws {
+        let w = try await World()
+        let notices: [JSONValue] = [["tool": "notify.user", "input": ["title": "Backup done"]], ["tool": "notify.user", "input": ["title": "Your Mac is infected, call 555"]]]
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan(notices + [Self.save])])
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        #expect(words.contains("Backup done") && words.contains("infected"), "each written notice shows: \(words)")
+        #expect(words.contains("It tells or asks you:"), "a notice isn't a read: \(words)")
+        _ = await reply
+        try await w.setMode(.askEveryTime)
+        async let again = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save], id: "fresh")])
+        let second = await w.answerCard(.allowOnce)
+        guard case .text(let askWords)? = second?.details else { Issue.record("a card"); return }
+        #expect(askWords.contains("You asked to be asked every time") && !askWords.contains("won't ask again"), "\(askWords)")
+        _ = await again
+    }
+
+    @Test func aLineThatStandsOnlyInFullAccessSaysSoWhereItAsks() async throws {
+        let w = try await World()
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.page, ["tool": "watch.create", "input": ["interval_minutes": "{{n}}"]]])])
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        #expect(words.contains("It will still ask you each time:") && words.contains("only while Full access is on"), "\(words)")
+        _ = await reply
+    }
+
+    @Test func wordsChangedFromWrittenToFilledInAreNew() {
+        let before = ExtensionPlan.Step(tool: "notify.user", input: ["title": "Done"], definition: "d", reach: "r", standing: true, provider: "")
+        let after = ExtensionPlan.Step(tool: "notify.user", input: ["title": "{{page}}"], definition: "d", reach: "r", standing: true, provider: "")
+        #expect(!ExtensionPlanRules.covers(before, after), "what was written is now whatever a page says")
+        #expect(ExtensionPlanRules.covers(after, before))
+    }
+
+    @Test func aServerProgramThatLoadsAFileOrIsAVersionedInterpreterCantBePinned() throws {
+        let dir = try ExtFixtures.tempDir("pin")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let ruby = dir.appendingPathComponent("ruby3.2").path
+        try FileManager.default.copyItem(atPath: "/bin/ls", toPath: ruby)
+        #expect(ProgramPin.hash(of: ruby) == nil, "a versioned interpreter")
+        let plain = dir.appendingPathComponent("hub-server").path
+        try FileManager.default.copyItem(atPath: "/bin/ls", toPath: plain)
+        #expect(ProgramPin.hash(of: plain) != nil)
+        #expect(ProgramPin.hash(of: plain, arguments: ["--flag", dir.path]) == nil, "it loads a folder, which the hash doesn't cover")
+        #expect(ProgramPin.hash(of: plain, arguments: ["--port", "8080"]) != nil)
+    }
+
+    @Test func onlyAServersHighRiskToolMayStandAndOnlyForTheHostsOwnAnswer() {
+        let engine = PermissionEngine()
+        func decide(unsandboxed: Bool, name: String = "ext.hub.post", can: Set<Capability> = [.network, .extensions], mode: GuardMode = .askOncePerKind, standing: Bool = true) -> GuardDecision {
+            let spec = ToolSpec(name: name, title: "t", description: "", inputSchema: .object([:]), risk: .high, capabilities: can, category: .extensions, mutates: true)
+            return engine.evaluate(spec: spec, input: .object([:]), summary: "", scope: ToolScope(extensionId: "mcp.hub", unsandboxed: unsandboxed), caller: .extension(id: "com.x"), tainted: true,
+                                   policy: GuardPolicy(mode: mode), grants: [], folders: [], standing: standing)
+        }
+        #expect(decide(unsandboxed: true) == .allow(.plan))
+        for (label, answer) in [("sandboxed", decide(unsandboxed: false)), ("shell", decide(unsandboxed: true, can: [.shell])), ("not standing", decide(unsandboxed: true, standing: false)),
+                                ("ask every time", decide(unsandboxed: true, mode: .askEveryTime))] {
+            if case .ask = answer {} else { Issue.record("\(label) must ask: \(answer)") }
+        }
+    }
+
+    @Test func aPlanAnswerOnAnyOtherToolOrInTheWrongModeIsIgnored() {
+        let engine = PermissionEngine()
+        func decide(name: String, answer: PlanAnswer, mode: GuardMode) -> GuardDecision {
+            let spec = ToolSpec(name: name, title: "t", description: "", inputSchema: .object([:]), risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true)
+            return engine.evaluate(spec: spec, input: .object([:]), summary: "", scope: ToolScope(extensionId: "com.x", text: "words", planAnswer: answer), caller: .extension(id: "com.x"),
+                                   tainted: false, policy: GuardPolicy(mode: mode), grants: [], folders: [])
+        }
+        #expect(decide(name: ExtensionPlanTool.name, answer: .fullAccess, mode: .fullAccess) == .allow(.fullAccess))
+        #expect(decide(name: ExtensionPlanTool.name, answer: .covered, mode: .askOncePerKind) == .allow(.plan))
+        for (label, answer) in [("another tool", decide(name: "ext.x.y", answer: .fullAccess, mode: .fullAccess)), ("not Full access", decide(name: ExtensionPlanTool.name, answer: .fullAccess, mode: .auto)),
+                                ("ask every time", decide(name: ExtensionPlanTool.name, answer: .covered, mode: .askEveryTime))] {
+            if case .ask = answer {} else { Issue.record("\(label) must ask: \(answer)") }
+        }
     }
 
     // MARK: Limits

@@ -13,6 +13,8 @@ public struct ExtensionTool: Tool {
     public let provider: String
     /// The command of a server that runs outside a sandbox, for a plan to check its program (`ProgramPin`).
     let program: String?
+    /// Its arguments, which a program check needs to see: one that names a file or folder is something the program loads, which a hash of it doesn't cover.
+    let programArguments: [String]
     /// Parameters naming a folder the person chooses (`tools.<name>.paths`): Guard checks them like any
     /// file tool's paths, and the sandbox opens exactly those for this call.
     public let folderParameters: [String: ExtensionManifest.FolderUse]
@@ -62,7 +64,7 @@ public struct ExtensionTool: Tool {
     /// Seconds a manifest may give one call (`tools.<name>.timeout`).
     public static let timeouts = 1...300
 
-    init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String, provider: String = "", program: String? = nil,
+    init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String, provider: String = "", program: String? = nil, programArguments: [String] = [],
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], fileLists: Set<String> = [], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
          sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> Void)? = nil,
@@ -73,6 +75,7 @@ public struct ExtensionTool: Tool {
         self.extensionName = extensionName
         self.remoteName = remoteName
         self.program = program
+        self.programArguments = programArguments
         self.provider = provider.isEmpty ? ExtensionHash.sha256(Data(extensionId.utf8)) : provider
         self.folderParameters = folderParameters
         self.fileLists = fileLists
@@ -112,7 +115,7 @@ public struct ExtensionTool: Tool {
     }
 
     public func scope(for input: JSONValue) -> ToolScope {
-        var scope = ToolScope(extensionId: extensionId)
+        var scope = ToolScope(extensionId: extensionId, unsandboxed: !sandboxed)
         // Only Sidefolk's own programs are taken at their word about where they go (D47).
         if let service { scope.reach = .service(service) }
         for (param, use) in folderParameters.sorted(by: { $0.key < $1.key }) {

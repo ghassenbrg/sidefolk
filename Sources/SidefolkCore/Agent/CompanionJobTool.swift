@@ -40,9 +40,9 @@ struct CompanionJobTool: Tool {
         guard let job = input.string("job")?.trimmingCharacters(in: .whitespacesAndNewlines), !job.isEmpty else { throw ToolError.invalidInput("Say what the job is.") }
         guard job.count <= Self.longest, ExtensionPlanRules.plain(job) else { throw ToolError.invalidInput("A job is at most \(Self.longest) plain characters, so a card can show all of it.") }
         guard let agent = agent.current else { throw ToolError.unavailable("The companion can't take a job right now.") }
-        // Only words the person read on a plan count as clean; anything else may have come from outside.
+        // Only words the person read on a plan count as clean; anything else, words a step filled in included, may have come from outside.
         let owner = if case .extension(let id) = context.caller { id } else { nil as String? }
-        let handle = await agent.submit(AgentRequest(text: job, job: AgentRequest.Job(read: context.onPlan, extensionId: owner)))
+        let handle = await agent.submit(AgentRequest(text: job, job: AgentRequest.Job(read: context.onPlan && !context.filledIn, extensionId: owner)))
         return try await withTaskCancellationHandler {
             var answer: String?
             for await event in handle.events {

@@ -30,7 +30,9 @@ extension ExtensionHost {
 
     /// Reads the program's plan against what is standing. A reason (as `plan.result` gives it) when the plan can't be read at all.
     func evaluatePlan(_ id: String, plan: JSONValue, gateway: ExtensionActionGateway) async -> Result<PlanEvaluation, PlanRefusal> {
-        guard let rt = runtimes[id] else { return .failure(.unusable) }
+        // Read before anything else here, so what follows works from one view of the extension (no await between it and the plan it compares).
+        let flow = await configuration.flowPolicy()
+        guard let rt = runtimes[id], plan.jsonString.utf8.count <= ExtensionPlanRules.maxPlanBytes else { return .failure(.unusable) }
         guard let planId = plan["id"]?.stringValue, planId.range(of: #"^[A-Za-z0-9._:-]{1,64}$"#, options: .regularExpression) != nil,
               let rawSteps = plan["steps"]?.arrayValue, rawSteps.count <= ExtensionPlanRules.maxRows else { return .failure(.unusable) }
         // No action to allow is still something to read when `when` says what it sets off. With nothing to say at all there's no card to show.
@@ -42,18 +44,19 @@ extension ExtensionHost {
         let perRun = plan["per_run"]?.intValue
         if let perRun, !ExtensionPlanRules.perRuns.contains(perRun) { return .failure(.unusable) }
 
-        let flow = await configuration.flowPolicy()
         let firstParty = rt.pin.origin?.firstParty == true
         let context = ExtensionPlanRules.Context(firstParty: firstParty, mayPassToServers: flow.mayPassToServers)
         // Only a signed extension is taken at its word about where its own values come from.
         let inside: Set<String> = firstParty ? Set((plan["inside"]?.arrayValue ?? []).compactMap(\.stringValue).filter(Self.isName)) : []
         let who = owner(rt)
-        let previous = rt.preferences.plans[planId].flatMap { $0.live(at: Date(), owner: who) ? $0 : nil }
 
         var lines: [PlanEvaluation.Line] = [], rows: [Int] = []
-        var earlier: [(name: String?, tool: String)] = []
+        var earlier: [(name: String?, tool: String)] = [], named = Set<String>(), definitions: [String: String] = [:]
         for raw in rawSteps {
             let name = raw["as"]?.stringValue.flatMap { Self.isName($0) ? $0 : nil }
+            // A step's name is how later steps point at it, and the host reads it first: one name twice, or one the host reads as the clock, would let words
+            // from outside pass for the person's own.
+            if let name, !named.insert(name).inserted || ExtensionPlanRules.reservedNames.contains(name) { return .failure(.unusable) }
             let title = raw["title"]?.stringValue.map { ExtensionText.line($0, characters: 80) }.flatMap { $0.isEmpty ? nil : $0 }
             var line: PlanEvaluation.Line
             if let kind = raw["kind"]?.stringValue {
@@ -78,9 +81,13 @@ extension ExtensionHost {
                 let sources = ExtensionPlanRules.sources(of: input, earlier: earlier, inside: inside, fromPerson: fromPerson)
                 let open = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
                 let ext = ExtensionPlanRules.extensionTool(tool)
-                let program = ext?.program.flatMap(ProgramPin.hash(of:))
+                // Off this actor: the first look at a large program is a long read.
+                let command = ext?.program, arguments = ext?.programArguments ?? []
+                let program = await command.asyncMap { path in await Task.detached { ProgramPin.hash(of: path, arguments: arguments) }.value } ?? nil
                 let verdict = ExtensionPlanRules.verdict(tool: tool, template: input, sources: sources.filter { !open.contains($0.key) }, pinned: ext?.sandboxed != false || program != nil, context: context)
-                var step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: ExtensionPlanRules.definition(tool.spec),
+                let definition = definitions[tool.spec.name] ?? ExtensionPlanRules.definition(tool.spec)
+                definitions[tool.spec.name] = definition
+                var step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: definition,
                                               reach: ExtensionPlanRules.reach(tool.scope(for: input)), standing: verdict.stands, provider: ExtensionPlanRules.provider(tool),
                                               name: name, sources: sources.filter { !open.contains($0.key) }.nonEmpty, fullAccessOnly: verdict.fullAccessOnly ? true : nil,
                                               program: verdict.stands ? program : nil)
@@ -103,6 +110,8 @@ extension ExtensionHost {
         let round = plan["goes_round"]?.boolValue == true || (plan["goes_round"]?.intValue ?? 0) > 0
         let candidate = ExtensionPlan(id: planId, title: title, when: when, steps: lines.map(\.step), owner: who, approvedAt: Date(),
                                       expiresAt: ttl.map { Date().addingTimeInterval(Double($0)) }, perDay: perDay, perRun: perRun, ttl: ttl, goesRound: round ? true : nil)
+        // The plan standing now, read after the last await above: it is what the candidate is compared with.
+        let previous = runtimes[id]?.preferences.plans[planId].flatMap { $0.live(at: Date(), owner: who) ? $0 : nil }
         var fresh = Array(lines.indices), widened = false
         if let previous {
             fresh = lines.indices.filter { i in !previous.steps.contains { ExtensionPlanRules.covers($0, lines[i].step) } }
@@ -119,13 +128,14 @@ extension ExtensionHost {
 
     private static func isName(_ text: String) -> Bool { text.range(of: nameShape, options: .regularExpression) != nil }
 
-    /// A flow that reads the person's own things and outside words, and fills a line for a server or another extension from what it reads, is where
-    /// a stranger's page could take private things off the Mac unattended. Worked out from the whole plan, and conservative: the person can drop one leg.
-    /// That line stands only in Full access (D189, T53). An AI step reads what it names, or everything before it when it names nothing.
+    /// A flow that reads the person's own things and outside words, and fills a line for a server or another extension from what it reads, is where a
+    /// stranger's page could take private words to that place unattended. The destination is written (or the line asks, or stands only in Full access),
+    /// so the page doesn't choose where they go: the card says it in plain words, naming the server, and the person's switch turns it back to asking
+    /// (D189, T53). Worked out from the whole plan, and conservative. An AI step reads what it names, or everything before it when it names nothing.
     static func markCrossing(_ lines: inout [PlanEvaluation.Line]) {
         func privateRead(_ tool: any Tool) -> Bool {
             let spec = tool.spec
-            return spec.name == CompanionJobTool.name
+            return spec.name == CompanionJobTool.name || ["reminders.list", "applereminders.list"].contains(spec.name)
                 || (!spec.mutates && !spec.capabilities.isDisjoint(with: [.notebook, .memory, .calendar, .clipboard, .filesRead, .macApps]))
         }
         func outsideRead(_ tool: any Tool) -> Bool {
@@ -148,13 +158,18 @@ extension ExtensionHost {
         for i in lines.indices {
             guard let tool = lines[i].tool, ExtensionPlanRules.extensionTool(tool) != nil, lines[i].step.standing,
                   (lines[i].step.sources ?? [:]).values.contains("outside") else { continue }
-            lines[i].step.fullAccessOnly = true
-            lines[i].verdict.fullAccessOnly = true
-            lines[i].verdict.why = "crossing"
+            lines[i].verdict.warning = "crossing"
         }
     }
 }
 
 private extension Dictionary {
     var nonEmpty: Self? { isEmpty ? nil : self }
+}
+
+extension Optional {
+    func asyncMap<T>(_ transform: (Wrapped) async -> T) async -> T? {
+        guard let value = self else { return nil }
+        return await transform(value)
+    }
 }

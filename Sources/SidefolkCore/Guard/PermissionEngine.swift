@@ -149,7 +149,7 @@ public struct PermissionEngine: Sendable {
         case .high:
             // A server's tool a plan names (D189): the host checked its program, its provider and its fields, and what the person read says so. Only
             // an extension's own tool qualifies: Sidefolk's high-risk tools keep their card whatever a plan says.
-            if standing, caller.kind == "extension", spec.name.hasPrefix("ext."), honoursGrants, scope.text == nil, !spec.capabilities.contains(.shell) {
+            if standing, caller.kind == "extension", scope.unsandboxed, honoursGrants, scope.text == nil, !spec.capabilities.contains(.shell) {
                 return .allow(.plan)
             }
             // Only an exact command may be granted "always"; everything else is asked every time. An extension gets no "always" for these at all (D127).

@@ -28,9 +28,14 @@ extension ExtensionPlanWords {
         parts += blocks(e, shown: shown, name: name, mode: mode).map(\.text)
         if let outside = outsideParagraph(e, shown: shown) { parts.append(outside) }
         if delta {
-            let kept = e.lines.indices.filter { !e.fresh.contains($0) }.count
-            if kept > 0 {
-                parts.append(String(localized: "Already allowed, unchanged: \(kept) things. What you took out isn't asked about.", comment: "A plan's card after an edit; a count of lines"))
+            // Only what stood and still stands is "already allowed"; a line that asks each time was never allowed, and words changed where the plan lets them are said.
+            let standing = e.lines.indices.filter { !e.fresh.contains($0) && e.lines[$0].step.standing && e.lines[$0].step.kind == nil }
+            let same = standing.filter { i in e.previous?.steps.contains { ExtensionPlanRules.same($0.input, e.lines[i].step.input) && ExtensionPlanRules.covers($0, e.lines[i].step) } == true }.count
+            if same > 0 {
+                parts.append(String(localized: "Lines already allowed, unchanged: \(same). What you took out isn't asked about.", comment: "A plan's card after an edit; a count of lines"))
+            }
+            if standing.count > same {
+                parts.append(String(localized: "Lines whose words changed where a plan lets them: \(standing.count - same).", comment: "A plan's card after an edit; a count of lines"))
             }
             if e.widened { parts.append(String(localized: "Its terms changed: how it starts, how long it lasts or how many actions it may make.", comment: "A plan's card after an edit")) }
         }
@@ -42,7 +47,9 @@ extension ExtensionPlanWords {
         }
         parts.append(limits(plan))
         if !delta {
-            parts.append(String(localized: "That's all of it. It won't ask again unless you change it to do something new.", comment: "A plan's card, the last words"))
+            parts.append(mode == .askEveryTime
+                ? String(localized: "You asked to be asked every time, so each action still asks before it runs.", comment: "A plan's card, the last words, for someone who chose Ask every time")
+                : String(localized: "That's all of it. It won't ask again unless you change it to do something new.", comment: "A plan's card, the last words"))
         }
         return text(parts)
     }
@@ -51,7 +58,7 @@ extension ExtensionPlanWords {
 
     private static func blocks(_ e: PlanEvaluation, shown: [Int], name: String, mode: GuardMode) -> [Block] {
         var reads: [(line: PlanEvaluation.Line, i: Int)] = [], changes = reads, sends = reads, asks = reads
-        var ai: [String] = [], sets: [String] = []
+        var tells = reads, ai: [String] = [], sets: [String] = []
         for i in shown {
             let line = e.lines[i]
             switch line.step.kind {
@@ -60,6 +67,7 @@ extension ExtensionPlanWords {
             default:
                 // What stands only in Full access asks under every other mode, and the card says so.
                 if !line.step.standing || (line.step.isInFullAccessOnly && mode != .fullAccess) { asks.append((line, i)) }
+                else if line.tool.map({ tellsThePerson($0) }) == true { tells.append((line, i)) }
                 else if sendsOut(line) { sends.append((line, i)) }
                 else if line.tool?.spec.mutates == false { reads.append((line, i)) }
                 else { changes.append((line, i)) }
@@ -72,10 +80,16 @@ extension ExtensionPlanWords {
         if !reads.isEmpty { out.append(Block(heading: String(localized: "It reads:", comment: "A plan's card"), rows: rows(reads))) }
         if !changes.isEmpty { out.append(Block(heading: String(localized: "It changes:", comment: "A plan's card"), rows: rows(changes))) }
         if !sends.isEmpty { out.append(Block(heading: String(localized: "It sends out:", comment: "A plan's card"), rows: rows(sends))) }
+        if !tells.isEmpty { out.append(Block(heading: String(localized: "It tells or asks you:", comment: "A plan's card: a notice, a question, a line said aloud"), rows: rows(tells))) }
         if !ai.isEmpty { out.append(Block(heading: String(localized: "What these steps read goes to your AI, to write from:", comment: "A plan's card"), rows: ai)) }
         if !sets.isEmpty { out.append(Block(heading: String(localized: "It sets off:", comment: "A plan's card"), rows: sets)) }
         if !asks.isEmpty { out.append(Block(heading: String(localized: "It will still ask you each time:", comment: "A plan's card"), rows: rows(asks, why: true))) }
         return out
+    }
+
+    /// A notice, a question, a line said aloud or the companion's move: reaching the person is all it does, though it changes nothing of theirs.
+    private static func tellsThePerson(_ tool: any Tool) -> Bool {
+        ExtensionActionPolicy.reachesThePerson.contains(tool.spec.name) || ["voice.say", "companion.play"].contains(tool.spec.name)
     }
 
     /// Whether a standing line leaves the Mac or hands words to another program: a server, another extension, a link, the network.
@@ -96,7 +110,8 @@ extension ExtensionPlanWords {
             guard let tool = line.tool else { continue }
             let open = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
             let isServer = ExtensionPlanRules.extensionTool(tool)?.sandboxed == false
-            let fixed = (line.step.input.objectValue ?? [:]).filter { !open.contains($0.key) }
+            // Words the plan leaves open stay out of the key only where they are filled in: written ones are different lines, and each is shown.
+            let fixed = (line.step.input.objectValue ?? [:]).filter { !(open.contains($0.key) && $0.value.stringValue.map(ExtensionPlanRules.hasSlot) == true) }
             let key = tool.spec.name + "\u{1}" + (line.step.provider ?? "") + "\u{1}" + JSONValue.object(fixed).jsonString
             if !isServer, !open.isEmpty, let seen = at[key] {
                 out[seen].count += 1
@@ -107,7 +122,7 @@ extension ExtensionPlanWords {
         }
         return out.map { row, count in
             guard count > 1 else { return row }
-            return Row(line: row.line, text: row.text + " " + String(localized: "(\(count) times, with different words)", comment: "A plan's card: one line standing for several that differ only in words the plan leaves open"))
+            return Row(line: row.line, text: row.text + " " + String(localized: "(\(count) times, with different filled-in words)", comment: "A plan's card: one line standing for several that differ only in words the plan leaves open"))
         }
     }
 
@@ -116,12 +131,22 @@ extension ExtensionPlanWords {
         var from: [String: String] = [:]
         for (field, source) in line.step.sources ?? [:] where source == "outside" || source == "inside" {
             guard let text = line.step.input[field]?.stringValue else { continue }
-            let names = ExtensionPlanRules.roots(text).map { root in
-                e.lines.first { $0.step.name == root }.map { $0.step.title ?? $0.tool?.spec.title ?? root } ?? root
-            }
-            from[field] = ToolFormat.oneLine(ExtensionText.clean(names.joined(separator: ", ")), 80)
+            from[field] = ToolFormat.oneLine(ExtensionText.clean(sourceNames(text, e).joined(separator: ", ")), 160)
         }
         return ExtensionPlanWords.line(tool: tool, template: line.step.input, from: from, program: line.step.program)
+    }
+
+    /// Where a filled value comes from, by the step's own title and the tool it runs, so a title can't be taken for something else; a name no step
+    /// makes is said to be one.
+    private static func sourceNames(_ text: String, _ e: PlanEvaluation) -> [String] {
+        ExtensionPlanRules.roots(text).map { root in
+            guard let line = e.lines.first(where: { $0.step.name == root }) else {
+                return String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow")
+            }
+            let tool = line.tool?.spec.title ?? line.step.kind ?? root
+            guard let title = line.step.title, title != tool else { return tool }
+            return "\(title) · \(tool)"
+        }
     }
 
     private static func aiRow(_ line: PlanEvaluation.Line, _ e: PlanEvaluation) -> String {
@@ -144,11 +169,17 @@ extension ExtensionPlanWords {
         case "server_unpinned"?: String(localized: "its program can't be checked", comment: "A plan's card: why a line asks")
         case "switch_off"?: String(localized: "you turned off passing what it reads on to servers", comment: "A plan's card: why a line asks")
         case "high_risk"?: String(localized: "it can't be undone", comment: "A plan's card: why a line asks")
-        case "shell"?, "text_to_read"?: String(localized: "it runs a program", comment: "A plan's card: why a line asks")
+        case "shell"?: String(localized: "it runs a program", comment: "A plan's card: why a line asks")
+        case "text_to_read"?: String(localized: "its words are read in full each time", comment: "A plan's card: why a line asks")
         case "nested_slot"?, "unreadable_value"?: String(localized: "a value that can't be shown in full", comment: "A plan's card: why a line asks")
         default: nil
         }
-        return why.map { " · " + $0 } ?? ""
+        var out = why.map { " · " + $0 } ?? ""
+        // Under Full access it stands: the card says so, since the mode can change after the card is read.
+        if line.step.standing, line.step.isInFullAccessOnly {
+            out += " · " + String(localized: "it runs without asking only while Full access is on", comment: "A plan's card: a line that stands only in Full access")
+        }
+        return out
     }
 
     // MARK: Outside content and limits
@@ -156,15 +187,24 @@ extension ExtensionPlanWords {
     /// Where words from outside go, line by line, in plain words: the one thing an approval can't fix is what such words say.
     private static func outsideParagraph(_ e: PlanEvaluation, shown: [Int]) -> String? {
         var sentences: [String] = []
+        // The whole plan reads private things and outside words and sends words from them to a server or another extension: said where it happens.
+        for i in shown where e.lines[i].verdict.warning == "crossing" {
+            guard let tool = e.lines[i].tool, let ext = ExtensionPlanRules.extensionTool(tool) else { continue }
+            sentences.append(String(localized: "This flow reads things of yours and outside content, and fills “\(ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 60))” from what it reads: a page's words could put your own there, and they go to \(ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40)).",
+                                    comment: "A plan's card: a warning that outside words could carry the person's own words to a server; a tool's title, an extension's name"))
+        }
         for i in shown {
             let line = e.lines[i]
             guard let tool = line.tool, line.step.standing else { continue }
             for field in (line.step.sources ?? [:]).filter({ $0.value == "outside" }).keys.sorted() {
                 guard let text = line.step.input[field]?.stringValue else { continue }
-                let names = ExtensionPlanRules.roots(text).map { root in
-                    e.lines.first { $0.step.name == root }.map { $0.step.title ?? $0.tool?.spec.title ?? root } ?? root
-                }
+                let names = sourceNames(text, e)
                 let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
+                if tool.spec.name == CompanionJobTool.name {
+                    sentences.append(String(localized: "Words from “\(ToolFormat.oneLine(ExtensionText.clean(names.joined(separator: ", ")), 80))” become the instructions of a job for your companion, which picks its own tools under your trust settings.",
+                                            comment: "A plan's card: outside words steer a job; a step's title"))
+                    continue
+                }
                 sentences.append(String(localized: "Words from “\(ToolFormat.oneLine(ExtensionText.clean(names.joined(separator: ", ")), 80))” go into \(ArgumentWords.label(field, properties[field])) of “\(ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 60))”.",
                                         comment: "A plan's card: where outside words go; a step's title, a field, a tool's title"))
             }
@@ -172,7 +212,7 @@ extension ExtensionPlanWords {
         guard !sentences.isEmpty else { return nil }
         return String(localized: "Outside content:", comment: "A plan's card: a paragraph on words that come from a web page, a file or another program") + " "
             + sentences.joined(separator: " ") + " "
-            + String(localized: "They can't change which tool, server or fields it uses.", comment: "A plan's card")
+            + String(localized: "They can't change which tool, server or fields it uses, only what goes into the fields named here.", comment: "A plan's card")
     }
 
     private static func limits(_ plan: ExtensionPlan) -> String {

@@ -19,6 +19,7 @@ extension ExtensionHost {
             let tools = gateway.tools(for: id).map(Self.listed)
             await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
         case "sidefolk/tools.check":
+            guard spendCall(id) else { return await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"]) }
             guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
                 return
@@ -66,8 +67,14 @@ extension ExtensionHost {
             // A plan's step as written, or the program's word for a call it filled in without one (a run from a draft): checked against
             // what it sent, and only where the closed table leaves words open. All it can do is keep those words out of History (D127).
             let template = step ?? params["written"].flatMap { ExtensionPlanRules.readable(written: $0, for: input) ? .some($0) : .none }
-            let filled = template.map { ExtensionPlanRules.fillsIn($0) && ExtensionPlanRules.matches(input, template: $0, fillable: ExtensionActionPolicy.fillable[tool] ?? []) } == true
-            let written = filled ? template : nil
+            let filled = template.map { ExtensionPlanRules.fillsIn($0) && ExtensionPlanRules.matches(input, template: $0, fillable: step == nil ? ExtensionActionPolicy.fillable[tool] ?? [] : ExtensionPlanRules.slotKeys($0),
+                                                                                       whole: step == nil ? [] : ExtensionPlanRules.wholeKeys($0, tool: tool)) } == true
+            // History keeps the step as written, and where its filled words came from.
+            var written = filled ? template : nil
+            if let prov = found.provenance, var fields = written?.objectValue {
+                fields["filled_from"] = .string(prov)
+                written = .object(fields)
+            }
             let asker = asker(rt)
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
@@ -78,6 +85,7 @@ extension ExtensionHost {
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.check":
+            guard spendCall(id) else { return await reply(id, request, ["ok": false, "reason": "busy"]) }
             await checkPlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.forget":
             if let plan = params["plan"]?.stringValue { await updatePreferences(id) { $0.plans[plan] = nil } }
@@ -171,6 +179,18 @@ extension ExtensionHost {
         return .object(out)
     }
 
+    /// One more look or call in the minute, the same budget for every kind: working a plan out is work on this actor, and nothing is free to ask for in a loop.
+    private func spendCall(_ id: String) -> Bool {
+        let now = Date()
+        let recent = (runtimes[id]?.actionCalls ?? []).filter { now.timeIntervalSince($0) < 60 }
+        guard recent.count < Self.callsPerMinute else {
+            runtimes[id]?.actionCalls = recent
+            return false
+        }
+        runtimes[id]?.actionCalls = recent + [now]
+        return true
+    }
+
     private func asker(_ rt: Runtime) -> ApprovalRequest.Asker {
         ApprovalRequest.Asker(name: name(rt), firstParty: rt.pin.origin?.firstParty == true)
     }
@@ -181,10 +201,15 @@ extension ExtensionHost {
     /// for a plan (T3). Called by its tools (`ExtensionTool.began`).
     func notePersonCall(_ id: String, caller: Caller, tainted: Bool) {
         switch caller {
-        case .user, .command:
+        case .user:
             // The person's own hand, which only Full access answers a plan for: a clean turn of Sidefolk's agent is not that (D188).
             runtimes[id]?.lastPersonCall = Date()
             runtimes[id]?.personClick = Date()
+        case .command(let owner) where owner == id:
+            runtimes[id]?.lastPersonCall = Date()
+            runtimes[id]?.personClick = Date()
+        case .command:
+            runtimes[id]?.lastPersonCall = Date()
         case .agent(let run) where !tainted && !run.hasPrefix(AgentRuntime.jobPrefix): runtimes[id]?.lastPersonCall = Date()
         default: break
         }
@@ -224,6 +249,8 @@ extension ExtensionHost {
         var step: JSONValue?
         /// The plan's own limit for today or for this run, reached: nothing is asked, the call is refused and the program says so (D189).
         var capped: String?
+        /// Where the step's filled words come from, for History: "body from page (outside content)".
+        var provenance: String?
     }
 
     private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, run: String?, counting: Bool, gateway: ExtensionActionGateway) async -> Standing {
@@ -233,7 +260,8 @@ extension ExtensionHost {
         let provider = ExtensionPlanRules.provider(tool)
         let flow = await configuration.flowPolicy()
         let ext = ExtensionPlanRules.extensionTool(tool)
-        let program = ext?.program.flatMap(ProgramPin.hash(of:))
+        let command = ext?.program, arguments = ext?.programArguments ?? []
+        let program = await command.asyncMap { path in await Task.detached { ProgramPin.hash(of: path, arguments: arguments) }.value } ?? nil
         let fits = saved.steps.first { step in
             guard step.kind == nil, step.standing, step.tool == tool.spec.name, step.definition == definition, (step.provider ?? "") == provider,
                   ExtensionPlanRules.same(step.reach, reach) else { return false }
@@ -248,7 +276,8 @@ extension ExtensionHost {
         guard let fits else { return Standing() }
         // "Ask each time" for the internet is the person's word for every page, whoever asks (D47).
         if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return Standing() }
-        guard counting else { return Standing(step: fits.input) }
+        let provenance = Self.provenance(fits)
+        guard counting else { return Standing(step: fits.input, provenance: provenance) }
         // Read after the wait above, and kept: a burst, or a restart, doesn't buy a new budget.
         let day = AIHelper.dayKey(Date()), used = runtimes[id]?.preferences.planCalls[plan]
         let count = used?.day == day ? used?.count ?? 0 : 0
@@ -260,7 +289,18 @@ extension ExtensionHost {
             runtimes[id]?.countRun(key)
         }
         await updatePreferences(id) { $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1) }
-        return Standing(step: fits.input)
+        return Standing(step: fits.input, provenance: provenance)
+    }
+
+    /// Where a step's filled words come from, so History says it afterwards (D189): the field, the steps it names, and whether that is outside content.
+    private static func provenance(_ step: ExtensionPlan.Step) -> String? {
+        let parts = (step.input.objectValue ?? [:]).keys.sorted().compactMap { field -> String? in
+            guard let text = step.input[field]?.stringValue, ExtensionPlanRules.hasSlot(text) else { return nil }
+            let source = step.sources?[field]
+            let kind = source == "outside" ? "outside content" : source == nil ? "filled in" : "the person's own words"
+            return "\(field) from \(ExtensionPlanRules.roots(text).joined(separator: ", ")) (\(kind))"
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "; ")
     }
 
     private func approvePlan(_ id: String, request: JSONValue, params: JSONValue, gateway: ExtensionActionGateway) async {
@@ -268,22 +308,24 @@ extension ExtensionHost {
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
         }
         guard let rt = runtimes[id], let plan = params["plan"] else { return await refuse("unusable") }
-        // One card at a time for a plan: what the person is reading is what is saved.
+        // One card at a time for a plan: what the person is reading is what is saved. Taken before anything is awaited, so a second ask can't pass the same check.
         guard !rt.planAsking else { return await refuse("busy") }
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        runtimes[id]?.planAsking = true
         let evaluation: PlanEvaluation
         switch await evaluatePlan(id, plan: plan, gateway: gateway) {
-        case .failure(let reason): return await refuse(reason.rawValue)
+        case .failure(let reason):
+            runtimes[id]?.planAsking = false
+            return await refuse(reason.rawValue)
         case .success(let found): evaluation = found
         }
         let flow = await configuration.flowPolicy()
         let answer = planAnswer(id, evaluation, flow: flow)
         let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: flow.mode)
-        let card = ExtensionPlanTool(extensionId: id, plan: evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, when: evaluation.plan.when, body: words,
+        let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: words,
                                      answer: answer, intent: evaluation.intent)
         let asker = asker(rt)
-        runtimes[id]?.planAsking = true
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: ["extension": .string(id), "plan": .string(evaluation.plan.id)], extensionId: id, asker: asker)
             await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation)
@@ -296,7 +338,7 @@ extension ExtensionHost {
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
         // Full access answers for the person's own click, once: not for a turn of Sidefolk's agent, and not for a click of a minute ago.
-        if flow.mode == .fullAccess, let click = runtimes[id]?.personClick, Date().timeIntervalSince(click) <= ExtensionPlanRules.personWindow {
+        if flow.mode == .fullAccess, let click = runtimes[id]?.personClick, Date().timeIntervalSince(click) <= ExtensionPlanRules.clickWindow {
             runtimes[id]?.personClick = nil
             return .fullAccess
         }
@@ -314,6 +356,11 @@ extension ExtensionHost {
         }
         var plan = evaluation.plan
         plan.owner = owner(rt)
+        // Nothing new was read, so nothing was renewed: a plan that ends by itself ends when it was going to, however often its program asks again.
+        if evaluation.covered, let was = evaluation.previous {
+            plan.approvedAt = was.approvedAt
+            plan.expiresAt = was.expiresAt
+        }
         await updatePreferences(id) { $0.plans[plan.id] = plan }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
@@ -337,6 +384,7 @@ extension ExtensionHost {
                 else if !v.stands { out = ["state": .string(v.refused ? "refused" : "asks")] }
                 else { out = ["state": .string(v.fullAccessOnly && flow.mode != .fullAccess ? "stands_in_full_access" : "stands")] }
                 if let why = v.why, line.step.kind == nil, out["why"] == nil { out["why"] = .string(why) }
+                if let warning = v.warning { out["warning"] = .string(warning) }
                 return .object(out)
             }
             let newRows = e.rows.indices.filter { e.fresh.contains(e.rows[$0]) }

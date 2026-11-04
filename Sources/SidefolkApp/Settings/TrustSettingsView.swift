@@ -262,6 +262,12 @@ struct TrustSettingsView: View {
             grants
             allowedNow
             UnansweredGroup(model: model)
+            SettingsGroup(title: "Flows you approved", footer: "A flow asks once, on a card that says what it does. This is the one thing on that card you can take back for every flow at once.") {
+                SettingsToggle(title: "A flow may pass what it reads to servers",
+                               detail: "On: a flow you approved may put words it read from a page or a file into a server's fields, where its card says so. Off: those lines ask each time.",
+                               isOn: Binding(get: { model.policy.flowsMayPassToServers },
+                                             set: { on in Task { await model.setPolicy { $0.flowsMayPassToServers = on } } }))
+            }
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.",
                           anchor: .capabilities) {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in

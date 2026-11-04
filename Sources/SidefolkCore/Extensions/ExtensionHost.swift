@@ -1641,7 +1641,7 @@ public actor ExtensionHost {
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote, provider: Self.provider(rt),
-                             program: rt.record.kind == .mcp ? rt.pin.server?.command : nil,
+                             program: rt.record.kind == .mcp ? rt.pin.server?.command : nil, programArguments: rt.pin.server?.arguments ?? [],
                              folderParameters: meta?.paths ?? [:], fileLists: Set((meta?.fileLists ?? [:]).keys), firstParty: firstParty,
                              commands: commandsOf(id, tool: def.name),
                              paired: paired,

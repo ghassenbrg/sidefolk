@@ -129,9 +129,11 @@ public struct ToolScope: Sendable, Hashable {
     public var factsOnly: Bool
     /// Only for an extension's plan card (D186, D188): the host has already decided the plan needs no card for this person and this click.
     public var planAnswer: PlanAnswer?
+    /// An extension's tool that runs outside a sandbox (an MCP server): Guard lets a plan hold a high-risk tool of this kind and no other.
+    public var unsandboxed: Bool
 
     public init(readPaths: [String] = [], writePaths: [String] = [], command: String? = nil, url: String? = nil,
-                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil, factsOnly: Bool = false, planAnswer: PlanAnswer? = nil) {
+                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil, factsOnly: Bool = false, planAnswer: PlanAnswer? = nil, unsandboxed: Bool = false) {
         self.readPaths = readPaths
         self.writePaths = writePaths
         self.command = command
@@ -141,6 +143,7 @@ public struct ToolScope: Sendable, Hashable {
         self.reach = reach
         self.factsOnly = factsOnly
         self.planAnswer = planAnswer
+        self.unsandboxed = unsandboxed
     }
 
     public static let none = ToolScope()
