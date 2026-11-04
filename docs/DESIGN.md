@@ -66,7 +66,7 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 
 | Component | File | Use |
 |---|---|---|
-| Buttons: `.sf(.primary / .secondary / .quiet / .destructive / .danger / .plain, size: .small/.regular/.sidecard/.large, working:, join:)` (`join` makes the halves of a split button); `.sf(kind)` (small, as before), `.sfPrimary`… | `Buttons.swift` | hover and press veil, 0.98 press, 40% disabled, spinner while working. `.destructive` is quiet danger ink; `.danger` the red fill that confirms |
+| Buttons: `.sf(.primary / .secondary / .quiet / .destructive / .danger / .plain, size: .small/.regular/.sidecard/.large, working:, join:)` (`join` makes the halves of a split button, as Allow and its menu); `.sf(kind)` (small, as before), `.sfPrimary`… | `Buttons.swift` | hover and press veil, 0.98 press, 40% disabled, spinner while working. `.destructive` is quiet danger ink; `.danger` the red fill that confirms |
 | Buttons with no look: `.sfBare` for a row, tile, card or words; `.sfIcon` / `.sfIcon(side:)` for a button that is only a symbol | `Buttons.swift` | **Never `.buttonStyle(.plain)`:** it takes clicks only on the drawn lines and letters, whatever its frame (`ButtonHitAreaTests` fails on it). `.sfBare` takes them anywhere in its frame. `.sfIcon` is at least `hitTarget` 28 square (22 where a row or field is tight), click and hover the same area. A hit area can't reach past a view's frame, so the size is real layout |
 | Chip, `ChipTone` (fill + ink) | `Components.swift` | 22 tall, sentence case |
 | `TouchChip(Touch)` "what it touches" | `TouchChip.swift` | `Touch(ApprovalRequest.Effect)`; amber for what reaches the person's things or leaves the Mac |
@@ -113,7 +113,7 @@ Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `Sta
 | `SettingInlineControl` | `SettingsRoot.swift` | the control itself in a search result (switches, short choices) |
 | `AttentionDial` (cards with a radio, the chosen one holding its Until menu, or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
 | `InterruptionsGroup`, `InterruptLevelMenu` | `InterruptionsGroup.swift` | What may interrupt you (D88): a row per source (icon, name, what it covers, a level menu one width down the column), watches set apart under Watches |
-| `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as cards with an example each |
+| `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as a list, each with its example a click away, open on the chosen one and on Auto |
 | `PocketView`, `PocketModel`, `PocketContent`, `PocketActions` | `StatusItem/` | the menu bar's popover; content gathered by `AppCoordinator+Pocket` |
 | `InstallPreviewSheet` (steps `.who`, `.touch`), `InstallPermissionRow` | `InstallPreviewSheet.swift`, `InstallReviewParts.swift` | the install passport |
 
