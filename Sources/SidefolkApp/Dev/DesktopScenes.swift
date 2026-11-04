@@ -34,7 +34,10 @@ enum DesktopScenes {
         stack.stack = [
             AttentionItem(level: .attention, source: "watcher", title: "staging.sidefolk.app is down", refKind: "watcher", now: now.addingTimeInterval(-900)),
             AttentionItem(level: .attention, source: "reminder", title: "Stretch and refill water", refKind: "reminder", now: now.addingTimeInterval(-300)),
-            AttentionItem(level: .attention, source: "external:codex", title: "Codex asks: deploy to staging?", refKind: "ask", now: now.addingTimeInterval(-60)),
+            // As `ask.user` makes it: the question is the title, who asks is under it, and the offered answers are its actions.
+            AttentionItem(level: .attention, source: "external:codex", title: "Deploy to staging?", body: "Codex asks",
+                          actions: [AttentionAction(id: "option-0", title: "Yes", isPrimary: true), AttentionAction(id: "option-1", title: "No")],
+                          refKind: "ask", now: now.addingTimeInterval(-60)),
         ]
         let needsYou = moment(AttentionItem(level: .attention, source: "session:cc-1", title: "Claude needs you in sidefolk",
                                             body: "Asks to use Bash: git push origin main",
