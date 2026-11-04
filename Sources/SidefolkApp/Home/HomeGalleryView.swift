@@ -41,6 +41,11 @@ struct HomeGalleryView: View {
         let extensions = gallery.entries(.extension).filter { $0.matches(search) }
         let themes = gallery.entries(.theme).filter { $0.matches(search) }
         HomePage {
+            VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+                Text("Gallery").font(Theme.Font.title1).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                    .homePageTitle()
+                Text("Companions, extensions and themes", comment: "Under the Gallery's title").font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+            }
             WrapRow(minimum: 420, spacing: Theme.Space.m) {
                 SegmentedPicker("Show", selection: $shelf, segments: [
                     .init(Shelf.all, Text("All", comment: "The Gallery's filter: everything")),
@@ -48,8 +53,9 @@ struct HomeGalleryView: View {
                     .init(Shelf.extensions, Text("Extensions \(extensions.count)", comment: "The Gallery's filter, with how many")),
                     .init(Shelf.themes, Text("Themes \(themes.count)", comment: "The Gallery's filter, with how many")),
                 ])
+                // A set width: a search field's natural width is next to nothing, and that's what this row gives what's at its end.
                 SearchBox(text: $search, prompt: Text("Search the Gallery"), focus: $focus, focusValue: .search)
-                    .frame(maxWidth: 300)
+                    .frame(width: 200)
             }
             if shelf == .companions && !chooser.galleryEntries.isEmpty { CompanionFilters(chooser: chooser) }
             AddonUpdatesSection(updates: settings.services.updates, gallery: gallery, kind: shelf.kind, search: search)

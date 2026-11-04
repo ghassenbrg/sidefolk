@@ -77,28 +77,27 @@ private struct AttentionHero: View {
         let ends = model.settings.attentionEnds(at: now)
         HStack(spacing: 0) {
             ZStack(alignment: .bottom) {
-                LightPool(state: mode == .focus ? .focus : .idle, width: 120).offset(y: 6)
-                Image(nsImage: CompanionArt.portrait(for: model.settings, side: 128))
-                    .resizable().interpolation(.high).frame(width: 128, height: 128)
+                LightPool(state: mode == .focus ? .focus : .idle, width: 84).offset(y: 4)
+                Image(nsImage: CompanionArt.portrait(for: model.settings, side: 84))
+                    .resizable().interpolation(.high).frame(width: 84, height: 84)
                     .overlay(alignment: .topTrailing) {
                         ShoulderBadge(state: mode == .focus ? .focus : mode == .quiet ? .quiet : .idle).offset(x: 4, y: -2)
                     }
-                    .padding(.bottom, Theme.Space.m)
+                    .padding(.bottom, Theme.Space.s)
             }
-            .frame(width: 168)
+            .frame(width: 104)
             .frame(maxHeight: .infinity)
             .background(Theme.well)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: Theme.Space.m) {
+            VStack(alignment: .leading, spacing: Theme.Space.s + 2) {
                 HStack(alignment: .center, spacing: Theme.Space.s) {
-                    Text(verbatim: Self.title(mode, ends: ends)).font(Theme.Font.title2).foregroundStyle(Theme.ink)
+                    Text(verbatim: Self.title(mode, ends: ends)).font(Theme.Font.headline).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     if let ends, mode != .open {
                         Chip(verbatim: Self.left(until: ends, now: now), tone: .neutral)
                     }
                     Spacer(minLength: Theme.Space.s)
-                    if mode != .open { AttentionUntilMenu(model: model, mode: mode) }
                 }
                 AttentionDial(model: model)
                 if mode != .open, model.heldCount > 0 {
@@ -111,7 +110,7 @@ private struct AttentionHero: View {
                     .font(Theme.Font.body).foregroundStyle(Theme.ink)
                 }
             }
-            .padding(Theme.Space.l)
+            .padding(Theme.Space.m)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -163,33 +162,33 @@ struct AttentionDial: View {
     }
 
     private func card(_ option: AttentionMode, selected: Bool) -> some View {
-        Button { choose(option) } label: {
-            VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                HStack(spacing: 6) {
-                    if option == .open {
-                        Circle().fill(Theme.success).frame(width: 8, height: 8)
-                    } else {
-                        Image(systemName: option.symbol).font(.system(size: 12, weight: .semibold))
+        let shape = RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous)
+        return VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Button { choose(option) } label: {
+                VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                    HStack(spacing: 6) {
+                        RadioDot(selected: selected)
+                        Image(systemName: option == .open ? "play.fill" : option.symbol).font(.system(size: 11, weight: .semibold))
+                            .accessibilityHidden(true)
+                        option.word.font(Theme.Font.bodyStrong)
                     }
-                    option.word.font(Theme.Font.bodyStrong)
+                    .foregroundStyle(Theme.ink)
+                    option.explanation.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .foregroundStyle(selected && option != .open ? Theme.link : Theme.ink)
-                option.explanation.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .contentShape(Rectangle())
             }
-            .padding(Theme.Space.m)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(selected ? Theme.accentSoft : Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
-            .overlay {
-                if selected {
-                    RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous).strokeBorder(Theme.accent, lineWidth: 1.5)
-                }
-            }
-            .contentShape(Rectangle())
+            .buttonStyle(.sfBare)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+            // When it ends belongs to the mode that's on: the rest of the row stays one click to switch.
+            if selected, option != .open { AttentionUntilMenu(model: model, mode: option) }
         }
-        .buttonStyle(.sfBare)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .padding(Theme.Space.s + 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(selected ? Theme.surfaceRaised : Theme.well, in: shape)
+        .overlay { if selected { shape.strokeBorder(Theme.accent, lineWidth: 2) } }
     }
 
     private func choose(_ option: AttentionMode) {

@@ -38,14 +38,14 @@ struct YouView: View {
     private var header: some View {
         WrapRow(minimum: 380, spacing: Theme.Space.l, alignment: .top) {
             HStack(alignment: .top, spacing: Theme.Space.l) {
-                PersonAvatar(size: 72)
-                    .overlay(Circle().strokeBorder(Theme.surfaceRaised, lineWidth: 3))
-                    .elevation(.e1, radius: 36)
-                VStack(alignment: .leading, spacing: Theme.Space.s) {
+                PersonAvatar(size: 56)
+                    .overlay(Circle().strokeBorder(Theme.surfaceRaised, lineWidth: 2))
+                    .elevation(.e1, radius: 28)
+                VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                     Text(verbatim: NSFullUserName().isEmpty ? String(localized: "You") : NSFullUserName().split(separator: " ").first.map(String.init) ?? "")
-                        .font(Theme.Font.display).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                        .font(Theme.Font.title1).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
                         .homePageTitle()
-                    summary.font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale)).foregroundStyle(Theme.inkMuted)
+                    summary.font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: 560, alignment: .leading)
                 }

@@ -83,7 +83,7 @@ private struct ItemList: View {
             HStack(alignment: .center, spacing: Theme.Space.s + 2) {
                 CollectionTile(collection: collection)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(name).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1)
+                    Text(name).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1).homePageTitle()
                         .accessibilityAddTraits(.isHeader)
                     countLine.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 }

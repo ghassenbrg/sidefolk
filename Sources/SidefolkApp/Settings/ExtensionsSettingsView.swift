@@ -157,16 +157,16 @@ struct ExtensionsSettingsView: View {
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             HStack(alignment: .top, spacing: Theme.Space.m) {
                 VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                    Text(verbatim: SettingKey.addons.title).font(Theme.Font.title1).foregroundStyle(Theme.ink)
+                    Text(verbatim: SettingKey.addons.title).font(Theme.Font.body.weight(.medium)).foregroundStyle(Theme.ink)
                         .accessibilityAddTraits(.isHeader)
-                    Text(verbatim: summary).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    Text(verbatim: summary).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: Theme.Space.s)
                 Button { model.services.openGallery() } label: {
                     Label { Text("Get add-ons", comment: "Settings › Add-ons: opens the add-on gallery") } icon: { Image(systemName: "sparkles") }
                 }
-                .buttonStyle(.sf(.secondary, size: .large))
+                .buttonStyle(.sf(.secondary, size: .regular))
                 .help("Extensions, companions and themes to add, in Home")
             }
             AddonsNeedYou(model: model)

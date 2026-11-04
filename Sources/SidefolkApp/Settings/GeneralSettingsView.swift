@@ -25,6 +25,11 @@ struct GeneralSettingsView: View {
                         .accessibilityLabel("Ask shortcut")
                 }
                 CardShortcutRow(model: model)
+                // Fixed, unlike the two above: said here so the three keys are in one place.
+                SettingsRow(title: Text("Say in Home", comment: "Settings › General: the Say bar's fixed key in the Home window"),
+                            detail: Text("Goes to the Say bar while the Home window is in front.", comment: "Settings › General: under Say in Home")) {
+                    KeyHint("⌘K")
+                }
                 LanguageRow()
             }
 

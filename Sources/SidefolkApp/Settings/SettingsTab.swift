@@ -36,6 +36,15 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         }
     }
 
+    /// One line under the title where the page has no heading of its own to say what it's for.
+    var subtitle: String? {
+        switch self {
+        case .attention: String(localized: "Choose how things reach you.", comment: "Settings › Attention: under the title")
+        case .trust: String(localized: "You decide what Sidefolk may do.", comment: "Settings › Trust: under the title")
+        case .general, .companion, .brain, .connections, .addons, .appearance: nil
+        }
+    }
+
     var symbol: String {
         switch self {
         case .general: "gearshape.fill"

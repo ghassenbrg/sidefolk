@@ -10,11 +10,11 @@ struct ConnectionsSettingsView: View {
         SettingsPage {
             VStack(alignment: .leading, spacing: Theme.Space.xs) {
                 Text("Let your agents reach \(model.settings.companionName)", comment: "Settings › Connections: the page's heading")
-                    .font(Theme.Font.title1).foregroundStyle(Theme.ink)
+                    .font(Theme.Font.body.weight(.medium)).foregroundStyle(Theme.ink)
                     .accessibilityAddTraits(.isHeader)
                 Text("Connected agents can save notes, set reminders, watch pages and tell you when they need you. Sidefolk backs up each file before it changes it.",
                      comment: "Settings › Connections: under the heading")
-                    .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
             AgentsGroup(model: model)
