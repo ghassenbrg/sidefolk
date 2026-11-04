@@ -97,6 +97,8 @@ import Foundation
             case failed
             /// Off, or no reply from Sidefolk in time. It may or may not have run.
             case lost
+            /// Too many calls this minute. Nothing happened: try again in a minute.
+            case busy
         }
 
         public var status: Status
@@ -234,7 +236,7 @@ public struct Plan: @unchecked Sendable {
 /// Plans the person read, so that exactly that needs no more cards (D110). Only an extension that can't reach beyond this Mac by itself gets
 /// them, and only just after the person's click or request, never from a timer.
 @MainActor public enum Plans {
-    /// The most lines a plan may hold; Sidefolk refuses more, and a plan with none.
+    /// The most lines a plan may hold; Sidefolk refuses more, and a plan with none and no `when` to say what it's for.
     public nonisolated static let maxSteps = 32
 
     public struct Standing: Sendable, Hashable {

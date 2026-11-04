@@ -284,21 +284,7 @@ struct PageEditFieldRow: View {
                     .padding(Theme.Space.xxs)
                     .fieldChrome(focused: chipFocused, problem: problem)
             }
-            if !field.tokens.isEmpty {
-                FlowRow(spacing: Theme.Space.xs) {
-                    ForEach(field.tokens, id: \.value) { token in
-                        Button { inserting = (token.value, inserting.count + 1) } label: {
-                            Label { Text(ext: token.label) } icon: { token.symbol.map { Image(systemName: $0) } }
-                                .font(Theme.Font.caption)
-                                .padding(.horizontal, Theme.Space.s)
-                                .frame(height: Theme.Size.chip)
-                                .background(Capsule().fill(Theme.well))
-                        }
-                        .buttonStyle(.sfBare)
-                        .accessibilityHint(Text("Puts this value in the field", comment: "VoiceOver: a chip beside a field"))
-                    }
-                }
-            }
+            if !field.tokens.isEmpty { values }
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.vertical, Theme.Space.s + 2)
@@ -308,6 +294,30 @@ struct PageEditFieldRow: View {
     }
 
     private var shown: String { field.value ?? "" }
+
+    /// What can go in the field, under their headings, one press from the field: as many as the program has.
+    private var values: some View {
+        let groups = Dictionary(grouping: field.tokens, by: { $0.group ?? "" })
+        let order = field.tokens.reduce(into: [String]()) { if !$0.contains($1.group ?? "") { $0.append($1.group ?? "") } }
+        return Menu {
+            ForEach(order, id: \.self) { group in
+                Section {
+                    ForEach(groups[group] ?? [], id: \.value) { token in
+                        Button { inserting = (token.value, inserting.count + 1) } label: {
+                            Label { Text(ext: token.label) } icon: { token.symbol.map { Image(systemName: $0) } }
+                        }
+                    }
+                } header: {
+                    if !group.isEmpty { Text(ext: group) }
+                }
+            }
+        } label: {
+            Label { Text("Use a value", comment: "Beside a field on an extension's page: a menu of values to put in it") } icon: { Image(systemName: "plus.circle") }
+                .font(Theme.Font.caption.weight(.medium))
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.visible).fixedSize()
+        .accessibilityHint(Text("Puts a value in the field", comment: "VoiceOver: a menu beside a field"))
+    }
 
     @ViewBuilder private var editor: some View {
         switch field.kind {

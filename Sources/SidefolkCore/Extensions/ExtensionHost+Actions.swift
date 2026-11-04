@@ -44,7 +44,7 @@ extension ExtensionHost {
             let recent = (runtimes[id]?.actionCalls ?? []).filter { now.timeIntervalSince($0) < 60 }
             guard recent.count < Self.callsPerMinute else {
                 runtimes[id]?.actionCalls = recent
-                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "denied", "text": "Too many actions in a minute."])
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "busy", "text": "Too many actions in a minute."])
                 return
             }
             runtimes[id]?.actionCalls = recent + [now]
@@ -231,7 +231,9 @@ extension ExtensionHost {
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
         guard let planId = plan["id"]?.stringValue, planId.range(of: #"^[A-Za-z0-9._:-]{1,64}$"#, options: .regularExpression) != nil,
-              let rawSteps = plan["steps"]?.arrayValue, (1...ExtensionPlanRules.maxSteps).contains(rawSteps.count) else { return await refuse("unusable") }
+              let rawSteps = plan["steps"]?.arrayValue, (0...ExtensionPlanRules.maxSteps).contains(rawSteps.count) else { return await refuse("unusable") }
+        // No action to allow is still something to read when `when` says what it sets off. With nothing to say at all there's no card to show.
+        guard !rawSteps.isEmpty || plan["when"]?.stringValue.map({ ExtensionText.clean($0).trimmingCharacters(in: .whitespacesAndNewlines) })?.isEmpty == false else { return await refuse("unusable") }
         let ttl = plan["ttl"]?.intValue
         if let ttl, !ExtensionPlanRules.ttls.contains(ttl) { return await refuse("unusable") }
         let perDay = plan["per_day"]?.intValue ?? ExtensionPlanRules.defaultPerDay
@@ -253,7 +255,7 @@ extension ExtensionHost {
             lines.append((ExtensionPlanWords.line(tool: tool, template: input), stands, previous != nil && !seen))
         }
         let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
-        let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 200)
+        let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 600)
         let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl, revised: previous != nil, holdsJob: steps.contains { $0.tool == CompanionJobTool.name })
         let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, when: when, body: body)
         let asker = asker(rt)

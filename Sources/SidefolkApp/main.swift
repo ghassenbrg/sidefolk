@@ -4,6 +4,7 @@ AppLanguage.applyLayoutDirection()
 #if DEBUG
 UISnapshots.runIfRequested()
 VoiceDev.runIfRequested()
+_ = PageJSONRender.runIfAsked()
 #endif
 let app = NSApplication.shared
 let delegate = AppDelegate()

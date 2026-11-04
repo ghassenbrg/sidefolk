@@ -241,3 +241,47 @@ struct PageTableCell: View {
         }
     }
 }
+
+/// The keys a page asked for, while it's showing: from Sidefolk's short list (`ExtensionPage.Shortcut`), each running its tool as the person.
+struct PageShortcuts: View {
+    var model: ExtensionPageModel
+
+    var body: some View {
+        ForEach(model.page?.shortcuts ?? [], id: \.key) { shortcut in
+            Button { Task { await press(shortcut) } } label: { Text(ext: shortcut.label) }
+                .keyboardShortcut(shortcut.key.equivalent, modifiers: shortcut.key.modifiers)
+                .buttonStyle(.sfBare)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func press(_ shortcut: ExtensionPage.Shortcut) async {
+        let typing = NSApp.keyWindow?.firstResponder is NSTextView
+        if typing, shortcut.key.belongsToText {
+            NSApp.sendAction(Selector(shortcut.key == .undo ? "undo:" : "redo:"), to: nil, from: nil)
+            return
+        }
+        // What's in the field being typed in counts: it hands that over first, then the key's tool runs.
+        if typing {
+            NSApp.keyWindow?.makeFirstResponder(nil)
+            try? await Task.sleep(for: .milliseconds(80))
+        }
+        _ = await model.run(tool: shortcut.tool, input: shortcut.input)
+    }
+}
+
+private extension ExtensionPage.Shortcut.Key {
+    var equivalent: KeyEquivalent {
+        switch self {
+        case .save: "s"
+        case .undo, .redo: "z"
+        case .duplicate: "d"
+        case .run: .return
+        case .find: "f"
+        }
+    }
+
+    var modifiers: EventModifiers { self == .redo ? [.command, .shift] : .command }
+}

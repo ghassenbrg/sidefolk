@@ -20,6 +20,7 @@ struct ExtensionPageView: View {
         .environment(\.pageWell, model.page?.dress?.well?.color(scheme))
         .tint(pageAccent)
         .pageConsent(model: model)
+        .background { PageShortcuts(model: model) }
         .task(id: model.info.id) { await model.run() }
     }
 
@@ -295,8 +296,8 @@ struct SectionView: View {
                         PagePictureView(picture: picture, model: model, side: 56).frame(width: 28, height: 28).clipShape(Circle())
                     }
                     if let status = section.status { Circle().fill(status == .neutral ? Theme.inkFaint : status.color).frame(width: 10, height: 10) }
-                    if section.card || section.joined {
-                        // In a card there's room for its line under the title, whole.
+                    if section.card || section.joined || section.place == .trailing {
+                        // In a card, or the narrow column at the end, its line goes under the title, whole.
                         VStack(alignment: .leading, spacing: 3) {
                             if let title = section.title { Text(ext: title).font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader) }
                             if let detail = section.detail { Text(ext: detail).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true) }

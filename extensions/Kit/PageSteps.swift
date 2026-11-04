@@ -130,7 +130,11 @@ public struct EditField {
         public var value: String
         public var symbol: String?
 
-        public init(_ label: String, value: String, symbol: String? = nil) {
+        /// The heading it's listed under.
+        public var group: String?
+
+        public init(_ label: String, value: String, symbol: String? = nil, group: String? = nil) {
+            self.group = group
             self.label = label
             self.value = value
             self.symbol = symbol
@@ -139,6 +143,7 @@ public struct EditField {
         var json: [String: Any] {
             var out: [String: Any] = ["label": label, "value": value]
             if let symbol { out["symbol"] = symbol }
+            if let group { out["group"] = group }
             return out
         }
     }

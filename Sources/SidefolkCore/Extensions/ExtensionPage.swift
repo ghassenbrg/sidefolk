@@ -25,6 +25,8 @@ public struct ExtensionPage: Sendable, Hashable {
     public var workspace = false
     /// The person's own companion looks in at the page's corner (D126). Sidefolk places it; the extension never reads it.
     public var companion = false
+    /// Keys that work while this page is showing (`ExtensionPage.Shortcut`).
+    public var shortcuts: [Shortcut] = []
     /// Its palettes' row (their shortcut and where they open) stays off this page, drawn by a `host_controls` part on another state of it. What it needs from macOS always shows.
     public var quietHost = false
 
@@ -327,10 +329,12 @@ public struct ExtensionPage: Sendable, Hashable {
             public var label: String
             public var value: String
             public var symbol: String?
+            /// The heading it's listed under.
+            public var group: String?
         }
 
         /// How long what's typed may be: edited in place, it may be a whole prompt.
-        public static let longestEdit = 8_000
+        public static let longestEdit = 32_000
 
         /// What the page's state gets for `text`, with `go`.
         public func go(typing text: String) -> PageGo? {
@@ -529,6 +533,7 @@ public struct ExtensionPage: Sendable, Hashable {
         page.workspace = page.bare && (object["workspace"]?.boolValue ?? false)
         page.companion = object["companion"]?.boolValue ?? false
         page.quietHost = object["quiet_host"]?.boolValue ?? false
+        page.shortcuts = (object["shortcuts"]?.arrayValue ?? []).prefix(Shortcut.Key.allCases.count).compactMap(Shortcut.parse)
         // As in a dress: white goes on it, so what's too light to hold white words is left out (D108).
         page.accent = Array((object["accent"]?.arrayValue ?? []).compactMap { color($0) }.filter { PageDress.Pair.luminance($0) <= PageDress.Pair.holdsWhite }.prefix(2))
         page.keepOnePrimary()
@@ -723,9 +728,9 @@ public struct ExtensionPage: Sendable, Hashable {
                 field.id = editId
                 field.value = j["value"]?.stringValue.map { ExtensionText.untrusted($0, bytes: Field.longestEdit * 2) } ?? ""
                 field.kind = j["kind"]?.stringValue.flatMap(Field.Kind.init(rawValue:)) ?? .text
-                field.tokens = (j["tokens"]?.arrayValue ?? []).prefix(16).compactMap { t in
+                field.tokens = (j["tokens"]?.arrayValue ?? []).prefix(64).compactMap { t in
                     guard let label = text(t["label"], 40), let value = t["value"]?.stringValue, (1...200).contains(value.count) else { return nil }
-                    return Field.Token(label: label, value: ExtensionText.line(value, characters: 200), symbol: symbol(t["symbol"]))
+                    return Field.Token(label: label, value: ExtensionText.line(value, characters: 200), symbol: symbol(t["symbol"]), group: text(t["group"], 40))
                 }
             }
             return .field(field)
