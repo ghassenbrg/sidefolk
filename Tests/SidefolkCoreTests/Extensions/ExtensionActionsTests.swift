@@ -161,6 +161,16 @@ import Testing
         #expect(reply["not_found"]?.boolValue == true)
     }
 
+    @Test func onlyARecordOfASizeCountsAsFields() {
+        #expect(ToolResult.fields(.object(["a": .number(1)])) != nil)
+        #expect(ToolResult.fields(.array([.number(1)])) == nil, "a list isn't fields by name")
+        #expect(ToolResult.fields(.string("words")) == nil, "a server can say anything, and it can't be allowed to stop the program")
+        #expect(ToolResult.fields(.object(["a": .string(String(repeating: "x", count: ToolResult.longestData))])) == nil)
+        #expect(ToolSpec.outputSchema(.string("words")) == nil)
+        #expect(ToolSpec.outputSchema(.object(["properties": .object([:])])) != nil)
+        #expect(ToolSpec.outputSchema(.object(["description": .string(String(repeating: "x", count: 20_000))])) == nil)
+    }
+
     @Test func aThingThatIsntThereIsToldFromAFailure() {
         var failure = ToolExecutor.userFacing(ToolError.notFound("a watcher"), tool: Probe(name: "x", risk: .low, capabilities: [], mutates: true).spec)
         #expect(failure.notFound)
@@ -185,6 +195,38 @@ import Testing
         #expect(other?["extension"]?.stringValue == "other")
         #expect(other?["extension_title"]?.stringValue == "Other")
         #expect(other?["from_server"] == nil)
+    }
+
+    @Test func fieldsComeBesideTheWordsAndKeepOutOfHistory() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let server = #"""
+        import json, sys
+        for line in sys.stdin:
+            m = json.loads(line)
+            def send(r): print(json.dumps(r), flush=True)
+            if m.get("method") == "initialize":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "f", "version": "1"}}})
+            elif m.get("method") == "tools/list":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "look", "title": "Look", "inputSchema": {"type": "object", "additionalProperties": False}, "outputSchema": {"type": "object", "properties": {"secret_word": {"type": "string"}}}}]}})
+            elif m.get("method") == "tools/call":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "Looked"}], "structuredContent": {"secret_word": "plover", "n": 3}}})
+            elif "id" in m:
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+        """#
+        let manifest: JSONValue = ["id": "com.example.fields", "name": "Fields", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["look": ["title": "Look", "risk": "low", "mutates": false]]]
+        try await w.h.host.install(from: w.h.source("fields", manifest: manifest, files: ["server.py": server]))
+        let listed = await w.ask(tool, "sidefolk/tools.list")
+        let looked = listed["tools"]?.arrayValue?.first { $0["name"]?.stringValue == "ext.fields.look" }
+        #expect(looked?["output_schema"]?["properties"]?["secret_word"] != nil)
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.fields.look", "input": .object([:])]) }
+        _ = await w.answerCard(.allowOnce)
+        let reply = await task.value
+        #expect(reply["text"]?.stringValue == "Looked")
+        #expect(reply["data"]?["secret_word"]?.stringValue == "plover")
+        let rows = try await w.h.env.activity.recent(limit: 20)
+        #expect(!String(describing: rows).contains("plover"), "History keeps the words it would have, never the fields")
     }
 
     @Test func aPageCanOpenAddons() {

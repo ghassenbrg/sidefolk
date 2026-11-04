@@ -18,6 +18,7 @@ public final class Extension {
         let title: String
         let description: String
         let input: [String: Any]
+        var output: [String: Any]?
         let run: @MainActor (Arguments) async throws -> ToolReply
     }
 
@@ -55,9 +56,10 @@ public final class Extension {
 
     /// A tool whose reply also asks for something of Sidefolk's: one of your surfaces opened or put away, one of your pages shown
     /// (`ToolReply`). This is how a menu item, a command or a page's button starts a surface.
-    public func tool(_ name: String, _ title: String, _ description: String, input: [String: Any] = Schema.none,
+    /// `output`: what `ToolReply.with(data:)` holds, in JSON Schema, so a flow can offer each field by name.
+    public func tool(_ name: String, _ title: String, _ description: String, input: [String: Any] = Schema.none, output: [String: Any]? = nil,
                      reply: @escaping @MainActor (Arguments) async throws -> ToolReply) {
-        tools.append(Tool(name: name, title: title, description: description, input: input, run: reply))
+        tools.append(Tool(name: name, title: title, description: description, input: input, output: output, run: reply))
     }
 
     /// A surface the manifest declares (`surfaces.<name>`): a panel or overlay Sidefolk frames, drawn from your `Scene`.
@@ -213,7 +215,7 @@ public final class Extension {
         case "ping":
             return [:]
         case "tools/list":
-            return ["tools": tools.map { ["name": $0.name, "title": $0.title, "description": $0.description, "inputSchema": $0.input] }]
+            return ["tools": tools.map { ["name": $0.name, "title": $0.title, "description": $0.description, "inputSchema": $0.input].merging($0.output.map { ["outputSchema": $0] } ?? [:]) { own, _ in own } }]
         case "tools/call":
             let called = params["name"] as? String ?? ""
             guard let tool = tools.first(where: { $0.name == called }) else { return Self.text("Unknown tool: \(called)", error: true) }
@@ -221,6 +223,7 @@ public final class Extension {
                 let reply = try await tool.run(Arguments(params["arguments"] as? [String: Any] ?? [:]))
                 var result = Self.text(reply.text, error: false)
                 if !reply.asks.isEmpty { result["sidefolk"] = reply.asks }
+                if let data = reply.data { result["structuredContent"] = data }
                 return result
             } catch let problem as Problem {
                 return Self.text(problem.message, error: true)

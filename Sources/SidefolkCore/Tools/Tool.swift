@@ -45,6 +45,16 @@ public struct ToolSpec: Sendable, Hashable {
     public var timeout: TimeInterval?
     /// Offered to Sidefolk's AI. An extension's tool its author left to commands only (D50) costs the model nothing.
     public var offeredToModel: Bool
+    /// What its answer holds, in JSON Schema, if it says.
+    public var outputSchema: JSONValue?
+
+    public static let longestOutputSchema = 16 * 1024
+
+    /// What a tool says its answer holds, if it's a schema, of a size to keep and to pass on.
+    public static func outputSchema(_ value: JSONValue?) -> JSONValue? {
+        guard let value, case .object = value, value.jsonString.utf8.count <= longestOutputSchema else { return nil }
+        return value
+    }
 
     public init(
         name: String, title: String, description: String, inputSchema: JSONValue, risk: Risk,
@@ -213,6 +223,15 @@ public struct UndoAction: Sendable {
 public struct ToolResult: Sendable {
     /// What the model reads.
     public var text: String
+    /// The same answer as fields, when the tool gives them: for a program that goes on to use one, never for a model or History.
+    public var data: JSONValue?
+    public static let longestData = 256 * 1024
+
+    /// A tool's fields, if that's what these are: a record, of a size to keep. A server can say anything here.
+    public static func fields(_ value: JSONValue?) -> JSONValue? {
+        guard let value, case .object = value, value.jsonString.utf8.count <= longestData else { return nil }
+        return value
+    }
     public var card: ResultCard?
     public var undo: UndoAction?
     /// The text contains content from outside the user's own words (web, files, clipboard, extensions).

@@ -31,8 +31,10 @@ import Foundation
         public var extensionTitle: String?
         /// It comes from an MCP server the person added.
         public var fromServer: Bool
+        /// What its answer holds, as a JSON string, if it says.
+        public var outputSchema: String?
 
-        public init(name: String, title: String, description: String = "", schema: String = "{}", risk: String = "medium", mutates: Bool = true, category: String = "", readsOnly: Bool = false, extensionName: String? = nil, extensionTitle: String? = nil, fromServer: Bool = false) {
+        public init(name: String, title: String, description: String = "", schema: String = "{}", risk: String = "medium", mutates: Bool = true, category: String = "", readsOnly: Bool = false, extensionName: String? = nil, extensionTitle: String? = nil, fromServer: Bool = false, outputSchema: String? = nil) {
             self.name = name
             self.title = title
             self.description = description
@@ -44,6 +46,7 @@ import Foundation
             self.extensionName = extensionName
             self.extensionTitle = extensionTitle
             self.fromServer = fromServer
+            self.outputSchema = outputSchema
         }
     }
 
@@ -116,12 +119,15 @@ import Foundation
         public var untrusted: Bool
         /// It fit a plan.
         public var standing: Bool
+        /// The answer as fields, when the tool gives them: as outside as the words are. As `JSONSerialization` reads it, as a JSON string.
+        public var data: String?
 
         /// `failed` because what it named isn't there, as opposed to a failure that may have done something.
         public var notFound = false
 
-        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false, notFound: Bool = false) {
+        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false, notFound: Bool = false, data: String? = nil) {
             self.notFound = notFound
+            self.data = data
             self.status = status
             self.text = text
             self.summary = summary
@@ -190,7 +196,8 @@ import Foundation
             return Tool(name: name, title: t["title"] as? String ?? name, description: t["description"] as? String ?? "", schema: schema,
                         risk: t["risk"] as? String ?? "medium", mutates: t["mutates"] as? Bool ?? true, category: t["category"] as? String ?? "",
                         readsOnly: t["reads_only"] as? Bool ?? false, extensionName: t["extension"] as? String,
-                        extensionTitle: t["extension_title"] as? String, fromServer: t["from_server"] as? Bool ?? false)
+                        extensionTitle: t["extension_title"] as? String, fromServer: t["from_server"] as? Bool ?? false,
+                        outputSchema: t["output_schema"].flatMap { JSONSerialization.isValidJSONObject($0) ? try? JSONSerialization.data(withJSONObject: $0, options: [.sortedKeys]) : nil }.flatMap { String(data: $0, encoding: .utf8) })
         }
         let plans = (args.values["plans"] as? [[String: Any]] ?? []).compactMap { p -> Plans.Standing? in
             guard let id = p["id"] as? String else { return nil }
@@ -211,7 +218,8 @@ import Foundation
     static func receiveResult(_ args: Arguments) {
         guard let id = args.string("request"), let c = calls.removeValue(forKey: id) else { return }
         c.resume(returning: Outcome(status: Outcome.Status(rawValue: args.string("status") ?? "") ?? .lost, text: args.string("text") ?? "", summary: args.string("summary") ?? "",
-                                    untrusted: args.bool("untrusted") ?? true, standing: args.bool("standing") ?? false, notFound: args.bool("not_found") ?? false))
+                                    untrusted: args.bool("untrusted") ?? true, standing: args.bool("standing") ?? false, notFound: args.bool("not_found") ?? false,
+                                    data: args.values["data"].flatMap { JSONSerialization.isValidJSONObject($0) ? try? JSONSerialization.data(withJSONObject: $0, options: [.sortedKeys]) : nil }.flatMap { String(data: $0, encoding: .utf8) }))
     }
 }
 
