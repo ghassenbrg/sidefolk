@@ -317,21 +317,23 @@ import Testing
         #expect(env.fetcher.requests.count == 2)
     }
 
+    /// The probe is slow by seconds and the answer is due in 0.2, so a Mac too busy to run the test promptly still tells
+    /// the two apart; the late check is waited for, not slept for.
     @Test func aSlowSiteDoesNotHoldUpTheAnswer() async throws {
         let slow = ScriptedProbe(kind: "fake") { _, _ in
-            try await Task.sleep(for: .seconds(0.8))
+            try await Task.sleep(for: .seconds(4))
             return ProbeResult(state: .object([:]), firstLookNote: "late")
         }
         let engine = env.engine(probes: [slow])
         let w = try await engine.add(.make("fake", interval: 600, now: env.clock.now))
         let started = Date()
         let look = await engine.firstLook(of: w.id, polite: false, within: 0.2)
-        #expect(Date().timeIntervalSince(started) < 0.7)
+        #expect(Date().timeIntervalSince(started) < 3.5, "the answer didn't wait for the probe")
         #expect(!look.answered)
         #expect(look.isFine)
         // The look carries on and is saved like any other.
-        try await Task.sleep(for: .seconds(1.2))
-        #expect(try #require(await engine.watcher(id: w.id)).lastCheckedAt != nil)
+        let saved = await pollUntil(30) { await engine.watcher(id: w.id)?.lastCheckedAt != nil }
+        #expect(saved)
     }
 
     // MARK: Who may do what

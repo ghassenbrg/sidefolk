@@ -4,7 +4,7 @@ extension WatcherEngine {
     /// One value now, for `watch.read`: the kind's own probe looks once at a watcher that is never added, so
     /// nothing keeps running, nothing is saved and no report slot is taken. Rates are measured over a fresh moment
     /// (`WatchContext.isReadingNow`), and the person's own question isn't made to wait its turn at a site.
-    func readNow(_ watcher: Watcher, polite: Bool, within seconds: TimeInterval = 8) async throws -> ProbeResult {
+    func readNow(_ watcher: Watcher, polite: Bool, within seconds: TimeInterval = WatchReadTool.defaultDeadline) async throws -> ProbeResult {
         guard let probe = probes[watcher.kind] else { throw WatchError.unknownKind(watcher.kind) }
         let w = try probe.prepare(watcher)
         for attempt in 1...2 {
@@ -40,6 +40,10 @@ struct WatchReadTool: Tool {
     let engine: WatcherEngine
     /// Where the person is, when they share it: the weather's place when none is named (D48).
     var here: @Sendable () -> KnownPlace? = { nil }
+    /// How long a value may take before the answer is "that took too long"; tests lengthen it so a busy Mac can't trip it.
+    var deadline: TimeInterval = WatchReadTool.defaultDeadline
+
+    static let defaultDeadline: TimeInterval = 8
 
     var spec: ToolSpec {
         ToolSpec(
@@ -85,7 +89,7 @@ struct WatchReadTool: Tool {
         let watcher = Watcher(kind: kind, title: title, config: config, intervalS: 0, mode: .report,
                               source: WatchSource.string(for: context), now: context.now)
         let found: ProbeResult
-        do { found = try await engine.readNow(watcher, polite: context.caller != .user) } catch { throw WatchInput.watchError(error) }
+        do { found = try await engine.readNow(watcher, polite: context.caller != .user, within: deadline) } catch { throw WatchInput.watchError(error) }
         guard let reading = found.reading else {
             throw UserFacingError("I couldn't read a value there.")
         }

@@ -12,6 +12,8 @@ import Testing
     init() throws {
         env = try WatchEnv()
         engine = env.reportEngine(sampler)
+        // A fake answers at once; the real 8 s deadline is for a slow site, and a Mac too busy to run this on time mustn't trip it.
+        env.base.registry.register(WatchReadTool(engine: engine, deadline: 120))
     }
 
     func run(_ input: JSONValue, as caller: Caller = .user) async -> ToolOutcome {
@@ -78,6 +80,7 @@ import Testing
         let here = try WatchEnv()
         let engine = here.engine(probes: WatchProbes.standard(fetcher: here.fetcher, throttle: here.throttle, settle: 0))
         here.base.registry.register(WatchTools.make(engine: engine, here: { LocationTests.fukuoka }))
+        here.base.registry.register(WatchReadTool(engine: engine, here: { LocationTests.fukuoka }, deadline: 120))
         here.fetcher.say(ReportTests.forecast(21), headers: ["content-type": "application/json"])
         let outcome = await here.base.executor.execute(name: "watch.read", input: ["source": "weather"], caller: .agent(runId: "r1"))
         let result = try ok(outcome)
@@ -96,6 +99,11 @@ import Testing
         #expect(result.card?.title == "Value on api.example.com/price: 42.5")
         #expect(result.card?.url == "https://api.example.com/price")
         #expect(result.untrusted, "a page's value is someone else's text")
+    }
+
+    @Test func aValueHasEightSecondsUnlessTheCallerSaysOtherwise() {
+        #expect(WatchReadTool(engine: engine).deadline == 8)
+        #expect(WatchReadTool.defaultDeadline == 8)
     }
 
     @Test func theSpecReadsWithoutChangingAnything() {
