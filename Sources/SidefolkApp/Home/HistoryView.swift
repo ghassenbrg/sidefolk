@@ -14,6 +14,7 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            title
             bar
             if model.loaded && model.events.isEmpty {
                 EmptyState(title: Text("Nothing has happened yet"),
@@ -30,6 +31,21 @@ struct HistoryView: View {
             Button("Find") { focus = .search }.keyboardShortcut("f", modifiers: .command).opacity(0).frame(width: 0, height: 0)
                 .accessibilityHidden(true)
         }
+    }
+
+    // MARK: The place's title
+
+    private var title: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+            Text("History").font(Theme.Font.title1).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                .homePageTitle()
+            Text(verbatim: spanTitle + " · " + String(localized: "\(model.spanCount) things happened", comment: "Under History's title"))
+                .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+        }
+        .padding(.horizontal, Theme.Size.contentPadding)
+        .padding(.top, Theme.Space.l)
+        .frame(maxWidth: Theme.Size.contentMaxWidth + 2 * Theme.Size.contentPadding, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: Filters and search
@@ -96,22 +112,12 @@ struct HistoryView: View {
                         .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                         .padding(.top, Theme.Space.xl)
                 }
-                ForEach(hours, id: \.start) { hour in
-                    HStack(alignment: .top, spacing: Theme.Space.l) {
-                        VStack(alignment: .trailing, spacing: 0) {
-                            if !Calendar.current.isDateInToday(hour.start) {
-                                Text(verbatim: TimeFormat.day(hour.start, now: Date(), calendar: .current))
-                                    .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                            }
-                            Text(verbatim: TimeFormat.clock(hour.start, calendar: .current)).font(Theme.Font.headline.monospacedDigit())
-                                .foregroundStyle(Theme.ink)
-                        }
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .frame(width: 84, alignment: .trailing)
-                        .padding(.top, Theme.Space.l)
+                // By the day, each row saying its own time: an hour's own heading took a column and said it twice (D220).
+                ForEach(Dictionary(grouping: hours) { Calendar.current.startOfDay(for: $0.start) }.sorted { $0.key > $1.key }, id: \.key) { day, hours in
+                    VStack(alignment: .leading, spacing: Theme.Space.s) {
+                        PageSectionTitle(title: Text(verbatim: TimeFormat.day(day, now: Date(), calendar: .current)))
                         RowsCard {
-                            ForEach(hour.events) { event in
+                            ForEach(hours.flatMap(\.events)) { event in
                                 HistoryRow(event: event, model: model, home: home).id(event.id)
                             }
                         }

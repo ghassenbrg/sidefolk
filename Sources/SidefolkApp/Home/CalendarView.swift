@@ -97,9 +97,13 @@ struct CalendarView: View {
         WrapRow(minimum: 260, spacing: Theme.Space.m) {
             HStack(spacing: Theme.Space.s) {
                 sidebarButton
-                Text(verbatim: model.title).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.7)
-                    .accessibilityAddTraits(.isHeader)
-                    .contentTransition(.numericText())
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(verbatim: model.title).font(Theme.Font.title).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.7)
+                        .accessibilityAddTraits(.isHeader)
+                        .contentTransition(.numericText())
+                        .homePageTitle()
+                    Text(verbatim: model.subtitle).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                }
             }
             HStack(spacing: Theme.Space.s) {
                 Button { model.startNew(at: model.newTime(on: model.mode == .day ? model.chosenDay : Date()), fromButton: true) } label: {

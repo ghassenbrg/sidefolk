@@ -25,15 +25,12 @@ struct OnDutyView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, Theme.Space.xxl)
             } else {
-                ColumnsLayout(widths: [1, 1], spacing: Theme.Size.columnGap, minimums: [320, 320]) {
-                    VStack(alignment: .leading, spacing: Theme.Size.columnGap) {
-                        if !duty.watches.isEmpty { scout(duty) }
-                        if !duty.repeating.isEmpty { tempo(duty) }
-                    }
-                    VStack(alignment: .leading, spacing: Theme.Size.columnGap) {
-                        if !duty.sessions.isEmpty || !duty.jobs.isEmpty || !background.isEmpty { byte(duty, background: background) }
-                        if !duty.reports.isEmpty { liveValues(duty) }
-                    }
+                // One column, so every row has room for its whole state at the same trailing edge (D220).
+                VStack(alignment: .leading, spacing: Theme.Space.l) {
+                    if !duty.watches.isEmpty { scout(duty) }
+                    if !duty.sessions.isEmpty || !duty.jobs.isEmpty || !background.isEmpty { byte(duty, background: background) }
+                    if !duty.repeating.isEmpty { tempo(duty) }
+                    if !duty.reports.isEmpty { liveValues(duty) }
                 }
                 Label("Click a folk beside \(model.companionName) on your desktop to come here.", systemImage: "info.circle")
                     .font(Theme.Font.callout).foregroundStyle(Theme.inkFaint)
@@ -45,7 +42,9 @@ struct OnDutyView: View {
 
     private func hero(_ duty: OnDuty, running: Int, empty: Bool) -> some View {
         WrapRow(minimum: 380, spacing: Theme.Space.l, alignment: .bottom) {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
+            VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+                Text("On duty").font(Theme.Font.title1).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                    .homePageTitle()
                 Group {
                     switch running {
                     case 0: Text("Nothing is working right now", comment: "On duty's title")
@@ -53,9 +52,8 @@ struct OnDutyView: View {
                     default: Text("\(running) things are working for you", comment: "On duty's title")
                     }
                 }
-                .font(Theme.Font.title1).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
-                .homePageTitle()
-                Text(verbatim: summary(duty)).font(.system(size: 15 * ThemeStore.shared.style.tokens.type.scale)).foregroundStyle(Theme.inkMuted)
+                .font(Theme.Font.body.weight(.medium)).foregroundStyle(Theme.ink)
+                Text(verbatim: summary(duty)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 640, alignment: .leading)
             }
@@ -63,17 +61,17 @@ struct OnDutyView: View {
             HStack(spacing: Theme.Space.s) {
                 if !now.watchers.isEmpty || !now.reports.isEmpty {
                     Button { model.selection = .watchers } label: { Label("All watchers", systemImage: "list.bullet") }
-                        .buttonStyle(.sf(.secondary, size: .large))
+                        .buttonStyle(.sf(.secondary, size: .regular))
                 }
                 if !duty.pausable.isEmpty {
                     Button { pauseAll(duty) } label: { Label("Pause all", systemImage: "pause") }
-                        .buttonStyle(.sf(.secondary, size: .large, working: pausing))
+                        .buttonStyle(.sf(.secondary, size: .regular, working: pausing))
                         .help(Text("Pauses every watch and live value; reminders, agents and extensions go on."))
                 }
                 // Empty, the page's one primary is the empty state's own.
                 if !empty {
                     Button { model.services.openAsk(prefill: "tell me when ") } label: { Label("Watch something", systemImage: "plus") }
-                        .buttonStyle(.sf(.primary, size: .large))
+                        .buttonStyle(.sf(.primary, size: .regular))
                 }
             }
             .fixedSize()
@@ -144,9 +142,9 @@ struct OnDutyView: View {
                     rowIcon("terminal")
                 } trailing: {
                     if s.state == .needsYou {
-                        StatusBadge(Text("needs you", comment: "An agent session waits on the person"), state: .tone(.warning))
+                        StatusBadge(Text(verbatim: String(localized: "needs you", comment: "An agent session waits on the person").capitalizedFirst), state: .tone(.warning))
                     } else {
-                        StatusBadge(Text("working", comment: "An agent session is running"), state: .live)
+                        StatusBadge(Text(verbatim: String(localized: "working", comment: "An agent session is running").capitalizedFirst), state: .live)
                     }
                 } actions: {
                     Button("Open session") { now.openSession(s) }
@@ -224,20 +222,21 @@ struct FolkCard<Rows: View>: View {
         RowsCard {
             HStack(spacing: Theme.Space.m) {
                 if let folk {
-                    FolkAvatar(name: folk, size: Theme.Size.avatarLarge - 6, live: true)
+                    FolkAvatar(name: folk, size: Theme.Size.avatar + 4, live: true)
                 } else {
-                    Image(systemName: "pin").font(.system(size: 16, weight: .medium)).foregroundStyle(Theme.link)
-                        .frame(width: Theme.Size.avatarLarge - 6, height: Theme.Size.avatarLarge - 6)
+                    Image(systemName: "pin").font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.link)
+                        .frame(width: Theme.Size.avatar + 4, height: Theme.Size.avatar + 4)
                         .background(Theme.accentSoft, in: Circle())
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    title.font(Theme.Font.title2).foregroundStyle(Theme.ink)
+                    title.font(Theme.Font.headline).foregroundStyle(Theme.ink)
                     role.font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
                 Spacer()
                 CountBadge(count: count, waiting: false)
             }
-            .padding(Theme.Space.l)
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.vertical, Theme.Space.s + 2)
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
             rows
@@ -319,7 +318,7 @@ struct OnDutyGlance: View {
         let tiles = duty.watches.count + duty.reports.count
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("On duty").font(Theme.Font.headline).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+                Text("On duty").font(Theme.Font.title2).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
                 Spacer()
                 Button("Open") { model.selection = .onDuty }.buttonStyle(.sf(.quiet))
             }
@@ -345,9 +344,9 @@ struct OnDutyGlance: View {
                 Button { now.openSession(g.session) } label: {
                     OnDutyRow(symbol: "sparkles", title: Describe.session(g)) {
                         if g.session.state == .needsYou {
-                            StatusBadge(Text("needs you", comment: "An agent session waits on the person"), state: .tone(.warning))
+                            StatusBadge(Text(verbatim: String(localized: "needs you", comment: "An agent session waits on the person").capitalizedFirst), state: .tone(.warning))
                         } else {
-                            StatusBadge(Text("working", comment: "An agent session is running"), state: .live)
+                            StatusBadge(Text(verbatim: String(localized: "working", comment: "An agent session is running").capitalizedFirst), state: .live)
                         }
                     }
                 }
@@ -356,7 +355,7 @@ struct OnDutyGlance: View {
             }
             ForEach(duty.jobs) { j in
                 OnDutyRow(symbol: "sparkles", title: j.title) {
-                    StatusBadge(Text("working", comment: "An agent session is running"), state: .live)
+                    StatusBadge(Text(verbatim: String(localized: "working", comment: "An agent session is running").capitalizedFirst), state: .live)
                 }
                 .help(Text(verbatim: j.command ?? j.title))
             }

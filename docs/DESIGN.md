@@ -72,7 +72,7 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `TouchChip(Touch)` "what it touches" | `TouchChip.swift` | `Touch(ApprovalRequest.Effect)`; amber for what reaches the person's things or leaves the Mac |
 | Card surface: `.cardSurface()`, `SFCard`, `RowsCard` | `Components.swift` | e1, hairline |
 | `ListRow` (+ `RowChevron`) | `ListRow.swift` | 44/34 rows, icon, title, meta, trailing value, ≤ 2 actions on hover and always in its ⋯ menu, selected state |
-| `PageSectionTitle` (title, count, trailing) | `Components.swift` | a section of a page: Needs you, Next up |
+| `PageSectionTitle` (title, count, trailing) | `Components.swift` | a section of a page: Needs you, Next up, a day in History |
 | `SectionHeader` (title, folk, count, detail, trailing) | `Components.swift` | a group inside a section or a card |
 | `Eyebrow` | `Components.swift` | sentence case, no tracking in Arabic and CJK |
 | `SegmentedPicker` | `SegmentedPicker.swift` | 2–5 choices; `small`, `equalWidths`; replaces every `.pickerStyle(.segmented)` |
@@ -111,7 +111,7 @@ Settings and the menu bar (phase 4), in `Sources/SidefolkApp/Settings/` and `Sta
 | `SettingKey` (tab, section, title, detail), `SettingsNavigation`, `.settingAnchor(_:)`, `SettingsRow(_ key:)`, `SettingsToggle(_ key:)` | `SettingsCatalog.swift` | every searchable row; a new setting gets a key, or search can't find it |
 | `SettingsPage` | `GeneralSettingsView.swift` | a tab's column, 720 at most, leading; scrolls to a jumped-to row |
 | `SettingInlineControl` | `SettingsRoot.swift` | the control itself in a search result (switches, short choices) |
-| `AttentionDial` (cards or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
+| `AttentionDial` (cards with a radio, the chosen one holding its Until menu, or compact), `AttentionUntilMenu`, `AttentionSpan` | `AttentionSettingsView.swift` | Open, Focus, Quiet and their ends, here and in the Pocket |
 | `InterruptionsGroup`, `InterruptLevelMenu` | `InterruptionsGroup.swift` | What may interrupt you (D88): a row per source (icon, name, what it covers, a level menu one width down the column), watches set apart under Watches |
 | `TrustHero`, `RadioDot`, `FullAccessSheet`, `FullAccessEnd` | `ApprovalSettings.swift` | the four modes as cards with an example each |
 | `PocketView`, `PocketModel`, `PocketContent`, `PocketActions` | `StatusItem/` | the menu bar's popover; content gathered by `AppCoordinator+Pocket` |

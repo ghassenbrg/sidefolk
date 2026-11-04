@@ -94,7 +94,8 @@ struct CalendarMiniMonth: View {
         VStack(spacing: 4) {
             HStack {
                 Text(verbatim: shown.formatted(.dateTime.month(.wide).year())).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
-                Spacer()
+                    .lineLimit(1).minimumScaleFactor(0.85)
+                Spacer(minLength: 0)
                 HStack(spacing: 0) {
                     Button { month = cal.date(byAdding: .month, value: -1, to: shown) } label: { Image(systemName: "chevron.backward").frame(width: 20, height: 20) }
                         .accessibilityLabel(Text("Show the previous month"))

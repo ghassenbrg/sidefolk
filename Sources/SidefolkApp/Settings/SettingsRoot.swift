@@ -56,13 +56,21 @@ struct SettingsRoot: View {
                     .foregroundStyle(Theme.inkMuted)
                 }
             } else {
-                Text(verbatim: navigation.tab.title).font(Theme.Font.title2).foregroundStyle(Theme.ink)
-                    .accessibilityAddTraits(.isHeader)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(verbatim: navigation.tab.title).font(Theme.Font.title1).foregroundStyle(Theme.ink)
+                        .accessibilityAddTraits(.isHeader)
+                    if let subtitle = navigation.tab.subtitle {
+                        Text(verbatim: subtitle).font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
                 Spacer()
             }
         }
         .padding(.horizontal, Theme.Space.xl)
-        .frame(height: 52)
+        .padding(.top, Theme.Space.l)
+        .padding(.bottom, Theme.Space.m)
+        .frame(minHeight: 52)
     }
 }
 

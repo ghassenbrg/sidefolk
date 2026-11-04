@@ -70,7 +70,7 @@ enum UISnapshots {
             // Home, as a real window (D84): every place, at the mockups' 1280 × 800, in a wide and a narrow window, and empty.
             let home = SnapshotWindow()
             HomeWindowController.configure(home, model: full)
-            func homeShot(_ name: String, size: CGSize = CGSize(width: 1280, height: 800), scroll: CGFloat = 0) async throws {
+            func homeShot(_ name: String, size: CGSize = CGSize(width: 1280, height: 800), scroll: CGFloat? = 0) async throws {
                 try await capture(home, size: size, dark: dark, scroll: scroll, to: file("window-home-\(name)"))
             }
             full.selection = .now
@@ -135,7 +135,8 @@ enum UISnapshots {
             for mode in CalendarModel.Mode.allCases {
                 full.calendar.mode = mode
                 await full.calendar.reload()
-                try await homeShot("calendar-\(mode.rawValue)")
+                // Where the page itself scrolls to: the time grids open near the hour that matters.
+                try await homeShot("calendar-\(mode.rawValue)", scroll: nil)
             }
             full.calendar.mode = .week
             await full.calendar.reload()
@@ -1175,15 +1176,19 @@ enum UISnapshots {
     }
 
     /// The whole window, titlebar and toolbar included.
-    private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, scroll: CGFloat = 0, to url: URL) async throws {
+    /// `scroll`: how far down the page's scroll views go, 0 for the top; nil leaves them where the page put them.
+    private static func capture(_ window: NSWindow, size: CGSize, dark: Bool, scroll: CGFloat? = 0, to url: URL) async throws {
         guard wanted(url) else { return }
+        // The page just chosen settles first: swapped in together with a resize, it keeps the place it reported mid-way
+        // and Home's toolbar shows its small title beside the page's own.
+        try await Task.sleep(for: .milliseconds(100))
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         window.setContentSize(size)
         window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
         window.orderFrontRegardless()
         try await Task.sleep(for: .milliseconds(400))
-        if let view = window.contentView { scrollPages(in: view, by: scroll) }
-        if scroll != 0 { try await Task.sleep(for: .milliseconds(300)) }
+        if let scroll, let view = window.contentView { scrollPages(in: view, by: scroll) }
+        if scroll != nil, scroll != 0 { try await Task.sleep(for: .milliseconds(300)) }
         window.makeFirstResponder(nil) // no field focused, as when Settings opens
         guard let frame = window.contentView?.superview else { throw SnapshotError.render(url.lastPathComponent) }
         try write(frame, to: url)
