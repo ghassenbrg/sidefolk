@@ -8,6 +8,7 @@ import SwiftUI
 struct FileWaysPart: View {
     var services: (any AppServices)?
     @State private var ring = FileRingSettings()
+    @State private var conflict: String?
 
     var body: some View {
         RowsCard {
@@ -33,15 +34,21 @@ struct FileWaysPart: View {
             }
             .disabled(!ring.enabled)
             row(symbol: nil, text: Text("Opens the ring for the files selected in Finder.", comment: "The ring: its shortcut")) {
-                KeyboardShortcuts.Recorder(for: .fileRing) { _ in services?.settingsChanged() }
+                KeyboardShortcuts.Recorder(for: .fileRing) { _ in
+                    services?.settingsChanged()
+                    conflict = services?.fileRingConflict()
+                }
             }
             .disabled(!ring.enabled)
-            if ring.enabled, let conflict = CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .fileRing)) {
-                row(symbol: "exclamationmark.triangle", text: Text(verbatim: CardShortcut.explanation(conflict))) { EmptyView() }
+            if ring.enabled, let conflict {
+                row(symbol: "exclamationmark.triangle", text: Text(verbatim: conflict)) { EmptyView() }
             }
             row(symbol: "contextualmenu.and.cursorarrow", text: Text("Right-click a file in Finder and choose Send to Sidefolk.", comment: "A way to hand a file over: Finder's Service")) { EmptyView() }
         }
-        .onAppear { ring = services?.runtime.settings.current.fileRing ?? FileRingSettings() }
+        .onAppear {
+            ring = services?.runtime.settings.current.fileRing ?? FileRingSettings()
+            conflict = services?.fileRingConflict()
+        }
     }
 
     private func row<End: View>(symbol: String?, text: Text, @ViewBuilder end: () -> End) -> some View {
@@ -60,7 +67,10 @@ struct FileWaysPart: View {
 
         Task {
             await services.runtime.settings.update { edit(&$0.fileRing) }
-            await MainActor.run { services.settingsChanged() }
+            await MainActor.run {
+                services.settingsChanged()
+                conflict = services.fileRingConflict()
+            }
         }
     }
 }

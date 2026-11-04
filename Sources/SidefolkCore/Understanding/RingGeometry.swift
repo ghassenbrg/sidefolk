@@ -28,27 +28,38 @@ public struct RingAim: Sendable {
     public static let leastMove = 14.0
     public static let leastOpen: TimeInterval = 0.4
     public static let leastRest: TimeInterval = 0.15
+    static let stillWithin = 3.0
 
     private let openedAt: TimeInterval
     private let start: (x: Double, y: Double)
     private var moved = false
     private var slice: Int?
     private var since: TimeInterval = 0
+    private var last: (x: Double, y: Double)
 
     public init(openedAt: TimeInterval, x: Double, y: Double) {
         self.openedAt = openedAt
         start = (x, y)
+        last = (x, y)
     }
 
     /// The pointer is here, on that slice if any. Returns the slice to light: nothing until it has moved.
     public mutating func follow(x: Double, y: Double, slice index: Int?, at now: TimeInterval) -> Int? {
         if hypot(x - start.x, y - start.y) >= Self.leastMove { moved = true }
         let shown = moved ? index : nil
-        if shown != slice {
+        // Resting means resting: a hand still crossing a slice hasn't chosen it.
+        if shown != slice || hypot(x - last.x, y - last.y) > Self.stillWithin {
             slice = shown
             since = now
         }
+        last = (x, y)
         return shown
+    }
+
+    /// The ring turned to its other set: whatever was under the pointer isn't what was seen there.
+    public mutating func turned(at now: TimeInterval) {
+        slice = nil
+        since = now
     }
 
     /// The slice a release now would choose, if any.

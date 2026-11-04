@@ -110,6 +110,8 @@ struct WorkingFile: Equatable {
     var extensionId: String
     var mark: String?
     var showsPicture = true
+    /// All of them, for Stop.
+    var files: [String] = []
 }
 
 protocol AskActions: AnyObject {

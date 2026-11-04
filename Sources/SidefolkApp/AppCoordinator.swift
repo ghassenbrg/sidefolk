@@ -887,7 +887,10 @@ final class AppCoordinator {
         settingsWindow.show(tab: tab)
     }
 
-    func openGallery() { home.show(section: .gallery) }
+    func openGallery() {
+        askPanel.hide()
+        home.show(section: .gallery)
+    }
 
     func showAbout() {
         askPanel.hide()

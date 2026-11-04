@@ -17,8 +17,10 @@ import SwiftUI
 
     enum Note { case nothing, tooMany }
 
-    /// Past this, a ring can't name them all under it, so it leaves them to the card.
-    static let mostNames = 8
+    /// Every name must fit under the ring, one to a line and whole, or it leaves them to the card (D141).
+    static func namesFit(_ paths: [String]) -> Bool {
+        paths.count == 1 || (paths.count <= 5 && paths.allSatisfy { ($0 as NSString).lastPathComponent.count <= 60 })
+    }
 
     var shown: [RingChoice] { Array(choices.dropFirst(set * DropChoices.ringSet).prefix(DropChoices.ringSet)) }
     var hasMore: Bool { choices.count > DropChoices.ringSet }
@@ -97,8 +99,12 @@ struct FileRingView: View {
                     ring(frost: frost)
                 }
                 .frame(width: RingLayout.side, height: RingLayout.side)
-                if model.overMiddle, model.files.count > 1 {
-                    line { Text(verbatim: model.files.map(DropChoices.shownName).joined(separator: ", ")).lineLimit(5).truncationMode(.middle) }
+                if model.overMiddle, model.hovered == nil {
+                    line {
+                        VStack(alignment: .leading, spacing: 1) {
+                            ForEach(model.files, id: \.self) { Text(verbatim: DropChoices.shownName($0)) }
+                        }
+                    }
                 } else if let first {
                     line { trust(first) }
                 }
@@ -186,7 +192,7 @@ struct FileRingView: View {
             Image(systemName: "info.circle")
             switch note {
             case .nothing: Text("Nothing you have installed can change this.", comment: "The ring: no extension offers anything for what's being dragged")
-            case .tooMany: Text("That's a lot of files. Drop them on your companion to see every name.", comment: "The ring: too many files being dragged to name them all")
+            case .tooMany: Text("These need more room to name. Drop them on your companion to see them all.", comment: "The ring: too many files being dragged, or names too long, to name them all under it")
             }
         }
     }

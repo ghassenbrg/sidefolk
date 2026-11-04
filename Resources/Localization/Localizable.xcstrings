@@ -42964,6 +42964,65 @@
         }
       }
     },
+    "Another Sidefolk shortcut is the same, so this one is off. Pick another." : {
+      "comment" : "The ring's shortcut, when an extension's palette or the card shortcut has the same keys",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختصار آخر في Sidefolk مطابق لهذا، لذا هذا الاختصار مطفأ. اختر غيره."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein anderer Sidefolk-Kurzbefehl ist gleich, daher ist dieser aus. Wähl einen anderen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otro atajo de Sidefolk es igual, así que este está desactivado. Elige otro."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un autre raccourci de Sidefolk est identique, celui-ci est donc désactivé. Choisissez-en un autre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un'altra scorciatoia di Sidefolk è uguale, quindi questa è spenta. Scegline un'altra."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkの別のショートカットと同じなので、これはオフです。別のものを選んでください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 다른 단축키와 같아서 이 단축키는 꺼져 있습니다. 다른 것을 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outro atalho do Sidefolk é igual, então este está desligado. Escolha outro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 的另一个快捷键与此相同,因此此快捷键已关闭。请另选一个。"
+          }
+        }
+      }
+    },
     "Another app asks" : {
       "localizations" : {
         "ar" : {
@@ -189845,6 +189904,64 @@
         }
       }
     },
+    "Stopped." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإيقاف."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detenido."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêté."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrotto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중지했습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停止。"
+          }
+        }
+      }
+    },
     "Stopped. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -189905,6 +190022,7 @@
     },
     "Stopped. Nothing was made, and the original is as it was." : {
       "comment" : "After Stop on the working card",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -189958,6 +190076,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已停止。没有生成任何内容,原文件保持不变。"
+          }
+        }
+      }
+    },
+    "Stopped. Nothing was saved, and the original is as it was." : {
+      "comment" : "After Stop on the working card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإيقاف. لم يُحفظ شيء، والأصل كما هو."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt. Es wurde nichts gespeichert, und das Original ist unverändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detenido. No se ha guardado nada y el original sigue igual."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêté. Rien n'a été enregistré et l'original est intact."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrotto. Non è stato salvato nulla e l'originale è com'era."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止しました。何も保存されず、元のファイルはそのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중지했습니다. 저장된 것이 없고 원본은 그대로입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parado. Nada foi salvo e o original continua como estava."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停止。没有保存任何内容,原文件保持不变。"
           }
         }
       }
@@ -198703,6 +198880,7 @@
     },
     "That's a lot of files. Drop them on your companion to see every name." : {
       "comment" : "The ring: too many files being dragged to name them all",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -209085,6 +209263,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这些即使在 Sidefolk 读取过其他页面之后，也不会弹出卡片，除非地址在“?”后面带有附加内容。移除其中一项后，Sidefolk 就会重新询问。"
+          }
+        }
+      }
+    },
+    "These need more room to name. Drop them on your companion to see them all." : {
+      "comment" : "The ring: too many files being dragged, or names too long, to name them all under it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحتاج أسماؤها إلى مساحة أكبر. أفلتها على رفيقك لرؤيتها كلها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für ihre Namen ist hier zu wenig Platz. Lass sie auf deinem Begleiter los, um alle zu sehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus nombres necesitan más espacio. Suéltalos sobre tu compañero para verlos todos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leurs noms demandent plus de place. Déposez-les sur votre compagnon pour tous les voir."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I loro nomi richiedono più spazio. Rilasciali sul tuo compagno per vederli tutti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前を表示するには場所が足りません。コンパニオンにドロップするとすべて表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이름을 표시할 공간이 부족합니다. 동반자에게 놓으면 모두 볼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os nomes precisam de mais espaço. Solte-os no seu companheiro para ver todos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些名称需要更多空间。把它们拖到你的伙伴身上即可全部查看。"
           }
         }
       }

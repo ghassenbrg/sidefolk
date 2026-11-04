@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import SidefolkCore
 
 /// The ring (D152), the page's way to the drop card, and stopping an extension's work on the person's files.
@@ -25,7 +26,15 @@ extension AppCoordinator {
             self.ask.add(.info(words), caption: nil)
             self.showAsk(focus: false)
         }
+        fileRing.otherKeys = { [weak self] in
+            (self?.palettes.current ?? []).compactMap { KeyboardShortcuts.getShortcut(for: PaletteController.shortcutName($0)) }
+        }
         fileRing.apply(runtime.settings.current.fileRing)
+    }
+
+    func fileRingConflict() -> String? {
+        guard runtime.settings.current.fileRing.enabled else { return nil }
+        return fileRing.conflict.map(CardShortcut.explanation)
     }
 
     func chooseFilesForCard() {
@@ -49,6 +58,6 @@ extension AppCoordinator {
     /// The working card's Stop: the program is ended, so nothing more happens, and what it was making never reaches the person's folder.
     func stopWork(_ file: WorkingFile, in model: AskModel) {
         model.stopped = file.id
-        Task { await runtime.extensions.stopWork(extensionId: file.extensionId) }
+        Task { await runtime.extensions.stopWork(extensionId: file.extensionId, files: file.files) }
     }
 }

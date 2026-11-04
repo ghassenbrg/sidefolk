@@ -14,7 +14,7 @@ extension KeyboardShortcuts.Name {
 /// needs no permission: the key comes from the modifier state any app can see. Off, there's no watcher at all.
 @MainActor final class FileRingController {
     /// A drag this long still at the key opens the ring: ⌥ is also how Finder copies, and a copy on its way somewhere shouldn't meet one.
-    private static let rest: TimeInterval = 0.25
+    private static let rest: TimeInterval = 0.35
     /// The system may deliver a drop a moment after the button's up, so the ring waits for it.
     private static let dropGrace: Duration = .milliseconds(600)
 
@@ -49,8 +49,8 @@ extension KeyboardShortcuts.Name {
     private var handlerInstalled = false
     private var scrollSum = 0.0
     private(set) var isOn = false
-    /// Why the shortcut is off, for the page.
-    private(set) var conflict: CardShortcut.Conflict?
+    /// Sidefolk's other keys, palettes' among them.
+    var otherKeys: () -> [KeyboardShortcuts.Shortcut] = { [] }
 
     var isOpen: Bool { panel.isVisible }
 
@@ -79,8 +79,26 @@ extension KeyboardShortcuts.Name {
                 close()
             }
         }
-        conflict = isOn ? CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .fileRing)) : nil
-        if isOn, conflict == nil { KeyboardShortcuts.enable(.fileRing) } else { KeyboardShortcuts.disable(.fileRing) }
+        // `disable` unregisters by keys, not by name: never for keys another of Sidefolk's shortcuts holds, or that one dies too.
+        let keys = KeyboardShortcuts.getShortcut(for: .fileRing)
+        if isOn, conflict == nil {
+            KeyboardShortcuts.enable(.fileRing)
+        } else if !sharedWithSidefolk(keys) {
+            KeyboardShortcuts.disable(.fileRing)
+        }
+    }
+
+    private func sharedWithSidefolk(_ keys: KeyboardShortcuts.Shortcut?) -> Bool {
+        guard let keys else { return false }
+        return keys == KeyboardShortcuts.getShortcut(for: .ask) || keys == KeyboardShortcuts.getShortcut(for: .talk)
+            || keys == KeyboardShortcuts.getShortcut(for: .answerCard) || otherKeys().contains(keys)
+    }
+
+    /// Why its shortcut is off, in words for the page.
+    var conflict: CardShortcut.Conflict? {
+        let keys = KeyboardShortcuts.getShortcut(for: .fileRing)
+        if let found = CardShortcut.conflict(keys) { return found }
+        return sharedWithSidefolk(keys) ? .sidefolk : nil
     }
 
     private func offerTheShortcutOnce() {
@@ -141,7 +159,7 @@ extension KeyboardShortcuts.Name {
     private func lookWhileOpen() {
         let flags = NSEvent.modifierFlags
         let shift = flags.contains(.shift)
-        if shift, !shiftWasDown { model.turn() }
+        if shift, !shiftWasDown { turn() }
         shiftWasDown = shift
         // The key let go off any slice: the person changed their mind, and the drag goes on to whatever's under the ring.
         guard !flags.contains(key.flag), model.hovered == nil else {
@@ -167,7 +185,7 @@ extension KeyboardShortcuts.Name {
     // MARK: The shortcut
 
     private func shortcutPressed() {
-        guard isOn else { return }
+        guard isOn, conflict == nil else { return }
         if isOpen { return close() }
         guard !readingFinder else { return }
         let first = String(localized: "Select a file in Finder first, then press the shortcut.", comment: "The ring's shortcut, from another app")
@@ -177,6 +195,8 @@ extension KeyboardShortcuts.Name {
             let answer = await FinderSelection.read()
             guard let self else { return }
             self.readingFinder = false
+            // It may have taken a while, the first time macOS asks.
+            guard self.isOn, NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return }
             switch answer {
             case .files(let paths) where paths.isEmpty: self.say(first)
             case .files(let paths): self.open(paths.map { URL(fileURLWithPath: $0) }, byClick: true)
@@ -193,12 +213,17 @@ extension KeyboardShortcuts.Name {
         closing?.cancel()
         closing = nil
         noteTimer?.cancel()
-        // Every name can be reached on a ring of a few files. Past that, the card shows them all.
-        if urls.count > FileRingModel.mostNames, byClick { return toCard(urls) }
+        // Every name can be read on a ring of a few files. Past that, the card shows them all.
+        let paths = urls.map(\.path), fits = FileRingModel.namesFit(paths)
+        if !fits, byClick { return toCard(urls) }
+        let choices = fits ? choicesFor(paths) : []
+        // A drag nothing can use is an ordinary drag: no ring in its way.
+        if fits, choices.isEmpty, !byClick { return }
         self.urls = urls
-        model.files = urls.map(\.path)
-        model.choices = urls.count > FileRingModel.mostNames ? [] : choicesFor(model.files)
-        model.note = urls.count > FileRingModel.mostNames ? .tooMany : model.choices.isEmpty ? .nothing : nil
+        model.files = paths
+        model.choices = choices
+        model.note = !fits ? .tooMany : choices.isEmpty ? .nothing : nil
+        scrollSum = 0
         model.set = 0
         model.hovered = nil
         model.overMiddle = false
@@ -217,6 +242,8 @@ extension KeyboardShortcuts.Name {
         #endif
         let pointer = NSEvent.mouseLocation
         place(at: pointer)
+        // Only words, so a drag goes through them to whatever's underneath.
+        panel.ignoresMouseEvents = model.note != nil
         aim = RingAim(openedAt: ProcessInfo.processInfo.systemUptime, x: pointer.x, y: pointer.y)
         panel.orderFrontRegardless()
         if byClick { panel.makeKey() }
@@ -249,11 +276,16 @@ extension KeyboardShortcuts.Name {
         urls = []
     }
 
+    private func turn() {
+        model.turn()
+        aim.turned(at: ProcessInfo.processInfo.systemUptime)
+    }
+
     private func scrolled(_ event: NSEvent) {
         scrollSum += event.scrollingDeltaY
         if abs(scrollSum) > 12 {
             scrollSum = 0
-            model.turn()
+            turn()
         }
     }
 
@@ -281,6 +313,7 @@ extension KeyboardShortcuts.Name {
             self?.model.overMiddle = false
         }
         surface.clicked = { [weak self] in self?.click() }
+        surface.scrolled = { [weak self] in self?.scrolled($0) }
         surface.dropped = { [weak self] urls in self?.dropped(urls) ?? false }
         panel.onKey = { [weak self] in self?.pressedKey($0) ?? false }
         return panel
@@ -291,9 +324,15 @@ extension KeyboardShortcuts.Name {
         guard model.note == nil else { return false }
         let dx = Double(point.x - RingLayout.side / 2), dy = Double(point.y - RingLayout.below - RingLayout.side / 2)
         let index = RingGeometry.slice(dx: dx, dy: dy, count: model.shown.count, inner: Double(RingLayout.inner), outer: Double(RingLayout.outer))
-        let screen = NSEvent.mouseLocation
-        model.hovered = aim.follow(x: screen.x, y: screen.y, slice: index, at: ProcessInfo.processInfo.systemUptime)
+        let screen = NSEvent.mouseLocation, now = ProcessInfo.processInfo.systemUptime
+        let aimed = aim.follow(x: screen.x, y: screen.y, slice: index, at: now)
         model.overMiddle = hypot(dx, dy) < Double(RingLayout.inner)
+        // A click has its own moment. A drag's slice lights when a release would count, and the cursor says so.
+        if model.byClick {
+            model.hovered = aimed
+            return aimed != nil
+        }
+        model.hovered = aim.ready(at: now)
         return model.hovered != nil
     }
 
@@ -327,7 +366,7 @@ extension KeyboardShortcuts.Name {
         }
         switch event.keyCode {
         case 53: close()
-        case 48: model.turn()
+        case 48: turn()
         case 124, 125: model.hovered = ((model.hovered ?? -1) + 1) % count
         case 123, 126: model.hovered = ((model.hovered ?? 0) - 1 + count) % count
         case 36, 76: click()
@@ -355,7 +394,9 @@ extension KeyboardShortcuts.Name {
             openedAt = .distantPast
             model.byClick = true
             click()
-        case "close": close()
+        case "close":
+            close()
+            testing = false
         default: Log.shared.warning("dev", "no such ring command", ["command": command])
         }
     }

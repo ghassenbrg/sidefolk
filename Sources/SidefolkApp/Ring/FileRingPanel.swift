@@ -34,6 +34,7 @@ final class FileRingSurface: NSView {
     var left: (() -> Void)?
     var dropped: (([URL]) -> Bool)?
     var clicked: (() -> Void)?
+    var scrolled: ((NSEvent) -> Void)?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -51,10 +52,12 @@ final class FileRingSurface: NSView {
     private func operation(_ sender: any NSDraggingInfo) -> NSDragOperation {
         guard track(sender.draggingLocation) else { return [] }
         let allowed = sender.draggingSourceOperationMask
-        return [.copy, .generic, .link, .move, .every].first { allowed.contains($0) } ?? []
+        // Never move: a source may delete its copy on that answer, while the extension is about to read it and the card says the original is as it was.
+        return [.copy, .generic, .link].first { allowed.contains($0) } ?? []
     }
 
     override func mouseMoved(with event: NSEvent) { _ = track(event.locationInWindow) }
+    override func scrollWheel(with event: NSEvent) { scrolled?(event) }
     override func mouseUp(with event: NSEvent) { if track(event.locationInWindow) { clicked?() } }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }

@@ -71,6 +71,25 @@ struct FileRingTests {
         #expect(aim.ready(at: 2) == nil, "the middle chooses nothing")
     }
 
+    @Test func aHandStillCrossingASliceHasntChosenIt() {
+        var aim = RingAim(openedAt: 0, x: 100, y: 100)
+        _ = aim.follow(x: 100, y: 130, slice: 2, at: 0.5)
+        _ = aim.follow(x: 100, y: 150, slice: 2, at: 0.7)
+        #expect(aim.ready(at: 0.75) == nil)
+        #expect(aim.ready(at: 0.9) == 2)
+    }
+
+    @Test func aTurnClearsWhatWasAimedAt() {
+        var aim = RingAim(openedAt: 0, x: 100, y: 100)
+        _ = aim.follow(x: 100, y: 130, slice: 2, at: 0.5)
+        #expect(aim.ready(at: 0.9) == 2)
+        aim.turned(at: 1)
+        #expect(aim.ready(at: 1.01) == nil)
+        #expect(aim.follow(x: 100, y: 130, slice: 2, at: 1.02) == 2)
+        #expect(aim.ready(at: 1.1) == nil, "the new set's slice needs its own moment")
+        #expect(aim.ready(at: 1.2) == 2)
+    }
+
     @Test func tooSoonAfterOpeningCountsForNothing() {
         var aim = RingAim(openedAt: 10, x: 0, y: 0)
         #expect(aim.follow(x: 0, y: 30, slice: 0, at: 10.05) == 0)

@@ -85,6 +85,10 @@ public actor ExtensionHost {
         var outputMuteStarts: [Date] = []
         /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
         var oneShots: [ObjectIdentifier: MCPClient] = [:]
+        /// The files handed over to each, so Stop on one card ends only that work.
+        var oneShotFiles: [ObjectIdentifier: Set<String>] = [:]
+        /// Stop pressed before this call reached its process.
+        var earlyStop: (files: Set<String>, at: Date)?
         /// What the host keeps for it: its settings, its AI switch and count (D100).
         var preferences = ExtensionPreferences()
         var lastActivity = Date.distantPast
@@ -1015,13 +1019,20 @@ public actor ExtensionHost {
             throw UserFacingError("Only sandboxed extensions can work in a folder you name.")
         }
         try await verifyFiles(id)
+        let handed = Set(folders.filter(\.handedOver).map(\.path))
+        if let early = runtimes[id]?.earlyStop {
+            runtimes[id]?.earlyStop = nil
+            if early.files == handed, Date().timeIntervalSince(early.at) < 10 { throw UserFacingError("Stopped.", changedNothing: true) }
+        }
         let process = try ExtensionProcess(spec: try sandboxedSpec(id, folders: folders), limits: config.limits)
         let context = requestContext, aiName = config.aiName
         let client = MCPClient(process: process, language: config.language, extras: { context.extras(id, aiName: aiName) })
         let key = ObjectIdentifier(client)
         runtimes[id]?.oneShots[key] = client
+        runtimes[id]?.oneShotFiles[key] = handed
         func finish() async {
             runtimes[id]?.oneShots[key] = nil
+            runtimes[id]?.oneShotFiles[key] = nil
             _ = await client.shutdown()
         }
         do {
@@ -1032,6 +1043,7 @@ public actor ExtensionHost {
         } catch {
             let exit = await client.shutdown()
             runtimes[id]?.oneShots[key] = nil
+            runtimes[id]?.oneShotFiles[key] = nil
             if let e = error as? UserFacingError { throw e }
             throw Self.startFailure(name: rt.pin.name, error: error, exit: exit, stderr: ExtensionText.untrusted(process.stderrTail, bytes: 2000))
         }
@@ -1491,13 +1503,18 @@ public actor ExtensionHost {
         if let client { await client.shutdown() }
     }
 
-    /// The person stopped work on files they handed over: those calls run in processes of their own (`callInOwnProcess`), which end now.
+    /// The person stopped work on these files they handed over: that call runs in a process of its own (`callInOwnProcess`), which ends now.
     /// The call fails, and what it made stays in its own data folder, since Sidefolk saves a result only from a finished call (D140). The
-    /// extension's main process, its page, surfaces and other work go on.
-    public func stopWork(extensionId id: String) async {
-        let clients = runtimes[id]?.oneShots.values.map { $0 } ?? []
-        runtimes[id]?.oneShots = [:]
-        for client in clients { await client.shutdown() }
+    /// extension's main process, its page, surfaces and other work go on. A Stop that comes before the call gets that far holds it for a moment.
+    public func stopWork(extensionId id: String, files: [String]) async {
+        let wanted = Set(files.compactMap(FolderAccess.canonical))
+        guard let key = runtimes[id]?.oneShotFiles.first(where: { $0.value == wanted })?.key, let client = runtimes[id]?.oneShots[key] else {
+            runtimes[id]?.earlyStop = (wanted, Date())
+            return
+        }
+        runtimes[id]?.oneShots[key] = nil
+        runtimes[id]?.oneShotFiles[key] = nil
+        await client.shutdown()
     }
 
     private func stop(_ id: String) async {
