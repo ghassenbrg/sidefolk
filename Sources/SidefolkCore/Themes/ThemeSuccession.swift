@@ -36,6 +36,13 @@ public enum ThemeSuccession {
         return settings.theme
     }
 
+    /// A theme by its name or exact id: one on this Mac, else a moved one by its id, which isn't fetched yet but is what a
+    /// person wore before and what an Undo puts back; the setting then waits for `fetchThemeThatMoved`.
+    public static func named(_ wanted: String, among installed: [(id: String, name: String)]) -> (id: String, name: String)? {
+        if let found = installed.first(where: { $0.name.lowercased() == wanted.lowercased() || $0.id == wanted }) { return found }
+        return movedToGallery[wanted].map { (id: wanted, name: $0) }
+    }
+
     public enum Step: Sendable, Equatable {
         /// The theme in use left the app: wear `to` instead (the settings already say so) and tell the person once.
         case moved(from: Retired, to: String)

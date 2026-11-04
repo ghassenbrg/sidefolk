@@ -754,9 +754,10 @@ enum UISnapshots {
     private static func askWaiting(_ rt: SidefolkRuntime) async {
         let home = NSHomeDirectory()
         let questions = [
-            ApprovalRequest(tool: "files.move", title: "Move 12 PDFs to Invoices", summary: "Move 12 files from Downloads to Documents › Invoices",
+            // As Guard words a move: the tool's title, "Move N items to <folder>", and every file listed (the chip counts them).
+            ApprovalRequest(tool: "files.move", title: "Move files", summary: "Move 12 items to ~/Documents/Invoices",
                             risk: .medium, caller: .agent(runId: "sample-move"),
-                            details: .paths([home + "/Downloads/Scan 0412.pdf", home + "/Downloads/Scan 0413.pdf"]), canAlways: true,
+                            details: .paths((412...423).map { home + "/Downloads/Scan 0\($0).pdf" }), canAlways: true,
                             effect: .changesFiles),
             ApprovalRequest(tool: "clipboard.read", title: "Read the clipboard", summary: "Read what you copied last",
                             risk: .medium, caller: .external(client: "codex"), details: .none, canAlways: false, effect: .readsPrivateData),
@@ -884,10 +885,10 @@ enum UISnapshots {
                 caption: "remind me at 5 to stretch")
         ask.add(.answer("Next up is **Stretch** at 17:00, and Scout is watching example.com for changes.",
                         canThinkHarder: false, tainted: false), caption: "what's coming up?")
-        ask.add(.approval(ApprovalRequest(tool: "files.move", title: "Move 3 files?", summary: "Move 3 items to ~/Downloads/Invoices",
+        ask.add(.approval(ApprovalRequest(tool: "files.move", title: "Move files", summary: "Move 3 items to ~/Downloads/Invoices",
                                           risk: .medium, caller: .agent(runId: "r"),
                                           details: .paths(["~/Downloads/a.pdf", "~/Downloads/b.pdf", "~/Downloads/c.pdf"]),
-                                          canAlways: false)))
+                                          canAlways: false, effect: .changesFiles)))
         return ask
     }
 

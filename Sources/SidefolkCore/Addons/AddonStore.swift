@@ -48,6 +48,8 @@ public actor AddonStore {
     /// When this store began: `tidy()` leaves what this run has started.
     private let started: Date
     private var cached: AddonCatalog?
+    /// How many downloads are using each add-on's folder in Downloads right now (`newWorkFolder`).
+    private var holding: [String: Int] = [:]
 
     /// How long a fetched catalog is used before the gallery asks again.
     public static let freshFor: TimeInterval = 30 * 60
@@ -145,7 +147,7 @@ public actor AddonStore {
 
     private func download(_ entry: AddonEntry, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
         guard let source else { throw UserFacingError("This copy of Sidefolk has no add-on gallery.") }
-        let work = try fresh(downloads.appendingPathComponent(entry.id, isDirectory: true))
+        let work = try fresh(newWorkFolder(for: entry.id))
         do {
             let zip = work.appendingPathComponent(entry.file)
             try await downloader.download(source.base.appendingPathComponent(entry.file), to: zip, expectedBytes: entry.bytes,
@@ -160,9 +162,30 @@ public actor AddonStore {
             try? FileManager.default.removeItem(at: zip)
             return resources
         } catch {
-            try? FileManager.default.removeItem(at: work)
+            abandon(work, id: entry.id)
             throw error
         }
+    }
+
+    /// A folder of this one's own under the id's: a fetch from the launch, from a restore and from a person's Get can run at
+    /// once for the same add-on, and none may clear or remove the others' files. The id's folder goes when the last of them
+    /// lets go (`discard`).
+    private func newWorkFolder(for id: String) -> URL {
+        holding[id, default: 0] += 1
+        return downloads.appendingPathComponent(id, isDirectory: true).appendingPathComponent(UUID().uuidString, isDirectory: true)
+    }
+
+    /// A download that failed: its own folder goes, and it lets go of the id's.
+    private func abandon(_ work: URL, id: String) {
+        try? FileManager.default.removeItem(at: work)
+        release(id)
+    }
+
+    /// One less user of the id's folder; the last one removes it.
+    private func release(_ id: String) {
+        let left = max(0, (holding[id] ?? 0) - 1)
+        holding[id] = left == 0 ? nil : left
+        if left == 0 { try? FileManager.default.removeItem(at: downloads.appendingPathComponent(id, isDirectory: true)) }
     }
 
     /// A pack the app carries (D98), checked as a download is: its size and digest against the app's list, its signature
@@ -175,21 +198,21 @@ public actor AddonStore {
         guard size == seed.bytes, try FileDigest.sha256(zip) == seed.sha256 else {
             throw UserFacingError("\(seed.name) isn't the pack this copy of Sidefolk should carry, so it wasn't installed.")
         }
-        let work = try fresh(downloads.appendingPathComponent(seed.id, isDirectory: true))
+        let work = try fresh(newWorkFolder(for: seed.id))
         do {
             return try await unpack(zip, into: work.appendingPathComponent("unpacked", isDirectory: true), id: seed.id, version: seed.version, source: source)
         } catch {
-            try? FileManager.default.removeItem(at: work)
+            abandon(work, id: seed.id)
             throw error
         }
     }
 
-    /// Removes what `fetch` left for `entry`.
+    /// Removes what `fetch` left for `entry`, once nothing else is still using the same add-on's download.
     public func discard(_ entry: AddonEntry) { discard(id: entry.id) }
 
     public func discard(id: String) {
         guard !id.contains("/"), !id.hasPrefix(".") else { return }
-        try? FileManager.default.removeItem(at: downloads.appendingPathComponent(id, isDirectory: true))
+        release(id)
     }
 
     /// Removes what earlier runs left in the downloads folder and half-made copies (a fetch interrupted by

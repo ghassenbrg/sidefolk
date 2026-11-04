@@ -123,8 +123,8 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         present()
     }
 
-    /// Dev channel: `home:<place>` (today, calendar, notebook, onduty, history, you, trash, gallery), and History's filter
-    /// as `home:history:agents` (D84).
+    /// Dev channel: `home:<place>` (today, calendar, notebook, onduty, history, you, trash, gallery), History's filter
+    /// as `home:history:agents` (D84), and `home:note:<id>` (a note open in the Notebook).
     func showPlace(_ place: String) {
         let parts = place.split(separator: ":").map(String.init)
         switch parts.first {
@@ -139,6 +139,14 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
         case "you": model.selection = .you
         case "trash": model.selection = .trash
         case "gallery": model.selection = .gallery
+        case "note":
+            // home:note:<id>: that note open in the Notebook, as a click on it from a search does.
+            if let id = parts.dropFirst().first {
+                Task {
+                    guard let item = try? await model.services.runtime.notebook.item(id: id) else { return }
+                    await model.reveal(item)
+                }
+            }
         case "watch":
             // home:watch[:<id>[:check|:sidebyside]], the first watch On duty lists without an id (D87): its page, then
             // its Check now button or its change in two columns.

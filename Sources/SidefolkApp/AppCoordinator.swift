@@ -65,6 +65,8 @@ final class AppCoordinator {
     private var moodTimer: Task<Void, Never>?
     /// The launch's try and a look's can overlap, and two downloads of one add-on share a folder.
     var fetchingThemeThatMoved = false
+    /// A look ended while a fetch of the theme that moved was running (`fetchThemeThatMoved`).
+    var fetchThemeAgain = false
     private var eventTask: Task<Void, Never>?
     /// Live reports and their latest values (AppCoordinator+Readouts).
     var reports: [Watcher] = []

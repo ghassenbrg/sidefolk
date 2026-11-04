@@ -68,6 +68,8 @@ reserved, so ask sessions too. Numbers can reach main out of order, because they
 
 - **D (decisions, `docs/DECISIONS.md`):** give each session a block of four to six, above everything in use or given
   out. Keep the blocks in the ledger and tell each new session which are taken.
+  Blocks are decided when a session starts and noted in the ledger. Unused numbers stay reserved: the homepages held D170–D179
+  and used D170 only.
 - **T (`docs/SECURITY.md`):** one at a time, when a session has new reach to record.
 - **v (migrations, `Sources/SidefolkCore/Storage/AppDatabase.swift`):** one at a time, announced with its full name and
   columns before it's written.
@@ -115,6 +117,16 @@ From `AGENTS.md`, which sessions should read themselves:
 
 ## How sessions work here
 
+- **Session names are one or two words** (Sideflow, Formatic, Small fixes, Permissions, Integrator). Give `start_session` a short
+  `title` and `name`, and rename a generic or long one at once: the founder follows many sessions.
+- **The founder's findings go through a cleaned list**: his meaning with his exact words in quotes, in `sandbox/FINDINGS-<date>.md`
+  (git-ignored), sorted by owner and marked bug, UX, design or big. A session that owns the area gets its items; small app fixes
+  all go to one "Small fixes" session; a big new topic gets its own. Send bugs first, then clarity, then design; a large redesign
+  starts as a written plan with real-app pictures, which you answer for the founder. Tell him who got what.
+- **A session started with a worktree is cut from the stale local `main`.** Its brief says `git fetch origin`, then
+  `git checkout -B <branch> origin/main` in its own worktree, before anything else.
+- **Relay "keep clear" file lists.** A session that lists the files it is changing has the list sent to every session nearby that
+  day. Two sessions in the same Guard or Kit files take turns: the one further along lands first, the other does inventory or design.
 - **One worktree and one branch per task, from `origin/main`, local only.** Branches are usually `team/<name>`, with a
   matching branch in add-ons if needed.
 - **Before writing code:** branch, files, and every new manifest key, Kit API, bridge method or tool name go to the
@@ -284,4 +296,15 @@ A gallery yes doesn't cover an app release, or the other way round.
   the digit count (four digits hold to 9999). The app sorts by version, so only people reading the page were misled, and the
   founder drafted the old three-digit releases.
 - **A site in the main repository** would have raised snapshot numbers and broken the Add-ons first freeze, so it has its own.
+- **A session that wants the founder's real data or synthetic input** (the real audit or log, a scripted drag) asks you. You may
+  say yes under his standing order, with limits: read only, only the named rows, report counts and kinds and never file names or
+  contents; synthetic input only after 15 minutes without any, aborting on any input, in a scratch window of a debug app, one
+  screen user at a time, never answering a system security dialog. The session's own permission check still decides.
+- **A cause found by reading the code is not a finding** until a run or a test shows it: ask which it is.
+- **Every new rule or lesson goes into the skills the same day**: the global ones in the `agent-skills` repository
+  (`~/.claude/skills` links to it), the project ones here.
+- **Test apps never show windows over the founder's screen.** A debug app's panel appeared under his real pointer and took two
+  clicks and some typing. Debug runs use `SIDEFOLK_QUIET_WINDOWS=1`: windows off every screen, no key focus, no clicks, never above
+  his other windows (a full-screen browser, say). Renders (`--ui-snapshots`, `dev.swift snap`) and state reads come first; a check
+  that truly needs the screen is asked of the coordinator, and he accepts a limited test over a disturbed screen.
 - **Security text in this public repository** follows the global skill's hygiene section. This file is public too.

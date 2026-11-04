@@ -136,6 +136,22 @@ import Testing
         #expect(try FileManager.default.contentsOfDirectory(atPath: g.paths.addons.appendingPathComponent("Downloads").path).isEmpty, "both cleaned up")
     }
 
+    /// The launch's fetch of a moved theme, a restore's and a person's Get can download the same add-on at once (the audit's restore race):
+    /// one finishing and discarding must not take the other's files, and the last one to let go clears the folder.
+    @Test func twoDownloadsOfOneAddonKeepTheirOwnFiles() async throws {
+        let g = try Gallery()
+        try g.companion("otter")
+        try g.publish()
+        let entry = try #require(try await g.store.catalog().entry("dev.sidefolk.companions.otter"))
+        let first = try await g.store.fetch(entry)
+        let second = try await g.store.fetch(entry)
+        #expect(first != second, "each has a folder of its own")
+        await g.store.discard(entry)
+        #expect(FileManager.default.fileExists(atPath: second.path), "the other one is still using its files")
+        await g.store.discard(entry)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: g.paths.addons.appendingPathComponent("Downloads").path).isEmpty)
+    }
+
     /// In a home with no catalog yet there's no last one to fall back on, so a fetch that loses a race is an error the person sees.
     @Test func manyFetchesAtOnceAllGetTheCatalog() async throws {
         let g = try Gallery()

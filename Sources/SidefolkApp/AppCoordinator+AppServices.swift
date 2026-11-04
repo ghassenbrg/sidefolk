@@ -375,7 +375,25 @@ extension AppCoordinator: AppServices {
             }
         case .watch: openNow()
         case .activity(let entry): home.show(activityRow: entry.id)
+        case .extension(let hit): open(extension: hit)
         }
+    }
+
+    /// An installed extension opens on its page when it has one, else on its row in Settings › Add-ons; one only the
+    /// gallery offers opens the Gallery.
+    func open(extension hit: ExtensionHit) {
+        askPanel.hide()
+        guard case .installed(let enabled) = hit.place else { return openGallery() }
+        Task {
+            let page = await runtime.extensions.pages().first { $0.extensionId == hit.id }
+            if enabled, let page { home.show(section: .page(page.id)) } else { openSettings(tab: .addons) }
+        }
+    }
+
+    /// The one extension whose name the words spell out: asked for by name, it is opened and nobody asks the AI (B1).
+    func extensionNamed(in text: String) async -> ExtensionHit? {
+        ExtensionHit.matching(text, installed: await runtime.extensions.extensions(), catalog: await runtime.addons.stored(),
+                              channel: runtime.settings.current.updates.effectiveChannel, limit: 1).first { $0.byName }
     }
 
     func replayOnboarding() {

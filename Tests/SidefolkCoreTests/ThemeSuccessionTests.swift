@@ -131,4 +131,15 @@ import Testing
         #expect(back.themeSuccessorsOffered == ["dev.sidefolk.theme.daylight"])
         #expect(try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8)).themeSuccessorsOffered.isEmpty)
     }
+
+    /// `sidefolk.look`'s Undo puts back the theme that was worn, which may be one that moved to the gallery and isn't fetched yet.
+    @Test func aMovedThemeNotFetchedYetCanStillBePutBack() {
+        let here = [(id: "dev.sidefolk.theme.harbor", name: "Harbor")]
+        #expect(ThemeSuccession.named("harbor", among: here)?.id == "dev.sidefolk.theme.harbor")
+        #expect(ThemeSuccession.named("dev.sidefolk.theme.harbor", among: here)?.name == "Harbor")
+        let moved = ThemeSuccession.named("dev.sidefolk.theme.marshmallow", among: here)
+        #expect(moved?.id == "dev.sidefolk.theme.marshmallow" && moved?.name == "Marshmallow")
+        #expect(ThemeSuccession.named("marshmallow", among: here) == nil, "by its name only once it is here")
+        #expect(ThemeSuccession.named("nothing", among: here) == nil)
+    }
 }

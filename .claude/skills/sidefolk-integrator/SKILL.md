@@ -278,3 +278,5 @@ way: published before the app.
 - **The push line.** `$C:refs/heads/main` under zsh reads `:r` as a modifier and the push is refused; `"${C}:refs/heads/main"`.
 - **A push during a pass** moves the fast-forward base and N, so the pass is run again, and it cancels the last push's CI. Ask
   when pushes and add-ons `main` stop, and to hear of any push first.
+- A branch that arrives with its owner's "keep clear" file list is checked against the other open branches before the pass; say
+  what overlaps.
