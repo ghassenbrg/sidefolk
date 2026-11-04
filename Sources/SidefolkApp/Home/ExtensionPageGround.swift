@@ -97,7 +97,7 @@ private struct PageFolderShareAsk: ViewModifier {
 
     private var title: String {
         guard let folder = model.sharing?.folder else { return "" }
-        return String(localized: "Share \(FolderAccess.displayPath(folder)) with Sidefolk?", comment: "A page asks to share a folder with Sidefolk")
+        return String(localized: "Share \(PageShareAsk.shown(folder)) with Sidefolk?", comment: "A page asks to share a folder with Sidefolk")
     }
 }
 

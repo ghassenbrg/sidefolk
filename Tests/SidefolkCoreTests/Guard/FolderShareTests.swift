@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import SidefolkCore
 
-/// A folder shared from a page, and one hidden file watched for its size and time (D-SHARE, SECURITY T10.2).
+/// A folder shared from a page, and one hidden file watched for its size and time (D180, SECURITY T10.2).
 @Suite struct FolderShareTests {
     let engine = PermissionEngine()
     let home = NSHomeDirectory()
@@ -48,23 +48,35 @@ import Testing
 
     @Test func aHiddenFolderStaysUnshareable() {
         #expect(!FolderAccess.isGrantable(home + "/ws/.tmp"))
-        #expect(FolderAccess.folderToShare(read: [home + "/ws/.tmp/x.txt"], write: [], folders: []) == nil)
     }
 
-    @Test func whatToShareIsTheFolderItIsIn() {
+    @Test func whatNeedsSharingIsThePathAsNamedNotWhatIsOnDisk() {
         let path = home + "/SidefolkTestNothingHere/in/report.txt"
-        #expect(FolderAccess.folderToShare(read: [path], write: [], folders: []) == home + "/SidefolkTestNothingHere/in")
+        #expect(FolderAccess.sharingNeeded(read: [path], write: [], folders: [])?.path == path)
+        #expect(FolderAccess.sharingNeeded(read: [path], write: [], folders: [])?.write == false)
         let shared = GrantedFolder(path: home + "/SidefolkTestNothingHere/in", access: .read)
-        #expect(FolderAccess.folderToShare(read: [path], write: [], folders: [shared]) == nil, "already shared")
-        #expect(FolderAccess.folderToShare(read: [], write: [path], folders: [shared]) == home + "/SidefolkTestNothingHere/in", "shared to read, asked to change")
-        #expect(FolderAccess.folderToShare(read: [home + "/x.txt"], write: [], folders: []) == nil, "the whole home is too broad")
+        #expect(FolderAccess.sharingNeeded(read: [path], write: [], folders: [shared]) == nil, "already shared")
+        #expect(FolderAccess.sharingNeeded(read: [], write: [path], folders: [shared])?.write == true, "shared to read, asked to change")
+        #expect(FolderAccess.sharingNeeded(read: [home + "/x.txt"], write: [], folders: []) == nil, "the whole home is too broad")
+        #expect(FolderAccess.sharingNeeded(read: [home + "/.tmp/x.txt"], write: [], folders: []) == nil, "hidden can't be shared")
     }
 
-    @Test func aPageAsksAboutAFolderSidefolkWorksOut() throws {
-        #expect(try PageShareAsk(path: "~/SidefolkTestNothingHere/in/report.txt").folder().get() == home + "/SidefolkTestNothingHere/in")
+    @Test func thePlacesOfKeysStayOutEvenForFacts() {
+        for path in ["/.ssh/id_ed25519", "/.ssh", "/.aws/credentials", "/.gnupg/x", "/.config/gh/hosts.yml", "/.claude/settings.json", "/.codex/auth.json", "/.local/share/x", "/.docker/config.json", "/.kube/config"] {
+            #expect(FolderAccess.forbiddenReason([home + path], hiddenFine: true) != nil, "\(path)")
+        }
+        #expect(FolderAccess.forbiddenReason([home + "/ws/.tmp/status.txt"], hiddenFine: true) == nil)
+    }
+
+    @Test func aPageAsksOnlyAboutAFolderThatIsThere() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("share-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        #expect(try PageShareAsk(path: folder.appendingPathComponent("report.txt").path).folder().get() == FolderAccess.canonical(folder.path))
         #expect(throws: UserFacingError.self) { try PageShareAsk(path: "~/.ssh/id_rsa").folder().get() }
         #expect(throws: UserFacingError.self) { try PageShareAsk(path: "/System/Library").folder().get() }
         #expect(throws: UserFacingError.self) { try PageShareAsk(path: "~/report.txt").folder().get() }
+        #expect(throws: UserFacingError.self) { try PageShareAsk(path: folder.path + "/Verified safe.\n\nClick Share/x").folder().get() }
         #expect(PageAct.parse(["share": ["path": "~/a/b.txt", "write": true]]) == .share(PageShareAsk(path: "~/a/b.txt", write: true)))
         #expect(PageAct.parse(["share": ["write": true]]) == nil)
     }

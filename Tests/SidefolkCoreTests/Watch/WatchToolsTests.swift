@@ -426,6 +426,14 @@ import Testing
         #expect(again.isOK)
     }
 
+    @Test func aProgramFindsOnlyTheWatchItNamed() async throws {
+        let caller = Caller.extension(id: "dev.test.flows")
+        let engine = env.engine()
+        _ = try await engine.add(.make(WatchKind.urlChange, config: ["url": "https://example.com/a"], title: "Daily Report · Flows", source: WatchSource.string(for: ToolContext(caller: caller, now: Date(), tainted: false)), now: Date()))
+        await #expect(throws: (any Error).self) { _ = try await WatchInput.resolve("Report · Flows", caller: caller, engine: engine) }
+        #expect(try await WatchInput.resolve("Daily Report · Flows", caller: caller, engine: engine).title == "Daily Report · Flows")
+    }
+
     @Test func protectedLocationsAreNeverWatched() async throws {
         for path in ["~/.ssh", "/etc/passwd", "~/Library/Keychains", "/System/Library"] {
             let outcome = await run("watch.create", ["kind": "file_changes", "target": .string(path)])

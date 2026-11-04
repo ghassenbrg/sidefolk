@@ -214,7 +214,7 @@ private struct TreeCard: View {
     @Environment(\.pageSelected) private var chosen
 
     private var selected: Bool { tree.selected == node.id }
-    private var hasActions: Bool { !node.fixed && (tree.reorder != nil || tree.remove != nil) }
+    private var hasActions: Bool { !node.fixed && (tree.remove != nil || (tree.reorder != nil && (tree.move(node.id, by: -1) != nil || tree.move(node.id, by: 1) != nil))) }
     /// One colour on a card's edge: the line alone runs from one to the other.
     private var edge: Color { chosen ?? line.to }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 14, style: .continuous) }
@@ -323,12 +323,16 @@ private struct TreeCardDrag: ViewModifier {
     var model: ExtensionPageModel
     @Binding var dropping: Bool
 
+    /// Marks a drag as a card's, so words dragged in from elsewhere land nowhere.
+    static let carrying = "sidefolk.tree.card:"
+    static func card(in dragged: [String]) -> String? { dragged.first?.hasPrefix(carrying) == true ? dragged.first.map { String($0.dropFirst(carrying.count)) } : nil }
+
     func body(content: Content) -> some View {
         if let reorder = tree.reorder {
             content
-                .treeDraggable(node.fixed ? nil : node.id)
+                .treeDraggable(node.fixed ? nil : TreeCardDrag.carrying + node.id)
                 .dropDestination(for: String.self) { ids, _ in
-                    guard let id = ids.first, let place = tree.place(id, after: node.id) else { return false }
+                    guard let id = TreeCardDrag.card(in: ids), let place = tree.place(id, after: node.id) else { return false }
                     Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
                     return true
                 } isTargeted: { dropping = $0 }
@@ -444,7 +448,7 @@ private struct TreeAddButton: View {
         .frame(width: 36, height: 36)
         .contentShape(Rectangle())
         .dropDestination(for: String.self) { ids, _ in
-            guard let reorder, let id = ids.first, let place = tree.place(id, after: add.target) else { return false }
+            guard let reorder, let id = TreeCardDrag.card(in: ids), let place = tree.place(id, after: add.target) else { return false }
             Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
             return true
         } isTargeted: { dropping = $0 }

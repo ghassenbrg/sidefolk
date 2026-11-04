@@ -116,7 +116,7 @@ public final class ToolExecutor: Sendable {
         case .ask: return result(.ask)
         case .deny(let why):
             var check = result(.deny, why)
-            check.share = FolderAccess.folderToShare(read: scope.readPaths, write: scope.writePaths, folders: folders)
+            if why == PermissionEngine.notShared { check.share = FolderAccess.sharingNeeded(read: scope.readPaths, write: scope.writePaths, folders: folders).map { .init(path: $0.path, write: $0.write) } }
             return check
         }
     }

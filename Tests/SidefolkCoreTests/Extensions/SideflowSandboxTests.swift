@@ -258,7 +258,7 @@ import Testing
         let check = await w.h.env.executor.check(name: "watch.create", input: ["kind": "file_changes", "target": .string(file), "mode": "repeat", "title": "t"],
                                                  caller: .extension(id: "dev.sidefolk.sideflow"), tainted: false, standing: false)
         #expect(check?.decision == .deny)
-        #expect(check?.share == FolderAccess.canonical(folder.path))
+        #expect(check?.share?.path == file, "the path as named: what's on disk stays out of its sandbox")
 
         let made = await w.h.call("ext.sideflow.create_flow", ["name": "Status", "definition": Self.watching(file)])
         #expect(made.isOK, "\(w.text(made))")

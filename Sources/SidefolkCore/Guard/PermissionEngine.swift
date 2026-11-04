@@ -8,6 +8,9 @@ public enum GuardDecision: Sendable, Equatable {
 
 /// Deterministic permission decisions. The model never decides what it may do; this does.
 public struct PermissionEngine: Sendable {
+    /// Why a call was refused when all that's in its way is a folder that isn't shared: other agents' and extensions' calls get no card for it.
+    static var notShared: String { String(localized: "That folder hasn't been shared with Sidefolk.") }
+
     public init() {}
 
     /// - Parameters:
@@ -30,7 +33,7 @@ public struct PermissionEngine: Sendable {
         if let blocked = FolderAccess.forbiddenReason(scope.readPaths + scope.writePaths, hiddenFine: scope.factsOnly) {
             return .deny(blocked)
         }
-        // One hidden file, its size and time only (D-SHARE). A hidden folder can't be shared, so the person says yes to this file each time it's
+        // One hidden file, its size and time only (D180). A hidden folder can't be shared, so the person says yes to this file each time it's
         // asked for: a card, or a plan they read that names it. No grant covers it, and other agents keep the plain refusal.
         if scope.factsOnly {
             guard caller.kind != "external" else { return .deny(String(localized: "Sidefolk doesn't touch hidden files or folders.")) }
@@ -43,7 +46,7 @@ public struct PermissionEngine: Sendable {
         }
         if !unreadable.isEmpty || !unwritable.isEmpty {
             guard caller.kind != "external", caller.kind != "extension" else {
-                return .deny(String(localized: "That folder hasn't been shared with Sidefolk."))
+                return .deny(Self.notShared)
             }
             guard let folder = FolderAccess.suggestedFolder(for: (unwritable + unreadable)[0]) else {
                 return .deny(String(localized: "That location is too broad to share. Add a specific folder in Settings › Trust."))

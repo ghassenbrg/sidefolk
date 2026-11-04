@@ -30,7 +30,7 @@ enum WatchedPath {
         guard let canonical = FolderAccess.canonical(expanded) else {
             throw WatchError.invalid(String(localized: "That path isn't allowed (it has “..” in it, or a link that goes nowhere)."))
         }
-        if let why = FolderAccess.forbiddenReason([canonical], hiddenFine: factsOnly) { throw WatchError.invalid(why) }
+        if let why = FolderAccess.forbiddenReason([canonical], hiddenFine: factsOnly && FileFacts.read(canonical)?.isDirectory != true) { throw WatchError.invalid(why) }
         return config.setting("path", .string(expanded)).setting("resolved", .string(canonical))
     }
 
@@ -187,7 +187,7 @@ public struct FileChangesProbe: WatcherProbe {
 
         // A text file's lines are kept as the watch's versions (D87): on the first look, and each time it changes. What
         // it was before is the version kept last time, so it isn't held in the state as well. Read only then, not at every look.
-        // A hidden file: its size and time, never its words (D-SHARE).
+        // A hidden file: its size and time, never its words (D180).
         let hidden = FolderAccess.isHidden(path)
         let text = { hidden ? nil : facts.flatMap { FileText.read(path, facts: $0) }.map { ComparedText($0) } }
         guard let previous = w.lastState else { return ProbeResult(state: .object(state), compared: text()) } // the first look is the baseline

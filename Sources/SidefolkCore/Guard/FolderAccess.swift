@@ -71,7 +71,7 @@ public enum FolderAccess {
                 return String(localized: "Sidefolk only works inside your own home folder.")
             }
             // Hidden files and folders (.ssh, .git, .env, .claude …) are off limits.
-            if !hiddenFine, isHidden(p) {
+            if !hiddenFine || isSecretStore(p, home: home), isHidden(p) {
                 return String(localized: "Sidefolk doesn't touch hidden files or folders.")
             }
         }
@@ -83,12 +83,20 @@ public enum FolderAccess {
         (canonical(path) ?? path).split(separator: "/").contains { $0.hasPrefix(".") }
     }
 
-    /// The folder that would let these paths through: what to offer when the only thing in the way is that it isn't shared.
-    /// Nil when one is already allowed for this, or a rule sharing can't change refuses them.
-    public static func folderToShare(read: [String], write: [String], folders: [GrantedFolder]) -> String? {
+    /// Where keys and agents' settings live: not even a file's size and time. A second wall, not the first: a card still asks about any other hidden file.
+    private static let secretStores = [".ssh", ".gnupg", ".aws", ".kube", ".docker", ".config", ".local", ".claude", ".codex"]
+
+    private static func isSecretStore(_ path: String, home: String) -> Bool {
+        secretStores.contains { path == home + "/" + $0 || path.hasPrefix(home + "/" + $0 + "/") }
+    }
+
+    /// The path a refused call would need shared, as the call named it, when that's all that's in its way and sharing could help. Says nothing of what's on disk beyond
+    /// what the refusal does: a page asks with this path, and Sidefolk works out the folder only on the person's click.
+    public static func sharingNeeded(read: [String], write: [String], folders: [GrantedFolder]) -> (path: String, write: Bool)? {
         guard forbiddenReason(read + write) == nil else { return nil }
-        let blocked = write.filter { !allows($0, write: true, folders: folders) } + read.filter { !allows($0, write: false, folders: folders) }
-        return blocked.first.flatMap(suggestedFolder)
+        if let path = write.first(where: { !allows($0, write: true, folders: folders) }) { return suggestedFolder(for: path) == nil ? nil : (path, true) }
+        if let path = read.first(where: { !allows($0, write: false, folders: folders) }) { return suggestedFolder(for: path) == nil ? nil : (path, false) }
+        return nil
     }
 
     /// Folders that can never be granted as a whole (too broad): the disk, home itself, a whole

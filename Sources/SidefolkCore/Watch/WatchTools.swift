@@ -211,7 +211,8 @@ enum WatchInput {
         }
         if ref.count >= 4, let w = try pick(mine.filter { $0.id.hasPrefix(ref) }) { return w }
         if let w = try pick(mine.filter { $0.title.caseInsensitiveCompare(ref) == .orderedSame }) { return w }
-        if ref.count >= 3, let w = try pick(mine.filter { $0.title.range(of: ref, options: .caseInsensitive) != nil }) { return w }
+        // A program names what it made: “Report” gone mustn't find “Daily Report”.
+        if caller.kind != "extension", ref.count >= 3, let w = try pick(mine.filter { $0.title.range(of: ref, options: .caseInsensitive) != nil }) { return w }
         throw ToolError.notFound(String(localized: "a watcher called “\(ref.clipped(60))”"))
     }
 }
@@ -275,7 +276,8 @@ struct WatchCreateTool: Tool {
             return ToolScope(url: URL(string: text)?.absoluteString ?? text)
         case WatchKind.fileAppears, WatchKind.fileChanges:
             let path = (target as NSString).expandingTildeInPath
-            return ToolScope(readPaths: [path], factsOnly: FolderAccess.isHidden(path))
+            // One file: a hidden folder stays refused, like the rest of what's hidden.
+            return ToolScope(readPaths: [path], factsOnly: FolderAccess.isHidden(path) && FileFacts.read(path)?.isDirectory != true)
         case WatchKind.folderNewFile:
             return ToolScope(readPaths: [(target as NSString).expandingTildeInPath])
         default:

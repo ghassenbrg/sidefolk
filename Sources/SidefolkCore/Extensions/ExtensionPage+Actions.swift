@@ -11,7 +11,7 @@ public enum PageAct: Sendable, Hashable {
     case file(PageFileAsk)
     /// Asks the person, in Sidefolk's words, to let this extension have something (D106, D107).
     case allow(PageConsent)
-    /// Asks the person, in Sidefolk's words, to share the folder a path is in with Sidefolk (D-SHARE).
+    /// Asks the person, in Sidefolk's words, to share the folder a path is in with Sidefolk (D180).
     case share(PageShareAsk)
     /// One of Sidefolk's or the Mac's settings panes.
     case settings(PageSettingsPane)
@@ -82,6 +82,9 @@ public struct PageShareAsk: Sendable, Hashable {
         self.write = write
     }
 
+    /// The folder as the question says it: a name on disk, kept to one short line.
+    public static func shown(_ folder: String) -> String { FolderAccess.displayPath(folder).displaySafe.clipped(120) }
+
     /// The folder to ask about, or why there's nothing to ask.
     public func folder() -> Result<String, UserFacingError> {
         let path = (path as NSString).expandingTildeInPath
@@ -89,6 +92,8 @@ public struct PageShareAsk: Sendable, Hashable {
         guard let folder = FolderAccess.suggestedFolder(for: path) else {
             return .failure(UserFacingError("That location is too broad to share. Add a specific folder in Settings › Trust."))
         }
+        // Only what's really there gets a question: the extension wrote this path, and it shows in Sidefolk's own words.
+        guard FileFacts.read(folder)?.isDirectory == true else { return .failure(UserFacingError("That folder isn't there.")) }
         return .success(folder)
     }
 

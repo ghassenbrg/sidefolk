@@ -60,10 +60,20 @@ import Foundation
         public var mutates: Bool
         /// It fits a plan, so no card.
         public var standing: Bool
-        /// The folder that would let it through, when all that's in the way is that it isn't shared: for a button with `PageAct.share`.
-        public var share: String?
+        /// What it would need shared, when that's all that's in its way: for a button with `PageAct.share`.
+        public struct Share: Sendable, Hashable {
+            public var path: String
+            public var write: Bool
 
-        public init(decision: Decision, why: String? = nil, summary: String, mutates: Bool, standing: Bool, share: String? = nil) {
+            public init(path: String, write: Bool) {
+                self.path = path
+                self.write = write
+            }
+        }
+
+        public var share: Share?
+
+        public init(decision: Decision, why: String? = nil, summary: String, mutates: Bool, standing: Bool, share: Share? = nil) {
             self.share = share
             self.decision = decision
             self.why = why
@@ -179,7 +189,8 @@ import Foundation
         guard let id = args.string("request"), let c = checks.removeValue(forKey: id) else { return }
         guard args.bool("ok") == true else { return c.resume(returning: nil) }
         c.resume(returning: Check(decision: Check.Decision(rawValue: args.string("decision") ?? "") ?? .unknown, why: args.string("why"), summary: args.string("summary") ?? "",
-                                  mutates: args.bool("mutates") ?? true, standing: args.bool("standing") ?? false, share: args.string("share")))
+                                  mutates: args.bool("mutates") ?? true, standing: args.bool("standing") ?? false,
+                                  share: (args.values["share"] as? [String: Any]).flatMap { s in (s["path"] as? String).map { Check.Share(path: $0, write: s["write"] as? Bool ?? false) } }))
     }
 
     static func receiveResult(_ args: Arguments) {

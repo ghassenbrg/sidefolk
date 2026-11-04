@@ -2,7 +2,7 @@ import Foundation
 
 public enum FolderShare { public static let toolName = "folders.share" }
 
-/// `folders.share` (D-SHARE): where the person's yes to a page's `share` question lands. Their click alone: a model, another agent or the extension
+/// `folders.share` (D180): where the person's yes to a page's `share` question lands. Their click alone: a model, another agent or the extension
 /// never reach it. The folder is one Sidefolk's question named, and the same rules hold as for Settings › Trust.
 struct FolderShareTool: Tool {
     static let name = FolderShare.toolName

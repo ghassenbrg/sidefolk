@@ -269,7 +269,9 @@ import Testing
         #expect(fired.triggered)
         #expect(fired.compared == nil)
         #expect(fired.openTarget == nil)
-        #expect(throws: (any Error).self) { try FolderNewFileProbe().prepare(.make(WatchKind.folderNewFile, config: ["path": .string(root.appendingPathComponent(".tmp").path)], now: now)) }
+        let folder = root.appendingPathComponent(".tmp").path
+        #expect(throws: (any Error).self) { try FolderNewFileProbe().prepare(.make(WatchKind.folderNewFile, config: ["path": .string(folder)], now: now)) }
+        #expect(throws: (any Error).self, "one file, not a hidden folder") { try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(folder)], now: now)) }
     }
 
     @Test func twoWatchersOnOneHostTakeTurnsAndCheckNowDoesNotWait() async throws {
