@@ -179,7 +179,7 @@ struct FullAccessSheet: View {
                     FolkAvatar(name: "guard", size: 48)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Turn on Full access?").font(Theme.Font.title2).foregroundStyle(Theme.ink)
-                        Text("\(model.settings.companionName) acts without asking until it ends.", comment: "The Full access sheet, under its title")
+                        Text("\(model.settings.companionName) acts without asking while it is on.", comment: "The Full access sheet, under its title")
                             .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
                     }
                 }
