@@ -46,10 +46,12 @@ public struct PermissionStore: Sendable {
     }
 
     /// Grants a folder (upgrading read to read/write if asked); stores the canonical path.
-    public func grantFolder(_ path: String, access: GrantedFolder.Access, now: Date = Date()) async throws {
+    /// `exactly`: only this path as it stands now, for a yes to a question that named it: a link swapped in since gets nothing.
+    public func grantFolder(_ path: String, access: GrantedFolder.Access, now: Date = Date(), exactly: Bool = false) async throws {
         guard let canonical = FolderAccess.canonical(path), FolderAccess.isGrantable(canonical) else {
             throw UserFacingError("That folder can't be shared with Sidefolk.", recovery: "Choose a more specific folder.")
         }
+        if exactly, canonical != path { throw UserFacingError("That folder changed. Nothing was shared.") }
         try await db.writer.write { db in
             if let existing = try GrantedFolder.fetchOne(db, key: canonical), existing.access == .readwrite { return }
             try GrantedFolder(path: canonical, access: access, now: now).save(db)

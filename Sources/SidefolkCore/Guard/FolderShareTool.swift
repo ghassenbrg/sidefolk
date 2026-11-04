@@ -27,7 +27,8 @@ struct FolderShareTool: Tool {
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         guard let folder = input.string("folder") else { throw ToolError.invalidInput(String(localized: "Tell me which folder.")) }
-        try await permissions.grantFolder(folder, access: input["write"]?.boolValue == true ? .readwrite : .read, now: context.now)
+        // What they read is what's shared: a link swapped in since the question gets nothing.
+        try await permissions.grantFolder(folder, access: input["write"]?.boolValue == true ? .readwrite : .read, now: context.now, exactly: true)
         events.changed(.permissions)
         return ToolResult(text: "Shared.", card: ResultCard(kind: .info, title: summary(for: input)))
     }

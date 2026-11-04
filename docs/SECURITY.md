@@ -318,9 +318,8 @@ group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; a
 *Residual:* an approved command is arbitrary code and inherits Sidefolk's TCC grants.
 
 **T10 Filesystem (H/H).** `PathPolicy`:
-1. Grants come only from `NSOpenPanel` or Settings. That is user intent, and it also satisfies TCC
-   for Documents, Desktop and Downloads. Store the `realpath(3)` plus a bookmark; a bookmark that
-   moves requires a new grant.
+1. Grants come only from the person: `NSOpenPanel`, Settings, a folder card, or a page's `share` question (D180). That is user intent. The panel also satisfies TCC
+   for Documents, Desktop and Downloads; otherwise TCC asks on the first read. The `realpath(3)` is stored; `isInside` resolves it again at each check, so a grant follows a link swapped in at its own path.
 2. Denied as whole subtrees, even inside broader grants (`FolderAccess.forbiddenReason`):
    `/System`, `/Library`, `/usr` (with `/usr/local`), `/bin`, `/sbin`, `/opt` (Homebrew's `bin`,
    `lib`, `Cellar`: a planted `claude` or stdlib file would run as the user), `/Applications`,
@@ -335,12 +334,18 @@ group, `SIGKILL` 2 s later. Output capped at 64 KiB and untrusted; floor 60 s; a
      homes, `~/Library`, the Sidefolk root). Guard asks on a card with no "Always", or the call fits a plan the person read that names the path; the person's own request
        runs; other agents are refused. A hidden folder is never watched, and never grantable. `folder_new_file` stays refused, since names are more than facts. Nothing in the
      stores of keys and agents' settings (`~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.kube`, `~/.docker`, `~/.config`, `~/.local`, `~/.claude`, `~/.codex`) is watched even so.
-     Accepted: a process already writing as the person can swap the file for a link between the card and the watch being made, and the plan holds the path as written. Each
-     look after that stops if a link appeared (`WatchedPath.resolved`).
+     What's asked comes from the path as named (`isNamedHidden`). After the yes `prepare` checks what it asked about: really hidden, with no link anywhere on the way below home,
+     not a folder, and no store as named or resolved. A folder coming to be there stops it, and editing a watch keeps what it resolved to. Protected places count as named too,
+     for every tool, so a link in an extension's own data folder is refused before anything follows it. What's still told: a caller that can write a link somewhere it's allowed
+     to, outside those, can learn from `ask` or `deny` whether its target exists and whether it's a protected or hidden place. That's T10's refusal as it has always been, names
+     no words, and is accepted. A link swapped in after a watch is made stops it at the next look. Accepted: a process already writing as the person can swap the file for a link between the card and the watch being made, and the plan holds the
+     path as written. Each look after that stops if a link appeared (`WatchedPath.resolved`).
+     Reviewed independently in rounds. The last read passed with notes; made after it, and read by no one independent: `isNamedHidden` as a condition in `prepare`, the check when a
+     stopped watch is brought back, and store names and protected places matched case-blind and, for stores, on any part of a path. All of these only refuse more.
    - *A folder asked for from a page (D180).* A page's `share` names a path; Sidefolk works out the folder with `suggestedFolder` (so the rules above apply) and asks in its
      own words, naming the extension. The extension's words aren't in the question, it can't press the button itself, and only `.user` reaches `folders.share`, which
      `grantFolder` checks again. It's a grant like Settings', without the open panel: TCC still asks for Documents, Desktop and Downloads on the first read. Before the click
-     `sidefolk/tools.check` tells an extension only that the path it named needs sharing, not the folder or what the path resolves to: its sandbox can't look there.
+     `sidefolk/tools.check` tells an extension only that the path it named needs sharing, from the path as written: one bit beyond `why` remains for a link right under a too-broad folder that resolves to one.
    - *A watch's rest (D180).* `cooldown_minutes` lets Sidefolk's agent and other agents (T4) shorten a watch's quiet after it fires from 30 minutes to 5, no further; an extension's
      own watch, which rings no one, has none unless it asks. Each still keeps its kind's shortest interval.
 3. Check: reject NUL, relative paths and `.`/`..` components. Do not collapse them lexically:

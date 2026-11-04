@@ -30,7 +30,13 @@ enum WatchedPath {
         guard let canonical = FolderAccess.canonical(expanded) else {
             throw WatchError.invalid(String(localized: "That path isn't allowed (it has “..” in it, or a link that goes nowhere)."))
         }
-        if let why = FolderAccess.forbiddenReason([canonical], hiddenFine: factsOnly && FileFacts.read(canonical)?.isDirectory != true) { throw WatchError.invalid(why) }
+        // Only what Guard asked about as a hidden file's facts gets past the rule on hidden places.
+        let asked = factsOnly && config["facts_only"]?.boolValue == true && FolderAccess.isNamedHidden(expanded)
+        if let why = FolderAccess.forbiddenReason([canonical, expanded], hiddenFine: asked && FileFacts.read(canonical)?.isDirectory != true) { throw WatchError.invalid(why) }
+        // It has to be what the card named: a hidden file, by that path, with no link on the way that could lead anywhere.
+        if asked, !FolderAccess.isHidden(canonical) || FolderAccess.hasLink(onTheWayTo: expanded) {
+            throw WatchError.invalid(String(localized: "Sidefolk doesn't touch hidden files or folders."))
+        }
         return config.setting("path", .string(expanded)).setting("resolved", .string(canonical))
     }
 
@@ -43,6 +49,12 @@ enum WatchedPath {
             throw ProbeError.failed(String(localized: "A link now points somewhere else on the way to \(FolderAccess.displayPath(resolved)), so I stopped looking there."))
         }
         return resolved
+    }
+
+    /// Whether a watcher's path still leads where it did when it was made: bringing one back mustn't follow a link swapped in since.
+    static func stillLeadsWhereItDid(_ config: JSONValue) -> Bool {
+        guard let path = config.string("path"), let resolved = config.string("resolved") else { return true }
+        return FolderAccess.canonical(path) == resolved
     }
 
     /// The closest folder that exists, so a watcher for a file that is not there yet still hears about its folder.
@@ -125,6 +137,8 @@ public struct FileAppearsProbe: WatcherProbe {
         let path = try WatchedPath.resolved(w.config)
         let gone = w.condition["gone"]?.boolValue == true
         let facts = FileFacts.read(path)
+        let hidden = FolderAccess.isHidden(path) || w.config["facts_only"]?.boolValue == true
+        if hidden, facts?.isDirectory == true { throw ProbeError.invalid(String(localized: "Sidefolk doesn't touch hidden files or folders.")) }
         let previous = w.lastState
         let firstLook = previous == nil
         let name = WatchedPath.name(path)
@@ -145,12 +159,12 @@ public struct FileAppearsProbe: WatcherProbe {
         if gone {
             return ProbeResult(state: .object(state), triggered: true,
                                summary: firstLook ? String(localized: "\(name) isn't there") : String(localized: "\(name) is gone"),
-                               openTarget: FolderAccess.isHidden(path) ? nil : (path as NSString).deletingLastPathComponent)
+                               openTarget: hidden ? nil : (path as NSString).deletingLastPathComponent)
         }
         let detail = facts.map { $0.isDirectory ? String(localized: "\(WatchedPath.size($0.size)) (folder)") : WatchedPath.size($0.size) }
         return ProbeResult(state: .object(state), triggered: true,
                            summary: firstLook ? String(localized: "\(name) is already there") : String(localized: "\(name) appeared"),
-                           detail: detail, openTarget: FolderAccess.isHidden(path) ? nil : WatchedPath.openable(path))
+                           detail: detail, openTarget: hidden ? nil : WatchedPath.openable(path))
     }
 
     public func eventTargets(for watcher: Watcher) -> [WatchEventTarget] {
@@ -188,7 +202,9 @@ public struct FileChangesProbe: WatcherProbe {
         // A text file's lines are kept as the watch's versions (D87): on the first look, and each time it changes. What
         // it was before is the version kept last time, so it isn't held in the state as well. Read only then, not at every look.
         // A hidden file: its size and time, never its words (D180).
-        let hidden = FolderAccess.isHidden(path)
+        let hidden = FolderAccess.isHidden(path) || w.config["facts_only"]?.boolValue == true
+        // One file: a folder that came to be there isn't what was asked about.
+        if hidden, facts?.isDirectory == true { throw ProbeError.invalid(String(localized: "Sidefolk doesn't touch hidden files or folders.")) }
         let text = { hidden ? nil : facts.flatMap { FileText.read(path, facts: $0) }.map { ComparedText($0) } }
         guard let previous = w.lastState else { return ProbeResult(state: .object(state), compared: text()) } // the first look is the baseline
         let existed = previous["exists"]?.boolValue == true

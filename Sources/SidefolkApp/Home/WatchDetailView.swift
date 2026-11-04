@@ -173,7 +173,7 @@ struct WatchDetailView: View {
     private func emptyChange(_ w: Watcher) -> LocalizedStringKey {
         if model.versions.count == 1 { return "Scout keeps what it read. The next change shows here, line by line." }
         if w.lastCheckedAt == nil { return "Not checked yet." }
-        if w.kind == WatchKind.fileChanges, FolderAccess.isHidden(w.config.string("resolved") ?? "") { return "This file is hidden, so Scout looks at its size and time only, never what's in it." }
+        if w.kind == WatchKind.fileChanges, w.config["facts_only"]?.boolValue == true || FolderAccess.isHidden(w.config.string("resolved") ?? "") { return "This file is hidden, so Scout looks at its size and time only, never what's in it." }
         if w.kind == WatchKind.fileChanges { return "This file isn't plain text, so Scout compares its size and time only." }
         return "Scout keeps what it reads from now on. The next change shows here, line by line."
     }
