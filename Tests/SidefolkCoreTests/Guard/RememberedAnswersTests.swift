@@ -141,17 +141,26 @@ import Testing
         try await env.permissions.setPolicy(GuardPolicy(mode: .auto))
         let stream = env.events.stream()
         let broker = env.broker
+        let cards = CallCounter()
         let swapping = Task {
             for await e in stream {
                 guard case .approvalRequested(let r) = e else { continue }
-                try? FileManager.default.removeItem(at: folder)
-                try? FileManager.default.createSymbolicLink(at: folder, withDestinationURL: elsewhere)
-                await broker.resolve(id: r.id, decision: .allowAlways)
+                cards.bump()
+                // Only the first question is answered yes, after the folder it named became a link; the call then asks again, now naming
+                // where the link leads, and that card is answered no.
+                if cards.value == 1 {
+                    try? FileManager.default.removeItem(at: folder)
+                    try? FileManager.default.createSymbolicLink(at: folder, withDestinationURL: elsewhere)
+                    await broker.resolve(id: r.id, decision: .allowAlways)
+                } else {
+                    await broker.resolve(id: r.id, decision: .deny)
+                }
             }
         }
         defer { swapping.cancel() }
         let out = await env.executor.execute(name: "files.move", input: ["x": "1"], caller: .agent(runId: "r"))
         #expect(!out.isOK)
+        #expect(cards.value == 2, "the yes shared nothing, so it asked again, about the real folder")
         #expect(try await env.permissions.folders().isEmpty, "nothing was shared")
     }
 }
