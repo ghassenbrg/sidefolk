@@ -1089,6 +1089,8 @@ On the menu, `menu_title` (at most 30 characters) names it, in place of Sidefolk
 
 **The ring (D152).** Every offer for the files, then their menus' choices, also show on a ring the person can open at the pointer, if they turned it on: two sets of eight at most, a tag and a few words on each, so keep titles and details short. You draw nothing for it. Put `{"type": "file_ways"}` (Kit: `.fileWays`) on your page to show its switch and keys, and `{"drop_card": true}` on a button (Kit: `act: .dropCard`) for the system's open panel and then your offers on Sidefolk's card, instead of `file`, which runs one tool.
 
+An extension with `permissions.clipboard` gets no offers for dropped files, since that permission can also rewrite what's being dragged (SECURITY T49).
+
 Every file must fit `patterns`. Several files only see offers with `{values}`, and more than 64 see none. `{value}` works as before for one file. `menu` (at most 12 choices of at most 30 characters) is more choices on the same card, drawn by Sidefolk: a second step wouldn't have the read, since it ends with the call. Any other argument of yours that names a path is taken out of what you receive for a drop, so only what was dropped can be there.
 
 ### Settings

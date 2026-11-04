@@ -102,6 +102,13 @@ struct FileRingTests {
         #expect(compile.terminationStatus == 0)
     }
 
+    @Test func anExtensionThatCanWriteDragsGetsNoFileOffers() {
+        var able = offer("a", patterns: ["*.png"])
+        able.canWriteDrags = true
+        #expect(DropChoices.offers(forFiles: ["/x/a.png"], among: [able]).isEmpty)
+        #expect(DropChoices.ringChoices(forFiles: ["/x/a.png"], among: [able]).isEmpty)
+    }
+
     @Test func twoSetsOfEightAtMost() {
         let drops = (0..<20).map { offer("o\($0)", patterns: ["*.png"]) }
         #expect(DropChoices.ringChoices(forFiles: ["/x/a.png"], among: drops).count == 16)

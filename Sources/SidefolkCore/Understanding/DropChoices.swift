@@ -46,7 +46,7 @@ public enum DropChoices {
         // A link's name says nothing of what would be read: `holiday.jpg` can point at `passport.pdf`.
         guard !files.contains(where: isLink) else { return [] }
         let many = files.count > 1
-        return drops.filter { drop in (!many || drop.takesMany) && files.allSatisfy { drop.matches(kind: .file, value: $0) } }
+        return drops.filter { drop in !drop.canWriteDrags && (!many || drop.takesMany) && files.allSatisfy { drop.matches(kind: .file, value: $0) } }
     }
 
     /// Everything these files can become, for the ring (D152): every offer, then their menus' choices, under the

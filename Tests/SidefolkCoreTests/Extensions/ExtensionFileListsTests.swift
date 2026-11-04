@@ -309,10 +309,16 @@ import Testing
     @Test func theMenuIsBounded() throws {
         let tools: JSONValue = ["echo": ["file_lists": ["files": "read"]]]
         func drops(_ count: Int, title: String = "PNG") -> JSONValue {
-            [["id": "d", "title": "Do", "kinds": ["file"], "tool": "echo", "input": ["files": "{values}"], "menu": .array((0..<count).map { _ in ["title": .string(title), "input": ["f": "png"]] })]]
+            [["id": "d", "title": "Do", "kinds": ["file"], "tool": "echo", "input": ["files": "{values}"], "menu": .array((0..<count).map { i in ["title": .string(i == 0 ? title : "\(title) \(i)"), "input": ["f": "png"]] })]]
         }
         #expect(try valid(tools: tools, drops: drops(12)))
         #expect(try !valid(tools: tools, drops: drops(13)))
         #expect(try !valid(tools: tools, drops: drops(1, title: String(repeating: "x", count: 31))))
+    }
+
+    @Test func aMenuCantHoldTheSameTitleTwice() throws {
+        let same: JSONValue = [["id": "d", "title": "Do", "kinds": ["file"], "tool": "echo", "input": ["files": "{values}"],
+                                "menu": [["title": "PNG", "input": ["a": "1"]], ["title": "PNG", "input": ["a": "2"]]]]]
+        #expect(try !valid(tools: ["echo": ["file_lists": ["files": "read"]]], drops: same))
     }
 }

@@ -212,6 +212,9 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     public var mark: String?
     /// What the card's menu is called, nil for Sidefolk's own words.
     public var menuTitle: String?
+    /// It may use the clipboard, and that also lets it write the system's drag pasteboard (measured, SECURITY T49): it could swap what's
+    /// being dragged for a file of its choosing, so it gets no offers for dropped files.
+    public var canWriteDrags = false
     /// What it reads could leave the Mac: it has the internet; can have your AI or a place search carry its words; uses `media`, whose
     /// certificate service can fetch from an address (SandboxProfile.mediaRules); or can put it on the clipboard or in a folder
     /// named at install, which may sync. The card says so.
