@@ -48,7 +48,7 @@ enum ExtensionPlanRules {
     /// a timer, a page's words or a model steered by what it read (T3).
     static let personWindow: TimeInterval = 30
 
-    private static let slot = try! NSRegularExpression(pattern: #"\{\{[A-Za-z0-9_.-]{1,40}\}\}"#)
+    private static let slot = try! NSRegularExpression(pattern: #"\{\{\s*[A-Za-z0-9_.\[\]-]{1,60}\s*\}\}"#)
 
     static func hasSlot(_ text: String) -> Bool {
         slot.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
@@ -251,6 +251,8 @@ enum ExtensionPlanWords {
     /// The whole card. Plans the person allowed before under the same id say what is new first.
     static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool, holdsJob: Bool = false) -> String {
         var out: [String] = []
+        // Whole, here, where the summary above the card is clipped: its own words, marked as that, and what it's the only place to say.
+        if !when.isEmpty { out.append(String(localized: "When, in \(name)'s words: \(when)", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
         func bullets(_ list: [(text: String, standing: Bool, new: Bool)]) -> String { list.map { "• \($0.text)" }.joined(separator: "\n") }
         let standing = lines.filter(\.standing)
         if revised {
@@ -262,6 +264,8 @@ enum ExtensionPlanWords {
         }
         let asking = lines.filter { !$0.standing }
         if !asking.isEmpty { out.append(String(localized: "It will still ask you each time:", comment: "A plan's card") + "\n" + bullets(asking)) }
+        // With nothing to allow, there's nothing to return and nothing to count: the card is only what it says it sets off.
+        guard !lines.isEmpty else { return out.joined(separator: "\n\n") }
         out.append(String(localized: "What these return goes to \(name), which can't reach the internet by itself.", comment: "A plan's card; the extension's name"))
         if holdsJob {
             out.append(String(localized: "A job for your companion uses your AI and its tools, under your own trust settings. What it does is in History.", comment: "A plan's card"))

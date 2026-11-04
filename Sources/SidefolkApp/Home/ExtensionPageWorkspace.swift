@@ -1,17 +1,14 @@
 import SidefolkCore
 import SwiftUI
 
-/// Says that the page showing takes the window (D126): Home folds its sidebar while it does. The person can still open it with the toolbar's button.
-struct PageTakesWindow: PreferenceKey {
-    static let defaultValue = false
-    static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
-}
-
 /// A page that takes the window (D126): a column of places at the start, the main part in the middle and what's selected at the end. Each scrolls on its own, and a tree in
 /// the middle fills what's left. Narrower, the places go first; narrower still, the end column sits under the main part. What goes where stays the extension's word.
 struct PageWorkspace: View {
     var page: ExtensionPage
     var model: ExtensionPageModel
+    @State private var showingPlaces = false
+    // A popover has an environment of its own.
+    @Environment(\.pageSelected) private var selectedColor
 
     private static let places: CGFloat = 232
     private static let details: CGFloat = 320
@@ -25,7 +22,8 @@ struct PageWorkspace: View {
 
     var body: some View {
         GeometryReader { geo in
-            let showsPlaces = geo.size.width >= 900 && !leading.isEmpty
+            // Beside Home's sidebar, which stays where the person left it (D181): with too little room for a second column, the places wait behind a button in the head.
+            let showsPlaces = geo.size.width >= 1120 && !leading.isEmpty
             let beside = geo.size.width >= 780
             HStack(spacing: 0) {
                 if showsPlaces {
@@ -37,7 +35,8 @@ struct PageWorkspace: View {
                 }
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: Theme.Space.m) {
-                        status(named: showsPlaces && leading.contains { $0.blocks.contains { if case .nav(let nav) = $0 { nav.brand } else { false } } })
+                        if !showsPlaces, !leading.isEmpty { placesButton }
+                        status(named: !leading.isEmpty && (!showsPlaces || leading.contains { $0.blocks.contains { if case .nav(let nav) = $0 { nav.brand } else { false } } }))
                         ForEach(Array(heads.enumerated()), id: \.offset) { _, section in SectionView(section: section, model: model) }
                     }
                     .padding(.horizontal, Theme.Space.xl).padding(.top, Theme.Space.m).padding(.bottom, heads.isEmpty ? 0 : Theme.Space.m)
@@ -65,7 +64,22 @@ struct PageWorkspace: View {
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .background { PageGround(dress: page.dress, model: model) }
-        .preference(key: PageTakesWindow.self, value: true)
+    }
+
+    private var placesButton: some View {
+        Button { showingPlaces.toggle() } label: {
+            Label { Text(verbatim: model.info.extensionName) } icon: { Image(systemName: "sidebar.leading") }
+                .font(Theme.Font.callout.weight(.medium))
+        }
+        .buttonStyle(.sf(.quiet))
+        .accessibilityHint(Text("Shows where you can go in this page", comment: "VoiceOver: the button on an extension's page that shows its own list of places when there's no room for it beside Home's sidebar"))
+        .popover(isPresented: $showingPlaces, arrowEdge: .bottom) {
+            column(leading, padded: Theme.Space.m)
+                .frame(width: Self.places + 28, height: 460)
+                .environment(\.pageSelected, selectedColor)
+        }
+        // A place chosen is somewhere else now.
+        .onChange(of: model.state) { _, _ in showingPlaces = false }
     }
 
     /// While something's happening on a tree, it stands there instead.

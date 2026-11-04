@@ -142,6 +142,32 @@ import Testing
         #expect(ExtensionActionPolicy.offers(pageOnly, to: "com.example.other"), "kept from the model isn't kept from what the person builds")
     }
 
+    /// A tool that fails the way a missing thing does.
+    struct NotThere: Tool {
+        var spec: ToolSpec { ToolSpec(name: "notes.update", title: "Update", description: "", inputSchema: Schema.object([:], required: []), risk: .low, capabilities: [], category: .notes, mutates: true) }
+        func summary(for input: JSONValue) -> String { "Update" }
+        func scope(for input: JSONValue) -> ToolScope { ToolScope() }
+        func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult { throw ToolError.notFound("a note") }
+    }
+
+    @Test func aProgramHearsWhenWhatItNamedIsntThere() async throws {
+        let w = try await World()
+        w.h.env.registry.register(NotThere())
+        let tool = try await w.install()
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "notes.update", "input": .object([:])]) }
+        _ = await w.answerCard(.allowOnce)
+        let reply = await task.value
+        #expect(reply["status"]?.stringValue == "failed")
+        #expect(reply["not_found"]?.boolValue == true)
+    }
+
+    @Test func aThingThatIsntThereIsToldFromAFailure() {
+        var failure = ToolExecutor.userFacing(ToolError.notFound("a watcher"), tool: Probe(name: "x", risk: .low, capabilities: [], mutates: true).spec)
+        #expect(failure.notFound)
+        failure = ToolExecutor.userFacing(ToolError.invalidInput("two match"), tool: Probe(name: "x", risk: .low, capabilities: [], mutates: true).spec)
+        #expect(!failure.notFound, "a failure that may have done something, or found two, isn't that")
+    }
+
     @Test func aJobByItsModelNameIsStillAJob() async throws {
         let w = try await World()
         w.h.env.registry.register(CompanionJobTool(agent: CompanionAgentSlot()))

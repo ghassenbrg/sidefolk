@@ -97,6 +97,8 @@ import Foundation
             case failed
             /// Off, or no reply from Sidefolk in time. It may or may not have run.
             case lost
+            /// Too many calls this minute. Nothing happened: try again in a minute.
+            case busy
         }
 
         public var status: Status
@@ -107,7 +109,11 @@ import Foundation
         /// It fit a plan.
         public var standing: Bool
 
-        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false) {
+        /// `failed` because what it named isn't there, as opposed to a failure that may have done something.
+        public var notFound = false
+
+        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false, notFound: Bool = false) {
+            self.notFound = notFound
             self.status = status
             self.text = text
             self.summary = summary
@@ -196,7 +202,7 @@ import Foundation
     static func receiveResult(_ args: Arguments) {
         guard let id = args.string("request"), let c = calls.removeValue(forKey: id) else { return }
         c.resume(returning: Outcome(status: Outcome.Status(rawValue: args.string("status") ?? "") ?? .lost, text: args.string("text") ?? "", summary: args.string("summary") ?? "",
-                                    untrusted: args.bool("untrusted") ?? true, standing: args.bool("standing") ?? false))
+                                    untrusted: args.bool("untrusted") ?? true, standing: args.bool("standing") ?? false, notFound: args.bool("not_found") ?? false))
     }
 }
 
@@ -234,7 +240,7 @@ public struct Plan: @unchecked Sendable {
 /// Plans the person read, so that exactly that needs no more cards (D110). Only an extension that can't reach beyond this Mac by itself gets
 /// them, and only just after the person's click or request, never from a timer.
 @MainActor public enum Plans {
-    /// The most lines a plan may hold; Sidefolk refuses more, and a plan with none.
+    /// The most lines a plan may hold; Sidefolk refuses more, and a plan with none and no `when` to say what it's for.
     public nonisolated static let maxSteps = 32
 
     public struct Standing: Sendable, Hashable {
@@ -243,6 +249,13 @@ public struct Plan: @unchecked Sendable {
         /// By step, in order: true runs without asking.
         public var standing: [Bool]
         public var expires: Date?
+
+        public init(id: String, title: String, standing: [Bool], expires: Date? = nil) {
+            self.id = id
+            self.title = title
+            self.standing = standing
+            self.expires = expires
+        }
     }
 
     public enum Answer: Sendable, Hashable {

@@ -21,6 +21,8 @@ extension ExtensionPage {
             public var branches: [Branch]
             /// Stays where it is, first in its run: what sets the rest off. Nothing moves or removes it.
             public var fixed = false
+            /// Folded by the person: how many cards it's holding out of sight.
+            public var folded: Int?
         }
 
         public struct Branch: Sendable, Hashable, Identifiable {
@@ -31,6 +33,8 @@ extension ExtensionPage {
             /// False: the path not taken, faded. Nil says nothing.
             public var taken: Bool?
             public var nodes: [Node]
+            /// On its + while it's empty: what goes here, so the place to add it can't be missed.
+            public var hint: String?
         }
 
         /// A searchable list of what `insert` may add, opened from a + button.
@@ -74,6 +78,14 @@ extension ExtensionPage {
         /// `#RRGGBB`, one or two: its line, running from one to the other.
         public var line: [String]
 
+        init(nodes: [Node]) {
+            self.init(nodes: nodes, selected: nil, select: nil, insert: nil, reorder: nil, remove: nil, picker: nil, tools: [], line: [])
+        }
+
+        public init(nodes: [Node], selected: String?, select: Steps.Hook?, insert: Steps.Hook?, reorder: Steps.Hook?, remove: Steps.Hook?, picker: Picker?, tools: [Control], line: [String]) {
+            (self.nodes, self.selected, self.select, self.insert, self.reorder, self.remove, self.picker, self.tools, self.line) = (nodes, selected, select, insert, reorder, remove, picker, tools, line)
+        }
+
         /// Every card, top to bottom and each branch whole before the next: the order they are read in.
         public var reading: [Node] {
             func walk(_ nodes: [Node]) -> [Node] { nodes.flatMap { [$0] + $0.branches.flatMap { walk($0.nodes) } } }
@@ -115,6 +127,70 @@ extension ExtensionPage {
             return find(nodes, first: nil)
         }
 
+        /// The tree with what hangs from these cards folded away: only what's looked at, never what it is. Each says how many it's holding, and stays a card to press.
+        public func folding(_ ids: Set<String>) -> Tree {
+            guard !ids.isEmpty else { return self }
+            func walk(_ nodes: [Node]) -> [Node] {
+                nodes.map { node in
+                    var node = node
+                    if ids.contains(node.id), !node.branches.isEmpty {
+                        let held = node.branches.reduce(0) { $0 + Tree(nodes: $1.nodes).reading.count }
+                        node.folded = held
+                        node.branches = []
+                    } else {
+                        node.branches = node.branches.map { var b = $0; b.nodes = walk(b.nodes); return b }
+                    }
+                    return node
+                }
+            }
+            var out = self
+            out.nodes = walk(nodes)
+            return out
+        }
+
+        /// The cards whose words have these in them, as they're read.
+        public func matching(_ words: String) -> [String] {
+            let wanted = words.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !wanted.isEmpty else { return [] }
+            return reading.filter { n in [n.kind, n.title, n.pill?.text].compactMap(\.self).contains { $0.range(of: wanted, options: [.caseInsensitive, .diacriticInsensitive]) != nil } }.map(\.id)
+        }
+
+        /// Everywhere a card can be put, as a list says it, for moving it without dragging. Top to bottom, as the + spots are.
+        public struct Spot: Sendable, Hashable, Identifiable {
+            public enum Place: Sendable, Hashable {
+                /// Right after this card.
+                case after(String)
+                /// First in this branch of that card.
+                case start(branch: String, of: String)
+            }
+
+            public var id: String
+            public var place: Place
+            public var depth: Int
+        }
+
+        public func spots(for id: String) -> [Spot] {
+            var out: [Spot] = []
+            func walk(_ nodes: [Node], depth: Int) {
+                for node in nodes {
+                    if place(id, after: node.id) != nil { out.append(Spot(id: node.id, place: .after(node.title), depth: depth)) }
+                    for branch in node.branches {
+                        if place(id, after: branch.id) != nil { out.append(Spot(id: branch.id, place: .start(branch: branch.label, of: node.title), depth: depth + 1)) }
+                        walk(branch.nodes, depth: depth + 1)
+                    }
+                }
+            }
+            walk(nodes, depth: 0)
+            return out
+        }
+
+        /// The card before or after this one, as the tree is read: what the arrow keys go to.
+        public func neighbour(of id: String?, by delta: Int) -> String? {
+            let all = reading
+            guard let id, let at = all.firstIndex(where: { $0.id == id }) else { return all.first?.id }
+            return all.indices.contains(at + delta) ? all[at + delta].id : nil
+        }
+
         /// What moving `id` by one place among its own says: the id it now stands before, or `.null` at the end. Nil when it can't go there.
         public func move(_ id: String, by delta: Int) -> JSONValue? {
             let own = siblings(of: id)
@@ -125,9 +201,9 @@ extension ExtensionPage {
         }
     }
 
-    static let maxTreeNodes = 64
+    static let maxTreeNodes = 128
     static let maxTreeDepth = 4
-    static let maxTreeBranches = 4
+    static let maxTreeBranches = 8
     static let maxPickerItems = 256
     private static let treeId = #"^[A-Za-z0-9_.:-]{1,64}$"#
 
@@ -156,7 +232,7 @@ extension ExtensionPage {
                 if let p = n["pill"], let t = text(p["text"], 24) { pill = Badge(text: t, tone: tone(p["tone"])) }
                 let branches = depth >= maxTreeDepth ? [] : (n["branches"]?.arrayValue ?? []).prefix(maxTreeBranches).compactMap { b -> Tree.Branch? in
                     guard let bid = fresh(b["id"]), let label = text(b["label"], 24) else { return nil }
-                    return Tree.Branch(id: bid, label: label, tone: tone(b["tone"]), taken: b["taken"]?.boolValue, nodes: nodes(b["nodes"], depth: depth + 1))
+                    return Tree.Branch(id: bid, label: label, tone: tone(b["tone"]), taken: b["taken"]?.boolValue, nodes: nodes(b["nodes"], depth: depth + 1), hint: text(b["hint"], 40))
                 }
                 return Tree.Node(id: id, kind: text(n["kind"], 30), title: title, symbol: symbol(n["symbol"]), color: color(n["color"]),
                                  state: n["state"]?.stringValue.flatMap(Tree.Node.State.init(rawValue:)) ?? .none, pill: pill, branches: Array(branches), fixed: n["fixed"]?.boolValue ?? false)
@@ -258,6 +334,8 @@ public struct TreeLayout: Sendable {
         public var point: CGPoint
         /// Only shown when the pointer or the keyboard is on it: the start of a branch that has cards.
         public var quiet: Bool
+        /// Words on it, for the start of an empty branch.
+        public var hint: String?
     }
 
     public struct Label: Sendable, Hashable {
@@ -342,7 +420,7 @@ public struct TreeLayout: Sendable {
                     lines.append(Line(points: [CGPoint(x: x, y: bottom), CGPoint(x: x, y: across), CGPoint(x: cx, y: across), CGPoint(x: cx, y: under)], style: line))
                     labels.append(Label(branch: branch, point: CGPoint(x: cx, y: across + m.drop / 2)))
                     if branch.nodes.isEmpty {
-                        if editable { adds.append(Add(target: branch.id, point: CGPoint(x: cx, y: under + 12), quiet: false)) }
+                        if editable { adds.append(Add(target: branch.id, point: CGPoint(x: cx, y: under + 12), quiet: false, hint: branch.hint)) }
                         ends.append((cx, under + (editable ? 24 : 0), line))
                     } else {
                         if editable { adds.append(Add(target: branch.id, point: CGPoint(x: cx, y: across + m.drop - 8), quiet: true)) }
@@ -370,7 +448,7 @@ public struct TreeLayout: Sendable {
         func moved(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x + shift, y: p.y) }
         self.cards = cards.map { Card(node: $0.node, frame: $0.frame.offsetBy(dx: shift, dy: 0)) }
         self.lines = lines.map { Line(points: $0.points.map(moved), style: $0.style) }
-        self.adds = adds.map { Add(target: $0.target, point: moved($0.point), quiet: $0.quiet) }
+        self.adds = adds.map { Add(target: $0.target, point: moved($0.point), quiet: $0.quiet, hint: $0.hint) }
         self.labels = labels.map { Label(branch: $0.branch, point: moved($0.point)) }
         size = CGSize(width: reach.max - reach.min + m.margin * 2, height: end.y + m.margin)
     }

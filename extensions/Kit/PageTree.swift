@@ -54,7 +54,11 @@ public struct CardTree {
         public var taken: Bool?
         public var nodes: [Node]
 
-        public init(_ id: String, _ label: String, tone: Tone = .neutral, taken: Bool? = nil, nodes: [Node] = []) {
+        /// On its + while it's empty: what goes here.
+        public var hint: String?
+
+        public init(_ id: String, _ label: String, tone: Tone = .neutral, taken: Bool? = nil, nodes: [Node] = [], hint: String? = nil) {
+            self.hint = hint
             self.id = id
             self.label = label
             self.tone = tone
@@ -65,6 +69,7 @@ public struct CardTree {
         var json: [String: Any] {
             var out: [String: Any] = ["id": id, "label": label, "tone": tone.rawValue, "nodes": nodes.map(\.json)]
             if let taken { out["taken"] = taken }
+            if let hint { out["hint"] = hint }
             return out
         }
     }

@@ -32,6 +32,52 @@ struct ExtensionPageTreeTests {
 
     private enum TreeTestFailure: Error { case notATree }
 
+    @Test func everySpotACardCanGoToIsListedWithoutTheOnesItCant() throws {
+        var start = node("start").objectValue ?? [:]
+        start["fixed"] = true
+        let t = try tree([.object(start), node("a"), node("b", branches: [branch("then:b", [node("c")]), branch("else:b", [])]), node("e")], extra: ["reorder": ["tool": "ui", "key": "move"]])
+        let forE = t.spots(for: "e").map(\.id)
+        #expect(forE == ["start", "a", "then:b", "c", "else:b"], "not b: it's already right after it")
+        let forB = t.spots(for: "b").map(\.id)
+        #expect(!forB.contains("then:b") && !forB.contains("c") && !forB.contains("else:b"), "never inside itself")
+        #expect(t.spots(for: "start").isEmpty)
+        #expect(t.neighbour(of: "a", by: 1) == "b")
+        #expect(t.neighbour(of: "b", by: 1) == "c", "as it's read, into the branch")
+        #expect(t.neighbour(of: "start", by: -1) == nil)
+        #expect(t.neighbour(of: nil, by: 1) == "start")
+    }
+
+    @Test func foldingHidesWhatHangsFromACardAndSaysHowMuch() throws {
+        let t = try tree([node("a"), node("b", branches: [branch("y", [node("c"), node("d", branches: [branch("z", [node("e")])])]), branch("n", [node("f")])]), node("g")])
+        let shown = t.folding(["b"])
+        #expect(shown.reading.map(\.id) == ["a", "b", "g"])
+        #expect(shown.reading[1].folded == 4)
+        #expect(t.folding(["d"]).reading.map(\.id) == ["a", "b", "c", "d", "f", "g"], "deep inside too")
+        #expect(t.folding([]) == t)
+        #expect(t.folding(["a"]) == t, "a card with nothing inside has nothing to fold")
+    }
+
+    @Test func findingGoesByWhatACardSays() throws {
+        let t = try tree([node("a"), node("b")])
+        #expect(t.matching("do B") == ["b"])
+        #expect(t.matching("do") == ["a", "b"])
+        #expect(t.matching("  ").isEmpty)
+    }
+
+    @Test func aPageTakesOnlyTheKeysOnTheList() throws {
+        let page = try page([.object(["type": "note", "text": "x"])], extra: ["shortcuts": [
+            ["key": "cmd+s", "label": "Save", "tool": "ui", "input": ["op": "save"]],
+            ["key": "cmd+q", "label": "Quit it", "tool": "ui"],
+            ["key": "cmd+w", "label": "Close it", "tool": "ui"],
+            ["key": "cmd+z", "label": "Undo", "tool": "not a tool name!"],
+            ["key": "cmd+d", "tool": "ui"],
+        ]])
+        #expect(page.shortcuts.map(\.key) == [.save])
+        #expect(page.shortcuts.first?.label == "Save")
+        #expect(ExtensionPage.Shortcut.Key.undo.belongsToText)
+        #expect(!ExtensionPage.Shortcut.Key.save.belongsToText)
+    }
+
     @Test func whatSetsItOffStaysAndTheRestMove() throws {
         var start = node("start").objectValue ?? [:]
         start["fixed"] = true
@@ -63,10 +109,10 @@ struct ExtensionPageTreeTests {
         #expect(try page([.object(["type": .string("tree"), "nodes": .array([])])]).sections.isEmpty)
     }
 
-    @Test("A tree holds 64 cards at most, and hooks name only the extension's own tools")
+    @Test("A tree holds 128 cards at most, and hooks name only the extension's own tools")
     func limits() throws {
-        let t = try tree((0..<100).map { node("n\($0)") }, extra: ["select": ["tool": "ext.other.tool", "key": "target"], "insert": ["tool": "ui", "key": "target"]])
-        #expect(t.nodes.count == 64)
+        let t = try tree((0..<200).map { node("n\($0)") }, extra: ["select": ["tool": "ext.other.tool", "key": "target"], "insert": ["tool": "ui", "key": "target"]])
+        #expect(t.nodes.count == 128)
         #expect(t.select == nil)
         #expect(t.insert?.tool == "ui")
     }
@@ -141,7 +187,7 @@ struct ExtensionPageTreeTests {
         #expect(try page([], extra: ["workspace": true, "summary": ["title": "x"]]).workspace == false)
         let press: JSONValue = ["label": "Open", "go": ["set": [:]]]
         let p = try page([
-            ["type": "bar", "title": "Morning brief", "pill": ["text": "Practised", "tone": "good"], "detail": "Every weekday",
+            ["type": "bar", "title": "Morning brief", "pill": ["text": "Practiced", "tone": "good"], "detail": "Every weekday",
              "actions": [["label": "A", "tool": "ui", "style": "primary"], ["label": "B", "tool": "ui", "style": "primary"]]],
             ["type": "nav", "brand": true, "items": [["id": "a", "title": "Flows", "selected": true, "press": press]]],
             ["type": "notice", "title": "Your morning", "body": "Three lines", "time": "08:30"],
@@ -152,7 +198,7 @@ struct ExtensionPageTreeTests {
             Issue.record("parts")
             return
         }
-        #expect(bar.pill?.text == "Practised")
+        #expect(bar.pill?.text == "Practiced")
         #expect(bar.actions[0].style == .primary && bar.actions[1].style == .secondary, "one primary a page")
         #expect(nav.items.first?.selected == true)
         #expect(notice.time == "08:30")

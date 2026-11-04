@@ -32,6 +32,8 @@ public struct Page {
     public var accent: [String]
     /// Its palettes' row stays off this state of the page, drawn by a `.hostControls` part on another. What it needs from macOS always shows.
     public var quietHost = false
+    /// Keys that work while this page is showing.
+    public var shortcuts: [PageShortcut] = []
 
     public init(summary: Summary? = nil, sections: [Section] = [], back: String? = nil, bare: Bool = false, bleed: Bool = false, dress: PageDress? = nil, tile: Scene? = nil, maxWidth: Double? = nil, workspace: Bool = false, companion: Bool = false, accent: [String] = []) {
         self.accent = accent
@@ -47,6 +49,9 @@ public struct Page {
         self.maxWidth = maxWidth
     }
 
+    /// What Sidefolk is sent, for looking at a page outside it.
+    public var sent: [String: Any] { json }
+
     var json: [String: Any] {
         var out: [String: Any] = ["sections": sections.filter { !$0.blocks.isEmpty || !$0.accessories.isEmpty }.map(\.json)]
         if let summary { out["summary"] = summary.json }
@@ -60,8 +65,27 @@ public struct Page {
         if companion { out["companion"] = true }
         if !accent.isEmpty { out["accent"] = accent }
         if quietHost { out["quiet_host"] = true }
+        if !shortcuts.isEmpty { out["shortcuts"] = shortcuts.map(\.json) }
         return out
     }
+}
+
+/// A key that runs one of your tools as the person while your page is showing. Only these, each what it is everywhere on a Mac: `cmd+s`, `cmd+z`, `shift+cmd+z`,
+/// `cmd+d`, `cmd+return`, `cmd+f`. While text is being typed, undo and redo stay the text's.
+public struct PageShortcut {
+    public var key: String
+    public var label: String
+    public var tool: String
+    public var input: [String: Any]
+
+    public init(_ key: String, _ label: String, tool: String, input: [String: Any] = [:]) {
+        self.key = key
+        self.label = label
+        self.tool = tool
+        self.input = input
+    }
+
+    var json: [String: Any] { ["key": key, "label": label, "tool": tool, "input": input] }
 }
 
 public enum Tone: String {

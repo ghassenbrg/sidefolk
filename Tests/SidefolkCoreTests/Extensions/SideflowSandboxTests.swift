@@ -206,7 +206,7 @@ import Testing
         _ = await w.h.call("ext.sideflow.create_flow", ["name": "Quiet", "definition": ["steps": [["id": "n", "do": "notes.save", "with": ["text": "x"]], ["do": "notify.user", "with": ["title": "Hi"]]]]])
         let out = await w.h.call("ext.sideflow.practice_flow", ["flow": "Quiet"])
         #expect(out.isOK, "\(w.text(out))")
-        await w.until("the practice run") { (await w.h.call("ext.sideflow.get_run", ["flow": "Quiet"])).okText?.contains("Practised") == true }
+        await w.until("the practice run") { (await w.h.call("ext.sideflow.get_run", ["flow": "Quiet"])).okText?.contains("Practiced") == true }
         #expect(w.saved.withLock { $0.isEmpty })
         #expect((try await w.h.env.activity.recent(limit: 5, tool: "notify.user")).isEmpty)
     }
@@ -325,6 +325,21 @@ import Testing
         let over = await w.h.call("ext.sideflow.create_flow", ["name": "Over", "definition": flow(ExtensionPlanRules.maxSteps - 3)])
         let read = await w.flow("Over")?.jsonString ?? ""
         #expect(w.text(over).contains("different things to allow") || read.contains("different things to allow"), "\(w.text(over)) \(read.prefix(200))")
+    }
+
+    /// Nothing to allow but another flow it sets off: that's on a card, whole, however long, and allows nothing by itself.
+    @Test(.enabled(if: packKnowsThePlanLimit, "this checkout's Sideflow pack doesn't know the plan limit yet"))
+    func aFlowThatOnlyCallsAnotherShowsItOnACard() async throws {
+        let w = try await World()
+        // What it calls has to be there: a step finds its flow by its exact name.
+        let target = await w.h.call("ext.sideflow.create_flow", ["name": "Delete old notes", "definition": ["trigger": ["type": "manual"], "steps": [["id": "t", "text": "Only words"]]]])
+        #expect(target.isOK, "\(w.text(target))")
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        let made = await w.h.call("ext.sideflow.create_flow", ["name": "Caller", "definition": ["trigger": ["type": "manual"], "steps": [["id": "r", "run_flow": "Delete old notes"]]], "start": true])
+        #expect(made.isOK, "\(w.text(made))")
+        let card = await answer.value
+        guard case .text(let words)? = card?.details else { Issue.record("the plan must be on the card"); return }
+        #expect(words.contains("Delete old notes"))
     }
 
     /// Nothing to allow: Sidefolk has no card for that, and the flow turns on.

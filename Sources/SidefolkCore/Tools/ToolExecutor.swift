@@ -490,7 +490,10 @@ public final class ToolExecutor: Sendable {
         if let e = error as? ToolError {
             switch e {
             case .invalidInput(let m): return UserFacingError("That didn't work: \(m)", detail: e.description)
-            case .notFound(let m): return UserFacingError("I couldn't find \(m).", detail: e.description)
+            case .notFound(let m):
+                var failure = UserFacingError("I couldn't find \(m).", detail: e.description)
+                failure.notFound = true
+                return failure
             case .unavailable(let m): return UserFacingError(verbatim: m, detail: e.description)
             }
         }

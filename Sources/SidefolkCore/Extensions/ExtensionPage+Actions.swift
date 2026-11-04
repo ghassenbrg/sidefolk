@@ -23,7 +23,7 @@ public enum PageAct: Sendable, Hashable {
     /// The control's own: `go`, `copy`, `file`, `allow`, `share` or `settings`. Exactly one, or it isn't drawn as one.
     static func parse(_ j: JSONValue) -> PageAct? {
         if let go = PageGo.parse(j["go"]) { return .go(go) }
-        if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(2000))) }
+        if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(60_000))) }
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
         if let consent = j["allow"]?.stringValue.flatMap(PageConsent.init(rawValue:)) { return .allow(consent) }
         if let share = PageShareAsk.parse(j["share"]) { return .share(share) }
@@ -230,4 +230,28 @@ public struct PageMove: Sendable, Hashable {
     }
 
     public var go: PageGo? { state.map { PageGo(set: $0, push: push) } }
+}
+
+extension ExtensionPage {
+    /// A key that runs one of the extension's tools as the person, through Guard, while its page is showing. From a short list, so a page can't take the keys that close
+    /// a window or quit, or hear what's typed. Each is what it is everywhere on a Mac.
+    public struct Shortcut: Sendable, Hashable {
+        public enum Key: String, Sendable, Hashable, CaseIterable {
+            case save = "cmd+s", undo = "cmd+z", redo = "shift+cmd+z", duplicate = "cmd+d", run = "cmd+return", find = "cmd+f"
+
+            /// While text is being typed these are the field's own.
+            public var belongsToText: Bool { self == .undo || self == .redo }
+        }
+
+        public var key: Key
+        /// What it does, for the page's list of keys and VoiceOver.
+        public var label: String
+        public var tool: String
+        public var input: JSONValue
+
+        static func parse(_ j: JSONValue) -> Shortcut? {
+            guard let key = j["key"]?.stringValue.flatMap(Key.init(rawValue:)), let label = text(j["label"], 40), let tool = toolName(j["tool"]), let input = smallInput(j["input"]) else { return nil }
+            return Shortcut(key: key, label: label, tool: tool, input: input)
+        }
+    }
 }
