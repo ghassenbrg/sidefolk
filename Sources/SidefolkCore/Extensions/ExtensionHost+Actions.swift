@@ -121,6 +121,7 @@ extension ExtensionHost {
             reply["ok"] = false
             reply["status"] = "failed"
             reply["text"] = .string(error.message)
+            if error.notFound { reply["not_found"] = true }
         case .unanswered:
             await refundAI(id, tool: tool)
             reply["ok"] = false

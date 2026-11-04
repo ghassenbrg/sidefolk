@@ -109,7 +109,11 @@ import Foundation
         /// It fit a plan.
         public var standing: Bool
 
-        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false) {
+        /// `failed` because what it named isn't there, as opposed to a failure that may have done something.
+        public var notFound = false
+
+        public init(status: Status, text: String, summary: String = "", untrusted: Bool = true, standing: Bool = false, notFound: Bool = false) {
+            self.notFound = notFound
             self.status = status
             self.text = text
             self.summary = summary
@@ -198,7 +202,7 @@ import Foundation
     static func receiveResult(_ args: Arguments) {
         guard let id = args.string("request"), let c = calls.removeValue(forKey: id) else { return }
         c.resume(returning: Outcome(status: Outcome.Status(rawValue: args.string("status") ?? "") ?? .lost, text: args.string("text") ?? "", summary: args.string("summary") ?? "",
-                                    untrusted: args.bool("untrusted") ?? true, standing: args.bool("standing") ?? false))
+                                    untrusted: args.bool("untrusted") ?? true, standing: args.bool("standing") ?? false, notFound: args.bool("not_found") ?? false))
     }
 }
 

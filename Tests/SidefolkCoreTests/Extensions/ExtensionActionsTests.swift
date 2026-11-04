@@ -142,6 +142,13 @@ import Testing
         #expect(ExtensionActionPolicy.offers(pageOnly, to: "com.example.other"), "kept from the model isn't kept from what the person builds")
     }
 
+    @Test func aThingThatIsntThereIsToldFromAFailure() {
+        var failure = ToolExecutor.userFacing(ToolError.notFound("a watcher"), tool: Probe(name: "x", risk: .low, capabilities: [], mutates: true).spec)
+        #expect(failure.notFound)
+        failure = ToolExecutor.userFacing(ToolError.invalidInput("two match"), tool: Probe(name: "x", risk: .low, capabilities: [], mutates: true).spec)
+        #expect(!failure.notFound, "a failure that may have done something, or found two, isn't that")
+    }
+
     @Test func aJobByItsModelNameIsStillAJob() async throws {
         let w = try await World()
         w.h.env.registry.register(CompanionJobTool(agent: CompanionAgentSlot()))

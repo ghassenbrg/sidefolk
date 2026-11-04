@@ -45,6 +45,8 @@ public struct UserFacingError: Error, Sendable, Equatable, CustomStringConvertib
     public var recovery: String?
     public var changedNothing: Bool
     public var detail: String?
+    /// What it named isn't there. A caller can tell that from a failure that may have done something.
+    public var notFound = false
 
     public init(_ message: String.LocalizationValue, recovery: String.LocalizationValue? = nil, changedNothing: Bool = true,
                 detail: String? = nil) {
