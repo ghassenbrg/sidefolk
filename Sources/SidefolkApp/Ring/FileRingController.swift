@@ -48,6 +48,9 @@ extension KeyboardShortcuts.Name {
     private var readingFinder = false
     private var handlerInstalled = false
     private var scrollSum = 0.0
+    private var scrollTurned = false
+    /// On a slice at all, lit or not.
+    private var overSlice = false
     private(set) var isOn = false
     /// Sidefolk's other keys, palettes' among them.
     var otherKeys: () -> [KeyboardShortcuts.Shortcut] = { [] }
@@ -162,7 +165,7 @@ extension KeyboardShortcuts.Name {
         if shift, !shiftWasDown { turn() }
         shiftWasDown = shift
         // The key let go off any slice: the person changed their mind, and the drag goes on to whatever's under the ring.
-        guard !flags.contains(key.flag), model.hovered == nil else {
+        guard !flags.contains(key.flag), !overSlice else {
             keyUpSince = nil
             return
         }
@@ -196,7 +199,8 @@ extension KeyboardShortcuts.Name {
             guard let self else { return }
             self.readingFinder = false
             // It may have taken a while, the first time macOS asks.
-            guard self.isOn, NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return }
+            guard self.isOn else { return }
+            guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return self.say(first) }
             switch answer {
             case .files(let paths) where paths.isEmpty: self.say(first)
             case .files(let paths): self.open(paths.map { URL(fileURLWithPath: $0) }, byClick: true)
@@ -213,17 +217,19 @@ extension KeyboardShortcuts.Name {
         closing?.cancel()
         closing = nil
         noteTimer?.cancel()
-        // Every name can be read on a ring of a few files. Past that, the card shows them all.
         let paths = urls.map(\.path), fits = FileRingModel.namesFit(paths)
-        if !fits, byClick { return toCard(urls) }
-        let choices = fits ? choicesFor(paths) : []
+        let choices = choicesFor(paths)
         // A drag nothing can use is an ordinary drag: no ring in its way.
-        if fits, choices.isEmpty, !byClick { return }
+        if choices.isEmpty, !byClick { return }
+        // Every name can be read on a ring of a few files. Past that, the card shows them all.
+        if !fits, byClick { return toCard(urls) }
         self.urls = urls
         model.files = paths
-        model.choices = choices
+        model.choices = fits ? choices : []
         model.note = !fits ? .tooMany : choices.isEmpty ? .nothing : nil
         scrollSum = 0
+        scrollTurned = false
+        overSlice = false
         model.set = 0
         model.hovered = nil
         model.overMiddle = false
@@ -273,6 +279,9 @@ extension KeyboardShortcuts.Name {
         panel.orderOut(nil)
         model.hovered = nil
         model.overMiddle = false
+        // What it drew from the person's file doesn't stay in memory until the next time.
+        model.files = []
+        model.choices = []
         urls = []
     }
 
@@ -281,10 +290,20 @@ extension KeyboardShortcuts.Name {
         aim.turned(at: ProcessInfo.processInfo.systemUptime)
     }
 
+    /// A mouse's notch is one turn. A trackpad's flick is too, however far it glides.
     private func scrolled(_ event: NSEvent) {
-        scrollSum += event.scrollingDeltaY
-        if abs(scrollSum) > 12 {
+        guard event.momentumPhase == [] else { return }
+        guard event.hasPreciseScrollingDeltas else {
+            if event.scrollingDeltaY != 0 { turn() }
+            return
+        }
+        if event.phase == .began {
             scrollSum = 0
+            scrollTurned = false
+        }
+        scrollSum += event.scrollingDeltaY
+        if abs(scrollSum) > 12, !scrollTurned {
+            scrollTurned = true
             turn()
         }
     }
@@ -309,6 +328,7 @@ extension KeyboardShortcuts.Name {
         panel.contentView = surface
         surface.follow = { [weak self] point in self?.follow(point) ?? false }
         surface.left = { [weak self] in
+            self?.overSlice = false
             self?.model.hovered = nil
             self?.model.overMiddle = false
         }
@@ -326,6 +346,7 @@ extension KeyboardShortcuts.Name {
         let index = RingGeometry.slice(dx: dx, dy: dy, count: model.shown.count, inner: Double(RingLayout.inner), outer: Double(RingLayout.outer))
         let screen = NSEvent.mouseLocation, now = ProcessInfo.processInfo.systemUptime
         let aimed = aim.follow(x: screen.x, y: screen.y, slice: index, at: now)
+        overSlice = index != nil
         model.overMiddle = hypot(dx, dy) < Double(RingLayout.inner)
         // A click has its own moment. A drag's slice lights when a release would count, and the cursor says so.
         if model.byClick {

@@ -86,7 +86,7 @@ public actor ExtensionHost {
         /// Processes started for one call that works in a folder the person named (`callInOwnProcess`).
         var oneShots: [ObjectIdentifier: MCPClient] = [:]
         /// The files handed over to each, so Stop on one card ends only that work.
-        var oneShotFiles: [ObjectIdentifier: Set<String>] = [:]
+        var oneShotFiles: [ObjectIdentifier: (files: Set<String>, order: Int)] = [:]
         /// Stop pressed before this call reached its process.
         var earlyStop: (files: Set<String>, at: Date)?
         /// What the host keeps for it: its settings, its AI switch and count (D100).
@@ -1013,6 +1013,8 @@ public actor ExtensionHost {
     /// A call that works in folders the person named gets a process of its own: its sandbox adds exactly
     /// those folders, and it stops when the call ends, so the extension never keeps that access (D39).
     /// It lists its tools first, so a tool that changed since install is held as it would be otherwise.
+    private var oneShotCount = 0
+
     private func callInOwnProcess(_ id: String, remote: String, title: String, input: JSONValue,
                                   folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> (text: String, asks: JSONValue?) {
         guard let rt = runtimes[id], rt.record.kind == .sidefolk else {
@@ -1029,7 +1031,8 @@ public actor ExtensionHost {
         let client = MCPClient(process: process, language: config.language, extras: { context.extras(id, aiName: aiName) })
         let key = ObjectIdentifier(client)
         runtimes[id]?.oneShots[key] = client
-        runtimes[id]?.oneShotFiles[key] = handed
+        oneShotCount += 1
+        runtimes[id]?.oneShotFiles[key] = (handed, oneShotCount)
         func finish() async {
             runtimes[id]?.oneShots[key] = nil
             runtimes[id]?.oneShotFiles[key] = nil
@@ -1508,13 +1511,20 @@ public actor ExtensionHost {
     /// extension's main process, its page, surfaces and other work go on. A Stop that comes before the call gets that far holds it for a moment.
     public func stopWork(extensionId id: String, files: [String]) async {
         let wanted = Set(files.compactMap(FolderAccess.canonical))
-        guard let key = runtimes[id]?.oneShotFiles.first(where: { $0.value == wanted })?.key, let client = runtimes[id]?.oneShots[key] else {
+        // The newest of them, if the same files went twice: that's the one the person is looking at.
+        guard let key = runtimes[id]?.oneShotFiles.filter({ $0.value.files == wanted }).max(by: { $0.value.order < $1.value.order })?.key,
+              let client = runtimes[id]?.oneShots[key] else {
             runtimes[id]?.earlyStop = (wanted, Date())
             return
         }
         runtimes[id]?.oneShots[key] = nil
         runtimes[id]?.oneShotFiles[key] = nil
         await client.shutdown()
+    }
+
+    /// That work ended, so a Stop that came as it finished holds nothing back from the next use of those files.
+    public func forgetEarlyStop(extensionId id: String) {
+        runtimes[id]?.earlyStop = nil
     }
 
     private func stop(_ id: String) async {

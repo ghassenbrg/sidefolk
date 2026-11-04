@@ -30,6 +30,22 @@ extension AppCoordinator {
             (self?.palettes.current ?? []).compactMap { KeyboardShortcuts.getShortcut(for: PaletteController.shortcutName($0)) }
         }
         fileRing.apply(runtime.settings.current.fileRing)
+        // Setting keys unregisters the old ones whichever shortcut held them too, so after any change each takes its own again.
+        NotificationCenter.default.addObserver(forName: Notification.Name("KeyboardShortcuts_shortcutByNameDidChange"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reclaimShortcuts() }
+        }
+    }
+
+    private func reclaimShortcuts() {
+        // Only what each already has on: this turns nothing on that was off. Done after the library has finished with its change.
+        Task { [weak self] in
+            guard let self else { return }
+            KeyboardShortcuts.enable(.ask)
+            self.applyVoiceKeys()
+            self.refreshCardKeys()
+            self.palettes.reclaimShortcuts()
+            self.fileRing.apply(self.runtime.settings.current.fileRing)
+        }
     }
 
     func fileRingConflict() -> String? {
@@ -57,6 +73,8 @@ extension AppCoordinator {
 
     /// The working card's Stop: the program is ended, so nothing more happens, and what it was making never reaches the person's folder.
     func stopWork(_ file: WorkingFile, in model: AskModel) {
+        // A second press has nothing more to stop, and mustn't hold up the next use of these files.
+        guard model.stopped != file.id else { return }
         model.stopped = file.id
         Task { await runtime.extensions.stopWork(extensionId: file.extensionId, files: file.files) }
     }

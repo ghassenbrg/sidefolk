@@ -35,24 +35,24 @@ public struct RingAim: Sendable {
     private var moved = false
     private var slice: Int?
     private var since: TimeInterval = 0
-    private var last: (x: Double, y: Double)
+    private var anchor: (x: Double, y: Double)
 
     public init(openedAt: TimeInterval, x: Double, y: Double) {
         self.openedAt = openedAt
         start = (x, y)
-        last = (x, y)
+        anchor = (x, y)
     }
 
     /// The pointer is here, on that slice if any. Returns the slice to light: nothing until it has moved.
     public mutating func follow(x: Double, y: Double, slice index: Int?, at now: TimeInterval) -> Int? {
         if hypot(x - start.x, y - start.y) >= Self.leastMove { moved = true }
         let shown = moved ? index : nil
-        // Resting means resting: a hand still crossing a slice hasn't chosen it.
-        if shown != slice || hypot(x - last.x, y - last.y) > Self.stillWithin {
+        // Resting means resting, near where it began: slow steady steps are still a hand on its way, however often they're sampled.
+        if shown != slice || hypot(x - anchor.x, y - anchor.y) > Self.stillWithin {
             slice = shown
             since = now
+            anchor = (x, y)
         }
-        last = (x, y)
         return shown
     }
 

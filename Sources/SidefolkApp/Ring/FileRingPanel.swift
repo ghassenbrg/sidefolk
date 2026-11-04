@@ -58,7 +58,8 @@ final class FileRingSurface: NSView {
 
     override func mouseMoved(with event: NSEvent) { _ = track(event.locationInWindow) }
     override func scrollWheel(with event: NSEvent) { scrolled?(event) }
-    override func mouseUp(with event: NSEvent) { if track(event.locationInWindow) { clicked?() } }
+    /// What's lit is what a click chooses: it was seen, and Sidefolk's line was about it. Moving is what lights a slice.
+    override func mouseUp(with event: NSEvent) { clicked?() }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }
     override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }
@@ -66,7 +67,7 @@ final class FileRingSurface: NSView {
     override func draggingExited(_ sender: (any NSDraggingInfo)?) { left?() }
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
-        guard track(sender.draggingLocation) else { return false }
+        // What the last update lit and promised: a jump in this last sample isn't a change of mind.
         let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
         return dropped?(urls) ?? false
     }

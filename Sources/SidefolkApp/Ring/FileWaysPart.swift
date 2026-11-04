@@ -49,6 +49,9 @@ struct FileWaysPart: View {
             ring = services?.runtime.settings.current.fileRing ?? FileRingSettings()
             conflict = services?.fileRingConflict()
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("KeyboardShortcuts_shortcutByNameDidChange"))) { _ in
+            conflict = services?.fileRingConflict()
+        }
     }
 
     private func row<End: View>(symbol: String?, text: Text, @ViewBuilder end: () -> End) -> some View {

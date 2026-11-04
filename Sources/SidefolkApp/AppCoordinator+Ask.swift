@@ -256,7 +256,10 @@ extension AppCoordinator: AskActions {
             let outcome = await runner.run(intent)
             if let work, model.working?.id == work { model.working = nil }
             let stopped = work != nil && model.stopped == work
-            if stopped { model.stopped = nil }
+            if stopped {
+                model.stopped = nil
+                if case .extensionCommand(let call) = intent { await runtime.extensions.forgetEarlyStop(extensionId: call.extensionId) }
+            }
             if stopped, case .failed = outcome {
                 // The person's own Stop, so no failure to report: only what became of the file. Had it finished first, the result shows as usual.
                 model.add(.info(String(localized: "Stopped. Nothing was saved, and the original is as it was.", comment: "After Stop on the working card")), caption: caption)

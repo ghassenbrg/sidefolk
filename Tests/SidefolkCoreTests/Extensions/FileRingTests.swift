@@ -90,6 +90,27 @@ struct FileRingTests {
         #expect(aim.ready(at: 1.2) == 2)
     }
 
+    @Test func slowSteadyStepsAreStillAHandOnItsWay() {
+        var aim = RingAim(openedAt: 0, x: 100, y: 100)
+        var now = 0.5
+        for step in 0..<40 {
+            _ = aim.follow(x: 100, y: 130 + Double(step), slice: 2, at: now)
+            now += 1 / 60
+        }
+        // 60 points a second never stays within 3 points for 0.15 s.
+        #expect(aim.ready(at: now) == nil)
+        #expect(aim.ready(at: now + 0.2) == 2, "stopped now")
+    }
+
+    @Test func namesMustFitByTheirWidth() {
+        let width: (String) -> Double = { Double($0.count) * ($0.hasPrefix("wide") ? 14 : 6) }
+        let short = Array(repeating: "a.png", count: 5)
+        #expect(DropChoices.namesFit(short, within: 400, width: width))
+        #expect(!DropChoices.namesFit(short + ["b.png"], within: 400, width: width), "six don't fit")
+        #expect(!DropChoices.namesFit(["a.png", "wide " + String(repeating: "x", count: 40)], within: 400, width: width))
+        #expect(DropChoices.namesFit(["wide " + String(repeating: "x", count: 40)], within: 400, width: width), "one always has room")
+    }
+
     @Test func tooSoonAfterOpeningCountsForNothing() {
         var aim = RingAim(openedAt: 10, x: 0, y: 0)
         #expect(aim.follow(x: 0, y: 30, slice: 0, at: 10.05) == 0)

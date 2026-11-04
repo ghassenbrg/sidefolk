@@ -17,9 +17,12 @@ import SwiftUI
 
     enum Note { case nothing, tooMany }
 
-    /// Every name must fit under the ring, one to a line and whole, or it leaves them to the card (D141).
+    /// Measured larger than it's drawn and in less room than it has, so a denser theme still fits.
     static func namesFit(_ paths: [String]) -> Bool {
-        paths.count == 1 || (paths.count <= 5 && paths.allSatisfy { ($0 as NSString).lastPathComponent.count <= 60 })
+        let font = NSFont.systemFont(ofSize: 13.5)
+        return DropChoices.namesFit(paths.map(DropChoices.shownName), within: Double(RingLayout.side) - 60) {
+            Double(($0 as NSString).size(withAttributes: [.font: font]).width)
+        }
     }
 
     var shown: [RingChoice] { Array(choices.dropFirst(set * DropChoices.ringSet).prefix(DropChoices.ringSet)) }
@@ -38,7 +41,7 @@ nonisolated enum RingLayout {
     static let outer: CGFloat = 214
     static let inner: CGFloat = 76
     /// Room under the ring for Sidefolk's line.
-    static let below: CGFloat = 96
+    static let below: CGFloat = 124
     static let size = NSSize(width: side, height: side + below)
     static let gap: Double = 1.6
 }
@@ -102,7 +105,7 @@ struct FileRingView: View {
                 if model.overMiddle, model.hovered == nil {
                     line {
                         VStack(alignment: .leading, spacing: 1) {
-                            ForEach(model.files, id: \.self) { Text(verbatim: DropChoices.shownName($0)) }
+                            ForEach(model.files, id: \.self) { Text(verbatim: DropChoices.shownName($0)).fixedSize(horizontal: false, vertical: true) }
                         }
                     }
                 } else if let first {

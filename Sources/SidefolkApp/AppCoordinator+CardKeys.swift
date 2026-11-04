@@ -28,6 +28,12 @@ extension AppCoordinator {
         if wanted { KeyboardShortcuts.enable(.answerCard) } else { KeyboardShortcuts.disable(.answerCard) }
     }
 
+    /// After something else's keys changed, which can unregister these.
+    func refreshCardKeys() {
+        guard cardKeysInstalled, cardKeysOn, CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .answerCard)) == nil else { return }
+        KeyboardShortcuts.enable(.answerCard)
+    }
+
     /// The shortcut, or VoiceOver pressing the card from the companion's group: a slip alone (or Ask) takes the
     /// keyboard; else the card in front; else the held cards fan out; else approvals waiting bring their slip back.
     func focusFrontCard() {

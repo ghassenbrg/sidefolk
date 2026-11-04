@@ -74,6 +74,14 @@ public enum DropChoices {
     }
 
     public static let ringSet = 8
+    /// As many names as fit, one to a line, under the ring.
+    public static let ringNames = 5
+
+    /// Whether every name can be read whole under the ring, one to a line (D141), by their real widths: a name's characters say little, a
+    /// Japanese one is twice as wide. Otherwise the ring leaves them to the card. One file always has room to wrap.
+    public static func namesFit(_ names: [String], within room: Double, width: (String) -> Double) -> Bool {
+        names.count == 1 || (names.count <= ringNames && names.allSatisfy { width($0) <= room })
+    }
 
     /// Asked again when a choice runs: a file can be swapped for a link while the card or the ring waits.
     public static func isLink(_ path: String) -> Bool {
