@@ -260,7 +260,7 @@ struct WatchCreateTool: Tool {
         case WatchKind.fileAppears:
             return input["gone"]?.boolValue == true ? String(localized: "Watch for \(target) to disappear") : String(localized: "Watch for \(target) to appear")
         case WatchKind.fileChanges:
-            if FolderAccess.isHidden((target as NSString).expandingTildeInPath) { return String(localized: "Watch hidden file \(target) for changes, its size and time only") }
+            if FolderAccess.isNamedHidden(target) { return String(localized: "Watch hidden file \(target) for changes, its size and time only") }
             return String(localized: "Watch \(target) for changes")
         case WatchKind.folderNewFile: return String(localized: "Watch \(target) for new files")
         case WatchKind.processExits: return String(localized: "Tell you when \(target) quits")
@@ -276,8 +276,8 @@ struct WatchCreateTool: Tool {
             return ToolScope(url: URL(string: text)?.absoluteString ?? text)
         case WatchKind.fileAppears, WatchKind.fileChanges:
             let path = (target as NSString).expandingTildeInPath
-            // One file: a hidden folder stays refused, like the rest of what's hidden.
-            return ToolScope(readPaths: [path], factsOnly: FolderAccess.isHidden(path) && FileFacts.read(path)?.isDirectory != true)
+            // From the path as named, so what's asked says nothing of what's on the disk. A hidden folder is refused after the yes, by `prepare`.
+            return ToolScope(readPaths: [path], factsOnly: FolderAccess.isNamedHidden(path))
         case WatchKind.folderNewFile:
             return ToolScope(readPaths: [(target as NSString).expandingTildeInPath])
         default:
@@ -303,9 +303,12 @@ struct WatchCreateTool: Tool {
             if let becomes = input.string("becomes") { condition = ["becomes": .string(becomes)] }
         case WatchKind.fileAppears:
             config = ["path": .string(target)]
+            if FolderAccess.isNamedHidden(target) { config = config.setting("facts_only", true) }
             if input["gone"]?.boolValue == true { condition = ["gone": true] }
         case WatchKind.fileChanges:
             config = ["path": .string(target)]
+            // Asked about as a hidden file's facts: that's all it gets, wherever the path turns out to lead.
+            if FolderAccess.isNamedHidden(target) { config = config.setting("facts_only", true) }
         case WatchKind.folderNewFile:
             config = ["path": .string(target)]
             if let pattern = input.string("pattern") { config = config.setting("pattern", .string(pattern)) }
@@ -577,6 +580,9 @@ struct WatchStopTool: Tool {
         let engine = self.engine
         let report = removed.mode == .report
         let undo = UndoAction(label: report ? String(localized: "Showing \(removed.title) again") : String(localized: "Watching \(removed.title) again")) {
+            guard WatchedPath.stillLeadsWhereItDid(removed.config) else {
+                throw WatchError.invalid(String(localized: "A link now points somewhere else on the way to it, so I can't bring it back."))
+            }
             _ = try await engine.add(removed)
         }
         let title = report ? String(localized: "Stopped showing \(removed.title)") : String(localized: "Stopped watching \(removed.title)")

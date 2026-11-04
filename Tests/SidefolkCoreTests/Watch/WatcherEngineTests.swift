@@ -246,6 +246,38 @@ import Testing
         #expect(throws: (any Error).self) { try WatchInput.rest(["cooldown_minutes": -1], caller: .user) }
     }
 
+    @Test func bringingAWatchBackDoesntFollowALinkSwappedInSince() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("undo-\(UUID().uuidString)")
+        let a = root.appendingPathComponent("a.txt"), other = root.appendingPathComponent("other.txt"), way = root.appendingPathComponent("way")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        for file in [a, other] { try "x".write(to: file, atomically: true, encoding: .utf8) }
+        try FileManager.default.createSymbolicLink(at: way, withDestinationURL: a)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let config = try WatchedPath.prepare(["path": .string(way.path)])
+        #expect(WatchedPath.stillLeadsWhereItDid(config))
+        try FileManager.default.removeItem(at: way)
+        try FileManager.default.createSymbolicLink(at: way, withDestinationURL: other)
+        #expect(!WatchedPath.stillLeadsWhereItDid(config))
+    }
+
+    @Test func editingAWatchDoesntFollowALinkSwappedInSince() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("edit-\(UUID().uuidString)")
+        let a = root.appendingPathComponent("a.txt"), elsewhere = root.appendingPathComponent("other.txt"), way = root.appendingPathComponent("way")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try "a".write(to: a, atomically: true, encoding: .utf8)
+        try "other".write(to: elsewhere, atomically: true, encoding: .utf8)
+        try FileManager.default.createSymbolicLink(at: way, withDestinationURL: a)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let engine = env.engine()
+        let w = try await engine.add(.make(WatchKind.fileChanges, config: ["path": .string(way.path)], interval: 60, now: now))
+        let resolved = w.config.string("resolved")
+        #expect(resolved == FolderAccess.canonical(a.path))
+        try FileManager.default.removeItem(at: way)
+        try FileManager.default.createSymbolicLink(at: way, withDestinationURL: elsewhere)
+        let edited = try await engine.edit(w.id, WatchEdit(intervalS: 120))
+        #expect(edited.config.string("resolved") == resolved)
+    }
+
     @Test func aHiddenFileIsWatchedByItsSizeAndTimeOnly() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("hidden-\(UUID().uuidString)")
         let hidden = root.appendingPathComponent(".tmp/status.txt"), plain = root.appendingPathComponent("plain/status.txt")
@@ -256,7 +288,7 @@ import Testing
         defer { try? FileManager.default.removeItem(at: root) }
         let probe = FileChangesProbe()
         func look(_ file: URL, after state: JSONValue?) async throws -> ProbeResult {
-            var w = try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(file.path)], now: now))
+            var w = try probe.prepare(.make(WatchKind.fileChanges, config: file == hidden ? ["path": .string(file.path), "facts_only": true] : ["path": .string(file.path)], now: now))
             w.lastState = state
             return try await probe.check(w, now: now)
         }
@@ -271,6 +303,23 @@ import Testing
         #expect(fired.openTarget == nil)
         let folder = root.appendingPathComponent(".tmp").path
         #expect(throws: (any Error).self) { try FolderNewFileProbe().prepare(.make(WatchKind.folderNewFile, config: ["path": .string(folder)], now: now)) }
+        // A link at a hidden path, to a visible file: not what the card asked about, so no watch at all.
+        let visibleLink = root.appendingPathComponent(".tmp/link")
+        try FileManager.default.createSymbolicLink(at: visibleLink, withDestinationURL: plain)
+        #expect(throws: (any Error).self) { try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(visibleLink.path), "facts_only": true], now: now)) }
+        // And a link to another hidden file: the same, since it could be re-pointed.
+        let hiddenLink = root.appendingPathComponent(".tmp/other")
+        try FileManager.default.createSymbolicLink(at: hiddenLink, withDestinationURL: hidden)
+        #expect(throws: (any Error).self) { try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(hiddenLink.path), "facts_only": true], now: now)) }
+        // The plain case still works, marked as the tool marks it.
+        _ = try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(hidden.path), "facts_only": true], now: now))
+        // Not marked by Guard as asked about: refused, whatever the path, so nothing swapped in between gets past.
+        #expect(throws: (any Error).self) { try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(hidden.path)], now: now)) }
+        // A folder that came to be there later stops it.
+        let late = root.appendingPathComponent(".tmp/later")
+        let lateWatch = try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(late.path), "facts_only": true], now: now))
+        try FileManager.default.createDirectory(at: late, withIntermediateDirectories: true)
+        await #expect(throws: (any Error).self) { _ = try await probe.check(lateWatch, now: now) }
         #expect(throws: (any Error).self, "one file, not a hidden folder") { try probe.prepare(.make(WatchKind.fileChanges, config: ["path": .string(folder)], now: now)) }
     }
 

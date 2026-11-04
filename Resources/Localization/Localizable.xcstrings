@@ -30655,6 +30655,64 @@
         }
       }
     },
+    "A link now points somewhere else on the way to it, so I can't bring it back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشير رابط في الطريق إليه الآن إلى مكان آخر، لذا لا يمكنني إعادته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Link auf dem Weg dorthin zeigt jetzt woandershin, darum kann ich es nicht zurückholen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un enlace del camino apunta ahora a otro sitio, así que no puedo recuperarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un lien mène maintenant ailleurs sur le chemin, je ne peux donc pas le rétablir."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un collegamento lungo il percorso ora punta altrove, quindi non posso ripristinarlo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "途中のリンクが別の場所を指すようになったため、元に戻せません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가는 길의 링크가 이제 다른 곳을 가리켜서 되돌릴 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um link no caminho agora aponta para outro lugar, então não posso trazê-lo de volta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "路径上的链接现在指向别处，所以无法恢复。"
+          }
+        }
+      }
+    },
     "A link on a page, read without asking because you allowed a few in this conversation." : {
       "localizations" : {
         "ar" : {
@@ -191043,6 +191101,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那个文件夹不能共享给 Sidefolk。"
+          }
+        }
+      }
+    },
+    "That folder changed. Nothing was shared." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر ذلك المجلد. لم تتم مشاركة أي شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Ordner hat sich geändert. Es wurde nichts geteilt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esa carpeta cambió. No se compartió nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce dossier a changé. Rien n'a été partagé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cartella è cambiata. Non è stato condiviso nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのフォルダは変更されました。何も共有していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 폴더가 바뀌었습니다. 아무것도 공유하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essa pasta mudou. Nada foi compartilhado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该文件夹已更改。没有共享任何内容。"
           }
         }
       }

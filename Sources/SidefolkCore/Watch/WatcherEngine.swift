@@ -362,7 +362,10 @@ public actor WatcherEngine {
         }
         let looksAgain = change.condition.map { $0 != w.condition } ?? false
         if let condition = change.condition { w.condition = condition }
+        // What it was asked to watch stays that: resolving the path again here would follow a link swapped in since, with nothing asked.
+        let resolved = w.config["resolved"]
         w = try probe.prepare(w)
+        if let resolved { w.config = w.config.setting("resolved", resolved) }
         if looksAgain { w.lastState = nil }
         if looksAgain || change.intervalS != nil { w.nextCheckAt = min(w.nextCheckAt ?? now, now.addingTimeInterval(w.intervalS)) }
         if let life = lifetime(w) {
