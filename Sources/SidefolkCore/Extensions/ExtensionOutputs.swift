@@ -114,7 +114,10 @@ public enum ExtensionOutputs {
     /// could plant a file the folder's other programs read by name, like `CLAUDE.md` or `package.json` in a project.
     static func follows(name: String, source: String) -> Bool {
         func plain(_ text: String) -> String { (text as NSString).deletingPathExtension.precomposedStringWithCanonicalMapping.lowercased() }
-        let made = plain(name), from = plain((source as NSString).lastPathComponent)
+        // A double ending is one ending: `trip.tar.gz` is named `trip`, as Finder and people read it.
+        var sourceName = (source as NSString).lastPathComponent
+        for double in [".tar.gz", ".tar.xz", ".tar.bz2"] where sourceName.lowercased().hasSuffix(double) { sourceName = (sourceName as NSString).deletingPathExtension }
+        let made = plain(name), from = plain(sourceName)
         guard made.hasPrefix(from) else { return false }
         // A whole word: "c.png" doesn't vouch for "CLAUDE.md".
         return made.count == from.count || [" ", "."].contains(made.dropFirst(from.count).first)
