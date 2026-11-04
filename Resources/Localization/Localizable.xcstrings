@@ -119466,7 +119466,7 @@
       }
     },
     "More" : {
-      "comment" : "A card on an extension's page: its menu\nThe Pocket's ⋯ menu: Settings, updates, About, Quit",
+      "comment" : "A card on an extension's page: its menu\nA row's menu of what can be done with it\nThe Pocket's ⋯ menu: Settings, updates, About, Quit",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -187694,6 +187694,7 @@
       }
     },
     "Stop watching “%@”?" : {
+      "comment" : "The question before a watch is stopped",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
