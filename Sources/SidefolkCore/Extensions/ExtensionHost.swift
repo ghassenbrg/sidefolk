@@ -1491,10 +1491,13 @@ public actor ExtensionHost {
         if let client { await client.shutdown() }
     }
 
-    /// The person stopped what it was doing: its program ends now, and the next use starts it again. A call still going fails, and what it
-    /// made stays in its own data folder, since Sidefolk saves a result only from a finished call (D140).
+    /// The person stopped work on files they handed over: those calls run in processes of their own (`callInOwnProcess`), which end now.
+    /// The call fails, and what it made stays in its own data folder, since Sidefolk saves a result only from a finished call (D140). The
+    /// extension's main process, its page, surfaces and other work go on.
     public func stopWork(extensionId id: String) async {
-        await stop(id)
+        let clients = runtimes[id]?.oneShots.values.map { $0 } ?? []
+        runtimes[id]?.oneShots = [:]
+        for client in clients { await client.shutdown() }
     }
 
     private func stop(_ id: String) async {

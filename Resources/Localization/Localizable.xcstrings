@@ -80608,6 +80608,65 @@
         }
       }
     },
+    "Extensions can add more choices for files." : {
+      "comment" : "The plain drop card, when no extension offers anything for a file",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكن للإضافات أن تضيف خيارات أكثر للملفات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweiterungen können weitere Möglichkeiten für Dateien bieten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las extensiones pueden añadir más opciones para archivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les extensions peuvent ajouter d'autres choix pour les fichiers."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le estensioni possono aggiungere altre scelte per i file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能でファイルの選択肢を増やせます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램으로 파일에 대한 선택지를 늘릴 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extensões podem adicionar mais opções para arquivos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展可以为文件添加更多选择。"
+          }
+        }
+      }
+    },
     "Extensions from a folder and MCP servers you added." : {
       "comment" : "Settings › Add-ons: search",
       "localizations" : {
@@ -138464,6 +138523,65 @@
         }
       }
     },
+    "One of those files has changed since you chose it, so nothing was done." : {
+      "comment" : "A dropped file became a link before a choice ran",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر أحد هذه الملفات منذ أن اخترته، لذا لم يُنفَّذ شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine dieser Dateien hat sich geändert, seit du sie gewählt hast, also ist nichts passiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uno de esos archivos ha cambiado desde que lo elegiste, así que no se ha hecho nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'un de ces fichiers a changé depuis votre choix, donc rien n'a été fait."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uno di quei file è cambiato da quando lo hai scelto, quindi non è stato fatto nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択後にファイルのいずれかが変更されたため、何も行いませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 뒤 파일 중 하나가 바뀌어 아무것도 하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um desses arquivos mudou desde que você o escolheu, então nada foi feito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中一个文件在你选择后发生了变化,因此没有执行任何操作。"
+          }
+        }
+      }
+    },
     "One short line: the gist, or how many things and the first." : {
       "localizations" : {
         "ar" : {
@@ -171426,6 +171544,65 @@
         }
       }
     },
+    "See the Gallery" : {
+      "comment" : "The plain drop card: opens the add-on gallery",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض المعرض"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zur Galerie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver la Galería"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir la Galerie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedi la Galleria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーを見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver a Galeria"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看图库"
+          }
+        }
+      }
+    },
     "See the change" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -198524,6 +198701,65 @@
         }
       }
     },
+    "That's a lot of files. Drop them on your companion to see every name." : {
+      "comment" : "The ring: too many files being dragged to name them all",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه ملفات كثيرة. أفلتها على رفيقك لرؤية كل الأسماء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das sind viele Dateien. Lass sie auf deinem Begleiter los, um alle Namen zu sehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son muchos archivos. Suéltalos sobre tu compañero para ver todos los nombres."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela fait beaucoup de fichiers. Déposez-les sur votre compagnon pour voir tous les noms."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono molti file. Rilasciali sul tuo compagno per vedere tutti i nomi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルが多すぎます。すべての名前を見るには、コンパニオンにドロップしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일이 많습니다. 동반자에게 놓으면 모든 이름을 볼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "São muitos arquivos. Solte-os no seu companheiro para ver todos os nomes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件太多了。把它们拖到你的伙伴身上,即可看到所有名称。"
+          }
+        }
+      }
+    },
     "That's faster than a surface takes moves." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -198637,6 +198873,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "就是这样。"
+          }
+        }
+      }
+    },
+    "That's more files than Sidefolk takes at once. Select fewer." : {
+      "comment" : "The ring's shortcut, with a very large selection",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه ملفات أكثر مما يقبله Sidefolk دفعة واحدة. حدد عددًا أقل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das sind mehr Dateien, als Sidefolk auf einmal annimmt. Wähl weniger aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son más archivos de los que Sidefolk admite a la vez. Selecciona menos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est plus de fichiers que Sidefolk n'en prend à la fois. Sélectionnez-en moins."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono più file di quanti Sidefolk ne accetti in una volta. Selezionane meno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkが一度に受け取れる数を超えています。選択を減らしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk가 한 번에 받을 수 있는 파일 수를 넘었습니다. 더 적게 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "São mais arquivos do que o Sidefolk aceita de uma vez. Selecione menos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件数量超过了 Sidefolk 一次能接收的上限。请少选一些。"
           }
         }
       }
@@ -242311,12 +242606,12 @@
       }
     },
     "and %lld more" : {
-      "comment" : "The Calendar's details: people invited beyond those listed",
+      "comment" : "The Calendar's details: people invited beyond those listed\nThe ring's middle: under the first of several files' names",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "و%lld أخرى"
+            "value" : "و%lld غيره"
           }
         },
         "de" : {
@@ -242346,7 +242641,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ほか%lld件"
+            "value" : "ほか %lld 個"
           }
         },
         "ko" : {
@@ -242364,7 +242659,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "还有 %lld 个"
+            "value" : "以及另外 %lld 个"
           }
         }
       }

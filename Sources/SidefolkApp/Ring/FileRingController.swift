@@ -4,35 +4,53 @@ import SidefolkCore
 import SwiftUI
 
 extension KeyboardShortcuts.Name {
-    /// ⌃⌥F by default (D152), and only while the ring is on: the combination stays other apps' the rest of the time.
-    static let fileRing = Self("fileRing", default: .init(.f, modifiers: [.control, .option]))
+    /// No default here: naming one takes the keys from every app as soon as anything touches this name. ⌃⌥F is set when the ring is first turned on.
+    static let fileRing = Self("fileRing")
 }
 
 /// The ring of what a file can become (D152). While it's on, a pressed mouse button starts a look at the system's drag: only its change
-/// count, which says nothing of what's in it, until the person holds the key. Then the file list is read, and the ring opens. Nothing reaches
-/// an extension until a file is let go on a slice or a slice is clicked. No key or mouse data is kept, and it needs no permission: the key
-/// comes from the modifier state any app can see. Off, there's no watcher at all.
+/// count, which says nothing of what's in it, until the person holds the key with the pointer at rest. Then the file list is read, and the
+/// ring opens. Nothing reaches an extension until a file is let go on a slice or a slice is clicked. No key or mouse data is kept, and it
+/// needs no permission: the key comes from the modifier state any app can see. Off, there's no watcher at all.
 @MainActor final class FileRingController {
+    /// A drag this long still at the key opens the ring: ⌥ is also how Finder copies, and a copy on its way somewhere shouldn't meet one.
+    private static let rest: TimeInterval = 0.25
+    /// The system may deliver a drop a moment after the button's up, so the ring waits for it.
+    private static let dropGrace: Duration = .milliseconds(600)
+
     let model = FileRingModel()
     /// What these files can become.
     var choicesFor: ([String]) -> [RingChoice] = { _ in [] }
     /// The person chose: run it, as the card's choice does.
     var choose: (RingChoice, [URL]) -> Void = { _, _ in }
+    /// More files than a ring can name: the card shows every one.
+    var toCard: ([URL]) -> Void = { _ in }
     var packPicture: (String, String) async -> NSImage? = { _, _ in nil }
     /// Says something in Ask, for what only words can answer.
     var say: (String) -> Void = { _ in }
 
     private lazy var panel = makePanel()
-    private var surface: FileRingSurface?
     private var key: FileRingSettings.DragKey = .option
     private var downMonitor: Any?
     private var openMonitors: [Any] = []
     private var tick: Timer?
     private var changeAtPress = 0
+    private var openedThisPress = false
     private var shiftWasDown = false
+    private var keyUpSince: Date?
+    private var lastPoint = NSPoint.zero
+    private var stillSince = Date()
     private var openedAt = Date.distantPast
+    private var aim = RingAim(openedAt: 0, x: 0, y: 0)
     private var urls: [URL] = []
+    private var closing: Task<Void, Never>?
+    private var noteTimer: Task<Void, Never>?
+    private var readingFinder = false
+    private var handlerInstalled = false
+    private var scrollSum = 0.0
     private(set) var isOn = false
+    /// Why the shortcut is off, for the page.
+    private(set) var conflict: CardShortcut.Conflict?
 
     var isOpen: Bool { panel.isVisible }
 
@@ -42,27 +60,47 @@ extension KeyboardShortcuts.Name {
         // A test run never watches: the mouse and keys are those of whoever is using this Mac.
         if WindowActivation.quiet { return }
         #endif
-        guard settings.enabled != isOn else { return }
-        isOn = settings.enabled
-        if isOn {
-            downMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
-                MainActor.assumeIsolated { self?.pressed() }
+        if settings.enabled != isOn {
+            isOn = settings.enabled
+            if isOn {
+                if let monitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown, handler: { [weak self] _ in
+                    MainActor.assumeIsolated { self?.pressed() }
+                }) { downMonitor = monitor }
+                offerTheShortcutOnce()
+                if !handlerInstalled {
+                    // Handlers add up and turning off doesn't remove them, so there's only ever this one.
+                    handlerInstalled = true
+                    KeyboardShortcuts.onKeyDown(for: .fileRing) { [weak self] in self?.shortcutPressed() }
+                }
+            } else {
+                if let downMonitor { NSEvent.removeMonitor(downMonitor) }
+                downMonitor = nil
+                stopWatching()
+                close()
             }
-            KeyboardShortcuts.onKeyDown(for: .fileRing) { [weak self] in self?.shortcutPressed() }
-            if CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .fileRing)) == nil { KeyboardShortcuts.enable(.fileRing) }
-        } else {
-            if let downMonitor { NSEvent.removeMonitor(downMonitor) }
-            downMonitor = nil
-            KeyboardShortcuts.disable(.fileRing)
-            stopWatching()
-            close()
+        }
+        conflict = isOn ? CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .fileRing)) : nil
+        if isOn, conflict == nil { KeyboardShortcuts.enable(.fileRing) } else { KeyboardShortcuts.disable(.fileRing) }
+    }
+
+    private func offerTheShortcutOnce() {
+        let asked = "fileRing.shortcutOffered"
+        guard !UserDefaults.standard.bool(forKey: asked) else { return }
+        UserDefaults.standard.set(true, forKey: asked)
+        if KeyboardShortcuts.getShortcut(for: .fileRing) == nil {
+            KeyboardShortcuts.setShortcut(.init(.f, modifiers: [.control, .option]), for: .fileRing)
         }
     }
 
     // MARK: A drag
 
     private func pressed() {
+        // A new press: whatever the last one left has had its moment.
+        if closing != nil { close() }
         changeAtPress = NSPasteboard(name: .drag).changeCount
+        openedThisPress = false
+        lastPoint = NSEvent.mouseLocation
+        stillSince = Date()
         stopWatching()
         // Only while the button stays down: at most ten quick looks a second, and none at all between presses.
         tick = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -78,92 +116,138 @@ extension KeyboardShortcuts.Name {
     private func look() {
         guard NSEvent.pressedMouseButtons & 1 != 0 else {
             stopWatching()
-            // A drop on a slice has just run, on the same turn of the loop or the one before.
-            if isOpen, !model.byClick { close() }
+            if isOpen, !model.byClick { closeSoon() }
             return
         }
         if isOpen {
-            let shift = NSEvent.modifierFlags.contains(.shift)
-            if shift, !shiftWasDown { model.turn() }
-            shiftWasDown = shift
+            lookWhileOpen()
             return
         }
-        guard NSPasteboard(name: .drag).changeCount != changeAtPress, NSEvent.modifierFlags.contains(key.flag) else { return }
+        let point = NSEvent.mouseLocation
+        if hypot(point.x - lastPoint.x, point.y - lastPoint.y) > 3 {
+            lastPoint = point
+            stillSince = Date()
+        }
+        guard !openedThisPress, NSPasteboard(name: .drag).changeCount != changeAtPress, NSEvent.modifierFlags.contains(key.flag),
+              Date().timeIntervalSince(stillSince) >= Self.rest else { return }
         let board = NSPasteboard(name: .drag)
         let urls = board.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
-        guard !urls.isEmpty else {
-            // Not files: nothing to do for this drag, and nothing to read again.
-            stopWatching()
+        // Not files: nothing to do for this drag, and nothing to read again.
+        guard !urls.isEmpty else { return stopWatching() }
+        openedThisPress = true
+        open(urls, byClick: false)
+    }
+
+    private func lookWhileOpen() {
+        let flags = NSEvent.modifierFlags
+        let shift = flags.contains(.shift)
+        if shift, !shiftWasDown { model.turn() }
+        shiftWasDown = shift
+        // The key let go off any slice: the person changed their mind, and the drag goes on to whatever's under the ring.
+        guard !flags.contains(key.flag), model.hovered == nil else {
+            keyUpSince = nil
             return
         }
-        open(urls, byClick: false)
+        if let since = keyUpSince {
+            if Date().timeIntervalSince(since) > 0.2 { close() }
+        } else {
+            keyUpSince = Date()
+        }
+    }
+
+    private func closeSoon() {
+        guard closing == nil else { return }
+        closing = Task { [weak self] in
+            try? await Task.sleep(for: Self.dropGrace)
+            guard !Task.isCancelled else { return }
+            self?.close()
+        }
     }
 
     // MARK: The shortcut
 
     private func shortcutPressed() {
+        guard isOn else { return }
         if isOpen { return close() }
-        guard let front = NSWorkspace.shared.frontmostApplication, front.bundleIdentifier == "com.apple.finder" else {
-            return say(String(localized: "Select a file in Finder first, then press the shortcut.", comment: "The ring's shortcut, from another app"))
-        }
-        switch FinderSelection.read() {
-        case .files(let urls) where !urls.isEmpty: open(urls, byClick: true)
-        case .files: say(String(localized: "Select a file in Finder first, then press the shortcut.", comment: "The ring's shortcut, from another app"))
-        case .notAllowed: say(String(localized: "Sidefolk can't see what's selected in Finder yet. Turn it on in System Settings › Privacy & Security › Automation.", comment: "The ring's shortcut, when macOS's Automation permission was refused"))
-        case .failed: say(String(localized: "Finder didn't answer. Try again in a moment.", comment: "The ring's shortcut, when Finder is busy"))
+        guard !readingFinder else { return }
+        let first = String(localized: "Select a file in Finder first, then press the shortcut.", comment: "The ring's shortcut, from another app")
+        guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder" else { return say(first) }
+        readingFinder = true
+        Task { [weak self] in
+            let answer = await FinderSelection.read()
+            guard let self else { return }
+            self.readingFinder = false
+            switch answer {
+            case .files(let paths) where paths.isEmpty: self.say(first)
+            case .files(let paths): self.open(paths.map { URL(fileURLWithPath: $0) }, byClick: true)
+            case .tooMany: self.say(String(localized: "That's more files than Sidefolk takes at once. Select fewer.", comment: "The ring's shortcut, with a very large selection"))
+            case .notAllowed: self.say(String(localized: "Sidefolk can't see what's selected in Finder yet. Turn it on in System Settings › Privacy & Security › Automation.", comment: "The ring's shortcut, when macOS's Automation permission was refused"))
+            case .failed: self.say(String(localized: "Finder didn't answer. Try again in a moment.", comment: "The ring's shortcut, when Finder is busy"))
+            }
         }
     }
 
     // MARK: Open and close
 
     func open(_ urls: [URL], byClick: Bool) {
+        closing?.cancel()
+        closing = nil
+        noteTimer?.cancel()
+        // Every name can be reached on a ring of a few files. Past that, the card shows them all.
+        if urls.count > FileRingModel.mostNames, byClick { return toCard(urls) }
         self.urls = urls
         model.files = urls.map(\.path)
-        model.choices = choicesFor(model.files)
-        model.nothing = model.choices.isEmpty
+        model.choices = urls.count > FileRingModel.mostNames ? [] : choicesFor(model.files)
+        model.note = urls.count > FileRingModel.mostNames ? .tooMany : model.choices.isEmpty ? .nothing : nil
         model.set = 0
         model.hovered = nil
+        model.overMiddle = false
         model.byClick = byClick
         shiftWasDown = NSEvent.modifierFlags.contains(.shift)
+        keyUpSince = nil
         openedAt = Date()
         #if DEBUG
         // A test's ring: off every screen and taking nothing, or it would open under the hand of whoever is using this Mac, and take their clicks and keys.
-        if testing {
+        if testing || WindowActivation.quiet {
             panel.ignoresMouseEvents = true
             panel.setFrameOrigin(NSPoint(x: -20_000, y: -20_000))
             panel.orderFrontRegardless()
             return
         }
         #endif
-        place(at: NSEvent.mouseLocation)
+        let pointer = NSEvent.mouseLocation
+        place(at: pointer)
+        aim = RingAim(openedAt: ProcessInfo.processInfo.systemUptime, x: pointer.x, y: pointer.y)
         panel.orderFrontRegardless()
         if byClick { panel.makeKey() }
-        openMonitors.append(NSEvent.addGlobalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: .scrollWheel, handler: { [weak self] event in
             MainActor.assumeIsolated { self?.scrolled(event) }
-        } as Any)
-        if byClick {
+        }) { openMonitors.append(monitor) }
+        if byClick, let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
             // A click anywhere else closes it, as a menu does.
-            openMonitors.append(NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-                MainActor.assumeIsolated { self?.close() }
-            } as Any)
-        }
-        if model.nothing {
-            Task { [weak self] in
+            MainActor.assumeIsolated { self?.close() }
+        }) { openMonitors.append(monitor) }
+        if model.note != nil {
+            noteTimer = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(byClick ? 2.5 : 4))
+                guard !Task.isCancelled else { return }
                 self?.close()
             }
         }
     }
 
     func close() {
+        closing?.cancel()
+        closing = nil
+        noteTimer?.cancel()
+        noteTimer = nil
         for monitor in openMonitors { NSEvent.removeMonitor(monitor) }
         openMonitors = []
         panel.orderOut(nil)
         model.hovered = nil
+        model.overMiddle = false
         urls = []
     }
-
-    private var scrollSum = 0.0
 
     private func scrolled(_ event: NSEvent) {
         scrollSum += event.scrollingDeltaY
@@ -191,34 +275,45 @@ extension KeyboardShortcuts.Name {
         host.autoresizingMask = [.width, .height]
         surface.addSubview(host)
         panel.contentView = surface
-        surface.locate = { [weak self] point in
-            guard let self, !self.model.nothing else { return nil }
-            return RingGeometry.slice(dx: point.x - RingLayout.side / 2, dy: point.y - RingLayout.below - RingLayout.side / 2, count: self.model.shown.count,
-                                      inner: Double(RingLayout.inner), outer: Double(RingLayout.outer))
+        surface.follow = { [weak self] point in self?.follow(point) ?? false }
+        surface.left = { [weak self] in
+            self?.model.hovered = nil
+            self?.model.overMiddle = false
         }
-        surface.hover = { [weak self] in self?.model.hovered = $0 }
         surface.clicked = { [weak self] in self?.click() }
         surface.dropped = { [weak self] urls in self?.dropped(urls) ?? false }
         panel.onKey = { [weak self] in self?.pressedKey($0) ?? false }
-        self.surface = surface
         return panel
+    }
+
+    /// The pointer is at this point in the ring's own view. Returns whether it's on a slice that would take a drop.
+    private func follow(_ point: NSPoint) -> Bool {
+        guard model.note == nil else { return false }
+        let dx = Double(point.x - RingLayout.side / 2), dy = Double(point.y - RingLayout.below - RingLayout.side / 2)
+        let index = RingGeometry.slice(dx: dx, dy: dy, count: model.shown.count, inner: Double(RingLayout.inner), outer: Double(RingLayout.outer))
+        let screen = NSEvent.mouseLocation
+        model.hovered = aim.follow(x: screen.x, y: screen.y, slice: index, at: ProcessInfo.processInfo.systemUptime)
+        model.overMiddle = hypot(dx, dy) < Double(RingLayout.inner)
+        return model.hovered != nil
     }
 
     private func dropped(_ dropped: [URL]) -> Bool {
         // Exactly what the ring said it would read. Another list, from a drag that changed under it, isn't what the person saw.
-        guard Set(dropped.map(\.path)) == Set(urls.map(\.path)), let choice = model.hoveredChoice else {
+        guard Set(dropped.map(\.path)) == Set(urls.map(\.path)), aim.ready(at: ProcessInfo.processInfo.systemUptime) != nil, let choice = model.hoveredChoice else {
             close()
             return false
         }
-        let urls = urls
-        close()
-        choose(choice, urls)
+        run(choice)
         return true
     }
 
     /// The first moment doesn't count: the ring opens under a pointer that may be on its way somewhere else.
     private func click() {
-        guard model.byClick, Date().timeIntervalSince(openedAt) > 0.4, let choice = model.hoveredChoice else { return }
+        guard model.byClick, Date().timeIntervalSince(openedAt) > RingAim.leastOpen, let choice = model.hoveredChoice else { return }
+        run(choice)
+    }
+
+    private func run(_ choice: RingChoice) {
         let urls = urls
         close()
         choose(choice, urls)
@@ -248,10 +343,12 @@ extension KeyboardShortcuts.Name {
     func dev(_ command: String) {
         testing = true
         let parts = command.split(separator: ":", maxSplits: 1).map(String.init)
+        let paths = (parts.last ?? "").split(separator: "|").map { URL(fileURLWithPath: String($0)) }
         switch parts.first {
-        case "open": open((parts.last ?? "").split(separator: "|").map { URL(fileURLWithPath: String($0)) }, byClick: true)
-        case "drag": open((parts.last ?? "").split(separator: "|").map { URL(fileURLWithPath: String($0)) }, byClick: false)
+        case "open": open(paths, byClick: true)
+        case "drag": open(paths, byClick: false)
         case "hover": model.hovered = Int(parts.last ?? "")
+        case "middle": model.overMiddle = true
         case "more": model.turn()
         case "choose":
             model.hovered = Int(parts.last ?? "") ?? model.hovered
@@ -270,7 +367,6 @@ extension FileRingSettings.DragKey {
         switch self {
         case .option: .option
         case .control: .control
-        case .shift: .shift
         case .command: .command
         }
     }
@@ -280,33 +376,7 @@ extension FileRingSettings.DragKey {
         switch self {
         case .option: "⌥ Option"
         case .control: "⌃ Control"
-        case .shift: "⇧ Shift"
         case .command: "⌘ Command"
         }
-    }
-}
-
-/// What's selected in Finder, asked only when the person presses the ring's shortcut with Finder in front. macOS asks once whether Sidefolk may.
-enum FinderSelection {
-    enum Answer { case files([URL]), notAllowed, failed }
-
-    static func read() -> Answer {
-        let source = """
-        with timeout of 2 seconds
-            tell application id "com.apple.finder"
-                set out to {}
-                repeat with one in (get selection)
-                    set end of out to POSIX path of (one as alias)
-                end repeat
-                return out
-            end tell
-        end timeout
-        """
-        var problem: NSDictionary?
-        guard let script = NSAppleScript(source: source) else { return .failed }
-        let answer = script.executeAndReturnError(&problem)
-        if let code = problem?[NSAppleScript.errorNumber] as? Int { return code == -1743 ? .notAllowed : .failed }
-        guard answer.numberOfItems > 0 else { return .files([]) }
-        return .files((1...answer.numberOfItems).compactMap { answer.atIndex($0)?.stringValue.map { URL(fileURLWithPath: $0) } })
     }
 }

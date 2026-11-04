@@ -10,8 +10,15 @@ import SwiftUI
     var hovered: Int?
     /// Opened by the shortcut, so a click chooses. During a drag, letting go does.
     var byClick = false
-    /// Nothing to offer: only a line says so.
-    var nothing = false
+    /// Only a line, no slices.
+    var note: Note?
+    /// The pointer's over the middle, so the line lists every name.
+    var overMiddle = false
+
+    enum Note { case nothing, tooMany }
+
+    /// Past this, a ring can't name them all under it, so it leaves them to the card.
+    static let mostNames = 8
 
     var shown: [RingChoice] { Array(choices.dropFirst(set * DropChoices.ringSet).prefix(DropChoices.ringSet)) }
     var hasMore: Bool { choices.count > DropChoices.ringSet }
@@ -29,7 +36,7 @@ nonisolated enum RingLayout {
     static let outer: CGFloat = 214
     static let inner: CGFloat = 76
     /// Room under the ring for Sidefolk's line.
-    static let below: CGFloat = 70
+    static let below: CGFloat = 96
     static let size = NSSize(width: side, height: side + below)
     static let gap: Double = 1.6
 }
@@ -75,20 +82,26 @@ struct FileRingView: View {
     var packPicture: (String, String) async -> NSImage?
 
     private var first: ExtensionDropAction? { model.hoveredChoice?.offer ?? model.choices.first?.offer }
+    private var picture: ExtensionDropAction? { model.choices.first?.offer }
 
     var body: some View {
         VStack(spacing: Theme.Space.s) {
-            if model.nothing {
+            if let note = model.note {
                 Spacer(minLength: 0)
-                line { nothingWords }
+                line { noteWords(note) }
                 Spacer(minLength: 0)
             } else {
-                FrostLoader(path: model.files.first, mark: first?.mark.map { mark in { await packPicture(mark, first?.extensionId ?? "") } },
-                            markKey: first?.mark.map { (first?.extensionId ?? "") + "|" + $0 }) { frost in
+                // The first extension's mark throughout, so the glass doesn't change as the pointer crosses the ring.
+                FrostLoader(path: model.files.first, mark: picture?.mark.map { mark in { await packPicture(mark, picture?.extensionId ?? "") } },
+                            markKey: picture?.mark.map { (picture?.extensionId ?? "") + "|" + $0 }) { frost in
                     ring(frost: frost)
                 }
                 .frame(width: RingLayout.side, height: RingLayout.side)
-                if let first { line { trust(first) } }
+                if model.overMiddle, model.files.count > 1 {
+                    line { Text(verbatim: model.files.map(DropChoices.shownName).joined(separator: ", ")).lineLimit(5).truncationMode(.middle) }
+                } else if let first {
+                    line { trust(first) }
+                }
             }
         }
         .frame(width: RingLayout.size.width, height: RingLayout.size.height, alignment: .top)
@@ -114,6 +127,8 @@ struct FileRingView: View {
             middle
         }
         .frame(width: RingLayout.side, height: RingLayout.side)
+        // Always clockwise from the top, as `RingGeometry` finds slices: mirrored, the slice you see wouldn't be the slice that runs.
+        .environment(\.layoutDirection, .leftToRight)
         .accessibilityElement(children: .contain)
     }
 
@@ -135,7 +150,6 @@ struct FileRingView: View {
         .position(x: RingLayout.side / 2 + at.dx, y: RingLayout.side / 2 - at.dy)
         .allowsHitTesting(false)
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
     }
 
     private var middle: some View {
@@ -143,8 +157,11 @@ struct FileRingView: View {
             FrostLoader(path: model.files.first) { frost in
                 FileSheetPlain(frost: frost, path: model.files.first ?? "", side: 44)
             }
-            Text(verbatim: model.files.count == 1 ? DropChoices.shownName(model.files[0]) : String(localized: "\(model.files.count) files", comment: "The drop card: how many files were dropped"))
-                .font(.system(size: 11.5, weight: .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.middle)
+            Text(verbatim: DropChoices.shownName(model.files.first ?? "")).font(.system(size: 11.5, weight: .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.middle)
+            if model.files.count > 1 {
+                Text("and \(model.files.count - 1) more", comment: "The ring's middle: under the first of several files' names")
+                    .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(.white)
+            }
             if model.hasMore {
                 Text(model.byClick ? "Tab for more" : "⇧ for more", comment: "The ring's middle: the key that shows its second set of choices")
                     .font(.system(size: 10.5, weight: .medium)).foregroundStyle(.white.opacity(0.75))
@@ -164,10 +181,13 @@ struct FileRingView: View {
             .frame(maxWidth: RingLayout.side - 20)
     }
 
-    private var nothingWords: some View {
+    private func noteWords(_ note: FileRingModel.Note) -> some View {
         HStack(spacing: Theme.Space.xs) {
             Image(systemName: "info.circle")
-            Text("Nothing you have installed can change this.", comment: "The ring: no extension offers anything for what's being dragged")
+            switch note {
+            case .nothing: Text("Nothing you have installed can change this.", comment: "The ring: no extension offers anything for what's being dragged")
+            case .tooMany: Text("That's a lot of files. Drop them on your companion to see every name.", comment: "The ring: too many files being dragged to name them all")
+            }
         }
     }
 

@@ -659,6 +659,8 @@ public struct ExtensionPage: Sendable, Hashable {
             // A switch inside a scene shows no words: nothing that opens or reads anything on one.
             if case .palette? = act { return nil }
             if case .refresh? = act { return nil }
+            if case .dropCard? = act { return nil }
+            if case .file? = act { return nil }
             guard let label = text(j["label"], 60), let tool = act == nil ? toolName(j["tool"]) : "", let input = smallInput(j["input"]) else { return nil }
             var control = Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 240), tool: tool,
                                   input: input, symbol: symbol(j["symbol"]))

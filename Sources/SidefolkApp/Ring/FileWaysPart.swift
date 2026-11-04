@@ -33,9 +33,12 @@ struct FileWaysPart: View {
             }
             .disabled(!ring.enabled)
             row(symbol: nil, text: Text("Opens the ring for the files selected in Finder.", comment: "The ring: its shortcut")) {
-                KeyboardShortcuts.Recorder(for: .fileRing)
+                KeyboardShortcuts.Recorder(for: .fileRing) { _ in services?.settingsChanged() }
             }
             .disabled(!ring.enabled)
+            if ring.enabled, let conflict = CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .fileRing)) {
+                row(symbol: "exclamationmark.triangle", text: Text(verbatim: CardShortcut.explanation(conflict))) { EmptyView() }
+            }
             row(symbol: "contextualmenu.and.cursorarrow", text: Text("Right-click a file in Finder and choose Send to Sidefolk.", comment: "A way to hand a file over: Finder's Service")) { EmptyView() }
         }
         .onAppear { ring = services?.runtime.settings.current.fileRing ?? FileRingSettings() }
@@ -54,6 +57,7 @@ struct FileWaysPart: View {
     private func change(_ edit: @escaping @Sendable (inout FileRingSettings) -> Void) {
         edit(&ring)
         guard let services else { return }
+
         Task {
             await services.runtime.settings.update { edit(&$0.fileRing) }
             await MainActor.run { services.settingsChanged() }

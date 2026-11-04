@@ -52,6 +52,7 @@ final class FixtureAskActions: AskActions {
         return DropChoices.offers(for: attachment.dropKind, value: attachment.dropValue, among: drops)
     }
     func stopWork(_ file: WorkingFile, in model: AskModel) {}
+    func openGallery() {}
     func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel) {}
     func open(_ entry: ExtensionEntry) {}
     func open(_ attachment: Attachment, with app: URL, in model: AskModel) {}

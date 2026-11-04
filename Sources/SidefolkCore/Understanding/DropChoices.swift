@@ -53,18 +53,30 @@ public enum DropChoices {
     /// same rules as the card. Two sets of eight at most, so it stays a ring and every choice is a short move away.
     public static func ringChoices(forFiles files: [String], among drops: [ExtensionDropAction]) -> [RingChoice] {
         let offers = fitting(files, drops)
-        let all = offers.map { RingChoice(offer: $0, item: nil, tag: $0.tag, title: $0.title, detail: $0.detail) } + offers.flatMap { offer in
+        func choices(of offer: ExtensionDropAction) -> [RingChoice] {
             offer.menu(forFiles: files).map { item in
                 // "PNG" and what it's for, or a name that says more than a format's would, and what it's for.
                 RingChoice(offer: offer, item: item, tag: item.tag, title: item.tag == nil ? item.title : item.detail ?? item.title, detail: item.tag == nil ? item.detail : nil)
             }
         }
-        return Array(all.prefix(ringSet * 2))
+        // Each extension's in its own order, offers first. They take turns, so one with many can't push another off the ring, whatever its id.
+        var seen: [String] = [], queues: [String: [RingChoice]] = [:]
+        for offer in offers where queues[offer.extensionId] == nil {
+            seen.append(offer.extensionId)
+            let own = offers.filter { $0.extensionId == offer.extensionId }
+            queues[offer.extensionId] = own.map { RingChoice(offer: $0, item: nil, tag: $0.tag, title: $0.title, detail: $0.detail) } + own.flatMap(choices)
+        }
+        var all: [RingChoice] = []
+        while all.count < ringSet * 2, seen.contains(where: { queues[$0]?.isEmpty == false }) {
+            for id in seen where all.count < ringSet * 2 && queues[id]?.isEmpty == false { all.append(queues[id]!.removeFirst()) }
+        }
+        return all
     }
 
     public static let ringSet = 8
 
-    private static func isLink(_ path: String) -> Bool {
+    /// Asked again when a choice runs: a file can be swapped for a link while the card or the ring waits.
+    public static func isLink(_ path: String) -> Bool {
         var info = stat()
         return lstat(path, &info) == 0 && info.st_mode & S_IFMT == S_IFLNK
     }

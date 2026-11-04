@@ -4,7 +4,7 @@ import Foundation
 public struct FileRingSettings: Codable, Sendable, Equatable {
     /// The key held during a drag to open it.
     public enum DragKey: String, Codable, Sendable, CaseIterable {
-        case option, control, shift, command
+        case option, control, command
     }
 
     public var enabled = false

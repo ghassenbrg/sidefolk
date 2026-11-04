@@ -150,6 +150,7 @@ enum ExtensionAbilityRules {
             }
             if let t = drop.menuTitle, !isPlain(t, 30) { issues.append(ValidationIssue(field: "\(field).menu_title", message: "must be one line of 1–30 characters of plain text.")) }
             if drop.menu.count > Self.maxDropMenu { issues.append(ValidationIssue(field: "\(field).menu", message: "can hold at most \(Self.maxDropMenu) choices.")) }
+            if Set(drop.menu.map(\.title)).count != drop.menu.count { issues.append(ValidationIssue(field: "\(field).menu", message: "has the same title twice.")) }
             for (j, item) in drop.menu.enumerated() {
                 if !isPlain(item.title, 30) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].title", message: "must be one line of 1–30 characters of plain text.")) }
                 if let d = item.detail, !isPlain(d, 80) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].detail", message: "must be one line of 1–80 characters of plain text.")) }

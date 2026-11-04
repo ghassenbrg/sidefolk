@@ -10,9 +10,13 @@ extension AppCoordinator {
             guard let attachment = Attachment.files(files.map { URL(fileURLWithPath: $0) }), attachment.dropKind == .file else { return [] }
             return DropChoices.ringChoices(forFiles: files, among: self.runtime.extensions.shelf.drops)
         }
+        fileRing.toCard = { [weak self] urls in
+            guard let files = Attachment.files(urls) else { return }
+            self?.companionReceived(files)
+        }
         fileRing.choose = { [weak self] choice, urls in
             guard let self, let attachment = Attachment.files(urls) else { return }
-            self.perform(choice.offer, choosing: choice.item, with: attachment, in: self.ask)
+            self.perform(choice.offer, choosing: choice.item, with: self.withWordsForAI(attachment), in: self.ask)
             self.showAsk(focus: false)
         }
         fileRing.packPicture = { [weak self] path, id in await self?.packPicture(path, extensionId: id) }
@@ -25,6 +29,11 @@ extension AppCoordinator {
     }
 
     func chooseFilesForCard() {
+        #if DEBUG
+        // The debug app's stand-in for the person, and no panel on their screen.
+        if let chosen = PageFilePanel.choiceForTest { return Attachment.files([URL(fileURLWithPath: chosen)]).map(companionReceived) ?? () }
+        if WindowActivation.quiet { return }
+        #endif
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
@@ -39,7 +48,7 @@ extension AppCoordinator {
 
     /// The working card's Stop: the program is ended, so nothing more happens, and what it was making never reaches the person's folder.
     func stopWork(_ file: WorkingFile, in model: AskModel) {
-        model.stopped = file.path
+        model.stopped = file.id
         Task { await runtime.extensions.stopWork(extensionId: file.extensionId) }
     }
 }

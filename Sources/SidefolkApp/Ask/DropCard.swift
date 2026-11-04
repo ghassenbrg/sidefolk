@@ -53,6 +53,7 @@ struct DropCard: View {
     var removeFile: () -> Void = {}
     var looks: [String: ExtensionLook] = [:]
     var packPicture: (String, String) async -> NSImage? = { _, _ in nil }
+    var openGallery: () -> Void = {}
 
     var body: some View {
         if attachment.dropKind == .file, !offers.isEmpty {
@@ -60,6 +61,17 @@ struct DropCard: View {
                           removeFile: removeFile, looks: looks, packPicture: packPicture)
         } else {
             grid
+            if attachment.dropKind == .file, offers.isEmpty { morePlainly }
+        }
+    }
+
+    /// Nothing installed offers anything for this file, so say where more could come from. Quiet, and it names no one.
+    private var morePlainly: some View {
+        HStack(spacing: Theme.Space.xs) {
+            Text("Extensions can add more choices for files.", comment: "The plain drop card, when no extension offers anything for a file").font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+            Button(action: openGallery) { Text("See the Gallery", comment: "The plain drop card: opens the add-on gallery") }
+                .buttonStyle(.sf(.quiet, size: .small))
+            Spacer(minLength: 0)
         }
     }
 

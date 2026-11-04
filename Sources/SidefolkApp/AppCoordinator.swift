@@ -1166,13 +1166,17 @@ extension AppCoordinator: CompanionDelegate {
     func companionReceived(_ drop: Attachment) { receive(drop, focus: true) }
 
     private func receive(_ drop: Attachment, focus: Bool) {
+        ask.attachment = withWordsForAI(drop)
+        showAsk(focus: focus)
+    }
+
+    func withWordsForAI(_ drop: Attachment) -> Attachment {
         var attachment = drop
         if case .file(let url) = drop.kind {
             // What the AI reads with the request (D28: text for models stays English).
             attachment.text = drop.files.count > 1 ? "Dropped files:\n" + drop.files.map(\.path).joined(separator: "\n") : "Dropped file: \(url.path)"
         }
-        ask.attachment = attachment
-        showAsk(focus: focus)
+        return attachment
     }
 
     func companionFolkClicked(_ folk: DutyFolk) { openHome() }

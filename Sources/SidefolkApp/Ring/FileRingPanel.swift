@@ -29,10 +29,11 @@ final class FileRingPanel: NSPanel {
 
 /// Takes the drag, and the clicks when the shortcut opened it. A slice is found from the pointer alone, so a stray release chooses nothing.
 final class FileRingSurface: NSView {
-    var hover: ((Int?) -> Void)?
+    /// The pointer is here: whether a slice there would take a drop.
+    var follow: ((NSPoint) -> Bool)?
+    var left: (() -> Void)?
     var dropped: (([URL]) -> Bool)?
     var clicked: (() -> Void)?
-    var locate: ((NSPoint) -> Int?)?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -44,21 +45,25 @@ final class FileRingSurface: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
-    private func follow(_ point: NSPoint) -> Int? {
-        let index = locate?(convert(point, from: nil))
-        hover?(index)
-        return index
+    private func track(_ point: NSPoint) -> Bool { follow?(convert(point, from: nil)) ?? false }
+
+    /// What the source allows: the person's held key can narrow a drag to link or generic, and asking for copy then gets the drop refused.
+    private func operation(_ sender: any NSDraggingInfo) -> NSDragOperation {
+        guard track(sender.draggingLocation) else { return [] }
+        let allowed = sender.draggingSourceOperationMask
+        return [.copy, .generic, .link, .move, .every].first { allowed.contains($0) } ?? []
     }
 
-    override func mouseMoved(with event: NSEvent) { _ = follow(event.locationInWindow) }
-    override func mouseUp(with event: NSEvent) { if follow(event.locationInWindow) != nil { clicked?() } }
+    override func mouseMoved(with event: NSEvent) { _ = track(event.locationInWindow) }
+    override func mouseUp(with event: NSEvent) { if track(event.locationInWindow) { clicked?() } }
 
-    override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { follow(sender.draggingLocation) == nil ? [] : .copy }
-    override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation { follow(sender.draggingLocation) == nil ? [] : .copy }
-    override func draggingExited(_ sender: (any NSDraggingInfo)?) { hover?(nil) }
+    override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }
+    override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation { operation(sender) }
+    override func wantsPeriodicDraggingUpdates() -> Bool { true }
+    override func draggingExited(_ sender: (any NSDraggingInfo)?) { left?() }
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
-        guard follow(sender.draggingLocation) != nil else { return false }
+        guard track(sender.draggingLocation) else { return false }
         let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
         return dropped?(urls) ?? false
     }

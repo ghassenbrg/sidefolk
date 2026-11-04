@@ -104,6 +104,7 @@ struct AskEntry: Identifiable, Equatable {
 @MainActor
 /// What the working card shows. Sidefolk's own words, about the person's file.
 struct WorkingFile: Equatable {
+    var id = UUID()
     var path: String
     var name: String
     var extensionId: String
@@ -168,6 +169,8 @@ protocol AskActions: AnyObject {
     func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel)
     /// The working card's Stop.
     func stopWork(_ file: WorkingFile, in model: AskModel)
+    /// The plain drop card's way to more choices.
+    func openGallery()
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
@@ -226,8 +229,8 @@ final class AskModel {
     var busy = false
     /// A file an extension is working on right now, from a choice on the drop card (D150).
     var working: WorkingFile?
-    /// The person pressed Stop on the work on this file, so its failing isn't news.
-    var stopped: String?
+    /// The person pressed Stop on this work, so its failing isn't news.
+    var stopped: UUID?
     var phase: String?
     /// Set while the person talks; the input is theirs again once it is nil.
     var voice: VoiceInput?

@@ -20,3 +20,40 @@ public enum RingGeometry {
         return (sin(angle) * radius, cos(angle) * radius)
     }
 }
+
+/// When a slice under the pointer counts (D152). The ring opens under a hand that may be on its way somewhere else, with ⌥ held because
+/// that's how Finder copies, so where the pointer already is chooses nothing, however the ring had to shift at a screen's edge: it has to move
+/// first, onto a slice, and stay there a moment.
+public struct RingAim: Sendable {
+    public static let leastMove = 14.0
+    public static let leastOpen: TimeInterval = 0.4
+    public static let leastRest: TimeInterval = 0.15
+
+    private let openedAt: TimeInterval
+    private let start: (x: Double, y: Double)
+    private var moved = false
+    private var slice: Int?
+    private var since: TimeInterval = 0
+
+    public init(openedAt: TimeInterval, x: Double, y: Double) {
+        self.openedAt = openedAt
+        start = (x, y)
+    }
+
+    /// The pointer is here, on that slice if any. Returns the slice to light: nothing until it has moved.
+    public mutating func follow(x: Double, y: Double, slice index: Int?, at now: TimeInterval) -> Int? {
+        if hypot(x - start.x, y - start.y) >= Self.leastMove { moved = true }
+        let shown = moved ? index : nil
+        if shown != slice {
+            slice = shown
+            since = now
+        }
+        return shown
+    }
+
+    /// The slice a release now would choose, if any.
+    public func ready(at now: TimeInterval) -> Int? {
+        guard now - openedAt >= Self.leastOpen, now - since >= Self.leastRest else { return nil }
+        return slice
+    }
+}
