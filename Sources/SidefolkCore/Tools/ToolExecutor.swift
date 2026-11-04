@@ -138,9 +138,10 @@ public final class ToolExecutor: Sendable {
 
     /// In Full access, the paths of this call that are in the person's home, as folders for this call alone (D185): nothing is
     /// added to the list Trust shows. They also reach the tool, which checks the folders Guard let it have. Nothing for anyone
-    /// but Sidefolk's own agent (`GuardPolicy.mode(for:)`), and nothing outside the home or in a protected place.
+    /// but Sidefolk's own agent: not a typed extension command, whose folder is the extension's to name (`GuardPolicy.mode(for:)`
+    /// gives it the mode, not the home), and nothing outside the home or in a protected place.
     static func fullAccessFolders(_ scope: ToolScope, caller: Caller, policy: GuardPolicy) -> [GrantedFolder] {
-        guard policy.mode(for: caller) == .fullAccess else { return [] }
+        guard case .agent = caller, policy.mode(for: caller) == .fullAccess else { return [] }
         return Set(scope.readPaths + scope.writePaths).compactMap { path in
             FolderAccess.isOpenToFullAccess(path) ? FolderAccess.canonical(path).map { GrantedFolder(path: $0, access: .readwrite) } : nil
         }
@@ -262,6 +263,7 @@ public final class ToolExecutor: Sendable {
                 // Another agent reading the notebook asks each time unless that group is allowed; say how to allow it (D185).
                 request.canAllowAgentsToRead = caller.kind == "external" && ExternalToolPolicy.reading.contains(spec.name)
                 var readByResearch = false
+                var carriedOver = false
                 if let asker {
                     request.asker = asker
                     request.firstParty = asker.firstParty
@@ -276,6 +278,7 @@ public final class ToolExecutor: Sendable {
                     answer = .allowOnce
                 } else if request.canAllowForRequest, let run = caller.runId, await forRequest.covers(spec.name, run: run) {
                     answer = .allowOnce
+                    carriedOver = true
                 } else if let reading, let run = caller.runId, policy.internet(for: caller) != .askEachTime, await research.take(reading, run: run, now: clock.now) {
                     answer = .allowOnce
                     readByResearch = true
@@ -302,7 +305,7 @@ public final class ToolExecutor: Sendable {
                     act.error = why
                     return ToolOutcome(activity: act, status: .denied(why))
                 }
-                decisionTag = readByResearch ? .research : answer == .allowAlways ? .always : .allowed
+                decisionTag = readByResearch ? .research : carriedOver ? .allowedForRequest : answer == .allowAlways ? .always : .allowed
                 if answer == .keepReading, request.canKeepReading, let run = caller.runId {
                     await research.grant(run: run, now: clock.now)
                     events.changed(.permissions)

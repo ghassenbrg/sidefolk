@@ -74,7 +74,10 @@ public enum FolderAccess {
             }
             if p == "/" { return String(localized: "Sidefolk doesn't work on the whole disk.") }
             let scratch = privateScratch.contains { p == $0 || p.hasPrefix($0 + "/") }
-            for prefix in protectedRoots(home: home) + sidefolk where p == prefix || p.hasPrefix(prefix + "/") {
+            // Compared without case: on a Mac's usual volume `~/BIN` is `~/bin`, and a protected place that doesn't exist yet can be made in
+            // another spelling (D185).
+            let folded = p.lowercased()
+            for prefix in protectedRoots(home: home) + sidefolk where folded == prefix.lowercased() || folded.hasPrefix(prefix.lowercased() + "/") {
                 if scratch, prefix == "/private" { continue }
                 return String(localized: "Sidefolk doesn't touch \(displayPath(prefix)) — it's protected.")
             }

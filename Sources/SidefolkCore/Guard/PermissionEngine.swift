@@ -55,7 +55,7 @@ public struct PermissionEngine: Sendable {
                 tool: spec.name, title: String(localized: "Let Sidefolk work in \(FolderAccess.displayPath(folder))?"),
                 summary: summary, risk: max(spec.risk, .medium), caller: caller,
                 details: .folderAccess(folder: folder, write: !unwritable.isEmpty),
-                canAlways: true, extensionId: scope.extensionId
+                canAlways: true, tainted: tainted, extensionId: scope.extensionId
             ))
         }
 
@@ -124,10 +124,11 @@ public struct PermissionEngine: Sendable {
             }
             // A call that can't carry anything off the Mac may instead be allowed for the rest of Sidefolk's
             // run (D37): a library of Apple Notes copied in batches is one card per kind, not one per batch.
-            // An extension's tool, once, for the same extension's tool for the rest of the run (D185): no wider than the "Always" a
-            // clean turn offers for it, never one that runs outside a sandbox, and not one that names an address or a service (D47).
+            // An extension's tool, once, for the same extension's tool for the rest of the run (D185): only one that reaches nothing
+            // (no network, no program, no address or service named, D47), since a yes given while a page steers could cover later
+            // calls the same page steers.
             let carriesOut = Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, staysInShared: staysInShared)
-            let forExtension = scope.extensionId != nil && !spec.capabilities.contains(.shell) && scope.url == nil && scope.reach == nil
+            let forExtension = scope.extensionId != nil && !spec.capabilities.contains(.shell) && scope.url == nil && scope.reach == nil && !spec.capabilities.contains(.network)
             let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil && (!carriesOut || forExtension)
             decision = .ask(ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
@@ -219,11 +220,12 @@ public struct PermissionEngine: Sendable {
         outwardUntyped
             || !spec.capabilities.isDisjoint(with: [.shell, .extensions, .calendarWrite])
             || (spec.capabilities.contains(.filesWrite) && !staysInShared)
-            || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard]))
+            || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard, .system]))
     }
 
-    /// High-risk steps that put things where they can be taken back: the Trash, Apple Notes' Recently Deleted (D185).
-    static let recoverable: Set<String> = ["files.trash", "applenotes.remove"]
+    /// High-risk steps that put things where they can be taken back: the Trash (D185). Removing Apple Notes shows its list to read in full, so it
+    /// stays a card every time.
+    static let recoverable: Set<String> = ["files.trash"]
 
     /// What a call can do, for the card's label, from what Sidefolk lets it do: an extension's capabilities come
     /// from its sandbox (network, folders, programs), so its own word that it changes nothing is never taken; a

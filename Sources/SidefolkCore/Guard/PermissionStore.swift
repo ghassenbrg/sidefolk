@@ -16,10 +16,12 @@ public struct PermissionStore: Sendable {
         _ = try await db.writer.write { db in try Grant.deleteOne(db, key: id) }
     }
 
-    /// Forgets every "Always allow", for every tool and caller (Trust › Forget everything I allowed). Folders the person
-    /// shared are a different list with their own Remove, and the policy is untouched.
-    public func revokeAllGrants() async throws {
-        _ = try await db.writer.write { db in try Grant.deleteAll(db) }
+    /// Forgets the "Always allow"s `matching` says (Trust › Forget everything I allowed passes everything but the sites and services
+    /// listed under "Using the internet"). Folders the person shared are a different list with their own Remove, and the policy is untouched.
+    public func revokeGrants(where matching: @escaping @Sendable (Grant) -> Bool) async throws {
+        _ = try await db.writer.write { db in
+            for grant in try Grant.fetchAll(db) where matching(grant) { _ = try Grant.deleteOne(db, key: grant.id) }
+        }
     }
 
     /// Allows Sidefolk's own agent to read a site for good, from Settings (D47): "example.com" or a full address.

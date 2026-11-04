@@ -29,6 +29,13 @@ import Testing
         #expect(!FolderAccess.isOpenToFullAccess("/Applications/Safari.app/x"))
     }
 
+    @Test func aProtectedPlaceThatDoesNotExistYetIsProtectedInAnyCase() {
+        for path in ["\(Self.home)/BIN/tool", "\(Self.home)/Bin", "\(Self.home)/APPLICATIONS/x.app", "\(Self.home)/lIbRaRy/x"] {
+            #expect(!FolderAccess.isOpenToFullAccess(path), "\(path)")
+            #expect(FolderAccess.forbiddenReason([path]) != nil, "\(path)")
+        }
+    }
+
     @Test func protectedPlacesInsideTheHomeStayOut() {
         let unique = "sf-full-\(UUID().uuidString)"
         for path in ["\(Self.home)/Library/Preferences/x.plist", "\(Self.home)/Library", "\(Self.home)/Applications/Tool.app/x",
@@ -55,8 +62,8 @@ import Testing
         let scope = ToolScope(writePaths: ["\(Self.home)/sf-full-\(UUID().uuidString)/a.txt"])
         let full = GuardPolicy(mode: .fullAccess)
         #expect(ToolExecutor.fullAccessFolders(scope, caller: Self.agent, policy: full).count == 1)
-        #expect(ToolExecutor.fullAccessFolders(scope, caller: .command(extensionId: "dev.x.y"), policy: full).count == 1)
-        for caller in [Caller.external(client: "claude-code"), .extension(id: "dev.x.y"), .routine(id: "r")] {
+        // A typed extension command gets the mode but not the home: its folder is the extension's to name, so it keeps its card.
+        for caller in [Caller.command(extensionId: "dev.x.y"), .external(client: "claude-code"), .extension(id: "dev.x.y"), .routine(id: "r")] {
             #expect(ToolExecutor.fullAccessFolders(scope, caller: caller, policy: full).isEmpty, "\(caller.kind)")
         }
         for mode in [GuardMode.askEveryTime, .askOncePerKind, .auto] {
@@ -196,6 +203,58 @@ import Testing
         guard case .ask(let roCard) = ro, case .folderAccess(_, let write) = roCard.details, write else { Issue.record("\(ro)"); return }
     }
 
+    @Test func aLinkOutOfASharedFolderStillAsksAfterOutsideContentInAuto() async throws {
+        let env = try TestEnv()
+        let shared = try await sharedFolder(env)
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent("sf-out-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        defer { for p in [shared, outside.path] { try? FileManager.default.removeItem(atPath: p) } }
+        try FileManager.default.createSymbolicLink(atPath: shared + "/escape", withDestinationPath: outside.path)
+        let spec = FolderProbe(paths: []).spec
+        let folders = try await env.permissions.folders()
+        func decide(_ path: String) -> GuardDecision {
+            PermissionEngine().evaluate(spec: spec, input: .object([:]), summary: "s", scope: ToolScope(writePaths: [path]), caller: Self.agent,
+                                        tainted: true, policy: GuardPolicy(mode: .auto), grants: [], folders: folders)
+        }
+        #expect(decide(shared + "/ok.txt") == .allow(.autoMode))
+        guard case .ask(let card) = decide(shared + "/escape/x.txt"), case .folderAccess = card.details else { Issue.record("a link out of a shared folder must ask"); return }
+        // A look-alike name is another folder, a `..` is refused, a relative path is refused.
+        guard case .ask = decide(shared + "-other/x.txt") else { Issue.record("prefix collision"); return }
+        guard case .deny = decide(shared + "/../x.txt") else { Issue.record("dot-dot"); return }
+        guard case .deny = decide("a/b.txt") else { Issue.record("relative"); return }
+    }
+
+    @Test func theFolderCardSaysItCameAfterOutsideContent() {
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent("sf-card-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: outside) }
+        let spec = FolderProbe(paths: []).spec
+        for tainted in [false, true] {
+            let d = PermissionEngine().evaluate(spec: spec, input: .object([:]), summary: "s", scope: ToolScope(writePaths: [outside.path + "/a.txt"]),
+                                                caller: Self.agent, tainted: tainted, policy: GuardPolicy(mode: .auto), grants: [], folders: [])
+            guard case .ask(let card) = d else { Issue.record("\(d)"); continue }
+            #expect(card.tainted == tainted, "so the card can say a page may be steering which folder, and offer sharing for good only on purpose")
+        }
+    }
+
+    /// What Auto now runs after outside content reaches nothing off the Mac; a step that changes how Sidefolk behaves stays a card.
+    @Test func autoStillAsksForStepsThatChangeSidefolkItselfAfterOutsideContent() {
+        func decide(_ caps: Set<Capability>, mutates: Bool, mode: GuardMode = .auto) -> GuardDecision {
+            let spec = ToolSpec(name: "t.x", title: "X", description: "", inputSchema: .object([:]), risk: .medium, capabilities: caps, category: .system, mutates: mutates)
+            return PermissionEngine().evaluate(spec: spec, input: .object([:]), summary: "s", scope: .none, caller: Self.agent, tainted: true,
+                                               policy: GuardPolicy(mode: mode), grants: [], folders: [])
+        }
+        for caps: Set<Capability> in [[.system]] {
+            guard case .ask = decide(caps, mutates: true) else { Issue.record("a mutating system step asks after outside content: \(caps)"); continue }
+            #expect(decide(caps, mutates: true, mode: .fullAccess) == .allow(.fullAccess))
+        }
+        // Reads and steps that stay in Sidefolk run.
+        #expect(decide([.system], mutates: false) == .allow(.autoMode))
+        #expect(decide([.macApps], mutates: false) == .allow(.autoMode))
+        #expect(decide([.calendar], mutates: false) == .allow(.autoMode))
+        #expect(decide([.notebook], mutates: true) == .allow(.autoMode))
+    }
+
     // MARK: Remembering what can be taken back
 
     private func trash(_ mode: GuardMode, tainted: Bool, caller: Caller = FullAccessMeansFullTests.agent, name: String = "files.trash",
@@ -213,7 +272,8 @@ import Testing
     @Test func autoAsksOncePerRequestForWhatGoesToTheTrash() {
         #expect(trash(.auto, tainted: false)?.canAllowForRequest == true)
         #expect(trash(.auto, tainted: true)?.canAllowForRequest == true)
-        #expect(trash(.auto, tainted: true, name: "applenotes.remove", caps: [.macApps])?.canAllowForRequest == true)
+        // Removing Apple Notes shows its list to read in full, so it stays a card every time.
+        #expect(PermissionEngine.recoverable == ["files.trash"])
         // Not for what can't be taken back, not in the other modes, not for other callers.
         #expect(trash(.auto, tainted: false, name: "calendar.delete", caps: [.calendarWrite])?.canAllowForRequest == false)
         #expect(trash(.auto, tainted: false, name: "watch.create", caps: [.watch, .shell])?.canAllowForRequest == false)
@@ -261,7 +321,7 @@ import Testing
             return nil
         }
         #expect(card([.extensions])?.canAllowForRequest == true)
-        #expect(card([.extensions, .network])?.canAllowForRequest == true)
+        #expect(card([.extensions, .network])?.canAllowForRequest == false, "a yes given while a page steers must not cover later calls to a network")
         #expect(card([.extensions, .shell])?.canAllowForRequest == false, "an unsandboxed program stays a card every time")
         #expect(card([.extensions], caller: .external(client: "codex"))?.canAllowForRequest == false)
         #expect(card([.extensions], caller: .extension(id: "dev.x.y"))?.canAllowForRequest == false)

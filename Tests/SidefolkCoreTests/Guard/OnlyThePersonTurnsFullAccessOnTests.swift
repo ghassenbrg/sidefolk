@@ -33,7 +33,7 @@ import Testing
         #expect(bad.isEmpty, "\(bad)")
     }
 
-    @Test func onlySidefolkOwnAgentEverGetsTheMode() {
+    @Test func onlySidefolkOwnAgentAndItsTypedCommandsGetTheMode() {
         let policy = GuardPolicy(mode: .fullAccess)
         for caller in [Caller.external(client: "claude-code"), .extension(id: "dev.x.y"), .routine(id: "r")] {
             #expect(policy.mode(for: caller) == .askOncePerKind, "\(caller)")

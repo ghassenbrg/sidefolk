@@ -54,17 +54,20 @@ import Testing
         let box = BrainToolbox(runId: "run-1", specs: env.registry.specs, executor: env.executor, startTainted: true, emit: { _ in })
         _ = await box.call("applenotes.copy", input: ["x": "1"])
         try await env.permissions.addGrant(Grant(tool: "applenotes.list", scope: .object([:]), callerKind: "agent"))
+        let site = Grant(tool: "web.fetch", scope: ["host": "docs.example.com"], callerKind: "agent")
+        try await env.permissions.addGrant(site)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("remembered-\(UUID().uuidString)").path
         try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(atPath: folder) }
         try await env.permissions.grantFolder(folder, access: .readwrite)
         try await env.permissions.updatePolicy { $0.disabled.insert(.network) }
-        #expect(try await env.permissions.grants().count == 1)
+        #expect(try await env.permissions.grants().count == 2)
 
-        try await env.permissions.revokeAllGrants()
+        // What Trust forgets: everything but the sites and services it lists under "Using the internet" (the caller says which).
+        try await env.permissions.revokeGrants { $0.scope.string("host") == nil }
         await env.executor.stopAllowingAnything()
 
-        #expect(try await env.permissions.grants().isEmpty)
+        #expect(try await env.permissions.grants().map(\.id) == [site.id], "the site stays, as the dialog says")
         #expect(await env.executor.allowedForNow().isEmpty)
         // Folders are their own list and the policy is not a yes.
         #expect(try await env.permissions.folders().count == 1)

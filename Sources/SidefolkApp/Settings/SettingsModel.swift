@@ -234,7 +234,10 @@ final class SettingsModel {
 
     /// Takes back every "Always allow" and every yes for now. Folders stay: they are their own list, with their own Remove.
     func forgetEverythingAllowed() async {
-        try? await runtime.permissions.revokeAllGrants()
+        // Sites and services are listed under "Using the internet", not here, and stay (the dialog says so).
+        let current = (try? await runtime.permissions.grants()) ?? grants
+        let forgotten = Set(current.filter { !InternetGrants.isInternet($0, extensions: extensions) }.map(\.id))
+        try? await runtime.permissions.revokeGrants { forgotten.contains($0.id) }
         await runtime.executor.stopAllowingAnything()
         runtime.events.changed(.permissions)
         await loadPermissions()

@@ -50,7 +50,8 @@ public struct ApprovalReason: Sendable, Hashable {
         // Full access asks only for what outlasts it (a skill) and for what the person chose to be asked about (reading pages).
         case .fullAccess?:
             if case .text = request.details { sentences.append(String(localized: "Full access still asks before saving a skill: it outlasts Full access.")) }
-            else { sentences.append(String(localized: "You chose to be asked before pages are read, and Full access keeps that.")) }
+            else if request.effect == .usesInternet { sentences.append(String(localized: "You chose to be asked before pages are read, and Full access keeps that.")) }
+            else { sentences.append(String(localized: "Full access still asks about this one.")) }
         // Auto answers only medium risk in a clean turn; a high-risk card would have asked anyway.
         case .auto? where request.risk == .medium: sentences.append(String(localized: "Auto never decides this for you after outside content."))
         default: break

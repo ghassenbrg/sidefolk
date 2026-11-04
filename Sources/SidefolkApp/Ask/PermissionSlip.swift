@@ -146,7 +146,7 @@ struct PermissionSlip: View {
                         Button { answer(.allowAgentsToRead) } label: { Text("Allow, and let other agents read my notes and reminders", comment: "In Allow's menu when another agent reads the notebook: sets “Read your notes and reminders” to Allow in Trust") }
                     }
                     if request.canAlways, !sharesFolder {
-                        Button { answer(.allowAlways) } label: { Text(alwaysTitle) }
+                        Button { answer(.allowAlways) } label: { Text(isFolderCard ? "Share folder" : alwaysTitle) }
                     } else if request.canAllowForRequest {
                         Button { answer(.allowForRequest) } label: { Text("Allow for this request") }
                     }
@@ -165,8 +165,14 @@ struct PermissionSlip: View {
     }
 
     /// The card asks to share a folder: its main button remembers it, and "Just this time" is in the menu.
+    /// Not when the request read outside content first: then a page may be steering which folder, so the main button is "Allow" (this
+    /// call) and sharing for good is a deliberate choice in the menu.
     private var sharesFolder: Bool {
-        if case .folderAccess = request.details { request.canAlways } else { false }
+        if case .folderAccess = request.details { request.canAlways && !request.tainted } else { false }
+    }
+
+    private var isFolderCard: Bool {
+        if case .folderAccess = request.details { true } else { false }
     }
 
     /// An answer counts once the slip has been in view for a moment.

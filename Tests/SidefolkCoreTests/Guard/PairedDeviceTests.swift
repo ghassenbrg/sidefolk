@@ -77,7 +77,8 @@ import Testing
         for spec in [Self.with(capabilities: [.extensions, .network, .shell]), Self.with(capabilities: [.extensions, .filesWrite]),
                      Self.with(risk: .high)] {
             #expect(asks(decide(.auto, spec: spec)))
-            #expect(runs(decide(.fullAccess, spec: spec)) && decide(.fullAccess, spec: spec) != .allow(.fullAccessPaired) || spec.risk == .high)
+            // Full access answers it too, and the log doesn't call it paired: what it carries isn't confined to the TV.
+            #expect(decide(.fullAccess, spec: spec) == .allow(.fullAccess), "\(spec.capabilities) \(spec.risk)")
         }
         var text = Self.paired
         text.text = "Steps…"
