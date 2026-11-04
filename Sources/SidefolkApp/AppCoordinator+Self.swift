@@ -92,14 +92,16 @@ final class SelfService: SelfReporting {
     }
 
     func setTheme(_ name: String) async -> (name: String, was: String)? {
-        let wanted = name.lowercased()
-        guard let theme = ThemeLibrary.app(runtime.paths).all().first(where: { $0.tokens.name.lowercased() == wanted || $0.id == name }) else { return nil }
+        let installed = ThemeLibrary.app(runtime.paths).all().map { (id: $0.id, name: $0.tokens.name) }
+        guard let theme = ThemeSuccession.named(name, among: installed) else { return nil }
         let was = runtime.settings.current.theme
         await runtime.settings.update {
             $0.theme = theme.id
             $0.themeFolder = nil
         }
         app.settingsChanged()
-        return (theme.tokens.name, was)
+        // A theme that moved to the gallery and isn't here yet (an Undo back to it) is fetched, as at launch.
+        if !installed.contains(where: { $0.id == theme.id }) { Task { await app.fetchThemeThatMoved() } }
+        return (theme.name, was)
     }
 }
