@@ -335,7 +335,7 @@ import Testing
         let target = await w.h.call("ext.sideflow.create_flow", ["name": "Delete old notes", "definition": ["trigger": ["type": "manual"], "steps": [["id": "t", "text": "Only words"]]]])
         #expect(target.isOK, "\(w.text(target))")
         let answer = w.h.env.autoAnswer(.allowOnce)
-        let made = await w.h.call("ext.sideflow.create_flow", ["name": "Caller", "definition": ["trigger": ["type": "manual"], "steps": [["id": "r", "call_flow": "Delete old notes"]]], "start": true])
+        let made = await w.h.call("ext.sideflow.create_flow", ["name": "Caller", "definition": ["trigger": ["type": "manual"], "steps": [["id": "r", "run_flow": "Delete old notes"]]], "start": true])
         #expect(made.isOK, "\(w.text(made))")
         let card = await answer.value
         guard case .text(let words)? = card?.details else { Issue.record("the plan must be on the card"); return }
