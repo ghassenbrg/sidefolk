@@ -291,6 +291,8 @@ struct PageEditFieldRow: View {
         .onAppear { text = shown }
         .onChange(of: shown) { _, new in if !focused && !chipFocused { text = new } }
         .onChange(of: focused) { _, now in if !now { commit() } }
+        // Going somewhere else on the page's own sidebar: what was being typed isn't lost with the field.
+        .onDisappear { if focused { commit() } }
     }
 
     private var shown: String { field.value ?? "" }

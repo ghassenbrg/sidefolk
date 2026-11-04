@@ -251,6 +251,7 @@ final class ExtensionPageModel {
     var updates: UpdateModel?
     private(set) var page: ExtensionPage?
     var problem: String?
+    private var fieldRuns = 0
     private(set) var updated: Date?
     private(set) var history: [String: [ExtensionPageHistory.Point]] = [:]
     private(set) var alerts: [Alert] = []
@@ -376,6 +377,7 @@ final class ExtensionPageModel {
 
     /// What a control does that isn't a tool (D105).
     func perform(_ act: PageAct) async {
+        await handOverTyping()
         switch act {
         case .go(let move):
             await go(move)
@@ -518,6 +520,7 @@ final class ExtensionPageModel {
 
     /// A switch or button: the extension's own tool, run as the person through Guard (D63), then the page again.
     func run(_ control: ExtensionPage.Control, on: Bool?) async {
+        await handOverTyping()
         if var act = control.act {
             // A switch says its new state in the page's own.
             if case .go(var move) = act, let key = control.key, let on {
@@ -568,8 +571,19 @@ final class ExtensionPageModel {
 
     /// A choice, field or list row's tool (D68): whether it ran without a problem.
     @discardableResult
+    /// What's in the field being typed in counts: a press of anything else takes it first, and waits for it to arrive, or Save would keep what's there without it.
+    func handOverTyping() async {
+        guard let window = NSApp.keyWindow, window.firstResponder is NSTextView else { return }
+        window.makeFirstResponder(nil)
+        // Its commit starts on the next turn of the run loop.
+        try? await Task.sleep(for: .milliseconds(30))
+        for _ in 0..<100 where fieldRuns > 0 { try? await Task.sleep(for: .milliseconds(20)) }
+    }
+
     func run(tool: String, input: JSONValue) async -> Bool {
         guard let services else { return false }
+        fieldRuns += 1
+        defer { fieldRuns -= 1 }
         let why = await ExtensionControl.run(tool: tool, input: input, extensionId: info.extensionId, services: services)
         await refresh()
         if let why { problem = why }

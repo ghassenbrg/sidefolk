@@ -263,11 +263,7 @@ struct PageShortcuts: View {
             NSApp.sendAction(Selector(shortcut.key == .undo ? "undo:" : "redo:"), to: nil, from: nil)
             return
         }
-        // What's in the field being typed in counts: it hands that over first, then the key's tool runs.
-        if typing {
-            NSApp.keyWindow?.makeFirstResponder(nil)
-            try? await Task.sleep(for: .milliseconds(80))
-        }
+        await model.handOverTyping()
         _ = await model.run(tool: shortcut.tool, input: shortcut.input)
     }
 }
