@@ -47,6 +47,21 @@ public struct ToolOutcome: Sendable {
     }
 }
 
+/// A yes that holds only for now (a run, a conversation), listed beside "Always allowed" so it can be taken back.
+public enum AllowedForNow: Sendable, Hashable, Identifiable {
+    /// "Allow for this request" (D37): this tool, until Sidefolk's run ends.
+    case tool(String)
+    /// "Allow, and read pages it links to" (D119).
+    case readingOn
+
+    public var id: String {
+        switch self {
+        case .tool(let name): "tool:" + name
+        case .readingOn: "reading-on"
+        }
+    }
+}
+
 /// The only path by which anything runs a tool: Guard, approval, execution, audit, events.
 public final class ToolExecutor: Sendable {
     public let registry: ToolRegistry
@@ -276,9 +291,13 @@ public final class ToolExecutor: Sendable {
                     return ToolOutcome(activity: act, status: .denied(why))
                 }
                 decisionTag = readByResearch ? .research : answer == .allowAlways ? .always : .allowed
-                if answer == .keepReading, request.canKeepReading, let run = caller.runId { await research.grant(run: run, now: clock.now) }
+                if answer == .keepReading, request.canKeepReading, let run = caller.runId {
+                    await research.grant(run: run, now: clock.now)
+                    events.changed(.permissions)
+                }
                 if answer == .allowForRequest, request.canAllowForRequest, let run = caller.runId {
                     await forRequest.allow(spec.name, run: run)
+                    events.changed(.permissions)
                 }
                 if case .folderAccess(let folder, let write) = request.details {
                     let access: GrantedFolder.Access = write ? .readwrite : .read
@@ -327,12 +346,34 @@ public final class ToolExecutor: Sendable {
         return ToolOutcome(activity: act, status: .unanswered(stop: stop))
     }
 
+    /// What the person said yes to for the length of a run or a conversation, and that is still holding (Trust › Allowed for
+    /// now): tools allowed "for this request", and reading pages on.
+    public func allowedForNow() async -> [AllowedForNow] {
+        let tools = await forRequest.allTools().sorted().map(AllowedForNow.tool)
+        return tools + (await research.isGranted(now: clock.now) ? [.readingOn] : [])
+    }
+
+    /// Takes one such yes back: the next call asks again.
+    public func stopAllowing(_ item: AllowedForNow) async {
+        switch item {
+        case .tool(let name): await forRequest.revoke(tool: name)
+        case .readingOn: await research.revokeAll()
+        }
+    }
+
+    /// Takes every such yes back.
+    public func stopAllowingAnything() async {
+        await forRequest.revokeAll()
+        await research.revokeAll()
+    }
+
     /// Denies the cards an agent run is still waiting on, and ends what was allowed "for this
     /// request"; call it when the run ends.
     public func cancelApprovals(runId: String) async {
         await broker.cancel(runId: runId)
         await forRequest.end(run: runId)
         await research.end(run: runId)
+        events.changed(.permissions)
     }
 
     private func run(_ tool: any Tool, input: JSONValue, caller: Caller, tainted: Bool, activity act: ToolActivity,

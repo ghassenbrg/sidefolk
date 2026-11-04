@@ -16,6 +16,12 @@ public struct PermissionStore: Sendable {
         _ = try await db.writer.write { db in try Grant.deleteOne(db, key: id) }
     }
 
+    /// Forgets every "Always allow", for every tool and caller (Trust › Forget everything I allowed). Folders the person
+    /// shared are a different list with their own Remove, and the policy is untouched.
+    public func revokeAllGrants() async throws {
+        _ = try await db.writer.write { db in try Grant.deleteAll(db) }
+    }
+
     /// Allows Sidefolk's own agent to read a site for good, from Settings (D47): "example.com" or a full address.
     /// It is the grant "Always allow" on a page card makes, so it holds the same way. Returns the site's name.
     @discardableResult

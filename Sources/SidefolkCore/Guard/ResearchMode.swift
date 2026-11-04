@@ -38,6 +38,14 @@ public actor ResearchMode {
 
     public func end(run: String) { threads[run] = nil }
 
+    /// Whether a yes to reading on is still holding for some conversation (Trust › Allowed for now).
+    func isGranted(now: Date) -> Bool {
+        grants.contains { thread, grant in now < grant.until && grant.left > 0 && !closed.contains(thread) }
+    }
+
+    /// Takes every yes back: the next page asks again.
+    func revokeAll() { grants = [:] }
+
     /// Forgets a conversation that was deleted.
     public func forget(thread: String) {
         grants[thread] = nil

@@ -21,9 +21,9 @@ extension GuardMode {
         case .askOncePerKind:
             String(localized: "Asks once for each kind of action and remembers “Always allow”. The default.")
         case .auto:
-            String(localized: "Acts on its own. Still asks before high-risk actions and anything a web page, file or extension could have steered.")
+            String(localized: "Gets on with it. Asks before deleting things you can't get back, before sending anything out after reading outside content, and for folders you haven't shared.", comment: "Settings › Trust: Auto's line")
         case .fullAccess:
-            String(localized: "Acts without asking. Still asks before anything a web page, file or extension steered could send your data out.")
+            String(localized: "Does what you ask without asking, even after reading a web page or file. Only your off switches and protected places hold.", comment: "Settings › Trust: Full access's line")
         }
     }
 
@@ -54,9 +54,9 @@ extension GuardMode {
                                    comment: "Settings › Trust: an example of Ask every time; keep the ** marks around the bold words")
         case .askOncePerKind: String(localized: "Move 12 PDFs: **asks once**. Choose Always allow, and moving files goes ahead from then on.",
                                      comment: "Settings › Trust: an example of Ask once per kind; keep the ** marks")
-        case .auto: String(localized: "Renames 3 files **on its own**. After reading a web page, it **asks** before acting.",
+        case .auto: String(localized: "Reads a page, then renames 3 files **on its own**. **Asks** before deleting for good or sending anything out.",
                            comment: "Settings › Trust: an example of Auto; keep the ** marks")
-        case .fullAccess: String(localized: "Runs `npm test` **without asking**. Still asks before your data could leave the Mac.",
+        case .fullAccess: String(localized: "Runs `npm test` **without asking**, even after reading a web page. Nothing asks.",
                                  comment: "Settings › Trust: an example of Full access; keep the ** marks and the command as it is")
         }
         return (try? AttributedString(markdown: text)) ?? AttributedString(text)

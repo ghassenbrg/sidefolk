@@ -142,6 +142,12 @@ actor RequestAllowances {
     func allow(_ tool: String, run: String) { tools[run, default: []].insert(tool) }
     func covers(_ tool: String, run: String) -> Bool { tools[run]?.contains(tool) == true }
     func end(run: String) { tools[run] = nil }
+
+    /// Every tool allowed for a run that is still going, once each however many runs allowed it (Trust › Allowed for now).
+    func allTools() -> Set<String> { tools.values.reduce(into: []) { $0.formUnion($1) } }
+    /// Takes one tool back from every run: its next call asks again.
+    func revoke(tool: String) { for run in tools.keys { tools[run]?.remove(tool) } }
+    func revokeAll() { tools = [:] }
 }
 
 /// Parks approval requests until the user answers in the UI, or they expire.
