@@ -34,8 +34,8 @@ Agents can't see the screen. To check the running debug app:
 - Use a fresh short `SIDEFOLK_HOME` (the socket path must stay under 104 bytes), e.g. `build/qa-<timestamp>`.
   `dev.swift` refuses to send without it, since every running debug app would act, other sessions' too; `--all-apps` before the command overrides that.
 - The founder is usually working on this Mac: launch with `SIDEFOLK_QUIET_WINDOWS=1` so Home, Settings and the other normal
-  windows stay invisible and nothing is brought forward (`snap` still reads them). Leave it out only for a check that
-  needs real clicks or keys. The companion and its panels still show.
+  windows, the companion and its panels stay invisible, take no clicks and no key focus, and nothing is brought forward (`snap` still reads them).
+  Never leave it out, and never drive the real mouse or keyboard, unless the coordinator says the founder is away; a check that needs them goes on the not-verified list.
 - `SIDEFOLK_REDUCE_MOTION=1` in a debug run is Reduce Motion for surfaces, without touching the Mac's setting. `snap` draws a surface's final state and no SwiftUI filters: `surfaceFilm:<s>` shows what is moving, and `screencapture -l <window>` what the screen really shows.
 - `sidefolk` (in `build/Sidefolk-dev.app/Contents/Helpers/`) with the same `SIDEFOLK_HOME` talks to that app.
 - Voice without a microphone or speakers: `say -o /tmp/x.aiff "remind me at 5 to stretch"`, then

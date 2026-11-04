@@ -16,7 +16,7 @@ enum WindowActivation {
     #if DEBUG
     /// A test run's windows stay out of the person's way (AGENTS.md): invisible, so they still lay out and `snap` still
     /// reads them, with nothing brought forward. Clicks and keys need a run without it.
-    private static let quiet = ProcessInfo.processInfo.environment["SIDEFOLK_QUIET_WINDOWS"] == "1"
+    static let quiet = ProcessInfo.processInfo.environment["SIDEFOLK_QUIET_WINDOWS"] == "1"
     #endif
 
     /// Call when a window is shown on the user's request (menu, hotkey, click).

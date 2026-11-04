@@ -37,6 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        QuietPanels.install()
+        #endif
         let paths = SidefolkPaths.standard()
         Log.shared.configure(directory: paths.logs, debug: false)
         Log.shared.info("app", "launch", ["version": SidefolkVersion.current, "home": paths.home.path])
