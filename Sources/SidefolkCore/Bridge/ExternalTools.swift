@@ -216,10 +216,12 @@ struct ExternalFacade: Tool {
     let spec: ToolSpec
     /// The card's words for a record not the caller's own; nil for everything else.
     var onCard: String?
+    /// A refusal decided before the call: the plan's limit was reached (D189).
+    var refused: String?
 
     func summary(for input: JSONValue) -> String { onCard ?? base.summary(for: input) }
     func scope(for input: JSONValue) -> ToolScope { base.scope(for: input) }
-    func refusal(for input: JSONValue, context: ToolContext) -> String? { base.refusal(for: input, context: context) }
+    func refusal(for input: JSONValue, context: ToolContext) -> String? { refused ?? base.refusal(for: input, context: context) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }

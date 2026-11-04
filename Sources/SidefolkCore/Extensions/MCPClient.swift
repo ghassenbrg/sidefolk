@@ -345,7 +345,7 @@ public final class MCPClient: Sendable {
                 onEvent(.placeSearch(params))
             } else if method == "sidefolk/occurrences.replace", let params = message["params"] {
                 onEvent(.occurrences(params))
-            } else if ["sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.forget"].contains(method),
+            } else if ["sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.check", "sidefolk/plan.forget"].contains(method),
                       let params = message["params"], method == "sidefolk/plan.forget" || params["request"]?.stringValue.flatMap(UUID.init(uuidString:)) != nil {
                 onEvent(.action(method: method, params: params))
             }

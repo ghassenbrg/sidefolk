@@ -18,6 +18,24 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
         /// its extension is gone, so a tool of the same name and shape from another extension is not what the person read (T52). A plan
         /// written before this has none: its steps on an extension's tool ask until the plan is approved again.
         public var provider: String?
+        /// The step's name in the extension's flow, for `{{name}}` in later steps (D186).
+        public var name: String?
+        /// Where each filled value comes from, by the field it goes in: "inside" (the person's own answer, the clock) or "outside" (everything
+        /// else, by default). Worked out by the host from the plan, never taken from the program, except the names a signed extension says are inside.
+        public var sources: [String: String]?
+        /// It stands only while Full access is on: it would ask under any other mode (D188).
+        public var fullAccessOnly: Bool?
+        /// A server's program as it was when the person read this, when Sidefolk can check one (D189).
+        public var program: String?
+        /// A step with no tool of Sidefolk's behind it, which the card still says: "ai" (what it reads goes to the person's AI) or "flow" (it sets
+        /// another flow off, which has its own approval). Such a step never stands or asks; it only counts as read.
+        public var kind: String?
+        /// The step's own title, for the card.
+        public var title: String?
+        /// For an "ai" step: the names of the steps whose words it reads, when its extension says.
+        public var reads: [String]?
+
+        var isInFullAccessOnly: Bool { fullAccessOnly == true }
     }
 
     public var id: String
@@ -29,6 +47,12 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
     public var approvedAt: Date
     public var expiresAt: Date?
     public var perDay: Int
+    /// How many actions one run may make, when the extension sends a run id with its calls (D189).
+    public var perRun: Int?
+    /// How long it was allowed to last, in seconds: a longer one is something new (D187).
+    public var ttl: Int?
+    /// It goes round a list: what its lines do, they do many times a run.
+    public var goesRound: Bool?
 
     public func live(at now: Date, owner: String) -> Bool { self.owner == owner && (expiresAt.map { $0 > now } ?? true) }
 }
@@ -44,7 +68,9 @@ public struct ExtensionPlanInfo: Sendable, Hashable, Identifiable {
 }
 
 enum ExtensionPlanRules {
-    static let maxSteps = 32
+    /// The most distinct lines a plan may hold, and the most rows the program may send for them (the same line once, D186).
+    static let maxSteps = 64
+    static let maxRows = 256
     static let ttls = 60...3600
     static let perDays = 1...1000
     static let defaultPerDay = 200
@@ -52,7 +78,7 @@ enum ExtensionPlanRules {
     /// a timer, a page's words or a model steered by what it read (T3).
     static let personWindow: TimeInterval = 30
 
-    private static let slot = try! NSRegularExpression(pattern: #"\{\{\s*[A-Za-z0-9_.\[\]-]{1,60}\s*\}\}"#)
+    static let slot = try! NSRegularExpression(pattern: #"\{\{\s*[A-Za-z0-9_.\[\]-]{1,60}\s*\}\}"#)
 
     static func hasSlot(_ text: String) -> Bool {
         slot.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
@@ -118,13 +144,37 @@ enum ExtensionPlanRules {
         return nil
     }
 
-    /// Whether a call is the step: the same keys, every written value equal, and words only where the plan left room.
-    static func matches(_ input: JSONValue, template: JSONValue, fillable: Set<String>) -> Bool {
-        guard let given = input.objectValue, let written = template.objectValue, Set(given.keys) == Set(written.keys) else { return false }
-        return written.allSatisfy { key, value in
-            guard let call = given[key] else { return false }
+    /// Whether a text is one slot and nothing else: a value of any kind may fill it.
+    static func isWholeSlot(_ text: String) -> Bool {
+        let parts = literals(text)
+        return parts.count == 2 && parts.allSatisfy(\.isEmpty)
+    }
+
+    /// The keys a step fills in.
+    static func slotKeys(_ template: JSONValue) -> Set<String> {
+        Set((template.objectValue ?? [:]).compactMap { key, value in value.stringValue.map(hasSlot) == true ? key : nil })
+    }
+
+    /// The keys that may hold a whole value of any kind, or be left out, when the step's own words are one slot and the field isn't one of the
+    /// table's text fields (which stay words): a number, a list, a blank form field (D186).
+    static func wholeKeys(_ template: JSONValue, tool: String) -> Set<String> {
+        let open = ExtensionActionPolicy.fillable[tool] ?? []
+        return Set((template.objectValue ?? [:]).compactMap { key, value in
+            guard !open.contains(key), let text = value.stringValue, isWholeSlot(text) else { return nil }
+            return key
+        })
+    }
+
+    /// Whether a call is the step: the same keys (a whole-slot field may be left out), every written value equal, and words only where the plan left room.
+    static func matches(_ input: JSONValue, template: JSONValue, fillable: Set<String>, whole: Set<String> = []) -> Bool {
+        guard let given = input.objectValue, let written = template.objectValue,
+              Set(given.keys).isSubset(of: Set(written.keys)), Set(written.keys).subtracting(given.keys).isSubset(of: whole) else { return false }
+        return given.allSatisfy { key, call in
+            guard let value = written[key] else { return false }
             if case .string(let t) = value, hasSlot(t) {
-                guard fillable.contains(key), case .string(let s) = call else { return false }
+                guard fillable.contains(key) else { return false }
+                if whole.contains(key) { return true }
+                guard case .string(let s) = call else { return false }
                 return fits(s, template: t)
             }
             return same(call, value)
@@ -170,7 +220,7 @@ enum ExtensionPlanRules {
     }
 
     /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.
-    private static func objectsFit(_ value: JSONValue) -> Bool {
+    static func objectsFit(_ value: JSONValue) -> Bool {
         guard let fields = value.objectValue else { return true }
         return fields.values.allSatisfy { field in
             switch field {
@@ -181,7 +231,7 @@ enum ExtensionPlanRules {
     }
 
     /// Every string in a value, its keys too.
-    private static func written(_ value: JSONValue) -> [String] {
+    static func written(_ value: JSONValue) -> [String] {
         switch value {
         case .string(let s): [s]
         case .array(let items): items.flatMap(written)
@@ -190,7 +240,7 @@ enum ExtensionPlanRules {
         }
     }
 
-    private static func slotless(_ value: JSONValue, unless allowed: Bool) -> Bool {
+    static func slotless(_ value: JSONValue, unless allowed: Bool) -> Bool {
         switch value {
         case .string(let s): return allowed || !hasSlot(s)
         case .array(let items): return items.allSatisfy { slotless($0, unless: false) }
@@ -231,22 +281,29 @@ enum ExtensionPlanRules {
 enum ExtensionPlanWords {
     static let valueLimit = 300
 
-    static func line(tool: any Tool, template: JSONValue) -> String {
+    static func line(tool: any Tool, template: JSONValue, from: [String: String] = [:], program: String? = nil) -> String {
         let fields = template.objectValue ?? [:]
         let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
         let values = fields.keys.sorted().compactMap { key -> String? in
-            guard let value = fields[key], let said = words(value) else { return nil }
+            guard let value = fields[key], let said = words(value, from: from[key]) else { return nil }
             return "\(ArgumentWords.label(key, properties[key])): \(said)"
         }
         var title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
         // A plan holds for the extension that offered the tool, so the card says whose it is (as a call's own card does).
         if let ext = ExtensionPlanRules.extensionTool(tool) {
-            title += " (\(ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40)))"
+            let who = ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40)
+            if ext.sandboxed {
+                title += " (\(who))"
+            } else if let program {
+                title += " (" + String(localized: "\(who), a server on this Mac, program \(program.prefix(8))…", comment: "A plan's card: a server the person added, and the start of its program's hash") + ")"
+            } else {
+                title += " (" + String(localized: "\(who), a server on this Mac; its program can't be checked", comment: "A plan's card: a server the person added") + ")"
+            }
         }
         return values.isEmpty ? title : "\(title) · \(values.joined(separator: ", "))"
     }
 
-    private static func words(_ value: JSONValue) -> String? {
+    private static func words(_ value: JSONValue, from: String? = nil) -> String? {
         switch value {
         case .string(let s) where ExtensionPlanRules.hasSlot(s):
             // One line each, keeping the space a written part has next to a slot.
@@ -255,46 +312,16 @@ enum ExtensionPlanWords {
                 guard !said.isEmpty else { return said }
                 return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
             }
-            let filled = String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
+            let filled = from.map { String(localized: "from “\($0)”", comment: "A plan's card: where words filled in at run time come from, a step's own title") }
+                ?? String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
             return "“\(parts.joined(separator: "[\(filled)]"))”"
         case .string(let s): return "“\(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))”"
         case .array(let items):
-            let said = items.compactMap(words)
+            let said = items.compactMap { words($0) }
             return said.isEmpty ? nil : said.joined(separator: ", ")
         case .object(let o): return o.isEmpty ? nil : ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit)
         default: return ArgumentWords.words(value)
         }
-    }
-
-    /// The whole card. Plans the person allowed before under the same id say what is new first.
-    static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool, holdsJob: Bool = false) -> String {
-        var out: [String] = []
-        // Whole, here, where the summary above the card is clipped: its own words, marked as that, and what it's the only place to say.
-        if !when.isEmpty { out.append(String(localized: "When, in \(name)'s words: \(when)", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
-        func bullets(_ list: [(text: String, standing: Bool, new: Bool)]) -> String { list.map { "• \($0.text)" }.joined(separator: "\n") }
-        let standing = lines.filter(\.standing)
-        if revised {
-            let new = standing.filter(\.new), old = standing.filter { !$0.new }
-            if !new.isEmpty { out.append(String(localized: "New, without asking you:", comment: "A plan's card") + "\n" + bullets(new)) }
-            if !old.isEmpty { out.append(String(localized: "As before, without asking you:", comment: "A plan's card") + "\n" + bullets(old)) }
-        } else if !standing.isEmpty {
-            out.append(String(localized: "Without asking you, it will:", comment: "A plan's card") + "\n" + bullets(standing))
-        }
-        let asking = lines.filter { !$0.standing }
-        if !asking.isEmpty { out.append(String(localized: "It will still ask you each time:", comment: "A plan's card") + "\n" + bullets(asking)) }
-        // With nothing to allow, there's nothing to return and nothing to count: the card is only what it says it sets off.
-        guard !lines.isEmpty else { return out.joined(separator: "\n\n") }
-        out.append(String(localized: "What these return goes to \(name), which can't reach the internet by itself.", comment: "A plan's card; the extension's name"))
-        if holdsJob {
-            out.append(String(localized: "A job for your companion uses your AI and its tools, under your own trust settings. What it does is in History.", comment: "A plan's card"))
-        }
-        if let ttl {
-            let minutes = max(1, ttl / 60)
-            out.append(String(localized: "This ends by itself in \(minutes) minutes.", comment: "A plan's card"))
-        } else {
-            out.append(String(localized: "At most \(perDay) actions a day. You can end this in Settings › Add-ons.", comment: "A plan's card"))
-        }
-        return out.joined(separator: "\n\n")
     }
 }
 
@@ -308,16 +335,28 @@ struct ExtensionPlanTool: Tool {
     /// The extension's words for when it runs.
     var when = ""
     let body: String
+    /// The host's answer for this person, when the plan needs no card (`PlanAnswer`).
+    var answer: PlanAnswer?
+    /// What the program says it is for ("run" or "turn_on"), which only chooses the title.
+    var intent: String?
+
+    private var title: String {
+        switch intent {
+        case "run"?: String(localized: "Run \(plan)", comment: "A tool, after “<an extension> wants to”: the person runs a flow, and reads what it will do")
+        case "turn_on"?: String(localized: "Turn on \(plan)", comment: "A tool, after “<an extension> wants to”: the person turns a flow on, and reads what it will do")
+        default: String(localized: "Run \(plan) without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that")
+        }
+    }
 
     var spec: ToolSpec {
-        ToolSpec(name: Self.name, title: String(localized: "Run \(plan) without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that"),
+        ToolSpec(name: Self.name, title: title,
                  description: "Lets an extension run what the person read, without further cards.",
                  inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id.")], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)
     }
 
     func summary(for input: JSONValue) -> String { when.isEmpty ? plan : when }
-    func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body) }
+    func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body, planAnswer: answer) }
 
     func refusal(for input: JSONValue, context: ToolContext) -> String? {
         if case .extension(let own) = context.caller, own == extensionId { return nil }

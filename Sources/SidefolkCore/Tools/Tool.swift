@@ -127,9 +127,11 @@ public struct ToolScope: Sendable, Hashable {
     public var reach: NetworkReach?
     /// The call learns only a hidden file's size and time, never what's in it (D180). Guard then asks about that one file instead of refusing.
     public var factsOnly: Bool
+    /// Only for an extension's plan card (D186, D188): the host has already decided the plan needs no card for this person and this click.
+    public var planAnswer: PlanAnswer?
 
     public init(readPaths: [String] = [], writePaths: [String] = [], command: String? = nil, url: String? = nil,
-                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil, factsOnly: Bool = false) {
+                extensionId: String? = nil, text: String? = nil, reach: NetworkReach? = nil, factsOnly: Bool = false, planAnswer: PlanAnswer? = nil) {
         self.readPaths = readPaths
         self.writePaths = writePaths
         self.command = command
@@ -138,12 +140,21 @@ public struct ToolScope: Sendable, Hashable {
         self.text = text
         self.reach = reach
         self.factsOnly = factsOnly
+        self.planAnswer = planAnswer
     }
 
     public static let none = ToolScope()
 
     /// The folder a command runs in: tools that take a working folder list it first in `readPaths`.
     public var commandFolder: String? { command == nil ? nil : readPaths.first }
+}
+
+/// Why an extension's plan needs no card (D186, D188). Guard still decides: `fullAccess` only while Full access is on, `covered` never in Ask every time.
+public enum PlanAnswer: Sendable, Hashable {
+    /// Everything it asks to allow is already allowed by the plan the person read (or stays inside Sidefolk, in Auto).
+    case covered
+    /// The person turned on Full access, and their own click started this plan.
+    case fullAccess
 }
 
 /// Where a call reaches on the network, as Sidefolk's own code knows it (D47). Only Sidefolk's code says so: a

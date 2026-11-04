@@ -9,7 +9,7 @@ import Testing
     import json, sys, uuid
     def send(m): sys.stdout.write(json.dumps(m) + "\\n"); sys.stdout.flush()
     answers = {"sidefolk/tools.list": "sidefolk/tools.listed", "sidefolk/tools.check": "sidefolk/tools.checked",
-               "sidefolk/tools.call": "sidefolk/tools.result", "sidefolk/plan.approve": "sidefolk/plan.result"}
+               "sidefolk/tools.call": "sidefolk/tools.result", "sidefolk/plan.approve": "sidefolk/plan.result", "sidefolk/plan.check": "sidefolk/plan.checked"}
     tools = [{"name": "ask_host", "title": "Ask the host", "description": "", "inputSchema": {"type": "object", "properties": {"method": {"type": "string"}, "params": {"type": "object"}}}}]
     for line in sys.stdin:
         m = json.loads(line)
@@ -576,9 +576,12 @@ import Testing
         _ = await w.answerCard(.allowOnce)
         #expect(await answer["ok"]?.boolValue == true)
         #expect(await w.ask(tool, "sidefolk/tools.call", ["tool": "notes.save", "plan": "one", "input": ["text": "x"]])["standing"]?.boolValue == true)
-        async let over = w.ask(tool, "sidefolk/tools.call", ["tool": "notes.save", "plan": "one", "input": ["text": "x"]])
-        #expect(await w.answerCard(.deny) != nil, "past its budget it asks")
-        _ = await over
+        // Past its budget nothing is asked: a flow running alone would only wait on a card nobody sees (D189).
+        let over = await w.ask(tool, "sidefolk/tools.call", ["tool": "notes.save", "plan": "one", "input": ["text": "x"]])
+        #expect(over["status"]?.stringValue == "capped" && over["limit"]?.stringValue == "day", "\(over)")
+        #expect(await w.h.env.broker.pending().isEmpty)
+        let row = try await w.h.env.activity.recent(limit: 1, tool: "notes.save").first
+        #expect(row?.decision == .blocked, "History says it was stopped")
     }
 
     @Test func aPlanThatEndsByItselfIsListedToo() async throws {

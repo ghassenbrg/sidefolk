@@ -122,8 +122,11 @@ struct ExtensionReachTests {
     }
 
     @Test func theCardsLayoutCantHideALine() {
-        let plan = ExtensionPlanWords.body(name: "Flows", lines: [(text: "Save a note · text: “Hello”", standing: true, new: false), (text: "Notify · body: “[filled in when it runs]”", standing: true, new: false),
-                                                                  (text: "Delete it · id: “7”", standing: false, new: false)], when: "Every day", perDay: 200, ttl: nil, revised: false)
+        let plan = ExtensionPlanWords.text([
+            "When, in Flows's words: Every day",
+            ExtensionPlanWords.Block(heading: "It changes:", rows: ["Save a note · text: “Hello”", "Notify · body: “[filled in when it runs]”"]).text,
+            ExtensionPlanWords.Block(heading: "It will still ask you each time:", rows: ["Delete it · id: “7”"]).text,
+        ])
         let awkward = ["• starts with a mark\nand goes on", "Heading:\nplain line\n• a mark", "One line", "", "A\n\n\nB", "Heading:\n• one\n• two\n\n• alone", "• a\n• b"]
         for text in [plan] + awkward {
             #expect(ApprovalText.joined(ApprovalText.parts(text)) == text, "every line stays, in order: \(text)")

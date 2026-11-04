@@ -59,6 +59,16 @@ public struct PermissionEngine: Sendable {
             ))
         }
 
+        // A plan the host found nothing new in, or that Full access answers for the person's own click (D186, D188): only an extension's own plan
+        // card carries this, and Guard still checks the mode itself.
+        if spec.name == ExtensionPlanTool.name, caller.kind == "extension", let answer = scope.planAnswer {
+            switch answer {
+            case .covered where policy.mode(for: caller) != .askEveryTime: return .allow(.plan)
+            case .fullAccess where policy.mode == .fullAccess: return .allow(.fullAccess)
+            default: break
+            }
+        }
+
         // A direct user action is the user's own decision.
         if caller == .user { return .allow(.auto) }
 
@@ -137,6 +147,11 @@ public struct PermissionEngine: Sendable {
                 extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
             ))
         case .high:
+            // A server's tool a plan names (D189): the host checked its program, its provider and its fields, and what the person read says so. Only
+            // an extension's own tool qualifies: Sidefolk's high-risk tools keep their card whatever a plan says.
+            if standing, caller.kind == "extension", spec.name.hasPrefix("ext."), honoursGrants, scope.text == nil, !spec.capabilities.contains(.shell) {
+                return .allow(.plan)
+            }
             // Only an exact command may be granted "always"; everything else is asked every time. An extension gets no "always" for these at all (D127).
             let exactCommand = scope.command != nil && caller.kind != "extension"
             if exactCommand, !tainted, honoursGrants,

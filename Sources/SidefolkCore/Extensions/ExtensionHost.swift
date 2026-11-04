@@ -32,6 +32,8 @@ public actor ExtensionHost {
         public var actions: ExtensionActionGateway?
         /// The person said every page and online service asks, each time (D47).
         public var askEachTimeOnline: @Sendable () async -> Bool = { false }
+        /// The person's mode and what they chose about flows passing words on, as it holds now (D186–D189).
+        public var flowPolicy: @Sendable () async -> FlowPolicy = { FlowPolicy() }
         /// The person's AI by name, nil without one: what an extension's label says (D100).
         public var aiName: @Sendable () -> String? = { nil }
         /// What the person calls their companion, for `{companion}` in the extension's words where Sidefolk writes them.
@@ -54,6 +56,17 @@ public actor ExtensionHost {
         /// Where the person is, as Sidefolk knows it (D106).
         public var currentPlace: @Sendable () -> KnownPlace? = { nil }
         public init() {}
+    }
+
+    /// What bears on a flow's plan, from the person's trust settings.
+    public struct FlowPolicy: Sendable {
+        public var mode: GuardMode
+        public var mayPassToServers: Bool
+
+        public init(mode: GuardMode = .askOncePerKind, mayPassToServers: Bool = true) {
+            self.mode = mode
+            self.mayPassToServers = mayPassToServers
+        }
     }
 
     struct Runtime {
@@ -106,6 +119,19 @@ public actor ExtensionHost {
         var actionCalls: [Date] = []
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
+        /// The person's own click or typed command to this extension, kept until a plan uses it (Full access answers one plan for one click, D188).
+        var personClick: Date?
+        /// How many actions each plan's runs made, by plan and run id: the most recent runs only (D189).
+        var runCalls: [String: Int] = [:]
+        var runOrder: [String] = []
+
+        mutating func countRun(_ key: String) {
+            if runCalls[key] == nil {
+                runOrder.append(key)
+                if runOrder.count > 64 { runCalls[runOrder.removeFirst()] = nil }
+            }
+            runCalls[key, default: 0] += 1
+        }
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -1615,6 +1641,7 @@ public actor ExtensionHost {
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote, provider: Self.provider(rt),
+                             program: rt.record.kind == .mcp ? rt.pin.server?.command : nil,
                              folderParameters: meta?.paths ?? [:], fileLists: Set((meta?.fileLists ?? [:]).keys), firstParty: firstParty,
                              commands: commandsOf(id, tool: def.name),
                              paired: paired,

@@ -124,11 +124,16 @@ public final class ExtensionActionGateway: Sendable {
     /// - Parameters:
     ///   - standing: the call fits a plan the person read and allowed.
     ///   - written: the plan's step as written, when it filled words in: what History keeps.
-    func call(_ name: String, input: JSONValue, extensionId id: String, asker: ApprovalRequest.Asker, standing: Bool, written: JSONValue? = nil, timeout: TimeInterval?) async -> ToolOutcome {
-        guard let facade = tool(named: name, for: id) else {
+    func call(_ name: String, input: JSONValue, extensionId id: String, asker: ApprovalRequest.Asker, standing: Bool, written: JSONValue? = nil, timeout: TimeInterval?,
+              capped: String? = nil) async -> ToolOutcome {
+        guard var facade = tool(named: name, for: id) as? ExternalFacade else {
             let caller = Caller.extension(id: id)
             let act = ToolActivity(id: Identifier.make(), tool: name, title: name, summary: "Not available", category: .system, caller: caller, error: "Not offered")
             return ToolOutcome(activity: act, status: .denied("Sidefolk doesn't offer that tool to extensions."))
+        }
+        // A plan's limit reached: refused before anything is asked or run, and History says so (D189).
+        if let capped {
+            facade.refused = capped == "run" ? "This run has used the actions its plan allows." : "This flow has used the actions its plan allows today."
         }
         exposed.register(facade)
         let limit = timeout ?? facade.spec.timeout ?? (facade.spec.name == "ask.user" ? AgentFacingTools.maxAskSeconds + 15 : 90)
