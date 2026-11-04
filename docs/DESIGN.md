@@ -20,7 +20,7 @@ disagree, use the sheet's component; if the sheet looks wrong, fix the component
   word or icon. Glow and folk colours are light and identity, never text and never status.
 - **Sentence case everywhere**, eyebrows included. No ALL CAPS (some scripts have none; capitals shout).
 - **The keyboard's ring is always visible** (D220): `.focusRing(_:radius:)` draws 2 pt in `Theme.focus`, 2 pt outside what it
-  marks, and takes no room. `.sf`, `.sfBare` and `.sfIcon` draw it themselves.
+  marks, and takes no room. `.sf`, `.sfBare` and `.sfIcon` draw it themselves; a row inside a clipped card draws it inset.
 - **No essential action only on hover** (D220): `ListRow`'s actions are also in its ⋯ menu.
 - **Firm cards never take Return** (another app's approval, agents' questions, after outside content): ⌘Return or a
   click. Calm cards may.
@@ -51,7 +51,7 @@ glass, symbols).
 | Light | `glow` (working), `waitGlow` (waiting) | never text; optional theme roles |
 | Control border | `Theme.controlBorder` | ink 3 at 70%, about 3:1 from a card, for frames that aren't fills, in both appearances |
 | Folk accents | `Theme.folkColor(_:)` | Lantern's table: Tempo #5B8DEF, Scout #F2B33D, Byte #3B6FF5, Guard #1FA88A, Pip #FF7B6B, Play #F0524F, Nova #A68BFA, Seed #52C08A, Melody #8E6CF0, Brew #C99A5B |
-| Type | `Theme.Font.display` 30, `greeting` 32, `title1` 24, `title2` 18, `heading` 16, `headline` 15, `body` 14, `bodyStrong`, `callout` 12, `caption` 12, `eyebrow` 12, `stateWord` 26, `number` 26 tabular, `bubble` 14, `bubbleTitle` 15, `input` 17, `mono` 12 | the theme face only on display, title1, stateWord, number (and `heading`); `hero`/`title` are display/title1 |
+| Type | `Theme.Font.display` 30, `greeting` 32 (24 under 760 pt), `title1` 24, `title2` 18, `heading` 16, `headline` 15, `body` 14, `bodyStrong`, `callout` 12, `caption` 12, `eyebrow` 12, `stateWord` 26, `number` 26 tabular, `bubble` 14, `bubbleTitle` 15, `input` 17, `mono` 12 | the theme face only on display, title1, stateWord, number (and `heading`); `hero`/`title` are display/title1 |
 | Spacing | `Theme.Space.xxs…xxl` 2 4 8 12 16 24 32, `xxxl` 48, `xxxxl` 64 | scaled by the theme's density |
 | Radii | `Theme.Radius.xs` 8, `control` 10, `card` 14, `panel` 16 (Sidecard, sheets, popovers), `bubble` 16 (the default theme's; a theme sets its own) | capsules for chips, pins, the Say bar |
 | Sizes | `Theme.Size.row` 44, `compactRow` 34, `sidebarRow` 32, `hitTarget` 28, `button` 30 / `buttonSmall` 26 / `buttonSidecard` 32 / `buttonLarge` 36, `field` 30, `chip` 24, `sayBarHome` 36 / `sayBarDesktop` 52, `sidebar` 224, `contentMaxWidth` 1080, `contentPadding` 32, `sheet` 520, `installSheet` 600, `sidecardMin…Max` 320–400, `sidecardAsk` 420, `stackBadge` 28, `pin` 36, `tileMin/Max` 160–240 | same in every theme |
@@ -72,7 +72,7 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `TouchChip(Touch)` "what it touches" | `TouchChip.swift` | `Touch(ApprovalRequest.Effect)`; amber for what reaches the person's things or leaves the Mac |
 | Card surface: `.cardSurface()`, `SFCard`, `RowsCard` | `Components.swift` | e1, hairline |
 | `ListRow` (+ `RowChevron`) | `ListRow.swift` | 44/34 rows, icon, title, meta, trailing value, ≤ 2 actions on hover and always in its ⋯ menu, selected state |
-| `PageSectionTitle` (title, count, trailing) | `Components.swift` | a section of a page |
+| `PageSectionTitle` (title, count, trailing) | `Components.swift` | a section of a page: Needs you, Next up |
 | `SectionHeader` (title, folk, count, detail, trailing) | `Components.swift` | a group inside a section or a card |
 | `Eyebrow` | `Components.swift` | sentence case, no tracking in Arabic and CJK |
 | `SegmentedPicker` | `SegmentedPicker.swift` | 2–5 choices; `small`, `equalWidths`; replaces every `.pickerStyle(.segmented)` |
@@ -128,9 +128,9 @@ In `Sources/SidefolkApp/Home/`; use them for any new place in Home.
 | `NextUpRow`, `NowModel.todayQueue`, `forwardDecision` | `TodayRows.swift`, `NowModel.swift` | what waits after the decision in view, one line each; a click or ↩ brings it forward |
 | `OnDutyRow` (`WatchCard`, `ReportCard`) | `TodayParts.swift` | On duty on Today as quiet rows, in colour only when wrong, new or waiting |
 | `ThemeScene`, `\.pageHasScene`, `\.pageScrolled` | `Components.swift` | a theme's picture at the top of Today; mirrors in right to left, gone under 860 pt |
-| `SidebarHeader`, `SidebarHeaderArt`, `SidebarRowFill`, `SidebarHighlightOff` | `SidebarHeader.swift` | the sidebar's top with the companion in its scene, and the theme's selected row instead of macOS's |
+| `SidebarHeader` (`compact` under 680 pt), `SidebarStudio`, `SidebarLogo`, `SidebarRowFill`, `SidebarHighlightOff` | `SidebarHeader.swift` | the sidebar's top: the companion on a strip of its studio, a line beside its face in a short window; the logo beside the window's buttons; the theme's selected row instead of macOS's |
 | `SelectedRail` | `ListRow.swift` | the edge of a selected row in a list: a tint alone is about 1.2:1 |
-| `NeedsYouCard` | `TodayView.swift` | one thing that waits: folk avatar, "who · time", the card's words, a 3 pt amber bar, the keyboard's ring |
+| `NeedsYouCard` | `TodayView.swift` | one thing that waits: folk avatar, a status dot and "who · time", the card's words, the keyboard's ring |
 | `FolkCard` | `OnDutyView.swift` | a folk's group of rows: avatar with its live ring, name, role, count |
 | `SidebarSquircle`, `PageSquircle`, `SidebarNook` | `HomeSidebar.swift`, `ExtensionsSidebar.swift` | 20 pt tinted icons in the sidebar; the companion's nook, with the theme's `companion.backdrop` faded behind it |
 | `SayPanel`, `SayWords` | `SayPanel.swift` | what typed words will do, from `IntentPlan`: sentence, chips, AI chip, keys |

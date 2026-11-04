@@ -20637,7 +20637,7 @@
       }
     },
     "%lld more" : {
-      "comment" : "Home's sidebar: extension pages put out of it",
+      "comment" : "Home's sidebar: extension pages put out of it\nToday: the rows of Next up folded away",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -81675,6 +81675,64 @@
         }
       }
     },
+    "Fewer collections" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجموعات أقل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger Sammlungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos colecciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moins de collections"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meno raccolte"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コレクションを減らす"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컬렉션 줄이기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos coleções"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起收藏夹"
+          }
+        }
+      }
+    },
     "Fewer like this" : {
       "comment" : "A card's ⋯ menu: notices from this source show only in Today from now on",
       "localizations" : {
@@ -120611,6 +120669,64 @@
         }
       }
     },
+    "More collections" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجموعات أخرى"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Sammlungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más colecciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de collections"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altre raccolte"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その他のコレクション"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컬렉션 더 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais coleções"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多收藏夹"
+          }
+        }
+      }
+    },
     "More detail in the local log. Turn it off when you're done." : {
       "localizations" : {
         "ar" : {
@@ -124989,7 +125105,6 @@
       }
     },
     "Needs you" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -219615,7 +219730,7 @@
       }
     },
     "Unfolded" : {
-      "comment" : "Spoken state of a section of an extension page that folds: open now",
+      "comment" : "Spoken state of a section of an extension page that folds: open now\nVoiceOver: a fold that is open",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

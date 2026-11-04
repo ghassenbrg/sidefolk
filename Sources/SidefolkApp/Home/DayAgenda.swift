@@ -104,14 +104,14 @@ struct DayAgenda: View {
 
     private var header: some View {
         HStack(spacing: Theme.Space.xs) {
-            Text("Your day").font(Theme.Font.headline).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
+            Text("Your day").font(Theme.Font.title2).foregroundStyle(Theme.ink).accessibilityAddTraits(.isHeader)
             Spacer(minLength: Theme.Space.xs)
             Button(action: addReminder) { Image(systemName: "plus").font(.system(size: 11, weight: .semibold)) }
                 .buttonStyle(.sfIcon(side: 22))
                 .foregroundStyle(Theme.inkMuted)
                 .help("New reminder")
                 .accessibilityLabel("New reminder")
-            Button("Open Calendar", action: openCalendar).buttonStyle(.sf(.quiet))
+            Button(action: openCalendar) { Label("Open Calendar", systemImage: "calendar") }.buttonStyle(.sf(.quiet))
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.top, Theme.Space.m)
@@ -131,12 +131,14 @@ struct DayAgenda: View {
     private func nowLine(_ now: Date) -> some View {
         HStack(spacing: Theme.Space.s) {
             Text(verbatim: TimeFormat.clock(now, calendar: .current)).font(Theme.Font.captionStrong).monospacedDigit().foregroundStyle(Theme.link)
-                .frame(width: Self.timeWidth, alignment: .trailing)
+                .padding(.vertical, 2)
+                .frame(width: Self.timeWidth)
+                .background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
             Circle().fill(Theme.link).frame(width: 7, height: 7)
             Rectangle().fill(Theme.link.opacity(0.5)).frame(height: 1)
         }
         .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, 3)
+        .padding(.vertical, Theme.Space.xs)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Now, \(TimeFormat.clock(now, calendar: .current))", comment: "VoiceOver: where now is in the day's list"))
     }
@@ -204,7 +206,7 @@ private struct AgendaLine: View {
     var body: some View {
         HStack(spacing: Theme.Space.s) {
             time.font(Theme.Font.callout).monospacedDigit().foregroundStyle(Theme.inkFaint)
-                .lineLimit(1).frame(width: DayAgenda.timeWidth, alignment: .trailing)
+                .lineLimit(1).frame(width: DayAgenda.timeWidth, alignment: .center)
             mark.frame(width: 7, height: 7)
             Text(verbatim: title).font(Theme.Font.body).strikethrough(struck)
                 .foregroundStyle(faded ? Theme.inkMuted : Theme.ink).lineLimit(1)
@@ -212,7 +214,7 @@ private struct AgendaLine: View {
             note?.font(Theme.Font.callout).foregroundStyle(Theme.inkFaint).lineLimit(1).fixedSize()
         }
         .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, 7)
+        .padding(.vertical, Theme.Space.s)
     }
 
 }
@@ -238,7 +240,7 @@ private struct AgendaReminder: View {
         HStack(spacing: Theme.Space.s) {
             Text(verbatim: TimeFormat.clock(shown, calendar: .current)).font(Theme.Font.callout).monospacedDigit()
                 .foregroundStyle(late ? Theme.warning : drag == 0 ? Theme.inkFaint : Theme.link)
-                .frame(width: DayAgenda.timeWidth, alignment: .trailing)
+                .frame(width: DayAgenda.timeWidth, alignment: .center)
             // Late still waits to be done: amber, with "late" in words.
             Circle().strokeBorder(late ? Theme.warning : Self.blue, lineWidth: 1.5).frame(width: 7, height: 7)
             Text(verbatim: reminder.title).font(Theme.Font.body).foregroundStyle(Theme.ink).lineLimit(1)
@@ -248,7 +250,7 @@ private struct AgendaReminder: View {
             }
         }
         .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, 7)
+        .padding(.vertical, Theme.Space.s)
         .background(focused ? Theme.accentSoft.opacity(0.6) : .clear)
         .overlay(alignment: .leading) { if focused { Capsule().fill(Theme.accent).frame(width: 3).padding(.vertical, 5) } }
         .offset(y: drag)
