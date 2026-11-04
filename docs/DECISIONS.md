@@ -4003,6 +4003,7 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 - **Shared, in every theme (D84):** a type scale with 14 pt reading text and 12 pt metadata; taller buttons, fields and rows; a control border at about 3:1; `.focusRing` on the shared buttons.
 - **Hover isn't the only way:** a `ListRow`'s actions are also in its ⋯ menu, for the keyboard and VoiceOver. It adds a small menu to rows the boards draw bare; an action a person can't reach wasn't worth the cleaner picture.
 - **Themes with a scene** (Harbor) keep it, and Today and the sky behind the toolbar work as they did.
+
 ### D181 — A page never takes Home's sidebar away (2026-11-04)
 **Decision:** *the founder's finding on 1177: "suddenly the sidebar disappear and side flow sidebar appear there. So that's confusing... it shouldn't be like surprising like that."* This amends D126. Home's sidebar stays as the person left it whatever page shows. A `workspace` page shows its own column of places only with room beside it (1120 points of its own width); with less, they're behind a button with its name at the top of the page. A person who wants more room folds the sidebar themselves, with the toolbar's button.
 **Why:** going to a place in a sidebar shouldn't move the sidebar. D126 folded it to give a tree room, and the cost was not knowing where the app's own places had gone.

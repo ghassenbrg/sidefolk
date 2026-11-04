@@ -54,7 +54,7 @@ struct ExtensionPlanRow: View {
 
     var body: some View {
         SettingsRow(title: Text(ext: plan.title.isEmpty ? plan.id : plan.title),
-                    detail: Text("Runs \(plan.actions) actions without asking. \(plan.when)", comment: "Settings › Add-ons: an extension's plan; a count, then its own words for when it runs")) {
+                    detail: plan.actions == 0 ? Text("Runs by itself, with no actions on its list. \(plan.when)", comment: "Settings › Add-ons: an extension's plan that has no actions listed; then its own words for when it runs") : Text("Runs \(plan.actions) actions without asking. \(plan.when)", comment: "Settings › Add-ons: an extension's plan; a count, then its own words for when it runs")) {
             Button(action: end) { Text("End", comment: "Settings › Add-ons: ends an extension's plan") }.buttonStyle(.sf(.secondary))
         }
     }

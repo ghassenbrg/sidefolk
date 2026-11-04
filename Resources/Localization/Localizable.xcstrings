@@ -166351,6 +166351,71 @@
         }
       }
     },
+    "Runs by itself, with no actions on its list. %@" : {
+      "comment" : "Settings › Add-ons: an extension's plan that has no actions listed; then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعمل من تلقاء نفسه، دون إجراءات في قائمته. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft von selbst, ohne Aktionen auf seiner Liste. %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Runs by itself, with no actions on its list. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona solo, sin acciones en su lista. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonctionne seul, sans action sur sa liste. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funziona da solo, senza azioni nel suo elenco. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動で実行されます。リストに操作はありません。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스스로 실행되며 목록에 작업이 없습니다. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona sozinho, sem ações na lista. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动运行，列表中没有操作。%@"
+          }
+        }
+      }
+    },
     "Runs commands" : {
       "comment" : "The Full access sheet",
       "localizations" : {
