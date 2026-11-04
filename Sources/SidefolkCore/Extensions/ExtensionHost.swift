@@ -1331,6 +1331,8 @@ public actor ExtensionHost {
         } else {
             for def in accepted {
                 if rt.pin.tools[def.name]?.hash == def.hash {
+                    // What it says it answers with isn't in the hash, and can change with no one to ask.
+                    rt.pin.tools[def.name] = def
                     rt.pin.pending[def.name] = nil
                 } else if rt.pin.pending[def.name]?.hash != def.hash {
                     rt.pin.pending[def.name] = def
