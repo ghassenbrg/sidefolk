@@ -96,6 +96,7 @@ extension ExtensionPage.Block {
         case .heading: "heading"
         case .headsUps: "heads_ups"
         case .hostControls: "host_controls"
+        case .fileWays: "file_ways"
         case .preview: "preview"
         }
     }

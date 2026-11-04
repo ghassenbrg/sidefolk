@@ -176,7 +176,7 @@ that meets it exists. There is no rollback but a revert and new snapshots, so th
 - [ ] Opening the DMG and the app raises no Gatekeeper warning beyond "downloaded from the internet".
 - [ ] First launch with no AI: the companion, onboarding, a reminder and a note work without any provider.
 - [ ] Prompts appear only when used, each with its text: notifications (onboarding), microphone (first hold of
-      the talk key), Automation for Notes and Reminders (first read), local network (a LAN watcher or a model on
+      the talk key), Automation for Notes and Reminders (first read) and for Finder (first press of the ring's shortcut), local network (a LAN watcher or a model on
       another computer).
 - [ ] Login item from /Applications; `sidefolk` installs on PATH from Settings › Connections and answers
       `sidefolk status`.

@@ -72,19 +72,25 @@ extension AppCoordinator {
     }
 
     func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel) {
-        model.attachment = nil
+        // Only the card this came from: the ring leaves whatever else is waiting in Ask.
+        if model.attachment?.dropFiles == attachment.dropFiles { model.attachment = nil }
         // Dropped files are the person's own act: a read of exactly those, for this one call (D141). The card said so before they chose.
         if attachment.dropKind == .file {
             let files = attachment.dropFiles
+            guard !files.contains(where: DropChoices.isLink) else {
+                model.add(.info(String(localized: "One of those files has changed since you chose it, so nothing was done.", comment: "A dropped file became a link before a choice ran")), caption: attachment.caption)
+                return
+            }
             var call = ExtensionCommandCall(tool: action.tool, input: action.input(forFiles: files, choosing: item), extensionId: action.extensionId, said: "")
             call.handedOver = files
             call.fromDrop = true
             call.mark = action.mark
+            let work = UUID()
             model.working = files.first.map {
-                WorkingFile(path: $0, name: files.count == 1 ? DropChoices.shownName($0) : String(localized: "\(files.count) files", comment: "The drop card: how many files were dropped"),
-                            extensionId: action.extensionId, mark: action.mark, showsPicture: !attachment.fromAnotherApp)
+                WorkingFile(id: work, path: $0, name: files.count == 1 ? DropChoices.shownName($0) : String(localized: "\(files.count) files", comment: "The drop card: how many files were dropped"),
+                            extensionId: action.extensionId, mark: action.mark, showsPicture: !attachment.fromAnotherApp, files: files)
             }
-            runLocal(.extensionCommand(call), caption: attachment.caption, into: model)
+            runLocal(.extensionCommand(call), caption: attachment.caption, into: model, returning: attachment, work: work)
             return
         }
         // Its own tool, as one of its sentences would run it: Guard asks as it always does, and the address counts as typed.

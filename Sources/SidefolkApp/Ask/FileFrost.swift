@@ -3,6 +3,7 @@ import CoreImage
 import QuickLookThumbnailing
 import SidefolkCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// What a file brings to the card made for it (D150): a frost from its picture, or from the extension's mark when the picture has no
 /// colour or there is none. The picture is the person's: it comes from the system's own thumbnail service, out of process, stays
@@ -26,6 +27,12 @@ nonisolated struct FileFrost: @unchecked Sendable {
     private static let side = 256
     /// A file the service can't draw soon enough gets the fallback, and the card still works.
     private static let patience: Duration = .seconds(2)
+
+    /// The ring's slice under the pointer: this card's own colour, strong, with white words readable on it. A coral when it has none.
+    func vividColour() -> Color {
+        let pixel = Self.samples(frost).flatMap(FrostMeasure.vivid) ?? FrostMeasure.vivid(hue: 0.96)
+        return Color(.sRGB, red: pixel.r, green: pixel.g, blue: pixel.b)
+    }
 
     /// `path` nil: no picture at all, for files another app sent with no click behind them (D151). `mark` is the extension's picture from
     /// its pack, already checked and capped. Never its icon: a PDF can take minutes to draw, whoever draws it.
@@ -226,6 +233,22 @@ private nonisolated struct FoldShape: Shape {
 }
 
 /// A file as a small sheet: its own picture, or the extension's mark for its kind, or an empty sheet.
+/// The file on Sidefolk's own ground: its picture, or the icon macOS shows for that type, which needs nothing read from the file.
+struct FileSheetPlain: View {
+    var frost: FileFrost
+    var path: String
+    var side: CGFloat
+
+    var body: some View {
+        if frost.picture != nil {
+            FileSheet(frost: frost, mark: nil, side: side)
+        } else {
+            Image(nsImage: NSWorkspace.shared.icon(for: UTType(filenameExtension: (path as NSString).pathExtension) ?? .data))
+                .resizable().scaledToFit().frame(width: side, height: side).accessibilityHidden(true)
+        }
+    }
+}
+
 struct FileSheet: View {
     var frost: FileFrost
     var mark: NSImage?

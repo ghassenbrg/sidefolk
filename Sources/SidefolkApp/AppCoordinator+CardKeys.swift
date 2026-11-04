@@ -28,6 +28,12 @@ extension AppCoordinator {
         if wanted { KeyboardShortcuts.enable(.answerCard) } else { KeyboardShortcuts.disable(.answerCard) }
     }
 
+    /// After something else's keys changed, which can unregister these.
+    func refreshCardKeys() {
+        guard cardKeysInstalled, cardKeysOn, CardShortcut.conflict(KeyboardShortcuts.getShortcut(for: .answerCard)) == nil else { return }
+        KeyboardShortcuts.enable(.answerCard)
+    }
+
     /// The shortcut, or VoiceOver pressing the card from the companion's group: a slip alone (or Ask) takes the
     /// keyboard; else the card in front; else the held cards fan out; else approvals waiting bring their slip back.
     func focusFrontCard() {
@@ -58,7 +64,7 @@ extension AppCoordinator {
 
 /// Whether a shortcut for the card would take keys something else already has.
 enum CardShortcut {
-    enum Conflict: Equatable { case macOS, ask, talk }
+    enum Conflict: Equatable { case macOS, ask, talk, sidefolk }
 
     static func conflict(_ shortcut: KeyboardShortcuts.Shortcut?) -> Conflict? {
         guard let shortcut else { return nil }
@@ -82,6 +88,8 @@ enum CardShortcut {
     /// What Settings says when the shortcut can't be used.
     static func explanation(_ conflict: Conflict) -> String {
         switch conflict {
+        case .sidefolk: String(localized: "Another Sidefolk shortcut is the same, so this one is off. Pick another.",
+                               comment: "The ring's shortcut, when an extension's palette or the card shortcut has the same keys")
         case .macOS: String(localized: "macOS already uses this shortcut, so it's off. Pick another.",
                             comment: "Settings › General, under the card shortcut")
         case .ask: String(localized: "The Ask shortcut is the same, so this one is off. Pick another.",

@@ -7,11 +7,11 @@ enum ExtensionAbilityRules {
     static let maxSettings = 64
     static let maxEntries = 8
     static let maxEntryItems = 32
-    static let maxDrops = 6
+    static let maxDrops = 20
     static let maxDropMenu = 12
 
     /// A fixed list and not macOS's own, which knows more on a Mac with more apps and includes words like PATCH and GUIDE.
-    static let formatNames: Set<String> = ["JPEG", "JPG", "PNG", "HEIC", "HEIF", "AVIF", "TIFF", "GIF", "BMP", "WEBP", "ICO", "PSD", "SVG", "PDF", "M4A", "MP3", "AAC", "FLAC", "WAV", "AIFF", "OPUS", "OGG", "CAF", "MP4", "M4V", "MOV", "MKV", "WEBM", "CSV", "TSV", "JSON", "PLIST", "XML", "YAML", "TXT", "RTF", "DOCX", "XLSX", "PPTX", "EPUB", "SRT", "VTT", "ZIP", "7Z", "TAR", "GZ", "TGZ", "BZ2", "XZ", "RAR", "TAR.GZ"]
+    static let formatNames: Set<String> = ["JPEG", "JPG", "PNG", "HEIC", "HEIF", "AVIF", "TIFF", "GIF", "BMP", "WEBP", "ICO", "PSD", "SVG", "PDF", "M4A", "MP3", "AAC", "FLAC", "ALAC", "WAV", "AIFF", "OPUS", "OGG", "CAF", "MP4", "M4V", "MOV", "MKV", "WEBM", "CSV", "TSV", "JSON", "PLIST", "XML", "YAML", "TXT", "RTF", "DOCX", "XLSX", "PPTX", "EPUB", "SRT", "VTT", "ZIP", "7Z", "TAR", "GZ", "TGZ", "BZ2", "XZ", "RAR", "TAR.GZ"]
 
     static func isFormatName(_ tag: String) -> Bool { formatNames.contains(tag) }
     static let maxPatterns = 16
@@ -148,9 +148,17 @@ enum ExtensionAbilityRules {
             if let mark = drop.mark, PackAssets.picturePath(mark) == nil || m.assets == nil {
                 issues.append(ValidationIssue(field: "\(field).mark", message: "must be a picture in its assets folder."))
             }
+            if let t = drop.menuTitle, !isPlain(t, 30) { issues.append(ValidationIssue(field: "\(field).menu_title", message: "must be one line of 1–30 characters of plain text.")) }
             if drop.menu.count > Self.maxDropMenu { issues.append(ValidationIssue(field: "\(field).menu", message: "can hold at most \(Self.maxDropMenu) choices.")) }
+            if Set(drop.menu.map(\.title)).count != drop.menu.count { issues.append(ValidationIssue(field: "\(field).menu", message: "has the same title twice.")) }
             for (j, item) in drop.menu.enumerated() {
                 if !isPlain(item.title, 30) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].title", message: "must be one line of 1–30 characters of plain text.")) }
+                if let d = item.detail, !isPlain(d, 80) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].detail", message: "must be one line of 1–80 characters of plain text.")) }
+                if let tag = item.tag, !Self.isFormatName(tag) { issues.append(ValidationIssue(field: "\(field).menu[\(j)].tag", message: "must be a file format's name in capitals, like JPEG or TAR.GZ.")) }
+                if item.skip.count > maxPatterns { issues.append(ValidationIssue(field: "\(field).menu[\(j)].skip", message: "can hold at most \(maxPatterns) patterns.")) }
+                for p in item.skip where p.isEmpty || p.count > 200 || ExtensionText.clean(p) != p || p.contains(where: \.isWhitespace) {
+                    issues.append(ValidationIssue(field: "\(field).menu[\(j)].skip", message: "must be 1–200 characters without spaces."))
+                }
                 if item.input.values.contains(.string("{value}")) || item.input.values.contains(.string("{values}")) || item.input.count > 8 {
                     issues.append(ValidationIssue(field: "\(field).menu[\(j)].input", message: "adds at most 8 arguments, and what was dropped goes in the action's own input."))
                 }
@@ -166,6 +174,9 @@ enum ExtensionAbilityRules {
             } else if !Set(drop.kinds).isDisjoint(with: [.file, .folder]), tool.paths[carriers[0]] == nil {
                 // The sandbox opens a file only through a declared path, and Guard checks it there first (D39).
                 issues.append(ValidationIssue(field: "\(field).input", message: "a file or folder goes under an argument the tool lists in `paths`, so Guard can check it."))
+            } else if drop.kinds.contains(.file), tool.paths[carriers[0]] != .read {
+                // A drop hands over one read. Asking to write would turn the person's choice into a card about the whole folder.
+                issues.append(ValidationIssue(field: "\(field).input", message: "a dropped file goes under an argument the tool lists as `read`."))
             }
         }
         return issues

@@ -319,6 +319,10 @@ protocol AppServices: AnyObject {
     func openSettings(tab: SettingsTab?)
     /// Opens an extension's palette by its id, as its shortcut does.
     func openPalette(_ id: String)
+    /// The system's open panel, then the drop card for the files chosen.
+    func chooseFilesForCard()
+    /// Why the ring's shortcut is off, nil when it isn't.
+    func fileRingConflict() -> String?
     /// Opens the About window: the logo, the version, the notices.
     func showAbout()
     /// Opens the Gallery in Home: companions, extensions and themes to get (D84).

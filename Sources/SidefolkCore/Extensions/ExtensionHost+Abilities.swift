@@ -29,13 +29,21 @@ extension ExtensionHost {
             }
             entries += m.entries.map(entry)
             drops += m.drops.map { d in
-                ExtensionDropAction(extensionId: id, extensionName: name, key: d.id, title: w?.drops[d.id]?.title ?? d.title,
+                var action = ExtensionDropAction(extensionId: id, extensionName: name, key: d.id, title: w?.drops[d.id]?.title ?? d.title,
                                     detail: w?.drops[d.id]?.description ?? d.detail, symbol: d.symbol, kinds: d.kinds, patterns: d.patterns,
-                                    tool: ExtensionTool.registryName(short: short, tool: d.tool), input: d.input, menu: d.menu,
+                                    tool: ExtensionTool.registryName(short: short, tool: d.tool), input: d.input,
+                                    menu: d.menu.map { item in
+                                        var item = item
+                                        item.detail = w?.dropMenuDetails[d.id]?[item.title] ?? item.detail
+                                        return item
+                                    },
                                     pathParameters: Set((m.tools[d.tool]?.paths.keys.map { $0 } ?? []) + (m.tools[d.tool]?.fileLists.keys.map { $0 } ?? [])),
                                     canSendAway: rt.pin.permissions.map { $0.network || $0.carriesOut } ?? false,
                                     canSendAwayWithoutInternet: rt.pin.permissions.map { !$0.network && $0.carriesOut } ?? false,
-                                    tag: d.tag, mark: d.mark.flatMap(PackAssets.picturePath))
+                                    tag: d.tag, mark: d.mark.flatMap(PackAssets.picturePath), menuTitle: w?.dropMenuTitles[d.id] ?? d.menuTitle)
+                action.canWriteDrags = rt.pin.permissions?.clipboard ?? false
+                action.writesTheFile = d.input.contains { $0.value == .string("{value}") && m.tools[d.tool]?.paths[$0.key] == .write }
+                return action
             }
             settings += settingRows(rt)
         }

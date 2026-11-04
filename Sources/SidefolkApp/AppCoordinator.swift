@@ -109,12 +109,15 @@ final class AppCoordinator {
         notifier.opened = { [weak self] id in self?.notificationOpened(id) }
     }
 
+    let fileRing = FileRingController()
+
     func start() async {
         CompanionArt.reloadMade()
         let s = runtime.settings.current
         askPanel = AskPanelController(model: ask, companionName: s.companionName, portrait: CompanionArt.avatar(for: s, side: 26),
                                       hotkey: hotkeyLabel)
         ask.actions = self
+        installFileRing()
         let pins = PinnedAskStore(runtime.db)
         let exchanges = runtime.exchanges
         ask.restorePins(await pins.load(conversationKept: { (try? await exchanges.contains(threadId: $0)) ?? false }))
@@ -457,15 +460,22 @@ final class AppCoordinator {
             return
         }
         if command.hasPrefix("dropChoice:") {
-            // One of the drop card's choices, as a click on it (D84).
-            let name = String(command.dropFirst("dropChoice:".count))
-            if let attachment = ask.attachment {
+            // One of the drop card's choices, as a click on it (D84), or `<offer>/<menu title>` from its menu.
+            let parts = command.dropFirst("dropChoice:".count).split(separator: "/", maxSplits: 1).map(String.init)
+            if let attachment = ask.attachment, let name = parts.first {
                 if let choice = DropChoice(rawValue: name) {
                     perform(choice, with: attachment, in: ask)
                 } else if let offer = extensionDrops(for: attachment).first(where: { $0.key == name }) {
-                    perform(offer, choosing: nil, with: attachment, in: ask)
+                    perform(offer, choosing: parts.count > 1 ? offer.menu.first { $0.title == parts[1] } : nil, with: attachment, in: ask)
                 }
             }
+            return
+        }
+        if command.hasPrefix("ring:") { fileRing.dev(String(command.dropFirst(5))); return }
+        if command == "stopWork", let working = ask.working { stopWork(working, in: ask); return }
+        if command.hasPrefix("drops:") {
+            // Several files dropped at once: paths between | signs.
+            if let files = Attachment.files(command.dropFirst(6).split(separator: "|").map { URL(fileURLWithPath: String($0)) }) { companionReceived(files) }
             return
         }
         if command.hasPrefix("uninstall:") {
@@ -877,7 +887,10 @@ final class AppCoordinator {
         settingsWindow.show(tab: tab)
     }
 
-    func openGallery() { home.show(section: .gallery) }
+    func openGallery() {
+        askPanel.hide()
+        home.show(section: .gallery)
+    }
 
     func showAbout() {
         askPanel.hide()
@@ -1156,13 +1169,17 @@ extension AppCoordinator: CompanionDelegate {
     func companionReceived(_ drop: Attachment) { receive(drop, focus: true) }
 
     private func receive(_ drop: Attachment, focus: Bool) {
+        ask.attachment = withWordsForAI(drop)
+        showAsk(focus: focus)
+    }
+
+    func withWordsForAI(_ drop: Attachment) -> Attachment {
         var attachment = drop
         if case .file(let url) = drop.kind {
             // What the AI reads with the request (D28: text for models stays English).
             attachment.text = drop.files.count > 1 ? "Dropped files:\n" + drop.files.map(\.path).joined(separator: "\n") : "Dropped file: \(url.path)"
         }
-        ask.attachment = attachment
-        showAsk(focus: focus)
+        return attachment
     }
 
     func companionFolkClicked(_ folk: DutyFolk) { openHome() }

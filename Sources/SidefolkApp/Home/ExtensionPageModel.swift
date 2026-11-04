@@ -408,6 +408,8 @@ final class ExtensionPageModel {
             if let why = outcome.problem?.message { problem = why }
             // Reported in its own words, since the call itself went through (D140).
             if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
+        case .dropCard:
+            services?.chooseFilesForCard()
         case .allow(let consent):
             asking = consent
         case .share(let ask):

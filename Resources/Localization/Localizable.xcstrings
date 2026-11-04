@@ -10461,6 +10461,201 @@
         }
       }
     },
+    "%@ reads these %lld files only if you choose a slice, and only this once. It can't go online by itself." : {
+      "comment" : "The ring's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ %1$@ هذه الملفات وعددها %2$lld فقط إذا اخترت شريحة، ولهذه المرة فقط. لا يمكنه الاتصال بالإنترنت من تلقاء نفسه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ liest diese %2$lld Dateien nur, wenn du ein Segment wählst, und nur dieses eine Mal. Es kann nicht von selbst online gehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reads these %2$lld files only if you choose a slice, and only this once. It can't go online by itself."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ lee estos %2$lld archivos solo si eliges una porción, y solo esta vez. No puede conectarse a internet por sí mismo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ne lit ces %2$lld fichiers que si vous choisissez une part, et seulement cette fois. Il ne peut pas aller en ligne de lui-même."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ legge questi %2$lld file solo se scegli uno spicchio, e solo questa volta. Non può andare online da solo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ は、スライスを選んだときに、今回に限りこの %2$lld 個のファイルを読みます。自分でオンラインに接続することはできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 조각을 고를 때만, 이번 한 번만 이 파일 %2$lld개를 읽습니다. 스스로 인터넷에 연결할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ lê estes %2$lld arquivos só se você escolher uma fatia, e só desta vez. Ele não consegue entrar na internet sozinho."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有在你选择一个扇区时,%1$@ 才会读取这 %2$lld 个文件,且仅此一次。它无法自行联网。"
+          }
+        }
+      }
+    },
+    "%@ reads these %lld files only if you choose a slice. It can use the internet, so it could send them anywhere." : {
+      "comment" : "The ring's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ %1$@ هذه الملفات وعددها %2$lld فقط إذا اخترت شريحة. يمكنه استخدام الإنترنت، لذا قد يرسلها إلى أي مكان."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ liest diese %2$lld Dateien nur, wenn du ein Segment wählst. Es kann das Internet nutzen und sie also überallhin senden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reads these %2$lld files only if you choose a slice. It can use the internet, so it could send them anywhere."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ lee estos %2$lld archivos solo si eliges una porción. Puede usar internet, así que podría enviarlos a cualquier parte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ne lit ces %2$lld fichiers que si vous choisissez une part. Il peut utiliser internet et donc les envoyer n'importe où."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ legge questi %2$lld file solo se scegli uno spicchio. Può usare internet, quindi potrebbe inviarli ovunque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ は、スライスを選んだときにのみこの %2$lld 個のファイルを読みます。インターネットを使えるので、どこへでも送ることができます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 조각을 고를 때만 이 파일 %2$lld개를 읽습니다. 인터넷을 쓸 수 있어 어디로든 보낼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ lê estes %2$lld arquivos só se você escolher uma fatia. Ele pode usar a internet, então poderia enviá-los para qualquer lugar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有在你选择一个扇区时,%1$@ 才会读取这 %2$lld 个文件。它可以使用互联网,因此可能把它们发送到任何地方。"
+          }
+        }
+      }
+    },
+    "%@ reads these %lld files only if you choose a slice. It has no internet access of its own, but other things it's allowed to use could carry them out." : {
+      "comment" : "The ring's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ %1$@ هذه الملفات وعددها %2$lld فقط إذا اخترت شريحة. ليس لديه اتصال خاص بالإنترنت، لكن أشياء أخرى مسموحًا له باستخدامها قد تُخرجها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ liest diese %2$lld Dateien nur, wenn du ein Segment wählst. Es hat keinen eigenen Internetzugang, aber anderes, das es nutzen darf, könnte sie hinaustragen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ reads these %2$lld files only if you choose a slice. It has no internet access of its own, but other things it's allowed to use could carry them out."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ lee estos %2$lld archivos solo si eliges una porción. No tiene internet propio, pero otras cosas que puede usar podrían sacarlos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ne lit ces %2$lld fichiers que si vous choisissez une part. Il n'a pas d'accès internet à lui, mais d'autres choses qu'il peut utiliser pourraient les faire sortir."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ legge questi %2$lld file solo se scegli uno spicchio. Non ha un accesso a internet proprio, ma altre cose che può usare potrebbero portarli fuori."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ は、スライスを選んだときにのみこの %2$lld 個のファイルを読みます。自身のインターネット接続はありませんが、使用を許可された他のものが持ち出す可能性があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 조각을 고를 때만 이 파일 %2$lld개를 읽습니다. 자체 인터넷 연결은 없지만, 사용이 허용된 다른 것이 내보낼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ lê estes %2$lld arquivos só se você escolher uma fatia. Ele não tem internet própria, mas outras coisas que pode usar poderiam levá-los para fora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有在你选择一个扇区时,%1$@ 才会读取这 %2$lld 个文件。它本身不能联网,但它获准使用的其他内容可能把它们带出去。"
+          }
+        }
+      }
+    },
     "%@ reads these %lld files only if you choose below, and only this once. It can't go online by itself." : {
       "comment" : "The drop card, Sidefolk's own words: an extension's name and a count",
       "localizations" : {
@@ -10652,6 +10847,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅当你在下方选择时，%@ 才会读取这 %lld 个文件。它自己无法访问互联网，但它被允许使用的其他东西可能把文件带出去。"
+          }
+        }
+      }
+    },
+    "%@ reads this file only if you choose a slice, and only this once. It can't go online by itself." : {
+      "comment" : "The ring's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ %@ هذا الملف فقط إذا اخترت شريحة، ولهذه المرة فقط. لا يمكنه الاتصال بالإنترنت من تلقاء نفسه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese Datei nur, wenn du ein Segment wählst, und nur dieses eine Mal. Es kann nicht von selbst online gehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee este archivo solo si eliges una porción, y solo esta vez. No puede conectarse a internet por sí mismo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne lit ce fichier que si vous choisissez une part, et seulement cette fois. Il ne peut pas aller en ligne de lui-même."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questo file solo se scegli uno spicchio, e solo questa volta. Non può andare online da solo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ は、スライスを選んだときに、今回に限りこのファイルを読みます。自分でオンラインに接続することはできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 조각을 고를 때만, 이번 한 번만 이 파일을 읽습니다. 스스로 인터넷에 연결할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê este arquivo só se você escolher uma fatia, e só desta vez. Ele não consegue entrar na internet sozinho."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有在你选择一个扇区时,%@ 才会读取这个文件,且仅此一次。它无法自行联网。"
+          }
+        }
+      }
+    },
+    "%@ reads this file only if you choose a slice. It can use the internet, so it could send the file anywhere." : {
+      "comment" : "The ring's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ %@ هذا الملف فقط إذا اخترت شريحة. يمكنه استخدام الإنترنت، لذا قد يرسل الملف إلى أي مكان."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese Datei nur, wenn du ein Segment wählst. Es kann das Internet nutzen und die Datei also überallhin senden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee este archivo solo si eliges una porción. Puede usar internet, así que podría enviarlo a cualquier parte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne lit ce fichier que si vous choisissez une part. Il peut utiliser internet et donc l'envoyer n'importe où."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questo file solo se scegli uno spicchio. Può usare internet, quindi potrebbe inviarlo ovunque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ は、スライスを選んだときにのみこのファイルを読みます。インターネットを使えるので、どこへでも送ることができます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 조각을 고를 때만 이 파일을 읽습니다. 인터넷을 쓸 수 있어 어디로든 보낼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê este arquivo só se você escolher uma fatia. Ele pode usar a internet, então poderia enviá-lo para qualquer lugar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有在你选择一个扇区时,%@ 才会读取这个文件。它可以使用互联网,因此可能把文件发送到任何地方。"
+          }
+        }
+      }
+    },
+    "%@ reads this file only if you choose a slice. It has no internet access of its own, but other things it's allowed to use could carry it out." : {
+      "comment" : "The ring's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ %@ هذا الملف فقط إذا اخترت شريحة. ليس لديه اتصال خاص بالإنترنت، لكن أشياء أخرى مسموحًا له باستخدامها قد تُخرجه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liest diese Datei nur, wenn du ein Segment wählst. Es hat keinen eigenen Internetzugang, aber anderes, das es nutzen darf, könnte sie hinaustragen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lee este archivo solo si eliges una porción. No tiene internet propio, pero otras cosas que puede usar podrían sacarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne lit ce fichier que si vous choisissez une part. Il n'a pas d'accès internet à lui, mais d'autres choses qu'il peut utiliser pourraient le faire sortir."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ legge questo file solo se scegli uno spicchio. Non ha un accesso a internet proprio, ma altre cose che può usare potrebbero portarlo fuori."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ は、スライスを選んだときにのみこのファイルを読みます。自身のインターネット接続はありませんが、使用を許可された他のものが持ち出す可能性があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 조각을 고를 때만 이 파일을 읽습니다. 자체 인터넷 연결은 없지만, 사용이 허용된 다른 것이 내보낼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lê este arquivo só se você escolher uma fatia. Ele não tem internet própria, mas outras coisas que pode usar poderiam levá-lo para fora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有在你选择一个扇区时,%@ 才会读取这个文件。它本身不能联网,但它获准使用的其他内容可能把文件带出去。"
           }
         }
       }
@@ -42588,6 +42960,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新已在进行中"
+          }
+        }
+      }
+    },
+    "Another Sidefolk shortcut is the same, so this one is off. Pick another." : {
+      "comment" : "The ring's shortcut, when an extension's palette or the card shortcut has the same keys",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختصار آخر في Sidefolk مطابق لهذا، لذا هذا الاختصار مطفأ. اختر غيره."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein anderer Sidefolk-Kurzbefehl ist gleich, daher ist dieser aus. Wähl einen anderen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otro atajo de Sidefolk es igual, así que este está desactivado. Elige otro."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un autre raccourci de Sidefolk est identique, celui-ci est donc désactivé. Choisissez-en un autre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un'altra scorciatoia di Sidefolk è uguale, quindi questa è spenta. Scegline un'altra."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkの別のショートカットと同じなので、これはオフです。別のものを選んでください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk의 다른 단축키와 같아서 이 단축키는 꺼져 있습니다. 다른 것을 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outro atalho do Sidefolk é igual, então este está desligado. Escolha outro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 的另一个快捷键与此相同,因此此快捷键已关闭。请另选一个。"
           }
         }
       }
@@ -74651,6 +75082,65 @@
         }
       }
     },
+    "Drag a file, pause and hold this: the ring opens at the pointer." : {
+      "comment" : "The ring: its key during a drag",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب ملفًا، وتوقف قليلًا واضغط هذا المفتاح باستمرار: تفتح الحلقة عند المؤشر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zieh eine Datei, halte kurz inne und halte diese Taste: Der Ring öffnet sich am Zeiger."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra un archivo, haz una pausa y mantén esta tecla: el anillo se abre en el puntero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser un fichier, marquez une pause et maintenez cette touche : l'anneau s'ouvre au pointeur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina un file, fermati e tieni premuto questo tasto: l'anello si apre al puntatore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルをドラッグして止め、このキーを押し続けると、ポインタの位置にリングが開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일을 끌다가 멈추고 이 키를 누르고 있으면 포인터 위치에 링이 열립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste um arquivo, pare e segure esta tecla: o anel abre no ponteiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖动文件,停一下并按住此键:圆环会在指针处打开。"
+          }
+        }
+      }
+    },
     "Drag from corner to corner, click a plot to clear it" : {
       "comment" : "Keys in the Play panel: Garden Plots, drawing rectangles",
       "extractionState" : "stale",
@@ -80236,6 +80726,65 @@
         }
       }
     },
+    "Extensions can add more choices for files." : {
+      "comment" : "The plain drop card, when no extension offers anything for a file",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكن للإضافات أن تضيف خيارات أكثر للملفات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweiterungen können weitere Möglichkeiten für Dateien bieten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las extensiones pueden añadir más opciones para archivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les extensions peuvent ajouter d'autres choix pour les fichiers."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le estensioni possono aggiungere altre scelte per i file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能でファイルの選択肢を増やせます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램으로 파일에 대한 선택지를 늘릴 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extensões podem adicionar mais opções para arquivos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展可以为文件添加更多选择。"
+          }
+        }
+      }
+    },
     "Extensions from a folder and MCP servers you added." : {
       "comment" : "Settings › Add-ons: search",
       "localizations" : {
@@ -81649,6 +82198,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在日历中查找“%@”"
+          }
+        }
+      }
+    },
+    "Finder didn't answer. Try again in a moment." : {
+      "comment" : "The ring's shortcut, when Finder is busy",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يستجب Finder. حاول مرة أخرى بعد لحظة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Finder hat nicht geantwortet. Versuch es gleich noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El Finder no ha respondido. Inténtalo de nuevo en un momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Finder n'a pas répondu. Réessayez dans un instant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il Finder non ha risposto. Riprova tra un momento."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finderが応答しませんでした。少し待ってからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder가 응답하지 않았습니다. 잠시 후 다시 시도하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Finder não respondeu. Tente de novo em um instante."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "访达没有响应。请稍后再试。"
           }
         }
       }
@@ -91123,6 +91731,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按住快捷键说话，松开即发送。按 Esc 键取消。"
+          }
+        }
+      }
+    },
+    "Hold this while dragging a file, and the ring opens at the pointer." : {
+      "comment" : "The ring: its key during a drag",
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط عليه باستمرار أثناء سحب ملف، فتفتح الحلقة عند المؤشر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte sie beim Ziehen einer Datei gedrückt, und der Ring öffnet sich am Zeiger."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantenla pulsada mientras arrastras un archivo y el anillo se abrirá en el puntero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenez-la en faisant glisser un fichier, et l'anneau s'ouvre au pointeur."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienilo premuto mentre trascini un file e l'anello si apre al puntatore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルをドラッグしながら押し続けると、ポインタの位置にリングが開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일을 끄는 동안 누르고 있으면 포인터 위치에 링이 열립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segure enquanto arrasta um arquivo e o anel abre no ponteiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖动文件时按住此键,圆环会在指针处打开。"
           }
         }
       }
@@ -111331,6 +111999,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "留在“今天”"
+          }
+        }
+      }
+    },
+    "Key" : {
+      "comment" : "The ring: the menu choosing its key",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المفتاح"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taste"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tasto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按键"
           }
         }
       }
@@ -136044,6 +136771,65 @@
         }
       }
     },
+    "Nothing you have installed can change this." : {
+      "comment" : "The ring: no extension offers anything for what's being dragged",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء مما ثبّتّه يمكنه تغيير هذا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts, was du installiert hast, kann das ändern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada de lo que tienes instalado puede cambiar esto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de ce que vous avez installé ne peut changer cela."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niente di ciò che hai installato può cambiarlo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インストールされているものでは、これを変換できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설치된 것 중에는 이것을 바꿀 수 있는 것이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada do que você instalou pode mudar isso."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你安装的内容都无法转换它。"
+          }
+        }
+      }
+    },
     "Notice when a session needs you" : {
       "localizations" : {
         "ar" : {
@@ -136978,6 +137764,124 @@
         }
       }
     },
+    "Off until you turn it on, since it looks for a file being dragged." : {
+      "comment" : "Under the ring's switch",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مطفأة حتى تشغّلها، لأنها تراقب سحب الملفات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, bis du ihn einschaltest, denn er achtet darauf, ob eine Datei gezogen wird."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado hasta que lo actives, porque está atento a si arrastras un archivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé tant que vous ne l'activez pas, car il guette le glissement d'un fichier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spento finché non lo accendi, perché controlla se stai trascinando un file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドラッグ中のファイルを確認するため、オンにするまでオフのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일을 끄는지 살펴보기 때문에 켜기 전까지는 꺼져 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligado até você ligar, porque ele observa se um arquivo está sendo arrastado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你打开之前保持关闭,因为它会留意是否有文件被拖动。"
+          }
+        }
+      }
+    },
+    "Off until you turn on the ring. Then it opens the ring for the files selected in Finder." : {
+      "comment" : "The ring: its shortcut, while the ring is off",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مطفأ حتى تشغّل الحلقة. بعدها يفتح الحلقة للملفات المحددة في Finder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, bis du den Ring einschaltest. Dann öffnet es den Ring für die im Finder ausgewählten Dateien."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado hasta que actives el anillo. Después abre el anillo para los archivos seleccionados en el Finder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé tant que vous n'activez pas l'anneau. Ouvre ensuite l'anneau pour les fichiers sélectionnés dans le Finder."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spento finché non accendi l'anello. Poi apre l'anello per i file selezionati nel Finder."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リングをオンにするまでオフです。オンにすると、Finderで選択したファイルのリングを開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "링을 켜기 전까지는 꺼져 있습니다. 켜면 Finder에서 선택한 파일의 링을 엽니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligado até você ligar o anel. Depois abre o anel para os arquivos selecionados no Finder."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你打开圆环之前保持关闭。打开后,它会为访达中选中的文件打开圆环。"
+          }
+        }
+      }
+    },
     "Okay, no reminder." : {
       "localizations" : {
         "ar" : {
@@ -137793,6 +138697,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这是 Sidefolk 自己的扩展在请求。"
+          }
+        }
+      }
+    },
+    "One of those files has changed since you chose it, so nothing was done." : {
+      "comment" : "A dropped file became a link before a choice ran",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر أحد هذه الملفات منذ أن اخترته، لذا لم يُنفَّذ شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine dieser Dateien hat sich geändert, seit du sie gewählt hast, also ist nichts passiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uno de esos archivos ha cambiado desde que lo elegiste, así que no se ha hecho nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'un de ces fichiers a changé depuis votre choix, donc rien n'a été fait."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uno di quei file è cambiato da quando lo hai scelto, quindi non è stato fatto nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択後にファイルのいずれかが変更されたため、何も行いませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 뒤 파일 중 하나가 바뀌어 아무것도 하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um desses arquivos mudou desde que você o escolheu, então nada foi feito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中一个文件在你选择后发生了变化,因此没有执行任何操作。"
           }
         }
       }
@@ -143114,6 +144077,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用这些话打开提问面板，可以直接发送"
+          }
+        }
+      }
+    },
+    "Opens the ring for the files selected in Finder." : {
+      "comment" : "The ring: its shortcut",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تفتح الحلقة للملفات المحددة في Finder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet den Ring für die im Finder ausgewählten Dateien."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre el anillo para los archivos seleccionados en el Finder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre l'anneau pour les fichiers sélectionnés dans le Finder."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apre l'anello per i file selezionati nel Finder."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finderで選択したファイルのリングを開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder에서 선택한 파일의 링을 엽니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre o anel para os arquivos selecionados no Finder."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为访达中选中的文件打开圆环。"
           }
         }
       }
@@ -164318,6 +165340,125 @@
         }
       }
     },
+    "Right-click a file in Finder and choose Send to Sidefolk, under Services." : {
+      "comment" : "A way to hand a file over: Finder's Service",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر بزر الفأرة الأيمن على ملف في Finder واختر Send to Sidefolk من الخدمات."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klick im Finder mit der rechten Maustaste auf eine Datei und wähl unter „Dienste“ „Send to Sidefolk“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic derecho en un archivo en el Finder y elige Send to Sidefolk, en Servicios."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites un clic droit sur un fichier dans le Finder et choisissez Send to Sidefolk, dans Services."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic destro su un file nel Finder e scegli Send to Sidefolk, in Servizi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finderでファイルを右クリックし、「サービス」の Send to Sidefolk を選びます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder에서 파일을 오른쪽 클릭하고 서비스에서 Send to Sidefolk를 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique com o botão direito em um arquivo no Finder e escolha Send to Sidefolk, em Serviços."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中右键点按文件,然后在“服务”中选择 Send to Sidefolk。"
+          }
+        }
+      }
+    },
+    "Right-click a file in Finder and choose Send to Sidefolk." : {
+      "comment" : "A way to hand a file over: Finder's Service",
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر بزر الفأرة الأيمن على ملف في Finder واختر Send to Sidefolk."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klick im Finder mit der rechten Maustaste auf eine Datei und wähl „Send to Sidefolk“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic derecho en un archivo en el Finder y elige Send to Sidefolk."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites un clic droit sur un fichier dans le Finder et choisissez Send to Sidefolk."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic destro su un file nel Finder e scegli Send to Sidefolk."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finderでファイルを右クリックし、Send to Sidefolk を選びます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder에서 파일을 오른쪽 클릭하고 Send to Sidefolk를 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique com o botão direito em um arquivo no Finder e escolha Send to Sidefolk."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中右键点按文件,然后选择 Send to Sidefolk。"
+          }
+        }
+      }
+    },
     "Risk" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -170641,6 +171782,65 @@
         }
       }
     },
+    "See the Gallery" : {
+      "comment" : "The plain drop card: opens the add-on gallery",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض المعرض"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zur Galerie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver la Galería"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir la Galerie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedi la Galleria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーを見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "갤러리 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver a Galeria"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看图库"
+          }
+        }
+      }
+    },
     "See the change" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -171102,6 +172302,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请先选择一个文件，或选择少一些文件。"
+          }
+        }
+      }
+    },
+    "Select a file in Finder first, then press the shortcut." : {
+      "comment" : "The ring's shortcut, from another app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدد ملفًا في Finder أولًا، ثم اضغط الاختصار."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähl zuerst im Finder eine Datei aus und drück dann den Kurzbefehl."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona primero un archivo en el Finder y luego pulsa el atajo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez d'abord un fichier dans le Finder, puis appuyez sur le raccourci."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleziona prima un file nel Finder, poi premi la scorciatoia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まずFinderでファイルを選択してから、ショートカットを押してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "먼저 Finder에서 파일을 선택한 다음 단축키를 누르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecione primeiro um arquivo no Finder e depois pressione o atalho."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先在访达中选择文件,然后按快捷键。"
           }
         }
       }
@@ -178381,6 +179640,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sidefolk 在更改你的日历前会询问一次。"
+          }
+        }
+      }
+    },
+    "Sidefolk can't see what's selected in Finder yet. Turn it on in System Settings › Privacy & Security › Automation." : {
+      "comment" : "The ring's shortcut, when macOS's Automation permission was refused",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يستطيع Sidefolk بعد رؤية ما هو محدد في Finder. شغّل ذلك من إعدادات النظام › الخصوصية والأمن › الأتمتة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk kann noch nicht sehen, was im Finder ausgewählt ist. Schalte es in den Systemeinstellungen unter Datenschutz & Sicherheit › Automation ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk aún no puede ver lo seleccionado en el Finder. Actívalo en Ajustes del Sistema › Privacidad y seguridad › Automatización."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk ne voit pas encore ce qui est sélectionné dans le Finder. Activez-le dans Réglages Système › Confidentialité et sécurité › Automatisation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk non vede ancora cosa è selezionato nel Finder. Attivalo in Impostazioni di Sistema › Privacy e sicurezza › Automazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SidefolkはまだFinderで選択されているものを確認できません。システム設定 › プライバシーとセキュリティ › オートメーションでオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk가 아직 Finder에서 선택한 항목을 볼 수 없습니다. 시스템 설정 › 개인정보 보호 및 보안 › 자동화에서 켜세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sidefolk ainda não consegue ver o que está selecionado no Finder. Ative em Ajustes do Sistema › Privacidade e Segurança › Automação."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk 还看不到访达中选中的内容。请在“系统设置 › 隐私与安全性 › 自动化”中打开。"
           }
         }
       }
@@ -187542,6 +188860,7 @@
       }
     },
     "Stop" : {
+      "comment" : "The working card: ends an extension's work on a file",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -188764,6 +190083,64 @@
         }
       }
     },
+    "Stopped." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإيقاف."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detenido."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêté."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrotto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중지했습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停止。"
+          }
+        }
+      }
+    },
     "Stopped. Nothing was changed." : {
       "localizations" : {
         "ar" : {
@@ -188818,6 +190195,125 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已停止。没有做任何更改。"
+          }
+        }
+      }
+    },
+    "Stopped. Nothing was made, and the original is as it was." : {
+      "comment" : "After Stop on the working card",
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإيقاف. لم يُنشأ شيء، والأصل كما هو."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt. Es wurde nichts erstellt, und das Original ist unverändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detenido. No se ha creado nada y el original sigue igual."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêté. Rien n'a été créé et l'original est intact."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrotto. Non è stato creato nulla e l'originale è com'era."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止しました。何も作成されず、元のファイルはそのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중지했습니다. 아무것도 만들어지지 않았고 원본은 그대로입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parado. Nada foi criado e o original continua como estava."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停止。没有生成任何内容,原文件保持不变。"
+          }
+        }
+      }
+    },
+    "Stopped. Nothing was saved, and the original is as it was." : {
+      "comment" : "After Stop on the working card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم الإيقاف. لم يُحفظ شيء، والأصل كما هو."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt. Es wurde nichts gespeichert, und das Original ist unverändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detenido. No se ha guardado nada y el original sigue igual."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêté. Rien n'a été enregistré et l'original est intact."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrotto. Non è stato salvato nulla e l'originale è com'era."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止しました。何も保存されず、元のファイルはそのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중지했습니다. 저장된 것이 없고 원본은 그대로입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parado. Nada foi salvo e o original continua como estava."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停止。没有保存任何内容,原文件保持不变。"
           }
         }
       }
@@ -189865,6 +191361,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "系统语音"
+          }
+        }
+      }
+    },
+    "Tab for more" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab للمزيد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab für mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab para más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab pour plus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab per altro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabでさらに表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab으로 더 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab para mais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 Tab 查看更多"
           }
         }
       }
@@ -197503,6 +199057,66 @@
         }
       }
     },
+    "That's a lot of files. Drop them on your companion to see every name." : {
+      "comment" : "The ring: too many files being dragged to name them all",
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه ملفات كثيرة. أفلتها على رفيقك لرؤية كل الأسماء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das sind viele Dateien. Lass sie auf deinem Begleiter los, um alle Namen zu sehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son muchos archivos. Suéltalos sobre tu compañero para ver todos los nombres."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela fait beaucoup de fichiers. Déposez-les sur votre compagnon pour voir tous les noms."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono molti file. Rilasciali sul tuo compagno per vedere tutti i nomi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルが多すぎます。すべての名前を見るには、コンパニオンにドロップしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일이 많습니다. 동반자에게 놓으면 모든 이름을 볼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "São muitos arquivos. Solte-os no seu companheiro para ver todos os nomes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件太多了。把它们拖到你的伙伴身上,即可看到所有名称。"
+          }
+        }
+      }
+    },
     "That's faster than a surface takes moves." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -197616,6 +199230,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "就是这样。"
+          }
+        }
+      }
+    },
+    "That's more files than Sidefolk takes at once. Select fewer." : {
+      "comment" : "The ring's shortcut, with a very large selection",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه ملفات أكثر مما يقبله Sidefolk دفعة واحدة. حدد عددًا أقل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das sind mehr Dateien, als Sidefolk auf einmal annimmt. Wähl weniger aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son más archivos de los que Sidefolk admite a la vez. Selecciona menos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est plus de fichiers que Sidefolk n'en prend à la fois. Sélectionnez-en moins."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono più file di quanti Sidefolk ne accetti in una volta. Selezionane meno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkが一度に受け取れる数を超えています。選択を減らしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk가 한 번에 받을 수 있는 파일 수를 넘었습니다. 더 적게 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "São mais arquivos do que o Sidefolk aceita de uma vez. Selecione menos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件数量超过了 Sidefolk 一次能接收的上限。请少选一些。"
           }
         }
       }
@@ -203983,6 +205656,65 @@
         }
       }
     },
+    "The ring" : {
+      "comment" : "A switch for the ring of what a file can become",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحلقة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ring"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El anillo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'anneau"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'anello"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リング"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "링"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O anel"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圆环"
+          }
+        }
+      }
+    },
     "The same password again" : {
       "localizations" : {
         "ar" : {
@@ -207710,6 +209442,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这些即使在 Sidefolk 读取过其他页面之后，也不会弹出卡片，除非地址在“?”后面带有附加内容。移除其中一项后，Sidefolk 就会重新询问。"
+          }
+        }
+      }
+    },
+    "These need more room to name. Drop them on your companion to see them all." : {
+      "comment" : "The ring: too many files being dragged, or names too long, to name them all under it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحتاج أسماؤها إلى مساحة أكبر. أفلتها على رفيقك لرؤيتها كلها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für ihre Namen ist hier zu wenig Platz. Lass sie auf deinem Begleiter los, um alle zu sehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus nombres necesitan más espacio. Suéltalos sobre tu compañero para verlos todos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leurs noms demandent plus de place. Déposez-les sur votre compagnon pour tous les voir."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I loro nomi richiedono più spazio. Rilasciali sul tuo compagno per vederli tutti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前を表示するには場所が足りません。コンパニオンにドロップするとすべて表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이름을 표시할 공간이 부족합니다. 동반자에게 놓으면 모두 볼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os nomes precisam de mais espaço. Solte-os no seu companheiro para ver todos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些名称需要更多空间。把它们拖到你的伙伴身上即可全部查看。"
           }
         }
       }
@@ -241231,12 +243022,12 @@
       }
     },
     "and %lld more" : {
-      "comment" : "The Calendar's details: people invited beyond those listed",
+      "comment" : "The Calendar's details: people invited beyond those listed\nThe ring's middle: under the first of several files' names",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "و%lld أخرى"
+            "value" : "و%lld غيره"
           }
         },
         "de" : {
@@ -241266,7 +243057,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ほか%lld件"
+            "value" : "ほか %lld 個"
           }
         },
         "ko" : {
@@ -241284,7 +243075,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "还有 %lld 个"
+            "value" : "以及另外 %lld 个"
           }
         }
       }
@@ -248825,6 +250616,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOS 正在把它下载到系统自己的存储空间，而不是 Sidefolk 中。"
+          }
+        }
+      }
+    },
+    "macOS may ask to let Sidefolk control Finder. Sidefolk uses that only to read what you selected." : {
+      "comment" : "The ring's shortcut, said once before macOS's question about Finder",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قد يسأل macOS عن السماح لـ Sidefolk بالتحكم في Finder. يستخدم Sidefolk ذلك فقط لقراءة ما حددته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS fragt vielleicht, ob Sidefolk den Finder steuern darf. Sidefolk nutzt das nur, um zu lesen, was du ausgewählt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede que macOS pregunte si Sidefolk puede controlar el Finder. Sidefolk lo usa solo para leer lo que has seleccionado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS peut demander d'autoriser Sidefolk à contrôler le Finder. Sidefolk s'en sert uniquement pour lire ce que vous avez sélectionné."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS potrebbe chiedere se Sidefolk può controllare il Finder. Sidefolk lo usa solo per leggere ciò che hai selezionato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSから、SidefolkによるFinderの操作を許可するか確認されることがあります。Sidefolkは選択した項目を読み取るためだけに使います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS에서 Sidefolk이 Finder를 제어하도록 허용할지 물을 수 있습니다. Sidefolk은 선택한 항목을 읽는 데만 이 권한을 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O macOS pode perguntar se o Sidefolk pode controlar o Finder. O Sidefolk usa isso só para ler o que você selecionou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 可能会询问是否允许 Sidefolk 控制访达。Sidefolk 只用它来读取你选中的内容。"
           }
         }
       }
@@ -262825,6 +264675,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "↩ 粘贴  ⇧↩ 纯文本  ⌘P 固定  ⌘⌫ 删除"
+          }
+        }
+      }
+    },
+    "⇧ for more" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ للمزيد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ für mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ para más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ pour plus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ per altro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧でさらに表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧로 더 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ para mais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 ⇧ 查看更多"
           }
         }
       }

@@ -182,21 +182,34 @@ extension ExtensionManifest {
         public var tag: String?
         /// A picture from its pack for the small sheet when a file has no colourful picture of its own (D150).
         public var mark: String?
+        /// What the card's menu is called ("Another format"), in place of Sidefolk's own "Another choice".
+        public var menuTitle: String?
 
         public struct MenuItem: Sendable, Hashable, Decodable {
             public var title: String
             public var input: [String: JSONValue]
+            /// A format's name for the ring, as a drop's `tag`, and one plain line of what it's for.
+            public var tag: String?
+            public var detail: String?
+            /// Names this choice is pointless for, like the format the file is already in. Globs, as `patterns`.
+            public var skip: [String] = []
 
-            public init(title: String, input: [String: JSONValue]) {
+            public init(title: String, input: [String: JSONValue], tag: String? = nil, detail: String? = nil, skip: [String] = []) {
                 self.title = title
                 self.input = input
+                self.tag = tag
+                self.detail = detail
+                self.skip = skip
             }
 
             public init(from decoder: Decoder) throws {
-                try decoder.rejectUnknownKeys(["title", "input"])
+                try decoder.rejectUnknownKeys(["title", "input", "tag", "detail", "skip"])
                 let c = try decoder.container(keyedBy: AnyKey.self)
                 title = try c.decode(String.self, forKey: "title")
                 input = try c.decode([String: JSONValue].self, forKey: "input")
+                tag = try c.decodeIfPresent(String.self, forKey: "tag")
+                detail = try c.decodeIfPresent(String.self, forKey: "detail")
+                skip = try c.decodeIfPresent([String].self, forKey: "skip") ?? []
             }
         }
 
@@ -213,7 +226,7 @@ extension ExtensionManifest {
         }
 
         public init(from decoder: Decoder) throws {
-            try decoder.rejectUnknownKeys(["id", "title", "detail", "symbol", "kinds", "patterns", "tool", "input", "menu", "tag", "mark"])
+            try decoder.rejectUnknownKeys(["id", "title", "detail", "symbol", "kinds", "patterns", "tool", "input", "menu", "tag", "mark", "menu_title"])
             let c = try decoder.container(keyedBy: AnyKey.self)
             id = try c.decode(String.self, forKey: "id")
             title = try c.decode(String.self, forKey: "title")
@@ -225,6 +238,7 @@ extension ExtensionManifest {
             input = try c.decode([String: JSONValue].self, forKey: "input")
             tag = try c.decodeIfPresent(String.self, forKey: "tag")
             mark = try c.decodeIfPresent(String.self, forKey: "mark")
+            menuTitle = try c.decodeIfPresent(String.self, forKey: "menu_title")
             menu = try c.decodeIfPresent([MenuItem].self, forKey: "menu") ?? []
         }
     }

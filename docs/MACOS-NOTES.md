@@ -228,7 +228,7 @@ VERIFIED (ran, `main.swift`):
 6. **Deployment target:** set `platforms: [.macOS(.v15)]`. Swift 6.4 features whose runtime ships only with macOS 26+ will then fail availability checks instead of crashing on 15. Run the app on macOS 15 before release; nothing tonight ran there.
 7. **Strict concurrency + AppKit:** Timer, NotificationCenter and NSEvent monitor closures are `@Sendable`. Route them to MainActor methods (VERIFIED patterns above), never capture layers or views directly.
 
-## 14. Apple Events: Notes and Reminders (D38)
+## 14. Apple Events: Notes and Reminders (D38), and Finder for the ring (D152, T49)
 
 VERIFIED (ran, no Apple Event sent):
 - `osascript -l JavaScript -` reads the script from stdin and prints the string the `run()` handler

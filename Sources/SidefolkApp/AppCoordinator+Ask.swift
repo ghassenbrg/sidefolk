@@ -248,11 +248,23 @@ extension AppCoordinator: AskActions {
     }
 
     /// - Parameter reply: set for a request someone made (typed or spoken), whose answer may be said aloud.
-    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel, reply: ReplyContext? = nil) {
+    /// - Parameter returning: files whose card comes back if this fails.
+    /// - Parameter work: the working card this is behind.
+    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel, reply: ReplyContext? = nil, returning: Attachment? = nil, work: UUID? = nil) {
         let runner = LocalIntentRunner(runtime: runtime)
         Task {
             let outcome = await runner.run(intent)
-            if case .extensionCommand(let call) = intent, call.handedOver.first == model.working?.path { model.working = nil }
+            if let work, model.working?.id == work { model.working = nil }
+            let stopped = work != nil && model.stopped == work
+            if stopped {
+                model.stopped = nil
+                if case .extensionCommand(let call) = intent { await runtime.extensions.forgetEarlyStop(extensionId: call.extensionId) }
+            }
+            if stopped, case .failed = outcome {
+                // The person's own Stop, so no failure to report: only what became of the file. Had it finished first, the result shows as usual.
+                model.add(.info(String(localized: "Stopped. Nothing was saved, and the original is as it was.", comment: "After Stop on the working card")), caption: caption)
+                return
+            }
             @MainActor func say(_ line: String) {
                 if let reply { voice.reply(line, to: reply, in: model) }
             }
@@ -315,6 +327,8 @@ extension AppCoordinator: AskActions {
             case .failed(let error):
                 model.add(.error(error, retryable: false), caption: caption)
                 say(SpokenLine.line(error.message))
+                // Another choice may well work, so the card comes back rather than asking for the drag again.
+                if let returning, model.attachment == nil, model.text.isEmpty, !model.busy, model.pendingQuestion == nil { model.attachment = returning }
             case .newConversation:
                 startFresh(in: model, announce: false)
                 announceFresh(caption: caption ?? String(localized: "New conversation"), in: model)

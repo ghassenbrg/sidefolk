@@ -203,6 +203,8 @@ final class FixtureServices: AppServices {
     func installCommandLineTool() async -> UserFacingError? { nil }
     func openSettings(tab: SettingsTab?) {}
     func openPalette(_ id: String) {}
+    func chooseFilesForCard() {}
+    func fileRingConflict() -> String? { nil }
     func showAbout() {}
     func openGallery() {}
     func openAsk(prefill: String) {}

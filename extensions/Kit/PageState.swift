@@ -31,6 +31,8 @@ public enum PageAct {
     case copy(String)
     /// The system's open panel, then `tool` with the chosen file in `param`, which the manifest declares in that tool's `paths`.
     case file(tool: String, param: String, types: [String], input: [String: Any] = [:])
+    /// The system's open panel, then Sidefolk's own drop card for the files chosen, with your drop offers on it.
+    case dropCard
     /// Sidefolk asks the person, in its own words, to let you have this: `place` or `schedule`.
     case allow(String)
     /// Sidefolk asks the person, in its own words, to share the folder this path is in with Sidefolk. Nothing changes until they say yes.
@@ -47,6 +49,7 @@ public enum PageAct {
         case .go(let go): out["go"] = go.json
         case .copy(let words): out["copy"] = words
         case .file(let tool, let param, let types, let input): out["file"] = ["tool": tool, "param": param, "types": types, "input": input] as [String: Any]
+        case .dropCard: out["drop_card"] = true
         case .allow(let what): out["allow"] = what
         case .share(let path, let write): out["share"] = ["path": path, "write": write] as [String: Any]
         case .settings(let pane): out["settings"] = pane

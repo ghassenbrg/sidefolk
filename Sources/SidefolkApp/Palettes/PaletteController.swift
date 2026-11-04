@@ -42,6 +42,11 @@ final class PaletteController {
         }
     }
 
+    /// After something else's keys changed, which can unregister these.
+    func reclaimShortcuts() {
+        for info in current where registered.contains(info.id) { KeyboardShortcuts.enable(Self.shortcutName(info)) }
+    }
+
     /// Opens or closes the palette; `under` is the menu bar icon's frame when it was opened from its menu.
     func toggle(_ id: String, under: NSRect? = nil) async {
         if let panel, panel.isVisible, model?.info.id == id { return hide() }

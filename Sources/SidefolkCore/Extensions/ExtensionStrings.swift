@@ -48,6 +48,9 @@ public struct ExtensionStrings: Sendable, Hashable {
         public var entries: [String: String] = [:]
         /// Drop actions' words, by id (D100).
         public var drops: [String: Watcher] = [:]
+        /// A drop's menu title, and its menu's details by the choice's title.
+        public var dropMenuTitles: [String: String] = [:]
+        public var dropMenuDetails: [String: [String: String]] = [:]
         /// `permissions.ai`'s purpose (D100).
         public var aiPurpose: String?
         public var placePurpose: String?
@@ -286,10 +289,14 @@ extension ExtensionStrings {
             w.entries[id] = line(value, "\(file).entries.\(id)", max: 40, base: m.allEntries.first { $0.id == id }?.title)
         }
         for (id, value) in object("drops", names: Set(m.drops.map(\.id))) {
-            let f = fields(value, "\(file).drops.\(id)", ["title", "detail"])
+            let f = fields(value, "\(file).drops.\(id)", ["title", "detail", "menu_title", "menu"])
             let drop = m.drops.first { $0.id == id }
             w.drops[id] = Watcher(title: line(f["title"], "\(file).drops.\(id).title", max: 30, base: drop?.title),
                                   description: line(f["detail"], "\(file).drops.\(id).detail", max: 80, base: drop?.detail))
+            w.dropMenuTitles[id] = line(f["menu_title"], "\(file).drops.\(id).menu_title", max: 30, base: drop?.menuTitle)
+            for (title, words) in (f["menu"].map { fields($0, "\(file).drops.\(id).menu", Set(drop?.menu.map(\.title) ?? [])) } ?? [:]) {
+                w.dropMenuDetails[id, default: [:]][title] = line(words, "\(file).drops.\(id).menu.\(title)", max: 80, base: drop?.menu.first { $0.title == title }?.detail)
+            }
         }
         func sentences(_ any: Any?, _ field: String) -> [String] {
             guard let any else { return [] }

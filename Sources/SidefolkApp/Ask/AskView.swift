@@ -145,12 +145,14 @@ struct AskView: View {
                              chooseOffer: { actions.perform($0, choosing: $1, with: attachment, in: model) },
                              openWith: { actions.open(attachment, with: $0, in: model) },
                              removeFile: { model.attachment = nil }, looks: model.extensionLooks,
-                             packPicture: { await actions.packPicture($0, extensionId: $1) })
+                             packPicture: { await actions.packPicture($0, extensionId: $1) },
+                             openGallery: { actions.openGallery() })
                 }
             }
             if let working = model.working {
                 FileWorkingCard(file: working, look: model.extensionLooks[working.extensionId],
-                                packPicture: { await model.actions?.packPicture($0, extensionId: $1) })
+                                packPicture: { await model.actions?.packPicture($0, extensionId: $1) },
+                                stop: { model.actions?.stopWork(working, in: model) })
             }
             if let target = model.replyingTo {
                 HStack(spacing: 6) {

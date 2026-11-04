@@ -31,6 +31,7 @@ struct RichBlockView: View {
         case .heading(let heading): PageHeadingView(heading: heading)
         case .headsUps(let part): PagePlacedHeadsUps(part: part, model: model)
         case .hostControls: HostControls(model: model)
+        case .fileWays: FileWaysPart(services: model.services)
         case .preview(let preview): PagePreviewView(preview: preview, model: model)
         default: EmptyView()
         }
