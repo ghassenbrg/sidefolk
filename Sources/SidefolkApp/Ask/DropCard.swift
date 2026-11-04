@@ -304,8 +304,8 @@ private struct FileOfferCard: View {
         let first = groups.first?.first
         return FrostLoader(path: picturePath) { frost in
             HStack(spacing: Theme.Space.s) {
-                // On Sidefolk's own ground: the person's picture or an empty sheet, never an extension's mark.
-                FileSheet(frost: frost, mark: nil, side: 32)
+                // On Sidefolk's own ground: the person's picture or macOS's icon for the type, never an extension's mark.
+                FileSheetPlain(frost: frost, path: attachment.dropFiles.first ?? "", side: 32)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: names.first ?? "").font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1).truncationMode(.middle)
                     if let size = attachment.dropFiles.first.flatMap(Self.size) {
@@ -346,15 +346,17 @@ private struct FileOfferCard: View {
                     Rectangle().fill(FrostInk.line).frame(height: 1)
                     FrostOfferRow(offer: offer) { chooseOffer(offer, nil) }
                 }
-                ForEach(group.filter { !$0.menu.isEmpty }) { offer in
+                ForEach(group.filter { !$0.menu(forFiles: attachment.dropFiles).isEmpty }) { offer in
                     Rectangle().fill(FrostInk.line).frame(height: 1)
                     Menu {
-                        ForEach(offer.menu, id: \.self) { item in
+                        ForEach(offer.menu(forFiles: attachment.dropFiles), id: \.self) { item in
                             Button { chooseOffer(offer, item) } label: { Text(ext: item.title) }
                         }
                     } label: {
                         HStack(spacing: Theme.Space.xs) {
-                            Text("Another choice", comment: "The drop card: a menu of more things an extension offers").font(Theme.Font.callout).foregroundStyle(FrostInk.text)
+                            Group {
+                                if let title = offer.menuTitle { Text(ext: title) } else { Text("Another choice", comment: "The drop card: a menu of more things an extension offers") }
+                            }.font(Theme.Font.callout).foregroundStyle(FrostInk.text)
                             Image(systemName: "chevron.up.chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(FrostInk.text)
                         }
                     }

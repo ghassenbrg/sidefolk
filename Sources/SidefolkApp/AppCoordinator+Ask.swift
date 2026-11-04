@@ -248,11 +248,18 @@ extension AppCoordinator: AskActions {
     }
 
     /// - Parameter reply: set for a request someone made (typed or spoken), whose answer may be said aloud.
-    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel, reply: ReplyContext? = nil) {
+    /// - Parameter returning: files whose card comes back if this fails.
+    func runLocal(_ intent: LocalIntent, caption: String?, into model: AskModel, reply: ReplyContext? = nil, returning: Attachment? = nil) {
         let runner = LocalIntentRunner(runtime: runtime)
         Task {
             let outcome = await runner.run(intent)
             if case .extensionCommand(let call) = intent, call.handedOver.first == model.working?.path { model.working = nil }
+            if case .extensionCommand(let call) = intent, let stopped = call.handedOver.first, stopped == model.stopped {
+                // The person's own Stop, so no failure to report: only what became of the file.
+                model.stopped = nil
+                model.add(.info(String(localized: "Stopped. Nothing was made, and the original is as it was.", comment: "After Stop on the working card")), caption: caption)
+                return
+            }
             @MainActor func say(_ line: String) {
                 if let reply { voice.reply(line, to: reply, in: model) }
             }
@@ -315,6 +322,8 @@ extension AppCoordinator: AskActions {
             case .failed(let error):
                 model.add(.error(error, retryable: false), caption: caption)
                 say(SpokenLine.line(error.message))
+                // Another choice may well work, so the card comes back rather than asking for the drag again.
+                if let returning, model.attachment == nil { model.attachment = returning }
             case .newConversation:
                 startFresh(in: model, announce: false)
                 announceFresh(caption: caption ?? String(localized: "New conversation"), in: model)

@@ -97,6 +97,8 @@ extension ExtensionPage {
             return .headsUps(HeadsUpsPart(show: (j["show"]?.arrayValue ?? []).prefix(8).compactMap(\.stringValue), more: text(j["more"], 40), less: text(j["less"], 40)))
         case "host_controls":
             return .hostControls
+        case "file_ways":
+            return .fileWays
         case "preview":
             let facts = (j["facts"]?.arrayValue ?? []).prefix(8).compactMap { f -> Fact? in
                 guard let label = text(f["label"], 40), let value = text(f["value"], 120) else { return nil }

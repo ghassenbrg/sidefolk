@@ -210,6 +210,8 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     /// A format's name for the card, and a picture from its pack for a file with none of its own (D150).
     public var tag: String?
     public var mark: String?
+    /// What the card's menu is called, nil for Sidefolk's own words.
+    public var menuTitle: String?
     /// What it reads could leave the Mac: it has the internet; can have your AI or a place search carry its words; uses `media`, whose
     /// certificate service can fetch from an address (SandboxProfile.mediaRules); or can put it on the clipboard or in a folder
     /// named at install, which may sync. The card says so.
@@ -225,7 +227,8 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
     public init(extensionId: String, extensionName: String, key: String, title: String, detail: String? = nil, symbol: String? = nil,
                 kinds: [ExtensionManifest.DropMeta.Kind], patterns: [String] = [], tool: String, input: [String: JSONValue],
                 menu: [ExtensionManifest.DropMeta.MenuItem] = [], pathParameters: Set<String> = [], canSendAway: Bool = false,
-                canSendAwayWithoutInternet: Bool = false, tag: String? = nil, mark: String? = nil) {
+                canSendAwayWithoutInternet: Bool = false, tag: String? = nil, mark: String? = nil, menuTitle: String? = nil) {
+        self.menuTitle = menuTitle
         self.tag = tag
         self.mark = mark
         self.menu = menu
@@ -263,6 +266,13 @@ public struct ExtensionDropAction: Sendable, Hashable, Identifiable {
             subject = value
         }
         return patterns.contains { Self.glob($0, matches: subject) }
+    }
+
+    /// Its menu for these files: a choice is left out only when every file is one it's pointless for, since a mixed batch still needs it.
+    public func menu(forFiles files: [String]) -> [ExtensionManifest.DropMeta.MenuItem] {
+        menu.filter { item in
+            item.skip.isEmpty || !files.allSatisfy { file in item.skip.contains { Self.glob($0, matches: (file as NSString).lastPathComponent) } }
+        }
     }
 
     /// The tool's arguments, with what was dropped in place of `{value}`.

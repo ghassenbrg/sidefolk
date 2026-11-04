@@ -84,7 +84,7 @@ extension AppCoordinator {
                 WorkingFile(path: $0, name: files.count == 1 ? DropChoices.shownName($0) : String(localized: "\(files.count) files", comment: "The drop card: how many files were dropped"),
                             extensionId: action.extensionId, mark: action.mark, showsPicture: !attachment.fromAnotherApp)
             }
-            runLocal(.extensionCommand(call), caption: attachment.caption, into: model)
+            runLocal(.extensionCommand(call), caption: attachment.caption, into: model, returning: attachment)
             return
         }
         // Its own tool, as one of its sentences would run it: Guard asks as it always does, and the address counts as typed.

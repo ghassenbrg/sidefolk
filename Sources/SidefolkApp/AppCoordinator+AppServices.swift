@@ -329,6 +329,7 @@ extension AppCoordinator: AppServices {
         updater.settingsChanged()
         addonUpdater.settingsChanged()
         applyCardKeys()
+        fileRing.apply(s.fileRing)
     }
 
     /// Light or dark for every window, or nil to follow the Mac. Theme's colours follow it.

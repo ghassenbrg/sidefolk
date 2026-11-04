@@ -75,6 +75,8 @@ def manifest_words(folder):
     # What Sidefolk D100 added: drops, entries and their items, settings and their choices, the AI's purpose, named commands.
     for d in m.get("drops", []):
         paths += [("drops", d["id"], "title")] + ([("drops", d["id"], "detail")] if d.get("detail") else [])
+        paths += [("drops", d["id"], "menu_title")] if d.get("menu_title") else []
+        paths += [("drops", d["id"], "menu", i["title"]) for i in d.get("menu", []) if i.get("detail")]
 
     def entries(items):
         for e in items:

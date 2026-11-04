@@ -440,7 +440,7 @@ struct SectionView: View {
                 out.append(.hero(h))
             case .transport(let t):
                 out.append(.transport(t))
-            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .heading, .headsUps, .hostControls, .preview:
+            case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .heading, .headsUps, .hostControls, .fileWays, .preview:
                 out.append(.rich(block))
             case .control(let c) where c.fill:
                 out.append(.wideButton(c))
@@ -470,7 +470,7 @@ private struct BlockView: View {
         case .bars(let b): BarsCard(bars: b, model: model)
         case .facts(let f): FactsCard(facts: f)
         case .note(let n): NoteView(note: n)
-        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .metric, .heading, .headsUps, .hostControls, .preview: EmptyView()
+        case .ask, .control, .choice, .field, .list, .hero, .transport, .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .metric, .heading, .headsUps, .hostControls, .fileWays, .preview: EmptyView()
         }
     }
 }

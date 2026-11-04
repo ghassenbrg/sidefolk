@@ -150,7 +150,8 @@ struct AskView: View {
             }
             if let working = model.working {
                 FileWorkingCard(file: working, look: model.extensionLooks[working.extensionId],
-                                packPicture: { await model.actions?.packPicture($0, extensionId: $1) })
+                                packPicture: { await model.actions?.packPicture($0, extensionId: $1) },
+                                stop: { model.actions?.stopWork(working, in: model) })
             }
             if let target = model.replyingTo {
                 HStack(spacing: 6) {

@@ -171,6 +171,8 @@ public struct ExtensionPage: Sendable, Hashable {
         case headsUps(HeadsUpsPart)
         /// Sidefolk's own controls for this extension (its palettes' shortcuts, what it needs from macOS), placed here rather than on top.
         case hostControls
+        /// Sidefolk's own ways to hand files over: the ring's switch and keys, and Finder's right-click.
+        case fileWays
         /// One thing shown whole.
         case preview(Preview)
     }

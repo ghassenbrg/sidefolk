@@ -166,6 +166,8 @@ protocol AskActions: AnyObject {
     /// A picture from an extension's pack, checked as any of its pictures is (D150).
     func packPicture(_ path: String, extensionId: String) async -> NSImage?
     func perform(_ action: ExtensionDropAction, choosing item: ExtensionManifest.DropMeta.MenuItem?, with attachment: Attachment, in model: AskModel)
+    /// The working card's Stop.
+    func stopWork(_ file: WorkingFile, in model: AskModel)
     /// The drop card's Open with…: the dropped file in the app the person picked.
     func open(_ attachment: Attachment, with app: URL, in model: AskModel)
     func retry(_ text: String, in model: AskModel)
@@ -224,6 +226,8 @@ final class AskModel {
     var busy = false
     /// A file an extension is working on right now, from a choice on the drop card (D150).
     var working: WorkingFile?
+    /// The person pressed Stop on the work on this file, so its failing isn't news.
+    var stopped: String?
     var phase: String?
     /// Set while the person talks; the input is theirs again once it is nil.
     var voice: VoiceInput?

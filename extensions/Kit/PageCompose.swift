@@ -118,6 +118,9 @@ extension Block {
     /// Sidefolk's own controls for you (your palettes' shortcuts, what you need from macOS), here rather than on top.
     public static var hostControls: Block { .part(Raw(json: ["type": "host_controls"])) }
 
+    /// Sidefolk's own ways to hand files to your drop offers: the ring's switch and keys, and Finder's right-click (D152).
+    public static var fileWays: Block { .part(Raw(json: ["type": "file_ways"])) }
+
     /// A note with a symbol: `.band` on a soft band, `.plain` with nothing behind it, `.verdict` on a tile with strong words. `link`: a quiet button after its words.
     public enum NoteStyle: String { case band, plain, verdict }
     public static func note(_ text: String, tone: Tone = .neutral, symbol: String?, style: NoteStyle = .band, link: Action? = nil) -> Block {

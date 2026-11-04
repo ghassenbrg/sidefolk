@@ -9,6 +9,8 @@ public enum PageAct: Sendable, Hashable {
     case copy(String)
     /// The system's open panel, then a tool of its own with the file the person chose.
     case file(PageFileAsk)
+    /// The system's open panel, then Sidefolk's own drop card for what was chosen: the person picks there, as for a drop.
+    case dropCard
     /// Asks the person, in Sidefolk's words, to let this extension have something (D106, D107).
     case allow(PageConsent)
     /// Asks the person, in Sidefolk's words, to share the folder a path is in with Sidefolk (D180).
@@ -25,6 +27,7 @@ public enum PageAct: Sendable, Hashable {
         if let go = PageGo.parse(j["go"]) { return .go(go) }
         if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(60_000))) }
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
+        if j["drop_card"]?.boolValue == true { return .dropCard }
         if let consent = j["allow"]?.stringValue.flatMap(PageConsent.init(rawValue:)) { return .allow(consent) }
         if let share = PageShareAsk.parse(j["share"]) { return .share(share) }
         if let pane = j["settings"]?.stringValue.flatMap(PageSettingsPane.init(rawValue:)) { return .settings(pane) }

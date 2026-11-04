@@ -750,11 +750,17 @@ final class CompanionWindowController {
 
     // MARK: Pointer (click-through + gaze)
 
+    private var dragCountAtPress = NSPasteboard(name: .drag).changeCount
+
     private func startMonitors() {
         guard monitors.isEmpty else { return }
         if let global = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged], handler: { [weak self] _ in
             MainActor.assumeIsolated { self?.pointerMoved(NSEvent.mouseLocation) }
         }) { monitors.append(global) }
+        // Only its change count, which says nothing of what's being dragged: so the next move knows a drag has started.
+        if let press = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown, handler: { [weak self] _ in
+            MainActor.assumeIsolated { self?.dragCountAtPress = NSPasteboard(name: .drag).changeCount }
+        }) { monitors.append(press) }
         if let local = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged], handler: { [weak self] e in
             MainActor.assumeIsolated { self?.pointerMoved(NSEvent.mouseLocation) }
             return e
@@ -772,6 +778,8 @@ final class CompanionWindowController {
         // tested when the pointer is inside the character's box, and the flag only written on change.
         var ignore = !container.isDraggingFile
         if frame.insetBy(dx: -4, dy: -4).contains(p) {
+            // A drag in another app: all of the companion's corner takes it, not just its outline, which is a small target to hit while carrying something.
+            if NSEvent.pressedMouseButtons & 1 != 0, NSPasteboard(name: .drag).changeCount != dragCountAtPress { ignore = false }
             let local = container.convert(panel.convertPoint(fromScreen: p), from: nil)
             let onBadge = badge(at: local)
             if onBadge != badgeHovered {

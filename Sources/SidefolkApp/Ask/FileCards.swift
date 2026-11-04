@@ -7,6 +7,7 @@ struct FileWorkingCard: View {
     var file: WorkingFile
     var look: ExtensionLook?
     var packPicture: (String, String) async -> NSImage?
+    var stop: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var still
     @State private var moving = false
 
@@ -27,12 +28,16 @@ struct FileWorkingCard: View {
                         .font(Theme.Font.bodyStrong).foregroundStyle(FrostInk.text).lineLimit(1).truncationMode(.middle)
                     bar
                 }
+                Button(action: stop) { Text("Stop", comment: "The working card: ends an extension's work on a file").font(Theme.Font.callout.weight(.semibold)).foregroundStyle(FrostInk.text) }
+                    .buttonStyle(.sfBare)
+                    .padding(.horizontal, Theme.Space.s).padding(.vertical, 4)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous).stroke(.white.opacity(0.4), lineWidth: 1))
             }
             .padding(Theme.Space.m)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(FrostGround(frost: frost, radius: Theme.Radius.panel))
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 
     /// How far along isn't known, so it moves without saying.

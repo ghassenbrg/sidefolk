@@ -288,6 +288,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var voice = VoiceSettings()
     /// Looking for a newer Sidefolk and asking before installing it (D46).
     public var updates = UpdateSettings()
+    /// The ring of what a file can become (D152). Off until the person turns it on, since it watches every drag.
+    public var fileRing = FileRingSettings()
     /// Where the person is, when they share it (D48).
     public var location = LocationSettings()
     /// What other agents may do through `sidefolk mcp` (D52).
@@ -357,6 +359,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         read(.onboardingDone, &onboardingDone)
         read(.voice, &voice)
         read(.updates, &updates)
+        read(.fileRing, &fileRing)
         read(.location, &location)
         read(.agentAccess, &agentAccess)
         read(.homePages, &homePages)

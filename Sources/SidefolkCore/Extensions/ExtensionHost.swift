@@ -1491,6 +1491,12 @@ public actor ExtensionHost {
         if let client { await client.shutdown() }
     }
 
+    /// The person stopped what it was doing: its program ends now, and the next use starts it again. A call still going fails, and what it
+    /// made stays in its own data folder, since Sidefolk saves a result only from a finished call (D140).
+    public func stopWork(extensionId id: String) async {
+        await stop(id)
+    }
+
     private func stop(_ id: String) async {
         let generation = runtimes[id]?.generation
         let client = runtimes[id]?.client
