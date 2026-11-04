@@ -19,10 +19,11 @@ import Testing
         let pipes: MCPPipes
         private let nextId = BridgeRecorder(10)
 
-        init(client: String = "codex-mcp-client") async throws {
+        /// `clock` is for a test that reads "today": on the real clock, a run across midnight moves the day under it.
+        init(client: String = "codex-mcp-client", clock: any Clock = SystemClock()) async throws {
             dir = try ShortTempDir()
             runtime = await SidefolkRuntime(paths: SidefolkPaths(home: URL(fileURLWithPath: dir.path)), db: try AppDatabase.inMemory(),
-                                            platform: NullPlatform())
+                                            platform: NullPlatform(), clock: clock)
             try await runtime.start()
             pipes = MCPPipes(connector: SocketConnector(socketPath: runtime.paths.socket.path))
             _ = try await pipes.request(1, "initialize", ["protocolVersion": "2025-06-18", "clientInfo": ["name": .string(client)]])
@@ -464,9 +465,10 @@ import Testing
 
     /// "what's on my plate today": one card, then today's reminders and open tasks.
     @Test func whatsOnMyPlateAsksOnce() async throws {
-        let s = try await Stack()
-        _ = try await s.runtime.scheduler.create(title: "Dentist", at: Date().addingTimeInterval(60), source: "user")
-        _ = try await s.runtime.scheduler.create(title: "File taxes", at: Date().addingTimeInterval(3 * 86400), source: "user")
+        let clock = ManualClock(TestEnv.referenceDate)
+        let s = try await Stack(clock: clock)
+        _ = try await s.runtime.scheduler.create(title: "Dentist", at: clock.now.addingTimeInterval(60), source: "user")
+        _ = try await s.runtime.scheduler.create(title: "File taxes", at: clock.now.addingTimeInterval(3 * 86400), source: "user")
         let inbox = try await s.runtime.notebook.inbox()
         try await s.runtime.notebook.add(NotebookItem(collectionId: inbox.id, kind: .task, title: "Renew passport", source: "user"))
 
