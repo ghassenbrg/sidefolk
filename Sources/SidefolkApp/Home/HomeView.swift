@@ -6,6 +6,7 @@ import SwiftUI
 struct HomeView: View {
     @Bindable var model: HomeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.layoutDirection) private var layoutDirection
     @State private var sayFocus = 0
     @State private var detailWidth: CGFloat = 1000
     /// Folded while a page that takes the window shows (D126), and back as the person had it after.
@@ -29,8 +30,9 @@ struct HomeView: View {
                             focusChanged: { model.saying = $0 },
                             onEscape: { model.find.query = "" })
                     // The toolbar gives its centre item only its least width: the bar takes what the page leaves beside the
-                    // place's title and the New menu, at most 560.
-                    .frame(width: min(Theme.Size.sayBarHomeMaxWidth, max(200, detailWidth - (detailWidth >= 720 ? 420 : 180))))
+                    // place's title and the New menu, at most 560. The toolbar centres it on the page, and right to left the
+                    // window's buttons share New's side: a bar that leaves too little sits under New or sends it into the overflow.
+                    .frame(width: min(Theme.Size.sayBarHomeMaxWidth, max(200, detailWidth - sayBarMargin)))
             }
             ToolbarItem(placement: .primaryAction) {
                 // Everything Home can start, in one place (D58).
@@ -46,20 +48,21 @@ struct HomeView: View {
                     }
                 } label: {
                     // Its own chip, like the Say bar: the toolbar sits on the theme's picture, whatever the picture has there.
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus").font(.system(size: 13, weight: .semibold))
-                        Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+                    HStack(spacing: 5) {
+                        Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
+                        Text("New").font(Theme.Font.bodyStrong)
                     }
                     .foregroundStyle(Theme.ink)
-                    .padding(.horizontal, 12)
-                    .frame(height: 32)
-                    .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 16, style: .circular))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .circular).strokeBorder(Theme.controlBorder))
-                    .contentShape(RoundedRectangle(cornerRadius: 16, style: .circular))
+                    .padding(.horizontal, Theme.Space.m)
+                    .frame(height: Theme.Size.buttonLarge - 2)
+                    .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.controlBorder))
+                    .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                 }
                 .menuStyle(.button)
                 .buttonStyle(.sfBare)
                 .menuIndicator(.hidden)
+                .fixedSize()
                 .accessibilityLabel("New")
                 .help("New note, reminder, watch or collection")
             }
@@ -104,18 +107,18 @@ struct HomeView: View {
         }
     }
 
-    /// A page with rounded corners under the toolbar: one sheet set into its frame, with the corner the cards use (D130). Today with a scene has the picture there instead, and a translucent sidebar has no colour to match.
+    /// A theme with a picture keeps that sky behind the toolbar on every page, the page's rounded corners set into it (D130). Today has the picture
+    /// there instead. Without a picture the page simply runs up under the toolbar (D220).
     private var framesPage: Bool {
         let tokens = ThemeStore.shared.style.tokens
-        return tokens.material.sidebar == .solid && !((model.selection ?? .now) == .now && tokens.material.scene)
+        return tokens.material.scene && tokens.material.sidebar == .solid && (model.selection ?? .now) != .now
     }
 
     private var pageFrame: some View {
-        // The theme's sky stays behind the toolbar on every page, so the window reads as one place; without a scene, the
-        // sidebar's colour.
+        // The theme's sky stays behind the toolbar on every page, so the window reads as one place.
         ZStack(alignment: .top) {
             Theme.sidebar
-            if ThemeStore.shared.style.tokens.material.scene { ThemeScene() }
+            ThemeScene()
         }
         .frame(height: PageFrameShape.top + PageFrameShape.radius, alignment: .top)
         .clipped()
@@ -151,6 +154,12 @@ struct HomeView: View {
             // Where the toolbar ends, for the places' own titles (`homePageTitle`).
             .environment(model.pages)
             .environment(model.title)
+    }
+
+    /// What the Say bar leaves of the page's width.
+    private var sayBarMargin: CGFloat {
+        let rightToLeft = layoutDirection == .rightToLeft
+        return detailWidth >= 720 ? (rightToLeft ? 510 : 460) : (rightToLeft ? 360 : 220)
     }
 
     private var showsPanel: Bool { !model.find.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }

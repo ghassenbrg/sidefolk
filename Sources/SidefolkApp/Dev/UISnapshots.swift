@@ -414,6 +414,11 @@ enum UISnapshots {
             let fullAccessEnds = Calendar.current.date(bySettingHour: 22, minute: 0, second: 0, of: Date()) ?? Date()
             await settings.setPolicy { $0.choose(.fullAccess, fullAccessEnds: fullAccessEnds); $0.unanswered = UnansweredRule(action: .stop, minutes: 30) }
             try await page("page-settings-trust-full-access", SettingsTabContent(tab: .trust, model: settings), width: width)
+            // The other modes, for the example each keeps open while it's the one chosen (D220).
+            for (name, mode) in [("ask-every-time", GuardMode.askEveryTime), ("auto", GuardMode.auto)] {
+                await settings.setPolicy { $0.choose(mode) }
+                try await page("page-settings-trust-\(name)", SettingsTabContent(tab: .trust, model: settings), width: width)
+            }
             await settings.setPolicy { $0 = policy }
             // What Full access means, and when it ends (D84).
             try await page("sheet-full-access", FullAccessSheet(model: settings), width: Theme.Size.sheet + 40)

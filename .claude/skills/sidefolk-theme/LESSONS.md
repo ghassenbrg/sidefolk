@@ -55,6 +55,8 @@ reason. Newest first within a section; delete a lesson when it stops being true.
   Sidefolk's fields use `.fieldHint`, in `inkFaint`. Measure the rendered pixels; reading the code said this was fine.
 - **Hide a drawn hint from VoiceOver only if the field still says it.** Test in the tree: `swift scripts/dev.swift ax` now shows
   SwiftUI's fields, and it caught a search bar with no name at all.
+- **Ask what a snapshot did before believing it.** A review of the default theme found the Calendar opening at midnight. The app
+  was fine: the snapshot tool scrolled every page to the top. Set `SIDEFOLK_RESOURCES`, too, or the default renders with no art.
 - **Look in a real window.** Snapshots draw an inactive window, so they hid macOS's blue selection and made toolbar icons
   look disabled. Run the debug app (`swift scripts/dev.swift snap`) at least once.
 - **Render right to left and a long language every time.** Arabic showed a scene that didn't mirror, with the art under the
