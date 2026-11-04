@@ -533,4 +533,13 @@ import Testing
         let source = try h.source("bad", manifest: ExtFixtures.manifest(id: "dev.test.bad", tools: ["make": ["outputs": ["txt"]]]))
         #expect(!ExtensionValidator.validate(at: source, paths: h.paths).isValid)
     }
+
+    @Test func aDoubleEndingIsOneEndingForAResultsName() {
+        #expect(ExtensionOutputs.follows(name: "pack.zip", source: "/x/pack.tar.gz"))
+        #expect(ExtensionOutputs.follows(name: "pack.tar", source: "/x/pack.tar.xz"))
+        #expect(ExtensionOutputs.follows(name: "Trip to Tunis.7z", source: "/x/Trip to Tunis.TAR.BZ2"))
+        #expect(!ExtensionOutputs.follows(name: "other.zip", source: "/x/pack.tar.gz"))
+        #expect(!ExtensionOutputs.follows(name: "package.zip", source: "/x/pack.tar.gz"), "a whole word")
+        #expect(ExtensionOutputs.follows(name: "a.png", source: "/x/a.heic"), "as before")
+    }
 }
