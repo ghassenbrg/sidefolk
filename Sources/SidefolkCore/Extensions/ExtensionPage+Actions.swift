@@ -108,7 +108,7 @@ public struct PageShareAsk: Sendable, Hashable {
 
 public enum PageConsent: String, Sendable, Hashable { case place, schedule }
 
-public enum PageSettingsPane: String, Sendable, Hashable { case notifications, attention, place }
+public enum PageSettingsPane: String, Sendable, Hashable { case notifications, attention, place, addons }
 
 /// A page's state while Home is open (D105): what it was told to remember, and the states Back returns to. The program gets it with
 /// each reading and keeps nothing of it, so it holds what is on screen (a tab, a draft), never anything that must last.

@@ -27,8 +27,12 @@ import Foundation
         public var readsOnly: Bool
         /// The last part of the id of the extension it comes from; nil for Sidefolk's own.
         public var extensionName: String?
+        /// That extension's own name, or the MCP server's.
+        public var extensionTitle: String?
+        /// It comes from an MCP server the person added.
+        public var fromServer: Bool
 
-        public init(name: String, title: String, description: String = "", schema: String = "{}", risk: String = "medium", mutates: Bool = true, category: String = "", readsOnly: Bool = false, extensionName: String? = nil) {
+        public init(name: String, title: String, description: String = "", schema: String = "{}", risk: String = "medium", mutates: Bool = true, category: String = "", readsOnly: Bool = false, extensionName: String? = nil, extensionTitle: String? = nil, fromServer: Bool = false) {
             self.name = name
             self.title = title
             self.description = description
@@ -38,6 +42,8 @@ import Foundation
             self.category = category
             self.readsOnly = readsOnly
             self.extensionName = extensionName
+            self.extensionTitle = extensionTitle
+            self.fromServer = fromServer
         }
     }
 
@@ -99,6 +105,8 @@ import Foundation
             case lost
             /// Too many calls this minute. Nothing happened: try again in a minute.
             case busy
+            /// The tool isn't here now: its extension is off or gone, its server removed. Nothing happened.
+            case unavailable
         }
 
         public var status: Status
@@ -181,7 +189,8 @@ import Foundation
             let schema = (try? JSONSerialization.data(withJSONObject: t["schema"] ?? [:], options: [.sortedKeys])).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
             return Tool(name: name, title: t["title"] as? String ?? name, description: t["description"] as? String ?? "", schema: schema,
                         risk: t["risk"] as? String ?? "medium", mutates: t["mutates"] as? Bool ?? true, category: t["category"] as? String ?? "",
-                        readsOnly: t["reads_only"] as? Bool ?? false, extensionName: t["extension"] as? String)
+                        readsOnly: t["reads_only"] as? Bool ?? false, extensionName: t["extension"] as? String,
+                        extensionTitle: t["extension_title"] as? String, fromServer: t["from_server"] as? Bool ?? false)
         }
         let plans = (args.values["plans"] as? [[String: Any]] ?? []).compactMap { p -> Plans.Standing? in
             guard let id = p["id"] as? String else { return nil }

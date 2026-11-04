@@ -48,6 +48,11 @@ extension ExtensionHost {
                 return
             }
             runtimes[id]?.actionCalls = recent + [now]
+            // Nothing to call: an extension off or removed, a server gone. The caller may wait for it, which it can't if this reads as a no.
+            guard gateway.tool(named: tool, for: id) != nil else {
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "unavailable", "text": "That tool isn't here now."])
+                return
+            }
             // A job uses the person's AI: only with leave to, and it counts toward the same day's cap.
             if tool == CompanionJobTool.name, let why = await spendOnAI(id) {
                 await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "denied", "text": .string(why)])
@@ -145,6 +150,11 @@ extension ExtensionHost {
         var out: [String: JSONValue] = ["reads_only": .bool(ExtensionActionPolicy.readsOnly(tool)), "name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description), "schema": spec.inputSchema,
                                         "risk": .string(spec.risk.rawValue), "mutates": .bool(spec.mutates), "category": .string(spec.category.rawValue)]
         if spec.name.hasPrefix("ext.") { out["extension"] = .string(String(spec.name.dropFirst(4).prefix { $0 != "." })) }
+        // Who offers it, in that extension's or server's own words: for the person, so a caller can name what it's missing.
+        if let from = ((tool as? ExternalFacade)?.base ?? tool) as? ExtensionTool {
+            out["extension_title"] = .string(from.extensionName)
+            if from.extensionId.hasPrefix("mcp.") { out["from_server"] = true }
+        }
         return .object(out)
     }
 
