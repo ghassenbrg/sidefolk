@@ -56,11 +56,13 @@ carries `untrusted`; a list or read that quotes anyone else's words sets it (`re
 `watch.*` when a title isn't user-sourced, notes, and `collections.list`, `notes.*` when a quoted
 collection name isn't). Taint is sticky for the turn (or routine run) and
 set only by code. While tainted, all medium/high calls ask (grants ignored), and so do clipboard
-writes and memory/skill/routine creation. Auto changes none of this; Full access still asks, in a
-tainted turn, for every call that could carry data out (network or open at an untyped address,
-commands, file changes, extension and MCP tools, clipboard and memory writes) and lets the rest run
-(D37). A tainted card for a step that can carry nothing out (not high risk, nothing to read in full)
-offers "Allow for this request" instead of "Always": that tool runs without a card until the run ends. Network and open calls ask (medium) whenever their
+writes and memory/skill/routine creation. After D185: Auto asks, in a tainted turn, for every call that
+could carry data out (network or open at an untyped address, commands, file changes outside a folder shared
+with write access, extension and MCP tools, calendar writes, clipboard and memory writes) and for high risk,
+and runs the rest; Full access asks only for text to read in full, by the person's choice (T48). A tainted
+card for a step that can carry nothing out (not high risk, nothing to read in full), or for an extension's own
+tool that runs no program and names no address or service, offers "Allow for this request" instead of
+"Always": that tool runs without a card until the run ends. Network and open calls ask (medium) whenever their
 normalized URL is not in the user's message for this run, tainted or not; a typed URL runs even
 while tainted, and opening a site the user named runs in a clean turn (`UserMentions`: scheme,
 `www.`, default port and a trailing slash don't matter; query and fragment do). Addresses on this
@@ -76,7 +78,7 @@ elsewhere: `ToolContext.site`), and a call whose destination Sidefolk's own code
 signed manifest names their `services` (D98: only packs Sidefolk signed, origin `official`; anyone else's list is shown
 as their word and changes nothing here; a test checks every address in those programs against the list). Those grants come
 from a clean turn or from Settings: "Always" is still never offered after outside content, and without a
-grant these ask as before, in Full access too. A metric report reaches no network at all
+grant these ask as before, except in Full access (D185, T48). A metric report reaches no network at all
 (`NetworkReach.nowhere`). A new site, a query on any site, a watcher, an open, someone else's network
 extension or MCP server ask as above. The person's internet rule: *Ask each time* (no grants, no "Always",
 and no mode answers for an internet call; even a weather report asks), *Ask once for each site* (the
@@ -1136,13 +1138,13 @@ read its own script *(verified)*. This exact profile ran python3 (Homebrew), nod
 16. **The calendar's changes (T34, D97, `CalendarWriteTests`):** nothing is written until the person allows
     changes; an event with attendees, a read-only calendar and a calendar that can't take changes are refused;
     create, update and delete each undo (a deleted event comes back with its alerts) and each is in History; the AI
-    is offered the write tools only once changes are allowed; a tainted turn in Full access still asks; hidden
+    is offered the write tools only once changes are allowed; a tainted turn in Auto still asks, and Full access runs it (D185); hidden
     calendars are left out of every read.
 16. **Crashes and fail-closed (T29):** huge numbers typed, sent by another agent or stored in a row never trap;
     a stopped task's call is refused with every capability still off and nothing done, and is in Activity; a
     policy that can't be read is never replaced by the default; a seeded fuzz of the time and report syntax
-    (`NewSyntaxFuzzTests`). End to end (`Tests/SidefolkCoreTests/E2E`): Full access against a page that tries
-    every way out, an AI-built extension in a tainted turn, a skipped Notes copy run later from Now.
+    (`NewSyntaxFuzzTests`). End to end (`Tests/SidefolkCoreTests/E2E`): Auto against a page that tries
+    every way out (each waits), and Full access against the same page (only a skill waits, D185), an AI-built extension in a tainted turn, a skipped Notes copy run later from Now.
 17. **Extension commands (T32):** `ExtensionCommandTests`: sentences that could swallow words are refused, slots
     are checked after matching, core intents win, two extensions claiming one sentence go to the AI, a network
     tool asks and honours the AI's grant, "Ask each time" holds, a command can't draft extensions, an `"ai":
@@ -1211,6 +1213,7 @@ The budget bounds that to about nine characters per yes, then the person is aske
 
 *Residual:* a source already named `CLAUDE.txt` still allows `CLAUDE.md`. A saved file is the program's content under an honest name, and could still be false or exploit a bug in whatever opens it, as with any download. Hence the quarantine mark, and D142's short list of what Open may launch. A program may keep its own copy if removing the data file fails.
 
+**T48 Full access and Auto after outside content (H/H), D185.** The person chose these modes knowing a page can steer a model; the risk is theirs, said on the sheet in plain words, and this is what it is. *Attackers considered:* a web page, file, extension or MCP answer whose text steers Sidefolk's own agent in a turn that read it; a model's own mistake. *In Full access* nothing asks after outside content except text to read in full (saving a skill, because it outlasts the mode); so a steered turn can do everything the mode does without a card, within what stays closed: capabilities the person switched off, protected places (T10, which also refuses hidden files and folders, other users' homes and everything outside the home for this mode), command watchers from a turn that read outside content, and the internet's "Ask each time" if chosen. *In Auto,* after outside content, what could carry data out still asks (an address the person didn't type, a program, an extension or MCP tool, the clipboard, memory, the calendar) as does high risk and any folder not shared; a change to files inside a folder shared with write access, and a medium step that stays on the Mac, now run. *Held:* only the person's own click turns Full access on (no tool, other agent, extension, routine or plan can change Guard's policy: tests scan for it); other agents, extensions and routines never get a mode, nor Full access's folders; every call is in Activity with its decision; Undo and the Trash stay; turning it off, by banner, Pocket or expiry, returns to the mode it replaced. *Residual:* in Full access a steered turn can send what the context holds to an address of its choosing, run commands and programs, move or trash files in the home, write the clipboard and the calendar, and use extensions and MCP servers, with the person told only by Activity, the red chip, the orange icon and the bubble; in Auto after outside content it can change or move files between shared folders (one may sync to a service), copy notes from Apple Notes into the notebook and write the notebook, with a card still standing before anything carried off the Mac. A skill saved in a mode that asked about it still outlasts that mode. A `companion.job` a flow starts runs under the person's mode, so in Full access its turn finishes alone (T44).
 **T43 Pages that act without tools, places and planned moments (M/M), D105, D106, D107, D108.** New reach, each held by something the program can't touch:
 - *`go`* only changes state the host keeps for that open page, 4 KB at most, and asks for another reading; nothing else happens, and nothing is in History because nothing was done.
 - *`copy`* runs `clipboard.write` as the person: the capability switch applies, History and the page show the exact words, and it hangs only on a button with a label, never a scene's area, so a command can't be planted for pasting behind nothing (T12).
