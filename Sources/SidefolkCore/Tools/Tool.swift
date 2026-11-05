@@ -220,6 +220,12 @@ public struct UndoAction: Sendable {
     }
 }
 
+/// How far along a call is, for whoever made it, if they're following. A task-local, because nothing between the caller and the extension's program has any business with it.
+public enum ToolProgress {
+    public typealias Report = @Sendable (_ progress: Double?, _ total: Double?, _ message: String?) -> Void
+    @TaskLocal public static var report: Report?
+}
+
 public struct ToolResult: Sendable {
     /// What the model reads.
     public var text: String

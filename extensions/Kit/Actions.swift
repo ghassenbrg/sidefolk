@@ -171,8 +171,15 @@ import Foundation
 
     /// Runs a tool and waits for what came of it. A card waits at most two minutes. `written`: the call before you filled words in, `{{name}}` where
     /// they went, for History to keep instead of them (only where a plan may leave words open; Sidefolk checks it fits).
-    public static func call(_ tool: String, _ input: [String: Any] = [:], plan: String? = nil, written: [String: Any]? = nil, seconds: Double = 300) async -> Outcome {
+    /// - Parameters:
+    ///   - request: hands you this call's id as it starts, for `cancel`.
+    ///   - progress: how far along it is, when the tool says: at most once a second, and the tool's own words.
+    public static func call(_ tool: String, _ input: [String: Any] = [:], plan: String? = nil, written: [String: Any]? = nil, seconds: Double = 300,
+                            request: ((String) -> Void)? = nil, progress: ((Progress) -> Void)? = nil) async -> Outcome {
         let id = UUID().uuidString
+        request?(id)
+        following[id] = progress
+        defer { following[id] = nil }
         var params: [String: Any] = ["request": id, "tool": tool, "input": input, "timeout": seconds]
         if let plan { params["plan"] = plan }
         if let written { params["written"] = written }
@@ -185,6 +192,31 @@ import Foundation
                 calls.removeValue(forKey: id)?.resume(returning: Outcome(status: .lost, text: "", summary: "", untrusted: false, standing: false))
             }
         }
+    }
+
+    /// How far along a call is. `fraction` is nil if it can't say.
+    public struct Progress: Sendable, Hashable {
+        public var fraction: Double?
+        public var message: String?
+
+        public init(fraction: Double? = nil, message: String? = nil) {
+            self.fraction = fraction
+            self.message = message
+        }
+    }
+
+    /// Asks Sidefolk to stop a call under way. A card still up goes away and nothing happens. Past that the tool is told, and may or may not stop: the answer comes back as for any call.
+    public static func cancel(_ request: String) {
+        ExtensionServices.send?("sidefolk/tools.cancel", ["request": request])
+    }
+
+    private static var following: [String: (Progress) -> Void] = [:]
+
+    static func receiveProgress(_ args: Arguments) {
+        guard let id = args.string("request"), let report = following[id] else { return }
+        let done = args.double("progress"), total = args.double("total")
+        let fraction = total.flatMap { t in t > 0 ? done.map { min(max($0 / t, 0), 1) } : nil }
+        report(Progress(fraction: fraction, message: args.string("message")))
     }
 
     static func receiveListing(_ args: Arguments) {

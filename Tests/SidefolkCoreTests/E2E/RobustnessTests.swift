@@ -39,6 +39,7 @@ import Testing
         await world.env.broker.resolve(id: try #require(card).id, decision: .allowOnce)
         let logged = try await world.activity()
         #expect(logged.map(\.tool) == ["clipboard.read"] && logged.first?.decision == .denied, "Activity still shows the step that never ran")
+        #expect(logged.first?.error?.contains("You said no") == false, "nobody answered it")
         #expect(try await AgentRunStore(world.env.db).recent().first?.outcome == "cancelled")
     }
 
