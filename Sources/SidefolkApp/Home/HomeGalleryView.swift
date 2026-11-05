@@ -196,7 +196,8 @@ private struct CompanionGalleryCard: View {
 
     private var meta: String {
         let looks = entry.looks.contains(.twoD) ? "3D · 2D" : "3D"
-        return "\(looks) · \(ByteCountFormatter.string(fromByteCount: entry.bytes, countStyle: .file)) · " + String(localized: "by \(entry.author)", comment: "Who made an add-on")
+        // Each part isolated, or right to left a size splits from its unit and the parts change places.
+        return "\u{2068}\(looks)\u{2069} · \u{2068}\(ByteCountFormatter.string(fromByteCount: entry.bytes, countStyle: .file))\u{2069} · " + String(localized: "by \(entry.author)", comment: "Who made an add-on")
     }
 
     private func badge(_ text: Text) -> some View {

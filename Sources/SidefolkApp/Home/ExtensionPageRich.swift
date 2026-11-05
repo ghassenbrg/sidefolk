@@ -74,16 +74,25 @@ struct PagePictureView: View {
 struct PageSceneHero: View {
     var hero: ExtensionPage.Hero
     var model: ExtensionPageModel
+    @State private var width: CGFloat = 0
+    @State private var wordsWidth: CGFloat = 0
+
+    /// The scene gives way before it reaches the words, and shows whole then rather than cropped; its fade may pass under them.
+    private var sceneWidth: CGFloat {
+        guard width > 0 else { return 420 }
+        return min(420, max(0, width - wordsWidth + 60))
+    }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Theme.surfaceRaised
             if let wash { LinearGradient(colors: [wash.first ?? .clear, wash.last ?? .clear], startPoint: .top, endPoint: .bottom) }
-            if let scene = hero.scene {
+            // Too little room leaves no picture rather than a faint thumbnail.
+            if let scene = hero.scene, sceneWidth >= 120 {
                 HStack(spacing: 0) {
                     Spacer(minLength: 0)
-                    PagePictureView(picture: scene, model: model, side: 840)
-                        .frame(width: 420, height: 230, alignment: .bottom).clipped()
+                    PagePictureView(picture: scene, model: model, side: 840, fill: sceneWidth >= 420)
+                        .frame(width: sceneWidth, height: 230, alignment: .bottomTrailing).clipped()
                         .mask(LinearGradient(colors: [.clear, .black, .black], startPoint: .leading, endPoint: .trailing)
                             .environment(\.layoutDirection, .leftToRight).flipsForRightToLeftLayoutDirection(true))
                 }
@@ -115,6 +124,7 @@ struct PageSceneHero: View {
                     }
                 }
                 .padding(Theme.Space.xl)
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { wordsWidth = $0 }
                 Spacer(minLength: 0)
                 if let figure = hero.figure {
                     VStack(alignment: .trailing, spacing: 0) {
@@ -141,6 +151,7 @@ struct PageSceneHero: View {
             }
         }
         .frame(minHeight: 230)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
         .elevation(.e1, radius: Theme.Radius.panel)
     }

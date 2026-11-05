@@ -86,7 +86,7 @@ struct CalendarTimeGrid: View {
         let today = model.calendar.isDateInToday(day)
         return HStack(spacing: 4) {
             Text(verbatim: day.formatted(.dateTime.weekday(days.count == 1 ? .wide : .abbreviated))).foregroundStyle(Theme.inkMuted)
-            Text(verbatim: day.formatted(.dateTime.day())).monospacedDigit()
+            Text(verbatim: model.dayNumber(day)).monospacedDigit()
                 .foregroundStyle(today ? Theme.onAccent : Theme.ink)
                 .frame(minWidth: 22, minHeight: 22)
                 .background(today ? Theme.accent : .clear, in: Circle())
@@ -117,8 +117,10 @@ struct CalendarTimeGrid: View {
         let rows = min(3, (lanes.max() ?? -1) + 1)
         let row: CGFloat = 22
         return HStack(alignment: .top, spacing: 0) {
-            Text("All day").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).lineLimit(1).minimumScaleFactor(0.7)
-                .frame(width: Self.gutter - 6, alignment: .trailing)
+            Text("All day").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint).multilineTextAlignment(.trailing)
+                .lineLimit(2).minimumScaleFactor(0.8)
+                .frame(width: Self.gutter - 10, alignment: .trailing)
+                .padding(.leading, 4)
                 .padding(.trailing, 6)
                 .padding(.top, 4)
             GeometryReader { geo in

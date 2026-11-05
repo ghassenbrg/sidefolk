@@ -210,7 +210,7 @@ struct HomeSidebar: View {
                 Image(systemName: symbol).font(.system(size: 14, weight: .medium))
                     .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInkMuted).frame(width: 20)
                 title.font(selected ? Theme.Font.bodyStrong : Theme.Font.body)
-                    .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInk).lineLimit(1)
+                    .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInk).lineLimit(2)
                 Spacer(minLength: Theme.Space.xs)
                 trailing()
             }

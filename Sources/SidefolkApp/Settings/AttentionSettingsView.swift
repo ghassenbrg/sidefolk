@@ -170,7 +170,7 @@ struct AttentionDial: View {
                         RadioDot(selected: selected)
                         Image(systemName: option == .open ? "play.fill" : option.symbol).font(.system(size: 11, weight: .semibold))
                             .accessibilityHidden(true)
-                        option.word.font(Theme.Font.bodyStrong)
+                        option.word.font(Theme.Font.bodyStrong).lineLimit(1).minimumScaleFactor(0.8)
                     }
                     .foregroundStyle(Theme.ink)
                     option.explanation.font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
