@@ -378,6 +378,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case fullAccessPlan = "full_access_plan"
         /// A plan's edit that Auto let through with no card, because its new lines stay inside Sidefolk: nobody read them (D187).
         case autoPlan = "auto_plan"
+        /// A plan nobody used for 60 days ended by itself, and its extension was told why (D186).
+        case planEnded = "plan_ended"
     }
 
     public var id: Int64?

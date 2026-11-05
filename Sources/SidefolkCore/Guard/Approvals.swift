@@ -71,6 +71,10 @@ public struct ApprovalRequest: Sendable, Hashable, Identifiable {
     public var firstParty = true
     /// The extension asking, when it is asking for a tool that isn't its own (`permissions.act`, D110): the card names it, not the tool's owner.
     public var asker: Asker?
+    /// What the main button says, when it isn't "Allow": a plan's card says "Approve", and what it also approves (D186, D189).
+    public var allowLabel: String?
+    /// A line above the buttons saying what the main button also approves (a plan that passes words it reads on to a server, D189).
+    public var allowNote: String?
     public var createdAt: Date
     /// When it stops waiting and counts as unanswered, set by the broker from the wait it was given, so Home can say
     /// "stops at 18:08" (D58).

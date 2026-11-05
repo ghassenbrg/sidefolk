@@ -15,12 +15,16 @@ extension ExtensionHost {
             return
         }
         let request = params["request"] ?? .null
+        await endIdlePlans(id)
         switch method {
         case "sidefolk/tools.list":
             let tools = gateway.tools(for: id).map(Self.listed)
             await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
         case "sidefolk/tools.check":
-            guard spendLook(id) else { return await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"]) }
+            guard spendLook(id) else {
+                await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"])
+                return
+            }
             guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
                 return
@@ -298,11 +302,40 @@ extension ExtensionHost {
 
     /// The plans Settings › Add-ons lists.
     func planInfos(_ id: String) -> [ExtensionPlanInfo] {
-        livePlans(id).map {
-            ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count,
-                              stands: Self.stands($0),
-                              approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
+        // Listing is how the person sees plans: one that has gone idle is ended properly (a row in History, its program told) and not just left out.
+        if !idlePlans(id).isEmpty { Task { [weak self] in await self?.endIdlePlans(id) } }
+        let today = AIHelper.dayKey(Date())
+        let signed = runtimes[id]?.pin.origin?.firstParty == true
+        return livePlans(id).map { plan in
+            let count = runtimes[id]?.preferences.planCalls[plan.id]
+            return ExtensionPlanInfo(id: plan.id, title: plan.title, when: plan.when, actions: plan.steps.filter(\.standing).count, stands: Self.stands(plan),
+                                     approvedAt: plan.approvedAt, expiresAt: plan.expiresAt,
+                                     card: plan.card ?? "", lastUsed: plan.lastUsed, callsToday: count?.day == today ? count?.count ?? 0 : 0, signed: signed)
         }
+    }
+
+    /// The plans nobody has used for 60 days and that have not ended some other way.
+    private func idlePlans(_ id: String, now: Date = Date()) -> [ExtensionPlan] {
+        guard let rt = runtimes[id] else { return [] }
+        let owner = owner(rt)
+        return rt.preferences.plans.values.filter { $0.owner == owner && ($0.expiresAt.map { $0 > now } ?? true) && $0.idle(at: now) }.sorted { $0.id < $1.id }
+    }
+
+    /// A plan nobody has used for 60 days ends, and its program hears why, so the flow can pause and say so: never silently (D186), and not only when its
+    /// program asks something: also when the app starts and when Trust is listed, so an extension that stopped, or was switched off, still leaves its row.
+    /// The plans are taken out before anything is awaited, so a second sweep finds none and nothing ends twice.
+    func endIdlePlans(_ id: String) async {
+        let idle = idlePlans(id)
+        guard !idle.isEmpty else { return }
+        await updatePreferences(id) { prefs in for plan in idle { prefs.plans[plan.id] = nil } }
+        for plan in idle {
+            // An extension that is not running, or whose message could not be written, hears nothing now, and History says so: it learns that the plan is gone
+            // by asking again. The client is read once and told first, so the row says what happened to this message and not what the client is a moment later.
+            var told = false
+            if let client = runtimes[id]?.client { told = await client.notify("sidefolk/plan.ended", params: ["plan": .string(plan.id), "reason": "idle"]) }
+            await configuration.actions?.recordPlanEnded(extensionId: id, plan: plan.id, title: plan.title, told: told)
+        }
+        events.changed(.extensions)
     }
 
     /// The person ended it; its program hears, so it can say so.
@@ -367,7 +400,10 @@ extension ExtensionHost {
             guard made < (saved.perRun ?? ExtensionPlanRules.defaultPerRun) else { return Standing(capped: "run") }
             runtimes[id]?.countRun(key)
         }
-        await updatePreferences(id) { $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1) }
+        await updatePreferences(id) {
+            $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1)
+            $0.plans[plan]?.lastUsed = Date()
+        }
         return Standing(step: fits.input, unread: unread, provenance: provenance)
     }
 
@@ -412,14 +448,18 @@ extension ExtensionHost {
         let answer = planAnswer(id, evaluation)
         let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
         let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: words,
-                                     answer: answer, intent: evaluation.intent)
+                                     answer: answer, intent: evaluation.intent, approveLabel: String(localized: "Approve"), approveNote: ExtensionPlanWords.approveNote(for: evaluation))
+        // What Trust shows later is the whole plan as the card says it, not only what an edit added.
+        var all = evaluation
+        all.previous = nil
+        let whole = evaluation.previous == nil ? words : ExtensionPlanWords.card(for: all, extensionName: name(rt), mode: evaluation.mode)
         let asker = asker(rt)
         // What nobody read is named on the approval's own row in History: the lines it let through.
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
         if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
-            await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer)
+            await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer, card: whole)
         }
     }
 
@@ -450,7 +490,7 @@ extension ExtensionHost {
             && ExtensionPlanWords.historyRecord(e) != nil
     }
 
-    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?) async {
+    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?, card: String) async {
         runtimes[id]?.planAsking = false
         // An extension that was turned off while its card was up has nobody to answer, and an Allow now saves nothing for it.
         guard let rt = runtimes[id], rt.record.enabled else { return }
@@ -466,14 +506,20 @@ extension ExtensionHost {
         }
         // What the person read was an edit of the plan standing then: if they ended it or it changed while the card was up (or while an answer was on its way),
         // saving the whole candidate would bring back lines they took away. The program asks again and the whole plan is shown.
-        if let was = evaluation.previous, rt.preferences.plans[was.id] != was {
+        // (A run in the meantime only changes when it last ran, which is not the person's to read.)
+        func withoutUse(_ plan: ExtensionPlan?) -> ExtensionPlan? { plan.map { var copy = $0; copy.lastUsed = nil; return copy } }
+        if let was = evaluation.previous, withoutUse(rt.preferences.plans[was.id]) != withoutUse(was) {
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
             return
         }
         var plan = evaluation.plan
+        if card.count <= 20_000 { plan.card = card }
         // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
         // when it was going to, however often its program asks again. (A plan nobody read never gets here with a previous: it is shown whole.)
-        if answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
+        // (A card the person approved is use of its own, though nothing in it was new: Ask every time shows one for a covered plan, and that approval renews it.
+        // What decides is what Guard did, not the mode read earlier: it reads the mode again, and the person may have changed it meanwhile.)
+        let withoutCard = outcome.activity.decision == .plan || outcome.activity.decision == .autoPlan
+        if withoutCard, answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
             plan.approvedAt = was.approvedAt
             // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
             plan.expiresAt = was.expiresAt ?? plan.expiresAt
@@ -481,7 +527,14 @@ extension ExtensionHost {
         if answer == .fullAccess { plan.answeredUnread = true }
         // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
         if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
-        await updatePreferences(id) { $0.plans[plan.id] = plan }
+        // When it last ran is the host's record, not the candidate's: an edit or a new approval does not make a plan that ran yesterday idle. Only the plan
+        // this one replaces has a record to keep: an entry that ended some other way (its time, another owner) is not this plan's past.
+        let replaces = evaluation.previous != nil
+        await updatePreferences(id) { prefs in
+            var saved = plan
+            saved.lastUsed = replaces ? prefs.plans[plan.id]?.lastUsed : nil
+            prefs.plans[plan.id] = saved
+        }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
                                                                              "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),

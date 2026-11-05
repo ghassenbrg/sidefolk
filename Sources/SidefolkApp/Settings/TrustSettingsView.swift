@@ -262,12 +262,7 @@ struct TrustSettingsView: View {
             grants
             allowedNow
             UnansweredGroup(model: model)
-            SettingsGroup(title: "Flows you approved", footer: "A flow asks on a card that says what it does, and again when its time is up or you end it, when a server's program changes, or if you ask to be asked every time. An edit that does something new asks too, except that in Auto and in Full access some additions are let through and History shows them. An update of the add-on itself does not ask again. This is the one thing on that card you can take back for every flow at once.") {
-                SettingsToggle(title: "A flow may pass what it reads to servers",
-                               detail: "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow, and anything an add-on says is yours, is not held back.",
-                               isOn: Binding(get: { model.policy.flowsMayPassToServers },
-                                             set: { on in Task { await model.setPolicy { $0.flowsMayPassToServers = on } } }))
-            }
+            flowsApproved
             SettingsGroup(title: "What Sidefolk may do", footer: "Switched off, Sidefolk and connected agents can't do it at all, even if you'd say yes, in every mode.",
                           anchor: .capabilities) {
                 ForEach(Self.switches, id: \.0) { capability, title, detail in
@@ -278,6 +273,28 @@ struct TrustSettingsView: View {
                         }
                     ))
                 }
+            }
+        }
+    }
+
+    /// What flows may do without asking (D186): the one switch, and each approval with what it said, when it last ran, and Revoke.
+    private var flowsApproved: some View {
+        let flows = model.extensions.flatMap { ext in ext.plans.map { (extensionName: ext.name, extensionId: ext.id, plan: $0) } }
+            .sorted { ($0.plan.lastUsed ?? $0.plan.approvedAt) > ($1.plan.lastUsed ?? $1.plan.approvedAt) }
+        return SettingsGroup(title: "Flows you approved",
+                             footer: "A flow asks on a card that says what it does, and again when its time is up or you end it, when a server's program changes, or if you ask to be asked every time. An edit that does something new asks too, except that in Auto and in Full access some additions are let through and History shows them. An update of the add-on itself does not ask again. This is the one thing on that card you can take back for every flow at once.") {
+            SettingsToggle(title: "A flow may pass what it reads to servers",
+                           detail: "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow, and anything an add-on says is yours, is not held back.",
+                           isOn: Binding(get: { model.policy.flowsMayPassToServers },
+                                         set: { on in Task { await model.setPolicy { $0.flowsMayPassToServers = on } } }))
+            Text("Here is what you approved. One that nobody has used for 60 days ends by itself, and its extension says so.", comment: "Settings › Trust: above the list of approved flows")
+                .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.m)
+            if flows.isEmpty {
+                InlineEmpty(text: "Nothing yet. When you approve a flow, it's listed here.", systemImage: "checkmark.shield")
+            }
+            ForEach(flows, id: \.plan.id) { item in
+                FlowApprovedRow(extensionName: item.extensionName, plan: item.plan) { Task { await model.endPlan(item.plan, extensionId: item.extensionId) } }
             }
         }
     }
@@ -381,5 +398,44 @@ struct DeleteAllSheet: View {
     private var confirmed: Bool {
         let typed = typed.trimmingCharacters(in: .whitespaces).lowercased()
         return typed == Self.word.lowercased() || typed == "delete"
+    }
+}
+
+/// One flow the person approved: its name, whose it is, when it last ran, what it said it would do, and Revoke.
+private struct FlowApprovedRow: View {
+    var extensionName: String
+    var plan: ExtensionPlanInfo
+    var revoke: () -> Void
+    @State private var open = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            HStack(spacing: Theme.Space.m) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(ext: plan.title.isEmpty ? plan.id : plan.title).font(Theme.Font.body).foregroundStyle(Theme.ink)
+                    Text(verbatim: detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+                }
+                Spacer(minLength: Theme.Space.s)
+                Button { revoke() } label: { Text("Revoke") }.buttonStyle(.sf(.secondary))
+            }
+            if !plan.card.isEmpty {
+                DisclosureGroup(isExpanded: $open) {
+                    Text(verbatim: plan.card).font(Theme.Font.callout).foregroundStyle(Theme.ink).textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.top, Theme.Space.xs)
+                } label: {
+                    Text("What it may do", comment: "Settings › Trust: opens the words the person read when they approved a flow").font(Theme.Font.caption)
+                }
+            }
+        }
+        .padding(.horizontal, Theme.Space.l).padding(.vertical, Theme.Space.m)
+    }
+
+    private var detail: String {
+        var parts = [extensionName]
+        parts.append(plan.lastUsed.map { String(localized: "Last ran \(TimeText.relative($0))", comment: "Settings › Trust: when a flow last ran without asking; a relative date") }
+                     ?? String(localized: "Hasn't run yet", comment: "Settings › Trust: a flow that was approved and hasn't run"))
+        if plan.nobodyReadAll { parts.append(String(localized: "Nobody read all of it", comment: "Settings › Trust: a flow Full access or Auto let through without showing a card for some or all of it")) }
+        if plan.callsToday > 0 { parts.append(String(localized: "Today: \(plan.callsToday)", comment: "Settings › Trust: how many actions a flow made today, a count")) }
+        return parts.joined(separator: " · ")
     }
 }

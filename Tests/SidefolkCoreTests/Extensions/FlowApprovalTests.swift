@@ -1021,6 +1021,202 @@ import Testing
         #expect(await w.check(Self.plan((0..<257).map { notice($0 % 10, name: "n\($0)") }))["reason"]?.stringValue == "unusable", "257 rows")
     }
 
+    // MARK: L3
+
+    @Test func theApproveButtonSaysApproveAndAboveItWhatElseIsApproved() async throws {
+        let w = try await World()
+        _ = try server(w)
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.page, Self.post(["body": "{{page}}"])])])
+        let card = await w.answerCard(.allowOnce)
+        #expect(card?.allowLabel == "Approve")
+        #expect(card?.allowNote == "Approving also lets it pass what it reads to GitHub.", "\(String(describing: card?.allowNote))")
+        _ = await reply
+        async let plain = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save], id: "plain")])
+        let second = await w.answerCard(.allowOnce)
+        #expect(second?.allowLabel == "Approve" && second?.allowNote == nil, "nothing passes on: no extra line")
+        _ = await plain
+    }
+
+    @Test func aPlanIsListedWithWhatTheyReadWhenItLastRanAndHowManyToday() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        var info = await w.h.host.info(id: "com.example.flow")?.plans.first
+        #expect(info?.card.contains("It changes:") == true && info?.lastUsed == nil && info?.callsToday == 0 && info?.signed == true, "\(String(describing: info))")
+        _ = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "input": ["text": "Digest: x"]])
+        info = await w.h.host.info(id: "com.example.flow")?.plans.first
+        #expect(info?.lastUsed != nil && info?.callsToday == 1)
+    }
+
+    @Test func trustShowsTheWholePlanAfterAnEditNotOnlyWhatTheEditAdded() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        #expect(await w.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked, "the new line asks")
+        let card = await w.h.host.info(id: "com.example.flow")?.plans.first?.card ?? ""
+        #expect(card.contains("It changes:") && card.contains("It tells or asks you:") && !card.contains("New, asking you now"), Comment(rawValue: card))
+    }
+
+    @Test func approvingAgainKeepsWhenItLastRanAndARunWhileACardIsUpDoesNotRefuseTheEdit() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        _ = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "input": ["text": "Digest: x"]])
+        let ran = await w.h.host.info(id: "com.example.flow")?.plans.first?.lastUsed
+        #expect(ran != nil)
+        #expect(await !w.approve(Self.plan([Self.save])).asked, "the same plan again is covered")
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.first?.lastUsed == ran, "approving again does not make a plan that ran look idle")
+        // A run while the edit's card is up changes only when it last ran: the edit is still what they read.
+        async let edit = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])])
+        var waited = 0
+        while await w.h.env.broker.pending().isEmpty, waited < 200 { try? await Task.sleep(for: .milliseconds(25)); waited += 1 }
+        // What a run does while the card is up (the test program takes one call at a time, so the write itself is made here).
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.lastUsed = Date() }
+        #expect(await w.answerCard(.allowOnce) != nil)
+        let reply = await edit
+        #expect(reply["ok"]?.boolValue == true, "a run in between is not a change of the plan")
+    }
+
+    @Test func anIdlePlanEndsWithItsRowWhenTrustIsListedAndOnlyOnce() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        let old = Date().addingTimeInterval(-61 * 24 * 3600)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = old }
+        // Nothing asks from the extension: only the list is built (twice).
+        _ = await w.h.host.info(id: "com.example.flow")
+        _ = await w.h.host.info(id: "com.example.flow")
+        var rows: [ActivityEntry] = []
+        for _ in 0..<80 where rows.isEmpty {
+            rows = try await w.rows("extensions.plan_end")
+            try? await Task.sleep(for: .milliseconds(25))
+        }
+        try? await Task.sleep(for: .milliseconds(200))
+        rows = try await w.rows("extensions.plan_end")
+        #expect(rows.count == 1 && rows.first?.decision == .planEnded, "listing alone ends it, once: \(rows.count)")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil)
+        // The extension asking afterwards finds nothing to end again.
+        _ = await w.ask("sidefolk/tools.list")
+        #expect(try await w.rows("extensions.plan_end").count == 1)
+    }
+
+    @Test func trustSaysNobodyReadAllOfItOnlyWhereNoCardWasShown() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.first?.nobodyReadAll == false, "read on a card")
+        let w2 = try await World()
+        try await w2.setMode(.fullAccess)
+        #expect(await !w2.approve(Self.plan([Self.save])).asked)
+        #expect(await w2.h.host.info(id: "com.example.flow")?.plans.first?.nobodyReadAll == true, "Full access answered it with no card")
+        // Lines read on a card that stand only in Full access are read.
+        func info(_ stands: ExtensionPlanInfo.Stands) -> ExtensionPlanInfo { ExtensionPlanInfo(id: "p", title: "", when: "", actions: 1, stands: stands, approvedAt: Date(), expiresAt: nil) }
+        #expect(info(.fullAccessSome).nobodyReadAll == false && info(.always).nobodyReadAll == false)
+        #expect(info(.fullAccessUnread).nobodyReadAll && info(.autoSome).nobodyReadAll && info(.either).nobodyReadAll)
+    }
+
+    @Test func anEntryThatEndedAnotherWayIsNotThePastOfAFreshApproval() async throws {
+        let day: TimeInterval = 24 * 3600
+        // Ended by its time, 65 days ago, last ran 70 days ago.
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        await w.h.host.updatePreferences("com.example.flow") {
+            $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-70 * day)
+            $0.plans["digest"]?.expiresAt = Date().addingTimeInterval(-65 * day)
+            $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(-70 * day)
+        }
+        _ = await w.approve(Self.plan([Self.save]))
+        var kept = await w.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(kept?.lastUsed == nil && kept?.expiresAt == nil, "a fresh approval has no past: \(String(describing: kept))")
+        _ = await w.ask("sidefolk/tools.list")
+        let swept = try await w.rows("extensions.plan_end")
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["digest"] && swept.isEmpty, "it was not swept the moment it was approved")
+        // Another owner's entry under the same id.
+        let w2 = try await World()
+        _ = await w2.approve(Self.plan([Self.save]))
+        await w2.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.owner = "someone else"; $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(-70 * day) }
+        _ = await w2.approve(Self.plan([Self.save]))
+        kept = await w2.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(kept?.lastUsed == nil, "\(String(describing: kept))")
+        _ = await w2.ask("sidefolk/tools.list")
+        #expect(await w2.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["digest"])
+        // A plan that last ran 59 days ago and is edited, with a card: the approval is use of its own, so it does not end tomorrow.
+        let w3 = try await World()
+        _ = await w3.approve(Self.plan([Self.save]))
+        await w3.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-59 * day); $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(-59 * day) }
+        #expect(await w3.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
+        let edited = await w3.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(edited?.live(at: Date().addingTimeInterval(2 * day), owner: edited?.owner ?? "") == true, "approved just now: alive in two days")
+    }
+
+    @Test func aCardThePersonApprovedRenewsAPlanEvenWhenNothingInItWasNew() async throws {
+        let day: TimeInterval = 24 * 3600
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        func approvedAt() async -> Date? { await w.h.host.loadPreferences("com.example.flow").plans["digest"]?.approvedAt }
+        // Ask every time shows a card even for a plan nothing in which changed; approving it is use.
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-59.9 * day) }
+        try await w.setMode(.askEveryTime)
+        #expect(await w.approve(Self.plan([Self.save])).asked, "Ask every time shows the card")
+        #expect((await approvedAt()).map { Date().timeIntervalSince($0) < 3600 } == true, "approved just now, not 59.9 days ago")
+        // Without a card nobody renewed anything: the approval keeps its date.
+        try await w.setMode(.askOncePerKind)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-30 * day) }
+        #expect(await !w.approve(Self.plan([Self.save])).asked)
+        #expect((await approvedAt()).map { abs(Date().timeIntervalSince($0) - 30 * day) < 3600 } == true, "a covered plan with no card keeps the date of the card they read")
+    }
+
+    @Test func anExtensionThatIsNotRunningIsRecordedAsNotToldWhateverTheClientBecomesLater() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-61 * 24 * 3600) }
+        try await w.h.host.setEnabled(false, id: "com.example.flow")
+        _ = await w.h.host.info(id: "com.example.flow")
+        var rows: [ActivityEntry] = []
+        for _ in 0..<80 where rows.isEmpty {
+            rows = try await w.rows("extensions.plan_end")
+            try? await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(rows.first?.args?["told"]?.boolValue == false && rows.first?.summary.contains("was not running, so it was not told") == true, "\(String(describing: rows.first?.summary))")
+    }
+
+    @Test func theRowSaysWhetherTheExtensionWasToldOfAnIdleEnd() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-61 * 24 * 3600) }
+        _ = await w.ask("sidefolk/tools.list")
+        var row = try await w.rows("extensions.plan_end").first
+        #expect(row?.args?["told"]?.boolValue == true && row?.summary.hasSuffix("Its extension was told.") == true, "\(String(describing: row?.summary))")
+        await w.gateway.recordPlanEnded(extensionId: "com.example.flow", plan: "digest", title: "Digest", told: false)
+        row = try await w.rows("extensions.plan_end").first
+        #expect(row?.args?["told"]?.boolValue == false && row?.summary.contains("was not running, so it was not told") == true, "\(String(describing: row?.summary))")
+    }
+
+    @Test func aLastRunAheadOfTheClockDoesNotKeepAPlanAlivePastSixtyDays() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        let old = Date().addingTimeInterval(-61 * 24 * 3600)
+        // Set ahead by an hour (a clock that was corrected): it counts as now.
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = old; $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(3600) }
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["digest"], "a little ahead is believed as now")
+        // Set ahead by ten days (the clock was moved back): not believed, the approval's date is used, and it is old.
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(10 * 24 * 3600) }
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.isEmpty == true, "far ahead does not keep it alive")
+    }
+
+    @Test func aPlanNobodyUsedFor60DaysEndsAndItsProgramIsTold() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        let old = Date().addingTimeInterval(-61 * 24 * 3600)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = old }
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.isEmpty == true, "an idle plan is not live: it stands for nothing")
+        // The next time its extension asks anything, the plan is taken away for good and its program told.
+        _ = await w.ask("sidefolk/tools.list")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil)
+        let ended = try await w.rows("extensions.plan_end").first
+        #expect(ended?.decision == .planEnded && ended?.args?["plan"]?.stringValue == "digest", "a plan that ends by itself is a row in History: \(String(describing: ended))")
+        // One used a month ago is fine.
+        _ = await w.approve(Self.plan([Self.save], id: "recent"))
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["recent"]?.lastUsed = Date().addingTimeInterval(-30 * 24 * 3600); $0.plans["recent"]?.approvedAt = old }
+        _ = await w.ask("sidefolk/tools.list")
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["recent"], "use keeps it")
+    }
+
     // MARK: Limits
 
     @Test func aRunPastItsLimitIsStoppedNotAsked() async throws {

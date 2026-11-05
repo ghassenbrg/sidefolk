@@ -154,6 +154,7 @@ enum Describe {
         case .research: String(localized: "A link on a page, read without asking because you allowed a few in this conversation.")
         case .plan: String(localized: "Ran without asking because it fit a plan you read and allowed.")
         case .planUnread: String(localized: "Ran without asking because it fit a plan nobody read: Full access or Auto let it through.", comment: "History: a plan's line that was never shown on a card")
+        case .planEnded: String(localized: "Ended by itself because nobody had used this plan for 60 days. The extension needs your approval again to bring it back.", comment: "History: a plan that was idle for 60 days")
         case .autoPlan: String(localized: "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a question, a reminder), and nobody read them.", comment: "History: a plan's edit Auto let through")
         }
     }

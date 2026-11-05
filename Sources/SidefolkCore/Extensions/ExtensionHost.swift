@@ -239,6 +239,8 @@ public actor ExtensionHost {
         installer.removeStaleStaging()
         let records = (try? await store.all()) ?? []
         for record in records { await load(record) }
+        // A plan that went idle while the app was off ends now, with its row, whether or not its extension is on.
+        for id in runtimes.keys.sorted() { await endIdlePlans(id) }
         // A smaller extension loaded before the one that includes it registered its tools; it rests now (D67).
         reconsiderResting()
         events.changed(.extensions)

@@ -80,6 +80,9 @@ struct ApprovalDetails: View {
 /// and its rows. All of it, in order, nothing folded (T44): only the look changes.
 private struct ReadInFull: View {
     var text: String
+    /// How tall the whole text is, to say there is more below when it is taller than the box.
+    @State private var height: CGFloat = 0
+    private static let limit: CGFloat = 300
 
     var body: some View {
         ScrollView {
@@ -102,7 +105,25 @@ private struct ReadInFull: View {
             }
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(GeometryReader { Color.clear.preference(key: ReadHeight.self, value: $0.size.height) })
         }
-        .frame(maxHeight: 300)
+        .onPreferenceChange(ReadHeight.self) { height = $0 }
+        .frame(maxHeight: Self.limit)
+        // A card that runs on says so: a fade at the foot and a line, so nobody takes the end of the box for the end of the text.
+        .overlay(alignment: .bottom) {
+            if height > Self.limit {
+                VStack(spacing: 0) {
+                    LinearGradient(colors: [Theme.well.opacity(0), Theme.well], startPoint: .top, endPoint: .bottom).frame(height: 24)
+                    Text("Scroll to read the rest", comment: "Under a long card the person has to read in full: there is more below")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).frame(maxWidth: .infinity).padding(.bottom, 2).background(Theme.well)
+                }
+                .allowsHitTesting(false)
+            }
+        }
     }
+}
+
+private struct ReadHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
