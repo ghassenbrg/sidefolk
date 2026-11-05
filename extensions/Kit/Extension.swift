@@ -1,5 +1,18 @@
 import Foundation
 
+/// Says how far along a tool is, while it runs, to whoever's following. Nobody following, nothing sent. A tool runs one at a time, so this is the one under way.
+public enum ToolProgressReport {
+    @MainActor static var token: Any?
+
+    @MainActor public static func report(_ progress: Double, of total: Double? = nil, message: String? = nil) {
+        guard let token else { return }
+        var params: [String: Any] = ["progressToken": token, "progress": progress]
+        if let total { params["total"] = total }
+        if let message { params["message"] = message }
+        ExtensionServices.send?("notifications/progress", params)
+    }
+}
+
 /// The program side of Sidefolk's extension protocol (docs/EXTENSIONS.md › The protocol): MCP over stdin and
 /// stdout, one JSON-RPC 2.0 message per line each way. The extensions that ship with Sidefolk are small programs
 /// built on it and signed inside the app, so they need nothing installed on the Mac: no Python, no Node.
@@ -148,6 +161,7 @@ public final class Extension {
         notices["sidefolk/tools.listed"] = { args in Actions.receiveListing(args) }
         notices["sidefolk/tools.checked"] = { args in Actions.receiveCheck(args) }
         notices["sidefolk/tools.result"] = { args in Actions.receiveResult(args) }
+        notices["sidefolk/tools.progress"] = { args in Actions.receiveProgress(args) }
         notices["sidefolk/plan.result"] = { args in Plans.receive(args) }
         notices["sidefolk/plan.ended"] = { args in if let plan = args.string("plan") { Plans.ended?(plan) } }
         notices["sidefolk/settings.changed"] = { [weak self] args in
@@ -170,6 +184,7 @@ public final class Extension {
             last = Task { @MainActor in
                 await previous?.value
                 var reply: [String: Any] = ["jsonrpc": "2.0", "id": id]
+                ToolProgressReport.token = (params["_meta"] as? [String: Any])?["progressToken"]
                 do {
                     reply["result"] = try await answer(method, params)
                 } catch let unknown as Unknown {

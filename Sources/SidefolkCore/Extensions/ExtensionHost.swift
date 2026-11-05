@@ -122,6 +122,8 @@ public actor ExtensionHost {
         /// When the person, or a clean request, last called one of its tools: what it may ask for a plan after (D110).
         var lastPersonCall = Date.distantPast
         var actionCalls: [Date] = []
+        /// Calls under way, by the request that made them: what a program can ask to stop.
+        var actionTasks: [String: Task<Void, Never>] = [:]
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
         /// The person's own clicks or typed commands to this extension whose calls are still running, by call (Full access answers one plan for one click,
@@ -1577,6 +1579,9 @@ public actor ExtensionHost {
         let client = runtimes[id]?.client
         runtimes[id]?.client = nil
         runtimes[id]?.idleTask?.cancel()
+        // Whoever asked is gone: a card up for it goes too, and a later Allow can't act for nobody.
+        for task in runtimes[id]?.actionTasks.values.map({ $0 }) ?? [] { task.cancel() }
+        runtimes[id]?.actionTasks = [:]
         let oneShots = runtimes[id]?.oneShots.values.map { $0 } ?? []
         runtimes[id]?.oneShots = [:]
         if let generation { await releaseOutputMute(id: id, generation: generation) }

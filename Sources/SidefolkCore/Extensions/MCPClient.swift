@@ -92,6 +92,8 @@ public final class MCPClient: Sendable {
     private struct State {
         var nextId = 1
         var pending: [Int: Pending] = [:]
+        /// Who hears how far along a call is, by the token it went out with.
+        var following: [String: ToolProgress.Report] = [:]
         var closed: MCPError?
     }
 
@@ -186,7 +188,16 @@ public final class MCPClient: Sendable {
 
     /// The same, with what a Sidefolk extension's reply asks for beside its text (`sidefolk`, D100). A plain MCP server's reply has none.
     func callToolAsking(name: String, arguments: JSONValue, timeout: TimeInterval = 30) async throws -> (text: String, asks: JSONValue?, data: JSONValue?) {
-        let result = try await request("tools/call", params: ["name": .string(name), "arguments": arguments], timeout: timeout)
+        var params: [String: JSONValue] = ["name": .string(name), "arguments": arguments]
+        // Only for a caller that's following along: a token means the server may send more than it would.
+        let token = ToolProgress.report.map { report in
+            let token = UUID().uuidString
+            state.withLock { $0.following[token] = report }
+            params["_meta"] = ["progressToken": .string(token)]
+            return token
+        }
+        defer { if let token { state.withLock { $0.following[token] = nil } } }
+        let result = try await request("tools/call", params: .object(params), timeout: timeout)
         let text = Self.text(of: result)
         if case .bool(true)? = result["isError"] { throw MCPError.toolFailed(text) }
         return (text, result["sidefolk"], result["structuredContent"])
@@ -259,6 +270,11 @@ public final class MCPClient: Sendable {
                     c.resume(throwing: closed)
                     return
                 }
+                // Stopped before it went out: the handler below found nothing to finish, and the server need never hear of it.
+                if Task.isCancelled {
+                    _ = finish(id, .failure(CancellationError()))
+                    return
+                }
                 let timer = Task { [weak self] in
                     try? await Task.sleep(for: .seconds(timeout))
                     guard !Task.isCancelled, let self, self.finish(id, .failure(MCPError.timeout(method: method))) else { return }
@@ -275,7 +291,9 @@ public final class MCPClient: Sendable {
                 }
             }
         } onCancel: {
-            _ = finish(id, .failure(CancellationError()))
+            guard finish(id, .failure(CancellationError())) else { return }
+            // It's told, and may or may not stop: hearing nothing more isn't proof that it did.
+            Task { [weak self] in await self?.notify("notifications/cancelled", params: ["requestId": .number(Double(id)), "reason": "stopped"]) }
         }
     }
 
@@ -347,7 +365,11 @@ public final class MCPClient: Sendable {
                 onEvent(.placeSearch(params))
             } else if method == "sidefolk/occurrences.replace", let params = message["params"] {
                 onEvent(.occurrences(params))
-            } else if ["sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.check", "sidefolk/plan.forget"].contains(method),
+            } else if method == "notifications/progress", let params = message["params"] {
+                let token = params["progressToken"]?.stringValue
+                let report = token.flatMap { t in state.withLock { $0.following[t] } }
+                report?(params["progress"]?.doubleValue, params["total"]?.doubleValue, params["message"]?.stringValue)
+            } else if ["sidefolk/tools.cancel", "sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.check", "sidefolk/plan.forget"].contains(method),
                       let params = message["params"], method == "sidefolk/plan.forget" || params["request"]?.stringValue.flatMap(UUID.init(uuidString:)) != nil {
                 onEvent(.action(method: method, params: params))
             }

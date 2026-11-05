@@ -125,8 +125,11 @@ public actor AgentRuntime {
         let runId = request.job.map { Self.jobRunId(Identifier.make(now: now), extensionId: $0.extensionId) } ?? Identifier.make(now: now)
         let (stream, continuation) = AsyncStream.makeStream(of: AgentEvent.self, bufferingPolicy: .unbounded)
         let previous = tails[threadId]
-        let task = Task {
-            await self.execute(runId: runId, threadId: threadId, request: request, after: previous, continuation: continuation)
+        // A run's tools are its own: how far along they are is nobody's to hear but what made the call, whoever asked for the run.
+        let task = ToolProgress.$report.withValue(nil) {
+            Task {
+                await self.execute(runId: runId, threadId: threadId, request: request, after: previous, continuation: continuation)
+            }
         }
         running[runId] = task
         runThreads[runId] = threadId

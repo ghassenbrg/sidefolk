@@ -10,7 +10,7 @@ import Testing
     def send(m): sys.stdout.write(json.dumps(m) + "\\n"); sys.stdout.flush()
     answers = {"sidefolk/tools.list": "sidefolk/tools.listed", "sidefolk/tools.check": "sidefolk/tools.checked",
                "sidefolk/tools.call": "sidefolk/tools.result", "sidefolk/plan.approve": "sidefolk/plan.result", "sidefolk/plan.check": "sidefolk/plan.checked"}
-    tools = [{"name": "ask_host", "title": "Ask the host", "description": "", "inputSchema": {"type": "object", "properties": {"method": {"type": "string"}, "params": {"type": "object"}}}}]
+    tools = [{"name": "ask_host", "title": "Ask the host", "description": "", "inputSchema": {"type": "object", "properties": {"cancel": {"type": "boolean"}, "method": {"type": "string"}, "params": {"type": "object"}}}}]
     for line in sys.stdin:
         m = json.loads(line)
         if m.get("method") == "initialize":
@@ -22,8 +22,16 @@ import Testing
             p = dict(a.get("params", {})); p["request"] = str(uuid.uuid4())
             send({"jsonrpc": "2.0", "method": a["method"], "params": p})
             want = answers[a["method"]]
+            heard = None
             for reply in sys.stdin:
                 r = json.loads(reply)
+                if a.get("cancel") and r.get("method") == "sidefolk/tools.progress" and r["params"].get("request") == p["request"]:
+                    heard = r["params"]
+                    send({"jsonrpc": "2.0", "method": "sidefolk/tools.cancel", "params": {"request": p["request"]}})
+                    continue
+                if heard and r.get("method") == want and r["params"].get("request") == p["request"]:
+                    send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": json.dumps({"progress": heard, "result": r["params"]})}]}})
+                    break
                 if r.get("method") == want and r["params"].get("request") == p["request"]:
                     send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": json.dumps(r["params"])}]}})
                     break
@@ -39,7 +47,10 @@ import Testing
             let env = try TestEnv()
             let gateway = ExtensionActionGateway(registry: env.registry, permissions: env.permissions, broker: env.broker, activity: env.activity, events: env.events)
             self.gateway = gateway
-            h = try HostEnv(env: env) { $0.actions = gateway }
+            h = try HostEnv(env: env) {
+                $0.actions = gateway
+                $0.aiName = { "Scripted" }
+            }
             h.env.registry.register(Probe(name: "notify.user", risk: .low, capabilities: [], mutates: false))
             h.env.registry.register(Probe(name: "notes.save", risk: .low, capabilities: [.notebook], mutates: true))
             h.env.registry.register(Probe(name: "notes.search", risk: .low, capabilities: [.notebook], mutates: false))
@@ -57,8 +68,10 @@ import Testing
         }
 
         /// What the host answered, asked from the program. `caller` is who started the tool.
-        func ask(_ tool: String, _ method: String, _ params: JSONValue = .object([:]), caller: Caller = .user) async -> JSONValue {
-            let outcome = await h.env.executor.execute(name: tool, input: ["method": .string(method), "params": params], caller: caller, timeout: 30)
+        func ask(_ tool: String, _ method: String, _ params: JSONValue = .object([:]), caller: Caller = .user, cancel: Bool = false) async -> JSONValue {
+            var input: [String: JSONValue] = ["method": .string(method), "params": params]
+            if cancel { input["cancel"] = true }
+            let outcome = await h.env.executor.execute(name: tool, input: .object(input), caller: caller, timeout: 30)
             guard case .ok(let r) = outcome.status, let json = try? JSONValue.parse(Data(r.text.utf8)) else { return .null }
             return json
         }
@@ -307,6 +320,161 @@ import Testing
         #expect(reply["data"]?["secret_word"]?.stringValue == "plover")
         let rows = try await w.h.env.activity.recent(limit: 20)
         #expect(!String(describing: rows).contains("plover"), "History keeps the words it would have, never the fields")
+    }
+
+    /// A tool that says how far along it is, then waits, and says whether it was told to stop.
+    static let slowServer = #"""
+    import json, sys, threading, time, os
+    def send(r): print(json.dumps(r), flush=True)
+    calls = {}
+    for line in sys.stdin:
+        m = json.loads(line)
+        if m.get("method") == "initialize":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "s", "version": "1"}}})
+        elif m.get("method") == "tools/list":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "slow", "title": "Slow", "inputSchema": {"type": "object", "additionalProperties": False}}]}})
+        elif m.get("method") == "tools/call":
+            token = m["params"].get("_meta", {}).get("progressToken")
+            if token: send({"jsonrpc": "2.0", "method": "notifications/progress", "params": {"progressToken": token, "progress": 2, "total": 5, "message": "two done"}})
+            calls[m["id"]] = True
+        elif m.get("method") == "notifications/cancelled":
+            open(os.environ["SIDEFOLK_DATA_DIR"] + "/told", "w").write("yes")
+        elif "id" in m:
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+    """#
+
+    @Test func aProgramHearsHowFarAlongACallIsAndCanStopIt() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let manifest: JSONValue = ["id": "com.example.slowly", "name": "Slowly", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["slow": ["title": "Slow", "risk": "low", "mutates": false, "timeout": 60]]]
+        try await w.h.host.install(from: w.h.source("slowly", manifest: manifest, files: ["server.py": ExtensionActionsTests.slowServer]))
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.slowly.slow", "input": .object([:])], cancel: true) }
+        _ = await w.answerCard(.allowOnce)
+        let reply = await task.value
+        #expect(reply["progress"]?["message"]?.stringValue == "two done")
+        #expect(reply["progress"]?["progress"]?.doubleValue == 2)
+        #expect(reply["progress"]?["total"]?.doubleValue == 5)
+        #expect(reply["result"]?["ok"]?.boolValue == false, "stopped before it answered")
+        #expect(reply["result"]?["status"]?.stringValue != "ok")
+    }
+
+    @Test func aCallStoppedBeforeItWentOutIsNeverSent() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let heard = folder.appendingPathComponent("heard")
+        let process = try ExtensionProcess(spec: ExtensionProcessSpec(executable: "/bin/sh", arguments: ["-c", "while read -r line; do echo \"$line\" >> \"$0\"; done", heard.path], environment: [:]))
+        let client = MCPClient(process: process)
+        try client.start()
+        let task = Task<Bool, Never> {
+            while !Task.isCancelled { await Task.yield() }
+            do {
+                _ = try await client.request("tools/call", params: .object([:]), timeout: 5)
+                return false
+            } catch {
+                return error is CancellationError
+            }
+        }
+        task.cancel()
+        #expect(await task.value)
+        await client.notify("marker")
+        var words = ""
+        for _ in 0..<200 where !words.contains("marker") {
+            try await Task.sleep(for: .milliseconds(10))
+            words = (try? String(contentsOf: heard, encoding: .utf8)) ?? ""
+        }
+        #expect(words.contains("marker"))
+        #expect(!words.contains("tools/call"), "the person pressed Stop first: it never starts")
+        _ = await client.shutdown()
+    }
+
+    @Test func whatACompanionFindsDoesntReachAProgramThatCouldCarryItOffOnTheWayEither() {
+        let name = CompanionJobTool.name
+        #expect(ExtensionHost.hearsOnlyThatItsDone(tool: name, permissions: ExtensionPermissions(network: true)))
+        #expect(ExtensionHost.hearsOnlyThatItsDone(tool: name, permissions: nil) == !ExtensionPermissions().isContained)
+        #expect(!ExtensionHost.hearsOnlyThatItsDone(tool: "ext.slowly.slow", permissions: ExtensionPermissions(network: true)))
+    }
+
+    /// A tool that says how far along it is whenever it's told someone's following, then says whether it was told.
+    static let followedServer = #"""
+    import json, sys
+    def send(r): print(json.dumps(r), flush=True)
+    for line in sys.stdin:
+        m = json.loads(line)
+        if m.get("method") == "initialize":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "s", "version": "1"}}})
+        elif m.get("method") == "tools/list":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "busy", "title": "Busy", "inputSchema": {"type": "object", "additionalProperties": False}}]}})
+        elif m.get("method") == "tools/call":
+            token = m["params"].get("_meta", {}).get("progressToken")
+            if token: send({"jsonrpc": "2.0", "method": "notifications/progress", "params": {"progressToken": token, "progress": 1, "total": 2, "message": "the other one's words"}})
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "followed" if token else "not followed"}]}})
+        elif "id" in m:
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+    """#
+
+    /// A companion with a scripted mind: it calls the other extension's tool, then says it's done.
+    private func jobWorld(_ w: World) async throws -> ScriptedModel {
+        let manifest: JSONValue = ["id": "com.example.other", "name": "Other", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["busy": ["title": "Busy", "risk": "low", "mutates": false, "timeout": 30]]]
+        try await w.h.host.install(from: w.h.source("other", manifest: manifest, files: ["server.py": Self.followedServer]))
+        let model = ScriptedModel([.turn(ModelTurn(text: "", toolCalls: [ToolCall(id: "t1", name: "ext_other_busy", input: .object([:]))], stop: .toolUse)), .turn(.reply("Done."))])
+        let env = w.h.env
+        let factory = BrainFactory { _, _ in BrainChoice(backend: LoopBackend(model: model, checkModel: "m", clock: env.clock), model: "test-model") }
+        let context = ContextBuilder(notebook: NotebookStore(env.db), exchanges: ExchangeStore(env.db), clock: env.clock)
+        var settings = AppSettings()
+        settings.provider.kind = .anthropic
+        let agent = AgentRuntime(executor: env.executor, db: env.db, events: env.events, context: context, factory: factory, settings: { [settings] in settings }, clock: env.clock)
+        let slot = CompanionAgentSlot()
+        slot.use(agent)
+        env.registry.register(CompanionJobTool(agent: slot))
+        return model
+    }
+
+    @Test func aJobsToolsAreNotTheProgramThatAskedForTheJobToHear() async throws {
+        let w = try await World()
+        let model = try await jobWorld(w)
+        let tool = try await w.install(["act": ["purpose": "to run what you set up"], "ai": ["purpose": "to think", "daily_cap": 3]], name: "contained")
+        let reply = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": .string(CompanionJobTool.name), "input": ["job": "Do the busy thing"]], cancel: true) }
+        _ = await w.answerCard(.allowOnce)
+        let heard = await reply.value
+        #expect(heard["progress"] == nil, "nothing on the way: \(heard)")
+        #expect(heard["ok"]?.boolValue == true, "and that it's done: \(heard)")
+        #expect(model.requests.count == 2, "the companion really did call it")
+        #expect(String(describing: model.requests.last).contains("not followed"), "and the other tool wasn't told anyone was following: \(String(describing: model.requests.last).suffix(400))")
+    }
+
+    @Test func aProgramStillHearsTheToolItCalledItself() async throws {
+        let w = try await World()
+        _ = try await jobWorld(w)
+        let tool = try await w.install(["act": ["purpose": "to run what you set up"], "ai": ["purpose": "to think", "daily_cap": 3]], name: "contained")
+        let reply = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.other.busy", "input": .object([:])], cancel: true) }
+        _ = await w.answerCard(.allowOnce)
+        #expect(await reply.value["progress"]?["message"]?.stringValue == "the other one's words")
+    }
+
+    @Test func aProgramStoppingTakesItsCardWithIt() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let manifest: JSONValue = ["id": "com.example.slowly", "name": "Slowly", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["slow": ["title": "Slow", "risk": "low", "mutates": false, "timeout": 60]]]
+        try await w.h.host.install(from: w.h.source("slowly", manifest: manifest, files: ["server.py": ExtensionActionsTests.slowServer]))
+        let asking = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.slowly.slow", "input": .object([:])]) }
+        var card: ApprovalRequest?
+        for _ in 0..<200 where card == nil {
+            card = await w.h.env.broker.pending().first
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(card != nil)
+        try await w.h.host.setEnabled(false, id: "com.example.actor")
+        var gone = false
+        for _ in 0..<200 where !gone {
+            gone = await w.h.env.broker.pending().isEmpty
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(gone, "nobody's left to act for")
+        asking.cancel()
     }
 
     @Test func aPageCanOpenAddons() {

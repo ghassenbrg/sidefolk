@@ -1,3 +1,4 @@
+import Synchronization
 import Foundation
 
 /// An extension using Sidefolk's tools through Guard (`permissions.act`, D110): the list, Guard's answer without running, a call, and
@@ -78,10 +79,18 @@ extension ExtensionHost {
             let asker = asker(rt)
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
-            Task { [weak self] in
-                let outcome = await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout, capped: found.capped)
-                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, capped: found.capped)
+            let key = request.stringValue ?? UUID().uuidString
+            let keptFrom = Self.hearsOnlyThatItsDone(tool: tool, permissions: rt.pin.permissions)
+            runtimes[id]?.actionTasks[key] = Task { [weak self] in
+                let following = keptFrom ? nil : ExtensionHost.following(request: request, client: client)
+                let outcome = await ToolProgress.$report.withValue(following) {
+                    await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout, capped: found.capped)
+                }
+                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, capped: found.capped, key: key)
             }
+        case "sidefolk/tools.cancel":
+            // Told, not done: it says so by answering, and that answer can only say it may or may not have happened.
+            if let key = params["request"]?.stringValue { runtimes[id]?.actionTasks[key]?.cancel() }
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.check":
@@ -117,16 +126,39 @@ extension ExtensionHost {
         }
     }
 
-    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "", capped: String? = nil) async {
+    /// What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done, and nothing on the way.
+    static func hearsOnlyThatItsDone(tool: String, permissions: ExtensionPermissions?) -> Bool {
+        tool == CompanionJobTool.name && !(permissions ?? ExtensionPermissions()).isContained
+    }
+
+    /// Passes on how far along a call is: its own words, cleaned, at most once a second. It's only ever heard by the program that made the call.
+    private static func following(request: JSONValue, client: MCPClient) -> ToolProgress.Report {
+        let last = Mutex(Date.distantPast)
+        return { progress, total, message in
+            let due = last.withLock { at -> Bool in
+                guard Date().timeIntervalSince(at) >= 1 else { return false }
+                at = Date()
+                return true
+            }
+            guard due else { return }
+            var params: [String: JSONValue] = ["request": request]
+            if let progress, progress.isFinite { params["progress"] = .number(progress) }
+            if let total, total.isFinite { params["total"] = .number(total) }
+            if let message { params["message"] = .string(ExtensionText.line(message, characters: 120)) }
+            Task { await client.notify("sidefolk/tools.progress", params: .object(params)) }
+        }
+    }
+
+    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "", capped: String? = nil, key: String? = nil) async {
         end(id)
+        if let key { runtimes[id]?.actionTasks[key] = nil }
         let summary = ToolFormat.oneLine(ExtensionText.clean(outcome.activity.summary), 240)
         var reply: [String: JSONValue] = ["request": request, "summary": .string(summary), "standing": .bool(standing), "undoable": .bool(outcome.activity.undoAvailable)]
         switch outcome.status {
         case .ok(let result):
             reply["ok"] = .bool(!result.isError)
             reply["status"] = .string(result.isError ? "error" : "ok")
-            // What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done.
-            let carries = tool == CompanionJobTool.name && !(runtimes[id]?.pin.permissions ?? ExtensionPermissions()).isContained
+            let carries = Self.hearsOnlyThatItsDone(tool: tool, permissions: runtimes[id]?.pin.permissions)
             reply["text"] = .string(carries ? "Done." : result.text)
             if !carries, let data = result.data { reply["data"] = data }
             reply["untrusted"] = .bool(result.untrusted)
@@ -440,8 +472,10 @@ extension ExtensionHost {
 
     /// Something happened: those with `permissions.events` hear it, with its words, whatever else they can reach: the founder's choice (D129).
     func tell(_ happening: Happening) async {
+        // One id for one happening, whoever hears it and however often: telling something twice mustn't make it happen twice.
+        let id = UUID().uuidString
         for rt in runtimes.values where rt.record.enabled && rt.pin.permissions?.events != nil {
-            var params: [String: JSONValue] = ["name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]
+            var params: [String: JSONValue] = ["id": .string(id), "name": .string(happening.name), "at": .number(Date().timeIntervalSince1970)]
             if let title = happening.title { params["title"] = .string(ExtensionText.line(title, characters: 200)) }
             if let detail = happening.detail { params["detail"] = .string(ExtensionText.untrusted(detail, bytes: 2_000)) }
             await rt.client?.notify("sidefolk/happened", params: .object(params))
