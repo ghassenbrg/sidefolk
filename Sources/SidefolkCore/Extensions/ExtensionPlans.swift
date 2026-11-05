@@ -478,7 +478,7 @@ struct ExtensionPlanTool: Tool {
     var spec: ToolSpec {
         ToolSpec(name: Self.name, title: title,
                  description: "Lets an extension run what the person read, without further cards.",
-                 inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id."), "lines": Schema.string("The lines a card was not shown for.")], required: ["extension", "plan"]),
+                 inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id."), "lines": Schema.array("The lines a card was not shown for, one entry each.", items: Schema.string("One line."))], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)
     }
 

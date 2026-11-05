@@ -30804,7 +30804,66 @@
         }
       }
     },
+    "A flow asks on a card that says what it does, and again when its time is up or you end it, when a server's program changes, or if you ask to be asked every time. An edit that does something new asks too, except that in Auto and in Full access some additions are let through and History shows them. An update of the add-on itself does not ask again. This is the one thing on that card you can take back for every flow at once." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسألك الروتين عبر بطاقة تشرح ما يفعله، ثم يسأل مرة أخرى عندما ينتهي وقته أو تنهيه، أو عندما يتغيّر برنامج خادم، أو إذا طلبت أن يُسأل عنه في كل مرة. والتعديل الذي يفعل شيئًا جديدًا يسأل أيضًا، إلا أنه في وضع Auto وفي الوصول الكامل تمرّ بعض الإضافات دون بطاقة ويعرضها السجل. تحديث الإضافة نفسها لا يسأل من جديد. هذا هو الشيء الوحيد في تلك البطاقة الذي يمكنك سحبه من جميع الروتينات دفعة واحدة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Ablauf fragt auf einer Karte, die sagt, was er tut, und noch einmal, wenn seine Zeit abläuft oder du ihn beendest, wenn sich das Programm eines Servers ändert oder wenn du jedes Mal gefragt werden willst. Eine Änderung, die etwas Neues tut, fragt auch, nur dass in Auto und mit Vollzugriff manche Ergänzungen ohne Karte durchgehen und der Verlauf sie zeigt. Ein Update des Add-ons selbst fragt nicht erneut. Das ist das Einzige auf dieser Karte, das du für alle Abläufe auf einmal zurücknehmen kannst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una rutina pregunta en una tarjeta que dice lo que hace, y de nuevo cuando se acaba su tiempo o la terminas, cuando cambia el programa de un servidor, o si pides que te pregunte siempre. Una edición que hace algo nuevo también pregunta, salvo que en Auto y en acceso total algunas adiciones pasan sin tarjeta y el Historial las muestra. Una actualización del propio complemento no vuelve a preguntar. Es lo único de esa tarjeta que puedes retirar para todas las rutinas a la vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une routine demande l’accord sur une carte qui dit ce qu’elle fait, puis à nouveau quand son délai est écoulé ou que vous y mettez fin, quand le programme d’un serveur change, ou si vous demandez à être sollicité à chaque fois. Une modification qui fait autre chose redemande aussi, sauf qu’en mode Auto et en accès complet certains ajouts passent sans carte et l’Historique les montre. Une mise à jour du module lui-même ne redemande pas. C’est le seul point de cette carte que vous pouvez reprendre pour toutes les routines à la fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una routine chiede su una scheda che dice cosa fa, e di nuovo quando il suo tempo scade o la termini, quando cambia il programma di un server, o se chiedi di essere interpellato ogni volta. Anche una modifica che fa qualcosa di nuovo chiede, solo che in Auto e con l’accesso completo alcune aggiunte passano senza scheda e la Cronologia le mostra. Un aggiornamento del componente stesso non chiede di nuovo. È l’unica cosa su quella scheda che puoi ritirare per tutte le routine insieme."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルーティンは、その内容を伝えるカードで確認します。期限が切れたりあなたが終了したとき、サーバのプログラムが変わったとき、毎回確認するよう求めたときにも、もう一度確認します。新しいことをするよう編集したときも確認しますが、Autoとフルアクセスでは一部の追加がカードなしで通り、履歴に表示されます。アドオン自体のアップデートでは再確認しません。このカードで、すべてのルーティンについてまとめて取り消せるのはこれだけです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "루틴은 하는 일을 알려 주는 카드로 물어봐요. 시간이 다 됐거나 직접 끝냈을 때, 서버의 프로그램이 바뀌었을 때, 매번 물어보도록 했을 때도 다시 물어봐요. 새로운 일을 하도록 고쳤을 때도 묻지만, Auto와 전체 접근에서는 일부 추가가 카드 없이 통과하고 기록에 나와요. 애드온 자체의 업데이트로는 다시 묻지 않아요. 이 카드에서 모든 루틴에 대해 한꺼번에 되돌릴 수 있는 건 이것뿐이에요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma rotina pergunta em um cartão que diz o que ela faz, e de novo quando o tempo dela acaba ou você a encerra, quando o programa de um servidor muda, ou se você pede para ser perguntado sempre. Uma edição que faz algo novo também pergunta, só que no Auto e no acesso total algumas adições passam sem cartão e o Histórico as mostra. Uma atualização do próprio complemento não pergunta de novo. É a única coisa nesse cartão que você pode retirar de todas as rotinas de uma vez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流程会在一张说明其作用的卡片上征求你的同意；当它到期或被你结束、服务器的程序改变，或你要求每次都询问时，会再次征求。把它改成做新的事时也会询问，只是在自动模式和完全访问下，部分新增内容会不经卡片通过，并显示在历史记录里。附加功能本身的更新不会再次询问。这是这张卡片上你能对所有流程一次性收回的唯一一项。"
+          }
+        }
+      }
+    },
     "A flow asks on a card that says what it does, and again when you edit it to do something new, when its time is up or you end it, when its program or definition changes, or if you ask to be asked every time. This is the one thing on that card you can take back for every flow at once." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -41752,6 +41811,7 @@
     },
     "Allowed in Auto without a card: the new lines stay inside Sidefolk, and nobody read them." : {
       "comment" : "History: a plan's edit Auto let through",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44381,6 +44441,65 @@
         }
       }
     },
+    "Answered by your own click under Full access: nobody read this plan, and it stands for later runs." : {
+      "comment" : "History: a plan Full access answered with no card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تمت الإجابة بنقرتك أنت في الوصول الكامل: لم يقرأ أحد هذه الخطة، وهي سارية على التشغيلات اللاحقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit deinem eigenen Klick bei Vollzugriff beantwortet: Niemand hat diesen Plan gelesen, und er gilt für spätere Läufe."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respondido con tu propio clic en acceso total: nadie leyó este plan, y vale para las ejecuciones siguientes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accepté par votre propre clic en accès complet : personne n’a lu ce plan, et il vaut pour les exécutions suivantes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Risposto con il tuo clic in accesso completo: nessuno ha letto questo piano, e vale per le esecuzioni successive."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルアクセスで、あなた自身のクリックにより承認されました。誰もこのプランを読んでおらず、以降の実行にも有効です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 접근에서 내 클릭으로 승인했어요. 아무도 이 계획을 읽지 않았고, 이후 실행에도 적용돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respondido pelo seu próprio clique no acesso total: ninguém leu este plano, e ele vale para as execuções seguintes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在完全访问下由你自己的点击批准：没有人读过这个计划，它对之后的运行同样有效。"
+          }
+        }
+      }
+    },
     "Answers it from the keyboard." : {
       "comment" : "VoiceOver: the card beside the companion",
       "localizations" : {
@@ -45259,6 +45378,7 @@
     },
     "Apart from the lines that still ask, that's all of it. It asks again if you change it to do something new, when its time is up, if the add-on or its program changes, or if you change a setting it depends on." : {
       "comment" : "A plan's card, the last words",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45312,6 +45432,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "除了仍会询问的行，就是这些。当你把它改成做新的事、它到期、附加功能或其程序改变，或你更改了它依赖的设置时，它会再次询问。"
+          }
+        }
+      }
+    },
+    "Apart from the lines that still ask, that's all of it. It asks again when its time is up, if a server's program changes, or if you change a setting it depends on, and when you change it to do something new, except that in Auto and in Full access some additions are let through and History shows them. An update of the add-on itself does not ask again." : {
+      "comment" : "A plan's card, the last words",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "باستثناء الأسطر التي ما زالت تسأل، هذا كل شيء. يسأل مرة أخرى عندما ينتهي وقته، أو إذا تغيّر برنامج خادم، أو إذا غيّرت إعدادًا يعتمد عليه، وعندما تعدّله ليفعل شيئًا جديدًا، إلا أنه في وضع Auto وفي الوصول الكامل تمرّ بعض الإضافات دون بطاقة ويعرضها السجل. تحديث الإضافة نفسها لا يسأل من جديد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgesehen von den Zeilen, die weiter fragen, ist das alles. Er fragt wieder, wenn seine Zeit abläuft, wenn sich das Programm eines Servers ändert oder wenn du eine Einstellung änderst, von der er abhängt, und wenn du ihn änderst, damit er etwas Neues tut, nur dass in Auto und mit Vollzugriff manche Ergänzungen ohne Karte durchgehen und der Verlauf sie zeigt. Ein Update des Add-ons selbst fragt nicht erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparte de las líneas que aún preguntan, eso es todo. Vuelve a preguntar cuando se acaba su tiempo, si cambia el programa de un servidor o si cambias un ajuste del que depende, y cuando la cambias para que haga algo nuevo, salvo que en Auto y en acceso total algunas adiciones pasan sin tarjeta y el Historial las muestra. Una actualización del propio complemento no vuelve a preguntar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En dehors des lignes qui demandent encore, c’est tout. Elle redemande quand son délai est écoulé, si le programme d’un serveur change ou si vous modifiez un réglage dont elle dépend, et quand vous la modifiez pour qu’elle fasse autre chose, sauf qu’en mode Auto et en accès complet certains ajouts passent sans carte et l’Historique les montre. Une mise à jour du module lui-même ne redemande pas."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A parte le righe che chiedono ancora, è tutto. Chiede di nuovo quando il suo tempo scade, se cambia il programma di un server o se cambi un’impostazione da cui dipende, e quando la modifichi perché faccia qualcosa di nuovo, solo che in Auto e con l’accesso completo alcune aggiunte passano senza scheda e la Cronologia le mostra. Un aggiornamento del componente stesso non chiede di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ確認が必要な行を除けば、これで全部です。期限が切れたとき、サーバのプログラムが変わったとき、依存する設定を変えたとき、新しいことをするよう編集したときは、もう一度確認します。ただしAutoとフルアクセスでは一部の追加がカードなしで通り、履歴に表示されます。アドオン自体のアップデートでは再確認しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속 물어보는 줄을 빼면 이게 전부예요. 시간이 다 됐을 때, 서버의 프로그램이 바뀌었을 때, 의존하는 설정을 바꿨을 때, 새로운 일을 하도록 고쳤을 때는 다시 물어봐요. 다만 Auto와 전체 접근에서는 일부 추가가 카드 없이 통과하고 기록에 나와요. 애드온 자체의 업데이트로는 다시 묻지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Além das linhas que ainda perguntam, é só isso. Ela pergunta de novo quando o tempo dela acaba, se o programa de um servidor muda ou se você muda uma configuração da qual ela depende, e quando você a edita para fazer algo novo, só que no Auto e no acesso total algumas adições passam sem cartão e o Histórico as mostra. Uma atualização do próprio complemento não pergunta de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除了仍会询问的行，就是这些。当它到期、服务器的程序改变、你更改了它依赖的设置，以及你把它改成做新的事时，它会再次询问；只是在自动模式和完全访问下，部分新增内容会不经卡片通过，并显示在历史记录里。附加功能本身的更新不会再次询问。"
           }
         }
       }
@@ -140443,25 +140622,25 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "An: Ein Ablauf, den du genehmigt hast, darf, was er gelesen oder geschrieben hat, in die Felder eines Servers oder des Werkzeugs eines anderen Add-ons setzen, wo seine Karte es sagt: Wörter von einer Seite oder aus einer Datei, aber auch deine eigenen Notizen, Erinnerungen und Termine, was deine KI geschrieben hat und was andere Server geantwortet haben. Aus: Diese Zeilen fragen jedes Mal. Was du in einen Ablauf eintippst und alles, was ein Add-on als deins bezeichnet, wird nicht zurückgehalten."
+            "value" : "An: Ein Ablauf, den du genehmigt hast, darf, was er gelesen oder geschrieben hat, in die Felder eines Servers oder des Werkzeugs eines anderen Add-ons setzen, wo seine Karte es sagt: Wörter von einer Seite oder aus einer Datei, aber auch deine eigenen Notizen, Erinnerungen und Termine, was deine KI geschrieben hat und was andere Server geantwortet haben. Aus: Diese Zeilen fragen jedes Mal. Was du in einen Ablauf eintippst und alles, was ein Add-on als deins bezeichnet, wird nicht blockiert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activado: una rutina que aprobaste puede poner lo que leyó o escribió en los campos de un servidor o de la herramienta de otro complemento, donde su tarjeta lo indica: palabras de una página o de un archivo, pero también tus propias notas, recordatorios y calendario, lo que escribió tu IA y lo que respondieron otros servidores. Desactivado: esas líneas preguntan cada vez. Lo que escribes en una rutina, y todo lo que un complemento dice que es tuyo, no se retiene."
+            "value" : "Activado: una rutina que aprobaste puede poner lo que leyó o escribió en los campos de un servidor o de la herramienta de otro complemento, donde su tarjeta lo indica: palabras de una página o de un archivo, pero también tus propias notas, recordatorios y calendario, lo que escribió tu IA y lo que respondieron otros servidores. Desactivado: esas líneas preguntan cada vez. Lo que escribes en una rutina, y todo lo que un complemento dice que es tuyo, no se bloquea."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activé : une routine que vous avez approuvée peut mettre ce qu’elle a lu ou écrit dans les champs d’un serveur ou de l’outil d’un autre module, comme l’indique sa carte : des mots venant d’une page ou d’un fichier, mais aussi vos propres notes, rappels et agenda, ce que votre IA a écrit et ce que d’autres serveurs ont répondu. Désactivé : ces lignes demandent à chaque fois. Ce que vous saisissez dans une routine, et tout ce qu’un module dit être à vous, n’est pas retenu."
+            "value" : "Activé : une routine que vous avez approuvée peut mettre ce qu’elle a lu ou écrit dans les champs d’un serveur ou de l’outil d’un autre module, comme l’indique sa carte : des mots venant d’une page ou d’un fichier, mais aussi vos propres notes, rappels et agenda, ce que votre IA a écrit et ce que d’autres serveurs ont répondu. Désactivé : ces lignes demandent à chaque fois. Ce que vous saisissez dans une routine, et tout ce qu’un module dit être à vous, n’est pas bloqué."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Attivo: una routine che hai approvato può mettere ciò che ha letto o scritto nei campi di un server o dello strumento di un altro componente, dove la sua scheda lo dice: parole di una pagina o di un file, ma anche le tue note, i tuoi promemoria e il tuo calendario, ciò che ha scritto la tua IA e ciò che hanno risposto altri server. Spento: quelle righe chiedono ogni volta. Ciò che scrivi in una routine, e tutto ciò che un componente dice essere tuo, non viene trattenuto."
+            "value" : "Attivo: una routine che hai approvato può mettere ciò che ha letto o scritto nei campi di un server o dello strumento di un altro componente, dove la sua scheda lo dice: parole di una pagina o di un file, ma anche le tue note, i tuoi promemoria e il tuo calendario, ciò che ha scritto la tua IA e ciò che hanno risposto altri server. Spento: quelle righe chiedono ogni volta. Ciò che scrivi in una routine, e tutto ciò che un componente dice essere tuo, non viene bloccato."
           }
         },
         "ja" : {
@@ -140479,7 +140658,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ligado: uma rotina que você aprovou pode colocar o que leu ou escreveu nos campos de um servidor ou da ferramenta de outro complemento, onde o cartão dela diz: palavras de uma página ou de um arquivo, mas também suas próprias notas, lembretes e agenda, o que sua IA escreveu e o que outros servidores responderam. Desligado: essas linhas perguntam a cada vez. O que você digita em uma rotina, e tudo o que um complemento diz ser seu, não é retido."
+            "value" : "Ligado: uma rotina que você aprovou pode colocar o que leu ou escreveu nos campos de um servidor ou da ferramenta de outro complemento, onde o cartão dela diz: palavras de uma página ou de um arquivo, mas também suas próprias notas, lembretes e agenda, o que sua IA escreveu e o que outros servidores responderam. Desligado: essas linhas perguntam a cada vez. O que você digita em uma rotina, e tudo o que um complemento diz ser seu, não é bloqueado."
           }
         },
         "zh-Hans" : {
@@ -269887,6 +270066,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘N 新建笔记"
+          }
+        }
+      }
+    },
+    "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a reminder), and nobody read them." : {
+      "comment" : "History: a plan's edit Auto let through",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé en mode Auto sans carte : les nouvelles lignes se contentent d’écrire ou d’informer dans Sidefolk (une note, une notification, un rappel), et personne ne les a lues."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido en Auto sin tarjeta: las líneas nuevas solo escriben o avisan dentro de Sidefolk (una nota, un aviso, un recordatorio) y nadie las leyó."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Auto ohne Karte erlaubt: Die neuen Zeilen schreiben oder melden nur innerhalb von Sidefolk (eine Notiz, ein Hinweis, eine Erinnerung), und niemand hat sie gelesen."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentito in Auto senza scheda: le nuove righe si limitano a scrivere o avvisare dentro Sidefolk (una nota, un avviso, un promemoria) e nessuno le ha lette."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido no Auto sem cartão: as novas linhas apenas escrevem ou avisam dentro do Sidefolk (uma nota, um aviso, um lembrete) e ninguém as leu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoでカードなしで許可されました。新しい行はSidefolkの中でノート・通知・リマインダーを書いたり知らせたりするだけで、誰も読んでいません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto에서 카드 없이 허용했어요. 새 줄은 Sidefolk 안에서 노트·알림·미리 알림을 쓰거나 알리기만 하고, 아무도 읽지 않았어요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在自动模式下无需卡片即获允许：新增的行只在 Sidefolk 内写入或通知（笔记、通知、提醒事项），没有人读过。"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سُمح به في وضع Auto دون بطاقة: الأسطر الجديدة تكتب أو تُعلِم داخل Sidefolk فقط (ملاحظة أو إشعار أو تذكير) ولم يقرأها أحد."
           }
         }
       }

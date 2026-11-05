@@ -145,6 +145,7 @@ enum Describe {
         case .failed: String(localized: "Allowed, but it didn't work.")
         case .autoMode: String(localized: "Ran without asking because Auto mode was on.")
         case .fullAccess: String(localized: "Ran without asking because Full access was on.")
+        case .fullAccessPlan: String(localized: "Answered by your own click under Full access: nobody read this plan, and it stands for later runs.", comment: "History: a plan Full access answered with no card")
         case .autoModePaired: String(localized: "Ran without asking because Auto mode was on and it reached only a device you paired.")
         case .fullAccessPaired: String(localized: "Ran without asking because Full access was on and it reached only a device you paired.")
         case .skipped: String(localized: "Not run: nobody answered in time.")
@@ -153,7 +154,7 @@ enum Describe {
         case .research: String(localized: "A link on a page, read without asking because you allowed a few in this conversation.")
         case .plan: String(localized: "Ran without asking because it fit a plan you read and allowed.")
         case .planUnread: String(localized: "Ran without asking because it fit a plan nobody read: Full access or Auto let it through.", comment: "History: a plan's line that was never shown on a card")
-        case .autoPlan: String(localized: "Allowed in Auto without a card: the new lines stay inside Sidefolk, and nobody read them.", comment: "History: a plan's edit Auto let through")
+        case .autoPlan: String(localized: "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a reminder), and nobody read them.", comment: "History: a plan's edit Auto let through")
         }
     }
 

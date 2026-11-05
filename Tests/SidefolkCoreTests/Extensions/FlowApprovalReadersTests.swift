@@ -36,13 +36,13 @@ import Testing
         await w.h.host.endPersonClick(Self.id, try #require(click))
     }
 
-    @Test func aCleanTurnOfTheAgentIsNotAClickAndATaintedOneIsNotEvenAsked() async throws {
+    @Test func aTurnOfTheAgentAndAnotherExtensionsCommandAreNotAClick() async throws {
         let w = try await World()
         try await w.setMode(.fullAccess)
         #expect(await w.h.host.notePersonCall(Self.id, caller: .agent(runId: "r1"), tainted: false) == nil)
+        #expect(await w.h.host.notePersonCall(Self.id, caller: .agent(runId: "r1"), tainted: true) == nil)
         #expect(await w.h.host.notePersonCall(Self.id, caller: .command(extensionId: "com.example.other"), tainted: false) == nil)
-        let tainted = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]), caller: .agent(runId: "r2"))
-        #expect(tainted.asked)
+        #expect(await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]), caller: .agent(runId: "r2")).asked)
     }
 
     // MARK: Outside content from files, the clipboard and other apps
@@ -68,10 +68,10 @@ import Testing
         let w = try await World()
         try await w.setMode(.auto)
         #expect(await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save])).asked, "the first time, the card")
-        let second: JSONValue = ["tool": "watch.create", "input": ["interval_minutes": 5]]
+        let second: JSONValue = ["tool": "reminders.create", "input": ["title": "Stretch"]]
         let edit = FlowApprovalTests.plan([FlowApprovalTests.save, second])
         #expect(await !w.approve(edit).asked, "Auto: a note stays inside Sidefolk")
-        let call: JSONValue = ["tool": "watch.create", "plan": "digest", "input": ["interval_minutes": 5]]
+        let call: JSONValue = ["tool": "reminders.create", "plan": "digest", "input": ["title": "Stretch"]]
         #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true, "it runs while Auto is on")
         try await w.setMode(.askOncePerKind)
         async let after = w.ask("sidefolk/tools.call", call)
@@ -81,7 +81,7 @@ import Testing
         async let reread = w.ask("sidefolk/plan.approve", ["plan": edit])
         let card = await w.answerCard(.allowOnce)
         guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
-        #expect(words.contains("interval_minutes"), "the line nobody read is shown again: \(words)")
+        #expect(words.contains("Stretch"), "the line nobody read is shown again: \(words)")
         #expect(await reread["ok"]?.boolValue == true)
         #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true)
     }
@@ -93,6 +93,20 @@ import Testing
         let delete: JSONValue = ["tool": "files.trash", "input": ["path": "/tmp/x"]]
         #expect(await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, delete])).asked, "a high-risk step is never skipped")
         #expect(await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, FlowApprovalTests.fetch], id: "web")).asked, "an address leaves the Mac")
+    }
+
+    @Test func autoShowsACardForAReadWhoseAnswerGoesBackToTheAddOn() async throws {
+        let w = try await World()
+        try await w.setMode(.auto)
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
+        for (tool, input): (String, JSONValue) in [("files.read", ["path": "/tmp/x"]), ("calendar.today", .object([:])), ("applenotes.read", .object([:])), ("notes.search", ["query": "plans"])] {
+            let edit = FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": .string(tool), "input": input]], id: "read-\(tool)")
+            _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "read-\(tool)"))
+            #expect(await w.approve(edit).asked, Comment(rawValue: "\(tool): what it reads is private, and nobody read the line"))
+        }
+        // What only writes or tells still passes without a card.
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "writes"))
+        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "reminders.create", "input": ["title": "Stretch"]]], id: "writes")).asked)
     }
 
     // MARK: A claim is the extension's word
@@ -205,6 +219,8 @@ import Testing
         try await w.h.host.setEnabled(false, id: Self.id)
         await w.h.env.broker.resolve(id: shown.id, decision: .allowOnce)
         _ = await reply
+        // The answer is worked out on the host's own time: wait for it, so turning the extension back on can't come first.
+        for _ in 0..<200 where await w.h.host.planIsBeingAsked(Self.id) { try await Task.sleep(for: .milliseconds(10)) }
         try await w.h.host.setEnabled(true, id: Self.id)
         #expect(await w.h.host.planInfos(Self.id).isEmpty, "what was allowed for a program that was gone is not saved")
     }
@@ -226,14 +242,7 @@ import Testing
         }
     }
 
-    @Test func aSlotNamingAStepThatComesLaterIsOutside() {
-        let later: [(name: String?, tool: String, kind: String?, reads: [String]?)] = [("a", "web.fetch", nil, nil)]
-        #expect(ExtensionPlanRules.sources(of: ["title": "{{answer}}"], steps: later, inside: [])["title"] == "outside", "a name no earlier step makes is outside")
-        let ask: [(name: String?, tool: String, kind: String?, reads: [String]?)] = [("answer", "ask.user", nil, nil)]
-        #expect(ExtensionPlanRules.sources(of: ["title": "{{answer}}"], steps: ask, inside: [])["title"] == "inside")
-    }
-
-    @Test func aPolicyThatCantBeReadIsNotAPermission() {
+    @Test func anUnreadablePolicyIsReadAsAskEverythingAndPassNothing() {
         let unreadable = ExtensionHost.FlowPolicy(policy: nil)
         #expect(unreadable.mode == .askEveryTime && !unreadable.mayPassToServers)
         let normal = ExtensionHost.FlowPolicy(policy: GuardPolicy())
@@ -339,13 +348,28 @@ import Testing
         #expect(!quiet.asked && quiet.reply["silent"]?.boolValue == true)
     }
 
+    @Test func historyNamesEveryLineNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        // 24 different long lines: History clips every string where it keeps it, so each is its own short entry, and the ones past the cap are counted.
+        let filler = String(repeating: "and a long, long sentence about nothing at all ", count: 8)
+        let steps: [JSONValue] = (0..<24).map { ["tool": "notify.user", "input": ["title": .string("Step \($0) \(filler)")]] }
+        let plan = FlowApprovalTests.plan(steps)
+        #expect(await !w.approve(plan).asked)
+        let row = try await w.rows("extensions.plan").first
+        #expect(row?.decision == .fullAccessPlan)
+        let lines = row?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        #expect(lines.count == 20 && lines.last == "+5 more", "past twenty, the rest are counted: \(lines.suffix(2))")
+        for i in 0..<19 { #expect(lines[i].contains("Step \(i) "), "line \(i) survives the clip and the redaction: \(lines[i])") }
+    }
+
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
         let w = try await World()
         try await w.setMode(.fullAccess)
         let plan = FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "watch.create", "input": ["interval_minutes": 5]]])
         #expect(await !w.approve(plan).asked)
         let row = try await w.rows("extensions.plan").first
-        #expect(row?.decision == .fullAccess && row?.args?["lines"]?.stringValue?.contains("interval_minutes") == true, "the approval's row names the lines: \(String(describing: row?.args))")
+        #expect(row?.decision == .fullAccessPlan && row?.args?["lines"]?.arrayValue?.contains { $0.stringValue?.contains("interval_minutes") == true } == true, "the approval's row names the lines: \(String(describing: row?.args))")
         let call: JSONValue = ["tool": "watch.create", "plan": "digest", "input": ["interval_minutes": 5]]
         #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true)
         #expect(try await w.rows("watch.create").first?.decision == .planUnread, "a run under a plan nobody read doesn't say it was a plan they read")
@@ -362,14 +386,86 @@ import Testing
         let w = try await World()
         try await w.setMode(.auto)
         _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
-        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "watch.create", "input": ["interval_minutes": 5]]]))
-        let call: JSONValue = ["tool": "watch.create", "plan": "digest", "input": ["interval_minutes": 5]]
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "reminders.create", "input": ["title": "Stretch"]]]))
+        let call: JSONValue = ["tool": "reminders.create", "plan": "digest", "input": ["title": "Stretch"]]
         #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true)
-        #expect(try await w.rows("watch.create").first?.decision == .planUnread)
+        #expect(try await w.rows("reminders.create").first?.decision == .planUnread)
         // The line that was read in the first card still says so.
         let save: JSONValue = ["tool": "notes.save", "plan": "digest", "input": ["text": "Digest: today"]]
         #expect(await w.ask("sidefolk/tools.call", save)["standing"]?.boolValue == true)
         #expect(try await w.rows("notes.save").first?.decision == .plan)
+        // The editor says what the reply says: this edit asked no card.
+        let again = FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "reminders.create", "input": ["title": "Stretch"]]])
+        #expect(await w.check(again)["silent"]?.boolValue == true)
+    }
+
+    @Test func aPlanSavedWithNoSourcesNeverTakesAWordSlotInAFieldTheTableDoesNotOpen() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        // A plan from before sources were worked out is the same steps with nothing saying where a slot's words come from.
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, FlowApprovalTests.post(["title": "Issue {{page}}"])]))
+        let call: JSONValue = ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Issue words"]]
+        #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true, "with its sources, the plan holds")
+        await w.h.host.updatePreferences(Self.id) { prefs in
+            for (key, plan) in prefs.plans {
+                var old = plan
+                for i in old.steps.indices { old.steps[i].sources = nil }
+                prefs.plans[key] = old
+            }
+        }
+        async let after = w.ask("sidefolk/tools.call", call)
+        _ = await w.answerCard(.deny)
+        #expect(await after["standing"]?.boolValue != true, "a slot nobody worked out is a written value there")
+    }
+
+    @Test func aStepCalledTodayInAnyCaseIsRefused() async throws {
+        let w = try await World()
+        for name in ["today", "Today", "NOW", "Now"] {
+            let step: JSONValue = ["tool": "web.fetch", "as": .string(name), "input": ["url": "https://news.example.com"]]
+            #expect(await w.check(FlowApprovalTests.plan([step]))["reason"]?.stringValue == "unusable", Comment(rawValue: name))
+        }
+    }
+
+    @Test func twoLinesSpelledAlikeAreTwoLinesWhenTheirBytesDiffer() async throws {
+        let w = try await World()
+        let composed: JSONValue = ["tool": "web.fetch", "input": ["url": "https://news.example.com/caf\u{E9}"]]
+        let decomposed: JSONValue = ["tool": "web.fetch", "input": ["url": "https://news.example.com/cafe\u{301}"]]
+        let checked = await w.check(FlowApprovalTests.plan([composed, decomposed]))
+        #expect(checked["new"]?.arrayValue?.count == 2, "two different addresses are two lines to read: \(checked)")
+    }
+
+    @Test func aCoveredEditThatAddsAnEndTakesTheShorterOne() async throws {
+        let w = try await World()
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
+        #expect(await w.h.host.planInfos(Self.id).first?.expiresAt == nil)
+        var fields = FlowApprovalTests.plan([FlowApprovalTests.save]).objectValue ?? [:]
+        fields["ttl"] = 600
+        #expect(await !w.approve(.object(fields)).asked)
+        #expect(await w.h.host.planInfos(Self.id).first?.expiresAt != nil, "no end became an end")
+    }
+
+    @Test func theWarningComesBeforeEvenTheAuthorsOwnWordsOnTheCard() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": FlowApprovalTests.plan([notes, FlowApprovalTests.page, FlowApprovalTests.post(["body": "{{page}}"])])])
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        if let warning = words.range(of: "reads things of yours"), let when = words.range(of: "When, in") {
+            #expect(warning.lowerBound < when.lowerBound, "first of all: \(words)")
+        } else { Issue.record(Comment(rawValue: "both are on the card: \(words)")) }
+        _ = await reply
+    }
+
+    @Test func everyFieldAServersLineFillsIsNamedInHistoryOneByOne() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, FlowApprovalTests.post(["body": "{{page}}", "title": "{{page}}"])]))
+        let call: JSONValue = ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "t", "body": "b"]]
+        _ = await w.ask("sidefolk/tools.call", call)
+        let row = try await w.rows("ext.hub.post").first
+        let said = row?.args?["_filled_from"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        #expect(said.count == 2 && said.contains { $0.hasPrefix("body from") } && said.contains { $0.hasPrefix("title from") }, "\(said)")
     }
 
     @Test func aFlowNameAndTheKeysOfAStepAreComparedByBytes() {

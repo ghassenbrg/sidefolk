@@ -64,7 +64,7 @@ public struct PermissionEngine: Sendable {
         if spec.name == ExtensionPlanTool.name, caller.kind == "extension", let answer = scope.planAnswer {
             switch answer {
             case .covered where policy.mode(for: caller) != .askEveryTime: return .allow(.plan)
-            case .fullAccess where policy.mode == .fullAccess: return .allow(.fullAccess)
+            case .fullAccess where policy.mode == .fullAccess: return .allow(.fullAccessPlan)
             case .autoSkipped where policy.mode == .auto: return .allow(.autoPlan)
             default: break
             }

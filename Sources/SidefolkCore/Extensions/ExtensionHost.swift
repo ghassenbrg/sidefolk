@@ -125,10 +125,17 @@ public actor ExtensionHost {
         /// Calls under way, by the request that made them: what a program can ask to stop.
         var actionTasks: [String: Task<Void, Never>] = [:]
         /// A stop that arrived before its call was registered: the most recent few, kept until the call turns up.
-        var earlyCancels: Set<String> = []
+        var earlyCancels: [String] = []
         mutating func noteEarlyCancel(_ key: String) {
-            if earlyCancels.count >= 32 { earlyCancels.removeAll() }
-            earlyCancels.insert(key)
+            if earlyCancels.count >= 32 { earlyCancels.removeFirst() }
+            earlyCancels.append(key)
+        }
+
+        /// Takes a remembered stop for this call, if there is one.
+        mutating func takeEarlyCancel(_ key: String) -> Bool {
+            guard let at = earlyCancels.firstIndex(of: key) else { return false }
+            earlyCancels.remove(at: at)
+            return true
         }
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
@@ -1588,6 +1595,7 @@ public actor ExtensionHost {
         // Whoever asked is gone: a card up for it goes too, and a later Allow can't act for nobody.
         for task in runtimes[id]?.actionTasks.values.map({ $0 }) ?? [] { task.cancel() }
         runtimes[id]?.actionTasks = [:]
+        runtimes[id]?.earlyCancels = []
         let oneShots = runtimes[id]?.oneShots.values.map { $0 } ?? []
         runtimes[id]?.oneShots = [:]
         if let generation { await releaseOutputMute(id: id, generation: generation) }

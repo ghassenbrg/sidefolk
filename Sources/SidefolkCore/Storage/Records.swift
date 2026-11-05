@@ -374,6 +374,8 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case plan
         /// Without a card, because it fit a plan nobody read: Full access answered it, or Auto let a line that stays inside Sidefolk through (D187, D188).
         case planUnread = "plan_unread"
+        /// A plan Full access answered for the person's own click, with no card: nobody read it, and it stands for later runs (D188).
+        case fullAccessPlan = "full_access_plan"
         /// A plan's edit that Auto let through with no card, because its new lines stay inside Sidefolk: nobody read them (D187).
         case autoPlan = "auto_plan"
     }

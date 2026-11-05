@@ -18,13 +18,13 @@ extension ExtensionPlanWords {
     static func card(for e: PlanEvaluation, extensionName name: String, mode: GuardMode) -> String {
         var parts: [String] = []
         let plan = e.plan
-        // Whole, here, where the summary above the card is clipped: its own words, marked as that, and what it's the only place to say.
-        if !plan.when.isEmpty { parts.append(String(localized: "When, in \(ToolFormat.oneLine(ExtensionText.clean(name), 60))'s words: \(ToolFormat.oneLine(ExtensionText.clean(plan.when), 600))", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
         let delta = e.previous != nil
         let shown = delta ? e.fresh : Array(e.lines.indices)
         // The one warning that matters most comes first: the card scrolls, and what is below its fold is read last.
         let crossings = crossingSentences(e, shown: shown)
         if !crossings.isEmpty { parts.append(crossings.joined(separator: " ")) }
+        // Whole, here, where the summary above the card is clipped: its own words, marked as that, and what it's the only place to say.
+        if !plan.when.isEmpty { parts.append(String(localized: "When, in \(ToolFormat.oneLine(ExtensionText.clean(name), 60))'s words: \(ToolFormat.oneLine(ExtensionText.clean(plan.when), 600))", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
         if delta, !shown.isEmpty {
             parts.append(String(localized: "New, asking you now:", comment: "A plan's card, after an edit: only what the person hasn't read yet follows"))
         }
@@ -64,17 +64,23 @@ extension ExtensionPlanWords {
         if !delta {
             parts.append(mode == .askEveryTime
                 ? String(localized: "You asked to be asked every time, so each action still asks before it runs.", comment: "A plan's card, the last words, for someone who chose Ask every time")
-                : String(localized: "Apart from the lines that still ask, that's all of it. It asks again if you change it to do something new, when its time is up, if the add-on or its program changes, or if you change a setting it depends on.", comment: "A plan's card, the last words"))
+                : String(localized: "Apart from the lines that still ask, that's all of it. It asks again when its time is up, if a server's program changes, or if you change a setting it depends on, and when you change it to do something new, except that in Auto and in Full access some additions are let through and History shows them. An update of the add-on itself does not ask again.", comment: "A plan's card, the last words"))
         }
         return text(parts)
     }
 
     /// The lines a card was never shown for (Full access or Auto let them through), each as the card would have said it: History keeps them on the approval's row.
     static func addedLines(_ e: PlanEvaluation) -> [String] {
-        e.fresh.compactMap { i -> String? in
+        capped(e.fresh.compactMap { i -> String? in
             guard e.lines[i].tool != nil else { return nil }
-            return ToolFormat.oneLine(lineText(e.lines[i], e), 240)
-        }.prefix(20).map { $0 }
+            return ToolFormat.oneLine(lineText(e.lines[i], e), 200)
+        }, 20)
+    }
+
+    /// At most `limit` entries, one line each so History keeps every one whole; past it, a last entry says how many more there were.
+    static func capped(_ lines: [String], _ limit: Int) -> [String] {
+        guard lines.count > limit else { return lines }
+        return Array(lines.prefix(limit - 1)) + ["+\(lines.count - limit + 1) more"]
     }
 
     // MARK: Sections
@@ -152,11 +158,9 @@ extension ExtensionPlanWords {
             // A signed extension's word that a value is the person's own is believed, and said to be its word.
             from[field] = source == "claimed" ? String(localized: "\(names), which the extension says is your own", comment: "A plan's card: a value the extension says comes from the person") : names
         }
-        // A whole value is only said where it could be something other than words: a field the schema says is a string can't take a list.
-        let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
+        // A field that is one slot takes a value of any kind, or none, whatever the schema says (what runs is what the host matched, not what the schema hopes).
         let wholes = ExtensionPlanRules.wholeKeys(line.step.input, tool: tool.spec.name)
-        let anything = wholes.filter { properties[$0]?["type"]?.stringValue != "string" }
-        return ExtensionPlanWords.line(tool: tool, template: line.step.input, from: from, program: line.step.program, whole: anything, omit: wholes.subtracting(anything))
+        return ExtensionPlanWords.line(tool: tool, template: line.step.input, from: from, program: line.step.program, whole: wholes, omit: [])
     }
 
     /// Names for the card: as many as fit in 400 characters, and how many more there are, so a long list can't push one past the cut unseen.
@@ -297,10 +301,13 @@ extension ExtensionPlanWords {
 }
 
 extension ExtensionPlanRules {
-    /// A standing line that stays inside Sidefolk: its tool is Sidefolk's own, nothing it does could carry words out, and it isn't a risk to undo.
+    /// A standing line that stays inside Sidefolk: its tool is Sidefolk's own, nothing it does could carry words out, it isn't a risk to undo, and it WRITES or
+    /// TELLS (a note, a notice, a reminder, a question, a line said aloud). A read whose answer goes back to the add-on (files, calendar, agenda, notes,
+    /// Apple Notes) always shows a card in Auto: what it hands over is private, and nobody would have read the line (D187, the founder's call).
     static func staysInside(_ line: PlanEvaluation.Line) -> Bool {
         guard let tool = line.tool, line.step.standing, !line.step.isInFullAccessOnly, extensionTool(tool) == nil else { return false }
         let spec = tool.spec
-        return spec.risk != .high && !PermissionEngine.couldCarryOut(spec, outwardUntyped: !spec.capabilities.isDisjoint(with: [.network, .apps]))
+        let writesOrTells = spec.mutates || ExtensionActionPolicy.reachesThePerson.contains(spec.name) || ["voice.say", "companion.play"].contains(spec.name)
+        return writesOrTells && spec.risk != .high && !PermissionEngine.couldCarryOut(spec, outwardUntyped: !spec.capabilities.isDisjoint(with: [.network, .apps]))
     }
 }

@@ -82,7 +82,7 @@ extension ExtensionHost {
             let name = raw["as"]?.stringValue
             // A step's name is how later steps point at it, and the host reads it first: one name twice, or one the host reads as the clock, would let words
             // from outside pass for the person's own.
-            if let name, !named.insert(name).inserted || ExtensionPlanRules.reservedNames.contains(name) { return .failure(.unusable) }
+            if let name, !named.insert(name).inserted || ExtensionPlanRules.reservedNames.contains(name.lowercased()) { return .failure(.unusable) }
             let title = raw["title"]?.stringValue.map { ExtensionPlanRules.visible(ExtensionText.line($0, characters: 80)) }.flatMap { $0.isEmpty ? nil : $0 }
             var line: PlanEvaluation.Line
             if let kind = raw["kind"]?.stringValue {
@@ -137,7 +137,8 @@ extension ExtensionHost {
                 step.feeds = Self.feeds(of: input, tool: tool.spec.name, earlier: lines)
                 line = .init(step: step, tool: tool, verdict: verdict)
             }
-            if let seen = lines.firstIndex(where: { $0.step == line.step }) {
+            // The same line is the same bytes: Swift's `==` takes two spellings of one letter for equal.
+            if let seen = lines.firstIndex(where: { $0.digest == line.digest && ExtensionPlanRules.same($0.step.title ?? "", line.step.title ?? "") && $0.step == line.step }) {
                 rows.append(seen)
             } else {
                 lines.append(line)
@@ -146,7 +147,7 @@ extension ExtensionHost {
             }
         }
         // At most 64 different lines: the same line again (whatever it is called) is one to read, and the card says so.
-        guard lines.count <= ExtensionPlanRules.maxRows, Set(lines.filter { $0.step.kind != "value" }.map { Self.contentKey($0.step) }).count <= ExtensionPlanRules.maxSteps else { return .failure(.unusable) }
+        guard lines.count <= ExtensionPlanRules.maxRows, Set(lines.filter { $0.step.kind != "value" }.map { Array(Self.contentKey($0.step).utf8) }).count <= ExtensionPlanRules.maxSteps else { return .failure(.unusable) }
         Self.markCrossing(&lines)
 
         let title = ExtensionPlanRules.visible(ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80))
@@ -201,7 +202,7 @@ extension ExtensionHost {
     /// A flow that reads the person's own things and outside words, and fills a line for a server or another extension from what it reads, is where a
     /// stranger's page could take private words to that place unattended. The destination is written (or the line asks, or stands only in Full access),
     /// so the page doesn't choose where they go: the card says it in plain words, naming the server, and the person's switch turns it back to asking
-    /// (D189, T53). Worked out from the whole plan, and conservative. An AI step reads what it names, or everything before it when it names nothing.
+    /// (D189, T53). Worked out from the whole plan, and conservative. An AI step reads what it names, or everything else in the plan when it names nothing.
     static func markCrossing(_ lines: inout [PlanEvaluation.Line]) {
         func privateRead(_ tool: any Tool) -> Bool {
             let spec = tool.spec
@@ -217,9 +218,9 @@ extension ExtensionHost {
             ExtensionPlanRules.extensionTool(tool) != nil || tool.spec.name == CompanionJobTool.name || tool.spec.capabilities.contains(.network)
                 || (!tool.spec.mutates && !tool.spec.capabilities.isDisjoint(with: [.filesRead, .clipboard, .calendar, .macApps]))
         }
-        // For each line that hands words to a server or another extension: do the steps BEFORE it read the person's own things and outside content? (What
-        // comes after can't feed it, and the line itself isn't its own reading.) What each step reads is worked out once, and an AI step's named steps are
-        // looked up by name, so a large plan is the size of the plan and no more.
+        // For each line that hands words to a server or another extension: does any OTHER step of the plan read the person's own things and outside content?
+        // The order the steps are written in is not the order they are called in, so every step counts (and a line that appears twice is one line). What each
+        // step reads is worked out once, and an AI step's named steps are looked up by name, so a large plan is the size of the plan and no more.
         var at: [String: Int] = [:]
         for (i, line) in lines.enumerated() { if line.tool != nil, let name = line.step.name { at[name] = i } }
         let reads: [(privately: Bool, outside: Bool)] = lines.map { line in line.tool.map { (privateRead($0), outsideRead($0)) } ?? (false, false) }
@@ -228,13 +229,13 @@ extension ExtensionHost {
             guard let tool = lines[i].tool, ExtensionPlanRules.extensionTool(tool) != nil, lines[i].step.standing,
                   (lines[i].step.sources ?? [:]).values.contains("outside") else { continue }
             var privately = false, outside = false
-            for j in 0..<i {
+            for j in lines.indices where j != i {
                 if lines[j].tool != nil {
                     privately = privately || reads[j].privately
                     outside = outside || reads[j].outside
                 } else if lines[j].step.kind == "ai" {
                     guard let from = named[j] else { privately = true; outside = true; continue }
-                    for k in from where k < i {
+                    for k in from where k != i {
                         privately = privately || reads[k].privately
                         outside = outside || reads[k].outside
                     }

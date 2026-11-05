@@ -25,7 +25,7 @@ import Testing
                 $0.askEachTimeOnline = { (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
             }
             for (name, risk, caps, mutates) in [("notes.save", Risk.low, Set<Capability>([.notebook]), true), ("notes.search", .low, [.notebook], false),
-                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch], true),
+                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch, .network, .filesRead], true), ("reminders.create", .low, [.time], true),
                                                 ("files.read", .low, [.filesRead], false), ("clipboard.read", .low, [.clipboard], false), ("applenotes.read", .low, [.macApps], false),
                                                 ("calendar.today", .low, [.calendar], false), ("voice.say", .low, [], true), ("files.trash", .high, [.filesWrite], true)] {
                 h.env.registry.register(ExtensionActionsTests.Probe(name: name, risk: risk, capabilities: caps, mutates: mutates, urlParameter: name == "web.fetch" ? "url" : nil))
@@ -193,7 +193,7 @@ import Testing
         try await w.setMode(.fullAccess)
         let first = await w.approve(Self.plan([Self.save, Self.fetch]))
         #expect(!first.asked && first.reply["ok"]?.boolValue == true, "their click is the approval")
-        #expect(try await w.rows("extensions.plan").first?.decision == .fullAccess, "History says Full access answered")
+        #expect(try await w.rows("extensions.plan").first?.decision == .fullAccessPlan, "History says Full access answered it and nobody read it")
     }
 
     @Test func fullAccessNeverAnswersForAnAgentOrAnUnsignedExtension() async throws {
@@ -226,7 +226,7 @@ import Testing
         #expect(!inside.asked && inside.reply["ok"]?.boolValue == true, "a notice stays in Sidefolk")
         let row = try await w.rows("extensions.plan").first
         #expect(row?.decision == .autoPlan, "History says Auto let it through unread, not that a plan was read")
-        #expect(row?.args?["lines"]?.stringValue?.contains("Done") == true, "and names the line: \(String(describing: row?.args))")
+        #expect(row?.args?["lines"]?.arrayValue?.contains { $0.stringValue?.contains("Done") == true } == true, "and names the line: \(String(describing: row?.args))")
         #expect(await w.approve(Self.plan([Self.save, Self.fetch])).asked, "an address leaves the Mac: the card")
     }
 
@@ -285,14 +285,14 @@ import Testing
         let card = await w.answerCard(.allowOnce)
         guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
         #expect(words.contains("It sends out:") && words.contains("a server on this Mac, program "), "\(words)")
-        #expect(words.contains("body: “[from “Read the page · web.fetch”; it may also be left out]”"), "\(words)")
+        #expect(words.contains("body: “[from “Read the page · web.fetch”; it may also be a list, a record, a number, or left out]”"), "\(words)")
         #expect(words.contains("Outside content: Words from “Read the page · web.fetch” go into body of “Create an issue”"), "\(words)")
         #expect(await reply["standing"]?.arrayValue?.compactMap(\.boolValue) == [true, true])
         let run = await w.ask("sidefolk/tools.call", ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Weekly digest", "body": "page words"]])
         #expect(run["standing"]?.boolValue == true && run["text"]?.stringValue == "posted", "\(run)")
         #expect(await w.h.env.broker.pending().isEmpty)
         let row = try await w.rows("ext.hub.post").first
-        #expect(row?.args?["_filled_from"]?.stringValue == "body from step page (outside content)", "History says where the words came from: \(String(describing: row?.args))")
+        #expect(row?.args?["_filled_from"]?.arrayValue?.compactMap(\.stringValue) == ["body from step page (outside content)"], "History says where the words came from: \(String(describing: row?.args))")
     }
 
     @Test func aServerWhoseProgramChangedAsksAgain() async throws {
@@ -596,7 +596,7 @@ import Testing
             return engine.evaluate(spec: spec, input: .object([:]), summary: "", scope: ToolScope(extensionId: "com.x", text: "words", planAnswer: answer), caller: .extension(id: "com.x"),
                                    tainted: false, policy: GuardPolicy(mode: mode), grants: [], folders: [])
         }
-        #expect(decide(name: ExtensionPlanTool.name, answer: .fullAccess, mode: .fullAccess) == .allow(.fullAccess))
+        #expect(decide(name: ExtensionPlanTool.name, answer: .fullAccess, mode: .fullAccess) == .allow(.fullAccessPlan))
         #expect(decide(name: ExtensionPlanTool.name, answer: .covered, mode: .askOncePerKind) == .allow(.plan))
         for (label, answer) in [("another tool", decide(name: "ext.x.y", answer: .fullAccess, mode: .fullAccess)), ("not Full access", decide(name: ExtensionPlanTool.name, answer: .fullAccess, mode: .auto)),
                                 ("ask every time", decide(name: ExtensionPlanTool.name, answer: .covered, mode: .askEveryTime))] {
@@ -713,7 +713,7 @@ import Testing
         #expect(!text.contains("with different"), "no row stands for several: \(text)")
         #expect(text.contains("x’, tags: ‘secret"), "a quote inside a value can't pass for another field: \(text)")
         #expect(text.contains("Words from “Read the page · web.fetch” go into body of “notify.user”"), "words a page writes into a notice are named too: \(text)")
-        #expect(text.contains("it may also be a list, a record, a number, or left out") == false, "a whole value is only said where it is whole")
+        #expect(text.contains("it may also be a list, a record, a number, or left out"), "a field that is one slot takes a value of any kind, whatever its schema says: \(text)")
         let whole = await words(w, Self.plan([Self.page, ["tool": "watch.create", "input": ["interval_minutes": "{{page}}"]]], id: "whole"))
         #expect(whole.words?.contains("it may also be a list, a record, a number, or left out") == true, "\(String(describing: whole.words))")
     }
@@ -749,7 +749,7 @@ import Testing
         #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true, "it was read on a card now, so it stands in every mode")
     }
 
-    @Test func aServersToolCountsAsReadingYourThingsForTheWarningOnlyBeforeALineItFeeds() async throws {
+    @Test func aServersToolCountsAsReadingYourThingsForTheWarningWhereverTheStepsAreWritten() async throws {
         let w = try await World()
         _ = try server(w)
         let spec = ToolSpec(name: "ext.hub.search", title: "Search mail", description: "", inputSchema: Schema.object(["query": Schema.string("Query")]),
@@ -759,7 +759,10 @@ import Testing
         let plan = Self.plan([Self.page, mail, Self.post(["body": "{{page}} {{mail}}"])])
         #expect(await w.check(plan)["steps"]?.arrayValue?.last?["warning"]?.stringValue == "crossing", "a server's read may hold your own things")
         #expect(await w.check(Self.plan([Self.page, Self.post(["body": "{{page}}"])]))["steps"]?.arrayValue?.last?["warning"] == nil, "the line itself isn't what it reads")
-        #expect(await w.check(Self.plan([Self.post(["body": "{{page}}"]), mail, Self.page]))["steps"]?.arrayValue?.first?["warning"] == nil, "what comes after can't feed it")
+        // The order they are written in is not the order they are called in: a line written first is warned about too.
+        #expect(await w.check(Self.plan([Self.post(["body": "{{page}}"]), mail, Self.page]))["steps"]?.arrayValue?.first?["warning"]?.stringValue == "crossing", "what comes after can feed it")
+        let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
+        #expect(await w.check(Self.plan([Self.post(["body": "{{page}}"]), Self.page, notes]))["steps"]?.arrayValue?.first?["warning"]?.stringValue == "crossing", "your notes written last")
     }
 
     @Test func swappingTheNamesOfTwoStepsOfOneToolRebindsAndShows() async throws {
