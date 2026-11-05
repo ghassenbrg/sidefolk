@@ -67,6 +67,25 @@ cp THIRD_PARTY_NOTICES.md LICENSE "$STAGE/Contents/Resources/" 2>/dev/null || tr
 python3 -I scripts/seed-packs.py fetch "$STAGE/Contents/Resources/SeedPacks" ${SIDEFOLK_RELEASE:+--required}
 # Dependency resource bundles (KeyboardShortcuts' recorder needs its strings) belong in Resources.
 for b in "$BIN"/*.bundle; do [[ -e "$b" ]] && cp -R "$b" "$STAGE/Contents/Resources/"; done
+# Its Arabic strings don't parse (one line has unescaped quotes), so the recorder shows "Space_Key". Mended while they're broken,
+# and the bundle's own ad hoc seal goes with the edit: the app's signature seals these resources. Never a reason to stop a build.
+KS_BUNDLE="$STAGE/Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle"
+AR_STRINGS="$KS_BUNDLE/Contents/Resources/ar.lproj/Localizable.strings"
+if [[ -f "$AR_STRINGS" ]] && ! plutil -lint "$AR_STRINGS" >/dev/null 2>&1; then
+  chmod -R u+w "$KS_BUNDLE"
+  python3 -I -c '
+import re, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().split("\n")
+mended = []
+for line in lines:
+    m = re.fullmatch(r"(\"[^\"]+\" = \")(.*)(\";)", line)
+    mended.append(m[1] + m[2].replace("\"", "\\\"") + m[3] if m else line)
+open(path, "w", encoding="utf-8").write("\n".join(mended))
+' "$AR_STRINGS" || true
+  rm -rf "$KS_BUNDLE/Contents/_CodeSignature"
+  plutil -lint "$AR_STRINGS" >/dev/null 2>&1 || echo "warning: KeyboardShortcuts' Arabic strings still don't parse" >&2
+fi
 find "$STAGE/Contents/Resources" -name '.DS_Store' -delete
 
 IDENTITY="${SIDEFOLK_SIGN_IDENTITY:-}"
