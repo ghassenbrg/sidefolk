@@ -113,6 +113,9 @@ snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a cop
 
 ## Known gaps
 
+- **A waiting question, seen and not designed:** with the held cards fanned out, answering one of them elsewhere closes the fan rather than shrinking it. What's left is right when it opens again. Left as it is, on the coordinator's word.
+- **A waiting question, not checked by hand:** clicking the yellow count, a double click on a card just come up, ↑/↓ with the keyboard, and all of it in full screen were driven by debug commands or read in the code, never pressed.
+
 - Add-ons tests: Playtime's sandbox tests fail when the suite runs in parallel and pass serially, which is how CI runs them. A known test-isolation item, cause not proven; a private data folder per run didn't change it.
 - **Hide over full-screen apps (D138), what's left to check:** the companion's visit, the notification and a real click need a person there. Measured on a real full-screen space: with the setting off nothing changes, and with it on the companion's panel is gone over the full-screen app and back after leaving it.
 - **A normal window opened over a full-screen app takes you to the desktop** (D137): it no longer lands inside that space, 3 of 3 with no click. A real click hasn't been measured. Test copies' companions and panels still show, sessions have to opt in to `SIDEFOLK_QUIET_WINDOWS=1`.
