@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import SidefolkCore
 
@@ -206,6 +207,25 @@ import Testing
         #expect(question?.state == .shown, "still open, still counted: \(String(describing: question?.state))")
         if let question { await center.respond(id: question.id, actionId: nil) }
         _ = await asking.value
+    }
+
+    /// What lists what's open has to hear: a row left behind would offer answers that go nowhere.
+    @Test func aQuestionThatRunsOutSaysSoToWhatListsIt() async throws {
+        let db = try AppDatabase.inMemory()
+        let events = EventBus()
+        let store = AttentionStore(db)
+        let center = AttentionCenter(store: store, events: events)
+        let stream = events.stream()
+        let told = Mutex(false)
+        let listening = Task {
+            for await event in stream { if case .dataChanged(.attention) = event { told.withLock { $0 = true } } }
+        }
+        let answer = await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Runs out?", refKind: "ask"), timeout: 0.05)
+        #expect(answer == nil)
+        #expect(try await store.open().isEmpty)
+        for _ in 0..<200 where !told.withLock({ $0 }) { try await Task.sleep(for: .milliseconds(5)) }
+        listening.cancel()
+        #expect(told.withLock { $0 }, "it's told, so Today and Ask's rows look again")
     }
 
     @Test func aNoticeIsStillSpacedOut() async throws {

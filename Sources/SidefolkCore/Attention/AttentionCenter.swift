@@ -316,6 +316,8 @@ public actor AttentionCenter {
         }
         // An `ask` whose item never reached the store still gets its answer: none.
         waiting.removeValue(forKey: id)?.resume(returning: nil)
+        // Today and Ask's rows show what's open: its answers wouldn't go anywhere now.
+        events.changed(.attention)
         await publishBacklog()
     }
 
