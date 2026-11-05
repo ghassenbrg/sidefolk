@@ -21,7 +21,10 @@ extension ExtensionHost {
             let tools = gateway.tools(for: id).map(Self.listed)
             await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
         case "sidefolk/tools.check":
-            guard spendLook(id) else { return await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"]) }
+            guard spendLook(id) else {
+                await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"])
+                return
+            }
             guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
                 return
@@ -513,8 +516,10 @@ extension ExtensionHost {
         if card.count <= 20_000 { plan.card = card }
         // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
         // when it was going to, however often its program asks again. (A plan nobody read never gets here with a previous: it is shown whole.)
-        // (A card the person approved is use of its own, though nothing in it was new: Ask every time shows one for a covered plan, and that approval renews it.)
-        if (answer == .covered && evaluation.mode != .askEveryTime) || answer == .autoSkipped, let was = evaluation.previous {
+        // (A card the person approved is use of its own, though nothing in it was new: Ask every time shows one for a covered plan, and that approval renews it.
+        // What decides is what Guard did, not the mode read earlier: it reads the mode again, and the person may have changed it meanwhile.)
+        let withoutCard = outcome.activity.decision == .plan || outcome.activity.decision == .autoPlan
+        if withoutCard, answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
             plan.approvedAt = was.approvedAt
             // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
             plan.expiresAt = was.expiresAt ?? plan.expiresAt
