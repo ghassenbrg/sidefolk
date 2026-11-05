@@ -381,6 +381,8 @@ final class ExtensionPageModel {
                 await loadSettings()
             } catch {
                 problem = (error as? UserFacingError)?.message ?? String(localized: "The page couldn't be read.")
+                // It's about the read, so the next good read takes it away.
+                saidAt = .distantPast
             }
         } while readAgain
         await loadHistory()
@@ -409,6 +411,7 @@ final class ExtensionPageModel {
 
     /// What a control does that isn't a tool (D105).
     func perform(_ act: PageAct) async {
+        saved = nil
         await handOverTyping()
         switch act {
         case .go(let move):
@@ -433,19 +436,22 @@ final class ExtensionPageModel {
         case .save(let ask):
             guard let services else { return }
             let short = String(info.extensionId.split(separator: ".").last ?? "")
-            let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: ask.input, caller: .user)
+            // A page's input is the author's, not a file the person chose, as for any control (D105, D141).
+            let paths = await services.runtime.extensions.pathParameters(extensionId: info.extensionId, tool: ask.tool)
+            let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: ask.input.removing(paths), caller: .user)
             if let why = outcome.problem?.message { problem = why; return }
             guard case .ok(let result) = outcome.status else { return }
             if result.isError { problem = result.text.clipped(300); return }
             // What a tool answers is cut for a model, so the file is handed over in its data folder. It stays for the program to tidy: a folder on the way there could be a link it made, so nothing is removed on its word.
             let name = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let folder, let bytes = ExtensionDataFile.readSaved(name, type: ask.type, in: folder, limit: PageSaveAsk.longest) else {
-                problem = String(localized: "That's too much to save from here.", comment: "An extension's page: what it asked to save is over the limit")
+                problem = String(localized: "That couldn't be saved: the file is missing or too big.", comment: "An extension's page: the file it made to save can't be read or is over the limit")
                 return
             }
             guard let place = await PageFilePanel.chooseWhere(ask) else { return }
             do {
                 try bytes.write(to: place, options: .atomic)
+                PageSaveAsk.markAsDownloaded(place)
                 saved = place.lastPathComponent
                 saidAt = Date()
             } catch {
@@ -643,7 +649,8 @@ final class ExtensionPageModel {
         defer { fieldRuns -= 1 }
         let why = await ExtensionControl.run(tool: tool, input: input, extensionId: info.extensionId, services: services)
         await refresh()
-        if let why { problem = why }
+        // Pressed again and fine: what went wrong before is over.
+        problem = why
         return why == nil
     }
 

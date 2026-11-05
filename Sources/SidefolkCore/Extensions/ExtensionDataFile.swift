@@ -34,7 +34,8 @@ public enum ExtensionDataFile {
 
     private static func opened(_ name: String, in folder: URL, limit: Int) -> Data? {
         guard let root = FolderAccess.canonical(folder.path) else { return nil }
-        let fd = open(folder.appendingPathComponent(name).path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+        // Not blocking: a program can make a pipe with this name, and opening one would wait for ever. It's refused just below.
+        let fd = open(folder.appendingPathComponent(name).path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK)
         guard fd >= 0 else { return nil }
         defer { close(fd) }
         // Where the opened file really is, after any folder on the way that was a link: checked on the open file, so

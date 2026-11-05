@@ -198157,6 +198157,65 @@
         }
       }
     },
+    "That couldn't be saved: the file is missing or too big." : {
+      "comment" : "An extension's page: the file it made to save can't be read or is over the limit",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر الحفظ: الملف مفقود أو كبير جدًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das konnte nicht gespeichert werden: Die Datei fehlt oder ist zu groß."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar: falta el archivo o es demasiado grande."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrement impossible : le fichier est manquant ou trop volumineux."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile salvare: il file manca o è troppo grande."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存できませんでした。ファイルが見つからないか、大きすぎます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장할 수 없습니다. 파일이 없거나 너무 큽니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar: o arquivo está faltando ou é grande demais."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存:文件缺失或太大。"
+          }
+        }
+      }
+    },
     "That didn't work." : {
       "localizations" : {
         "ar" : {
@@ -203090,65 +203149,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "放到剪贴板的文本太多了（上限为 %@ 个字符）。"
-          }
-        }
-      }
-    },
-    "That's too much to save from here." : {
-      "comment" : "An extension's page: what it asked to save is over the limit",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هذا أكثر مما يمكن حفظه من هنا."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das ist zu viel, um es von hier zu speichern."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Es demasiado para guardarlo desde aquí."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "C’est trop volumineux pour être enregistré d’ici."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "È troppo da salvare da qui."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ここから保存するには大きすぎます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "여기서 저장하기에는 너무 큽니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "É demais para salvar daqui."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内容太多,无法从这里保存。"
           }
         }
       }

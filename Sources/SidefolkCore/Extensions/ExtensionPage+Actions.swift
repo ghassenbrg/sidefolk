@@ -1,3 +1,5 @@
+import Darwin
+import UniformTypeIdentifiers
 import Foundation
 
 /// What a page's control may do other than run a tool (D105). None of these changes anything of the person's, so none needs a
@@ -89,15 +91,32 @@ public struct PageSaveAsk: Sendable, Hashable {
     /// The most it writes: words a page's tool made, not a way to fill a disk.
     public static let longest = 1_000_000
 
-    static func parse(_ j: JSONValue?) -> PageSaveAsk? {
-        guard let j, let tool = ExtensionPage.toolName(j["tool"]), let type = j["type"]?.stringValue, type.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil,
-              let input = ExtensionPage.smallInput(j["input"]), let name = j["name"]?.stringValue else { return nil }
-        // A name, not a place: nothing that could point the panel at a folder or hide what it is.
-        let plain = ExtensionText.clean(name).replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-").trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: ".")))
-        guard !plain.isEmpty else { return nil }
+    /// What a save may be: a kind of file that holds content (D140's list), or one nothing on this Mac knows, which nothing runs. Never one that opens by running: `.command`, `.terminal`, `.pkg`, `.app`.
+    public static func mayBe(_ type: String) -> Bool {
+        ExtensionOutputs.allowedEndings.contains(type) || UTType(filenameExtension: type)?.isDynamic == true
+    }
+
+    /// What the file's called, and only that: one line, nothing hidden, no folder, and its real ending in sight however long it is.
+    static func plainName(_ name: String, type: String) -> String? {
+        let shown = name.unicodeScalars.filter { ![.control, .format, .lineSeparator, .paragraphSeparator].contains($0.properties.generalCategory) && !$0.properties.isDefaultIgnorableCodePoint }
+        let words = String(String.UnicodeScalarView(shown)).replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-").split(whereSeparator: \.isWhitespace).joined(separator: " ")
         let ending = "." + type
-        let whole = plain.lowercased().hasSuffix(ending) ? plain : plain + ending
-        return PageSaveAsk(name: String(whole.suffix(120)), type: type, tool: tool, input: input, note: j["note"]?.stringValue.map { String(ExtensionText.clean($0).prefix(200)) })
+        var stem = words.lowercased().hasSuffix(ending) ? String(words.dropLast(ending.count)) : words
+        let edges = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "."))
+        stem = String(stem.trimmingCharacters(in: edges).prefix(120 - ending.count)).trimmingCharacters(in: edges)
+        return stem.isEmpty ? nil : stem + ending
+    }
+
+    /// Comes from a program, so the system treats it as downloaded: it says so if anyone tries to run it, as D140's files do.
+    public static func markAsDownloaded(_ place: URL, now: Date = Date()) {
+        let mark = String(format: "0081;%08x;Sidefolk;", Int(now.timeIntervalSince1970))
+        _ = place.withUnsafeFileSystemRepresentation { path in path.map { setxattr($0, "com.apple.quarantine", mark, mark.utf8.count, 0, XATTR_NOFOLLOW) } }
+    }
+
+    static func parse(_ j: JSONValue?) -> PageSaveAsk? {
+        guard let j, let tool = ExtensionPage.toolName(j["tool"]), let type = j["type"]?.stringValue, type.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil, mayBe(type),
+              let input = ExtensionPage.smallInput(j["input"]), let name = j["name"]?.stringValue.flatMap({ plainName($0, type: type) }) else { return nil }
+        return PageSaveAsk(name: name, type: type, tool: tool, input: input, note: j["note"]?.stringValue.map { String(ExtensionText.clean($0).prefix(200)) })
     }
 }
 

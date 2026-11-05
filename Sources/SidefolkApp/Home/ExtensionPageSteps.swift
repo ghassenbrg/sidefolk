@@ -266,6 +266,8 @@ struct PageEditFieldRow: View {
     @State private var inserting: (value: String, count: Int) = ("", 0)
     @State private var saves = PageFieldSaves()
     @State private var latestShown = ""
+    /// What was last handed over and not shown yet: while the page reads it back, that's what a change is measured from.
+    @State private var lastSent: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
@@ -293,6 +295,7 @@ struct PageEditFieldRow: View {
         .onAppear { text = shown; latestShown = shown }
         .onChange(of: shown) { _, new in
             latestShown = new
+            lastSent = nil
             if !focused && !chipFocused && !saves.isBusy { text = new }
         }
         .onChange(of: focused) { _, now in if !now { commit() } }
@@ -360,14 +363,17 @@ struct PageEditFieldRow: View {
 
     private func commit() {
         // Back to what's saved, with a save still on its way: that save isn't what they want any more.
-        guard text != shown || saves.isBusy else { return }
+        guard text != (lastSent ?? shown) || saves.isBusy else { return }
+        lastSent = text
         let field = field, model = model
         saves.save(text) { typed in
             await model.run(tool: field.tool, input: field.input(typing: typed))
         } finished: { saved in
             problem = !saved
             // Not while they're still in the field, whichever kind it is: what they're typing isn't what failed.
-            if !saved, !focused, !chipFocused { text = latestShown }
+            if !saved { lastSent = nil }
+            // What the page says now, the tool's tidying included: dropped while this was on its way.
+            if !focused, !chipFocused { text = latestShown }
         }
     }
 }

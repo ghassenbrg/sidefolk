@@ -17,7 +17,7 @@ import Testing
     @Test func aNameIsOnlyAName() {
         #expect(ask("Morning")?.name == "Morning.sideflow", "its ending goes on")
         #expect(ask("Morning.sideflow")?.name == "Morning.sideflow")
-        #expect(ask("Morning.SIDEFLOW")?.name == "Morning.SIDEFLOW")
+        #expect(ask("Morning.SIDEFLOW")?.name == "Morning.sideflow")
         #expect(ask("../../etc/passwd")?.name.contains("/") == false)
         #expect(ask("~/Library/LaunchAgents/x")?.name.contains("/") == false)
         #expect(ask("a:b")?.name == "a-b.sideflow")
@@ -53,5 +53,34 @@ import Testing
         try Data("x".utf8).write(to: folder.appendingPathComponent("b.sideflow"))
         try FileManager.default.linkItem(at: folder.appendingPathComponent("b.sideflow"), to: folder.appendingPathComponent("c.sideflow"))
         #expect(ExtensionDataFile.readSaved("b.sideflow", type: "sideflow", in: folder, limit: 100) == nil, "nor one with two names")
+    }
+
+    @Test func itCantBeAKindOfFileThatRuns() {
+        for type in ["app", "command", "terminal", "pkg", "scpt", "sh", "py", "dmg", "webloc"] { #expect(ask("Report", type: type) == nil, "\(type)") }
+        for type in ["csv", "json", "txt", "sideflow"] { #expect(ask("Report", type: type)?.name == "Report.\(type)", "\(type)") }
+    }
+
+    @Test func aNameCantHideWhatItIs() {
+        #expect(ask("Invoice.pdf" + String(repeating: " ", count: 100) + "x")?.name == "Invoice.pdf x.sideflow")
+        #expect(ask("a\nb\u{202E}c\u{00AD}d\u{2028}e")?.name == "abcde.sideflow" || ask("a\nb\u{202E}c\u{00AD}d\u{2028}e")?.name == "a bcde.sideflow")
+        #expect(ask(String(repeating: "x", count: 300) + ".y")?.name.hasSuffix("xxx.sideflow") == true)
+        #expect(ask("...")?.name == nil)
+        #expect(ask(String(repeating: ".", count: 200) + "z")?.name == "z.sideflow")
+    }
+
+    @Test func aPipeDoesntHoldItUp() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        #expect(mkfifo(folder.appendingPathComponent("p.sideflow").path, 0o600) == 0)
+        #expect(ExtensionDataFile.readSaved("p.sideflow", type: "sideflow", in: folder, limit: 100) == nil)
+    }
+
+    @Test func aSavedFileIsMarkedAsDownloaded() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try Data("x".utf8).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        PageSaveAsk.markAsDownloaded(file)
+        #expect(getxattr(file.path, "com.apple.quarantine", nil, 0, 0, 0) > 0)
     }
 }
