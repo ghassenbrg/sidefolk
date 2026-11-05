@@ -872,6 +872,8 @@ import Testing
         await w.h.host.updatePreferences("com.example.flow") { $0.plans["recent"]?.lastUsed = Date().addingTimeInterval(-30 * 24 * 3600); $0.plans["recent"]?.approvedAt = old }
         _ = await w.ask("sidefolk/tools.list")
         #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["recent"], "use keeps it")
+    }
+
     // MARK: Lines, and steps that pass words on
 
     @Test func theLimitCountsDifferentLinesNotNamesAndTheCardSaysHowManyTimes() async throws {
