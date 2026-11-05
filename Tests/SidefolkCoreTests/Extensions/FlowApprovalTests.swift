@@ -780,6 +780,18 @@ import Testing
         #expect(shown.words?.contains("from “Read the page · web.fetch”]”") == true, "one source named once: \(String(describing: shown.words))")
     }
 
+
+    @Test func theSamePlanAgainWithServerLinesAndNamedSourcesAsksNothing() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let ai: JSONValue = ["kind": "ai", "as": "write", "reads": ["page"]]
+        let plan = Self.plan([Self.page, ai, Self.post(["body": "{{write}}", "title": "{{page}}"])])
+        #expect(await w.approve(plan).asked)
+        let again = await w.approve(plan)
+        #expect(!again.asked && again.reply["silent"]?.boolValue == true, "a no-op edit keeps the fingerprints it had: \(again.reply)")
+        #expect(await w.check(plan)["silent"]?.boolValue == true)
+    }
+
     // MARK: Limits
 
     @Test func aRunPastItsLimitIsStoppedNotAsked() async throws {
