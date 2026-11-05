@@ -71,7 +71,7 @@ extension ExtensionPlanWords {
 
     /// The record of what a plan lets through with no card (Full access, or Auto's edit that stays inside Sidefolk), as History keeps it on the approval's row,
     /// or nil when it cannot be kept in full, and then the plan shows its card. A silent pass needs a LOSSLESS record: one entry for the plan's limits and warning, one for its title and one for the words it gives for when it runs (what the card says in the extension's own words besides the lines),
-    /// then for every line a header and for every field of it an entry of its own, each carrying the line's number so a destination stays with its body; the kind
+    /// then for every line a header, an entry for each source its fields read from (told once, a slot refers to it by name) and for every field of it an entry of its own, each carrying the line's number so a destination stays with its body; the kind
     /// of each value's source first, every written part between slots in quotes, every item of a list with the count, the producers of a slot in full. It is nil
     /// if there would be more than 64 entries, if any entry is over 300 characters (nothing is split or cut), or if History's Redactor would change an entry (a
     /// literal that looks like a secret, a field named like one, a long mixed-case word): what History would not keep whole, the card is the record of.
@@ -126,6 +126,25 @@ extension ExtensionPlanWords {
                     return ra != rb ? ra < rb : a.key < b.key
                 }
                 out.append(header + " · " + String(localized: "fields: \(fields.count)", comment: "History: how many fields a line has") + again)
+                // Each source a field's slots read from is told once for the line, in an entry of its own, and a slot refers to it by its name: told in every slot, a
+                // field that gathers several values would repeat the same producers past what History keeps. Two names that read alike are not told apart, so then the
+                // card is the record.
+                var named: [String: [UInt8]] = [:], sources: [(label: String, root: String)] = []
+                for (_, value) in fields {
+                    guard let text = value.stringValue, ExtensionPlanRules.hasSlot(text) else { continue }
+                    for root in ExtensionPlanRules.roots(text) {
+                        let label = fit(root, 60)
+                        if let known = named[label] {
+                            if known != Array(root.utf8) { return nil }
+                            continue
+                        }
+                        named[label] = Array(root.utf8)
+                        sources.append((label, root))
+                    }
+                }
+                for (label, root) in sources {
+                    out.append(number + String(localized: "source “\(label)”: \(describe([root], e).joined(separator: ", "))", comment: "History: where a filled-in value comes from, told once for the line: the name a slot uses, then the steps that make it"))
+                }
                 // The number carries the pairing of a field with its line: the tool is named once, on the header.
                 for (key, value) in fields { out.append(number + fit(key, 60) + ": " + historyValue(key, value, line, e)) }
             }
@@ -146,7 +165,7 @@ extension ExtensionPlanWords {
             var shown: [String] = []
             for (n, root) in roots.enumerated() {
                 shown.append(around(n < literals.count ? literals[n] : ""))
-                shown.append(String(localized: "[from \(describe([root], e).joined(separator: ", "))]", comment: "History: a filled-in value, from the steps named"))
+                shown.append(String(localized: "[from “\(safe(root, 60))”]", comment: "History: a filled-in value, from the source of that name, told once for the line"))
             }
             shown.append(around(literals.count > roots.count ? literals[roots.count] : ""))
             let body = shown.filter { !$0.isEmpty }.joined(separator: " ")

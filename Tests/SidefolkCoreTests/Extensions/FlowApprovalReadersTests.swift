@@ -356,7 +356,7 @@ import Testing
         let page: JSONValue = ["tool": "web.fetch", "as": "page", "title": .string(title), "input": ["url": "https://news.example.com/feed"]]
         #expect(await !w.approve(FlowApprovalTests.plan([page, FlowApprovalTests.post(["repo": "{{page}}"])])).asked)
         let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.contains { $0.contains("[from \(title) · web.fetch]") }, "who makes the slot, whatever its title: \(lines)")
+        #expect(lines.contains { $0.contains("source “page”: \(title) · web.fetch") }, "who makes the slot, whatever its title: \(lines)")
     }
 
     @Test func thePlansLimitsAndItsWarningAreOneEntryOfTheirOwn() async throws {
@@ -543,6 +543,58 @@ import Testing
         // The host keeps 80 characters of a title, on the card as in the record.
         #expect(await !w.approve(plan([FlowApprovalTests.save], title: String(repeating: "t", count: 90))).asked)
         #expect(try await record(w).contains { $0.hasPrefix("plan: “ttt") && $0.count <= 90 })
+    }
+
+    // MARK: A source is told once for the line
+
+    /// `count` fetches with long titles, named p0…, and the notes to put in a field's slots.
+    private func producers(_ count: Int, titleLength: Int = 70) -> [JSONValue] {
+        (0..<count).map { ["tool": "web.fetch", "as": .string("p\($0)"), "title": .string("P\($0) " + String(repeating: "t", count: titleLength)), "input": ["url": .string("https://news.example.com/\($0)")]] }
+    }
+
+    @Test func aFieldThatGathersSeveralValuesIsRecordedWithEachSourceToldOnce() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        let body = (0..<5).map { "{{p\($0)}}" }.joined(separator: " and ")
+        #expect(await !w.approve(FlowApprovalTests.plan(producers(5) + [FlowApprovalTests.post(["body": .string(body)])])).asked, "the month-end shape records and passes with no card")
+        let lines = try await record(w)
+        let sources = lines.filter { $0.contains(" source “p") }
+        #expect(sources.count == 5 && sources.allSatisfy { $0.count <= 300 && $0.hasPrefix("#6 ") }, "each source once, with the line's number: \(lines)")
+        let field = lines.first { $0.contains(" body: ") } ?? ""
+        #expect(field.hasPrefix("#6 ") && field.count <= 300 && (0..<5).allSatisfy { field.contains("[from “p\($0)”]") }, "the slots refer to them by name: \(field)")
+        #expect(sources.first?.contains("P0 " + String(repeating: "t", count: 70) + " · web.fetch") == true, "a source says its producers as the card does: \(sources)")
+    }
+
+    @Test func aSourceWhoseProducersAloneAreMoreThanAnEntryHoldsStillShowsTheCard() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        let mix: JSONValue = ["as": "mix", "kind": "value", "reads": .array((0..<12).map { .string("p\($0)") })]
+        #expect(await w.approve(FlowApprovalTests.plan(producers(12, titleLength: 30) + [mix, FlowApprovalTests.post(["body": "{{mix}}"])])).asked, "a source that can't be told whole in one entry means the card is the record")
+    }
+
+    @Test func eachLineTellsItsOwnSourcesAndTwoSourcesWithTheSameTitleAreTwoEntries() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        let same: [JSONValue] = (0..<2).map { ["tool": "web.fetch", "as": .string("p\($0)"), "title": "Same title", "input": ["url": .string("https://news.example.com/\($0)")]] }
+        let a = FlowApprovalTests.post(["body": "{{p0}}"]).withName("a"), b = FlowApprovalTests.post(["body": "{{p0}} {{p1}}"]).withName("b")
+        #expect(await !w.approve(FlowApprovalTests.plan(same + [a, b])).asked)
+        let lines = try await record(w)
+        let first = lines.filter { $0.contains("source “p0”") }, second = lines.filter { $0.contains("source “p1”") }
+        #expect(first.count == 2 && Set(first.map { String($0.prefix(3)) }).count == 2, "p0 is told for each line that reads it: \(lines)")
+        #expect(second.count == 1 && second[0].contains("Same title · web.fetch") && first[0].contains("Same title · web.fetch"), "two producers with one title are two sources, named apart: \(lines)")
+    }
+
+    @Test func theEditorAndTheApprovalAgreeWhenSourcesAreToldOnce() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.auto)
+        let fits = FlowApprovalTests.plan(producers(5) + [FlowApprovalTests.post(["body": .string((0..<5).map { "{{p\($0)}}" }.joined(separator: " "))])])
+        let checked = await w.check(fits)["silent"]?.boolValue
+        let approved = await w.approve(fits)
+        #expect(checked == !approved.asked, "the editor says what the approval does")
     }
 
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {

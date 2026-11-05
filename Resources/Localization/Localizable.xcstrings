@@ -246146,61 +246146,61 @@
         }
       }
     },
-    "[from %@]" : {
-      "comment" : "History: a filled-in value, from the steps named",
+    "[from “%@”]" : {
+      "comment" : "History: a filled-in value, from the source of that name, told once for the line",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[من %@]"
+            "value" : "[من “%@”]"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[aus %@]"
+            "value" : "[aus “%@”]"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[de %@]"
+            "value" : "[de “%@”]"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[depuis %@]"
+            "value" : "[de “%@”]"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[da %@]"
+            "value" : "[da “%@”]"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "［%@から］"
+            "value" : "[“%@”から]"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[%@에서]"
+            "value" : "[“%@”에서]"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "[de %@]"
+            "value" : "[de “%@”]"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "［来自 %@］"
+            "value" : "[来自“%@”]"
           }
         }
       }
@@ -262659,6 +262659,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有事等你处理"
+          }
+        }
+      }
+    },
+    "source “%@”: %@" : {
+      "comment" : "History: where a filled-in value comes from, told once for the line: the name a slot uses, then the steps that make it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المصدر “%@”: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle “%@”: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "origen “%@”: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "source “%@” : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "origine “%@”: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出どころ“%@”：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출처 “%@”: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "origem “%@”: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来源“%@”：%@"
           }
         }
       }
