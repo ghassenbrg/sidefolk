@@ -124,6 +124,12 @@ public actor ExtensionHost {
         var actionCalls: [Date] = []
         /// Calls under way, by the request that made them: what a program can ask to stop.
         var actionTasks: [String: Task<Void, Never>] = [:]
+        /// A stop that arrived before its call was registered: the most recent few, kept until the call turns up.
+        var earlyCancels: Set<String> = []
+        mutating func noteEarlyCancel(_ key: String) {
+            if earlyCancels.count >= 32 { earlyCancels.removeAll() }
+            earlyCancels.insert(key)
+        }
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
         /// The person's own clicks or typed commands to this extension whose calls are still running, by call (Full access answers one plan for one click,

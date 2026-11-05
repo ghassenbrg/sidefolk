@@ -193,6 +193,22 @@ import Testing
         }
     }
 
+    @Test func anAllowAfterTheExtensionWasTurnedOffSavesNothingForIt() async throws {
+        let w = try await World()
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": FlowApprovalTests.plan([FlowApprovalTests.save])])
+        var card: ApprovalRequest?
+        for _ in 0..<200 where card == nil {
+            card = await w.h.env.broker.pending().first
+            if card == nil { try? await Task.sleep(for: .milliseconds(25)) }
+        }
+        let shown = try #require(card)
+        try await w.h.host.setEnabled(false, id: Self.id)
+        await w.h.env.broker.resolve(id: shown.id, decision: .allowOnce)
+        _ = await reply
+        try await w.h.host.setEnabled(true, id: Self.id)
+        #expect(await w.h.host.planInfos(Self.id).isEmpty, "what was allowed for a program that was gone is not saved")
+    }
+
     @Test func aKeySpelledAnotherWayIsAnotherKey() {
         let composed = "caf\u{E9}", decomposed = "cafe\u{301}"
         #expect(composed == decomposed, "Swift calls them equal")

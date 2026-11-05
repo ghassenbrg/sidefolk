@@ -77,20 +77,30 @@ extension ExtensionHost {
                 written = .object(fields)
             }
             let asker = asker(rt)
+            let key = request.stringValue ?? UUID().uuidString
+            // One call to a request: a program that sends the same one twice would leave the first with nothing to stop it.
+            guard runtimes[id]?.actionTasks[key] == nil else {
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "failed", "text": "That request is already running."])
+                return
+            }
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
-            let key = request.stringValue ?? UUID().uuidString
             let keptFrom = Self.hearsOnlyThatItsDone(tool: tool, permissions: rt.pin.permissions)
-            runtimes[id]?.actionTasks[key] = Task { [weak self] in
+            let task = Task { [weak self] in
                 let following = keptFrom ? nil : ExtensionHost.following(request: request, client: client)
                 let outcome = await ToolProgress.$report.withValue(following) {
                     await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout, capped: found.capped, unread: found.unread)
                 }
                 await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, capped: found.capped, key: key)
             }
+            runtimes[id]?.actionTasks[key] = task
+            // A stop that came while this was being worked out (the program's messages are not handled in order) is not lost.
+            if runtimes[id]?.earlyCancels.remove(key) != nil { task.cancel() }
         case "sidefolk/tools.cancel":
             // Told, not done: it says so by answering, and that answer can only say it may or may not have happened.
-            if let key = params["request"]?.stringValue { runtimes[id]?.actionTasks[key]?.cancel() }
+            if let key = params["request"]?.stringValue {
+                if let task = runtimes[id]?.actionTasks[key] { task.cancel() } else { runtimes[id]?.noteEarlyCancel(key) }
+            }
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.check":
@@ -408,7 +418,9 @@ extension ExtensionHost {
 
     private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?) async {
         runtimes[id]?.planAsking = false
-        guard outcome.isOK, let rt = runtimes[id] else {
+        // An extension that was turned off while its card was up has nobody to answer, and an Allow now saves nothing for it.
+        guard let rt = runtimes[id], rt.record.enabled else { return }
+        guard outcome.isOK else {
             let reason = if case .unanswered = outcome.status { "unanswered" } else { "denied" }
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
             return
