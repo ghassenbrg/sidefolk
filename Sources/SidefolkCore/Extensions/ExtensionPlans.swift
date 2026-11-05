@@ -34,8 +34,8 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
         public var title: String?
         /// For an "ai" step: the names of the steps whose words it reads, when its extension says.
         public var reads: [String]?
-        /// What each filled field is fed by, as a fingerprint of the steps it points at (their tool, provider, definition and kind): an edit that points the
-        /// same words at another kind of step is something new, though the step itself is unchanged (D187).
+        /// What each filled field is fed by, as a fingerprint of the steps it points at, each as written (name, tool, provider, definition, kind, input): an
+        /// edit that points the same words at another step is something new, though the step itself is unchanged (D187).
         public var feeds: [String: String]?
 
         var isInFullAccessOnly: Bool { fullAccessOnly == true }
@@ -320,10 +320,10 @@ enum ExtensionPlanWords {
             guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key), omit: omit.contains(key)) else { return nil }
             return "\(safe(key, 300)): \(said)"
         }
-        var title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
+        var title = safe(tool.spec.title, 80)
         // A plan holds for the extension that offered the tool, so the card says whose it is (as a call's own card does).
         if let ext = ExtensionPlanRules.extensionTool(tool) {
-            let who = ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40)
+            let who = safe(ext.extensionName, 40)
             if ext.sandboxed {
                 title += " (\(who))"
             } else if let program {

@@ -159,7 +159,8 @@ extension ExtensionHost {
                 || (!spec.mutates && !spec.capabilities.isDisjoint(with: [.notebook, .memory, .calendar, .clipboard, .filesRead, .macApps]))
         }
         func outsideRead(_ tool: any Tool) -> Bool {
-            ExtensionPlanRules.extensionTool(tool) != nil || tool.spec.capabilities.contains(.network)
+            // A job for the companion reads what it likes, pages included, and writes what it hands on.
+            ExtensionPlanRules.extensionTool(tool) != nil || tool.spec.capabilities.contains(.network) || tool.spec.name == CompanionJobTool.name
         }
         // For each line that hands words to a server or another extension: do the steps BEFORE it read the person's own things and outside content? (What
         // comes after can't feed it, and the line itself isn't its own reading.)
@@ -196,7 +197,7 @@ extension Optional {
 }
 
 extension ExtensionHost {
-    /// A fingerprint of the steps a value or an AI step is fed by: their tool, provider, definition and kind, and what an AI step among them reads.
+    /// A fingerprint of the steps a value or an AI step is fed by: each one as written (its name, tool, provider, definition, kind, what an AI step reads, and its input).
     static func fingerprint(_ lines: [PlanEvaluation.Line]) -> String {
         // The whole step as written, name included: which words a name points at is what this fingerprints, so two steps of one tool that trade names differ.
         let text = lines.map { line -> String in

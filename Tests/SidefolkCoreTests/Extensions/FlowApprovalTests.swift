@@ -422,7 +422,7 @@ import Testing
         for place in ["urls", "paths", "URLPath", "HTTPEndpoint", "url2", "targetUrl", "recipients_list", "chat_id", "attendees", "workspace"] {
             #expect(ExtensionPlanRules.fieldClass(place, schema: ["type": "string"]) == .other, "\(place)")
         }
-        for code in ["command", "commands", "applescript", "sql_statement", "SQLStatement", "args", "run_script", "jsCode"] {
+        for code in ["command", "commands", "applescript", "osascript", "shellcommand", "runscript", "subcommand", "sql_statement", "SQLStatement", "args", "run_script", "jsCode"] {
             #expect(ExtensionPlanRules.fieldClass(code, schema: ["type": "string"]) == .code, "\(code)")
         }
         for text in ["body", "message", "issue_body", "title", "commentText"] {
@@ -639,6 +639,7 @@ import Testing
         #expect(ExtensionPlanRules.fieldClass("long_description", schema: string) == .freeText && ExtensionPlanRules.fieldClass("messages", schema: string) == .freeText)
         #expect(ExtensionPlanRules.fieldClass("addresses", schema: string) == .other)
         #expect(ExtensionPlanRules.fieldClass("description", schema: string) == .freeText, "a description is words, though it holds the letters of `script`")
+        #expect(ExtensionPlanRules.fieldClass("transcript", schema: string) == .other && ExtensionPlanRules.fieldClass("transcript", schema: string) != .code, "nor is a transcript code")
     }
 
     @Test func anEditAnsweredWithoutACardInAutoKeepsTheEndThePlanHad() async throws {
@@ -750,6 +751,25 @@ import Testing
         let text = shown.words ?? ""
         #expect(text.contains("It will still ask you each time:") && text.contains("you asked the internet to ask each time"), "\(text)")
         #expect(text.contains("It changes:") && text.contains("notes.save"), "what doesn't use it still stands: \(text)")
+    }
+
+    @Test func aJobForTheCompanionCountsAsReadingOutsideContent() async throws {
+        let w = try await World()
+        _ = try server(w)
+        w.h.env.registry.register(CompanionJobTool(agent: CompanionAgentSlot()))
+        let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
+        let job: JSONValue = ["tool": "companion.job", "as": "summary", "input": ["job": "Summarise my plans"]]
+        let checked = await w.check(Self.plan([notes, job, Self.post(["body": "{{summary}}"])]))
+        #expect(checked["steps"]?.arrayValue?.last?["warning"]?.stringValue == "crossing", "a job reads pages as it likes: \(checked)")
+    }
+
+    @Test func whenTheInternetAsksEachTimeTheEditorSaysSoToo() async throws {
+        let w = try await World()
+        try await w.h.env.permissions.updatePolicy { $0.internet = .askEachTime }
+        let checked = await w.check(Self.plan([Self.fetch, Self.save]))
+        let steps = checked["steps"]?.arrayValue ?? []
+        #expect(steps.first?["state"]?.stringValue == "asks" && steps.first?["why"]?.stringValue == "ask_online", "\(checked)")
+        #expect(steps.last?["state"]?.stringValue == "stands")
     }
 
     @Test func lookingAndApprovingHaveBudgetsOfTheirOwn() async throws {
