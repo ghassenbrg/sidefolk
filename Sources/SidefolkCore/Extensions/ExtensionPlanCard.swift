@@ -74,6 +74,7 @@ extension ExtensionPlanWords {
         for i in shown {
             let line = e.lines[i]
             switch line.step.kind {
+            case "value": continue
             case "ai": ai.append(aiRow(line, e))
             case "flow": sets.append(String(localized: "“\(safe(line.step.input["name"]?.stringValue ?? "", 80))”, which keeps its own approval, as the extension says", comment: "A plan's card: another flow it sets off; its name"))
             default:
@@ -86,14 +87,21 @@ extension ExtensionPlanWords {
             }
         }
         func rows(_ list: [(line: PlanEvaluation.Line, i: Int)], why: Bool = false) -> [String] {
-            list.map { item in
+            // The same line again is read once: identical in every word it shows, so nothing is hidden by saying how many.
+            var order: [String] = [], counts: [String: Int] = [:]
+            for item in list {
                 var text = lineText(item.line, e)
                 if why { text += reason(item.line, mode: mode, askOnline: e.askOnline) }
                 // A line that stands only in Full access says so wherever it is shown: the mode can change after the card is read.
                 else if item.line.step.isInFullAccessOnly {
                     text += " · " + String(localized: "it runs without asking only while Full access is on", comment: "A plan's card: a line that stands only in Full access")
                 }
-                return text
+                if counts[text] == nil { order.append(text) }
+                counts[text, default: 0] += 1
+            }
+            return order.map { text in
+                let n = counts[text] ?? 1
+                return n > 1 ? text + " " + String(localized: "× \(n)", comment: "A plan's card: the same line, this many times") : text
             }
         }
         var out: [Block] = []
@@ -140,15 +148,21 @@ extension ExtensionPlanWords {
     /// Where a filled value comes from, by the step's own title and the tool it runs, so a title can't be taken for something else; a name no step
     /// makes is said to be one.
     private static func sourceNames(_ text: String, _ e: PlanEvaluation) -> [String] {
-        var seen = Set<String>()
-        return ExtensionPlanRules.roots(text).filter { seen.insert($0).inserted }.map { root in
+        // A step that only passes words on is named by what it reads, down to the steps that make them.
+        func expand(_ root: String, _ seen: Set<String>) -> [String] {
             guard let line = e.lines.first(where: { $0.step.name == root }) else {
-                return String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow")
+                return [String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow")]
             }
+            if line.step.kind == "value", !seen.contains(root) { return (line.step.reads ?? []).flatMap { expand($0, seen.union([root])) } }
             let tool = line.tool.map { safe($0.spec.title, 80) } ?? line.step.kind ?? root
-            guard let title = line.step.title.map({ safe($0, 80) }), title != tool else { return tool }
-            return "\(title) · \(tool)"
+            guard let title = line.step.title.map({ safe($0, 80) }), title != tool else { return [tool] }
+            return ["\(title) · \(tool)"]
         }
+        var seen = Set<String>(), out: [String] = []
+        for root in ExtensionPlanRules.roots(text) where seen.insert(root).inserted {
+            for name in expand(root, []) where !out.contains(name) { out.append(name) }
+        }
+        return out
     }
 
     private static func aiRow(_ line: PlanEvaluation.Line, _ e: PlanEvaluation) -> String {
