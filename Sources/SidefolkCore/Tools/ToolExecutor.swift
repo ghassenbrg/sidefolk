@@ -299,7 +299,9 @@ public final class ToolExecutor: Sendable {
                         let call = SkippedStep.Call(tool: spec.name, input: input, caller: caller, tainted: tainted, mentions: mentions)
                         return await unanswered(spec, act, request: request, stop: then == .stop, call: call)
                     }
-                    let why = answer == .expired ? String(localized: "The request waited too long for your answer.")
+                    // Nobody said no to a card that went away because the run stopped.
+                    let why = Task.isCancelled ? String(localized: "The request was stopped before this ran.")
+                        : answer == .expired ? String(localized: "The request waited too long for your answer.")
                         : answer.allowed ? String(localized: "The request was withdrawn before it ran.") : String(localized: "You said no.")
                     await log(spec, act, caller: caller, input: input, decision: .denied, outcome: nil, error: why)
                     act.error = why
