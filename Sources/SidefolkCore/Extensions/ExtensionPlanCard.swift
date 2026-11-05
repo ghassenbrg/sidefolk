@@ -33,7 +33,7 @@ extension ExtensionPlanWords {
                 let step = e.lines[i].step
                 return !e.fresh.contains(i) && step.standing && step.kind == nil && !(step.isInFullAccessOnly && mode != .fullAccess)
             }
-            let same = standing.filter { i in e.previous?.steps.contains { ExtensionPlanRules.same($0.input, e.lines[i].step.input) && ExtensionPlanRules.covers($0, e.lines[i].step) } == true }.count
+            let same = standing.filter { i in e.previous?.steps.contains { $0.tool == e.lines[i].step.tool && ExtensionPlanRules.same($0.input, e.lines[i].step.input) && ExtensionPlanRules.covers($0, e.lines[i].step) } == true }.count
             if same > 0 {
                 parts.append(String(localized: "Lines already allowed, unchanged: \(same). What you took out isn't asked about.", comment: "A plan's card after an edit; a count of lines"))
             }
@@ -100,8 +100,10 @@ extension ExtensionPlanWords {
             }
         }
         func rows(_ list: [(line: PlanEvaluation.Line, i: Int)], why: Bool = false) -> [String] {
-            // The same line again is read once: identical in every word it shows, so nothing is hidden by saying how many.
-            var order: [String] = [], counts: [String: Int] = [:]
+            // The same line again is read once: the same tool and the same bytes in every word it shows (not just text that compares equal), so nothing is
+            // hidden by saying how many.
+            struct Key: Hashable { var tool: String; var bytes: [UInt8] }
+            var order: [Key] = [], texts: [Key: String] = [:], counts: [Key: Int] = [:]
             for item in list {
                 var text = lineText(item.line, e)
                 if why { text += reason(item.line, mode: mode, askOnline: e.askOnline) }
@@ -109,11 +111,12 @@ extension ExtensionPlanWords {
                 else if item.line.step.isInFullAccessOnly {
                     text += " · " + String(localized: "it runs without asking only while Full access is on", comment: "A plan's card: a line that stands only in Full access")
                 }
-                if counts[text] == nil { order.append(text) }
-                counts[text, default: 0] += 1
+                let key = Key(tool: item.line.step.tool + "\u{1}" + (item.line.step.provider ?? ""), bytes: Array(text.utf8))
+                if counts[key] == nil { order.append(key); texts[key] = text }
+                counts[key, default: 0] += 1
             }
-            return order.map { text in
-                let n = counts[text] ?? 1
+            return order.map { key in
+                let n = counts[key] ?? 1, text = texts[key] ?? ""
                 return n > 1 ? text + " " + String(localized: "× \(n)", comment: "A plan's card: the same line, this many times") : text
             }
         }
@@ -160,21 +163,28 @@ extension ExtensionPlanWords {
 
     /// Where a filled value comes from, by the step's own title and the tool it runs, so a title can't be taken for something else; a name no step
     /// makes is said to be one.
-    private static func sourceNames(_ text: String, _ e: PlanEvaluation) -> [String] {
-        // A step that only passes words on is named by what it reads, down to the steps that make them.
-        func expand(_ root: String, _ seen: Set<String>) -> [String] {
+    private static func sourceNames(_ text: String, _ e: PlanEvaluation) -> [String] { describe(ExtensionPlanRules.roots(text), e) }
+
+    /// The steps these names stand for, each once, a step that only passes words on named by what it reads, down to the steps that make them; each by its own
+    /// title and its tool, so a title can't pass for something else. A name no step makes is said to be one.
+    private static func describe(_ names: [String], _ e: PlanEvaluation) -> [String] {
+        var visited = Set<String>(), out: [String] = []
+        func expand(_ root: String) {
+            guard visited.insert(root).inserted else { return }
             guard let line = e.lines.first(where: { $0.step.name == root }) else {
-                return [String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow")]
+                out.append(String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow"))
+                return
             }
-            if line.step.kind == "value", !seen.contains(root) { return (line.step.reads ?? []).flatMap { expand($0, seen.union([root])) } }
+            if line.step.kind == "value" {
+                for read in line.step.reads ?? [] { expand(read) }
+                return
+            }
             let tool = line.tool.map { safe($0.spec.title, 80) } ?? line.step.kind ?? root
-            guard let title = line.step.title.map({ safe($0, 80) }), title != tool else { return [tool] }
-            return ["\(title) · \(tool)"]
+            let text: String
+            if let title = line.step.title.map({ safe($0, 80) }), title != tool { text = "\(title) · \(tool)" } else { text = tool }
+            if !out.contains(text) { out.append(text) }
         }
-        var seen = Set<String>(), out: [String] = []
-        for root in ExtensionPlanRules.roots(text) where seen.insert(root).inserted {
-            for name in expand(root, []) where !out.contains(name) { out.append(name) }
-        }
+        names.forEach(expand)
         return out
     }
 
@@ -183,7 +193,7 @@ extension ExtensionPlanWords {
         guard let reads = line.step.reads, !reads.isEmpty else {
             return title + " · " + String(localized: "from everything the steps before it read", comment: "A plan's card: an AI step that names nothing")
         }
-        let names = reads.map { read in e.lines.first { $0.step.name == read }.map { $0.step.title ?? $0.tool?.spec.title ?? read } ?? read }
+        let names = describe(reads, e)
         return title + " · " + String(localized: "from “\(safe(names.joined(separator: ", "), 400))”", comment: "A plan's card: the steps an AI step reads")
     }
 
