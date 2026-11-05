@@ -15,7 +15,7 @@ extension ExtensionHost {
             return
         }
         let request = params["request"] ?? .null
-        await endIdlePlans(id, gateway: gateway)
+        await endIdlePlans(id)
         switch method {
         case "sidefolk/tools.list":
             let tools = gateway.tools(for: id).map(Self.listed)
@@ -299,6 +299,8 @@ extension ExtensionHost {
 
     /// The plans Settings › Add-ons lists.
     func planInfos(_ id: String) -> [ExtensionPlanInfo] {
+        // Listing is how the person sees plans: one that has gone idle is ended properly (a row in History, its program told) and not just left out.
+        if !idlePlans(id).isEmpty { Task { [weak self] in await self?.endIdlePlans(id) } }
         let today = AIHelper.dayKey(Date())
         let signed = runtimes[id]?.pin.origin?.firstParty == true
         return livePlans(id).map { plan in
@@ -309,16 +311,22 @@ extension ExtensionHost {
         }
     }
 
-    /// A plan nobody has used for 60 days ends, and its program hears why, so the flow can pause and say so: never silently (D186).
-    private func endIdlePlans(_ id: String, gateway: ExtensionActionGateway) async {
-        let now = Date()
-        guard let rt = runtimes[id] else { return }
+    /// The plans nobody has used for 60 days and that have not ended some other way.
+    private func idlePlans(_ id: String, now: Date = Date()) -> [ExtensionPlan] {
+        guard let rt = runtimes[id] else { return [] }
         let owner = owner(rt)
-        let idle = rt.preferences.plans.values.filter { $0.owner == owner && ($0.expiresAt.map { $0 > now } ?? true) && $0.idle(at: now) }
+        return rt.preferences.plans.values.filter { $0.owner == owner && ($0.expiresAt.map { $0 > now } ?? true) && $0.idle(at: now) }.sorted { $0.id < $1.id }
+    }
+
+    /// A plan nobody has used for 60 days ends, and its program hears why, so the flow can pause and say so: never silently (D186), and not only when its
+    /// program asks something: also when the app starts and when Trust is listed, so an extension that stopped, or was switched off, still leaves its row.
+    /// The plans are taken out before anything is awaited, so a second sweep finds none and nothing ends twice.
+    func endIdlePlans(_ id: String) async {
+        let idle = idlePlans(id)
         guard !idle.isEmpty else { return }
         await updatePreferences(id) { prefs in for plan in idle { prefs.plans[plan.id] = nil } }
         for plan in idle {
-            await gateway.recordPlanEnded(extensionId: id, plan: plan.id, title: plan.title)
+            await configuration.actions?.recordPlanEnded(extensionId: id, plan: plan.id, title: plan.title)
             await runtimes[id]?.client?.notify("sidefolk/plan.ended", params: ["plan": .string(plan.id), "reason": "idle"])
         }
         events.changed(.extensions)

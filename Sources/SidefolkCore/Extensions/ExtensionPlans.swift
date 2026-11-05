@@ -106,6 +106,10 @@ public struct ExtensionPlanInfo: Sendable, Hashable, Identifiable {
     public var lastUsed: Date?
     public var callsToday = 0
     public var signed = false
+
+    /// Some of it ran, or may run, with no card shown to the person: Full access answered the plan, or Auto let lines through. (Lines they read on a card that
+    /// stand only in Full access are not that.)
+    public var nobodyReadAll: Bool { [.fullAccessUnread, .autoSome, .either].contains(stands) }
 }
 
 enum ExtensionPlanRules {

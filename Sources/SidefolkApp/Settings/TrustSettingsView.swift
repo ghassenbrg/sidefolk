@@ -434,7 +434,7 @@ private struct FlowApprovedRow: View {
         var parts = [extensionName]
         parts.append(plan.lastUsed.map { String(localized: "Last ran \(TimeText.relative($0))", comment: "Settings › Trust: when a flow last ran without asking; a relative date") }
                      ?? String(localized: "Hasn't run yet", comment: "Settings › Trust: a flow that was approved and hasn't run"))
-        if plan.stands != .always { parts.append(String(localized: "Nobody read all of it", comment: "Settings › Trust: a flow Full access or Auto let through without showing a card for some or all of it")) }
+        if plan.nobodyReadAll { parts.append(String(localized: "Nobody read all of it", comment: "Settings › Trust: a flow Full access or Auto let through without showing a card for some or all of it")) }
         if plan.callsToday > 0 { parts.append(String(localized: "Today: \(plan.callsToday)", comment: "Settings › Trust: how many actions a flow made today, a count")) }
         return parts.joined(separator: " · ")
     }

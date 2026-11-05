@@ -1072,6 +1072,42 @@ import Testing
         #expect(await edit["ok"]?.boolValue == true, "a run in between is not a change of the plan")
     }
 
+    @Test func anIdlePlanEndsWithItsRowWhenTrustIsListedAndOnlyOnce() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        let old = Date().addingTimeInterval(-61 * 24 * 3600)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = old }
+        // Nothing asks from the extension: only the list is built (twice).
+        _ = await w.h.host.info(id: "com.example.flow")
+        _ = await w.h.host.info(id: "com.example.flow")
+        var rows: [ActivityEntry] = []
+        for _ in 0..<80 where rows.isEmpty {
+            rows = try await w.rows("extensions.plan_end")
+            try? await Task.sleep(for: .milliseconds(25))
+        }
+        try? await Task.sleep(for: .milliseconds(200))
+        rows = try await w.rows("extensions.plan_end")
+        #expect(rows.count == 1 && rows.first?.decision == .planEnded, "listing alone ends it, once: \(rows.count)")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil)
+        // The extension asking afterwards finds nothing to end again.
+        _ = await w.ask("sidefolk/tools.list")
+        #expect(try await w.rows("extensions.plan_end").count == 1)
+    }
+
+    @Test func trustSaysNobodyReadAllOfItOnlyWhereNoCardWasShown() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.first?.nobodyReadAll == false, "read on a card")
+        let w2 = try await World()
+        try await w2.setMode(.fullAccess)
+        #expect(await !w2.approve(Self.plan([Self.save])).asked)
+        #expect(await w2.h.host.info(id: "com.example.flow")?.plans.first?.nobodyReadAll == true, "Full access answered it with no card")
+        // Lines read on a card that stand only in Full access are read.
+        func info(_ stands: ExtensionPlanInfo.Stands) -> ExtensionPlanInfo { ExtensionPlanInfo(id: "p", title: "", when: "", actions: 1, stands: stands, approvedAt: Date(), expiresAt: nil) }
+        #expect(info(.fullAccessSome).nobodyReadAll == false && info(.always).nobodyReadAll == false)
+        #expect(info(.fullAccessUnread).nobodyReadAll && info(.autoSome).nobodyReadAll && info(.either).nobodyReadAll)
+    }
+
     @Test func aLastRunAheadOfTheClockDoesNotKeepAPlanAlivePastSixtyDays() async throws {
         let w = try await World()
         _ = await w.approve(Self.plan([Self.save]))
