@@ -1004,7 +1004,7 @@ final class AppCoordinator {
         presentKnown(item, presentation)
     }
 
-    func presentKnown(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+    func presentKnown(_ item: AttentionItem, _ presentation: AttentionPresentation, forward: Bool = false) {
         // Questions that want a typed answer (and all of Sidefolk's own) go in the panel, where the user can type.
         if item.refKind == "ask", item.source == "agent" || item.actions.isEmpty {
             // Brought forward again from the count, it's already there.
@@ -1022,7 +1022,7 @@ final class AppCoordinator {
             sidecard.present(item, presentation)
         case .attention:
             if reachInFullScreen(item) { companion.stepForward() }
-            sidecard.present(item, presentation)
+            sidecard.present(item, presentation, forward: forward)
         case .system(let sound, let alsoOnDesktop):
             notifier.show(item, sound: sound && runtime.settings.current.sounds)
             if alsoOnDesktop, companion.isVisible {

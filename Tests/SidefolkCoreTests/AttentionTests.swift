@@ -168,6 +168,24 @@ import Testing
         asking.cancel()
     }
 
+    /// A program asking every so often mustn't keep anyone else's notices from coming up.
+    @Test func questionsDontUseUpWhatNoticesMayDo() async throws {
+        let (center, _, store) = try center()
+        let asking = (1...(AttentionPolicy.perFamilyLimit + 1)).map { n in
+            Task { await center.ask(AttentionRequest(level: .attention, source: "extension:nagging", title: "Question \(n)?", refKind: "ask"), timeout: 5) }
+        }
+        var open: [AttentionItem] = []
+        for _ in 0..<400 where open.count < asking.count || !open.allSatisfy({ $0.state == .shown }) {
+            open = try await store.open()
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        let notice = await center.post(AttentionRequest(level: .attention, source: "extension:other", title: "A notice"))
+        #expect(try await store.item(id: notice.id)?.state == .shown, "not held behind them")
+        #expect(await center.heldCount == 0)
+        for item in try await store.open() { await center.respond(id: item.id, actionId: nil) }
+        for task in asking { _ = await task.value }
+    }
+
     @Test func aNoticeIsStillSpacedOut() async throws {
         let (center, _, store) = try center()
         await center.post(AttentionRequest(level: .attention, source: "external:test", title: "One"))

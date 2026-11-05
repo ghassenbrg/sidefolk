@@ -41,6 +41,8 @@ public actor AttentionCenter {
     /// taken in the same synchronous step as the decision, before any `await`, so concurrent posts
     /// can't all decide against the same, older list.
     private var recent: [(source: String, at: Date)] = []
+    /// Questions shown, counted apart: their own budget, and they don't use up what notices may do, or a program could keep anyone else's from coming up.
+    private var asked: [(source: String, at: Date)] = []
     private var gentle: [(source: String, at: Date)] = []
     /// Away because the input-idle signal said so at the last decision (lock and sleep come through `update`).
     private var idleAway = false
@@ -233,12 +235,12 @@ public actor AttentionCenter {
         }
         let punctual = item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true
         let decision = AttentionPolicy.decide(level: level, source: item.source, createdAt: item.createdAt, now: now,
-                                              env: environment, recent: recent, gentle: gentle, punctual: punctual,
+                                              env: environment, recent: item.refKind == "ask" ? asked : recent, gentle: gentle, punctual: punctual,
                                               reachWhenAway: item.refKind == OccurrenceScheduler.systemAttentionKind, question: item.refKind == "ask")
         switch decision {
         case .present(let presentation):
             held[item.id] = nil
-            reserve(item.source, presentation, now: now)
+            reserve(item.source, presentation, now: now, question: item.refKind == "ask")
             await present(item, presentation, level: level)
         case .hold(let until):
             held[item.id] = item
@@ -293,10 +295,12 @@ public actor AttentionCenter {
 
     /// Counts a presentation against the rate limits. Synchronous, so it lands in the same actor
     /// step as the decision that made it.
-    private func reserve(_ source: String, _ presentation: AttentionPresentation, now: Date) {
+    private func reserve(_ source: String, _ presentation: AttentionPresentation, now: Date, question: Bool = false) {
         let window = AttentionPolicy.perSourceWindow
+        asked.removeAll { now.timeIntervalSince($0.at) >= window }
         switch presentation {
-        case .attention, .system: recent.append((source, now))
+        case .attention, .system:
+            if question { asked.append((source, now)) } else { recent.append((source, now)) }
         case .gentle: gentle.append((source, now))
         case .ambient: break
         }

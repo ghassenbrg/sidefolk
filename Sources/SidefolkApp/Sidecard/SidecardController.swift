@@ -104,8 +104,10 @@ final class SidecardController {
     /// Where the card stands, for what must stay clear of it (D99).
     var visibleFrame: NSRect? { hosted.panel.isVisible ? hosted.panel.frame : nil }
 
-    func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+    /// `forward`: the person asked for this one, so it comes up now, with a question in front going back to the head of the line.
+    func present(_ item: AttentionItem, _ presentation: AttentionPresentation, forward: Bool = false) {
         if model.item?.id == item.id, model.shape != .stack { return }
+        queue.removeAll { $0.0.id == item.id }
         let card = Self.isCard(item, presentation)
         if holds?(!card) == true {
             if !queue.contains(where: { $0.0.id == item.id }) { queue.append((item, presentation)) }
@@ -118,12 +120,14 @@ final class SidecardController {
                 return
             }
             // A new card: a card in front folds into the stack (it still waits there), a whisper waits its turn.
-            // A question doesn't fold, though: someone's waiting on it, so what's new takes its turn after.
+            // A question doesn't fold, though: someone's waiting on it. What's new takes its turn after, unless it's for right now, or the person asked for it.
             if model.shape == .card, current.refKind == "ask" {
-                queue.append((item, presentation))
-                return
-            }
-            if model.shape == .card { fold(current) } else { queue.insert((current, .gentle(autoDismiss: AttentionPolicy.gentleSeconds)), at: 0) }
+                guard forward || item.source == "reminder" || item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true else {
+                    queue.append((item, presentation))
+                    return
+                }
+                queue.insert((current, .attention(expandFor: AttentionPolicy.expandSeconds)), at: 0)
+            } else if model.shape == .card { fold(current) } else { queue.insert((current, .gentle(autoDismiss: AttentionPolicy.gentleSeconds)), at: 0) }
         }
         show(item, presentation, card: card)
     }

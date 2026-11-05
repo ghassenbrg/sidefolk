@@ -131,7 +131,7 @@ extension AppCoordinator {
                 return
             }
             answeringWaiting = first.id
-            presentKnown(first, .attention(expandFor: AttentionPolicy.expandSeconds))
+            presentKnown(first, .attention(expandFor: AttentionPolicy.expandSeconds), forward: true)
         }
     }
 }
