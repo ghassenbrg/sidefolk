@@ -93,12 +93,11 @@ private struct PageChoiceRow: View {
             }
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 PageRowLabel(label: choice.label, detail: choice.detail)
-                picker
-            }
-            // Even stacked, a row of choices can be wider than a narrow panel, and it doesn't shrink: that pushes all the panel holds off both sides. A menu always fits.
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                PageRowLabel(label: choice.label, detail: choice.detail)
-                menu
+                // Even stacked, a row of choices can be wider than a narrow panel, and it doesn't shrink: that pushes all the panel holds off both sides. A menu always fits.
+                ViewThatFits(in: .horizontal) {
+                    picker
+                    menu
+                }
             }
         }
         .padding(.horizontal, flat ? 0 : Theme.Space.l)
