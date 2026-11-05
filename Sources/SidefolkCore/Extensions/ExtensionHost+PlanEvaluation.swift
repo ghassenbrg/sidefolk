@@ -22,6 +22,15 @@ struct PlanEvaluation {
     var intent: String?
     /// The person said every page and online service asks each time (D47): lines that use the network ask whatever a plan says.
     var askOnline = false
+    /// The person's mode when it was read.
+    var mode: GuardMode = .askOncePerKind
+
+    /// Whether the line would run without a card now, in this mode and with this setting for the internet: what the replies say, so they say one thing.
+    func standsNow(_ line: Line) -> Bool {
+        guard line.step.standing, line.step.kind == nil, mode != .askEveryTime else { return false }
+        if line.step.isInFullAccessOnly, mode != .fullAccess { return false }
+        return !(askOnline && line.tool?.spec.capabilities.contains(.network) == true)
+    }
 
     /// Nothing is new: the plan they read already allows all of it.
     var covered: Bool { previous != nil && fresh.isEmpty && !widened }
@@ -135,7 +144,7 @@ extension ExtensionHost {
             widened = ExtensionPlanRules.widened(read, to: candidate)
         }
         let intent = plan["intent"]?.stringValue.flatMap { ["run", "turn_on"].contains($0) ? $0 : nil }
-        return .success(PlanEvaluation(lines: lines, rows: rows, plan: candidate, previous: read, fresh: fresh, widened: widened, intent: intent, askOnline: askOnline))
+        return .success(PlanEvaluation(lines: lines, rows: rows, plan: candidate, previous: read, fresh: fresh, widened: widened, intent: intent, askOnline: askOnline, mode: flow.mode))
     }
 
     enum PlanRefusal: String, Error {

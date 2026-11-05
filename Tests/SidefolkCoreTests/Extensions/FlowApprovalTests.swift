@@ -639,6 +639,12 @@ import Testing
         #expect(ExtensionPlanRules.fieldClass("long_description", schema: string) == .freeText && ExtensionPlanRules.fieldClass("messages", schema: string) == .freeText)
         #expect(ExtensionPlanRules.fieldClass("addresses", schema: string) == .other)
         #expect(ExtensionPlanRules.fieldClass("description", schema: string) == .freeText, "a description is words, though it holds the letters of `script`")
+        for innocent in ["manuscript", "prescription", "subscription", "inscription", "descriptions", "transcripts"] {
+            #expect(ExtensionPlanRules.fieldClass(innocent, schema: string) != .code, "\(innocent)")
+        }
+        for overlap in ["commandescription", "scriptranscript", "shellcommandescription"] {
+            #expect(ExtensionPlanRules.fieldClass(overlap, schema: string) == .code, "a stem that overlaps an innocent word is still a stem: \(overlap)")
+        }
         #expect(ExtensionPlanRules.fieldClass("transcript", schema: string) == .other && ExtensionPlanRules.fieldClass("transcript", schema: string) != .code, "nor is a transcript code")
     }
 
@@ -751,6 +757,19 @@ import Testing
         let text = shown.words ?? ""
         #expect(text.contains("It will still ask you each time:") && text.contains("you asked the internet to ask each time"), "\(text)")
         #expect(text.contains("It changes:") && text.contains("notes.save"), "what doesn't use it still stands: \(text)")
+    }
+
+    @Test func theRepliesAgreeOnWhatRunsWithoutACardNow() async throws {
+        let w = try await World()
+        let count: JSONValue = ["tool": "watch.create", "input": ["interval_minutes": "{{n}}"]]
+        let plan = Self.plan([Self.save, count, Self.fetch])
+        let approved = await w.approve(plan)
+        #expect(approved.reply["standing"]?.arrayValue?.compactMap(\.boolValue) == [true, false, true], "a line that stands only in Full access asks now: \(approved.reply)")
+        let states = await w.check(plan)["steps"]?.arrayValue?.compactMap { $0["state"]?.stringValue }
+        #expect(states == ["stands", "stands_in_full_access", "stands"])
+        try await w.setMode(.askEveryTime)
+        let all = await w.approve(Self.plan([Self.save], id: "other"))
+        #expect(all.reply["standing"]?.arrayValue?.compactMap(\.boolValue) == [false], "in Ask every time every call asks")
     }
 
     @Test func aJobForTheCompanionCountsAsReadingOutsideContent() async throws {

@@ -79,13 +79,25 @@ extension ExtensionPlanRules {
     ]
     /// Names that run something, written as one word (`applescript`); a name that only holds the letters (`transcript`, `description`) isn't one.
     private static let codeCompounds = ["applescript", "javascript", "typescript", "vbscript", "coffeescript", "powershell", "commandline", "shellscript", "bashscript"]
-    /// A name that runs something written as one lower-case word (`osascript`, `shellcommand`, `runscript`): the stems in it, unless it is a word that only
-    /// holds the letters (`description`, `transcript`, `manuscript`, `prescription`, `subscription`, and their plurals).
+    /// A name that runs something written as one lower-case word (`osascript`, `shellcommand`, `runscript`): a stem in it, unless every place the stem
+    /// appears is inside a word that only holds the letters (`description`, `transcript`, `manuscript`, `prescription`, `subscription`, `inscription`).
+    /// Ranges, not removal: cutting the innocent word out of `commandescription` would cut the stem apart.
     private static func hidesCode(_ lower: String) -> Bool {
-        let innocent = ["description", "transcript", "manuscript", "prescription", "subscription", "inscription"]
-        var rest = lower
-        for word in innocent { rest = rest.replacingOccurrences(of: word, with: "") }
-        return ["script", "command", "shell"].contains { rest.contains($0) }
+        let text = lower as NSString
+        func found(_ word: String) -> [NSRange] {
+            var out: [NSRange] = [], from = 0
+            while from < text.length {
+                let r = text.range(of: word, range: NSRange(location: from, length: text.length - from))
+                guard r.location != NSNotFound else { break }
+                out.append(r)
+                from = r.location + 1
+            }
+            return out
+        }
+        let innocent = ["description", "transcript", "manuscript", "prescription", "subscription", "inscription"].flatMap(found)
+        return ["script", "command", "shell"].flatMap(found).contains { stem in
+            !innocent.contains { NSIntersectionRange($0, stem) == stem }
+        }
     }
 
     private static let placeWords: Set<String> = [

@@ -376,7 +376,7 @@ extension ExtensionHost {
         await updatePreferences(id) { $0.plans[plan.id] = plan }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
-                                                                             "standing": .array(evaluation.lines.map { .bool($0.step.standing && !(evaluation.askOnline && $0.tool?.spec.capabilities.contains(.network) == true)) }),
+                                                                             "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),
                                                                              "silent": .bool(evaluation.covered),
                                                                              "new": .number(Double(evaluation.fresh.count))])
     }
@@ -393,8 +393,8 @@ extension ExtensionHost {
                 var out: [String: JSONValue]
                 if line.step.kind != nil { out = ["state": "listed"] }
                 else if flow.mode == .askEveryTime { out = ["state": "asks", "why": "ask_every_time"] }
-                else if e.askOnline, line.tool?.spec.capabilities.contains(.network) == true { out = ["state": "asks", "why": "ask_online"] }
                 else if !v.stands { out = ["state": .string(v.refused ? "refused" : "asks")] }
+                else if e.askOnline, line.tool?.spec.capabilities.contains(.network) == true { out = ["state": "asks", "why": "ask_online"] }
                 else { out = ["state": .string(v.fullAccessOnly && flow.mode != .fullAccess ? "stands_in_full_access" : "stands")] }
                 if let why = v.why, line.step.kind == nil, out["why"] == nil { out["why"] = .string(why) }
                 if let warning = v.warning { out["warning"] = .string(warning) }
