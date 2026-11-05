@@ -90,6 +90,9 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     public var fullAccessEnds: Date?
     /// The mode Full access hands back to when it ends; never Full access itself.
     public var beforeFullAccess: GuardMode = .askOncePerKind
+    /// A flow the person approved may pass what it read to a server or another extension's tool, in the fields its card names (D189). Off: those
+    /// lines ask each time. On by default, as the founder asked: a flow is automation.
+    public var flowsMayPassToServers = true
 
     public init(mode: GuardMode = .askOncePerKind, disabled: Set<Capability> = [], unanswered: UnansweredRule = UnansweredRule(),
                 internet: InternetRule = .oncePerSite) {
@@ -111,6 +114,8 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         fullAccessEnds = try? c.decodeIfPresent(Date.self, forKey: .fullAccessEnds)
         let before = (try? c.decode(GuardMode.self, forKey: .beforeFullAccess)) ?? .askOncePerKind
         beforeFullAccess = before == .fullAccess ? .askOncePerKind : before
+        // Absent: on, the default. Present and unreadable: off, never a yes nobody gave.
+        flowsMayPassToServers = c.contains(.flowsMayPassToServers) ? ((try? c.decode(Bool.self, forKey: .flowsMayPassToServers)) ?? false) : true
     }
 
     /// The policy as it holds at `now`: Full access past its end is the mode it replaced (D84). Guard reads the policy

@@ -11,6 +11,10 @@ public struct ExtensionTool: Tool {
     /// Which extension this is, as a plan keeps it (`ExtensionPlan.Step.provider`): its id and the kind of pack or server it was installed
     /// as, which the id alone doesn't say once an extension has been taken away and another has taken its name.
     public let provider: String
+    /// The command of a server that runs outside a sandbox, for a plan to check its program (`ProgramPin`).
+    let program: String?
+    /// Its arguments, which a program check needs to see: one that names a file or folder is something the program loads, which a hash of it doesn't cover.
+    let programArguments: [String]
     /// Parameters naming a folder the person chooses (`tools.<name>.paths`): Guard checks them like any
     /// file tool's paths, and the sandbox opens exactly those for this call.
     public let folderParameters: [String: ExtensionManifest.FolderUse]
@@ -34,7 +38,9 @@ public struct ExtensionTool: Tool {
     /// Other agents may use it, on a card each time (`tools.<name>.agents`, D112).
     public let forAgents: Bool
     /// Told who called, before the call: a plan may be asked for only just after the person (D110).
-    private let began: (@Sendable (Caller, Bool) async -> Void)?
+    private let began: (@Sendable (Caller, Bool) async -> UUID?)?
+    /// The call is over, whatever it came to: a click answers a plan only while the call it made is still running.
+    private let ended: (@Sendable (UUID) async -> Void)?
     /// Does what a reply asked for, knowing who made the call (D100).
     private let asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
@@ -60,16 +66,18 @@ public struct ExtensionTool: Tool {
     /// Seconds a manifest may give one call (`tools.<name>.timeout`).
     public static let timeouts = 1...300
 
-    init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String, provider: String = "",
+    init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String, provider: String = "", program: String? = nil, programArguments: [String] = [],
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], fileLists: Set<String> = [], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
-         sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> Void)? = nil,
+         sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> UUID?)? = nil, ended: (@Sendable (UUID) async -> Void)? = nil,
          asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)? = nil,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
         self.extensionId = extensionId
         self.extensionName = extensionName
         self.remoteName = remoteName
+        self.program = program
+        self.programArguments = programArguments
         self.provider = provider.isEmpty ? ExtensionHash.sha256(Data(extensionId.utf8)) : provider
         self.folderParameters = folderParameters
         self.fileLists = fileLists
@@ -79,6 +87,7 @@ public struct ExtensionTool: Tool {
         self.sandboxed = sandboxed
         self.forAgents = forAgents
         self.began = began
+        self.ended = ended
         self.paired = firstParty ? paired : nil
         self.sentence = firstParty ? sentence : nil
         self.service = firstParty ? service : nil
@@ -109,7 +118,7 @@ public struct ExtensionTool: Tool {
     }
 
     public func scope(for input: JSONValue) -> ToolScope {
-        var scope = ToolScope(extensionId: extensionId)
+        var scope = ToolScope(extensionId: extensionId, unsandboxed: !sandboxed)
         // Only Sidefolk's own programs are taken at their word about where they go (D47).
         if let service { scope.reach = .service(service) }
         for (param, use) in folderParameters.sorted(by: { $0.key < $1.key }) {
@@ -206,8 +215,13 @@ public struct ExtensionTool: Tool {
             }
             input = input.setting(param, .array(checked))
         }
-        await began?(context.caller, context.tainted)
-        let result = try await invoke(input, grants)
+        let click = await began?(context.caller, context.tainted)
+        let result: ToolResult
+        do { result = try await invoke(input, grants) } catch {
+            if let click { await ended?(click) }
+            throw error
+        }
+        if let click { await ended?(click) }
         if let asks = result.asks { await asking?(asks, context.caller) }
         return result
     }

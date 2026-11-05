@@ -32,6 +32,8 @@ public actor ExtensionHost {
         public var actions: ExtensionActionGateway?
         /// The person said every page and online service asks, each time (D47).
         public var askEachTimeOnline: @Sendable () async -> Bool = { false }
+        /// The person's mode and what they chose about flows passing words on, as it holds now (D186–D189).
+        public var flowPolicy: @Sendable () async -> FlowPolicy = { FlowPolicy() }
         /// The person's AI by name, nil without one: what an extension's label says (D100).
         public var aiName: @Sendable () -> String? = { nil }
         /// What the person calls their companion, for `{companion}` in the extension's words where Sidefolk writes them.
@@ -54,6 +56,22 @@ public actor ExtensionHost {
         /// Where the person is, as Sidefolk knows it (D106).
         public var currentPlace: @Sendable () -> KnownPlace? = { nil }
         public init() {}
+    }
+
+    /// What bears on a flow's plan, from the person's trust settings.
+    public struct FlowPolicy: Sendable {
+        public var mode: GuardMode
+        public var mayPassToServers: Bool
+
+        public init(mode: GuardMode = .askOncePerKind, mayPassToServers: Bool = true) {
+            self.mode = mode
+            self.mayPassToServers = mayPassToServers
+        }
+
+        /// From the person's policy. One that can't be read is not a permission: every action asks and nothing is passed on to servers.
+        public init(policy: GuardPolicy?) {
+            self.init(mode: policy?.mode ?? .askEveryTime, mayPassToServers: policy?.flowsMayPassToServers ?? false)
+        }
     }
 
     struct Runtime {
@@ -106,8 +124,44 @@ public actor ExtensionHost {
         var actionCalls: [Date] = []
         /// Calls under way, by the request that made them: what a program can ask to stop.
         var actionTasks: [String: Task<Void, Never>] = [:]
+        /// A stop that arrived before its call was registered: the most recent few, kept until the call turns up.
+        var earlyCancels: [String] = []
+        mutating func noteEarlyCancel(_ key: String) {
+            if earlyCancels.count >= 32 { earlyCancels.removeFirst() }
+            earlyCancels.append(key)
+        }
+
+        /// Takes a remembered stop for this call, if there is one.
+        mutating func takeEarlyCancel(_ key: String) -> Bool {
+            guard let at = earlyCancels.firstIndex(of: key) else { return false }
+            earlyCancels.remove(at: at)
+            return true
+        }
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
+        /// The person's own clicks or typed commands to this extension whose calls are still running, by call (Full access answers one plan for one click,
+        /// and only while the call that click made is the one asking, D188).
+        var personClicks: [UUID: Date] = [:]
+        /// How many actions each plan's runs made, by plan and run id: the most recent runs only (D189).
+        var runCalls: [String: Int] = [:]
+        /// When this extension last spent from each minute budget (looking at plans and tools, approving plans).
+        var budgets: [String: [Date]] = [:]
+        var runOrder: [String] = []
+
+        /// A click whose call is running; those past the window can no longer answer a plan and are dropped.
+        mutating func noteClick(_ token: UUID, at now: Date) {
+            lastPersonCall = now
+            personClicks = personClicks.filter { now.timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow }
+            personClicks[token] = now
+        }
+
+        mutating func countRun(_ key: String) {
+            if runCalls[key] == nil {
+                runOrder.append(key)
+                if runOrder.count > 64 { runCalls[runOrder.removeFirst()] = nil }
+            }
+            runCalls[key, default: 0] += 1
+        }
     }
 
     public nonisolated let paths: SidefolkPaths
@@ -1541,6 +1595,7 @@ public actor ExtensionHost {
         // Whoever asked is gone: a card up for it goes too, and a later Allow can't act for nobody.
         for task in runtimes[id]?.actionTasks.values.map({ $0 }) ?? [] { task.cancel() }
         runtimes[id]?.actionTasks = [:]
+        runtimes[id]?.earlyCancels = []
         let oneShots = runtimes[id]?.oneShots.values.map { $0 } ?? []
         runtimes[id]?.oneShots = [:]
         if let generation { await releaseOutputMute(id: id, generation: generation) }
@@ -1625,6 +1680,7 @@ public actor ExtensionHost {
             ? ExtensionTool.PairedDevice(parameter: meta?.device) { [weak self] input in await self?.pairedCheck(id, tool: remote, input: input) }
             : nil
         return ExtensionTool(spec: spec, extensionId: id, extensionName: name(rt), remoteName: remote, provider: Self.provider(rt),
+                             program: rt.record.kind == .mcp ? rt.pin.server?.command : nil, programArguments: rt.pin.server?.arguments ?? [],
                              folderParameters: meta?.paths ?? [:], fileLists: Set((meta?.fileLists ?? [:]).keys), firstParty: firstParty,
                              commands: commandsOf(id, tool: def.name),
                              paired: paired,
@@ -1632,6 +1688,7 @@ public actor ExtensionHost {
                              service: Self.reachName(rt.manifest?.services ?? []), trustedOnly: meta?.trustedOnly ?? [],
                              sandboxed: rt.record.kind == .sidefolk, forAgents: rt.record.kind == .sidefolk && meta?.agents == true,
                              began: { [weak self] caller, tainted in await self?.notePersonCall(id, caller: caller, tainted: tainted) },
+                             ended: { [weak self] click in await self?.endPersonClick(id, click) },
                              asking: { [weak self] asks, caller in await self?.performAsks(id, asks, caller: caller) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)

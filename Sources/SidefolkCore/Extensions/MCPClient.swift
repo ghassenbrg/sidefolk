@@ -369,7 +369,7 @@ public final class MCPClient: Sendable {
                 let token = params["progressToken"]?.stringValue
                 let report = token.flatMap { t in state.withLock { $0.following[t] } }
                 report?(params["progress"]?.doubleValue, params["total"]?.doubleValue, params["message"]?.stringValue)
-            } else if ["sidefolk/tools.cancel", "sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.forget"].contains(method),
+            } else if ["sidefolk/tools.cancel", "sidefolk/tools.list", "sidefolk/tools.check", "sidefolk/tools.call", "sidefolk/plan.approve", "sidefolk/plan.check", "sidefolk/plan.forget"].contains(method),
                       let params = message["params"], method == "sidefolk/plan.forget" || params["request"]?.stringValue.flatMap(UUID.init(uuidString:)) != nil {
                 onEvent(.action(method: method, params: params))
             }

@@ -18,6 +18,30 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
         /// its extension is gone, so a tool of the same name and shape from another extension is not what the person read (T52). A plan
         /// written before this has none: its steps on an extension's tool ask until the plan is approved again.
         public var provider: String?
+        /// The step's name in the extension's flow, for `{{name}}` in later steps (D186).
+        public var name: String?
+        /// Where each filled value comes from, by the field it goes in: "inside" (the person's own answer, the clock) or "outside" (everything
+        /// else, by default). Worked out by the host from the plan, never taken from the program, except the names a signed extension says are inside.
+        public var sources: [String: String]?
+        /// It stands only while Full access is on: it would ask under any other mode (D188).
+        public var fullAccessOnly: Bool?
+        /// A server's program as it was when the person read this, when Sidefolk can check one (D189).
+        public var program: String?
+        /// A step with no tool of Sidefolk's behind it, which the card still says: "ai" (what it reads goes to the person's AI) or "flow" (it sets
+        /// another flow off, which has its own approval). Such a step never stands or asks; it only counts as read.
+        public var kind: String?
+        /// The step's own title, for the card.
+        public var title: String?
+        /// For an "ai" step: the names of the steps whose words it reads, when its extension says.
+        public var reads: [String]?
+        /// What each filled field is fed by, as a fingerprint of the steps it points at, each as written (name, tool, provider, definition, kind, input): an
+        /// edit that points the same words at another step is something new, though the step itself is unchanged (D187).
+        public var feeds: [String: String]?
+        /// Added while Auto skipped the card because it stays inside Sidefolk: nobody read it, so it stands only while Auto is on and any other mode asks
+        /// for a card first (D187, D188).
+        public var answeredInAuto: Bool?
+
+        var isInFullAccessOnly: Bool { fullAccessOnly == true }
     }
 
     public var id: String
@@ -29,6 +53,16 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
     public var approvedAt: Date
     public var expiresAt: Date?
     public var perDay: Int
+    /// How many actions one run may make, when the extension sends a run id with its calls (D189).
+    public var perRun: Int?
+    /// How long it was allowed to last, in seconds: a longer one is something new (D187).
+    public var ttl: Int?
+    /// It goes round a list: what its lines do, they do many times a run.
+    public var goesRound: Bool?
+    /// Allowed by Full access with no card: nobody read it. It stands only while Full access is on, and any other mode asks for a card first (D188).
+    public var answeredUnread: Bool?
+    /// It read the person's own things and outside content and fills a server line from them (the card's warning): becoming so is new.
+    public var crossing: Bool?
 
     public func live(at now: Date, owner: String) -> Bool { self.owner == owner && (expiresAt.map { $0 > now } ?? true) }
 }
@@ -39,20 +73,29 @@ public struct ExtensionPlanInfo: Sendable, Hashable, Identifiable {
     public var title: String
     public var when: String
     public var actions: Int
+    /// When its actions run without asking, if not always: nobody read some of it, or the mode that let it through is the only one it stands in.
+    public enum Stands: Sendable, Hashable { case always, fullAccessUnread, fullAccessSome, autoSome, either }
+    public var stands = Stands.always
     public var approvedAt: Date
     public var expiresAt: Date?
 }
 
 enum ExtensionPlanRules {
-    static let maxSteps = 32
+    /// The most distinct lines a plan may hold, and the most rows the program may send for them (the same line once, D186).
+    static let maxSteps = 64
+    static let maxRows = 256
+    /// The most a plan may weigh as sent, so working it out stays small on the host's own actor.
+    static let maxPlanBytes = 256_000
     static let ttls = 60...3600
     static let perDays = 1...1000
     static let defaultPerDay = 200
     /// How far past the person's click, command or clean request an extension may still ask for a plan: a card is never started by
     /// a timer, a page's words or a model steered by what it read (T3).
     static let personWindow: TimeInterval = 30
+    /// How long the person's own click may be used to answer a plan under Full access: a click and the plan it started come close together.
+    static let clickWindow: TimeInterval = 10
 
-    private static let slot = try! NSRegularExpression(pattern: #"\{\{\s*[A-Za-z0-9_.\[\]-]{1,60}\s*\}\}"#)
+    static let slot = try! NSRegularExpression(pattern: #"\{\{\s*[A-Za-z0-9_.\[\]-]{1,60}\s*\}\}"#)
 
     static func hasSlot(_ text: String) -> Bool {
         slot.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
@@ -118,13 +161,40 @@ enum ExtensionPlanRules {
         return nil
     }
 
-    /// Whether a call is the step: the same keys, every written value equal, and words only where the plan left room.
-    static func matches(_ input: JSONValue, template: JSONValue, fillable: Set<String>) -> Bool {
-        guard let given = input.objectValue, let written = template.objectValue, Set(given.keys) == Set(written.keys) else { return false }
-        return written.allSatisfy { key, value in
-            guard let call = given[key] else { return false }
+    /// Whether a text is one slot and nothing else: a value of any kind may fill it.
+    static func isWholeSlot(_ text: String) -> Bool {
+        let parts = literals(text)
+        return parts.count == 2 && parts.allSatisfy(\.isEmpty)
+    }
+
+    /// The keys a step fills in.
+    static func slotKeys(_ template: JSONValue) -> Set<String> {
+        Set((template.objectValue ?? [:]).compactMap { key, value in value.stringValue.map(hasSlot) == true ? key : nil })
+    }
+
+    /// The keys that may hold a whole value of any kind, or be left out, when the step's own words are one slot and the field isn't one of the
+    /// table's text fields (which stay words): a number, a list, a blank form field (D186).
+    static func wholeKeys(_ template: JSONValue, tool: String) -> Set<String> {
+        let open = ExtensionActionPolicy.fillable[tool] ?? []
+        return Set((template.objectValue ?? [:]).compactMap { key, value in
+            guard !open.contains(key), let text = value.stringValue, isWholeSlot(text) else { return nil }
+            return key
+        })
+    }
+
+    /// Whether a call is the step: the same keys (a whole-slot field may be left out), every written value equal, and words only where the plan left room.
+    /// Keys are compared by their bytes, as values are: Swift calls two spellings of one letter equal, and a server reads them as two different fields.
+    static func matches(_ input: JSONValue, template: JSONValue, fillable: Set<String>, whole: Set<String> = []) -> Bool {
+        guard let given = input.objectValue, let written = template.objectValue else { return false }
+        func spelled(_ key: String) -> String? { written.keys.first { $0.utf8.elementsEqual(key.utf8) } }
+        let used = Set(given.keys.compactMap(spelled))
+        guard used.count == given.count, written.keys.filter({ !used.contains($0) }).allSatisfy({ whole.contains($0) }) else { return false }
+        return given.allSatisfy { key, call in
+            guard let own = spelled(key), let value = written[own] else { return false }
             if case .string(let t) = value, hasSlot(t) {
-                guard fillable.contains(key), case .string(let s) = call else { return false }
+                guard fillable.contains(own) else { return false }
+                if whole.contains(own) { return true }
+                guard case .string(let s) = call else { return false }
                 return fits(s, template: t)
             }
             return same(call, value)
@@ -141,7 +211,7 @@ enum ExtensionPlanRules {
         if name == CompanionJobTool.name, (fields["job"]?.stringValue?.count ?? 0) > CompanionJobTool.longest { return false }
         // What runs is what the card showed: nothing hidden in a written value, nothing past where the card stops.
         guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }),
-              objectsFit(template) else { return false }
+              objectsFit(template), !joinersOutsideWords(template) else { return false }
         let fillable = ExtensionActionPolicy.fillable[name] ?? []
         return fields.allSatisfy { key, value in
             !hasSlot(key) && slotless(value, unless: fillable.contains(key))
@@ -149,28 +219,116 @@ enum ExtensionPlanRules {
     }
 
     /// What shows is all there is: nothing the card would strip, nothing invisible, nothing so long in bytes that characters hide it. What people's own writing needs stays:
-    /// a joiner between letters (Persian, Hindi) or in an emoji, and an emoji's variation selector, each where it joins something, so none can carry anything by itself.
+    /// a joiner between letters (Persian, Hindi) or in an emoji, and an emoji's variation selector, each where it joins something of its own kind, so none can carry anything by itself.
     static func plain(_ text: String) -> Bool {
         guard text.utf8.count <= ExtensionPlanWords.valueLimit * 4 else { return false }
         let scalars = Array(text.unicodeScalars)
         var rest = String.UnicodeScalarView()
+        // An emoji (not a keycap's base: `1`, `#`, `*` have no joiners) takes joiners and a selector; letters of the writing that needs them (Arabic, the Indic
+        // scripts, Khmer, Myanmar) take them too, and nothing else does: between Cyrillic, Greek, CJK or accented Latin letters a joiner only changes what shows.
+        func emoji(_ o: Unicode.Scalar?) -> Bool {
+            guard let o, !o.isASCII else { return false }
+            return o.properties.isEmoji || o.value == 0xFE0F || (0x1F3FB...0x1F3FF).contains(o.value)
+        }
+        func writing(_ o: Unicode.Scalar?) -> Bool {
+            guard let o, joinerScripts.contains(where: { $0.contains(o.value) }) else { return false }
+            switch o.properties.generalCategory {
+            case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .nonspacingMark, .spacingMark, .enclosingMark: return true
+            default: return false
+            }
+        }
         for (i, s) in scalars.enumerated() {
             let before = i > 0 ? scalars[i - 1] : nil, after = i + 1 < scalars.count ? scalars[i + 1] : nil
-            func shows(_ o: Unicode.Scalar?) -> Bool { o.map { !$0.properties.isDefaultIgnorableCodePoint && !$0.properties.isWhitespace } ?? false }
             switch s.value {
-            case 0xFE0F where shows(before): continue
+            case 0xFE0F where before.map({ $0.properties.isEmoji && $0.value != 0xFE0F }) == true: continue
             case 0x200C, 0x200D:
-                if shows(after), shows(before) || before?.value == 0xFE0F { continue }
+                // A joiner joins writing that has joiners (an emoji, Persian, Hindi): between two ASCII letters it would only change what a card shows.
+                if (emoji(before) && emoji(after)) || (writing(before) && writing(after)) { continue }
                 return false
             default: rest.append(s)
             }
         }
         let shown = String(rest)
-        return same(ExtensionText.clean(shown), shown) && !shown.unicodeScalars.contains { $0.properties.isDefaultIgnorableCodePoint }
+        guard same(ExtensionText.clean(shown), shown), !shown.unicodeScalars.contains(where: { $0.properties.isDefaultIgnorableCodePoint || blank($0) }) else { return false }
+        // A word that mixes Latin with Cyrillic or Greek letters is one the eye can't tell from another (a Cyrillic `а` in `paypal`): not shown as plain.
+        for word in shown.split(whereSeparator: \.isWhitespace) where Set(word.unicodeScalars.compactMap(script)).count > 1 { return false }
+        // What the card shows is the bytes: one plain space between words, none at the ends, no other kind of space, no tab or line break, and no pile of
+        // marks past what the card keeps on a letter.
+        var previous: Unicode.Scalar?, marks = 0
+        for scalar in shown.unicodeScalars {
+            if scalar.properties.isWhitespace || scalar.properties.generalCategory == .spaceSeparator {
+                guard scalar == " ", let last = previous, last != " " else { return false }
+            }
+            switch scalar.properties.generalCategory {
+            case .nonspacingMark, .enclosingMark, .spacingMark:
+                marks += 1
+                if marks > 8 { return false }
+            default: marks = 0
+            }
+            previous = scalar
+        }
+        return previous != " "
+    }
+
+    /// An author's own words for the card (a title, when it runs): what draws nothing at all is left out, so a blank can't pass for a word.
+    static func visible(_ text: String) -> String {
+        var out = String.UnicodeScalarView()
+        for scalar in text.unicodeScalars where !scalar.properties.isDefaultIgnorableCodePoint && !blank(scalar) { out.append(scalar) }
+        return String(out)
+    }
+
+    /// Characters that draw nothing or nothing a reader could name: the braille blank, private use, what no version of Unicode has assigned, and controls.
+    private static func blank(_ scalar: Unicode.Scalar) -> Bool {
+        if scalar.value == 0x2800 { return true }
+        switch scalar.properties.generalCategory {
+        case .privateUse, .unassigned, .surrogate, .control, .format: return true
+        default: return false
+        }
+    }
+
+    /// Where joiners belong: Arabic, the Indic scripts, Myanmar and Khmer.
+    private static let joinerScripts: [ClosedRange<UInt32>] = [0x600...0x6FF, 0x750...0x77F, 0x8A0...0x8FF, 0xFB50...0xFDFF, 0xFE70...0xFEFF, 0x900...0xDFF, 0x1000...0x109F, 0x1780...0x17FF]
+
+    /// The writing a letter belongs to, by its block: nil for what isn't a letter. A word of two of them is one a reader can't tell from another (a Cyrillic or
+    /// Armenian letter in a Latin address); blocks are all this knows, so a script it has no block for counts as one of its own ("other").
+    private static func script(_ scalar: Unicode.Scalar) -> String? {
+        switch scalar.properties.generalCategory {
+        case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter: break
+        default: return nil
+        }
+        switch scalar.value {
+        case 0x41...0x5A, 0x61...0x7A, 0xAA, 0xB5, 0xBA, 0xC0...0x2FF, 0x1D00...0x1DBF, 0x1E00...0x1EFF, 0x2C60...0x2C7F, 0xA720...0xA7FF, 0xFF21...0xFF3A, 0xFF41...0xFF5A: return "latin"
+        case 0x370...0x3FF, 0x1F00...0x1FFF: return "greek"
+        case 0x400...0x52F, 0x1C80...0x1C8F, 0x2DE0...0x2DFF, 0xA640...0xA69F: return "cyrillic"
+        case 0x530...0x58F, 0xFB13...0xFB17: return "armenian"
+        case 0x590...0x5FF, 0xFB1D...0xFB4F: return "hebrew"
+        case 0x600...0x6FF, 0x750...0x77F, 0x8A0...0x8FF, 0xFB50...0xFDFF, 0xFE70...0xFEFF: return "arabic"
+        case 0x900...0xDFF: return "indic"
+        case 0xE00...0xE7F: return "thai"
+        case 0xE80...0xEFF: return "lao"
+        case 0x10A0...0x10FF, 0x2D00...0x2D2F: return "georgian"
+        case 0x13A0...0x13FF, 0xAB70...0xABBF: return "cherokee"
+        case 0x2C80...0x2CFF: return "coptic"
+        case 0xA4D0...0xA4FF: return "lisu"
+        case 0x1100...0x11FF, 0x3130...0x318F, 0xAC00...0xD7AF, 0x2E80...0x2FDF, 0x3040...0x30FF, 0x31F0...0x31FF, 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF, 0xFF66...0xFF9F, 0x20000...0x2FA1F: return "cjk"
+        default: return "other"
+        }
+    }
+
+    /// Joiners and selectors are shown where the card shows a field's own words; a field's name, and what a list or an object holds, are shown cleaned of them, so
+    /// none may be there (the card must say the bytes).
+    static func joinersOutsideWords(_ template: JSONValue) -> Bool {
+        func joiner(_ text: String) -> Bool { text.unicodeScalars.contains { [0x200C, 0x200D, 0xFE0F].contains($0.value) } }
+        for (key, value) in template.objectValue ?? [:] {
+            if joiner(key) { return true }
+            if case .string = value { continue }
+            if written(value).contains(where: joiner) { return true }
+        }
+        return false
     }
 
     /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.
-    private static func objectsFit(_ value: JSONValue) -> Bool {
+    static func objectsFit(_ value: JSONValue) -> Bool {
         guard let fields = value.objectValue else { return true }
         return fields.values.allSatisfy { field in
             switch field {
@@ -181,7 +339,7 @@ enum ExtensionPlanRules {
     }
 
     /// Every string in a value, its keys too.
-    private static func written(_ value: JSONValue) -> [String] {
+    static func written(_ value: JSONValue) -> [String] {
         switch value {
         case .string(let s): [s]
         case .array(let items): items.flatMap(written)
@@ -190,7 +348,7 @@ enum ExtensionPlanRules {
         }
     }
 
-    private static func slotless(_ value: JSONValue, unless allowed: Bool) -> Bool {
+    static func slotless(_ value: JSONValue, unless allowed: Bool) -> Bool {
         switch value {
         case .string(let s): return allowed || !hasSlot(s)
         case .array(let items): return items.allSatisfy { slotless($0, unless: false) }
@@ -231,70 +389,69 @@ enum ExtensionPlanRules {
 enum ExtensionPlanWords {
     static let valueLimit = 300
 
-    static func line(tool: any Tool, template: JSONValue) -> String {
+    /// An author's words as the card shows them inside Sidefolk's own quotes: one line, no hidden characters, and no quote that could end them early.
+    static func safe(_ text: String, _ limit: Int) -> String { unquoted(ToolFormat.oneLine(ExtensionText.clean(text), limit)) }
+
+    static func line(tool: any Tool, template: JSONValue, from: [String: String] = [:], program: String? = nil, whole: Set<String> = [], omit: Set<String> = []) -> String {
         let fields = template.objectValue ?? [:]
-        let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
+        // The field's own name, as the tool takes it: a schema's title is its author's, and could name one field after another.
         let values = fields.keys.sorted().compactMap { key -> String? in
-            guard let value = fields[key], let said = words(value) else { return nil }
-            return "\(ArgumentWords.label(key, properties[key])): \(said)"
+            guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key), omit: omit.contains(key)) else { return nil }
+            return "\(safe(key, 300)): \(said)"
         }
-        var title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
+        var title = safe(tool.spec.title, 80)
         // A plan holds for the extension that offered the tool, so the card says whose it is (as a call's own card does).
         if let ext = ExtensionPlanRules.extensionTool(tool) {
-            title += " (\(ToolFormat.oneLine(ExtensionText.clean(ext.extensionName), 40)))"
+            let who = safe(ext.extensionName, 40)
+            if ext.sandboxed {
+                title += " (\(who))"
+            } else if let program {
+                title += " (" + String(localized: "\(who), a server on this Mac, program \(program.prefix(8))…", comment: "A plan's card: a server the person added, and the start of its program's hash") + ")"
+            } else {
+                title += " (" + String(localized: "\(who), a server on this Mac; its program can't be checked", comment: "A plan's card: a server the person added") + ")"
+            }
         }
         return values.isEmpty ? title : "\(title) · \(values.joined(separator: ", "))"
     }
 
-    private static func words(_ value: JSONValue) -> String? {
-        switch value {
-        case .string(let s) where ExtensionPlanRules.hasSlot(s):
-            // One line each, keeping the space a written part has next to a slot.
-            let parts = ExtensionPlanRules.literals(s).map { part -> String in
-                let said = ToolFormat.oneLine(ExtensionText.clean(part), valueLimit)
-                guard !said.isEmpty else { return said }
-                return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
-            }
-            let filled = String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
-            return "“\(parts.joined(separator: "[\(filled)]"))”"
-        case .string(let s): return "“\(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))”"
-        case .array(let items):
-            let said = items.compactMap(words)
-            return said.isEmpty ? nil : said.joined(separator: ", ")
-        case .object(let o): return o.isEmpty ? nil : ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit)
-        default: return ArgumentWords.words(value)
-        }
+    /// What `plain` allowed stays: a joiner between writing that has them is part of the word, and a card that dropped it would show another string.
+    private static func cleanKeepingJoiners(_ text: String) -> String {
+        var scalars = String.UnicodeScalarView()
+        for scalar in text.unicodeScalars where scalar.value == 0x200C || scalar.value == 0x200D || !ExtensionText.isHidden(scalar) { scalars.append(scalar) }
+        return String(scalars)
     }
 
-    /// The whole card. Plans the person allowed before under the same id say what is new first.
-    static func body(name: String, lines: [(text: String, standing: Bool, new: Bool)], when: String, perDay: Int, ttl: Int?, revised: Bool, holdsJob: Bool = false) -> String {
-        var out: [String] = []
-        // Whole, here, where the summary above the card is clipped: its own words, marked as that, and what it's the only place to say.
-        if !when.isEmpty { out.append(String(localized: "When, in \(name)'s words: \(when)", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
-        func bullets(_ list: [(text: String, standing: Bool, new: Bool)]) -> String { list.map { "• \($0.text)" }.joined(separator: "\n") }
-        let standing = lines.filter(\.standing)
-        if revised {
-            let new = standing.filter(\.new), old = standing.filter { !$0.new }
-            if !new.isEmpty { out.append(String(localized: "New, without asking you:", comment: "A plan's card") + "\n" + bullets(new)) }
-            if !old.isEmpty { out.append(String(localized: "As before, without asking you:", comment: "A plan's card") + "\n" + bullets(old)) }
-        } else if !standing.isEmpty {
-            out.append(String(localized: "Without asking you, it will:", comment: "A plan's card") + "\n" + bullets(standing))
+    /// A written value as the card shows it: the quotes it is wrapped in can't be written inside it, so it can't pass for two fields.
+    private static func quoted(_ text: String) -> String { "“" + unquoted(text) + "”" }
+
+    static func unquoted(_ text: String) -> String { text.replacingOccurrences(of: "“", with: "‘").replacingOccurrences(of: "”", with: "’") }
+
+    private static func words(_ value: JSONValue, from: String? = nil, whole: Bool = false, omit: Bool = false) -> String? {
+        switch value {
+        case .string(let s) where ExtensionPlanRules.hasSlot(s):
+            // One line each, keeping the space a written part has next to a slot (a lone space between two slots too).
+            let parts = ExtensionPlanRules.literals(s).map { part -> String in
+                let said = unquoted(ToolFormat.oneLine(cleanKeepingJoiners(part), valueLimit))
+                guard !said.isEmpty else { return part.isEmpty ? "" : " " }
+                return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
+            }
+            var filled = from.map { String(localized: "from “\($0)”", comment: "A plan's card: where words filled in at run time come from, a step's own title") }
+                ?? String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
+            if whole { filled += "; " + String(localized: "it may also be a list, a record, a number, or left out", comment: "A plan's card: a field filled with one value of any kind") }
+            else if omit { filled += "; " + String(localized: "it may also be left out", comment: "A plan's card: a field that may be left out, which then takes its default") }
+            return "“" + parts.joined(separator: "[\(filled)]") + "”"
+        case .string(let s): return quoted(ToolFormat.oneLine(cleanKeepingJoiners(s), valueLimit))
+        // What clears a field is something the person reads too: a null or an empty list sets it to nothing.
+        case .null: return String(localized: "nothing", comment: "A plan's card: a value written as null")
+        case .array(let items):
+            if items.isEmpty { return String(localized: "an empty list", comment: "A plan's card: a value written as an empty list") }
+            // A list of lists keeps its shape: it shows as written.
+            if items.contains(where: { $0.arrayValue != nil || $0.objectValue != nil }) { return ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit) }
+            return items.map { words($0) ?? String(localized: "nothing", comment: "A plan's card: a value written as null") }.joined(separator: ", ")
+        case .object(let o):
+            return o.isEmpty ? String(localized: "an empty record", comment: "A plan's card: a value written as an empty object") : ToolFormat.oneLine(ExtensionText.clean(value.jsonString), valueLimit)
+        default: return ArgumentWords.words(value)
         }
-        let asking = lines.filter { !$0.standing }
-        if !asking.isEmpty { out.append(String(localized: "It will still ask you each time:", comment: "A plan's card") + "\n" + bullets(asking)) }
-        // With nothing to allow, there's nothing to return and nothing to count: the card is only what it says it sets off.
-        guard !lines.isEmpty else { return out.joined(separator: "\n\n") }
-        out.append(String(localized: "What these return goes to \(name), which can't reach the internet by itself.", comment: "A plan's card; the extension's name"))
-        if holdsJob {
-            out.append(String(localized: "A job for your companion uses your AI and its tools, under your own trust settings. What it does is in History.", comment: "A plan's card"))
-        }
-        if let ttl {
-            let minutes = max(1, ttl / 60)
-            out.append(String(localized: "This ends by itself in \(minutes) minutes.", comment: "A plan's card"))
-        } else {
-            out.append(String(localized: "At most \(perDay) actions a day. You can end this in Settings › Add-ons.", comment: "A plan's card"))
-        }
-        return out.joined(separator: "\n\n")
     }
 }
 
@@ -308,16 +465,28 @@ struct ExtensionPlanTool: Tool {
     /// The extension's words for when it runs.
     var when = ""
     let body: String
+    /// The host's answer for this person, when the plan needs no card (`PlanAnswer`).
+    var answer: PlanAnswer?
+    /// What the program says it is for ("run" or "turn_on"), which only chooses the title.
+    var intent: String?
+
+    private var title: String {
+        switch intent {
+        case "run"?: String(localized: "Run “\(ExtensionPlanWords.unquoted(plan))”", comment: "A tool, after “<an extension> wants to”: the person runs a flow, and reads what it will do")
+        case "turn_on"?: String(localized: "Turn on “\(ExtensionPlanWords.unquoted(plan))”", comment: "A tool, after “<an extension> wants to”: the person turns a flow on, and reads what it will do")
+        default: String(localized: "Run “\(ExtensionPlanWords.unquoted(plan))” without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that")
+        }
+    }
 
     var spec: ToolSpec {
-        ToolSpec(name: Self.name, title: String(localized: "Run \(plan) without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that"),
+        ToolSpec(name: Self.name, title: title,
                  description: "Lets an extension run what the person read, without further cards.",
-                 inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id.")], required: ["extension", "plan"]),
+                 inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id."), "lines": Schema.array("The lines a card was not shown for, one entry each.", items: Schema.string("One line."))], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)
     }
 
     func summary(for input: JSONValue) -> String { when.isEmpty ? plan : when }
-    func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body) }
+    func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body, planAnswer: answer) }
 
     func refusal(for input: JSONValue, context: ToolContext) -> String? {
         if case .extension(let own) = context.caller, own == extensionId { return nil }

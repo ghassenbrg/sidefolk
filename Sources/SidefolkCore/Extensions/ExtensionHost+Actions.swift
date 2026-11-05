@@ -20,11 +20,12 @@ extension ExtensionHost {
             let tools = gateway.tools(for: id).map(Self.listed)
             await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
         case "sidefolk/tools.check":
+            guard spendLook(id) else { return await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"]) }
             guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
                 return
             }
-            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: false, gateway: gateway) != nil
+            let standing = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, run: nil, counting: false, gateway: gateway).step != nil
             guard let check = await gateway.check(tool, input: input, extensionId: id, standing: standing) else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unknown"])
                 return
@@ -60,30 +61,53 @@ extension ExtensionHost {
                 return
             }
             let timeout = params["timeout"]?.doubleValue.map { min(max($0, 1), 600) }
-            let step = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, counting: true, gateway: gateway)
+            let run = params["run"]?.stringValue.flatMap { $0.isEmpty || $0.count > 64 ? nil : $0 }
+            let found = await standing(id, tool: tool, input: input, plan: params["plan"]?.stringValue, run: run, counting: true, gateway: gateway)
+            let step = found.step
             let standing = step != nil
             // A plan's step as written, or the program's word for a call it filled in without one (a run from a draft): checked against
             // what it sent, and only where the closed table leaves words open. All it can do is keep those words out of History (D127).
             let template = step ?? params["written"].flatMap { ExtensionPlanRules.readable(written: $0, for: input) ? .some($0) : .none }
-            let filled = template.map { ExtensionPlanRules.fillsIn($0) && ExtensionPlanRules.matches(input, template: $0, fillable: ExtensionActionPolicy.fillable[tool] ?? []) } == true
-            let written = filled ? template : nil
+            let filled = template.map { ExtensionPlanRules.fillsIn($0) && ExtensionPlanRules.matches(input, template: $0, fillable: step == nil ? ExtensionActionPolicy.fillable[tool] ?? [] : ExtensionPlanRules.slotKeys($0),
+                                                                                       whole: step == nil ? [] : ExtensionPlanRules.wholeKeys($0, tool: tool)) } == true
+            // History keeps the step as written, and where its filled words came from.
+            var written = filled ? template : nil
+            if let prov = found.provenance, var fields = written?.objectValue {
+                fields["_filled_from"] = .array(prov.map { .string($0) })
+                written = .object(fields)
+            }
             let asker = asker(rt)
+            let key = request.stringValue ?? UUID().uuidString
+            // One call to a request: a program that sends the same one twice would leave the first with nothing to stop it.
+            guard runtimes[id]?.actionTasks[key] == nil else {
+                await client.notify("sidefolk/tools.result", params: ["request": request, "ok": false, "status": "failed", "text": "That request is already running."])
+                return
+            }
+            // The extension may have been turned off while this was being worked out.
+            guard runtimes[id]?.record.enabled == true else { return }
             begin(id)
             // Off this actor: a card can wait two minutes, and everything else this host does waits for nothing of that.
-            let key = request.stringValue ?? UUID().uuidString
             let keptFrom = Self.hearsOnlyThatItsDone(tool: tool, permissions: rt.pin.permissions)
-            runtimes[id]?.actionTasks[key] = Task { [weak self] in
+            let task = Task { [weak self] in
                 let following = keptFrom ? nil : ExtensionHost.following(request: request, client: client)
                 let outcome = await ToolProgress.$report.withValue(following) {
-                    await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout)
+                    await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout, capped: found.capped, unread: found.unread)
                 }
-                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, key: key)
+                await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, capped: found.capped, key: key)
             }
+            runtimes[id]?.actionTasks[key] = task
+            // A stop that came while this was being worked out (the program's messages are not handled in order) is not lost.
+            if runtimes[id]?.takeEarlyCancel(key) == true { task.cancel() }
         case "sidefolk/tools.cancel":
             // Told, not done: it says so by answering, and that answer can only say it may or may not have happened.
-            if let key = params["request"]?.stringValue { runtimes[id]?.actionTasks[key]?.cancel() }
+            if let key = params["request"]?.stringValue {
+                if let task = runtimes[id]?.actionTasks[key] { task.cancel() } else { runtimes[id]?.noteEarlyCancel(key) }
+            }
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
+        case "sidefolk/plan.check":
+            guard spendLook(id) else { return await reply(id, request, ["ok": false, "reason": "busy"]) }
+            await checkPlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.forget":
             if let plan = params["plan"]?.stringValue { await updatePreferences(id) { $0.plans[plan] = nil } }
             events.changed(.extensions)
@@ -137,7 +161,7 @@ extension ExtensionHost {
         }
     }
 
-    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "", key: String? = nil) async {
+    private func finishAction(_ id: String, request: JSONValue, standing: Bool, outcome: ToolOutcome, tool: String = "", capped: String? = nil, key: String? = nil) async {
         end(id)
         if let key { runtimes[id]?.actionTasks[key] = nil }
         let summary = ToolFormat.oneLine(ExtensionText.clean(outcome.activity.summary), 240)
@@ -153,8 +177,9 @@ extension ExtensionHost {
         case .denied(let why):
             await refundAI(id, tool: tool)
             reply["ok"] = false
-            reply["status"] = "denied"
+            reply["status"] = .string(capped == nil ? "denied" : "capped")
             reply["text"] = .string(why)
+            if let capped { reply["limit"] = .string(capped) }
         case .failed(let error):
             reply["ok"] = false
             reply["status"] = "failed"
@@ -174,6 +199,7 @@ extension ExtensionHost {
         case "sidefolk/tools.list": "sidefolk/tools.listed"
         case "sidefolk/tools.check": "sidefolk/tools.checked"
         case "sidefolk/plan.approve": "sidefolk/plan.result"
+        case "sidefolk/plan.check": "sidefolk/plan.checked"
         default: "sidefolk/tools.result"
         }
     }
@@ -199,6 +225,21 @@ extension ExtensionHost {
         return .object(out)
     }
 
+    /// One more look or plan in the minute, from a bucket of its own: working a plan out is work on this actor, and nothing is free to ask for in a loop,
+    /// but an editor's looks can't use up the calls a flow runs on, nor those the person's own Run.
+    private func spend(_ id: String, _ bucket: String, limit: Int) -> Bool {
+        let now = Date()
+        let recent = (runtimes[id]?.budgets[bucket] ?? []).filter { now.timeIntervalSince($0) < 60 }
+        guard recent.count < limit else {
+            runtimes[id]?.budgets[bucket] = recent
+            return false
+        }
+        runtimes[id]?.budgets[bucket] = recent + [now]
+        return true
+    }
+
+    private func spendLook(_ id: String) -> Bool { spend(id, "look", limit: Self.callsPerMinute) }
+
     private func asker(_ rt: Runtime) -> ApprovalRequest.Asker {
         ApprovalRequest.Asker(name: name(rt), firstParty: rt.pin.origin?.firstParty == true)
     }
@@ -207,16 +248,34 @@ extension ExtensionHost {
 
     /// The person's click or typed command to this extension, or a clean request of Sidefolk's own agent: only just after one may it ask
     /// for a plan (T3). Called by its tools (`ExtensionTool.began`).
-    func notePersonCall(_ id: String, caller: Caller, tainted: Bool) {
+    func notePersonCall(_ id: String, caller: Caller, tainted: Bool) -> UUID? {
         switch caller {
-        case .user, .command: runtimes[id]?.lastPersonCall = Date()
+        case .user:
+            // The person's own hand, which only Full access answers a plan for: a clean turn of Sidefolk's agent is not that (D188).
+            return click(id)
+        case .command(let owner) where owner == id: return click(id)
+        case .command: runtimes[id]?.lastPersonCall = Date()
         case .agent(let run) where !tainted && !run.hasPrefix(AgentRuntime.jobPrefix): runtimes[id]?.lastPersonCall = Date()
         default: break
         }
+        return nil
+    }
+
+    /// A click is kept while its call runs, so a plan that comes with it is answered for it: a button that has returned, or a timer, leaves nothing to
+    /// answer another plan with (D188). A call that never returns is cut off by its own timeout.
+    private func click(_ id: String) -> UUID? {
+        guard runtimes[id] != nil else { return nil }
+        let token = UUID(), now = Date()
+        runtimes[id]?.noteClick(token, at: now)
+        return token
+    }
+
+    func endPersonClick(_ id: String, _ click: UUID) {
+        runtimes[id]?.personClicks[click] = nil
     }
 
     /// Who a plan was allowed for.
-    private func owner(_ rt: Runtime) -> String {
+    func owner(_ rt: Runtime) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let permissions = (try? encoder.encode(rt.pin.permissions ?? ExtensionPermissions())) ?? Data()
@@ -229,10 +288,20 @@ extension ExtensionHost {
         return rt.preferences.plans.values.filter { $0.live(at: now, owner: owner) }.sorted { $0.id < $1.id }
     }
 
+    /// When a plan's actions run without asking, for Settings (`ExtensionPlanInfo.Stands`): a plan Full access answered stands in all its lines only in Full access;
+    /// a line Auto let through only in Auto; a line marked for Full access only in Full access.
+    private static func stands(_ plan: ExtensionPlan) -> ExtensionPlanInfo.Stands {
+        if plan.answeredUnread == true { return .fullAccessUnread }
+        let full = plan.steps.contains { $0.isInFullAccessOnly }, auto = plan.steps.contains { $0.answeredInAuto == true }
+        return full && auto ? .either : full ? .fullAccessSome : auto ? .autoSome : .always
+    }
+
     /// The plans Settings › Add-ons lists.
     func planInfos(_ id: String) -> [ExtensionPlanInfo] {
         livePlans(id).map {
-            ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count, approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
+            ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count,
+                              stands: Self.stands($0),
+                              approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
         }
     }
 
@@ -244,28 +313,81 @@ extension ExtensionHost {
         events.changed(.extensions)
     }
 
-    /// The step of a live plan this call fits, as it was written; nil when it fits none, and it asks.
-    private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, counting: Bool, gateway: ExtensionActionGateway) async -> JSONValue? {
+    /// What a call comes to against the plans: the step it fits, as written; or that a limit stopped it; or neither, and it asks.
+    struct Standing {
+        var step: JSONValue?
+        /// The plan's own limit for today or for this run, reached: nothing is asked, the call is refused and the program says so (D189).
+        var capped: String?
+        /// The plan or the line was never read on a card (Full access or Auto let it through).
+        var unread = false
+        /// Where the step's filled words come from, for History: "body from page (outside content)".
+        var provenance: [String]?
+    }
+
+    private func standing(_ id: String, tool name: String, input: JSONValue, plan: String?, run: String?, counting: Bool, gateway: ExtensionActionGateway) async -> Standing {
         guard let rt = runtimes[id], let plan, let saved = rt.preferences.plans[plan], saved.live(at: Date(), owner: owner(rt)),
-              (rt.pin.permissions ?? ExtensionPermissions()).isContained, ExtensionPlanRules.short(input), let tool = gateway.tool(named: name, for: id) else { return nil }
+              (rt.pin.permissions ?? ExtensionPermissions()).isContained, ExtensionPlanRules.short(input), let tool = gateway.tool(named: name, for: id) else { return Standing() }
         let definition = ExtensionPlanRules.definition(tool.spec), reach = ExtensionPlanRules.reach(tool.scope(for: input))
         let provider = ExtensionPlanRules.provider(tool)
-        let fillable = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
+        let flow = await configuration.flowPolicy()
+        // Full access answered it and nobody read it: it stands while Full access is on, and asks for a card first otherwise (D188).
+        if saved.answeredUnread == true, flow.mode != .fullAccess { return Standing() }
+        let ext = ExtensionPlanRules.extensionTool(tool)
+        let command = ext?.program, arguments = ext?.programArguments ?? []
+        let program = await command.asyncMap { path in await Task.detached { ProgramPin.hash(of: path, arguments: arguments) }.value } ?? nil
         let fits = saved.steps.first { step in
-            step.standing && step.tool == tool.spec.name && step.definition == definition && (step.provider ?? "") == provider
-                && ExtensionPlanRules.same(step.reach, reach)
-                && ExtensionPlanRules.matches(input, template: step.input, fillable: fillable)
+            guard step.kind == nil, step.standing, step.tool == tool.spec.name, step.definition == definition, (step.provider ?? "") == provider,
+                  ExtensionPlanRules.same(step.reach, reach) else { return false }
+            // What stands only in Full access stops when it ends (D188). A server's program is the one the person read, and the switch is theirs still.
+            if step.isInFullAccessOnly, flow.mode != .fullAccess { return false }
+            if step.answeredInAuto == true, flow.mode != .auto { return false }
+            if let pinned = step.program, pinned != program { return false }
+            if ext?.sandboxed == false, step.program == nil { return false }
+            if !flow.mayPassToServers, ext != nil, (step.sources ?? [:]).values.contains("outside") { return false }
+            // A slot is a place for words only where the table opens one or the host worked out where the words come from when it read the plan: a plan saved
+            // before that was written has no sources, and a slot written in some other field is a plain written value there.
+            let open = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
+            let fillable = ExtensionPlanRules.slotKeys(step.input).filter { open.contains($0) || step.sources?[$0] != nil }
+            return ExtensionPlanRules.matches(input, template: step.input, fillable: fillable,
+                                              whole: ExtensionPlanRules.wholeKeys(step.input, tool: tool.spec.name).intersection(fillable))
         }
-        guard let fits else { return nil }
+        guard let fits else { return Standing() }
         // "Ask each time" for the internet is the person's word for every page, whoever asks (D47).
-        if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return nil }
-        guard counting else { return fits.input }
+        if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return Standing() }
+        let provenance = Self.provenance(fits)
+        let unread = saved.answeredUnread == true || fits.answeredInAuto == true
+        guard counting else { return Standing(step: fits.input, unread: unread, provenance: provenance) }
         // Read after the wait above, and kept: a burst, or a restart, doesn't buy a new budget.
         let day = AIHelper.dayKey(Date()), used = runtimes[id]?.preferences.planCalls[plan]
         let count = used?.day == day ? used?.count ?? 0 : 0
-        guard count < saved.perDay else { return nil }
+        guard count < saved.perDay else { return Standing(capped: "day") }
+        if let run {
+            let key = plan + "\u{1}" + run
+            let made = runtimes[id]?.runCalls[key] ?? 0
+            guard made < (saved.perRun ?? ExtensionPlanRules.defaultPerRun) else { return Standing(capped: "run") }
+            runtimes[id]?.countRun(key)
+        }
         await updatePreferences(id) { $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1) }
-        return fits.input
+        return Standing(step: fits.input, unread: unread, provenance: provenance)
+    }
+
+    /// Where a step's filled words come from, so History says it afterwards (D189): the field, the names of the steps it reads (as the extension wrote
+    /// them), and what the plan declared them to be. The last is what the host worked out when the plan was read, not a fact about this run.
+    /// One short line per filled field (a long list would be clipped by History where it is kept, and the end of it would be lost); past twenty, how many more.
+    private static func provenance(_ step: ExtensionPlan.Step) -> [String]? {
+        let parts = (step.input.objectValue ?? [:]).keys.sorted().compactMap { field -> String? in
+            guard let text = step.input[field]?.stringValue, ExtensionPlanRules.hasSlot(text) else { return nil }
+            let names = ExtensionPlanRules.roots(text).joined(separator: ", ")
+            let said: String
+            switch step.sources?[field] {
+            case "outside"?: said = String(localized: "outside content: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            case "claimed"?: said = String(localized: "said by the extension to be the person's own: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            case nil: said = String(localized: "filled in: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            default: said = String(localized: "an answer asked of the person, or the clock: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            }
+            return ToolFormat.oneLine(said, 200)
+        }
+        return parts.isEmpty ? nil : ExtensionPlanWords.capped(parts, 20)
     }
 
     private func approvePlan(_ id: String, request: JSONValue, params: JSONValue, gateway: ExtensionActionGateway) async {
@@ -273,62 +395,130 @@ extension ExtensionHost {
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
         }
         guard let rt = runtimes[id], let plan = params["plan"] else { return await refuse("unusable") }
-        // One card at a time for a plan: what the person is reading is what is saved.
+        // One card at a time for a plan: what the person is reading is what is saved. Taken before anything is awaited, so a second ask can't pass the same check.
         guard !rt.planAsking else { return await refuse("busy") }
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
-        guard let planId = plan["id"]?.stringValue, planId.range(of: #"^[A-Za-z0-9._:-]{1,64}$"#, options: .regularExpression) != nil,
-              let rawSteps = plan["steps"]?.arrayValue, (0...ExtensionPlanRules.maxSteps).contains(rawSteps.count) else { return await refuse("unusable") }
-        // No action to allow is still something to read when `when` says what it sets off. With nothing to say at all there's no card to show.
-        guard !rawSteps.isEmpty || plan["when"]?.stringValue.map({ ExtensionText.clean($0).trimmingCharacters(in: .whitespacesAndNewlines) })?.isEmpty == false else { return await refuse("unusable") }
-        let ttl = plan["ttl"]?.intValue
-        if let ttl, !ExtensionPlanRules.ttls.contains(ttl) { return await refuse("unusable") }
-        let perDay = plan["per_day"]?.intValue ?? ExtensionPlanRules.defaultPerDay
-        guard ExtensionPlanRules.perDays.contains(perDay) else { return await refuse("unusable") }
-
-        let owner = owner(rt)
-        let previous = rt.preferences.plans[planId].flatMap { $0.live(at: Date(), owner: owner) ? $0 : nil }
-        var steps: [ExtensionPlan.Step] = [], lines: [(text: String, standing: Bool, new: Bool)] = []
-        for raw in rawSteps {
-            guard let name = raw["tool"]?.stringValue, let input = raw["input"], input.objectValue != nil, let tool = gateway.tool(named: name, for: id) else {
-                return await refuse("unknown_tool")
-            }
-            let stands = ExtensionPlanRules.standing(tool: tool, template: input)
-            let step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: ExtensionPlanRules.definition(tool.spec),
-                                          reach: ExtensionPlanRules.reach(tool.scope(for: input)), standing: stands,
-                                          provider: ExtensionPlanRules.provider(tool))
-            guard !steps.contains(step) else { continue }
-            steps.append(step)
-            let seen = previous?.steps.contains { $0.tool == step.tool && $0.input == step.input && $0.provider == step.provider } ?? false
-            lines.append((ExtensionPlanWords.line(tool: tool, template: input), stands, previous != nil && !seen))
-        }
-        let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
-        let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 600)
-        let body = ExtensionPlanWords.body(name: name(rt), lines: lines, when: when, perDay: perDay, ttl: ttl, revised: previous != nil, holdsJob: steps.contains { $0.tool == CompanionJobTool.name })
-        let card = ExtensionPlanTool(extensionId: id, plan: title.isEmpty ? planId : title, when: when, body: body)
-        let asker = asker(rt)
+        guard spend(id, "plan", limit: 10) else { return await refuse("busy") }
         runtimes[id]?.planAsking = true
+        let evaluation: PlanEvaluation
+        switch await evaluatePlan(id, plan: plan, gateway: gateway) {
+        case .failure(let reason):
+            runtimes[id]?.planAsking = false
+            return await refuse(reason.rawValue)
+        case .success(let found): evaluation = found
+        }
+        // One reading of the person's mode decides all of it: the card's words, the answer, what is marked and what the reply says.
+        let answer = planAnswer(id, evaluation)
+        let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
+        let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: words,
+                                     answer: answer, intent: evaluation.intent)
+        let asker = asker(rt)
+        // What nobody read is named on the approval's own row in History: the lines it let through.
+        var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
+        if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
         Task { [weak self] in
-            let outcome = await gateway.askForPlan(card, input: ["extension": .string(id), "plan": .string(planId)], extensionId: id, asker: asker)
-            await self?.finishPlan(id, request: request, outcome: outcome, plan: ExtensionPlan(
-                id: planId, title: title, when: when, steps: steps, owner: "", approvedAt: Date(),
-                expiresAt: ttl.map { Date().addingTimeInterval(Double($0)) }, perDay: perDay))
+            let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
+            await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer)
         }
     }
 
-    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, plan: ExtensionPlan) async {
+    /// Whether the person needs a card for this plan at all (D186–D188). Guard checks the mode again itself: this only says what the host found.
+    private func planAnswer(_ id: String, _ e: PlanEvaluation) -> PlanAnswer? {
+        if e.covered { return .covered }
+        // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
+        guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
+        // A plan that can't be recorded in full on one History row always shows its card, in every mode: nothing passes that History could not say.
+        guard ExtensionPlanWords.historyRecord(e) != nil else { return nil }
+        // Full access answers for the person's own click, once: not for a turn of Sidefolk's agent, and not for a click of a minute ago.
+        if e.mode == .fullAccess, let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
+            runtimes[id]?.personClicks[click] = nil
+            return .fullAccess
+        }
+        // In Auto, an edit that only adds what stays inside Sidefolk asks nothing; History still has the row.
+        if Self.autoSkips(e) { return .autoSkipped }
+        return nil
+    }
+
+    /// Whether a plan card is up for this extension now.
+    func planIsBeingAsked(_ id: String) -> Bool { runtimes[id]?.planAsking == true }
+
+    /// In Auto, an edit that only adds what stays inside Sidefolk asks nothing.
+    private static func autoSkips(_ e: PlanEvaluation) -> Bool {
+        // One predicate for the answer and for `plan.check`: an edit passes with no card only if what it adds can be recorded in full (`historyRecord`).
+        e.mode == .auto && e.previous != nil && !e.widened && e.fresh.allSatisfy { ExtensionPlanRules.staysInside(e.lines[$0]) }
+            && ExtensionPlanWords.historyRecord(e) != nil
+    }
+
+    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?) async {
         runtimes[id]?.planAsking = false
-        guard outcome.isOK, let rt = runtimes[id] else {
+        // An extension that was turned off while its card was up has nobody to answer, and an Allow now saves nothing for it.
+        guard let rt = runtimes[id], rt.record.enabled else { return }
+        guard outcome.isOK else {
             let reason = if case .unanswered = outcome.status { "unanswered" } else { "denied" }
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
             return
         }
-        var plan = plan
-        plan.owner = owner(rt)
+        // The extension that was read is the one that is saved for: if it was replaced or changed meanwhile, what the person read isn't its plan.
+        guard owner(rt) == evaluation.plan.owner else {
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
+            return
+        }
+        // What the person read was an edit of the plan standing then: if they ended it or it changed while the card was up (or while an answer was on its way),
+        // saving the whole candidate would bring back lines they took away. The program asks again and the whole plan is shown.
+        if let was = evaluation.previous, rt.preferences.plans[was.id] != was {
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
+            return
+        }
+        var plan = evaluation.plan
+        // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
+        // when it was going to, however often its program asks again. (A plan nobody read never gets here with a previous: it is shown whole.)
+        if answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
+            plan.approvedAt = was.approvedAt
+            // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
+            plan.expiresAt = was.expiresAt ?? plan.expiresAt
+        }
+        if answer == .fullAccess { plan.answeredUnread = true }
+        // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
+        if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
         await updatePreferences(id) { $0.plans[plan.id] = plan }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
-                                                                             "standing": .array(plan.steps.map { .bool($0.standing) })])
+                                                                             "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),
+                                                                             "silent": .bool((answer == .covered || answer == .autoSkipped) && evaluation.mode != .askEveryTime || answer == .fullAccess),
+                                                                             "new": .number(Double(evaluation.fresh.count))])
+    }
+
+    /// `sidefolk/plan.check`: what `plan.approve` would find, with nothing shown, saved or run, so an editor can say it while the person builds (D186).
+    private func checkPlan(_ id: String, request: JSONValue, params: JSONValue, gateway: ExtensionActionGateway) async {
+        guard let plan = params["plan"] else { return await reply(id, request, ["ok": false, "reason": "unusable"]) }
+        switch await evaluatePlan(id, plan: plan, gateway: gateway) {
+        case .failure(let reason): await reply(id, request, ["ok": false, "reason": .string(reason.rawValue)])
+        case .success(let e):
+            let flow = await configuration.flowPolicy()
+            let states = e.rows.map { row -> JSONValue in
+                let line = e.lines[row], v = line.verdict
+                var out: [String: JSONValue]
+                if line.step.kind != nil { out = ["state": "listed"] }
+                else if flow.mode == .askEveryTime { out = ["state": "asks", "why": "ask_every_time"] }
+                else if !v.stands { out = ["state": .string(v.refused ? "refused" : "asks")] }
+                else if e.askOnline, line.tool?.spec.capabilities.contains(.network) == true { out = ["state": "asks", "why": "ask_online"] }
+                else { out = ["state": .string(v.fullAccessOnly && flow.mode != .fullAccess ? "stands_in_full_access" : "stands")] }
+                if let why = v.why, line.step.kind == nil, out["why"] == nil { out["why"] = .string(why) }
+                if let detail = v.detail, line.step.kind == nil { out["detail"] = .string(detail) }
+                if let warning = v.warning { out["warning"] = .string(warning) }
+                return .object(out)
+            }
+            let newRows = e.rows.indices.filter { e.fresh.contains(e.rows[$0]) }
+            await reply(id, request, ["ok": true, "steps": .array(states), "new": .array(newRows.map { .number(Double($0)) }), "silent": .bool((e.covered || (runtimes[id]?.pin.origin?.firstParty == true && Self.autoSkips(e))) && flow.mode != .askEveryTime),
+                                      "widened": .bool(e.widened)])
+        }
+    }
+
+    private func reply(_ id: String, _ request: JSONValue, _ fields: [String: JSONValue]) async {
+        var fields = fields
+        fields["request"] = request
+        await runtimes[id]?.client?.notify("sidefolk/plan.checked", params: .object(fields))
     }
 
     // MARK: Its own watches

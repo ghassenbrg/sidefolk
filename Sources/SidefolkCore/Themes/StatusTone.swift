@@ -25,8 +25,8 @@ extension StatusTone {
         case .failed: .danger
         case .blocked: .warning
         // Full access answered for the person: no failure, but the riskiest mode, so it stands out (D37).
-        case .fullAccess, .fullAccessPaired: .warning
-        case .denied, .skipped, .auto, .autoMode, .autoModePaired, .webSetting, .research, .allowedForRequest, .plan: .neutral
+        case .fullAccess, .fullAccessPaired, .fullAccessPlan: .warning
+        case .denied, .skipped, .auto, .autoMode, .autoModePaired, .webSetting, .research, .allowedForRequest, .plan, .planUnread, .autoPlan: .neutral
         }
     }
 

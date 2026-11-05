@@ -129,7 +129,8 @@ final class SettingsModel {
         folders = (try? await runtime.permissions.folders()) ?? []
         grants = (try? await runtime.permissions.grants()) ?? []
         allowedForNow = await runtime.executor.allowedForNow()
-        policy = (try? await runtime.permissions.policy()) ?? GuardPolicy()
+        // A policy that can't be read enforces "off" for passing words on to servers, and the switch shows what is enforced.
+        policy = (try? await runtime.permissions.policy()) ?? Self.unreadablePolicy
     }
 
     // MARK: Settings
@@ -260,8 +261,17 @@ final class SettingsModel {
     func setPolicy(_ change: @escaping @Sendable (inout GuardPolicy) -> Void) async {
         change(&policy)
         try? await runtime.permissions.updatePolicy(change)
-        if let saved = try? await runtime.permissions.policy() { policy = saved }
+        // What is shown is what is enforced: a policy that can't be read back is shown as the one that is enforced then, not as the change just made.
+        policy = (try? await runtime.permissions.policy()) ?? Self.unreadablePolicy
         runtime.events.changed(.permissions)
+    }
+
+    /// What is shown while the policy can't be read. Guard then refuses everything outright (nothing runs); the picker shows the strictest mode, and nothing is passed on to servers.
+    private static var unreadablePolicy: GuardPolicy {
+        var p = GuardPolicy()
+        p.mode = .askEveryTime
+        p.flowsMayPassToServers = false
+        return p
     }
 
     /// Full access only after its sheet (`FullAccessSheet`), with its end; every other mode at once.
