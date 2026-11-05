@@ -270,6 +270,11 @@ struct SectionView: View {
                     HStack(spacing: Theme.Space.s) {
                         Image(systemName: "chevron.forward").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.inkMuted)
                             .rotationEffect(.degrees(open ? 90 : 0))
+                            #if DEBUG
+                            .onReceive(NotificationCenter.default.publisher(for: Self.devOpen)) { note in
+                                if note.object as? String == title { model.toggleOpen(title) }
+                            }
+                            #endif
                         VStack(alignment: .leading, spacing: 3) {
                             Text(ext: title).font(Theme.Font.heading).foregroundStyle(Theme.ink)
                             if let detail = section.detail {
@@ -335,6 +340,11 @@ struct SectionView: View {
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(tint.opacity(0.35), lineWidth: 1))
         .accessibilityAddTraits(.isHeader)
     }
+
+    #if DEBUG
+    /// `pageOpen:` in scripts/dev.swift: a folding section's title, as a click on it.
+    static let devOpen = Notification.Name("sidefolk.dev.pageOpen")
+    #endif
 
     /// A section that folds is open once the person opened it, or when the extension doesn't fold it.
     private var open: Bool {

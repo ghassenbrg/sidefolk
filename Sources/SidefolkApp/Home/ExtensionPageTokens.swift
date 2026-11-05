@@ -43,7 +43,9 @@ struct TokenTextEditor: NSViewRepresentable {
         context.coordinator.parent = self
         if context.coordinator.inserted != inserting.count {
             context.coordinator.inserted = inserting.count
-            context.coordinator.insert(inserting.value, in: view)
+            // After this update: what the field holds can't change during one, and the chip would show without being kept, then go when the field was left.
+            let coordinator = context.coordinator, value = inserting.value
+            DispatchQueue.main.async { coordinator.insert(value, in: view) }
         } else if context.coordinator.plain(view) != text, view.window?.firstResponder !== view {
             context.coordinator.show(text, in: view)
         }
