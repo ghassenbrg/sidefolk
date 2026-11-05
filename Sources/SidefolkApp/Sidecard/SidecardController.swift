@@ -122,7 +122,7 @@ final class SidecardController {
             // A new card: a card in front folds into the stack (it still waits there), a whisper waits its turn.
             // A question doesn't fold, though: someone's waiting on it. What's new takes its turn after, unless it's for right now, or the person asked for it.
             if model.shape == .card, current.refKind == "ask" {
-                guard forward || item.source == "reminder" || item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true else {
+                guard forward || item.refKind == "reminder" || item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true else {
                     queue.append((item, presentation))
                     return
                 }
