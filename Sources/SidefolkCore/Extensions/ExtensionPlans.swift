@@ -83,10 +83,10 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
     /// the real now. A little ahead (a day, for a clock that was corrected) counts as now; more than that is not believed, and the other date is used; if
     /// both are that far ahead the plan is as old as it can be and asks again.
     private func lastSeen(at now: Date) -> Date {
-        let skew: TimeInterval = 24 * 3600
-        if let used = lastUsed, used <= now.addingTimeInterval(skew) { return min(used, now) }
-        if approvedAt <= now.addingTimeInterval(skew) { return min(approvedAt, now) }
-        return .distantPast
+        let horizon = now.addingTimeInterval(24 * 3600)
+        // The later of the two: an approval after the last run is use of its own (the person just read it).
+        guard let seen = [lastUsed, approvedAt].compactMap({ $0 }).filter({ $0 <= horizon }).max() else { return .distantPast }
+        return min(seen, now)
     }
 }
 

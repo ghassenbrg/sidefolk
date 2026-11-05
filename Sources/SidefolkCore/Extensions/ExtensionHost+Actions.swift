@@ -326,7 +326,8 @@ extension ExtensionHost {
         guard !idle.isEmpty else { return }
         await updatePreferences(id) { prefs in for plan in idle { prefs.plans[plan.id] = nil } }
         for plan in idle {
-            await configuration.actions?.recordPlanEnded(extensionId: id, plan: plan.id, title: plan.title)
+            // An extension that is not running hears nothing now, and History says so: it learns that the plan is gone by asking again.
+            await configuration.actions?.recordPlanEnded(extensionId: id, plan: plan.id, title: plan.title, told: runtimes[id]?.client != nil)
             await runtimes[id]?.client?.notify("sidefolk/plan.ended", params: ["plan": .string(plan.id), "reason": "idle"])
         }
         events.changed(.extensions)
@@ -518,10 +519,12 @@ extension ExtensionHost {
         if answer == .fullAccess { plan.answeredUnread = true }
         // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
         if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
-        // When it last ran is the host's record, not the candidate's: an edit or a new approval does not make a plan that ran yesterday idle.
+        // When it last ran is the host's record, not the candidate's: an edit or a new approval does not make a plan that ran yesterday idle. Only the plan
+        // this one replaces has a record to keep: an entry that ended some other way (its time, another owner) is not this plan's past.
+        let replaces = evaluation.previous != nil
         await updatePreferences(id) { prefs in
             var saved = plan
-            saved.lastUsed = prefs.plans[plan.id]?.lastUsed
+            saved.lastUsed = replaces ? prefs.plans[plan.id]?.lastUsed : nil
             prefs.plans[plan.id] = saved
         }
         events.changed(.extensions)

@@ -32626,61 +32626,120 @@
         }
       }
     },
-    "A plan ended: nobody used “%@” for 60 days" : {
-      "comment" : "History: a plan that was idle for 60 days ended by itself; its title",
+    "A plan ended: nobody used “%@” for 60 days. Its extension was not running, so it was not told." : {
+      "comment" : "History: a plan that was idle for 60 days ended by itself while its extension was not running; its title",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "انتهت خطة: لم يستخدم أحد “%@” لمدة 60 يومًا"
+            "value" : "انتهت خطة: لم يستخدم أحد “%@” لمدة 60 يومًا. لم تكن إضافتها قيد التشغيل، لذا لم تُبلَّغ."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein Plan ist beendet: “%@” wurde 60 Tage lang nicht genutzt"
+            "value" : "Ein Plan ist beendet: “%@” wurde 60 Tage lang nicht genutzt. Seine Erweiterung lief nicht und wurde deshalb nicht informiert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un plan terminó: nadie usó “%@” en 60 días"
+            "value" : "Un plan terminó: nadie usó “%@” en 60 días. Su extensión no estaba en marcha, así que no se le avisó."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un plan s’est terminé : personne n’a utilisé “%@” depuis 60 jours"
+            "value" : "Un plan s’est terminé : personne n’a utilisé “%@” depuis 60 jours. Son extension ne tournait pas, elle n’en a donc pas été informée."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un piano è terminato: nessuno ha usato “%@” per 60 giorni"
+            "value" : "Un piano è terminato: nessuno ha usato “%@” per 60 giorni. La sua estensione non era in esecuzione, quindi non è stata avvisata."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "プランが終了しました：“%@”は60日間使われませんでした"
+            "value" : "プランが終了しました：“%@”は60日間使われませんでした。拡張機能が動作していなかったため、知らせていません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "플랜이 끝났습니다: “%@”을(를) 60일 동안 아무도 쓰지 않았습니다"
+            "value" : "플랜이 끝났습니다: “%@”을(를) 60일 동안 아무도 쓰지 않았습니다. 확장 프로그램이 실행 중이 아니어서 알리지 않았습니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Um plano terminou: ninguém usou “%@” por 60 dias"
+            "value" : "Um plano terminou: ninguém usou “%@” por 60 dias. A extensão não estava em execução, então não foi avisada."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "计划已结束：“%@”已 60 天无人使用"
+            "value" : "计划已结束：“%@”已 60 天无人使用。其扩展未在运行，因此没有被告知。"
+          }
+        }
+      }
+    },
+    "A plan ended: nobody used “%@” for 60 days. Its extension was told." : {
+      "comment" : "History: a plan that was idle for 60 days ended by itself; its title",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهت خطة: لم يستخدم أحد “%@” لمدة 60 يومًا. أُبلغت إضافتها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Plan ist beendet: “%@” wurde 60 Tage lang nicht genutzt. Seine Erweiterung wurde informiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un plan terminó: nadie usó “%@” en 60 días. Su extensión lo sabe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un plan s’est terminé : personne n’a utilisé “%@” depuis 60 jours. Son extension en a été informée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un piano è terminato: nessuno ha usato “%@” per 60 giorni. La sua estensione è stata avvisata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プランが終了しました：“%@”は60日間使われませんでした。拡張機能に知らせました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플랜이 끝났습니다: “%@”을(를) 60일 동안 아무도 쓰지 않았습니다. 확장 프로그램에 알렸습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um plano terminou: ninguém usou “%@” por 60 dias. A extensão foi avisada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划已结束：“%@”已 60 天无人使用。已告知其扩展。"
           }
         }
       }
@@ -78733,61 +78792,61 @@
         }
       }
     },
-    "Ended by itself: nobody had used this plan for 60 days. Its extension was told and asks again if it still needs it." : {
+    "Ended by itself because nobody had used this plan for 60 days. The extension needs your approval again to bring it back." : {
       "comment" : "History: a plan that was idle for 60 days",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "انتهت من تلقاء نفسها: لم يستخدم أحد هذه الخطة منذ 60 يومًا. أُبلغت إضافتها وستطلبها من جديد إن احتاجتها."
+            "value" : "انتهت من تلقاء نفسها لأن أحدًا لم يستخدم هذه الخطة منذ 60 يومًا. تحتاج الإضافة إلى موافقتك من جديد لإعادتها."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Von selbst beendet: Niemand hatte diesen Plan 60 Tage lang genutzt. Seine Erweiterung wurde informiert und fragt erneut, wenn sie ihn noch braucht."
+            "value" : "Von selbst beendet, weil niemand diesen Plan 60 Tage lang genutzt hat. Die Erweiterung braucht deine Genehmigung erneut, um ihn zurückzuholen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Terminó solo: nadie había usado este plan en 60 días. Su extensión lo sabe y vuelve a pedirlo si aún lo necesita."
+            "value" : "Terminó solo porque nadie había usado este plan en 60 días. La extensión necesita tu aprobación otra vez para recuperarlo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Terminé de lui-même : personne n’avait utilisé ce plan depuis 60 jours. Son extension en a été informée et redemande si elle en a encore besoin."
+            "value" : "Terminé de lui-même parce que personne n’avait utilisé ce plan depuis 60 jours. L’extension a besoin de votre approbation pour le rétablir."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Terminato da solo: nessuno aveva usato questo piano per 60 giorni. La sua estensione è stata avvisata e lo richiede se le serve ancora."
+            "value" : "Terminato da solo perché nessuno aveva usato questo piano per 60 giorni. L’estensione ha bisogno della tua approvazione per riattivarlo."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "自動的に終了しました：このプランは60日間だれにも使われませんでした。拡張機能に知らせてあり、まだ必要なら改めて求めます。"
+            "value" : "このプランは60日間だれにも使われなかったため、自動的に終了しました。元に戻すには、拡張機能があらためて承認を求める必要があります。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "저절로 끝났습니다: 이 플랜을 60일 동안 아무도 쓰지 않았습니다. 확장 프로그램에 알렸으며, 아직 필요하면 다시 요청합니다."
+            "value" : "이 플랜을 60일 동안 아무도 쓰지 않아 저절로 끝났습니다. 되살리려면 확장 프로그램이 다시 승인을 받아야 합니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Terminou sozinho: ninguém usava este plano havia 60 dias. A extensão foi avisada e pede de novo se ainda precisar."
+            "value" : "Terminou sozinho porque ninguém usava este plano havia 60 dias. A extensão precisa da sua aprovação de novo para trazê-lo de volta."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已自行结束：这个计划已有 60 天无人使用。其扩展已被告知，若仍需要会再次询问。"
+            "value" : "这个计划已有 60 天无人使用，因此自行结束。扩展需要再次获得你的批准才能恢复。"
           }
         }
       }

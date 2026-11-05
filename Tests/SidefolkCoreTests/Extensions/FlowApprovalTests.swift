@@ -1108,6 +1108,52 @@ import Testing
         #expect(info(.fullAccessUnread).nobodyReadAll && info(.autoSome).nobodyReadAll && info(.either).nobodyReadAll)
     }
 
+    @Test func anEntryThatEndedAnotherWayIsNotThePastOfAFreshApproval() async throws {
+        let day: TimeInterval = 24 * 3600
+        // Ended by its time, 65 days ago, last ran 70 days ago.
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        await w.h.host.updatePreferences("com.example.flow") {
+            $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-70 * day)
+            $0.plans["digest"]?.expiresAt = Date().addingTimeInterval(-65 * day)
+            $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(-70 * day)
+        }
+        _ = await w.approve(Self.plan([Self.save]))
+        var kept = await w.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(kept?.lastUsed == nil && kept?.expiresAt == nil, "a fresh approval has no past: \(String(describing: kept))")
+        _ = await w.ask("sidefolk/tools.list")
+        let swept = try await w.rows("extensions.plan_end")
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["digest"] && swept.isEmpty, "it was not swept the moment it was approved")
+        // Another owner's entry under the same id.
+        let w2 = try await World()
+        _ = await w2.approve(Self.plan([Self.save]))
+        await w2.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.owner = "someone else"; $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(-70 * day) }
+        _ = await w2.approve(Self.plan([Self.save]))
+        kept = await w2.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(kept?.lastUsed == nil, "\(String(describing: kept))")
+        _ = await w2.ask("sidefolk/tools.list")
+        #expect(await w2.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["digest"])
+        // A plan that last ran 59 days ago and is edited, with a card: the approval is use of its own, so it does not end tomorrow.
+        let w3 = try await World()
+        _ = await w3.approve(Self.plan([Self.save]))
+        await w3.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-59 * day); $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(-59 * day) }
+        #expect(await w3.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
+        let edited = await w3.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(edited?.live(at: Date().addingTimeInterval(2 * day), owner: edited?.owner ?? "") == true, "approved just now: alive in two days")
+    }
+
+    @Test func theRowSaysWhetherTheExtensionWasToldOfAnIdleEnd() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-61 * 24 * 3600) }
+        _ = await w.ask("sidefolk/tools.list")
+        var row = try await w.rows("extensions.plan_end").first
+        #expect(row?.args?["told"]?.boolValue == true && row?.summary.hasSuffix("Its extension was told.") == true, "\(String(describing: row?.summary))")
+        await w.gateway.recordPlanEnded(extensionId: "com.example.flow", plan: "digest", title: "Digest", told: false)
+        row = try await w.rows("extensions.plan_end").first
+        #expect(row?.args?["told"]?.boolValue == false && row?.summary.contains("was not running, so it was not told") == true, "\(String(describing: row?.summary))")
+    }
+
     @Test func aLastRunAheadOfTheClockDoesNotKeepAPlanAlivePastSixtyDays() async throws {
         let w = try await World()
         _ = await w.approve(Self.plan([Self.save]))

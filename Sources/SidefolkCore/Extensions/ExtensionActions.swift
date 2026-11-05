@@ -155,11 +155,14 @@ public final class ExtensionActionGateway: Sendable {
     }
 
     /// A plan that ended by itself because nobody used it for 60 days: a row of its own, so it never ends unseen (D186).
-    func recordPlanEnded(extensionId id: String, plan: String, title: String) async {
+    func recordPlanEnded(extensionId id: String, plan: String, title: String, told: Bool) async {
         let caller = Caller.extension(id: id)
-        let entry = ActivityEntry(at: clock.now, caller: "\(caller.kind):\(caller)", tool: "extensions.plan_end", risk: Risk.low.rawValue, decision: .planEnded,
-                                  summary: String(localized: "A plan ended: nobody used “\(ExtensionPlanWords.safe(title.isEmpty ? plan : title, 80))” for 60 days", comment: "History: a plan that was idle for 60 days ended by itself; its title"),
-                                  args: ["extension": .string(id), "plan": .string(plan)])
+        let shown = ExtensionPlanWords.safe(title.isEmpty ? plan : title, 80)
+        let summary = told
+            ? String(localized: "A plan ended: nobody used “\(shown)” for 60 days. Its extension was told.", comment: "History: a plan that was idle for 60 days ended by itself; its title")
+            : String(localized: "A plan ended: nobody used “\(shown)” for 60 days. Its extension was not running, so it was not told.", comment: "History: a plan that was idle for 60 days ended by itself while its extension was not running; its title")
+        let entry = ActivityEntry(at: clock.now, caller: "\(caller.kind):\(caller)", tool: "extensions.plan_end", risk: Risk.low.rawValue, decision: .planEnded, summary: summary,
+                                  args: ["extension": .string(id), "plan": .string(plan), "told": .bool(told)])
         _ = try? await activity.log(entry)
     }
 
