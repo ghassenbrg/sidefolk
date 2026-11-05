@@ -19,8 +19,8 @@ final class AppCoordinator {
     private(set) var askPanel: AskPanelController!
     /// Whispers, cards and the stack above the companion (D84).
     let sidecard = SidecardController()
-    /// The person clicked the count: as each is answered, the next comes forward.
-    var answeringWaiting = false
+    /// The person clicked the count and this came forward: when it's answered, the next one does. Anything else about it, folding or going, ends that.
+    var answeringWaiting: String?
     let statusItem = StatusItemController()
     /// Extensions' palettes on their shortcuts (D63).
     private(set) lazy var palettes = PaletteController(host: runtime.extensions)
@@ -1007,7 +1007,8 @@ final class AppCoordinator {
     func presentKnown(_ item: AttentionItem, _ presentation: AttentionPresentation) {
         // Questions that want a typed answer (and all of Sidefolk's own) go in the panel, where the user can type.
         if item.refKind == "ask", item.source == "agent" || item.actions.isEmpty {
-            ask.add(.question(item))
+            // Brought forward again from the count, it's already there.
+            if !ask.entries.contains(where: { if case .question(let q) = $0.content { q.id == item.id } else { false } }) { ask.add(.question(item)) }
             let own = item.source == "agent"
             guard reachInFullScreen(item) else { return }
             if !askPanel.isVisible { showAsk(focus: own) }
@@ -1044,7 +1045,7 @@ final class AppCoordinator {
         if action == ReminderScheduler.ActionID.open, item.refKind == "reminder", let id = item.refId { openReminderItem(id) }
         Task {
             await runtime.attention.respond(id: item.id, actionId: action)
-            if answeringWaiting { nextWaiting() }
+            if answeringWaiting == item.id { answerWhatWaits(stopAtEnd: true) }
         }
     }
 

@@ -162,10 +162,11 @@ public actor AttentionCenter {
     /// waiting for their answer any more; anything older than a day stays in the Now list only.
     public func restoreWaiting() async {
         let cutoff = clock.now.addingTimeInterval(-86_400)
-        for item in (try? await store.open()) ?? [] where item.state == .pending {
+        for item in (try? await store.open()) ?? [] {
+            // Shown or not, nobody's left to hear the answer.
             if item.refKind == "ask" {
                 await expire(id: item.id)
-            } else if item.createdAt > cutoff, item.source != "summary" {
+            } else if item.state == .pending, item.createdAt > cutoff, item.source != "summary" {
                 held[item.id] = item
             }
         }

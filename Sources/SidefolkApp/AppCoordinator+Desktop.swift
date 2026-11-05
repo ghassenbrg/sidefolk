@@ -122,25 +122,16 @@ extension AppCoordinator {
     }
 
     /// What has waited longest comes forward whole, with all its answers, and then the next until none are left.
-    /// Approvals have their slip in Ask, and so does nothing being left.
-    func answerWhatWaits() {
+    /// Approvals have their slip in Ask, and so does nothing being left, unless this is the end of going through them.
+    func answerWhatWaits(stopAtEnd: Bool = false) {
         Task {
             guard let first = await sidecard.waitingItems?().first else {
-                answeringWaiting = false
-                return showAsk()
-            }
-            answeringWaiting = true
-            presentKnown(first, .attention(expandFor: AttentionPolicy.expandSeconds))
-        }
-    }
-
-    func nextWaiting() {
-        Task {
-            guard let next = await sidecard.waitingItems?().first else {
-                answeringWaiting = false
+                answeringWaiting = nil
+                if !stopAtEnd { showAsk() }
                 return
             }
-            presentKnown(next, .attention(expandFor: AttentionPolicy.expandSeconds))
+            answeringWaiting = first.id
+            presentKnown(first, .attention(expandFor: AttentionPolicy.expandSeconds))
         }
     }
 }

@@ -74,6 +74,8 @@ final class SidecardController {
         hosted.panel.setAccessibilityTitle(String(localized: "Sidefolk card", comment: "VoiceOver: the window of the card above the companion"))
         hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
+            // The second click of a double click, on the card that's just come up under it, isn't an answer to it.
+            if let self, let shown = self.shownAt, Date().timeIntervalSince(shown) < Self.settling { return }
             self?.close(id: item.id)
             self?.onRespond?(item, action)
         }
@@ -89,6 +91,9 @@ final class SidecardController {
         }
         installKeys()
     }
+
+    private var shownAt: Date?
+    private static let settling: TimeInterval = 0.4
 
     /// The stack was clicked: what waits comes forward.
     var onOpenStack: (() -> Void)?
@@ -159,6 +164,7 @@ final class SidecardController {
 
     private func show(_ item: AttentionItem, _ presentation: AttentionPresentation, card: Bool) {
         fanEnd?.cancel()
+        shownAt = Date()
         model.item = item
         model.shape = card ? .card : .whisper
         followSpaces()

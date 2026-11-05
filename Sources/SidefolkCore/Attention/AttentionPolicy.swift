@@ -121,6 +121,11 @@ public enum AttentionPolicy {
         if question {
             let mine = recent.filter { $0.source == source && now.timeIntervalSince($0.at) < perSourceWindow }
             if mine.count >= questionsPerSourceLimit, let oldest = mine.map(\.at).min() { return .hold(until: oldest.addingTimeInterval(perSourceWindow)) }
+            // A new name for each question is still the same family.
+            if let family = family(source) {
+                let kin = recent.filter { $0.source.hasPrefix(family) && now.timeIntervalSince($0.at) < perSourceWindow }
+                if kin.count >= questionsPerSourceLimit * 2, let oldest = kin.map(\.at).min() { return .hold(until: oldest.addingTimeInterval(perSourceWindow)) }
+            }
             return .present(.attention(expandFor: expandSeconds))
         }
 

@@ -119,6 +119,55 @@ import Testing
         for task in asking { _ = await task.value }
     }
 
+    /// Dismissed each time and asked again: the loop a question's own budget is there to stop.
+    @Test func aLoopReAskingAfterEachDismissalIsBounded() async throws {
+        let (center, _, store) = try center()
+        for n in 1...AttentionPolicy.questionsPerSourceLimit {
+            async let answer = center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Again \(n)?", refKind: "ask"), timeout: 5)
+            var shown: AttentionItem?
+            for _ in 0..<400 where shown == nil {
+                shown = try await store.open().first { $0.title == "Again \(n)?" && $0.state == .shown }
+                if shown == nil { try await Task.sleep(for: .milliseconds(5)) }
+            }
+            #expect(shown != nil, "within the budget, question \(n) is shown")
+            if let shown { await center.respond(id: shown.id, actionId: nil) }
+            _ = await answer
+        }
+        async let last = center.ask(AttentionRequest(level: .attention, source: "external:test", title: "One more?", refKind: "ask"), timeout: 0.3)
+        var state: AttentionItem.State?
+        for _ in 0..<40 where state == nil {
+            state = try await store.open().first { $0.title == "One more?" }?.state
+            if state == nil { try await Task.sleep(for: .milliseconds(5)) }
+        }
+        #expect(state == .pending, "past it, it waits and doesn't come up")
+        #expect(await center.heldCount == 1)
+        #expect(await last == nil)
+    }
+
+    @Test func aNewNameForEachQuestionIsStillBounded() {
+        let now = Date()
+        let many = (1...(AttentionPolicy.questionsPerSourceLimit * 2)).map { (source: "external:client\($0)", at: now.addingTimeInterval(-Double($0))) }
+        let held = AttentionPolicy.decide(level: .attention, source: "external:fresh", createdAt: now, now: now, env: AttentionEnvironment(), recent: many, question: true)
+        if case .hold = held {} else { Issue.record("it holds: \(held)") }
+    }
+
+    @Test func aQuestionShownBeforeARestartIsOverAfterIt() async throws {
+        let db = try AppDatabase.inMemory()
+        let store = AttentionStore(db)
+        let center = AttentionCenter(store: store, events: EventBus())
+        let asking = Task { await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Before?", refKind: "ask"), timeout: 5) }
+        var open: [AttentionItem] = []
+        for _ in 0..<400 where !open.contains(where: { $0.state == .shown }) {
+            open = try await store.open()
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(open.first?.state == .shown)
+        let restarted = AttentionCenter(store: store, events: EventBus())
+        await restarted.restoreWaiting()
+        #expect(try await store.open().isEmpty, "nobody's left to hear its answer, so it can't come forward from the count")
+        asking.cancel()
+    }
+
     @Test func aNoticeIsStillSpacedOut() async throws {
         let (center, _, store) = try center()
         await center.post(AttentionRequest(level: .attention, source: "external:test", title: "One"))
