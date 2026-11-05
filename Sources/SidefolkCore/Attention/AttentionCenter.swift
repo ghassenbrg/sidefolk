@@ -347,7 +347,8 @@ public actor AttentionCenter {
                 held[i.id] = nil
                 timers.removeValue(forKey: i.id)?.cancel()
                 guard var settled = try? await store.item(id: i.id), settled.state == .pending else { continue }
-                if settled.level >= .attention, !settled.actions.isEmpty {
+                // A question with nothing to pick from is answered in words, and its caller is still waiting.
+                if settled.level >= .attention, !settled.actions.isEmpty || settled.refKind == "ask" {
                     settled.state = .shown
                     settled.shownAt = clock.now
                 } else {

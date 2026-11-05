@@ -19,7 +19,7 @@ final class AppCoordinator {
     private(set) var askPanel: AskPanelController!
     /// Whispers, cards and the stack above the companion (D84).
     let sidecard = SidecardController()
-    /// The person clicked the count and this came forward: when it's answered, the next one does. Anything else about it, folding or going, ends that.
+    /// The person clicked the count and this came forward: when it's answered, the next one does. Nothing else about it moves things on.
     var answeringWaiting: String?
     let statusItem = StatusItemController()
     /// Extensions' palettes on their shortcuts (D63).

@@ -186,6 +186,28 @@ import Testing
         for task in asking { _ = await task.value }
     }
 
+    /// Held while away with something else, so it goes into the one card on coming back. Answered in words, it has no buttons, and someone's still waiting.
+    @Test func aQuestionWithNoChoicesStillWaitsAfterTheCardOnComingBack() async throws {
+        let (center, _, store) = try center()
+        await center.update { $0.away = true }
+        let asking = Task { await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "What title?", refKind: "ask"), timeout: 5) }
+        await center.post(AttentionRequest(level: .attention, source: "external:other", title: "A notice"))
+        var open: [AttentionItem] = []
+        for _ in 0..<400 where open.count < 2 {
+            open = try await store.open()
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        await center.update { $0.away = false }
+        var question: AttentionItem?
+        for _ in 0..<400 where question?.state != .shown {
+            question = try await store.open().first { $0.title == "What title?" }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(question?.state == .shown, "still open, still counted: \(String(describing: question?.state))")
+        if let question { await center.respond(id: question.id, actionId: nil) }
+        _ = await asking.value
+    }
+
     @Test func aNoticeIsStillSpacedOut() async throws {
         let (center, _, store) = try center()
         await center.post(AttentionRequest(level: .attention, source: "external:test", title: "One"))
