@@ -30745,7 +30745,66 @@
         }
       }
     },
+    "A flow asks once, on a card that says what it does. Here is what you approved. One that nobody has used for 60 days ends by itself, and its extension says so." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسأل الروتين مرة واحدة، على بطاقة تقول ما يفعله. وهنا ما وافقتَ عليه. أما الذي لم يستخدمه أحد منذ 60 يومًا فينتهي من تلقاء نفسه، وتُخبرك إضافته بذلك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Ablauf fragt einmal, auf einer Karte, die sagt, was er tut. Hier siehst du, was du genehmigt hast. Einer, den 60 Tage niemand benutzt hat, endet von selbst, und seine Erweiterung sagt es."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una rutina pregunta una sola vez, en una tarjeta que dice lo que hace. Esto es lo que aprobaste. Una que nadie ha usado en 60 días termina sola, y su extensión lo avisa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une routine ne demande qu’une fois, sur une carte qui dit ce qu’elle fait. Voici ce que vous avez approuvé. Une routine que personne n’a utilisée depuis 60 jours prend fin d’elle-même, et son extension le dit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una routine chiede una sola volta, con una scheda che dice cosa fa. Ecco cosa hai approvato. Una che nessuno usa da 60 giorni termina da sola, e la sua estensione lo dice."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルーティンは、内容を示すカードで一度だけ確認します。ここには承認したものが並びます。60日間だれも使っていないものは自動的に終わり、拡張機能がそれを知らせます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "루틴은 하는 일을 보여 주는 카드로 한 번만 물어봐요. 여기에 승인한 것이 보여요. 60일 동안 아무도 쓰지 않은 루틴은 저절로 끝나고, 확장 프로그램이 알려 줘요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma rotina pergunta uma só vez, num cartão que diz o que ela faz. Aqui está o que você aprovou. Uma que ninguém usa há 60 dias termina sozinha, e a extensão avisa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流程只在一张说明其作用的卡片上询问一次。这里列出你批准过的内容。60 天没人使用的流程会自动结束，其扩展会告知你。"
+          }
+        }
+      }
+    },
     "A flow asks once, on a card that says what it does. This is the one thing on that card you can take back for every flow at once." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45545,6 +45604,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "批准"
+          }
+        }
+      }
+    },
+    "Approving also lets it pass what it reads to %@." : {
+      "comment" : "Above a plan card's Approve button: what else the person approves; the names of servers and extensions",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الموافقة تتيح لها أيضًا تمرير ما تقرؤه إلى %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zustimmen erlaubt auch, Gelesenes an %@ weiterzugeben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobar también le permite pasar lo que lee a %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuver permet aussi de transmettre ce qu’elle lit à %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approvando le permetti anche di passare a %@ ciò che legge."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "承認すると、読み取った内容を%@に渡すことも許可されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "승인하면 읽은 내용을 %@(으)로 넘기는 것도 허용돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovar também permite que ela passe o que lê a %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "批准也意味着允许它把读到的内容交给 %@。"
           }
         }
       }
@@ -84854,6 +84972,7 @@
       }
     },
     "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -84907,6 +85026,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "适用于你让 Sidefolk 做的事。其他智能体和扩展仍遵循各自的规则，所有操作都会显示在“历史记录”中。"
+          }
+        }
+      }
+    },
+    "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, except that Full access answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسري هذا على ما تطلب من Sidefolk فعله. للوكلاء والملحقات الأخرى قواعدها الخاصة، إلا أن الوصول الكامل يجيب عن روتين من ملحقات Sidefolk نفسها عندما تفعّله أو تشغّله بنفسك. ويظهر كل شيء في «السجل»."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gilt für das, worum du Sidefolk bittest. Andere Agenten und Erweiterungen behalten ihre eigenen Regeln, nur dass der Vollzugriff für einen Ablauf von Sidefolks eigenen Erweiterungen antwortet, wenn du ihn einschaltest oder selbst ausführst. Alles erscheint in „Verlauf“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para lo que le pides hacer a Sidefolk. Los demás agentes y extensiones mantienen sus propias reglas, salvo que el acceso total responde a una rutina de las extensiones de Sidefolk cuando la activas o la ejecutas tú. Todo aparece en Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour ce que vous demandez à Sidefolk de faire. Les autres agents et extensions gardent leurs propres règles, sauf que l’accès complet répond à une routine des extensions de Sidefolk quand vous l’activez ou la lancez vous-même. Tout apparaît dans Historique."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale per ciò che chiedi a Sidefolk di fare. Gli altri agenti e le estensioni seguono le loro regole, tranne che l'accesso completo risponde per una routine delle estensioni di Sidefolk quando la attivi o la esegui tu. Tutto compare nella Cronologia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolkに頼んだことが対象です。ほかのエージェントや拡張機能にはそれぞれのルールが適用されますが、Sidefolk自身の拡張機能のルーティンは、あなた自身がオンにしたり実行したりしたとき、フルアクセスが代わりに承認します。すべて履歴に表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidefolk에게 시킨 일에 적용돼요. 다른 에이전트와 확장 프로그램은 각자의 규칙을 따르지만, Sidefolk 자체 확장 프로그램의 루틴은 내가 직접 켜거나 실행할 때 전체 접근이 대신 승인해요. 모든 내용은 기록에 표시돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vale para o que você pede ao Sidefolk. Outros agentes e extensões seguem suas próprias regras, exceto que o acesso total responde por uma rotina das extensões do Sidefolk quando você a ativa ou a executa. Tudo aparece no Histórico."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适用于你让 Sidefolk 做的事。其他智能体和扩展仍遵循各自的规则，只有一点例外：当你亲自开启或运行 Sidefolk 自带扩展的流程时，完全访问会代你批准。所有操作都会显示在“历史记录”中。"
           }
         }
       }
@@ -91101,6 +91278,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guard 检查每一步"
+          }
+        }
+      }
+    },
+    "Hasn't run yet" : {
+      "comment" : "Settings › Trust: a flow that was approved and hasn't run",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُشغَّل بعد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht gelaufen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no se ha ejecutado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore exécutée"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ancora eseguita"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ実行されていません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 실행되지 않았어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não rodou"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未运行"
           }
         }
       }
@@ -113847,6 +114083,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "昨晚"
+          }
+        }
+      }
+    },
+    "Last ran %@" : {
+      "comment" : "Settings › Trust: when a flow last ran without asking; a relative date",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آخر تشغيل: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt gelaufen: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última ejecución: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière exécution : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ultima esecuzione: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最後の実行: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마지막 실행: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última execução: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次运行：%@"
           }
         }
       }
@@ -138262,6 +138557,64 @@
         }
       }
     },
+    "Nothing yet. When you approve a flow, it's listed here." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا شيء بعد. عندما توافق على روتين، يظهر هنا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts. Wenn du einen Ablauf genehmigst, erscheint er hier."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún nada. Cuando apruebes una rutina, aparecerá aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien pour l’instant. Quand vous approuvez une routine, elle apparaît ici."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancora niente. Quando approvi una routine, compare qui."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだありません。ルーティンを承認すると、ここに表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 없어요. 루틴을 승인하면 여기에 나타나요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda nada. Quando você aprovar uma rotina, ela aparece aqui."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有。你批准流程后，它会列在这里。"
+          }
+        }
+      }
+    },
     "Nothing yet. When you choose “Always allow”, it's listed here." : {
       "localizations" : {
         "ar" : {
@@ -146715,6 +147068,7 @@
     },
     "Other agents and extensions keep their own rules." : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -146768,6 +147122,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他智能体和扩展仍遵循各自的规则。"
+          }
+        }
+      }
+    },
+    "Other agents and extensions keep their own rules. The one exception is a flow of Sidefolk's own extensions: turning it on or running it yourself is your approval, with no card, and it stands only while Full access is on." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للوكلاء والملحقات الأخرى قواعدها الخاصة. والاستثناء الوحيد هو روتين من ملحقات Sidefolk نفسها: تفعيله أو تشغيله بنفسك يُعدّ موافقتك دون بطاقة، ولا يسري إلا أثناء تشغيل الوصول الكامل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere Agenten und Erweiterungen behalten ihre eigenen Regeln. Die einzige Ausnahme ist ein Ablauf von Sidefolks eigenen Erweiterungen: Ihn einzuschalten oder selbst auszuführen gilt als deine Genehmigung, ohne Karte, und sie gilt nur, solange der Vollzugriff eingeschaltet ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los demás agentes y extensiones mantienen sus propias reglas. La única excepción es una rutina de las extensiones de Sidefolk: activarla o ejecutarla tú equivale a aprobarla, sin tarjeta, y solo vale mientras el acceso total esté activado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les autres agents et extensions gardent leurs propres règles. La seule exception est une routine des extensions de Sidefolk : l’activer ou la lancer vous-même vaut approbation, sans carte, et elle ne tient que tant que l’accès complet est activé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli altri agenti e le estensioni seguono le loro regole. L'unica eccezione è una routine delle estensioni di Sidefolk: attivarla o eseguirla tu equivale ad approvarla, senza scheda, e vale solo finché l'accesso completo è attivo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのエージェントや拡張機能にはそれぞれのルールが適用されます。唯一の例外は、Sidefolk自身の拡張機能のルーティンです。あなた自身がオンにしたり実行したりすることが承認になり、カードは出ず、フルアクセスがオンの間だけ有効です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 에이전트와 확장 프로그램은 각자의 규칙을 따라요. 유일한 예외는 Sidefolk 자체 확장 프로그램의 루틴이에요. 내가 직접 켜거나 실행하면 그것이 승인이 되고, 카드는 나오지 않으며, 전체 접근이 켜져 있는 동안에만 유효해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outros agentes e extensões seguem suas próprias regras. A única exceção é uma rotina das extensões do Sidefolk: ativá-la ou executá-la você mesmo equivale a aprová-la, sem cartão, e só vale enquanto o acesso total estiver ativado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他智能体和扩展仍遵循各自的规则。唯一的例外是 Sidefolk 自带扩展的流程：你亲自开启或运行它就等于批准，不会出现卡片，并且只在完全访问开启期间有效。"
           }
         }
       }
@@ -172207,6 +172620,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scout：替你监视东西"
+          }
+        }
+      }
+    },
+    "Scroll to read the rest" : {
+      "comment" : "Under a long card the person has to read in full: there is more below",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مرّر لقراءة الباقي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scrolle, um den Rest zu lesen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplázate para leer el resto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites défiler pour lire la suite"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scorri per leggere il resto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクロールして続きを読む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크롤해서 나머지를 읽어 보세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Role para ler o resto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向下滚动阅读其余内容"
           }
         }
       }
@@ -216961,6 +217433,65 @@
         }
       }
     },
+    "Today: %lld" : {
+      "comment" : "Settings › Trust: how many actions a flow made today, a count",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اليوم: %lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute: %lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy: %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aujourd’hui : %lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oggi: %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日: %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘: %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoje: %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天：%lld"
+          }
+        }
+      }
+    },
     "Tokens this week" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -232577,6 +233108,65 @@
         }
       }
     },
+    "What it may do" : {
+      "comment" : "Settings › Trust: opens the words the person read when they approved a flow",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما يمكنها فعله"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was er tun darf"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que puede hacer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qu’elle peut faire"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa può fare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "できること"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "할 수 있는 일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que ela pode fazer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它可以做什么"
+          }
+        }
+      }
+    },
     "What it wears." : {
       "localizations" : {
         "ar" : {
@@ -239737,6 +240327,7 @@
     },
     "You can end this in Settings › Add-ons." : {
       "comment" : "A plan's card",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -239790,6 +240381,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你可以在设置 › 附加组件中结束它。"
+          }
+        }
+      }
+    },
+    "You can end this in Settings › Trust." : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنك إنهاء هذا من الإعدادات › الثقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kannst das in Einstellungen › Vertrauen beenden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes terminarlo en Ajustes › Confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez y mettre fin dans Réglages › Confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puoi terminarlo in Impostazioni › Fiducia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定 › 信頼で終了できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 › 신뢰에서 끝낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você pode encerrar isso em Ajustes › Confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可以在设置 › 信任中结束它。"
           }
         }
       }

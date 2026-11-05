@@ -26,7 +26,7 @@ struct TrustHero: View {
                 ModeCard(mode: .auto, current: mode, ends: nil) { choose(.auto) }
                 ModeCard(mode: .fullAccess, current: mode, ends: model.policy.fullAccessEnds) { choose(.fullAccess) }
             }
-            Text("For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History.")
+            Text("For what you ask Sidefolk to do. Other agents and extensions keep their own rules, except that Full access answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History.")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, Theme.Space.xs)
@@ -223,7 +223,7 @@ struct FullAccessSheet: View {
                     line("switch.2", Text("What you switched off under “What Sidefolk may do” stays off, and system, hidden and other people's folders are never touched.", comment: "The Full access sheet"), nil)
                     line("text.badge.checkmark", Text("Saving a new skill, or removing notes from Apple Notes, still asks: both show what they are in full first, and a skill outlasts Full access.", comment: "The Full access sheet"), nil)
                     line("externaldrive", Text("A folder outside your home that can be shared, such as an external drive, still asks; system and hidden places are never touched.", comment: "The Full access sheet"), nil)
-                    line("person.2", Text("Other agents and extensions keep their own rules.", comment: "The Full access sheet"), nil)
+                    line("person.2", Text("Other agents and extensions keep their own rules. The one exception is a flow of Sidefolk's own extensions: turning it on or running it yourself is your approval, with no card, and it stands only while Full access is on.", comment: "The Full access sheet"), nil)
                     line("doc.badge.clock", Text("Watching one hidden file, by its size and time, still asks.", comment: "The Full access sheet: D180's card"), nil)
                     if model.policy.internet == .askEachTime {
                         line("globe", Text("You chose to be asked before it reads pages: that stays.", comment: "The Full access sheet: shown when “Using the internet” is Ask each time"), nil)

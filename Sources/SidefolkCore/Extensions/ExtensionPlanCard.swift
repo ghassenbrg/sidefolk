@@ -66,6 +66,19 @@ extension ExtensionPlanWords {
         return text(parts)
     }
 
+    /// What the main button also approves, said above it: words from outside content going to a server or another extension's tool; nil when none do.
+    static func approveNote(for e: PlanEvaluation, shown: [Int]? = nil) -> String? {
+        var names: [String] = []
+        for i in shown ?? Array(e.lines.indices) {
+            let line = e.lines[i]
+            guard line.step.standing, (line.step.sources ?? [:]).values.contains("outside"), let ext = line.tool.flatMap(ExtensionPlanRules.extensionTool) else { continue }
+            let name = safe(ext.extensionName, 30)
+            if !names.contains(name) { names.append(name) }
+        }
+        guard !names.isEmpty else { return nil }
+        return String(localized: "Approving also lets it pass what it reads to \(Wording.list(names)).", comment: "Above a plan card's Approve button: what else the person approves; the names of servers and extensions")
+    }
+
     // MARK: Sections
 
     private static func blocks(_ e: PlanEvaluation, shown: [Int], name: String, mode: GuardMode) -> [Block] {
@@ -225,7 +238,7 @@ extension ExtensionPlanWords {
         if let ttl = plan.ttl {
             out += " " + String(localized: "This plan ends by itself in about \(max(1, Int((Double(ttl) / 60).rounded(.up)))) minutes; what it set up, a watch or a reminder, stays until it is removed.", comment: "A plan's card")
         } else {
-            out += " " + String(localized: "You can end this in Settings › Add-ons.", comment: "A plan's card")
+            out += " " + String(localized: "You can end this in Settings › Trust.", comment: "A plan's card")
             // Ending the plan doesn't take back what it made.
             if creates { out += " " + String(localized: "A watch, a reminder or an event it creates stays until you remove it.", comment: "A plan's card") }
         }

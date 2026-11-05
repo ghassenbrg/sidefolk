@@ -140,12 +140,15 @@ public struct PermissionEngine: Sendable {
             let carriesOut = Self.couldCarryOut(spec, outwardUntyped: outwardUntyped, staysInShared: staysInShared)
             let forExtension = scope.extensionId != nil && !spec.capabilities.contains(.shell) && scope.url == nil && scope.reach == nil && !spec.capabilities.contains(.network)
             let forRequest = tainted && caller.runId != nil && honoursGrants && scope.text == nil && (!carriesOut || forExtension)
-            decision = .ask(ApprovalRequest(
+            var request = ApprovalRequest(
                 tool: spec.name, title: spec.title, summary: summary, risk: risk, caller: caller,
                 details: Self.details(spec: spec, scope: scope), canAlways: clean && scope.text == nil && !askEachTime, tainted: tainted,
                 effect: Self.effect(of: spec, extension: scope.extensionId != nil || spec.name.hasPrefix("ext.")), canAllowForRequest: forRequest,
                 extensionId: scope.extensionId, site: Self.siteOfGrant(scope), service: service
-            ))
+            )
+            request.allowLabel = scope.approveLabel
+            request.allowNote = scope.approveNote
+            decision = .ask(request)
         case .high:
             // A server's tool a plan names (D189): the host checked its program, its provider and its fields, and what the person read says so. Only
             // an extension's own tool qualifies: Sidefolk's high-risk tools keep their card whatever a plan says.
