@@ -128,6 +128,7 @@ extension ExtensionHost {
             // What the companion found may be anything of theirs: an extension that could carry it off hears only that it's done.
             let carries = tool == CompanionJobTool.name && !(runtimes[id]?.pin.permissions ?? ExtensionPermissions()).isContained
             reply["text"] = .string(carries ? "Done." : result.text)
+            if !carries, let data = result.data { reply["data"] = data }
             reply["untrusted"] = .bool(result.untrusted)
         case .denied(let why):
             await refundAI(id, tool: tool)
@@ -163,6 +164,7 @@ extension ExtensionHost {
         let spec = tool.spec
         var out: [String: JSONValue] = ["reads_only": .bool(ExtensionActionPolicy.readsOnly(tool)), "name": .string(spec.name), "title": .string(spec.title), "description": .string(spec.description), "schema": spec.inputSchema,
                                         "risk": .string(spec.risk.rawValue), "mutates": .bool(spec.mutates), "category": .string(spec.category.rawValue)]
+        if let output = spec.outputSchema { out["output_schema"] = output }
         if spec.name.hasPrefix("ext.") { out["extension"] = .string(String(spec.name.dropFirst(4).prefix { $0 != "." })) }
         // Who offers it, in that extension's or server's own words: for the person, so a caller can name what it's missing.
         if let from = ((tool as? ExternalFacade)?.base ?? tool) as? ExtensionTool {

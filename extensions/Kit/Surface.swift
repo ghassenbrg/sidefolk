@@ -35,8 +35,16 @@ public struct SurfaceRequest {
 public struct ToolReply {
     public var text: String
     var asks: [String: Any] = [:]
+    /// The answer as fields, beside the words: a flow's next step can use each by name.
+    var data: [String: Any]?
 
     public init(_ text: String) { self.text = text }
+
+    public func with(data: [String: Any]) -> ToolReply {
+        var copy = self
+        copy.data = data
+        return copy
+    }
 
     public func opening(surface: String, arguments: [String: Any] = [:]) -> ToolReply {
         var copy = self

@@ -32,6 +32,8 @@ public struct MCPToolDefinition: Codable, Sendable, Hashable {
     public var description: String
     public var inputSchema: JSONValue
     public var hash: String
+    /// What its answer holds, if it says. Left out of `hash`: saying more about an answer doesn't change what a call does.
+    public var outputSchema: JSONValue?
 }
 
 public struct MCPServerInfo: Sendable, Hashable {
@@ -174,7 +176,7 @@ public final class MCPClient: Sendable {
         return .success(MCPToolDefinition(
             name: name, title: rawTitle.map { ExtensionText.line($0, characters: 80) },
             description: ExtensionText.untrusted(rawDescription, bytes: maxDescriptionBytes),
-            inputSchema: schema, hash: hash))
+            inputSchema: schema, hash: hash, outputSchema: ToolSpec.outputSchema(raw["outputSchema"])))
     }
 
     /// Text content of a tool result; `isError` results throw.
@@ -183,11 +185,11 @@ public final class MCPClient: Sendable {
     }
 
     /// The same, with what a Sidefolk extension's reply asks for beside its text (`sidefolk`, D100). A plain MCP server's reply has none.
-    func callToolAsking(name: String, arguments: JSONValue, timeout: TimeInterval = 30) async throws -> (text: String, asks: JSONValue?) {
+    func callToolAsking(name: String, arguments: JSONValue, timeout: TimeInterval = 30) async throws -> (text: String, asks: JSONValue?, data: JSONValue?) {
         let result = try await request("tools/call", params: ["name": .string(name), "arguments": arguments], timeout: timeout)
         let text = Self.text(of: result)
         if case .bool(true)? = result["isError"] { throw MCPError.toolFailed(text) }
-        return (text, result["sidefolk"])
+        return (text, result["sidefolk"], result["structuredContent"])
     }
 
     static func text(of result: JSONValue) -> String {
