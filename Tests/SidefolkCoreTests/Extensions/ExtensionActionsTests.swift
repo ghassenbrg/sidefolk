@@ -47,7 +47,10 @@ import Testing
             let env = try TestEnv()
             let gateway = ExtensionActionGateway(registry: env.registry, permissions: env.permissions, broker: env.broker, activity: env.activity, events: env.events)
             self.gateway = gateway
-            h = try HostEnv(env: env) { $0.actions = gateway }
+            h = try HostEnv(env: env) {
+                $0.actions = gateway
+                $0.aiName = { "Scripted" }
+            }
             h.env.registry.register(Probe(name: "notify.user", risk: .low, capabilities: [], mutates: false))
             h.env.registry.register(Probe(name: "notes.save", risk: .low, capabilities: [.notebook], mutates: true))
             h.env.registry.register(Probe(name: "notes.search", risk: .low, capabilities: [.notebook], mutates: false))
@@ -391,6 +394,64 @@ import Testing
         #expect(ExtensionHost.hearsOnlyThatItsDone(tool: name, permissions: ExtensionPermissions(network: true)))
         #expect(ExtensionHost.hearsOnlyThatItsDone(tool: name, permissions: nil) == !ExtensionPermissions().isContained)
         #expect(!ExtensionHost.hearsOnlyThatItsDone(tool: "ext.slowly.slow", permissions: ExtensionPermissions(network: true)))
+    }
+
+    /// A tool that says how far along it is whenever it's told someone's following, then says whether it was told.
+    static let followedServer = #"""
+    import json, sys
+    def send(r): print(json.dumps(r), flush=True)
+    for line in sys.stdin:
+        m = json.loads(line)
+        if m.get("method") == "initialize":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "s", "version": "1"}}})
+        elif m.get("method") == "tools/list":
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "busy", "title": "Busy", "inputSchema": {"type": "object", "additionalProperties": False}}]}})
+        elif m.get("method") == "tools/call":
+            token = m["params"].get("_meta", {}).get("progressToken")
+            if token: send({"jsonrpc": "2.0", "method": "notifications/progress", "params": {"progressToken": token, "progress": 1, "total": 2, "message": "the other one's words"}})
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "followed" if token else "not followed"}]}})
+        elif "id" in m:
+            send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+    """#
+
+    /// A companion with a scripted mind: it calls the other extension's tool, then says it's done.
+    private func jobWorld(_ w: World) async throws -> ScriptedModel {
+        let manifest: JSONValue = ["id": "com.example.other", "name": "Other", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["busy": ["title": "Busy", "risk": "low", "mutates": false, "timeout": 30]]]
+        try await w.h.host.install(from: w.h.source("other", manifest: manifest, files: ["server.py": Self.followedServer]))
+        let model = ScriptedModel([.turn(ModelTurn(text: "", toolCalls: [ToolCall(id: "t1", name: "ext_other_busy", input: .object([:]))], stop: .toolUse)), .turn(.reply("Done."))])
+        let env = w.h.env
+        let factory = BrainFactory { _, _ in BrainChoice(backend: LoopBackend(model: model, checkModel: "m", clock: env.clock), model: "test-model") }
+        let context = ContextBuilder(notebook: NotebookStore(env.db), exchanges: ExchangeStore(env.db), clock: env.clock)
+        var settings = AppSettings()
+        settings.provider.kind = .anthropic
+        let agent = AgentRuntime(executor: env.executor, db: env.db, events: env.events, context: context, factory: factory, settings: { [settings] in settings }, clock: env.clock)
+        let slot = CompanionAgentSlot()
+        slot.use(agent)
+        env.registry.register(CompanionJobTool(agent: slot))
+        return model
+    }
+
+    @Test func aJobsToolsAreNotTheProgramThatAskedForTheJobToHear() async throws {
+        let w = try await World()
+        let model = try await jobWorld(w)
+        let tool = try await w.install(["act": ["purpose": "to run what you set up"], "ai": ["purpose": "to think", "daily_cap": 3]], name: "contained")
+        let reply = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": .string(CompanionJobTool.name), "input": ["job": "Do the busy thing"]], cancel: true) }
+        _ = await w.answerCard(.allowOnce)
+        let heard = await reply.value
+        #expect(heard["progress"] == nil, "nothing on the way: \(heard)")
+        #expect(heard["ok"]?.boolValue == true, "and that it's done: \(heard)")
+        #expect(model.requests.count == 2, "the companion really did call it")
+        #expect(String(describing: model.requests.last).contains("not followed"), "and the other tool wasn't told anyone was following: \(String(describing: model.requests.last).suffix(400))")
+    }
+
+    @Test func aProgramStillHearsTheToolItCalledItself() async throws {
+        let w = try await World()
+        _ = try await jobWorld(w)
+        let tool = try await w.install(["act": ["purpose": "to run what you set up"], "ai": ["purpose": "to think", "daily_cap": 3]], name: "contained")
+        let reply = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.other.busy", "input": .object([:])], cancel: true) }
+        _ = await w.answerCard(.allowOnce)
+        #expect(await reply.value["progress"]?["message"]?.stringValue == "the other one's words")
     }
 
     @Test func aProgramStoppingTakesItsCardWithIt() async throws {
