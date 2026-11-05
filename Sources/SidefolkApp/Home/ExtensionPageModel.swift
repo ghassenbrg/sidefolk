@@ -246,6 +246,16 @@ enum PageFilePanel {
         return await panel.begin() == .OK ? panel.url : nil
     }
 
+    /// An ending outside the list of content kinds can still be one an app says it opens, and some of those run what's in them: only one nothing here opens is plain data.
+    static func anAppWouldOpen(_ type: String) -> Bool {
+        guard !ExtensionOutputs.allowedEndings.contains(type) else { return false }
+        // Asked about a file, since that's how an app's claim on an ending is found: an empty one, of a name no one chose.
+        let probe = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).\(type)")
+        guard FileManager.default.createFile(atPath: probe.path, contents: Data()) else { return true }
+        defer { try? FileManager.default.removeItem(at: probe) }
+        return NSWorkspace.shared.urlForApplication(toOpen: probe) != nil
+    }
+
     #if DEBUG
     /// The debug app's stand-in for the person: there is no one to click in the panel.
     static var choiceForTest: String?
@@ -435,6 +445,10 @@ final class ExtensionPageModel {
             if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
         case .save(let ask):
             guard let services else { return }
+            guard !PageFilePanel.anAppWouldOpen(ask.type) else {
+                problem = String(localized: "Sidefolk doesn't save this kind of file from a page.", comment: "An extension's page: it asked to save a kind of file an app on this Mac would open and could run")
+                return
+            }
             let short = String(info.extensionId.split(separator: ".").last ?? "")
             // A page's input is the author's, not a file the person chose, as for any control (D105, D141).
             let paths = await services.runtime.extensions.pathParameters(extensionId: info.extensionId, tool: ask.tool)
@@ -453,6 +467,7 @@ final class ExtensionPageModel {
                 try bytes.write(to: place, options: .atomic)
                 PageSaveAsk.markAsDownloaded(place)
                 saved = place.lastPathComponent
+                problem = nil
                 saidAt = Date()
             } catch {
                 problem = String(localized: "That couldn't be saved there.", comment: "An extension's page: the file couldn't be written where the person chose")
@@ -649,8 +664,7 @@ final class ExtensionPageModel {
         defer { fieldRuns -= 1 }
         let why = await ExtensionControl.run(tool: tool, input: input, extensionId: info.extensionId, services: services)
         await refresh()
-        // Pressed again and fine: what went wrong before is over.
-        problem = why
+        if let why { problem = why } else { saidAt = .distantPast }
         return why == nil
     }
 

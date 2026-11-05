@@ -91,7 +91,7 @@ public struct PageSaveAsk: Sendable, Hashable {
     /// The most it writes: words a page's tool made, not a way to fill a disk.
     public static let longest = 1_000_000
 
-    /// What a save may be: a kind of file that holds content (D140's list), or one nothing on this Mac knows, which nothing runs. Never one that opens by running: `.command`, `.terminal`, `.pkg`, `.app`.
+    /// What a save may be: a kind of file that holds content (D140's list), or an ending the system has no kind for. The page's model then asks whether an app here would open it. Never one that opens by running: `.command`, `.terminal`, `.pkg`, `.app`.
     public static func mayBe(_ type: String) -> Bool {
         ExtensionOutputs.allowedEndings.contains(type) || UTType(filenameExtension: type)?.isDynamic == true
     }
