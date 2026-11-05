@@ -297,10 +297,15 @@ public final class MCPClient: Sendable {
         }
     }
 
-    public func notify(_ method: String, params: JSONValue? = nil) async {
+    /// Whether the message was written: nothing more is known of it, but a write that failed was certainly not heard.
+    @discardableResult
+    public func notify(_ method: String, params: JSONValue? = nil) async -> Bool {
         var message: [String: JSONValue] = ["jsonrpc": "2.0", "method": .string(method)]
         if let params { message["params"] = params }
-        try? await process.write(Data((JSONValue.object(message).jsonString + "\n").utf8))
+        do {
+            try await process.write(Data((JSONValue.object(message).jsonString + "\n").utf8))
+            return true
+        } catch { return false }
     }
 
     /// Stops the process (SIGTERM to its group, SIGKILL after the grace period).

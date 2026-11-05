@@ -1142,6 +1142,37 @@ import Testing
         #expect(edited?.live(at: Date().addingTimeInterval(2 * day), owner: edited?.owner ?? "") == true, "approved just now: alive in two days")
     }
 
+    @Test func aCardThePersonApprovedRenewsAPlanEvenWhenNothingInItWasNew() async throws {
+        let day: TimeInterval = 24 * 3600
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        func approvedAt() async -> Date? { await w.h.host.loadPreferences("com.example.flow").plans["digest"]?.approvedAt }
+        // Ask every time shows a card even for a plan nothing in which changed; approving it is use.
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-59.9 * day) }
+        try await w.setMode(.askEveryTime)
+        #expect(await w.approve(Self.plan([Self.save])).asked, "Ask every time shows the card")
+        #expect((await approvedAt()).map { Date().timeIntervalSince($0) < 3600 } == true, "approved just now, not 59.9 days ago")
+        // Without a card nobody renewed anything: the approval keeps its date.
+        try await w.setMode(.askOncePerKind)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-30 * day) }
+        #expect(await !w.approve(Self.plan([Self.save])).asked)
+        #expect((await approvedAt()).map { abs(Date().timeIntervalSince($0) - 30 * day) < 3600 } == true, "a covered plan with no card keeps the date of the card they read")
+    }
+
+    @Test func anExtensionThatIsNotRunningIsRecordedAsNotToldWhateverTheClientBecomesLater() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = Date().addingTimeInterval(-61 * 24 * 3600) }
+        try await w.h.host.setEnabled(false, id: "com.example.flow")
+        _ = await w.h.host.info(id: "com.example.flow")
+        var rows: [ActivityEntry] = []
+        for _ in 0..<80 where rows.isEmpty {
+            rows = try await w.rows("extensions.plan_end")
+            try? await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(rows.first?.args?["told"]?.boolValue == false && rows.first?.summary.contains("was not running, so it was not told") == true, "\(String(describing: rows.first?.summary))")
+    }
+
     @Test func theRowSaysWhetherTheExtensionWasToldOfAnIdleEnd() async throws {
         let w = try await World()
         _ = await w.approve(Self.plan([Self.save]))
