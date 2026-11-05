@@ -264,7 +264,7 @@ struct TrustSettingsView: View {
             UnansweredGroup(model: model)
             SettingsGroup(title: "Flows you approved", footer: "A flow asks once, on a card that says what it does. This is the one thing on that card you can take back for every flow at once.") {
                 SettingsToggle(title: "A flow may pass what it reads to servers",
-                               detail: "On: a flow you approved may put words it read from a page or a file into a server's fields, where its card says so. Off: those lines ask each time.",
+                               detail: "On: a flow you approved may put words it read from a page or a file into the fields of a server or another add-on's tool, where its card says so. Off: those lines ask each time.",
                                isOn: Binding(get: { model.policy.flowsMayPassToServers },
                                              set: { on in Task { await model.setPolicy { $0.flowsMayPassToServers = on } } }))
             }

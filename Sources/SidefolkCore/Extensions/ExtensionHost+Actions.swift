@@ -19,7 +19,7 @@ extension ExtensionHost {
             let tools = gateway.tools(for: id).map(Self.listed)
             await client.notify("sidefolk/tools.listed", params: ["request": request, "ok": true, "tools": .array(tools), "plans": .array(livePlans(id).map(Self.listed))])
         case "sidefolk/tools.check":
-            guard spendCall(id) else { return await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"]) }
+            guard spendLook(id) else { return await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "busy"]) }
             guard let tool = params["tool"]?.stringValue, let input = params["input"], input.objectValue != nil else {
                 await client.notify("sidefolk/tools.checked", params: ["request": request, "ok": false, "reason": "unusable"])
                 return
@@ -85,7 +85,7 @@ extension ExtensionHost {
         case "sidefolk/plan.approve":
             await approvePlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.check":
-            guard spendCall(id) else { return await reply(id, request, ["ok": false, "reason": "busy"]) }
+            guard spendLook(id) else { return await reply(id, request, ["ok": false, "reason": "busy"]) }
             await checkPlan(id, request: request, params: params, gateway: gateway)
         case "sidefolk/plan.forget":
             if let plan = params["plan"]?.stringValue { await updatePreferences(id) { $0.plans[plan] = nil } }
@@ -179,17 +179,20 @@ extension ExtensionHost {
         return .object(out)
     }
 
-    /// One more look or call in the minute, the same budget for every kind: working a plan out is work on this actor, and nothing is free to ask for in a loop.
-    private func spendCall(_ id: String) -> Bool {
+    /// One more look or plan in the minute, from a bucket of its own: working a plan out is work on this actor, and nothing is free to ask for in a loop,
+    /// but an editor's looks can't use up the calls a flow runs on, nor those the person's own Run.
+    private func spend(_ id: String, _ bucket: String, limit: Int) -> Bool {
         let now = Date()
-        let recent = (runtimes[id]?.actionCalls ?? []).filter { now.timeIntervalSince($0) < 60 }
-        guard recent.count < Self.callsPerMinute else {
-            runtimes[id]?.actionCalls = recent
+        let recent = (runtimes[id]?.budgets[bucket] ?? []).filter { now.timeIntervalSince($0) < 60 }
+        guard recent.count < limit else {
+            runtimes[id]?.budgets[bucket] = recent
             return false
         }
-        runtimes[id]?.actionCalls = recent + [now]
+        runtimes[id]?.budgets[bucket] = recent + [now]
         return true
     }
+
+    private func spendLook(_ id: String) -> Bool { spend(id, "look", limit: Self.callsPerMinute) }
 
     private func asker(_ rt: Runtime) -> ApprovalRequest.Asker {
         ApprovalRequest.Asker(name: name(rt), firstParty: rt.pin.origin?.firstParty == true)
@@ -314,7 +317,7 @@ extension ExtensionHost {
         guard !rt.planAsking else { return await refuse("busy") }
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
         guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
-        guard spendCall(id) else { return await refuse("busy") }
+        guard spend(id, "plan", limit: 10) else { return await refuse("busy") }
         runtimes[id]?.planAsking = true
         let evaluation: PlanEvaluation
         switch await evaluatePlan(id, plan: plan, gateway: gateway) {

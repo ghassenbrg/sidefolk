@@ -110,7 +110,7 @@ import Testing
         let card = await answer.value
         guard case .text(let words)? = card?.details else { Issue.record("the plan must be on the card"); return }
         #expect(words.contains("Save to notebook"))
-        #expect(words.contains("filled in when it runs"))
+        #expect(words.contains("that no step makes"), "a value the flow fills in names where it comes from: \(words)")
         #expect(card?.asker?.name == "Sideflow")
         await w.until("it to be on") { await w.flow("Companion's")?["state"]?.stringValue == "on" }
 
@@ -304,8 +304,11 @@ import Testing
     /// The Kit's word for the limit is Sidefolk's, and a flow right at it, watch and all, is really allowed: the page and the host give one answer.
     @Test(.enabled(if: packKnowsThePlanLimit, "this checkout's Sideflow pack doesn't know the plan limit yet"))
     func aFlowAtTheLimitTurnsOnAndOverItIsMarkedFirst() async throws {
+        // The pack's own word for the limit may be lower than the host's (the host's can rise first), never higher: a flow the page accepts must fit.
         let kit = try String(contentsOf: ExtFixtures.addonsRepo.appendingPathComponent("Kit/Actions.swift"), encoding: .utf8)
-        #expect(kit.contains("maxSteps = \(ExtensionPlanRules.maxSteps)"))
+        let found = kit.range(of: #"maxSteps = (\d+)"#, options: .regularExpression).flatMap { Int(kit[$0].filter(\.isNumber)) }
+        let limit = try #require(found)
+        #expect(limit <= ExtensionPlanRules.maxSteps, "the Kit says \(limit); the host takes \(ExtensionPlanRules.maxSteps)")
         let w = try await World()
         _ = Self.realWatches(w.h.env)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("flow-\(UUID().uuidString)")
@@ -317,12 +320,12 @@ import Testing
              "steps": .array((0..<actions).map { ["id": .string("s\($0)"), "do": "notify.user", "with": ["title": .string("Line \($0)")]] })]
         }
         let answer = w.h.env.autoAnswer(.allowOnce)
-        let fits = await w.h.call("ext.sideflow.create_flow", ["name": "Fits", "definition": flow(ExtensionPlanRules.maxSteps - 4), "start": true])
+        let fits = await w.h.call("ext.sideflow.create_flow", ["name": "Fits", "definition": flow(limit - 4), "start": true])
         #expect(fits.isOK, "\(w.text(fits))")
         _ = await answer.value
         await w.until("it to be on") { await w.flow("Fits")?["state"]?.stringValue == "on" }
 
-        let over = await w.h.call("ext.sideflow.create_flow", ["name": "Over", "definition": flow(ExtensionPlanRules.maxSteps - 3)])
+        let over = await w.h.call("ext.sideflow.create_flow", ["name": "Over", "definition": flow(limit - 3)])
         let read = await w.flow("Over")?.jsonString ?? ""
         #expect(w.text(over).contains("different things to allow") || read.contains("different things to allow"), "\(w.text(over)) \(read.prefix(200))")
     }

@@ -14122,7 +14122,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@, 확장 프로그램이 직접 입력한 것이라고 말해요"
+            "value" : "%@, 확장 프로그램이 내가 직접 입력한 것이라고 말해요"
           }
         },
         "pt-BR" : {
@@ -33561,6 +33561,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来个小把戏"
+          }
+        }
+      }
+    },
+    "A watch, a reminder or an event it creates stays until you remove it." : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما تنشئه من مراقبة أو تذكير أو حدث يبقى حتى تزيله."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Beobachtung, eine Erinnerung oder ein Termin, die er anlegt, bleibt, bis du sie entfernst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vigilancia, un recordatorio o un evento que crea se queda hasta que lo quites."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une surveillance, un rappel ou un événement qu’elle crée reste jusqu’à ce que vous le retiriez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un controllo, un promemoria o un evento che crea resta finché non lo rimuovi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作成した監視、リマインダー、予定は、あなたが削除するまで残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "만들어 둔 감시, 알림, 일정은 지우기 전까지 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma vigilância, um lembrete ou um evento que ela cria continua até você remover."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它创建的监视、提醒或日程会一直保留，直到你把它删除。"
           }
         }
       }
@@ -106637,7 +106696,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er ändert:"
+            "value" : "Ändert:"
           }
         },
         "es" : {
@@ -107882,7 +107941,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er liest:"
+            "value" : "Liest:"
           }
         },
         "es" : {
@@ -108476,7 +108535,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er sendet:"
+            "value" : "Sendet:"
           }
         },
         "es" : {
@@ -108535,7 +108594,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er löst aus:"
+            "value" : "Löst aus:"
           }
         },
         "es" : {
@@ -109206,7 +109265,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er informiert oder fragt dich:"
+            "value" : "Informiert oder fragt dich:"
           }
         },
         "es" : {
@@ -140018,6 +140077,7 @@
       }
     },
     "On: a flow you approved may put words it read from a page or a file into a server's fields, where its card says so. Off: those lines ask each time." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -140071,6 +140131,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开启：你批准过的流程，可以把从网页或文件读到的文字放进服务器的字段里（卡片上会写明）。关闭：这些行每次都会询问。"
+          }
+        }
+      }
+    },
+    "On: a flow you approved may put words it read from a page or a file into the fields of a server or another add-on's tool, where its card says so. Off: those lines ask each time." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مفعّل: يمكن لروتين وافقتَ عليه أن يضع كلمات قرأها من صفحة أو ملف في حقول خادم أو أداة إضافة أخرى، حيث تقول بطاقته ذلك. معطّل: تسأل تلك الأسطر في كل مرة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An: Ein genehmigter Ablauf darf Wörter, die er auf einer Seite oder in einer Datei gelesen hat, in die Felder eines Servers oder des Werkzeugs eines anderen Add-ons einsetzen, wo es auf seiner Karte steht. Aus: Diese Zeilen fragen jedes Mal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado: una rutina aprobada puede poner palabras leídas en una página o un archivo en los campos de un servidor o de la herramienta de otro complemento, donde su tarjeta lo diga. Desactivado: esas líneas preguntan cada vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé : une routine approuvée peut placer des mots lus sur une page ou dans un fichier dans les champs d’un serveur ou de l’outil d’un autre module, là où sa carte le dit. Désactivé : ces lignes demandent à chaque fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivo: una routine approvata può inserire parole lette da una pagina o da un file nei campi di un server o dello strumento di un altro componente aggiuntivo, dove la sua scheda lo dice. Disattivo: quelle righe chiedono ogni volta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オン: 承認したルーティンが、ページやファイルから読み取った言葉を、カードに示された箇所で、サーバや別のアドオンのツールの項目に入れることがあります。オフ: それらの行は毎回確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "켜기: 승인한 루틴이 페이지나 파일에서 읽은 말을, 카드에 적힌 곳에서 서버나 다른 애드온 도구의 항목에 넣을 수 있어요. 끄기: 그런 줄은 매번 물어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativado: uma rotina aprovada pode colocar palavras lidas de uma página ou arquivo nos campos de um servidor ou da ferramenta de outro complemento, onde o cartão dela disser. Desativado: essas linhas perguntam sempre."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启：你批准过的流程，可以把从网页或文件读到的文字放进服务器或其他附加组件的工具的字段里（卡片上会写明）。关闭：这些行每次都会询问。"
           }
         }
       }
@@ -214173,24 +214291,6 @@
         "ar" : {
           "variations" : {
             "plural" : {
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو %lld دقيقة؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو دقيقة (%lld)؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو دقيقتين (%lld)؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -214203,7 +214303,25 @@
                   "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو %lld دقيقة؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو دقيقة (%lld)؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
+                }
+              },
               "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو %lld دقيقة؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو دقيقتين (%lld)؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
+                }
+              },
+              "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "تنتهي هذه الخطة من تلقاء نفسها خلال نحو %lld دقيقة؛ وما أعدّته، من مراقبة أو تذكير، يبقى حتى يُزال."
@@ -214251,16 +214369,16 @@
         "es" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Este plan termina solo en unos %lld minuto; lo que dejó preparado, una vigilancia o un recordatorio, sigue hasta que se quite."
-                }
-              },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Este plan termina solo en unos %lld de minutos; lo que dejó preparado, una vigilancia o un recordatorio, sigue hasta que se quite."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Este plan termina solo en unos %lld minuto; lo que dejó preparado, una vigilancia o un recordatorio, sigue hasta que se quite."
                 }
               },
               "other" : {
@@ -214275,16 +214393,16 @@
         "fr" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Ce plan prend fin de lui-même dans environ %lld minute ; ce qu’il a mis en place, une surveillance ou un rappel, reste jusqu’à ce qu’on le retire."
-                }
-              },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Ce plan prend fin de lui-même dans environ %lld de minutes ; ce qu’il a mis en place, une surveillance ou un rappel, reste jusqu’à ce qu’on le retire."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ce plan prend fin de lui-même dans environ %lld minute ; ce qu’il a mis en place, une surveillance ou un rappel, reste jusqu’à ce qu’on le retire."
                 }
               },
               "other" : {
@@ -214299,16 +214417,16 @@
         "it" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Questo piano termina da solo tra circa %lld minuto; ciò che ha impostato, un controllo o un promemoria, resta finché non viene rimosso."
-                }
-              },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Questo piano termina da solo tra circa %lld di minuti; ciò che ha impostato, un controllo o un promemoria, resta finché non viene rimosso."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Questo piano termina da solo tra circa %lld minuto; ciò che ha impostato, un controllo o un promemoria, resta finché non viene rimosso."
                 }
               },
               "other" : {
@@ -214347,16 +214465,16 @@
         "pt-BR" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Este plano termina sozinho em cerca de %lld minuto; o que ele criou, uma vigilância ou um lembrete, continua até ser removido."
-                }
-              },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Este plano termina sozinho em cerca de %lld de minutos; o que ele criou, uma vigilância ou um lembrete, continua até ser removido."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Este plano termina sozinho em cerca de %lld minuto; o que ele criou, uma vigilância ou um lembrete, continua até ser removido."
                 }
               },
               "other" : {
@@ -232278,6 +232396,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会改变什么"
+          }
+        }
+      }
+    },
+    "What each tool of a server does is its author's word, which Sidefolk can't check." : {
+      "comment" : "A plan's card: about a server the person added",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما تفعله كل أداة في الخادم هو قول مؤلفها، ولا يستطيع Sidefolk التحقق منه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was jedes Werkzeug eines Servers tut, ist das Wort seines Autors, das Sidefolk nicht prüfen kann."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que hace cada herramienta de un servidor es palabra de su autor, y Sidefolk no puede comprobarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que fait chaque outil d’un serveur relève de la parole de son auteur, que Sidefolk ne peut pas vérifier."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciò che fa ogni strumento di un server è parola del suo autore, che Sidefolk non può verificare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバの各ツールが何をするかは作者の言うとおりで、Sidefolkには確認できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서버의 각 도구가 하는 일은 만든 사람의 말이며, Sidefolk는 이를 확인할 수 없어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que cada ferramenta de um servidor faz é palavra do autor dela, que o Sidefolk não consegue verificar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器的每个工具做什么，只是其作者的说法，Sidefolk 无法核实。"
           }
         }
       }
@@ -252441,6 +252618,65 @@
         }
       }
     },
+    "it may also be left out" : {
+      "comment" : "A plan's card: a field that may be left out, which then takes its default",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وقد تُترك فارغة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "es kann auch wegfallen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "también puede quedar vacío"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il peut aussi rester vide"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "può anche mancare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "省かれることもあります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빠질 수도 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "também pode ficar de fora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "也可能留空"
+          }
+        }
+      }
+    },
     "it runs a program" : {
       "comment" : "A plan's card: why a line asks",
       "localizations" : {
@@ -262976,6 +263212,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你"
+          }
+        }
+      }
+    },
+    "you asked the internet to ask each time" : {
+      "comment" : "A plan's card: why a line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلبتَ أن يسأل الإنترنت في كل مرة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "du hast eingestellt, dass das Internet jedes Mal fragt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pediste que internet pregunte cada vez"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vous avez demandé qu’Internet demande à chaque fois"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hai chiesto che internet chieda ogni volta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネットは毎回確認する設定にしています"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인터넷은 매번 묻도록 설정해 두었어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "você pediu que a internet pergunte sempre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你设置了访问互联网每次都询问"
           }
         }
       }

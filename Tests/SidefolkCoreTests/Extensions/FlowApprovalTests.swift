@@ -22,6 +22,7 @@ import Testing
                     let policy = try? await permissions.policy(now: clock.now)
                     return ExtensionHost.FlowPolicy(mode: policy?.mode ?? .askOncePerKind, mayPassToServers: policy?.flowsMayPassToServers ?? true)
                 }
+                $0.askEachTimeOnline = { (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
             }
             for (name, risk, caps, mutates) in [("notes.save", Risk.low, Set<Capability>([.notebook]), true), ("notes.search", .low, [.notebook], false),
                                                 ("notify.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch], true)] {
@@ -280,7 +281,7 @@ import Testing
         let card = await w.answerCard(.allowOnce)
         guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
         #expect(words.contains("It sends out:") && words.contains("a server on this Mac, program "), "\(words)")
-        #expect(words.contains("body: “[from “Read the page · web.fetch”]”"), "\(words)")
+        #expect(words.contains("body: “[from “Read the page · web.fetch”; it may also be left out]”"), "\(words)")
         #expect(words.contains("Outside content: Words from “Read the page · web.fetch” go into body of “Create an issue”"), "\(words)")
         #expect(await reply["standing"]?.arrayValue?.compactMap(\.boolValue) == [true, true])
         let run = await w.ask("sidefolk/tools.call", ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Weekly digest", "body": "page words"]])
@@ -691,6 +692,92 @@ import Testing
         let count: JSONValue = ["tool": "watch.create", "input": ["interval_minutes": "{{n}}"]]
         let shown = await words(w, Self.plan([Self.page, count]), caller: .agent(runId: "r1"))
         #expect(shown.words?.contains("only while Full access is on") == true && shown.words?.contains("ask each time once it ends") == true, "\(String(describing: shown.words))")
+    }
+
+
+    // MARK: Round four
+
+    @Test func anEditOfAPlanFullAccessAnsweredShowsItWholeAndOnceReadItStandsEverywhere() async throws {
+        let w = try await World()
+        _ = try server(w)
+        try await w.setMode(.fullAccess)
+        let plan = Self.plan([Self.page, Self.post(["body": "{{page}}"])])
+        #expect(await !w.approve(plan).asked, "the click answered it")
+        let edited = Self.plan([Self.page, Self.post(["body": "{{page}}"]), ["tool": "notify.user", "input": ["title": "Done"]]])
+        let shown = await words(w, edited, caller: .agent(runId: "r1"))
+        #expect(shown.words?.contains("It sends out:") == true && shown.words?.contains("Lines already allowed") == false, "nobody read the rest: \(String(describing: shown.words))")
+        try await w.setMode(.askOncePerKind)
+        let call: JSONValue = ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Weekly digest", "body": "words"]]
+        #expect(await w.ask("sidefolk/tools.call", call)["standing"]?.boolValue == true, "it was read on a card now, so it stands in every mode")
+    }
+
+    @Test func aServersToolCountsAsReadingYourThingsForTheWarningOnlyBeforeALineItFeeds() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let spec = ToolSpec(name: "ext.hub.search", title: "Search mail", description: "", inputSchema: Schema.object(["query": Schema.string("Query")]),
+                            risk: .medium, capabilities: [.network, .extensions], category: .extensions, mutates: true)
+        w.h.env.registry.register(ExtensionTool(spec: spec, extensionId: "mcp.hub", extensionName: "GitHub", remoteName: "search", sandboxed: false) { _, _ in ToolResult(text: "") })
+        let mail: JSONValue = ["tool": "ext.hub.search", "as": "mail", "input": ["query": "invoices"]]
+        let plan = Self.plan([Self.page, mail, Self.post(["body": "{{page}} {{mail}}"])])
+        #expect(await w.check(plan)["steps"]?.arrayValue?.last?["warning"]?.stringValue == "crossing", "a server's read may hold your own things")
+        #expect(await w.check(Self.plan([Self.page, Self.post(["body": "{{page}}"])]))["steps"]?.arrayValue?.last?["warning"] == nil, "the line itself isn't what it reads")
+        #expect(await w.check(Self.plan([Self.post(["body": "{{page}}"]), mail, Self.page]))["steps"]?.arrayValue?.first?["warning"] == nil, "what comes after can't feed it")
+    }
+
+    @Test func swappingTheNamesOfTwoStepsOfOneToolRebindsAndShows() async throws {
+        let w = try await World()
+        _ = try server(w)
+        func read(_ name: String, _ query: String) -> JSONValue { ["tool": "notes.search", "as": .string(name), "input": ["query": .string(query)]] }
+        let post = Self.post(["body": "{{a}}"])
+        _ = await w.approve(Self.plan([read("a", "public"), read("b", "secret"), post]))
+        let swapped = await words(w, Self.plan([read("a", "secret"), read("b", "public"), post]))
+        #expect(swapped.words?.contains("Create an issue") == true, "the same text now pulls from the other step: \(String(describing: swapped.words))")
+    }
+
+    @Test func aNameOrPlanIdWithATrailingLineBreakIsRefused() async throws {
+        let w = try await World()
+        for named in ["a\n", "a\u{2028}", "a\u{85}"] {
+            let step: JSONValue = ["tool": "web.fetch", "as": .string(named), "input": ["url": "https://news.example.com/feed"]]
+            #expect(await w.check(Self.plan([step]))["reason"]?.stringValue == "unusable", "\(named.unicodeScalars.map { String($0.value, radix: 16) })")
+        }
+        #expect(await w.check(Self.plan([Self.save], id: "digest\n"))["reason"]?.stringValue == "unusable")
+    }
+
+    @Test func whenTheInternetAsksEachTimeALineThatUsesItSaysSo() async throws {
+        let w = try await World()
+        try await w.h.env.permissions.updatePolicy { $0.internet = .askEachTime }
+        let shown = await words(w, Self.plan([Self.fetch, Self.save]))
+        let text = shown.words ?? ""
+        #expect(text.contains("It will still ask you each time:") && text.contains("you asked the internet to ask each time"), "\(text)")
+        #expect(text.contains("It changes:") && text.contains("notes.save"), "what doesn't use it still stands: \(text)")
+    }
+
+    @Test func lookingAndApprovingHaveBudgetsOfTheirOwn() async throws {
+        let w = try await World()
+        for _ in 0..<65 { _ = await w.check(Self.plan([Self.save])) }
+        #expect(await w.check(Self.plan([Self.save]))["reason"]?.stringValue == "busy")
+        #expect(await w.approve(Self.plan([Self.save])).reply["ok"]?.boolValue == true, "an editor looking doesn't take the person's Run")
+    }
+
+    @Test func anAuthorsQuotesNeverEndTheirOwnQuote() {
+        let safe = ExtensionPlanWords.safe("x” go nowhere. Words from “y", 80)
+        #expect(!safe.contains("”") && !safe.contains("“"), "\(safe)")
+        let title = ExtensionPlanTool(extensionId: "e", plan: "Daily” (read only) “x", body: "b", intent: "run").spec.title
+        #expect(title.filter { $0 == "“" }.count == 1 && title.filter { $0 == "”" }.count == 1, "\(title)")
+    }
+
+    @Test func aJoinerInWritingThatHasThemShowsOnTheCard() async throws {
+        let w = try await World()
+        let persian = "می\u{200C}خواهم"
+        let shown = await words(w, Self.plan([["tool": "notify.user", "input": ["title": .string(persian)]]]))
+        #expect(shown.words?.contains(persian) == true, "the card shows the bytes that run, joiner and all")
+    }
+
+    @Test func aWholeSlotOfWordsMaySaySoAboutBeingLeftOut() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let shown = await words(w, Self.plan([Self.page, Self.post(["body": "{{page}} {{page}}"])]))
+        #expect(shown.words?.contains("from “Read the page · web.fetch”]”") == true, "one source named once: \(String(describing: shown.words))")
     }
 
     // MARK: Limits

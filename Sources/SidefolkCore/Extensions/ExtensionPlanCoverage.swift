@@ -77,6 +77,8 @@ extension ExtensionPlanRules {
         "command", "cmd", "script", "code", "exec", "execute", "eval", "expression", "sql", "shell", "statement", "program", "snippet", "args", "argv",
         "regex", "js", "python", "bash", "zsh", "powershell", "applescript", "javascript",
     ]
+    /// Names that run something, written as one word (`applescript`); a name that only holds the letters (`transcript`, `description`) isn't one.
+    private static let codeCompounds = ["applescript", "javascript", "typescript", "vbscript", "coffeescript", "powershell", "commandline", "shellscript", "bashscript"]
     private static let placeWords: Set<String> = [
         "url", "uri", "link", "href", "host", "hostname", "domain", "address", "endpoint", "path", "file", "filename", "filepath", "dir", "directory",
         "folder", "recipient", "email", "repo", "repository", "branch", "channel", "webhook", "target", "destination", "server", "origin", "redirect", "to",
@@ -119,7 +121,7 @@ extension ExtensionPlanRules {
     static func fieldClass(_ key: String, schema: JSONValue?, whole: Bool = false) -> FieldClass {
         let lower = key.lowercased()
         let tokens = Set(words(in: key))
-        if !tokens.isDisjoint(with: codeWords) || lower.contains("command") || lower.contains("shell") || lower.hasSuffix("script") || lower.hasPrefix("script") { return .code }
+        if !tokens.isDisjoint(with: codeWords) || codeCompounds.contains(where: lower.contains) { return .code }
         if !tokens.isDisjoint(with: placeWords) { return .other }
         // Free text is a declared plain string, named only with words for what people read: every word of the name, so `appName` or `functionBody` is not.
         let allowed = freeTextWords.union(neutralWords)

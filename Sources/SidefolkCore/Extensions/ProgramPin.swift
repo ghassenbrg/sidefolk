@@ -32,6 +32,8 @@ enum ProgramPin {
         for argument in arguments {
             let value = argument.split(separator: "=", maxSplits: 1).last.map(String.init) ?? argument
             if argument.contains("/") || value.contains("/") || argument.hasPrefix("~") || FileManager.default.fileExists(atPath: (value as NSString).expandingTildeInPath) { return nil }
+            // A bare name that looks like a file (`server.tcl`, `config.json`) is one the server may find in its own folder, which isn't where Sidefolk looks.
+            if value.range(of: #"\.[A-Za-z][A-Za-z0-9]{0,5}\z"#, options: .regularExpression) != nil { return nil }
         }
         let name = (real as NSString).lastPathComponent.lowercased()
         // Versioned names too: `ruby3.2`, `node20`, `python3.11`.

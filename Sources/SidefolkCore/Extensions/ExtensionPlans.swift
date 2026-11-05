@@ -310,12 +310,15 @@ enum ExtensionPlanRules {
 enum ExtensionPlanWords {
     static let valueLimit = 300
 
-    static func line(tool: any Tool, template: JSONValue, from: [String: String] = [:], program: String? = nil, whole: Set<String> = []) -> String {
+    /// An author's words as the card shows them inside Sidefolk's own quotes: one line, no hidden characters, and no quote that could end them early.
+    static func safe(_ text: String, _ limit: Int) -> String { unquoted(ToolFormat.oneLine(ExtensionText.clean(text), limit)) }
+
+    static func line(tool: any Tool, template: JSONValue, from: [String: String] = [:], program: String? = nil, whole: Set<String> = [], omit: Set<String> = []) -> String {
         let fields = template.objectValue ?? [:]
         // The field's own name, as the tool takes it: a schema's title is its author's, and could name one field after another.
         let values = fields.keys.sorted().compactMap { key -> String? in
-            guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key)) else { return nil }
-            return "\(ToolFormat.oneLine(ExtensionText.clean(key), 40)): \(said)"
+            guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key), omit: omit.contains(key)) else { return nil }
+            return "\(safe(key, 300)): \(said)"
         }
         var title = ToolFormat.oneLine(ExtensionText.clean(tool.spec.title), 80)
         // A plan holds for the extension that offered the tool, so the card says whose it is (as a call's own card does).
@@ -332,25 +335,33 @@ enum ExtensionPlanWords {
         return values.isEmpty ? title : "\(title) · \(values.joined(separator: ", "))"
     }
 
+    /// What `plain` allowed stays: a joiner between writing that has them is part of the word, and a card that dropped it would show another string.
+    private static func cleanKeepingJoiners(_ text: String) -> String {
+        var scalars = String.UnicodeScalarView()
+        for scalar in text.unicodeScalars where scalar.value == 0x200C || scalar.value == 0x200D || !ExtensionText.isHidden(scalar) { scalars.append(scalar) }
+        return String(scalars)
+    }
+
     /// A written value as the card shows it: the quotes it is wrapped in can't be written inside it, so it can't pass for two fields.
     private static func quoted(_ text: String) -> String { "“" + unquoted(text) + "”" }
 
-    private static func unquoted(_ text: String) -> String { text.replacingOccurrences(of: "“", with: "‘").replacingOccurrences(of: "”", with: "’") }
+    static func unquoted(_ text: String) -> String { text.replacingOccurrences(of: "“", with: "‘").replacingOccurrences(of: "”", with: "’") }
 
-    private static func words(_ value: JSONValue, from: String? = nil, whole: Bool = false) -> String? {
+    private static func words(_ value: JSONValue, from: String? = nil, whole: Bool = false, omit: Bool = false) -> String? {
         switch value {
         case .string(let s) where ExtensionPlanRules.hasSlot(s):
             // One line each, keeping the space a written part has next to a slot (a lone space between two slots too).
             let parts = ExtensionPlanRules.literals(s).map { part -> String in
-                let said = unquoted(ToolFormat.oneLine(ExtensionText.clean(part), valueLimit))
+                let said = unquoted(ToolFormat.oneLine(cleanKeepingJoiners(part), valueLimit))
                 guard !said.isEmpty else { return part.isEmpty ? "" : " " }
                 return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
             }
             var filled = from.map { String(localized: "from “\($0)”", comment: "A plan's card: where words filled in at run time come from, a step's own title") }
                 ?? String(localized: "filled in when it runs", comment: "A plan's card: a value the extension writes at run time")
             if whole { filled += "; " + String(localized: "it may also be a list, a record, a number, or left out", comment: "A plan's card: a field filled with one value of any kind") }
+            else if omit { filled += "; " + String(localized: "it may also be left out", comment: "A plan's card: a field that may be left out, which then takes its default") }
             return "“" + parts.joined(separator: "[\(filled)]") + "”"
-        case .string(let s): return quoted(ToolFormat.oneLine(ExtensionText.clean(s), valueLimit))
+        case .string(let s): return quoted(ToolFormat.oneLine(cleanKeepingJoiners(s), valueLimit))
         // What clears a field is something the person reads too: a null or an empty list sets it to nothing.
         case .null: return String(localized: "nothing", comment: "A plan's card: a value written as null")
         case .array(let items):
@@ -382,9 +393,9 @@ struct ExtensionPlanTool: Tool {
 
     private var title: String {
         switch intent {
-        case "run"?: String(localized: "Run “\(plan)”", comment: "A tool, after “<an extension> wants to”: the person runs a flow, and reads what it will do")
-        case "turn_on"?: String(localized: "Turn on “\(plan)”", comment: "A tool, after “<an extension> wants to”: the person turns a flow on, and reads what it will do")
-        default: String(localized: "Run “\(plan)” without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that")
+        case "run"?: String(localized: "Run “\(ExtensionPlanWords.unquoted(plan))”", comment: "A tool, after “<an extension> wants to”: the person runs a flow, and reads what it will do")
+        case "turn_on"?: String(localized: "Turn on “\(ExtensionPlanWords.unquoted(plan))”", comment: "A tool, after “<an extension> wants to”: the person turns a flow on, and reads what it will do")
+        default: String(localized: "Run “\(ExtensionPlanWords.unquoted(plan))” without asking you", comment: "A tool, after “<an extension> wants to”: a plan the person reads, then it needs no more cards for exactly that")
         }
     }
 

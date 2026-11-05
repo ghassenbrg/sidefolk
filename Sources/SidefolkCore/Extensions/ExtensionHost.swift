@@ -123,6 +123,8 @@ public actor ExtensionHost {
         var personClick: Date?
         /// How many actions each plan's runs made, by plan and run id: the most recent runs only (D189).
         var runCalls: [String: Int] = [:]
+        /// When this extension last spent from each minute budget (looking at plans and tools, approving plans).
+        var budgets: [String: [Date]] = [:]
         var runOrder: [String] = []
 
         mutating func countRun(_ key: String) {
