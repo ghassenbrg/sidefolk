@@ -81,30 +81,46 @@ extension ExtensionPlanWords {
 
     private static func historyLine(_ line: PlanEvaluation.Line, tool: any Tool, _ e: PlanEvaluation) -> String {
         let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
-        let who = ExtensionPlanRules.extensionTool(tool).map { " (" + safe($0.extensionName, 30) + ")" } ?? ""
+        let ext = ExtensionPlanRules.extensionTool(tool)
+        let who = ext.map { " (" + safe($0.extensionName, 30) + ")" } ?? ""
         let fields = (line.step.input.objectValue ?? [:]).sorted { a, b in
             let ra = ExtensionPlanRules.fieldClass(a.key, schema: properties[a.key]) == .freeText ? 1 : 0
             let rb = ExtensionPlanRules.fieldClass(b.key, schema: properties[b.key]) == .freeText ? 1 : 0
             return ra != rb ? ra < rb : a.key < b.key
         }
-        var out = safe(tool.spec.title, 50) + who, left = 0
-        for (key, value) in fields {
-            let shown: String
+        var out = safe(tool.spec.title, 50) + who
+        // A server whose program Sidefolk couldn't check says so on its own row, as the card does.
+        if ext?.sandboxed == false, line.step.program == nil { out += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
+        var left = 0
+        for (index, (key, value)) in fields.enumerated() {
+            var shown: String
             if let text = value.stringValue, ExtensionPlanRules.hasSlot(text) {
-                shown = "[from " + safe(sourceNames(text, e).joined(separator: ", "), 50) + "]"
+                // What is written around the slot stays: it is often the host or the folder a call goes to.
+                let literals = ExtensionPlanRules.literals(text)
+                let names = safe(sourceNames(text, e).joined(separator: ", "), 50)
+                shown = safe(literals.first ?? "", 40) + String(localized: "[from \(names)]", comment: "History: a filled-in value, from the steps named") + safe(literals.count > 1 ? literals.last ?? "" : "", 40)
+                switch line.step.sources?[key] {
+                case "outside"?: shown = String(localized: "\(shown) (outside content)", comment: "History: a filled-in value that comes from outside content")
+                case "claimed"?: shown = String(localized: "\(shown) (the add-on says it's yours)", comment: "History: a filled-in value the extension says is the person's own")
+                case "inside"?: shown = String(localized: "\(shown) (your answer or the clock)", comment: "History: a filled-in value that is the person's typed answer or the clock")
+                default: break
+                }
+            } else if let text = value.stringValue {
+                shown = "“" + safe(text, 50) + "”"
             } else {
-                shown = "“" + safe(value.stringValue ?? value.jsonString, 50) + "”"
+                // A number, nothing, an empty list: shown as what it is, not as words.
+                shown = safe(value.jsonString, 50)
             }
             let part = " · " + safe(key, 30) + ": " + shown
-            if out.count + part.count <= 260 { out += part } else { left += 1 }
+            if out.count + part.count <= 260 { out += part } else { left = fields.count - index; break }
         }
-        return left > 0 ? out + " (+\(left) more fields)" : out
+        return left > 0 ? out + " " + String(localized: "(and \(left) more)", comment: "A plan's card: a list of a step's sources was cut; how many more") : out
     }
 
     /// At most `limit` entries, one line each so History keeps every one whole; past it, a last entry says how many more there were.
     static func capped(_ lines: [String], _ limit: Int) -> [String] {
         guard lines.count > limit else { return lines }
-        return Array(lines.prefix(limit - 1)) + ["+\(lines.count - limit + 1) more"]
+        return Array(lines.prefix(limit - 1)) + [String(localized: "+\(lines.count - limit + 1) more", comment: "A list was cut; how many more")]
     }
 
     // MARK: Sections
@@ -331,7 +347,7 @@ extension ExtensionPlanRules {
     static func staysInside(_ line: PlanEvaluation.Line) -> Bool {
         guard let tool = line.tool, line.step.standing, !line.step.isInFullAccessOnly, extensionTool(tool) == nil else { return false }
         let spec = tool.spec
-        let writesOrTells = spec.mutates || ExtensionActionPolicy.reachesThePerson.contains(spec.name) || ["voice.say", "companion.play"].contains(spec.name)
+        let writesOrTells = (spec.mutates || ExtensionActionPolicy.reachesThePerson.contains(spec.name)) && spec.name != "companion.play"
         // A tool that reads private things and gives them back, whatever else it does (`applenotes.copy` reads whole notes in and returns their titles), is a read.
         let reads = !spec.capabilities.isDisjoint(with: [.macApps, .filesRead, .calendar])
         return writesOrTells && !reads && spec.risk != .high && !PermissionEngine.couldCarryOut(spec, outwardUntyped: !spec.capabilities.isDisjoint(with: [.network, .apps]))

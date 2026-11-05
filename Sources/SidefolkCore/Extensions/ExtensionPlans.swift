@@ -73,8 +73,9 @@ public struct ExtensionPlanInfo: Sendable, Hashable, Identifiable {
     public var title: String
     public var when: String
     public var actions: Int
-    /// Some of its lines stand only while Full access or Auto is on, or were never shown on a card.
-    public var partlyUnread = false
+    /// When its actions run without asking, if not always: nobody read some of it, or the mode that let it through is the only one it stands in.
+    public enum Stands: Sendable, Hashable { case always, fullAccessUnread, fullAccessSome, autoSome, either }
+    public var stands = Stands.always
     public var approvedAt: Date
     public var expiresAt: Date?
 }

@@ -288,11 +288,19 @@ extension ExtensionHost {
         return rt.preferences.plans.values.filter { $0.live(at: now, owner: owner) }.sorted { $0.id < $1.id }
     }
 
+    /// When a plan's actions run without asking, for Settings (`ExtensionPlanInfo.Stands`): a plan Full access answered stands in all its lines only in Full access;
+    /// a line Auto let through only in Auto; a line marked for Full access only in Full access.
+    private static func stands(_ plan: ExtensionPlan) -> ExtensionPlanInfo.Stands {
+        if plan.answeredUnread == true { return .fullAccessUnread }
+        let full = plan.steps.contains { $0.isInFullAccessOnly }, auto = plan.steps.contains { $0.answeredInAuto == true }
+        return full && auto ? .either : full ? .fullAccessSome : auto ? .autoSome : .always
+    }
+
     /// The plans Settings › Add-ons lists.
     func planInfos(_ id: String) -> [ExtensionPlanInfo] {
         livePlans(id).map {
             ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count,
-                              partlyUnread: $0.answeredUnread == true || $0.steps.contains { $0.answeredInAuto == true || $0.isInFullAccessOnly },
+                              stands: Self.stands($0),
                               approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
         }
     }
@@ -369,11 +377,15 @@ extension ExtensionHost {
     private static func provenance(_ step: ExtensionPlan.Step) -> [String]? {
         let parts = (step.input.objectValue ?? [:]).keys.sorted().compactMap { field -> String? in
             guard let text = step.input[field]?.stringValue, ExtensionPlanRules.hasSlot(text) else { return nil }
-            let source = step.sources?[field]
-            let kind = source == "outside" ? "outside content" : source == "claimed" ? "said by the extension to be the person's own" : source == nil ? "filled in"
-                : "an answer asked of the person, or the clock, as the plan declared"
-            // The kind first, then the field and the step: the Redactor that History runs can take a word after a step named like a secret.
-            return ToolFormat.oneLine("\(kind): \(field) from step \(ExtensionPlanRules.roots(text).joined(separator: ", "))", 200)
+            let names = ExtensionPlanRules.roots(text).joined(separator: ", ")
+            let said: String
+            switch step.sources?[field] {
+            case "outside"?: said = String(localized: "outside content: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            case "claimed"?: said = String(localized: "said by the extension to be the person's own: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            case nil: said = String(localized: "filled in: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            default: said = String(localized: "an answer asked of the person, or the clock: \(field) from step \(names)", comment: "History: where a filled-in value comes from; a field, the steps' names")
+            }
+            return ToolFormat.oneLine(said, 200)
         }
         return parts.isEmpty ? nil : ExtensionPlanWords.capped(parts, 20)
     }

@@ -483,6 +483,19 @@ import Testing
         #expect(lines[0].contains("GitHub"), "and who gets it")
     }
 
+    @Test func aPlaceWithWrittenWordsAroundASlotKeepsThemAndSaysWhereTheWordsComeFrom() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        let long = String(repeating: "x", count: 300)
+        let post = FlowApprovalTests.post(["repo": "https://hooks.example.com/{{page}}", "body": .string(long)])
+        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, post])).asked)
+        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        let line = lines.first { $0.contains("Create an issue") } ?? ""
+        #expect(line.contains("repo: https://hooks.example.com/[from") && line.contains("(outside content)"), "the host and the kind of source are on the row: \(lines)")
+        #expect(line.contains("program: not checked") == false, "this server's program was checked")
+    }
+
     @Test func aWholeSlotOnAStringFieldTakesNoRecordBecauseTheSchemaRefusesIt() async throws {
         let w = try await World()
         _ = try w.registerHub()
@@ -503,7 +516,10 @@ import Testing
         let w = try await World()
         try await w.setMode(.fullAccess)
         _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
-        #expect(await w.h.host.planInfos(Self.id).first?.partlyUnread == true)
+        #expect(await w.h.host.planInfos(Self.id).first?.stands == .fullAccessUnread)
+        try await w.setMode(.askOncePerKind)
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "read"))
+        #expect(await w.h.host.planInfos(Self.id).first { $0.id == "read" }?.stands == .always, "a plan somebody read says nothing of the kind")
         var plan = ExtensionPlan(id: "p", title: "t", when: "w", steps: [ExtensionPlan.Step(tool: "notes.save", input: ["text": "x"], definition: "d", reach: "r", standing: true)],
                                  owner: "o", approvedAt: Date(timeIntervalSince1970: 0), perDay: 10)
         plan.answeredUnread = true

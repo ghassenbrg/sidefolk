@@ -52,11 +52,20 @@ struct ExtensionPlanRow: View {
     var plan: ExtensionPlanInfo
     var end: () -> Void
 
+    /// What the row says its actions do: a count where they always run without asking, and where they don't, when they do.
+    private var detail: Text {
+        switch plan.stands {
+        case .always where plan.actions == 0: Text("Runs by itself, with no actions on its list. \(plan.when)", comment: "Settings › Add-ons: an extension's plan that has no actions listed; then its own words for when it runs")
+        case .always: Text("Runs \(plan.actions) actions without asking. \(plan.when)", comment: "Settings › Add-ons: an extension's plan; a count, then its own words for when it runs")
+        case .fullAccessUnread: Text("Its actions run without asking only while Full access is on, and nobody read this plan. \(plan.when)", comment: "Settings › Add-ons: a plan Full access answered with no card; then its own words for when it runs")
+        case .fullAccessSome: Text("Some of its actions run without asking only while Full access is on. \(plan.when)", comment: "Settings › Add-ons: a plan with lines that stand only in Full access; then its own words for when it runs")
+        case .autoSome: Text("Some of its actions run without asking only while Auto is on, and nobody read them. \(plan.when)", comment: "Settings › Add-ons: a plan with lines Auto let through; then its own words for when it runs")
+        case .either: Text("Some of its actions run without asking only while Full access or Auto is on. \(plan.when)", comment: "Settings › Add-ons: a plan with lines that stand only in Full access or only in Auto; then its own words for when it runs")
+        }
+    }
+
     var body: some View {
-        SettingsRow(title: Text(ext: plan.title.isEmpty ? plan.id : plan.title),
-                    detail: plan.actions == 0 ? Text("Runs by itself, with no actions on its list. \(plan.when)", comment: "Settings › Add-ons: an extension's plan that has no actions listed; then its own words for when it runs") : (plan.partlyUnread
-                        ? Text("Runs up to \(plan.actions) actions without asking; some only while Full access or Auto is on, or never shown on a card. \(plan.when)", comment: "Settings › Add-ons: an extension's plan some of whose lines nobody read; a count, then its own words for when it runs")
-                        : Text("Runs \(plan.actions) actions without asking. \(plan.when)", comment: "Settings › Add-ons: an extension's plan; a count, then its own words for when it runs"))) {
+        SettingsRow(title: Text(ext: plan.title.isEmpty ? plan.id : plan.title), detail: detail) {
             Button(action: end) { Text("End", comment: "Settings › Add-ons: ends an extension's plan") }.buttonStyle(.sf(.secondary))
         }
     }

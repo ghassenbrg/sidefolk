@@ -436,6 +436,183 @@
         }
       }
     },
+    "%@ (outside content)" : {
+      "comment" : "History: a filled-in value that comes from outside content",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (محتوى من الخارج)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Inhalt von außen)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (contenido externo)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (contenu extérieur)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (contenuto esterno)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（外部のコンテンツ）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (외부 콘텐츠)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (conteúdo de fora)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（外部内容）"
+          }
+        }
+      }
+    },
+    "%@ (the add-on says it's yours)" : {
+      "comment" : "History: a filled-in value the extension says is the person's own",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (تقول الإضافة إنه لك)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (das Add-on sagt, es ist deins)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (el complemento dice que es tuyo)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (le module dit que c’est à vous)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (il componente dice che è tuo)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（アドオンはあなたのものだと言っています）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (애드온이 내 것이라고 말해요)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (o complemento diz que é seu)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（附加功能声称属于你）"
+          }
+        }
+      }
+    },
+    "%@ (your answer or the clock)" : {
+      "comment" : "History: a filled-in value that is the person's typed answer or the clock",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (إجابتك أو الساعة)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (deine Antwort oder die Uhr)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (tu respuesta o el reloj)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (votre réponse ou l’horloge)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (la tua risposta o l’orologio)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（あなたの答えか時計）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (내가 한 답이나 시계)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (sua resposta ou o relógio)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（你的回答或时钟）"
+          }
+        }
+      }
+    },
     "%@ (⌘%lld)" : {
       "comment" : "A place, then its shortcut",
       "localizations" : {
@@ -29112,7 +29289,7 @@
       }
     },
     "+%lld more" : {
-      "comment" : "Under the held cards beside the companion: how many more wait",
+      "comment" : "A list was cut; how many more\nUnder the held cards beside the companion: how many more wait",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -110913,6 +111090,65 @@
         }
       }
     },
+    "Its actions run without asking only while Full access is on, and nobody read this plan. %@" : {
+      "comment" : "Settings › Add-ons: a plan Full access answered with no card; then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعمل إجراءاتها دون سؤال فقط أثناء تفعيل الوصول الكامل، ولم يقرأ أحد هذه الخطة. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seine Aktionen laufen nur ohne Nachfrage, solange Vollzugriff an ist, und niemand hat diesen Plan gelesen. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus acciones se ejecutan sin preguntar solo mientras el acceso total está activado, y nadie leyó este plan. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses actions s’exécutent sans demander seulement quand l’accès complet est activé, et personne n’a lu ce plan. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le sue azioni girano senza chiedere solo mentre l’accesso completo è attivo, e nessuno ha letto questo piano. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このルーティンの動作は、フルアクセスがオンの間だけ確認なしで実行され、誰もこのプランを読んでいません。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 루틴의 동작은 전체 접근이 켜져 있는 동안에만 묻지 않고 실행되고, 아무도 이 계획을 읽지 않았어요. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As ações dela rodam sem perguntar só enquanto o acesso total está ligado, e ninguém leu este plano. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的操作仅在完全访问开启时才无需询问地运行，而且没有人读过这个计划。%@"
+          }
+        }
+      }
+    },
     "Its checks and the text it kept are deleted with it." : {
       "localizations" : {
         "ar" : {
@@ -170293,6 +170529,7 @@
     },
     "Runs up to %lld actions without asking; some only while Full access or Auto is on, or never shown on a card. %@" : {
       "comment" : "Settings › Add-ons: an extension's plan some of whose lines nobody read; a count, then its own words for when it runs",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -188900,6 +189137,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分操作已经完成；可以在“历史记录”中查看具体内容。"
+          }
+        }
+      }
+    },
+    "Some of its actions run without asking only while Auto is on, and nobody read them. %@" : {
+      "comment" : "Settings › Add-ons: a plan with lines Auto let through; then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعمل بعض إجراءاتها دون سؤال فقط أثناء تفعيل وضع Auto، ولم يقرأها أحد. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manche seiner Aktionen laufen nur ohne Nachfrage, solange Auto an ist, und niemand hat sie gelesen. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunas de sus acciones se ejecutan sin preguntar solo mientras Auto está activado, y nadie las leyó. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certaines de ses actions s’exécutent sans demander seulement quand le mode Auto est activé, et personne ne les a lues. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcune sue azioni girano senza chiedere solo mentre Auto è attivo, e nessuno le ha lette. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このルーティンの一部の動作は、Autoがオンの間だけ確認なしで実行され、誰も読んでいません。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 루틴의 일부 동작은 Auto가 켜져 있는 동안에만 묻지 않고 실행되고, 아무도 읽지 않았어요. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas das ações dela rodam sem perguntar só enquanto o Auto está ligado, e ninguém as leu. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的部分操作仅在自动模式开启时才无需询问地运行，而且没有人读过。%@"
+          }
+        }
+      }
+    },
+    "Some of its actions run without asking only while Full access is on. %@" : {
+      "comment" : "Settings › Add-ons: a plan with lines that stand only in Full access; then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعمل بعض إجراءاتها دون سؤال فقط أثناء تفعيل الوصول الكامل. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manche seiner Aktionen laufen nur ohne Nachfrage, solange Vollzugriff an ist. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunas de sus acciones se ejecutan sin preguntar solo mientras el acceso total está activado. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certaines de ses actions s’exécutent sans demander seulement quand l’accès complet est activé. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcune sue azioni girano senza chiedere solo mentre l’accesso completo è attivo. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このルーティンの一部の動作は、フルアクセスがオンの間だけ確認なしで実行されます。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 루틴의 일부 동작은 전체 접근이 켜져 있는 동안에만 묻지 않고 실행돼요. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas das ações dela rodam sem perguntar só enquanto o acesso total está ligado. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的部分操作仅在完全访问开启时才无需询问地运行。%@"
+          }
+        }
+      }
+    },
+    "Some of its actions run without asking only while Full access or Auto is on. %@" : {
+      "comment" : "Settings › Add-ons: a plan with lines that stand only in Full access or only in Auto; then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعمل بعض إجراءاتها دون سؤال فقط أثناء تفعيل الوصول الكامل أو وضع Auto. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manche seiner Aktionen laufen nur ohne Nachfrage, solange Vollzugriff oder Auto an ist. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunas de sus acciones se ejecutan sin preguntar solo mientras el acceso total o Auto está activado. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certaines de ses actions s’exécutent sans demander seulement quand l’accès complet ou le mode Auto est activé. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcune sue azioni girano senza chiedere solo mentre l’accesso completo o Auto è attivo. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このルーティンの一部の動作は、フルアクセスまたはAutoがオンの間だけ確認なしで実行されます。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 루틴의 일부 동작은 전체 접근이나 Auto가 켜져 있는 동안에만 묻지 않고 실행돼요. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas das ações dela rodam sem perguntar só enquanto o acesso total ou o Auto está ligado. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的部分操作仅在完全访问或自动模式开启时才无需询问地运行。%@"
           }
         }
       }
@@ -244665,6 +245079,65 @@
         }
       }
     },
+    "[from %@]" : {
+      "comment" : "History: a filled-in value, from the steps named",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[من %@]"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[aus %@]"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[de %@]"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[depuis %@]"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[da %@]"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "［%@から］"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[%@에서]"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[de %@]"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "［来自 %@］"
+          }
+        }
+      }
+    },
     "a collection called “%@”" : {
       "localizations" : {
         "ar" : {
@@ -246708,6 +247181,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许"
+          }
+        }
+      }
+    },
+    "an answer asked of the person, or the clock: %@ from step %@" : {
+      "comment" : "History: where a filled-in value comes from; a field, the steps' names",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجابة طُلبت من الشخص، أو الساعة: %1$@ من الخطوة %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eine Antwort, nach der die Person gefragt wurde, oder die Uhr: %1$@ aus Schritt %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "an answer asked of the person, or the clock: %1$@ from step %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "una respuesta pedida a la persona, o el reloj: %1$@ del paso %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "une réponse demandée à la personne, ou l’horloge : %1$@ depuis l’étape %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "una risposta chiesta alla persona, o l’orologio: %1$@ dal passo %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本人に尋ねた答え、または時計：ステップ%2$@の%1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "본인에게 물은 답 또는 시계: 단계 %2$@의 %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "uma resposta pedida à pessoa, ou o relógio: %1$@ do passo %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向你询问得到的回答，或时钟：步骤 %2$@ 的 %1$@"
           }
         }
       }
@@ -251907,6 +252445,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行时填入"
+          }
+        }
+      }
+    },
+    "filled in: %@ from step %@" : {
+      "comment" : "History: where a filled-in value comes from; a field, the steps' names",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مُلئ: %1$@ من الخطوة %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eingefüllt: %1$@ aus Schritt %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "filled in: %1$@ from step %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rellenado: %1$@ del paso %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rempli : %1$@ depuis l’étape %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "compilato: %1$@ dal passo %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "埋め込み：ステップ%2$@の%1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "채워 넣음: 단계 %2$@의 %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "preenchido: %1$@ do passo %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "填入：步骤 %2$@ 的 %1$@"
           }
         }
       }
@@ -258194,6 +258797,71 @@
         }
       }
     },
+    "outside content: %@ from step %@" : {
+      "comment" : "History: where a filled-in value comes from; a field, the steps' names",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محتوى من الخارج: %1$@ من الخطوة %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inhalt von außen: %1$@ aus Schritt %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "outside content: %1$@ from step %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contenido externo: %1$@ del paso %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contenu extérieur : %1$@ depuis l’étape %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contenuto esterno: %1$@ dal passo %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外部のコンテンツ：ステップ%2$@の%1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "외부 콘텐츠: 단계 %2$@의 %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "conteúdo de fora: %1$@ do passo %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外部内容：步骤 %2$@ 的 %1$@"
+          }
+        }
+      }
+    },
     "paused" : {
       "comment" : "A watch the person paused\nOn a live value beside the companion: it isn't updating",
       "localizations" : {
@@ -258308,6 +258976,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已置顶"
+          }
+        }
+      }
+    },
+    "program: not checked" : {
+      "comment" : "History: a plan's line for a server whose program can't be checked",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البرنامج: لم يُتحقق منه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programm: nicht geprüft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "programa: sin comprobar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "programme : non vérifié"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "programma: non verificato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プログラム：未確認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로그램: 확인 안 됨"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "programa: não verificado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "程序：未核对"
           }
         }
       }
@@ -259210,6 +259937,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已运行 %@"
+          }
+        }
+      }
+    },
+    "said by the extension to be the person's own: %@ from step %@" : {
+      "comment" : "History: where a filled-in value comes from; a field, the steps' names",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقول الإضافة إنه للشخص: %1$@ من الخطوة %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "von der Erweiterung als Eigenes der Person bezeichnet: %1$@ aus Schritt %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "said by the extension to be the person's own: %1$@ from step %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dicho por la extensión como de la persona: %1$@ del paso %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dit par l’extension être à la personne : %1$@ depuis l’étape %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "detto dall’estensione essere della persona: %1$@ dal passo %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能が本人のものだと言っているもの：ステップ%2$@の%1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 프로그램이 본인 것이라고 말함: 단계 %2$@의 %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dito pela extensão como da pessoa: %1$@ do passo %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展声称属于你：步骤 %2$@ 的 %1$@"
           }
         }
       }

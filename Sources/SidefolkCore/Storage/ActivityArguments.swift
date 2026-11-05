@@ -23,7 +23,11 @@ public enum ActivityArguments {
         case .number(let n): return n == n.rounded() && abs(n) < 1e15 ? String(Int64(n)) : String(n)
         case .string(let s): return s.hasPrefix("/") ? FolderAccess.displayPath(s) : s
         case .array(let items):
-            if items.allSatisfy({ $0.stringValue != nil }) { return items.prefix(listLimit).compactMap { $0.stringValue }.joined(separator: "\n") }
+            if items.allSatisfy({ $0.stringValue != nil }) {
+                // Past the limit, how many more: nothing is cut without a count.
+                let more = items.count > listLimit ? ["+\(items.count - listLimit) more"] : []
+                return (items.prefix(listLimit).compactMap { $0.stringValue } + more).joined(separator: "\n")
+            }
             return items.compactMap(text).joined(separator: ", ")
         // What an object holds is shown, not only its keys: a plan's written values are shown on the card, and History says the same.
         case .object: return value.jsonString

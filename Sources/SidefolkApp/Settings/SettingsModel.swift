@@ -129,7 +129,8 @@ final class SettingsModel {
         folders = (try? await runtime.permissions.folders()) ?? []
         grants = (try? await runtime.permissions.grants()) ?? []
         allowedForNow = await runtime.executor.allowedForNow()
-        policy = (try? await runtime.permissions.policy()) ?? GuardPolicy()
+        // A policy that can't be read enforces "off" for passing words on to servers, and the switch shows what is enforced.
+        policy = (try? await runtime.permissions.policy()) ?? { var p = GuardPolicy(); p.flowsMayPassToServers = false; return p }()
     }
 
     // MARK: Settings
