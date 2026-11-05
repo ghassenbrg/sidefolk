@@ -479,6 +479,72 @@ import Testing
         #expect(lines.contains { $0.hasPrefix("#1 body: “”") } && lines.contains { $0.hasPrefix("#1 labels: list (0):") }, "\(lines)")
     }
 
+    // MARK: What the card says in the extension's own words is in the record too
+
+    /// `plan` with its title or its intent set.
+    private func plan(_ steps: [JSONValue], when: String = "When you click Digest", title: String? = nil, intent: String? = nil) -> JSONValue {
+        var fields = FlowApprovalTests.plan(steps, when: when).objectValue ?? [:]
+        if let title { fields["title"] = .string(title) }
+        if let intent { fields["intent"] = .string(intent) }
+        return .object(fields)
+    }
+
+    @Test func aPlanWhoseWhenChangedMeanwhileShowsTheNewWhenInHistoryNotOnlyOnACard() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        #expect(await !w.approve(plan([FlowApprovalTests.save])).asked)
+        #expect(try await record(w).contains("when, in its words: “When you click Digest”"))
+        let later = "Every 5 minutes, whenever a watched page changes; sets off Send"
+        #expect(await !w.approve(plan([FlowApprovalTests.save], when: later)).asked)
+        let lines = try await record(w)
+        #expect(lines.contains("when, in its words: “\(later)”") && !lines.contains { $0.contains("When you click") }, "the row shows what changed: \(lines)")
+    }
+
+    @Test func aPlanWithNoLinesAndOnlyAWhenIsRecordedWithIt() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        let words = plan([], when: "Whenever anything changes, it sets off Send")
+        #expect(await !w.approve(words).asked)
+        let lines = try await record(w)
+        #expect(lines.count == 3 && lines[0].hasPrefix("limits:") && lines[2] == "when, in its words: “Whenever anything changes, it sets off Send”", "\(lines)")
+    }
+
+    @Test func aWhenThatIsEmptyIsSaidAsEmptyAndOneThatCantBeKeptWholeShowsTheCard() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        #expect(await !w.approve(plan([FlowApprovalTests.save], when: "")).asked)
+        #expect(try await record(w).contains("when, in its words: “”"))
+        #expect(await w.approve(plan([FlowApprovalTests.save], when: String(repeating: "w", count: 700))).asked, "a when over what History keeps shows the card, Full access too")
+    }
+
+    @Test func theEditorAndTheApprovalAgreeAboutAWhenAtTheEdgeOfWhatHistoryKeeps() async throws {
+        // In Auto the edit adds one line under the same words for when; the entry for them is 300 characters, or 301.
+        let inside = "when, in its words: “".count + 1
+        for (count, silent) in [(300 - inside, true), (301 - inside, false)] {
+            let w = try await World()
+            try await w.setMode(.auto)
+            let when = String(repeating: "w", count: count)
+            _ = await w.approve(plan([FlowApprovalTests.save], when: when))
+            let edit = plan([FlowApprovalTests.save, ["tool": "notify.user", "input": ["title": "Done"]]], when: when)
+            #expect(await w.check(edit)["silent"]?.boolValue == silent, Comment(rawValue: "the editor, \(count)"))
+            #expect(await w.approve(edit).asked == !silent, Comment(rawValue: "the approval, \(count)"))
+        }
+    }
+
+    @Test func theTitleAndHowTheProgramAskedAreInTheRecord() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        #expect(await !w.approve(plan([FlowApprovalTests.save], title: "Monday digest", intent: "turn_on")).asked)
+        #expect(try await record(w).contains("asked to turn on: “Monday digest”"))
+        #expect(await !w.approve(plan([FlowApprovalTests.save], title: "Monday digest", intent: "run")).asked)
+        #expect(try await record(w).contains("asked to run: “Monday digest”"), "the same plan under another verb is another thing to read")
+        #expect(await !w.approve(plan([FlowApprovalTests.save], title: "Monday digest")).asked)
+        #expect(try await record(w).contains("plan: “Monday digest”"))
+        // The host keeps 80 characters of a title, on the card as in the record.
+        #expect(await !w.approve(plan([FlowApprovalTests.save], title: String(repeating: "t", count: 90))).asked)
+        #expect(try await record(w).contains { $0.hasPrefix("plan: “ttt") && $0.count <= 90 })
+    }
+
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
         let w = try await World()
         try await w.setMode(.fullAccess)

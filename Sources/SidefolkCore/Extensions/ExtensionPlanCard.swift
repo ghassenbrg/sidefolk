@@ -70,7 +70,7 @@ extension ExtensionPlanWords {
     }
 
     /// The record of what a plan lets through with no card (Full access, or Auto's edit that stays inside Sidefolk), as History keeps it on the approval's row,
-    /// or nil when it cannot be kept in full, and then the plan shows its card. A silent pass needs a LOSSLESS record: one entry for the plan's limits and warning,
+    /// or nil when it cannot be kept in full, and then the plan shows its card. A silent pass needs a LOSSLESS record: one entry for the plan's limits and warning, one for its title and one for the words it gives for when it runs (what the card says in the extension's own words besides the lines),
     /// then for every line a header and for every field of it an entry of its own, each carrying the line's number so a destination stays with its body; the kind
     /// of each value's source first, every written part between slots in quotes, every item of a list with the count, the producers of a slot in full. It is nil
     /// if there would be more than 60 entries, if any entry is over 270 characters (nothing is split or cut), or if History's Redactor would change an entry (a
@@ -90,7 +90,16 @@ extension ExtensionPlanWords {
         // Lines are numbered in the order the card shows them, with no gap where a step that only passes words on is left out.
         var visible: [Int: Int] = [:]
         for i in e.lines.indices where e.lines[i].step.kind != "value" { visible[i] = visible.count + 1 }
-        var out = [terms]
+        // What the card says in the extension's own words, besides the lines: the plan's title, how the program asked for it, and when it says it runs. A change
+        // in any of them is a change in what the person was told, so each is an entry of its own, whole (empty, said as empty) or the plan shows its card.
+        let title = fit(e.plan.title.isEmpty ? e.plan.id : e.plan.title, 80)
+        let named: String = switch e.intent {
+        case "run"?: String(localized: "asked to run: “\(title)”", comment: "History: the title of a plan the person asked to run")
+        case "turn_on"?: String(localized: "asked to turn on: “\(title)”", comment: "History: the title of a plan the person asked to turn on")
+        default: String(localized: "plan: “\(title)”", comment: "History: the title of a plan")
+        }
+        let when = String(localized: "when, in its words: “\(fit(e.plan.when, 600))”", comment: "History: the extension's own description of when a plan runs; empty when it says nothing")
+        var out = [terms, named, when]
         for i in e.fresh {
             guard let n = visible[i] else { continue }
             let line = e.lines[i], number = "#\(n) "
