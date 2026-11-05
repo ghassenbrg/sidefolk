@@ -22,7 +22,7 @@ import Testing
             let saved = saved
             h.env.registry.register(NoteProbe(record: { input in saved.withLock { $0.append(input) } }))
             h.env.registry.register(NoticeProbe())
-            try await h.host.install(from: ExtFixtures.builtIn("sideflow"))
+            try await h.host.install(from: ExtFixtures.builtIn("sideflow"), origin: .official)
         }
 
         func text(_ outcome: ToolOutcome) -> String { outcome.okText ?? outcome.problem?.message ?? "" }
@@ -145,7 +145,59 @@ import Testing
         await w.until("its row") { (try? await w.h.env.activity.recent(limit: 1, tool: "notes.save").first) != nil }
         let row = try await w.h.env.activity.recent(limit: 1, tool: "notes.save").first
         #expect(row?.args?["text"]?.stringValue == "Saved: {{t}}")
-        #expect(row?.decision != .plan)
+        #expect(row?.decision == .plan, "run from a draft goes under the plan it just read")
+    }
+
+    /// The founder's words: run it, read once what it will do, approve, and after that do nothing. An edit with nothing new asks nothing; only something new does.
+    @Test func runAsksOnceAndAnEditWithNothingNewAsksNothing() async throws {
+        let w = try await World()
+        _ = await w.h.call("ext.sideflow.create_flow", ["name": "Once", "definition": Self.definition])
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        let first = await w.h.call("ext.sideflow.run_flow", ["flow": "Once"])
+        #expect(first.isOK, "\(w.text(first))")
+        let card = await answer.value
+        guard case .text(let words)? = card?.details else { Issue.record("the plan must be on the card"); return }
+        #expect(words.contains("Save to notebook"), "\(words)")
+        await w.until("the note") { w.saved.withLock { !$0.isEmpty } }
+        #expect(await w.flow("Once")?["state"]?.stringValue == "draft", "running it isn't turning it on")
+
+        // Again, as it is: no card, and nothing else in the way.
+        let again = await w.h.call("ext.sideflow.run_flow", ["flow": "Once"])
+        #expect(again.isOK, "\(w.text(again))")
+        await w.until("the second note") { w.saved.withLock { $0.count == 2 } }
+        #expect(await w.h.env.broker.pending().isEmpty)
+
+        // Edited, with only words changed in what it already said it would write.
+        var edited = Self.definition
+        edited = try JSONValue.parse(Data(edited.jsonString.replacingOccurrences(of: "From the companion", with: "From an edit").utf8))
+        let update = await w.h.call("ext.sideflow.update_flow", ["flow": "Once", "definition": edited])
+        #expect(update.isOK, "\(w.text(update))")
+        let third = await w.h.call("ext.sideflow.run_flow", ["flow": "Once"])
+        #expect(third.isOK, "\(w.text(third))")
+        await w.until("the third note") { w.saved.withLock { $0.count == 3 } }
+        #expect(await w.h.env.broker.pending().isEmpty, "nothing new, nothing to read")
+        #expect(w.saved.withLock { $0.last?["text"]?.stringValue } == "Saved: From an edit")
+    }
+
+    @Test func anEditThatDoesSomethingNewAsksForThatAlone() async throws {
+        let w = try await World()
+        _ = await w.h.call("ext.sideflow.create_flow", ["name": "Grows", "definition": Self.definition])
+        let answer = w.h.env.autoAnswer(.allowOnce)
+        _ = await w.h.call("ext.sideflow.run_flow", ["flow": "Grows"])
+        _ = await answer.value
+        await w.until("the note") { w.saved.withLock { !$0.isEmpty } }
+
+        let grown: JSONValue = ["trigger": ["type": "manual"], "steps": [["id": "t", "text": "x"], ["id": "n", "do": "notes.save", "with": ["text": "Saved: {{t}}"]], ["id": "tell", "do": "notify.user", "with": ["title": "Done"]]]]
+        let update = await w.h.call("ext.sideflow.update_flow", ["flow": "Grows", "definition": grown])
+        #expect(update.isOK, "\(w.text(update))")
+        let next = w.h.env.autoAnswer(.deny)
+        let refused = await w.h.call("ext.sideflow.run_flow", ["flow": "Grows"])
+        let card = await next.value
+        guard case .text(let words)? = card?.details else { Issue.record("something new shows a card"); return }
+        #expect(words.contains("Notify the user"), "\(words)")
+        #expect(!words.contains("Save to notebook"), "what's already allowed isn't asked again: \(words)")
+        #expect(!refused.isOK, "they said no, and nothing ran")
+        #expect(w.saved.withLock { $0.count } == 1)
     }
 
     /// What a flow found stays out of History, by each way it could get there (D127, D136).
