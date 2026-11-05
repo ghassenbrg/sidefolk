@@ -116,8 +116,7 @@ public final class SidefolkRuntime: Sendable {
         hostConfiguration.actions = actions
         hostConfiguration.askEachTimeOnline = { [permissions, clock] in (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
         hostConfiguration.flowPolicy = { [permissions, clock] in
-            let policy = try? await permissions.policy(now: clock.now)
-            return ExtensionHost.FlowPolicy(mode: policy?.mode ?? .askOncePerKind, mayPassToServers: policy?.flowsMayPassToServers ?? true)
+            ExtensionHost.FlowPolicy(policy: try? await permissions.policy(now: clock.now))
         }
         hostConfiguration.aiName = { [settings] in settings.current.provider.shortName }
         hostConfiguration.currentPlace = { [settings] in settings.current.location.current }

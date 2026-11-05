@@ -20,12 +20,14 @@ import Testing
                 $0.actions = gateway
                 $0.flowPolicy = {
                     let policy = try? await permissions.policy(now: clock.now)
-                    return ExtensionHost.FlowPolicy(mode: policy?.mode ?? .askOncePerKind, mayPassToServers: policy?.flowsMayPassToServers ?? true)
+                    return ExtensionHost.FlowPolicy(policy: policy)
                 }
                 $0.askEachTimeOnline = { (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
             }
             for (name, risk, caps, mutates) in [("notes.save", Risk.low, Set<Capability>([.notebook]), true), ("notes.search", .low, [.notebook], false),
-                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch], true)] {
+                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch], true),
+                                                ("files.read", .low, [.filesRead], false), ("clipboard.read", .low, [.clipboard], false), ("applenotes.read", .low, [.macApps], false),
+                                                ("calendar.today", .low, [.calendar], false), ("voice.say", .low, [], true), ("files.trash", .high, [.filesWrite], true)] {
                 h.env.registry.register(ExtensionActionsTests.Probe(name: name, risk: risk, capabilities: caps, mutates: mutates, urlParameter: name == "web.fetch" ? "url" : nil))
             }
             h.env.registry.register(ExtensionPlanEndTool(host: h.host))
@@ -288,7 +290,7 @@ import Testing
         #expect(run["standing"]?.boolValue == true && run["text"]?.stringValue == "posted", "\(run)")
         #expect(await w.h.env.broker.pending().isEmpty)
         let row = try await w.rows("ext.hub.post").first
-        #expect(row?.args?["_filled_from"]?.stringValue == "body from page (outside content)", "History says where the words came from: \(String(describing: row?.args))")
+        #expect(row?.args?["_filled_from"]?.stringValue == "body from step page (outside content)", "History says where the words came from: \(String(describing: row?.args))")
     }
 
     @Test func aServerWhoseProgramChangedAsksAgain() async throws {
@@ -306,14 +308,41 @@ import Testing
         #expect(await changed["standing"]?.boolValue == false)
     }
 
-    @Test func aServerThatCantBeCheckedAsksEveryTime() async throws {
-        let w = try await World()
-        _ = try server(w, program: "/usr/bin/env")
-        let checked = await w.check(Self.plan([Self.post([:])]))
-        #expect(checked["steps"]?.arrayValue?.first?["state"]?.stringValue == "asks")
-        #expect(checked["steps"]?.arrayValue?.first?["why"]?.stringValue == "server_unpinned")
-        let npx = try server(w, program: "/usr/local/bin/npx")
-        #expect(ProgramPin.hash(of: npx) == nil && ProgramPin.hash(of: "node") == nil && ProgramPin.hash(of: "/bin/ls") != nil)
+    @Test func aServerThatCantBeCheckedAsksEveryTimeAndTheCardSaysWhyForThatLine() async throws {
+        let dir = try ExtFixtures.tempDir("unpinned")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        // Each way a program can't be checked, with what the card says about that very line.
+        func copy(_ name: String) throws -> String {
+            let path = dir.appendingPathComponent(name).path
+            try FileManager.default.copyItem(atPath: "/bin/ls", toPath: path)
+            return path
+        }
+        let script = dir.appendingPathComponent("server.sh")
+        try "#!/bin/sh\necho hi\n".write(to: script, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+        let cases: [(program: String, check: ProgramPin.Result, says: String)] = [
+            (try copy("npx"), .unchecked(.launcher), "it starts through a launcher, interpreter or build tool"),
+            (try copy("make"), .unchecked(.launcher), "it starts through a launcher, interpreter or build tool"),
+            ("/usr/bin/env", .unchecked(.launcher), "it starts through a launcher, interpreter or build tool"),
+            (script.path, .unchecked(.script), "its program is a script, not a compiled program"),
+            ("hub-server", .unchecked(.path), "its program is named without a full path"),
+        ]
+        for (program, check, says) in cases {
+            #expect(ProgramPin.check(of: program) == check, "\(program)")
+            let w = try await World()
+            _ = try server(w, program: program)
+            let checked = await w.check(Self.plan([Self.post([:])]))
+            let step = checked["steps"]?.arrayValue?.first
+            #expect(step?["state"]?.stringValue == "asks" && step?["why"]?.stringValue == "server_unpinned", "\(program): \(checked)")
+            async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.post([:])])])
+            let card = await w.answerCard(.allowOnce)
+            guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+            #expect(words.contains(says), "\(program): \(words)")
+            _ = await reply
+        }
+        let loads = try copy("hub-server")
+        #expect(ProgramPin.check(of: loads, arguments: ["--root", dir.path]) == .unchecked(.loads))
+        if case .pinned = ProgramPin.check(of: loads) {} else { Issue.record("a compiled program with nothing to load is pinned") }
     }
 
     @Test func wordsFromOutsideNeverChooseWhereACallGoesOrWhatItRuns() async throws {

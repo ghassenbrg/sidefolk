@@ -204,20 +204,30 @@ extension ExtensionHost {
 
     /// The person's click or typed command to this extension, or a clean request of Sidefolk's own agent: only just after one may it ask
     /// for a plan (T3). Called by its tools (`ExtensionTool.began`).
-    func notePersonCall(_ id: String, caller: Caller, tainted: Bool) {
+    func notePersonCall(_ id: String, caller: Caller, tainted: Bool) -> UUID? {
         switch caller {
         case .user:
             // The person's own hand, which only Full access answers a plan for: a clean turn of Sidefolk's agent is not that (D188).
-            runtimes[id]?.lastPersonCall = Date()
-            runtimes[id]?.personClick = Date()
-        case .command(let owner) where owner == id:
-            runtimes[id]?.lastPersonCall = Date()
-            runtimes[id]?.personClick = Date()
-        case .command:
-            runtimes[id]?.lastPersonCall = Date()
+            return click(id)
+        case .command(let owner) where owner == id: return click(id)
+        case .command: runtimes[id]?.lastPersonCall = Date()
         case .agent(let run) where !tainted && !run.hasPrefix(AgentRuntime.jobPrefix): runtimes[id]?.lastPersonCall = Date()
         default: break
         }
+        return nil
+    }
+
+    /// A click is kept while its call runs, so a plan that comes with it is answered for it: a button that has returned, or a timer, leaves nothing to
+    /// answer another plan with (D188). A call that never returns is cut off by its own timeout.
+    private func click(_ id: String) -> UUID? {
+        guard runtimes[id] != nil else { return nil }
+        let token = UUID(), now = Date()
+        runtimes[id]?.noteClick(token, at: now)
+        return token
+    }
+
+    func endPersonClick(_ id: String, _ click: UUID) {
+        runtimes[id]?.personClicks[click] = nil
     }
 
     /// Who a plan was allowed for.
@@ -274,6 +284,7 @@ extension ExtensionHost {
                   ExtensionPlanRules.same(step.reach, reach) else { return false }
             // What stands only in Full access stops when it ends (D188). A server's program is the one the person read, and the switch is theirs still.
             if step.isInFullAccessOnly, flow.mode != .fullAccess { return false }
+            if step.answeredInAuto == true, flow.mode != .auto { return false }
             if let pinned = step.program, pinned != program { return false }
             if ext?.sandboxed == false, step.program == nil { return false }
             if !flow.mayPassToServers, ext != nil, (step.sources ?? [:]).values.contains("outside") { return false }
@@ -299,13 +310,15 @@ extension ExtensionHost {
         return Standing(step: fits.input, provenance: provenance)
     }
 
-    /// Where a step's filled words come from, so History says it afterwards (D189): the field, the steps it names, and whether that is outside content.
+    /// Where a step's filled words come from, so History says it afterwards (D189): the field, the names of the steps it reads (as the extension wrote
+    /// them), and what the plan declared them to be. The last is what the host worked out when the plan was read, not a fact about this run.
     private static func provenance(_ step: ExtensionPlan.Step) -> String? {
         let parts = (step.input.objectValue ?? [:]).keys.sorted().compactMap { field -> String? in
             guard let text = step.input[field]?.stringValue, ExtensionPlanRules.hasSlot(text) else { return nil }
             let source = step.sources?[field]
-            let kind = source == "outside" ? "outside content" : source == "claimed" ? "said by the extension to be the person's own" : source == nil ? "filled in" : "the person's own words"
-            return "\(field) from \(ExtensionPlanRules.roots(text).joined(separator: ", ")) (\(kind))"
+            let kind = source == "outside" ? "outside content" : source == "claimed" ? "said by the extension to be the person's own" : source == nil ? "filled in"
+                : "an answer asked of the person, or the clock, as the plan declared"
+            return "\(field) from step \(ExtensionPlanRules.roots(text).joined(separator: ", ")) (\(kind))"
         }
         return parts.isEmpty ? nil : parts.joined(separator: "; ")
     }
@@ -346,8 +359,8 @@ extension ExtensionHost {
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
         // Full access answers for the person's own click, once: not for a turn of Sidefolk's agent, and not for a click of a minute ago.
-        if flow.mode == .fullAccess, let click = runtimes[id]?.personClick, Date().timeIntervalSince(click) <= ExtensionPlanRules.clickWindow {
-            runtimes[id]?.personClick = nil
+        if flow.mode == .fullAccess, let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
+            runtimes[id]?.personClicks[click] = nil
             return .fullAccess
         }
         // In Auto, an edit that only adds what stays inside Sidefolk asks nothing; History still has the row.
@@ -367,6 +380,12 @@ extension ExtensionHost {
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
             return
         }
+        // What the person read was an edit of the plan standing then: if they ended it or it changed while the card was up (or while an answer was on its way),
+        // saving the whole candidate would bring back lines they took away. The program asks again and the whole plan is shown.
+        if let was = evaluation.previous, rt.preferences.plans[was.id] != was {
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
+            return
+        }
         var plan = evaluation.plan
         // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
         // when it was going to, however often its program asks again. (A plan nobody read never gets here with a previous: it is shown whole.)
@@ -375,6 +394,8 @@ extension ExtensionHost {
             plan.expiresAt = was.expiresAt
         }
         if answer == .fullAccess { plan.answeredUnread = true }
+        // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
+        if answer == .covered, evaluation.mode == .auto { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
         await updatePreferences(id) { $0.plans[plan.id] = plan }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
@@ -399,6 +420,7 @@ extension ExtensionHost {
                 else if e.askOnline, line.tool?.spec.capabilities.contains(.network) == true { out = ["state": "asks", "why": "ask_online"] }
                 else { out = ["state": .string(v.fullAccessOnly && flow.mode != .fullAccess ? "stands_in_full_access" : "stands")] }
                 if let why = v.why, line.step.kind == nil, out["why"] == nil { out["why"] = .string(why) }
+                if let detail = v.detail, line.step.kind == nil { out["detail"] = .string(detail) }
                 if let warning = v.warning { out["warning"] = .string(warning) }
                 return .object(out)
             }

@@ -16,6 +16,8 @@ extension ExtensionPlanRules {
         var fullAccessOnly = false
         /// Why it asks or only stands in Full access, as the editor's marks say it (`sidefolk/plan.check`); nil when it stands.
         var why: String?
+        /// More on why, for the card: why a server's program can't be checked (`ProgramPin.Unchecked`).
+        var detail: String?
         /// A plain warning on the card for a line that stands (`crossing`: it reads the person's own things and outside words and sends words on).
         var warning: String?
         /// It stands in no mode: the person's own words are needed there.
@@ -90,6 +92,8 @@ extension ExtensionPlanRules {
     private static let codeWords: Set<String> = [
         "command", "cmd", "script", "code", "exec", "execute", "eval", "expression", "sql", "shell", "statement", "program", "snippet", "args", "argv",
         "regex", "js", "python", "bash", "zsh", "powershell", "applescript", "javascript",
+        "arguments", "argument", "executable", "exe", "binary", "cmdline", "flags", "flag", "options", "option", "env", "environment", "prompt", "task", "run", "sh",
+        "interpreter", "entrypoint", "macro",
     ]
     /// Names that run something, written as one word (`applescript`); a name that only holds the letters (`transcript`, `description`) isn't one.
     private static let codeCompounds = ["applescript", "javascript", "typescript", "vbscript", "coffeescript", "powershell", "commandline", "shellscript", "bashscript"]
@@ -250,8 +254,11 @@ extension ExtensionPlanRules {
             guard let was = before[key], same(was, value) else { return false }
         }
         // What a word-filled value came from: no further out than before, and the same kind of step behind it.
-        for (key, source) in step.sources ?? [:] where source == "outside" && !open.contains(key) {
-            guard old.sources?[key] == "outside" else { return false }
+        // The table's text fields are no exception: their words may change, but where those words come from may not move out of the person's own.
+        for (key, source) in step.sources ?? [:] {
+            // A claim is the extension's word, which no switch of the person's holds back: a field newly said to be theirs is something new, though it is
+            // "no further out" than the page words it was before (T53).
+            if source == "outside" || source == "claimed" { guard old.sources?[key] == source else { return false } }
         }
         return (step.feeds ?? [:]).allSatisfy { old.feeds?[$0.key] == $0.value }
     }

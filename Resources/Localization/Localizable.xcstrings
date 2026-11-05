@@ -28994,6 +28994,65 @@
         }
       }
     },
+    "(and %lld more)" : {
+      "comment" : "A plan's card: a list of a step's sources was cut; how many more",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(و%lld غيره)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(und %lld weitere)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(y %lld más)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(et %lld de plus)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(e altri %lld)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（ほか%lld件）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(외 %lld개)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(e mais %lld)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（以及另外 %lld 个）"
+          }
+        }
+      }
+    },
     "+ %lld more" : {
       "localizations" : {
         "ar" : {
@@ -30745,7 +30804,66 @@
         }
       }
     },
+    "A flow asks on a card that says what it does, and again when you edit it to do something new, when its time is up or you end it, when its program or definition changes, or if you ask to be asked every time. This is the one thing on that card you can take back for every flow at once." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسألك الروتين عبر بطاقة تشرح ما يفعله، ثم يسأل مرة أخرى عندما تعدّله ليفعل شيئًا جديدًا، أو عندما ينتهي وقته أو تنهيه، أو عندما يتغيّر برنامجه أو تعريفه، أو إذا طلبت أن يُسأل عنه في كل مرة. هذا هو الشيء الوحيد في تلك البطاقة الذي يمكنك سحبه من جميع الروتينات دفعة واحدة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Ablauf fragt auf einer Karte, die sagt, was er tut, und noch einmal, wenn du ihn änderst, damit er etwas Neues tut, wenn seine Zeit abläuft oder du ihn beendest, wenn sich sein Programm oder seine Definition ändert, oder wenn du jedes Mal gefragt werden willst. Das ist das Einzige auf dieser Karte, das du für alle Abläufe auf einmal zurücknehmen kannst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una rutina pide permiso en una tarjeta que dice lo que hace, y de nuevo cuando la editas para que haga algo nuevo, cuando se acaba su tiempo o la terminas, cuando cambia su programa o su definición, o si pides que te pregunte siempre. Es lo único de esa tarjeta que puedes retirar para todas las rutinas a la vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une routine demande l’accord sur une carte qui dit ce qu’elle fait, puis à nouveau quand vous la modifiez pour qu’elle fasse autre chose, quand son délai est écoulé ou que vous y mettez fin, quand son programme ou sa définition change, ou si vous demandez à être sollicité à chaque fois. C’est le seul point de cette carte que vous pouvez reprendre pour toutes les routines à la fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una routine chiede su una scheda che dice cosa fa, e di nuovo quando la modifichi perché faccia qualcosa di nuovo, quando il suo tempo scade o la termini, quando cambiano il suo programma o la sua definizione, o se chiedi di essere interpellato ogni volta. È l’unica cosa su quella scheda che puoi ritirare per tutte le routine insieme."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルーティンは、その内容を伝えるカードで確認します。新しいことをするよう編集したとき、期限が切れたりあなたが終了したとき、プログラムや定義が変わったとき、毎回確認するよう求めたときにも、もう一度確認します。このカードで、すべてのルーティンについてまとめて取り消せるのはこれだけです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "루틴은 하는 일을 알려 주는 카드로 물어봐요. 새로운 일을 하도록 고쳤을 때, 시간이 다 됐거나 직접 끝냈을 때, 프로그램이나 정의가 바뀌었을 때, 매번 물어보도록 했을 때도 다시 물어봐요. 이 카드에서 모든 루틴에 대해 한꺼번에 되돌릴 수 있는 건 이것뿐이에요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma rotina pergunta em um cartão que diz o que ela faz, e de novo quando você a edita para fazer algo novo, quando o tempo dela acaba ou você a encerra, quando o programa ou a definição dela muda, ou se você pede para ser perguntado sempre. É a única coisa nesse cartão que você pode retirar de todas as rotinas de uma vez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流程会在一张说明其作用的卡片上征求你的同意；当你把它改成做新的事、它到期或被你结束、它的程序或定义改变，或你要求每次都询问时，会再次征求。这是这张卡片上你能对所有流程一次性收回的唯一一项。"
+          }
+        }
+      }
+    },
     "A flow asks once, on a card that says what it does. This is the one thing on that card you can take back for every flow at once." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -111487,6 +111605,7 @@
     },
     "Its terms changed: how it starts, how long it lasts or how many actions it may make." : {
       "comment" : "A plan's card after an edit",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -111540,6 +111659,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "条款已更改：启动方式、持续时间或可执行的操作数量。"
+          }
+        }
+      }
+    },
+    "Its terms changed: what it says about when it runs, how long it lasts, how many actions it may make, or that it goes round a list." : {
+      "comment" : "A plan's card after an edit",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّرت شروطه: ما يقوله عن وقت تشغيله، أو مدة سريانه، أو عدد الإجراءات التي يمكنه تنفيذها، أو أنه يمرّ على قائمة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seine Bedingungen haben sich geändert: was er darüber sagt, wann er läuft, wie lange er gilt, wie viele Aktionen er ausführen darf oder dass er eine Liste durchläuft."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiaron sus condiciones: lo que dice sobre cuándo se ejecuta, cuánto dura, cuántas acciones puede hacer, o que recorre una lista."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses conditions ont changé : ce qu’elle dit de son déclenchement, sa durée, le nombre d’actions permises, ou le fait qu’elle parcoure une liste."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono cambiate le condizioni: ciò che dice su quando parte, quanto dura, quante azioni può fare, o che scorre una lista."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "条件が変わりました。実行のタイミングについての記述、有効期間、実行できる動作の数、またはリストを順に処理することです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "조건이 바뀌었어요. 언제 실행되는지에 대한 설명, 지속 시간, 할 수 있는 동작 수, 또는 목록을 차례로 도는지 여부예요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os termos mudaram: o que ela diz sobre quando roda, quanto dura, quantas ações pode fazer, ou que ela percorre uma lista."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "条款已更改：它对何时运行的说明、持续时间、可执行的操作数量，或它是否会遍历一个列表。"
           }
         }
       }
@@ -140076,6 +140254,64 @@
         }
       }
     },
+    "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow is not held back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مفعّل: يمكن للروتين الذي وافقت عليه أن يضع ما قرأه أو كتبه في حقول خادم أو أداة إضافة أخرى، كما تقول بطاقته: كلمات من صفحة أو ملف، وأيضًا ملاحظاتك وتذكيراتك وتقويمك، وما كتبه الذكاء الاصطناعي لديك، وما ردّت به خوادم أخرى. متوقف: تسألك تلك الأسطر في كل مرة. ما تكتبه بنفسك في الروتين لا يُحجب."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An: Ein Ablauf, den du genehmigt hast, darf, was er gelesen oder geschrieben hat, in die Felder eines Servers oder des Werkzeugs eines anderen Add-ons setzen, wo seine Karte es sagt: Wörter von einer Seite oder aus einer Datei, aber auch deine eigenen Notizen, Erinnerungen und Termine, was deine KI geschrieben hat und was andere Server geantwortet haben. Aus: Diese Zeilen fragen jedes Mal. Was du in einen Ablauf eintippst, wird nicht zurückgehalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado: una rutina que aprobaste puede poner lo que leyó o escribió en los campos de un servidor o de la herramienta de otro complemento, donde su tarjeta lo indica: palabras de una página o de un archivo, pero también tus propias notas, recordatorios y calendario, lo que escribió tu IA y lo que respondieron otros servidores. Desactivado: esas líneas preguntan cada vez. Lo que escribes en una rutina no se retiene."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé : une routine que vous avez approuvée peut mettre ce qu’elle a lu ou écrit dans les champs d’un serveur ou de l’outil d’un autre module, comme l’indique sa carte : des mots venant d’une page ou d’un fichier, mais aussi vos propres notes, rappels et agenda, ce que votre IA a écrit et ce que d’autres serveurs ont répondu. Désactivé : ces lignes demandent à chaque fois. Ce que vous saisissez dans une routine n’est pas retenu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivo: una routine che hai approvato può mettere ciò che ha letto o scritto nei campi di un server o dello strumento di un altro componente, dove la sua scheda lo dice: parole di una pagina o di un file, ma anche le tue note, i tuoi promemoria e il tuo calendario, ciò che ha scritto la tua IA e ciò che hanno risposto altri server. Spento: quelle righe chiedono ogni volta. Ciò che scrivi in una routine non viene trattenuto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オン：承認したルーティンは、カードに書かれているとおり、読み取った内容や書いた内容をサーバや別のアドオンのツールの項目に入れられます。ページやファイルの言葉だけでなく、自分のノート、リマインダー、カレンダー、AIが書いた内容、ほかのサーバの返答も含みます。オフ：それらの行は毎回確認します。ルーティンに自分で入力した内容は止められません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "켬: 승인한 루틴이 읽거나 쓴 내용을 카드에 적힌 대로 서버나 다른 애드온 도구의 항목에 넣을 수 있어요. 페이지나 파일의 글뿐 아니라 내 노트, 미리 알림, 캘린더, AI가 쓴 글, 다른 서버의 응답도 포함돼요. 끔: 그런 줄은 매번 물어봐요. 루틴에 직접 입력한 내용은 막지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligado: uma rotina que você aprovou pode colocar o que leu ou escreveu nos campos de um servidor ou da ferramenta de outro complemento, onde o cartão dela diz: palavras de uma página ou de um arquivo, mas também suas próprias notas, lembretes e agenda, o que sua IA escreveu e o que outros servidores responderam. Desligado: essas linhas perguntam a cada vez. O que você digita em uma rotina não é retido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启：你批准过的流程可以按卡片上所写，把它读到或写下的内容放进服务器或其他附加功能工具的字段：来自网页或文件的文字，也包括你自己的笔记、提醒事项和日历、你的 AI 写的内容，以及其他服务器的回答。关闭：这些行每次都会询问。你在流程中输入的内容不受限制。"
+          }
+        }
+      }
+    },
     "On: a flow you approved may put words it read from a page or a file into a server's fields, where its card says so. Off: those lines ask each time." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -140136,6 +140372,7 @@
       }
     },
     "On: a flow you approved may put words it read from a page or a file into the fields of a server or another add-on's tool, where its card says so. Off: those lines ask each time." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -213931,6 +214168,7 @@
     },
     "This flow reads things of yours and outside content, and fills “%@” from what it reads: a page's words could put your own there, and they go to %@." : {
       "comment" : "A plan's card: a warning that outside words could carry the person's own words to a server; a tool's title, an extension's name",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -213990,6 +214228,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这个流程会读取你自己的内容和外部内容，并用读到的内容填写“%1$@”：网页上的文字可能把你自己的内容放进去，并送往 %2$@。"
+          }
+        }
+      }
+    },
+    "This flow reads things of yours and outside content, and fills “%@” from what it reads: words from a page or a file could put your own there, and they go to %@." : {
+      "comment" : "A plan's card: a warning that outside words could carry the person's own words to a server; a tool's title, an extension's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ هذا الروتين أشياء من عندك ومحتوى من الخارج، ويملأ «%1$@» مما يقرؤه: قد تضع كلمات صفحة أو ملف ما كلماتك أنت هناك، وتذهب إلى %2$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Ablauf liest Eigenes von dir und Inhalte von außen und füllt „%1$@“ mit dem Gelesenen: Die Wörter einer Seite oder einer Datei könnten deine eigenen dort einsetzen, und sie gehen an %2$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This flow reads things of yours and outside content, and fills “%1$@” from what it reads: words from a page or a file could put your own there, and they go to %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta rutina lee cosas tuyas y contenido externo, y rellena «%1$@» con lo que lee: las palabras de una página o de un archivo podrían poner ahí las tuyas, y van a %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette routine lit des éléments à vous et du contenu extérieur, et remplit « %1$@ » avec ce qu’elle lit : les mots d’une page ou d’un fichier pourraient y mettre les vôtres, et ils vont vers %2$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa routine legge cose tue e contenuto esterno, e riempie “%1$@” con ciò che legge: le parole di una pagina o di un file potrebbero metterci le tue, e vanno a %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このルーティンは、あなた自身の内容と外部のコンテンツを読み取り、読み取った内容で「%1$@」を埋めます。ページやファイルの言葉があなた自身の内容をそこに入れる可能性があり、それは%2$@に送られます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 루틴은 내 자료와 외부 콘텐츠를 읽고, 읽은 내용으로 “%1$@” 항목을 채워요. 페이지나 파일의 말이 내 자료를 거기에 넣을 수 있고, 그 내용은 %2$@(으)로 가요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta rotina lê coisas suas e conteúdo de fora, e preenche “%1$@” com o que lê: as palavras de uma página ou de um arquivo podem pôr as suas lá, e elas vão para %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个流程会读取你自己的内容和外部内容，并用读到的内容填写“%1$@”：网页或文件上的文字可能把你自己的内容放进去，并送往 %2$@。"
           }
         }
       }
@@ -252559,6 +252862,65 @@
         }
       }
     },
+    "it is started with a file or folder it loads, which Sidefolk can't check" : {
+      "comment" : "A plan's card: why a server's line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبدأ بملف أو مجلد يحمّله، ولا يستطيع Sidefolk التحقق منه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "er wird mit einer Datei oder einem Ordner gestartet, den er lädt, was Sidefolk nicht prüfen kann"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "se inicia con un archivo o una carpeta que carga, y Sidefolk no puede comprobarlo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il est lancé avec un fichier ou un dossier qu’il charge, ce que Sidefolk ne peut pas vérifier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "viene avviato con un file o una cartella che carica, e Sidefolk non può verificarlo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "読み込むファイルまたはフォルダを指定して起動されるため、Sidefolkでは確認できません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "불러오는 파일이나 폴더와 함께 시작돼서 Sidefolk이 확인할 수 없어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ele é iniciado com um arquivo ou uma pasta que carrega, o que o Sidefolk não consegue verificar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它启动时带有它要加载的文件或文件夹，Sidefolk 无法核对"
+          }
+        }
+      }
+    },
     "it may also be a list, a record, a number, or left out" : {
       "comment" : "A plan's card: a field filled with one value of any kind",
       "localizations" : {
@@ -252795,6 +253157,65 @@
         }
       }
     },
+    "it starts through a launcher, interpreter or build tool, so what runs isn't the file Sidefolk can check" : {
+      "comment" : "A plan's card: why a server's line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبدأ عبر مشغّل أو مفسّر أو أداة بناء، فما يعمل ليس الملف الذي يستطيع Sidefolk التحقق منه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "er startet über einen Launcher, Interpreter oder ein Build-Werkzeug, also ist das Ausgeführte nicht die Datei, die Sidefolk prüfen kann"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "arranca a través de un lanzador, un intérprete o una herramienta de compilación, así que lo que se ejecuta no es el archivo que Sidefolk puede comprobar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il démarre via un lanceur, un interpréteur ou un outil de build : ce qui s’exécute n’est pas le fichier que Sidefolk peut vérifier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parte tramite un launcher, un interprete o uno strumento di build, quindi ciò che viene eseguito non è il file che Sidefolk può verificare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ランチャー、インタプリタ、またはビルドツール経由で起動するため、実行されるものはSidefolkが確認できるファイルではありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "런처, 인터프리터 또는 빌드 도구를 거쳐 시작하므로 실행되는 것이 Sidefolk이 확인할 수 있는 파일이 아니에요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ele começa por um lançador, um interpretador ou uma ferramenta de build, então o que roda não é o arquivo que o Sidefolk consegue verificar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它通过启动器、解释器或构建工具启动，所以实际运行的并不是 Sidefolk 能核对的那个文件"
+          }
+        }
+      }
+    },
     "its notes to “%@”" : {
       "localizations" : {
         "ar" : {
@@ -252908,6 +253329,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "它的程序无法核对"
+          }
+        }
+      }
+    },
+    "its program is a script, not a compiled program, so Sidefolk can't check it" : {
+      "comment" : "A plan's card: why a server's line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برنامجه سكربت وليس برنامجًا مترجمًا، فلا يستطيع Sidefolk التحقق منه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sein Programm ist ein Skript, kein kompiliertes Programm, daher kann Sidefolk es nicht prüfen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "su programa es un script, no un programa compilado, así que Sidefolk no puede comprobarlo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "son programme est un script, pas un programme compilé : Sidefolk ne peut pas le vérifier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il suo programma è uno script, non un programma compilato, quindi Sidefolk non può verificarlo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プログラムがスクリプトでありコンパイル済みではないため、Sidefolkでは確認できません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로그램이 컴파일된 것이 아니라 스크립트라서 Sidefolk이 확인할 수 없어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o programa dele é um script, não um programa compilado, então o Sidefolk não consegue verificá-lo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的程序是脚本而不是编译后的程序，Sidefolk 无法核对"
+          }
+        }
+      }
+    },
+    "its program is named without a full path, so Sidefolk can't tell which one runs" : {
+      "comment" : "A plan's card: why a server's line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برنامجه مذكور دون مسار كامل، فلا يعرف Sidefolk أيّها يعمل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sein Programm wird ohne vollständigen Pfad genannt, daher weiß Sidefolk nicht, welches läuft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "su programa se nombra sin ruta completa, así que Sidefolk no sabe cuál se ejecuta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "son programme est nommé sans chemin complet : Sidefolk ne peut pas savoir lequel s’exécute"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il suo programma è indicato senza percorso completo, quindi Sidefolk non sa quale viene eseguito"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プログラムがフルパスなしで指定されているため、Sidefolkはどれが実行されるか分かりません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로그램이 전체 경로 없이 지정돼서 Sidefolk이 무엇이 실행되는지 알 수 없어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o programa dele é indicado sem o caminho completo, então o Sidefolk não sabe qual roda"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的程序没有写完整路径，Sidefolk 无法知道实际运行的是哪一个"
           }
         }
       }
@@ -263218,6 +263757,7 @@
     },
     "you asked the internet to ask each time" : {
       "comment" : "A plan's card: why a line asks",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -263271,6 +263811,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你设置了访问互联网每次都询问"
+          }
+        }
+      }
+    },
+    "you asked the internet to ask each time (this line runs without asking if you change that)" : {
+      "comment" : "A plan's card: why a line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلبت أن يسأل الإنترنت في كل مرة (يعمل هذا السطر دون سؤال إذا غيّرت ذلك)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "du hast verlangt, dass das Internet jedes Mal fragt (diese Zeile läuft ohne Nachfrage, wenn du das änderst)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pediste que internet pregunte cada vez (esta línea se ejecuta sin preguntar si cambias eso)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vous avez demandé que l’internet demande à chaque fois (cette ligne s’exécute sans demander si vous changez cela)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hai chiesto che internet chieda ogni volta (questa riga gira senza chiedere se cambi questa impostazione)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネットは毎回確認するよう設定されています（この設定を変えると、この行は確認なしで実行されます）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인터넷을 매번 물어보도록 설정했어요 (이 설정을 바꾸면 이 줄은 묻지 않고 실행돼요)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "você pediu que a internet pergunte a cada vez (esta linha roda sem perguntar se você mudar isso)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你设置了互联网每次都询问（如果你更改这一设置，这一行将不再询问直接运行）"
           }
         }
       }

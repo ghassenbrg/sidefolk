@@ -37,6 +37,9 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
         /// What each filled field is fed by, as a fingerprint of the steps it points at, each as written (name, tool, provider, definition, kind, input): an
         /// edit that points the same words at another step is something new, though the step itself is unchanged (D187).
         public var feeds: [String: String]?
+        /// Added while Auto skipped the card because it stays inside Sidefolk: nobody read it, so it stands only while Auto is on and any other mode asks
+        /// for a card first (D187, D188).
+        public var answeredInAuto: Bool?
 
         var isInFullAccessOnly: Bool { fullAccessOnly == true }
     }
@@ -177,14 +180,17 @@ enum ExtensionPlanRules {
     }
 
     /// Whether a call is the step: the same keys (a whole-slot field may be left out), every written value equal, and words only where the plan left room.
+    /// Keys are compared by their bytes, as values are: Swift calls two spellings of one letter equal, and a server reads them as two different fields.
     static func matches(_ input: JSONValue, template: JSONValue, fillable: Set<String>, whole: Set<String> = []) -> Bool {
-        guard let given = input.objectValue, let written = template.objectValue,
-              Set(given.keys).isSubset(of: Set(written.keys)), Set(written.keys).subtracting(given.keys).isSubset(of: whole) else { return false }
+        guard let given = input.objectValue, let written = template.objectValue else { return false }
+        func spelled(_ key: String) -> String? { written.keys.first { $0.utf8.elementsEqual(key.utf8) } }
+        let used = Set(given.keys.compactMap(spelled))
+        guard used.count == given.count, written.keys.filter({ !used.contains($0) }).allSatisfy({ whole.contains($0) }) else { return false }
         return given.allSatisfy { key, call in
-            guard let value = written[key] else { return false }
+            guard let own = spelled(key), let value = written[own] else { return false }
             if case .string(let t) = value, hasSlot(t) {
-                guard fillable.contains(key) else { return false }
-                if whole.contains(key) { return true }
+                guard fillable.contains(own) else { return false }
+                if whole.contains(own) { return true }
                 guard case .string(let s) = call else { return false }
                 return fits(s, template: t)
             }
@@ -210,26 +216,35 @@ enum ExtensionPlanRules {
     }
 
     /// What shows is all there is: nothing the card would strip, nothing invisible, nothing so long in bytes that characters hide it. What people's own writing needs stays:
-    /// a joiner between letters (Persian, Hindi) or in an emoji, and an emoji's variation selector, each where it joins something, so none can carry anything by itself.
+    /// a joiner between letters (Persian, Hindi) or in an emoji, and an emoji's variation selector, each where it joins something of its own kind, so none can carry anything by itself.
     static func plain(_ text: String) -> Bool {
         guard text.utf8.count <= ExtensionPlanWords.valueLimit * 4 else { return false }
         let scalars = Array(text.unicodeScalars)
         var rest = String.UnicodeScalarView()
+        // An emoji, or a keycap's base (`1`, `#`, `*`), takes a selector; a letter or a mark beyond ASCII has joiners in its own writing.
+        func emoji(_ o: Unicode.Scalar?) -> Bool { o.map { $0.properties.isEmoji || $0.value == 0xFE0F || (0x1F3FB...0x1F3FF).contains($0.value) } ?? false }
+        func writing(_ o: Unicode.Scalar?) -> Bool {
+            guard let o, !o.isASCII else { return false }
+            switch o.properties.generalCategory {
+            case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .nonspacingMark, .spacingMark, .enclosingMark: return true
+            default: return false
+            }
+        }
         for (i, s) in scalars.enumerated() {
             let before = i > 0 ? scalars[i - 1] : nil, after = i + 1 < scalars.count ? scalars[i + 1] : nil
-            func shows(_ o: Unicode.Scalar?) -> Bool { o.map { !$0.properties.isDefaultIgnorableCodePoint && !$0.properties.isWhitespace } ?? false }
             switch s.value {
-            case 0xFE0F where shows(before): continue
+            case 0xFE0F where before.map({ $0.properties.isEmoji && $0.value != 0xFE0F }) == true: continue
             case 0x200C, 0x200D:
                 // A joiner joins writing that has joiners (an emoji, Persian, Hindi): between two ASCII letters it would only change what a card shows.
-                func beyondASCII(_ o: Unicode.Scalar?) -> Bool { o.map { !$0.isASCII } ?? false }
-                if shows(after), shows(before) || before?.value == 0xFE0F, beyondASCII(after), beyondASCII(before) { continue }
+                if (emoji(before) && emoji(after)) || (writing(before) && writing(after)) { continue }
                 return false
             default: rest.append(s)
             }
         }
         let shown = String(rest)
-        guard same(ExtensionText.clean(shown), shown), !shown.unicodeScalars.contains(where: { $0.properties.isDefaultIgnorableCodePoint }) else { return false }
+        guard same(ExtensionText.clean(shown), shown), !shown.unicodeScalars.contains(where: { $0.properties.isDefaultIgnorableCodePoint || blank($0) }) else { return false }
+        // A word that mixes Latin with Cyrillic or Greek letters is one the eye can't tell from another (a Cyrillic `а` in `paypal`): not shown as plain.
+        for word in shown.split(whereSeparator: \.isWhitespace) where Set(word.unicodeScalars.compactMap(script)).count > 1 { return false }
         // What the card shows is the bytes: one plain space between words, none at the ends, no other kind of space, no tab or line break, and no pile of
         // marks past what the card keeps on a letter.
         var previous: Unicode.Scalar?, marks = 0
@@ -246,6 +261,26 @@ enum ExtensionPlanRules {
             previous = scalar
         }
         return previous != " "
+    }
+
+    /// Characters that draw nothing or nothing a reader could name: the braille blank, private use, what no version of Unicode has assigned, and controls.
+    private static func blank(_ scalar: Unicode.Scalar) -> Bool {
+        if scalar.value == 0x2800 { return true }
+        switch scalar.properties.generalCategory {
+        case .privateUse, .unassigned, .surrogate, .control, .format: return true
+        default: return false
+        }
+    }
+
+    /// The script of a letter, for the three that share shapes: nil for anything else.
+    private static func script(_ scalar: Unicode.Scalar) -> String? {
+        guard scalar.properties.isAlphabetic else { return nil }
+        switch scalar.value {
+        case 0x41...0x5A, 0x61...0x7A, 0xC0...0x24F, 0x1E00...0x1EFF: return "latin"
+        case 0x370...0x3FF, 0x1F00...0x1FFF: return "greek"
+        case 0x400...0x52F, 0x2DE0...0x2DFF, 0xA640...0xA69F: return "cyrillic"
+        default: return nil
+        }
     }
 
     /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.

@@ -67,6 +67,11 @@ public actor ExtensionHost {
             self.mode = mode
             self.mayPassToServers = mayPassToServers
         }
+
+        /// From the person's policy. One that can't be read is not a permission: every action asks and nothing is passed on to servers.
+        public init(policy: GuardPolicy?) {
+            self.init(mode: policy?.mode ?? .askEveryTime, mayPassToServers: policy?.flowsMayPassToServers ?? false)
+        }
     }
 
     struct Runtime {
@@ -119,13 +124,21 @@ public actor ExtensionHost {
         var actionCalls: [Date] = []
         /// A plan's card is up: the next waits, so what is saved is what was read.
         var planAsking = false
-        /// The person's own click or typed command to this extension, kept until a plan uses it (Full access answers one plan for one click, D188).
-        var personClick: Date?
+        /// The person's own clicks or typed commands to this extension whose calls are still running, by call (Full access answers one plan for one click,
+        /// and only while the call that click made is the one asking, D188).
+        var personClicks: [UUID: Date] = [:]
         /// How many actions each plan's runs made, by plan and run id: the most recent runs only (D189).
         var runCalls: [String: Int] = [:]
         /// When this extension last spent from each minute budget (looking at plans and tools, approving plans).
         var budgets: [String: [Date]] = [:]
         var runOrder: [String] = []
+
+        /// A click whose call is running; those past the window can no longer answer a plan and are dropped.
+        mutating func noteClick(_ token: UUID, at now: Date) {
+            lastPersonCall = now
+            personClicks = personClicks.filter { now.timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow }
+            personClicks[token] = now
+        }
 
         mutating func countRun(_ key: String) {
             if runCalls[key] == nil {
@@ -1656,6 +1669,7 @@ public actor ExtensionHost {
                              service: Self.reachName(rt.manifest?.services ?? []), trustedOnly: meta?.trustedOnly ?? [],
                              sandboxed: rt.record.kind == .sidefolk, forAgents: rt.record.kind == .sidefolk && meta?.agents == true,
                              began: { [weak self] caller, tainted in await self?.notePersonCall(id, caller: caller, tainted: tainted) },
+                             ended: { [weak self] click in await self?.endPersonClick(id, click) },
                              asking: { [weak self] asks, caller in await self?.performAsks(id, asks, caller: caller) }) { [weak self] input, folders in
             guard let self else { throw ToolError.unavailable(String(localized: "Extensions aren't running.")) }
             return try await self.callTool(id, remote: remote, title: title, input: input, folders: folders, timeout: timeout)

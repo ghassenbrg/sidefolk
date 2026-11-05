@@ -38,7 +38,9 @@ public struct ExtensionTool: Tool {
     /// Other agents may use it, on a card each time (`tools.<name>.agents`, D112).
     public let forAgents: Bool
     /// Told who called, before the call: a plan may be asked for only just after the person (D110).
-    private let began: (@Sendable (Caller, Bool) async -> Void)?
+    private let began: (@Sendable (Caller, Bool) async -> UUID?)?
+    /// The call is over, whatever it came to: a click answers a plan only while the call it made is still running.
+    private let ended: (@Sendable (UUID) async -> Void)?
     /// Does what a reply asked for, knowing who made the call (D100).
     private let asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)?
     private let invoke: @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult
@@ -67,7 +69,7 @@ public struct ExtensionTool: Tool {
     init(spec: ToolSpec, extensionId: String, extensionName: String, remoteName: String, provider: String = "", program: String? = nil, programArguments: [String] = [],
          folderParameters: [String: ExtensionManifest.FolderUse] = [:], fileLists: Set<String> = [], firstParty: Bool = false, commands: ToolCommands? = nil,
          paired: PairedDevice? = nil, sentence: ToolSentence? = nil, service: String? = nil, trustedOnly: [String] = [],
-         sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> Void)? = nil,
+         sandboxed: Bool = true, forAgents: Bool = false, began: (@Sendable (Caller, Bool) async -> UUID?)? = nil, ended: (@Sendable (UUID) async -> Void)? = nil,
          asking: (@Sendable (ExtensionToolAsks, Caller) async -> Void)? = nil,
          invoke: @escaping @Sendable (JSONValue, [ExtensionFolderGrant]) async throws -> ToolResult) {
         self.spec = spec
@@ -85,6 +87,7 @@ public struct ExtensionTool: Tool {
         self.sandboxed = sandboxed
         self.forAgents = forAgents
         self.began = began
+        self.ended = ended
         self.paired = firstParty ? paired : nil
         self.sentence = firstParty ? sentence : nil
         self.service = firstParty ? service : nil
@@ -212,8 +215,13 @@ public struct ExtensionTool: Tool {
             }
             input = input.setting(param, .array(checked))
         }
-        await began?(context.caller, context.tainted)
-        let result = try await invoke(input, grants)
+        let click = await began?(context.caller, context.tainted)
+        let result: ToolResult
+        do { result = try await invoke(input, grants) } catch {
+            if let click { await ended?(click) }
+            throw error
+        }
+        if let click { await ended?(click) }
         if let asks = result.asks { await asking?(asks, context.caller) }
         return result
     }

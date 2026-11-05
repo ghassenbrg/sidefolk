@@ -8,6 +8,17 @@ struct PlanEvaluation {
         /// The tool behind it, nil for a step the host doesn't run (an AI step, another flow).
         var tool: (any Tool)?
         var verdict: ExtensionPlanRules.Verdict
+        /// The step as written (name, tool, provider, definition, kind, what an AI step reads, input), hashed once: what a fingerprint of the steps
+        /// that feed another is made of, so working one out never reads a large input again.
+        let digest: String
+
+        init(step: ExtensionPlan.Step, tool: (any Tool)?, verdict: ExtensionPlanRules.Verdict) {
+            self.step = step
+            self.tool = tool
+            self.verdict = verdict
+            let text = "\(step.name ?? "")|\(step.tool)|\(step.provider ?? "")|\(step.definition)|\(step.kind ?? "")|\((step.reads ?? ["*"]).joined(separator: ","))|\(step.input.jsonString)"
+            digest = ExtensionHash.sha256(Data(text.utf8))
+        }
     }
 
     /// The distinct lines, in order.
@@ -107,8 +118,15 @@ extension ExtensionHost {
                 let ext = ExtensionPlanRules.extensionTool(tool)
                 // Off this actor: the first look at a large program is a long read.
                 let command = ext?.program, arguments = ext?.programArguments ?? []
-                let program = await command.asyncMap { path in await Task.detached { ProgramPin.hash(of: path, arguments: arguments) }.value } ?? nil
-                let verdict = ExtensionPlanRules.verdict(tool: tool, template: input, sources: sources.filter { !open.contains($0.key) }, pinned: ext?.sandboxed != false || program != nil, context: context)
+                let checked = await command.asyncMap { path in await Task.detached { ProgramPin.check(of: path, arguments: arguments) }.value }
+                var program: String?, unchecked: ProgramPin.Unchecked?
+                switch checked {
+                case .pinned(let hash)?: program = hash
+                case .unchecked(let why)?: unchecked = why
+                case nil: break
+                }
+                var verdict = ExtensionPlanRules.verdict(tool: tool, template: input, sources: sources.filter { !open.contains($0.key) }, pinned: ext?.sandboxed != false || program != nil, context: context)
+                if verdict.why == "server_unpinned" { verdict.detail = unchecked?.rawValue }
                 let definition = definitions[tool.spec.name] ?? ExtensionPlanRules.definition(tool.spec)
                 definitions[tool.spec.name] = definition
                 var step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: definition,
@@ -145,7 +163,9 @@ extension ExtensionHost {
         candidate.crossing = crossing ? true : nil
         var fresh = Array(lines.indices), widened = false
         if let read {
-            fresh = lines.indices.filter { i in !read.steps.contains { $0.tool == lines[i].step.tool && $0.kind == lines[i].step.kind && ExtensionPlanRules.covers($0, lines[i].step) } }
+            // A line Auto let through without a card was not read either.
+            let readSteps = read.steps.filter { $0.answeredInAuto != true }
+            fresh = lines.indices.filter { i in !readSteps.contains { $0.tool == lines[i].step.tool && $0.kind == lines[i].step.kind && ExtensionPlanRules.covers($0, lines[i].step) } }
             // A plan that now reads private things and outside words and fills a server line from them: those lines are new, however they stood before.
             if crossing, read.crossing != true { fresh = Array(Set(fresh).union(lines.indices.filter { lines[$0].verdict.warning != nil })).sorted() }
             widened = ExtensionPlanRules.widened(read, to: candidate)
@@ -192,24 +212,31 @@ extension ExtensionHost {
                 || (!spec.mutates && !spec.capabilities.isDisjoint(with: [.notebook, .memory, .calendar, .clipboard, .filesRead, .macApps]))
         }
         func outsideRead(_ tool: any Tool) -> Bool {
-            // A job for the companion reads what it likes, pages included, and writes what it hands on.
-            ExtensionPlanRules.extensionTool(tool) != nil || tool.spec.capabilities.contains(.network) || tool.spec.name == CompanionJobTool.name
+            // A job for the companion reads what it likes, pages included, and writes what it hands on. A file, the clipboard, another app's notes,
+            // reminders or calendar hold what others wrote or what was pasted from a page: the Trust text says "a page or a file", and so does this.
+            ExtensionPlanRules.extensionTool(tool) != nil || tool.spec.name == CompanionJobTool.name || tool.spec.capabilities.contains(.network)
+                || (!tool.spec.mutates && !tool.spec.capabilities.isDisjoint(with: [.filesRead, .clipboard, .calendar, .macApps]))
         }
         // For each line that hands words to a server or another extension: do the steps BEFORE it read the person's own things and outside content? (What
-        // comes after can't feed it, and the line itself isn't its own reading.)
+        // comes after can't feed it, and the line itself isn't its own reading.) What each step reads is worked out once, and an AI step's named steps are
+        // looked up by name, so a large plan is the size of the plan and no more.
+        var at: [String: Int] = [:]
+        for (i, line) in lines.enumerated() { if line.tool != nil, let name = line.step.name { at[name] = i } }
+        let reads: [(privately: Bool, outside: Bool)] = lines.map { line in line.tool.map { (privateRead($0), outsideRead($0)) } ?? (false, false) }
+        let named: [[Int]?] = lines.map { line in line.step.kind == "ai" ? line.step.reads.map { $0.compactMap { at[$0] } } : nil }
         for i in lines.indices {
             guard let tool = lines[i].tool, ExtensionPlanRules.extensionTool(tool) != nil, lines[i].step.standing,
                   (lines[i].step.sources ?? [:]).values.contains("outside") else { continue }
             var privately = false, outside = false
-            for line in lines[..<i] {
-                if let before = line.tool {
-                    privately = privately || privateRead(before)
-                    outside = outside || outsideRead(before)
-                } else if line.step.kind == "ai" {
-                    guard let reads = line.step.reads else { privately = true; outside = true; continue }
-                    for named in lines[..<i] where named.tool != nil && reads.contains(named.step.name ?? "\u{0}") {
-                        privately = privately || privateRead(named.tool!)
-                        outside = outside || outsideRead(named.tool!)
+            for j in 0..<i {
+                if lines[j].tool != nil {
+                    privately = privately || reads[j].privately
+                    outside = outside || reads[j].outside
+                } else if lines[j].step.kind == "ai" {
+                    guard let from = named[j] else { privately = true; outside = true; continue }
+                    for k in from where k < i {
+                        privately = privately || reads[k].privately
+                        outside = outside || reads[k].outside
                     }
                 }
             }
@@ -235,17 +262,16 @@ extension ExtensionHost {
         "\(step.tool)|\(step.provider ?? "")|\(step.definition)|\(step.kind ?? "")|\((step.reads ?? []).joined(separator: ","))|\(step.input.jsonString)"
     }
 
-    /// The steps with these names, and the steps whose words they pass on, down to the ones that run something.
+    /// The steps with these names, and the steps whose words they pass on, down to the ones that run something. Each step once, by its name (a name is
+    /// never shared): the work is the size of the plan, not of its paths.
     static func closure(of names: [String], in lines: [PlanEvaluation.Line]) -> [PlanEvaluation.Line] {
-        var wanted = Set(names), added = Set<Int>()
-        var changed = true
-        while changed {
-            changed = false
-            for (i, line) in lines.enumerated() where !added.contains(i) && wanted.contains(line.step.name ?? "\u{0}") {
-                added.insert(i)
-                changed = true
-                if line.step.kind == "value" || line.step.kind == "ai" { wanted.formUnion(line.step.reads ?? []) }
-            }
+        var at: [String: Int] = [:]
+        for (i, line) in lines.enumerated() { if let name = line.step.name { at[name] = i } }
+        var added = Set<Int>(), todo = names
+        while let name = todo.popLast() {
+            guard let i = at[name], added.insert(i).inserted else { continue }
+            let step = lines[i].step
+            if step.kind == "value" || step.kind == "ai" { todo.append(contentsOf: step.reads ?? []) }
         }
         return added.sorted().map { lines[$0] }
     }
@@ -253,10 +279,7 @@ extension ExtensionHost {
     /// A fingerprint of the steps a value or an AI step is fed by: each one as written (its name, tool, provider, definition, kind, what an AI step reads, and its input).
     static func fingerprint(_ lines: [PlanEvaluation.Line]) -> String {
         // The whole step as written, name included: which words a name points at is what this fingerprints, so two steps of one tool that trade names differ.
-        let text = lines.map { line -> String in
-            "\(line.step.name ?? "")|\(line.step.tool)|\(line.step.provider ?? "")|\(line.step.definition)|\(line.step.kind ?? "")|\((line.step.reads ?? ["*"]).joined(separator: ","))|\(line.step.input.jsonString)"
-        }.joined(separator: "\n")
-        return ExtensionHash.sha256(Data(text.utf8))
+        ExtensionHash.sha256(Data(lines.map(\.digest).joined(separator: "\n").utf8))
     }
 
     /// For each field a step fills in, a fingerprint of the earlier steps its slots name (a name no step makes stands for itself).

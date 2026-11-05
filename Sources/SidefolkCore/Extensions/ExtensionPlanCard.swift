@@ -40,7 +40,7 @@ extension ExtensionPlanWords {
             if standing.count > same {
                 parts.append(String(localized: "Lines whose words changed where a plan lets them: \(standing.count - same).", comment: "A plan's card after an edit; a count of lines"))
             }
-            if e.widened { parts.append(String(localized: "Its terms changed: how it starts, how long it lasts or how many actions it may make.", comment: "A plan's card after an edit")) }
+            if e.widened { parts.append(String(localized: "Its terms changed: what it says about when it runs, how long it lasts, how many actions it may make, or that it goes round a list.", comment: "A plan's card after an edit")) }
         }
         // With nothing to allow, there's nothing to return and nothing to count: the card is only what it says it sets off.
         guard !e.lines.isEmpty else { return text(parts) }
@@ -137,7 +137,7 @@ extension ExtensionPlanWords {
         var from: [String: String] = [:]
         for (field, source) in line.step.sources ?? [:] {
             guard let text = line.step.input[field]?.stringValue else { continue }
-            let names = safe(sourceNames(text, e).joined(separator: ", "), 400)
+            let names = listed(sourceNames(text, e))
             // A signed extension's word that a value is the person's own is believed, and said to be its word.
             from[field] = source == "claimed" ? String(localized: "\(names), which the extension says is your own", comment: "A plan's card: a value the extension says comes from the person") : names
         }
@@ -146,6 +146,21 @@ extension ExtensionPlanWords {
         let wholes = ExtensionPlanRules.wholeKeys(line.step.input, tool: tool.spec.name)
         let anything = wholes.filter { properties[$0]?["type"]?.stringValue != "string" }
         return ExtensionPlanWords.line(tool: tool, template: line.step.input, from: from, program: line.step.program, whole: anything, omit: wholes.subtracting(anything))
+    }
+
+    /// Names for the card: as many as fit in 400 characters, and how many more there are, so a long list can't push one past the cut unseen.
+    private static func listed(_ names: [String]) -> String {
+        var shown: [String] = [], used = 0
+        for name in names {
+            let text = safe(name, 400)
+            let added = (shown.isEmpty ? 0 : 2) + text.count
+            if !shown.isEmpty, used + added > 400 { break }
+            shown.append(text)
+            used += added
+        }
+        let more = names.count - shown.count
+        let list = shown.joined(separator: ", ")
+        return more > 0 ? list + " " + String(localized: "(and \(more) more)", comment: "A plan's card: a list of a step's sources was cut; how many more") : list
     }
 
     /// Where a filled value comes from, by the step's own title and the tool it runs, so a title can't be taken for something else; a name no step
@@ -181,7 +196,7 @@ extension ExtensionPlanWords {
             return title + " · " + String(localized: "from everything the steps before it read", comment: "A plan's card: an AI step that names nothing")
         }
         let names = describe(reads, e)
-        return title + " · " + String(localized: "from “\(safe(names.joined(separator: ", "), 400))”", comment: "A plan's card: the steps an AI step reads")
+        return title + " · " + String(localized: "from “\(listed(names))”", comment: "A plan's card: the steps an AI step reads")
     }
 
     /// Why a line still asks, in words, when there is a reason the person can act on.
@@ -191,11 +206,18 @@ extension ExtensionPlanWords {
         case "reach_field"?: String(localized: "where it goes comes from outside content", comment: "A plan's card: why a line asks")
         case "private_read"?: String(localized: "what you copied is yours alone", comment: "A plan's card: why a line asks")
         case "filled_value"?: String(localized: "a value filled in from outside content", comment: "A plan's card: why a line asks")
-        case "server_unpinned"?: String(localized: "its program can't be checked", comment: "A plan's card: why a line asks")
+        case "server_unpinned"?:
+            switch line.verdict.detail {
+            case "launcher"?: String(localized: "it starts through a launcher, interpreter or build tool, so what runs isn't the file Sidefolk can check", comment: "A plan's card: why a server's line asks")
+            case "script"?: String(localized: "its program is a script, not a compiled program, so Sidefolk can't check it", comment: "A plan's card: why a server's line asks")
+            case "loads"?: String(localized: "it is started with a file or folder it loads, which Sidefolk can't check", comment: "A plan's card: why a server's line asks")
+            case "path"?: String(localized: "its program is named without a full path, so Sidefolk can't tell which one runs", comment: "A plan's card: why a server's line asks")
+            default: String(localized: "its program can't be checked", comment: "A plan's card: why a line asks")
+            }
         case "switch_off"?: String(localized: "you turned off passing what it reads on to servers", comment: "A plan's card: why a line asks")
         case "high_risk"?: String(localized: "it can't be undone", comment: "A plan's card: why a line asks")
         case "shell"?: String(localized: "it runs a program", comment: "A plan's card: why a line asks")
-        case nil where line.step.standing && line.tool?.spec.capabilities.contains(.network) == true && askOnline: String(localized: "you asked the internet to ask each time", comment: "A plan's card: why a line asks")
+        case nil where line.step.standing && line.tool?.spec.capabilities.contains(.network) == true && askOnline: String(localized: "you asked the internet to ask each time (this line runs without asking if you change that)", comment: "A plan's card: why a line asks")
         case "text_to_read"?: String(localized: "its words are read in full each time", comment: "A plan's card: why a line asks")
         case "nested_slot"?, "unreadable_value"?: String(localized: "a value that can't be shown in full", comment: "A plan's card: why a line asks")
         default: nil
@@ -216,7 +238,7 @@ extension ExtensionPlanWords {
         // The whole plan reads private things and outside words and sends words from them to a server or another extension: said where it happens.
         for i in shown where e.lines[i].verdict.warning == "crossing" {
             guard let tool = e.lines[i].tool, let ext = ExtensionPlanRules.extensionTool(tool) else { continue }
-            sentences.append(String(localized: "This flow reads things of yours and outside content, and fills “\(safe(tool.spec.title, 60))” from what it reads: a page's words could put your own there, and they go to \(safe(ext.extensionName, 40)).",
+            sentences.append(String(localized: "This flow reads things of yours and outside content, and fills “\(safe(tool.spec.title, 60))” from what it reads: words from a page or a file could put your own there, and they go to \(safe(ext.extensionName, 40)).",
                                     comment: "A plan's card: a warning that outside words could carry the person's own words to a server; a tool's title, an extension's name"))
         }
         for i in shown {
@@ -227,11 +249,11 @@ extension ExtensionPlanWords {
                 let names = sourceNames(text, e)
                 let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
                 if tool.spec.name == CompanionJobTool.name {
-                    sentences.append(String(localized: "Words from “\(safe(names.joined(separator: ", "), 400))” become the instructions of a job for your companion, which picks its own tools under your trust settings.",
+                    sentences.append(String(localized: "Words from “\(listed(names))” become the instructions of a job for your companion, which picks its own tools under your trust settings.",
                                             comment: "A plan's card: outside words steer a job; a step's title"))
                     continue
                 }
-                sentences.append(String(localized: "Words from “\(safe(names.joined(separator: ", "), 400))” go into \(safe(field, 300)) of “\(safe(tool.spec.title, 60))”.",
+                sentences.append(String(localized: "Words from “\(listed(names))” go into \(safe(field, 300)) of “\(safe(tool.spec.title, 60))”.",
                                         comment: "A plan's card: where outside words go; a step's title, a field, a tool's title"))
             }
         }
