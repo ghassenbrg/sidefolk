@@ -387,9 +387,9 @@ import Testing
         #expect(lines.first?.hasPrefix("limits:") == true)
         for number in 1...6 { #expect(lines.contains { $0.hasPrefix("#\(number) ") }, "line \(number) is named: \(lines)") }
         #expect(lines.contains { $0.hasPrefix("#3 Hands to your AI:") } && lines.contains { $0.hasPrefix("#5 Sets off: “Send the mail”") })
-        let repo = lines.first { $0.contains("/ repo:") } ?? ""
+        let repo = lines.first { $0.contains(" repo: ") } ?? ""
         #expect(repo.hasPrefix("#6 ") && repo.contains("outside content: “https://” [from") && repo.contains("“.attacker.example/” [from"), "the number, the kind first, every written part: \(repo)")
-        let body = lines.first { $0.contains("/ body:") } ?? "", labels = lines.first { $0.contains("/ labels:") } ?? ""
+        let body = lines.first { $0.contains(" body: ") } ?? "", labels = lines.first { $0.contains(" labels: ") } ?? ""
         #expect(body.hasPrefix("#6 ") && labels.hasPrefix("#6 ") && labels.contains("list (3)") && labels.contains("evil@z.com"), "a body stays with its destination: \(body) \(labels)")
         #expect(lines.allSatisfy { $0.count <= 270 } && lines.count <= 60)
         #expect(ActivityArguments.rows(try await w.rows("extensions.plan").first?.args).first { $0.name == "lines" }?.value.split(separator: "\n").count == lines.count, "one to a line on the screen")
@@ -403,7 +403,7 @@ import Testing
         let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
         #expect(await !w.approve(FlowApprovalTests.plan([post("a", repo: "evil/attacker", body: "hi"), notes, post("b", repo: "me/digest", body: "{{mine}}")])).asked)
         let lines = try await record(w)
-        func number(_ field: String, _ text: String) -> String? { lines.first { $0.contains("/ \(field):") && $0.contains(text) }?.prefix(3).description }
+        func number(_ field: String, _ text: String) -> String? { lines.first { $0.contains(" \(field): ") && $0.contains(text) }?.prefix(3).description }
         #expect(number("repo", "evil/attacker") == number("body", "“hi”") && number("repo", "me/digest") == number("body", "[from") && number("repo", "me/digest") != number("repo", "evil/attacker"), "\(lines)")
     }
 
@@ -445,6 +445,38 @@ import Testing
         try await w.setMode(.auto)
         _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
         #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
+        // The row numbers the line as the plan shows it (the second), and says what it holds.
+        let lines = try await record(w)
+        #expect(lines.contains { $0.hasPrefix("#2 notify.user · fields: 1") } && lines.contains { $0.hasPrefix("#2 title: “Done”") }, "\(lines)")
+    }
+
+    @Test func theEditorAndTheApprovalAgreeOnWhetherAnEditPassesWithNoCard() async throws {
+        let w = try await World()
+        try await w.setMode(.auto)
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
+        let many: [JSONValue] = (0..<41).map { ["tool": "notify.user", "input": ["title": .string("Step \($0)")]] }
+        let tooMuch = FlowApprovalTests.plan([FlowApprovalTests.save] + many)
+        #expect(await w.check(tooMuch)["silent"]?.boolValue == false, "what can't be recorded shows a card, and the editor says so")
+        #expect(await w.approve(tooMuch).asked)
+        let fits = FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "notify.user", "input": ["title": "Done"]]])
+        #expect(await w.check(fits)["silent"]?.boolValue == true)
+    }
+
+    @Test func anEntryUpTo300CharactersFitsAndOneOverDoesNot() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        func plan(_ count: Int) -> JSONValue { FlowApprovalTests.plan([["tool": "notify.user", "input": ["title": .string(String(repeating: "y", count: count))]]]) }
+        #expect(await !w.approve(plan(280)).asked, "an entry of 292 characters is kept whole by History")
+        #expect(await w.approve(plan(295)).asked, "one of 307 is not, so the card is the record")
+    }
+
+    @Test func emptyValuesAreRecordedAsEmptyAndDoNotForceACard() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.post(["body": "", "labels": []])])).asked)
+        let lines = try await record(w)
+        #expect(lines.contains { $0.hasPrefix("#1 body: “”") } && lines.contains { $0.hasPrefix("#1 labels: list (0):") }, "\(lines)")
     }
 
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {

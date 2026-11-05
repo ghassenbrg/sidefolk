@@ -445,7 +445,9 @@ extension ExtensionHost {
 
     /// In Auto, an edit that only adds what stays inside Sidefolk asks nothing.
     private static func autoSkips(_ e: PlanEvaluation) -> Bool {
+        // One predicate for the answer and for `plan.check`: an edit passes with no card only if what it adds can be recorded in full (`historyRecord`).
         e.mode == .auto && e.previous != nil && !e.widened && e.fresh.allSatisfy { ExtensionPlanRules.staysInside(e.lines[$0]) }
+            && ExtensionPlanWords.historyRecord(e) != nil
     }
 
     private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?) async {

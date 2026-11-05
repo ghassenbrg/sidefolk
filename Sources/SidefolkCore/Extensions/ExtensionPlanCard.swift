@@ -76,34 +76,53 @@ extension ExtensionPlanWords {
     /// if there would be more than 60 entries, if any entry is over 270 characters (nothing is split or cut), or if History's Redactor would change an entry (a
     /// literal that looks like a secret, a field named like one, a long mixed-case word): what History would not keep whole, the card is the record of.
     static func historyRecord(_ e: PlanEvaluation) -> [String]? {
+        // A name or a title is shown whole or the plan shows its card: a cut ("…") would hide the end of it.
+        var cutSomewhere = false
+        func fit(_ text: String, _ limit: Int) -> String {
+            let shown = safe(text, limit)
+            if shown != safe(text, 10_000) { cutSomewhere = true }
+            return shown
+        }
         var terms = String(localized: "limits: \(e.plan.perDay) a day, \(e.plan.perRun ?? ExtensionPlanRules.defaultPerRun) in a run", comment: "History: a plan's limits")
+        if let ttl = e.plan.ttl { terms += " · " + String(localized: "ends after \(max(1, Int((Double(ttl) / 60).rounded(.up)))) min at the most", comment: "History: how long a plan lasts") }
         if e.plan.goesRound == true { terms += " · " + String(localized: "goes round a list", comment: "History: a plan that goes round a list") }
         if e.lines.contains(where: { $0.verdict.warning != nil }) { terms += " · " + String(localized: "warning: it reads your things and outside content, and sends words on", comment: "History: the card's warning about a plan that could take private words to a server") }
+        // Lines are numbered in the order the card shows them, with no gap where a step that only passes words on is left out.
+        var visible: [Int: Int] = [:]
+        for i in e.lines.indices where e.lines[i].step.kind != "value" { visible[i] = visible.count + 1 }
         var out = [terms]
         for i in e.fresh {
-            let line = e.lines[i], number = "#\(i + 1) "
+            guard let n = visible[i] else { continue }
+            let line = e.lines[i], number = "#\(n) "
+            let times = e.rows.filter { $0 == i }.count
+            let again = times > 1 ? " · " + String(localized: "× \(times)", comment: "A plan's card: the same line, this many times") : ""
             switch line.step.kind {
-            case "value"?: continue
-            case "ai"?: out.append(number + String(localized: "Hands to your AI: \(aiRow(line, e))", comment: "History: a plan's step that hands what it read to the person's AI"))
-            case "flow"?: out.append(number + String(localized: "Sets off: “\(safe(line.step.input["name"]?.stringValue ?? "", 80))”", comment: "History: a plan's step that sets off another flow; its name"))
+            case "ai"?:
+                let title = line.step.title.map { fit($0, 80) } ?? String(localized: "Write with your AI", comment: "A plan's card: a step that hands what it read to the person's AI")
+                let from: String
+                if let reads = line.step.reads, !reads.isEmpty { from = String(localized: "from “\(describe(reads, e).joined(separator: ", "))”", comment: "A plan's card: the steps an AI step reads") }
+                else { from = String(localized: "from everything the steps before it read", comment: "A plan's card: an AI step that names nothing") }
+                out.append(number + String(localized: "Hands to your AI: \(title + " · " + from)", comment: "History: a plan's step that hands what it read to the person's AI") + again)
+            case "flow"?: out.append(number + String(localized: "Sets off: “\(fit(line.step.input["name"]?.stringValue ?? "", 80))”", comment: "History: a plan's step that sets off another flow; its name") + again)
             default:
                 guard let tool = line.tool else { return nil }
                 let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
                 let ext = ExtensionPlanRules.extensionTool(tool)
-                let name = number + safe(tool.spec.title, 60) + (ext.map { " (" + safe($0.extensionName, 40) + ")" } ?? "")
+                var header = number + fit(tool.spec.title, 60) + (ext.map { " (" + fit($0.extensionName, 40) + ")" } ?? "")
+                // A server whose program Sidefolk couldn't check says so, as the card does.
+                if ext?.sandboxed == false, line.step.program == nil { header += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
                 let fields = (line.step.input.objectValue ?? [:]).sorted { a, b in
                     let ra = ExtensionPlanRules.fieldClass(a.key, schema: properties[a.key]) == .freeText ? 1 : 0
                     let rb = ExtensionPlanRules.fieldClass(b.key, schema: properties[b.key]) == .freeText ? 1 : 0
                     return ra != rb ? ra < rb : a.key < b.key
                 }
-                var header = name
-                // A server whose program Sidefolk couldn't check says so, as the card does.
-                if ext?.sandboxed == false, line.step.program == nil { header += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
-                out.append(header + " · " + String(localized: "fields: \(fields.count)", comment: "History: how many fields a line has"))
-                for (key, value) in fields { out.append(name + " / " + safe(key, 60) + ": " + historyValue(key, value, line, e)) }
+                out.append(header + " · " + String(localized: "fields: \(fields.count)", comment: "History: how many fields a line has") + again)
+                // The number carries the pairing of a field with its line: the tool is named once, on the header.
+                for (key, value) in fields { out.append(number + fit(key, 60) + ": " + historyValue(key, value, line, e)) }
             }
         }
-        guard out.count <= 60, out.allSatisfy({ $0.count <= 270 }),
+        // 64 entries is what History keeps of a list; 300 characters of a string, and only what the Redactor leaves as it is.
+        guard !cutSomewhere, out.count <= 64, out.allSatisfy({ $0.count <= 300 }),
               out.allSatisfy({ Redactor.arguments(.string($0)).stringValue == $0 }) else { return nil }
         return out
     }
@@ -111,15 +130,16 @@ extension ExtensionPlanWords {
     /// A field's value as the card says it, with the kind of its source first: written words in quotes, a slot as the steps it comes from between the written
     /// parts (each in quotes, so a written part can't pass for the row's own marks), a list with its count.
     private static func historyValue(_ key: String, _ value: JSONValue, _ line: PlanEvaluation.Line, _ e: PlanEvaluation) -> String {
-        func quoted(_ text: String) -> String { text.isEmpty ? "" : "“" + safe(text, 100_000) + "”" }
+        func quoted(_ text: String) -> String { "“" + safe(text, 100_000) + "”" }
+        func around(_ text: String) -> String { text.isEmpty ? "" : quoted(text) }
         if let text = value.stringValue, ExtensionPlanRules.hasSlot(text) {
             let literals = ExtensionPlanRules.literals(text), roots = ExtensionPlanRules.roots(text)
             var shown: [String] = []
             for (n, root) in roots.enumerated() {
-                shown.append(quoted(n < literals.count ? literals[n] : ""))
+                shown.append(around(n < literals.count ? literals[n] : ""))
                 shown.append(String(localized: "[from \(describe([root], e).joined(separator: ", "))]", comment: "History: a filled-in value, from the steps named"))
             }
-            shown.append(quoted(literals.count > roots.count ? literals[roots.count] : ""))
+            shown.append(around(literals.count > roots.count ? literals[roots.count] : ""))
             let body = shown.filter { !$0.isEmpty }.joined(separator: " ")
             switch line.step.sources?[key] {
             case "outside"?: return String(localized: "outside content: \(body)", comment: "History: a filled-in value that comes from outside content; then the value")
@@ -131,7 +151,9 @@ extension ExtensionPlanWords {
         func one(_ v: JSONValue) -> String { v.stringValue.map { quoted($0) } ?? safe(v.jsonString, 100_000) }
         switch value {
         case .string(let text): return quoted(text)
-        case .array(let items): return String(localized: "list (\(items.count)): \(items.map(one).joined(separator: ", "))", comment: "History: a list a plan wrote, with how many items it has")
+        case .array(let items):
+            let said = items.isEmpty ? String(localized: "none", comment: "History: a list a plan wrote that has nothing in it") : items.map(one).joined(separator: ", ")
+            return String(localized: "list (\(items.count)): \(said)", comment: "History: a list a plan wrote, with how many items it has")
         case .object: return String(localized: "record: \(safe(value.jsonString, 100_000))", comment: "History: a record a plan wrote")
         default: return safe(value.jsonString, 100_000)
         }

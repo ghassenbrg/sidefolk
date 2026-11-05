@@ -1,7 +1,7 @@
 import Foundation
 
 /// An action's arguments as History shows them, name and value in name order: the home folder shortened, long values cut, and a list of short lines
-/// (what a plan's approval row keeps, one entry per line) shown one entry to a line and never cut, so the last entry, "+5 more", is on the screen.
+/// (what a plan's approval row keeps, one entry per line) shown one entry to a line and never cut (a plan's record has up to 64 entries, all on the screen).
 public enum ActivityArguments {
     /// The most entries of a list shown whole, and the longest text of any other value.
     static let listLimit = 64
