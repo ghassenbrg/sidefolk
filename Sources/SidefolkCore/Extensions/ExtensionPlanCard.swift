@@ -69,52 +69,65 @@ extension ExtensionPlanWords {
         return text(parts)
     }
 
-    /// The lines a card was never shown for (Full access or Auto let them through), one entry each for History to keep on the approval's row: the tool and who
-    /// offers it, then its fields with the ones that say where it goes (a place, a choice) first and the free words last, so a long body can't push the
-    /// destination past the cut History makes (about 300 characters). Each value is short; what was dropped past the cut is counted.
+    /// The lines a card was never shown for (Full access or Auto let them through), as History keeps them on the approval's row: a list with one entry for each
+    /// line and one for each of its FIELDS, the places and choices first and the free words last. An entry is the field as the card says it, nothing left out
+    /// (every written part between the slots, every item of a list), up to the 300 characters History keeps of a string; one that is longer says how much was cut.
+    /// There are at most 60 entries, and then how many more, so nothing is dropped without a count.
     static func addedLines(_ e: PlanEvaluation) -> [String] {
-        capped(e.fresh.compactMap { i -> String? in
-            guard let tool = e.lines[i].tool else { return nil }
-            return historyLine(e.lines[i], tool: tool, e)
-        }, 20)
+        var out: [String] = []
+        for i in e.fresh {
+            guard let tool = e.lines[i].tool else { continue }
+            out += historyEntries(e.lines[i], tool: tool, e)
+        }
+        return capped(out, 60)
     }
 
-    private static func historyLine(_ line: PlanEvaluation.Line, tool: any Tool, _ e: PlanEvaluation) -> String {
+    private static func historyEntries(_ line: PlanEvaluation.Line, tool: any Tool, _ e: PlanEvaluation) -> [String] {
         let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
         let ext = ExtensionPlanRules.extensionTool(tool)
         let who = ext.map { " (" + safe($0.extensionName, 30) + ")" } ?? ""
+        let title = safe(tool.spec.title, 50) + who
+        var header = title
+        // A server whose program Sidefolk couldn't check says so, as the card does.
+        if ext?.sandboxed == false, line.step.program == nil { header += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
         let fields = (line.step.input.objectValue ?? [:]).sorted { a, b in
             let ra = ExtensionPlanRules.fieldClass(a.key, schema: properties[a.key]) == .freeText ? 1 : 0
             let rb = ExtensionPlanRules.fieldClass(b.key, schema: properties[b.key]) == .freeText ? 1 : 0
             return ra != rb ? ra < rb : a.key < b.key
         }
-        var out = safe(tool.spec.title, 50) + who
-        // A server whose program Sidefolk couldn't check says so on its own row, as the card does.
-        if ext?.sandboxed == false, line.step.program == nil { out += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
-        var left = 0
-        for (index, (key, value)) in fields.enumerated() {
-            var shown: String
-            if let text = value.stringValue, ExtensionPlanRules.hasSlot(text) {
-                // What is written around the slot stays: it is often the host or the folder a call goes to.
-                let literals = ExtensionPlanRules.literals(text)
-                let names = safe(sourceNames(text, e).joined(separator: ", "), 50)
-                shown = safe(literals.first ?? "", 40) + String(localized: "[from \(names)]", comment: "History: a filled-in value, from the steps named") + safe(literals.count > 1 ? literals.last ?? "" : "", 40)
-                switch line.step.sources?[key] {
-                case "outside"?: shown = String(localized: "\(shown) (outside content)", comment: "History: a filled-in value that comes from outside content")
-                case "claimed"?: shown = String(localized: "\(shown) (the add-on says it's yours)", comment: "History: a filled-in value the extension says is the person's own")
-                case "inside"?: shown = String(localized: "\(shown) (your answer or the clock)", comment: "History: a filled-in value that is the person's typed answer or the clock")
-                default: break
-                }
-            } else if let text = value.stringValue {
-                shown = "“" + safe(text, 50) + "”"
-            } else {
-                // A number, nothing, an empty list: shown as what it is, not as words.
-                shown = safe(value.jsonString, 50)
+        return [header] + fields.map { key, value in cut(title + " / " + safe(key, 40) + ": " + historyValue(key, value, line, e)) }
+    }
+
+    /// A field's value as the card says it: written words quoted, a slot as the steps it comes from with every written part around it, a list with its count.
+    private static func historyValue(_ key: String, _ value: JSONValue, _ line: PlanEvaluation.Line, _ e: PlanEvaluation) -> String {
+        if let text = value.stringValue, ExtensionPlanRules.hasSlot(text) {
+            let literals = ExtensionPlanRules.literals(text), roots = ExtensionPlanRules.roots(text)
+            var shown = ""
+            for (n, root) in roots.enumerated() {
+                shown += safe(n < literals.count ? literals[n] : "", 300)
+                shown += String(localized: "[from \(safe(describe([root], e).joined(separator: ", "), 80))]", comment: "History: a filled-in value, from the steps named")
             }
-            let part = " · " + safe(key, 30) + ": " + shown
-            if out.count + part.count <= 260 { out += part } else { left = fields.count - index; break }
+            shown += safe(literals.count > roots.count ? literals[roots.count] : "", 300)
+            switch line.step.sources?[key] {
+            case "outside"?: return String(localized: "\(shown) (outside content)", comment: "History: a filled-in value that comes from outside content")
+            case "claimed"?: return String(localized: "\(shown) (the add-on says it's yours)", comment: "History: a filled-in value the extension says is the person's own")
+            case "inside"?: return String(localized: "\(shown) (your answer or the clock)", comment: "History: a filled-in value that is the person's typed answer or the clock")
+            default: return shown
+            }
         }
-        return left > 0 ? out + " " + String(localized: "(and \(left) more)", comment: "A plan's card: a list of a step's sources was cut; how many more") : out
+        func one(_ v: JSONValue) -> String { v.stringValue.map { "“" + safe($0, 300) + "”" } ?? safe(v.jsonString, 300) }
+        switch value {
+        case .string(let text): return "“" + safe(text, 300) + "”"
+        case .array(let items): return String(localized: "list (\(items.count)): \(items.map(one).joined(separator: ", "))", comment: "History: a list a plan wrote, with how many items it has")
+        case .object: return String(localized: "record: \(safe(value.jsonString, 300))", comment: "History: a record a plan wrote")
+        default: return safe(value.jsonString, 300)
+        }
+    }
+
+    /// An entry as History keeps it (a string of at most 300 characters): longer, it ends with how much was cut.
+    private static func cut(_ text: String) -> String {
+        guard text.count > 290 else { return text }
+        return String(text.prefix(265)) + String(localized: "…[\(text.count - 265) cut]", comment: "History: an entry was cut; how many characters")
     }
 
     /// At most `limit` entries, one line each so History keeps every one whole; past it, a last entry says how many more there were.

@@ -60,7 +60,7 @@ struct ExtensionPlanRow: View {
         case .fullAccessUnread: Text("Its actions run without asking only while Full access is on, and nobody read this plan. \(plan.when)", comment: "Settings › Add-ons: a plan Full access answered with no card; then its own words for when it runs")
         case .fullAccessSome: Text("Some of its actions run without asking only while Full access is on. \(plan.when)", comment: "Settings › Add-ons: a plan with lines that stand only in Full access; then its own words for when it runs")
         case .autoSome: Text("Some of its actions run without asking only while Auto is on, and nobody read them. \(plan.when)", comment: "Settings › Add-ons: a plan with lines Auto let through; then its own words for when it runs")
-        case .either: Text("Some of its actions run without asking only while Full access or Auto is on. \(plan.when)", comment: "Settings › Add-ons: a plan with lines that stand only in Full access or only in Auto; then its own words for when it runs")
+        case .either: Text("Some of its actions run without asking only while Full access or Auto is on, and nobody read the ones Auto let through. \(plan.when)", comment: "Settings › Add-ons: a plan with lines that stand only in Full access or only in Auto; then its own words for when it runs")
         }
     }
 

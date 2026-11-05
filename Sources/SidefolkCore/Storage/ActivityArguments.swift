@@ -4,7 +4,7 @@ import Foundation
 /// (what a plan's approval row keeps, one entry per line) shown one entry to a line and never cut, so the last entry, "+5 more", is on the screen.
 public enum ActivityArguments {
     /// The most entries of a list shown whole, and the longest text of any other value.
-    static let listLimit = 30
+    static let listLimit = 64
     static let valueLimit = 600
 
     public static func rows(_ args: JSONValue?) -> [(name: String, value: String)] {
@@ -25,7 +25,7 @@ public enum ActivityArguments {
         case .array(let items):
             if items.allSatisfy({ $0.stringValue != nil }) {
                 // Past the limit, how many more: nothing is cut without a count.
-                let more = items.count > listLimit ? ["+\(items.count - listLimit) more"] : []
+                let more = items.count > listLimit ? [String(localized: "+\(items.count - listLimit) more", comment: "A list was cut; how many more")] : []
                 return (items.prefix(listLimit).compactMap { $0.stringValue } + more).joined(separator: "\n")
             }
             return items.compactMap(text).joined(separator: ", ")

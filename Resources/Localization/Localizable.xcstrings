@@ -189259,8 +189259,68 @@
         }
       }
     },
+    "Some of its actions run without asking only while Full access or Auto is on, and nobody read the ones Auto let through. %@" : {
+      "comment" : "Settings › Add-ons: a plan with lines that stand only in Full access or only in Auto; then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعمل بعض إجراءاتها دون سؤال فقط أثناء تفعيل الوصول الكامل أو وضع Auto، ولم يقرأ أحد ما سمح به وضع Auto. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manche seiner Aktionen laufen nur ohne Nachfrage, solange Vollzugriff oder Auto an ist, und niemand hat die gelesen, die Auto durchgelassen hat. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunas de sus acciones se ejecutan sin preguntar solo mientras el acceso total o Auto está activado, y nadie leyó las que Auto dejó pasar. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certaines de ses actions s’exécutent sans demander seulement quand l’accès complet ou le mode Auto est activé, et personne n’a lu celles que le mode Auto a laissé passer. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcune sue azioni girano senza chiedere solo mentre l’accesso completo o Auto è attivo, e nessuno ha letto quelle che Auto ha lasciato passare. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このルーティンの一部の動作は、フルアクセスまたはAutoがオンの間だけ確認なしで実行され、Autoが通したものは誰も読んでいません。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 루틴의 일부 동작은 전체 접근이나 Auto가 켜져 있는 동안에만 묻지 않고 실행되고, Auto가 통과시킨 것은 아무도 읽지 않았어요. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas das ações dela rodam sem perguntar só enquanto o acesso total ou o Auto está ligado, e ninguém leu as que o Auto deixou passar. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的部分操作仅在完全访问或自动模式开启时才无需询问地运行，自动模式放行的那些没有人读过。%@"
+          }
+        }
+      }
+    },
     "Some of its actions run without asking only while Full access or Auto is on. %@" : {
       "comment" : "Settings › Add-ons: a plan with lines that stand only in Full access or only in Auto; then its own words for when it runs",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -255362,6 +255422,71 @@
         }
       }
     },
+    "list (%lld): %@" : {
+      "comment" : "History: a list a plan wrote, with how many items it has",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قائمة (%lld): %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste (%lld): %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "list (%1$lld): %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lista (%lld): %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "liste (%lld) : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "elenco (%lld): %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リスト（%lld件）：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록 (%lld개): %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lista (%lld): %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "列表（%lld 项）：%@"
+          }
+        }
+      }
+    },
     "liveliness.balanced" : {
       "comment" : "How lively the companion is: the default",
       "extractionState" : "extracted_with_value",
@@ -259329,6 +259454,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "读取页面"
+          }
+        }
+      }
+    },
+    "record: %@" : {
+      "comment" : "History: a record a plan wrote",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجل: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datensatz: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "registro: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "enregistrement : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "record: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レコード：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "레코드: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "registro: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录：%@"
           }
         }
       }
@@ -270684,6 +270868,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "• %1$@（%2$@，ID %3$@）：%4$@，每 %5$@"
+          }
+        }
+      }
+    },
+    "…[%lld cut]" : {
+      "comment" : "History: an entry was cut; how many characters",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[قُطع %lld]"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[%lld gekürzt]"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[%lld recortados]"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[%lld coupés]"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[%lld tagliati]"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…［%lld文字省略］"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[%lld자 생략]"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…[%lld cortados]"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…［已截去 %lld 个字符］"
           }
         }
       }
