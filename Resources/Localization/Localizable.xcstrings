@@ -258186,7 +258186,7 @@
       }
     },
     "none" : {
-      "comment" : "No AI is set up",
+      "comment" : "History: a list a plan wrote that has nothing in it\nNo AI is set up",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
