@@ -63,8 +63,21 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
     public var answeredUnread: Bool?
     /// It read the person's own things and outside content and fills a server line from them (the card's warning): becoming so is new.
     public var crossing: Bool?
+    /// What the plan may do, as its card says it in full: Trust shows it again, so they can see what they allowed (a plan nobody read, answered by Full access
+    /// or Auto, has it too, and Trust says it was not read).
+    public var card: String?
+    /// The last time one of its steps ran without a card. A plan nobody has used for 60 days ends, and its extension is told (D186).
+    public var lastUsed: Date?
 
-    public func live(at now: Date, owner: String) -> Bool { self.owner == owner && (expiresAt.map { $0 > now } ?? true) }
+    /// How long a plan may sit unused before it ends: an automation that stopped running long ago is not one the person still has in mind.
+    public static let idleLimit: TimeInterval = 60 * 24 * 3600
+
+    public func live(at now: Date, owner: String) -> Bool {
+        self.owner == owner && (expiresAt.map { $0 > now } ?? true) && now.timeIntervalSince(lastUsed ?? approvedAt) < Self.idleLimit
+    }
+
+    /// Whether it ended for sitting unused (rather than by its own end, or because the extension changed).
+    public func idle(at now: Date) -> Bool { now.timeIntervalSince(lastUsed ?? approvedAt) >= Self.idleLimit }
 }
 
 /// A plan as Settings shows it, to end it.
@@ -78,6 +91,11 @@ public struct ExtensionPlanInfo: Sendable, Hashable, Identifiable {
     public var stands = Stands.always
     public var approvedAt: Date
     public var expiresAt: Date?
+    /// What the person read, and when it last ran without a card, for Trust.
+    public var card: String = ""
+    public var lastUsed: Date?
+    public var callsToday = 0
+    public var signed = false
 }
 
 enum ExtensionPlanRules {
@@ -469,6 +487,9 @@ struct ExtensionPlanTool: Tool {
     var answer: PlanAnswer?
     /// What the program says it is for ("run" or "turn_on"), which only chooses the title.
     var intent: String?
+    /// What the Approve button says, when it says more than "Approve" (`ExtensionPlanWords.approveLabel`).
+    var approveLabel: String?
+    var approveNote: String?
 
     private var title: String {
         switch intent {
@@ -486,7 +507,7 @@ struct ExtensionPlanTool: Tool {
     }
 
     func summary(for input: JSONValue) -> String { when.isEmpty ? plan : when }
-    func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body, planAnswer: answer) }
+    func scope(for input: JSONValue) -> ToolScope { ToolScope(extensionId: extensionId, text: body, planAnswer: answer, approveLabel: approveLabel, approveNote: approveNote) }
 
     func refusal(for input: JSONValue, context: ToolContext) -> String? {
         if case .extension(let own) = context.caller, own == extensionId { return nil }

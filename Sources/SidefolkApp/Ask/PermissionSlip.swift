@@ -83,6 +83,9 @@ struct PermissionSlip: View {
                     Text("It stays shared until you remove it in Settings › Trust.", comment: "On a permission slip that asks to share a folder: the main button remembers it")
                         .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                 }
+                if let note = request.allowNote {
+                    Text(verbatim: note).font(Theme.Font.callout).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                }
                 if let alwaysNote {
                     Text(verbatim: alwaysNote).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).fixedSize(horizontal: false, vertical: true)
                 }
@@ -124,6 +127,7 @@ struct PermissionSlip: View {
             // A folder is shared for good by the main button (D185): the person is asked once, not again for every call in it.
             let button = Button { answer(sharesFolder ? .allowAlways : .allowOnce) } label: {
                 if sharesFolder { Text("Share folder", comment: "A permission slip's main button when it asks to share a folder: remembered until removed in Trust") }
+                else if let label = request.allowLabel { Text(verbatim: label) }
                 else { Text("Allow", comment: "A permission slip's main button") }
             }
             .buttonStyle(.sf(.primary, size: .sidecard, join: splits ? .leading : nil))
