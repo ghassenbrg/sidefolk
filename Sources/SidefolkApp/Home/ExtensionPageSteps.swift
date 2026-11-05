@@ -358,7 +358,8 @@ struct PageEditFieldRow: View {
         Task {
             let ok = await model.run(tool: field.tool, input: field.input(typing: text))
             problem = !ok
-            if !ok, !focused { text = shown }
+            // Not while they're still in the field, whichever kind it is: what they're typing isn't what failed.
+            if !ok, !focused, !chipFocused { text = shown }
         }
     }
 }
