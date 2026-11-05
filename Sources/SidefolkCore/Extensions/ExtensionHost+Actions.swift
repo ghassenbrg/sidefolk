@@ -492,7 +492,9 @@ extension ExtensionHost {
         }
         // What the person read was an edit of the plan standing then: if they ended it or it changed while the card was up (or while an answer was on its way),
         // saving the whole candidate would bring back lines they took away. The program asks again and the whole plan is shown.
-        if let was = evaluation.previous, rt.preferences.plans[was.id] != was {
+        // (A run in the meantime only changes when it last ran, which is not the person's to read.)
+        func withoutUse(_ plan: ExtensionPlan?) -> ExtensionPlan? { plan.map { var copy = $0; copy.lastUsed = nil; return copy } }
+        if let was = evaluation.previous, withoutUse(rt.preferences.plans[was.id]) != withoutUse(was) {
             await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
             return
         }
@@ -508,7 +510,12 @@ extension ExtensionHost {
         if answer == .fullAccess { plan.answeredUnread = true }
         // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
         if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
-        await updatePreferences(id) { $0.plans[plan.id] = plan }
+        // When it last ran is the host's record, not the candidate's: an edit or a new approval does not make a plan that ran yesterday idle.
+        await updatePreferences(id) { prefs in
+            var saved = plan
+            saved.lastUsed = prefs.plans[plan.id]?.lastUsed
+            prefs.plans[plan.id] = saved
+        }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
                                                                              "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),

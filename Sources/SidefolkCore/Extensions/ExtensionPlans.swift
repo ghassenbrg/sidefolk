@@ -73,11 +73,21 @@ public struct ExtensionPlan: Codable, Sendable, Hashable {
     public static let idleLimit: TimeInterval = 60 * 24 * 3600
 
     public func live(at now: Date, owner: String) -> Bool {
-        self.owner == owner && (expiresAt.map { $0 > now } ?? true) && now.timeIntervalSince(lastUsed ?? approvedAt) < Self.idleLimit
+        self.owner == owner && (expiresAt.map { $0 > now } ?? true) && now.timeIntervalSince(lastSeen(at: now)) < Self.idleLimit
     }
 
     /// Whether it ended for sitting unused (rather than by its own end, or because the extension changed).
-    public func idle(at now: Date) -> Bool { now.timeIntervalSince(lastUsed ?? approvedAt) >= Self.idleLimit }
+    public func idle(at now: Date) -> Bool { now.timeIntervalSince(lastSeen(at: now)) >= Self.idleLimit }
+
+    /// When it was last in use, never later than now: a date ahead of the clock (the Mac's clock was set back) must not keep a plan alive past 60 days from
+    /// the real now. A little ahead (a day, for a clock that was corrected) counts as now; more than that is not believed, and the other date is used; if
+    /// both are that far ahead the plan is as old as it can be and asks again.
+    private func lastSeen(at now: Date) -> Date {
+        let skew: TimeInterval = 24 * 3600
+        if let used = lastUsed, used <= now.addingTimeInterval(skew) { return min(used, now) }
+        if approvedAt <= now.addingTimeInterval(skew) { return min(approvedAt, now) }
+        return .distantPast
+    }
 }
 
 /// A plan as Settings shows it, to end it.

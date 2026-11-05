@@ -1055,6 +1055,35 @@ import Testing
         #expect(card.contains("It changes:") && card.contains("It tells or asks you:") && !card.contains("New, asking you now"), Comment(rawValue: card))
     }
 
+    @Test func approvingAgainKeepsWhenItLastRanAndARunWhileACardIsUpDoesNotRefuseTheEdit() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        _ = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "input": ["text": "Digest: x"]])
+        let ran = await w.h.host.info(id: "com.example.flow")?.plans.first?.lastUsed
+        #expect(ran != nil)
+        #expect(await !w.approve(Self.plan([Self.save])).asked, "the same plan again is covered")
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.first?.lastUsed == ran, "approving again does not make a plan that ran look idle")
+        // A run while the edit's card is up changes only when it last ran: the edit is still what they read.
+        async let edit = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])])
+        var waited = 0
+        while await w.h.env.broker.pending().isEmpty, waited < 200 { try? await Task.sleep(for: .milliseconds(25)); waited += 1 }
+        _ = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "input": ["text": "Digest: y"]])
+        #expect(await w.answerCard(.allowOnce) != nil)
+        #expect(await edit["ok"]?.boolValue == true, "a run in between is not a change of the plan")
+    }
+
+    @Test func aLastRunAheadOfTheClockDoesNotKeepAPlanAlivePastSixtyDays() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        let old = Date().addingTimeInterval(-61 * 24 * 3600)
+        // Set ahead by an hour (a clock that was corrected): it counts as now.
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = old; $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(3600) }
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["digest"], "a little ahead is believed as now")
+        // Set ahead by ten days (the clock was moved back): not believed, the approval's date is used, and it is old.
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.lastUsed = Date().addingTimeInterval(10 * 24 * 3600) }
+        #expect(await w.h.host.info(id: "com.example.flow")?.plans.isEmpty == true, "far ahead does not keep it alive")
+    }
+
     @Test func aPlanNobodyUsedFor60DaysEndsAndItsProgramIsTold() async throws {
         let w = try await World()
         _ = await w.approve(Self.plan([Self.save]))
