@@ -47,6 +47,8 @@ public enum AttentionPolicy {
     /// All sources of one self-named kind together (every external agent, every session, every
     /// extension): a new name doesn't buy a new budget.
     public static let perFamilyLimit = 6
+    /// Questions from one source in `perSourceWindow`: each has someone waiting on the answer, so it's a loop re-asking that this stops.
+    public static let questionsPerSourceLimit = 12
     /// Gentle bubbles per source and in total per window; past them a gentle item is a badge only.
     public static let gentlePerSourceLimit = 6
     public static let gentleLimit = 12
@@ -69,7 +71,7 @@ public enum AttentionPolicy {
     ///   - reachWhenAway: the person also asked for it through macOS, so being away doesn't hold it (D107).
     public static func decide(
         level: AttentionLevel, source: String, createdAt: Date, now: Date, env: AttentionEnvironment,
-        recent: [(source: String, at: Date)], gentle: [(source: String, at: Date)] = [], punctual: Bool = false, reachWhenAway: Bool = false
+        recent: [(source: String, at: Date)], gentle: [(source: String, at: Date)] = [], punctual: Bool = false, reachWhenAway: Bool = false, question: Bool = false
     ) -> AttentionDecision {
         let level = level == .critical && !criticalSources.contains(source) ? .attention : level
         if level == .ambient { return .present(.ambient) }
@@ -114,6 +116,13 @@ public enum AttentionPolicy {
 
         // Reminders arrive at the time the user chose; spacing them out would make them late.
         if source == "reminder" { return .present(.attention(expandFor: expandSeconds)) }
+
+        // A question has a caller waiting, on a clock of its own: spaced out like a notice, it could run out unseen.
+        if question {
+            let mine = recent.filter { $0.source == source && now.timeIntervalSince($0.at) < perSourceWindow }
+            if mine.count >= questionsPerSourceLimit, let oldest = mine.map(\.at).min() { return .hold(until: oldest.addingTimeInterval(perSourceWindow)) }
+            return .present(.attention(expandFor: expandSeconds))
+        }
 
         // Rate limits for attention: spacing overall, a per-source budget and a per-family budget.
         if !punctual, let last = recent.map(\.at).max(), now.timeIntervalSince(last) < attentionSpacing {

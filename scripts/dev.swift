@@ -52,6 +52,7 @@
 //   swift scripts/dev.swift "brain:scripted:<answer>" | brain:scripted:off   (every AI request gets that fixed answer,
 //                           no network; only on a SIDEFOLK_HOME)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
+//   swift scripts/dev.swift countClick | stackAnswer   (the count on the companion's shoulder, and Answer under the held cards, as a click)
 //   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
 //                           the companion, the extras stepping back, the held cards fanned, a whisper grown into a card)
 //   swift scripts/dev.swift ax   (D84: every visible window's accessibility tree, as VoiceOver walks it, in $SIDEFOLK_HOME/snapshots)

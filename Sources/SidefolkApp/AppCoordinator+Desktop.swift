@@ -16,7 +16,7 @@ extension AppCoordinator {
             guard let self else { return [] }
             return await runtime.attention.open().filter { $0.level >= .attention }.sorted { $0.createdAt < $1.createdAt }
         }
-        sidecard.onOpenStack = { [weak self] in self?.showAsk() }
+        sidecard.onOpenStack = { [weak self] in self?.answerWhatWaits() }
         sidecard.remarksShown = { [weak self] in self?.ownRemarksShown ?? true }
         sidecard.onLowerSource = { [weak self] _, source, level in self?.lowerSource(source, to: level) }
         sidecard.onChange = { [weak self] in self?.renderLight() }
@@ -115,9 +115,32 @@ extension AppCoordinator {
 
     func companionBadgeHovered(_ hovering: Bool) { sidecard.fanStack(hovering) }
 
-    /// Clicking the count opens Ask on top of what waits, as clicking the companion does.
+    /// Clicking the count answers what it counts.
     func companionBadgeClicked() {
         sidecard.fanStack(false)
-        showAsk()
+        answerWhatWaits()
+    }
+
+    /// What has waited longest comes forward whole, with all its answers, and then the next until none are left.
+    /// Approvals have their slip in Ask, and so does nothing being left.
+    func answerWhatWaits() {
+        Task {
+            guard let first = await sidecard.waitingItems?().first else {
+                answeringWaiting = false
+                return showAsk()
+            }
+            answeringWaiting = true
+            presentKnown(first, .attention(expandFor: AttentionPolicy.expandSeconds))
+        }
+    }
+
+    func nextWaiting() {
+        Task {
+            guard let next = await sidecard.waitingItems?().first else {
+                answeringWaiting = false
+                return
+            }
+            presentKnown(next, .attention(expandFor: AttentionPolicy.expandSeconds))
+        }
     }
 }

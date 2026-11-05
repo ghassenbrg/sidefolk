@@ -10,6 +10,35 @@ import Testing
         AttentionPolicy.decide(level: level, source: source, createdAt: createdAt ?? now, now: now, env: env, recent: recent)
     }
 
+    @Test func aQuestionIsntSpacedOutLikeANotice() {
+        func ask(recent: [(source: String, at: Date)]) -> AttentionDecision {
+            AttentionPolicy.decide(level: .attention, source: "ext", createdAt: now, now: now, env: AttentionEnvironment(), recent: recent, question: true)
+        }
+        let aMomentAgo = [(source: "other", at: now.addingTimeInterval(-5))]
+        if case .hold = decide(.attention, source: "ext", recent: aMomentAgo) {} else { Issue.record("a notice waits its turn") }
+        #expect(ask(recent: aMomentAgo) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)), "someone's waiting on a question")
+        // Past a notice's budget, and a timeout of a few minutes would run out before it came up.
+        let aFew = (1...AttentionPolicy.perSourceLimit).map { (source: "ext", at: now.addingTimeInterval(-Double($0) * 10)) }
+        #expect(ask(recent: aFew) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)))
+    }
+
+    @Test func aLoopOfQuestionsHasALimit() {
+        let many = (1...AttentionPolicy.questionsPerSourceLimit).map { (source: "ext", at: now.addingTimeInterval(-Double($0))) }
+        let held = AttentionPolicy.decide(level: .attention, source: "ext", createdAt: now, now: now, env: AttentionEnvironment(), recent: many, question: true)
+        if case .hold = held {} else { Issue.record("it holds: \(held)") }
+        let other = AttentionPolicy.decide(level: .attention, source: "other", createdAt: now, now: now, env: AttentionEnvironment(), recent: many, question: true)
+        #expect(other == .present(.attention(expandFor: AttentionPolicy.expandSeconds)), "one source's loop doesn't hold another's")
+    }
+
+    @Test func aQuestionStillWaitsForTheWayOut() {
+        func ask(_ env: AttentionEnvironment) -> AttentionDecision {
+            AttentionPolicy.decide(level: .attention, source: "ext", createdAt: now, now: now, env: env, recent: [], question: true)
+        }
+        var away = AttentionEnvironment()
+        away.away = true
+        #expect(ask(away) == .hold(until: nil), "nobody's there to see it")
+    }
+
     @Test func defaults() {
         #expect(decide(.ambient) == .present(.ambient))
         #expect(decide(.gentle) == .present(.gentle(autoDismiss: AttentionPolicy.gentleSeconds)))
@@ -69,6 +98,33 @@ import Testing
         let events = EventBus()
         let store = AttentionStore(db)
         return (AttentionCenter(store: store, events: events), events, store)
+    }
+
+    @Test func questionsInARowAreAllShownNotHeld() async throws {
+        let (center, _, store) = try center()
+        // More than a notice's budget, each with its caller waiting.
+        let asking = (1...(AttentionPolicy.perSourceLimit + 1)).map { n in
+            Task { await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Question \(n)?", refKind: "ask"), timeout: 5) }
+        }
+        var open: [AttentionItem] = []
+        for _ in 0..<400 {
+            open = (try? await store.open()) ?? []
+            if open.count == asking.count, open.allSatisfy({ $0.state == .shown }) { break }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(open.count == asking.count)
+        #expect(open.allSatisfy { $0.state == .shown }, "\(open.map { $0.state })")
+        #expect(await center.heldCount == 0)
+        for item in open { await center.respond(id: item.id, actionId: nil) }
+        for task in asking { _ = await task.value }
+    }
+
+    @Test func aNoticeIsStillSpacedOut() async throws {
+        let (center, _, store) = try center()
+        await center.post(AttentionRequest(level: .attention, source: "external:test", title: "One"))
+        await center.post(AttentionRequest(level: .attention, source: "external:test", title: "Two"))
+        #expect(await center.heldCount == 1)
+        #expect(try await store.open().filter { $0.state == .shown }.count == 1)
     }
 
     @Test func postPresentsAndPersists() async throws {

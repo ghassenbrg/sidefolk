@@ -19,6 +19,8 @@ final class AppCoordinator {
     private(set) var askPanel: AskPanelController!
     /// Whispers, cards and the stack above the companion (D84).
     let sidecard = SidecardController()
+    /// The person clicked the count: as each is answered, the next comes forward.
+    var answeringWaiting = false
     let statusItem = StatusItemController()
     /// Extensions' palettes on their shortcuts (D63).
     private(set) lazy var palettes = PaletteController(host: runtime.extensions)
@@ -791,6 +793,10 @@ final class AppCoordinator {
             sidecard.devKey(String(command.dropFirst("cardKey:".count)))
         } else if command == "grow" {
             sidecard.model.grow?()
+        } else if command == "countClick" {
+            companionBadgeClicked()
+        } else if command == "stackAnswer" {
+            sidecard.model.openStack?()
         } else if command.hasPrefix("stack:") {
             sidecard.fanStack(command == "stack:on")
         } else if command == "hideAsk" {
@@ -998,7 +1004,7 @@ final class AppCoordinator {
         presentKnown(item, presentation)
     }
 
-    private func presentKnown(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+    func presentKnown(_ item: AttentionItem, _ presentation: AttentionPresentation) {
         // Questions that want a typed answer (and all of Sidefolk's own) go in the panel, where the user can type.
         if item.refKind == "ask", item.source == "agent" || item.actions.isEmpty {
             ask.add(.question(item))
@@ -1036,7 +1042,10 @@ final class AppCoordinator {
         if action == SidecardItemCard.undo, item.refKind == "credit", let id = item.refId { return undoFromWhisper(id) }
         if action == "open", item.source == "summary" { openHome() }
         if action == ReminderScheduler.ActionID.open, item.refKind == "reminder", let id = item.refId { openReminderItem(id) }
-        Task { await runtime.attention.respond(id: item.id, actionId: action) }
+        Task {
+            await runtime.attention.respond(id: item.id, actionId: action)
+            if answeringWaiting { nextWaiting() }
+        }
     }
 
     /// Open on a reminder that belongs to a note or task (D49): that item in the Notebook, or Home if it went to the

@@ -90,7 +90,7 @@ final class SidecardController {
         installKeys()
     }
 
-    /// The stack was clicked: Ask opens on top of it.
+    /// The stack was clicked: what waits comes forward.
     var onOpenStack: (() -> Void)?
 
     var currentId: String? { model.shape == .stack ? nil : model.item?.id }
@@ -113,6 +113,11 @@ final class SidecardController {
                 return
             }
             // A new card: a card in front folds into the stack (it still waits there), a whisper waits its turn.
+            // A question doesn't fold, though: someone's waiting on it, so what's new takes its turn after.
+            if model.shape == .card, current.refKind == "ask" {
+                queue.append((item, presentation))
+                return
+            }
             if model.shape == .card { fold(current) } else { queue.insert((current, .gentle(autoDismiss: AttentionPolicy.gentleSeconds)), at: 0) }
         }
         show(item, presentation, card: card)
@@ -120,6 +125,11 @@ final class SidecardController {
 
     func withdraw(id: String) {
         queue.removeAll { $0.0.id == id }
+        // Answered somewhere else while the held cards are out: it goes from them too.
+        if model.stack.contains(where: { $0.id == id }) {
+            model.stack.removeAll { $0.id == id }
+            if model.stack.isEmpty { hideStack() }
+        }
         if model.item?.id == id, model.shape != .stack { close(id: id) }
     }
 

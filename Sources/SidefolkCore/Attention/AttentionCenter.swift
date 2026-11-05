@@ -233,7 +233,7 @@ public actor AttentionCenter {
         let punctual = item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true
         let decision = AttentionPolicy.decide(level: level, source: item.source, createdAt: item.createdAt, now: now,
                                               env: environment, recent: recent, gentle: gentle, punctual: punctual,
-                                              reachWhenAway: item.refKind == OccurrenceScheduler.systemAttentionKind)
+                                              reachWhenAway: item.refKind == OccurrenceScheduler.systemAttentionKind, question: item.refKind == "ask")
         switch decision {
         case .present(let presentation):
             held[item.id] = nil
