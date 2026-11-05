@@ -73,7 +73,7 @@ extension ExtensionPlanWords {
     /// or nil when it cannot be kept in full, and then the plan shows its card. A silent pass needs a LOSSLESS record: one entry for the plan's limits and warning, one for its title and one for the words it gives for when it runs (what the card says in the extension's own words besides the lines),
     /// then for every line a header and for every field of it an entry of its own, each carrying the line's number so a destination stays with its body; the kind
     /// of each value's source first, every written part between slots in quotes, every item of a list with the count, the producers of a slot in full. It is nil
-    /// if there would be more than 60 entries, if any entry is over 270 characters (nothing is split or cut), or if History's Redactor would change an entry (a
+    /// if there would be more than 64 entries, if any entry is over 300 characters (nothing is split or cut), or if History's Redactor would change an entry (a
     /// literal that looks like a secret, a field named like one, a long mixed-case word): what History would not keep whole, the card is the record of.
     static func historyRecord(_ e: PlanEvaluation) -> [String]? {
         // A name or a title is shown whole or the plan shows its card: a cut ("…") would hide the end of it.
