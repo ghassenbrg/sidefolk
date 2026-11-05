@@ -18,9 +18,22 @@ public enum ExtensionDataFile {
         name.count <= 200 && name.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
+    /// What a page's `save` hands over: the same kind of name, with the ending it asked for. These go on to the person's own file, never to a model or back to the extension.
+    public static func isValidSaved(_ name: String, type: String) -> Bool {
+        name.count <= 200 && name.lowercased().hasSuffix("." + type) && name.range(of: #"^([A-Za-z0-9_-][A-Za-z0-9._-]{0,99}/){0,3}[A-Za-z0-9_-][A-Za-z0-9._-]{0,99}$"#, options: .regularExpression) != nil
+    }
+
+    public static func readSaved(_ name: String, type: String, in folder: URL, limit: Int) -> Data? {
+        isValidSaved(name, type: type) ? opened(name, in: folder, limit: limit) : nil
+    }
+
     /// The file's bytes, or nil when it isn't a regular file of one link inside `folder` and at most `limit` bytes.
     public static func read(_ name: String, in folder: URL, limit: Int) -> Data? {
-        guard isValidName(name), let root = FolderAccess.canonical(folder.path) else { return nil }
+        isValidName(name) ? opened(name, in: folder, limit: limit) : nil
+    }
+
+    private static func opened(_ name: String, in folder: URL, limit: Int) -> Data? {
+        guard let root = FolderAccess.canonical(folder.path) else { return nil }
         let fd = open(folder.appendingPathComponent(name).path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
         guard fd >= 0 else { return nil }
         defer { close(fd) }

@@ -9,7 +9,7 @@ public enum PageAct: Sendable, Hashable {
     case copy(String)
     /// The system's open panel, then a tool of its own with the file the person chose.
     case file(PageFileAsk)
-    /// A tool of its own runs, then the system's save panel, and Sidefolk writes what the tool answered to the place the person picked. The extension never learns where.
+    /// A tool of its own writes a file in its data folder and answers its name, then the system's save panel, and Sidefolk copies that file to the place the person picked. The extension never learns where.
     case save(PageSaveAsk)
     /// The system's open panel, then Sidefolk's own drop card for what was chosen: the person picks there, as for a drop.
     case dropCard
@@ -25,7 +25,7 @@ public enum PageAct: Sendable, Hashable {
     case refresh
 
     /// The control's own: `go`, `copy`, `file`, `allow`, `share` or `settings`. Exactly one, or it isn't drawn as one.
-    static func parse(_ j: JSONValue) -> PageAct? {
+    public static func parse(_ j: JSONValue) -> PageAct? {
         if let go = PageGo.parse(j["go"]) { return .go(go) }
         if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(60_000))) }
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
@@ -78,12 +78,14 @@ public struct PageFileAsk: Sendable, Hashable {
     }
 }
 
-/// `{"name": "Morning.sideflow", "type": "sideflow", "tool": "export_flows", "input": {…}}`: what the save panel starts with, and the tool whose words are written. The person picks the place in the system's panel, and the extension never learns it.
+/// `{"name": "Morning.sideflow", "type": "sideflow", "tool": "export_flows", "input": {…}, "note": "…"}`: what the save panel starts with, and the tool whose words are written. The person picks the place in the system's panel, and the extension never learns it.
 public struct PageSaveAsk: Sendable, Hashable {
     public var name: String
     public var type: String
     public var tool: String
     public var input: JSONValue
+    /// What the person should know about what's in the file, on the panel where they decide.
+    public var note: String?
     /// The most it writes: words a page's tool made, not a way to fill a disk.
     public static let longest = 1_000_000
 
@@ -95,7 +97,7 @@ public struct PageSaveAsk: Sendable, Hashable {
         guard !plain.isEmpty else { return nil }
         let ending = "." + type
         let whole = plain.lowercased().hasSuffix(ending) ? plain : plain + ending
-        return PageSaveAsk(name: String(whole.suffix(120)), type: type, tool: tool, input: input)
+        return PageSaveAsk(name: String(whole.suffix(120)), type: type, tool: tool, input: input, note: j["note"]?.stringValue.map { String(ExtensionText.clean($0).prefix(200)) })
     }
 }
 

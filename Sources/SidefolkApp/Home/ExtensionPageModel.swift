@@ -98,6 +98,9 @@ final class ExtensionPagesModel {
         await model.share(question)
     }
 
+    /// The debug app's stand-in for a press of a button that does this.
+    func acts(_ id: String, _ act: PageAct) async { await models[id]?.perform(act) }
+
     func pressInlay(_ id: String, label: String) async -> Bool {
         guard let model = models[id], let page = model.page else { return false }
         for section in page.sections {
@@ -238,6 +241,7 @@ enum PageFilePanel {
         #endif
         let panel = NSSavePanel()
         panel.nameFieldStringValue = ask.name
+        if let note = ask.note { panel.message = note }
         if let type = UTType(filenameExtension: ask.type) { panel.allowedContentTypes = [type] }
         return await panel.begin() == .OK ? panel.url : nil
     }
@@ -270,7 +274,9 @@ final class ExtensionPageModel {
     /// Where its extension's update, if one waits, is said (D89).
     var updates: UpdateModel?
     private(set) var page: ExtensionPage?
-    var problem: String?
+    var problem: String? { didSet { if problem != nil { saidAt = Date() } } }
+    /// When a problem or a save was last said: a page's next read comes in seconds, and that's too soon to take it away.
+    private var saidAt = Date.distantPast
     private var fieldRuns = 0
     private(set) var updated: Date?
     private(set) var history: [String: [ExtensionPageHistory.Point]] = [:]
@@ -367,7 +373,10 @@ final class ExtensionPageModel {
             for go in await host.takePageMoves(info.id) { state.apply(go) }
             do {
                 page = try await host.renderPage(extensionId: info.extensionId, page: info.page, language: Self.language, state: state.json, width: width)
-                problem = nil
+                if Date().timeIntervalSince(saidAt) > 12 {
+                    problem = nil
+                    saved = nil
+                }
                 updated = Date()
                 await loadSettings()
             } catch {
@@ -428,8 +437,9 @@ final class ExtensionPageModel {
             if let why = outcome.problem?.message { problem = why; return }
             guard case .ok(let result) = outcome.status else { return }
             if result.isError { problem = result.text.clipped(300); return }
-            let bytes = Data(result.text.utf8)
-            guard bytes.count <= PageSaveAsk.longest else {
+            // What a tool answers is cut for a model, so the file is handed over in its data folder. It stays for the program to tidy: a folder on the way there could be a link it made, so nothing is removed on its word.
+            let name = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let folder, let bytes = ExtensionDataFile.readSaved(name, type: ask.type, in: folder, limit: PageSaveAsk.longest) else {
                 problem = String(localized: "That's too much to save from here.", comment: "An extension's page: what it asked to save is over the limit")
                 return
             }
@@ -437,6 +447,7 @@ final class ExtensionPageModel {
             do {
                 try bytes.write(to: place, options: .atomic)
                 saved = place.lastPathComponent
+                saidAt = Date()
             } catch {
                 problem = String(localized: "That couldn't be saved there.", comment: "An extension's page: the file couldn't be written where the person chose")
             }

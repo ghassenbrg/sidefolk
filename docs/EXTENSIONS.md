@@ -283,7 +283,7 @@ approve it". A `"write"` parameter raises every tool to at least medium risk, li
 
 ### Saving something where the person picks
 
-A control with `save` (Kit: `.save(name:type:tool:input:)`) runs your tool as the person, then shows the system's save panel starting at `name`, and Sidefolk writes the tool's words, at most 1 MB, where they pick. You never learn the place, and need no `files` permission. A name is only a name: slashes and colons are replaced, and the type's ending is added. A tool that fails, or an answer over the limit, saves nothing and says why on the page.
+A control with `save` (Kit: `.save(name:type:tool:input:note:)`) runs your tool as the person. The tool writes the file in your data folder and answers its name relative to that folder, ending in `.type`, since what a tool answers is cut at 20 KB. Sidefolk then shows the system's save panel starting at `name`, with `note` on it if you sent one (at most 200 characters: what's in the file, for someone deciding), and copies the file, at most 1 MB, where they pick. It stays in your data folder for you to tidy. You never learn the place, and need no `files` permission. A name is only a name: slashes and colons are replaced, and the type's ending is added. A tool that fails, or a file over the limit, saves nothing and says why on the page.
 
 ### Saving a result beside a file
 
