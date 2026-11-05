@@ -161,6 +161,16 @@ import Testing
         #expect(reply["not_found"]?.boolValue == true)
     }
 
+    @Test func onlyARecordOfASizeCountsAsFields() {
+        #expect(ToolResult.fields(.object(["a": .number(1)])) != nil)
+        #expect(ToolResult.fields(.array([.number(1)])) == nil, "a list isn't fields by name")
+        #expect(ToolResult.fields(.string("words")) == nil, "a server can say anything, and it can't be allowed to stop the program")
+        #expect(ToolResult.fields(.object(["a": .string(String(repeating: "x", count: ToolResult.longestData))])) == nil)
+        #expect(ToolSpec.outputSchema(.string("words")) == nil)
+        #expect(ToolSpec.outputSchema(.object(["properties": .object([:])])) != nil)
+        #expect(ToolSpec.outputSchema(.object(["description": .string(String(repeating: "x", count: 20_000))])) == nil)
+    }
+
     @Test func aThingThatIsntThereIsToldFromAFailure() {
         var failure = ToolExecutor.userFacing(ToolError.notFound("a watcher"), tool: Probe(name: "x", risk: .low, capabilities: [], mutates: true).spec)
         #expect(failure.notFound)
@@ -185,6 +195,118 @@ import Testing
         #expect(other?["extension"]?.stringValue == "other")
         #expect(other?["extension_title"]?.stringValue == "Other")
         #expect(other?["from_server"] == nil)
+    }
+
+    @Test func aServerChangingItsFieldsIsBelievedOnItsNextStart() async throws {
+        let w = try await World()
+        let tool = try await w.install(["act": ["purpose": "to use what others offer"]], name: "asker")
+        // Each start offers a field named after the start: the tool's words stay the same, so its pin holds.
+        let server = #"""
+        import json, os, sys
+        path = os.path.join(os.environ["SIDEFOLK_DATA_DIR"], "starts")
+        starts = int(open(path).read()) if os.path.exists(path) else 0
+        open(path, "w").write(str(starts + 1))
+        for line in sys.stdin:
+            m = json.loads(line)
+            def send(r): print(json.dumps(r), flush=True)
+            if m.get("method") == "initialize":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "f", "version": "1"}}})
+            elif m.get("method") == "tools/list":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "look", "title": "Look", "inputSchema": {"type": "object", "additionalProperties": False}, "outputSchema": {"type": "object", "properties": {"start_%d" % starts: {"type": "string"}}}}]}})
+            elif "id" in m:
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+        """#
+        let manifest: JSONValue = ["id": "com.example.moving", "name": "Moving", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["look": ["title": "Look", "risk": "low", "mutates": false]]]
+        try await w.h.host.install(from: w.h.source("moving", manifest: manifest, files: ["server.py": server]))
+        func fields() async -> [String] {
+            let listed = await w.ask(tool, "sidefolk/tools.list")
+            let looked = listed["tools"]?.arrayValue?.first { $0["name"]?.stringValue == "ext.moving.look" }
+            return looked?["output_schema"]?["properties"]?.objectValue?.keys.sorted() ?? []
+        }
+        let before = await fields()
+        #expect(before.count == 1)
+        try await w.h.host.setEnabled(false, id: "com.example.moving")
+        try await w.h.host.setEnabled(true, id: "com.example.moving")
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.moving.look", "input": .object([:])]) }
+        _ = await w.answerCard(.allowOnce)
+        _ = await task.value
+        let after = await fields()
+        #expect(after.count == 1)
+        #expect(after != before, "the tool's words didn't change, so no one is asked, and what it answers with is its latest word")
+    }
+
+    @Test func fieldsComeCleanedOfWhatTheEyeCantSee() throws {
+        let raw: JSONValue = ["who\u{202E}": "\u{202E}eteled", "line": "a\u{0}b\nc", "list": ["\u{200B}x", 3, true, ["deep\u{2066}": "y\u{E0001}"]]]
+        let clean = try #require(ToolResult.fields(raw))
+        #expect(clean["who"]?.stringValue == "eteled")
+        #expect(clean["line"]?.stringValue == "ab\nc")
+        #expect(clean["list"]?.arrayValue?[0].stringValue == "x")
+        #expect(clean["list"]?.arrayValue?[1].doubleValue == 3)
+        #expect(clean["list"]?.arrayValue?[3]["deep"]?.stringValue == "y")
+    }
+
+    @Test func aServerSayingAnythingAsFieldsIsNotPassedOn() async throws {
+        let w = try await World()
+        let tool = try await w.install(["act": ["purpose": "to use what others offer"]], name: "asker")
+        let server = #"""
+        import json, sys
+        for line in sys.stdin:
+            m = json.loads(line)
+            def send(r): print(json.dumps(r), flush=True)
+            if m.get("method") == "initialize":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "f", "version": "1"}}})
+            elif m.get("method") == "tools/list":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "look", "title": "Look", "inputSchema": {"type": "object", "additionalProperties": False}, "outputSchema": "not a schema"}]}})
+            elif m.get("method") == "tools/call":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "Looked"}], "structuredContent": "just words"}})
+            elif "id" in m:
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+        """#
+        let manifest: JSONValue = ["id": "com.example.strange", "name": "Strange", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["look": ["title": "Look", "risk": "low", "mutates": false]]]
+        try await w.h.host.install(from: w.h.source("strange", manifest: manifest, files: ["server.py": server]))
+        let listed = await w.ask(tool, "sidefolk/tools.list")
+        let looked = listed["tools"]?.arrayValue?.first { $0["name"]?.stringValue == "ext.strange.look" }
+        #expect(looked != nil)
+        #expect(looked?["output_schema"] == nil, "a schema is a record")
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.strange.look", "input": .object([:])]) }
+        _ = await w.answerCard(.allowOnce)
+        let reply = await task.value
+        #expect(reply["text"]?.stringValue == "Looked")
+        #expect(reply["data"] == nil, "fields are a record")
+    }
+
+    @Test func fieldsComeBesideTheWordsAndKeepOutOfHistory() async throws {
+        let w = try await World()
+        let tool = try await w.install()
+        let server = #"""
+        import json, sys
+        for line in sys.stdin:
+            m = json.loads(line)
+            def send(r): print(json.dumps(r), flush=True)
+            if m.get("method") == "initialize":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "f", "version": "1"}}})
+            elif m.get("method") == "tools/list":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"tools": [{"name": "look", "title": "Look", "inputSchema": {"type": "object", "additionalProperties": False}, "outputSchema": {"type": "object", "properties": {"secret_word": {"type": "string"}}}}]}})
+            elif m.get("method") == "tools/call":
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {"content": [{"type": "text", "text": "Looked"}], "structuredContent": {"secret_word": "plover", "n": 3}}})
+            elif "id" in m:
+                send({"jsonrpc": "2.0", "id": m["id"], "result": {}})
+        """#
+        let manifest: JSONValue = ["id": "com.example.fields", "name": "Fields", "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
+                                   "tools": ["look": ["title": "Look", "risk": "low", "mutates": false]]]
+        try await w.h.host.install(from: w.h.source("fields", manifest: manifest, files: ["server.py": server]))
+        let listed = await w.ask(tool, "sidefolk/tools.list")
+        let looked = listed["tools"]?.arrayValue?.first { $0["name"]?.stringValue == "ext.fields.look" }
+        #expect(looked?["output_schema"]?["properties"]?["secret_word"] != nil)
+        let task = Task { await w.ask(tool, "sidefolk/tools.call", ["tool": "ext.fields.look", "input": .object([:])]) }
+        _ = await w.answerCard(.allowOnce)
+        let reply = await task.value
+        #expect(reply["text"]?.stringValue == "Looked")
+        #expect(reply["data"]?["secret_word"]?.stringValue == "plover")
+        let rows = try await w.h.env.activity.recent(limit: 20)
+        #expect(!String(describing: rows).contains("plover"), "History keeps the words it would have, never the fields")
     }
 
     @Test func aPageCanOpenAddons() {

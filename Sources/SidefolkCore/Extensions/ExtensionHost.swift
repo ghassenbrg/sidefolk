@@ -967,14 +967,14 @@ public actor ExtensionHost {
         defer { end(id) }
         let limit = timeout ?? config.callTimeout
         let text: String
-        var asked: JSONValue?
+        var asked: JSONValue?, data: JSONValue?
         do {
             if folders.isEmpty {
                 let client = try await ensureRunning(id)
                 try ensureApproved(id, remote, title)
-                (text, asked) = try await client.callToolAsking(name: remote, arguments: input, timeout: limit)
+                (text, asked, data) = try await client.callToolAsking(name: remote, arguments: input, timeout: limit)
             } else {
-                (text, asked) = try await callInOwnProcess(id, remote: remote, title: title, input: input, folders: folders, timeout: limit)
+                (text, asked, data) = try await callInOwnProcess(id, remote: remote, title: title, input: input, folders: folders, timeout: limit)
             }
         } catch MCPError.toolFailed(let message) {
             // The tool's own explanation helps the model fix its call; it is the extension's text, so untrusted.
@@ -998,6 +998,8 @@ public actor ExtensionHost {
         var result = ToolResult(text: clean.isEmpty ? "(no output)" : clean,
                                 card: ResultCard(kind: .extensionResult, title: title, subtitle: rt.pin.name, detail: clean.clipped(200), refId: id),
                                 untrusted: true)
+        // Fields beside the words, for whoever asks next: as outside as the words are, and never in History. Past this size it's a lot to keep hold of, and the words still stand.
+        result.data = ToolResult.fields(data)
         // What it answered is what History keeps for a command (D136). Not what's been copied, nor what it may have read through Sidefolk or
         // heard: History isn't a second clipboard, or a second notebook.
         if !Self.holdsThePersonsWords(rt.pin.permissions), !clean.isEmpty { result.rowOutcome = clean.clipped(160) }
@@ -1042,7 +1044,7 @@ public actor ExtensionHost {
     /// those folders, and it stops when the call ends, so the extension never keeps that access (D39).
     /// It lists its tools first, so a tool that changed since install is held as it would be otherwise.
     private func callInOwnProcess(_ id: String, remote: String, title: String, input: JSONValue,
-                                  folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> (text: String, asks: JSONValue?) {
+                                  folders: [ExtensionFolderGrant], timeout: TimeInterval) async throws -> (text: String, asks: JSONValue?, data: JSONValue?) {
         guard let rt = runtimes[id], rt.record.kind == .sidefolk else {
             throw UserFacingError("Only sandboxed extensions can work in a folder you name.")
         }
@@ -1357,6 +1359,8 @@ public actor ExtensionHost {
         } else {
             for def in accepted {
                 if rt.pin.tools[def.name]?.hash == def.hash {
+                    // What it says it answers with isn't in the hash, and can change with no one to ask.
+                    rt.pin.tools[def.name] = def
                     rt.pin.pending[def.name] = nil
                 } else if rt.pin.pending[def.name]?.hash != def.hash {
                     rt.pin.pending[def.name] = def
@@ -1624,7 +1628,7 @@ public actor ExtensionHost {
         // Sidefolk's own extensions are first-party text that ships in the app; everyone else's isn't (D24, D39).
         let firstParty = rt.pin.origin?.firstParty == true
         let timeout = meta?.timeout.map { TimeInterval(min(max($0, ExtensionTool.timeouts.lowerBound), ExtensionTool.timeouts.upperBound)) }
-        let spec = ToolSpec(name: registryName, title: title,
+        var spec = ToolSpec(name: registryName, title: title,
                             description: firstParty
                                 ? Self.firstPartyDescription(def.description, extensionName: rt.pin.name)
                                 : Self.modelDescription(title: title, extensionName: rt.pin.name, kind: rt.record.kind),
@@ -1635,6 +1639,7 @@ public actor ExtensionHost {
                             timeout: timeout.map { $0 + 5 },
                             // The author may keep a tool to its commands; then the model never sees it (D50).
                             offeredToModel: meta?.offeredToModel ?? true)
+        spec.outputSchema = def.outputSchema
         let id = rt.record.id
         let remote = def.name
         // Only Sidefolk's own extensions are asked which paired device a call reaches (D72); ExtensionTool drops it for
