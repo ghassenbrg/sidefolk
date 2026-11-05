@@ -10,25 +10,21 @@ struct TrustHero: View {
         let mode = model.policy.mode
         VStack(alignment: .leading, spacing: Theme.Space.m) {
             HStack(alignment: .center, spacing: Theme.Space.m) {
-                FolkAvatar(name: "guard", size: 44)
+                FolkAvatar(name: "guard", size: Theme.Size.avatar)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: mode.headline).font(Theme.Font.title2).foregroundStyle(Theme.ink)
+                    Text(verbatim: mode.headline).font(Theme.Font.headline).foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("Whatever you pick, Guard checks every step outside the AI, and every step shows in History.",
                          comment: "Settings › Trust: under the mode's headline")
-                        .font(Theme.Font.body).foregroundStyle(Theme.inkMuted)
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            Grid(horizontalSpacing: Theme.Space.m, verticalSpacing: Theme.Space.m) {
-                GridRow {
-                    ModeCard(mode: .askEveryTime, current: mode, ends: nil) { choose(.askEveryTime) }
-                    ModeCard(mode: .askOncePerKind, current: mode, ends: nil) { choose(.askOncePerKind) }
-                }
-                GridRow {
-                    ModeCard(mode: .auto, current: mode, ends: nil) { choose(.auto) }
-                    ModeCard(mode: .fullAccess, current: mode, ends: model.policy.fullAccessEnds) { choose(.fullAccess) }
-                }
+            VStack(spacing: Theme.Space.xs) {
+                ModeCard(mode: .askEveryTime, current: mode, ends: nil) { choose(.askEveryTime) }
+                ModeCard(mode: .askOncePerKind, current: mode, ends: nil) { choose(.askOncePerKind) }
+                ModeCard(mode: .auto, current: mode, ends: nil) { choose(.auto) }
+                ModeCard(mode: .fullAccess, current: mode, ends: model.policy.fullAccessEnds) { choose(.fullAccess) }
             }
             Text("For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History.")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
@@ -51,32 +47,64 @@ struct TrustHero: View {
     }
 }
 
-/// One approval mode: a radio, its name, what it does, and what it does to one example step.
+/// One approval mode: a radio, its name and what it does, and its example step a click away. A chosen mode keeps its
+/// example open, since that's the rule in force, and so does Auto, which turns on with one click: its example is the
+/// only line that says it changes files after reading outside content.
 private struct ModeCard: View {
     var mode: GuardMode
     var current: GuardMode
     var ends: Date?
     var action: () -> Void
+    @State private var open = false
 
     var body: some View {
         let selected = mode == current
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Theme.Space.s) {
-                HStack(spacing: Theme.Space.s) {
-                    RadioDot(selected: selected)
-                    Text(verbatim: mode.title).font(Theme.Font.headline).foregroundStyle(Theme.ink)
-                    Spacer(minLength: Theme.Space.xs)
-                    if mode == .askOncePerKind {
-                        Chip(text: Text("Suggested", comment: "Settings › Trust: the mode Sidefolk suggests"), tone: .accent)
+        let alwaysOpen = selected || mode == .auto
+        let shape = RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            HStack(alignment: .top, spacing: Theme.Space.m) {
+                Button(action: action) {
+                    HStack(alignment: .top, spacing: Theme.Space.m) {
+                        RadioDot(selected: selected).padding(.top, 2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: Theme.Space.s) {
+                                Text(verbatim: mode.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
+                                if mode == .askOncePerKind {
+                                    Chip(text: Text("Suggested", comment: "Settings › Trust: the mode Sidefolk suggests"), tone: .accent)
+                                }
+                                if selected, mode == .fullAccess {
+                                    Chip(verbatim: ends.map { String(localized: "Ends \(TimeText.clock($0))", comment: "Full access: “Ends 22:00”") }
+                                            ?? String(localized: "On until you turn it off", comment: "Full access without an end"),
+                                         tone: .warning)
+                                }
+                            }
+                            Text(verbatim: mode.explanation).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    if selected, mode == .fullAccess {
-                        Chip(verbatim: ends.map { String(localized: "Ends \(TimeText.clock($0))", comment: "Full access: “Ends 22:00”") }
-                                ?? String(localized: "On until you turn it off", comment: "Full access without an end"),
-                             tone: .warning)
-                    }
+                    .contentShape(Rectangle())
                 }
-                Text(verbatim: mode.explanation).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                .buttonStyle(.sfBare)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+                // Nothing for this to do on an example that's always open.
+                if !alwaysOpen {
+                    Button { withAnimation(Theme.Motion.standard) { open.toggle() } } label: {
+                        HStack(spacing: Theme.Space.xxs + 1) {
+                            Text("Example", comment: "Settings › Trust: shows what a mode does to one real step")
+                            Image(systemName: open ? "chevron.down" : "chevron.forward").font(.system(size: 9, weight: .semibold)).accessibilityHidden(true)
+                        }
+                        .font(Theme.Font.caption.weight(.medium)).foregroundStyle(Theme.link)
+                        .frame(minHeight: Theme.Size.hitTarget)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.sfBare)
+                    .accessibilityLabel(Text("Example of \(mode.title)", comment: "VoiceOver: the button that shows what a mode of Settings › Trust does to one real step"))
+                    .accessibilityValue(open ? Text("Unfolded", comment: "VoiceOver: a fold that is open") : Text(verbatim: ""))
+                }
+            }
+            if open || alwaysOpen {
                 HStack(alignment: .top, spacing: Theme.Space.s) {
                     Image(systemName: mode.exampleSymbol).font(.system(size: 12)).foregroundStyle(Theme.inkMuted).frame(width: 16)
                     Text(mode.example).font(Theme.Font.caption).foregroundStyle(Theme.ink)
@@ -86,18 +114,11 @@ private struct ModeCard: View {
                 .padding(Theme.Space.s)
                 .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
-            .padding(Theme.Space.m)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                    .strokeBorder(selected ? Theme.accent : Theme.line, lineWidth: selected ? 2 : 1)
-            }
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.sfBare)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .padding(Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(Theme.surfaceRaised, in: shape)
+        .overlay(shape.strokeBorder(selected ? Theme.accent : Theme.line, lineWidth: selected ? 2 : 1))
     }
 }
 

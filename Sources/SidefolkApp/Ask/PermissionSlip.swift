@@ -35,10 +35,7 @@ struct PermissionSlip: View {
             content
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 .cardSurface()
-                .overlay {
-                    RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                        .strokeBorder(focused ? Theme.accent : .clear, lineWidth: 2)
-                }
+                .focusRing(focused, radius: Theme.Radius.card)
         }
     }
 
@@ -51,13 +48,13 @@ struct PermissionSlip: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(asker) wants to", comment: "Above a permission slip's title: who asks (“Mochi wants to”, “Codex wants to”)")
                             .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
-                        Text(verbatim: request.title).font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink)
+                        Text(verbatim: request.title).font(standalone ? Theme.Font.bubbleTitle : Theme.Font.title2).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)
                         if request.summary != request.title {
                             // An extension's or another agent's request shows whole: what's clipped here could still run (D160).
                             let whole = request.asker != nil || request.caller.kind == "external"
                             Text(verbatim: whole ? request.summary.split(whereSeparator: \.isNewline).joined(separator: " ") : request.summary)
-                                .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(whole ? nil : 3)
+                                .font(standalone ? Theme.Font.callout : Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(whole ? nil : standalone ? 3 : 4)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if let ends = request.expiresAt {
@@ -123,12 +120,13 @@ struct PermissionSlip: View {
     /// Allow, with "Always…" and "for this request" in its menu when the mode permits them (b08).
     private var allow: some View {
         HStack(spacing: 1) {
+            let splits = request.canAlways || request.canAllowForRequest || request.canKeepReading || request.canAllowAgentsToRead
             // A folder is shared for good by the main button (D185): the person is asked once, not again for every call in it.
             let button = Button { answer(sharesFolder ? .allowAlways : .allowOnce) } label: {
                 if sharesFolder { Text("Share folder", comment: "A permission slip's main button when it asks to share a folder: remembered until removed in Trust") }
                 else { Text("Allow", comment: "A permission slip's main button") }
             }
-            .buttonStyle(.sf(.primary, size: .sidecard))
+            .buttonStyle(.sf(.primary, size: .sidecard, join: splits ? .leading : nil))
             if !keys {
                 button
             } else if request.takesReturn {
@@ -136,7 +134,7 @@ struct PermissionSlip: View {
             } else {
                 button.keyboardShortcut(.return, modifiers: .command)
             }
-            if request.canAlways || request.canAllowForRequest || request.canKeepReading || request.canAllowAgentsToRead {
+            if splits {
                 Menu {
                     Button { answer(.allowOnce) } label: { if sharesFolder { Text("Just this time") } else { Text("Allow once") } }
                     if request.canKeepReading {
@@ -153,11 +151,12 @@ struct PermissionSlip: View {
                     Divider()
                     Button { changeMode() } label: { Text("Change how \(companionName) asks…", comment: "In Allow's menu on a permission slip: opens the approval settings") }
                 } label: {
-                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold))
+                    // A full-sized half: on a folder card the main button shares for good, so a click for this menu mustn't land there.
+                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold)).padding(.horizontal, 6)
                 }
                 .menuStyle(.button)
                 .menuIndicator(.hidden)
-                .buttonStyle(.sf(.primary, size: .sidecard))
+                .buttonStyle(.sf(.primary, size: .sidecard, join: .trailing))
                 .fixedSize()
                 .accessibilityLabel(Text("More ways to allow", comment: "VoiceOver: the menu beside Allow on a permission slip"))
             }

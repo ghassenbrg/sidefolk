@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Lantern's buttons (D84, docs/DESIGN.md). One primary per card, sheet or page: the deep aqua fill with its label at
@@ -74,7 +75,7 @@ struct SFButtonStyle: ButtonStyle {
             .contentShape(shape)
             .scaleEffect(configuration.isPressed && isEnabled ? 0.98 : 1)
             .opacity(isEnabled ? 1 : 0.4)
-            .focusRing(isFocused || showsRing)
+            .focusRing((isFocused && buttonsTakeFocus) || showsRing)
             .focusEffectDisabled()
             .onHover { hovered = $0 }
             .animation(Theme.Motion.micro, value: configuration.isPressed)
@@ -153,7 +154,7 @@ struct SFBareButtonStyle: ButtonStyle {
             configuration.label
                 .contentShape(Rectangle())
                 .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
-                .focusRing(isFocused, radius: Theme.Radius.xs)
+                .focusRing(isFocused && buttonsTakeFocus, radius: Theme.Radius.xs)
                 .focusEffectDisabled()
         }
     }
@@ -183,7 +184,7 @@ struct SFIconButtonStyle: ButtonStyle {
                 .background(Theme.ink.opacity(isEnabled ? (configuration.isPressed ? 0.12 : hovered ? 0.06 : 0) : 0), in: shape)
                 .contentShape(shape)
                 .opacity(isEnabled ? 1 : 0.4)
-                .focusRing(isFocused)
+                .focusRing(isFocused && buttonsTakeFocus)
                 .focusEffectDisabled()
                 .onHover { hovered = $0 }
                 .animation(Theme.Motion.micro, value: configuration.isPressed)
@@ -216,3 +217,8 @@ extension ButtonStyle where Self == SFButtonStyle {
         SFButtonStyle(kind: kind, size: size, working: working, join: join)
     }
 }
+
+/// `\.isFocused` answers for the nearest focusable ancestor, so inside a focused card every button would draw the ring,
+/// Allow and Not now together, though Return would press neither. With macOS's keyboard navigation on a button takes focus
+/// itself, and is its own nearest ancestor. A row made focusable on purpose draws its own ring (`NextUpRow`).
+@MainActor private var buttonsTakeFocus: Bool { NSApp?.isFullKeyboardAccessEnabled ?? false }
