@@ -95,13 +95,18 @@ private struct PageChoiceRow: View {
                 PageRowLabel(label: choice.label, detail: choice.detail)
                 picker
             }
+            // Even stacked, a row of choices can be wider than a narrow panel, and it doesn't shrink: that pushes all the panel holds off both sides. A menu always fits.
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                PageRowLabel(label: choice.label, detail: choice.detail)
+                menu
+            }
         }
         .padding(.horizontal, flat ? 0 : Theme.Space.l)
         .padding(.vertical, Theme.Space.s + 2)
     }
 
-    @ViewBuilder private var picker: some View {
-        let binding = Binding(get: { pending ?? choice.selected }, set: { value in
+    private var binding: Binding<String> {
+        Binding(get: { pending ?? choice.selected }, set: { value in
             guard value != choice.selected else { return }
             pending = value
             Task {
@@ -109,6 +114,17 @@ private struct PageChoiceRow: View {
                 pending = nil
             }
         })
+    }
+
+    private var menu: some View {
+        Picker(selection: binding) { ForEach(choice.options, id: \.value) { Text(ext: $0.label).tag($0.value) } } label: { Text(ext: choice.label) }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .disabled(pending != nil || choice.disabled)
+    }
+
+    @ViewBuilder private var picker: some View {
         let options = ForEach(choice.options, id: \.value) { Text(ext: $0.label).tag($0.value) }
         Group {
             if choice.options.count <= 4 {

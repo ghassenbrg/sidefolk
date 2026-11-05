@@ -654,6 +654,11 @@ final class AppCoordinator {
             if rest.count == 2 { NotificationCenter.default.post(name: PageEditFieldRow.devChip, object: rest) }
             return
         }
+        if command.hasPrefix("pageOpen:") {
+            // pageOpen:<a folding section's title>: as a click on it.
+            NotificationCenter.default.post(name: SectionView.devOpen, object: String(command.dropFirst("pageOpen:".count)))
+            return
+        }
         if command == "pageFieldEnd" {
             // Clicking elsewhere: the field being typed in lets go.
             for window in NSApp.windows where window.firstResponder is NSTextView { window.makeFirstResponder(nil) }
