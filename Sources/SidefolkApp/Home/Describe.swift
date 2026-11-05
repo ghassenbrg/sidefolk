@@ -152,6 +152,8 @@ enum Describe {
         case .allowedForRequest: String(localized: "Ran without asking: you allowed this for the request it belongs to.", comment: "History: a step covered by an earlier yes in the same request")
         case .research: String(localized: "A link on a page, read without asking because you allowed a few in this conversation.")
         case .plan: String(localized: "Ran without asking because it fit a plan you read and allowed.")
+        case .planUnread: String(localized: "Ran without asking because it fit a plan nobody read: Full access or Auto let it through.", comment: "History: a plan's line that was never shown on a card")
+        case .autoPlan: String(localized: "Allowed in Auto without a card: the new lines stay inside Sidefolk, and nobody read them.", comment: "History: a plan's edit Auto let through")
         }
     }
 

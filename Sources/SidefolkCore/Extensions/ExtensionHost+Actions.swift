@@ -84,7 +84,7 @@ extension ExtensionHost {
             runtimes[id]?.actionTasks[key] = Task { [weak self] in
                 let following = keptFrom ? nil : ExtensionHost.following(request: request, client: client)
                 let outcome = await ToolProgress.$report.withValue(following) {
-                    await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout, capped: found.capped)
+                    await gateway.call(tool, input: input, extensionId: id, asker: asker, standing: standing, written: written, timeout: timeout, capped: found.capped, unread: found.unread)
                 }
                 await self?.finishAction(id, request: request, standing: standing, outcome: outcome, tool: tool, capped: found.capped, key: key)
             }
@@ -296,6 +296,8 @@ extension ExtensionHost {
         var step: JSONValue?
         /// The plan's own limit for today or for this run, reached: nothing is asked, the call is refused and the program says so (D189).
         var capped: String?
+        /// The plan or the line was never read on a card (Full access or Auto let it through).
+        var unread = false
         /// Where the step's filled words come from, for History: "body from page (outside content)".
         var provenance: String?
     }
@@ -327,7 +329,8 @@ extension ExtensionHost {
         // "Ask each time" for the internet is the person's word for every page, whoever asks (D47).
         if tool.spec.capabilities.contains(.network), await configuration.askEachTimeOnline() { return Standing() }
         let provenance = Self.provenance(fits)
-        guard counting else { return Standing(step: fits.input, provenance: provenance) }
+        let unread = saved.answeredUnread == true || fits.answeredInAuto == true
+        guard counting else { return Standing(step: fits.input, unread: unread, provenance: provenance) }
         // Read after the wait above, and kept: a burst, or a restart, doesn't buy a new budget.
         let day = AIHelper.dayKey(Date()), used = runtimes[id]?.preferences.planCalls[plan]
         let count = used?.day == day ? used?.count ?? 0 : 0
@@ -339,7 +342,7 @@ extension ExtensionHost {
             runtimes[id]?.countRun(key)
         }
         await updatePreferences(id) { $0.planCalls[plan] = ExtensionPreferences.PlanCount(day: day, count: count + 1) }
-        return Standing(step: fits.input, provenance: provenance)
+        return Standing(step: fits.input, unread: unread, provenance: provenance)
     }
 
     /// Where a step's filled words come from, so History says it afterwards (D189): the field, the names of the steps it reads (as the extension wrote
@@ -373,30 +376,33 @@ extension ExtensionHost {
             return await refuse(reason.rawValue)
         case .success(let found): evaluation = found
         }
-        let flow = await configuration.flowPolicy()
-        let answer = planAnswer(id, evaluation, flow: flow)
-        let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: flow.mode)
+        // One reading of the person's mode decides all of it: the card's words, the answer, what is marked and what the reply says.
+        let answer = planAnswer(id, evaluation)
+        let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
         let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: words,
                                      answer: answer, intent: evaluation.intent)
         let asker = asker(rt)
+        // What nobody read is named on the approval's own row in History: the lines it let through.
+        var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
+        if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .string(ExtensionPlanWords.addedLines(evaluation).joined(separator: "\n")) }
         Task { [weak self] in
-            let outcome = await gateway.askForPlan(card, input: ["extension": .string(id), "plan": .string(evaluation.plan.id)], extensionId: id, asker: asker)
+            let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
             await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer)
         }
     }
 
     /// Whether the person needs a card for this plan at all (D186–D188). Guard checks the mode again itself: this only says what the host found.
-    private func planAnswer(_ id: String, _ e: PlanEvaluation, flow: FlowPolicy) -> PlanAnswer? {
+    private func planAnswer(_ id: String, _ e: PlanEvaluation) -> PlanAnswer? {
         if e.covered { return .covered }
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
         // Full access answers for the person's own click, once: not for a turn of Sidefolk's agent, and not for a click of a minute ago.
-        if flow.mode == .fullAccess, let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
+        if e.mode == .fullAccess, let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
             runtimes[id]?.personClicks[click] = nil
             return .fullAccess
         }
         // In Auto, an edit that only adds what stays inside Sidefolk asks nothing; History still has the row.
-        if flow.mode == .auto, e.previous != nil, !e.widened, e.fresh.allSatisfy({ ExtensionPlanRules.staysInside(e.lines[$0]) }) { return .covered }
+        if e.mode == .auto, e.previous != nil, !e.widened, e.fresh.allSatisfy({ ExtensionPlanRules.staysInside(e.lines[$0]) }) { return .autoSkipped }
         return nil
     }
 
@@ -421,18 +427,18 @@ extension ExtensionHost {
         var plan = evaluation.plan
         // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
         // when it was going to, however often its program asks again. (A plan nobody read never gets here with a previous: it is shown whole.)
-        if answer == .covered, let was = evaluation.previous {
+        if answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
             plan.approvedAt = was.approvedAt
             plan.expiresAt = was.expiresAt
         }
         if answer == .fullAccess { plan.answeredUnread = true }
         // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
-        if answer == .covered, evaluation.mode == .auto { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
+        if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
         await updatePreferences(id) { $0.plans[plan.id] = plan }
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
                                                                              "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),
-                                                                             "silent": .bool(evaluation.covered),
+                                                                             "silent": .bool((answer == .covered || answer == .autoSkipped) && evaluation.mode != .askEveryTime || answer == .fullAccess),
                                                                              "new": .number(Double(evaluation.fresh.count))])
     }
 
@@ -457,7 +463,7 @@ extension ExtensionHost {
                 return .object(out)
             }
             let newRows = e.rows.indices.filter { e.fresh.contains(e.rows[$0]) }
-            await reply(id, request, ["ok": true, "steps": .array(states), "new": .array(newRows.map { .number(Double($0)) }), "silent": .bool(e.covered),
+            await reply(id, request, ["ok": true, "steps": .array(states), "new": .array(newRows.map { .number(Double($0)) }), "silent": .bool(e.covered && flow.mode != .askEveryTime),
                                       "widened": .bool(e.widened)])
         }
     }

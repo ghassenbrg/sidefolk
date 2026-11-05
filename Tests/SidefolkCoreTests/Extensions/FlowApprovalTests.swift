@@ -224,7 +224,9 @@ import Testing
         #expect(first.asked, "the first time, the card")
         let inside = await w.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]]))
         #expect(!inside.asked && inside.reply["ok"]?.boolValue == true, "a notice stays in Sidefolk")
-        #expect(try await w.rows("extensions.plan").first?.decision == .plan)
+        let row = try await w.rows("extensions.plan").first
+        #expect(row?.decision == .autoPlan, "History says Auto let it through unread, not that a plan was read")
+        #expect(row?.args?["lines"]?.stringValue?.contains("Done") == true, "and names the line: \(String(describing: row?.args))")
         #expect(await w.approve(Self.plan([Self.save, Self.fetch])).asked, "an address leaves the Mac: the card")
     }
 
@@ -515,7 +517,7 @@ import Testing
         let w = try await World()
         var busy = 0
         for _ in 0..<70 where await w.check(Self.plan([Self.save]))["reason"]?.stringValue == "busy" { busy += 1 }
-        #expect(busy >= 5, "a loop of plan.check can't starve the host: \(busy)")
+        #expect(busy == 10, "70 looks in a minute: the first 60 are served and the other 10 are not: \(busy)")
         let huge = String(repeating: "a", count: 300_000)
         #expect(await w.check(Self.plan([["tool": "notes.save", "input": ["text": .string(huge)]]]))["ok"]?.boolValue == false)
     }
@@ -898,7 +900,7 @@ import Testing
         let ask: JSONValue = ["tool": "ask.user", "as": "who", "input": ["question": "Where?"]]
         let through: JSONValue = ["kind": "value", "as": "t", "reads": ["who"]]
         let mine = await w.check(Self.plan([ask, through, Self.post(["repo": "{{t}}"])]))["steps"]?.arrayValue?.last
-        #expect(mine?["state"]?.stringValue == "stands", "\(String(describing: mine))")
+        #expect(mine?["state"]?.stringValue == "stands_in_full_access" && mine?["why"]?.stringValue == "declared_place", "a typed answer is read from names the program wrote: \(String(describing: mine))")
         #expect(await w.check(Self.plan([Self.page, ["kind": "value", "as": "t", "reads": ["t"]], Self.post(["command": "{{t}}"])]))["steps"]?.arrayValue?.last?["state"]?.stringValue == "refused",
                 "a value that reads itself is read as outside, not looped")
     }
@@ -920,7 +922,7 @@ import Testing
         let started = ContinuousClock.now
         let checked = await w.check(Self.plan(steps))
         #expect(ContinuousClock.now - started < .seconds(10), "not exponential")
-        #expect(checked["steps"]?.arrayValue?.last?["state"]?.stringValue == "stands", "the person's answer, passed down 90 steps, is still theirs")
+        #expect(checked["steps"]?.arrayValue?.last?["why"]?.stringValue == "declared_place", "the person's answer, passed down 90 steps, is still read as theirs, and a place it fills stands only in Full access")
     }
 
     @Test func aStepsNamesToReadMustAllBeNamesAndFewAndNeverDropped() async throws {
@@ -939,15 +941,15 @@ import Testing
     @Test func cyclesAndNamesNoStepMakesAreOutside() async throws {
         let w = try await World()
         _ = try server(w)
-        func state(_ steps: [JSONValue], _ field: String) async -> String? {
-            await w.check(Self.plan(steps + [Self.post([field: "{{a}}"])]))["steps"]?.arrayValue?.last?["state"]?.stringValue
+        func state(_ steps: [JSONValue], _ field: String, key: String = "state") async -> String? {
+            await w.check(Self.plan(steps + [Self.post([field: "{{a}}"])]))["steps"]?.arrayValue?.last?[key]?.stringValue
         }
         let ab: [JSONValue] = [["kind": "value", "as": "a", "reads": ["b"]], ["kind": "value", "as": "b", "reads": ["a"]]]
         #expect(await state(ab, "command") == "refused", "two steps reading each other")
         #expect(await state([["kind": "value", "as": "a", "reads": ["nobody"]]], "command") == "refused", "a name no step makes")
         let ask: JSONValue = ["tool": "ask.user", "as": "who", "input": ["question": "Where?"]]
-        #expect(await state([["kind": "value", "as": "a", "reads": ["later"]], ask, ["kind": "value", "as": "later", "reads": ["who"]]], "command") == "stands",
-                "a name a LATER step makes is that step's, read the same way as an earlier one")
+        #expect(await state([["kind": "value", "as": "a", "reads": ["later"]], ask, ["kind": "value", "as": "later", "reads": ["who"]]], "repo", key: "why") == "declared_place",
+                "a name a LATER step makes is that step's, read the same way as an earlier one (a typed answer, which still only stands in Full access in a place)")
     }
 
     @Test func theAIRowNamesWhatAValueStepPassesOn() async throws {

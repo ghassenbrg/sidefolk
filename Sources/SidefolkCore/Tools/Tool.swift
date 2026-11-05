@@ -168,6 +168,8 @@ public enum PlanAnswer: Sendable, Hashable {
     case covered
     /// The person turned on Full access, and their own click started this plan.
     case fullAccess
+    /// In Auto, an edit whose new lines stay inside Sidefolk: no card, and nobody read them.
+    case autoSkipped
 }
 
 /// Where a call reaches on the network, as Sidefolk's own code knows it (D47). Only Sidefolk's code says so: a

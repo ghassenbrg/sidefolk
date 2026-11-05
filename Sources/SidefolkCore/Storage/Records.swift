@@ -372,6 +372,10 @@ public struct ActivityEntry: SidefolkRecord, Identifiable, Hashable {
         case allowedForRequest = "allowed_for_request"
         /// Without a card, because it fit a plan the person read and allowed (D110).
         case plan
+        /// Without a card, because it fit a plan nobody read: Full access answered it, or Auto let a line that stays inside Sidefolk through (D187, D188).
+        case planUnread = "plan_unread"
+        /// A plan's edit that Auto let through with no card, because its new lines stay inside Sidefolk: nobody read them (D187).
+        case autoPlan = "auto_plan"
     }
 
     public var id: Int64?

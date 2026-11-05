@@ -83,7 +83,7 @@ extension ExtensionHost {
             // A step's name is how later steps point at it, and the host reads it first: one name twice, or one the host reads as the clock, would let words
             // from outside pass for the person's own.
             if let name, !named.insert(name).inserted || ExtensionPlanRules.reservedNames.contains(name) { return .failure(.unusable) }
-            let title = raw["title"]?.stringValue.map { ExtensionText.line($0, characters: 80) }.flatMap { $0.isEmpty ? nil : $0 }
+            let title = raw["title"]?.stringValue.map { ExtensionPlanRules.visible(ExtensionText.line($0, characters: 80)) }.flatMap { $0.isEmpty ? nil : $0 }
             var line: PlanEvaluation.Line
             if let kind = raw["kind"]?.stringValue {
                 // A step with no tool of Sidefolk's behind it: it is read, never run by the host (D186). Only a signed extension's word for what it does is put
@@ -132,7 +132,7 @@ extension ExtensionHost {
                 var step = ExtensionPlan.Step(tool: tool.spec.name, input: input, definition: definition,
                                               reach: ExtensionPlanRules.reach(tool.scope(for: input)), standing: verdict.stands, provider: ExtensionPlanRules.provider(tool),
                                               name: name, sources: sources.nonEmpty, fullAccessOnly: verdict.fullAccessOnly ? true : nil,
-                                              program: verdict.stands ? program : nil)
+                                              program: program)
                 step.title = title
                 step.feeds = Self.feeds(of: input, tool: tool.spec.name, earlier: lines)
                 line = .init(step: step, tool: tool, verdict: verdict)
@@ -149,8 +149,8 @@ extension ExtensionHost {
         guard lines.count <= ExtensionPlanRules.maxRows, Set(lines.filter { $0.step.kind != "value" }.map { Self.contentKey($0.step) }).count <= ExtensionPlanRules.maxSteps else { return .failure(.unusable) }
         Self.markCrossing(&lines)
 
-        let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
-        let when = ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 600)
+        let title = ExtensionPlanRules.visible(ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80))
+        let when = ExtensionPlanRules.visible(ExtensionText.line(plan["when"]?.stringValue ?? "", characters: 600))
         let round = plan["goes_round"]?.boolValue == true || (plan["goes_round"]?.intValue ?? 0) > 0
         var candidate = ExtensionPlan(id: planId, title: title, when: when, steps: lines.map(\.step), owner: who, approvedAt: Date(),
                                       expiresAt: ttl.map { Date().addingTimeInterval(Double($0)) }, perDay: perDay, perRun: perRun, ttl: ttl, goesRound: round ? true : nil)

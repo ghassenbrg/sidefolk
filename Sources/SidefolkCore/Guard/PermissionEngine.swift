@@ -65,6 +65,7 @@ public struct PermissionEngine: Sendable {
             switch answer {
             case .covered where policy.mode(for: caller) != .askEveryTime: return .allow(.plan)
             case .fullAccess where policy.mode == .fullAccess: return .allow(.fullAccess)
+            case .autoSkipped where policy.mode == .auto: return .allow(.autoPlan)
             default: break
             }
         }

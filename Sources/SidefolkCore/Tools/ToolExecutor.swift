@@ -230,7 +230,8 @@ public final class ToolExecutor: Sendable {
                                            tainted: tainted, policy: policy, grants: grants, folders: folders, mentions: mentions,
                                            answeredFolders: answeredFolders, standing: standing)
             switch decision {
-            case .allow(let tag):
+            case .allow(var tag):
+                if tag == .plan, (tool as? ExternalFacade)?.unread == true { tag = .planUnread }
                 // A site allowed for good, used while outside content is in play, is the only site the call may reach:
                 // a redirect from it could carry the address's path anywhere (D47).
                 var site: String?
@@ -406,7 +407,7 @@ public final class ToolExecutor: Sendable {
         events.publish(.toolStarted(act))
         let context = {
             var context = ToolContext(caller: caller, now: clock.now, tainted: tainted, folders: folders, site: site, handedOver: handedOver)
-            context.onPlan = decision == .plan
+            context.onPlan = decision == .plan || decision == .planUnread
             context.filledIn = act.written != nil
             // What happened here, not what anyone says: this call's own card, answered yes, for another agent. A plan or a
             // flow's step never has it (D160).

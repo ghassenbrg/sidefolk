@@ -22,6 +22,9 @@ extension ExtensionPlanWords {
         if !plan.when.isEmpty { parts.append(String(localized: "When, in \(ToolFormat.oneLine(ExtensionText.clean(name), 60))'s words: \(ToolFormat.oneLine(ExtensionText.clean(plan.when), 600))", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
         let delta = e.previous != nil
         let shown = delta ? e.fresh : Array(e.lines.indices)
+        // The one warning that matters most comes first: the card scrolls, and what is below its fold is read last.
+        let crossings = crossingSentences(e, shown: shown)
+        if !crossings.isEmpty { parts.append(crossings.joined(separator: " ")) }
         if delta, !shown.isEmpty {
             parts.append(String(localized: "New, asking you now:", comment: "A plan's card, after an edit: only what the person hasn't read yet follows"))
         }
@@ -44,7 +47,7 @@ extension ExtensionPlanWords {
         }
         // With nothing to allow, there's nothing to return and nothing to count: the card is only what it says it sets off.
         guard !e.lines.isEmpty else { return text(parts) }
-        if !delta { parts.append(String(localized: "What these return goes to \(name), which has no network of its own.", comment: "A plan's card; the extension's name")) }
+        if !delta { parts.append(String(localized: "What these return goes to \(safe(name, 60)), which has no network of its own.", comment: "A plan's card; the extension's name")) }
         if e.lines.contains(where: { $0.step.tool == CompanionJobTool.name }) {
             parts.append(String(localized: "A job for your companion uses your AI and its tools, under your own trust settings. What it does is in History.", comment: "A plan's card"))
         }
@@ -61,9 +64,17 @@ extension ExtensionPlanWords {
         if !delta {
             parts.append(mode == .askEveryTime
                 ? String(localized: "You asked to be asked every time, so each action still asks before it runs.", comment: "A plan's card, the last words, for someone who chose Ask every time")
-                : String(localized: "Apart from the lines that still ask, that's all of it: it won't ask again unless you change it to do something new.", comment: "A plan's card, the last words"))
+                : String(localized: "Apart from the lines that still ask, that's all of it. It asks again if you change it to do something new, when its time is up, if the add-on or its program changes, or if you change a setting it depends on.", comment: "A plan's card, the last words"))
         }
         return text(parts)
+    }
+
+    /// The lines a card was never shown for (Full access or Auto let them through), each as the card would have said it: History keeps them on the approval's row.
+    static func addedLines(_ e: PlanEvaluation) -> [String] {
+        e.fresh.compactMap { i -> String? in
+            guard e.lines[i].tool != nil else { return nil }
+            return ToolFormat.oneLine(lineText(e.lines[i], e), 240)
+        }.prefix(20).map { $0 }
     }
 
     // MARK: Sections
@@ -202,8 +213,9 @@ extension ExtensionPlanWords {
     /// Why a line still asks, in words, when there is a reason the person can act on.
     private static func reason(_ line: PlanEvaluation.Line, mode: GuardMode, askOnline: Bool) -> String {
         let why: String? = switch line.verdict.why {
-        case "code_field"?: String(localized: "words from outside can't go in a field that runs something", comment: "A plan's card: why a line asks")
+        case "code_field"?: String(localized: "nothing filled in can go in a field that runs something", comment: "A plan's card: why a line asks")
         case "reach_field"?: String(localized: "where it goes comes from outside content", comment: "A plan's card: why a line asks")
+        case "declared_place"?: String(localized: "where it goes comes from a name the extension wrote, which Sidefolk can't check", comment: "A plan's card: why a line asks")
         case "private_read"?: String(localized: "what you copied is yours alone", comment: "A plan's card: why a line asks")
         case "filled_value"?: String(localized: "a value filled in from outside content", comment: "A plan's card: why a line asks")
         case "server_unpinned"?:
@@ -232,15 +244,20 @@ extension ExtensionPlanWords {
 
     // MARK: Outside content and limits
 
-    /// Where words from outside go, line by line, in plain words: the one thing an approval can't fix is what such words say.
-    private static func outsideParagraph(_ e: PlanEvaluation, shown: [Int]) -> String? {
+    /// The whole plan reads private things and outside words and sends words from them to a server or another extension: said where it happens.
+    private static func crossingSentences(_ e: PlanEvaluation, shown: [Int]) -> [String] {
         var sentences: [String] = []
-        // The whole plan reads private things and outside words and sends words from them to a server or another extension: said where it happens.
         for i in shown where e.lines[i].verdict.warning == "crossing" {
             guard let tool = e.lines[i].tool, let ext = ExtensionPlanRules.extensionTool(tool) else { continue }
             sentences.append(String(localized: "This flow reads things of yours and outside content, and fills “\(safe(tool.spec.title, 60))” from what it reads: words from a page or a file could put your own there, and they go to \(safe(ext.extensionName, 40)).",
                                     comment: "A plan's card: a warning that outside words could carry the person's own words to a server; a tool's title, an extension's name"))
         }
+        return sentences
+    }
+
+    /// Where words from outside go, line by line, in plain words: the one thing an approval can't fix is what such words say.
+    private static func outsideParagraph(_ e: PlanEvaluation, shown: [Int]) -> String? {
+        var sentences: [String] = []
         for i in shown {
             let line = e.lines[i]
             guard let tool = line.tool, line.step.standing else { continue }

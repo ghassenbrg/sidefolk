@@ -187,7 +187,7 @@ extension ExtensionPlanRules {
         if spec.capabilities.contains(.shell) { return asks("shell", refused: true) }
         guard let fields = template.objectValue else { return asks("unreadable_value") }
         guard context.firstParty else { return asks(spec.risk == .high ? "high_risk" : "filled_value") }
-        guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }), objectsFit(template) else { return asks("unreadable_value") }
+        guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }), objectsFit(template), !joinersOutsideWords(template) else { return asks("unreadable_value") }
         if name == CompanionJobTool.name, (fields["job"]?.stringValue?.count ?? 0) > CompanionJobTool.longest { return asks("unreadable_value") }
         // A built-in tool that is high risk keeps its card; a server's is high risk for everyone (D127), and stands once its program can be checked.
         if spec.risk == .high, !server { return asks("high_risk") }
@@ -205,15 +205,20 @@ extension ExtensionPlanRules {
             if open.contains(key) { continue }
             let source = sources[key] ?? "outside"
             let kind = fieldClass(key, schema: properties[key], whole: isWholeSlot(text))
-            // A signed extension's word for the person's own is believed, but never where code runs.
-            if kind == .code, source != "inside" { return asks("code_field", refused: true) }
-            guard source == "outside" else { continue }
+            // Where code runs, no slot at all: the host reads a name ("today", an `ask.user` step the program may never ask) as the person's own, which is the
+            // program's declaration and not a fact, so nobody's word counts there, in any mode.
+            if kind == .code { return asks("code_field", refused: true) }
             switch kind {
-            case .code: return asks("code_field", refused: true)
+            case .code: break
             case .other:
+                // A place or a choice is the person's only where the extension says so on its card (claimed). The rest, a typed answer or a clock included, is
+                // read from names the program wrote, so it stands only in Full access; and the person's switch holds back what comes from outside.
+                if source == "claimed" { continue }
+                if source == "outside", ext != nil, !context.mayPassToServers { return asks("switch_off") }
                 fullOnly = true
-                why = "reach_field"
+                why = source == "inside" ? "declared_place" : "reach_field"
             case .freeText:
+                guard source == "outside" else { continue }
                 if ext != nil {
                     // Another extension's tool or a server: free words may go in, as the card says, unless the person switched that off.
                     guard context.mayPassToServers else { return asks("switch_off") }
@@ -236,14 +241,15 @@ extension ExtensionPlanRules {
             guard old.kind == kind else { return false }
             // A step that only passes words on grants nothing: what feeds from it is what changes, and that is compared where it is used.
             if kind == "value" { return true }
-            if kind == "flow" { return step.input["name"]?.stringValue == old.input["name"]?.stringValue }
+            if kind == "flow" { return same(step.input["name"]?.stringValue ?? "", old.input["name"]?.stringValue ?? "") }
             return Set(step.reads ?? ["*"]).isSubset(of: Set(old.reads ?? ["*"])) && (step.feeds ?? [:]).allSatisfy { old.feeds?[$0.key] == $0.value }
         }
         guard old.kind == nil, old.tool == step.tool, (old.provider ?? "") == (step.provider ?? ""), old.definition == step.definition else { return false }
         // It asks each time: there is nothing silent to read again.
         guard step.standing else { return true }
         guard old.standing, !(old.isInFullAccessOnly && !step.isInFullAccessOnly), same(old.reach, step.reach), (old.program ?? "") == (step.program ?? ""),
-              let before = old.input.objectValue, let now = step.input.objectValue, Set(before.keys) == Set(now.keys) else { return false }
+              let before = old.input.objectValue, let now = step.input.objectValue,
+              Set(before.keys.map { Array($0.utf8) }) == Set(now.keys.map { Array($0.utf8) }) else { return false }
         let open = ExtensionActionPolicy.fillable[step.tool] ?? []
         for (key, value) in now {
             if open.contains(key), let was = before[key]?.stringValue, let now = value.stringValue {

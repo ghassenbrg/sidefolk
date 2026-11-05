@@ -41750,6 +41750,65 @@
         }
       }
     },
+    "Allowed in Auto without a card: the new lines stay inside Sidefolk, and nobody read them." : {
+      "comment" : "History: a plan's edit Auto let through",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سُمح به في وضع Auto دون بطاقة: الأسطر الجديدة تبقى داخل Sidefolk ولم يقرأها أحد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Auto ohne Karte erlaubt: Die neuen Zeilen bleiben in Sidefolk, und niemand hat sie gelesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido en Auto sin tarjeta: las líneas nuevas se quedan dentro de Sidefolk y nadie las leyó."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé en mode Auto sans carte : les nouvelles lignes restent dans Sidefolk, et personne ne les a lues."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentito in Auto senza scheda: le nuove righe restano dentro Sidefolk e nessuno le ha lette."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoでカードなしで許可されました。新しい行はSidefolkの中にとどまり、誰も読んでいません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto에서 카드 없이 허용했어요. 새 줄은 Sidefolk 안에 머물고, 아무도 읽지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido no Auto sem cartão: as novas linhas ficam dentro do Sidefolk e ninguém as leu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在自动模式下无需卡片即获允许：新增的行留在 Sidefolk 内，没有人读过。"
+          }
+        }
+      }
+    },
     "Allowed, but it didn't work." : {
       "localizations" : {
         "ar" : {
@@ -45198,8 +45257,68 @@
         }
       }
     },
+    "Apart from the lines that still ask, that's all of it. It asks again if you change it to do something new, when its time is up, if the add-on or its program changes, or if you change a setting it depends on." : {
+      "comment" : "A plan's card, the last words",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "باستثناء الأسطر التي ما زالت تسأل، هذا كل شيء. يسأل مرة أخرى إذا عدّلته ليفعل شيئًا جديدًا، أو عندما ينتهي وقته، أو إذا تغيّرت الإضافة أو برنامجها، أو إذا غيّرت إعدادًا يعتمد عليه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgesehen von den Zeilen, die weiter fragen, ist das alles. Er fragt wieder, wenn du ihn änderst, damit er etwas Neues tut, wenn seine Zeit abläuft, wenn sich das Add-on oder sein Programm ändert oder wenn du eine Einstellung änderst, von der er abhängt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparte de las líneas que aún preguntan, eso es todo. Vuelve a preguntar si la cambias para que haga algo nuevo, cuando se acaba su tiempo, si cambia el complemento o su programa, o si cambias un ajuste del que depende."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En dehors des lignes qui demandent encore, c’est tout. Elle redemande si vous la modifiez pour qu’elle fasse autre chose, quand son délai est écoulé, si le module ou son programme change, ou si vous modifiez un réglage dont elle dépend."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A parte le righe che chiedono ancora, è tutto. Chiede di nuovo se la modifichi perché faccia qualcosa di nuovo, quando il suo tempo scade, se cambia il componente o il suo programma, o se cambi un’impostazione da cui dipende."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ確認が必要な行を除けば、これで全部です。新しいことをするよう編集したとき、期限が切れたとき、アドオンやそのプログラムが変わったとき、依存する設定を変えたときは、もう一度確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속 물어보는 줄을 빼면 이게 전부예요. 새로운 일을 하도록 고쳤을 때, 시간이 다 됐을 때, 애드온이나 프로그램이 바뀌었을 때, 의존하는 설정을 바꿨을 때는 다시 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Além das linhas que ainda perguntam, é só isso. Ela pergunta de novo se você a edita para fazer algo novo, quando o tempo dela acaba, se o complemento ou o programa dele muda, ou se você muda uma configuração da qual ela depende."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除了仍会询问的行，就是这些。当你把它改成做新的事、它到期、附加功能或其程序改变，或你更改了它依赖的设置时，它会再次询问。"
+          }
+        }
+      }
+    },
     "Apart from the lines that still ask, that's all of it: it won't ask again unless you change it to do something new." : {
       "comment" : "A plan's card, the last words",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -140255,6 +140374,7 @@
       }
     },
     "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow is not held back." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -140308,6 +140428,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开启：你批准过的流程可以按卡片上所写，把它读到或写下的内容放进服务器或其他附加功能工具的字段：来自网页或文件的文字，也包括你自己的笔记、提醒事项和日历、你的 AI 写的内容，以及其他服务器的回答。关闭：这些行每次都会询问。你在流程中输入的内容不受限制。"
+          }
+        }
+      }
+    },
+    "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow, and anything an add-on says is yours, is not held back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مفعّل: يمكن للروتين الذي وافقت عليه أن يضع ما قرأه أو كتبه في حقول خادم أو أداة إضافة أخرى، كما تقول بطاقته: كلمات من صفحة أو ملف، وأيضًا ملاحظاتك وتذكيراتك وتقويمك، وما كتبه الذكاء الاصطناعي لديك، وما ردّت به خوادم أخرى. متوقف: تسألك تلك الأسطر في كل مرة. ما تكتبه بنفسك في الروتين، وكل ما تقول إضافة إنه لك، لا يُحجب."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An: Ein Ablauf, den du genehmigt hast, darf, was er gelesen oder geschrieben hat, in die Felder eines Servers oder des Werkzeugs eines anderen Add-ons setzen, wo seine Karte es sagt: Wörter von einer Seite oder aus einer Datei, aber auch deine eigenen Notizen, Erinnerungen und Termine, was deine KI geschrieben hat und was andere Server geantwortet haben. Aus: Diese Zeilen fragen jedes Mal. Was du in einen Ablauf eintippst und alles, was ein Add-on als deins bezeichnet, wird nicht zurückgehalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado: una rutina que aprobaste puede poner lo que leyó o escribió en los campos de un servidor o de la herramienta de otro complemento, donde su tarjeta lo indica: palabras de una página o de un archivo, pero también tus propias notas, recordatorios y calendario, lo que escribió tu IA y lo que respondieron otros servidores. Desactivado: esas líneas preguntan cada vez. Lo que escribes en una rutina, y todo lo que un complemento dice que es tuyo, no se retiene."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé : une routine que vous avez approuvée peut mettre ce qu’elle a lu ou écrit dans les champs d’un serveur ou de l’outil d’un autre module, comme l’indique sa carte : des mots venant d’une page ou d’un fichier, mais aussi vos propres notes, rappels et agenda, ce que votre IA a écrit et ce que d’autres serveurs ont répondu. Désactivé : ces lignes demandent à chaque fois. Ce que vous saisissez dans une routine, et tout ce qu’un module dit être à vous, n’est pas retenu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivo: una routine che hai approvato può mettere ciò che ha letto o scritto nei campi di un server o dello strumento di un altro componente, dove la sua scheda lo dice: parole di una pagina o di un file, ma anche le tue note, i tuoi promemoria e il tuo calendario, ciò che ha scritto la tua IA e ciò che hanno risposto altri server. Spento: quelle righe chiedono ogni volta. Ciò che scrivi in una routine, e tutto ciò che un componente dice essere tuo, non viene trattenuto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オン：承認したルーティンは、カードに書かれているとおり、読み取った内容や書いた内容をサーバや別のアドオンのツールの項目に入れられます。ページやファイルの言葉だけでなく、自分のノート、リマインダー、カレンダー、AIが書いた内容、ほかのサーバの返答も含みます。オフ：それらの行は毎回確認します。ルーティンに自分で入力した内容と、アドオンが自分のものだと言う内容は止められません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "켬: 승인한 루틴이 읽거나 쓴 내용을 카드에 적힌 대로 서버나 다른 애드온 도구의 항목에 넣을 수 있어요. 페이지나 파일의 글뿐 아니라 내 노트, 미리 알림, 캘린더, AI가 쓴 글, 다른 서버의 응답도 포함돼요. 끔: 그런 줄은 매번 물어봐요. 루틴에 직접 입력한 내용과 애드온이 내 것이라고 말하는 내용은 막지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligado: uma rotina que você aprovou pode colocar o que leu ou escreveu nos campos de um servidor ou da ferramenta de outro complemento, onde o cartão dela diz: palavras de uma página ou de um arquivo, mas também suas próprias notas, lembretes e agenda, o que sua IA escreveu e o que outros servidores responderam. Desligado: essas linhas perguntam a cada vez. O que você digita em uma rotina, e tudo o que um complemento diz ser seu, não é retido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启：你批准过的流程可以按卡片上所写，把它读到或写下的内容放进服务器或其他附加功能工具的字段：来自网页或文件的文字，也包括你自己的笔记、提醒事项和日历、你的 AI 写的内容，以及其他服务器的回答。关闭：这些行每次都会询问。你在流程中输入的内容，以及附加功能声称属于你的内容，不受限制。"
           }
         }
       }
@@ -154133,6 +154311,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "因为“完全访问”已开启，未经询问就运行了。"
+          }
+        }
+      }
+    },
+    "Ran without asking because it fit a plan nobody read: Full access or Auto let it through." : {
+      "comment" : "History: a plan's line that was never shown on a card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التنفيذ دون سؤال لأنه يطابق خطة لم يقرأها أحد: سمح به الوصول الكامل أو وضع Auto."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Nachfrage ausgeführt, weil es zu einem Plan passte, den niemand gelesen hat: Vollzugriff oder Auto hat es durchgelassen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ejecutó sin preguntar porque encajaba en un plan que nadie leyó: el acceso total o Auto lo dejó pasar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuté sans demander, car il correspondait à un plan que personne n’a lu : l’accès complet ou le mode Auto l’a laissé passer."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseguito senza chiedere perché rientrava in un piano che nessuno ha letto: l’accesso completo o Auto l’ha lasciato passare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "誰も読んでいないプランに合っていたため、確認なしで実行しました。フルアクセスまたはAutoが通しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아무도 읽지 않은 계획에 맞아서 묻지 않고 실행했어요. 전체 접근 또는 Auto가 통과시켰어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rodou sem perguntar porque se encaixava em um plano que ninguém leu: o acesso total ou o Auto deixou passar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未经询问就运行了，因为它符合一个没有人读过的计划：完全访问权限或自动模式放行了它。"
           }
         }
       }
@@ -256655,6 +256892,65 @@
         }
       }
     },
+    "nothing filled in can go in a field that runs something" : {
+      "comment" : "A plan's card: why a line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن وضع أي شيء يُملأ تلقائيًا في حقل ينفّذ شيئًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nichts Eingefülltes darf in ein Feld, das etwas ausführt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nada de lo que se rellena puede ir en un campo que ejecuta algo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rien de ce qui est rempli ne peut aller dans un champ qui exécute quelque chose"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nulla di ciò che viene inserito può andare in un campo che esegue qualcosa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "埋め込まれた内容は、何かを実行する項目には入れられません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "채워 넣는 내용은 무언가를 실행하는 항목에 들어갈 수 없어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nada do que é preenchido pode ir num campo que executa algo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任何填入的内容都不能放进会运行内容的字段"
+          }
+        }
+      }
+    },
     "nothing like that is running" : {
       "localizations" : {
         "ar" : {
@@ -263343,6 +263639,65 @@
         }
       }
     },
+    "where it goes comes from a name the extension wrote, which Sidefolk can't check" : {
+      "comment" : "A plan's card: why a line asks",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وجهته تأتي من اسم كتبته الإضافة، ولا يستطيع Sidefolk التحقق منه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wohin es geht, stammt aus einem Namen, den die Erweiterung geschrieben hat und den Sidefolk nicht prüfen kann"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "adónde va viene de un nombre que escribió la extensión, y Sidefolk no puede comprobarlo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "l’endroit où il va vient d’un nom écrit par l’extension, que Sidefolk ne peut pas vérifier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dove va viene da un nome scritto dall’estensione, che Sidefolk non può verificare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送り先は拡張機能が書いた名前から来ており、Sidefolkでは確認できません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가는 곳이 확장 프로그램이 쓴 이름에서 와서 Sidefolk이 확인할 수 없어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "para onde vai vem de um nome que a extensão escreveu, e o Sidefolk não consegue verificar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它去往的位置来自扩展写下的名称，Sidefolk 无法核对"
+          }
+        }
+      }
+    },
     "where it goes comes from outside content" : {
       "comment" : "A plan's card: why a line asks",
       "localizations" : {
@@ -263521,6 +263876,7 @@
     },
     "words from outside can't go in a field that runs something" : {
       "comment" : "A plan's card: why a line asks",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

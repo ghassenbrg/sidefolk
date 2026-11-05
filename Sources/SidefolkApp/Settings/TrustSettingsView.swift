@@ -264,7 +264,7 @@ struct TrustSettingsView: View {
             UnansweredGroup(model: model)
             SettingsGroup(title: "Flows you approved", footer: "A flow asks on a card that says what it does, and again when you edit it to do something new, when its time is up or you end it, when its program or definition changes, or if you ask to be asked every time. This is the one thing on that card you can take back for every flow at once.") {
                 SettingsToggle(title: "A flow may pass what it reads to servers",
-                               detail: "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow is not held back.",
+                               detail: "On: a flow you approved may put what it read or wrote into the fields of a server or another add-on's tool, where its card says so: words from a page or a file, but also your own notes, reminders and calendar, what your AI wrote and what other servers answered. Off: those lines ask each time. What you type into a flow, and anything an add-on says is yours, is not held back.",
                                isOn: Binding(get: { model.policy.flowsMayPassToServers },
                                              set: { on in Task { await model.setPolicy { $0.flowsMayPassToServers = on } } }))
             }

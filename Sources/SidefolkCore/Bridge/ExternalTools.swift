@@ -218,6 +218,8 @@ struct ExternalFacade: Tool {
     var onCard: String?
     /// A refusal decided before the call: the plan's limit was reached (D189).
     var refused: String?
+    /// The call fits a plan nobody read (Full access answered it, or Auto let the line through): History says so (D187, D188).
+    var unread = false
 
     func summary(for input: JSONValue) -> String { onCard ?? base.summary(for: input) }
     func scope(for input: JSONValue) -> ToolScope { base.scope(for: input) }

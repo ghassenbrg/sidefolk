@@ -208,7 +208,7 @@ enum ExtensionPlanRules {
         if name == CompanionJobTool.name, (fields["job"]?.stringValue?.count ?? 0) > CompanionJobTool.longest { return false }
         // What runs is what the card showed: nothing hidden in a written value, nothing past where the card stops.
         guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }),
-              objectsFit(template) else { return false }
+              objectsFit(template), !joinersOutsideWords(template) else { return false }
         let fillable = ExtensionActionPolicy.fillable[name] ?? []
         return fields.allSatisfy { key, value in
             !hasSlot(key) && slotless(value, unless: fillable.contains(key))
@@ -221,10 +221,14 @@ enum ExtensionPlanRules {
         guard text.utf8.count <= ExtensionPlanWords.valueLimit * 4 else { return false }
         let scalars = Array(text.unicodeScalars)
         var rest = String.UnicodeScalarView()
-        // An emoji, or a keycap's base (`1`, `#`, `*`), takes a selector; a letter or a mark beyond ASCII has joiners in its own writing.
-        func emoji(_ o: Unicode.Scalar?) -> Bool { o.map { $0.properties.isEmoji || $0.value == 0xFE0F || (0x1F3FB...0x1F3FF).contains($0.value) } ?? false }
-        func writing(_ o: Unicode.Scalar?) -> Bool {
+        // An emoji (not a keycap's base: `1`, `#`, `*` have no joiners) takes joiners and a selector; letters of the writing that needs them (Arabic, the Indic
+        // scripts, Khmer, Myanmar) take them too, and nothing else does: between Cyrillic, Greek, CJK or accented Latin letters a joiner only changes what shows.
+        func emoji(_ o: Unicode.Scalar?) -> Bool {
             guard let o, !o.isASCII else { return false }
+            return o.properties.isEmoji || o.value == 0xFE0F || (0x1F3FB...0x1F3FF).contains(o.value)
+        }
+        func writing(_ o: Unicode.Scalar?) -> Bool {
+            guard let o, joinerScripts.contains(where: { $0.contains(o.value) }) else { return false }
             switch o.properties.generalCategory {
             case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .nonspacingMark, .spacingMark, .enclosingMark: return true
             default: return false
@@ -263,6 +267,13 @@ enum ExtensionPlanRules {
         return previous != " "
     }
 
+    /// An author's own words for the card (a title, when it runs): what draws nothing at all is left out, so a blank can't pass for a word.
+    static func visible(_ text: String) -> String {
+        var out = String.UnicodeScalarView()
+        for scalar in text.unicodeScalars where !scalar.properties.isDefaultIgnorableCodePoint && !blank(scalar) { out.append(scalar) }
+        return String(out)
+    }
+
     /// Characters that draw nothing or nothing a reader could name: the braille blank, private use, what no version of Unicode has assigned, and controls.
     private static func blank(_ scalar: Unicode.Scalar) -> Bool {
         if scalar.value == 0x2800 { return true }
@@ -272,15 +283,45 @@ enum ExtensionPlanRules {
         }
     }
 
-    /// The script of a letter, for the three that share shapes: nil for anything else.
+    /// Where joiners belong: Arabic, the Indic scripts, Myanmar and Khmer.
+    private static let joinerScripts: [ClosedRange<UInt32>] = [0x600...0x6FF, 0x750...0x77F, 0x8A0...0x8FF, 0xFB50...0xFDFF, 0xFE70...0xFEFF, 0x900...0xDFF, 0x1000...0x109F, 0x1780...0x17FF]
+
+    /// The writing a letter belongs to, by its block: nil for what isn't a letter. A word of two of them is one a reader can't tell from another (a Cyrillic or
+    /// Armenian letter in a Latin address); blocks are all this knows, so a script it has no block for counts as one of its own ("other").
     private static func script(_ scalar: Unicode.Scalar) -> String? {
-        guard scalar.properties.isAlphabetic else { return nil }
-        switch scalar.value {
-        case 0x41...0x5A, 0x61...0x7A, 0xC0...0x24F, 0x1E00...0x1EFF: return "latin"
-        case 0x370...0x3FF, 0x1F00...0x1FFF: return "greek"
-        case 0x400...0x52F, 0x2DE0...0x2DFF, 0xA640...0xA69F: return "cyrillic"
+        switch scalar.properties.generalCategory {
+        case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter: break
         default: return nil
         }
+        switch scalar.value {
+        case 0x41...0x5A, 0x61...0x7A, 0xAA, 0xB5, 0xBA, 0xC0...0x2FF, 0x1D00...0x1DBF, 0x1E00...0x1EFF, 0x2C60...0x2C7F, 0xA720...0xA7FF, 0xFF21...0xFF3A, 0xFF41...0xFF5A: return "latin"
+        case 0x370...0x3FF, 0x1F00...0x1FFF: return "greek"
+        case 0x400...0x52F, 0x1C80...0x1C8F, 0x2DE0...0x2DFF, 0xA640...0xA69F: return "cyrillic"
+        case 0x530...0x58F, 0xFB13...0xFB17: return "armenian"
+        case 0x590...0x5FF, 0xFB1D...0xFB4F: return "hebrew"
+        case 0x600...0x6FF, 0x750...0x77F, 0x8A0...0x8FF, 0xFB50...0xFDFF, 0xFE70...0xFEFF: return "arabic"
+        case 0x900...0xDFF: return "indic"
+        case 0xE00...0xE7F: return "thai"
+        case 0xE80...0xEFF: return "lao"
+        case 0x10A0...0x10FF, 0x2D00...0x2D2F: return "georgian"
+        case 0x13A0...0x13FF, 0xAB70...0xABBF: return "cherokee"
+        case 0x2C80...0x2CFF: return "coptic"
+        case 0xA4D0...0xA4FF: return "lisu"
+        case 0x1100...0x11FF, 0x3130...0x318F, 0xAC00...0xD7AF, 0x2E80...0x2FDF, 0x3040...0x30FF, 0x31F0...0x31FF, 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF, 0xFF66...0xFF9F, 0x20000...0x2FA1F: return "cjk"
+        default: return "other"
+        }
+    }
+
+    /// Joiners and selectors are shown where the card shows a field's own words; a field's name, and what a list or an object holds, are shown cleaned of them, so
+    /// none may be there (the card must say the bytes).
+    static func joinersOutsideWords(_ template: JSONValue) -> Bool {
+        func joiner(_ text: String) -> Bool { text.unicodeScalars.contains { [0x200C, 0x200D, 0xFE0F].contains($0.value) } }
+        for (key, value) in template.objectValue ?? [:] {
+            if joiner(key) { return true }
+            if case .string = value { continue }
+            if written(value).contains(where: joiner) { return true }
+        }
+        return false
     }
 
     /// A value held in an object or a list shows as a whole, clipped: it has to fit whole.
@@ -437,7 +478,7 @@ struct ExtensionPlanTool: Tool {
     var spec: ToolSpec {
         ToolSpec(name: Self.name, title: title,
                  description: "Lets an extension run what the person read, without further cards.",
-                 inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id.")], required: ["extension", "plan"]),
+                 inputSchema: Schema.object(["extension": Schema.string("The extension's id."), "plan": Schema.string("The plan's id."), "lines": Schema.string("The lines a card was not shown for.")], required: ["extension", "plan"]),
                  risk: .medium, capabilities: [.extensions], category: .extensions, mutates: true, offeredToModel: false)
     }
 
