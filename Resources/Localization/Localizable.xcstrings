@@ -438,6 +438,7 @@
     },
     "%@ (outside content)" : {
       "comment" : "History: a filled-in value that comes from outside content",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -497,6 +498,7 @@
     },
     "%@ (the add-on says it's yours)" : {
       "comment" : "History: a filled-in value the extension says is the person's own",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -556,6 +558,7 @@
     },
     "%@ (your answer or the clock)" : {
       "comment" : "History: a filled-in value that is the person's typed answer or the clock",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -91817,6 +91820,65 @@
         }
       }
     },
+    "Hands to your AI: %@" : {
+      "comment" : "History: a plan's step that hands what it read to the person's AI",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُسلَّم إلى الذكاء الاصطناعي لديك: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An deine KI übergeben: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entregado a tu IA: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmis à votre IA : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passato alla tua IA: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIに渡す：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI에 넘김: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entregue à sua IA: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交给你的 AI：%@"
+          }
+        }
+      }
+    },
     "Having trouble" : {
       "comment" : "The companion's state in Home's nook: a watch keeps failing",
       "localizations" : {
@@ -176461,6 +176523,65 @@
         }
       }
     },
+    "Sets off: “%@”" : {
+      "comment" : "History: a plan's step that sets off another flow; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشغّل: «%@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startet: „%@“"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa: «%@»"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déclenche : « %@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvia: “%@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "起動するもの：「%@」"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실행시킴: “%@”"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aciona: “%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "触发：“%@”"
+          }
+        }
+      }
+    },
     "Setting the reminder…" : {
       "localizations" : {
         "ar" : {
@@ -252450,6 +252571,130 @@
         }
       }
     },
+    "fields: %lld" : {
+      "comment" : "History: how many fields a line has",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحقول: %lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felder: %lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "campos: %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "champs : %lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "campi: %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目：%lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "항목: %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "campos: %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字段：%lld"
+          }
+        }
+      }
+    },
+    "fields: %lld of %lld listed" : {
+      "comment" : "History: how many of a line's fields are listed",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحقول: عُرض %1$lld من %2$lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felder: %1$lld von %2$lld aufgeführt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "fields: %1$lld of %2$lld listed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "campos: %1$lld de %2$lld listados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "champs : %1$lld sur %2$lld listés"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "campi: %1$lld di %2$lld elencati"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目：%2$lld件中%1$lld件を表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "항목: %2$lld개 중 %1$lld개 표시"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "campos: %1$lld de %2$lld listados"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字段：共 %2$lld 个，列出 %1$lld 个"
+          }
+        }
+      }
+    },
     "filled in when it runs" : {
       "comment" : "A plan's card: a value the extension writes at run time",
       "localizations" : {
@@ -253221,6 +253466,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅发送给 %@"
+          }
+        }
+      }
+    },
+    "goes round a list" : {
+      "comment" : "History: a plan that goes round a list",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمرّ على قائمة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geht eine Liste durch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "recorre una lista"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parcourt une liste"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "scorre un elenco"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リストを順に処理します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록을 차례로 돌아요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "percorre uma lista"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会遍历一个列表"
           }
         }
       }
@@ -255300,6 +255604,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已过时 · %@"
+          }
+        }
+      }
+    },
+    "limits: %lld a day, %lld in a run" : {
+      "comment" : "History: a plan's limits",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحدود: %1$lld في اليوم، %2$lld في كل تشغيل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grenzen: %1$lld pro Tag, %2$lld pro Lauf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "limits: %1$lld a day, %2$lld in a run"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "límites: %1$lld al día, %2$lld por ejecución"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "limites : %1$lld par jour, %2$lld par exécution"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "limiti: %1$lld al giorno, %2$lld per esecuzione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上限：1日%1$lld回、1回の実行で%2$lld回"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "한도: 하루 %1$lld번, 한 번 실행에 %2$lld번"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "limites: %1$lld por dia, %2$lld por execução"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "限制：每天 %1$lld 次，每次运行 %2$lld 次"
           }
         }
       }
@@ -258922,6 +259291,65 @@
         }
       }
     },
+    "outside content: %@" : {
+      "comment" : "History: a filled-in value that comes from outside content; then the value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محتوى من الخارج: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inhalt von außen: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contenido externo: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contenu extérieur : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contenuto esterno: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外部のコンテンツ：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "외부 콘텐츠: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "conteúdo de fora: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外部内容：%@"
+          }
+        }
+      }
+    },
     "outside content: %@ from step %@" : {
       "comment" : "History: where a filled-in value comes from; a field, the steps' names",
       "localizations" : {
@@ -261754,6 +262182,65 @@
         }
       }
     },
+    "the add-on says it's yours: %@" : {
+      "comment" : "History: a filled-in value the extension says is the person's own; then the value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقول الإضافة إنه لك: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "das Add-on sagt, es ist deins: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el complemento dice que es tuyo: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "le module dit que c’est à vous : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "il componente dice che è tuo: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アドオンはあなたのものだと言っています：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "애드온이 내 것이라고 말함: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o complemento diz que é seu: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加功能声称属于你：%@"
+          }
+        }
+      }
+    },
     "the input" : {
       "localizations" : {
         "ar" : {
@@ -263232,6 +263719,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用了 %1$@ 的工具 %2$@，而 Sidefolk 并没有提供给它"
+          }
+        }
+      }
+    },
+    "warning: it reads your things and outside content, and sends words on" : {
+      "comment" : "History: the card's warning about a plan that could take private words to a server",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحذير: يقرأ أشياء من عندك ومحتوى من الخارج ويرسل كلمات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warnung: liest Eigenes von dir und Inhalte von außen und gibt Wörter weiter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aviso: lee cosas tuyas y contenido externo, y envía palabras"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "avertissement : elle lit des choses à vous et du contenu extérieur, et transmet des mots"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "avviso: legge cose tue e contenuto esterno, e invia parole"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警告：あなた自身の内容と外部のコンテンツを読み取り、言葉を送ります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "경고: 내 자료와 외부 콘텐츠를 읽고 말을 내보내요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aviso: lê coisas suas e conteúdo de fora, e envia palavras"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警告：它读取你自己的内容和外部内容，并把文字发送出去"
           }
         }
       }
@@ -265743,6 +266289,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的 AI"
+          }
+        }
+      }
+    },
+    "your answer or the clock: %@" : {
+      "comment" : "History: a filled-in value that is the person's typed answer or the clock; then the value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجابتك أو الساعة: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine Antwort oder die Uhr: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tu respuesta o el reloj: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "votre réponse ou l’horloge : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la tua risposta o l’orologio: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたの答えか時計：%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내가 한 답이나 시계: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sua resposta ou o relógio: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的回答或时钟：%@"
           }
         }
       }
@@ -270874,6 +271479,7 @@
     },
     "…[%lld cut]" : {
       "comment" : "History: an entry was cut; how many characters",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

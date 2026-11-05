@@ -266,7 +266,7 @@ final class SettingsModel {
         runtime.events.changed(.permissions)
     }
 
-    /// What is enforced while the policy can't be read: every action asks and nothing is passed on to servers.
+    /// What is shown while the policy can't be read. Guard then refuses everything outright (nothing runs); the picker shows the strictest mode, and nothing is passed on to servers.
     private static var unreadablePolicy: GuardPolicy {
         var p = GuardPolicy()
         p.mode = .askEveryTime
