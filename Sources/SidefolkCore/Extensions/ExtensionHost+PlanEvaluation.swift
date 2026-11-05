@@ -64,7 +64,7 @@ extension ExtensionHost {
         let who = owner(rt)
 
         var lines: [PlanEvaluation.Line] = [], rows: [Int] = []
-        var earlier: [(name: String?, tool: String)] = [], named = Set<String>(), definitions: [String: String] = [:]
+        var earlier: [(name: String?, tool: String, kind: String?, reads: [String]?)] = [], named = Set<String>(), definitions: [String: String] = [:]
         for raw in rawSteps {
             // A name that can't be read as one is refused, not dropped: dropped, a step would answer to nothing and a slot could point at the wrong one.
             if let given = raw["as"], given.stringValue.map(Self.isName) != true { return .failure(.unusable) }
@@ -82,7 +82,13 @@ extension ExtensionHost {
                 case "ai":
                     let reads = raw["reads"]?.arrayValue?.compactMap(\.stringValue).filter(Self.isName).nonEmptyList
                     var step = ExtensionPlan.Step(tool: "", input: .object([:]), definition: "", reach: "", standing: false, name: name, kind: kind, title: title, reads: reads)
-                    step.feeds = ["*": Self.fingerprint(reads.map { names in lines.filter { names.contains($0.step.name ?? "\u{0}") } } ?? lines)]
+                    step.feeds = ["*": Self.fingerprint(reads.map { names in Self.closure(of: names, in: lines) } ?? lines)]
+                    line = .init(step: step, tool: nil, verdict: .init())
+                case "value":
+                    // Words passed from step to step with nothing run: never shown, but what it reads decides where later steps' words come from.
+                    guard let name, let reads = raw["reads"]?.arrayValue?.compactMap(\.stringValue).filter(Self.isName), !reads.isEmpty else { return .failure(.unusable) }
+                    var step = ExtensionPlan.Step(tool: "", input: .object([:]), definition: "", reach: "", standing: false, name: name, kind: kind, title: nil, reads: reads)
+                    step.feeds = ["*": Self.fingerprint(Self.closure(of: reads, in: lines))]
                     line = .init(step: step, tool: nil, verdict: .init())
                 case "flow":
                     guard let other = raw["name"]?.stringValue.map({ ExtensionText.line($0, characters: 80) }), !other.isEmpty else { return .failure(.unusable) }
@@ -96,7 +102,7 @@ extension ExtensionHost {
                 }
                 var fromPerson: Set<String> = []
                 if firstParty { for (field, who) in raw["from"]?.objectValue ?? [:] where ["person", "clock"].contains(who.stringValue ?? "") { fromPerson.insert(field) } }
-                let sources = ExtensionPlanRules.sources(of: input, earlier: earlier, inside: inside, fromPerson: fromPerson)
+                let sources = ExtensionPlanRules.sources(of: input, steps: earlier, inside: inside, fromPerson: fromPerson)
                 let open = ExtensionActionPolicy.fillable[tool.spec.name] ?? []
                 let ext = ExtensionPlanRules.extensionTool(tool)
                 // Off this actor: the first look at a large program is a long read.
@@ -118,10 +124,11 @@ extension ExtensionHost {
             } else {
                 lines.append(line)
                 rows.append(lines.count - 1)
-                earlier.append((line.step.name, line.step.tool))
+                earlier.append((line.step.name, line.step.tool, line.step.kind, line.step.reads))
             }
         }
-        guard lines.count <= ExtensionPlanRules.maxSteps else { return .failure(.unusable) }
+        // At most 64 different lines: the same line again (whatever it is called) is one to read, and the card says so.
+        guard lines.count <= ExtensionPlanRules.maxRows, Set(lines.filter { $0.step.kind != "value" }.map { Self.contentKey($0.step) }).count <= ExtensionPlanRules.maxSteps else { return .failure(.unusable) }
         Self.markCrossing(&lines)
 
         let title = ExtensionText.line(plan["title"]?.stringValue ?? "", characters: 80)
@@ -143,6 +150,8 @@ extension ExtensionHost {
             if crossing, read.crossing != true { fresh = Array(Set(fresh).union(lines.indices.filter { lines[$0].verdict.warning != nil })).sorted() }
             widened = ExtensionPlanRules.widened(read, to: candidate)
         }
+        // A step that only passes words on is never shown, so it is never "new" by itself: what it feeds shows where it is used.
+        fresh.removeAll { lines[$0].step.kind == "value" }
         let intent = plan["intent"]?.stringValue.flatMap { ["run", "turn_on"].contains($0) ? $0 : nil }
         return .success(PlanEvaluation(lines: lines, rows: rows, plan: candidate, previous: read, fresh: fresh, widened: widened, intent: intent, askOnline: askOnline, mode: flow.mode))
     }
@@ -206,6 +215,26 @@ extension Optional {
 }
 
 extension ExtensionHost {
+    /// A step without its name, title or what feeds it: what a person reads, to count the lines that differ.
+    static func contentKey(_ step: ExtensionPlan.Step) -> String {
+        "\(step.tool)|\(step.provider ?? "")|\(step.definition)|\(step.kind ?? "")|\((step.reads ?? []).joined(separator: ","))|\(step.input.jsonString)"
+    }
+
+    /// The steps with these names, and the steps whose words they pass on, down to the ones that run something.
+    static func closure(of names: [String], in lines: [PlanEvaluation.Line]) -> [PlanEvaluation.Line] {
+        var wanted = Set(names), added = Set<Int>()
+        var changed = true
+        while changed {
+            changed = false
+            for (i, line) in lines.enumerated() where !added.contains(i) && wanted.contains(line.step.name ?? "\u{0}") {
+                added.insert(i)
+                changed = true
+                if line.step.kind == "value" || line.step.kind == "ai" { wanted.formUnion(line.step.reads ?? []) }
+            }
+        }
+        return added.sorted().map { lines[$0] }
+    }
+
     /// A fingerprint of the steps a value or an AI step is fed by: each one as written (its name, tool, provider, definition, kind, what an AI step reads, and its input).
     static func fingerprint(_ lines: [PlanEvaluation.Line]) -> String {
         // The whole step as written, name included: which words a name points at is what this fingerprints, so two steps of one tool that trade names differ.
@@ -223,7 +252,7 @@ extension ExtensionHost {
         for (key, value) in template.objectValue ?? [:] {
             guard !open.contains(key), let text = value.stringValue, ExtensionPlanRules.hasSlot(text) else { continue }
             let roots = Set(ExtensionPlanRules.roots(text)).sorted()
-            let named = roots.flatMap { root in earlier.filter { $0.step.name == root } }
+            let named = closure(of: roots, in: earlier)
             let unplaced = roots.filter { root in !earlier.contains { $0.step.name == root } }
             out[key] = fingerprint(named) + unplaced.joined(separator: ",")
         }

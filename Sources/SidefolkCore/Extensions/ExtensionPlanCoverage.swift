@@ -49,24 +49,32 @@ extension ExtensionPlanRules {
     /// a signed extension says it comes from the person (believed, except where code runs), and "outside" otherwise, which is also what any name the host
     /// can't place is. A step's name is the host's to read first: a name two steps share, or a step called `now`, never counts as inside.
     static func sources(of template: JSONValue, earlier: [(name: String?, tool: String)], inside: Set<String>, fromPerson: Set<String> = []) -> [String: String] {
+        sources(of: template, steps: earlier.map { ($0.name, $0.tool, nil, nil) }, inside: inside, fromPerson: fromPerson)
+    }
+
+    /// As above, with the steps that only pass words on (`kind: "value"`, which read other steps by name and are never shown): a value is as far out as
+    /// the furthest thing it reads.
+    static func sources(of template: JSONValue, steps: [(name: String?, tool: String, kind: String?, reads: [String]?)], inside: Set<String>, fromPerson: Set<String> = []) -> [String: String] {
+        // 0 inside, 1 claimed, 2 outside.
+        func rank(_ root: String, _ seen: Set<String>) -> Int {
+            let named = steps.filter { $0.name == root }
+            if !named.isEmpty {
+                guard !seen.contains(root) else { return 2 }
+                return named.map { step -> Int in
+                    if step.tool == "ask.user" { return 0 }
+                    if step.kind == "value", let reads = step.reads { return reads.map { rank($0, seen.union([root])) }.max() ?? 2 }
+                    return 2
+                }.max() ?? 2
+            }
+            if reservedNames.contains(root) { return 0 }
+            return inside.contains(root) ? 1 : 2
+        }
         var out: [String: String] = [:]
         for (key, value) in template.objectValue ?? [:] {
             guard let text = value.stringValue, hasSlot(text) else { continue }
             if fromPerson.contains(key) { out[key] = "claimed"; continue }
-            var claimed = false, outside = false
-            for root in roots(text) {
-                let named = earlier.filter { $0.name == root }
-                if !named.isEmpty {
-                    if !named.allSatisfy({ $0.tool == "ask.user" }) { outside = true }
-                } else if reservedNames.contains(root) {
-                    continue
-                } else if inside.contains(root) {
-                    claimed = true
-                } else {
-                    outside = true
-                }
-            }
-            out[key] = outside ? "outside" : claimed ? "claimed" : "inside"
+            let worst = roots(text).map { rank($0, []) }.max() ?? 0
+            out[key] = worst == 2 ? "outside" : worst == 1 ? "claimed" : "inside"
         }
         return out
     }
@@ -216,6 +224,8 @@ extension ExtensionPlanRules {
         // An AI step is covered by one that read at least what this one reads (no names given means everything before it); another flow set off, by the same name.
         if let kind = step.kind {
             guard old.kind == kind else { return false }
+            // A step that only passes words on grants nothing: what feeds from it is what changes, and that is compared where it is used.
+            if kind == "value" { return true }
             if kind == "flow" { return step.input["name"]?.stringValue == old.input["name"]?.stringValue }
             return Set(step.reads ?? ["*"]).isSubset(of: Set(old.reads ?? ["*"])) && (step.feeds ?? [:]).allSatisfy { old.feeds?[$0.key] == $0.value }
         }

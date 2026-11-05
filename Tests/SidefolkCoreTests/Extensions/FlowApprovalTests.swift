@@ -25,7 +25,7 @@ import Testing
                 $0.askEachTimeOnline = { (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
             }
             for (name, risk, caps, mutates) in [("notes.save", Risk.low, Set<Capability>([.notebook]), true), ("notes.search", .low, [.notebook], false),
-                                                ("notify.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch], true)] {
+                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch], true)] {
                 h.env.registry.register(ExtensionActionsTests.Probe(name: name, risk: risk, capabilities: caps, mutates: mutates, urlParameter: name == "web.fetch" ? "url" : nil))
             }
             h.env.registry.register(ExtensionPlanEndTool(host: h.host))
@@ -872,6 +872,45 @@ import Testing
         await w.h.host.updatePreferences("com.example.flow") { $0.plans["recent"]?.lastUsed = Date().addingTimeInterval(-30 * 24 * 3600); $0.plans["recent"]?.approvedAt = old }
         _ = await w.ask("sidefolk/tools.list")
         #expect(await w.h.host.info(id: "com.example.flow")?.plans.map(\.id) == ["recent"], "use keeps it")
+    // MARK: Lines, and steps that pass words on
+
+    @Test func theLimitCountsDifferentLinesNotNamesAndTheCardSaysHowManyTimes() async throws {
+        let w = try await World()
+        // 70 steps, each with its own name, of 10 different lines.
+        func step(_ i: Int) -> JSONValue { ["tool": "notify.user", "as": .string("n\(i)"), "input": ["title": .string("Line \(i % 10)")]] }
+        let seventy = Self.plan((0..<70).map(step))
+        let shown = await words(w, seventy)
+        #expect(shown.reply["ok"]?.boolValue == true, "\(shown.reply)")
+        #expect(shown.words?.contains("× 7") == true, "\(String(describing: shown.words))")
+        let eighty: JSONValue = Self.plan((0..<70).map { i in ["tool": "notify.user", "as": .string("m\(i)"), "input": ["title": .string("Different \(i)")]] })
+        #expect(await w.check(eighty)["reason"]?.stringValue == "unusable", "70 different lines are too many to read")
+    }
+
+    @Test func aStepThatOnlyPassesWordsOnKeepsTheirSourceAndIsNeverShown() async throws {
+        let w = try await World()
+        _ = try server(w)
+        func plan(reads: String, post: [String: JSONValue]) -> JSONValue {
+            let value: JSONValue = ["kind": "value", "as": "t", "reads": [.string(reads)]]
+            return Self.plan([Self.page, ["tool": "notes.search", "as": "mail", "input": ["query": "invoices"]], value, Self.post(post)])
+        }
+        let first = plan(reads: "page", post: ["body": "{{t}}"])
+        let shown = await words(w, first)
+        #expect(shown.words?.contains("Words from “Read the page · web.fetch”") == true, "\(String(describing: shown.words))")
+        #expect(shown.words?.contains("from “value”") == false && shown.words?.contains("kind") == false, "a value step has no line on the card")
+        // Outside words through a step still can't pick a place or run code.
+        let place = await w.check(plan(reads: "page", post: ["repo": "{{t}}"]))["steps"]?.arrayValue?.last
+        #expect(place?["state"]?.stringValue == "stands_in_full_access")
+        let code = await w.check(plan(reads: "page", post: ["command": "{{t}}"]))["steps"]?.arrayValue?.last
+        #expect(code?["state"]?.stringValue == "refused")
+        // Editing what it reads, with nothing else changed, is new at the line that uses it.
+        let edited = await words(w, plan(reads: "mail", post: ["body": "{{t}}"]))
+        #expect(edited.words?.contains("Create an issue") == true, "the same text now comes from another step: \(String(describing: edited.words))")
+        // The person's own typed answer, passed through a step, stays theirs.
+        let ask: JSONValue = ["tool": "ask.user", "as": "who", "input": ["question": "Where?"]]
+        let through: JSONValue = ["kind": "value", "as": "t", "reads": ["who"]]
+        let mine = await w.check(Self.plan([ask, through, Self.post(["repo": "{{t}}"])]))["steps"]?.arrayValue?.last
+        #expect(mine?["state"]?.stringValue == "stands", "\(String(describing: mine))")
+        #expect(await w.check(Self.plan([Self.page, ["kind": "value", "as": "t", "reads": ["t"]], Self.post(["body": "{{t}}"])]))["steps"]?.arrayValue?.last?["state"] != nil, "a value that reads itself is read as outside, not looped")
     }
 
     // MARK: Limits
