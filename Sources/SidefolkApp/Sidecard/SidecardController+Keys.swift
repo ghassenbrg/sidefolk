@@ -123,7 +123,7 @@ extension SidecardController {
         case .putAway:
             putAway(item)
         case .show(let id):
-            if let next = deckItems.first(where: { $0.id == id }) { present(next, .attention(expandFor: AttentionPolicy.expandSeconds)) }
+            if let next = deckItems.first(where: { $0.id == id }) { present(next, .attention(expandFor: AttentionPolicy.expandSeconds), forward: true) }
         case .needsCommand:
             model.keysNudge += 1
         case .moved, .ignored:

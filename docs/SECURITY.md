@@ -673,7 +673,7 @@ binary targets or build plugins from dependencies.
   HTML; a file only when it is a small plain text file in a folder it may watch), with invisible and
   bidirectional controls removed (T2). It is deleted with the watch, exported and deleted with "Your data", and
   never given to a model: `watch.list` says when a watch last changed, and repeats the notice's words only for
-  kinds whose summary is built from the watch's own settings.
+  kinds whose summary is built from the watch's own settings. *Amended 2026-11-05 for questions:* a question (`refKind` "ask") has a caller waiting on its answer with a time limit of its own, so the 90-second spacing and the notice budgets could make it run out unseen. Questions skip the spacing and have their own budget, `questionsPerSourceLimit` (12 per source per 10 minutes, twice that per family, so a new client name doesn't buy more), and past it they wait, reachable from the count. Each question holds its caller until it is answered, dismissed or timed out, and a question in front isn't folded by a new card. *What's left:* within the budget, a program can still put a dozen questions a window in front of the person, counted apart from notices so that they can't use up what notices may do; a notice card behind a question waits for it, at most until its time limit, while a reminder or an occurrence comes up in front of it and it comes back after; dismissing one more than a few times can't turn a source down, since `Interruptions.mustReach` keeps questions from being lowered.
 
 **T26 Voice: the microphone and a cloud voice (M/M), D34.** The microphone opens only while the
 person holds the talk key or the companion (off until voice input is turned on; macOS asks on the

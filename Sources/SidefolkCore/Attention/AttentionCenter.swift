@@ -41,6 +41,8 @@ public actor AttentionCenter {
     /// taken in the same synchronous step as the decision, before any `await`, so concurrent posts
     /// can't all decide against the same, older list.
     private var recent: [(source: String, at: Date)] = []
+    /// Questions shown, counted apart: their own budget, and they don't use up what notices may do, or a program could keep anyone else's from coming up.
+    private var asked: [(source: String, at: Date)] = []
     private var gentle: [(source: String, at: Date)] = []
     /// Away because the input-idle signal said so at the last decision (lock and sleep come through `update`).
     private var idleAway = false
@@ -162,10 +164,11 @@ public actor AttentionCenter {
     /// waiting for their answer any more; anything older than a day stays in the Now list only.
     public func restoreWaiting() async {
         let cutoff = clock.now.addingTimeInterval(-86_400)
-        for item in (try? await store.open()) ?? [] where item.state == .pending {
+        for item in (try? await store.open()) ?? [] {
+            // Shown or not, nobody's left to hear the answer.
             if item.refKind == "ask" {
                 await expire(id: item.id)
-            } else if item.createdAt > cutoff, item.source != "summary" {
+            } else if item.state == .pending, item.createdAt > cutoff, item.source != "summary" {
                 held[item.id] = item
             }
         }
@@ -232,12 +235,12 @@ public actor AttentionCenter {
         }
         let punctual = item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true
         let decision = AttentionPolicy.decide(level: level, source: item.source, createdAt: item.createdAt, now: now,
-                                              env: environment, recent: recent, gentle: gentle, punctual: punctual,
-                                              reachWhenAway: item.refKind == OccurrenceScheduler.systemAttentionKind)
+                                              env: environment, recent: item.refKind == "ask" ? asked : recent, gentle: gentle, punctual: punctual,
+                                              reachWhenAway: item.refKind == OccurrenceScheduler.systemAttentionKind, question: item.refKind == "ask")
         switch decision {
         case .present(let presentation):
             held[item.id] = nil
-            reserve(item.source, presentation, now: now)
+            reserve(item.source, presentation, now: now, question: item.refKind == "ask")
             await present(item, presentation, level: level)
         case .hold(let until):
             held[item.id] = item
@@ -292,10 +295,12 @@ public actor AttentionCenter {
 
     /// Counts a presentation against the rate limits. Synchronous, so it lands in the same actor
     /// step as the decision that made it.
-    private func reserve(_ source: String, _ presentation: AttentionPresentation, now: Date) {
+    private func reserve(_ source: String, _ presentation: AttentionPresentation, now: Date, question: Bool = false) {
         let window = AttentionPolicy.perSourceWindow
+        asked.removeAll { now.timeIntervalSince($0.at) >= window }
         switch presentation {
-        case .attention, .system: recent.append((source, now))
+        case .attention, .system:
+            if question { asked.append((source, now)) } else { recent.append((source, now)) }
         case .gentle: gentle.append((source, now))
         case .ambient: break
         }
@@ -311,6 +316,8 @@ public actor AttentionCenter {
         }
         // An `ask` whose item never reached the store still gets its answer: none.
         waiting.removeValue(forKey: id)?.resume(returning: nil)
+        // Today and Ask's rows show what's open: its answers wouldn't go anywhere now.
+        events.changed(.attention)
         await publishBacklog()
     }
 
@@ -342,7 +349,8 @@ public actor AttentionCenter {
                 held[i.id] = nil
                 timers.removeValue(forKey: i.id)?.cancel()
                 guard var settled = try? await store.item(id: i.id), settled.state == .pending else { continue }
-                if settled.level >= .attention, !settled.actions.isEmpty {
+                // A question with nothing to pick from is answered in words, and its caller is still waiting.
+                if settled.level >= .attention, !settled.actions.isEmpty || settled.refKind == "ask" {
                     settled.state = .shown
                     settled.shownAt = clock.now
                 } else {

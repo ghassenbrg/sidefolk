@@ -47,9 +47,19 @@ struct GlanceView: View {
                 }
                 ForEach(glance.decisions.prefix(max(0, Glance.decisionsShown - glance.sessions.count))) { item in
                     row(Text(verbatim: item.title), avatar: SidecardItemCard.folk(item)) {
-                        if let primary = item.actions.first(where: \.isPrimary) {
-                            Button { answer(item, primary.id) } label: { Text(verbatim: primary.title) }
-                                .buttonStyle(.sf(.primary, size: .small)).fixedSize()
+                        // As on the card: every answer is here, the rest in a ⋯ menu.
+                        let (menu, buttons) = SidecardItemCard.arrange(item.actions.filter { $0.id != "dismiss" })
+                        if !menu.isEmpty {
+                            Menu {
+                                ForEach(menu, id: \.id) { action in Button(action.title) { answer(item, action.id) } }
+                            } label: { Image(systemName: "ellipsis") }
+                            .menuStyle(.button).menuIndicator(.hidden)
+                            .buttonStyle(.sf(.secondary, size: .small)).fixedSize()
+                            .accessibilityLabel(Text("More choices", comment: "A ⋯ menu on a card beside the companion"))
+                        }
+                        ForEach(buttons, id: \.id) { action in
+                            Button { answer(item, action.id) } label: { Text(verbatim: action.title) }
+                                .buttonStyle(.sf(action.isPrimary ? .primary : .secondary, size: .small)).fixedSize()
                         }
                         Button { answer(item, nil) } label: { Image(systemName: "xmark") }
                             .buttonStyle(.sf(.plain, size: .small)).foregroundStyle(Theme.inkFaint)

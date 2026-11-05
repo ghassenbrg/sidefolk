@@ -83,7 +83,7 @@ struct SidecardView: View {
                     Text("+\(model.waiting - 3) more", comment: "Under the held cards beside the companion: how many more wait")
                         .font(Theme.Font.callout).foregroundStyle(Theme.inkMuted)
                 }
-                Button { model.openStack?() } label: { Text("Answer", comment: "Under the held cards: opens Ask on top of them") }
+                Button { model.openStack?() } label: { Text("Answer", comment: "Under the held cards: brings the one that has waited longest forward, with its answers") }
                     .buttonStyle(.sf(.quiet, size: .small))
             }
             .padding(.horizontal, Theme.Space.m)

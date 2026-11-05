@@ -44449,7 +44449,7 @@
       }
     },
     "Answer" : {
-      "comment" : "Under the held cards: opens Ask on top of them",
+      "comment" : "Under the held cards: brings the one that has waited longest forward, with its answers",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

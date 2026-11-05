@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import SidefolkCore
 
@@ -8,6 +9,35 @@ import Testing
     func decide(_ level: AttentionLevel, env: AttentionEnvironment = AttentionEnvironment(), source: String = "reminder",
                 createdAt: Date? = nil, recent: [(source: String, at: Date)] = []) -> AttentionDecision {
         AttentionPolicy.decide(level: level, source: source, createdAt: createdAt ?? now, now: now, env: env, recent: recent)
+    }
+
+    @Test func aQuestionIsntSpacedOutLikeANotice() {
+        func ask(recent: [(source: String, at: Date)]) -> AttentionDecision {
+            AttentionPolicy.decide(level: .attention, source: "ext", createdAt: now, now: now, env: AttentionEnvironment(), recent: recent, question: true)
+        }
+        let aMomentAgo = [(source: "other", at: now.addingTimeInterval(-5))]
+        if case .hold = decide(.attention, source: "ext", recent: aMomentAgo) {} else { Issue.record("a notice waits its turn") }
+        #expect(ask(recent: aMomentAgo) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)), "someone's waiting on a question")
+        // Past a notice's budget, and a timeout of a few minutes would run out before it came up.
+        let aFew = (1...AttentionPolicy.perSourceLimit).map { (source: "ext", at: now.addingTimeInterval(-Double($0) * 10)) }
+        #expect(ask(recent: aFew) == .present(.attention(expandFor: AttentionPolicy.expandSeconds)))
+    }
+
+    @Test func aLoopOfQuestionsHasALimit() {
+        let many = (1...AttentionPolicy.questionsPerSourceLimit).map { (source: "ext", at: now.addingTimeInterval(-Double($0))) }
+        let held = AttentionPolicy.decide(level: .attention, source: "ext", createdAt: now, now: now, env: AttentionEnvironment(), recent: many, question: true)
+        if case .hold = held {} else { Issue.record("it holds: \(held)") }
+        let other = AttentionPolicy.decide(level: .attention, source: "other", createdAt: now, now: now, env: AttentionEnvironment(), recent: many, question: true)
+        #expect(other == .present(.attention(expandFor: AttentionPolicy.expandSeconds)), "one source's loop doesn't hold another's")
+    }
+
+    @Test func aQuestionStillWaitsForTheWayOut() {
+        func ask(_ env: AttentionEnvironment) -> AttentionDecision {
+            AttentionPolicy.decide(level: .attention, source: "ext", createdAt: now, now: now, env: env, recent: [], question: true)
+        }
+        var away = AttentionEnvironment()
+        away.away = true
+        #expect(ask(away) == .hold(until: nil), "nobody's there to see it")
     }
 
     @Test func defaults() {
@@ -69,6 +99,141 @@ import Testing
         let events = EventBus()
         let store = AttentionStore(db)
         return (AttentionCenter(store: store, events: events), events, store)
+    }
+
+    @Test func questionsInARowAreAllShownNotHeld() async throws {
+        let (center, _, store) = try center()
+        // More than a notice's budget, each with its caller waiting.
+        let asking = (1...(AttentionPolicy.perSourceLimit + 1)).map { n in
+            Task { await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Question \(n)?", refKind: "ask"), timeout: 5) }
+        }
+        var open: [AttentionItem] = []
+        for _ in 0..<400 {
+            open = (try? await store.open()) ?? []
+            if open.count == asking.count, open.allSatisfy({ $0.state == .shown }) { break }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(open.count == asking.count)
+        #expect(open.allSatisfy { $0.state == .shown }, "\(open.map { $0.state })")
+        #expect(await center.heldCount == 0)
+        for item in open { await center.respond(id: item.id, actionId: nil) }
+        for task in asking { _ = await task.value }
+    }
+
+    /// Dismissed each time and asked again: the loop a question's own budget is there to stop.
+    @Test func aLoopReAskingAfterEachDismissalIsBounded() async throws {
+        let (center, _, store) = try center()
+        for n in 1...AttentionPolicy.questionsPerSourceLimit {
+            async let answer = center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Again \(n)?", refKind: "ask"), timeout: 5)
+            var shown: AttentionItem?
+            for _ in 0..<400 where shown == nil {
+                shown = try await store.open().first { $0.title == "Again \(n)?" && $0.state == .shown }
+                if shown == nil { try await Task.sleep(for: .milliseconds(5)) }
+            }
+            #expect(shown != nil, "within the budget, question \(n) is shown")
+            if let shown { await center.respond(id: shown.id, actionId: nil) }
+            _ = await answer
+        }
+        async let last = center.ask(AttentionRequest(level: .attention, source: "external:test", title: "One more?", refKind: "ask"), timeout: 0.3)
+        var state: AttentionItem.State?
+        for _ in 0..<40 where state == nil {
+            state = try await store.open().first { $0.title == "One more?" }?.state
+            if state == nil { try await Task.sleep(for: .milliseconds(5)) }
+        }
+        #expect(state == .pending, "past it, it waits and doesn't come up")
+        #expect(await center.heldCount == 1)
+        #expect(await last == nil)
+    }
+
+    @Test func aNewNameForEachQuestionIsStillBounded() {
+        let now = Date()
+        let many = (1...(AttentionPolicy.questionsPerSourceLimit * 2)).map { (source: "external:client\($0)", at: now.addingTimeInterval(-Double($0))) }
+        let held = AttentionPolicy.decide(level: .attention, source: "external:fresh", createdAt: now, now: now, env: AttentionEnvironment(), recent: many, question: true)
+        if case .hold = held {} else { Issue.record("it holds: \(held)") }
+    }
+
+    @Test func aQuestionShownBeforeARestartIsOverAfterIt() async throws {
+        let db = try AppDatabase.inMemory()
+        let store = AttentionStore(db)
+        let center = AttentionCenter(store: store, events: EventBus())
+        let asking = Task { await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Before?", refKind: "ask"), timeout: 5) }
+        var open: [AttentionItem] = []
+        for _ in 0..<400 where !open.contains(where: { $0.state == .shown }) {
+            open = try await store.open()
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(open.first?.state == .shown)
+        let restarted = AttentionCenter(store: store, events: EventBus())
+        await restarted.restoreWaiting()
+        #expect(try await store.open().isEmpty, "nobody's left to hear its answer, so it can't come forward from the count")
+        asking.cancel()
+    }
+
+    /// A program asking every so often mustn't keep anyone else's notices from coming up.
+    @Test func questionsDontUseUpWhatNoticesMayDo() async throws {
+        let (center, _, store) = try center()
+        let asking = (1...(AttentionPolicy.perFamilyLimit + 1)).map { n in
+            Task { await center.ask(AttentionRequest(level: .attention, source: "extension:nagging", title: "Question \(n)?", refKind: "ask"), timeout: 5) }
+        }
+        var open: [AttentionItem] = []
+        for _ in 0..<400 where open.count < asking.count || !open.allSatisfy({ $0.state == .shown }) {
+            open = try await store.open()
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        let notice = await center.post(AttentionRequest(level: .attention, source: "extension:other", title: "A notice"))
+        #expect(try await store.item(id: notice.id)?.state == .shown, "not held behind them")
+        #expect(await center.heldCount == 0)
+        for item in try await store.open() { await center.respond(id: item.id, actionId: nil) }
+        for task in asking { _ = await task.value }
+    }
+
+    /// Held while away with something else, so it goes into the one card on coming back. Answered in words, it has no buttons, and someone's still waiting.
+    @Test func aQuestionWithNoChoicesStillWaitsAfterTheCardOnComingBack() async throws {
+        let (center, _, store) = try center()
+        await center.update { $0.away = true }
+        let asking = Task { await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "What title?", refKind: "ask"), timeout: 5) }
+        await center.post(AttentionRequest(level: .attention, source: "external:other", title: "A notice"))
+        var open: [AttentionItem] = []
+        for _ in 0..<400 where open.count < 2 {
+            open = try await store.open()
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        await center.update { $0.away = false }
+        var question: AttentionItem?
+        for _ in 0..<400 where question?.state != .shown {
+            question = try await store.open().first { $0.title == "What title?" }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(question?.state == .shown, "still open, still counted: \(String(describing: question?.state))")
+        if let question { await center.respond(id: question.id, actionId: nil) }
+        _ = await asking.value
+    }
+
+    /// What lists what's open has to hear: a row left behind would offer answers that go nowhere.
+    @Test func aQuestionThatRunsOutSaysSoToWhatListsIt() async throws {
+        let db = try AppDatabase.inMemory()
+        let events = EventBus()
+        let store = AttentionStore(db)
+        let center = AttentionCenter(store: store, events: events)
+        let stream = events.stream()
+        let told = Mutex(false)
+        let listening = Task {
+            for await event in stream { if case .dataChanged(.attention) = event { told.withLock { $0 = true } } }
+        }
+        let answer = await center.ask(AttentionRequest(level: .attention, source: "external:test", title: "Runs out?", refKind: "ask"), timeout: 0.05)
+        #expect(answer == nil)
+        #expect(try await store.open().isEmpty)
+        for _ in 0..<200 where !told.withLock({ $0 }) { try await Task.sleep(for: .milliseconds(5)) }
+        listening.cancel()
+        #expect(told.withLock { $0 }, "it's told, so Today and Ask's rows look again")
+    }
+
+    @Test func aNoticeIsStillSpacedOut() async throws {
+        let (center, _, store) = try center()
+        await center.post(AttentionRequest(level: .attention, source: "external:test", title: "One"))
+        await center.post(AttentionRequest(level: .attention, source: "external:test", title: "Two"))
+        #expect(await center.heldCount == 1)
+        #expect(try await store.open().filter { $0.state == .shown }.count == 1)
     }
 
     @Test func postPresentsAndPersists() async throws {

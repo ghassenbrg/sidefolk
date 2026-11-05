@@ -74,6 +74,8 @@ final class SidecardController {
         hosted.panel.setAccessibilityTitle(String(localized: "Sidefolk card", comment: "VoiceOver: the window of the card above the companion"))
         hosted.onPlaced = { [weak self] frame, anchor in self?.aimTail(from: frame, at: anchor) }
         model.respond = { [weak self] item, action in
+            // The second click of a double click, on the card that's just come up under it, isn't an answer to it.
+            if let self, let shown = self.shownAt, Date().timeIntervalSince(shown) < Self.settling { return }
             self?.close(id: item.id)
             self?.onRespond?(item, action)
         }
@@ -90,7 +92,10 @@ final class SidecardController {
         installKeys()
     }
 
-    /// The stack was clicked: Ask opens on top of it.
+    private var shownAt: Date?
+    private static let settling: TimeInterval = 0.4
+
+    /// The stack was clicked: what waits comes forward.
     var onOpenStack: (() -> Void)?
 
     var currentId: String? { model.shape == .stack ? nil : model.item?.id }
@@ -99,8 +104,10 @@ final class SidecardController {
     /// Where the card stands, for what must stay clear of it (D99).
     var visibleFrame: NSRect? { hosted.panel.isVisible ? hosted.panel.frame : nil }
 
-    func present(_ item: AttentionItem, _ presentation: AttentionPresentation) {
+    /// `forward`: the person asked for this one, so it comes up now, with a question in front going back to the head of the line.
+    func present(_ item: AttentionItem, _ presentation: AttentionPresentation, forward: Bool = false) {
         if model.item?.id == item.id, model.shape != .stack { return }
+        queue.removeAll { $0.0.id == item.id }
         let card = Self.isCard(item, presentation)
         if holds?(!card) == true {
             if !queue.contains(where: { $0.0.id == item.id }) { queue.append((item, presentation)) }
@@ -113,13 +120,25 @@ final class SidecardController {
                 return
             }
             // A new card: a card in front folds into the stack (it still waits there), a whisper waits its turn.
-            if model.shape == .card { fold(current) } else { queue.insert((current, .gentle(autoDismiss: AttentionPolicy.gentleSeconds)), at: 0) }
+            // A question doesn't fold, though: someone's waiting on it. What's new takes its turn after, unless it's for right now, or the person asked for it.
+            if model.shape == .card, current.refKind == "ask" {
+                guard forward || item.refKind == "reminder" || item.refKind?.hasPrefix(OccurrenceScheduler.attentionKind) == true else {
+                    queue.append((item, presentation))
+                    return
+                }
+                queue.insert((current, .attention(expandFor: AttentionPolicy.expandSeconds)), at: 0)
+            } else if model.shape == .card { fold(current) } else { queue.insert((current, .gentle(autoDismiss: AttentionPolicy.gentleSeconds)), at: 0) }
         }
         show(item, presentation, card: card)
     }
 
     func withdraw(id: String) {
         queue.removeAll { $0.0.id == id }
+        // Answered somewhere else while the held cards are out: it goes from them too.
+        if model.stack.contains(where: { $0.id == id }) {
+            model.stack.removeAll { $0.id == id }
+            if model.stack.isEmpty { hideStack() }
+        }
         if model.item?.id == id, model.shape != .stack { close(id: id) }
     }
 
@@ -149,6 +168,7 @@ final class SidecardController {
 
     private func show(_ item: AttentionItem, _ presentation: AttentionPresentation, card: Bool) {
         fanEnd?.cancel()
+        shownAt = Date()
         model.item = item
         model.shape = card ? .card : .whisper
         followSpaces()
