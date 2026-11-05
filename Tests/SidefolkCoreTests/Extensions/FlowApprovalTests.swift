@@ -1067,9 +1067,11 @@ import Testing
         async let edit = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])])
         var waited = 0
         while await w.h.env.broker.pending().isEmpty, waited < 200 { try? await Task.sleep(for: .milliseconds(25)); waited += 1 }
-        _ = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "input": ["text": "Digest: y"]])
+        // What a run does while the card is up (the test program takes one call at a time, so the write itself is made here).
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.lastUsed = Date() }
         #expect(await w.answerCard(.allowOnce) != nil)
-        #expect(await edit["ok"]?.boolValue == true, "a run in between is not a change of the plan")
+        let reply = await edit
+        #expect(reply["ok"]?.boolValue == true, "a run in between is not a change of the plan")
     }
 
     @Test func anIdlePlanEndsWithItsRowWhenTrustIsListedAndOnlyOnce() async throws {
