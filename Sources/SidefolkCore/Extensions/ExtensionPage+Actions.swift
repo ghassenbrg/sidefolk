@@ -9,6 +9,8 @@ public enum PageAct: Sendable, Hashable {
     case copy(String)
     /// The system's open panel, then a tool of its own with the file the person chose.
     case file(PageFileAsk)
+    /// A tool of its own runs, then the system's save panel, and Sidefolk writes what the tool answered to the place the person picked. The extension never learns where.
+    case save(PageSaveAsk)
     /// The system's open panel, then Sidefolk's own drop card for what was chosen: the person picks there, as for a drop.
     case dropCard
     /// Asks the person, in Sidefolk's words, to let this extension have something (D106, D107).
@@ -27,6 +29,7 @@ public enum PageAct: Sendable, Hashable {
         if let go = PageGo.parse(j["go"]) { return .go(go) }
         if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(60_000))) }
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
+        if let save = PageSaveAsk.parse(j["save"]) { return .save(save) }
         if j["drop_card"]?.boolValue == true { return .dropCard }
         if let consent = j["allow"]?.stringValue.flatMap(PageConsent.init(rawValue:)) { return .allow(consent) }
         if let share = PageShareAsk.parse(j["share"]) { return .share(share) }
@@ -72,6 +75,27 @@ public struct PageFileAsk: Sendable, Hashable {
               let input = ExtensionPage.smallInput(j["input"]) else { return nil }
         let types = (j["types"]?.arrayValue ?? []).prefix(8).compactMap { $0.stringValue }.filter { $0.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil }
         return PageFileAsk(tool: tool, param: param, types: Array(types), input: input)
+    }
+}
+
+/// `{"name": "Morning.sideflow", "type": "sideflow", "tool": "export_flows", "input": {…}}`: what the save panel starts with, and the tool whose words are written. The person picks the place in the system's panel, and the extension never learns it.
+public struct PageSaveAsk: Sendable, Hashable {
+    public var name: String
+    public var type: String
+    public var tool: String
+    public var input: JSONValue
+    /// The most it writes: words a page's tool made, not a way to fill a disk.
+    public static let longest = 1_000_000
+
+    static func parse(_ j: JSONValue?) -> PageSaveAsk? {
+        guard let j, let tool = ExtensionPage.toolName(j["tool"]), let type = j["type"]?.stringValue, type.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil,
+              let input = ExtensionPage.smallInput(j["input"]), let name = j["name"]?.stringValue else { return nil }
+        // A name, not a place: nothing that could point the panel at a folder or hide what it is.
+        let plain = ExtensionText.clean(name).replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-").trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: ".")))
+        guard !plain.isEmpty else { return nil }
+        let ending = "." + type
+        let whole = plain.lowercased().hasSuffix(ending) ? plain : plain + ending
+        return PageSaveAsk(name: String(whole.suffix(120)), type: type, tool: tool, input: input)
     }
 }
 

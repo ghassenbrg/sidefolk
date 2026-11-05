@@ -39,6 +39,10 @@ struct ExtensionPageView: View {
                 Label { Text("Copied: \(copied)", comment: "An extension's page: the exact words a button just put on the clipboard") } icon: { Image(systemName: "doc.on.clipboard") }
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
             }
+            if let saved = model.saved {
+                Label { Text("Saved: \(saved)", comment: "An extension's page: the file a button just saved, by its name") } icon: { Image(systemName: "square.and.arrow.down") }
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
+            }
             // A hero with a scene carries the page's title itself (D100), large; a bare page draws its own head (D105).
             if model.page?.hero?.scene == nil, model.page?.bare != true { header }
             // A page led by its own head has the way back there, with the same key.

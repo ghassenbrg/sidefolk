@@ -230,6 +230,18 @@ enum PageFilePanel {
         return await panel.begin() == .OK ? panel.url?.path : nil
     }
 
+    /// The system's save panel: the place is the person's, and only Sidefolk ever knows it.
+    @MainActor
+    static func chooseWhere(_ ask: PageSaveAsk) async -> URL? {
+        #if DEBUG
+        if let chosen = choiceForTest { return URL(fileURLWithPath: chosen) }
+        #endif
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = ask.name
+        if let type = UTType(filenameExtension: ask.type) { panel.allowedContentTypes = [type] }
+        return await panel.begin() == .OK ? panel.url : nil
+    }
+
     #if DEBUG
     /// The debug app's stand-in for the person: there is no one to click in the panel.
     static var choiceForTest: String?
@@ -284,6 +296,7 @@ final class ExtensionPageModel {
     private var widthWait: Task<Void, Never>?
     /// What a click just put on the clipboard, word for word: nobody should have to trust a button's label for that (SECURITY T12).
     private(set) var copied: String?
+    private(set) var saved: String?
     /// Waiting for the person to answer Sidefolk's question (D106, D107).
     var asking: PageConsent?
     /// The folder Sidefolk is asking to share, for a page's `share`.
@@ -408,6 +421,25 @@ final class ExtensionPageModel {
             if let why = outcome.problem?.message { problem = why }
             // Reported in its own words, since the call itself went through (D140).
             if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
+        case .save(let ask):
+            guard let services else { return }
+            let short = String(info.extensionId.split(separator: ".").last ?? "")
+            let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: ask.input, caller: .user)
+            if let why = outcome.problem?.message { problem = why; return }
+            guard case .ok(let result) = outcome.status else { return }
+            if result.isError { problem = result.text.clipped(300); return }
+            let bytes = Data(result.text.utf8)
+            guard bytes.count <= PageSaveAsk.longest else {
+                problem = String(localized: "That's too much to save from here.", comment: "An extension's page: what it asked to save is over the limit")
+                return
+            }
+            guard let place = await PageFilePanel.chooseWhere(ask) else { return }
+            do {
+                try bytes.write(to: place, options: .atomic)
+                saved = place.lastPathComponent
+            } catch {
+                problem = String(localized: "That couldn't be saved there.", comment: "An extension's page: the file couldn't be written where the person chose")
+            }
         case .dropCard:
             services?.chooseFilesForCard()
         case .allow(let consent):
