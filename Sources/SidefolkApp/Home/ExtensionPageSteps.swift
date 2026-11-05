@@ -293,7 +293,18 @@ struct PageEditFieldRow: View {
         .onChange(of: focused) { _, now in if !now { commit() } }
         // Going somewhere else on the page's own sidebar: what was being typed isn't lost with the field.
         .onDisappear { if focused || chipFocused { commit() } }
+        #if DEBUG
+        // `pageChip:` in scripts/dev.swift: "Use a value" as a press on it.
+        .onReceive(NotificationCenter.default.publisher(for: PageEditFieldRow.devChip)) { note in
+            guard let asked = note.object as? [String], asked.first == field.id, asked.count == 2 else { return }
+            inserting = (asked[1], inserting.count + 1)
+        }
+        #endif
     }
+
+    #if DEBUG
+    static let devChip = Notification.Name("sidefolk.dev.pageChip")
+    #endif
 
     private var shown: String { field.value ?? "" }
 

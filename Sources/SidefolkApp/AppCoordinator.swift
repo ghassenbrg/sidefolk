@@ -648,6 +648,17 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("pageChip:") {
+            // pageChip:<field id>:<value>: "Use a value" on that field, as a press.
+            let rest = command.dropFirst("pageChip:".count).split(separator: ":", maxSplits: 1).map(String.init)
+            if rest.count == 2 { NotificationCenter.default.post(name: PageEditFieldRow.devChip, object: rest) }
+            return
+        }
+        if command == "pageFieldEnd" {
+            // Clicking elsewhere: the field being typed in lets go.
+            for window in NSApp.windows where window.firstResponder is NSTextView { window.makeFirstResponder(nil) }
+            return
+        }
         if command.hasPrefix("pageFile:") {
             // pageFile:<path>: the next page `file` panel takes this, there being no one to click in it (D105).
             PageFilePanel.choiceForTest = String(command.dropFirst("pageFile:".count))
