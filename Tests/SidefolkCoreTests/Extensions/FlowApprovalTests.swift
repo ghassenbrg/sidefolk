@@ -870,7 +870,106 @@ import Testing
         let through: JSONValue = ["kind": "value", "as": "t", "reads": ["who"]]
         let mine = await w.check(Self.plan([ask, through, Self.post(["repo": "{{t}}"])]))["steps"]?.arrayValue?.last
         #expect(mine?["state"]?.stringValue == "stands", "\(String(describing: mine))")
-        #expect(await w.check(Self.plan([Self.page, ["kind": "value", "as": "t", "reads": ["t"]], Self.post(["body": "{{t}}"])]))["steps"]?.arrayValue?.last?["state"] != nil, "a value that reads itself is read as outside, not looped")
+        #expect(await w.check(Self.plan([Self.page, ["kind": "value", "as": "t", "reads": ["t"]], Self.post(["command": "{{t}}"])]))["steps"]?.arrayValue?.last?["state"]?.stringValue == "refused",
+                "a value that reads itself is read as outside, not looped")
+    }
+
+
+    // MARK: Fifth read
+
+    @Test func aDeepDiamondOfValueStepsIsWorkedOutOnceAndFast() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let ask: JSONValue = ["tool": "ask.user", "as": "who", "input": ["question": "Where?"]]
+        var steps: [JSONValue] = [ask, ["kind": "value", "as": "c0", "reads": ["who"]]]
+        for k in 1...30 {
+            steps.append(["kind": "value", "as": .string("a\(k)"), "reads": [.string("c\(k - 1)")]])
+            steps.append(["kind": "value", "as": .string("b\(k)"), "reads": [.string("c\(k - 1)")]])
+            steps.append(["kind": "value", "as": .string("c\(k)"), "reads": [.string("a\(k)"), .string("b\(k)")]])
+        }
+        steps.append(Self.post(["repo": "{{c30}}"]))
+        let started = ContinuousClock.now
+        let checked = await w.check(Self.plan(steps))
+        #expect(ContinuousClock.now - started < .seconds(10), "not exponential")
+        #expect(checked["steps"]?.arrayValue?.last?["state"]?.stringValue == "stands", "the person's answer, passed down 90 steps, is still theirs")
+    }
+
+    @Test func aStepsNamesToReadMustAllBeNamesAndFewAndNeverDropped() async throws {
+        let w = try await World()
+        let ask: JSONValue = ["tool": "ask.user", "as": "who", "input": ["question": "Where?"]]
+        for reads in [["who", "page.title"], ["who", "bad name"], [], Array(repeating: "who", count: 70), (0..<40).map { "n\($0)" }] as [[String]] {
+            let value: JSONValue = ["kind": "value", "as": "t", "reads": .array(reads.map { .string($0) })]
+            #expect(await w.check(Self.plan([ask, value]))["reason"]?.stringValue == "unusable", "\(reads.prefix(3))")
+            let ai: JSONValue = ["kind": "ai", "as": "w", "reads": .array(reads.map { .string($0) })]
+            if !reads.isEmpty { #expect(await w.check(Self.plan([ask, ai]))["reason"]?.stringValue == "unusable", "\(reads.prefix(3))") }
+        }
+        let twice: JSONValue = ["kind": "value", "as": "t", "reads": ["who", "who"]]
+        #expect(await w.check(Self.plan([ask, twice]))["ok"]?.boolValue == true, "a name twice is read once")
+    }
+
+    @Test func cyclesAndNamesNoStepMakesAreOutside() async throws {
+        let w = try await World()
+        _ = try server(w)
+        func state(_ steps: [JSONValue], _ field: String) async -> String? {
+            await w.check(Self.plan(steps + [Self.post([field: "{{a}}"])]))["steps"]?.arrayValue?.last?["state"]?.stringValue
+        }
+        let ab: [JSONValue] = [["kind": "value", "as": "a", "reads": ["b"]], ["kind": "value", "as": "b", "reads": ["a"]]]
+        #expect(await state(ab, "command") == "refused", "two steps reading each other")
+        #expect(await state([["kind": "value", "as": "a", "reads": ["nobody"]]], "command") == "refused", "a name no step makes")
+        let ask: JSONValue = ["tool": "ask.user", "as": "who", "input": ["question": "Where?"]]
+        #expect(await state([["kind": "value", "as": "a", "reads": ["later"]], ask, ["kind": "value", "as": "later", "reads": ["who"]]], "command") == "stands",
+                "a name a LATER step makes is that step's, read the same way as an earlier one")
+    }
+
+    @Test func theAIRowNamesWhatAValueStepPassesOn() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let notes: JSONValue = ["tool": "notes.search", "as": "mail", "title": "Weather", "input": ["query": "invoices"]]
+        func plan(_ reads: String) -> JSONValue {
+            Self.plan([Self.page, notes, ["kind": "value", "as": "v", "reads": [.string(reads)]], ["kind": "ai", "as": "write", "reads": ["v"]]])
+        }
+        let first = await words(w, plan("page"))
+        #expect(first.words?.contains("from “Read the page · web.fetch”") == true && first.words?.contains("from “v”") == false, "\(String(describing: first.words))")
+        let edited = await words(w, plan("mail"))
+        #expect(edited.words?.contains("Weather · notes.search") == true, "the AI step now reads another step, and the card says which, by title and tool: \(String(describing: edited.words))")
+    }
+
+    @Test func anUnsignedExtensionCantSendAValueStep() async throws {
+        let third = try await World(origin: nil, name: "other")
+        let value: JSONValue = ["kind": "value", "as": "t", "reads": ["who"]]
+        #expect(await third.check(Self.plan([value]))["reason"]?.stringValue == "unusable")
+    }
+
+    @Test func linesAreGroupedOnlyWhenTheyAreTheSameToolAndTheSameBytes() async throws {
+        let w = try await World()
+        _ = try server(w)
+        for name in ["post2"] {
+            let spec = ToolSpec(name: "ext.hub.\(name)", title: "Create an issue", description: "", inputSchema: Schema.object(["title": Schema.string("Title")]),
+                                risk: .medium, capabilities: [.network, .extensions], category: .extensions, mutates: true)
+            w.h.env.registry.register(ExtensionTool(spec: spec, extensionId: "mcp.hub", extensionName: "GitHub", remoteName: name, program: w.h.root.appendingPathComponent("hub-server").path, sandboxed: false) { _, _ in ToolResult(text: "") })
+        }
+        let one: JSONValue = ["tool": "ext.hub.post", "input": ["repo": "me/digest", "title": "Same"]]
+        let other: JSONValue = ["tool": "ext.hub.post2", "input": ["title": "Same"]]
+        let plan = Self.plan([one, other])
+        let shown = await words(w, plan)
+        #expect(shown.words?.contains("× 2") == false, "two tools with one title are two lines: \(String(describing: shown.words))")
+        let composed = "\u{E9}", decomposed = "e\u{301}"
+        let notices = Self.plan([["tool": "notify.user", "input": ["title": .string(composed)]], ["tool": "notify.user", "input": ["title": .string(decomposed)]]], id: "uni")
+        let second = await words(w, notices)
+        #expect(second.words?.contains("× 2") == false, "text that only compares equal isn't the same line: \(String(describing: second.words))")
+    }
+
+    @Test func theLimitsOn64DifferentLinesAnd256RowsHoldAtTheEdge() async throws {
+        let w = try await World()
+        func notice(_ i: Int, name: String? = nil) -> JSONValue {
+            var step: [String: JSONValue] = ["tool": "notify.user", "input": ["title": .string("Line \(i)")]]
+            if let name { step["as"] = .string(name) }
+            return .object(step)
+        }
+        #expect(await w.check(Self.plan((0..<64).map { notice($0) }))["ok"]?.boolValue == true, "64 different lines")
+        #expect(await w.check(Self.plan((0..<65).map { notice($0) }))["reason"]?.stringValue == "unusable", "65 different lines")
+        #expect(await w.check(Self.plan((0..<256).map { notice($0 % 10, name: "n\($0)") }))["ok"]?.boolValue == true, "256 rows of 10 lines")
+        #expect(await w.check(Self.plan((0..<257).map { notice($0 % 10, name: "n\($0)") }))["reason"]?.stringValue == "unusable", "257 rows")
     }
 
     // MARK: Limits

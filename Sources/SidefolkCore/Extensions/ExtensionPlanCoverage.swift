@@ -55,25 +55,31 @@ extension ExtensionPlanRules {
     /// As above, with the steps that only pass words on (`kind: "value"`, which read other steps by name and are never shown): a value is as far out as
     /// the furthest thing it reads.
     static func sources(of template: JSONValue, steps: [(name: String?, tool: String, kind: String?, reads: [String]?)], inside: Set<String>, fromPerson: Set<String> = []) -> [String: String] {
-        // 0 inside, 1 claimed, 2 outside.
-        func rank(_ root: String, _ seen: Set<String>) -> Int {
+        // 0 inside, 1 claimed, 2 outside. Worked out once per name, however many steps point at it (a chain of steps each reading the one before twice would
+        // otherwise take as many turns as it has paths); a name met again while it is being worked out is a cycle, and outside.
+        var memo: [String: Int] = [:]
+        func rank(_ root: String) -> Int {
+            if let known = memo[root] { return known }
             let named = steps.filter { $0.name == root }
-            if !named.isEmpty {
-                guard !seen.contains(root) else { return 2 }
-                return named.map { step -> Int in
-                    if step.tool == "ask.user" { return 0 }
-                    if step.kind == "value", let reads = step.reads { return reads.map { rank($0, seen.union([root])) }.max() ?? 2 }
-                    return 2
-                }.max() ?? 2
+            guard !named.isEmpty else {
+                let value = reservedNames.contains(root) ? 0 : inside.contains(root) ? 1 : 2
+                memo[root] = value
+                return value
             }
-            if reservedNames.contains(root) { return 0 }
-            return inside.contains(root) ? 1 : 2
+            memo[root] = 2
+            let value = named.map { step -> Int in
+                if step.tool == "ask.user" { return 0 }
+                if step.kind == "value", let reads = step.reads { return reads.map(rank).max() ?? 2 }
+                return 2
+            }.max() ?? 2
+            memo[root] = value
+            return value
         }
         var out: [String: String] = [:]
         for (key, value) in template.objectValue ?? [:] {
             guard let text = value.stringValue, hasSlot(text) else { continue }
             if fromPerson.contains(key) { out[key] = "claimed"; continue }
-            let worst = roots(text).map { rank($0, []) }.max() ?? 0
+            let worst = roots(text).map(rank).max() ?? 0
             out[key] = worst == 2 ? "outside" : worst == 1 ? "claimed" : "inside"
         }
         return out

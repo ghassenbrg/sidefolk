@@ -80,13 +80,13 @@ extension ExtensionHost {
                 guard firstParty else { return .failure(.unusable) }
                 switch kind {
                 case "ai":
-                    let reads = raw["reads"]?.arrayValue?.compactMap(\.stringValue).filter(Self.isName).nonEmptyList
+                    guard let reads = Self.reads(raw["reads"], required: false) else { return .failure(.unusable) }
                     var step = ExtensionPlan.Step(tool: "", input: .object([:]), definition: "", reach: "", standing: false, name: name, kind: kind, title: title, reads: reads)
                     step.feeds = ["*": Self.fingerprint(reads.map { names in Self.closure(of: names, in: lines) } ?? lines)]
                     line = .init(step: step, tool: nil, verdict: .init())
                 case "value":
                     // Words passed from step to step with nothing run: never shown, but what it reads decides where later steps' words come from.
-                    guard let name, let reads = raw["reads"]?.arrayValue?.compactMap(\.stringValue).filter(Self.isName), !reads.isEmpty else { return .failure(.unusable) }
+                    guard let name, let found = Self.reads(raw["reads"], required: true), let reads = found else { return .failure(.unusable) }
                     var step = ExtensionPlan.Step(tool: "", input: .object([:]), definition: "", reach: "", standing: false, name: name, kind: kind, title: nil, reads: reads)
                     step.feeds = ["*": Self.fingerprint(Self.closure(of: reads, in: lines))]
                     line = .init(step: step, tool: nil, verdict: .init())
@@ -145,7 +145,7 @@ extension ExtensionHost {
         candidate.crossing = crossing ? true : nil
         var fresh = Array(lines.indices), widened = false
         if let read {
-            fresh = lines.indices.filter { i in !read.steps.contains { ExtensionPlanRules.covers($0, lines[i].step) } }
+            fresh = lines.indices.filter { i in !read.steps.contains { $0.tool == lines[i].step.tool && $0.kind == lines[i].step.kind && ExtensionPlanRules.covers($0, lines[i].step) } }
             // A plan that now reads private things and outside words and fills a server line from them: those lines are new, however they stood before.
             if crossing, read.crossing != true { fresh = Array(Set(fresh).union(lines.indices.filter { lines[$0].verdict.warning != nil })).sorted() }
             widened = ExtensionPlanRules.widened(read, to: candidate)
@@ -159,6 +159,21 @@ extension ExtensionHost {
     enum PlanRefusal: String, Error {
         case unusable
         case unknownTool = "unknown_tool"
+    }
+
+    /// The names a step reads: every one a valid name, each once, at most 32. Nothing is dropped quietly (a dropped name could make words look closer than
+    /// they are); a list that can't be read as it is makes the plan unusable. The outer nil is that; the inner nil is a step that names nothing.
+    static func reads(_ value: JSONValue?, required: Bool) -> [String]?? {
+        guard let value else { return required ? nil : .some(nil) }
+        guard let items = value.arrayValue, items.count <= 64 else { return nil }
+        var out: [String] = []
+        for item in items {
+            guard let name = item.stringValue, isName(name) else { return nil }
+            if !out.contains(name) { out.append(name) }
+        }
+        guard out.count <= 32 else { return nil }
+        if out.isEmpty { return required ? nil : .some(nil) }
+        return .some(out)
     }
 
     private static func isName(_ text: String) -> Bool { text.range(of: nameShape, options: .regularExpression) != nil }
@@ -258,9 +273,4 @@ extension ExtensionHost {
         }
         return out.isEmpty ? nil : out
     }
-}
-
-private extension Array {
-    /// The list, or nothing for an empty one (an AI step that names no steps reads everything before it).
-    var nonEmptyList: [Element]? { isEmpty ? nil : self }
 }
