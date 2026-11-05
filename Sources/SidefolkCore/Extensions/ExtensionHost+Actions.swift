@@ -416,7 +416,7 @@ extension ExtensionHost {
         let asker = asker(rt)
         // What nobody read is named on the approval's own row in History: the lines it let through.
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
-        if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array(ExtensionPlanWords.addedLines(evaluation).map { .string($0) }) }
+        if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
             await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer)
@@ -428,6 +428,8 @@ extension ExtensionHost {
         if e.covered { return .covered }
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
+        // A plan that can't be recorded in full on one History row always shows its card, in every mode: nothing passes that History could not say.
+        guard ExtensionPlanWords.historyRecord(e) != nil else { return nil }
         // Full access answers for the person's own click, once: not for a turn of Sidefolk's agent, and not for a click of a minute ago.
         if e.mode == .fullAccess, let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
             runtimes[id]?.personClicks[click] = nil

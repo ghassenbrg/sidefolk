@@ -252632,6 +252632,7 @@
     },
     "fields: %lld of %lld listed" : {
       "comment" : "History: how many of a line's fields are listed",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

@@ -69,73 +69,43 @@ extension ExtensionPlanWords {
         return text(parts)
     }
 
-    /// The lines a card was never shown for (Full access or Auto let them through), as History keeps them on the approval's row: a list of short entries (a string
-    /// of at most 300 characters is all History keeps, and its Redactor can lengthen one), in this order so nothing is hidden by what comes before it:
-    /// 1. one entry for the plan's limits, and its warning where it has one;
-    /// 2. one entry for EVERY line, tool or not (a hand-over to the person's AI, a flow it sets off), saying how many of its fields are listed;
-    /// 3. the fields, the places and choices of every line first and the free words after, each as the card says it with the kind of its source FIRST, and
-    ///    a long value split over several entries (never cut at its tail), within what is left of 63 entries; and a last entry counting what did not fit.
-    static func addedLines(_ e: PlanEvaluation) -> [String] {
-        let maxEntries = 64, maxLines = 40
-        let fresh = e.fresh.filter { e.lines[$0].step.kind != "value" }
-        var headers: [(text: String, line: Int)] = [], fields: [(line: Int, priority: Int, key: String, entries: [String])] = []
-        var counts: [Int: Int] = [:]
-        for i in fresh.prefix(maxLines) {
-            let line = e.lines[i]
-            switch line.step.kind {
-            case "ai"?: headers.append((String(localized: "Hands to your AI: \(aiRow(line, e))", comment: "History: a plan's step that hands what it read to the person's AI"), i))
-            case "flow"?: headers.append((String(localized: "Sets off: “\(safe(line.step.input["name"]?.stringValue ?? "", 80))”", comment: "History: a plan's step that sets off another flow; its name"), i))
-            default:
-                guard let tool = line.tool else { continue }
-                let made = historyFields(line, tool: tool, e)
-                counts[i] = made.fields.count
-                headers.append((made.title, i))
-                for (n, field) in made.fields.enumerated() { fields.append((i, field.priority, "\(n)", field.entries)) }
-            }
-        }
-        // The plan's own terms and its warning, in one entry.
+    /// The record of what a plan lets through with no card (Full access, or Auto's edit that stays inside Sidefolk), as History keeps it on the approval's row,
+    /// or nil when it cannot be kept in full, and then the plan shows its card. A silent pass needs a LOSSLESS record: one entry for the plan's limits and warning,
+    /// then for every line a header and for every field of it an entry of its own, each carrying the line's number so a destination stays with its body; the kind
+    /// of each value's source first, every written part between slots in quotes, every item of a list with the count, the producers of a slot in full. It is nil
+    /// if there would be more than 60 entries, if any entry is over 270 characters (nothing is split or cut), or if History's Redactor would change an entry (a
+    /// literal that looks like a secret, a field named like one, a long mixed-case word): what History would not keep whole, the card is the record of.
+    static func historyRecord(_ e: PlanEvaluation) -> [String]? {
         var terms = String(localized: "limits: \(e.plan.perDay) a day, \(e.plan.perRun ?? ExtensionPlanRules.defaultPerRun) in a run", comment: "History: a plan's limits")
         if e.plan.goesRound == true { terms += " · " + String(localized: "goes round a list", comment: "History: a plan that goes round a list") }
         if e.lines.contains(where: { $0.verdict.warning != nil }) { terms += " · " + String(localized: "warning: it reads your things and outside content, and sends words on", comment: "History: the card's warning about a plan that could take private words to a server") }
-        let room = maxEntries - 2 - headers.count
-        var listed: [Int: Int] = [:], taken: [String] = [], dropped = 0
-        for field in fields.sorted(by: { ($0.priority, $0.line) < ($1.priority, $1.line) }) {
-            if taken.count + field.entries.count <= max(0, room) {
-                taken += field.entries
-                listed[field.line, default: 0] += 1
-            } else {
-                dropped += field.entries.count
+        var out = [terms]
+        for i in e.fresh {
+            let line = e.lines[i], number = "#\(i + 1) "
+            switch line.step.kind {
+            case "value"?: continue
+            case "ai"?: out.append(number + String(localized: "Hands to your AI: \(aiRow(line, e))", comment: "History: a plan's step that hands what it read to the person's AI"))
+            case "flow"?: out.append(number + String(localized: "Sets off: “\(safe(line.step.input["name"]?.stringValue ?? "", 80))”", comment: "History: a plan's step that sets off another flow; its name"))
+            default:
+                guard let tool = line.tool else { return nil }
+                let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
+                let ext = ExtensionPlanRules.extensionTool(tool)
+                let name = number + safe(tool.spec.title, 60) + (ext.map { " (" + safe($0.extensionName, 40) + ")" } ?? "")
+                let fields = (line.step.input.objectValue ?? [:]).sorted { a, b in
+                    let ra = ExtensionPlanRules.fieldClass(a.key, schema: properties[a.key]) == .freeText ? 1 : 0
+                    let rb = ExtensionPlanRules.fieldClass(b.key, schema: properties[b.key]) == .freeText ? 1 : 0
+                    return ra != rb ? ra < rb : a.key < b.key
+                }
+                var header = name
+                // A server whose program Sidefolk couldn't check says so, as the card does.
+                if ext?.sandboxed == false, line.step.program == nil { header += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
+                out.append(header + " · " + String(localized: "fields: \(fields.count)", comment: "History: how many fields a line has"))
+                for (key, value) in fields { out.append(name + " / " + safe(key, 60) + ": " + historyValue(key, value, line, e)) }
             }
         }
-        var out = pieces(terms)
-        for header in headers {
-            let total = counts[header.line] ?? 0
-            var text = header.text
-            if counts[header.line] != nil { text += " · " + (listed[header.line, default: 0] == total ? String(localized: "fields: \(total)", comment: "History: how many fields a line has") : String(localized: "fields: \(listed[header.line, default: 0]) of \(total) listed", comment: "History: how many of a line's fields are listed")) }
-            out += pieces(text)
-        }
-        out += taken
-        // History keeps 64 entries of a list: what is past 63 is counted in the last.
-        if out.count > maxEntries - 1 { dropped += out.count - (maxEntries - 1); out = Array(out.prefix(maxEntries - 1)) }
-        let notShown = max(0, fresh.count - maxLines)
-        if dropped > 0 || notShown > 0 { out.append(String(localized: "+\(dropped + notShown) more", comment: "A list was cut; how many more")) }
+        guard out.count <= 60, out.allSatisfy({ $0.count <= 270 }),
+              out.allSatisfy({ Redactor.arguments(.string($0)).stringValue == $0 }) else { return nil }
         return out
-    }
-
-    /// A line's header and its fields, the kind of source first in each; the places and choices (priority 0) before the free words (1).
-    private static func historyFields(_ line: PlanEvaluation.Line, tool: any Tool, _ e: PlanEvaluation) -> (title: String, fields: [(priority: Int, entries: [String])]) {
-        let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
-        let ext = ExtensionPlanRules.extensionTool(tool)
-        let who = ext.map { " (" + safe($0.extensionName, 24) + ")" } ?? ""
-        let name = safe(tool.spec.title, 40) + who
-        var title = name
-        // A server whose program Sidefolk couldn't check says so, as the card does.
-        if ext?.sandboxed == false, line.step.program == nil { title += " · " + String(localized: "program: not checked", comment: "History: a plan's line for a server whose program can't be checked") }
-        let fields = (line.step.input.objectValue ?? [:]).sorted { $0.key < $1.key }.map { key, value -> (Int, [String]) in
-            let free = ExtensionPlanRules.fieldClass(key, schema: properties[key]) == .freeText
-            return (free ? 1 : 0, pieces(historyValue(key, value, line, e), head: name + " / " + safe(key, 30) + ": "))
-        }
-        return (title, fields.map { (priority: $0.0, entries: $0.1) })
     }
 
     /// A field's value as the card says it, with the kind of its source first: written words in quotes, a slot as the steps it comes from between the written
@@ -165,17 +135,6 @@ extension ExtensionPlanWords {
         case .object: return String(localized: "record: \(safe(value.jsonString, 100_000))", comment: "History: a record a plan wrote")
         default: return safe(value.jsonString, 100_000)
         }
-    }
-
-    /// Text as History keeps it: whole, in entries short enough that the Redactor, which can lengthen a string, never reaches the 300 characters History keeps.
-    /// What `head` says it is the value of is repeated in each entry of a value split over several, and they are numbered.
-    private static func pieces(_ text: String, head: String = "") -> [String] {
-        let size = 230
-        guard head.count + text.count > size else { return [head + text] }
-        let chunk = max(60, size - head.count)
-        let chars = Array(text)
-        let parts = stride(from: 0, to: chars.count, by: chunk).map { String(chars[$0..<min($0 + chunk, chars.count)]) }
-        return parts.enumerated().map { n, part in head + part + (parts.count > 1 ? " (\(n + 1)/\(parts.count))" : "") }
     }
 
     /// At most `limit` entries, one line each so History keeps every one whole; past it, a last entry says how many more there were.

