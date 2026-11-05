@@ -73,6 +73,8 @@ public struct ExtensionPlanInfo: Sendable, Hashable, Identifiable {
     public var title: String
     public var when: String
     public var actions: Int
+    /// Some of its lines stand only while Full access or Auto is on, or were never shown on a card.
+    public var partlyUnread = false
     public var approvedAt: Date
     public var expiresAt: Date?
 }

@@ -1,5 +1,6 @@
 import Foundation
 @testable import SidefolkCore
+import Synchronization
 import Testing
 
 /// One approval for a flow (D186–D189, T53): the plan the person read covers what an edit leaves alone, asks only about what is new, and Full access
@@ -25,7 +26,7 @@ import Testing
                 $0.askEachTimeOnline = { (try? await permissions.policy(now: clock.now))?.internet == .askEachTime }
             }
             for (name, risk, caps, mutates) in [("notes.save", Risk.low, Set<Capability>([.notebook]), true), ("notes.search", .low, [.notebook], false),
-                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch, .network, .filesRead], true), ("reminders.create", .low, [.time], true),
+                                                ("notify.user", .low, [], false), ("ask.user", .low, [], false), ("web.fetch", .low, [.network], false), ("watch.create", .low, [.watch, .network, .filesRead], true), ("reminders.create", .low, [.time], true), ("applenotes.copy", .medium, [.macApps, .notebook], true),
                                                 ("files.read", .low, [.filesRead], false), ("clipboard.read", .low, [.clipboard], false), ("applenotes.read", .low, [.macApps], false),
                                                 ("calendar.today", .low, [.calendar], false), ("voice.say", .low, [], true), ("files.trash", .high, [.filesWrite], true)] {
                 h.env.registry.register(ExtensionActionsTests.Probe(name: name, risk: risk, capabilities: caps, mutates: mutates, urlParameter: name == "web.fetch" ? "url" : nil))
@@ -59,9 +60,23 @@ import Testing
 
         /// Approves `plan`, answering its card yes if there is one. Returns the reply and whether a card came.
         func approve(_ plan: JSONValue, caller: Caller = .user) async -> (reply: JSONValue, asked: Bool) {
-            async let reply = ask("sidefolk/plan.approve", ["plan": plan], caller: caller)
-            let card = await answerCard(.allowOnce, wait: 40)
-            return (await reply, card != nil)
+            // Answers a card whenever one comes, until the reply is in: a card that comes late is still seen, and "no card" means none came.
+            let done = Mutex(false)
+            let reply = Task { () -> JSONValue in
+                let answer = await ask("sidefolk/plan.approve", ["plan": plan], caller: caller)
+                done.withLock { $0 = true }
+                return answer
+            }
+            var asked = false
+            while !done.withLock({ $0 }) {
+                if let card = await h.env.broker.pending().first {
+                    await h.env.broker.resolve(id: card.id, decision: .allowOnce)
+                    asked = true
+                } else {
+                    try? await Task.sleep(for: .milliseconds(20))
+                }
+            }
+            return (await reply.value, asked)
         }
 
         func check(_ plan: JSONValue) async -> JSONValue { await ask("sidefolk/plan.check", ["plan": plan]) }
@@ -292,7 +307,7 @@ import Testing
         #expect(run["standing"]?.boolValue == true && run["text"]?.stringValue == "posted", "\(run)")
         #expect(await w.h.env.broker.pending().isEmpty)
         let row = try await w.rows("ext.hub.post").first
-        #expect(row?.args?["_filled_from"]?.arrayValue?.compactMap(\.stringValue) == ["body from step page (outside content)"], "History says where the words came from: \(String(describing: row?.args))")
+        #expect(row?.args?["_filled_from"]?.arrayValue?.compactMap(\.stringValue) == ["outside content: body from step page"], "History says where the words came from: \(String(describing: row?.args))")
     }
 
     @Test func aServerWhoseProgramChangedAsksAgain() async throws {
@@ -461,7 +476,7 @@ import Testing
         }
         #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "string", "format": "uri"]) == .other, "the schema says it is an address")
         #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "string", "enum": ["a"]]) == .other)
-        #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "object"], whole: true) == .other, "a whole value of any other kind may carry a place inside")
+        #expect(ExtensionPlanRules.fieldClass("body", schema: ["type": "object"]) == .other, "a value of any other kind may carry a place inside")
         #expect(ExtensionPlanRules.fieldClass("payload", schema: ["type": "string"]) == .other, "a name for words nobody reads is not free text")
     }
 

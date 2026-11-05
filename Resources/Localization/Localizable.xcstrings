@@ -41809,6 +41809,125 @@
         }
       }
     },
+    "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a question, a reminder), and nobody read them." : {
+      "comment" : "History: a plan's edit Auto let through",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سُمح به في وضع Auto دون بطاقة: الأسطر الجديدة تكتب أو تُعلِم داخل Sidefolk فقط (ملاحظة أو إشعار أو سؤال أو تذكير) ولم يقرأها أحد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Auto ohne Karte erlaubt: Die neuen Zeilen schreiben oder melden nur innerhalb von Sidefolk (eine Notiz, ein Hinweis, eine Frage, eine Erinnerung), und niemand hat sie gelesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido en Auto sin tarjeta: las líneas nuevas solo escriben o avisan dentro de Sidefolk (una nota, un aviso, una pregunta, un recordatorio) y nadie las leyó."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé en mode Auto sans carte : les nouvelles lignes se contentent d’écrire ou d’informer dans Sidefolk (une note, une notification, une question, un rappel), et personne ne les a lues."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentito in Auto senza scheda: le nuove righe si limitano a scrivere o avvisare dentro Sidefolk (una nota, un avviso, una domanda, un promemoria) e nessuno le ha lette."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoでカードなしで許可されました。新しい行はSidefolkの中でノート・通知・質問・リマインダーを書いたり知らせたりするだけで、誰も読んでいません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto에서 카드 없이 허용했어요. 새 줄은 Sidefolk 안에서 노트·알림·질문·미리 알림을 쓰거나 알리기만 하고, 아무도 읽지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido no Auto sem cartão: as novas linhas apenas escrevem ou avisam dentro do Sidefolk (uma nota, um aviso, uma pergunta, um lembrete) e ninguém as leu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在自动模式下无需卡片即获允许：新增的行只在 Sidefolk 内写入或通知（笔记、通知、提问、提醒事项），没有人读过。"
+          }
+        }
+      }
+    },
+    "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a reminder), and nobody read them." : {
+      "comment" : "History: a plan's edit Auto let through",
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سُمح به في وضع Auto دون بطاقة: الأسطر الجديدة تكتب أو تُعلِم داخل Sidefolk فقط (ملاحظة أو إشعار أو تذكير) ولم يقرأها أحد."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Auto ohne Karte erlaubt: Die neuen Zeilen schreiben oder melden nur innerhalb von Sidefolk (eine Notiz, ein Hinweis, eine Erinnerung), und niemand hat sie gelesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido en Auto sin tarjeta: las líneas nuevas solo escriben o avisan dentro de Sidefolk (una nota, un aviso, un recordatorio) y nadie las leyó."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé en mode Auto sans carte : les nouvelles lignes se contentent d’écrire ou d’informer dans Sidefolk (une note, une notification, un rappel), et personne ne les a lues."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentito in Auto senza scheda: le nuove righe si limitano a scrivere o avvisare dentro Sidefolk (una nota, un avviso, un promemoria) e nessuno le ha lette."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoでカードなしで許可されました。新しい行はSidefolkの中でノート・通知・リマインダーを書いたり知らせたりするだけで、誰も読んでいません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto에서 카드 없이 허용했어요. 새 줄은 Sidefolk 안에서 노트·알림·미리 알림을 쓰거나 알리기만 하고, 아무도 읽지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido no Auto sem cartão: as novas linhas apenas escrevem ou avisam dentro do Sidefolk (uma nota, um aviso, um lembrete) e ninguém as leu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在自动模式下无需卡片即获允许：新增的行只在 Sidefolk 内写入或通知（笔记、通知、提醒事项），没有人读过。"
+          }
+        }
+      }
+    },
     "Allowed in Auto without a card: the new lines stay inside Sidefolk, and nobody read them." : {
       "comment" : "History: a plan's edit Auto let through",
       "extractionState" : "stale",
@@ -170172,6 +170291,71 @@
         }
       }
     },
+    "Runs up to %lld actions without asking; some only while Full access or Auto is on, or never shown on a card. %@" : {
+      "comment" : "Settings › Add-ons: an extension's plan some of whose lines nobody read; a count, then its own words for when it runs",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينفّذ حتى %lld إجراءً دون سؤال؛ بعضها فقط أثناء تفعيل الوصول الكامل أو وضع Auto، أو لم يُعرض قط على بطاقة. %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Führt bis zu %lld Aktionen ohne Nachfrage aus; manche nur, solange Vollzugriff oder Auto an ist, oder nie auf einer Karte gezeigt. %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Runs up to %1$lld actions without asking; some only while Full access or Auto is on, or never shown on a card. %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hace hasta %lld acciones sin preguntar; algunas solo mientras el acceso total o Auto está activado, o nunca se mostraron en una tarjeta. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécute jusqu’à %lld actions sans demander ; certaines seulement quand l’accès complet ou le mode Auto est activé, ou jamais montrées sur une carte. %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegue fino a %lld azioni senza chiedere; alcune solo mentre l’accesso completo o Auto è attivo, o mai mostrate su una scheda. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大%lld件の動作を確認なしで実行します。一部はフルアクセスまたはAutoがオンの間だけ、またはカードで一度も表示されていません。%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최대 %lld개의 동작을 묻지 않고 실행해요. 일부는 전체 접근이나 Auto가 켜져 있을 때만 실행되거나, 카드에 한 번도 보이지 않았어요. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executa até %lld ações sem perguntar; algumas só enquanto o acesso total ou o Auto está ligado, ou nunca mostradas em um cartão. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最多无需询问即可运行 %lld 个操作；其中一些仅在完全访问或自动模式开启时运行，或从未在卡片上显示过。%@"
+          }
+        }
+      }
+    },
     "Runs with your full permissions" : {
       "localizations" : {
         "ar" : {
@@ -215004,8 +215188,68 @@
         }
       }
     },
+    "This plan ends by itself after %lld min at the most; what it set up, a watch or a reminder, stays until it is removed." : {
+      "comment" : "A plan's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنتهي هذه الخطة من تلقاء نفسها بعد %lld دقيقة على الأكثر؛ وما أنشأته، من مراقبة أو تذكير، يبقى حتى تزيله."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Plan endet von selbst nach höchstens %lld Min.; was er eingerichtet hat, eine Beobachtung oder eine Erinnerung, bleibt, bis du es entfernst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este plan termina solo después de %lld min como máximo; lo que dejó creado, una vigilancia o un recordatorio, queda hasta que lo quites."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce plan prend fin de lui-même après %lld min au plus ; ce qu’il a mis en place, une surveillance ou un rappel, reste jusqu’à ce que vous le retiriez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questo piano finisce da solo dopo al massimo %lld min; ciò che ha creato, un controllo o un promemoria, resta finché non lo rimuovi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプランは最長%lld分で自動的に終了します。作成した監視やリマインダーは、削除するまで残ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 계획은 길어야 %lld분 뒤에 저절로 끝나요. 만들어 둔 감시나 미리 알림은 지울 때까지 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este plano termina sozinho após no máximo %lld min; o que ele criou, uma vigia ou um lembrete, fica até você remover."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个计划最多 %lld 分钟后自行结束；它设置的监视或提醒会保留，直到你移除。"
+          }
+        }
+      }
+    },
     "This plan ends by itself in about %lld minutes; what it set up, a watch or a reminder, stays until it is removed." : {
       "comment" : "A plan's card",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -270066,65 +270310,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘N 新建笔记"
-          }
-        }
-      }
-    },
-    "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a reminder), and nobody read them." : {
-      "comment" : "History: a plan's edit Auto let through",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisé en mode Auto sans carte : les nouvelles lignes se contentent d’écrire ou d’informer dans Sidefolk (une note, une notification, un rappel), et personne ne les a lues."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitido en Auto sin tarjeta: las líneas nuevas solo escriben o avisan dentro de Sidefolk (una nota, un aviso, un recordatorio) y nadie las leyó."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In Auto ohne Karte erlaubt: Die neuen Zeilen schreiben oder melden nur innerhalb von Sidefolk (eine Notiz, ein Hinweis, eine Erinnerung), und niemand hat sie gelesen."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Consentito in Auto senza scheda: le nuove righe si limitano a scrivere o avvisare dentro Sidefolk (una nota, un avviso, un promemoria) e nessuno le ha lette."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitido no Auto sem cartão: as novas linhas apenas escrevem ou avisam dentro do Sidefolk (uma nota, um aviso, um lembrete) e ninguém as leu."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autoでカードなしで許可されました。新しい行はSidefolkの中でノート・通知・リマインダーを書いたり知らせたりするだけで、誰も読んでいません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auto에서 카드 없이 허용했어요. 새 줄은 Sidefolk 안에서 노트·알림·미리 알림을 쓰거나 알리기만 하고, 아무도 읽지 않았어요."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在自动模式下无需卡片即获允许：新增的行只在 Sidefolk 内写入或通知（笔记、通知、提醒事项），没有人读过。"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "سُمح به في وضع Auto دون بطاقة: الأسطر الجديدة تكتب أو تُعلِم داخل Sidefolk فقط (ملاحظة أو إشعار أو تذكير) ولم يقرأها أحد."
           }
         }
       }

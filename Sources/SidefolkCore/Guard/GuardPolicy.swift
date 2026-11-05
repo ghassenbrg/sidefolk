@@ -114,7 +114,8 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         fullAccessEnds = try? c.decodeIfPresent(Date.self, forKey: .fullAccessEnds)
         let before = (try? c.decode(GuardMode.self, forKey: .beforeFullAccess)) ?? .askOncePerKind
         beforeFullAccess = before == .fullAccess ? .askOncePerKind : before
-        flowsMayPassToServers = (try? c.decode(Bool.self, forKey: .flowsMayPassToServers)) ?? true
+        // Absent: on, the default. Present and unreadable: off, never a yes nobody gave.
+        flowsMayPassToServers = c.contains(.flowsMayPassToServers) ? ((try? c.decode(Bool.self, forKey: .flowsMayPassToServers)) ?? false) : true
     }
 
     /// The policy as it holds at `now`: Full access past its end is the mode it replaced (D84). Guard reads the policy

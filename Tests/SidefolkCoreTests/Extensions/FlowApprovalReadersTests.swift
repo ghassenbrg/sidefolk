@@ -98,11 +98,11 @@ import Testing
     @Test func autoShowsACardForAReadWhoseAnswerGoesBackToTheAddOn() async throws {
         let w = try await World()
         try await w.setMode(.auto)
-        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
-        for (tool, input): (String, JSONValue) in [("files.read", ["path": "/tmp/x"]), ("calendar.today", .object([:])), ("applenotes.read", .object([:])), ("notes.search", ["query": "plans"])] {
-            let edit = FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": .string(tool), "input": input]], id: "read-\(tool)")
-            _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "read-\(tool)"))
-            #expect(await w.approve(edit).asked, Comment(rawValue: "\(tool): what it reads is private, and nobody read the line"))
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "reads"))
+        for (tool, input): (String, JSONValue) in [("files.read", ["path": "/tmp/x"]), ("calendar.today", .object([:])), ("applenotes.read", .object([:])), ("applenotes.copy", .object([:])), ("notes.search", ["query": "plans"])] {
+            let edit = FlowApprovalTests.plan([FlowApprovalTests.save, ["tool": .string(tool), "input": input]], id: "reads")
+            let result = await w.approve(edit)
+            #expect(result.asked, Comment(rawValue: "\(tool): what it reads is private, and nobody read the line: \(result.reply)"))
         }
         // What only writes or tells still passes without a card.
         _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "writes"))
@@ -361,6 +361,9 @@ import Testing
         let lines = row?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
         #expect(lines.count == 20 && lines.last == "+5 more", "past twenty, the rest are counted: \(lines.suffix(2))")
         for i in 0..<19 { #expect(lines[i].contains("Step \(i) "), "line \(i) survives the clip and the redaction: \(lines[i])") }
+        // And on the screen: History shows a list one entry to a line, uncut, so the count at its end is there to read.
+        let shown = ActivityArguments.rows(row?.args).first { $0.name == "lines" }?.value.split(separator: "\n").map(String.init) ?? []
+        #expect(shown.count == 20 && shown.last == "+5 more" && shown[18].contains("Step 18 "), "\(shown.suffix(2))")
     }
 
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
@@ -465,7 +468,48 @@ import Testing
         _ = await w.ask("sidefolk/tools.call", call)
         let row = try await w.rows("ext.hub.post").first
         let said = row?.args?["_filled_from"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(said.count == 2 && said.contains { $0.hasPrefix("body from") } && said.contains { $0.hasPrefix("title from") }, "\(said)")
+        #expect(said.count == 2 && said.contains { $0.hasPrefix("outside content: body from") } && said.contains { $0.hasPrefix("outside content: title from") }, "\(said)")
+    }
+
+    @Test func theDestinationOfALineSurvivesAHistoryClipWhateverTheBodyIs() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        try await w.setMode(.fullAccess)
+        let long = String(repeating: "a long body of words, ", count: 40)
+        let post = FlowApprovalTests.post(["body": .string(long), "title": "Weekly"])
+        #expect(await !w.approve(FlowApprovalTests.plan([post])).asked)
+        let lines = try await w.rows("extensions.plan").first?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        #expect(lines.count == 1 && lines[0].contains("repo: “me/digest”"), "where it goes comes first, whatever the body: \(lines)")
+        #expect(lines[0].contains("GitHub"), "and who gets it")
+    }
+
+    @Test func aWholeSlotOnAStringFieldTakesNoRecordBecauseTheSchemaRefusesIt() async throws {
+        let w = try await World()
+        _ = try w.registerHub()
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.page, FlowApprovalTests.post(["body": "{{page}}"])]))
+        let record: JSONValue = ["tool": "ext.hub.post", "plan": "digest", "input": ["repo": "me/digest", "title": "Weekly digest", "body": ["a": 1]]]
+        let reply = await w.ask("sidefolk/tools.call", record)
+        #expect(reply["ok"]?.boolValue == false && reply["status"]?.stringValue == "failed", "a string field is checked before Guard sees it: \(reply)")
+    }
+
+    @Test func anUnreadableSwitchIsOffAndAnAbsentOneIsOn() throws {
+        func policy(_ json: String) throws -> GuardPolicy { try JSONDecoder().decode(GuardPolicy.self, from: Data(json.utf8)) }
+        #expect(try policy("{}").flowsMayPassToServers)
+        #expect(try policy(#"{"flowsMayPassToServers": false}"#).flowsMayPassToServers == false)
+        #expect(try policy(#"{"flowsMayPassToServers": "yes"}"#).flowsMayPassToServers == false, "present and unreadable: never a yes nobody gave")
+    }
+
+    @Test func whatNobodyReadSurvivesARestartAndSettingsSaysSo() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save]))
+        #expect(await w.h.host.planInfos(Self.id).first?.partlyUnread == true)
+        var plan = ExtensionPlan(id: "p", title: "t", when: "w", steps: [ExtensionPlan.Step(tool: "notes.save", input: ["text": "x"], definition: "d", reach: "r", standing: true)],
+                                 owner: "o", approvedAt: Date(timeIntervalSince1970: 0), perDay: 10)
+        plan.answeredUnread = true
+        plan.steps[0].answeredInAuto = true
+        let back = try JSONDecoder().decode(ExtensionPlan.self, from: JSONEncoder().encode(plan))
+        #expect(back.answeredUnread == true && back.steps[0].answeredInAuto == true && back == plan, "what nobody read is kept, or a restart would make it read")
     }
 
     @Test func aFlowNameAndTheKeysOfAStepAreComparedByBytes() {

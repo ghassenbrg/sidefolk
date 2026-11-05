@@ -291,7 +291,9 @@ extension ExtensionHost {
     /// The plans Settings › Add-ons lists.
     func planInfos(_ id: String) -> [ExtensionPlanInfo] {
         livePlans(id).map {
-            ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count, approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
+            ExtensionPlanInfo(id: $0.id, title: $0.title, when: $0.when, actions: $0.steps.filter(\.standing).count,
+                              partlyUnread: $0.answeredUnread == true || $0.steps.contains { $0.answeredInAuto == true || $0.isInFullAccessOnly },
+                              approvedAt: $0.approvedAt, expiresAt: $0.expiresAt)
         }
     }
 
@@ -370,7 +372,8 @@ extension ExtensionHost {
             let source = step.sources?[field]
             let kind = source == "outside" ? "outside content" : source == "claimed" ? "said by the extension to be the person's own" : source == nil ? "filled in"
                 : "an answer asked of the person, or the clock, as the plan declared"
-            return ToolFormat.oneLine("\(field) from step \(ExtensionPlanRules.roots(text).joined(separator: ", ")) (\(kind))", 200)
+            // The kind first, then the field and the step: the Redactor that History runs can take a word after a step named like a secret.
+            return ToolFormat.oneLine("\(kind): \(field) from step \(ExtensionPlanRules.roots(text).joined(separator: ", "))", 200)
         }
         return parts.isEmpty ? nil : ExtensionPlanWords.capped(parts, 20)
     }

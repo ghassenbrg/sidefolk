@@ -69,12 +69,36 @@ extension ExtensionPlanWords {
         return text(parts)
     }
 
-    /// The lines a card was never shown for (Full access or Auto let them through), each as the card would have said it: History keeps them on the approval's row.
+    /// The lines a card was never shown for (Full access or Auto let them through), one entry each for History to keep on the approval's row: the tool and who
+    /// offers it, then its fields with the ones that say where it goes (a place, a choice) first and the free words last, so a long body can't push the
+    /// destination past the cut History makes (about 300 characters). Each value is short; what was dropped past the cut is counted.
     static func addedLines(_ e: PlanEvaluation) -> [String] {
         capped(e.fresh.compactMap { i -> String? in
-            guard e.lines[i].tool != nil else { return nil }
-            return ToolFormat.oneLine(lineText(e.lines[i], e), 200)
+            guard let tool = e.lines[i].tool else { return nil }
+            return historyLine(e.lines[i], tool: tool, e)
         }, 20)
+    }
+
+    private static func historyLine(_ line: PlanEvaluation.Line, tool: any Tool, _ e: PlanEvaluation) -> String {
+        let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
+        let who = ExtensionPlanRules.extensionTool(tool).map { " (" + safe($0.extensionName, 30) + ")" } ?? ""
+        let fields = (line.step.input.objectValue ?? [:]).sorted { a, b in
+            let ra = ExtensionPlanRules.fieldClass(a.key, schema: properties[a.key]) == .freeText ? 1 : 0
+            let rb = ExtensionPlanRules.fieldClass(b.key, schema: properties[b.key]) == .freeText ? 1 : 0
+            return ra != rb ? ra < rb : a.key < b.key
+        }
+        var out = safe(tool.spec.title, 50) + who, left = 0
+        for (key, value) in fields {
+            let shown: String
+            if let text = value.stringValue, ExtensionPlanRules.hasSlot(text) {
+                shown = "[from " + safe(sourceNames(text, e).joined(separator: ", "), 50) + "]"
+            } else {
+                shown = "“" + safe(value.stringValue ?? value.jsonString, 50) + "”"
+            }
+            let part = " · " + safe(key, 30) + ": " + shown
+            if out.count + part.count <= 260 { out += part } else { left += 1 }
+        }
+        return left > 0 ? out + " (+\(left) more fields)" : out
     }
 
     /// At most `limit` entries, one line each so History keeps every one whole; past it, a last entry says how many more there were.
@@ -290,7 +314,7 @@ extension ExtensionPlanWords {
             ? String(localized: "It goes round a list. Limit a day: \(plan.perDay). Limit in a run, as the extension counts runs: \(perRun).", comment: "A plan's card: its limits")
             : String(localized: "Limit a day: \(plan.perDay). Limit in a run, as the extension counts runs: \(perRun).", comment: "A plan's card: its limits")
         if let ttl = plan.ttl {
-            out += " " + String(localized: "This plan ends by itself in about \(max(1, Int((Double(ttl) / 60).rounded(.up)))) minutes; what it set up, a watch or a reminder, stays until it is removed.", comment: "A plan's card")
+            out += " " + String(localized: "This plan ends by itself after \(max(1, Int((Double(ttl) / 60).rounded(.up)))) min at the most; what it set up, a watch or a reminder, stays until it is removed.", comment: "A plan's card")
         } else {
             out += " " + String(localized: "You can end this in Settings › Add-ons.", comment: "A plan's card")
             // Ending the plan doesn't take back what it made.
@@ -308,6 +332,8 @@ extension ExtensionPlanRules {
         guard let tool = line.tool, line.step.standing, !line.step.isInFullAccessOnly, extensionTool(tool) == nil else { return false }
         let spec = tool.spec
         let writesOrTells = spec.mutates || ExtensionActionPolicy.reachesThePerson.contains(spec.name) || ["voice.say", "companion.play"].contains(spec.name)
-        return writesOrTells && spec.risk != .high && !PermissionEngine.couldCarryOut(spec, outwardUntyped: !spec.capabilities.isDisjoint(with: [.network, .apps]))
+        // A tool that reads private things and gives them back, whatever else it does (`applenotes.copy` reads whole notes in and returns their titles), is a read.
+        let reads = !spec.capabilities.isDisjoint(with: [.macApps, .filesRead, .calendar])
+        return writesOrTells && !reads && spec.risk != .high && !PermissionEngine.couldCarryOut(spec, outwardUntyped: !spec.capabilities.isDisjoint(with: [.network, .apps]))
     }
 }

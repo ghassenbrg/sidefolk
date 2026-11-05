@@ -157,7 +157,7 @@ extension ExtensionPlanRules {
 
     /// What kind of place a parameter is, by its name and the schema: a closed guess and the second line behind the card's own words (T53). Only a plain
     /// string with a name for words people read is free text; everything else outside words might choose is another place, and code is refused.
-    static func fieldClass(_ key: String, schema: JSONValue?, whole: Bool = false) -> FieldClass {
+    static func fieldClass(_ key: String, schema: JSONValue?) -> FieldClass {
         let lower = key.lowercased()
         let tokens = Set(words(in: key))
         if !tokens.isDisjoint(with: codeWords) || codeCompounds.contains(where: lower.contains) || hidesCode(lower) { return .code }
@@ -204,7 +204,7 @@ extension ExtensionPlanRules {
             }
             if open.contains(key) { continue }
             let source = sources[key] ?? "outside"
-            let kind = fieldClass(key, schema: properties[key], whole: isWholeSlot(text))
+            let kind = fieldClass(key, schema: properties[key])
             // Where code runs, no slot at all: the host reads a name ("today", an `ask.user` step the program may never ask) as the person's own, which is the
             // program's declaration and not a fact, so nobody's word counts there, in any mode.
             if kind == .code { return asks("code_field", refused: true) }

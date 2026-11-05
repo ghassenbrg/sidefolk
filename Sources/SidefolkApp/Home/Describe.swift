@@ -154,30 +154,12 @@ enum Describe {
         case .research: String(localized: "A link on a page, read without asking because you allowed a few in this conversation.")
         case .plan: String(localized: "Ran without asking because it fit a plan you read and allowed.")
         case .planUnread: String(localized: "Ran without asking because it fit a plan nobody read: Full access or Auto let it through.", comment: "History: a plan's line that was never shown on a card")
-        case .autoPlan: String(localized: "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a reminder), and nobody read them.", comment: "History: a plan's edit Auto let through")
+        case .autoPlan: String(localized: "Allowed in Auto without a card: the new lines only write or tell inside Sidefolk (a note, a notice, a question, a reminder), and nobody read them.", comment: "History: a plan's edit Auto let through")
         }
     }
 
-    /// An action's arguments as name and value, in name order: the home folder shortened, long values cut.
-    /// The names are the tool's own and stay untranslated (GLOSSARY).
-    static func arguments(_ args: JSONValue?) -> [(name: String, value: String)] {
-        guard case .object(let fields)? = args else { return [] }
-        return fields.keys.sorted().compactMap { name in
-            guard let value = fields[name].flatMap(plain), !value.isEmpty else { return nil }
-            return (name, value.count > 600 ? value.prefix(600) + "…" : value)
-        }
-    }
-
-    private static func plain(_ value: JSONValue) -> String? {
-        switch value {
-        case .null: nil
-        case .bool(let b): b ? "true" : "false"
-        case .number(let n): n == n.rounded() && abs(n) < 1e15 ? String(Int64(n)) : String(n)
-        case .string(let s): s.hasPrefix("/") ? FolderAccess.displayPath(s) : s
-        case .array(let items): items.compactMap(plain).joined(separator: ", ")
-        case .object(let fields): "{" + fields.keys.sorted().joined(separator: ", ") + "}"
-        }
-    }
+    /// An action's arguments as name and value, in name order (`ActivityArguments`).
+    static func arguments(_ args: JSONValue?) -> [(name: String, value: String)] { ActivityArguments.rows(args) }
 
     static func callerKind(_ raw: String) -> String {
         String(raw.split(separator: ":", maxSplits: 1).first ?? Substring(raw))
