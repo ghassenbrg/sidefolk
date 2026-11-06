@@ -32,6 +32,20 @@ struct ExtensionPageTreeTests {
 
     private enum TreeTestFailure: Error { case notATree }
 
+    @Test func onlyTheCardThisBoardPickedUpLands() throws {
+        let t = try tree([node("a"), node("b"), node("c")], extra: ["reorder": ["tool": "ui", "key": "move"]])
+        let picked = ExtensionPage.Tree.Carry(id: "b", on: t)
+        let words = [ExtensionPage.Tree.dragPrefix + "b"]
+        #expect(t.dropped(words, carried: picked) == "b")
+        #expect(t.dropped(words, carried: nil) == nil, "the same words from another app or window, with nothing picked up here")
+        #expect(t.dropped([ExtensionPage.Tree.dragPrefix + "c"], carried: picked) == nil, "words naming another card than the one carried")
+        #expect(t.dropped(["b"], carried: picked) == nil)
+        let changed = try tree([node("a"), node("b"), node("x"), node("c")], extra: ["reorder": ["tool": "ui", "key": "move"]])
+        #expect(changed.dropped(words, carried: picked) == nil, "a tree whose cards changed while it was carried")
+        let other = try tree([node("b"), node("z")], extra: ["reorder": ["tool": "ui", "key": "move"]])
+        #expect(other.dropped(words, carried: picked) == nil, "another tree with a card of the same id")
+    }
+
     @Test func everySpotACardCanGoToIsListedWithoutTheOnesItCant() throws {
         var start = node("start").objectValue ?? [:]
         start["fixed"] = true

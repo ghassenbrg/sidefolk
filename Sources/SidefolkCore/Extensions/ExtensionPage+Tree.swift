@@ -453,3 +453,26 @@ public struct TreeLayout: Sendable {
         size = CGSize(width: reach.max - reach.min + m.margin * 2, height: end.y + m.margin)
     }
 }
+
+extension ExtensionPage.Tree {
+    /// What a card's drag says it carries, for the system's drag. Only a label: which card a drop moves is the board's own record (D233).
+    public static let dragPrefix = "sidefolk.tree.card:"
+
+    /// A card a board picked up as its drag started, with the tree's cards as they were then.
+    public struct Carry: Sendable, Hashable {
+        public var id: String
+        public var cards: [String]
+
+        public init(id: String, on tree: ExtensionPage.Tree) {
+            self.id = id
+            cards = tree.reading.map(\.id)
+        }
+    }
+
+    /// The card a drop moves: the one this board picked up itself, while the tree still has the same cards, and only when the dropped words
+    /// name it. Words alone, from another app, window or tree, move nothing.
+    public func dropped(_ words: [String], carried: Carry?) -> String? {
+        guard let carried, words.first == Self.dragPrefix + carried.id, carried.cards == reading.map(\.id) else { return nil }
+        return carried.id
+    }
+}

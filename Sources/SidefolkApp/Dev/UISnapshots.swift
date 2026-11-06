@@ -676,6 +676,14 @@ enum UISnapshots {
             if let tree = SampleExtensionPage.treeForAsk() {
                 try await page("panel-ask-tree", ResultCardView(card: tree, actions: { EmptyView() }), width: 400)
             }
+            // A board a person edits (D233): as it fits, zoomed out and in, and with a card carried: every place it can go shows.
+            if let board = SampleExtensionPage.board() {
+                let looks: [(String, TreeSnapshot)] = [("page-tree-board", TreeSnapshot()), ("page-tree-board-zoomed-out", TreeSnapshot(zoom: 0.25)),
+                                                        ("page-tree-board-zoomed-in", TreeSnapshot(zoom: 2)), ("page-tree-board-carrying", TreeSnapshot(carrying: "save"))]
+                for (name, look) in looks {
+                    try await page(name, PageTreeView(tree: board, model: SampleExtensionPage.model()).environment(\.treeSnapshot, look).frame(height: 760), width: 1000)
+                }
+            }
             // What a tree's + opens (D125): a popover, which a window's snapshot can't catch.
             if let picker = SampleExtensionPage.treePicker() { try await page("panel-tree-picker", TreePicker(picker: picker) { _ in }, width: 520) }
             // Reduce Transparency with Increase Contrast (D84 phase 5): solid surfaces and edges at a control's strength.

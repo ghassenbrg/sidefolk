@@ -19,6 +19,24 @@ enum SampleExtensionPage {
         return card
     }
 
+    /// A board a person edits (D125, D233): cards to press, + spots, a split with two paths, and moving by dragging.
+    static func board() -> ExtensionPage.Tree? {
+        let json = #"""
+        {"sections": [{"blocks": [{"type": "tree", "line": ["#4FA8F5", "#7C5CFC"], "selected": "sum",
+          "select": {"tool": "ui", "key": "step"}, "insert": {"tool": "ui", "key": "after"}, "reorder": {"tool": "ui", "key": "move"},
+          "nodes": [
+            {"id": "start", "kind": "When", "title": "Every weekday at 8:00", "symbol": "calendar.badge.clock", "color": "#4FA8F5", "fixed": true},
+            {"id": "read", "kind": "Read a page", "title": "example.com/forecast", "symbol": "globe", "color": "#5B8DEF"},
+            {"id": "rain", "kind": "If…", "title": "Rain is likely", "symbol": "arrow.triangle.branch", "color": "#1FA88A", "branches": [
+              {"id": "then:rain", "label": "Yes", "nodes": [{"id": "umbrella", "kind": "Tell me", "title": "Take an umbrella", "symbol": "bell", "color": "#FF7B6B"}]},
+              {"id": "else:rain", "label": "No", "nodes": []}]},
+            {"id": "sum", "kind": "Write with AI", "title": "Sum up the day ahead", "symbol": "sparkles", "color": "#C65CD6"},
+            {"id": "save", "kind": "Save a note", "title": "To your notebook", "symbol": "note.text", "color": "#52C08A"}]}]}]}
+        """#
+        guard let value = try? JSONValue.parse(Data(json.utf8)), case .tree(let tree)? = (try? ExtensionPage.parse(value))?.sections.first?.blocks.first else { return nil }
+        return tree
+    }
+
     /// What can be added to a tree, as an extension says it.
     static func treePicker() -> ExtensionPage.Tree.Picker? {
         let json = #"""
