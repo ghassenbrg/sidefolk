@@ -187,7 +187,7 @@ extension ExtensionPlanRules {
         if spec.capabilities.contains(.shell) { return asks("shell", refused: true) }
         guard let fields = template.objectValue else { return asks("unreadable_value") }
         guard context.firstParty else { return asks(spec.risk == .high ? "high_risk" : "filled_value") }
-        guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }), objectsFit(template), !joinersOutsideWords(template) else { return asks("unreadable_value") }
+        guard writtenFits(template, tool: name), objectsFit(template), !joinersOutsideWords(template) else { return asks("unreadable_value") }
         if name == CompanionJobTool.name, (fields["job"]?.stringValue?.count ?? 0) > CompanionJobTool.longest { return asks("unreadable_value") }
         // A built-in tool that is high risk keeps its card; a server's is high risk for everyone (D127), and stands once its program can be checked.
         if spec.risk == .high, !server { return asks("high_risk") }

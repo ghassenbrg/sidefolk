@@ -846,20 +846,63 @@ import Testing
         #expect(await run["standing"]?.boolValue == true)
     }
 
-    /// A note's first line is its title and the rest its body, so a save that has a title and a body has a line break in its words. A card can't show a line
-    /// break exactly, so such a line asks each run, in every mode, and says why (`unreadable_value`): the same words on one line stand.
-    @Test func aNoteSaveWithALineBreakAsksEachRunAndOneLineStands() async throws {
+    /// A note's first line is its title and the rest its body, so a save that has a title and a body has a line break in its words. In a field the table opens
+    /// for words a line feed stands (D236) and the card draws it as a mark, one for one; everywhere else, and for any other kind of break, the line asks.
+    @Test func aLineFeedInTheWordsOfAnOpenFieldStandsInEveryModeAndTheCardShowsIt() async throws {
         let w = try await World()
         let titled: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo\nMade by the demo."]]
-        let oneLine: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo, made by the demo."]]
-        let broken = await w.check(Self.plan([titled]))["steps"]?.arrayValue?.first
-        #expect(broken?["state"]?.stringValue == "asks" && broken?["why"]?.stringValue == "unreadable_value", "\(String(describing: broken))")
-        let fine = await w.check(Self.plan([oneLine]))["steps"]?.arrayValue?.first
-        #expect(fine?["state"]?.stringValue == "stands", "\(String(describing: fine))")
-        // With a slot too: the line break alone is what asks.
-        let slotted: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo\n{{hello}}"]]
-        let slottedState = await w.check(Self.plan([slotted]))["steps"]?.arrayValue?.first
-        #expect(slottedState?["state"]?.stringValue == "asks" && slottedState?["why"]?.stringValue == "unreadable_value", "\(String(describing: slottedState))")
+        let slotted: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo\n\n{{hello}}\n{{hello}}"]]
+        let ask: JSONValue = ["tool": "ask.user", "as": "hello", "input": ["question": "Hello?"]]
+        let plan = Self.plan([ask, titled, slotted])
+        // The card says where the breaks are.
+        async let first = w.ask("sidefolk/plan.approve", ["plan": plan])
+        guard case .text(let words)? = await w.answerCard(.allowOnce)?.details else { Issue.record("a card"); return }
+        _ = await first
+        #expect(words.contains("“Sideflow demo⏎Made by the demo.”"), "a break is one mark: \(words)")
+        #expect(words.contains("“Sideflow demo⏎⏎[from “ask.user”]⏎[from “ask.user”]”"), "breaks around a slot too: \(words)")
+        let call: JSONValue = ["tool": "notes.save", "plan": "digest", "input": ["text": "Sideflow demo\nMade by the demo."]]
+        let filled: JSONValue = ["tool": "notes.save", "plan": "digest", "input": ["text": "Sideflow demo\n\nhi\nthere\nand more"]]
+        for mode in [GuardMode.askOncePerKind, .auto, .fullAccess] {
+            try await w.setMode(mode)
+            _ = await w.approve(plan)
+            let states = await w.check(plan)["steps"]?.arrayValue?.compactMap { $0["state"]?.stringValue }
+            #expect(states?.suffix(2) == ["stands", "stands"], "\(mode): \(String(describing: states))")
+            for run in [call, filled] {
+                async let reply = w.ask("sidefolk/tools.call", run)
+                #expect(await w.answerCard(.deny, wait: 20) == nil, "\(mode): no card for what they read")
+                #expect(await reply["standing"]?.boolValue == true, "\(mode)")
+            }
+        }
+        // The same words with a space where the break was are not what they read.
+        try await w.setMode(.askOncePerKind)
+        async let other = w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "input": ["text": "Sideflow demo Made by the demo."]])
+        #expect(await w.answerCard(.deny) != nil, "a break is part of the words")
+        #expect(await other["standing"]?.boolValue == false)
+    }
+
+    @Test func onlyAPlainLineFeedBetweenPlainLinesIsShownAndNothingElseStands() async throws {
+        let w = try await World()
+        func state(_ tool: String, _ input: JSONValue) async -> String {
+            let line = await w.check(Self.plan([["tool": .string(tool), "input": input]]))["steps"]?.arrayValue?.first
+            return "\(line?["state"]?.stringValue ?? "-")/\(line?["why"]?.stringValue ?? "-")"
+        }
+        for text in ["a\rb", "a\r\nb", "a\u{2028}b", "a\u{2029}b", "a\u{85}b", "a\tb", "a\u{0B}b", "a\u{0C}b", "a\u{1C}b", "\nab", "ab\n", "a\n\n\nb", "a\u{23CE}b", "a \nb", "a\n b", "a\n\u{200B}b"] {
+            #expect(await state("notes.save", ["text": .string(text)]) == "asks/unreadable_value", "\(text.unicodeScalars.map(\.value))")
+        }
+        for text in ["a\nb", "a\n\nb", "Title\n- one\n- two\n\nend"] {
+            #expect(await state("notes.save", ["text": .string(text)]) == "stands/-", Comment(rawValue: text))
+        }
+        // Only where the table opens a field for words: a collection's name, and a tool with no open field, keep one line.
+        #expect(await state("notes.save", ["text": "a", "collection": "x\ny"]) == "asks/unreadable_value")
+        #expect(await state("notify.user", ["title": "a\nb", "body": "c\nd"]) == "stands/-")
+        #expect(await state("voice.say", ["text": "a\nb"]) == "stands/-")
+        #expect(await state("files.read", ["path": "a\nb"]) == "asks/unreadable_value")
+        // The limit counts a break as one character.
+        let half = String(repeating: "a", count: 150)
+        #expect(await state("notes.save", ["text": .string(String(half.dropLast()) + "\n" + half)]) == "stands/-", "300 characters with the break")
+        #expect(await state("notes.save", ["text": .string(half + "\n" + half)]) == "asks/unreadable_value", "301")
+        // A key is one line too.
+        #expect(await state("notes.save", ["text": "a", "co\nllection": "x"]) == "asks/unreadable_value")
     }
 
     @Test func aJobForTheCompanionCountsAsReadingOutsideContent() async throws {
