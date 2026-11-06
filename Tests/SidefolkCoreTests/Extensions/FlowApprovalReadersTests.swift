@@ -359,6 +359,16 @@ import Testing
         #expect(lines.contains { $0.contains("source “page”: \(title) · web.fetch") }, "who makes the slot, whatever its title: \(lines)")
     }
 
+    @Test func aBreakInANoteIsRecordedWhereItIsSoTheRecordIsNotOneLine() async throws {
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        let titled: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo\nMade by the demo."]]
+        #expect(await !w.approve(FlowApprovalTests.plan([titled])).asked, "a plan that fits History is answered with no card")
+        let lines = try await record(w)
+        #expect(lines.contains { $0.contains(" text: “Sideflow demo⏎Made by the demo.”") }, "a break is the mark, as on the card: \(lines)")
+        #expect(lines.allSatisfy { !$0.contains("\n") })
+    }
+
     @Test func thePlansLimitsAndItsWarningAreOneEntryOfTheirOwn() async throws {
         let w = try await World()
         _ = try w.registerHub()

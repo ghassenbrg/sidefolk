@@ -71,7 +71,7 @@ extension ExtensionHost {
             let standing = step != nil
             // A plan's step as written, or the program's word for a call it filled in without one (a run from a draft): checked against
             // what it sent, and only where the closed table leaves words open. All it can do is keep those words out of History (D127).
-            let template = step ?? params["written"].flatMap { ExtensionPlanRules.readable(written: $0, for: input) ? .some($0) : .none }
+            let template = step ?? params["written"].flatMap { ExtensionPlanRules.readable(written: $0, for: input, tool: tool) ? .some($0) : .none }
             let filled = template.map { ExtensionPlanRules.fillsIn($0) && ExtensionPlanRules.matches(input, template: $0, fillable: step == nil ? ExtensionActionPolicy.fillable[tool] ?? [] : ExtensionPlanRules.slotKeys($0),
                                                                                        whole: step == nil ? [] : ExtensionPlanRules.wholeKeys($0, tool: tool)) } == true
             // History keeps the step as written, and where its filled words came from.

@@ -149,8 +149,8 @@ enum ExtensionPlanRules {
     static func short(_ input: JSONValue) -> Bool { input.jsonString.utf8.count <= 64_000 }
 
     /// Whether a program's own word for how a call was written is one to read: a size a card could show, and a call not so long that matching it is work.
-    static func readable(written template: JSONValue, for input: JSONValue) -> Bool {
-        short(input) && written(template).allSatisfy { plain($0) && $0.count <= ExtensionPlanWords.valueLimit } && objectsFit(template)
+    static func readable(written template: JSONValue, for input: JSONValue, tool: String) -> Bool {
+        short(input) && writtenFits(template, tool: tool) && objectsFit(template)
     }
 
     /// Whether a step leaves words to fill in.
@@ -242,12 +242,49 @@ enum ExtensionPlanRules {
         // What would be refused when it runs doesn't stand on a card that promised it.
         if name == CompanionJobTool.name, (fields["job"]?.stringValue?.count ?? 0) > CompanionJobTool.longest { return false }
         // What runs is what the card showed: nothing hidden in a written value, nothing past where the card stops.
-        guard written(template).allSatisfy({ plain($0) && $0.count <= ExtensionPlanWords.valueLimit }),
-              objectsFit(template), !joinersOutsideWords(template) else { return false }
+        guard writtenFits(template, tool: name), objectsFit(template), !joinersOutsideWords(template) else { return false }
         let fillable = ExtensionActionPolicy.fillable[name] ?? []
         return fields.allSatisfy { key, value in
             !hasSlot(key) && slotless(value, unless: fillable.contains(key))
         }
+    }
+
+    /// What the card draws a line break with: one character for one, so the limit on a value counts the break. A written value can't hold it, or a card could
+    /// show a break that isn't there.
+    static let breakMarker: Unicode.Scalar = "\u{23CE}"
+
+    /// Whether every string written in a step can be shown exactly: one plain line each, within the limit. The words a field the table opens may hold run over
+    /// lines (a note's first line is its title and the rest its body): there a line feed between plain lines is shown too (`plainLines`), and nowhere else.
+    static func writtenFits(_ template: JSONValue, tool: String) -> Bool {
+        func fits(_ text: String, lines: Bool) -> Bool { (lines ? plainLines(text) : plain(text)) && text.count <= ExtensionPlanWords.valueLimit }
+        guard let fields = template.objectValue else { return written(template).allSatisfy { fits($0, lines: false) } }
+        let open = ExtensionActionPolicy.fillable[tool] ?? []
+        var rest = fields
+        var words: [String] = []
+        for (key, value) in fields where open.contains(where: { $0.utf8.elementsEqual(key.utf8) }) {
+            guard case .string(let text) = value else { continue }
+            rest[key] = nil
+            words.append(text)
+            // The key itself is written too.
+            guard fits(key, lines: false) else { return false }
+        }
+        return words.allSatisfy { fits($0, lines: true) } && written(.object(rest)).allSatisfy { fits($0, lines: false) }
+    }
+
+    /// Words over several lines: each line plain on its own, the breaks plain line feeds (never a carriage return, a line or paragraph separator or another
+    /// control), none at either end, no more than two together (a blank line), and none of the card's own mark for one.
+    static func plainLines(_ text: String) -> Bool {
+        let scalars = text.unicodeScalars
+        // The mark is the card's own: in these fields it always means a break, so no written value has one.
+        guard !scalars.contains(breakMarker) else { return false }
+        guard scalars.contains("\n") else { return plain(text) }
+        guard scalars.first != "\n", scalars.last != "\n" else { return false }
+        var run = 0
+        for scalar in scalars {
+            run = scalar == "\n" ? run + 1 : 0
+            if run > 2 { return false }
+        }
+        return text.split(separator: "\n", omittingEmptySubsequences: true).allSatisfy { plain(String($0)) }
     }
 
     /// What shows is all there is: nothing the card would strip, nothing invisible, nothing so long in bytes that characters hide it. What people's own writing needs stays:
@@ -280,6 +317,8 @@ enum ExtensionPlanRules {
             default: rest.append(s)
             }
         }
+        // The card's marks for a line break (and its look-alike) are never plain: a value can't pass for one that has a break where there is none.
+        guard !text.unicodeScalars.contains(where: { $0 == breakMarker || $0.value == 0x21B5 }) else { return false }
         let shown = String(rest)
         guard same(ExtensionText.clean(shown), shown), !shown.unicodeScalars.contains(where: { $0.properties.isDefaultIgnorableCodePoint || blank($0) }) else { return false }
         // A word that mixes Latin with Cyrillic or Greek letters is one the eye can't tell from another (a Cyrillic `а` in `paypal`): not shown as plain.
@@ -428,7 +467,7 @@ enum ExtensionPlanWords {
         let fields = template.objectValue ?? [:]
         // The field's own name, as the tool takes it: a schema's title is its author's, and could name one field after another.
         let values = fields.keys.sorted().compactMap { key -> String? in
-            guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key), omit: omit.contains(key)) else { return nil }
+            guard let value = fields[key], let said = words(value, from: from[key], whole: whole.contains(key), omit: omit.contains(key), lines: opensLines(tool.spec.name, key)) else { return nil }
             return "\(safe(key, 300)): \(said)"
         }
         var title = safe(tool.spec.title, 80)
@@ -458,11 +497,25 @@ enum ExtensionPlanWords {
 
     static func unquoted(_ text: String) -> String { text.replacingOccurrences(of: "“", with: "‘").replacingOccurrences(of: "”", with: "’") }
 
-    private static func words(_ value: JSONValue, from: String? = nil, whole: Bool = false, omit: Bool = false) -> String? {
+    /// A line feed as the card draws it, one mark for one (`ExtensionPlanRules.breakMarker`): a value one line shows, with History's record of it the same.
+    static func marked(_ text: String) -> String {
+        String(String.UnicodeScalarView(text.unicodeScalars.map { $0 == "\n" ? ExtensionPlanRules.breakMarker : $0 }))
+    }
+
+    /// Whether `key` of `tool` is a field the table opens for words, where a written value may run over lines.
+    static func opensLines(_ tool: String?, _ key: String) -> Bool {
+        tool.flatMap { ExtensionActionPolicy.fillable[$0] }?.contains { $0.utf8.elementsEqual(key.utf8) } == true
+    }
+
+    /// `lines`: the field is one the table opens for words, where a line feed may stand: the card draws it with the mark `breakMarker`, one character for one,
+    /// and a written value can't hold that mark, so the mark is always a real break.
+    private static func words(_ value: JSONValue, from: String? = nil, whole: Bool = false, omit: Bool = false, lines: Bool = false) -> String? {
+        func marked(_ text: String) -> String { lines ? Self.marked(text) : text }
         switch value {
         case .string(let s) where ExtensionPlanRules.hasSlot(s):
             // One line each, keeping the space a written part has next to a slot (a lone space between two slots too).
-            let parts = ExtensionPlanRules.literals(s).map { part -> String in
+            // The slots are found in the words as written and the breaks marked in each written part: marking first would hide a slot with a line feed inside its braces.
+            let parts = ExtensionPlanRules.literals(s).map { marked($0) }.map { part -> String in
                 let said = unquoted(ToolFormat.oneLine(cleanKeepingJoiners(part), valueLimit))
                 guard !said.isEmpty else { return part.isEmpty ? "" : " " }
                 return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")
@@ -472,7 +525,7 @@ enum ExtensionPlanWords {
             if whole { filled += "; " + String(localized: "it may also be a list, a record, a number, or left out", comment: "A plan's card: a field filled with one value of any kind") }
             else if omit { filled += "; " + String(localized: "it may also be left out", comment: "A plan's card: a field that may be left out, which then takes its default") }
             return "“" + parts.joined(separator: "[\(filled)]") + "”"
-        case .string(let s): return quoted(ToolFormat.oneLine(cleanKeepingJoiners(s), valueLimit))
+        case .string(let s): return quoted(ToolFormat.oneLine(cleanKeepingJoiners(marked(s)), valueLimit))
         // What clears a field is something the person reads too: a null or an empty list sets it to nothing.
         case .null: return String(localized: "nothing", comment: "A plan's card: a value written as null")
         case .array(let items):

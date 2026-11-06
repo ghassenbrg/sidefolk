@@ -179,7 +179,9 @@ extension ExtensionPlanWords {
     /// A field's value as the card says it, with the kind of its source first: written words in quotes, a slot as the steps it comes from between the written
     /// parts (each in quotes, so a written part can't pass for the row's own marks), a list with its count.
     private static func historyValue(_ key: String, _ value: JSONValue, _ line: PlanEvaluation.Line, _ e: PlanEvaluation) -> String {
-        func quoted(_ text: String) -> String { "“" + safe(text, 100_000) + "”" }
+        // A field the table opens for words may run over lines: History shows each break as the card does, so a record of a title and a body isn't one line.
+        let lines = ExtensionPlanWords.opensLines(line.tool?.spec.name, key)
+        func quoted(_ text: String) -> String { "“" + safe(lines ? ExtensionPlanWords.marked(text) : text, 100_000) + "”" }
         func around(_ text: String) -> String { text.isEmpty ? "" : quoted(text) }
         if let text = value.stringValue, ExtensionPlanRules.hasSlot(text) {
             let literals = ExtensionPlanRules.literals(text), roots = ExtensionPlanRules.roots(text)

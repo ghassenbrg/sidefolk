@@ -310,9 +310,9 @@ struct ExtensionReachTests {
         #expect(ExtensionPlanRules.standing(tool: facade, template: ["title": "{{x}}"]))
         #expect(!ExtensionPlanRules.standing(tool: facade, template: ["notes": "{{x}}"]), "they'd show in History when it fires")
         let short: JSONValue = ["title": "{{x}}"]
-        #expect(ExtensionPlanRules.readable(written: short, for: ["title": "words"]))
-        #expect(!ExtensionPlanRules.readable(written: .object(["title": .string("{{x}}" + String(repeating: "a", count: 400))]), for: ["title": "words"]))
-        #expect(!ExtensionPlanRules.readable(written: short, for: .object(["title": .string(String(repeating: "a", count: 70_000))])))
+        #expect(ExtensionPlanRules.readable(written: short, for: ["title": "words"], tool: "notify.user"))
+        #expect(!ExtensionPlanRules.readable(written: .object(["title": .string("{{x}}" + String(repeating: "a", count: 400))]), for: ["title": "words"], tool: "notify.user"))
+        #expect(!ExtensionPlanRules.readable(written: short, for: .object(["title": .string(String(repeating: "a", count: 70_000))]), tool: "notify.user"))
     }
 
     @Test func aPlansCardKeepsTheSpacesAroundWhatItFillsIn() throws {
