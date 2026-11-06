@@ -845,6 +845,22 @@ import Testing
         #expect(await run["standing"]?.boolValue == false)
     }
 
+    /// A note's first line is its title and the rest its body, so a save that has a title and a body has a line break in its words. A card can't show a line
+    /// break exactly, so such a line asks each run, in every mode, and says why (`unreadable_value`): the same words on one line stand.
+    @Test func aNoteSaveWithALineBreakAsksEachRunAndOneLineStands() async throws {
+        let w = try await World()
+        let titled: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo\nMade by the demo."]]
+        let oneLine: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo, made by the demo."]]
+        let broken = await w.check(Self.plan([titled]))["steps"]?.arrayValue?.first
+        #expect(broken?["state"]?.stringValue == "asks" && broken?["why"]?.stringValue == "unreadable_value", "\(String(describing: broken))")
+        let fine = await w.check(Self.plan([oneLine]))["steps"]?.arrayValue?.first
+        #expect(fine?["state"]?.stringValue == "stands", "\(String(describing: fine))")
+        // With a slot too: the line break alone is what asks.
+        let slotted: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo\n{{hello}}"]]
+        let slottedState = await w.check(Self.plan([slotted]))["steps"]?.arrayValue?.first
+        #expect(slottedState?["state"]?.stringValue == "asks" && slottedState?["why"]?.stringValue == "unreadable_value", "\(String(describing: slottedState))")
+    }
+
     @Test func aJobForTheCompanionCountsAsReadingOutsideContent() async throws {
         let w = try await World()
         _ = try server(w)
