@@ -34,14 +34,17 @@ public enum DayBrief {
         return String(localized: "\(next.title) is at \(clock).", comment: "Today's brief: what comes next today, “Design review is at 16:30.”")
     }
 
-    /// Good morning, afternoon or evening, with the person's first name when the Mac knows it.
+    /// Good morning, afternoon or evening, with the person's first name when the Mac knows it. Between midnight and five
+    /// it's neither evening nor morning, and "good night" is a goodbye: a plain hello.
     public static func greeting(at date: Date, name: String?, calendar: Calendar = .autoupdatingCurrent) -> String {
         let hour = calendar.component(.hour, from: date)
         let name = name?.trimmingCharacters(in: .whitespaces).nilIfEmpty
         switch (hour, name) {
+        case (0..<5, let name?): return String(localized: "Hello, \(name).", comment: "Today's greeting between midnight and five, with the person's first name")
         case (5..<12, let name?): return String(localized: "Good morning, \(name).", comment: "Today's greeting with the person's first name")
         case (12..<18, let name?): return String(localized: "Good afternoon, \(name).", comment: "Today's greeting with the person's first name")
         case (_, let name?): return String(localized: "Good evening, \(name).", comment: "Today's greeting with the person's first name")
+        case (0..<5, nil): return String(localized: "Hello.", comment: "Today's greeting between midnight and five")
         case (5..<12, nil): return String(localized: "Good morning.", comment: "Today's greeting")
         case (12..<18, nil): return String(localized: "Good afternoon.", comment: "Today's greeting")
         default: return String(localized: "Good evening.", comment: "Today's greeting")
