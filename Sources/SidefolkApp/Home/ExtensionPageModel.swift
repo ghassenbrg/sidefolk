@@ -98,6 +98,9 @@ final class ExtensionPagesModel {
         await model.share(question)
     }
 
+    /// The debug app's stand-in for a press of a button that does this.
+    func acts(_ id: String, _ act: PageAct) async { await models[id]?.perform(act) }
+
     func pressInlay(_ id: String, label: String) async -> Bool {
         guard let model = models[id], let page = model.page else { return false }
         for section in page.sections {
@@ -230,6 +233,31 @@ enum PageFilePanel {
         return await panel.begin() == .OK ? panel.url?.path : nil
     }
 
+    /// The system's save panel: the place is the person's, and only Sidefolk ever knows it.
+    @MainActor
+    static func chooseWhere(_ ask: PageSaveAsk, from extensionName: String) async -> URL? {
+        #if DEBUG
+        if let chosen = choiceForTest { return URL(fileURLWithPath: chosen) }
+        #endif
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = ask.name
+        // It starts where downloads go, never where a page would have it: the place is the person's to pick.
+        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        if let note = ask.note { panel.message = PageSaveAsk.panelMessage(note, from: extensionName) }
+        if let type = UTType(filenameExtension: ask.type) { panel.allowedContentTypes = [type] }
+        return await panel.begin() == .OK ? panel.url : nil
+    }
+
+    /// An ending outside the list of content kinds can still be one an app says it opens, and some of those run what's in them: only one nothing here opens is plain data.
+    static func anAppWouldOpen(_ type: String) -> Bool {
+        guard !ExtensionOutputs.allowedEndings.contains(type) else { return false }
+        // Asked about a file, since that's how an app's claim on an ending is found: an empty one, of a name no one chose.
+        let probe = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).\(type)")
+        guard FileManager.default.createFile(atPath: probe.path, contents: Data()) else { return true }
+        defer { try? FileManager.default.removeItem(at: probe) }
+        return NSWorkspace.shared.urlForApplication(toOpen: probe) != nil
+    }
+
     #if DEBUG
     /// The debug app's stand-in for the person: there is no one to click in the panel.
     static var choiceForTest: String?
@@ -258,7 +286,9 @@ final class ExtensionPageModel {
     /// Where its extension's update, if one waits, is said (D89).
     var updates: UpdateModel?
     private(set) var page: ExtensionPage?
-    var problem: String?
+    var problem: String? { didSet { if problem != nil { saidAt = Date() } } }
+    /// When a problem or a save was last said: a page's next read comes in seconds, and that's too soon to take it away.
+    private var saidAt = Date.distantPast
     private var fieldRuns = 0
     private(set) var updated: Date?
     private(set) var history: [String: [ExtensionPageHistory.Point]] = [:]
@@ -284,6 +314,7 @@ final class ExtensionPageModel {
     private var widthWait: Task<Void, Never>?
     /// What a click just put on the clipboard, word for word: nobody should have to trust a button's label for that (SECURITY T12).
     private(set) var copied: String?
+    private(set) var saved: String?
     /// Waiting for the person to answer Sidefolk's question (D106, D107).
     var asking: PageConsent?
     /// The folder Sidefolk is asking to share, for a page's `share`.
@@ -354,11 +385,16 @@ final class ExtensionPageModel {
             for go in await host.takePageMoves(info.id) { state.apply(go) }
             do {
                 page = try await host.renderPage(extensionId: info.extensionId, page: info.page, language: Self.language, state: state.json, width: width)
-                problem = nil
+                if Date().timeIntervalSince(saidAt) > 12 {
+                    problem = nil
+                    saved = nil
+                }
                 updated = Date()
                 await loadSettings()
             } catch {
                 problem = (error as? UserFacingError)?.message ?? String(localized: "The page couldn't be read.")
+                // It's about the read, so the next good read takes it away.
+                saidAt = .distantPast
             }
         } while readAgain
         await loadHistory()
@@ -387,6 +423,7 @@ final class ExtensionPageModel {
 
     /// What a control does that isn't a tool (D105).
     func perform(_ act: PageAct) async {
+        saved = nil
         await handOverTyping()
         switch act {
         case .go(let move):
@@ -408,6 +445,40 @@ final class ExtensionPageModel {
             if let why = outcome.problem?.message { problem = why }
             // Reported in its own words, since the call itself went through (D140).
             if case .ok(let result) = outcome.status, result.isError { problem = result.text.clipped(300) }
+        case .save(let ask):
+            guard let services else { return }
+            guard !PageFilePanel.anAppWouldOpen(ask.type) else {
+                problem = String(localized: "Sidefolk doesn't save this kind of file from a page.", comment: "An extension's page: it asked to save a kind of file an app on this Mac would open and could run")
+                return
+            }
+            let short = String(info.extensionId.split(separator: ".").last ?? "")
+            // A page's input is the author's, not a file the person chose, as for any control (D105, D141).
+            let paths = await services.runtime.extensions.pathParameters(extensionId: info.extensionId, tool: ask.tool)
+            let outcome = await services.runtime.executor.execute(name: ExtensionTool.registryName(short: short, tool: ask.tool), input: ask.input.removing(paths), caller: .user)
+            if let why = outcome.problem?.message { problem = why; return }
+            guard case .ok(let result) = outcome.status else { return }
+            if result.isError { problem = result.text.clipped(300); return }
+            // What a tool answers is cut for a model, so the file is handed over in its data folder. It stays for the program to tidy: a folder on the way there could be a link it made, so nothing is removed on its word.
+            let name = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let folder, let bytes = ExtensionDataFile.readSaved(name, type: ask.type, in: folder, limit: PageSaveAsk.longest) else {
+                problem = String(localized: "That couldn't be saved: the file is missing or too big.", comment: "An extension's page: the file it made to save can't be read or is over the limit")
+                return
+            }
+            guard let place = await PageFilePanel.chooseWhere(ask, from: info.extensionName) else { return }
+            // Picked by the person, and still never where Sidefolk doesn't go (T10): a page can say where to put it.
+            if let why = PageSaveAsk.refusal(at: place) {
+                problem = why
+                return
+            }
+            do {
+                try bytes.write(to: place, options: .atomic)
+                PageSaveAsk.markAsDownloaded(place)
+                saved = place.lastPathComponent
+                problem = nil
+                saidAt = Date()
+            } catch {
+                problem = String(localized: "That couldn't be saved there.", comment: "An extension's page: the file couldn't be written where the person chose")
+            }
         case .dropCard:
             services?.chooseFilesForCard()
         case .allow(let consent):
@@ -600,7 +671,7 @@ final class ExtensionPageModel {
         defer { fieldRuns -= 1 }
         let why = await ExtensionControl.run(tool: tool, input: input, extensionId: info.extensionId, services: services)
         await refresh()
-        if let why { problem = why }
+        if let why { problem = why } else { saidAt = .distantPast }
         return why == nil
     }
 

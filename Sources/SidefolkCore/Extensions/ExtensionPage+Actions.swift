@@ -1,3 +1,5 @@
+import Darwin
+import UniformTypeIdentifiers
 import Foundation
 
 /// What a page's control may do other than run a tool (D105). None of these changes anything of the person's, so none needs a
@@ -9,6 +11,8 @@ public enum PageAct: Sendable, Hashable {
     case copy(String)
     /// The system's open panel, then a tool of its own with the file the person chose.
     case file(PageFileAsk)
+    /// A tool of its own writes a file in its data folder and answers its name, then the system's save panel, and Sidefolk copies that file to the place the person picked. The extension never learns where.
+    case save(PageSaveAsk)
     /// The system's open panel, then Sidefolk's own drop card for what was chosen: the person picks there, as for a drop.
     case dropCard
     /// Asks the person, in Sidefolk's words, to let this extension have something (D106, D107).
@@ -23,10 +27,11 @@ public enum PageAct: Sendable, Hashable {
     case refresh
 
     /// The control's own: `go`, `copy`, `file`, `allow`, `share` or `settings`. Exactly one, or it isn't drawn as one.
-    static func parse(_ j: JSONValue) -> PageAct? {
+    public static func parse(_ j: JSONValue) -> PageAct? {
         if let go = PageGo.parse(j["go"]) { return .go(go) }
         if let words = j["copy"]?.stringValue, !words.isEmpty { return .copy(String(ExtensionText.clean(words).prefix(60_000))) }
         if let file = PageFileAsk.parse(j["file"]) { return .file(file) }
+        if let save = PageSaveAsk.parse(j["save"]) { return .save(save) }
         if j["drop_card"]?.boolValue == true { return .dropCard }
         if let consent = j["allow"]?.stringValue.flatMap(PageConsent.init(rawValue:)) { return .allow(consent) }
         if let share = PageShareAsk.parse(j["share"]) { return .share(share) }
@@ -72,6 +77,67 @@ public struct PageFileAsk: Sendable, Hashable {
               let input = ExtensionPage.smallInput(j["input"]) else { return nil }
         let types = (j["types"]?.arrayValue ?? []).prefix(8).compactMap { $0.stringValue }.filter { $0.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil }
         return PageFileAsk(tool: tool, param: param, types: Array(types), input: input)
+    }
+}
+
+/// `{"name": "Morning.sideflow", "type": "sideflow", "tool": "export_flows", "input": {…}, "note": "…"}`: what the save panel starts with, and the tool whose words are written. The person picks the place in the system's panel, and the extension never learns it.
+public struct PageSaveAsk: Sendable, Hashable {
+    public var name: String
+    public var type: String
+    public var tool: String
+    public var input: JSONValue
+    /// What the person should know about what's in the file, on the panel where they decide.
+    public var note: String?
+    /// The most it writes: words a page's tool made, not a way to fill a disk.
+    public static let longest = 1_000_000
+    /// A note is a line on the panel, not a set of instructions.
+    public static let longestNote = 140
+
+    /// What a save may be: a kind of file that holds content (D140's list), or an ending the system has no kind for. The page's model then asks whether an app here would open it. Never one that opens by running: `.command`, `.terminal`, `.pkg`, `.app`.
+    public static func mayBe(_ type: String) -> Bool {
+        !savesNever.contains(type) && (ExtensionOutputs.allowedEndings.contains(type) || UTType(filenameExtension: type)?.isDynamic == true)
+    }
+
+    /// Kinds the system acts on by itself where they land, or that run when opened, whatever a page says is in them: a property list in LaunchAgents starts a program at login.
+    static let savesNever: Set<String> = [
+        "plist", "mobileconfig", "command", "tool", "terminal", "app", "pkg", "mpkg", "dmg", "sh", "zsh", "bash", "py", "rb", "pl", "php", "js", "scpt",
+        "applescript", "workflow", "action", "webloc", "inetloc", "fileloc", "kext", "plugin", "bundle", "prefpane", "dylib", "so", "framework", "service",
+    ]
+
+    /// Why the place the person picked can't have it, or nil: the places Sidefolk never touches (T10) are refused whatever was picked, a link on the way followed to where it leads.
+    public static func refusal(at place: URL) -> String? {
+        if savesNever.contains(place.pathExtension.lowercased()) {
+            return String(localized: "Sidefolk doesn't save this kind of file from a page.", comment: "An extension's page: it asked to save a kind of file an app on this Mac would open and could run")
+        }
+        return FolderAccess.forbiddenReason([place.path])
+    }
+
+    /// The panel's words: who says them first, since they're the extension's and not Sidefolk's, on one short line.
+    public static func panelMessage(_ note: String, from extensionName: String) -> String {
+        String(localized: "\(extensionName) says: \(note)", comment: "The save panel's message from an extension's page: the extension's name, then what it says about the file")
+    }
+
+    /// What the file's called, and only that: one line, nothing hidden, no folder, and its real ending in sight however long it is.
+    static func plainName(_ name: String, type: String) -> String? {
+        let shown = name.unicodeScalars.filter { ![.control, .format, .lineSeparator, .paragraphSeparator].contains($0.properties.generalCategory) && !$0.properties.isDefaultIgnorableCodePoint }
+        let words = String(String.UnicodeScalarView(shown)).replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-").split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        let ending = "." + type
+        var stem = words.lowercased().hasSuffix(ending) ? String(words.dropLast(ending.count)) : words
+        let edges = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "."))
+        stem = String(stem.trimmingCharacters(in: edges).prefix(120 - ending.count)).trimmingCharacters(in: edges)
+        return stem.isEmpty ? nil : stem + ending
+    }
+
+    /// Comes from a program, so the system treats it as downloaded: it says so if anyone tries to run it, as D140's files do.
+    public static func markAsDownloaded(_ place: URL, now: Date = Date()) {
+        let mark = String(format: "0081;%08x;Sidefolk;", Int(now.timeIntervalSince1970))
+        _ = place.withUnsafeFileSystemRepresentation { path in path.map { setxattr($0, "com.apple.quarantine", mark, mark.utf8.count, 0, XATTR_NOFOLLOW) } }
+    }
+
+    static func parse(_ j: JSONValue?) -> PageSaveAsk? {
+        guard let j, let tool = ExtensionPage.toolName(j["tool"]), let type = j["type"]?.stringValue, type.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil, mayBe(type),
+              let input = ExtensionPage.smallInput(j["input"]), let name = j["name"]?.stringValue.flatMap({ plainName($0, type: type) }) else { return nil }
+        return PageSaveAsk(name: name, type: type, tool: tool, input: input, note: j["note"]?.stringValue.map { String(ExtensionText.clean($0).split(whereSeparator: \.isNewline).joined(separator: " ").prefix(longestNote)) })
     }
 }
 

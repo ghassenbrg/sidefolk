@@ -292,6 +292,8 @@ public struct ExtensionPage: Sendable, Hashable {
         public static func == (a: Field, b: Field) -> Bool {
             a.label == b.label && a.detail == b.detail && a.placeholder == b.placeholder && a.button == b.button && a.tool == b.tool
                 && a.input == b.input && a.key == b.key && a.go == b.go && a.live == b.live
+                // Any other field shows what's saved, and has to hear when that changes: an undo, a tool tidying what it was given.
+                && (a.live || a.value == b.value)
         }
 
         public func hash(into hasher: inout Hasher) {
@@ -661,6 +663,7 @@ public struct ExtensionPage: Sendable, Hashable {
             if case .refresh? = act { return nil }
             if case .dropCard? = act { return nil }
             if case .file? = act { return nil }
+            if case .save? = act { return nil }
             guard let label = text(j["label"], 60), let tool = act == nil ? toolName(j["tool"]) : "", let input = smallInput(j["input"]) else { return nil }
             var control = Control(kind: .toggle(on: j["on"]?.boolValue ?? false), label: label, detail: text(j["detail"], 240), tool: tool,
                                   input: input, symbol: symbol(j["symbol"]))

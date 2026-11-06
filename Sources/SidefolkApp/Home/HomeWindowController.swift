@@ -37,6 +37,7 @@ final class HomeWindowController: NSObject, NSWindowDelegate {
     func pageAnswersShare(_ id: String) async { await model.pages.answersShare(id) }
 
     /// A native control in a page's scene pressed by its label, through what its click runs (D109): nothing outside the app can reach one.
+    func pageActs(_ id: String, _ act: PageAct) async { await model.pages.acts(id, act) }
     func pagePressesInlay(_ id: String, label: String) async -> Bool { await model.pages.pressInlay(id, label: label) }
     #endif
 

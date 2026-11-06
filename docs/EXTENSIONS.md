@@ -281,6 +281,10 @@ For a call with such a parameter:
 The install sheet says "Can read and change files in a folder you name, for that request only, once you
 approve it". A `"write"` parameter raises every tool to at least medium risk, like a fixed write folder.
 
+### Saving something where the person picks
+
+A control with `save` (Kit: `.save(name:type:tool:input:note:)`) runs your tool as the person. The tool writes the file in your data folder and answers its name relative to that folder, ending in `.type`, since what a tool answers is cut at 20 KB. Sidefolk then shows the system's save panel starting at `name`, with `note` on it if you sent one (at most 200 characters: what's in the file, for someone deciding), and copies the file, at most 1 MB, where they pick. It stays in your data folder for you to tidy. You never learn the place, and need no `files` permission. `type` has to be a kind of file that holds content (D140's list) or an ending no app on this Mac says it opens, never one that opens by running. A name is only a name: slashes and colons are replaced, hidden characters go, and the type's ending is added. A tool that fails, or a file that's missing or over the limit, saves nothing and says so on the page.
+
 ### Saving a result beside a file
 
 A tool that makes a new file from one the person handed over declares the endings it makes, and Sidefolk saves the result (D140). Your program never gets to write in that folder:
@@ -1167,6 +1171,7 @@ A pack using any of this names the snapshot that has it in `addon.json`'s `minim
    {"type": "switch", "label": "Remind me", "key": "remind", "go": {}, "on": false},
    {"type": "button", "label": "Copy bearing", "copy": "293° clockwise from true north"},
    {"type": "button", "label": "Import CSV", "file": {"tool": "import_csv", "param": "path", "types": ["csv"]}},
+   {"type": "button", "label": "Export", "save": {"name": "Report.csv", "type": "csv", "tool": "export_csv", "input": {}}},
    {"type": "button", "label": "Use my place", "allow": "place"},
    {"type": "button", "label": "Open settings", "settings": "notifications"}]}]}
 ```
