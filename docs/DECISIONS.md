@@ -4099,6 +4099,49 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 **Alternatives:** a host rule for a `self` source (a value from the same tool's previous answer, going back into the same tool), considered with Permissions and not built: it would widen what stands in Ask once and Auto, needing a T amendment, a D and a read for about 150 lines in 6 to 8 files, and no flow needs it while the tools page themselves. Sideflow following pages by itself (`pages` on a step): written, parked, since each page would ask in Ask once and Auto.
 **Implications:** a flow that loops over `next_page` itself still asks each call in Ask once and Auto, and the connectors' words and the demo guide say so. A third-party server that pages can't be helped this way; that's when the `self` rule comes back.
 
+### D223 — Sideflow's lanes: limits, how a parallel carries on, and stops that hold (2026-11-06)
+**Decision:** *the roadmap's lanes, read five times.* A lane of a `parallel` can have `timeout_minutes`; a parallel carries on with `all` (the default), `first`, a number, or `settled` (when every lane has ended, the rest named in `not_finished`), and `fail_fast` stops the rest of a lost cause. A lane the parallel stopped itself is its own doing; any other stop, the person's, an ended plan, a lane at the run's limit, stops the parallel and what called it, whatever the join, and is never a failure for `carry_on` or a try to get past. A lane at the per-run limit stops the run it's part of from the top, and only that: another run of the flow, called by another flow or tried from a draft, has its own count. A run's lanes count as that one run against the limit. A lane's clock is the clock's alone (an ordinary save keeps its limit, its held time and that it ran out from the stored run), and time it's held, by a pause keeping it from a tool, a card, a form or "did it happen?", isn't taken from its limit; a lane under way when its flow is paused goes on, as runs under way do.
+**Why:** a stop from outside is the person's or Sidefolk's word, and a join or a recover that went past it would carry on with what they stopped. A limit counted per lane would have let a parallel inside a loop multiply it.
+**Alternatives:** holding every walking lane of a paused flow at its next step (`pause_flow` says runs under way finish, and the limit already bounds a lane); counting a capped lane as a failure (carry_on would have gone past the person's limit).
+**Implications:** the clock notices a lane leaving a held state only at its next look, so it may give up to one look's gap. T61.
+
+### D224 — A called flow can stay on a version, and an off flow is refused up front only where it would certainly end the run (2026-11-06)
+**Decision:** `call_flow` takes `version`, a version kept in the called flow's history; an old version can't bring back an AI step or a set-off its current approval no longer has. Before anything runs, a call to a flow that's off refuses the run only where its failure would certainly end it: the run's own steps, a repeat's first go, the lanes of a parallel that waits for all, a try with nothing to recover with, followed into what those calls do in the version each stays on. Under a try that recovers, a parallel that settles or a step that carries on, it's left to the call itself, which still stops there.
+**Why:** refusing a run that would have recovered is a wrong answer; doing half a run and then failing at a call that was always going to fail is too.
+**Alternatives:** refusing for any call anywhere (refused safe runs); only the top level (did half the work first).
+
+### D225 — Working a value out: a small language that can only compute (2026-11-06)
+**Decision:** a `data` step with `work_out` takes an expression: numbers, words, `if`, `round`, `min`/`max`, `number(words, "1,234.56")`, `replace`, `split`, `join`, `field`, `default` and a few more, over `{{values}}`. Nothing in it names a tool, a file, the network or the clock; it has a depth (32), a work budget, numbers below 2^53, and words of at most 100,000 bytes, counted before they're built. A word that isn't plainly a number isn't read as one: `number(…)` says how it's written.
+**Why:** the roadmap's mapping needed arithmetic and text work that a text step can't do and an AI step shouldn't.
+**Alternatives:** JavaScript in a sandbox (a runtime, and reach to argue about); more `data` ops (one per need, for ever).
+**Implications:** T56.
+
+### D226 — Sideflow's Permissions tab says what a flow may do, never its values (2026-11-06)
+**Decision:** *five reads of a tab that tried to show the card in 400 characters.* Each line of the flow's plan, as the card holds them (what sets it off, every tool, question, AI step and flow it sets off), shows only what it is, what Sidefolk says of it now, how many fields it fills, and the step's own name last. Alike lines are one, "× N". It says at top and bottom: "This list says what it may do. Who or where, and every value, are on the approval card." When the draft differs from what runs, "Running now" and "After you apply" are shown apart. A cached look is used only for exactly the lines it was asked about.
+**Why:** any value shown in a few hundred characters could be cut short, pushed out by another, or written to look like another field; the card shows them whole.
+**Alternatives:** showing places first, quoted, cut, split across notes (four reads found a way through each).
+**Implications:** T59.
+
+### D227 — An agent's patch, repair offers, and practice by example (2026-11-06)
+**Decision:** an agent can change a flow with a patch (add, replace, move, remove steps), never more than a whole definition would; it changes the draft only, and whatever goes live still goes through the card; the person sees what changed and can take it back. A problem can offer its fix in one press (a fallback for a value only one way makes, a step moved after what it needs), through the page's own `ui` tool only. A practice run can go by what a run gave, kept on this Mac as an example, asking and reading nothing again; examples never go in a copy or a file.
+**Why:** an agent writing whole definitions to change one step was the roadmap's slowest edit, and an example run saves calls and quota.
+**Implications:** T60.
+
+### D228 — What a run keeps of its steps' input, and how its page shows it (2026-11-06)
+**Decision:** *the founder's report that a long "Tell me" couldn't be read anywhere.* A run keeps what each step was given: every field that isn't words to read (where it goes, an amount, an id; a list or a record as its JSON text) up to 2,000 characters a field, 20,000 a step and 400 KB a run; words to read up to 8,000 a field and 200 KB a run. The run keeps running totals, and Try again from here counts on from them. The run's page shows each field in notes of its own, as plain one-line words that start with Sideflow's words ("Message: …", "… "), where it goes first, and says when something was shortened or not kept. Words to read are decided as Sidefolk does for the card, and more carefully: a plain string the tool takes as text, named only with words for what people read, and nothing that runs.
+**Why:** the full message went only to the notice, and the run's page showed it as JSON cut at 400 characters.
+**Alternatives:** one cap for everything (an email's `to` was lost after a long feed loop).
+**Implications:** T57.
+
+### D229 — Bigger flows: wrap, focus, and a hundred steps (2026-11-06)
+**Decision:** steps can be wrapped in a condition, a loop, a try or a parallel; focus opens one part with the way back on top, and a part past the fourth level is shut with what's stopped, to fix or not allowed inside it on its card. A flow stays at 100 steps, which Sidefolk's board always draws with its start card. 200 steps is considered, not built: it needs the board to show more than 128 cards, or to page. A template says what it needs before it's picked.
+**Why:** the board leaves cards out past 128 without a word, and a step on the run's board that never shows can't be read.
+
+### D230 — A service that asks to wait, a step's key, and a flow's own clock (2026-11-06)
+**Decision:** when a tool's fields say `rate_limited`, a step set to try again waits and goes again within the tries its card already counted (only while the card's numbers weren't cut down to Sidefolk's most for a run or a day); any other step stops with "try again later", never using another step's share or pausing the flow. `{{step_key}}` is the same each time one go of a step is tried again (run, step and loop place). Next and `{{today}}` go by the flow's own time zone. Sideflow sends a question's `about` (D201) as the flow's name.
+**Why:** a retry the card didn't count took a later step's call and stopped runs halfway.
+**Implications:** T62.
+
 ### D195 — A program can follow a call it made, and ask it to stop (2026-11-04)
 **Decision:** *the roadmap's long jobs and cancellation, the part that fits one call.* With `permissions.act`, a program making a call hears `sidefolk/tools.progress {request, progress, total, message}` when the tool reports it, and can send `sidefolk/tools.cancel {request}`. An MCP server is asked with `_meta.progressToken` and told with `notifications/cancelled`. On the Kit: `Actions.call(request:progress:)`, `Actions.cancel` and `ToolProgressReport.report`. Sideflow shows how far along a step is, and Stop tells the step under way.
 **Why:** a long step looked frozen, and Stop could only wait for it to end.
