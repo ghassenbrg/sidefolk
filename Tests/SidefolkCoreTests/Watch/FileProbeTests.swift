@@ -218,6 +218,27 @@ import Testing
         #expect(try await share.step(&w).triggered, "the same number on another name is a new file here, as a share can't promise otherwise")
     }
 
+    @Test func aBadNumberInTheMiddleLeavesTheOthersOnTheirOwnNames() async throws {
+        defer { box.cleanUp() }
+        for name in ["a.txt", "b.txt", "c.txt"] { try box.write(name, name) }
+        var w = try watcher()
+        _ = try await probe.step(&w)
+        var state = try #require(w.lastState?.objectValue)
+        let names = try #require(state["seen"]?.arrayValue?.compactMap(\.stringValue))
+        #expect(names == ["a.txt", "b.txt", "c.txt"])
+        var ids = try #require(state["ids"]?.arrayValue)
+        ids[1] = .number(Double(UInt64.max))
+        state["ids"] = .array(ids)
+        w.lastState = .object(state)
+        // c.txt's number is still c.txt's: renaming it is a rename, not a new file.
+        try box.move("c.txt", "d.txt")
+        #expect(try await !probe.step(&w).triggered)
+        #expect(try await !probe.step(&w).triggered)
+        let saved = try #require(w.lastState?["ids"]?.arrayValue)
+        let seen = try #require(w.lastState?["seen"]?.arrayValue)
+        #expect(saved.count == seen.count, "one entry a name, a blank where there's no number, so they stay side by side")
+    }
+
     @Test func thisMacsOwnDiskKeepsFileNumbers() {
         #expect(FolderNewFileProbe.volumeKeepsFileNumbers(NSTemporaryDirectory()), "the tests' own disk is APFS")
         #expect(!FolderNewFileProbe.volumeKeepsFileNumbers("/no/such/folder"))
