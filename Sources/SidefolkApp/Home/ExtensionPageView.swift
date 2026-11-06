@@ -241,8 +241,8 @@ struct SectionView: View {
         /// Choices, fields and lists (D68), drawn in ExtensionPageInputs.swift.
         case inputs([ExtensionPage.Block])
         case hero(ExtensionPage.Hero), transport(ExtensionPage.Transport)
-        /// The richer parts (D100), each on its own, drawn in ExtensionPageRich.swift.
-        case rich(ExtensionPage.Block)
+        /// The richer parts (D100), each on its own, drawn in ExtensionPageRich.swift; `at` is its place in the section.
+        case rich(ExtensionPage.Block, at: Int)
         case metrics([ExtensionPage.Block]), askRows([ExtensionPage.Ask]), wideButton(ExtensionPage.Control)
         var id: String {
             switch self {
@@ -257,7 +257,10 @@ struct SectionView: View {
             case .inputs(let b): "i" + b.map(\.inputIdentity).joined(separator: "|")
             case .hero(let h): "h\(h.hashValue)"
             case .transport(let t): "t\(t.hashValue)"
-            case .rich(let b): "r\(b.hashValue)"
+            // By where it stands and what kind it is, not what it shows, as inputs are: a scene draws each new reading into the
+            // layers it has (SceneView), and tabs keep the scenes inside them. An identity from the contents made every reading a
+            // new, empty view, blank until its pictures loaded: the page flickered at each refresh.
+            case .rich(let b, let at): "r\(at)\(b.kind)"
             case .metrics(let b): "x\(b.count)\(b.hashValue)"
             case .askRows(let a): "q\(a.count)\(a.hashValue)"
             case .wideButton(let c): "w\(c.hashValue)"
@@ -396,7 +399,7 @@ struct SectionView: View {
                 HeroView(hero: h, model: model)
             case .transport(let t):
                 TransportView(transport: t, model: model)
-            case .rich(let b):
+            case .rich(let b, _):
                 RichBlockView(block: b, model: model)
             case .asks(let asks):
                 FlowRow(spacing: Theme.Space.s) {
@@ -456,7 +459,7 @@ struct SectionView: View {
             case .transport(let t):
                 out.append(.transport(t))
             case .stats, .cards, .tabs, .badges, .recent, .settings, .scene, .table, .steps, .tree, .bar, .nav, .notice, .ticks, .heading, .headsUps, .hostControls, .fileWays, .preview:
-                out.append(.rich(block))
+                out.append(.rich(block, at: out.count))
             case .control(let c) where c.fill:
                 out.append(.wideButton(c))
             case .control(let c):
