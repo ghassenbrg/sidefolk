@@ -10,6 +10,8 @@ public struct ExtensionToolAsks: Sendable, Hashable {
     /// Which of its surfaces goes away, kept to come back to. Empty: whichever of its are open.
     public var closeSurface: String?
     public var openPage: PageMove?
+    /// One of its pages, with a state, that the card in Ask offers as Open in Home (D221): an offer, opened only by the person's click.
+    public var cardPage: PageMove?
     /// The AI's words wait this long, so they don't give away what an animation is still showing.
     public var holdAnswer: TimeInterval?
     /// What History says this call did, in place of the tool's title and arguments ("Heads!"). Believed only for packs Sidefolk signed, like `summary` (D98).
@@ -35,9 +37,10 @@ public struct ExtensionToolAsks: Sendable, Hashable {
             if close.boolValue == true { closeSurface = "" } else if let name = close.stringValue, manifest.surfaces[name] != nil { closeSurface = name }
         }
         if let move = PageMove.parse(json["open_page"]), manifest.pages[move.page] != nil { openPage = move }
+        if let offer = PageMove.parse(json["card_page"]), manifest.pages[offer.page] != nil { cardPage = PageMove(page: offer.page, state: offer.state) }
         if let ms = json["hold_answer_ms"]?.doubleValue, ms.isFinite, ms > 0 { holdAnswer = min(ms / 1000, Self.longestHold) }
         if let said = json["row"]?.stringValue { row = ExtensionText.line(said, characters: 120) }
-        guard openSurface != nil || closeSurface != nil || openPage != nil || holdAnswer != nil || row != nil || tree != nil else { return nil }
+        guard openSurface != nil || closeSurface != nil || openPage != nil || cardPage != nil || holdAnswer != nil || row != nil || tree != nil else { return nil }
     }
 }
 

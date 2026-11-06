@@ -256,6 +256,9 @@ final class AskModel {
     }
     /// Extensions by id, so their approval and result cards show their icon and name.
     var extensionLooks: [String: ExtensionLook] = [:]
+    /// The pages an extension's card can open now (D221), by `extension/page`: a kept card whose extension is off or gone, or whose
+    /// page went, shows no Open in Home.
+    var openablePages: Set<String> = []
     /// Called when a quick intent finished and the panel can close.
     var onAutoClose: (() -> Void)?
     /// The header's close button.
