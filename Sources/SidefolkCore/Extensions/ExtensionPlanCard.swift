@@ -299,8 +299,9 @@ extension ExtensionPlanWords {
         for (field, source) in line.step.sources ?? [:] {
             guard let text = line.step.input[field]?.stringValue else { continue }
             let names = listed(sourceNames(text, e))
-            // A signed extension's word that a value is the person's own is believed, and said to be its word.
-            from[field] = source == "claimed" ? String(localized: "\(names), which the extension says is your own", comment: "A plan's card: a value the extension says comes from the person") : names
+            // A signed extension's word that a value is the person's own is believed, and said to be its word: once, when its words already say so.
+            let saysSo = ExtensionPlanRules.roots(text).allSatisfy(e.inside.contains)
+            from[field] = source == "claimed" && !saysSo ? String(localized: "\(names), which the extension says is your own", comment: "A plan's card: a value the extension says comes from the person") : names
         }
         // A field that is one slot takes a value of any kind, or none, whatever the schema says (what runs is what the host matched, not what the schema hopes).
         let wholes = ExtensionPlanRules.wholeKeys(line.step.input, tool: tool.spec.name)

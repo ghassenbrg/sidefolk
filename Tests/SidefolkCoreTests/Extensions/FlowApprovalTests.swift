@@ -179,6 +179,19 @@ import Testing
         _ = await reply
     }
 
+    /// A field filled only from the form, which the extension says is the person's: the card says so once, not twice.
+    @Test func aFieldFromTheFormSaysYourOwnOnce() async throws {
+        let w = try await World()
+        guard case .object(var plan) = Self.plan([["tool": "notify.user", "input": ["title": "Hi", "body": "All done, {{f.who}}"], "from": ["body": "person"]]], id: "told") else { return }
+        plan["inside"] = ["f"]
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": .object(plan)])
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        #expect(words.contains("your own answers, as the extension says"), "\(words)")
+        #expect(!words.contains("which the extension says is your own"), "\(words)")
+        _ = await reply
+    }
+
     @Test func aPlanSavedBeforeProvidersAndNamesAsksOnceForWhatItCantPlace() {
         let old = ExtensionPlan.Step(tool: "ext.x.y", input: ["a": "b"], definition: "d", reach: "r", standing: true)
         let now = ExtensionPlan.Step(tool: "ext.x.y", input: ["a": "b"], definition: "d", reach: "r", standing: true, provider: "p")
