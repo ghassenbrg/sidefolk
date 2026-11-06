@@ -417,7 +417,8 @@ final class AppCoordinator {
         if command == "companionShow" { showCompanion(true); return }
         // What the menu bar's Show/Hide says against what the companion's window really is, in the log.
         if command == "companionState" {
-            Log.shared.info("dev", "companion state", ["onScreen": String(companion.isVisible), "menuSaysHidden": String(statusItem.hidden)])
+            Log.shared.info("dev", "companion state", ["onScreen": String(companion.isVisible), "menuSaysHidden": String(statusItem.hidden),
+                                                         "pocketOpen": String(statusItem.isPocketShown), "pocketOnEverySpace": String(statusItem.pocketJoinsEverySpace)])
             return
         }
         if command == "askPinNewest" {
