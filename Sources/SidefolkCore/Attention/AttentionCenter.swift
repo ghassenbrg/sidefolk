@@ -190,7 +190,7 @@ public actor AttentionCenter {
     private func makeItem(_ request: AttentionRequest) -> AttentionItem {
         let level = request.level == .critical && !AttentionPolicy.criticalSources.contains(request.source) ? .attention : request.level
         var item = AttentionItem(level: level, source: request.source, title: request.title.clipped(160),
-                                 body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
+                                 body: request.body?.clipped(AttentionItem.bodyLimit), actions: request.actions, refKind: request.refKind,
                                  refId: request.refId, now: clock.now)
         item.historyTitle = request.historyTitle
         item.about = request.about

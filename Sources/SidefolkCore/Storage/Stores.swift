@@ -192,6 +192,18 @@ public struct AttentionStore: Sendable {
         try await db.writer.read { db in try AttentionItem.order(Column("created_at").desc).limit(limit).fetchAll(db) }
     }
 
+    /// An answered or expired notice keeps its whole words for a week, then its first 600 characters, title kept: long ones
+    /// can be read while they matter without filling the month they're kept. One still waiting keeps them all.
+    public func trimBodies(answeredBefore cutoff: Date, to limit: Int = AttentionItem.trimmedBodyLimit) async throws -> Int {
+        try await db.writer.write { db in
+            try db.execute(sql: """
+                UPDATE attention SET body = substr(body, 1, ?) || '…'
+                WHERE state IN ('acknowledged', 'expired') AND created_at < ? AND length(body) > ?
+                """, arguments: [limit - 1, cutoff.timeIntervalSince1970, limit])
+            return db.changesCount
+        }
+    }
+
     public func purge(olderThan cutoff: Date) async throws -> Int {
         try await db.writer.write { db in
             try AttentionItem.filter(["acknowledged", "expired", "kept"].contains(Column("state")) && Column("created_at") < cutoff.timeIntervalSince1970).deleteAll(db)

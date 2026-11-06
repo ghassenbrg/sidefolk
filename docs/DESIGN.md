@@ -83,6 +83,7 @@ All in `Sources/SidefolkApp/DesignSystem/`.
 | `.contrastEdge(radius:)` | `FieldChrome.swift` | a border under Increase Contrast only, for fills that have none |
 | `SayBarField` (.home / .desktop), `KeyHint`, `UnderstandingRow` | `SayBar.swift` | the Say bar's shell; behaviour is the screen's |
 | Sidecard: `SidecardSurface` (glass, tail), `SidecardShape`, `SidecardTail`, `Whisper`, `SidecardCard` (source line or slip layout, extra, ≤ 3 actions), `SidecardStrip` (calm / firm), `SidecardStack` | `Sidecard.swift` | looks only: placement, timing and answering are the desktop's |
+| `ExpandableText` | `ExpandableText.swift` | a notice's words that may run long: the first lines, Show all only when they cut it short, opened in a bounded scroll (220 pt) so a card's answers stay in reach; plain, selectable, VoiceOver hears it whole. The Sidecard card's `longMessage`, Today's notices |
 | `LightPool(state:level:)`, `LightPoolState`, `ShoulderBadge(state:count:)` | `LightPool.swift` | the companion's state as light, with its VoiceOver words; an alert pulses once; `level` (0…1) swells it with the voice while listening |
 | `.keyFocusRing(_:)`, `ArcFan`, `SidecardStack(selected:out:from:)` | `Sidecard.swift` | the keyboard's ring on the answer Return presses; held cards coming out of (and back into) the shoulder along an arc |
 | `.lanternGlass(radius:elevation:)` | `ThemeMetrics.swift` | e2 for small glass on the desktop (pins, tips), e3 for the Sidecard |

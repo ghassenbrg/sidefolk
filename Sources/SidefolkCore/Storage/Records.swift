@@ -511,6 +511,11 @@ public struct AttentionAction: Codable, Sendable, Hashable {
 
 public struct AttentionItem: SidefolkRecord, Identifiable, Hashable {
     public static let databaseTableName = "attention"
+    /// A notice's words kept whole up to this many characters, so a long message (a flow's "tell me") can be read in full
+    /// where it shows; each place that has less room cuts its own copy.
+    public static let bodyLimit = 4000
+    /// What an answered notice keeps of its words once it's a week old (`AttentionStore.trimBodies`).
+    public static let trimmedBodyLimit = 600
     /// `kept`: its source is set to Only in Today (D88), so it waits in Today's lists, never on the desktop.
     public enum State: String, Codable, Sendable { case pending, shown, acknowledged, expired, kept }
 

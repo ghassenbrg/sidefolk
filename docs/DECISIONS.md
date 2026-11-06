@@ -4111,3 +4111,9 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 **Alternatives:** a replay of events missed while off (more than anything here needs, and it would run things long after). Several watches on one flow (each watch has a title and a plan step to look after, so a watch stays the first way only).
 **Implications:** no new reach: the card lists every way it starts, and adding one is a change that needs the card again. An extension that ignores `id` hears what it did before.
 
+### D222 — A notice's long words can be read whole (2026-11-06)
+**Decision:** *the founder's report: a flow's long "tell me" ended in "…" with no way to read the rest.* A notice keeps 4,000 characters of its words (`AttentionItem.bodyLimit`, up from 600). Where they show with room for a few lines, the Sidecard card and Today's notices, `ExpandableText` shows three and Show all only when they're cut short; opened, the whole text scrolls within 220 pt, so the answers stay under it, plain and selectable, and VoiceOver hears it whole. The Sidecard fits itself again when it opens or closes. An answered or expired notice keeps its words whole for 7 days, then 600, title kept; one still waiting keeps them all. A question's line under it (who asks) stays a plain line outside it. Titles, the whisper, the Pocket's rows and macOS banners keep their own short copy.
+**Why:** a notice the person can't finish reading isn't told; the 600-character cut lost the words before any screen could show them.
+**Alternatives:** opening a long notice in its own window (another window to find and close, and the answers away from the words); keeping 4,000 for a month (T55: room for nothing a week later).
+**Implications:** T55. `ExpandableText` is for any notice-like words that may run long; History's opened notice can be selected.
+

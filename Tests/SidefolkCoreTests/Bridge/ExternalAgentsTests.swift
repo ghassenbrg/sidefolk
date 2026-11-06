@@ -388,6 +388,21 @@ import Testing
         await s.stop()
     }
 
+    /// A long message from another agent is kept whole to 4,000 characters, without the characters that could hide or
+    /// reorder its words.
+    @Test func longNoticesAreKeptWholeAndClean() async throws {
+        let s = try await Stack()
+        let long = String(repeating: "All 12 checks passed on the release branch. ", count: 70)
+        _ = try await s.call("notify_user", ["title": "Release checks", "body": .string(long + "\u{202E}gnihtyna\u{200B}"), "level": "attention"])
+        let kept = try #require(await s.runtime.attention.open().first { $0.title == "Release checks" })
+        #expect(kept.body?.hasPrefix(long.trimmingCharacters(in: .whitespaces)) == true)
+        #expect(kept.body?.unicodeScalars.contains { $0.value == 0x202E || $0.value == 0x200B } == false)
+        _ = try await s.call("notify_user", ["title": "Too long", "body": .string(String(repeating: "x", count: 9000)), "level": "attention"])
+        let cut = try #require(await s.runtime.attention.open().first { $0.title == "Too long" })
+        #expect(cut.body?.count == AttentionItem.bodyLimit)
+        await s.stop()
+    }
+
     /// "ask me before you push": the question reaches the desktop and the button's text comes back.
     @Test func askBeforePushing() async throws {
         let s = try await Stack()

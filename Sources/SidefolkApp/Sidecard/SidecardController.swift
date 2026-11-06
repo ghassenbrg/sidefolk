@@ -80,6 +80,8 @@ final class SidecardController {
             self?.onRespond?(item, action)
         }
         model.grow = { [weak self] in self?.growWhisper() }
+        // On the next pass, once SwiftUI has laid the new height out.
+        model.refit = { DispatchQueue.main.async { [weak self] in self?.refit() } }
         model.lowerSource = { [weak self] item, source, level in
             // The card goes as a whisper would: what needs an answer waits in the stack, news is done.
             self?.autoDismiss(id: item.id)

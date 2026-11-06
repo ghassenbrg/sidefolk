@@ -63,7 +63,8 @@ final class SystemNotifier: NSObject, UNUserNotificationCenterDelegate {
         guard let center else { return }
         let content = UNMutableNotificationContent()
         content.title = item.title
-        if let body = item.body { content.body = body }
+        // macOS shows a few lines of it; the card a click opens has the rest.
+        if let body = item.body { content.body = body.clipped(600) }
         content.sound = sound ? .default : nil
         content.categoryIdentifier = Self.category(item)
         content.userInfo = ["attentionId": item.id]

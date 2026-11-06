@@ -73,14 +73,16 @@ struct NotifyUserTool: Tool {
     func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
-        guard var title = input.string("title") else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
+        guard var title = input.string("title").map(ExtensionText.clean) else { throw ToolError.invalidInput(String(localized: "a title is needed")) }
         // An extension's words are named wherever they show, in Sidefolk's own bubble or a system notification: it can't pose as anyone (D110).
         if case .extension(let id) = context.caller { title = "\(AgentFacingTools.extensionName(id) ?? id): \(title)" }
         // The schema only offers gentle and attention, so external agents stay capped at attention.
         let level: AttentionLevel = input.string("level") == "attention" ? .attention : .gentle
         let actions = level == .attention ? [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))] : []
         let item = await attention.post(AttentionRequest(level: level, source: AgentFacingTools.source(for: context.caller),
-                                                         title: title.clipped(120), body: input.string("body")?.clipped(600),
+                                                         title: title.clipped(120),
+                                                         // Another agent's or an extension's words: no invisible or direction characters.
+                                                         body: input.string("body").map(ExtensionText.clean)?.clipped(AttentionItem.bodyLimit),
                                                          actions: actions, refKind: "notify",
                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a notice", comment: "History, in place of a notice's words"), context)))
         // Saying so keeps a caller from sending it again, louder, because it seemed to go nowhere.
