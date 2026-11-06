@@ -70,19 +70,25 @@ struct NotifyUserTool: Tool {
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
-    /// What `about` may hold: letters and digits of any script, spaces and a few marks that can't be read as Sidefolk's own (no colon, no dot between words, no quotes or brackets but parentheses).
-    /// Everything else becomes a space, emoji too. Letters that draw as nothing (the Hangul fillers, the blank braille cell) and anything meant to be invisible go.
+    /// What `about` may hold: letters and digits of any script, at most two marks on a letter, spaces and `. , - _ & + / ' ! ?`. Everything else becomes a space,
+    /// emoji too, and modifier letters, which can look like punctuation. Letters that draw as nothing and anything meant to be invisible go.
     static func aboutWords(_ text: String) -> String {
-        let marks = Set(".,-_()&+/'!?".unicodeScalars)
+        let marks = Set(".,-_&+/'!?".unicodeScalars)
         let blank: Set<UInt32> = [0x3164, 0x115F, 0x1160, 0xFFA0, 0x2800]
-        var out = String.UnicodeScalarView()
+        var out = String.UnicodeScalarView(), onLetter = 0
         for s in text.unicodeScalars {
-            let category = s.properties.generalCategory
-            let letterOrDigit = [.uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .decimalNumber, .letterNumber, .otherNumber].contains(category)
-            // A mark that joins a letter (an accent, a vowel sign) stays with it.
-            let joins = [.nonspacingMark, .spacingMark, .enclosingMark].contains(category) && !(out.last.map { $0 == " " } ?? true)
             if s.properties.isDefaultIgnorableCodePoint || blank.contains(s.value) { continue }
-            out.append(letterOrDigit || joins || marks.contains(s) ? s : " ")
+            let category = s.properties.generalCategory
+            if [.uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .otherLetter, .decimalNumber, .letterNumber, .otherNumber].contains(category) {
+                out.append(s)
+                onLetter = 1
+            } else if [.nonspacingMark, .spacingMark, .enclosingMark].contains(category), onLetter > 0, onLetter <= 2 {
+                out.append(s)
+                onLetter += 1
+            } else {
+                out.append(marks.contains(s) ? s : " ")
+                onLetter = 0
+            }
         }
         let words = String(out).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
         let scalars = words.unicodeScalars
@@ -155,11 +161,11 @@ struct AskUserTool: Tool {
         }
         // What it's about, in the asker's words, after the asker's name and marked as theirs (D201). Only beside a name: with none, it would read as the companion's own words.
         let about = asker == nil ? nil : input.string("about").map(Self.aboutWords).flatMap { $0.isEmpty ? nil : $0 }
-        // Kept apart from Sidefolk's own words by a mark nobody can type, so the card can draw it in a style of its own (`AttentionWords`).
-        let said = [asker, about].compactMap(\.self).joined(separator: AttentionWords.aboutMark)
+        // Its own field, never in the body: only the card draws it, apart from Sidefolk's words (D201).
+        let said = asker
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
-                                                          title: question.clipped(200), body: said.isEmpty ? nil : said, actions: actions, refKind: "ask",
-                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),
+                                                          title: question.clipped(200), body: said, actions: actions, refKind: "ask",
+                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context), about: about),
                                          timeout: max(10, timeout))
         guard let answer else { return ToolResult(text: "no answer") }
         if answer.hasPrefix(AgentFacingTools.typedAnswerPrefix) {

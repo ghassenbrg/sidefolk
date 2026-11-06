@@ -11,9 +11,11 @@ public struct AttentionRequest: Sendable {
     public var refKind: String?
     public var refId: String?
     public var historyTitle: String?
+    /// D201: drawn only on the card that asks, after who asks, in a style of its own. Nothing else shows it.
+    public var about: String?
 
     public init(level: AttentionLevel, source: String, title: String, body: String? = nil,
-                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil, historyTitle: String? = nil) {
+                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil, historyTitle: String? = nil, about: String? = nil) {
         self.level = level
         self.source = source
         self.title = title
@@ -22,6 +24,7 @@ public struct AttentionRequest: Sendable {
         self.refKind = refKind
         self.refId = refId
         self.historyTitle = historyTitle
+        self.about = about
     }
 }
 
@@ -190,6 +193,7 @@ public actor AttentionCenter {
                                  body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
                                  refId: request.refId, now: clock.now)
         item.historyTitle = request.historyTitle
+        item.about = request.about
         return item
     }
 
@@ -384,19 +388,3 @@ public actor AttentionCenter {
     }
 }
 
-/// A question's line under it: who asks, in Sidefolk's words, then what the asker says it's about, which is drawn in a style of its own so it can't pass for more of Sidefolk's (D201).
-public enum AttentionWords {
-    /// Between the two: a control character, which nothing an asker writes can hold (`ExtensionText.clean`, `aboutWords`).
-    public static let aboutMark = "\u{1F}"
-
-    public static func parts(_ body: String) -> (said: String, about: String?) {
-        guard let range = body.range(of: aboutMark) else { return (body, nil) }
-        return (String(body[..<range.lowerBound]), String(body[range.upperBound...]))
-    }
-
-    /// For a place that shows it as plain words: the two apart.
-    public static func plain(_ body: String) -> String {
-        let (said, about) = parts(body)
-        return about.map { String(localized: "\(said) (about \($0))", comment: "A question's line where only plain words fit: who asks, then what it says it's about") } ?? said
-    }
-}

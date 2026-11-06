@@ -106,11 +106,11 @@ struct SidecardItemCard: View {
 
     static let undo = "undo"
 
-    /// The line under a question: Sidefolk's words for who asks, then the asker's own, set apart so nothing they write can read as Sidefolk's (D201).
-    static func message(_ body: String) -> Text {
-        let (said, about) = AttentionWords.parts(body)
-        guard let about else { return Text(verbatim: said) }
-        return Text(verbatim: said) + Text(verbatim: "  ") + Text(verbatim: about).italic().foregroundStyle(Theme.inkFaint)
+    /// The line under a question: Sidefolk's words for who asks, then, only here, what the asker says it's about, in a style of its own so it can't read as more of Sidefolk's (D201).
+    static func message(_ item: AttentionItem) -> Text? {
+        guard let body = item.body else { return nil }
+        guard let about = item.about, !about.isEmpty else { return Text(verbatim: body) }
+        return Text(verbatim: body) + Text(verbatim: "  ") + Text(verbatim: about).italic().foregroundStyle(Theme.inkFaint)
     }
 
     var body: some View {
@@ -119,7 +119,7 @@ struct SidecardItemCard: View {
         let fewer = Self.fewer(item, model.interruptions)
         SidecardCard(folk: Self.folk(item), face: Self.speaksItself(item) ? model.face : nil,
                      source: Self.source(item, companion: model.companionName, sessions: model.sessions), title: Text(verbatim: item.title),
-                     message: lines == nil ? item.body.map(Self.message) : nil, tail: tail,
+                     message: lines == nil ? Self.message(item) : nil, tail: tail,
                      close: { model.respond?(item, nil) }) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 // The very first hello introduces the whole family, not just the one on the desktop.
