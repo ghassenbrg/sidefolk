@@ -52,8 +52,9 @@
 //   swift scripts/dev.swift "brain:scripted:<answer>" | brain:scripted:off   (every AI request gets that fixed answer,
 //                           no network; only on a SIDEFOLK_HOME)
 //   swift scripts/dev.swift swipe:-140 | swipe:end   (two fingers sideways over the newest Ask result)
-//   swift scripts/dev.swift treeZoom:<factor>[:x,y] | treeCarry:<card id>|off | treeDrop:<card id>:<spot>   (D233: the open tree board pinched
-//                           around a point, a card shown carried with every place it can go, a card let go at a spot)
+//   swift scripts/dev.swift treeZoom:<factor>[:x,y] | treeCarry:<card id>[:loose]|off | treeDrop:<card id>:<spot>   (D233: the open tree board
+//                           pinched around a point, a card shown carried with every place it can go (`loose`: its button already up, so
+//                           forgotten after a second), a card let go at a spot: the log's `treeDrop:` line says moved or refused)
 //   swift scripts/dev.swift pageChip:<field id>:<value> | pageFieldEnd | pageOpen:<section title>   ("Use a value" on a page's field, as a press; clicking elsewhere; a folding section, as a click)
 //   swift scripts/dev.swift countClick | stackAnswer   (the count on the companion's shoulder, and Answer under the held cards, as a click)
 //   swift scripts/dev.swift tip:0 | tip:off | recede:on | recede:off | stack:on | stack:off | grow   (D84: an extra's tip beside
