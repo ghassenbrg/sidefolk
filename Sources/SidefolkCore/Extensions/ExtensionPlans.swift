@@ -317,6 +317,8 @@ enum ExtensionPlanRules {
             default: rest.append(s)
             }
         }
+        // The card's marks for a line break (and its look-alike) are never plain: a value can't pass for one that has a break where there is none.
+        guard !text.unicodeScalars.contains(where: { $0 == breakMarker || $0.value == 0x21B5 }) else { return false }
         let shown = String(rest)
         guard same(ExtensionText.clean(shown), shown), !shown.unicodeScalars.contains(where: { $0.properties.isDefaultIgnorableCodePoint || blank($0) }) else { return false }
         // A word that mixes Latin with Cyrillic or Greek letters is one the eye can't tell from another (a Cyrillic `а` in `paypal`): not shown as plain.
@@ -512,7 +514,8 @@ enum ExtensionPlanWords {
         switch value {
         case .string(let s) where ExtensionPlanRules.hasSlot(s):
             // One line each, keeping the space a written part has next to a slot (a lone space between two slots too).
-            let parts = ExtensionPlanRules.literals(marked(s)).map { part -> String in
+            // The slots are found in the words as written and the breaks marked in each written part: marking first would hide a slot with a line feed inside its braces.
+            let parts = ExtensionPlanRules.literals(s).map { marked($0) }.map { part -> String in
                 let said = unquoted(ToolFormat.oneLine(cleanKeepingJoiners(part), valueLimit))
                 guard !said.isEmpty else { return part.isEmpty ? "" : " " }
                 return (part.first?.isWhitespace == true ? " " : "") + said + (part.last?.isWhitespace == true ? " " : "")

@@ -880,6 +880,24 @@ import Testing
         #expect(await other["standing"]?.boolValue == false)
     }
 
+    /// A line feed inside a slot's braces is still a slot at run time, so the card has to say so: it can't read like fixed words.
+    @Test func aSlotWithALineFeedInsideItsBracesIsStillShownAsASlot() async throws {
+        let w = try await World()
+        let plan = Self.plan([Self.page, ["tool": "notes.save", "input": ["text": "Title\n{{\npage\n}}"]]])
+        async let first = w.ask("sidefolk/plan.approve", ["plan": plan])
+        guard case .text(let words)? = await w.answerCard(.allowOnce)?.details else { Issue.record("a card"); return }
+        _ = await first
+        #expect(words.contains("“Title⏎[from “") && !words.contains("{{"), "the slot is on the card as a slot: \(words)")
+        let call: JSONValue = ["tool": "notes.save", "plan": "digest", "input": ["text": "Title\nwords from the page"]]
+        for mode in [GuardMode.askOncePerKind, .auto, .fullAccess] {
+            try await w.setMode(mode)
+            _ = await w.approve(plan)
+            async let reply = w.ask("sidefolk/tools.call", call)
+            #expect(await w.answerCard(.deny, wait: 20) == nil, "\(mode): what they read, slot and all")
+            #expect(await reply["standing"]?.boolValue == true, "\(mode)")
+        }
+    }
+
     @Test func onlyAPlainLineFeedBetweenPlainLinesIsShownAndNothingElseStands() async throws {
         let w = try await World()
         func state(_ tool: String, _ input: JSONValue) async -> String {
@@ -901,6 +919,11 @@ import Testing
         let half = String(repeating: "a", count: 150)
         #expect(await state("notes.save", ["text": .string(String(half.dropLast()) + "\n" + half)]) == "stands/-", "300 characters with the break")
         #expect(await state("notes.save", ["text": .string(half + "\n" + half)]) == "asks/unreadable_value", "301")
+        // The card's mark for a break and its look-alike are no one's plain words, in an open field or not.
+        for mark in ["a\u{23CE}b", "a\u{21B5}b"] {
+            #expect(await state("notes.save", ["text": "x", "collection": .string(mark)]) == "asks/unreadable_value", Comment(rawValue: mark))
+            #expect(await state("notes.save", ["text": .string(mark)]) == "asks/unreadable_value", Comment(rawValue: mark))
+        }
         // A key is one line too.
         #expect(await state("notes.save", ["text": "a", "co\nllection": "x"]) == "asks/unreadable_value")
     }
