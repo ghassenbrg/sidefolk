@@ -165,6 +165,20 @@ import Testing
         #expect(await !w.approve(Self.plan([Self.save, flow])).asked, "taking the AI step out asks nothing")
     }
 
+    /// What a signed extension's form gives is the person's own typing: an AI step reading it says so, where a name nobody makes still says that.
+    @Test func anAiStepReadingTheFormSaysItsYourAnswers() async throws {
+        let w = try await World()
+        guard case .object(var plan) = Self.plan([["kind": "ai", "as": "welcome", "title": "Write a welcome", "reads": ["f", "nobody"]]], id: "welcome") else { return }
+        plan["inside"] = ["f"]
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": .object(plan)])
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        #expect(words.contains("your own answers, as the extension says"), "\(words)")
+        #expect(!words.contains("a value named f that no step makes"), "\(words)")
+        #expect(words.contains("a value named nobody that no step makes"), "\(words)")
+        _ = await reply
+    }
+
     @Test func aPlanSavedBeforeProvidersAndNamesAsksOnceForWhatItCantPlace() {
         let old = ExtensionPlan.Step(tool: "ext.x.y", input: ["a": "b"], definition: "d", reach: "r", standing: true)
         let now = ExtensionPlan.Step(tool: "ext.x.y", input: ["a": "b"], definition: "d", reach: "r", standing: true, provider: "p")

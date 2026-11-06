@@ -269128,6 +269128,65 @@
         }
       }
     },
+    "your own answers, as the extension says" : {
+      "comment" : "A plan's card: values the person typed into the extension's own form",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجاباتك أنت، كما تقول الإضافة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deine eigenen Antworten, wie die Erweiterung sagt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tus propias respuestas, según la extensión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vos propres réponses, d’après l’extension"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "le tue risposte, secondo l’estensione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなた自身の回答（拡張機能の申告による）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "직접 입력한 답(확장 프로그램이 말하는 대로)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suas próprias respostas, segundo a extensão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你自己的回答（据扩展所说）"
+          }
+        }
+      }
+    },
     "your own companion's work" : {
       "extractionState" : "stale",
       "localizations" : {

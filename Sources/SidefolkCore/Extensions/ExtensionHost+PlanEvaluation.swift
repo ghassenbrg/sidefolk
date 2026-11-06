@@ -23,6 +23,8 @@ struct PlanEvaluation {
 
     /// The distinct lines, in order.
     var lines: [Line]
+    /// Names a signed extension says only the person or the clock fill (its form's answers): the card says so rather than that no step makes them.
+    var inside: Set<String> = []
     /// For each row the program sent, the line it became.
     var rows: [Int]
     var plan: ExtensionPlan
@@ -174,7 +176,9 @@ extension ExtensionHost {
         // A step that only passes words on is never shown, so it is never "new" by itself: what it feeds shows where it is used.
         fresh.removeAll { lines[$0].step.kind == "value" }
         let intent = plan["intent"]?.stringValue.flatMap { ["run", "turn_on"].contains($0) ? $0 : nil }
-        return .success(PlanEvaluation(lines: lines, rows: rows, plan: candidate, previous: read, fresh: fresh, widened: widened, intent: intent, askOnline: askOnline, mode: flow.mode))
+        var evaluation = PlanEvaluation(lines: lines, rows: rows, plan: candidate, previous: read, fresh: fresh, widened: widened, intent: intent, askOnline: askOnline, mode: flow.mode)
+        evaluation.inside = inside
+        return .success(evaluation)
     }
 
     enum PlanRefusal: String, Error {

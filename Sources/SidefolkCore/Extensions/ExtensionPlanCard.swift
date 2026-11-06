@@ -333,7 +333,11 @@ extension ExtensionPlanWords {
         func expand(_ root: String) {
             guard visited.insert(root).inserted else { return }
             guard let line = e.lines.first(where: { $0.step.name == root }) else {
-                out.append(String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow"))
+                // A name a signed extension says only the person fills (its form's answers), said once whatever its name; any other is no step's.
+                let said = e.inside.contains(root)
+                    ? String(localized: "your own answers, as the extension says", comment: "A plan's card: values the person typed into the extension's own form")
+                    : String(localized: "a value named \(root) that no step makes", comment: "A plan's card: a filled-in value whose source isn't a step of the flow")
+                if !out.contains(said) { out.append(said) }
                 return
             }
             if line.step.kind == "value" {
