@@ -13,7 +13,9 @@ trap 'rm -f "$words"' EXIT
 /usr/bin/python3 -I - "$addons" > "$words" <<'PY'
 import glob, json, os, sys
 # The same words the source guard leaves out: the app's own as much as an extension's.
-common = {"archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus",
+# "wikipedia" is a web destination like "google" and "youtube" (what "search wikipedia for X" is not a notebook search for), and a sample link: no Wikipedia
+# feature is built into the app, so the Wikipedia connector's name is not an extension's own word here.
+common = {"archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus", "wikipedia",
           "play", "games", "rock", "paper", "scissors", "heads", "tails",
           "easy", "fair", "hard", "true", "false", "menu", "last", "again", "random", "center", "harder", "easier", "coin", "dice", "toss"}
 def titles(entries):

@@ -28,7 +28,9 @@ import Testing
     /// Words that are the app's own as much as an extension's (its clipboard tools, its weather watch): `namedInContext` and `names`
     /// look for those where they name something. Every other extension's name and id, from its own manifest, means nothing else here.
     /// So are a surface's and a menu entry's plain words ("play", "games"): the app has its own Play menu, and people run games full screen.
-    static let commonWords: Set<String> = ["archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus",
+    /// "wikipedia" is a web destination like "google" and "youtube" (`IntentNotes` keeps "search wikipedia for X" from being a notebook search; a sample link names it): no
+    /// Wikipedia feature is built into the app, so the Wikipedia connector's name is not an extension's own word here.
+    static let commonWords: Set<String> = ["archives", "calculator", "clipboard", "currency", "feeds", "git", "images", "pdf", "weather", "your mac", "system vitals plus", "wikipedia",
                                            "play", "games", "rock", "paper", "scissors", "heads", "tails",
                                            // A surface's plain arguments, and symbols anything might draw.
                                            "easy", "fair", "hard", "true", "false", "menu", "last", "again", "random", "center", "harder", "easier", "coin", "dice", "toss"]
