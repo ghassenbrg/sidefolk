@@ -34,10 +34,7 @@ struct ExpandableText: View {
                     .accessibilityLabel(Text(verbatim: text))
             }
             if cutShort {
-                Button {
-                    withAnimation(Theme.Motion.ease(0.2)) { open = !expanded }
-                    changed?()
-                } label: {
+                Button(action: toggle) {
                     Label(expanded ? "Show less" : "Show all", systemImage: expanded ? "chevron.up" : "chevron.down")
                         .font(Theme.Font.caption)
                 }
@@ -57,7 +54,20 @@ struct ExpandableText: View {
         .onChange(of: fullHeight) { changed?() }
         // Other words in the same place start closed.
         .onChange(of: text) { open = nil }
+        #if DEBUG
+        .onReceive(NotificationCenter.default.publisher(for: Self.devToggle)) { _ in if cutShort { toggle() } }
+        #endif
     }
+
+    private func toggle() {
+        withAnimation(Theme.Motion.ease(0.2)) { open = !expanded }
+        changed?()
+    }
+
+    #if DEBUG
+    /// `showAll` in scripts/dev.swift: Show all, or Show less, on every long text on screen, as a click on it.
+    static let devToggle = Notification.Name("sidefolk.dev.showAll")
+    #endif
 
     private var words: some View {
         Text(verbatim: text).font(font).foregroundStyle(color).fixedSize(horizontal: false, vertical: true)
