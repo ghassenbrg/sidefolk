@@ -79,20 +79,49 @@ extension String {
         return head + "…"
     }
 
-    /// The text with every character that draws nothing, or changes how the rest is drawn (direction controls, zero-width characters, separators, controls, tags,
-    /// unassigned), written out as `⟨U+202E⟩`: a name or a path can't pass for another, and the person sees that something is odd.
+    /// The text with every character that draws nothing, or changes how the rest is drawn (direction controls, zero-width characters, separators, controls,
+    /// tags, variation selectors, fillers, whatever Unicode says is ignorable, unassigned), written out as `⟨U+202E⟩`: a name or a path can't pass for another, and
+    /// the person sees that something is odd. The joiners and selectors that make up an emoji, and the joiners between letters that need them (Arabic, Indic,
+    /// Khmer, Myanmar), stay where they sit between what they join.
     public var hiddenShown: String {
-        func hidden(_ scalar: Unicode.Scalar) -> Bool {
-            switch scalar.properties.generalCategory {
-            case .format, .control, .lineSeparator, .paragraphSeparator, .unassigned, .surrogate: true
-            default: false
-            }
-        }
-        guard unicodeScalars.contains(where: hidden) else { return self }
+        let scalars = Array(unicodeScalars)
+        guard scalars.indices.contains(where: { String.isHidden(scalars, at: $0) }) else { return self }
         var out = ""
-        for scalar in unicodeScalars {
-            if hidden(scalar) { out += String(format: "⟨U+%04X⟩", scalar.value) } else { out.unicodeScalars.append(scalar) }
+        for index in scalars.indices {
+            if String.isHidden(scalars, at: index) { out += String(format: "⟨U+%04X⟩", scalars[index].value) } else { out.unicodeScalars.append(scalars[index]) }
         }
         return out
+    }
+
+    private static func isHidden(_ scalars: [Unicode.Scalar], at index: Int) -> Bool {
+        let scalar = scalars[index]
+        let previous = index > 0 ? scalars[index - 1] : nil, next = index + 1 < scalars.count ? scalars[index + 1] : nil
+        let hidden: Bool
+        switch scalar.properties.generalCategory {
+        case .format, .control, .lineSeparator, .paragraphSeparator, .unassigned, .surrogate: hidden = true
+        default: hidden = scalar.properties.isDefaultIgnorableCodePoint
+        }
+        guard hidden else { return false }
+        func emoji(_ s: Unicode.Scalar?) -> Bool { s.map { $0.properties.isEmoji && $0.value >= 0x80 } ?? false }
+        func joins(_ s: Unicode.Scalar?) -> Bool {
+            guard let s else { return false }
+            switch s.value {
+            case 0x0600...0x06FF, 0x0750...0x077F, 0x08A0...0x08FF, 0xFB50...0xFDFF, 0xFE70...0xFEFC, 0x0900...0x0DFF, 0x1000...0x109F, 0x1780...0x17FF: return true
+            default: return false
+            }
+        }
+        switch scalar.value {
+        // An emoji presentation selector after an emoji (or after a digit, # or * of a keycap), once.
+        case 0xFE0E, 0xFE0F:
+            if let previous, previous.properties.isEmoji, ![0xFE0E, 0xFE0F].contains(previous.value) { return false }
+        // A joiner between two emoji (a family, a person with a job), after a selector too.
+        case 0x200D:
+            if (emoji(previous) || previous?.value == 0xFE0F) && emoji(next) { return false }
+            if joins(previous) && joins(next) { return false }
+        case 0x200C:
+            if joins(previous) && joins(next) { return false }
+        default: break
+        }
+        return true
     }
 }

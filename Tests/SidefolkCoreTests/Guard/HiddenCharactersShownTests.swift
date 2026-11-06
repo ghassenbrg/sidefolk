@@ -35,6 +35,36 @@ import Testing
         #expect(fits.contains("⟨U+202E⟩"))
     }
 
+    @Test func whatUnicodeCallsIgnorableIsWrittenOutAndFillersAndSelectorsToo() {
+        for scalar in ["\u{034F}", "\u{FE00}", "\u{E0100}", "\u{17B4}", "\u{180B}", "\u{115F}", "\u{3164}", "\u{FFA0}", "\u{00AD}", "\u{061C}", "\u{0085}"] {
+            let shown = "invoice\(scalar).pdf".hiddenShown
+            #expect(shown.contains("⟨U+") && shown.hasSuffix(".pdf") && shown != "invoice\(scalar).pdf", Comment(rawValue: "\(scalar.unicodeScalars.first!.value)"))
+        }
+        // A variation selector with nothing to select, or a second one, is not part of an emoji.
+        #expect("e\u{FE0F}".hiddenShown == "e⟨U+FE0F⟩")
+        #expect("🙂\u{FE0F}\u{FE0F}".hiddenShown == "🙂\u{FE0F}⟨U+FE0F⟩")
+    }
+
+    @Test func emojiAndJoinedScriptsKeepTheirJoiners() {
+        for text in ["👨\u{200D}👩\u{200D}👧.png", "❤\u{FE0F}.txt", "1\u{FE0F}\u{20E3}.txt", "👩\u{200D}❤\u{FE0F}\u{200D}👨", "می\u{200C}خواهم.txt", "क\u{094D}\u{200D}ष"] {
+            #expect(text.hiddenShown == text, Comment(rawValue: text))
+        }
+        // The same joiners between Latin letters, or at an edge, hide something.
+        #expect("inv\u{200C}oice".hiddenShown == "inv⟨U+200C⟩oice")
+        #expect("a\u{200D}b".hiddenShown == "a⟨U+200D⟩b")
+        #expect("🙂\u{200D}".hiddenShown == "🙂⟨U+200D⟩")
+        #expect("\u{E0067}x".hiddenShown == "⟨U+E0067⟩x", "tag characters carry hidden text: never kept")
+    }
+
+    @Test func renameAndTrashCardsShowTheNamesWithTheirHiddenCharacters() {
+        let rename = FilesRenameTool().summary(for: ["path": "/Users/me/Downloads/photo.jpg", "new_name": "photo\u{202E}gpj.txt"])
+        #expect(rename.contains("photo⟨U+202E⟩gpj.txt") && !rename.unicodeScalars.contains("\u{202E}"), Comment(rawValue: rename))
+        let trash = FilesTrashTool().summary(for: ["paths": ["/Users/me/Shared/report\u{202E}fdp.exe", "/Users/me/Shared/a.txt"]])
+        #expect(trash.contains("report⟨U+202E⟩fdp.exe") && !trash.unicodeScalars.contains("\u{202E}"), Comment(rawValue: trash))
+        let oldName = FilesRenameTool().summary(for: ["path": "/Users/me/Downloads/old\u{034F}.pdf", "new_name": "new.pdf"])
+        #expect(oldName.contains("old⟨U+034F⟩.pdf"), Comment(rawValue: oldName))
+    }
+
     @Test func theSummaryOfAFileToolShowsTheMarker() {
         let tool = FilesRevealTool(platform: RecordingPlatform())
         let summary = tool.summary(for: ["path": "/private/tmp/sidefolk-nonexistent/report\u{202E}fdp.exe"])

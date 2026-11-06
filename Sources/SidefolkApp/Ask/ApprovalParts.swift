@@ -62,7 +62,7 @@ struct ApprovalDetails: View {
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(paths.prefix(5), id: \.self) { p in
                     Text(verbatim: FolderAccess.displayPath(p)).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted)
-                        .lineLimit(1)
+                        .lineLimit(1).truncationMode(.middle)
                 }
                 if paths.count > 5 { Text("and \(paths.count - 5) more").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint) }
             }
