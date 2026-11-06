@@ -11,7 +11,28 @@ struct PageWorkspace: View {
     @Environment(\.pageSelected) private var selectedColor
 
     private static let places: CGFloat = 232
-    private static let details: CGFloat = 320
+    /// The end column: as wide as the person drags it, between these, and the same on every page (it's how they like to read).
+    @AppStorage("home.page.detailsWidth") private var details: Double = 320
+    @State private var dragFrom: Double?
+    static let narrowest: Double = 280, widest: Double = 560
+
+    /// A handle on the column's edge: drag it to make the column wider or narrower, double-click it to go back.
+    private var resizer: some View {
+        Color.clear
+            .frame(width: 8)
+            .contentShape(Rectangle())
+            .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+            .gesture(DragGesture(minimumDistance: 1)
+                .onChanged { drag in
+                    let from = dragFrom ?? details
+                    dragFrom = from
+                    details = min(max(from - drag.translation.width, Self.narrowest), Self.widest)
+                }
+                .onEnded { _ in dragFrom = nil })
+            .onTapGesture(count: 2) { details = 320 }
+            .accessibilityLabel(Text("Width of the side panel", comment: "An extension page: the handle that makes the side panel wider or narrower"))
+            .offset(x: -4)
+    }
 
     private var leading: [ExtensionPage.Section] { page.sections.filter { $0.place == .side } }
     private var trailing: [ExtensionPage.Section] { page.sections.filter { $0.place == .trailing } }
@@ -46,9 +67,10 @@ struct PageWorkspace: View {
                         main
                         if beside, !trailing.isEmpty {
                             column(trailing, padded: Theme.Space.l)
-                                .frame(width: Self.details)
+                                .frame(width: min(max(details, Self.narrowest), min(Self.widest, geo.size.width * 0.5)))
                                 .background(Theme.surfaceRaised)
                                 .overlay(alignment: .leading) { Divider() }
+                                .overlay(alignment: .leading) { resizer }
                         }
                     }
                     if !beside, !trailing.isEmpty {

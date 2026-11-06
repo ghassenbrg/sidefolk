@@ -70,6 +70,38 @@ struct NotifyUserTool: Tool {
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
+    /// What `about` may hold: letters and digits of any script, at most two marks on a letter, spaces and `. , - _ & + / ' ! ?`. Everything else becomes a space,
+    /// emoji too, and modifier letters, which can look like punctuation, and the few letters that look like dots, bars or bangs. Letters that draw as nothing and anything meant to be invisible go.
+    static func aboutWords(_ text: String) -> String {
+        let marks = Set(".,-_&+/'!?".unicodeScalars)
+        let blank: Set<UInt32> = [0x3164, 0x115F, 0x1160, 0xFFA0, 0x2800]
+        // Letters by Unicode's reckoning that read as punctuation: Canadian syllabics' dots and finals, the Latin click letters, Lisu's tone letters.
+        let lookalike: [ClosedRange<UInt32>] = [0x1400...0x167F, 0x01C0...0x01C3, 0xA4D0...0xA4FF]
+        var out = String.UnicodeScalarView(), onLetter = 0
+        for s in text.unicodeScalars {
+            if s.properties.isDefaultIgnorableCodePoint || blank.contains(s.value) { continue }
+            if lookalike.contains(where: { $0.contains(s.value) }) || s.properties.isPatternSyntax {
+                out.append(" ")
+                onLetter = 0
+                continue
+            }
+            let category = s.properties.generalCategory
+            if [.uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .otherLetter, .decimalNumber, .letterNumber, .otherNumber].contains(category) {
+                out.append(s)
+                onLetter = 1
+            } else if [.nonspacingMark, .spacingMark].contains(category), onLetter > 0, onLetter <= 2 {
+                out.append(s)
+                onLetter += 1
+            } else {
+                out.append(marks.contains(s) ? s : " ")
+                onLetter = 0
+            }
+        }
+        let words = String(out).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
+        let scalars = words.unicodeScalars
+        return scalars.count <= 80 ? words : String(String.UnicodeScalarView(scalars.prefix(80))).trimmingCharacters(in: .whitespaces) + "…"
+    }
+
     func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -111,6 +143,7 @@ struct AskUserTool: Tool {
                 "question": Schema.string("The question, at most 200 characters."),
                 "options": Schema.array("Optional: 2 to 4 short answers (at most 40 characters each).", items: Schema.string("An answer")),
                 "timeout_seconds": Schema.integer("How long to wait, at most 600 (default 300).", minimum: 10, maximum: 600),
+                "about": Schema.string("Optional: what it's about, in a few words the user will recognise, like the routine asking (at most 80 characters)."),
             ], required: ["question"]),
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
@@ -133,9 +166,14 @@ struct AskUserTool: Tool {
         if case .extension(let id) = context.caller {
             asker = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) asks", comment: "Under a question; an extension's name")
         }
+        // What it's about, in the asker's words, after the asker's name and marked as theirs (D201). Only beside a name: with none, it would read as the companion's own words.
+        var about: String?
+        if case .extension = context.caller { about = input.string("about").map(Self.aboutWords).flatMap { $0.isEmpty ? nil : $0 } }
+        // Its own field, never in the body: only the card draws it, apart from Sidefolk's words (D201).
+        let said = asker
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
-                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask",
-                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),
+                                                          title: question.clipped(200), body: said, actions: actions, refKind: "ask",
+                                                          historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context), about: about),
                                          timeout: max(10, timeout))
         guard let answer else { return ToolResult(text: "no answer") }
         if answer.hasPrefix(AgentFacingTools.typedAnswerPrefix) {

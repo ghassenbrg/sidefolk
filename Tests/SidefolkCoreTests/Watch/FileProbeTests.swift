@@ -194,6 +194,19 @@ import Testing
         #expect(try await !probe.step(&w).triggered, "reported once")
     }
 
+    @Test func aFileRenamedInTheFolderIsntNew() async throws {
+        defer { box.cleanUp() }
+        try box.write("draft.txt", "words")
+        var w = try watcher()
+        _ = try await probe.step(&w)
+        try box.move("draft.txt", "final.txt")
+        #expect(try await !probe.step(&w).triggered)
+        #expect(try await !probe.step(&w).triggered, "and not later either")
+        try box.write("new.txt", "other")
+        _ = try await probe.step(&w)
+        #expect(try await probe.step(&w).triggered, "a file that's really new still is")
+    }
+
     @Test func aGrowingFileKeepsWaiting() async throws {
         defer { box.cleanUp() }
         var w = try watcher()

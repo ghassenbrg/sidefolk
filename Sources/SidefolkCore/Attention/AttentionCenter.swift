@@ -11,9 +11,11 @@ public struct AttentionRequest: Sendable {
     public var refKind: String?
     public var refId: String?
     public var historyTitle: String?
+    /// D201: drawn only on the card that asks, after who asks, in a style of its own. Nothing else shows it.
+    public var about: String?
 
     public init(level: AttentionLevel, source: String, title: String, body: String? = nil,
-                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil, historyTitle: String? = nil) {
+                actions: [AttentionAction] = [], refKind: String? = nil, refId: String? = nil, historyTitle: String? = nil, about: String? = nil) {
         self.level = level
         self.source = source
         self.title = title
@@ -22,6 +24,7 @@ public struct AttentionRequest: Sendable {
         self.refKind = refKind
         self.refId = refId
         self.historyTitle = historyTitle
+        self.about = about
     }
 }
 
@@ -190,6 +193,7 @@ public actor AttentionCenter {
                                  body: request.body?.clipped(600), actions: request.actions, refKind: request.refKind,
                                  refId: request.refId, now: clock.now)
         item.historyTitle = request.historyTitle
+        item.about = request.about
         return item
     }
 
@@ -383,3 +387,4 @@ public actor AttentionCenter {
         events.publish(.attention(.backlog(count: count)))
     }
 }
+

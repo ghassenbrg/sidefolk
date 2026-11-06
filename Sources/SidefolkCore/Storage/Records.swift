@@ -529,6 +529,12 @@ public struct AttentionItem: SidefolkRecord, Identifiable, Hashable {
     public var renudged: Bool
     /// What History says in place of its words, for a step of a plan that filled them in (D127).
     public var historyTitle: String?
+    /// What a question's asker says it's about, in its own words (D201): only the card it's asked on draws it, apart from Sidefolk's. Never stored, so a question brought back later has none.
+    public var about: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, level, source, title, body, actions, refKind, refId, state, createdAt, shownAt, acknowledgedAt, renudged, historyTitle
+    }
 
     public init(
         id: String = Identifier.make(), level: AttentionLevel, source: String, title: String, body: String? = nil,

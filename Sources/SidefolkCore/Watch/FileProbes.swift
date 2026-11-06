@@ -267,6 +267,18 @@ public struct FolderNewFileProbe: WatcherProbe {
     /// Hidden files and partial downloads are never reported.
     static func isIgnored(_ name: String) -> Bool { name.hasPrefix(".") || isPartial(name) }
 
+    /// Each name's file number, as the folder lists it: no look at the files themselves, which a big Downloads folder can't afford every half minute.
+    static func fileNumbers(_ dir: String) -> [String: UInt64] {
+        guard let stream = opendir(dir) else { return [:] }
+        defer { closedir(stream) }
+        var out: [String: UInt64] = [:]
+        while let entry = readdir(stream), out.count <= maxEntries {
+            let name = withUnsafePointer(to: entry.pointee.d_name) { $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXNAMLEN) + 1) { String(cString: $0) } }
+            out[name] = UInt64(entry.pointee.d_ino)
+        }
+        return out
+    }
+
     static func matches(_ name: String, pattern: String?) -> Bool {
         guard let pattern else { return true }
         return fnmatch(pattern, name, FNM_CASEFOLD) == 0
@@ -283,11 +295,20 @@ public struct FolderNewFileProbe: WatcherProbe {
 
         let visible = names.filter { !Self.isIgnored($0) }
         let partials = Array(names.filter { !$0.hasPrefix(".") && Self.isPartial($0) }.sorted().prefix(50))
+        // Which file each name is, by the folder's own list: a name that moved to another name is the same file, not a new one.
+        let ids = Self.fileNumbers(dir)
+        func idList(_ list: [String]) -> JSONValue { .array(list.map { ids[$0].map { .number(Double($0)) } ?? .null }) }
         guard let previous = w.lastState, let seenList = previous["seen"]?.arrayValue else {
-            return ProbeResult(state: ["seen": .array(visible.sorted().map { .string($0) }), "partials": .array(partials.map { .string($0) })])
+            let all = visible.sorted()
+            return ProbeResult(state: ["seen": .array(all.map { .string($0) }), "ids": idList(all), "partials": .array(partials.map { .string($0) })])
         }
 
-        let seen = Set(seenList.compactMap(\.stringValue))
+        var seen = Set(seenList.compactMap(\.stringValue))
+        // A file seen before under a name that's gone now has only been renamed.
+        let before = zip(seenList.compactMap(\.stringValue), previous["ids"]?.arrayValue ?? []).compactMap { name, id in id.doubleValue.map { (name, UInt64($0)) } }
+        let present = Set(visible)
+        let movedAway = Set(before.filter { !present.contains($0.0) }.map(\.1))
+        for name in visible where !seen.contains(name) { if let id = ids[name], movedAway.contains(id) { seen.insert(name) } }
         let pattern = w.config.string("pattern")
         let pendingBefore = previous["pending"]?.objectValue?.mapValues { $0.doubleValue ?? -1 } ?? [:]
         let partialsBefore = Set(previous["partials"]?.arrayValue?.compactMap(\.stringValue) ?? [])
@@ -312,8 +333,10 @@ public struct FolderNewFileProbe: WatcherProbe {
 
         let growingBefore = Set(previous["growing"]?.arrayValue?.compactMap(\.stringValue) ?? [])
         let stillGrowing = downloaded.union(growingBefore).filter { pending[$0] != nil }
+        let kept = visible.filter { pending[$0] == nil }.sorted()
         var state: [String: JSONValue] = [
-            "seen": .array(visible.filter { pending[$0] == nil }.sorted().map { .string($0) }),
+            "seen": .array(kept.map { .string($0) }),
+            "ids": idList(kept),
             "partials": .array(partials.map { .string($0) }),
         ]
         if !pending.isEmpty { state["pending"] = .object(pending.mapValues { .number($0) }) }

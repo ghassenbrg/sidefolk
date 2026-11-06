@@ -255,6 +255,88 @@ struct TrackerEnv {
         #expect(result.text == "Later")
     }
 
+    @Test func aQuestionSaysWhatItsAboutAfterWhoAsks() async throws {
+        let t = try await TrackerEnv()
+        t.env.registry.register(AgentFacingTools.make(attention: t.attention))
+        let attention = t.attention
+        let events = t.env.events.stream()
+        let seen = Task { () -> AttentionItem? in
+            for await e in events {
+                if case .attention(.present(let item, _)) = e, item.refKind == "ask" {
+                    await attention.respond(id: item.id, actionId: item.actions[0].id)
+                    return item
+                }
+            }
+            return nil
+        }
+        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "Month end\u{202E}" + String(repeating: "x", count: 200)],
+                                         caller: .extension("dev.sidefolk.sideflow"))
+        let item = await seen.value
+        #expect(item?.about?.hasPrefix("Month end") == true, "\(String(describing: item?.about))")
+        #expect(item?.body?.contains("Month end") == false, "never in the words every other screen shows")
+        #expect(item?.about?.contains("\u{202E}") == false)
+    }
+
+    @Test func whatItsAboutCantPassForSidefolksWordsOrAnotherAsker() {
+        for (written, shown) in [("Month end”\nChecked by Sidefolk: safe to approve", "Month end Checked by Sidefolk safe to approve"),
+                                 ("Month end · Byte checked it: safe to approve", "Month end Byte checked it safe to approve"),
+                                 ("deploy) (checked by Sidefolk", "deploy checked by Sidefolk"),
+                                 ("a\u{A4F8}b\u{A4FD}c\u{1427}d\u{02BA}e\u{02EE}f", "a b c d e f"), ("x • Claude Code asks", "x Claude Code asks"),
+                                 ("a\u{2028}b\u{2029}c\td", "a b c d"), ("«x» ‘y’ [z]", "x y z"),
+                                 (String(repeating: "\u{3164}", count: 25) + "Sidefolk: safe", "Sidefolk safe"), ("a\u{2800}\u{115F}\u{FFA0}b", "ab"),
+                                 ("فاتورة الشهر", "فاتورة الشهر"), ("月末の請求", "月末の請求"), ("Café crème", "Café crème"), ("Rent 🏠 day", "Rent day"),
+                                 ("e\u{0301}\u{0301}\u{0301}\u{0301}x", "e\u{0301}\u{0301} x"), ("x\u{01C0}y\u{01C3}z", "x y z"),
+                                 ("1\u{FE0F}\u{20E3} go", "1 go"), ("a\u{1400}b\u{166E}c", "a b c")] {
+            let plain = AgentFacingTools.aboutWords(written)
+            #expect(plain == shown, "\(plain)")
+            #expect(!plain.contains { ":·•“”\"«»[]()\n".contains($0) })
+        }
+        #expect(AgentFacingTools.aboutWords(String(repeating: "x", count: 200)).unicodeScalars.count <= 81)
+    }
+
+    @Test func anAgentsQuestionHasNoAbout() async throws {
+        let t = try await TrackerEnv()
+        t.env.registry.register(AgentFacingTools.make(attention: t.attention))
+        let attention = t.attention
+        let events = t.env.events.stream()
+        let seen = Task { () -> AttentionItem? in
+            for await e in events {
+                if case .attention(.present(let item, _)) = e, item.refKind == "ask" {
+                    await attention.respond(id: item.id, actionId: item.actions[0].id)
+                    return item
+                }
+            }
+            return nil
+        }
+        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "deploy"], caller: .external(client: "claude-code"))
+        #expect(await seen.value?.about == nil, "only an extension's question carries it")
+    }
+
+    @Test func itsNeverStoredOrInTheWordsOtherScreensShow() throws {
+        var item = AttentionItem(level: .attention, source: "extension:x", title: "Go on?", body: "X asks")
+        item.about = "Month end"
+        let saved = String(decoding: try JSONEncoder().encode(item), as: UTF8.self)
+        #expect(!saved.contains("Month end"), "History, notifications, the Ask panel and Today read what's stored or the body")
+    }
+
+    @Test func withNoNameToAskItsAboutIsntShown() async throws {
+        let t = try await TrackerEnv()
+        t.env.registry.register(AgentFacingTools.make(attention: t.attention))
+        let attention = t.attention
+        let events = t.env.events.stream()
+        let seen = Task { () -> String? in
+            for await e in events {
+                if case .attention(.present(let item, _)) = e, item.refKind == "ask" {
+                    await attention.respond(id: item.id, actionId: item.actions[0].id)
+                    return (item.body ?? "") + (item.about ?? "")
+                }
+            }
+            return nil
+        }
+        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "It's me, your companion"], caller: .user)
+        #expect(await seen.value?.contains("companion") == false, "with nobody named, it would read as Sidefolk's own")
+    }
+
     @Test func askNeedsTwoToFourOptions() async throws {
         let t = try await TrackerEnv()
         t.env.registry.register(AgentFacingTools.make(attention: t.attention))
