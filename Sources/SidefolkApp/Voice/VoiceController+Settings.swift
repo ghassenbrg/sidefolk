@@ -47,14 +47,23 @@ extension VoiceController: VoiceServices {
 
     var hasElevenLabsKey: Bool { elevenLabsKey != nil }
 
-    func setElevenLabsKey(_ key: String?) {
+    @discardableResult func setElevenLabsKey(_ key: String?) -> UserFacingError? {
         let keys = ProviderKeys(store: secrets)
         let clean = key?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         elevenLabsModels = nil
-        if clean.isEmpty {
-            try? keys.remove(account: SecretKey.elevenLabsAPIKey)
-        } else {
-            try? keys.save(Secret(clean), account: SecretKey.elevenLabsAPIKey, host: ElevenLabs.host)
+        do {
+            if clean.isEmpty {
+                try keys.remove(account: SecretKey.elevenLabsAPIKey)
+            } else {
+                try keys.save(Secret(clean), account: SecretKey.elevenLabsAPIKey, host: ElevenLabs.host)
+            }
+            return nil
+        } catch {
+            // Said, not swallowed: the settings would show "Saved" over the key that was there before.
+            Log.shared.warning("voice", "ElevenLabs key not saved", ["error": String(describing: error)])
+            return clean.isEmpty ? UserFacingError("I couldn't remove your ElevenLabs key from the Keychain.", detail: String(describing: error))
+                : UserFacingError("I couldn't save your ElevenLabs key in the Keychain, so the one saved before stays.",
+                                  recovery: "Remove the key, then paste the new one again.", detail: String(describing: error))
         }
     }
 

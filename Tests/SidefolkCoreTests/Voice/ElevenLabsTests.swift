@@ -173,6 +173,17 @@ final class ElevenLabsStub: URLProtocol, @unchecked Sendable {
         #expect(ElevenLabs.failure(status: 429, body: Data()).message.contains("busy"))
     }
 
+    @Test func aKeyMissingAPermissionSaysWhichNotThatTheKeyIsWrong() {
+        let voices = ElevenLabs.failure(status: 401, body: json(#"{"detail": {"status": "missing_permissions", "message": "The API key you used is missing the permission voices_read to execute this operation."}}"#))
+        #expect(voices.message.contains("isn't allowed to use Voices"))
+        #expect(voices.recovery?.contains("allow Voices") == true)
+        #expect(!voices.message.contains("didn't accept"))
+        let speech = ElevenLabs.failure(status: 401, body: json(#"{"detail": {"status": "missing_permissions", "message": "missing the permission text_to_speech"}}"#))
+        #expect(speech.message.contains("Text to Speech"))
+        // A bad key still says so.
+        #expect(ElevenLabs.failure(status: 401, body: json(#"{"detail": {"status": "invalid_api_key"}}"#)).message.contains("didn't accept your key"))
+    }
+
     @Test func theModelsListKeepsThePreferredOnesThatSpeak() async throws {
         ElevenLabsStub.set("/v1/models", .init(pieces: [json("""
             [{"model_id": "eleven_multilingual_v2", "can_do_text_to_speech": true},

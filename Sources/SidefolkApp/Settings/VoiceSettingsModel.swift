@@ -37,7 +37,8 @@ protocol VoiceServices: AnyObject {
     /// The installed voices for the app's language, best first.
     func appleVoices() -> [AppleVoiceChoice]
     var hasElevenLabsKey: Bool { get }
-    func setElevenLabsKey(_ key: String?)
+    /// Saves or (nil) removes the key; what went wrong if the Keychain refused.
+    @discardableResult func setElevenLabsKey(_ key: String?) -> UserFacingError?
     /// Free: lists the voices in the person's ElevenLabs library.
     func elevenLabsVoices() async -> Result<[ElevenLabs.Voice], UserFacingError>
     /// Says one short sentence with these settings (with ElevenLabs it costs a few characters).
@@ -118,17 +119,18 @@ final class VoiceSettingsModel {
     func saveKey(_ key: String) {
         let clean = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
-        services.setElevenLabsKey(clean)
+        let failed = services.setElevenLabsKey(clean)
         hasKey = services.hasElevenLabsKey
         elevenVoices = nil
-        Task { await loadVoices() }
+        // A key the Keychain wouldn't take isn't the one that would be used: don't try the old one in its place.
+        if let failed { elevenError = failed } else { Task { await loadVoices() } }
     }
 
     func removeKey() {
-        services.setElevenLabsKey(nil)
+        let failed = services.setElevenLabsKey(nil)
         hasKey = services.hasElevenLabsKey
         elevenVoices = nil
-        elevenError = nil
+        elevenError = failed
         update { $0.elevenLabsVoice = ""; $0.elevenLabsVoiceName = "" }
     }
 
