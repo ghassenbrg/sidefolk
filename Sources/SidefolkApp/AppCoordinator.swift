@@ -654,6 +654,28 @@ final class AppCoordinator {
             if rest.count == 2 { NotificationCenter.default.post(name: PageEditFieldRow.devChip, object: rest) }
             return
         }
+        if command.hasPrefix("treeZoom:") {
+            // treeZoom:<factor>[:x,y]: the open tree board zoomed by that much around that point of it, as a pinch there would (D233).
+            let parts = command.dropFirst("treeZoom:".count).split(separator: ":").map(String.init)
+            let at = parts.count > 1 ? parts[1].split(separator: ",").compactMap { Double($0) } : []
+            if let factor = parts.first.flatMap(Double.init) {
+                let point: CGPoint? = at.count == 2 ? CGPoint(x: at[0], y: at[1]) : nil
+                NotificationCenter.default.post(name: PageTreeView.devZoom, object: (CGFloat(factor), point))
+            }
+            return
+        }
+        if command.hasPrefix("treeCarry:") {
+            // treeCarry:<card id> | treeCarry:off: the board shows where that card can go, as while it's dragged.
+            let id = String(command.dropFirst("treeCarry:".count))
+            NotificationCenter.default.post(name: PageTreeView.devCarry, object: id == "off" ? nil : id)
+            return
+        }
+        if command.hasPrefix("treeDrop:") {
+            // treeDrop:<card id>:<spot>: that card let go at a spot (a card's id, or a branch's), as a drop there does.
+            let pair = command.dropFirst("treeDrop:".count).split(separator: ":", maxSplits: 1).map(String.init)
+            if pair.count == 2 { NotificationCenter.default.post(name: PageTreeView.devDrop, object: pair) }
+            return
+        }
         if command.hasPrefix("pageOpen:") {
             // pageOpen:<a folding section's title>: as a click on it.
             NotificationCenter.default.post(name: SectionView.devOpen, object: String(command.dropFirst("pageOpen:".count)))

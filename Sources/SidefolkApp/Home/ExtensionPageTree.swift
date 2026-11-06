@@ -3,10 +3,19 @@ import SwiftUI
 
 /// A tree of cards that arranges itself (D125): where everything goes is `TreeLayout`'s, what a click means is the extension's tool. Native buttons, read top to bottom,
 /// so the keyboard and VoiceOver go through it like any list. Zoom and the small map are only for looking: nothing here changes anything until a card or a + is pressed.
+/// It handles like a whiteboard (D233): pinch or ⌘+ ⌘− to zoom around the pointer, two fingers to move about, ⌘0 to fit; a carried card shows every place it can go.
 struct PageTreeView: View {
     var tree: ExtensionPage.Tree
     var model: ExtensionPageModel
     @State private var zoom: CGFloat?
+    @State private var pinchStart: CGFloat?
+    @State private var position = ScrollPosition(idType: String.self)
+    @State private var offset = CGPoint.zero
+    @State private var pointer: CGPoint?
+    /// The card being dragged, while it is: every place it can go shows.
+    @State private var carried: String?
+    /// The edge a carried card is held at, which the board scrolls toward.
+    @State private var edge: CGRectEdge?
     @State private var outline = false
     @FocusState private var boardFocused: Bool
     /// Cards folded and words looked for are the person's view of it, not the tree's: kept here, told to no one.
@@ -16,7 +25,14 @@ struct PageTreeView: View {
     @State private var found = 0
     @FocusState private var findFocused: Bool
 
-    private static let zooms: ClosedRange<CGFloat> = 0.5...1.5
+    #if DEBUG
+    /// A dev command's carry, with no mouse button to let go of.
+    @State private var held = false
+    @Environment(\.treeSnapshot) private var snapshot
+    private var carrying: String? { carried ?? snapshot.carrying }
+    #else
+    private var carrying: String? { carried }
+    #endif
 
     var body: some View {
         if outline {
@@ -92,18 +108,43 @@ struct PageTreeView: View {
         let layout = TreeLayout(shown, editable: tree.insert != nil)
         let matches = shown.matching(words)
         return GeometryReader { geo in
-            let scale = zoom ?? min(1, max(Self.zooms.lowerBound, min(geo.size.width / max(1, layout.size.width), geo.size.height / max(1, layout.size.height))))
+            let scale = zoom ?? startZoom ?? TreeZoom.fit(layout.size, in: geo.size)
+            let rescale = { (wanted: CGFloat, anchor: CGPoint?) in self.rescale(to: wanted, around: anchor, from: scale, view: geo.size) }
             ScrollViewReader { scroll in
                 ScrollView([.horizontal, .vertical]) {
-                    TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: Set(matches))
+                    TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: Set(matches), carried: carrying) { carried = $0 }
                         .scaleEffect(scale, anchor: .topLeading)
                         .frame(width: layout.size.width * scale, height: layout.size.height * scale, alignment: .topLeading)
                         .frame(minWidth: geo.size.width, minHeight: geo.size.height, alignment: .top)
                 }
                 .scrollContentBackground(.hidden)
+                .scrollPosition($position)
+                .onScrollGeometryChange(for: CGPoint.self) { $0.contentOffset } action: { _, new in offset = new }
+                .onContinuousHover { phase in if case .active(let at) = phase { pointer = at } else { pointer = nil } }
+                // A pinch zooms around where it started, as on any board; scrolling goes on beside it.
+                .simultaneousGesture(MagnifyGesture()
+                    .onChanged { value in
+                        let start = pinchStart ?? scale
+                        if pinchStart == nil { pinchStart = scale }
+                        rescale(start * value.magnification, value.startLocation)
+                    }
+                    .onEnded { _ in pinchStart = nil })
+                .overlay { if carrying != nil { edges } }
+                #if DEBUG
+                .onReceive(NotificationCenter.default.publisher(for: Self.devZoom)) { note in
+                    guard let (factor, at) = note.object as? (CGFloat, CGPoint?) else { return }
+                    rescale(scale * factor, at)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: Self.devDrop)) { note in
+                    guard let pair = note.object as? [String], pair.count == 2 else { return }
+                    _ = TreeCardDrag.drop([TreeCardDrag.carrying + pair[0]], after: pair[1], tree: shown, model: model)
+                    carried = nil
+                    held = false
+                }
+                #endif
                 .overlay(alignment: .topLeading) { tools }
                 .overlay(alignment: .topTrailing) { if finding { finder.onSubmit { found += 1; if !matches.isEmpty { withAnimation(Theme.Motion.ease(0.25)) { scroll.scrollTo(matches[found % matches.count], anchor: .center) } } } } }
-                .overlay(alignment: .bottomLeading) { zooming(scale, fit: { zoom = nil }) }
+                .overlay(alignment: .bottomLeading) { zooming(scale, fit: { zoom = nil }, by: { rescale(scale + $0, pointer) }) }
                 .onChange(of: words) { _, _ in
                     found = 0
                     if let first = matches.first { withAnimation(Theme.Motion.ease(0.25)) { scroll.scrollTo(first, anchor: .center) } }
@@ -126,9 +167,44 @@ struct PageTreeView: View {
         .focusEffectDisabled()
         .focused($boardFocused)
         .onKeyPress(phases: .down, action: key)
+        // The carried card is forgotten once the button is let go, dropped or not (Esc is the drag's own way out).
+        .task(id: carried) {
+            guard carried != nil else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(150))
+                #if DEBUG
+                if held { continue }
+                #endif
+                if NSEvent.pressedMouseButtons & 1 == 0 {
+                    carried = nil
+                    edge = nil
+                    return
+                }
+            }
+        }
+        .task(id: edge) {
+            guard let edge else { return }
+            while !Task.isCancelled {
+                position.scrollTo(point: TreeZoom.nudged(offset, toward: edge))
+                try? await Task.sleep(for: .milliseconds(30))
+            }
+        }
+        #if DEBUG
+        .onReceive(NotificationCenter.default.publisher(for: Self.devCarry)) { note in
+            carried = note.object as? String
+            held = carried != nil
+        }
+        #endif
         // Pressing a card leaves the keyboard here.
         .onChange(of: tree.selected) { _, new in if new != nil, !(NSApp.keyWindow?.firstResponder is NSTextView) { boardFocused = true } }
     }
+
+    #if DEBUG
+    /// `treeZoom:`, `treeCarry:` and `treeDrop:` in scripts/dev.swift: a pinch, a card picked up, a card let go, as the person's would.
+    static let devZoom = Notification.Name("sidefolk.dev.treeZoom")
+    static let devCarry = Notification.Name("sidefolk.dev.treeCarry")
+    static let devDrop = Notification.Name("sidefolk.dev.treeDrop")
+    #endif
 
     @ViewBuilder private var tools: some View {
         if !tree.tools.isEmpty {
@@ -151,19 +227,55 @@ struct PageTreeView: View {
         }
     }
 
-    private func zooming(_ scale: CGFloat, fit: @escaping () -> Void) -> some View {
+    /// Zooms, keeping what's under `anchor` (the pointer, or else the middle) where it is. Only the view changes.
+    private func rescale(to wanted: CGFloat, around anchor: CGPoint?, from old: CGFloat, view: CGSize) {
+        let new = TreeZoom.clamped(wanted)
+        guard new != old else { return }
+        let target = TreeZoom.offset(offset, keeping: anchor ?? CGPoint(x: view.width / 2, y: view.height / 2), from: old, to: new)
+        zoom = new
+        // Once the board has its new size: before, the scroll would stop at the old one's end.
+        Task { @MainActor in position.scrollTo(point: target) }
+    }
+
+    private var startZoom: CGFloat? {
+        #if DEBUG
+        snapshot.zoom
+        #else
+        nil
+        #endif
+    }
+
+    /// Thin bands at the edges while a card is carried: held over one, the board scrolls that way, as under a dragged sticky note.
+    private var edges: some View {
+        func band(_ side: CGRectEdge) -> some View {
+            let across = side == .minYEdge || side == .maxYEdge
+            return Color.clear.contentShape(Rectangle())
+                .frame(width: across ? nil : 28, height: across ? 28 : nil)
+                .dropDestination(for: String.self) { _, _ in false } isTargeted: { over in
+                    if over { edge = side } else if edge == side { edge = nil }
+                }
+        }
+        return ZStack {
+            VStack(spacing: 0) { band(.minYEdge); Spacer(minLength: 0); band(.maxYEdge) }
+            HStack(spacing: 0) { band(.minXEdge); Spacer(minLength: 0); band(.maxXEdge) }
+        }
+        // The scroll's offset is the board's own, not the reading direction's.
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    private func zooming(_ scale: CGFloat, fit: @escaping () -> Void, by: @escaping (CGFloat) -> Void) -> some View {
         HStack(spacing: Theme.Space.xs) {
             if tree.select != nil { boardOrOutline }
             Button(action: fit) { Image(systemName: "arrow.up.left.and.arrow.down.right").frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget).contentShape(Rectangle()) }
-                .buttonStyle(.sfBare)
+                .buttonStyle(.sfBare).keyboardShortcut("0", modifiers: .command)
                 .help(Text("Fit to the window", comment: "A tree of cards on an extension's page: the zoom button that fits it all in"))
                 .accessibilityLabel(Text("Fit to the window", comment: "A tree of cards on an extension's page: the zoom button that fits it all in"))
             HStack(spacing: 0) {
-                Button { zoom = max(Self.zooms.lowerBound, scale - 0.1) } label: { Image(systemName: "minus").frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget).contentShape(Rectangle()) }
+                Button { by(-TreeZoom.step) } label: { Image(systemName: "minus").frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget).contentShape(Rectangle()) }
                     .buttonStyle(.sfBare).keyboardShortcut("-", modifiers: .command)
                     .accessibilityLabel(Text("Zoom out", comment: "A tree of cards on an extension's page"))
                 Text(scale, format: .percent.precision(.fractionLength(0))).font(Theme.Font.caption).monospacedDigit().foregroundStyle(Theme.inkMuted).frame(minWidth: 40)
-                Button { zoom = min(Self.zooms.upperBound, scale + 0.1) } label: { Image(systemName: "plus").frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget).contentShape(Rectangle()) }
+                Button { by(TreeZoom.step) } label: { Image(systemName: "plus").frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget).contentShape(Rectangle()) }
                     .buttonStyle(.sfBare).keyboardShortcut("=", modifiers: .command)
                     .accessibilityLabel(Text("Zoom in", comment: "A tree of cards on an extension's page"))
             }
@@ -217,6 +329,8 @@ private struct TreeCanvas: View {
     var model: ExtensionPageModel
     @Binding var folded: Set<String>
     var marked: Set<String>
+    var carried: String?
+    var carry: (String?) -> Void
 
     var body: some View {
         let line = TreeLine(tree.line)
@@ -224,14 +338,15 @@ private struct TreeCanvas: View {
             TreeLines(lines: layout.lines, line: line, size: layout.size)
             TreeBoard(size: layout.size) {
                 ForEach(layout.cards, id: \.node.id) { card in
-                    TreeCard(node: card.node, tree: tree, line: line, model: model, folded: $folded, marked: marked.contains(card.node.id)).treeFrame(card.frame).id(card.node.id)
+                    TreeCard(node: card.node, tree: tree, line: line, model: model, folded: $folded, marked: marked.contains(card.node.id), carried: carried, carry: carry)
+                        .treeFrame(card.frame).id(card.node.id)
                 }
                 ForEach(layout.labels, id: \.branch.id) { label in
                     TreeBranchLabel(branch: label.branch).fixedSize().treeFrame(CGRect(x: label.point.x - 60, y: label.point.y - 11, width: 120, height: 22))
                 }
                 if let insert = tree.insert {
                     ForEach(layout.adds, id: \.target) { add in
-                        TreeAddButton(add: add, hook: insert, picker: tree.picker, tree: tree, line: line, model: model)
+                        TreeAddButton(add: add, hook: insert, picker: tree.picker, tree: tree, line: line, model: model, carried: carried, carry: carry)
                             .treeFrame(add.hint == nil ? CGRect(x: add.point.x - 18, y: add.point.y - 18, width: 36, height: 36) : CGRect(x: add.point.x - 75, y: add.point.y - 18, width: 150, height: 36))
                     }
                 }
@@ -309,6 +424,8 @@ private struct TreeCard: View {
     var model: ExtensionPageModel
     @Binding var folded: Set<String>
     var marked = false
+    var carried: String?
+    var carry: (String?) -> Void
     @State private var hovering = false
     @State private var dropping = false
     @Environment(\.pageSelected) private var chosen
@@ -343,7 +460,8 @@ private struct TreeCard: View {
         .buttonStyle(.sfBare)
         // Nothing to press on a tree that only shows, without looking pressed-out.
         .allowsHitTesting(tree.select != nil)
-        .opacity(node.state == .skipped ? 0.55 : 1)
+        // The card being carried stays faint where it was, so it's clear what's moving.
+        .opacity(carried == node.id ? 0.35 : (node.state == .skipped ? 0.55 : 1))
         .elevation(node.state == .pending || node.state == .skipped ? .e0 : (hovering ? .e2 : .e1))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(ext: spoken))
@@ -351,12 +469,17 @@ private struct TreeCard: View {
         .accessibilityActions { actions }
         // Beside the card's button, not in it: a control inside a button's label isn't sure to get its click.
         .overlay(alignment: .trailing) { menu }
-        .overlay { if dropping { shape.strokeBorder(line.to, style: StrokeStyle(lineWidth: 2, dash: [5, 4])) } }
+        // Where a card let go here lands: a line under this one, as it will stand right after it.
+        .overlay(alignment: .bottom) {
+            if dropping, let carried, tree.place(carried, after: node.id) != nil {
+                Capsule().fill(line.to).frame(height: 4).padding(.horizontal, Theme.Space.l).offset(y: 12).allowsHitTesting(false)
+            }
+        }
         .overlay { if marked { shape.strokeBorder(line.from, lineWidth: 3) } }
         .overlay(alignment: .bottom) { foldButton }
         .onHover { hovering = $0 }
         .contextMenu { actions }
-        .modifier(TreeCardDrag(node: node, tree: tree, model: model, dropping: $dropping))
+        .modifier(TreeCardDrag(node: node, tree: tree, model: model, carry: carry, dropping: $dropping))
     }
 
     /// Its kind, what it does and its state: what the card shows, said in that order.
@@ -423,274 +546,6 @@ private struct TreeCard: View {
     }
 
     private var actions: some View { TreeCardActions(node: node, tree: tree, model: model) }
-}
-
-/// What can be done to a card, the same on its menu, under a right click, in the outline and for VoiceOver.
-struct TreeCardActions: View {
-    var node: ExtensionPage.Tree.Node
-    var tree: ExtensionPage.Tree
-    var model: ExtensionPageModel
-
-    var body: some View {
-        if let reorder = tree.reorder, !node.fixed {
-            if let up = tree.move(node.id, by: -1) {
-                Button { Task { await model.run(tool: reorder.tool, input: reorder.input(up)) } } label: { Text("Move up", comment: "A row or card on an extension's page: its menu") }
-            }
-            if let down = tree.move(node.id, by: 1) {
-                Button { Task { await model.run(tool: reorder.tool, input: reorder.input(down)) } } label: { Text("Move down", comment: "A row or card on an extension's page: its menu") }
-            }
-            let spots = tree.spots(for: node.id)
-            if !spots.isEmpty {
-                Menu {
-                    ForEach(spots) { spot in
-                        Button {
-                            guard let place = tree.place(node.id, after: spot.id) else { return }
-                            Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
-                        } label: { Text(verbatim: Self.words(spot)) }
-                    }
-                } label: { Text("Move to", comment: "A card on an extension's page: its menu, listing everywhere it can go") }
-            }
-        }
-        if let remove = tree.remove, !node.fixed {
-            Button(role: .destructive) { Task { await model.run(tool: remove.tool, input: remove.input(.string(node.id))) } } label: { Text("Remove", comment: "A card on an extension's page: its menu") }
-        }
-    }
-
-    private static func words(_ spot: ExtensionPage.Tree.Spot) -> String {
-        let indent = String(repeating: "    ", count: spot.depth)
-        switch spot.place {
-        case .after(let title): return indent + String(localized: "After “\(title.clipped(40))”", comment: "Where a card can move to, in a list of the cards it can follow")
-        case .start(let branch, let of): return indent + String(localized: "First under “\(branch)” of “\(of.clipped(30))”", comment: "Where a card can move to: the start of a path that splits from another card")
-        }
-    }
-}
-
-/// The same tree as a plain list: every card with its place in the structure, for reading through, moving precisely and VoiceOver. Nothing here means anything of its own.
-struct TreeOutline: View {
-    var tree: ExtensionPage.Tree
-    var model: ExtensionPageModel
-    @Environment(\.pageSelected) private var chosen
-
-    private enum Row: Identifiable {
-        case card(ExtensionPage.Tree.Node, depth: Int)
-        case branch(ExtensionPage.Tree.Branch, depth: Int)
-        var id: String {
-            switch self {
-            case .card(let n, _): "card-\(n.id)"
-            case .branch(let b, _): "branch-\(b.id)"
-            }
-        }
-    }
-
-    private var rows: [Row] {
-        var out: [Row] = []
-        func walk(_ nodes: [ExtensionPage.Tree.Node], _ depth: Int) {
-            for node in nodes {
-                out.append(.card(node, depth: depth))
-                for branch in node.branches {
-                    out.append(.branch(branch, depth: depth + 1))
-                    walk(branch.nodes, depth + 2)
-                }
-            }
-        }
-        walk(tree.nodes, 0)
-        return out
-    }
-
-    var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: Theme.Space.xxs) {
-                ForEach(rows) { row in
-                    switch row {
-                    case .card(let node, let depth): card(node).padding(.leading, CGFloat(depth) * 18)
-                    case .branch(let branch, let depth):
-                        Text(ext: branch.label).font(Theme.Font.caption.weight(.semibold)).foregroundStyle(branch.tone == .neutral ? Theme.inkMuted : branch.tone.color)
-                            .padding(.leading, CGFloat(depth) * 18).padding(.top, Theme.Space.xs)
-                    }
-                }
-            }
-            .padding(EdgeInsets(top: Theme.Space.m, leading: 64, bottom: Theme.Space.xxl, trailing: Theme.Space.l))
-        }
-    }
-
-    private func card(_ node: ExtensionPage.Tree.Node) -> some View {
-        Button {
-            guard let select = tree.select else { return }
-            Task { await model.run(tool: select.tool, input: select.input(.string(node.id))) }
-        } label: {
-            HStack(spacing: Theme.Space.s) {
-                TreeTile(symbol: node.symbol, color: node.color, side: 26, tone: node.state == .attention ? .warn : nil)
-                if let kind = node.kind { Text(ext: kind).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1) }
-                Text(ext: node.title).font(Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(1)
-                Spacer(minLength: Theme.Space.s)
-                if let pill = node.pill { TreePill(badge: pill) }
-            }
-            .padding(.horizontal, Theme.Space.s).padding(.vertical, Theme.Space.xxs + 2)
-            .background(tree.selected == node.id ? (chosen ?? Theme.accent).opacity(0.12) : Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.sfBare)
-        .contextMenu { TreeCardActions(node: node, tree: tree, model: model) }
-        .accessibilityActions { TreeCardActions(node: node, tree: tree, model: model) }
-        .accessibilityAddTraits(tree.selected == node.id ? .isSelected : [])
-    }
-}
-
-/// Picks a card up, and takes one dropped on it to stand right after it. The system's own drag: the words carried are only the card's id, and only a card of this tree lands.
-private struct TreeCardDrag: ViewModifier {
-    var node: ExtensionPage.Tree.Node
-    var tree: ExtensionPage.Tree
-    var model: ExtensionPageModel
-    @Binding var dropping: Bool
-
-    /// Marks a drag as a card's, so words dragged in from elsewhere land nowhere.
-    static let carrying = "sidefolk.tree.card:"
-    static func card(in dragged: [String]) -> String? { dragged.first?.hasPrefix(carrying) == true ? dragged.first.map { String($0.dropFirst(carrying.count)) } : nil }
-
-    func body(content: Content) -> some View {
-        if let reorder = tree.reorder {
-            content
-                .treeDraggable(node.fixed ? nil : TreeCardDrag.carrying + node.id)
-                .dropDestination(for: String.self) { ids, _ in
-                    guard let id = TreeCardDrag.card(in: ids), let place = tree.place(id, after: node.id) else { return false }
-                    Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
-                    return true
-                } isTargeted: { dropping = $0 }
-        } else {
-            content
-        }
-    }
-}
-
-private extension View {
-    @ViewBuilder func treeDraggable(_ id: String?) -> some View {
-        if let id { draggable(id) } else { self }
-    }
-}
-
-/// A symbol on its soft tile: the colour says what kind of thing it is, never how it went.
-struct TreeTile: View {
-    var symbol: String?
-    var color: String?
-    var side: CGFloat
-    var tone: ExtensionPage.Tone?
-
-    var body: some View {
-        let tint = tone?.color ?? color.flatMap { Color(extensionHex: $0) } ?? Theme.accent
-        Image(systemName: symbol ?? "circle").font(.system(size: side * 0.42, weight: .medium)).foregroundStyle(tint)
-            .frame(width: side, height: side)
-            .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: side * 0.26, style: .continuous))
-            .accessibilityHidden(true)
-    }
-}
-
-/// A word and its colour, soft (D78).
-struct TreePill: View {
-    var badge: ExtensionPage.Badge
-    @Environment(\.pageSelected) private var accent
-    @Environment(\.colorScheme) private var scheme
-
-    /// "Info" says nothing good or bad: on a page with its own accent, it's in that, not a second brand colour beside it.
-    private var selection: PageSelection? { badge.tone == .info && accent != nil ? PageSelection(accent: accent, dark: scheme == .dark) : nil }
-
-    var body: some View {
-        Text(ext: badge.text).font(Theme.Font.caption.weight(.medium)).lineLimit(1)
-            .foregroundStyle(selection?.ink ?? (badge.tone == .neutral ? Theme.inkMuted : badge.tone.color))
-            .padding(.horizontal, Theme.Space.s).padding(.vertical, 3)
-            .background(selection?.soft ?? (badge.tone == .neutral ? Theme.well : badge.tone.soft), in: Capsule())
-            .fixedSize()
-    }
-}
-
-private struct TreeBranchLabel: View {
-    var branch: ExtensionPage.Tree.Branch
-
-    var body: some View {
-        Text(ext: branch.label).font(Theme.Font.caption.weight(.semibold)).lineLimit(1)
-            .foregroundStyle(branch.taken == false ? Theme.inkMuted : (branch.tone == .neutral ? Theme.ink : branch.tone.color))
-            .padding(.horizontal, Theme.Space.s + 2).padding(.vertical, 3)
-            .background(branch.taken == false ? Theme.well : (branch.tone == .neutral ? Theme.surfaceRaised : branch.tone.soft), in: Capsule())
-            .overlay(Capsule().strokeBorder(Theme.line))
-    }
-}
-
-/// The person's own companion in its light, standing by what's happening now.
-private struct TreeCompanion: View {
-    var model: ExtensionPageModel
-
-    var body: some View {
-        ZStack {
-            Circle().fill(RadialGradient(colors: [Theme.glow.opacity(0.55), Theme.glow.opacity(0)], center: .center, startRadius: 2, endRadius: 30)).frame(width: 60, height: 60)
-            PagePictureView(picture: .companion(.full), model: model, side: 96, fill: false).frame(width: 44, height: 44)
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
-
-private struct TreeAddButton: View {
-    var add: TreeLayout.Add
-    var hook: ExtensionPage.Steps.Hook
-    var picker: ExtensionPage.Tree.Picker?
-    var tree: ExtensionPage.Tree
-    var line: TreeLine
-    var model: ExtensionPageModel
-    @State private var hovering = false
-    @State private var picking = false
-    @State private var dropping = false
-    private var reorder: ExtensionPage.Steps.Hook? { tree.reorder }
-    @FocusState private var focused: Bool
-    // A popover has an environment of its own.
-    @Environment(\.pageSelected) private var accent
-
-    var body: some View {
-        Button {
-            if picker == nil {
-                Task { await model.run(tool: hook.tool, input: hook.input(.string(add.target))) }
-            } else {
-                picking = true
-            }
-        } label: {
-            if let hint = add.hint {
-                Label { Text(ext: hint).lineLimit(1) } icon: { Image(systemName: "plus") }
-                    .font(Theme.Font.callout).foregroundStyle(Theme.ink)
-                    .padding(.horizontal, Theme.Space.m)
-                    .frame(height: 30)
-                    .background(Theme.surfaceRaised, in: Capsule())
-                    .overlay(Capsule().strokeBorder(hovering || dropping ? line.to : Theme.line, style: StrokeStyle(lineWidth: dropping ? 2 : 1, dash: [4, 3])))
-                    .contentShape(Capsule())
-            } else {
-                Image(systemName: "plus").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.ink)
-                    .frame(width: 22, height: 22)
-                    .background(Theme.surfaceRaised, in: Circle())
-                    .overlay(Circle().strokeBorder(hovering || dropping ? line.to : Theme.line, lineWidth: dropping ? 2 : 1))
-                    .scaleEffect(dropping ? 1.4 : 1)
-                    .contentShape(Circle())
-            }
-        }
-        .buttonStyle(.sfBare)
-        .focused($focused)
-        .onHover { hovering = $0 }
-        .opacity(add.quiet && !hovering && !focused && !picking && !dropping ? 0 : 1)
-        .help(Text(ext: hook.label ?? ""))
-        .accessibilityLabel(Text(ext: hook.label ?? ""))
-        // A card dragged here lands at this spot: on either side of the +, so it needn't be hit exactly.
-        .frame(minWidth: 36, minHeight: 36)
-        .contentShape(Rectangle())
-        .dropDestination(for: String.self) { ids, _ in
-            guard let reorder, let id = TreeCardDrag.card(in: ids), let place = tree.place(id, after: add.target) else { return false }
-            Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
-            return true
-        } isTargeted: { dropping = $0 }
-        .popover(isPresented: $picking, arrowEdge: .bottom) {
-            if let picker {
-                TreePicker(picker: picker, accent: accent) { id in
-                    picking = false
-                    Task { await model.run(tool: hook.tool, input: hook.input(.string(add.target)).setting(picker.key, .string(id))) }
-                }
-            }
-        }
-    }
 }
 
 /// What can be added, found by typing or by category, and picked with the arrows and Return.
@@ -920,3 +775,15 @@ struct DotGrid: View {
         .accessibilityHidden(true)
     }
 }
+
+#if DEBUG
+/// How a snapshot shows a board, as it can't pinch or drag: at a zoom, or with a card carried.
+struct TreeSnapshot {
+    var zoom: CGFloat?
+    var carrying: String?
+}
+
+extension EnvironmentValues {
+    @Entry var treeSnapshot = TreeSnapshot()
+}
+#endif
