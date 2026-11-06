@@ -372,6 +372,8 @@ public struct TreeLayout: Sendable {
     public var nudged = false
     /// Where a place the person chose is drawn: the board grows so that every card is on it, so a place is drawn this much further on.
     public var origin = CGPoint.zero
+    /// Where the tree's main line runs, from the left: a place's x is kept from there, so it stays put as branches come and go beside it.
+    public private(set) var root: CGFloat = 0
 
     /// `free`: cards the person put somewhere stand there (a board, D234); a card's small drawing ignores where they were put.
     public init(_ tree: ExtensionPage.Tree, editable: Bool, metrics: Metrics = Metrics(), free: Bool = false) {
@@ -476,6 +478,7 @@ public struct TreeLayout: Sendable {
         self.adds = adds.map { Add(target: $0.target, point: moved($0.point), quiet: $0.quiet, hint: $0.hint) }
         self.labels = labels.map { Label(branch: $0.branch, point: moved($0.point)) }
         size = CGSize(width: reach.max - reach.min + m.margin * 2, height: end.y + m.margin)
+        root = shift
         if free, tree.reading.contains(where: { $0.at != nil }) { place(tree, metrics: m, editable: editable, style: style, style: style) }
     }
 
@@ -483,7 +486,7 @@ public struct TreeLayout: Sendable {
     /// board as drawn, from its left edge; right to left the board is drawn mirrored, so the point is mirrored back.
     public func corner(forDropAt point: CGPoint, of id: String, rightToLeft: Bool) -> CGPoint? {
         guard let card = cards.first(where: { $0.node.id == id }) else { return nil }
-        let x = (rightToLeft ? size.width - point.x : point.x) - card.frame.width / 2 - origin.x
+        let x = (rightToLeft ? size.width - point.x : point.x) - card.frame.width / 2 - origin.x - root
         let y = point.y - card.frame.height / 2 - origin.y
         let reach = ExtensionPage.farthestPlace
         return CGPoint(x: min(reach, max(-reach, x.rounded())), y: min(reach, max(-reach, y.rounded())))
@@ -491,13 +494,27 @@ public struct TreeLayout: Sendable {
 
     /// Puts the cards the person placed where they put them, none over another card or its controls, and draws the lines between all of
     /// them again in the tree's order: where a card stands never changes what follows what. Branch labels and + spots go with their card.
+    /// All or nothing: when the places can't all be kept apart within a fixed amount of work and the board's bounds, every place is left out
+    /// and the tree lays itself out, Tidy up standing out; nothing is ever drawn over anything else.
     private mutating func place(_ tree: ExtensionPage.Tree, metrics m: Metrics, editable: Bool,
                                 style: (ExtensionPage.Tree.Node?) -> LineStyle, style branchStyle: (ExtensionPage.Tree.Branch) -> LineStyle) {
         placed = true
         let auto = Dictionary(cards.map { ($0.node.id, $0.frame) }, uniquingKeysWith: { a, _ in a })
         var frames = auto
-        var holder: [String: String] = [:]
-        for node in tree.reading { for branch in node.branches { holder[branch.id] = node.id } }
+        var holder: [String: String] = [:], first: [String: String] = [:]
+        for node in tree.reading {
+            for branch in node.branches {
+                holder[branch.id] = node.id
+                first[branch.id] = branch.nodes.first?.id
+            }
+        }
+        // Rectangles compared at most this many times, nudging and checking together: a bound on the work for any tree.
+        var work = 0
+        let budget = 600_000
+        func meets(_ a: CGRect, _ b: CGRect) -> Bool {
+            work += 1
+            return a.intersects(b)
+        }
         // A card's own controls reach past it: its menu inside, its fold button under it, the + spot over the card after it.
         func reach(_ r: CGRect) -> CGRect { CGRect(x: r.minX - 12, y: r.minY - 12, width: r.width + 24, height: r.height + 64) }
         // Its branches' labels and the + spot or words under each, which go where the card goes.
@@ -508,19 +525,30 @@ public struct TreeLayout: Sendable {
             }
         }
         func room(_ id: String, _ frame: CGRect) -> [CGRect] { [reach(frame)] + branchRoom(of: id, at: frame) }
+        func fallBack() {
+            nudged = true
+        }
         var taken = cards.filter { $0.node.at == nil }.flatMap { room($0.node.id, $0.frame) }
         let farthest = ExtensionPage.farthestPlace
         for card in cards {
             guard let at = card.node.at else { continue }
-            var frame = CGRect(origin: at, size: card.frame.size)
-            for _ in 0..<(ExtensionPage.maxTreeNodes * 4) {
+            var frame = CGRect(origin: CGPoint(x: at.x + root, y: at.y), size: card.frame.size)
+            var free = false
+            while work < budget {
                 let mine = room(card.node.id, frame)
-                guard let hit = taken.first(where: { t in mine.contains { $0.intersects(t) } }) else { break }
+                guard let hit = taken.first(where: { t in mine.contains { meets($0, t) } }) else {
+                    free = true
+                    break
+                }
                 nudged = true
                 frame.origin.y = hit.maxY + 16
-                // Past the farthest place, the next column along: however many cards are let go on one spot, the board stays bounded.
-                if frame.minY > farthest { frame.origin = CGPoint(x: frame.maxX + 40, y: at.y) }
+                // Past the farthest place, the next column along, and never past the farthest place that way either.
+                if frame.minY > farthest {
+                    frame.origin = CGPoint(x: frame.maxX + 40, y: at.y)
+                    if frame.minX > root + farthest { break }
+                }
             }
+            guard free else { return fallBack() }
             frames[card.node.id] = frame
             taken += room(card.node.id, frame)
         }
@@ -582,6 +610,32 @@ public struct TreeLayout: Sendable {
             return exits
         }
         _ = walk(tree.nodes, from: [])
+
+        // The last word: nothing drawn over a card, its fold button, or a + spot or label over a card, whatever the nudging did.
+        let ids = cards.map(\.node.id)
+        let drawn = ids.compactMap { id in frames[id].map { (id, $0) } }
+        let folds = cards.filter { !$0.node.branches.isEmpty || $0.node.folded != nil }.compactMap { card in
+            frames[card.node.id].map { (card.node.id, CGRect(x: $0.midX - 30, y: $0.maxY - 9, width: 60, height: 18)) }
+        }
+        for (i, one) in drawn.enumerated() {
+            for other in drawn[(i + 1)...] where meets(one.1.insetBy(dx: -8, dy: -8), other.1) { return fallBack() }
+            for fold in folds where fold.0 != one.0 && meets(fold.1, one.1) { return fallBack() }
+            if work > budget { return fallBack() }
+        }
+        for spot in spots {
+            // As drawn: a + of its own, or words in a capsule for the start of an empty branch.
+            let half: CGFloat = spot.hint == nil ? 14 : 75
+            let box = CGRect(x: spot.point.x - half, y: spot.point.y - 14, width: half * 2, height: 28)
+            // A branch's own + sits on the line just above its first card, as when the tree lays itself out.
+            for card in drawn where card.0 != first[spot.target] && meets(box, card.1) { return fallBack() }
+            for fold in folds where meets(box, fold.1) { return fallBack() }
+            if work > budget { return fallBack() }
+        }
+        for name in names {
+            let box = CGRect(x: name.point.x - 60, y: name.point.y - 11, width: 120, height: 22)
+            for card in drawn where meets(box, card.1) { return fallBack() }
+            if work > budget { return fallBack() }
+        }
 
         // The board takes in every card, label and + spot, a margin all round.
         let points = frames.values.flatMap { [$0.origin, CGPoint(x: $0.maxX, y: $0.maxY)] } + names.map(\.point) + spots.map(\.point)

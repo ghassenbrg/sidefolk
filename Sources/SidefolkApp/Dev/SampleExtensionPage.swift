@@ -39,7 +39,8 @@ enum SampleExtensionPage {
 
     /// The same board with cards the person put somewhere (D234): one off to the side, one let go on the first card, which moves down out of its way.
     static func boardPlaced() -> ExtensionPage.Tree? {
-        guard var tree = board(), let first = TreeLayout(tree, editable: true).cards.first?.frame,
+        // Places are kept from the tree's main line (D234).
+        guard var tree = board(), case let laid = TreeLayout(tree, editable: true), let first = laid.cards.first?.frame.offsetBy(dx: -laid.root, dy: 0),
               let sum = tree.nodes.firstIndex(where: { $0.id == "sum" }), let save = tree.nodes.firstIndex(where: { $0.id == "save" }) else { return nil }
         tree.nodes[sum].at = CGPoint(x: first.maxX + 120, y: first.minY + 260)
         tree.nodes[save].at = first.origin

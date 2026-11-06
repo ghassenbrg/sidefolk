@@ -16,6 +16,7 @@ struct PageTreeView: View {
     @State private var carried: ExtensionPage.Tree.Carry?
     /// The edge a carried card is held at, which the board scrolls toward.
     @State private var edge: CGRectEdge?
+    @State private var layouts = TreeLayoutCache()
     @State private var outline = false
     @FocusState private var boardFocused: Bool
     /// Cards folded and words looked for are the person's view of it, not the tree's: kept here, told to no one.
@@ -128,7 +129,7 @@ struct PageTreeView: View {
 
     private var board: some View {
         let shown = tree.folding(folded)
-        let layout = TreeLayout(shown, editable: tree.insert != nil, free: true)
+        let layout = layouts.layout(shown, editable: tree.insert != nil)
         let matches = shown.matching(words)
         return GeometryReader { geo in
             let scale = zoom ?? startZoom ?? TreeZoom.fit(layout.size, in: geo.size)

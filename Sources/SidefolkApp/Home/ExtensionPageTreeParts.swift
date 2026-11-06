@@ -204,3 +204,19 @@ struct TreeStepNumber: View {
             .accessibilityHidden(true)
     }
 }
+
+/// The board's layout, worked out again only when the tree (or what's folded, or whether cards can be added) changes: not each time the
+/// pointer moves over the board, which redraws it.
+@MainActor
+final class TreeLayoutCache {
+    private var tree: ExtensionPage.Tree?
+    private var editable = false
+    private var last: TreeLayout?
+
+    func layout(_ tree: ExtensionPage.Tree, editable: Bool) -> TreeLayout {
+        if let last, self.tree == tree, self.editable == editable { return last }
+        let fresh = TreeLayout(tree, editable: editable, free: true)
+        (self.tree, self.editable, last) = (tree, editable, fresh)
+        return fresh
+    }
+}
