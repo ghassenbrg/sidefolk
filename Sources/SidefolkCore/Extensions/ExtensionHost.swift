@@ -846,6 +846,15 @@ public actor ExtensionHost {
     /// An entry opening a page at a state of its own (D105).
     public func movePage(_ page: String, _ go: PageGo) { pageMoves[page, default: []].append(go) }
 
+    /// A card's Open in Home, on the person's click (D221): the page its reply offered, if the extension is still installed and on and its
+    /// manifest still declares the page. Its full name, with the state queued for it; nil, and nothing queued, when it may not open.
+    public func openOffered(extensionId id: String, page: String, state: [String: JSONValue]?) -> String? {
+        guard let rt = runtimes[id], rt.record.enabled, rt.manifest?.pages[page] != nil else { return nil }
+        let name = "\(id)/\(page)"
+        if let state { pageMoves[name, default: []].append(PageGo(set: state)) }
+        return name
+    }
+
     /// Reads every page that keeps a history or has a tile on Today once every `interval` seconds while Sidefolk runs,
     /// so its charts reach back a day and its tile is current. A page that fails is tried again next time.
     public func startPageSampling(every interval: TimeInterval = 60) {
@@ -1037,6 +1046,8 @@ public actor ExtensionHost {
             result.asks = asks
             result.card?.holdAnswer = asks.holdAnswer
             result.card?.tree = asks.tree
+            result.card?.page = asks.cardPage?.page
+            result.card?.pageState = asks.cardPage?.state
             if rt.pin.origin?.firstParty == true, let row = asks.row, !row.isEmpty { result.rowSummary = row }
         }
         result.placing = placing(ExtensionOutput.list(asked), for: id, tool: remote, folders: folders)

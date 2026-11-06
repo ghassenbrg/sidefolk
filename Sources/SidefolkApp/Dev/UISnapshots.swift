@@ -1073,10 +1073,12 @@ enum UISnapshots {
         let repos = FixtureServices.repoPal
         ask.extensionLooks = [repos.id: repos.look,
                               SampleAddons.timeZones: ExtensionLook(name: "Time Zones", iconPath: FixtureServices.sampleIcon, folk: "tempo")]
-        ask.add(.result(ResultCard(kind: .extensionResult, title: "Time around the world", subtitle: "Time Zones",
-                                   detail: "It is Tuesday 27 October, 09:12 in Tokyo (JST, UTC+9), 8 hours ahead of you.",
-                                   refId: SampleAddons.timeZones), activityId: nil, undo: false),
-                caption: "what time is it in Tokyo?")
+        var zones = ResultCard(kind: .extensionResult, title: "Time around the world", subtitle: "Time Zones",
+                               detail: "It is Tuesday 27 October, 09:12 in Tokyo (JST, UTC+9), 8 hours ahead of you.", refId: SampleAddons.timeZones)
+        // Its page offered on the card (D221).
+        zones.page = "clocks"
+        zones.pageState = ["city": "Tokyo"]
+        ask.add(.result(zones, activityId: nil, undo: false), caption: "what time is it in Tokyo?")
         ask.add(.approval(ApprovalRequest(tool: "ext.repo-pal.clone", title: "Clone a repository",
                                           summary: "Clone https://github.com/octocat/Hello-World into ~/git/Hello-World",
                                           risk: .medium, caller: .agent(runId: "r"), details: .paths([NSHomeDirectory() + "/git/Hello-World"]),

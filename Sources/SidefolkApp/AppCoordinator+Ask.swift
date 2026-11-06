@@ -473,6 +473,16 @@ extension AppCoordinator: AskActions {
     }
 
     func open(card: ResultCard) {
+        if card.kind == .extensionResult, let id = card.refId, let page = card.page {
+            // The page an extension's card offered (D221), as its entry would open it; asked again now, since the extension may be off or changed.
+            Task {
+                guard let name = await runtime.extensions.openOffered(extensionId: id, page: page, state: card.pageState) else { return }
+                askPanel.hide()
+                home.show(section: .page(name))
+                await home.pageMoved(name)
+            }
+            return
+        }
         if let link = card.url.flatMap(SettingsLink.init(rawValue:)) {
             open(link)
             return

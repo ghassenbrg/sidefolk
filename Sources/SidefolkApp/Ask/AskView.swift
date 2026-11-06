@@ -407,6 +407,12 @@ private struct EntryView: View {
                     Button("Set your location…") { model.actions?.open(card: card) }.buttonStyle(.sf(.primary))
                 } else if card.kind != .extensionResult, card.refId != nil || card.url != nil {
                     Button("Open") { model.actions?.open(card: card) }.buttonStyle(.sf(.secondary))
+                } else if card.kind == .extensionResult, card.page != nil, card.refId != nil {
+                    // The extension chose the page; the words are Sidefolk's, so a card can't dress a button up as something else (D221).
+                    Button { model.actions?.open(card: card) } label: {
+                        Text("Open in Home", comment: "On an extension's result card in Ask: opens the page of that extension it offers")
+                    }
+                    .buttonStyle(.sf(.secondary))
                 }
             })
         case .list(let title, let cards):

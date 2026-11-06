@@ -185,6 +185,8 @@ public struct LocalIntentRunner: Sendable {
                               detail: short ? nil : text.clipped(2_000), refId: tool.extensionId)
         card.holdAnswer = result.card?.holdAnswer
         card.tree = result.card?.tree
+        card.page = result.card?.page
+        card.pageState = result.card?.pageState
         // What it opened is the answer: the panel steps aside, as for a quick intent, rather than staying to be read.
         if result.asks?.openSurface != nil || result.asks?.openPage != nil { return .card(card, activityId: out.activity.id, undo: false) }
         return .answer(card, activityId: out.activity.id)

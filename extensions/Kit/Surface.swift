@@ -72,6 +72,14 @@ public struct ToolReply {
         return copy
     }
 
+    /// A button on the card this reply leaves in Ask, in Sidefolk's own words ("Open in Home"), that opens one of your pages showing
+    /// `state` when the person clicks it (D221). It never opens anything by itself; a page your manifest doesn't declare leaves no button.
+    public func offering(page: String, state: [String: Any] = [:]) -> ToolReply {
+        var copy = self
+        copy.asks["card_page"] = ["page": page, "state": state] as [String: Any]
+        return copy
+    }
+
     /// A small drawing of a tree on the card this reply leaves in Ask, so what you made can be seen where it was asked for (D125).
     public func showing(tree: CardTree) -> ToolReply {
         var copy = self

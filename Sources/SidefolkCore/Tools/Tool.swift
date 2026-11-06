@@ -220,6 +220,9 @@ public struct ResultCard: Codable, Sendable, Hashable {
     public var files: [PlacedFile]?
     /// A small tree to draw on it (D125): an extension's, read again as a page part when it's drawn.
     public var tree: JSONValue?
+    /// One of the extension's own pages, and the state to show, that the card offers as Open in Home (D221). Checked again at the click.
+    public var page: String?
+    public var pageState: [String: JSONValue]?
 
     public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil,
                 itemKind: NotebookItem.Kind? = nil) {
