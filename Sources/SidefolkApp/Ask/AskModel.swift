@@ -135,6 +135,10 @@ protocol AskActions: AnyObject {
     /// Something Sidefolk noticed, set aside without an answer (Glance's ×).
     func dismissAttention(_ item: AttentionItem)
     func stop()
+    /// The microphone button, clicked by the person: the only thing that calls this (D232, T64).
+    func microphoneClicked()
+    /// The microphone button: nil while voice input is off or the talk key is talking, else ready or listening.
+    var microphone: AskMicrophone? { get }
     /// The next request starts a new conversation with the AI; `announce` says so in the panel (D45).
     func startFresh(in model: AskModel, announce: Bool)
     /// Home › Conversations, at `thread` when given.
@@ -191,6 +195,14 @@ struct ReplyTarget: Equatable {
 }
 
 /// Talking instead of typing (D34): what the panel shows while the talk key is held and just after.
+/// The Say field's microphone button (D232).
+enum AskMicrophone: Equatable {
+    /// A click starts listening.
+    case ready
+    /// A click started it: the next click, or Return, sends what was heard.
+    case listening
+}
+
 enum VoiceInput: Equatable {
     /// The microphone and the recognizer are getting ready.
     case starting

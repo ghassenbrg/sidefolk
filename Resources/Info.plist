@@ -97,8 +97,8 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>When you choose “Use my Mac's location”, Sidefolk knows which town you're in, for the weather and anything else that needs a place. Only the town's name goes to your AI, never an address or coordinates.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Sidefolk listens only while you hold the talk shortcut, and understands what you say on this Mac. The recording is never kept.</string>
+	<string>Sidefolk listens only while you hold the talk shortcut, or from when you click the microphone until you click it again or send. It understands what you say on this Mac, and the recording is never kept.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>On macOS 15, Sidefolk uses Apple's on-device speech recognition to understand what you say while you hold the talk shortcut.</string>
+	<string>On macOS 15, Sidefolk uses Apple's on-device speech recognition to understand what you say while you hold the talk shortcut, or after you click the microphone until you click it again or send.</string>
 </dict>
 </plist>

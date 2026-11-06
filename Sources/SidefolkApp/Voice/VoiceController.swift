@@ -57,6 +57,10 @@ final class VoiceController {
     private var levelWatch: Task<Void, Never>?
     /// The preferred models this ElevenLabs key may use, listed (free) along with its voices.
     var elevenLabsModels: [String]?
+    /// Talking by the microphone button (D232): on from the person's click until their second click or Return.
+    private var toggle = VoiceToggle()
+    /// The minute one click may listen.
+    private var clickLimit: Task<Void, Never>?
 
     init(host: any VoiceHost, secrets: any SecretStore, sink: any AudioSink = AudioPlayer()) {
         self.host = host
@@ -81,8 +85,49 @@ final class VoiceController {
         start(feed: nil)
     }
 
-    /// Released: what was heard goes through the normal Ask pipeline.
-    func end() {
+    // MARK: The microphone button (D232, T64)
+
+    /// The person clicked the microphone button. The button is the only way to this: nothing else may start listening.
+    func microphoneClicked() {
+        act(toggle.handle(.click(replyPlaying: isSpeaking || awaitingSpokenReply)), feed: nil)
+    }
+
+    /// Listening that a click started is over without the person's word: the panel closed, they left Sidefolk, the Mac
+    /// slept or locked. The microphone stops and what was heard stays in the field, unsent.
+    func clickedTalkingEnds(_ event: VoiceToggle.Event) {
+        guard toggle.listening else { return }
+        act(toggle.handle(event), feed: nil)
+    }
+
+    /// The button's state, for its look and its VoiceOver label.
+    var listensFromClick: Bool { toggle.listening }
+
+    private func act(_ action: VoiceToggle.Action, feed file: URL?) {
+        switch action {
+        case .none: break
+        case .silence: interrupt(cancelRun: true)
+        case .listen: listenFromClick(feed: file)
+        case .send: end()
+        case .cancel: cancel()
+        case .stopKeepingWords: end(sending: false)
+        }
+    }
+
+    private func listenFromClick(feed file: URL?) {
+        interrupt(cancelRun: true)
+        guard host.currentSettings.voice.input, !holding else { return toggle.reset() }
+        if host.ask.busy, host.ask.pendingQuestion == nil { host.cancelRun() }
+        start(feed: file)
+        clickLimit = Task { [weak self] in
+            try? await Task.sleep(for: VoiceToggle.limit)
+            guard !Task.isCancelled else { return }
+            self?.clickedTalkingEnds(.timeUp)
+        }
+    }
+
+    /// Released: what was heard goes through the normal Ask pipeline. Unless `sending` is false: then the microphone stops
+    /// and the words wait in the field for the person.
+    func end(sending: Bool = true) {
         guard holding else { return }
         holding = false
         let opening = work
@@ -108,6 +153,7 @@ final class VoiceController {
             finishedTalking()
             guard host.ask.voice == .finishing else { return }
             host.ask.voice = nil
+            guard sending else { return kept(heard) }
             await deliver(heard, mic: mic)
         }
     }
@@ -160,8 +206,14 @@ final class VoiceController {
     private func watchEscape() {
         guard escape == nil else { return }
         escape = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard event.keyCode == 53, let self, self.isActive || self.isSpeaking else { return event }
-            self.cancel()
+            guard let self else { return event }
+            // Return (or Enter) sends what a click is listening to: the field is locked while it listens.
+            if event.keyCode == 36 || event.keyCode == 76, self.toggle.listening {
+                self.act(self.toggle.handle(.returnKey), feed: nil)
+                return nil
+            }
+            guard event.keyCode == 53, self.isActive || self.isSpeaking else { return event }
+            if self.toggle.listening { self.act(self.toggle.handle(.escape), feed: nil) } else { self.cancel() }
             return nil
         }
     }
@@ -252,6 +304,15 @@ final class VoiceController {
         host.ask.submit(spoken: true)
     }
 
+    /// Stopped without the person's word: nothing goes anywhere, and what was heard waits for Return.
+    private func kept(_ heard: String) {
+        let words = heard.trimmingCharacters(in: .whitespacesAndNewlines)
+        notice(.info(words.isEmpty ? String(localized: "I stopped listening. Nothing was sent.")
+                                   : String(localized: "I stopped listening. Press Return to send what I heard.")))
+        host.ask.text = words
+        host.ask.focusRequest += 1
+    }
+
     private func missed(_ heard: String, mic: MicrophoneMeter.Reading) {
         host.voiceMissed()
         let words = heard.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -297,6 +358,9 @@ final class VoiceController {
 
     /// Talking is over, however it ended: the pose and the Esc watch go back.
     private func finishedTalking() {
+        toggle.reset()
+        clickLimit?.cancel()
+        clickLimit = nil
         host.voiceMood(hearing: false, transcribing: false)
         stopWatchingEscape()
         levelWatch?.cancel()
@@ -501,6 +565,12 @@ final class VoiceController {
             await opening?.value
             end()
         }
+    }
+
+    /// Dev: the microphone button clicked, with an audio file in place of the microphone while it listens
+    /// (`voice:clickFile:<path>`), or with nothing new (`voice:click`, the second click). Debug builds only (T64).
+    func devMicrophoneClicked(feeding file: URL?) {
+        act(toggle.handle(.click(replyPlaying: isSpeaking || awaitingSpokenReply)), feed: file)
     }
     #endif
 }

@@ -433,6 +433,14 @@ extension AppCoordinator: AskActions {
         }
     }
 
+    func microphoneClicked() { voice.microphoneClicked() }
+
+    var microphone: AskMicrophone? {
+        guard runtime.settings.current.voice.input else { return nil }
+        if voice.listensFromClick { return .listening }
+        return voice.isActive ? nil : .ready
+    }
+
     func stop() {
         // Stopped by hand: the run's answer, if any arrives, isn't said aloud either.
         voice.interrupt(cancelRun: false)

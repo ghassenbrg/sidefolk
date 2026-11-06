@@ -123,6 +123,8 @@ struct AskView: View {
                     Button("Stop") { model.actions?.stop() }
                         .buttonStyle(.sf(.secondary, size: .small))
                         .keyboardShortcut(".", modifiers: .command)
+                } else if let microphone = model.actions?.microphone {
+                    MicrophoneButton(state: microphone) { model.actions?.microphoneClicked() }
                 }
             }
             .accessibilityLabel(Text("Ask \(companionName)"))
@@ -259,6 +261,9 @@ struct AskView: View {
             return String(localized: "Downloading the speech model… \(Int(progress * 100))%", comment: "The number is a percentage")
         case .finishing:
             return String(localized: "Getting your last words…")
+        case .listening where model.actions?.microphone == .listening:
+            // A click started it: nothing to hold, and nothing goes until the person says so (D232).
+            return String(localized: "Listening… Click the microphone or press Return to send, Esc to cancel")
         case .listening(let basic):
             let words = model.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !words.isEmpty, let hint = model.actions?.hint(for: words) else {
@@ -813,5 +818,26 @@ private struct RequestSurface: ViewModifier {
 
     func body(content: Content) -> some View {
         if on { content.cardSurface() } else { content }
+    }
+}
+
+/// The Say field's microphone (D232): a click listens, the next click sends. Red while it listens, and VoiceOver says what a
+/// click does now; macOS shows its own microphone light in the menu bar too.
+private struct MicrophoneButton: View {
+    var state: AskMicrophone
+    var click: () -> Void
+
+    var body: some View {
+        let listening = state == .listening
+        Button(action: click) {
+            Image(systemName: listening ? "stop.circle.fill" : "mic")
+                .font(.system(size: listening ? 17 : 15, weight: .medium))
+                .symbolEffect(.pulse, isActive: listening)
+        }
+        .buttonStyle(.sfIcon(side: 26))
+        .foregroundStyle(listening ? Theme.danger : Theme.inkMuted)
+        .help(listening ? Text("Stop and send what I heard") : Text("Click to talk, click again to send"))
+        .accessibilityLabel(listening ? Text("Stop and send") : Text("Talk"))
+        .accessibilityHint(listening ? Text("Sends what was heard. Esc cancels.") : Text("Listens until you click again or press Return."))
     }
 }

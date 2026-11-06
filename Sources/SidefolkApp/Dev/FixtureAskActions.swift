@@ -23,6 +23,9 @@ final class FixtureAskActions: AskActions {
     func openSession(_ session: AgentSession) {}
     func dismissAttention(_ item: AttentionItem) {}
     func stop() {}
+    func microphoneClicked() {}
+    /// Set by a snapshot that shows the button.
+    var microphone: AskMicrophone?
     func startFresh(in model: AskModel, announce: Bool) {}
     func openConversation(_ thread: String?) {}
     func undo(activityId: String, in model: AskModel) {}

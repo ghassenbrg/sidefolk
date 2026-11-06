@@ -4111,3 +4111,9 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 **Alternatives:** a replay of events missed while off (more than anything here needs, and it would run things long after). Several watches on one flow (each watch has a title and a plan step to look after, so a watch stays the first way only).
 **Implications:** no new reach: the card lists every way it starts, and adding one is a change that needs the card again. An extension that ignores `id` hears what it did before.
 
+### D232 — Talking by clicking the microphone (2026-11-06)
+**Decision:** *amends D34.* The Ask panel's Say field has a microphone button while voice input is on: a click listens, the person's second click or Return sends what was heard through the normal Ask pipeline, Esc drops it. Anything else that ends it (60 seconds, the panel closing or losing the keyboard, leaving Sidefolk, sleep or lock) stops the microphone and leaves the words in the field, unsent. A click while an answer is being said only silences it. The talk key and pressing and holding the companion stay as they were. No wake word (`VoiceToggle`, T64).
+**Why:** the founder: holding a shortcut or the companion is awkward for many people; one click to start and one to send is how other assistants work. Approved as the first step on 2026-11-06, with the wake word left for a decision about listening on the Mac.
+**Alternatives:** a wake word ("Hi Nori": always listening, a bigger privacy question, not built); sending when the minute runs out or the panel closes (words would go without the person's word); the button in Home's Say bar too (next, once the screens that share HomeView have landed).
+**Implications:** the permission strings say when it listens. Nothing but the button starts it, and only the person sends.
+
