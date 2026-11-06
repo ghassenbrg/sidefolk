@@ -597,6 +597,41 @@ import Testing
         #expect(checked == !approved.asked, "the editor says what the approval does")
     }
 
+    // MARK: Why a card comes, for an editor
+
+    @Test func theEditorIsToldWhyACardComesAndOnWhichLine() async throws {
+        func why(_ reply: JSONValue) -> String { "\(reply["why"]?.stringValue ?? "-")@\(reply["line"]?.intValue.map(String.init) ?? "-")" }
+        func notice(_ title: String) -> JSONValue { ["tool": "notify.user", "input": ["title": .string(title)]] }
+        // Full access: what fits is silent only in the person's click, which the editor can't know.
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        #expect(why(await w.check(FlowApprovalTests.plan([notice("Done")]))) == "in_click_only@-")
+        // What can't be recorded in full says so, on its line.
+        let many = FlowApprovalTests.plan((0..<41).map { notice("Step \($0)") })
+        #expect(why(await w.check(many)) == "too_many_entries@-")
+        #expect(await w.approve(many).asked, "and the card does come")
+        #expect(why(await w.check(FlowApprovalTests.plan([notice("Done"), notice(String(repeating: "x", count: 300))]))) == "entry_too_long@2")
+        #expect(why(await w.check(FlowApprovalTests.plan([notice("Done"), notice("token: abcdefgh1234")]))) == "secret_like@2")
+        #expect(why(await w.check(FlowApprovalTests.plan([notice("Done")], when: String(repeating: "w", count: 700)))) == "entry_too_long@-", "the plan's own words have no line")
+        // The modes that ask.
+        try await w.setMode(.askEveryTime)
+        #expect(why(await w.check(FlowApprovalTests.plan([notice("Done")]))) == "ask_every_time@-")
+        try await w.setMode(.askOncePerKind)
+        #expect(why(await w.check(FlowApprovalTests.plan([notice("Done")]))) == "mode_asks@-")
+        // Auto: the first plan is read, and a line that leaves the Mac asks on its own line.
+        try await w.setMode(.auto)
+        #expect(why(await w.check(FlowApprovalTests.plan([FlowApprovalTests.save], id: "fresh"))) == "first_time@-")
+        _ = await w.approve(FlowApprovalTests.plan([FlowApprovalTests.save], id: "fresh"))
+        #expect(why(await w.check(FlowApprovalTests.plan([FlowApprovalTests.save, FlowApprovalTests.fetch], id: "fresh"))) == "line_asks@2")
+        // Nothing to explain when no card comes.
+        let quiet = await w.check(FlowApprovalTests.plan([FlowApprovalTests.save, notice("Done")], id: "fresh"))
+        #expect(quiet["silent"]?.boolValue == true && quiet["why"] == nil && quiet["line"] == nil)
+        // Another program's plan.
+        let other = try await World(origin: nil)
+        try await other.setMode(.fullAccess)
+        #expect(why(await other.check(FlowApprovalTests.plan([notice("Done")]))) == "not_signed@-")
+    }
+
     @Test func historyNamesWhatNobodyReadAndSaysItWasNotAPlanTheyRead() async throws {
         let w = try await World()
         try await w.setMode(.fullAccess)
