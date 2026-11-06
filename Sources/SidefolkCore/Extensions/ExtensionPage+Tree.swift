@@ -520,6 +520,7 @@ public struct TreeLayout: Sendable {
         // Its branches' labels and the + spot or words under each, which go where the card goes.
         func branchRoom(of id: String, at frame: CGRect) -> [CGRect] {
             guard let was = auto[id] else { return [] }
+            work += labels.count
             return labels.filter { holder[$0.branch.id] == id }.map { label in
                 CGRect(x: label.point.x - was.minX + frame.minX - 75, y: label.point.y - was.minY + frame.minY - 11, width: 150, height: 74)
             }
@@ -638,7 +639,10 @@ public struct TreeLayout: Sendable {
         }
 
         // The board takes in every card, label and + spot, a margin all round.
-        let points = frames.values.flatMap { [$0.origin, CGPoint(x: $0.maxX, y: $0.maxY)] } + names.map(\.point) + spots.map(\.point)
+        // A label's and a hint's whole width, not only their middles, so none is cut at the board's edge.
+        let points = frames.values.flatMap { [$0.origin, CGPoint(x: $0.maxX, y: $0.maxY)] }
+            + names.flatMap { [CGPoint(x: $0.point.x - 60, y: $0.point.y - 11), CGPoint(x: $0.point.x + 60, y: $0.point.y + 11)] }
+            + spots.flatMap { s in [CGPoint(x: s.point.x - (s.hint == nil ? 18 : 75), y: s.point.y - 18), CGPoint(x: s.point.x + (s.hint == nil ? 18 : 75), y: s.point.y + 18)] }
         let low = CGPoint(x: points.map(\.x).min() ?? 0, y: points.map(\.y).min() ?? 0)
         let high = CGPoint(x: points.map(\.x).max() ?? 0, y: points.map(\.y).max() ?? 0)
         origin = CGPoint(x: max(0, m.margin - low.x), y: max(0, m.margin - low.y))
