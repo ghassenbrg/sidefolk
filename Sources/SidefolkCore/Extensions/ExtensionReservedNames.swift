@@ -17,9 +17,16 @@ enum ExtensionReservedNames {
         return String(plain.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.map(Character.init))
     }
 
+    /// As `folded`, and with the letters that are drawn alike set equal: `i`, `l`, `1` and a bar are one (a capital I for the l of `Sidefolk`), `o` and `0` are one.
+    /// Only for comparing with a name kept: the two sides are made the same way.
+    static func skeleton(_ name: String) -> String {
+        let marked = name.map { $0 == "|" ? "l" : String($0) }.joined()
+        return String(folded(marked).map { "il1".contains($0) ? "l" : $0 == "0" ? "o" : $0 })
+    }
+
     static func isReserved(_ name: String) -> Bool {
-        let name = folded(name)
-        return name.hasPrefix("sidefolk") || companions.contains(name)
+        let name = skeleton(name)
+        return name.hasPrefix(skeleton("sidefolk")) || companions.contains { skeleton($0) == name }
     }
 
     /// What a pack may not call itself or say it is by, in any language it carries, unless it is Sidefolk's own.

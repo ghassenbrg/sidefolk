@@ -848,7 +848,7 @@ Mitigations:
 - *Spoofing:* a surface is always framed by Sidefolk with the extension's icon and name (and, unless it is Sidefolk's own, its
   author or "not from Sidefolk"), drawn outside the canvas it can reach (`SurfaceFrame`); the extension can't remove it or draw on it:
   layers clip to the canvas, and a text field, the one real view a scene can have, is cut to it (`SurfacePolicy.fieldFrame`). Only a
-  signed pack may be named Sidefolk or a companion (`ExtensionReservedNames`, in every language it carries). It can still draw a picture of an approval card
+  signed pack may be named Sidefolk or a companion (`ExtensionReservedNames`, in every language it carries; letters drawn alike are one for this, so a capital I or a 1 for the l of Sidefolk, or a 0 for an o, is found too, and so is a server the person names). Every sentence that says "<name> asks" or "<name> says" takes the name from `ExtensionHost.name`, which cuts it to one clean line of 60 characters and puts the id in place of a kept name when the pack isn't Sidefolk's (an extension installed before the rule is not turned off, but it can no longer pass for the app). It can still draw a picture of an approval card
   inside its canvas, so what makes that harmless is where it stands and what it can catch: its window level is below
   Sidefolk's own panels and cards (one under `.floating`), so it can never cover one; it is placed clear of them
   (`SurfacePolicy.place`); opening Ask, where permission slips stand, puts a surface panel away; and while an approval

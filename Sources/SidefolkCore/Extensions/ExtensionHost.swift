@@ -414,9 +414,12 @@ public actor ExtensionHost {
     /// The extension's own words in the person's language, when it has them.
     func words(_ rt: Runtime) -> ExtensionStrings.Words? { rt.strings?.words(for: config.language()) }
 
-    /// Its own translation, then the manifest.
+    /// Its own translation, then the manifest. Every sentence that says "<name> asks" or "<name> says" takes the name from here, so it is made safe here: one clean
+    /// line of at most 60 characters, and never a name kept for Sidefolk's own unless the pack is Sidefolk's (T40). One installed before that rule, or a translation,
+    /// would otherwise pass for the app: its id stands in.
     func name(_ rt: Runtime) -> String {
-        words(rt)?.name ?? rt.pin.name
+        let given = ExtensionText.line(words(rt)?.name ?? rt.pin.name, characters: 60)
+        return given.isEmpty || (rt.pin.origin?.firstParty != true && ExtensionReservedNames.isReserved(given)) ? rt.record.id : given
     }
 
     private func tagline(_ rt: Runtime) -> String? {
@@ -673,6 +676,8 @@ public actor ExtensionHost {
         let id = "mcp." + slug
         if name.trimmingCharacters(in: .whitespaces).isEmpty || name.count > 60 || ExtensionText.clean(name) != name || slug.isEmpty {
             errors.append(String(localized: "Give it a short plain name."))
+        } else if ExtensionReservedNames.isReserved(name) {
+            errors.append(String(localized: "That name is the app's own. Choose another.", comment: "Adding a server: its name can't be Sidefolk, or begin with it"))
         }
         let resolved = resolveCommand(command)
         if resolved == nil { errors.append(String(localized: "Couldn't find the program “\(command)”.")) }

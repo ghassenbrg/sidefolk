@@ -200897,6 +200897,65 @@
         }
       }
     },
+    "That name is the app's own. Choose another." : {
+      "comment" : "Adding a server: its name can't be Sidefolk, or begin with it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الاسم يخص التطبيق نفسه. اختر اسمًا آخر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Name gehört der App selbst. Wähle einen anderen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese nombre es el de la propia app. Elige otro."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce nom est celui de l’app. Choisissez-en un autre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quel nome è quello dell’app stessa. Scegline un altro."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その名前はアプリ自身のものです。別の名前にしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 이름은 앱 자체의 이름입니다. 다른 이름을 고르세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esse nome é o do próprio app. Escolha outro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个名字是应用自己的。请换一个。"
+          }
+        }
+      }
+    },
     "That name is too long." : {
       "localizations" : {
         "ar" : {

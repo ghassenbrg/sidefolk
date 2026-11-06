@@ -21,6 +21,27 @@ struct ExtensionReviewTests {
         }
     }
 
+    @Test func lettersDrawnAlikeAreOneForTheNamesKept() {
+        // A capital I or a 1 or a bar for the l, a 0 for an o, and the same for a companion.
+        for name in ["SideFoIk", "S1defolk", "Sidefo1k", "S|defolk", "Sidef0lk", "SIDEF0LK Tools", "Side Fo1k", "K1ko", "N0ri", "Fol1o"] {
+            #expect(ExtensionReservedNames.isReserved(name), "\(name)")
+        }
+        // The gallery's own names, and names that only mention it.
+        for name in ["Archives", "Calculator", "Clipboard", "Currency", "Dev Toolbox", "Feeds", "Formatic", "Git", "Images", "Keep Awake", "Miraya", "PDF Tools", "Playtime", "Noor",
+                     "QR Codes", "Sideflow", "Your Mac", "System Vitals", "Weather", "World Clock", "My Sidefolk notes", "For Sidefolk"] {
+            #expect(!ExtensionReservedNames.isReserved(name), "\(name)")
+        }
+    }
+
+    @Test func aServerThePersonNamesCannotBeNamedLikeTheApp() async throws {
+        let h = try HostEnv()
+        for name in ["Sidefolk", "SideFoIk", "Ѕidefolk"] {
+            let preview = await h.host.previewMCPServer(name: name, command: "/bin/echo", arguments: [])
+            #expect(!preview.canAdd, "\(name)")
+        }
+        #expect(await h.host.previewMCPServer(name: "Echo", command: "/bin/echo", arguments: []).errors.allSatisfy { !$0.contains("app's own") })
+    }
+
     @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))
     func onlySidefolksOwnMayGoByItsName() async throws {
         let h = try HostEnv()
