@@ -684,6 +684,10 @@ enum UISnapshots {
                     try await page(name, PageTreeView(tree: board, model: SampleExtensionPage.model()).environment(\.treeSnapshot, look).frame(height: 760), width: 1000)
                 }
             }
+            // Cards the person put somewhere (D234): numbered, the lines in the order, one moved off another, and Tidy up standing out.
+            if let placed = SampleExtensionPage.boardPlaced() {
+                try await page("page-tree-board-placed", PageTreeView(tree: placed, model: SampleExtensionPage.model()).frame(height: 760), width: 1000)
+            }
             // What a tree's + opens (D125): a popover, which a window's snapshot can't catch.
             if let picker = SampleExtensionPage.treePicker() { try await page("panel-tree-picker", TreePicker(picker: picker) { _ in }, width: 520) }
             // Reduce Transparency with Increase Contrast (D84 phase 5): solid surfaces and edges at a control's strength.

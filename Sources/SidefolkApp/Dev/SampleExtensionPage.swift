@@ -23,7 +23,7 @@ enum SampleExtensionPage {
     static func board() -> ExtensionPage.Tree? {
         let json = #"""
         {"sections": [{"blocks": [{"type": "tree", "line": ["#4FA8F5", "#7C5CFC"], "selected": "sum",
-          "select": {"tool": "ui", "key": "step"}, "insert": {"tool": "ui", "key": "after"}, "reorder": {"tool": "ui", "key": "move"},
+          "select": {"tool": "ui", "key": "step"}, "insert": {"tool": "ui", "key": "after"}, "reorder": {"tool": "ui", "key": "move"}, "placed": {"tool": "ui", "key": "spot"},
           "nodes": [
             {"id": "start", "kind": "When", "title": "Every weekday at 8:00", "symbol": "calendar.badge.clock", "color": "#4FA8F5", "fixed": true},
             {"id": "read", "kind": "Read a page", "title": "example.com/forecast", "symbol": "globe", "color": "#5B8DEF"},
@@ -34,6 +34,16 @@ enum SampleExtensionPage {
             {"id": "save", "kind": "Save a note", "title": "To your notebook", "symbol": "note.text", "color": "#52C08A"}]}]}]}
         """#
         guard let value = try? JSONValue.parse(Data(json.utf8)), case .tree(let tree)? = (try? ExtensionPage.parse(value))?.sections.first?.blocks.first else { return nil }
+        return tree
+    }
+
+    /// The same board with cards the person put somewhere (D234): one off to the side, one let go on the first card, which moves down out of its way.
+    static func boardPlaced() -> ExtensionPage.Tree? {
+        // Places are kept from the tree's main line (D234).
+        guard var tree = board(), case let laid = TreeLayout(tree, editable: true), let first = laid.cards.first?.frame.offsetBy(dx: -laid.root, dy: 0),
+              let sum = tree.nodes.firstIndex(where: { $0.id == "sum" }), let save = tree.nodes.firstIndex(where: { $0.id == "save" }) else { return nil }
+        tree.nodes[sum].at = CGPoint(x: first.maxX + 120, y: first.minY + 260)
+        tree.nodes[save].at = first.origin
         return tree
     }
 
