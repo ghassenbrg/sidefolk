@@ -269,8 +269,8 @@ struct TrackerEnv {
             }
             return nil
         }
-        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "Month end\u{202E}" + String(repeating: "x", count: 200)],
-                                         caller: .extension("dev.sidefolk.sideflow"))
+        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": .string("Month end\u{202E}" + String(repeating: "x", count: 200))],
+                                         caller: .extension(id: "dev.sidefolk.sideflow"))
         let item = await seen.value
         #expect(item?.about?.hasPrefix("Month end") == true, "\(String(describing: item?.about))")
         #expect(item?.body?.contains("Month end") == false, "never in the words every other screen shows")
