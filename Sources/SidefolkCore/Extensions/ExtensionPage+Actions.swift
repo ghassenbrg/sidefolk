@@ -80,7 +80,7 @@ public struct PageFileAsk: Sendable, Hashable {
     }
 }
 
-/// `{"name": "Morning.sideflow", "type": "sideflow", "tool": "export_flows", "input": {…}, "note": "…"}`: what the save panel starts with, and the tool whose words are written. The person picks the place in the system's panel, and the extension never learns it.
+/// `{"name": "Report.data", "type": "data", "tool": "export_report", "input": {…}, "note": "…"}`: what the save panel starts with, and the tool whose words are written. The person picks the place in the system's panel, and the extension never learns it.
 public struct PageSaveAsk: Sendable, Hashable {
     public var name: String
     public var type: String
