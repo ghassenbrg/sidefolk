@@ -6,7 +6,7 @@ import Testing
 @Suite struct HiddenCharactersShownTests {
     @Test func aDirectionControlInAPathIsWrittenOut() {
         let shown = FolderAccess.displayPath("/Users/me/Downloads/report\u{202E}fdp.exe")
-        #expect(shown == "/Users/me/Downloads/report⟨U+202E⟩fdp.exe", shown)
+        #expect(shown == "/Users/me/Downloads/report⟨U+202E⟩fdp.exe", Comment(rawValue: shown))
         #expect(!shown.unicodeScalars.contains("\u{202E}"))
     }
 
