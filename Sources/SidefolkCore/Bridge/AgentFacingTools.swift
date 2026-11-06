@@ -111,6 +111,7 @@ struct AskUserTool: Tool {
                 "question": Schema.string("The question, at most 200 characters."),
                 "options": Schema.array("Optional: 2 to 4 short answers (at most 40 characters each).", items: Schema.string("An answer")),
                 "timeout_seconds": Schema.integer("How long to wait, at most 600 (default 300).", minimum: 10, maximum: 600),
+                "about": Schema.string("Optional: what it's about, in a few words the user will recognise, like the routine asking (at most 80 characters)."),
             ], required: ["question"]),
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
@@ -133,8 +134,11 @@ struct AskUserTool: Tool {
         if case .extension(let id) = context.caller {
             asker = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) asks", comment: "Under a question; an extension's name")
         }
+        // What it's about, in the asker's words, after the asker's name: Sidefolk says who asks, the asker says what for (D201).
+        let about = input.string("about").map { ExtensionText.clean($0).trimmingCharacters(in: .whitespacesAndNewlines).clipped(80) }.flatMap { $0.isEmpty ? nil : $0 }
+        let said = [asker, about.map { String(localized: "about “\($0)”", comment: "Under a question, after who asks: what the asker says it's about") }].compactMap(\.self).joined(separator: ", ")
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
-                                                          title: question.clipped(200), body: asker, actions: actions, refKind: "ask",
+                                                          title: question.clipped(200), body: said.isEmpty ? nil : said, actions: actions, refKind: "ask",
                                                           historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),
                                          timeout: max(10, timeout))
         guard let answer else { return ToolResult(text: "no answer") }

@@ -255,6 +255,27 @@ struct TrackerEnv {
         #expect(result.text == "Later")
     }
 
+    @Test func aQuestionSaysWhatItsAboutAfterWhoAsks() async throws {
+        let t = try await TrackerEnv()
+        t.env.registry.register(AgentFacingTools.make(attention: t.attention))
+        let attention = t.attention
+        let events = t.env.events.stream()
+        let seen = Task { () -> String? in
+            for await e in events {
+                if case .attention(.present(let item, _)) = e, item.refKind == "ask" {
+                    await attention.respond(id: item.id, actionId: item.actions[0].id)
+                    return item.body
+                }
+            }
+            return nil
+        }
+        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "Month end\u{202E}" + String(repeating: "x", count: 200)],
+                                         caller: .external(client: "claude-code"))
+        let body = await seen.value ?? ""
+        #expect(body.contains("asks, about “Month end"), "\(body)")
+        #expect(!body.contains("\u{202E}") && body.count < 140)
+    }
+
     @Test func askNeedsTwoToFourOptions() async throws {
         let t = try await TrackerEnv()
         t.env.registry.register(AgentFacingTools.make(attention: t.attention))

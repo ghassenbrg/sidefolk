@@ -4083,6 +4083,12 @@ The founder approved the look ("your file sets the colour") and chose to wait fo
 **Alternatives:** a card for the press (a second confirmation straight after the first one). A high-risk tool for the page's button (the same card). Keeping one flow's delete on `ui` (the same hole, one flow at a time).
 **Implications:** Sideflow's add-ons only; no new reach, one way less. `delete_flow` stays what an agent uses: high risk, one flow, a card each time. The token only separates the page from other callers: it lives in the extension's own data folder, so it doesn't protect against the extension's own program. The same token already says a Stop came from the person.
 
+### D201 — A question can say what it's about (2026-11-06)
+**Decision:** *the founder's report that a question from a routine didn't say which routine.* `ask.user` takes an optional `about`, at most 80 characters, cleaned of hidden characters. The card shows it after Sidefolk's own words for who asks: "Sideflow asks, about “Month end”". Sideflow sends the flow's name.
+**Why:** a question with no context can't be answered well. Who asks is still Sidefolk's to say, so the asker can't pose as someone else. It only says what it's about, in its own words, after that.
+**Alternatives:** a field the host fills from the run (only Sideflow knows its flows); putting it in the question (it's cut at 200 characters, and the question is what's being asked).
+**Implications:** for a plan, `about` is written once in the step's line: a rename changes the line, which in Auto stays inside Sidefolk and asks nothing.
+
 ### D195 — A program can follow a call it made, and ask it to stop (2026-11-04)
 **Decision:** *the roadmap's long jobs and cancellation, the part that fits one call.* With `permissions.act`, a program making a call hears `sidefolk/tools.progress {request, progress, total, message}` when the tool reports it, and can send `sidefolk/tools.cancel {request}`. An MCP server is asked with `_meta.progressToken` and told with `notifications/cancelled`. On the Kit: `Actions.call(request:progress:)`, `Actions.cancel` and `ToolProgressReport.report`. Sideflow shows how far along a step is, and Stop tells the step under way.
 **Why:** a long step looked frozen, and Stop could only wait for it to end.
