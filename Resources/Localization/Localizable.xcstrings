@@ -11690,7 +11690,7 @@
       }
     },
     "%@ says: %@" : {
-      "comment" : "Spoken aloud: an extension's name, then its words\nVoiceOver: what an extension's panel announces, always with the extension's name",
+      "comment" : "Spoken aloud: an extension's name, then its words\nThe save panel's message from an extension's page: the extension's name, then what it says about the file\nVoiceOver: what an extension's panel announces, always with the extension's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
