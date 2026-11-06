@@ -248,7 +248,21 @@ public struct FolderNewFileProbe: WatcherProbe {
     static let maxEntries = 20_000
     static let partialSuffixes = [".crdownload", ".download", ".part", ".tmp"]
 
-    public init(settleRecheck: TimeInterval = 3) { self.settleRecheck = settleRecheck }
+    /// Whether a folder's volume keeps a file's number its own for good, so a number seen again is the same file: APFS and HFS+ do.
+    /// Elsewhere (a share, FAT, exFAT) a number can come back for a new file at once, so there a new name is always new.
+    let keepsFileNumbers: @Sendable (String) -> Bool
+
+    public init(settleRecheck: TimeInterval = 3, keepsFileNumbers: @escaping @Sendable (String) -> Bool = FolderNewFileProbe.volumeKeepsFileNumbers) {
+        self.settleRecheck = settleRecheck
+        self.keepsFileNumbers = keepsFileNumbers
+    }
+
+    public static func volumeKeepsFileNumbers(_ dir: String) -> Bool {
+        var info = statfs()
+        guard statfs(dir, &info) == 0 else { return false }
+        let type = withUnsafePointer(to: info.f_fstypename) { $0.withMemoryRebound(to: CChar.self, capacity: Int(MFSTYPENAMELEN)) { String(cString: $0) } }
+        return type == "apfs" || type == "hfs"
+    }
 
     public func prepare(_ watcher: Watcher) throws -> Watcher {
         var w = watcher
@@ -274,7 +288,9 @@ public struct FolderNewFileProbe: WatcherProbe {
         var out: [String: UInt64] = [:]
         while let entry = readdir(stream), out.count <= maxEntries {
             let name = withUnsafePointer(to: entry.pointee.d_name) { $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXNAMLEN) + 1) { String(cString: $0) } }
-            out[name] = UInt64(entry.pointee.d_ino)
+            // Kept as JSON keeps numbers, exactly: no number that would round, nor the "unknown" a share can give.
+            let number = UInt64(entry.pointee.d_ino)
+            if number > 0, number < 1 << 53 { out[name] = number }
         }
         return out
     }
@@ -305,7 +321,11 @@ public struct FolderNewFileProbe: WatcherProbe {
 
         var seen = Set(seenList.compactMap(\.stringValue))
         // A file seen before under a name that's gone now has only been renamed.
-        let before = zip(seenList.compactMap(\.stringValue), previous["ids"]?.arrayValue ?? []).compactMap { name, id in id.doubleValue.map { (name, UInt64($0)) } }
+        // A number from an older state that isn't a whole one in range is dropped, not trusted and not fatal.
+        let before = keepsFileNumbers(dir) ? zip(seenList.compactMap(\.stringValue), previous["ids"]?.arrayValue ?? []).compactMap { name, id -> (String, UInt64)? in
+            guard let value = id.doubleValue, let number = UInt64(exactly: value), number > 0, number < 1 << 53 else { return nil }
+            return (name, number)
+        } : []
         let present = Set(visible)
         let movedAway = Set(before.filter { !present.contains($0.0) }.map(\.1))
         for name in visible where !seen.contains(name) { if let id = ids[name], movedAway.contains(id) { seen.insert(name) } }

@@ -207,6 +207,36 @@ import Testing
         #expect(try await probe.step(&w).triggered, "a file that's really new still is")
     }
 
+    @Test func onAVolumeThatGivesNumbersAgainANewNameIsAlwaysNew() async throws {
+        defer { box.cleanUp() }
+        let share = FolderNewFileProbe(settleRecheck: 3, keepsFileNumbers: { _ in false })
+        try box.write("scan_041.pdf", "a")
+        var w = try share.made(.make(WatchKind.folderNewFile, config: ["path": .string(box.root)], mode: .repeat))
+        _ = try await share.step(&w)
+        try box.move("scan_041.pdf", "scan_042.pdf")
+        _ = try await share.step(&w)
+        #expect(try await share.step(&w).triggered, "the same number on another name is a new file here, as a share can't promise otherwise")
+    }
+
+    @Test func thisMacsOwnDiskKeepsFileNumbers() {
+        #expect(FolderNewFileProbe.volumeKeepsFileNumbers(NSTemporaryDirectory()), "the tests' own disk is APFS")
+        #expect(!FolderNewFileProbe.volumeKeepsFileNumbers("/no/such/folder"))
+    }
+
+    @Test func aBadNumberInAnOldStateIsDroppedNotFatal() async throws {
+        defer { box.cleanUp() }
+        try box.write("a.txt", "a")
+        var w = try watcher()
+        _ = try await probe.step(&w)
+        var state = try #require(w.lastState?.objectValue)
+        state["ids"] = .array([.number(Double(UInt64.max)), .number(.nan), .number(-1), .number(1.5), .string("x")])
+        w.lastState = .object(state)
+        _ = try await probe.step(&w)
+        try box.write("b.txt", "b")
+        _ = try await probe.step(&w)
+        #expect(try await probe.step(&w).triggered)
+    }
+
     @Test func aGrowingFileKeepsWaiting() async throws {
         defer { box.cleanUp() }
         var w = try watcher()
