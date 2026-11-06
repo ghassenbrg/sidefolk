@@ -99107,6 +99107,64 @@
         }
       }
     },
+    "I couldn't remove your ElevenLabs key from the Keychain." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ إزالة مفتاح ElevenLabs من سلسلة المفاتيح."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich konnte deinen ElevenLabs-Schlüssel nicht aus dem Schlüsselbund entfernen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pude quitar tu clave de ElevenLabs del llavero."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’ai pas pu retirer votre clé ElevenLabs du trousseau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non sono riuscito a rimuovere la tua chiave ElevenLabs dal Portachiavi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabsのキーをキーチェーンから削除できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabs 키를 키체인에서 지우지 못했어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não consegui remover sua chave do ElevenLabs das Chaves."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我无法从钥匙串中移除你的 ElevenLabs 密钥。"
+          }
+        }
+      }
+    },
     "I couldn't remove ~/.local/bin/sidefolk." : {
       "localizations" : {
         "ar" : {
@@ -99161,6 +99219,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我无法移除 ~/.local/bin/sidefolk。"
+          }
+        }
+      }
+    },
+    "I couldn't save your ElevenLabs key in the Keychain, so the one saved before stays." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر عليّ حفظ مفتاح ElevenLabs في سلسلة المفاتيح، لذا يبقى المفتاح المحفوظ سابقًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich konnte deinen ElevenLabs-Schlüssel nicht im Schlüsselbund sichern, daher bleibt der vorher gesicherte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pude guardar tu clave de ElevenLabs en el llavero, así que se queda la que estaba guardada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’ai pas pu enregistrer votre clé ElevenLabs dans le trousseau : celle enregistrée avant reste en place."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non sono riuscito a salvare la tua chiave ElevenLabs nel Portachiavi, quindi resta quella salvata prima."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabsのキーをキーチェーンに保存できなかったため、以前のキーがそのまま残っています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabs 키를 키체인에 저장하지 못해서 전에 저장한 키가 그대로 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não consegui salvar sua chave do ElevenLabs nas Chaves, então a salva antes continua."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我无法将你的 ElevenLabs 密钥存入钥匙串，之前保存的密钥仍然保留。"
           }
         }
       }
@@ -141849,6 +141965,64 @@
         }
       }
     },
+    "On elevenlabs.io, edit the key under API keys and allow %@." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "على elevenlabs.io، عدّل المفتاح في API keys واسمح بـ %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bearbeite den Schlüssel auf elevenlabs.io unter API keys und erlaube %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En elevenlabs.io, edita la clave en API keys y permite %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur elevenlabs.io, modifiez la clé dans API keys et autorisez %@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su elevenlabs.io, modifica la chiave in API keys e consenti %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "elevenlabs.ioのAPI keysでキーを編集し、%@を許可してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "elevenlabs.io의 API keys에서 키를 편집하고 %@ 권한을 허용하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No elevenlabs.io, edite a chave em API keys e permita %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 elevenlabs.io 的 API keys 中编辑该密钥，并允许 %@。"
+          }
+        }
+      }
+    },
     "On this Mac" : {
       "comment" : "A gallery companion already downloaded",
       "localizations" : {
@@ -163623,6 +163797,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除密钥并切换"
+          }
+        }
+      }
+    },
+    "Remove the key, then paste the new one again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أزل المفتاح، ثم الصق المفتاح الجديد مرة أخرى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entferne den Schlüssel und füge den neuen noch einmal ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quita la clave y vuelve a pegar la nueva."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirez la clé, puis collez à nouveau la nouvelle."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovi la chiave, poi incolla di nuovo quella nuova."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーを削除してから、新しいキーをもう一度貼り付けてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키를 지운 다음 새 키를 다시 붙여 넣으세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remova a chave e cole a nova de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请移除密钥，然后重新粘贴新密钥。"
           }
         }
       }
@@ -245456,6 +245688,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通过 claude 命令使用你的 Claude 订阅。"
+          }
+        }
+      }
+    },
+    "Your ElevenLabs key isn't allowed to use %@. Nothing was said." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مفتاح ElevenLabs لديك غير مسموح له باستخدام %@. لم يُقَل شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein ElevenLabs-Schlüssel darf %@ nicht verwenden. Es wurde nichts gesagt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu clave de ElevenLabs no tiene permiso para usar %@. No se dijo nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre clé ElevenLabs n’a pas le droit d’utiliser %@. Rien n’a été dit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tua chiave ElevenLabs non può usare %@. Non è stato detto nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabsのキーには%@の使用が許可されていません。何も話していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ElevenLabs 키에 %@ 사용 권한이 없어요. 아무것도 말하지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua chave do ElevenLabs não tem permissão para usar %@. Nada foi dito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的 ElevenLabs 密钥无权使用 %@。没有说出任何内容。"
           }
         }
       }
