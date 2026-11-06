@@ -357,14 +357,17 @@ final class Box<T: Sendable>: @unchecked Sendable {
         let store = AttentionStore(try AppDatabase.inMemory())
         let now = Date()
         let long = String(repeating: "Line of a long weekly look back. ", count: 100)
-        func notice(_ title: String, daysAgo: Double, _ state: AttentionItem.State) async throws -> String {
+        func notice(_ title: String, daysAgo: Double, _ state: AttentionItem.State, answeredDaysAgo: Double? = nil) async throws -> String {
             var item = AttentionItem(level: .attention, source: "external:codex", title: title, body: long, refKind: "notify",
                                      now: now.addingTimeInterval(-daysAgo * 86400))
             item.state = state
+            item.acknowledgedAt = answeredDaysAgo.map { now.addingTimeInterval(-$0 * 86400) }
             try await store.save(item)
             return item.id
         }
-        let old = try await notice("Old and answered", daysAgo: 8, .acknowledged)
+        let old = try await notice("Old and answered", daysAgo: 9, .acknowledged, answeredDaysAgo: 8)
+        // Arrived long ago, answered yesterday: the week counts from the answer.
+        let lateAnswer = try await notice("Old, answered late", daysAgo: 20, .acknowledged, answeredDaysAgo: 1)
         let expired = try await notice("Old and expired", daysAgo: 9, .expired)
         let fresh = try await notice("New and answered", daysAgo: 2, .acknowledged)
         let waiting = try await notice("Old and waiting", daysAgo: 8, .shown)
@@ -376,7 +379,24 @@ final class Box<T: Sendable>: @unchecked Sendable {
             #expect(item.body?.hasSuffix("…") == true)
             #expect(item.title.hasPrefix("Old and"))
         }
-        for id in [fresh, waiting, kept] { #expect(try await store.item(id: id)?.body == long) }
+        for id in [fresh, waiting, kept, lateAnswer] { #expect(try await store.item(id: id)?.body == long) }
+    }
+}
+
+@Suite struct AttentionTrimCharacterTests {
+    /// The cut falls between whole characters: an emoji made of several code points is kept or dropped, never split.
+    @Test func trimmingNeverSplitsACharacter() async throws {
+        let store = AttentionStore(try AppDatabase.inMemory())
+        let now = Date()
+        let family = "👩‍👩‍👧‍👦"
+        var item = AttentionItem(level: .attention, source: "external:codex", title: "Family photos",
+                                 body: String(repeating: family, count: 700), refKind: "notify", now: now.addingTimeInterval(-9 * 86400))
+        item.state = .acknowledged
+        item.acknowledgedAt = now.addingTimeInterval(-8 * 86400)
+        try await store.save(item)
+        #expect(try await store.trimBodies(answeredBefore: now.addingTimeInterval(-7 * 86400)) == 1)
+        let body = try #require(try await store.item(id: item.id)?.body)
+        #expect(body == String(repeating: family, count: AttentionItem.trimmedBodyLimit - 1) + "…")
     }
 }
 

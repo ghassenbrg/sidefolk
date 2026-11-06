@@ -14,7 +14,8 @@ struct SidecardView: View {
             switch model.shape {
             case .whisper: if let item = model.item { whisper(item).fixedSize() }
             // As wide as the card allows (320–400), so long words and buttons wrap inside it rather than run off.
-            case .card: if let item = model.item { SidecardItemCard(item: item, model: model, tail: tail).fixedSize(horizontal: false, vertical: true) }
+            // Each notice its own card: one opened with Show all doesn't hand that to the next.
+            case .card: if let item = model.item { SidecardItemCard(item: item, model: model, tail: tail).id(item.id).fixedSize(horizontal: false, vertical: true) }
             case .stack: stack.fixedSize()
             }
         }

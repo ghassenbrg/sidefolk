@@ -5,7 +5,7 @@ import Foundation
 /// Text that comes from an extension is untrusted: invisible and bidi characters are stripped and
 /// lengths are capped before anything shows it to the model or the user (SECURITY T2, T17).
 enum ExtensionText {
-    /// Removes zero-width, bidi-control, tag and control characters (newline and tab survive).
+    /// Removes zero-width, bidi-control (the Arabic letter mark too), tag and control characters (newline and tab survive).
     static func clean(_ text: String) -> String {
         var scalars = String.UnicodeScalarView()
         for s in text.unicodeScalars where !isHidden(s) { scalars.append(s) }
@@ -16,7 +16,7 @@ enum ExtensionText {
         switch s.value {
         case 0x09, 0x0A: false
         case 0x00...0x1F, 0x7F...0x9F: true
-        case 0x200B...0x200F, 0x202A...0x202E, 0x2060...0x2069, 0xFEFF, 0xE0000...0xE007F: true
+        case 0x061C, 0x200B...0x200F, 0x202A...0x202E, 0x2060...0x2069, 0xFEFF, 0xE0000...0xE007F: true
         default: false
         }
     }

@@ -64,7 +64,7 @@ struct NotifyUserTool: Tool {
             description: "Show the user a short message on their desktop, e.g. that a task finished. Use \"attention\" only when they should look now.",
             inputSchema: Schema.object([
                 "title": Schema.string("One line, at most 120 characters."),
-                "body": Schema.string("Optional detail, at most 600 characters."),
+                "body": Schema.string("Optional detail, at most 4,000 characters; the person sees the first lines and can open the rest."),
                 "level": Schema.string("gentle (default) or attention.", enum: ["gentle", "attention"]),
             ], required: ["title"]),
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)

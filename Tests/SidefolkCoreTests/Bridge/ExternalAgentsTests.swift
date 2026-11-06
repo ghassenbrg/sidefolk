@@ -393,10 +393,10 @@ import Testing
     @Test func longNoticesAreKeptWholeAndClean() async throws {
         let s = try await Stack()
         let long = String(repeating: "All 12 checks passed on the release branch. ", count: 70)
-        _ = try await s.call("notify_user", ["title": "Release checks", "body": .string(long + "\u{202E}gnihtyna\u{200B}"), "level": "attention"])
+        _ = try await s.call("notify_user", ["title": "Release checks", "body": .string(long + "\u{202E}gnihtyna\u{200B}\u{061C}"), "level": "attention"])
         let kept = try #require(await s.runtime.attention.open().first { $0.title == "Release checks" })
         #expect(kept.body?.hasPrefix(long.trimmingCharacters(in: .whitespaces)) == true)
-        #expect(kept.body?.unicodeScalars.contains { $0.value == 0x202E || $0.value == 0x200B } == false)
+        #expect(kept.body?.unicodeScalars.contains { [0x202E, 0x200B, 0x061C].contains($0.value) } == false)
         _ = try await s.call("notify_user", ["title": "Too long", "body": .string(String(repeating: "x", count: 9000)), "level": "attention"])
         let cut = try #require(await s.runtime.attention.open().first { $0.title == "Too long" })
         #expect(cut.body?.count == AttentionItem.bodyLimit)

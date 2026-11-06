@@ -50,6 +50,8 @@ struct ExpandableText: View {
                 .accessibilityHidden(true)
         }
         .onChange(of: fullHeight) { changed?() }
+        // Other words in the same place start closed.
+        .onChange(of: text) { open = nil }
     }
 
     private var words: some View {
