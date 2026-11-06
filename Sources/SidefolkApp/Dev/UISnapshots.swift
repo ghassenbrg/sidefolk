@@ -1078,6 +1078,7 @@ enum UISnapshots {
         // Its page offered on the card (D221).
         zones.page = "clocks"
         zones.pageState = ["city": "Tokyo"]
+        ask.openablePages = ["\(SampleAddons.timeZones)/clocks"]
         ask.add(.result(zones, activityId: nil, undo: false), caption: "what time is it in Tokyo?")
         ask.add(.approval(ApprovalRequest(tool: "ext.repo-pal.clone", title: "Clone a repository",
                                           summary: "Clone https://github.com/octocat/Hello-World into ~/git/Hello-World",

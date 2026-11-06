@@ -201536,6 +201536,65 @@
         }
       }
     },
+    "That page isn't available any more." : {
+      "comment" : "Ask, after Open in Home on an extension's card whose extension is off or gone, or whose page went",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه الصفحة لم تعد متاحة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Seite ist nicht mehr verfügbar."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esa página ya no está disponible."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page n’est plus disponible."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quella pagina non è più disponibile."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのページはもう使えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 페이지는 더 이상 사용할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essa página não está mais disponível."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该页面已不可用。"
+          }
+        }
+      }
+    },
     "That page sent me on to another site, “%@”, so I stopped. You can ask me to read it there." : {
       "comment" : "Fetching a page from a site the person allowed redirected to a different site",
       "localizations" : {

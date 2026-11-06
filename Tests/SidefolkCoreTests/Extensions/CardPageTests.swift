@@ -24,6 +24,10 @@ struct CardPageTests {
         offering.pageState = ["flow": "f1"]
         let again = try JSONDecoder().decode(ResultCard.self, from: JSONEncoder().encode(offering))
         #expect(again.page == "flows" && again.pageState == ["flow": "f1"], "kept in History as written")
+        #expect(again.offeredPage == "com.example.a/flows")
+        var notes = ResultCard(kind: .note, title: "Milk", refId: "n1")
+        notes.page = "flows"
+        #expect(notes.offeredPage == nil, "only an extension's card offers its page")
     }
 
     @Test(.enabled(if: ExtFixtures.python != nil, ExtFixtures.noPython))
@@ -36,6 +40,7 @@ struct CardPageTests {
         #expect(result.card?.page == "home" && result.card?.pageState == ["run": "r1"])
         #expect(await h.host.takePageMoves("\(info.id)/home").isEmpty, "nothing moves until the person clicks, an agent's call or not")
 
+        #expect(await h.host.openablePages().contains("\(info.id)/home"), "so the card draws its button")
         #expect(await h.host.openOffered(extensionId: info.id, page: "home", state: ["run": "r1"]) == "\(info.id)/home")
         #expect(await h.host.takePageMoves("\(info.id)/home") == [PageGo(set: ["run": "r1"])], "the click takes the state to the page")
         #expect(await h.host.openOffered(extensionId: info.id, page: "gone", state: nil) == nil, "a page the manifest no longer declares")
@@ -43,5 +48,6 @@ struct CardPageTests {
         try await h.host.setEnabled(false, id: info.id)
         #expect(await h.host.openOffered(extensionId: info.id, page: "home", state: ["run": "r1"]) == nil, "one turned off since")
         #expect(await h.host.takePageMoves("\(info.id)/home").isEmpty, "and nothing was queued for it")
+        #expect(!(await h.host.openablePages()).contains("\(info.id)/home"), "and a card kept from before draws no button")
     }
 }

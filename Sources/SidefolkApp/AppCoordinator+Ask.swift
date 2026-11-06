@@ -476,7 +476,14 @@ extension AppCoordinator: AskActions {
         if card.kind == .extensionResult, let id = card.refId, let page = card.page {
             // The page an extension's card offered (D221), as its entry would open it; asked again now, since the extension may be off or changed.
             Task {
-                guard let name = await runtime.extensions.openOffered(extensionId: id, page: page, state: card.pageState) else { return }
+                guard let name = await runtime.extensions.openOffered(extensionId: id, page: page, state: card.pageState) else {
+                    // Turned off, taken away or changed since the card was drawn: said, never a click that does nothing.
+                    ask.add(.error(UserFacingError(verbatim: String(localized: "That page isn't available any more.",
+                                                                    comment: "Ask, after Open in Home on an extension's card whose extension is off or gone, or whose page went")),
+                                   retryable: false))
+                    await refreshExtensionLooks()
+                    return
+                }
                 askPanel.hide()
                 home.show(section: .page(name))
                 await home.pageMoved(name)

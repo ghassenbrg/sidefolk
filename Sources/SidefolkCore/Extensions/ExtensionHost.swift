@@ -846,6 +846,12 @@ public actor ExtensionHost {
     /// An entry opening a page at a state of its own (D105).
     public func movePage(_ page: String, _ go: PageGo) { pageMoves[page, default: []].append(go) }
 
+    /// The pages a card's Open in Home can open now, as `extension/page` (D221): an enabled extension's, as its manifest declares
+    /// them. A card kept from before whose page isn't here draws no button.
+    public func openablePages() -> Set<String> {
+        Set(pages().filter { !$0.needsAnUpdate }.map { "\($0.extensionId)/\($0.page)" })
+    }
+
     /// A card's Open in Home, on the person's click (D221): the page its reply offered, if the extension is still installed and on and its
     /// manifest still declares the page. Its full name, with the state queued for it; nil, and nothing queued, when it may not open.
     public func openOffered(extensionId id: String, page: String, state: [String: JSONValue]?) -> String? {

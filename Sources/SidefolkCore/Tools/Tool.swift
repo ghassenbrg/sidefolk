@@ -224,6 +224,12 @@ public struct ResultCard: Codable, Sendable, Hashable {
     public var page: String?
     public var pageState: [String: JSONValue]?
 
+    /// The page its Open in Home would open, as `extension/page` (D221).
+    public var offeredPage: String? {
+        guard kind == .extensionResult, let id = refId, let page else { return nil }
+        return "\(id)/\(page)"
+    }
+
     public init(kind: Kind, title: String, subtitle: String? = nil, detail: String? = nil, refId: String? = nil, url: String? = nil,
                 itemKind: NotebookItem.Kind? = nil) {
         self.kind = kind

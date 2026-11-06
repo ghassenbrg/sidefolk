@@ -830,6 +830,7 @@ final class AppCoordinator {
     /// How each extension looks, for its approval and result cards in the Ask panel.
     func refreshExtensionLooks() async {
         ask.extensionLooks = Dictionary(await extensions().map { ($0.id, $0.look) }, uniquingKeysWith: { a, _ in a })
+        ask.openablePages = await runtime.extensions.openablePages()
     }
 
     func refreshCollections() async {
