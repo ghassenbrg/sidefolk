@@ -11,6 +11,8 @@ final class AskPanelController {
     /// The two-finger gesture under way: which way it was read, and how far it went sideways.
     private var gesture: (sideways: Bool?, x: CGFloat, y: CGFloat) = (nil, 0, 0)
     var onVisibilityChange: ((Bool) -> Void)?
+    /// The panel lost the keyboard: the person went elsewhere.
+    var onResignKey: (() -> Void)?
     private var tidying: Task<Void, Never>?
     /// Esc goes here first (talking, speaking); true when it was handled there.
     var onEscape: (() -> Bool)?
@@ -184,6 +186,7 @@ final class AskPanelController {
     }
 
     private func didResignKey() {
+        onResignKey?()
         // Stay up while work, a question or talking is pending; otherwise get out of the way.
         if !model.busy && model.voice == nil && !model.entries.contains(where: \.isPinned) { hide() }
     }

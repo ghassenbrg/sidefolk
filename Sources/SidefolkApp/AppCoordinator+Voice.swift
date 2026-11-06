@@ -18,10 +18,12 @@ extension AppCoordinator: VoiceHost {
         applyVoiceKeys()
     }
 
-    /// The talk shortcut only takes its keys from other apps while it is the way to talk.
+    /// The talk shortcut only takes its keys from other apps while it is the way to talk. The microphone button needs no
+    /// key, so it follows the setting even where the keys aren't installed (a debug copy, D232).
     func applyVoiceKeys() {
-        guard talkKeysInstalled else { return }
         let v = runtime.settings.current.voice
+        ask.microphoneOn = v.input
+        guard talkKeysInstalled else { return }
         if v.input && v.talkKey == .ownShortcut { KeyboardShortcuts.enable(.talk) } else { KeyboardShortcuts.disable(.talk) }
     }
 

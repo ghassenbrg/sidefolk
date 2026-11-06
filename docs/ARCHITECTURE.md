@@ -328,6 +328,9 @@ core; the app holds the audio and speech frameworks.
   `--voice-install <language>` downloads a language's model; `swift scripts/dev.swift voice:file:<path>`
   plays a file into a running debug app as if the talk key were held, and `brain:scripted:<answer>` (`DevBrain`)
   answers every AI request with fixed words, with no network, so a spoken reply can be checked end to end.
+- **The microphone button** (D232, T64): the Ask panel's Say field; `VoiceToggle` (core) decides what each click, Return, Esc or
+  other end does, and `VoiceController.microphoneClicked()` acts on it. Only the button calls it; `voice:clickFile:` and `voice:click`
+  drive it in a debug app.
 
 ## Updates (D46, D70)
 

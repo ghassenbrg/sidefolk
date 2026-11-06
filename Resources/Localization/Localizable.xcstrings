@@ -64555,6 +64555,64 @@
         }
       }
     },
+    "Click to talk, click again to send" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر لتتحدث، وانقر مجددًا للإرسال"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicke zum Sprechen, klicke erneut zum Senden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic para hablar y otra vez para enviar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez pour parler, cliquez à nouveau pour envoyer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai clic per parlare, di nuovo per inviare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリックで話し始め、もう一度クリックで送信"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클릭하면 말하기, 다시 클릭하면 전송"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique para falar e clique de novo para enviar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按开始说话，再次点按即发送"
+          }
+        }
+      }
+    },
     "Clipboard" : {
       "comment" : "A built-in extension: everything you copy\nClipboard: its page in Home's sidebar\nClipboard: the title of its pop-up list",
       "localizations" : {
@@ -85923,6 +85981,7 @@
       }
     },
     "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, and everything shows in History." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85978,8 +86037,7 @@
             "value" : "适用于你让 Sidefolk 做的事。其他智能体和扩展仍遵循各自的规则，所有操作都会显示在“历史记录”中。"
           }
         }
-      },
-      "extractionState" : "stale"
+      }
     },
     "For what you ask Sidefolk to do. Other agents and extensions keep their own rules, except that Full access answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History." : {
       "localizations" : {
@@ -93871,7 +93929,66 @@
         }
       }
     },
+    "Hold your talk shortcut. You can also press and hold %@, or click the microphone in the Ask panel and click it again to send." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط مطوّلًا على اختصار التحدث. يمكنك أيضًا الضغط مطوّلًا على %@، أو النقر على الميكروفون في لوحة «اسأل» ثم النقر عليه مجددًا للإرسال."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte deinen Kurzbefehl zum Sprechen gedrückt. Du kannst auch auf %@ klicken und halten, oder im Fragefenster auf das Mikrofon klicken und zum Senden erneut klicken."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén pulsado tu atajo para hablar. También puedes mantener pulsado a %@, o hacer clic en el micrófono del panel Preguntar y volver a hacer clic para enviar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenez enfoncé votre raccourci pour parler. Vous pouvez aussi appuyer longuement sur %@, ou cliquer sur le microphone du panneau Demander puis cliquer à nouveau pour envoyer."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni premuta la tua abbreviazione per parlare. Puoi anche tenere premuto %@, oppure fare clic sul microfono nel pannello Chiedi e fare di nuovo clic per inviare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "話すためのショートカットを押し続けてください。%@を長押しするか、入力パネルのマイクをクリックしてもう一度クリックすると送信することもできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "말하기 단축키를 길게 누르세요. 컴패니언(%@)을 길게 누르거나, 요청 패널의 마이크를 클릭하고 다시 클릭해 보낼 수도 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segure seu atalho para falar. Você também pode pressionar e segurar %@, ou clicar no microfone do painel Perguntar e clicar de novo para enviar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按住你的说话快捷键。你也可以按住 %@，或点按提问面板中的麦克风，再次点按即发送。"
+          }
+        }
+      }
+    },
     "Hold your talk shortcut. You can also press and hold %@." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -99860,7 +99977,66 @@
         }
       }
     },
+    "I didn't catch that. Fix the words and press Return, or talk again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أتبيّن ما قلته. صحّح الكلمات واضغط مفتاح الرجوع، أو تحدّث مجددًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das habe ich nicht verstanden. Korrigiere die Wörter und drücke den Zeilenschalter, oder sprich noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No te entendí. Corrige las palabras y pulsa Retorno, o vuelve a hablar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’ai pas bien compris. Corrigez les mots et appuyez sur Entrée, ou reparlez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ho capito. Correggi le parole e premi A capo, oppure parla di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取れませんでした。言葉を直してReturnキーを押すか、もう一度話してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잘 알아듣지 못했어요. 글을 고친 다음 Return 키를 누르거나, 다시 말하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não entendi. Corrija as palavras e pressione Return, ou fale de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我没听清。请修改文字后按 Return 键，或再说一次。"
+          }
+        }
+      }
+    },
     "I didn't catch that. Hold to talk again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -99914,6 +100090,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我没听清。请再次按住说话。"
+          }
+        }
+      }
+    },
+    "I didn't catch that. Try talking again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم أتبيّن ما قلته. حاول التحدث مجددًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das habe ich nicht verstanden. Versuche es noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No te entendí. Intenta hablar de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je n’ai pas bien compris. Essayez de reparler."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ho capito. Prova a parlare di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取れませんでした。もう一度話してみてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잘 알아듣지 못했어요. 다시 말해 보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não entendi. Tente falar de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我没听清。请再说一次。"
           }
         }
       }
@@ -101214,6 +101448,122 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我停了下来，因为我一直在重复同一个步骤。"
+          }
+        }
+      }
+    },
+    "I stopped listening. Nothing was sent." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقفت عن الإصغاء. لم يُرسَل شيء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich habe aufgehört zuzuhören. Es wurde nichts gesendet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejé de escuchar. No se envió nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J’ai arrêté d’écouter. Rien n’a été envoyé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ho smesso di ascoltare. Non è stato inviato nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取りを停止しました。何も送信していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "듣기를 멈췄어요. 아무것도 보내지 않았어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parei de ouvir. Nada foi enviado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我已停止聆听。没有发送任何内容。"
+          }
+        }
+      }
+    },
+    "I stopped listening. Press Return to send what I heard." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توقفت عن الإصغاء. اضغط مفتاح الرجوع لإرسال ما سمعته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich habe aufgehört zuzuhören. Drücke den Zeilenschalter, um zu senden, was ich gehört habe."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejé de escuchar. Pulsa Retorno para enviar lo que escuché."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J’ai arrêté d’écouter. Appuyez sur Entrée pour envoyer ce que j’ai entendu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ho smesso di ascoltare. Premi A capo per inviare ciò che ho sentito."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取りを停止しました。Returnキーを押すと、聞き取った内容を送信します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "듣기를 멈췄어요. Return 키를 누르면 들은 내용을 보내요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parei de ouvir. Pressione Return para enviar o que ouvi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我已停止聆听。按 Return 键即可发送我听到的内容。"
           }
         }
       }
@@ -118912,6 +119262,64 @@
         }
       }
     },
+    "Listening… Click the microphone or press Return to send, Esc to cancel" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الإصغاء… انقر على الميكروفون أو اضغط مفتاح الرجوع للإرسال، أو Esc للإلغاء"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich höre zu … Klicke auf das Mikrofon oder drücke den Zeilenschalter zum Senden, Esc bricht ab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuchando… Haz clic en el micrófono o pulsa Retorno para enviar, Esc para cancelar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute… Cliquez sur le microphone ou appuyez sur Entrée pour envoyer, Échap pour annuler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In ascolto… Fai clic sul microfono o premi A capo per inviare, Esc per annullare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取り中… マイクをクリックするかReturnキーで送信、Escでキャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "듣는 중… 마이크를 클릭하거나 Return 키를 누르면 전송, Esc 키로 취소"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvindo… Clique no microfone ou pressione Return para enviar, Esc para cancelar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在聆听…点按麦克风或按 Return 键即发送，按 Esc 键取消"
+          }
+        }
+      }
+    },
     "Listening… Release to send, Esc to cancel" : {
       "localizations" : {
         "ar" : {
@@ -118966,6 +119374,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在聆听…松开即发送，按 Esc 键取消"
+          }
+        }
+      }
+    },
+    "Listens until you click again or press Return." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يصغي حتى تنقر مجددًا أو تضغط مفتاح الرجوع."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hört zu, bis du erneut klickst oder den Zeilenschalter drückst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escucha hasta que vuelvas a hacer clic o pulses Retorno."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute jusqu’à ce que vous cliquiez à nouveau ou appuyiez sur Entrée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ascolta finché non fai di nuovo clic o premi A capo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう一度クリックするかReturnキーを押すまで聞き取ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 클릭하거나 Return 키를 누를 때까지 들어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouve até você clicar de novo ou pressionar Return."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "持续聆听，直到你再次点按或按 Return 键。"
           }
         }
       }
@@ -148492,6 +148958,7 @@
     },
     "Other agents and extensions keep their own rules." : {
       "comment" : "The Full access sheet",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -148547,8 +149014,7 @@
             "value" : "其他智能体和扩展仍遵循各自的规则。"
           }
         }
-      },
-      "extractionState" : "stale"
+      }
     },
     "Other agents and extensions keep their own rules. The one exception is a flow of Sidefolk's own extensions: turning it on or running it yourself is your approval, with no card, and it stands only while Full access is on." : {
       "comment" : "The Full access sheet",
@@ -176638,6 +177104,64 @@
         }
       }
     },
+    "Sends what was heard. Esc cancels." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يرسل ما سُمع. اضغط Esc للإلغاء."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendet, was gehört wurde. Esc bricht ab."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía lo que se escuchó. Esc cancela."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoie ce qui a été entendu. Échap annule."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invia ciò che è stato sentito. Esc annulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取った内容を送信します。Escでキャンセルします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "들은 내용을 보내요. Esc 키로 취소해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envia o que foi ouvido. Esc cancela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送听到的内容。按 Esc 键取消。"
+          }
+        }
+      }
+    },
     "Sent to %@ (%@) at %@" : {
       "localizations" : {
         "ar" : {
@@ -193489,6 +194013,122 @@
         }
       }
     },
+    "Stop and send" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أوقف وأرسل"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anhalten und senden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener y enviar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter et envoyer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompi e invia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止して送信"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "멈추고 보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar e enviar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止并发送"
+          }
+        }
+      }
+    },
+    "Stop and send what I heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أوقف وأرسل ما سمعته"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anhalten und senden, was ich gehört habe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener y enviar lo que escuché"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter et envoyer ce que j’ai entendu"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompi e invia ciò che ho sentito"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止して聞き取った内容を送信"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "멈추고 들은 내용 보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar e enviar o que ouvi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止并发送我听到的内容"
+          }
+        }
+      }
+    },
     "Stop finding" : {
       "comment" : "A tree of cards on an extension's page",
       "localizations" : {
@@ -195759,6 +196399,64 @@
         }
       }
     },
+    "Talk" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحدّث"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprechen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hablar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parla"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "話す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "말하기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说话"
+          }
+        }
+      }
+    },
     "Talk shortcut" : {
       "localizations" : {
         "ar" : {
@@ -195934,7 +196632,72 @@
         }
       }
     },
+    "Tap %@ to open the Ask panel, hold it to talk. You can also press and hold %@, or click the microphone in the Ask panel and click it again to send." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على %1$@ لفتح لوحة «اسأل»، أو اضغط مطوّلًا عليه للتحدث. يمكنك أيضًا الضغط مطوّلًا على %2$@، أو النقر على الميكروفون في لوحة «اسأل» ثم النقر عليه مجددًا للإرسال."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücke %1$@ kurz, um das Fragefenster zu öffnen, oder halte es zum Sprechen gedrückt. Du kannst auch auf %2$@ klicken und halten, oder im Fragefenster auf das Mikrofon klicken und zum Senden erneut klicken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tap %1$@ to open the Ask panel, hold it to talk. You can also press and hold %2$@, or click the microphone in the Ask panel and click it again to send."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsa %1$@ para abrir el panel Preguntar; mantenlo pulsado para hablar. También puedes mantener pulsado a %2$@, o hacer clic en el micrófono del panel Preguntar y volver a hacer clic para enviar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur %1$@ pour ouvrir le panneau Demander, maintenez-le enfoncé pour parler. Vous pouvez aussi appuyer longuement sur %2$@, ou cliquer sur le microphone du panneau Demander puis cliquer à nouveau pour envoyer."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premi %1$@ per aprire il pannello Chiedi; tieni premuto per parlare. Puoi anche tenere premuto %2$@, oppure fare clic sul microfono nel pannello Chiedi e fare di nuovo clic per inviare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@を押すと入力パネルが開き、押し続けると話せます。%2$@を長押しするか、入力パネルのマイクをクリックしてもう一度クリックすると送信することもできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 단축키를 누르면 요청 패널이 열리고, 길게 누르면 말할 수 있어요. 컴패니언(%2$@)을 길게 누르거나, 요청 패널의 마이크를 클릭하고 다시 클릭해 보낼 수도 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque em %1$@ para abrir o painel Perguntar e segure para falar. Você também pode pressionar e segurar %2$@, ou clicar no microfone do painel Perguntar e clicar de novo para enviar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下 %1$@ 打开提问面板，按住则开始说话。你也可以按住 %2$@，或点按提问面板中的麦克风，再次点按即发送。"
+          }
+        }
+      }
+    },
     "Tap %@ to open the Ask panel, hold it to talk. You can also press and hold %@." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -208195,6 +208958,7 @@
       }
     },
     "The microphone is ready. Hold to talk." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -208248,6 +209012,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "麦克风已就绪。请按住说话。"
+          }
+        }
+      }
+    },
+    "The microphone is ready: click it or hold the talk shortcut." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الميكروفون جاهز: انقر عليه أو اضغط مطوّلًا على اختصار التحدث."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Mikrofon ist bereit: Klicke darauf oder halte den Kurzbefehl zum Sprechen gedrückt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El micrófono está listo: haz clic en él o mantén pulsado el atajo para hablar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le microphone est prêt : cliquez dessus ou maintenez le raccourci pour parler."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il microfono è pronto: fai clic su di esso o tieni premuta l’abbreviazione per parlare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マイクの準備ができました。マイクをクリックするか、ショートカットを押し続けて話してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마이크가 준비됐어요. 마이크를 클릭하거나 단축키를 길게 눌러 말하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O microfone está pronto: clique nele ou segure o atalho para falar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "麦克风已就绪：点按麦克风或按住说话快捷键。"
           }
         }
       }
@@ -210698,6 +211520,7 @@
       }
     },
     "The speech model is ready. Hold to talk again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -210751,6 +211574,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语音识别模型已就绪。请再次按住说话。"
+          }
+        }
+      }
+    },
+    "The speech model is ready: click the microphone or hold the talk shortcut." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نموذج الكلام جاهز: انقر على الميكروفون أو اضغط مطوّلًا على اختصار التحدث."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Spracherkennungsmodell ist bereit: Klicke auf das Mikrofon oder halte den Kurzbefehl zum Sprechen gedrückt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El modelo de voz está listo: haz clic en el micrófono o mantén pulsado el atajo para hablar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le modèle de reconnaissance vocale est prêt : cliquez sur le microphone ou maintenez le raccourci pour parler."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il modello vocale è pronto: fai clic sul microfono o tieni premuta l’abbreviazione per parlare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声認識モデルの準備ができました。マイクをクリックするか、ショートカットを押し続けて話してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음성 인식 모델이 준비됐어요. 마이크를 클릭하거나 단축키를 길게 눌러 말하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O modelo de fala está pronto: clique no microfone ou segure o atalho para falar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音识别模型已就绪：点按麦克风或按住说话快捷键。"
           }
         }
       }
@@ -242475,6 +243356,7 @@
     },
     "You can end this in Settings › Add-ons." : {
       "comment" : "A plan's card",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -242530,8 +243412,7 @@
             "value" : "你可以在设置 › 附加组件中结束它。"
           }
         }
-      },
-      "extractionState" : "stale"
+      }
     },
     "You can end this in Settings › Trust." : {
       "comment" : "A plan's card",

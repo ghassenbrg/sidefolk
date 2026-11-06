@@ -433,6 +433,8 @@ extension AppCoordinator: AskActions {
         }
     }
 
+    func microphoneClicked() { voice.microphoneClicked() }
+
     func stop() {
         // Stopped by hand: the run's answer, if any arrives, isn't said aloud either.
         voice.interrupt(cancelRun: false)

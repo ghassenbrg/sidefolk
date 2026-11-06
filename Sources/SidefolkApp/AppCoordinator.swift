@@ -131,9 +131,12 @@ final class AppCoordinator {
         ask.onPinsChanged = { save.yield($0) }
         // Esc silences the companion or drops what is being said before it closes anything.
         askPanel.onEscape = { [weak self] in self?.voice.cancel() ?? false }
+        // Listening a click started stops the moment the person is elsewhere, unsent (D232, T64).
+        askPanel.onResignKey = { [weak self] in self?.voice.clickedTalkingEnds(.leftSidefolk) }
         askPanel.onVisibilityChange = { [weak self] visible in
             self?.mood.panelOpen = visible
             if !visible {
+                self?.voice.clickedTalkingEnds(.panelClosed)
                 self?.companion.keepRaised(false)
                 self?.sidecard.askClosed()
             }
@@ -190,7 +193,18 @@ final class AppCoordinator {
         }
 
         notifier.configure()
-        monitor.onAwayChanged = { [weak self] away in self?.setAsleep(away) }
+        monitor.onAwayChanged = { [weak self] away in
+            if away { self?.voice.clickedTalkingEnds(.sleptOrLocked) }
+            self?.setAsleep(away)
+        }
+        for (center, name) in [(NSWorkspace.shared.notificationCenter, NSWorkspace.willSleepNotification),
+                               (NotificationCenter.default, NSApplication.didHideNotification),
+                               (NotificationCenter.default, NSApplication.didResignActiveNotification)] {
+            let ending: VoiceToggle.Event = name == NSWorkspace.willSleepNotification ? .sleptOrLocked : .leftSidefolk
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.voice.clickedTalkingEnds(ending) }
+            }
+        }
         sidecard.holds = { [weak self] whisper in
             guard let route = self?.fullScreenRoute(whisper: whisper) else { return false }
             return route == .wait || route == .notify
@@ -463,6 +477,12 @@ final class AppCoordinator {
             return
         }
         if command == "voice:stop" { _ = voice.cancel(); return }
+        // The microphone button, as the person's click on it, with a file as the microphone (D232); debug builds only (T64).
+        if command == "voice:click" { voice.devMicrophoneClicked(feeding: nil); return }
+        if command.hasPrefix("voice:clickFile:") {
+            voice.devMicrophoneClicked(feeding: URL(fileURLWithPath: String(command.dropFirst("voice:clickFile:".count))))
+            return
+        }
         if command.hasPrefix("brain:scripted:") {
             let value = String(command.dropFirst("brain:scripted:".count))
             Task { await DevBrain.set(value, paths: runtime.paths, settings: runtime.settings) }

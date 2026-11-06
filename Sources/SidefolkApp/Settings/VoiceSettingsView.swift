@@ -61,8 +61,8 @@ struct VoiceSettingsSections: View {
 
     @ViewBuilder private var talkRows: some View {
         SettingsRow(title: Text("Talk with"), detail: settings.talkKey == .askShortcut
-                    ? Text("Tap \(askShortcut) to open the Ask panel, hold it to talk. You can also press and hold \(name).")
-                    : Text("Hold your talk shortcut. You can also press and hold \(name).")) {
+                    ? Text("Tap \(askShortcut) to open the Ask panel, hold it to talk. You can also press and hold \(name), or click the microphone in the Ask panel and click it again to send.")
+                    : Text("Hold your talk shortcut. You can also press and hold \(name), or click the microphone in the Ask panel and click it again to send.")) {
             Picker("Talk with", selection: Binding(get: { settings.talkKey }, set: { key in voice.update { $0.talkKey = key } })) {
                 Text("Hold the Ask shortcut").tag(TalkKey.askShortcut)
                 Text("Its own shortcut").tag(TalkKey.ownShortcut)

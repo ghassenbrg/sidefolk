@@ -23,6 +23,7 @@ final class FixtureAskActions: AskActions {
     func openSession(_ session: AgentSession) {}
     func dismissAttention(_ item: AttentionItem) {}
     func stop() {}
+    func microphoneClicked() {}
     func startFresh(in model: AskModel, announce: Bool) {}
     func openConversation(_ thread: String?) {}
     func undo(activityId: String, in model: AskModel) {}
