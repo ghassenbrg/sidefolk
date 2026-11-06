@@ -47,7 +47,7 @@ enum DesktopScenes {
                           actions: [AttentionAction(id: "option-0", title: "Yes", isPrimary: true), AttentionAction(id: "option-1", title: "No")],
                           refKind: "ask", now: now.addingTimeInterval(-60)),
         ]
-        let longNotice = AttentionItem(level: .attention, source: "extension:dev.sidefolk.sideflow", title: "Sideflow: Weekly look back",
+        let longNotice = AttentionItem(level: .attention, source: "extension:dev.example.flows", title: "Flows: Weekly look back",
                                        body: String(Self.weeklyLookBack.prefix(AttentionItem.bodyLimit)),
                                        actions: [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))], refKind: "notify")
         let needsYou = moment(AttentionItem(level: .attention, source: "session:cc-1", title: "Claude needs you in sidefolk",
