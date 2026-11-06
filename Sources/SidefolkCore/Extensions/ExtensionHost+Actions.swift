@@ -495,7 +495,7 @@ extension ExtensionHost {
         if e.mode == .fullAccess { return ("in_click_only", nil) }
         if e.previous == nil { return ("first_time", nil) }
         if e.widened { return ("terms_changed", nil) }
-        if let asking = e.fresh.first(where: { !ExtensionPlanRules.staysInside(e.lines[$0]) }) { return ("line_asks", ExtensionPlanWords.visibleNumber(e, asking)) }
+        if let asking = e.fresh.first(where: { !ExtensionPlanRules.staysInside(e.lines[$0]) }) { return ("line_asks", asking) }
         return nil
     }
 
@@ -581,10 +581,11 @@ extension ExtensionHost {
             let newRows = e.rows.indices.filter { e.fresh.contains(e.rows[$0]) }
             let silent = (e.covered || (runtimes[id]?.pin.origin?.firstParty == true && Self.autoSkips(e))) && flow.mode != .askEveryTime
             var fields: [String: JSONValue] = ["ok": true, "steps": .array(states), "new": .array(newRows.map { .number(Double($0)) }), "silent": .bool(silent), "widened": .bool(e.widened)]
-            // Why a card comes, for an editor to tell its author: the first reason, and the line it is on as the card numbers it. Only names a reason: it changes nothing.
+            // Why a card comes, for an editor to tell its author: the first reason, and the row of the plan it is on, numbered from 0 as `new` numbers rows. Only
+            // names a reason: it changes nothing.
             if !silent, let reason = Self.cardReason(e, firstParty: runtimes[id]?.pin.origin?.firstParty == true) {
                 fields["why"] = .string(reason.why)
-                if let line = reason.line { fields["line"] = .number(Double(line)) }
+                if let row = reason.line.flatMap({ line in e.rows.firstIndex(of: line) }) { fields["step"] = .number(Double(row)) }
             }
             await reply(id, request, fields)
         }

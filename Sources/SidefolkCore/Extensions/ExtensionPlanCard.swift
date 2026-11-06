@@ -77,17 +77,12 @@ extension ExtensionPlanWords {
     /// literal that looks like a secret, a field named like one, a long mixed-case word): what History would not keep whole, the card is the record of.
     static func historyRecord(_ e: PlanEvaluation) -> [String]? { recordResult(e).lines }
 
-    /// What `historyRecord` found: the record, or why there is none and the line (as the card numbers it) the first reason is on, for an editor to tell its author.
+    /// What `historyRecord` found: the record, or why there is none and the line (its index among `PlanEvaluation.lines`) the first reason is on, for an editor to
+    /// tell its author.
     struct Recorded {
         var lines: [String]?
         var why = ""
         var line: Int?
-    }
-
-    /// The number the card gives a line, which is not its place in the plan: steps that only pass words on are left out.
-    static func visibleNumber(_ e: PlanEvaluation, _ index: Int) -> Int? {
-        guard e.lines.indices.contains(index), e.lines[index].step.kind != "value" else { return nil }
-        return e.lines[..<index].filter { $0.step.kind != "value" }.count + 1
     }
 
     static func recordResult(_ e: PlanEvaluation) -> Recorded {
@@ -120,7 +115,7 @@ extension ExtensionPlanWords {
         var out = [terms, named, when]
         for i in e.fresh {
             guard let n = visible[i] else { continue }
-            currentLine = n
+            currentLine = i
             let line = e.lines[i], number = "#\(n) "
             let times = e.rows.filter { $0 == i }.count
             let again = times > 1 ? " · " + String(localized: "× \(times)", comment: "A plan's card: the same line, this many times") : ""
@@ -133,7 +128,7 @@ extension ExtensionPlanWords {
                 out.append(number + String(localized: "Hands to your AI: \(title + " · " + from)", comment: "History: a plan's step that hands what it read to the person's AI") + again)
             case "flow"?: out.append(number + String(localized: "Sets off: “\(fit(line.step.input["name"]?.stringValue ?? "", 80))”", comment: "History: a plan's step that sets off another flow; its name") + again)
             default:
-                guard let tool = line.tool else { return Recorded(why: "unknown_tool", line: n) }
+                guard let tool = line.tool else { return Recorded(why: "unknown_tool", line: i) }
                 let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
                 let ext = ExtensionPlanRules.extensionTool(tool)
                 var header = number + fit(tool.spec.title, 60) + (ext.map { " (" + fit($0.extensionName, 40) + ")" } ?? "")
@@ -154,7 +149,7 @@ extension ExtensionPlanWords {
                     for root in ExtensionPlanRules.roots(text) {
                         let label = fit(root, 60)
                         if let known = named[label] {
-                            if known != Array(root.utf8) { return Recorded(why: "names_alike", line: n) }
+                            if known != Array(root.utf8) { return Recorded(why: "names_alike", line: i) }
                             continue
                         }
                         named[label] = Array(root.utf8)
@@ -169,7 +164,11 @@ extension ExtensionPlanWords {
             }
         }
         // 64 entries is what History keeps of a list; 300 characters of a string, and only what the Redactor leaves as it is.
-        func lineOf(_ entry: String) -> Int? { entry.hasPrefix("#") ? Int(entry.dropFirst().prefix { $0.isNumber }) : nil }
+        // An entry begins with its line's number as the card shows it; the line is the one that has it.
+        func lineOf(_ entry: String) -> Int? {
+            guard entry.hasPrefix("#"), let number = Int(entry.dropFirst().prefix { $0.isNumber }) else { return nil }
+            return visible.first { $0.value == number }?.key
+        }
         if cutSomewhere { return Recorded(why: "name_too_long", line: cutLine) }
         if out.count > 64 { return Recorded(why: "too_many_entries") }
         if let long = out.first(where: { $0.count > 300 }) { return Recorded(why: "entry_too_long", line: lineOf(long)) }
