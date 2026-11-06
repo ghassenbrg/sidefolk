@@ -105,13 +105,9 @@ import Testing
 
     @Test func aFieldHearsWhenWhatsSavedChangesUnlessItFollowsTheTyping() throws {
         func field(_ value: String, live: Bool) throws -> ExtensionPage.Field {
-            let page = try ExtensionPage.parse(.object(["sections": [["blocks": [["field": ["label": "A", "tool": "t", "key": "text", "value": .string(value), "live": .bool(live), "id": "f"]]]]]]))
-            guard case .field(let f)? = page.sections.first?.blocks.first else { throw Problem() }
-            return f
+            ExtensionPage.Field(label: "A", detail: nil, placeholder: nil, button: "", tool: "t", input: .object([:]), key: "text", go: nil, live: live, value: value)
         }
         #expect(try field("a", live: false) != field("b", live: false))
         #expect(try field("a", live: true) == field("b", live: true))
     }
-
-    private struct Problem: Error {}
 }
