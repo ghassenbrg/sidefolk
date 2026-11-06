@@ -32,7 +32,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private(set) var mode: GuardMode = .askOncePerKind
     private var fullAccessEnds: Date?
     private var mark: Mark = .idle
-    private var hidden = false
+    private(set) var hidden = false
     private var readout: String?
 
     var isPocketShown: Bool { popover.isShown }
