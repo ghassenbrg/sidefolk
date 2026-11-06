@@ -80,7 +80,7 @@ lines = open(path, encoding="utf-8").read().split("\n")
 mended = []
 for line in lines:
     m = re.fullmatch(r"(\"[^\"]+\" = \")(.*)(\";)", line)
-    mended.append(m[1] + m[2].replace("\"", "\\\"") + m[3] if m else line)
+    mended.append(m[1] + re.sub(r"(?<!\\)\"", lambda _: chr(92) + chr(34), m[2]) + m[3] if m else line)
 open(path, "w", encoding="utf-8").write("\n".join(mended))
 ' "$AR_STRINGS" || true
   rm -rf "$KS_BUNDLE/Contents/_CodeSignature"
