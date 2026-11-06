@@ -161,8 +161,9 @@ struct TreeAddButton: View {
                     .frame(width: 22, height: 22)
                     .background(Theme.surfaceRaised, in: Circle())
                     .overlay(Circle().strokeBorder(lit ? line.to : Theme.line, lineWidth: dropping || takes == true ? 2 : 1))
-                    .background(Circle().fill(line.to.opacity(takes == true ? 0.18 : 0)).padding(-6))
-                    .scaleEffect(dropping ? 1.5 : (takes == true ? 1.2 : 1))
+                    // A quiet spot sits by a branch's label: lit, it keeps its size, so the label stays readable.
+                    .background(Circle().fill(line.to.opacity(takes == true && !add.quiet ? 0.18 : 0)).padding(-6))
+                    .scaleEffect(dropping ? 1.5 : (takes == true && !add.quiet ? 1.2 : 1))
                     .contentShape(Circle())
             }
         }
