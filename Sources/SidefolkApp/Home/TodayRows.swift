@@ -202,10 +202,15 @@ struct QueueRow: View {
     /// Beside Dismiss, two answers with the main one last: sorting the main one last and keeping the first two had
     /// left a reminder without Done.
     static func cardActions(_ item: AttentionItem) -> [AttentionAction] {
-        let main = item.actions.first(where: \.isPrimary)
         // A question's answers are all it has: none can be left off.
-        if item.refKind == "ask" { return item.actions.filter { !$0.isPrimary } + (main.map { [$0] } ?? []) }
-        let others = item.actions.filter { !$0.isPrimary }.prefix(main == nil ? 2 : 1)
+        if item.refKind == "ask" {
+            let main = item.actions.first(where: \.isPrimary)
+            return item.actions.filter { !$0.isPrimary } + (main.map { [$0] } ?? [])
+        }
+        // The card has its own Dismiss, as the rows do; an item's "dismiss" answer would show it twice (an agent's notice, a job's).
+        let actions = item.actions.filter { $0.id != "dismiss" }
+        let main = actions.first(where: \.isPrimary)
+        let others = actions.filter { !$0.isPrimary }.prefix(main == nil ? 2 : 1)
         return Array(others) + (main.map { [$0] } ?? [])
     }
 

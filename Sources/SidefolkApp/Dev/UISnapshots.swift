@@ -323,6 +323,14 @@ enum UISnapshots {
             full.selection = .now
             try await page("page-today", TodayView(model: full), width: 1100)
             try await page("page-today-empty", TodayView(model: empty), width: 1100)
+            // An agent's notice as Today's card: one Dismiss, though the notice carries a "dismiss" answer of its own.
+            let agentNotice = await empty.services.runtime.attention.post(AttentionRequest(level: .attention, source: "external:claude-code",
+                title: "Deploy to staging finished", body: "All checks passed.",
+                actions: [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))], refKind: "notify"))
+            await empty.now.reload()
+            try await page("page-today-notice", TodayView(model: empty), width: 1100)
+            await empty.services.runtime.attention.respond(id: agentNotice.id, actionId: nil)
+            await empty.now.reload()
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
             // A wide window and a narrow one: the page fills the width it has, centred (D67).

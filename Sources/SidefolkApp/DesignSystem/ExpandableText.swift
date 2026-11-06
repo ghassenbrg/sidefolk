@@ -13,7 +13,11 @@ struct ExpandableText: View {
     var maxHeight: CGFloat = 220
     /// Told when it opens or closes, for a window that fits itself to its content (the Sidecard).
     var changed: (() -> Void)?
+    #if DEBUG
     @Environment(\.opensLongText) private var startsOpen
+    #else
+    private let startsOpen = false
+    #endif
     @State private var open: Bool?
     @State private var shownHeight: CGFloat = 0
     @State private var fullHeight: CGFloat = 0
@@ -74,7 +78,9 @@ struct ExpandableText: View {
     }
 }
 
+#if DEBUG
 extension EnvironmentValues {
     /// Long text opened from the start: for snapshots, which can't click Show all.
     @Entry var opensLongText = false
 }
+#endif
