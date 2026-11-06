@@ -20,7 +20,9 @@ enum CompanionAppIcon {
     static func apply(_ settings: AppSettings) {
         _ = sidefolk
         let look = CompanionArt.look(for: settings)
-        let wanted = settings.companionAppIcon ? "\(settings.localCompanion ?? settings.companion.rawValue).\(settings.customCompanion ?? "").\(look.style.color.rawValue).\(look.style.accessory.rawValue)" : nil
+        // Its 2D or 3D look can each have their own profile picture.
+        let dimension = settings.localCompanion.map { settings.dimension(forLocal: $0) } ?? settings.dimension(for: settings.companion)
+        let wanted = settings.companionAppIcon ? "\(settings.localCompanion ?? settings.companion.rawValue).\(settings.customCompanion ?? "").\(look.style.color.rawValue).\(look.style.accessory.rawValue).\(dimension)" : nil
         guard wanted != showing else { return }
         showing = wanted
         current = wanted == nil ? nil : image(for: settings)
@@ -33,23 +35,17 @@ enum CompanionAppIcon {
         if let current { NSApp.applicationIconImage = current }
     }
 
-    /// The icon a companion carries (`appicons/<id>.png`, D118), or else its portrait on a tile in the app icon's shape.
+    /// The icon a companion carries (`appicons/<id>.png`, D118), or else its profile picture, the one Ask and Home show.
     static func image(for settings: AppSettings) -> NSImage? {
         // A made-up companion wears a built-in's body, not its icon.
         let carried = settings.customCompanion == nil ? Companion3DStage.appIcon(settings.localCompanion ?? settings.companion.rawValue) : nil
-        return carried ?? tile(CompanionArt.portrait(for: settings, side: side))
+        return carried ?? round(CompanionArt.avatar(for: settings, side: side))
     }
 
-    /// The macOS icon shape, inset as Apple's grid has it, so it sits beside its neighbours in the Dock.
-    private static func tile(_ portrait: NSImage) -> NSImage {
-        let canvas = NSSize(width: side, height: side)
-        return NSImage(size: canvas, flipped: false) { rect in
-            let shape = NSBezierPath(roundedRect: rect.insetBy(dx: side * 0.098, dy: side * 0.098), xRadius: side * 0.18, yRadius: side * 0.18)
-            NSGradient(starting: NSColor(calibratedWhite: 0.99, alpha: 1), ending: NSColor(calibratedWhite: 0.88, alpha: 1))?.draw(in: shape, angle: -90)
-            NSGraphicsContext.current?.saveGraphicsState()
-            shape.addClip()
-            portrait.draw(in: rect.insetBy(dx: side * 0.15, dy: side * 0.15))
-            NSGraphicsContext.current?.restoreGraphicsState()
+    /// The round picture as it is, no tile behind it, inset as Apple's grid has it so it sits beside its neighbours in the Dock.
+    private static func round(_ avatar: NSImage) -> NSImage {
+        NSImage(size: NSSize(width: side, height: side), flipped: false) { rect in
+            avatar.draw(in: rect.insetBy(dx: side * 0.098, dy: side * 0.098))
             return true
         }
     }
