@@ -110,7 +110,9 @@ struct SidecardItemCard: View {
     static func message(_ item: AttentionItem) -> Text? {
         guard let body = item.body else { return nil }
         guard let about = item.about, !about.isEmpty else { return Text(verbatim: body) }
-        return Text(verbatim: body) + Text(verbatim: "  ") + Text(verbatim: about).italic().foregroundStyle(Theme.inkFaint)
+        // Read aloud as a phrase of its own after who asks, since a style isn't heard.
+        let heard = Text(verbatim: body) + Text(verbatim: ". ") + Text("About: \(about)", comment: "Read aloud under a question, after who asks: what the asker says it's about, in its words")
+        return (Text(verbatim: body) + Text(verbatim: "  ") + Text(verbatim: about).italic().foregroundStyle(Theme.inkFaint)).accessibilityLabel(heard)
     }
 
     var body: some View {
