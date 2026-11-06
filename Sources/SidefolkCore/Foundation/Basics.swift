@@ -73,6 +73,26 @@ extension String {
     public func clipped(_ limit: Int) -> String {
         let t = ExtensionText.withoutStacks(trimmingCharacters(in: .whitespacesAndNewlines))
         guard t.count > limit else { return t }
-        return String(t.prefix(max(0, limit - 1))) + "…"
+        var head = String(t.prefix(max(0, limit - 1)))
+        // A marker for a hidden character (`hiddenShown`) is shown whole or not at all: whatever of one is left at the cut goes.
+        if let partial = head.range(of: "⟨(U(\\+[0-9A-F]{0,6})?)?$", options: .regularExpression) { head = String(head[..<partial.lowerBound]) }
+        return head + "…"
+    }
+
+    /// The text with every character that draws nothing, or changes how the rest is drawn (direction controls, zero-width characters, separators, controls, tags,
+    /// unassigned), written out as `⟨U+202E⟩`: a name or a path can't pass for another, and the person sees that something is odd.
+    public var hiddenShown: String {
+        func hidden(_ scalar: Unicode.Scalar) -> Bool {
+            switch scalar.properties.generalCategory {
+            case .format, .control, .lineSeparator, .paragraphSeparator, .unassigned, .surrogate: true
+            default: false
+            }
+        }
+        guard unicodeScalars.contains(where: hidden) else { return self }
+        var out = ""
+        for scalar in unicodeScalars {
+            if hidden(scalar) { out += String(format: "⟨U+%04X⟩", scalar.value) } else { out.unicodeScalars.append(scalar) }
+        }
+        return out
     }
 }
