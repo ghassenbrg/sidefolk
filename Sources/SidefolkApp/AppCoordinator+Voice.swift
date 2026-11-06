@@ -22,6 +22,7 @@ extension AppCoordinator: VoiceHost {
     func applyVoiceKeys() {
         guard talkKeysInstalled else { return }
         let v = runtime.settings.current.voice
+        ask.microphoneOn = v.input
         if v.input && v.talkKey == .ownShortcut { KeyboardShortcuts.enable(.talk) } else { KeyboardShortcuts.disable(.talk) }
     }
 

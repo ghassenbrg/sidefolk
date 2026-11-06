@@ -123,7 +123,7 @@ struct AskView: View {
                     Button("Stop") { model.actions?.stop() }
                         .buttonStyle(.sf(.secondary, size: .small))
                         .keyboardShortcut(".", modifiers: .command)
-                } else if let microphone = model.actions?.microphone {
+                } else if let microphone = model.microphone {
                     MicrophoneButton(state: microphone) { model.actions?.microphoneClicked() }
                 }
             }
@@ -261,7 +261,7 @@ struct AskView: View {
             return String(localized: "Downloading the speech model… \(Int(progress * 100))%", comment: "The number is a percentage")
         case .finishing:
             return String(localized: "Getting your last words…")
-        case .listening where model.actions?.microphone == .listening:
+        case .listening where model.microphone == .listening:
             // A click started it: nothing to hold, and nothing goes until the person says so (D232).
             return String(localized: "Listening… Click the microphone or press Return to send, Esc to cancel")
         case .listening(let basic):
@@ -835,6 +835,8 @@ private struct MicrophoneButton: View {
                 .symbolEffect(.pulse, isActive: listening)
         }
         .buttonStyle(.sfIcon(side: 26))
+        // Opening or settling: the click would be ignored anyway, so it looks it.
+        .disabled(state == .waiting)
         .foregroundStyle(listening ? Theme.danger : Theme.inkMuted)
         .help(listening ? Text("Stop and send what I heard") : Text("Click to talk, click again to send"))
         .accessibilityLabel(listening ? Text("Stop and send") : Text("Talk"))

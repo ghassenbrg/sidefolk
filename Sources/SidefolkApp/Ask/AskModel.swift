@@ -137,8 +137,6 @@ protocol AskActions: AnyObject {
     func stop()
     /// The microphone button, clicked by the person: the only thing that calls this (D232, T64).
     func microphoneClicked()
-    /// The microphone button: nil while voice input is off or the talk key is talking, else ready or listening.
-    var microphone: AskMicrophone? { get }
     /// The next request starts a new conversation with the AI; `announce` says so in the panel (D45).
     func startFresh(in model: AskModel, announce: Bool)
     /// Home › Conversations, at `thread` when given.
@@ -201,6 +199,8 @@ enum AskMicrophone: Equatable {
     case ready
     /// A click started it: the next click, or Return, sends what was heard.
     case listening
+    /// Opening, downloading its model or settling the last words: a click does nothing until that's done.
+    case waiting
 }
 
 enum VoiceInput: Equatable {
@@ -216,6 +216,21 @@ enum VoiceInput: Equatable {
 
 @MainActor @Observable
 final class AskModel {
+    /// Voice input is on, so the Say field has its microphone button (D232).
+    var microphoneOn = false
+    /// A click is listening now; the next click or Return sends.
+    var clickListening = false
+    /// Talking that a click started, from the click until the words are settled or dropped.
+    var talkingByClick = false
+
+    /// The microphone button: nil while voice input is off or the talk key is talking.
+    var microphone: AskMicrophone? {
+        guard microphoneOn else { return nil }
+        if clickListening, case .listening? = voice { return .listening }
+        if voice == nil { return .ready }
+        return talkingByClick ? .waiting : nil
+    }
+
     var text = "" {
         didSet {
             guard text != oldValue else { return }

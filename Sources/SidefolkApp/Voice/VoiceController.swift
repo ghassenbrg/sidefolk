@@ -88,8 +88,16 @@ final class VoiceController {
     // MARK: The microphone button (D232, T64)
 
     /// The person clicked the microphone button. The button is the only way to this: nothing else may start listening.
-    func microphoneClicked() {
-        act(toggle.handle(.click(replyPlaying: isSpeaking || awaitingSpokenReply)), feed: nil)
+    func microphoneClicked() { click(feed: nil) }
+
+    /// A click counts only when the microphone is off or listening: one that comes while it opens, downloads its model or
+    /// settles the last words waits for none of that, so quick clicks can't start a second recognizer or leave one held.
+    private func click(feed file: URL?) {
+        switch host.ask.voice {
+        case nil, .listening?: break
+        default: return
+        }
+        act(toggle.handle(.click(replyPlaying: isSpeaking || awaitingSpokenReply)), feed: file)
     }
 
     /// Listening that a click started is over without the person's word: the panel closed, they left Sidefolk, the Mac
@@ -98,9 +106,6 @@ final class VoiceController {
         guard toggle.listening else { return }
         act(toggle.handle(event), feed: nil)
     }
-
-    /// The button's state, for its look and its VoiceOver label.
-    var listensFromClick: Bool { toggle.listening }
 
     private func act(_ action: VoiceToggle.Action, feed file: URL?) {
         switch action {
@@ -111,6 +116,8 @@ final class VoiceController {
         case .cancel: cancel()
         case .stopKeepingWords: end(sending: false)
         }
+        // The button reads this from the observed model, so it changes the moment the state does.
+        host.ask.clickListening = toggle.listening
     }
 
     private func listenFromClick(feed file: URL?) {
@@ -118,6 +125,7 @@ final class VoiceController {
         guard host.currentSettings.voice.input, !holding else { return toggle.reset() }
         if host.ask.busy, host.ask.pendingQuestion == nil { host.cancelRun() }
         start(feed: file)
+        host.ask.talkingByClick = true
         clickLimit = Task { [weak self] in
             try? await Task.sleep(for: VoiceToggle.limit)
             guard !Task.isCancelled else { return }
@@ -234,7 +242,7 @@ final class VoiceController {
             // The key was let go to answer macOS's question: nothing was heard yet.
             if asking, !holding {
                 host.ask.voice = nil
-                notice(.info(String(localized: "The microphone is ready. Hold to talk.")))
+                notice(.info(String(localized: "The microphone is ready: click it or hold the talk shortcut.")))
                 return
             }
         }
@@ -274,6 +282,9 @@ final class VoiceController {
 
     /// The first time a language is used, macOS downloads its model; the panel shows how far it is.
     private func download(_ language: String?) async {
+        // Nothing listens while the model downloads: a click has no release to clear this, and the talk key's comes too late.
+        holding = false
+        capture.stop()
         finishedTalking()
         host.ask.voice = .preparing(0)
         do {
@@ -283,7 +294,7 @@ final class VoiceController {
             }
             guard case .preparing? = host.ask.voice else { return }
             host.ask.voice = nil
-            notice(.info(String(localized: "The speech model is ready. Hold to talk again.")))
+            notice(.info(String(localized: "The speech model is ready: click the microphone or hold the talk shortcut.")))
         } catch {
             fail(UserFacingError("I couldn't download the speech model. Nothing was sent.", recovery: "Check your internet connection and try again.",
                                  detail: String(describing: error)))
@@ -318,7 +329,7 @@ final class VoiceController {
         let words = heard.trimmingCharacters(in: .whitespacesAndNewlines)
         let message: String
         if !words.isEmpty {
-            message = String(localized: "I didn't catch that. Fix the words and press Return, or hold to talk again.")
+            message = String(localized: "I didn't catch that. Fix the words and press Return, or talk again.")
         } else if mic.opens == 0 {
             // Let go before the microphone opened (the first press of the day takes a moment).
             message = String(localized: "Hold a moment longer: I was still getting ready to listen. Talk once my ears are up.")
@@ -329,7 +340,7 @@ final class VoiceController {
             message = String(localized: "I only heard silence from \(mic.device). Check it's the microphone you're talking into, in System Settings › Sound.",
                              comment: "A microphone's name, like “MacBook Pro Microphone”")
         } else {
-            message = String(localized: "I didn't catch that. Hold to talk again.")
+            message = String(localized: "I didn't catch that. Try talking again.")
         }
         notice(.info(message))
         host.ask.text = words
@@ -359,6 +370,8 @@ final class VoiceController {
     /// Talking is over, however it ended: the pose and the Esc watch go back.
     private func finishedTalking() {
         toggle.reset()
+        host.ask.clickListening = false
+        host.ask.talkingByClick = false
         clickLimit?.cancel()
         clickLimit = nil
         host.voiceMood(hearing: false, transcribing: false)
@@ -569,8 +582,6 @@ final class VoiceController {
 
     /// Dev: the microphone button clicked, with an audio file in place of the microphone while it listens
     /// (`voice:clickFile:<path>`), or with nothing new (`voice:click`, the second click). Debug builds only (T64).
-    func devMicrophoneClicked(feeding file: URL?) {
-        act(toggle.handle(.click(replyPlaying: isSpeaking || awaitingSpokenReply)), feed: file)
-    }
+    func devMicrophoneClicked(feeding file: URL?) { click(feed: file) }
     #endif
 }
