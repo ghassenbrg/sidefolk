@@ -43,6 +43,7 @@ your client's name (shown to the user as unverified). You act as another app, no
 | "mark the oat milk task done", "fix the typo in that note" | `notes_search` or `notes_list` for the id, then `notes_update` |
 | "delete that note", "remove the old ideas about X" | find the id, then `notes_trash` |
 | "is Sidefolk running?" | `status` |
+| "make an automation that…", something only an add-on does | an add-on's own tools, when it offers them: see "Add-ons' tools" below |
 
 Use Sidefolk only for what the user asked. Don't set reminders or watches on your own initiative, and don't
 read their notes or reminders unless the task needs them.
@@ -174,6 +175,18 @@ and how many watches are running, in one read.
 
 Counts only (sessions, jobs, reminders, watches): a cheap way to check that Sidefolk is running.
 
+### Add-ons' tools
+
+Some of the user's Sidefolk add-ons offer tools to you too, on this same server, named `ext_` + the add-on + the
+tool. Use them the way the add-on's own guide says: when it has a tool that explains how to use it, read that first.
+
+- What you make is saved as a draft and runs nothing until the user allows it.
+- A tool that turns something on or runs it puts a card on the user's desktop and comes back at once. Only the
+  user can say yes, never you. Tell them a card is waiting, then read how it stands later with the add-on's read
+  tool. Don't ask again while it waits.
+- If a result says it wasn't asked, tell the user where to turn it on in Sidefolk themselves.
+- Write each value on one line: a line break or a hidden mark makes that step ask the user every time.
+
 ## When something finishes
 
 "Tell me when the tests finish" depends on who runs them:
@@ -206,8 +219,9 @@ when the user asked for it.
 - You can't answer Sidefolk's approvals, and you never need to: don't ask the user to approve things in
   Sidefolk "so you can continue" unless a result says a card is waiting.
 - Not available to other agents, by design: creating collections, critical alerts, watches that run
-  commands, local-network addresses, reading web pages or files, the clipboard, Sidefolk's settings and
-  extensions. When the user wants one of these, tell them they can ask Sidefolk directly.
+  commands, local-network addresses, reading web pages or files, the clipboard, Sidefolk's settings, and
+  add-ons' tools other than those an add-on offers you. When the user wants one of these, tell them they can ask
+  Sidefolk directly.
 - Limits: 20 active reminders per agent (50 for all agents together), 10 watches for all agents together,
   4 live values at once, about 60 calls a minute. A result that says a limit was reached is final for now.
 
