@@ -264,7 +264,10 @@ extension ExtensionHost {
         // alone can settle it: no mode answers it, and no click of theirs from before counts for it.
         case .external(let client):
             // The name comes from the connection and is the client's own word for itself (unverified, `clientName`): shown as that, with anything that hides marked.
-            runtimes[id]?.agentAsk = (ExtensionPlanWords.unquoted(client.hiddenShown.clipped(60)), Date())
+            let name = ExtensionPlanWords.unquoted(client.hiddenShown.clipped(60)), token = UUID()
+            runtimes[id]?.agentAsk = (name, Date())
+            runtimes[id]?.agentCalls[token] = name
+            return token
         default: break
         }
         return nil
@@ -281,6 +284,8 @@ extension ExtensionHost {
 
     func endPersonClick(_ id: String, _ click: UUID) {
         runtimes[id]?.personClicks[click] = nil
+        // An agent's call that ends starts its 30 seconds from the end: a tool that runs long, or holds its ask back, keeps the window as long as it runs.
+        if let name = runtimes[id]?.agentCalls.removeValue(forKey: click) { runtimes[id]?.agentAsk = (name, Date()) }
     }
 
     /// Who a plan was allowed for.
@@ -442,8 +447,8 @@ extension ExtensionHost {
         // Asked for since the person's own call or a clean request, or since an agent's call. While an agent's call is within the window, every ask is the agent's
         // (D237): a click of the person's after it doesn't make the plan theirs, since which of the two the extension's program is answering can't be told.
         let now = Date()
-        let throughAgent = rt.agentAsk.map { now.timeIntervalSince($0.at) <= ExtensionPlanRules.personWindow } == true
-        guard now.timeIntervalSince(max(rt.lastPersonCall, rt.agentAsk?.at ?? .distantPast)) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        let throughAgent = !rt.agentCalls.isEmpty || rt.agentAsk.map { now.timeIntervalSince($0.at) <= ExtensionPlanRules.personWindow } == true
+        guard throughAgent || now.timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
         let agent = throughAgent ? rt.agentAsk?.client : nil
         guard spend(id, "plan", limit: 10) else { return await refuse("busy") }
         runtimes[id]?.planAsking = true

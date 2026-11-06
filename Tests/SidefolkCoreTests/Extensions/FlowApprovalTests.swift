@@ -1022,6 +1022,25 @@ import Testing
         #expect(await auto.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
     }
 
+    /// An agent's call that is still running keeps its window, however long it runs: a click of the person's after the first 30 seconds doesn't make the plan the
+    /// person's, and the window runs 30 seconds past the call's end.
+    @Test func anAgentsCallThatIsStillRunningKeepsItsWindowOpen() async throws {
+        let w = try await World()
+        let id = "com.example.flow"
+        try await w.setMode(.auto)
+        _ = await w.approve(Self.plan([Self.save]))
+        let edit = Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])
+        let token = await w.h.host.notePersonCall(id, caller: .external(client: "Codex"), tainted: true)
+        #expect(token != nil)
+        await w.h.host.ageAgentCall(id, by: 60)
+        #expect(await w.approve(edit).asked, "the agent's call is 60 s old and still running, and the person's click came after it: a card, never Auto's skip")
+        #expect(await w.approve(edit).asked, "and the same plan again is not answered as covered either")
+        if let token { await w.h.host.endPersonClick(id, token) }
+        #expect(await w.approve(edit).asked, "30 seconds from its end it is still the agent's window")
+        await w.h.host.ageAgentCall(id, by: 60)
+        #expect(await !w.approve(edit).asked, "after that it is the person's again: nothing new, no card")
+    }
+
     /// The same edit, for the person's own ask, is what Auto answers: so the agent's card above is the agent's own rule, not a quirk of the edit.
     @Test func theSameEditIsAnsweredForThePersonInAutoButNotForAnAgent() async throws {
         let w = try await World()
@@ -1473,5 +1492,14 @@ import Testing
         #expect(await w.h.env.broker.pending().isEmpty)
         let fresh = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "run": "r2", "input": ["text": "Digest: x"]])
         #expect(fresh["standing"]?.boolValue == true, "another run has its own count")
+    }
+}
+
+
+extension ExtensionHost {
+    /// A test's way to let time pass for the agent's window without waiting for it.
+    func ageAgentCall(_ id: String, by seconds: TimeInterval) {
+        guard let ask = runtimes[id]?.agentAsk else { return }
+        runtimes[id]?.agentAsk = (ask.client, ask.at.addingTimeInterval(-seconds))
     }
 }

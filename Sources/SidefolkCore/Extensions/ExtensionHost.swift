@@ -123,6 +123,8 @@ public actor ExtensionHost {
         var lastPersonCall = Date.distantPast
         /// When an AI agent connected over MCP last called one of its tools, and which: it may ask for a plan then, but only ever as a card (D237).
         var agentAsk: (client: String, at: Date)?
+        /// Agent calls of its tools still running, by call: the window is open while any runs and for 30 s after the last ends, however long it runs (D237).
+        var agentCalls: [UUID: String] = [:]
         var actionCalls: [Date] = []
         /// Calls under way, by the request that made them: what a program can ask to stop.
         var actionTasks: [String: Task<Void, Never>] = [:]
