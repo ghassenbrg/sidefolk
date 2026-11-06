@@ -215,6 +215,12 @@ public struct ElevenLabs: Sendable {
         let message = detail?.string("message") ?? detail?.stringValue ?? ""
         let info = Redactor.redact("HTTP \(status) \(code) \(message)").clipped(300)
         switch status {
+        // A good key that leaves out what Sidefolk uses is refused the same way as a bad one: say which, or the person
+        // goes looking for a typo in a key that works.
+        case 401 where code == "missing_permissions":
+            let permission = permissionName(in: message)
+            return UserFacingError("Your ElevenLabs key isn't allowed to use \(permission). Nothing was said.",
+                                   recovery: "On elevenlabs.io, edit the key under API keys and allow \(permission).", detail: info)
         case 401:
             return UserFacingError("ElevenLabs didn't accept your key. Nothing was said.",
                                    recovery: "Check the key in Settings › Brain.", detail: info)
@@ -233,6 +239,17 @@ public struct ElevenLabs: Sendable {
                                        recovery: "Pick another voice in Settings › Brain.", detail: info)
             }
             return UserFacingError("ElevenLabs couldn't make the voice. Nothing was said.", recovery: "Try again in a moment.", detail: info)
+        }
+    }
+
+    /// The permission named in ElevenLabs' refusal ("…missing the permission voices_read…"), as its key settings show it.
+    static func permissionName(in message: String) -> String {
+        guard let found = message.firstMatch(of: /permission ([a-z_]+)/)?.1 else { return "Text to Speech, Voices and Models" }
+        switch found {
+        case "text_to_speech": return "Text to Speech"
+        case "voices_read", "voices_write": return "Voices"
+        case "models_read": return "Models"
+        default: return String(found)
         }
     }
 

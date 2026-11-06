@@ -27,7 +27,10 @@ final class FixtureVoiceServices: VoiceServices {
          AppleVoiceChoice(id: "com.apple.voice.compact.en-US.Samantha", name: "Samantha", language: "en-US", quality: .compact)]
     }
 
-    func setElevenLabsKey(_ key: String?) { hasElevenLabsKey = key != nil }
+    func setElevenLabsKey(_ key: String?) -> UserFacingError? {
+        hasElevenLabsKey = key != nil
+        return nil
+    }
 
     func elevenLabsVoices() async -> Result<[ElevenLabs.Voice], UserFacingError> {
         .success([ElevenLabs.Voice(id: "v1", name: "Juniper", detail: "female · american · warm"),
