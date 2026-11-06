@@ -842,7 +842,8 @@ import Testing
         #expect(checked?["state"]?.stringValue == "asks" && checked?["why"]?.stringValue == "ask_every_time", "\(String(describing: checked))")
         async let run = w.ask("sidefolk/tools.call", call)
         #expect(await w.answerCard(.allowOnce) != nil, "Ask every time puts a card up for every call, however it was approved")
-        #expect(await run["standing"]?.boolValue == false)
+        // The call still fits what they read (`standing`); it is Guard that asks, because the mode never lets a plan answer.
+        #expect(await run["standing"]?.boolValue == true)
     }
 
     /// A note's first line is its title and the rest its body, so a save that has a title and a body has a line break in its words. A card can't show a line
