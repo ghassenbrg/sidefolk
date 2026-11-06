@@ -293,6 +293,7 @@ public final class SidefolkRuntime: Sendable {
         _ = try? await jobs.purge(olderThan: now.addingTimeInterval(-14 * 86400))
         _ = try? await runs.purge(olderThan: now.addingTimeInterval(-Double(s.activityDays) * 86400))
         _ = try? await AttentionStore(db).purge(olderThan: now.addingTimeInterval(-30 * 86400))
+        _ = try? await AttentionStore(db).trimBodies(answeredBefore: now.addingTimeInterval(-7 * 86400))
         _ = try? await WatchHistoryStore(db).purge(olderThan: now.addingTimeInterval(-Double(WatchHistoryLimits.keepDays) * 86400))
     }
 

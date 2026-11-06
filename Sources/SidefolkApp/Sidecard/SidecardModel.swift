@@ -53,6 +53,8 @@ final class SidecardModel {
     var lowerSource: ((AttentionItem, InterruptSource, InterruptLevel) -> Void)?
     /// A whisper clicked: it grows into a card in place.
     var grow: (() -> Void)?
+    /// The card changed its height (its message opened or closed): the window fits it again.
+    var refit: (() -> Void)?
     /// The stack clicked: Ask opens on top of it.
     var openStack: (() -> Void)?
 

@@ -654,6 +654,11 @@ final class AppCoordinator {
             if rest.count == 2 { NotificationCenter.default.post(name: PageEditFieldRow.devChip, object: rest) }
             return
         }
+        if command == "showAll" {
+            // Show all on long words on screen (a card's, Today's), as a click on it.
+            NotificationCenter.default.post(name: ExpandableText.devToggle, object: nil)
+            return
+        }
         if command.hasPrefix("pageOpen:") {
             // pageOpen:<a folding section's title>: as a click on it.
             NotificationCenter.default.post(name: SectionView.devOpen, object: String(command.dropFirst("pageOpen:".count)))

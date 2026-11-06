@@ -169,7 +169,7 @@ struct QueueRow: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 Text(item.title).font(Theme.Font.title2).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 if let body = item.body, !body.isEmpty {
-                    Text(body).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                    ExpandableText(text: body)
                 }
                 // The watch's own page has the change line by line and its checks (D87): a link, so the card keeps its
                 // three buttons.
@@ -202,10 +202,15 @@ struct QueueRow: View {
     /// Beside Dismiss, two answers with the main one last: sorting the main one last and keeping the first two had
     /// left a reminder without Done.
     static func cardActions(_ item: AttentionItem) -> [AttentionAction] {
-        let main = item.actions.first(where: \.isPrimary)
         // A question's answers are all it has: none can be left off.
-        if item.refKind == "ask" { return item.actions.filter { !$0.isPrimary } + (main.map { [$0] } ?? []) }
-        let others = item.actions.filter { !$0.isPrimary }.prefix(main == nil ? 2 : 1)
+        if item.refKind == "ask" {
+            let main = item.actions.first(where: \.isPrimary)
+            return item.actions.filter { !$0.isPrimary } + (main.map { [$0] } ?? [])
+        }
+        // The card has its own Dismiss, as the rows do; an item's "dismiss" answer would show it twice (an agent's notice, a job's).
+        let actions = item.actions.filter { $0.id != "dismiss" }
+        let main = actions.first(where: \.isPrimary)
+        let others = actions.filter { !$0.isPrimary }.prefix(main == nil ? 2 : 1)
         return Array(others) + (main.map { [$0] } ?? [])
     }
 
@@ -278,7 +283,7 @@ struct SessionNeedsYouRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 headline.font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 if let detail = session.detail, !detail.isEmpty {
-                    Text(detail).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                    ExpandableText(text: detail, font: Theme.Font.caption)
                 }
                 Text("Waiting since \(TimeText.short(session.updatedAt))").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
                 Button("Open session", action: open).buttonStyle(.sf(.primary)).fixedSize().padding(.top, 4)
@@ -307,7 +312,7 @@ struct AttentionRow: View {
                 Text(item.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 if let body = item.body, !body.isEmpty {
-                    Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                    ExpandableText(text: body, font: Theme.Font.caption)
                 }
                 Text(verbatim: ([Self.who(item)].compactMap { $0 } + [TimeText.short(item.createdAt)]).joined(separator: " · "))
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)

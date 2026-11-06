@@ -14,7 +14,8 @@ struct SidecardView: View {
             switch model.shape {
             case .whisper: if let item = model.item { whisper(item).fixedSize() }
             // As wide as the card allows (320–400), so long words and buttons wrap inside it rather than run off.
-            case .card: if let item = model.item { SidecardItemCard(item: item, model: model, tail: tail).fixedSize(horizontal: false, vertical: true) }
+            // Each notice its own card: one opened with Show all doesn't hand that to the next.
+            case .card: if let item = model.item { SidecardItemCard(item: item, model: model, tail: tail).id(item.id).fixedSize(horizontal: false, vertical: true) }
             case .stack: stack.fixedSize()
             }
         }
@@ -121,7 +122,10 @@ struct SidecardItemCard: View {
         let fewer = Self.fewer(item, model.interruptions)
         SidecardCard(folk: Self.folk(item), face: Self.speaksItself(item) ? model.face : nil,
                      source: Self.source(item, companion: model.companionName, sessions: model.sessions), title: Text(verbatim: item.title),
-                     message: lines == nil ? Self.message(item) : nil, tail: tail,
+                     // A question's line says who asks and, apart from it, what it's about (D201); only a notice's words may run long.
+                     message: lines == nil && item.refKind == "ask" ? Self.message(item) : nil,
+                     longMessage: lines == nil && item.refKind != "ask" ? item.body : nil,
+                     messageChanged: { model.refit?() }, tail: tail,
                      close: { model.respond?(item, nil) }) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 // The very first hello introduces the whole family, not just the one on the desktop.

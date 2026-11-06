@@ -199,6 +199,10 @@ struct SidecardCard<Extra: View, Actions: View>: View {
     var source: Text?
     var title: Text
     var message: Text?
+    /// A notice's own words, which may run long: three lines, then Show all in place of `message` (they never sit together).
+    var longMessage: String? = nil
+    /// Told when the long message opens or closes, so the window fits itself again.
+    var messageChanged: (() -> Void)? = nil
     var strip: SidecardStrip?
     var tail: SidecardTail? = SidecardTail(edge: .bottom)
     var close: (() -> Void)?
@@ -230,7 +234,10 @@ struct SidecardCard<Extra: View, Actions: View>: View {
                         if !sourceLine, let folk { FolkAvatar(name: folk, size: Theme.Size.avatar) }
                         VStack(alignment: .leading, spacing: Theme.Space.xs) {
                             title.font(Theme.Font.bubbleTitle).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
-                            if let message {
+                            if let longMessage {
+                                ExpandableText(text: longMessage, font: sourceLine ? Theme.Font.bubble : Theme.Font.callout,
+                                               changed: messageChanged)
+                            } else if let message {
                                 message.font(sourceLine ? Theme.Font.bubble : Theme.Font.callout).foregroundStyle(Theme.inkMuted).lineLimit(3)
                                     .fixedSize(horizontal: false, vertical: true)
                             }

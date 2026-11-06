@@ -301,7 +301,7 @@ private struct HistoryRow: View {
             InlineConversation(model: model.conversation)
         case .alert(let a):
             VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                if let body = a.body { Text(verbatim: body).font(Theme.Font.body).foregroundStyle(Theme.ink) }
+                if let body = a.body { Text(verbatim: body).font(Theme.Font.body).foregroundStyle(Theme.ink).textSelection(.enabled) }
                 Text(verbatim: a.source).font(Theme.Font.mono).foregroundStyle(Theme.inkFaint)
             }
             .padding(.leading, 40 + Theme.Size.avatar + 2 * Theme.Space.m + Theme.Space.l)

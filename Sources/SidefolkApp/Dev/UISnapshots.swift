@@ -323,6 +323,14 @@ enum UISnapshots {
             full.selection = .now
             try await page("page-today", TodayView(model: full), width: 1100)
             try await page("page-today-empty", TodayView(model: empty), width: 1100)
+            // An agent's notice as Today's card: one Dismiss, though the notice carries a "dismiss" answer of its own.
+            let agentNotice = await empty.services.runtime.attention.post(AttentionRequest(level: .attention, source: "external:claude-code",
+                title: "Deploy to staging finished", body: "All checks passed.",
+                actions: [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))], refKind: "notify"))
+            await empty.now.reload()
+            try await page("page-today-notice", TodayView(model: empty), width: 1100)
+            await empty.services.runtime.attention.respond(id: agentNotice.id, actionId: nil)
+            await empty.now.reload()
             // An extension's page, and its tile on Today (D62).
             try await page("page-extension-mac", ExtensionPageView(model: SampleExtensionPage.model()), width: 980)
             // A wide window and a narrow one: the page fills the width it has, centred (D67).
@@ -381,9 +389,13 @@ enum UISnapshots {
                                                           body: "Tidy the attention tests", refKind: "session", refId: "snap-1")),
                 await homeAttention.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Deploy to staging finished",
                                                           body: "All checks passed.", refKind: "notify")),
+                // A long one: three lines and Show all, and opened.
+                await homeAttention.post(AttentionRequest(level: .gentle, source: "external:claude-code", title: "Weekly look back",
+                                                          body: DesktopScenes.weeklyLookBack, refKind: "notify")),
             ]
             await full.now.reload()
             try await page("page-today-kept", TodayView(model: full), width: 1100)
+            try await page("page-today-kept-open", TodayView(model: full).environment(\.opensLongText, true), width: 1100)
             for item in kept { await homeAttention.respond(id: item.id, actionId: nil) }
             await homeAttention.update { $0.interruptions = Interruptions() }
             await full.now.reload()
@@ -640,7 +652,8 @@ enum UISnapshots {
             let face = CompanionArt.avatar(for: AppSettings(), side: 48)
             let still = CompanionArt.portrait(for: AppSettings(), side: 300)
             for (name, moment) in DesktopScenes.sidecards(face: face) {
-                try await page("desktop-sidecard-\(name)", SidecardView(model: moment).frame(maxWidth: .infinity).background(Wallpaper()), width: 470)
+                try await page("desktop-sidecard-\(name)", SidecardView(model: moment).frame(maxWidth: .infinity).background(Wallpaper())
+                    .environment(\.opensLongText, name.hasSuffix("-open")), width: 470)
             }
             try await page("desktop-states", DesktopScenes.statesBoard(portrait: still), width: 1100)
             for (name, floor, measure) in DesktopScenes.scenes(portrait: still, face: face) {

@@ -11,6 +11,14 @@ enum DesktopScenes {
 
     // MARK: Sidecard moments
 
+    /// A long message as a flow might send it, repeated past the 4,000 characters a notice keeps.
+    static let weeklyLookBack = String(repeating: """
+        This week you saved 14 notes, 3 of them ideas for Pockito. You finished 9 of 12 tasks; the onboarding email and \
+        the pricing page are still open, and the pricing page has waited since Monday. Two watches changed: \
+        example.com/pricing went from $12 to $15, and staging was down for 4 minutes on Wednesday night. \
+
+        """, count: 16)
+
     static func sidecards(face: NSImage) -> [(String, SidecardModel)] {
         func moment(_ item: AttentionItem, _ shape: SidecardModel.Shape = .card, tail: CGFloat? = 0.78) -> SidecardModel {
             let model = SidecardModel()
@@ -39,6 +47,9 @@ enum DesktopScenes {
                           actions: [AttentionAction(id: "option-0", title: "Yes", isPrimary: true), AttentionAction(id: "option-1", title: "No")],
                           refKind: "ask", now: now.addingTimeInterval(-60)),
         ]
+        let longNotice = AttentionItem(level: .attention, source: "extension:dev.example.flows", title: "Flows: Weekly look back",
+                                       body: String(Self.weeklyLookBack.prefix(AttentionItem.bodyLimit)),
+                                       actions: [AttentionAction(id: "dismiss", title: String(localized: "Dismiss"))], refKind: "notify")
         let needsYou = moment(AttentionItem(level: .attention, source: "session:cc-1", title: "Claude needs you in sidefolk",
                                             body: "Asks to use Bash: git push origin main",
                                             actions: [AttentionAction(id: "open", title: String(localized: "Open"), isPrimary: true),
@@ -78,6 +89,10 @@ enum DesktopScenes {
                                                      AttentionAction(id: "stop", title: String(localized: "Stop watching"))],
                                            refKind: "watcher", refId: "w1"))),
             ("agent-needs-you", needsYou),
+            // A flow's "tell me" at its longest (4,000 characters): three lines and Show all, and opened (`-open`), its
+            // answers still in reach under a scroll.
+            ("notice-long", moment(longNotice)),
+            ("notice-long-open", moment(longNotice)),
             ("job-failed", moment(AttentionItem(level: .attention, source: "job", title: "npm test failed in pockito (exit 1)",
                                                 body: "billing › team needs three seats\nExpected 36, received 24",
                                                 actions: [AttentionAction(id: "copy", title: String(localized: "Copy command"), isPrimary: true),
