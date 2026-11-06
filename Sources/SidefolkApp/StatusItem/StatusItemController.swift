@@ -32,10 +32,14 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private(set) var mode: GuardMode = .askOncePerKind
     private var fullAccessEnds: Date?
     private var mark: Mark = .idle
-    private var hidden = false
+    private(set) var hidden = false
     private var readout: String?
 
     var isPocketShown: Bool { popover.isShown }
+    /// Whether the open Pocket's window goes to whichever space the person is on (for the debug channel's check).
+    var pocketJoinsEverySpace: Bool {
+        popover.contentViewController?.view.window?.collectionBehavior.isSuperset(of: [.canJoinAllSpaces, .fullScreenAuxiliary]) ?? false
+    }
 
     func install(image: NSImage?) {
         if let image {
@@ -147,11 +151,21 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             if let contentProvider { pocket.content = await contentProvider() }
             pocket.palettes = palettes()
             pocket.entries = entries()
+            // Shown before Sidefolk comes forward: activating first, from another app's full-screen space, sent macOS to the
+            // desktop where Sidefolk's windows are, and the Pocket opened there, out of sight until the person swiped back.
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            joinTheCurrentSpace()
             // The Pocket takes the keyboard (its Ask field, the dial's keys), so Sidefolk comes forward while it's open.
             NSApp.activate()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }
+    }
+
+    func popoverWillShow(_ notification: Notification) { joinTheCurrentSpace() }
+
+    /// The Pocket's window opens on the space the person is on, a full-screen app's included, as the companion does.
+    private func joinTheCurrentSpace() {
+        popover.contentViewController?.view.window?.collectionBehavior.formUnion([.canJoinAllSpaces, .fullScreenAuxiliary])
     }
 
     func closePocket() { if popover.isShown { popover.performClose(nil) } }

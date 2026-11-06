@@ -16,6 +16,8 @@ final class AppCoordinator {
     let runtime: SidefolkRuntime
     let ask = AskModel()
     var fullScreenVisit: Task<Void, Never>?
+    /// The person's last Show or Hide of the companion (menu bar, Pocket); settings writes keep to it.
+    var companionVisibility = CompanionVisibility()
     private(set) var askPanel: AskPanelController!
     /// Whispers, cards and the stack above the companion (D84).
     let sidecard = SidecardController()
@@ -273,13 +275,21 @@ final class AppCoordinator {
         }
     }
 
+    /// On the desktop or not, from the setting and the person's last Show or Hide. Every settings write comes here, so the
+    /// menu bar's "Show"/"Hide" is told what is really on screen each time.
+    func applyCompanionVisibility() {
+        let decision = companionVisibility.decide(presence: runtime.settings.current.presence)
+        if decision.visible { companion.show(presence: decision.presence) } else { companion.hide() }
+        statusItem.setCompanionHidden(!companion.isVisible)
+    }
+
     func applyCompanionSettings() {
         let s = runtime.settings.current
         companion.eyesFollowPointer = s.eyesFollowPointer
         companion.apply(size: s.size, reducedMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
         companion.character.liveliness = CompanionArt.liveliness(s.liveliness)
         companion.apply(look: CompanionArt.look(for: s), name: s.companionName)
-        companion.show(presence: s.presence)
+        applyCompanionVisibility()
         companion.setFolks(roster.onDuty, visible: s.showFolks)
         applyFullScreenHiding()
         sidecard.hidesOverFullScreen = s.hideOverFullScreen
@@ -404,6 +414,13 @@ final class AppCoordinator {
     func runDevCommand(_ command: String) {
         if command == "home" { openHome(); return }
         if command == "companionHide" { showCompanion(false); return }
+        if command == "companionShow" { showCompanion(true); return }
+        // What the menu bar's Show/Hide says against what the companion's window really is, in the log.
+        if command == "companionState" {
+            Log.shared.info("dev", "companion state", ["onScreen": String(companion.isVisible), "menuSaysHidden": String(statusItem.hidden),
+                                                         "pocketOpen": String(statusItem.isPocketShown), "pocketOnEverySpace": String(statusItem.pocketJoinsEverySpace)])
+            return
+        }
         if command == "askPinNewest" {
             if let newest = ask.visibleRequests.first { ask.togglePin(newest) }
             return
@@ -1238,14 +1255,11 @@ extension AppCoordinator: CompanionDelegate {
 
     func companionFolkClicked(_ folk: DutyFolk) { openHome() }
 
+    /// The person's Show or Hide stands until they change where the companion lives (`CompanionVisibility`).
     func showCompanion(_ visible: Bool) {
-        if visible {
-            companion.show(presence: runtime.settings.current.presence == .menuBarOnly ? .always : runtime.settings.current.presence)
-        } else {
-            companion.hide()
-            askPanel.hide()
-        }
-        statusItem.setCompanionHidden(!companion.isVisible)
+        companionVisibility.choose(visible: visible, under: runtime.settings.current.presence)
+        applyCompanionVisibility()
+        if !visible { askPanel.hide() }
         // The live values follow: beside the companion, or in the menu bar while it is away.
         renderReadouts()
     }

@@ -4,6 +4,7 @@
 // too, down to pressing their cards and spending their AI. `--all-apps` before the command says that's really meant.
 //
 //   swift scripts/dev.swift companionHide        as the companion's menu's Hide Companion does (its tip goes too)
+//   swift scripts/dev.swift companionShow | companionState   (the menu's Show Companion; logs whether the window is on screen and what the menu says)
 //   swift scripts/dev.swift snap                 PNG of every visible window in $SIDEFOLK_HOME/snapshots
 //   swift scripts/dev.swift "ask:remind me in 2 min to stretch"
 //   swift scripts/dev.swift "type:time in Tokyo"    (typed but not sent: the hint shows what Enter would do)
