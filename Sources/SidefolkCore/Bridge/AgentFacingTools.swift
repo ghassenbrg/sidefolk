@@ -70,11 +70,23 @@ struct NotifyUserTool: Tool {
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
-    /// One plain line of the asker's words: no line breaks, nothing hidden, and no quote marks to close Sidefolk's own words with or open new ones.
+    /// What `about` may hold: letters and digits of any script, spaces and a few marks that can't be read as Sidefolk's own (no colon, no dot between words, no quotes or brackets but parentheses).
+    /// Everything else becomes a space, emoji too. Letters that draw as nothing (the Hangul fillers, the blank braille cell) and anything meant to be invisible go.
     static func aboutWords(_ text: String) -> String {
-        let marks = CharacterSet(charactersIn: "\"'“”„‟‘’‚‛«»‹›「」『』\u{2028}\u{2029}").union(.controlCharacters).union(.newlines)
-        let plain = String(String.UnicodeScalarView(ExtensionText.clean(text).unicodeScalars.map { marks.contains($0) ? " " : $0 }))
-        return plain.split(whereSeparator: \.isWhitespace).joined(separator: " ").clipped(80)
+        let marks = Set(".,-_()&+/'!?".unicodeScalars)
+        let blank: Set<UInt32> = [0x3164, 0x115F, 0x1160, 0xFFA0, 0x2800]
+        var out = String.UnicodeScalarView()
+        for s in text.unicodeScalars {
+            let category = s.properties.generalCategory
+            let letterOrDigit = [.uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .decimalNumber, .letterNumber, .otherNumber].contains(category)
+            // A mark that joins a letter (an accent, a vowel sign) stays with it.
+            let joins = [.nonspacingMark, .spacingMark, .enclosingMark].contains(category) && !(out.last.map { $0 == " " } ?? true)
+            if s.properties.isDefaultIgnorableCodePoint || blank.contains(s.value) { continue }
+            out.append(letterOrDigit || joins || marks.contains(s) ? s : " ")
+        }
+        let words = String(out).split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
+        let scalars = words.unicodeScalars
+        return scalars.count <= 80 ? words : String(String.UnicodeScalarView(scalars.prefix(80))).trimmingCharacters(in: .whitespaces) + "…"
     }
 
     func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
@@ -143,7 +155,8 @@ struct AskUserTool: Tool {
         }
         // What it's about, in the asker's words, after the asker's name and marked as theirs (D201). Only beside a name: with none, it would read as the companion's own words.
         let about = asker == nil ? nil : input.string("about").map(Self.aboutWords).flatMap { $0.isEmpty ? nil : $0 }
-        let said = [asker, about.map { String(localized: "About: \($0)", comment: "Under a question, after who asks: what the asker says it's about, in its words") }].compactMap(\.self).joined(separator: " · ")
+        // Kept apart from Sidefolk's own words by a mark nobody can type, so the card can draw it in a style of its own (`AttentionWords`).
+        let said = [asker, about].compactMap(\.self).joined(separator: AttentionWords.aboutMark)
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
                                                           title: question.clipped(200), body: said.isEmpty ? nil : said, actions: actions, refKind: "ask",
                                                           historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),

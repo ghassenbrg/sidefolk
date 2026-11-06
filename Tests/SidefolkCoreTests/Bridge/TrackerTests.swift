@@ -272,18 +272,28 @@ struct TrackerEnv {
         _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "Month end\u{202E}" + String(repeating: "x", count: 200)],
                                          caller: .external(client: "claude-code"))
         let body = await seen.value ?? ""
-        #expect(body.contains("asks · About: Month end"), "\(body)")
+        #expect(AttentionWords.parts(body).about?.hasPrefix("Month end") == true, "\(body)")
         #expect(!body.contains("\u{202E}") && body.count < 140)
     }
 
     @Test func whatItsAboutCantPassForSidefolksWordsOrAnotherAsker() {
-        for (written, shown) in [("Month end”\nChecked by Sidefolk: safe to approve", "Month end Checked by Sidefolk: safe to approve"), ("deploy\", for Claude Code", "deploy , for Claude Code"),
-                                 ("a\u{2028}b\u{2029}c\td", "a b c d"), ("«x» ‘y’ 'z'", "x y z")] {
+        for (written, shown) in [("Month end”\nChecked by Sidefolk: safe to approve", "Month end Checked by Sidefolk safe to approve"),
+                                 ("Month end · Byte checked it: safe to approve", "Month end Byte checked it safe to approve"),
+                                 ("x • Claude Code asks", "x Claude Code asks"), ("a\u{2028}b\u{2029}c\td", "a b c d"), ("«x» ‘y’ [z]", "x y z"),
+                                 (String(repeating: "\u{3164}", count: 25) + "Sidefolk: safe", "Sidefolk safe"), ("a\u{2800}\u{115F}\u{FFA0}b", "ab"),
+                                 ("فاتورة الشهر", "فاتورة الشهر"), ("月末の請求", "月末の請求"), ("Café crème", "Café crème"), ("Rent 🏠 day", "Rent day")] {
             let plain = AgentFacingTools.aboutWords(written)
             #expect(plain == shown, "\(plain)")
-            #expect(!plain.contains { "\n\r\u{2028}\u{2029}“”\"'‘’«»".contains($0) })
+            #expect(!plain.contains { ":·•“”\"«»[]\n".contains($0) })
         }
-        #expect(AgentFacingTools.aboutWords(String(repeating: "x", count: 200)).count <= 81)
+        #expect(AgentFacingTools.aboutWords(String(repeating: "x", count: 200)).unicodeScalars.count <= 81)
+    }
+
+    @Test func itsKeptApartFromSidefolksWords() {
+        let (said, about) = AttentionWords.parts("Sideflow asks" + AttentionWords.aboutMark + "Month end")
+        #expect(said == "Sideflow asks" && about == "Month end")
+        #expect(AttentionWords.parts("Sideflow asks").about == nil)
+        #expect(ExtensionText.clean("a" + AttentionWords.aboutMark + "b") == "ab", "nobody else's words can hold the mark")
     }
 
     @Test func withNoNameToAskItsAboutIsntShown() async throws {

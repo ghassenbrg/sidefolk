@@ -383,3 +383,20 @@ public actor AttentionCenter {
         events.publish(.attention(.backlog(count: count)))
     }
 }
+
+/// A question's line under it: who asks, in Sidefolk's words, then what the asker says it's about, which is drawn in a style of its own so it can't pass for more of Sidefolk's (D201).
+public enum AttentionWords {
+    /// Between the two: a control character, which nothing an asker writes can hold (`ExtensionText.clean`, `aboutWords`).
+    public static let aboutMark = "\u{1F}"
+
+    public static func parts(_ body: String) -> (said: String, about: String?) {
+        guard let range = body.range(of: aboutMark) else { return (body, nil) }
+        return (String(body[..<range.lowerBound]), String(body[range.upperBound...]))
+    }
+
+    /// For a place that shows it as plain words: the two apart.
+    public static func plain(_ body: String) -> String {
+        let (said, about) = parts(body)
+        return about.map { String(localized: "\(said) (about \($0))", comment: "A question's line where only plain words fit: who asks, then what it says it's about") } ?? said
+    }
+}

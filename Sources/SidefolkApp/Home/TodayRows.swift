@@ -169,7 +169,7 @@ struct QueueRow: View {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 Text(item.title).font(Theme.Font.title2).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 if let body = item.body, !body.isEmpty {
-                    Text(body).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                    Text(AttentionWords.plain(body)).font(Theme.Font.body).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
                 // The watch's own page has the change line by line and its checks (D87): a link, so the card keeps its
                 // three buttons.
@@ -307,7 +307,7 @@ struct AttentionRow: View {
                 Text(item.title).font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 if let body = item.body, !body.isEmpty {
-                    Text(body).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
+                    Text(AttentionWords.plain(body)).font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(3)
                 }
                 Text(verbatim: ([Self.who(item)].compactMap { $0 } + [TimeText.short(item.createdAt)]).joined(separator: " · "))
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkFaint)
