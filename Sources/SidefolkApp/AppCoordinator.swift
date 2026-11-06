@@ -198,10 +198,9 @@ final class AppCoordinator {
         for (center, name) in [(NSWorkspace.shared.notificationCenter, NSWorkspace.willSleepNotification),
                                (NotificationCenter.default, NSApplication.didHideNotification),
                                (NotificationCenter.default, NSApplication.didResignActiveNotification)] {
-            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
-                MainActor.assumeIsolated {
-                    self?.voice.clickedTalkingEnds(note.name == NSWorkspace.willSleepNotification ? .sleptOrLocked : .leftSidefolk)
-                }
+            let ending: VoiceToggle.Event = name == NSWorkspace.willSleepNotification ? .sleptOrLocked : .leftSidefolk
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.voice.clickedTalkingEnds(ending) }
             }
         }
         sidecard.holds = { [weak self] whisper in
