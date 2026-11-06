@@ -42,18 +42,34 @@ import Testing
         }
         // A variation selector with nothing to select, or a second one, is not part of an emoji.
         #expect("e\u{FE0F}".hiddenShown == "e⟨U+FE0F⟩")
-        #expect("🙂\u{FE0F}\u{FE0F}".hiddenShown == "🙂\u{FE0F}⟨U+FE0F⟩")
+        #expect("🙂\u{FE0F}\u{FE0F}".hiddenShown == "🙂⟨U+FE0F⟩⟨U+FE0F⟩")
     }
 
-    @Test func emojiAndJoinedScriptsKeepTheirJoiners() {
-        for text in ["👨\u{200D}👩\u{200D}👧.png", "❤\u{FE0F}.txt", "1\u{FE0F}\u{20E3}.txt", "👩\u{200D}❤\u{FE0F}\u{200D}👨", "می\u{200C}خواهم.txt", "क\u{094D}\u{200D}ष"] {
+    @Test func onlyWhatMakesUpAnEmojiKeepsItsJoinersAndSelectors() {
+        // Kept: a family, a person with a job, a heart drawn as text then as emoji, a keycap, a flag.
+        for text in ["👨\u{200D}👩\u{200D}👧.png", "❤\u{FE0F}.txt", "1\u{FE0F}\u{20E3}.txt", "👩\u{200D}❤\u{FE0F}\u{200D}👨", "#\u{FE0F}\u{20E3}", "🇯🇵 trip.txt"] {
             #expect(text.hiddenShown == text, Comment(rawValue: text))
         }
-        // The same joiners between Latin letters, or at an edge, hide something.
+        // Marked: a selector after a plain digit (`invoice-2025.pdf` with a hidden character), after letters, an emoji drawn as emoji already, FE0E always.
+        #expect("invoice-2025\u{FE0F}.pdf".hiddenShown == "invoice-2025⟨U+FE0F⟩.pdf")
+        #expect("a\u{FE0F}".hiddenShown == "a⟨U+FE0F⟩")
+        #expect("🙂\u{FE0F}".hiddenShown == "🙂⟨U+FE0F⟩")
+        #expect("🙂\u{FE0E}".hiddenShown == "🙂⟨U+FE0E⟩")
+        #expect("❤\u{FE0E}".hiddenShown == "❤⟨U+FE0E⟩")
+        #expect("❤\u{FE0F}\u{FE0F}".hiddenShown == "❤\u{FE0F}⟨U+FE0F⟩")
+        // Marked: every other joiner, in Latin, Arabic, Persian and Indic writing, at an edge or between digits.
         #expect("inv\u{200C}oice".hiddenShown == "inv⟨U+200C⟩oice")
         #expect("a\u{200D}b".hiddenShown == "a⟨U+200D⟩b")
         #expect("🙂\u{200D}".hiddenShown == "🙂⟨U+200D⟩")
+        #expect("1\u{200D}2".hiddenShown == "1⟨U+200D⟩2")
+        #expect("می\u{200C}خواهم".hiddenShown == "می⟨U+200C⟩خواهم", "Persian too: noise, but honest")
+        #expect("ب\u{200D}ا".hiddenShown == "ب⟨U+200D⟩ا")
+        #expect("ا\u{200D}ب".hiddenShown == "ا⟨U+200D⟩ب", "a letter that doesn't join")
+        #expect("क\u{094D}\u{200C}ष".hiddenShown == "क\u{094D}⟨U+200C⟩ष")
+        #expect("क\u{094D}\u{200D}ष".hiddenShown == "क\u{094D}⟨U+200D⟩ष")
         #expect("\u{E0067}x".hiddenShown == "⟨U+E0067⟩x", "tag characters carry hidden text: never kept")
+        #expect("🏴\u{E0067}\u{E007F}".hiddenShown == "🏴⟨U+E0067⟩⟨U+E007F⟩", "the England flag shows markers: accepted")
+        #expect("a\u{180B}b".hiddenShown == "a⟨U+180B⟩b", "a Mongolian selector shows a marker: accepted")
     }
 
     @Test func renameAndTrashCardsShowTheNamesWithTheirHiddenCharacters() {

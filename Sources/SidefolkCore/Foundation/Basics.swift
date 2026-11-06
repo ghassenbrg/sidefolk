@@ -81,8 +81,9 @@ extension String {
 
     /// The text with every character that draws nothing, or changes how the rest is drawn (direction controls, zero-width characters, separators, controls,
     /// tags, variation selectors, fillers, whatever Unicode says is ignorable, unassigned), written out as `⟨U+202E⟩`: a name or a path can't pass for another, and
-    /// the person sees that something is odd. The joiners and selectors that make up an emoji, and the joiners between letters that need them (Arabic, Indic,
-    /// Khmer, Myanmar), stay where they sit between what they join.
+    /// the person sees that something is odd. Only what makes up an emoji stays (a joiner between two emoji, a presentation selector after an emoji drawn as
+    /// text or a keycap's digit): a joiner in Persian or Indic writing is marked too, and so are a Mongolian selector, an ideographic variation sequence and the
+    /// England and Scotland flags. That is noise, but it is honest.
     public var hiddenShown: String {
         let scalars = Array(unicodeScalars)
         guard scalars.indices.contains(where: { String.isHidden(scalars, at: $0) }) else { return self }
@@ -103,23 +104,18 @@ extension String {
         }
         guard hidden else { return false }
         func emoji(_ s: Unicode.Scalar?) -> Bool { s.map { $0.properties.isEmoji && $0.value >= 0x80 } ?? false }
-        func joins(_ s: Unicode.Scalar?) -> Bool {
-            guard let s else { return false }
-            switch s.value {
-            case 0x0600...0x06FF, 0x0750...0x077F, 0x08A0...0x08FF, 0xFB50...0xFDFF, 0xFE70...0xFEFC, 0x0900...0x0DFF, 0x1000...0x109F, 0x1780...0x17FF: return true
-            default: return false
-            }
-        }
         switch scalar.value {
-        // An emoji presentation selector after an emoji (or after a digit, # or * of a keycap), once.
-        case 0xFE0E, 0xFE0F:
-            if let previous, previous.properties.isEmoji, ![0xFE0E, 0xFE0F].contains(previous.value) { return false }
-        // A joiner between two emoji (a family, a person with a job), after a selector too.
+        // The emoji presentation selector, once, where it changes how something is drawn: after a digit, # or * that a keycap mark follows, or after an emoji
+        // that is drawn as text unless asked (a heart, a smiley outline). After anything else it only hides.
+        case 0xFE0F:
+            if let previous {
+                if previous.value < 0x80, previous.properties.isEmoji, next?.value == 0x20E3 { return false }
+                if emoji(previous), !previous.properties.isEmojiPresentation { return false }
+            }
+        // A joiner inside an emoji sequence (a family, a person with a job): emoji on both sides, a selector in between allowed. Every other joiner of either
+        // kind is marked, in Persian and Indic writing too: from outside a joiner that changes nothing can't be told from one that hides.
         case 0x200D:
             if (emoji(previous) || previous?.value == 0xFE0F) && emoji(next) { return false }
-            if joins(previous) && joins(next) { return false }
-        case 0x200C:
-            if joins(previous) && joins(next) { return false }
         default: break
         }
         return true
