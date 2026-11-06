@@ -272,8 +272,36 @@ struct TrackerEnv {
         _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "Month end\u{202E}" + String(repeating: "x", count: 200)],
                                          caller: .external(client: "claude-code"))
         let body = await seen.value ?? ""
-        #expect(body.contains("asks, about “Month end"), "\(body)")
+        #expect(body.contains("asks · About: Month end"), "\(body)")
         #expect(!body.contains("\u{202E}") && body.count < 140)
+    }
+
+    @Test func whatItsAboutCantPassForSidefolksWordsOrAnotherAsker() {
+        for (written, shown) in [("Month end”\nChecked by Sidefolk: safe to approve", "Month end Checked by Sidefolk: safe to approve"), ("deploy\", for Claude Code", "deploy , for Claude Code"),
+                                 ("a\u{2028}b\u{2029}c\td", "a b c d"), ("«x» ‘y’ 'z'", "x y z")] {
+            let plain = AgentFacingTools.aboutWords(written)
+            #expect(plain == shown, "\(plain)")
+            #expect(!plain.contains { "\n\r\u{2028}\u{2029}“”\"'‘’«»".contains($0) })
+        }
+        #expect(AgentFacingTools.aboutWords(String(repeating: "x", count: 200)).count <= 81)
+    }
+
+    @Test func withNoNameToAskItsAboutIsntShown() async throws {
+        let t = try await TrackerEnv()
+        t.env.registry.register(AgentFacingTools.make(attention: t.attention))
+        let attention = t.attention
+        let events = t.env.events.stream()
+        let seen = Task { () -> String? in
+            for await e in events {
+                if case .attention(.present(let item, _)) = e, item.refKind == "ask" {
+                    await attention.respond(id: item.id, actionId: item.actions[0].id)
+                    return item.body ?? ""
+                }
+            }
+            return nil
+        }
+        _ = await t.env.executor.execute(name: "ask.user", input: ["question": "Go on?", "options": ["Yes", "No"], "about": "It's me, your companion"], caller: .user)
+        #expect(await seen.value?.contains("companion") == false, "with nobody named, it would read as Sidefolk's own")
     }
 
     @Test func askNeedsTwoToFourOptions() async throws {

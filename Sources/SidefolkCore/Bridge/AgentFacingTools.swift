@@ -70,6 +70,13 @@ struct NotifyUserTool: Tool {
             risk: .low, capabilities: [], category: .agents, mutates: false, external: true)
     }
 
+    /// One plain line of the asker's words: no line breaks, nothing hidden, and no quote marks to close Sidefolk's own words with or open new ones.
+    static func aboutWords(_ text: String) -> String {
+        let marks = CharacterSet(charactersIn: "\"'“”„‟‘’‚‛«»‹›「」『』\u{2028}\u{2029}").union(.controlCharacters).union(.newlines)
+        let plain = String(String.UnicodeScalarView(ExtensionText.clean(text).unicodeScalars.map { marks.contains($0) ? " " : $0 }))
+        return plain.split(whereSeparator: \.isWhitespace).joined(separator: " ").clipped(80)
+    }
+
     func summary(for input: JSONValue) -> String { String(localized: "Notify: \(input.string("title") ?? "")") }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
@@ -134,9 +141,9 @@ struct AskUserTool: Tool {
         if case .extension(let id) = context.caller {
             asker = String(localized: "\(AgentFacingTools.extensionName(id) ?? id) asks", comment: "Under a question; an extension's name")
         }
-        // What it's about, in the asker's words, after the asker's name: Sidefolk says who asks, the asker says what for (D201).
-        let about = input.string("about").map { ExtensionText.clean($0).trimmingCharacters(in: .whitespacesAndNewlines).clipped(80) }.flatMap { $0.isEmpty ? nil : $0 }
-        let said = [asker, about.map { String(localized: "about “\($0)”", comment: "Under a question, after who asks: what the asker says it's about") }].compactMap(\.self).joined(separator: ", ")
+        // What it's about, in the asker's words, after the asker's name and marked as theirs (D201). Only beside a name: with none, it would read as the companion's own words.
+        let about = asker == nil ? nil : input.string("about").map(Self.aboutWords).flatMap { $0.isEmpty ? nil : $0 }
+        let said = [asker, about.map { String(localized: "About: \($0)", comment: "Under a question, after who asks: what the asker says it's about, in its words") }].compactMap(\.self).joined(separator: " · ")
         let answer = await attention.ask(AttentionRequest(level: .attention, source: AgentFacingTools.source(for: context.caller),
                                                           title: question.clipped(200), body: said.isEmpty ? nil : said, actions: actions, refKind: "ask",
                                                           historyTitle: AgentFacingTools.historyTitle(String(localized: "a question", comment: "History, in place of a question's words"), context)),
