@@ -572,6 +572,14 @@ final class AppCoordinator {
             }
             return
         }
+        if command.hasPrefix("pageAct:") {
+            // pageAct:<extension id>/<page>:<json>: what a button with this `act` does when pressed, there being no one to click it.
+            let rest = command.dropFirst("pageAct:".count)
+            guard let colon = rest.firstIndex(of: ":"), let json = try? JSONValue.parse(Data(rest[rest.index(after: colon)...].utf8)), let act = PageAct.parse(json) else { return }
+            let id = String(rest[..<colon])
+            Task { await home.pageActs(id, act) }
+            return
+        }
         if command.hasPrefix("pageInlay:") {
             // pageInlay:<extension id>/<page>:<label>: a button or switch laid into the open page's scene, pressed through what its click runs (D109).
             let rest = command.dropFirst("pageInlay:".count)

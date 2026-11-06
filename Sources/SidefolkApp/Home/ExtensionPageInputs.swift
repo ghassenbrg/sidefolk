@@ -20,7 +20,8 @@ struct ExtensionPageInputs: View {
                             case .choice(let c) where c.multiple: PageMultiChoiceRow(choice: c, model: model)
                             case .choice(let c): PageChoiceRow(choice: c, model: model)
                             case .field(let f) where f.search: PageFieldRow(field: f, model: model)
-                            case .field(let f) where f.id != nil: PageEditFieldRow(field: f, model: model).id(f.id)
+                            // What it saves to is part of what it is: a field called the same on another flow's page doesn't take over this one's typing or its saves.
+                            case .field(let f) where f.id != nil: PageEditFieldRow(field: f, model: model).id("\(f.id ?? "")|\(f.input.hashValue)")
                             case .field(let f): PageFieldRow(field: f, model: model)
                             default: EmptyView()
                             }
