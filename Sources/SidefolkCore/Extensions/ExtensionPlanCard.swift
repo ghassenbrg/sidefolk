@@ -75,12 +75,25 @@ extension ExtensionPlanWords {
     /// of each value's source first, every written part between slots in quotes, every item of a list with the count, the producers of a slot in full. It is nil
     /// if there would be more than 64 entries, if any entry is over 300 characters (nothing is split or cut), or if History's Redactor would change an entry (a
     /// literal that looks like a secret, a field named like one, a long mixed-case word): what History would not keep whole, the card is the record of.
-    static func historyRecord(_ e: PlanEvaluation) -> [String]? {
+    static func historyRecord(_ e: PlanEvaluation) -> [String]? { recordResult(e).lines }
+
+    /// What `historyRecord` found: the record, or why there is none and the line (its index among `PlanEvaluation.lines`) the first reason is on, for an editor to
+    /// tell its author.
+    struct Recorded {
+        var lines: [String]?
+        var why = ""
+        var line: Int?
+    }
+
+    static func recordResult(_ e: PlanEvaluation) -> Recorded {
         // A name or a title is shown whole or the plan shows its card: a cut ("…") would hide the end of it.
-        var cutSomewhere = false
+        var cutSomewhere = false, cutLine: Int?, currentLine: Int?
         func fit(_ text: String, _ limit: Int) -> String {
             let shown = safe(text, limit)
-            if shown != safe(text, 10_000) { cutSomewhere = true }
+            if shown != safe(text, 10_000) {
+                cutSomewhere = true
+                if cutLine == nil { cutLine = currentLine }
+            }
             return shown
         }
         var terms = String(localized: "limits: \(e.plan.perDay) a day, \(e.plan.perRun ?? ExtensionPlanRules.defaultPerRun) in a run", comment: "History: a plan's limits")
@@ -102,6 +115,7 @@ extension ExtensionPlanWords {
         var out = [terms, named, when]
         for i in e.fresh {
             guard let n = visible[i] else { continue }
+            currentLine = i
             let line = e.lines[i], number = "#\(n) "
             let times = e.rows.filter { $0 == i }.count
             let again = times > 1 ? " · " + String(localized: "× \(times)", comment: "A plan's card: the same line, this many times") : ""
@@ -114,7 +128,7 @@ extension ExtensionPlanWords {
                 out.append(number + String(localized: "Hands to your AI: \(title + " · " + from)", comment: "History: a plan's step that hands what it read to the person's AI") + again)
             case "flow"?: out.append(number + String(localized: "Sets off: “\(fit(line.step.input["name"]?.stringValue ?? "", 80))”", comment: "History: a plan's step that sets off another flow; its name") + again)
             default:
-                guard let tool = line.tool else { return nil }
+                guard let tool = line.tool else { return Recorded(why: "unknown_tool", line: i) }
                 let properties = tool.spec.inputSchema["properties"]?.objectValue ?? [:]
                 let ext = ExtensionPlanRules.extensionTool(tool)
                 var header = number + fit(tool.spec.title, 60) + (ext.map { " (" + fit($0.extensionName, 40) + ")" } ?? "")
@@ -135,7 +149,7 @@ extension ExtensionPlanWords {
                     for root in ExtensionPlanRules.roots(text) {
                         let label = fit(root, 60)
                         if let known = named[label] {
-                            if known != Array(root.utf8) { return nil }
+                            if known != Array(root.utf8) { return Recorded(why: "names_alike", line: i) }
                             continue
                         }
                         named[label] = Array(root.utf8)
@@ -150,9 +164,16 @@ extension ExtensionPlanWords {
             }
         }
         // 64 entries is what History keeps of a list; 300 characters of a string, and only what the Redactor leaves as it is.
-        guard !cutSomewhere, out.count <= 64, out.allSatisfy({ $0.count <= 300 }),
-              out.allSatisfy({ Redactor.arguments(.string($0)).stringValue == $0 }) else { return nil }
-        return out
+        // An entry begins with its line's number as the card shows it; the line is the one that has it.
+        func lineOf(_ entry: String) -> Int? {
+            guard entry.hasPrefix("#"), let number = Int(entry.dropFirst().prefix { $0.isNumber }) else { return nil }
+            return visible.first { $0.value == number }?.key
+        }
+        if cutSomewhere { return Recorded(why: "name_too_long", line: cutLine) }
+        if out.count > 64 { return Recorded(why: "too_many_entries") }
+        if let long = out.first(where: { $0.count > 300 }) { return Recorded(why: "entry_too_long", line: lineOf(long)) }
+        if let changed = out.first(where: { Redactor.arguments(.string($0)).stringValue != $0 }) { return Recorded(why: "secret_like", line: lineOf(changed)) }
+        return Recorded(lines: out)
     }
 
     /// A field's value as the card says it, with the kind of its source first: written words in quotes, a slot as the steps it comes from between the written

@@ -483,6 +483,22 @@ extension ExtensionHost {
     /// Whether a plan card is up for this extension now.
     func planIsBeingAsked(_ id: String) -> Bool { runtimes[id]?.planAsking == true }
 
+    /// Why this plan, as it stands, would show a card, in the order the answer is worked out; nil when none would be shown (but for the click Full access needs,
+    /// `in_click_only`). The same facts `planAnswer` and `autoSkips` use, only named.
+    private static func cardReason(_ e: PlanEvaluation, firstParty: Bool) -> (why: String, line: Int?)? {
+        if e.mode == .askEveryTime { return ("ask_every_time", nil) }
+        if e.covered { return nil }
+        guard firstParty else { return ("not_signed", nil) }
+        guard e.mode == .fullAccess || e.mode == .auto else { return ("mode_asks", nil) }
+        let recorded = ExtensionPlanWords.recordResult(e)
+        if recorded.lines == nil { return (recorded.why, recorded.line) }
+        if e.mode == .fullAccess { return ("in_click_only", nil) }
+        if e.previous == nil { return ("first_time", nil) }
+        if e.widened { return ("terms_changed", nil) }
+        if let asking = e.fresh.first(where: { !ExtensionPlanRules.staysInside(e.lines[$0]) }) { return ("line_asks", asking) }
+        return nil
+    }
+
     /// In Auto, an edit that only adds what stays inside Sidefolk asks nothing.
     private static func autoSkips(_ e: PlanEvaluation) -> Bool {
         // One predicate for the answer and for `plan.check`: an edit passes with no card only if what it adds can be recorded in full (`historyRecord`).
@@ -563,8 +579,15 @@ extension ExtensionHost {
                 return .object(out)
             }
             let newRows = e.rows.indices.filter { e.fresh.contains(e.rows[$0]) }
-            await reply(id, request, ["ok": true, "steps": .array(states), "new": .array(newRows.map { .number(Double($0)) }), "silent": .bool((e.covered || (runtimes[id]?.pin.origin?.firstParty == true && Self.autoSkips(e))) && flow.mode != .askEveryTime),
-                                      "widened": .bool(e.widened)])
+            let silent = (e.covered || (runtimes[id]?.pin.origin?.firstParty == true && Self.autoSkips(e))) && flow.mode != .askEveryTime
+            var fields: [String: JSONValue] = ["ok": true, "steps": .array(states), "new": .array(newRows.map { .number(Double($0)) }), "silent": .bool(silent), "widened": .bool(e.widened)]
+            // Why a card comes, for an editor to tell its author: the first reason, and the row of the plan it is on, numbered from 0 as `new` numbers rows. Only
+            // names a reason: it changes nothing.
+            if !silent, let reason = Self.cardReason(e, firstParty: runtimes[id]?.pin.origin?.firstParty == true) {
+                fields["why"] = .string(reason.why)
+                if let row = reason.line.flatMap({ line in e.rows.firstIndex(of: line) }) { fields["step"] = .number(Double(row)) }
+            }
+            await reply(id, request, fields)
         }
     }
 
