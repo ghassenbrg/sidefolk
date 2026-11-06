@@ -109,7 +109,8 @@ snapshots. **Playtime 1.0.0-snapshot.11** needs Sidefolk snapshot 958, and a cop
    ([research/licence.md](research/licence.md)), the name and domain, a privacy policy and support contact,
    Open-Meteo's terms if Sidefolk is paid, Anthropic's and OpenAI's approval of their logos, curated release notes,
    and fresh launch screenshots (`scripts/launch-screenshots.swift` still picks snapshot names from before D84).
-6. **Later:** which extension ideas to build ([research/extension-ideas.md](research/extension-ideas.md));
+6. **Considered, not built:** a flow following a service's own next pages with no card per page in Ask once and Auto (the `self` source; [research/host-self-cursor-design.md](research/host-self-cursor-design.md)); Sideflow pages inside its own tools instead.
+7. **Later:** which extension ideas to build ([research/extension-ideas.md](research/extension-ideas.md));
    community companions as data (the gallery's 3D characters are code;
    [research/companion-marketplace.md](research/companion-marketplace.md)); whether the gallery's companions get
    folder-style 2D forms (D85); a hand-drawn Mochi pose for the About window and onboarding; the hero and wordmark
