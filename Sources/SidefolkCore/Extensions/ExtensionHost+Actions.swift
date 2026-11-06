@@ -260,6 +260,11 @@ extension ExtensionHost {
         case .command(let owner) where owner == id: return click(id)
         case .command: runtimes[id]?.lastPersonCall = Date()
         case .agent(let run) where !tainted && !run.hasPrefix(AgentRuntime.jobPrefix): runtimes[id]?.lastPersonCall = Date()
+        // Another AI agent, over MCP: it may ask for a card, and nothing more (D237). Whatever it has read, the plan then goes to the person on the desktop, who
+        // alone can settle it: no mode answers it, and no click of theirs from before counts for it.
+        case .external(let client):
+            // The name comes from the connection and is the client's own word for itself (unverified, `clientName`): shown as that, with anything that hides marked.
+            runtimes[id]?.agentAsk = (ExtensionPlanWords.unquoted(client.hiddenShown.clipped(60)), Date())
         default: break
         }
         return nil
@@ -434,7 +439,10 @@ extension ExtensionHost {
         // One card at a time for a plan: what the person is reading is what is saved. Taken before anything is awaited, so a second ask can't pass the same check.
         guard !rt.planAsking else { return await refuse("busy") }
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
-        guard Date().timeIntervalSince(rt.lastPersonCall) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        // Asked for since the person's own call or a clean request, or since an agent's call; when the agent's is the latest, it is the agent's ask (D237).
+        let throughAgent = rt.agentAsk.map { $0.at > rt.lastPersonCall } == true
+        guard Date().timeIntervalSince(max(rt.lastPersonCall, rt.agentAsk?.at ?? .distantPast)) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        let agent = throughAgent ? rt.agentAsk?.client : nil
         guard spend(id, "plan", limit: 10) else { return await refuse("busy") }
         runtimes[id]?.planAsking = true
         let evaluation: PlanEvaluation
@@ -445,9 +453,11 @@ extension ExtensionHost {
         case .success(let found): evaluation = found
         }
         // One reading of the person's mode decides all of it: the card's words, the answer, what is marked and what the reply says.
-        let answer = planAnswer(id, evaluation)
+        let answer = planAnswer(id, evaluation, throughAgent: agent != nil)
         let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
-        let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: words,
+        // An agent asked, not the person: the card says who, first, and that nothing is allowed until they say so here.
+        let shown = agent.map { String(localized: "An app that says it's “\($0)” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.", comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself") + "\n\n" + words } ?? words
+        let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: shown,
                                      answer: answer, intent: evaluation.intent, approveLabel: String(localized: "Approve"), approveNote: ExtensionPlanWords.approveNote(for: evaluation))
         // What Trust shows later is the whole plan as the card says it, not only what an edit added.
         var all = evaluation
@@ -456,6 +466,7 @@ extension ExtensionHost {
         let asker = asker(rt)
         // What nobody read is named on the approval's own row in History: the lines it let through.
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
+        if let agent { rowInput["asked_by"] = .string(agent) }
         if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
@@ -464,7 +475,9 @@ extension ExtensionHost {
     }
 
     /// Whether the person needs a card for this plan at all (D186–D188). Guard checks the mode again itself: this only says what the host found.
-    private func planAnswer(_ id: String, _ e: PlanEvaluation) -> PlanAnswer? {
+    private func planAnswer(_ id: String, _ e: PlanEvaluation, throughAgent: Bool = false) -> PlanAnswer? {
+        // An agent's ask is never answered for the person: not by what they read before (covered), not by Full access, not by Auto (D237). Only a card.
+        guard !throughAgent else { return nil }
         if e.covered { return .covered }
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }

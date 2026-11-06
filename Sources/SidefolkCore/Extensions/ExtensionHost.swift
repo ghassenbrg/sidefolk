@@ -121,6 +121,8 @@ public actor ExtensionHost {
         var lastPlan = Date.distantPast
         /// When the person, or a clean request, last called one of its tools: what it may ask for a plan after (D110).
         var lastPersonCall = Date.distantPast
+        /// When an AI agent connected over MCP last called one of its tools, and which: it may ask for a plan then, but only ever as a card (D237).
+        var agentAsk: (client: String, at: Date)?
         var actionCalls: [Date] = []
         /// Calls under way, by the request that made them: what a program can ask to stop.
         var actionTasks: [String: Task<Void, Never>] = [:]

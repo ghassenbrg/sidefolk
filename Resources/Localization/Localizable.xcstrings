@@ -43337,6 +43337,65 @@
         }
       }
     },
+    "An app that says it's “%@” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here." : {
+      "comment" : "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلب تطبيق يقول إنه «%@» هذا عبر اتصال Sidefolk. لا يُسمح بأي شيء حتى توافق عليه هنا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine App, die sich „%@“ nennt, hat das über die Verbindung von Sidefolk angefragt. Nichts ist erlaubt, bis du es hier genehmigst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una app que dice ser «%@» lo pidió a través de la conexión de Sidefolk. No se permite nada hasta que lo apruebes aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une app qui se dit « %@ » l’a demandé via la connexion de Sidefolk. Rien n’est autorisé tant que vous ne l’approuvez pas ici."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un’app che dice di essere «%@» lo ha richiesto tramite la connessione di Sidefolk. Nulla è consentito finché non lo approvi qui."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」と名乗るアプリが、Sidefolkの接続を通じてこれを求めました。ここで承認するまで、何も許可されません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스스로 “%@”(이)라고 밝힌 앱이 Sidefolk 연결을 통해 이것을 요청했어요. 여기에서 승인하기 전까지는 아무것도 허용되지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um app que diz ser “%@” pediu isto pela conexão do Sidefolk. Nada é permitido até você aprovar aqui."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个自称“%@”的应用通过 Sidefolk 的连接提出了这个请求。在你于此处批准之前，不会允许任何操作。"
+          }
+        }
+      }
+    },
     "An event can last a year at most." : {
       "localizations" : {
         "ar" : {
