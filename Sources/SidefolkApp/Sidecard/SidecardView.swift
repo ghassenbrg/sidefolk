@@ -106,13 +106,22 @@ struct SidecardItemCard: View {
 
     static let undo = "undo"
 
+    /// The line under a question: Sidefolk's words for who asks, then, only here, what the asker says it's about, in a style of its own so it can't read as more of Sidefolk's (D201).
+    static func message(_ item: AttentionItem) -> Text? {
+        guard let body = item.body else { return nil }
+        guard let about = item.about, !about.isEmpty else { return Text(verbatim: body) }
+        // Read aloud as a phrase of its own after who asks, since a style isn't heard.
+        let heard = Text(verbatim: body) + Text(verbatim: ". ") + Text("About: \(about)", comment: "Read aloud under a question, after who asks: what the asker says it's about, in its words")
+        return (Text(verbatim: body) + Text(verbatim: "  ") + Text(verbatim: about).italic().foregroundStyle(Theme.inkFaint)).accessibilityLabel(heard)
+    }
+
     var body: some View {
         let lines = Self.listLines(item)
         let (menu, buttons) = Self.arrange(item.actions)
         let fewer = Self.fewer(item, model.interruptions)
         SidecardCard(folk: Self.folk(item), face: Self.speaksItself(item) ? model.face : nil,
                      source: Self.source(item, companion: model.companionName, sessions: model.sessions), title: Text(verbatim: item.title),
-                     message: lines == nil ? item.body.map { Text(verbatim: $0) } : nil, tail: tail,
+                     message: lines == nil ? Self.message(item) : nil, tail: tail,
                      close: { model.respond?(item, nil) }) {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
                 // The very first hello introduces the whole family, not just the one on the desktop.

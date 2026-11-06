@@ -194,6 +194,71 @@ import Testing
         #expect(try await !probe.step(&w).triggered, "reported once")
     }
 
+    @Test func aFileRenamedInTheFolderIsntNew() async throws {
+        defer { box.cleanUp() }
+        try box.write("draft.txt", "words")
+        var w = try watcher()
+        _ = try await probe.step(&w)
+        try box.move("draft.txt", "final.txt")
+        #expect(try await !probe.step(&w).triggered)
+        #expect(try await !probe.step(&w).triggered, "and not later either")
+        try box.write("new.txt", "other")
+        _ = try await probe.step(&w)
+        #expect(try await probe.step(&w).triggered, "a file that's really new still is")
+    }
+
+    @Test func onAVolumeThatGivesNumbersAgainANewNameIsAlwaysNew() async throws {
+        defer { box.cleanUp() }
+        let share = FolderNewFileProbe(settleRecheck: 3, keepsFileNumbers: { _ in false })
+        try box.write("scan_041.pdf", "a")
+        var w = try share.made(.make(WatchKind.folderNewFile, config: ["path": .string(box.root)], mode: .repeat))
+        _ = try await share.step(&w)
+        try box.move("scan_041.pdf", "scan_042.pdf")
+        _ = try await share.step(&w)
+        #expect(try await share.step(&w).triggered, "the same number on another name is a new file here, as a share can't promise otherwise")
+    }
+
+    @Test func aBadNumberInTheMiddleLeavesTheOthersOnTheirOwnNames() async throws {
+        defer { box.cleanUp() }
+        for name in ["a.txt", "b.txt", "c.txt"] { try box.write(name, name) }
+        var w = try watcher()
+        _ = try await probe.step(&w)
+        var state = try #require(w.lastState?.objectValue)
+        let listed = try #require(state["seen"]?.arrayValue)
+        let names = listed.compactMap { $0.stringValue }
+        #expect(names == ["a.txt", "b.txt", "c.txt"])
+        var ids = try #require(state["ids"]?.arrayValue)
+        ids[1] = .number(Double(UInt64.max))
+        state["ids"] = .array(ids)
+        w.lastState = .object(state)
+        // c.txt's number is still c.txt's: renaming it is a rename, not a new file.
+        try box.move("c.txt", "d.txt")
+        #expect(try await !probe.step(&w).triggered)
+        #expect(try await !probe.step(&w).triggered)
+        let saved = try #require(w.lastState?["ids"]?.arrayValue)
+        let seen = try #require(w.lastState?["seen"]?.arrayValue)
+        #expect(saved.count == seen.count, "one entry a name, a blank where there's no number, so they stay side by side")
+    }
+
+    @Test func thisMacsOwnDiskKeepsFileNumbers() {
+        #expect(FolderNewFileProbe.volumeKeepsFileNumbers(NSTemporaryDirectory()), "the tests' own disk is APFS")
+        #expect(!FolderNewFileProbe.volumeKeepsFileNumbers("/no/such/folder"))
+    }
+
+    @Test func aBadNumberInAnOldStateIsDroppedNotFatal() async throws {
+        defer { box.cleanUp() }
+        try box.write("a.txt", "a")
+        var w = try watcher()
+        _ = try await probe.step(&w)
+        var state = try #require(w.lastState?.objectValue)
+        state["ids"] = .array([.number(Double(UInt64.max)), .number(.nan), .number(-1), .number(1.5), .string("x")])
+        w.lastState = .object(state)
+        _ = try await probe.step(&w)
+        try box.write("b.txt", "b")
+        _ = try await probe.step(&w)
+        #expect(try await probe.step(&w).triggered)
+    }
+
     @Test func aGrowingFileKeepsWaiting() async throws {
         defer { box.cleanUp() }
         var w = try watcher()

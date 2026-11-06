@@ -163,6 +163,7 @@ public final class Extension {
         notices["sidefolk/tools.result"] = { args in Actions.receiveResult(args) }
         notices["sidefolk/tools.progress"] = { args in Actions.receiveProgress(args) }
         notices["sidefolk/plan.result"] = { args in Plans.receive(args) }
+        notices["sidefolk/plan.checked"] = { args in Plans.receiveChecked(args) }
         notices["sidefolk/plan.ended"] = { args in if let plan = args.string("plan") { Plans.ended?(plan) } }
         notices["sidefolk/settings.changed"] = { [weak self] args in
             ExtensionSettings.use(args.values["settings"])
