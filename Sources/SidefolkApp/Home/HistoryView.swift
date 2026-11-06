@@ -142,6 +142,7 @@ private struct HistoryRow: View {
     var event: HistoryEvent
     var model: HistoryModel
     var home: HomeModel
+    @Environment(\.layoutDirection) private var layoutDirection
     @State private var hovered = false
 
     private var open: Bool {
@@ -199,6 +200,10 @@ private struct HistoryRow: View {
         let name = Text(verbatim: who).fontWeight(.semibold).foregroundStyle(Theme.ink)
         switch event.kind {
         case .action(let e):
+            // Right to left, who comes first even when both are in Latin letters, which would read as one line left to right.
+            if layoutDirection == .rightToLeft {
+                return Text(verbatim: "\u{200F}\u{2068}") + name + Text(verbatim: "\u{2069}  \u{2068}\(e.summary)\u{2069}")
+            }
             return name + Text(verbatim: "  ") + Text(verbatim: e.summary)
         case .conversation(let c):
             return Text("\(name) talked: “\(c.title.clipped(120))”", comment: "History: a conversation, “You and Mochi talked: “Plan my afternoon””")

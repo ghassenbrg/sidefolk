@@ -7,6 +7,8 @@ struct NotebookEditor: View {
     @Bindable var model: NotebookModel
     @FocusState private var focus: Field?
     @State private var formatting = NoteEditorController()
+    /// How wide the kind and collection are, so the actions move to their own row before they'd crowd them.
+    @State private var choicesWidth: CGFloat = 0
     private enum Field { case title, body }
 
     var body: some View {
@@ -75,7 +77,19 @@ struct NotebookEditor: View {
     }
 
     private func topBar(_ item: NotebookItem) -> some View {
-        HStack(spacing: Theme.Space.s) {
+        // The actions take a second row when the pane is too narrow for one: a language's longer names mustn't push the note
+        // past its edges. One set of controls, whichever it is, so ⌘⌫ and VoiceOver only ever meet one.
+        WrapRow(minimum: choicesWidth, spacing: Theme.Space.s) {
+            HStack(spacing: Theme.Space.s) { noteChoices(item) }
+                .fixedSize()
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { choicesWidth = $0 }
+            HStack(spacing: Theme.Space.s) { noteActions(item) }
+        }
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.vertical, Theme.Space.s + 2)
+    }
+
+    @ViewBuilder private func noteChoices(_ item: NotebookItem) -> some View {
             Picker("Kind", selection: field(item, \.kind, item.kind)) {
                 ForEach(NotebookItem.Kind.allCases, id: \.self) { kind in
                     Label { Text(ItemKindStyle.title(kind)) } icon: { Image(systemName: ItemKindStyle.symbol(kind)) }.tag(kind)
@@ -101,7 +115,9 @@ struct NotebookEditor: View {
                 .font(Theme.Font.body)
                 .padding(.leading, Theme.Space.xs)
             }
-            Spacer(minLength: Theme.Space.s)
+    }
+
+    @ViewBuilder private func noteActions(_ item: NotebookItem) -> some View {
             Button {
                 Task { await model.togglePin(item) }
             } label: {
@@ -119,9 +135,6 @@ struct NotebookEditor: View {
             .buttonStyle(.sf(.secondary))
             .keyboardShortcut(.delete, modifiers: .command)
             .help("Move to Trash (⌘⌫)")
-        }
-        .padding(.horizontal, Theme.Space.l)
-        .padding(.vertical, Theme.Space.s + 2)
     }
 
     /// When it was made and changed, and its reminder (D49), if it has one.

@@ -47692,25 +47692,25 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Frag %@ oder tippe eine Erinnerung …"
+            "value" : "Frag %@ …"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pregunta a %@ o escribe un recordatorio…"
+            "value" : "Pregunta a %@…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demandez à %@ ou tapez un rappel…"
+            "value" : "Demandez à %@…"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chiedi a %@ o scrivi un promemoria…"
+            "value" : "Chiedi a %@…"
           }
         },
         "ja" : {
@@ -47728,7 +47728,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pergunte a %@ ou digite um lembrete…"
+            "value" : "Pergunte a %@…"
           }
         },
         "zh-Hans" : {
@@ -174730,7 +174730,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rechercher dans l’historique"
+            "value" : "Rechercher"
           }
         },
         "it" : {
@@ -174834,19 +174834,19 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Namen, Werkzeuge und Berechtigungen durchsuchen"
+            "value" : "Namen, Werkzeuge, Rechte suchen"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Buscar nombres, herramientas y permisos"
+            "value" : "Buscar nombres, herramientas, permisos"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rechercher des noms, outils et autorisations"
+            "value" : "Chercher noms, outils, autorisations"
           }
         },
         "it" : {
@@ -174870,7 +174870,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Buscar nomes, ferramentas e permissões"
+            "value" : "Buscar nomes, ferramentas, permissões"
           }
         },
         "zh-Hans" : {
@@ -175020,7 +175020,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rechercher dans la Galerie"
+            "value" : "Rechercher"
           }
         },
         "it" : {

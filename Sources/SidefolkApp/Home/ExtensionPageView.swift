@@ -31,6 +31,11 @@ struct ExtensionPageView: View {
             // Told to the program, which may draw to it (D105): the column it fills, wherever the window puts it.
             Color.clear.frame(height: 0).frame(maxWidth: .infinity)
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { model.setWidth($0) }
+                // A bare page draws its own head, which Sidefolk can't see: while the page's top is in sight, the toolbar
+                // doesn't say the same name over it.
+                .overlay(alignment: .top) {
+                    if model.page?.bare == true { Color.clear.frame(height: 56).allowsHitTesting(false).homePageTitle() }
+                }
             // What went wrong with a click, and the words a click just copied, are Sidefolk's to say whatever the page draws (D105).
             if model.page?.bare == true, let problem = model.problem {
                 NoteView(note: ExtensionPage.Note(text: problem, tone: .bad))
