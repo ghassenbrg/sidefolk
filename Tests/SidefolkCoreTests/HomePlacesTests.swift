@@ -94,6 +94,14 @@ struct HomePlacesTests {
         let afternoon = cal.date(bySettingHour: 15, minute: 58, second: 0, of: now)!
         #expect(DayBrief.greeting(at: afternoon, name: "Ghassen", calendar: cal) == "Good afternoon, Ghassen.")
         #expect(DayBrief.greeting(at: afternoon, name: " ", calendar: cal) == "Good afternoon.")
+        // After midnight it isn't evening any more (the founder, phase 5).
+        let late = cal.date(bySettingHour: 0, minute: 30, second: 0, of: now)!
+        #expect(DayBrief.greeting(at: late, name: "Ghassen", calendar: cal) == "Hello, Ghassen.")
+        #expect(DayBrief.greeting(at: late, name: nil, calendar: cal) == "Hello.")
+        let evening = cal.date(bySettingHour: 23, minute: 30, second: 0, of: now)!
+        #expect(DayBrief.greeting(at: evening, name: nil, calendar: cal) == "Good evening.")
+        let early = cal.date(bySettingHour: 5, minute: 0, second: 0, of: now)!
+        #expect(DayBrief.greeting(at: early, name: nil, calendar: cal) == "Good morning.")
     }
 
     @Test func keepingASuggestedFactMakesItTheirsAndPutsItInAnswers() async throws {
