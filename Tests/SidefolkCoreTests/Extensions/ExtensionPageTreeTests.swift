@@ -45,7 +45,7 @@ struct ExtensionPageTreeTests {
         var words = node("words").objectValue ?? [:]
         words["at"] = ["x": "10", "y": 4]
         let t = try tree([.object(far), .object(words), node("none")], extra: ["placed": ["tool": "ui", "key": "spot"]])
-        #expect(t.reading.map(\.at) == [CGPoint(x: 10_000, y: -5), nil, nil], "clamped to ±10,000; anything not a number leaves it laid out")
+        #expect(t.reading.map(\.at) == [CGPoint(x: 4_000, y: -5), nil, nil], "clamped to ±4,000; anything not a number leaves it laid out")
         #expect(t.placed?.key == "spot")
     }
 
@@ -80,7 +80,40 @@ struct ExtensionPageTreeTests {
         for card in board.cards {
             #expect(card.frame.minX >= 0 && card.frame.minY >= 0 && card.frame.maxX <= board.size.width && card.frame.maxY <= board.size.height)
         }
-        #expect(board.size.width < 21_000 && board.size.height < 21_000, "bounded by how far a card may be put")
+        #expect(board.size.width < 9_000 && board.size.height < 9_000, "bounded by how far a card may be put")
+    }
+
+    @Test func aHundredAndTwentyEightCardsOnOneSpotStayBoundedAndApart() throws {
+        let t = try tree((0..<128).map { placed("n\($0)", x: 0, y: 0) }, extra: ["placed": ["tool": "ui", "key": "spot"]])
+        let board = TreeLayout(t, editable: true, free: true)
+        #expect(board.cards.count == 128 && board.nudged)
+        #expect(board.size.width < 12_000 && board.size.height < 12_000, "\(board.size): the next column, not an ever taller one")
+        let frames = board.cards.map(\.frame)
+        for (i, one) in frames.enumerated() { for other in frames[(i + 1)...] { #expect(!one.intersects(other)) } }
+    }
+
+    @Test func aCardIsNotPutWhereTheSpotAboveItCoversAFoldButton() throws {
+        // c right under a, as close as a card's own frame allows: the + spot over c would sit on a's fold button.
+        let auto = TreeLayout(try tree([node("a", branches: [branch("then:a", [node("x")])]), node("b")]), editable: true)
+        let a = try #require(auto.cards.first { $0.node.id == "a" }).frame
+        let t = try tree([node("a", branches: [branch("then:a", [node("x")])]), node("b"), placed("c", x: a.minX, y: a.maxY + 28)],
+                         extra: ["placed": ["tool": "ui", "key": "spot"]])
+        let board = TreeLayout(t, editable: true, free: true)
+        let placedA = try #require(board.cards.first { $0.node.id == "a" }).frame
+        let c = try #require(board.cards.first { $0.node.id == "c" }).frame
+        #expect(board.nudged)
+        let fold = CGRect(x: placedA.midX - 30, y: placedA.maxY - 9, width: 60, height: 18)
+        for spot in board.adds { #expect(!CGRect(x: spot.point.x - 18, y: spot.point.y - 18, width: 36, height: 36).intersects(fold) || spot.target == "a", "\(spot.target)") }
+        #expect(!c.intersects(placedA.insetBy(dx: -12, dy: -12)))
+    }
+
+    @Test func aDropIsKeptTheSameWayWhicheverWayTheBoardReads() throws {
+        let t = try tree([node("a"), placed("b", x: 600, y: 300)], extra: ["placed": ["tool": "ui", "key": "spot"]])
+        let board = TreeLayout(t, editable: true, free: true)
+        let left = board.corner(forDropAt: CGPoint(x: 700, y: 400), of: "b", rightToLeft: false)
+        let mirrored = board.corner(forDropAt: CGPoint(x: board.size.width - 700, y: 400), of: "b", rightToLeft: true)
+        #expect(left != nil && left == mirrored, "right to left the board is drawn mirrored, so the same place is the mirrored point")
+        #expect(board.corner(forDropAt: CGPoint(x: 1e7, y: -1e7), of: "b", rightToLeft: false) == CGPoint(x: 4_000, y: -4_000), "kept within reach")
     }
 
     @Test func onlyTheCardThisBoardPickedUpLands() throws {

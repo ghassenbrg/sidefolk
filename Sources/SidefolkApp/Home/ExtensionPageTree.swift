@@ -43,11 +43,11 @@ struct PageTreeView: View {
 
     /// A card let go on the board's empty space (D234): the extension is told where it now stands, its top left corner, centred on the pointer.
     /// Only for looking: nothing about what follows what changes, and the same rule as `land` says which card it is.
-    private func put(_ words: [String], at point: CGPoint, layout: TreeLayout, on shown: ExtensionPage.Tree) -> Bool {
+    private func put(_ words: [String], at point: CGPoint, layout: TreeLayout, on shown: ExtensionPage.Tree, rightToLeft: Bool) -> Bool {
         defer { carried = nil; edge = nil }
-        guard let placed = shown.placed, let id = shown.dropped(words, carried: carried), let card = layout.cards.first(where: { $0.node.id == id }) else { return false }
-        let x = (point.x - card.frame.width / 2 - layout.origin.x).rounded(), y = (point.y - card.frame.height / 2 - layout.origin.y).rounded()
-        Task { await model.run(tool: placed.tool, input: placed.input(["id": .string(id), "x": .number(Double(x)), "y": .number(Double(y))])) }
+        guard let placed = shown.placed, let id = shown.dropped(words, carried: carried),
+              let corner = layout.corner(forDropAt: point, of: id, rightToLeft: rightToLeft) else { return false }
+        Task { await model.run(tool: placed.tool, input: placed.input(["id": .string(id), "x": .number(Double(corner.x)), "y": .number(Double(corner.y))])) }
         return true
     }
 
@@ -137,7 +137,8 @@ struct PageTreeView: View {
                 ScrollView([.horizontal, .vertical]) {
                     TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: Set(matches), carried: carrying,
                                carry: { id in carried = id.map { ExtensionPage.Tree.Carry(id: $0, on: shown) } },
-                               land: { land($0, after: $1, on: shown) }, put: { put($0, at: $1, layout: layout, on: shown) })
+                               land: { land($0, after: $1, on: shown) }, put: { put($0, at: $1, layout: layout, on: shown, rightToLeft: $2) },
+                               order: Dictionary(tree.reading.enumerated().map { ($1.id, $0 + 1) }, uniquingKeysWith: { a, _ in a }))
                         .scaleEffect(scale, anchor: .topLeading)
                         .frame(width: layout.size.width * scale, height: layout.size.height * scale, alignment: .topLeading)
                         .frame(minWidth: geo.size.width, minHeight: geo.size.height, alignment: .top)
@@ -374,16 +375,21 @@ private struct TreeCanvas: View {
     var carried: String?
     var carry: (String?) -> Void
     var land: ([String], String) -> Bool
-    var put: ([String], CGPoint) -> Bool = { _, _ in false }
+    var put: ([String], CGPoint, Bool) -> Bool = { _, _, _ in false }
+    /// Each card's place in the whole tree's order, folded cards counted: what the numbers say.
+    var order: [String: Int] = [:]
+    @Environment(\.layoutDirection) private var direction
 
     var body: some View {
         let line = TreeLine(tree.line)
         // Once cards stand where the person put them, each says its place in the order, which the lines also follow.
-        let numbers = layout.placed ? Dictionary(tree.reading.enumerated().map { ($1.id, $0 + 1) }, uniquingKeysWith: { a, _ in a }) : [:]
+        let numbers = layout.placed ? order : [:]
         ZStack(alignment: .topLeading) {
-            // The board's empty space takes a card let go there, as a place to stand (D234); a card or a + spot over it takes it first.
+            // The board's empty space takes a card let go there, as a place to stand (D234); a card or a + spot over it takes it first. Measured
+            // from the left edge whatever the reading direction, and mirrored back in `corner` when the board is drawn right to left.
             Color.clear.contentShape(Rectangle())
-                .dropDestination(for: String.self) { words, at in put(words, at) }
+                .dropDestination(for: String.self) { words, at in put(words, at, direction == .rightToLeft) }
+                .environment(\.layoutDirection, .leftToRight)
             TreeLines(lines: layout.lines, line: line, size: layout.size)
             TreeBoard(size: layout.size) {
                 ForEach(layout.cards, id: \.node.id) { card in
