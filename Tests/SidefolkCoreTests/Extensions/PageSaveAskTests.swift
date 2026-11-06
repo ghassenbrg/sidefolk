@@ -11,7 +11,26 @@ import Testing
 
     @Test func aNoteIsPlainAndShort() {
         guard case .save(let ask)? = PageAct.parse(["save": ["name": "a", "type": "txt", "tool": "t", "input": [:], "note": .string(String(repeating: "x", count: 300))]]) else { Issue.record("no ask"); return }
-        #expect(ask.note?.count == 200)
+        #expect(ask.note?.count == 140)
+        guard case .save(let lines)? = PageAct.parse(["save": ["name": "a", "type": "txt", "tool": "t", "input": [:], "note": "Save it\nin ~/Library"]]) else { Issue.record("no ask"); return }
+        #expect(lines.note == "Save it in ~/Library", "one line")
+        #expect(PageSaveAsk.panelMessage("Save it here", from: "Sideflow").hasPrefix("Sideflow says: "), "whose words they are comes first")
+    }
+
+    @Test func thePlacesSidefolkNeverTouchesAreRefusedWhateverWasPicked() throws {
+        let home = NSHomeDirectory()
+        for path in [home + "/Library/LaunchAgents/com.helper.agent.json", home + "/.claude/settings.json", home + "/.ssh/config.txt",
+                     SidefolkPaths.standard().home.appendingPathComponent("notes.json").path, "/Library/LaunchDaemons/x.json"] {
+            #expect(PageSaveAsk.refusal(at: URL(fileURLWithPath: path)) != nil, "\(path)")
+        }
+        // A link on the way is followed to where it leads.
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try FileManager.default.createSymbolicLink(at: folder.appendingPathComponent("in"), withDestinationURL: URL(fileURLWithPath: home + "/Library"))
+        #expect(PageSaveAsk.refusal(at: folder.appendingPathComponent("in/LaunchAgents/x.json")) != nil, "a link into ~/Library")
+        #expect(PageSaveAsk.refusal(at: folder.appendingPathComponent("report.json")) == nil, "an ordinary place")
+        #expect(PageSaveAsk.refusal(at: folder.appendingPathComponent("agent.plist")) != nil, "a kind that acts where it lands, renamed in the panel")
     }
 
     @Test func aNameIsOnlyAName() {
@@ -56,7 +75,7 @@ import Testing
     }
 
     @Test func itCantBeAKindOfFileThatRuns() {
-        for type in ["app", "command", "terminal", "pkg", "scpt", "sh", "py", "dmg", "webloc"] { #expect(ask("Report", type: type) == nil, "\(type)") }
+        for type in ["app", "command", "terminal", "pkg", "scpt", "sh", "py", "dmg", "webloc", "plist", "mobileconfig", "workflow", "rb", "pl"] { #expect(ask("Report", type: type) == nil, "\(type)") }
         for type in ["csv", "json", "txt", "sideflow"] { #expect(ask("Report", type: type)?.name == "Report.\(type)", "\(type)") }
     }
 

@@ -90,10 +90,31 @@ public struct PageSaveAsk: Sendable, Hashable {
     public var note: String?
     /// The most it writes: words a page's tool made, not a way to fill a disk.
     public static let longest = 1_000_000
+    /// A note is a line on the panel, not a set of instructions.
+    public static let longestNote = 140
 
     /// What a save may be: a kind of file that holds content (D140's list), or an ending the system has no kind for. The page's model then asks whether an app here would open it. Never one that opens by running: `.command`, `.terminal`, `.pkg`, `.app`.
     public static func mayBe(_ type: String) -> Bool {
-        ExtensionOutputs.allowedEndings.contains(type) || UTType(filenameExtension: type)?.isDynamic == true
+        !savesNever.contains(type) && (ExtensionOutputs.allowedEndings.contains(type) || UTType(filenameExtension: type)?.isDynamic == true)
+    }
+
+    /// Kinds the system acts on by itself where they land, or that run when opened, whatever a page says is in them: a property list in LaunchAgents starts a program at login.
+    static let savesNever: Set<String> = [
+        "plist", "mobileconfig", "command", "tool", "terminal", "app", "pkg", "mpkg", "dmg", "sh", "zsh", "bash", "py", "rb", "pl", "php", "js", "scpt",
+        "applescript", "workflow", "action", "webloc", "inetloc", "fileloc", "kext", "plugin", "bundle", "prefpane", "dylib", "so", "framework", "service",
+    ]
+
+    /// Why the place the person picked can't have it, or nil: the places Sidefolk never touches (T10) are refused whatever was picked, a link on the way followed to where it leads.
+    public static func refusal(at place: URL) -> String? {
+        if savesNever.contains(place.pathExtension.lowercased()) {
+            return String(localized: "Sidefolk doesn't save this kind of file from a page.", comment: "An extension's page: it asked to save a kind of file an app on this Mac would open and could run")
+        }
+        return FolderAccess.forbiddenReason([place.path])
+    }
+
+    /// The panel's words: who says them first, since they're the extension's and not Sidefolk's, on one short line.
+    public static func panelMessage(_ note: String, from extensionName: String) -> String {
+        String(localized: "\(extensionName) says: \(note)", comment: "The save panel's message from an extension's page: the extension's name, then what it says about the file")
     }
 
     /// What the file's called, and only that: one line, nothing hidden, no folder, and its real ending in sight however long it is.
@@ -116,7 +137,7 @@ public struct PageSaveAsk: Sendable, Hashable {
     static func parse(_ j: JSONValue?) -> PageSaveAsk? {
         guard let j, let tool = ExtensionPage.toolName(j["tool"]), let type = j["type"]?.stringValue, type.range(of: #"^[a-z0-9]{1,12}$"#, options: .regularExpression) != nil, mayBe(type),
               let input = ExtensionPage.smallInput(j["input"]), let name = j["name"]?.stringValue.flatMap({ plainName($0, type: type) }) else { return nil }
-        return PageSaveAsk(name: name, type: type, tool: tool, input: input, note: j["note"]?.stringValue.map { String(ExtensionText.clean($0).prefix(200)) })
+        return PageSaveAsk(name: name, type: type, tool: tool, input: input, note: j["note"]?.stringValue.map { String(ExtensionText.clean($0).split(whereSeparator: \.isNewline).joined(separator: " ").prefix(longestNote)) })
     }
 }
 

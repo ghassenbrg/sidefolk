@@ -235,13 +235,15 @@ enum PageFilePanel {
 
     /// The system's save panel: the place is the person's, and only Sidefolk ever knows it.
     @MainActor
-    static func chooseWhere(_ ask: PageSaveAsk) async -> URL? {
+    static func chooseWhere(_ ask: PageSaveAsk, from extensionName: String) async -> URL? {
         #if DEBUG
         if let chosen = choiceForTest { return URL(fileURLWithPath: chosen) }
         #endif
         let panel = NSSavePanel()
         panel.nameFieldStringValue = ask.name
-        if let note = ask.note { panel.message = note }
+        // It starts where downloads go, never where a page would have it: the place is the person's to pick.
+        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        if let note = ask.note { panel.message = PageSaveAsk.panelMessage(note, from: extensionName) }
         if let type = UTType(filenameExtension: ask.type) { panel.allowedContentTypes = [type] }
         return await panel.begin() == .OK ? panel.url : nil
     }
@@ -462,7 +464,12 @@ final class ExtensionPageModel {
                 problem = String(localized: "That couldn't be saved: the file is missing or too big.", comment: "An extension's page: the file it made to save can't be read or is over the limit")
                 return
             }
-            guard let place = await PageFilePanel.chooseWhere(ask) else { return }
+            guard let place = await PageFilePanel.chooseWhere(ask, from: info.extensionName) else { return }
+            // Picked by the person, and still never where Sidefolk doesn't go (T10): a page can say where to put it.
+            if let why = PageSaveAsk.refusal(at: place) {
+                problem = why
+                return
+            }
             do {
                 try bytes.write(to: place, options: .atomic)
                 PageSaveAsk.markAsDownloaded(place)
