@@ -85,6 +85,12 @@ final class CalendarModel {
     let now: NowModel
     var runtime: SidefolkRuntime { services.runtime }
     var calendar: Calendar { .autoupdatingCurrent }
+
+    /// A date's number alone, for a cell of a calendar: the locale's day format says "10日" in Japanese, Korean and Chinese,
+    /// which doesn't fit a cell and repeats what the grid already says.
+    func dayNumber(_ day: Date) -> String {
+        calendar.component(.day, from: day).formatted(.number.grouping(.never))
+    }
     /// The settings the page draws from, kept here so the page redraws when they change (the store isn't observed).
     private(set) var calendarOn = false
     private(set) var writesOn = false

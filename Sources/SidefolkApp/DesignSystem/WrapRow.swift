@@ -25,7 +25,9 @@ struct WrapRow: Layout {
             return CGSize(width: width, height: max(h, endHeight))
         }
         let h = words.sizeThatFits(ProposedViewSize(width: width, height: nil)).height
-        return CGSize(width: width, height: h + spacing + endHeight)
+        // On their own line an end may wrap, so it's asked at the width it gets.
+        let line = subviews.dropFirst().map { $0.sizeThatFits(ProposedViewSize(width: max(0, width - indent), height: nil)).height }.max() ?? 0
+        return CGSize(width: width, height: h + spacing + max(line, endHeight))
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
@@ -50,8 +52,8 @@ struct WrapRow: Layout {
             let y = bounds.minY + wordsSize.height + spacing
             for (view, size) in zip(rest, ends) {
                 // An end wider than the line on its own gets the line.
-                let w = min(size.width, bounds.width - indent)
-                view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(width: w, height: size.height))
+                let w = min(size.width, max(0, bounds.width - indent))
+                view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(width: w, height: nil))
                 x += w + spacing
             }
         }

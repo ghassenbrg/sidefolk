@@ -162,9 +162,11 @@ public enum FolderAccess {
         return isGrantable(base) ? base : nil
     }
 
+    /// A path as people read it: `~` for home, and any character that is hidden or turns the text around written out (`hiddenShown`), so a card or a row can't
+    /// show one name for another.
     public static func displayPath(_ path: String) -> String {
         let home = self.home
         if path == home { return "~" }
-        return path.hasPrefix(home + "/") ? "~" + path.dropFirst(home.count) : path
+        return (path.hasPrefix(home + "/") ? "~" + path.dropFirst(home.count) : path).hiddenShown
     }
 }

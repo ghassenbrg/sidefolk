@@ -224,7 +224,8 @@ import Testing
         var w = try watcher()
         _ = try await probe.step(&w)
         var state = try #require(w.lastState?.objectValue)
-        let names = try #require(state["seen"]?.arrayValue?.compactMap(\.stringValue))
+        let listed = try #require(state["seen"]?.arrayValue)
+        let names = listed.compactMap { $0.stringValue }
         #expect(names == ["a.txt", "b.txt", "c.txt"])
         var ids = try #require(state["ids"]?.arrayValue)
         ids[1] = .number(Double(UInt64.max))

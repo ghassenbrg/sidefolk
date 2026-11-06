@@ -65,7 +65,7 @@ struct CalendarMonth: View {
                     Text(verbatim: day.formatted(.dateTime.month(.abbreviated))).font(Theme.Font.captionStrong)
                         .foregroundStyle(inMonth ? Theme.ink : Theme.inkFaint)
                 }
-                Text(verbatim: day.formatted(.dateTime.day()))
+                Text(verbatim: model.dayNumber(day))
                     .font(Theme.Font.captionStrong).monospacedDigit()
                     .foregroundStyle(today ? Theme.onAccent : inMonth ? Theme.ink : Theme.inkFaint)
                     .frame(minWidth: 22, minHeight: 22)

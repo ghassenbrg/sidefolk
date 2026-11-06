@@ -58,7 +58,12 @@ struct OnDutyView: View {
                     .frame(maxWidth: 640, alignment: .leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: Theme.Space.s) {
+            // Wraps when a language's longer words won't fit in a row: past the margin they'd run under the scroll bar.
+            FlowRow(spacing: Theme.Space.s) { heroActions(duty, empty: empty) }
+        }
+    }
+
+    @ViewBuilder private func heroActions(_ duty: OnDuty, empty: Bool) -> some View {
                 if !now.watchers.isEmpty || !now.reports.isEmpty {
                     Button { model.selection = .watchers } label: { Label("All watchers", systemImage: "list.bullet") }
                         .buttonStyle(.sf(.secondary, size: .regular))
@@ -73,9 +78,6 @@ struct OnDutyView: View {
                     Button { model.services.openAsk(prefill: "tell me when ") } label: { Label("Watch something", systemImage: "plus") }
                         .buttonStyle(.sf(.primary, size: .regular))
                 }
-            }
-            .fixedSize()
-        }
     }
 
     /// "Scout watches 3, Byte follows 2 agents, Tempo repeats a reminder, and 2 live values are pinned."

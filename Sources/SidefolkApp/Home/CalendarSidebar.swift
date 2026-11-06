@@ -129,7 +129,7 @@ struct CalendarMiniMonth: View {
         let busy = !model.entries(on: day).isEmpty
         return Button { model.jump(to: day) } label: {
             VStack(spacing: 1) {
-                Text(verbatim: day.formatted(.dateTime.day())).font(Theme.Font.caption.monospacedDigit())
+                Text(verbatim: model.dayNumber(day)).font(Theme.Font.caption.monospacedDigit())
                     .foregroundStyle(today ? Theme.onAccent : chosen ? Theme.ink : inMonth ? Theme.ink : Theme.inkFaint)
                     .frame(width: 22, height: 20)
                     .background {

@@ -59,7 +59,7 @@ struct CalendarYear: View {
         let today = model.calendar.isDateInToday(day)
         let count = model.entries(on: day).count
         return Button { model.show(day: day) } label: {
-            Text(verbatim: day.formatted(.dateTime.day())).font(Theme.Font.caption.monospacedDigit())
+            Text(verbatim: model.dayNumber(day)).font(Theme.Font.caption.monospacedDigit())
                 .foregroundStyle(today ? Theme.onAccent : Theme.ink)
                 .frame(width: 22, height: 22)
                 .background {

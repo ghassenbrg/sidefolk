@@ -147,7 +147,7 @@ private struct SidebarTab: View {
                 Text(verbatim: tab.title)
                     .font(selected ? Theme.Font.bodyStrong : Theme.Font.body)
                     .foregroundStyle(selected ? Theme.onSidebarSelected : Theme.sidebarInk)
-                    .lineLimit(1)
+                    .lineLimit(2)
                 Spacer(minLength: Theme.Space.xs)
                 if let found {
                     if found > 0 {
@@ -158,7 +158,9 @@ private struct SidebarTab: View {
                 }
             }
             .padding(.horizontal, Theme.Space.s)
-            .frame(height: Theme.Size.sidebarRow + 2)
+            // A name on two lines grows the row rather than filling it edge to edge.
+            .padding(.vertical, 2)
+            .frame(minHeight: Theme.Size.sidebarRow + 2)
             .background {
                 RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
                     .fill(selected ? Theme.sidebarSelected : hovering ? Theme.well : .clear)

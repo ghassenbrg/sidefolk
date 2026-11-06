@@ -49,7 +49,7 @@ struct ApprovalDetails: View {
             EmptyView()
         case .command(let command):
             DisclosureGroup(isExpanded: $showDetails) {
-                Text(verbatim: command).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                Text(verbatim: command.hiddenShown).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                     .padding(Theme.Space.s).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Theme.surfaceSunken, in: RoundedRectangle(cornerRadius: 6))
             } label: {
@@ -57,12 +57,12 @@ struct ApprovalDetails: View {
             }
             .onAppear { showDetails = true }
         case .url(let url):
-            Text(verbatim: url).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted).lineLimit(2).textSelection(.enabled)
+            Text(verbatim: url.hiddenShown).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted).lineLimit(2).textSelection(.enabled)
         case .paths(let paths):
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(paths.prefix(5), id: \.self) { p in
                     Text(verbatim: FolderAccess.displayPath(p)).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.inkMuted)
-                        .lineLimit(1)
+                        .lineLimit(1).truncationMode(.middle)
                 }
                 if paths.count > 5 { Text("and \(paths.count - 5) more").font(Theme.Font.caption).foregroundStyle(Theme.inkFaint) }
             }

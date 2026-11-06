@@ -156,8 +156,8 @@ struct FilesRenameTool: Tool {
         risk: .medium, capabilities: [.filesWrite], category: .files, mutates: true)
 
     func summary(for input: JSONValue) -> String {
-        let old = input.string("path").map { FilePaths.name($0) } ?? String(localized: "an item")
-        return String(localized: "Rename \(old) to “\((input.string("new_name") ?? "").clipped(80))”")
+        let old = (input.string("path").map { FilePaths.name($0) } ?? String(localized: "an item")).hiddenShown
+        return String(localized: "Rename \(old) to “\((input.string("new_name") ?? "").hiddenShown.clipped(80))”")
     }
 
     func scope(for input: JSONValue) -> ToolScope {
@@ -286,7 +286,7 @@ struct FilesTrashTool: Tool {
         risk: .high, capabilities: [.filesWrite], category: .files, mutates: true)
 
     func summary(for input: JSONValue) -> String {
-        let names = (input.textList("paths") ?? []).map { FilePaths.name($0) }
+        let names = (input.textList("paths") ?? []).map { FilePaths.name($0).hiddenShown }
         return String(localized: "Move \(names.count) items to the Trash: \(Wording.names(names))")
     }
 

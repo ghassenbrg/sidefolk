@@ -55,7 +55,7 @@ struct PocketView: View {
                     .font(Theme.Font.headline).foregroundStyle(Theme.ink).lineLimit(1)
                 Text(verbatim: content.companionVisible ? content.stateLine
                      : String(localized: "Reminders arrive as notifications", comment: "The Pocket, while the companion is hidden"))
-                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(1)
+                    .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted).lineLimit(2)
             }
             Spacer(minLength: Theme.Space.s)
             moreMenu
@@ -175,7 +175,7 @@ struct PocketView: View {
                     .font(Theme.Font.caption)
                     .fixedSize()
                     Spacer()
-                    Button { actions.openAttentionSettings() } label: { Text("Attention settings…", comment: "The Pocket: opens Settings › Attention") }
+                    Button { actions.openAttentionSettings() } label: { Text("Attention settings…", comment: "The Pocket: opens Settings › Attention").lineLimit(1).minimumScaleFactor(0.8) }
                         .buttonStyle(.sfBare).foregroundStyle(Theme.link)
                 }
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
@@ -195,7 +195,8 @@ struct PocketView: View {
             Image(nsImage: CompanionAppIcon.sidefolk).resizable().frame(width: 30, height: 30).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(version) is ready", comment: "Settings › General: a new version, “0.1.0 snapshot 560 is ready”")
-                    .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(1)
+                    .font(Theme.Font.bodyStrong).foregroundStyle(Theme.ink).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 (content.updateReady ? Text("Downloaded and checked", comment: "The Pocket: an update ready to restart into")
                      : Text("Sidefolk asks before installing", comment: "The Pocket: an update found"))
                     .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)

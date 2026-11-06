@@ -586,6 +586,11 @@ private struct AgentOptions: View {
     }
 }
 
+/// Each path and config key in a line kept whole, or right to left "~/.claude.json" reads "claude.json./~".
+private func isolatingPlaces(_ line: String) -> String {
+    line.replacing(/(?:~\/|\/|\[)[^\s،,;”"]+/) { "\u{2068}\($0.output)\u{2069}" }
+}
+
 /// Any other app that speaks MCP (Cursor, VS Code, Zed…): Sidefolk changes nothing there, it hands over the command.
 private struct OtherAgentsRow: View {
     var copy: () -> Void
@@ -638,7 +643,7 @@ private struct AgentCard<Extra: View>: View {
                 if found {
                     VStack(alignment: .leading, spacing: 3) {
                         ForEach(changes, id: \.self) { line in
-                            Label(line, systemImage: "plus").labelStyle(BulletLabelStyle())
+                            Label(isolatingPlaces(line), systemImage: "plus").labelStyle(BulletLabelStyle())
                         }
                     }
                     extra
