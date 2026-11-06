@@ -1,25 +1,19 @@
 import SidefolkCore
 import SwiftUI
 
-/// Picks a card up, and takes one dropped on it to stand right after it. The system's own drag: the words carried are only the card's id, and only a card of this tree lands.
-/// Esc puts it back, as any drag on a Mac.
+/// Picks a card up, and takes one dropped on it to stand right after it. The system's own drag; which card lands is the board's own record
+/// of what it picked up (`ExtensionPage.Tree.dropped`), never the words the drag carries. Esc puts it back, as any drag on a Mac.
 struct TreeCardDrag: ViewModifier {
     var node: ExtensionPage.Tree.Node
     var tree: ExtensionPage.Tree
-    var model: ExtensionPageModel
-    var carried: String?
     var carry: (String?) -> Void
+    var land: ([String], String) -> Bool
     @Binding var dropping: Bool
 
-    /// Marks a drag as a card's, so words dragged in from elsewhere land nowhere.
-    static let carrying = "sidefolk.tree.card:"
-    static func card(in dragged: [String]) -> String? { dragged.first?.hasPrefix(carrying) == true ? dragged.first.map { String($0.dropFirst(carrying.count)) } : nil }
-
-    /// What letting a card go at a spot does: the tree's own move to right after `target`, through the extension's tool, as Move to does.
-    /// Only the card this board picked up itself moves: the same words typed, pasted or dragged in from another app or window name a
-    /// card, but this board isn't carrying it, so they land nowhere.
-    static func drop(_ dragged: [String], after target: String, carried: String?, tree: ExtensionPage.Tree, model: ExtensionPageModel) -> Bool {
-        guard let reorder = tree.reorder, let id = card(in: dragged), id == carried, let place = tree.place(id, after: target) else { return false }
+    /// The tree's own move to right after `target`, through the extension's tool, as Move to does. Nil from `place` (itself, its own
+    /// family, where it stands already) moves nothing.
+    static func move(_ id: String, after target: String, tree: ExtensionPage.Tree, model: ExtensionPageModel) -> Bool {
+        guard let reorder = tree.reorder, let place = tree.place(id, after: target) else { return false }
         Task { await model.run(tool: reorder.tool, input: reorder.input(place)) }
         return true
     }
@@ -28,10 +22,7 @@ struct TreeCardDrag: ViewModifier {
         if tree.reorder != nil {
             content
                 .treeDraggable(node.fixed ? nil : node, carry: carry)
-                .dropDestination(for: String.self) { ids, _ in
-                    carry(nil)
-                    return Self.drop(ids, after: node.id, carried: carried, tree: tree, model: model)
-                } isTargeted: { dropping = $0 }
+                .dropDestination(for: String.self) { words, _ in land(words, node.id) } isTargeted: { dropping = $0 }
         } else {
             content
         }
@@ -44,7 +35,7 @@ private extension View {
         if let node {
             onDrag {
                 carry(node.id)
-                return NSItemProvider(object: (TreeCardDrag.carrying + node.id) as NSString)
+                return NSItemProvider(object: (ExtensionPage.Tree.dragPrefix + node.id) as NSString)
             } preview: {
                 TreeDragPreview(node: node)
             }
@@ -138,7 +129,7 @@ struct TreeAddButton: View {
     var line: TreeLine
     var model: ExtensionPageModel
     var carried: String?
-    var carry: (String?) -> Void
+    var land: ([String], String) -> Bool
     @State private var hovering = false
     @State private var picking = false
     @State private var dropping = false
@@ -185,10 +176,7 @@ struct TreeAddButton: View {
         // A card dragged here lands at this spot: on either side of the +, so it needn't be hit exactly.
         .frame(minWidth: 36, minHeight: 36)
         .contentShape(Rectangle())
-        .dropDestination(for: String.self) { ids, _ in
-            carry(nil)
-            return TreeCardDrag.drop(ids, after: add.target, carried: carried, tree: tree, model: model)
-        } isTargeted: { dropping = $0 }
+        .dropDestination(for: String.self) { words, _ in land(words, add.target) } isTargeted: { dropping = $0 }
         .popover(isPresented: $picking, arrowEdge: .bottom) {
             if let picker {
                 TreePicker(picker: picker, accent: accent) { id in

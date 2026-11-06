@@ -12,8 +12,8 @@ struct PageTreeView: View {
     @State private var position = ScrollPosition(idType: String.self)
     @State private var offset = CGPoint.zero
     @State private var pointer: CGPoint?
-    /// The card being dragged, while it is: every place it can go shows.
-    @State private var carried: String?
+    /// The card being dragged, while it is, and the tree it was picked up from: every place it can go shows, and only it lands.
+    @State private var carried: ExtensionPage.Tree.Carry?
     /// The edge a carried card is held at, which the board scrolls toward.
     @State private var edge: CGRectEdge?
     @State private var outline = false
@@ -29,10 +29,17 @@ struct PageTreeView: View {
     /// A dev command's carry, with no mouse button to let go of.
     @State private var held = false
     @Environment(\.treeSnapshot) private var snapshot
-    private var carrying: String? { carried ?? snapshot.carrying }
+    private var carrying: String? { carried?.id ?? snapshot.carrying }
     #else
-    private var carrying: String? { carried }
+    private var carrying: String? { carried?.id }
     #endif
+
+    /// A card let go at a spot: it moves only if it's the one this board picked up, on the tree as it was then. The board forgets it either way.
+    private func land(_ words: [String], after target: String, on shown: ExtensionPage.Tree) -> Bool {
+        defer { carried = nil; edge = nil }
+        guard let id = shown.dropped(words, carried: carried) else { return false }
+        return TreeCardDrag.move(id, after: target, tree: shown, model: model)
+    }
 
     var body: some View {
         if outline {
@@ -112,7 +119,9 @@ struct PageTreeView: View {
             let rescale = { (wanted: CGFloat, anchor: CGPoint?) in self.rescale(to: wanted, around: anchor, from: scale, view: geo.size) }
             ScrollViewReader { scroll in
                 ScrollView([.horizontal, .vertical]) {
-                    TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: Set(matches), carried: carrying) { carried = $0 }
+                    TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: Set(matches), carried: carrying,
+                               carry: { id in carried = id.map { ExtensionPage.Tree.Carry(id: $0, on: shown) } },
+                               land: { land($0, after: $1, on: shown) })
                         .scaleEffect(scale, anchor: .topLeading)
                         .frame(width: layout.size.width * scale, height: layout.size.height * scale, alignment: .topLeading)
                         .frame(minWidth: geo.size.width, minHeight: geo.size.height, alignment: .top)
@@ -136,10 +145,10 @@ struct PageTreeView: View {
                     rescale(scale * factor, at)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: Self.devDrop)) { note in
-                    // As a drop by hand: only the card `treeCarry:` picked up moves.
+                    // As a drop by hand, through the same door: only the card `treeCarry:` picked up moves.
                     guard let pair = note.object as? [String], pair.count == 2 else { return }
-                    _ = TreeCardDrag.drop([TreeCardDrag.carrying + pair[0]], after: pair[1], carried: carried, tree: shown, model: model)
-                    carried = nil
+                    let moved = land([ExtensionPage.Tree.dragPrefix + pair[0]], after: pair[1], on: shown)
+                    NSLog("treeDrop: %@ after %@ → %@", pair[0], pair[1], moved ? "moved" : "refused")
                     held = false
                 }
                 #endif
@@ -168,8 +177,8 @@ struct PageTreeView: View {
         .focusEffectDisabled()
         .focused($boardFocused)
         .onKeyPress(phases: .down, action: key)
-        // The carried card is forgotten once the button is let go, dropped or not (Esc is the drag's own way out).
-        // Seen let go twice, so the drop that comes with letting go still finds the card it carried.
+        // A drop forgets the carried card as it lands. A drag let go anywhere else (Esc is the drag's own way out) is forgotten a second
+        // after the button comes up: long enough that the drop that comes with letting go still finds it.
         .task(id: carried) {
             guard carried != nil else { return }
             var up = 0
@@ -179,7 +188,7 @@ struct PageTreeView: View {
                 if held { continue }
                 #endif
                 up = NSEvent.pressedMouseButtons & 1 == 0 ? up + 1 : 0
-                if up >= 2 {
+                if up >= 7 {
                     carried = nil
                     edge = nil
                     return
@@ -195,8 +204,10 @@ struct PageTreeView: View {
         }
         #if DEBUG
         .onReceive(NotificationCenter.default.publisher(for: Self.devCarry)) { note in
-            carried = note.object as? String
-            held = carried != nil
+            // `<id>` stays carried until a drop; `<id>:loose` is let go of at once, as a drag whose button came up.
+            let words = (note.object as? String)?.split(separator: ":").map(String.init) ?? []
+            carried = words.first.map { ExtensionPage.Tree.Carry(id: $0, on: tree.folding(folded)) }
+            held = carried != nil && words.last != "loose"
         }
         #endif
         // Pressing a card leaves the keyboard here.
@@ -335,6 +346,7 @@ private struct TreeCanvas: View {
     var marked: Set<String>
     var carried: String?
     var carry: (String?) -> Void
+    var land: ([String], String) -> Bool
 
     var body: some View {
         let line = TreeLine(tree.line)
@@ -342,7 +354,7 @@ private struct TreeCanvas: View {
             TreeLines(lines: layout.lines, line: line, size: layout.size)
             TreeBoard(size: layout.size) {
                 ForEach(layout.cards, id: \.node.id) { card in
-                    TreeCard(node: card.node, tree: tree, line: line, model: model, folded: $folded, marked: marked.contains(card.node.id), carried: carried, carry: carry)
+                    TreeCard(node: card.node, tree: tree, line: line, model: model, folded: $folded, marked: marked.contains(card.node.id), carried: carried, carry: carry, land: land)
                         .treeFrame(card.frame).id(card.node.id)
                 }
                 ForEach(layout.labels, id: \.branch.id) { label in
@@ -350,7 +362,7 @@ private struct TreeCanvas: View {
                 }
                 if let insert = tree.insert {
                     ForEach(layout.adds, id: \.target) { add in
-                        TreeAddButton(add: add, hook: insert, picker: tree.picker, tree: tree, line: line, model: model, carried: carried, carry: carry)
+                        TreeAddButton(add: add, hook: insert, picker: tree.picker, tree: tree, line: line, model: model, carried: carried, land: land)
                             .treeFrame(add.hint == nil ? CGRect(x: add.point.x - 18, y: add.point.y - 18, width: 36, height: 36) : CGRect(x: add.point.x - 75, y: add.point.y - 18, width: 150, height: 36))
                     }
                 }
@@ -430,6 +442,7 @@ private struct TreeCard: View {
     var marked = false
     var carried: String?
     var carry: (String?) -> Void
+    var land: ([String], String) -> Bool
     @State private var hovering = false
     @State private var dropping = false
     @Environment(\.pageSelected) private var chosen
@@ -483,7 +496,7 @@ private struct TreeCard: View {
         .overlay(alignment: .bottom) { foldButton }
         .onHover { hovering = $0 }
         .contextMenu { actions }
-        .modifier(TreeCardDrag(node: node, tree: tree, model: model, carried: carried, carry: carry, dropping: $dropping))
+        .modifier(TreeCardDrag(node: node, tree: tree, carry: carry, land: land, dropping: $dropping))
     }
 
     /// Its kind, what it does and its state: what the card shows, said in that order.
