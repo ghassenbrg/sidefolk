@@ -18,7 +18,9 @@ struct ExpandableText: View {
     @State private var shownHeight: CGFloat = 0
     @State private var fullHeight: CGFloat = 0
 
-    private var expanded: Bool { open ?? startsOpen }
+    /// Whether the first lines leave words out: only then is there anything to open.
+    private var cutShort: Bool { fullHeight > shownHeight + 1 }
+    private var expanded: Bool { cutShort && (open ?? startsOpen) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
@@ -29,10 +31,9 @@ struct ExpandableText: View {
                 .frame(height: min(max(fullHeight, 1), maxHeight))
             } else {
                 words.lineLimit(lines)
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { shownHeight = $0 }
                     .accessibilityLabel(Text(verbatim: text))
             }
-            if expanded || fullHeight > shownHeight + 1 {
+            if cutShort {
                 Button {
                     withAnimation(Theme.Motion.ease(0.2)) { open = !expanded }
                     changed?()
@@ -44,10 +45,14 @@ struct ExpandableText: View {
             }
         }
         .background(alignment: .topLeading) {
-            // The whole text, unseen and at the same width, for whether the first lines cut it short and how tall it opens.
-            words.hidden().frame(maxWidth: .infinity, alignment: .leading)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
-                .accessibilityHidden(true)
+            // The first lines and the whole text, unseen and at the same width, open or not: whether they cut it short and how tall it opens.
+            ZStack(alignment: .topLeading) {
+                words.lineLimit(lines).onGeometryChange(for: CGFloat.self) { $0.size.height } action: { shownHeight = $0 }
+                words.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .hidden()
+            .accessibilityHidden(true)
         }
         .onChange(of: fullHeight) { changed?() }
         // Other words in the same place start closed.
