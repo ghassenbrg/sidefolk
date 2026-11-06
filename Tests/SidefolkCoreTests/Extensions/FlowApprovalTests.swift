@@ -997,6 +997,31 @@ import Testing
         #expect(longWords.hasPrefix("An app that says it's “N") && longWords.contains("…” asked for this") && !longWords.contains("Sidefolk: approve"), "\(longWords.prefix(200))")
     }
 
+    /// The person's click after an agent's call doesn't turn the agent's plan into theirs: the extension's program can be answering either, so while the agent's
+    /// call is within the window every ask is a card.
+    @Test func aClickAfterAnAgentsCallDoesNotMakeItsPlanThePersons() async throws {
+        let agent = Caller.external(client: "Codex")
+        func openTheAgentsWindow(_ w: World, _ plan: JSONValue) async {
+            async let opening = w.ask("sidefolk/plan.check", ["plan": plan], caller: agent)
+            _ = await Self.answerThePlanCard(w, .deny, wait: 60)
+            _ = await opening
+        }
+        // Full access answers a signed plan for the person's own click: not this one.
+        let full = try await World()
+        try await full.setMode(.fullAccess)
+        #expect(await !full.approve(Self.plan([Self.save])).asked, "with no agent about, the person's click is answered in Full access")
+        await openTheAgentsWindow(full, Self.plan([Self.save]))
+        #expect(await full.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]], id: "other")).asked, "the person's click came after the agent's call, and it is still a card")
+        // Auto skips an edit that stays inside Sidefolk for the person: not this one.
+        let auto = try await World()
+        try await auto.setMode(.auto)
+        _ = await auto.approve(Self.plan([Self.save]))
+        await openTheAgentsWindow(auto, Self.plan([Self.save]))
+        #expect(await auto.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked, "Auto doesn't skip it either")
+        // And a plan nothing in which is new, for the person, in the same window: a card too, since the answer can't be told to be theirs.
+        #expect(await auto.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
+    }
+
     /// The same edit, for the person's own ask, is what Auto answers: so the agent's card above is the agent's own rule, not a quirk of the edit.
     @Test func theSameEditIsAnsweredForThePersonInAutoButNotForAnAgent() async throws {
         let w = try await World()

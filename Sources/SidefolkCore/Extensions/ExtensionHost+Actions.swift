@@ -439,9 +439,11 @@ extension ExtensionHost {
         // One card at a time for a plan: what the person is reading is what is saved. Taken before anything is awaited, so a second ask can't pass the same check.
         guard !rt.planAsking else { return await refuse("busy") }
         guard (rt.pin.permissions ?? ExtensionPermissions()).isContained else { return await refuse("not_contained") }
-        // Asked for since the person's own call or a clean request, or since an agent's call; when the agent's is the latest, it is the agent's ask (D237).
-        let throughAgent = rt.agentAsk.map { $0.at > rt.lastPersonCall } == true
-        guard Date().timeIntervalSince(max(rt.lastPersonCall, rt.agentAsk?.at ?? .distantPast)) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
+        // Asked for since the person's own call or a clean request, or since an agent's call. While an agent's call is within the window, every ask is the agent's
+        // (D237): a click of the person's after it doesn't make the plan theirs, since which of the two the extension's program is answering can't be told.
+        let now = Date()
+        let throughAgent = rt.agentAsk.map { now.timeIntervalSince($0.at) <= ExtensionPlanRules.personWindow } == true
+        guard now.timeIntervalSince(max(rt.lastPersonCall, rt.agentAsk?.at ?? .distantPast)) <= ExtensionPlanRules.personWindow else { return await refuse("not_asked") }
         let agent = throughAgent ? rt.agentAsk?.client : nil
         guard spend(id, "plan", limit: 10) else { return await refuse("busy") }
         runtimes[id]?.planAsking = true
