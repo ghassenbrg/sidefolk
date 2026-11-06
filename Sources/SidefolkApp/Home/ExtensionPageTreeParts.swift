@@ -188,3 +188,19 @@ struct TreeAddButton: View {
         }
     }
 }
+
+/// A card's place in the order, at its corner, while cards stand where the person put them (D234). VoiceOver hears the cards in that order already.
+struct TreeStepNumber: View {
+    var number: Int
+    var line: TreeLine
+
+    var body: some View {
+        Text(number, format: .number).font(Theme.Font.caption.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink)
+            .padding(.horizontal, 6).frame(minWidth: 22, minHeight: 22)
+            .background(Theme.surfaceRaised, in: Capsule())
+            .overlay(Capsule().strokeBorder(line.to, lineWidth: 1.5))
+            .offset(x: -9, y: -9)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}

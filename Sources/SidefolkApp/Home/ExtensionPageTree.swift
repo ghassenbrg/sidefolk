@@ -41,6 +41,22 @@ struct PageTreeView: View {
         return TreeCardDrag.move(id, after: target, tree: shown, model: model)
     }
 
+    /// A card let go on the board's empty space (D234): the extension is told where it now stands, its top left corner, centred on the pointer.
+    /// Only for looking: nothing about what follows what changes, and the same rule as `land` says which card it is.
+    private func put(_ words: [String], at point: CGPoint, layout: TreeLayout, on shown: ExtensionPage.Tree) -> Bool {
+        defer { carried = nil; edge = nil }
+        guard let placed = shown.placed, let id = shown.dropped(words, carried: carried), let card = layout.cards.first(where: { $0.node.id == id }) else { return false }
+        let x = (point.x - card.frame.width / 2 - layout.origin.x).rounded(), y = (point.y - card.frame.height / 2 - layout.origin.y).rounded()
+        Task { await model.run(tool: placed.tool, input: placed.input(["id": .string(id), "x": .number(Double(x)), "y": .number(Double(y))])) }
+        return true
+    }
+
+    /// Back to the board laying itself out: every place the person chose is forgotten, by the extension, in one call.
+    private func tidy(_ shown: ExtensionPage.Tree) {
+        guard let placed = shown.placed else { return }
+        Task { await model.run(tool: placed.tool, input: placed.input(["clear": true])) }
+    }
+
     var body: some View {
         if outline {
             TreeOutline(tree: tree, model: model)
@@ -112,7 +128,7 @@ struct PageTreeView: View {
 
     private var board: some View {
         let shown = tree.folding(folded)
-        let layout = TreeLayout(shown, editable: tree.insert != nil)
+        let layout = TreeLayout(shown, editable: tree.insert != nil, free: true)
         let matches = shown.matching(words)
         return GeometryReader { geo in
             let scale = zoom ?? startZoom ?? TreeZoom.fit(layout.size, in: geo.size)
@@ -121,7 +137,7 @@ struct PageTreeView: View {
                 ScrollView([.horizontal, .vertical]) {
                     TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: Set(matches), carried: carrying,
                                carry: { id in carried = id.map { ExtensionPage.Tree.Carry(id: $0, on: shown) } },
-                               land: { land($0, after: $1, on: shown) })
+                               land: { land($0, after: $1, on: shown) }, put: { put($0, at: $1, layout: layout, on: shown) })
                         .scaleEffect(scale, anchor: .topLeading)
                         .frame(width: layout.size.width * scale, height: layout.size.height * scale, alignment: .topLeading)
                         .frame(minWidth: geo.size.width, minHeight: geo.size.height, alignment: .top)
@@ -154,7 +170,7 @@ struct PageTreeView: View {
                 #endif
                 .overlay(alignment: .topLeading) { tools }
                 .overlay(alignment: .topTrailing) { if finding { finder.onSubmit { found += 1; if !matches.isEmpty { withAnimation(Theme.Motion.ease(0.25)) { scroll.scrollTo(matches[found % matches.count], anchor: .center) } } } } }
-                .overlay(alignment: .bottomLeading) { zooming(scale, fit: { zoom = nil }, by: { rescale(scale + $0, pointer) }) }
+                .overlay(alignment: .bottomLeading) { zooming(scale, fit: { zoom = nil }, by: { rescale(scale + $0, pointer) }, tidy: layout.placed && shown.placed != nil ? (layout.nudged, { tidy(shown) }) : nil) }
                 .onChange(of: words) { _, _ in
                     found = 0
                     if let first = matches.first { withAnimation(Theme.Motion.ease(0.25)) { scroll.scrollTo(first, anchor: .center) } }
@@ -278,9 +294,20 @@ struct PageTreeView: View {
         .environment(\.layoutDirection, .leftToRight)
     }
 
-    private func zooming(_ scale: CGFloat, fit: @escaping () -> Void, by: @escaping (CGFloat) -> Void) -> some View {
+    /// `tidy`: some cards stand where the person put them; true when one had to be moved off another, which makes the button stand out.
+    private func zooming(_ scale: CGFloat, fit: @escaping () -> Void, by: @escaping (CGFloat) -> Void, tidy: (nudged: Bool, run: () -> Void)?) -> some View {
         HStack(spacing: Theme.Space.xs) {
             if tree.select != nil { boardOrOutline }
+            if let tidy {
+                Button(action: tidy.run) {
+                    Label { Text("Tidy up", comment: "A board of cards on an extension's page: puts every card back where the board lays it out") } icon: { Image(systemName: "rectangle.3.group") }
+                        .font(Theme.Font.caption.weight(.semibold)).padding(.horizontal, Theme.Space.s).frame(height: Theme.Size.hitTarget)
+                        .foregroundStyle(tidy.nudged ? Theme.onAccent : Theme.ink)
+                        .background(tidy.nudged ? Theme.accent : Color.clear, in: Capsule())
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.sfBare)
+            }
             Button(action: fit) { Image(systemName: "arrow.up.left.and.arrow.down.right").frame(width: Theme.Size.hitTarget, height: Theme.Size.hitTarget).contentShape(Rectangle()) }
                 .buttonStyle(.sfBare).keyboardShortcut("0", modifiers: .command)
                 .help(Text("Fit to the window", comment: "A tree of cards on an extension's page: the zoom button that fits it all in"))
@@ -347,14 +374,21 @@ private struct TreeCanvas: View {
     var carried: String?
     var carry: (String?) -> Void
     var land: ([String], String) -> Bool
+    var put: ([String], CGPoint) -> Bool = { _, _ in false }
 
     var body: some View {
         let line = TreeLine(tree.line)
+        // Once cards stand where the person put them, each says its place in the order, which the lines also follow.
+        let numbers = layout.placed ? Dictionary(tree.reading.enumerated().map { ($1.id, $0 + 1) }, uniquingKeysWith: { a, _ in a }) : [:]
         ZStack(alignment: .topLeading) {
+            // The board's empty space takes a card let go there, as a place to stand (D234); a card or a + spot over it takes it first.
+            Color.clear.contentShape(Rectangle())
+                .dropDestination(for: String.self) { words, at in put(words, at) }
             TreeLines(lines: layout.lines, line: line, size: layout.size)
             TreeBoard(size: layout.size) {
                 ForEach(layout.cards, id: \.node.id) { card in
                     TreeCard(node: card.node, tree: tree, line: line, model: model, folded: $folded, marked: marked.contains(card.node.id), carried: carried, carry: carry, land: land)
+                        .overlay(alignment: .topLeading) { if let n = numbers[card.node.id] { TreeStepNumber(number: n, line: line) } }
                         .treeFrame(card.frame).id(card.node.id)
                 }
                 ForEach(layout.labels, id: \.branch.id) { label in

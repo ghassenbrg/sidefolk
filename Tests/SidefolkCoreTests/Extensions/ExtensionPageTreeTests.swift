@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import Testing
 @testable import SidefolkCore
@@ -31,6 +32,56 @@ struct ExtensionPageTreeTests {
     }
 
     private enum TreeTestFailure: Error { case notATree }
+
+    private func placed(_ id: String, x: Double, y: Double, branches: [JSONValue] = []) -> JSONValue {
+        var o = node(id, branches: branches).objectValue ?? [:]
+        o["at"] = ["x": .number(x), "y": .number(y)]
+        return .object(o)
+    }
+
+    @Test func aPlaceIsPlainNumbersWithinReach() throws {
+        var far = node("far").objectValue ?? [:]
+        far["at"] = ["x": 1e9, "y": -5]
+        var words = node("words").objectValue ?? [:]
+        words["at"] = ["x": "10", "y": 4]
+        let t = try tree([.object(far), .object(words), node("none")], extra: ["placed": ["tool": "ui", "key": "spot"]])
+        #expect(t.reading.map(\.at) == [CGPoint(x: 10_000, y: -5), nil, nil], "clamped to ±10,000; anything not a number leaves it laid out")
+        #expect(t.placed?.key == "spot")
+    }
+
+    @Test func aPlacedCardStandsThereAndTheOrderStays() throws {
+        let t = try tree([node("a"), node("b"), placed("c", x: 900, y: 40)], extra: ["placed": ["tool": "ui", "key": "spot"]])
+        let board = TreeLayout(t, editable: true, free: true)
+        #expect(board.placed && !board.nudged)
+        #expect(board.cards.map(\.node.id) == ["a", "b", "c"], "read, and heard by VoiceOver, in the tree's order wherever it stands")
+        let c = try #require(board.cards.first { $0.node.id == "c" }).frame
+        #expect(c.origin == CGPoint(x: 900 + board.origin.x, y: 40 + board.origin.y))
+        let b = try #require(board.cards.first { $0.node.id == "b" }).frame
+        #expect(board.lines.contains { $0.points.first == CGPoint(x: b.midX, y: b.maxY) && $0.points.last == CGPoint(x: c.midX, y: c.minY) }, "the line still runs from b to c")
+        #expect(!TreeLayout(t, editable: true).placed, "a card's small drawing lays itself out")
+    }
+
+    @Test func noPlacedCardCoversAnother() throws {
+        // c put right on top of a, and d on top of where c then lands.
+        let first = TreeLayout(try tree([node("a"), node("b")]), editable: true).cards[0].frame
+        let t = try tree([node("a"), node("b"), placed("c", x: first.minX, y: first.minY), placed("d", x: first.minX + 20, y: first.minY + 10)],
+                         extra: ["placed": ["tool": "ui", "key": "spot"]])
+        let board = TreeLayout(t, editable: true, free: true)
+        #expect(board.nudged, "the board says it moved them")
+        let frames = board.cards.map(\.frame)
+        for (i, one) in frames.enumerated() {
+            for other in frames[(i + 1)...] { #expect(!one.insetBy(dx: -8, dy: -8).intersects(other), "\(one) and \(other)") }
+        }
+    }
+
+    @Test func everyCardIsOnTheBoardWhereverItWasPut() throws {
+        let t = try tree([node("a"), placed("b", x: -10_000, y: -10_000), placed("c", x: 10_000, y: 10_000)], extra: ["placed": ["tool": "ui", "key": "spot"]])
+        let board = TreeLayout(t, editable: true, free: true)
+        for card in board.cards {
+            #expect(card.frame.minX >= 0 && card.frame.minY >= 0 && card.frame.maxX <= board.size.width && card.frame.maxY <= board.size.height)
+        }
+        #expect(board.size.width < 21_000 && board.size.height < 21_000, "bounded by how far a card may be put")
+    }
 
     @Test func onlyTheCardThisBoardPickedUpLands() throws {
         let t = try tree([node("a"), node("b"), node("c")], extra: ["reorder": ["tool": "ui", "key": "move"]])

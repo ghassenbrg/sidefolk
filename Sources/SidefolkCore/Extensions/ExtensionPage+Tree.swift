@@ -23,6 +23,8 @@ extension ExtensionPage {
             public var fixed = false
             /// Folded by the person: how many cards it's holding out of sight.
             public var folded: Int?
+            /// Where the person put it on the board, its top left corner (D234): only where it's drawn, never what runs or in what order.
+            public var at: CGPoint?
         }
 
         public struct Branch: Sendable, Hashable, Identifiable {
@@ -70,6 +72,8 @@ extension ExtensionPage {
         public var select: Steps.Hook?
         public var insert: Steps.Hook?
         public var reorder: Steps.Hook?
+        /// Gets `{"id", "x", "y"}` when a card is let go on the board's empty space, and `{"clear": true}` from Tidy up (D234). Only where cards are drawn.
+        public var placed: Steps.Hook?
         /// Takes a card away: its id goes under the hook's key. On a card's menu.
         public var remove: Steps.Hook?
         public var picker: Picker?
@@ -234,8 +238,10 @@ extension ExtensionPage {
                     guard let bid = fresh(b["id"]), let label = text(b["label"], 24) else { return nil }
                     return Tree.Branch(id: bid, label: label, tone: tone(b["tone"]), taken: b["taken"]?.boolValue, nodes: nodes(b["nodes"], depth: depth + 1), hint: text(b["hint"], 40))
                 }
-                return Tree.Node(id: id, kind: text(n["kind"], 30), title: title, symbol: symbol(n["symbol"]), color: color(n["color"]),
-                                 state: n["state"]?.stringValue.flatMap(Tree.Node.State.init(rawValue:)) ?? .none, pill: pill, branches: Array(branches), fixed: n["fixed"]?.boolValue ?? false)
+                var node = Tree.Node(id: id, kind: text(n["kind"], 30), title: title, symbol: symbol(n["symbol"]), color: color(n["color"]),
+                                     state: n["state"]?.stringValue.flatMap(Tree.Node.State.init(rawValue:)) ?? .none, pill: pill, branches: Array(branches), fixed: n["fixed"]?.boolValue ?? false)
+                node.at = place(n["at"])
+                return node
             }
         }
         let list = nodes(j["nodes"], depth: 0)
@@ -253,9 +259,21 @@ extension ExtensionPage {
             }
             if !items.isEmpty { picker = Tree.Picker(placeholder: text(p["placeholder"], 60), note: text(p["note"], 120), key: key, categories: categories, items: items) }
         }
-        return Tree(nodes: list, selected: j["selected"]?.stringValue, select: hook(j["select"]), insert: hook(j["insert"]), reorder: hook(j["reorder"]), remove: hook(j["remove"]), picker: picker,
-                    tools: (j["tools"]?.arrayValue ?? []).prefix(6).compactMap { button($0, characters: 30) },
-                    line: Array((j["line"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2)))
+        var tree = Tree(nodes: list, selected: j["selected"]?.stringValue, select: hook(j["select"]), insert: hook(j["insert"]), reorder: hook(j["reorder"]), remove: hook(j["remove"]), picker: picker,
+                        tools: (j["tools"]?.arrayValue ?? []).prefix(6).compactMap { button($0, characters: 30) },
+                        line: Array((j["line"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2)))
+        tree.placed = hook(j["placed"])
+        return tree
+    }
+
+    /// The farthest a card is put from the board's start, either way (D234).
+    public static let farthestPlace: CGFloat = 10_000
+
+    /// `{"x", "y"}`, plain numbers only, kept within reach: anything else leaves the card where the tree lays it.
+    static func place(_ j: JSONValue?) -> CGPoint? {
+        guard case .number(let x)? = j?["x"], case .number(let y)? = j?["y"], x.isFinite, y.isFinite else { return nil }
+        let reach = Double(farthestPlace)
+        return CGPoint(x: min(reach, max(-reach, x)), y: min(reach, max(-reach, y)))
     }
 }
 
@@ -348,8 +366,15 @@ public struct TreeLayout: Sendable {
     public var adds: [Add] = []
     public var labels: [Label] = []
     public var size: CGSize = .zero
+    /// Some cards stand where the person put them (D234).
+    public var placed = false
+    /// One of them would have covered another card, and was moved down to the first free place: the board suggests tidying up.
+    public var nudged = false
+    /// Where a place the person chose is drawn: the board grows so that every card is on it, so a place is drawn this much further on.
+    public var origin = CGPoint.zero
 
-    public init(_ tree: ExtensionPage.Tree, editable: Bool, metrics: Metrics = Metrics()) {
+    /// `free`: cards the person put somewhere stand there (a board, D234); a card's small drawing ignores where they were put.
+    public init(_ tree: ExtensionPage.Tree, editable: Bool, metrics: Metrics = Metrics(), free: Bool = false) {
         let m = metrics
 
         func style(_ node: ExtensionPage.Tree.Node?) -> LineStyle {
@@ -451,6 +476,103 @@ public struct TreeLayout: Sendable {
         self.adds = adds.map { Add(target: $0.target, point: moved($0.point), quiet: $0.quiet, hint: $0.hint) }
         self.labels = labels.map { Label(branch: $0.branch, point: moved($0.point)) }
         size = CGSize(width: reach.max - reach.min + m.margin * 2, height: end.y + m.margin)
+        if free, tree.reading.contains(where: { $0.at != nil }) { place(tree, metrics: m, editable: editable, style: style, style: style) }
+    }
+
+    /// Puts the cards the person placed where they put them, none over another card or its controls, and draws the lines between all of
+    /// them again in the tree's order: where a card stands never changes what follows what. Branch labels and + spots go with their card.
+    private mutating func place(_ tree: ExtensionPage.Tree, metrics m: Metrics, editable: Bool,
+                                style: (ExtensionPage.Tree.Node?) -> LineStyle, style branchStyle: (ExtensionPage.Tree.Branch) -> LineStyle) {
+        placed = true
+        let auto = Dictionary(cards.map { ($0.node.id, $0.frame) }, uniquingKeysWith: { a, _ in a })
+        var frames = auto
+        // A card's own controls reach past it: its menu inside, its fold button under it. Nothing may sit over them.
+        func reach(_ r: CGRect) -> CGRect { CGRect(x: r.minX - 12, y: r.minY - 12, width: r.width + 24, height: r.height + 40) }
+        var settled = cards.filter { $0.node.at == nil }.map(\.frame)
+        for card in cards {
+            guard let at = card.node.at else { continue }
+            var frame = CGRect(origin: at, size: card.frame.size)
+            for _ in 0..<(ExtensionPage.maxTreeNodes * 2) {
+                guard let hit = settled.first(where: { reach(frame).intersects($0) || frame.intersects(reach($0)) }) else { break }
+                frame.origin.y = reach(hit).maxY + 12
+                nudged = true
+            }
+            frames[card.node.id] = frame
+            settled.append(frame)
+        }
+        func moved(_ id: String) -> CGVector {
+            guard let now = frames[id], let was = auto[id] else { return .zero }
+            return CGVector(dx: now.minX - was.minX, dy: now.minY - was.minY)
+        }
+        // Each branch's label stays where it was beside the card it splits from, wherever that card went.
+        var holder: [String: String] = [:]
+        for node in tree.reading { for branch in node.branches { holder[branch.id] = node.id } }
+        var labelAt: [String: CGPoint] = [:]
+        for label in labels {
+            let d = holder[label.branch.id].map(moved) ?? .zero
+            labelAt[label.branch.id] = CGPoint(x: label.point.x + d.dx, y: label.point.y + d.dy)
+        }
+
+        var paths: [Line] = [], spots: [Add] = [], names: [Label] = []
+        func top(_ id: String) -> CGPoint { frames[id].map { CGPoint(x: $0.midX, y: $0.minY) } ?? .zero }
+        func bottom(_ id: String) -> CGPoint { frames[id].map { CGPoint(x: $0.midX, y: $0.maxY) } ?? .zero }
+        func join(_ p: CGPoint, _ q: CGPoint, _ style: LineStyle) {
+            guard q.y < p.y else {
+                let mid = (p.y + q.y) / 2
+                paths.append(Line(points: p.x == q.x ? [p, q] : [p, CGPoint(x: p.x, y: mid), CGPoint(x: q.x, y: mid), q], style: style))
+                return
+            }
+            // Up to a card placed higher: round it on the side it's coming from and in from above, so the line never runs through it.
+            let side = q.x + (p.x <= q.x ? -1 : 1) * (m.card.width / 2 + 20)
+            paths.append(Line(points: [p, CGPoint(x: p.x, y: p.y + 16), CGPoint(x: side, y: p.y + 16), CGPoint(x: side, y: q.y - 16),
+                                       CGPoint(x: q.x, y: q.y - 16), q], style: style))
+        }
+        /// Lines from where the run is entered to each card in turn; says where its last card is left from.
+        func walk(_ nodes: [ExtensionPage.Tree.Node], from entries: [CGPoint]) -> [CGPoint] {
+            var exits = entries, previous: String?
+            for node in nodes {
+                for exit in exits { join(exit, top(node.id), style(node)) }
+                if editable, let previous { spots.append(Add(target: previous, point: CGPoint(x: top(node.id).x, y: top(node.id).y - 18), quiet: false)) }
+                if node.branches.isEmpty {
+                    exits = [bottom(node.id)]
+                } else {
+                    var ends: [CGPoint] = []
+                    for branch in node.branches {
+                        let at = labelAt[branch.id] ?? bottom(node.id)
+                        join(bottom(node.id), at, branchStyle(branch))
+                        names.append(Label(branch: branch, point: at))
+                        if branch.nodes.isEmpty {
+                            if editable { spots.append(Add(target: branch.id, point: CGPoint(x: at.x, y: at.y + 34), quiet: false, hint: branch.hint)) }
+                            ends.append(CGPoint(x: at.x, y: at.y + (editable ? 52 : 14)))
+                        } else {
+                            if editable { spots.append(Add(target: branch.id, point: CGPoint(x: at.x, y: at.y + 18), quiet: true)) }
+                            ends += walk(branch.nodes, from: [CGPoint(x: at.x, y: at.y + 12)])
+                        }
+                    }
+                    exits = ends
+                }
+                previous = node.id
+            }
+            if editable, let previous {
+                let below = (exits.map(\.y).max() ?? bottom(previous).y) + m.gap / 2
+                spots.append(Add(target: previous, point: CGPoint(x: bottom(previous).x, y: below), quiet: false))
+            }
+            return exits
+        }
+        _ = walk(tree.nodes, from: [])
+
+        // The board takes in every card, label and + spot, a margin all round.
+        let points = frames.values.flatMap { [$0.origin, CGPoint(x: $0.maxX, y: $0.maxY)] } + names.map(\.point) + spots.map(\.point)
+        let low = CGPoint(x: points.map(\.x).min() ?? 0, y: points.map(\.y).min() ?? 0)
+        let high = CGPoint(x: points.map(\.x).max() ?? 0, y: points.map(\.y).max() ?? 0)
+        origin = CGPoint(x: max(0, m.margin - low.x), y: max(0, m.margin - low.y))
+        let shift = CGVector(dx: origin.x, dy: origin.y)
+        func shifted(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x + shift.dx, y: p.y + shift.dy) }
+        self.cards = cards.map { Card(node: $0.node, frame: (frames[$0.node.id] ?? $0.frame).offsetBy(dx: shift.dx, dy: shift.dy)) }
+        self.lines = paths.map { Line(points: $0.points.map(shifted), style: $0.style) }
+        self.adds = spots.map { Add(target: $0.target, point: shifted($0.point), quiet: $0.quiet, hint: $0.hint) }
+        self.labels = names.map { Label(branch: $0.branch, point: shifted($0.point)) }
+        size = CGSize(width: high.x + shift.dx + m.margin, height: high.y + shift.dy + m.margin)
     }
 }
 
