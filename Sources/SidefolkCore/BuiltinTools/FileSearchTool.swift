@@ -87,7 +87,7 @@ struct FilesSearchTool: Tool {
 
     func summary(for input: JSONValue) -> String {
         let folder = FilePaths.display(FilePaths.scopePath(input.string("folder")) ?? input.string("folder") ?? String(localized: "a folder"))
-        return String(localized: "Search \(folder) for “\((input.string("query") ?? "").clipped(60))”")
+        return String(localized: "Search \(folder) for “\((input.string("query") ?? "").hiddenShown.clipped(60))”")
     }
 
     func scope(for input: JSONValue) -> ToolScope {

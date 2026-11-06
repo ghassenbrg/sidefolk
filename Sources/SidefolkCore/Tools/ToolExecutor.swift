@@ -336,6 +336,15 @@ public final class ToolExecutor: Sendable {
                     try? await permissions.addGrant(Grant(tool: spec.name, scope: PermissionEngine.grantScope(for: scope), callerKind: caller.grantKind))
                     events.changed(.permissions)
                 }
+                // What Guard checked was where the paths led then. A card can be up for minutes, and a link swapped meanwhile would send the tool somewhere that was
+                // never checked (the tool resolves its path again when it runs, T10): the person said yes to these places, not to those.
+                let now = tool.scope(for: input)
+                guard now.readPaths == scope.readPaths, now.writePaths == scope.writePaths else {
+                    let why = String(localized: "A file or folder in this changed while the question was waiting (a link now leads somewhere else), so it didn't run. Ask again.", comment: "Why an action was stopped after the person said yes")
+                    await log(spec, act, caller: caller, input: input, decision: .blocked, outcome: nil, error: why)
+                    act.error = why
+                    return ToolOutcome(activity: act, status: .denied(why))
+                }
                 return await run(tool, input: input, caller: caller, tainted: tainted, activity: act, decision: decisionTag,
                                  timeout: spec.timeout ?? timeout, folders: folders, handedOver: handedOver, personWasAsked: thePersonAnswered)
             }

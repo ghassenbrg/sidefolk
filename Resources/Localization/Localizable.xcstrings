@@ -30867,6 +30867,65 @@
         }
       }
     },
+    "A file or folder in this changed while the question was waiting (a link now leads somewhere else), so it didn't run. Ask again." : {
+      "comment" : "Why an action was stopped after the person said yes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر ملف أو مجلد في هذا أثناء انتظار السؤال (أصبح رابط يقود إلى مكان آخر)، لذلك لم يُنفَّذ. اطلب مرة أخرى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Datei oder ein Ordner darin hat sich geändert, während die Frage wartete (ein Link führt jetzt woandershin), deshalb wurde nichts ausgeführt. Frag noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un archivo o una carpeta de esto cambió mientras la pregunta esperaba (un enlace ahora lleva a otro sitio), así que no se hizo. Pídelo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un fichier ou un dossier concerné a changé pendant que la question attendait (un lien mène maintenant ailleurs), donc rien n’a été fait. Demandez à nouveau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un file o una cartella coinvolti sono cambiati mentre la domanda era in attesa (un collegamento ora porta altrove), quindi non è stato eseguito. Chiedi di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "質問の待機中に、対象のファイルまたはフォルダが変わったため（リンクの行き先が変わっています）、実行しませんでした。もう一度お願いします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "질문이 대기하는 동안 해당 파일이나 폴더가 바뀌어(링크가 다른 곳을 가리킵니다) 실행하지 않았습니다. 다시 요청해 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um arquivo ou pasta disso mudou enquanto a pergunta esperava (um link agora leva a outro lugar), então não foi feito. Peça de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在等待提问期间，其中的文件或文件夹发生了变化（某个链接现在指向别处），因此没有执行。请再问一次。"
+          }
+        }
+      }
+    },
     "A file was added: %@." : {
       "localizations" : {
         "ar" : {
