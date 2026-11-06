@@ -130,7 +130,10 @@ final class SceneLayers {
     private func draw(_ node: SceneNode, in view: SceneView) {
         let dark = view.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
         switch node.kind {
-        case .group, .flip, .entry, .scroll: main.contents = nil
+        // Cleared, so forgotten: a node that was text, became a group and is the same text again would otherwise stay blank.
+        case .group, .flip, .entry, .scroll:
+            main.contents = nil
+            drawnKey = nil
         case .image(let image):
             let path = dark ? (image.dark ?? image.path) : image.path
             let key: AnyHashable = [path, "\(node.width)x\(node.height)", "\(String(describing: image.tint))", image.fit.rawValue, "\(dark)"]
@@ -225,6 +228,7 @@ final class SceneLayers {
             shape.fillColor = nil
         } else {
             shape.contents = nil
+            drawnKey = nil
             shape.fillColor = form.fill.map { SceneColors.cg($0, appearance: appearance) }
         }
     }
