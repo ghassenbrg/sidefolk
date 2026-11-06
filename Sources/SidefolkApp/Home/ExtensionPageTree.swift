@@ -136,8 +136,9 @@ struct PageTreeView: View {
                     rescale(scale * factor, at)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: Self.devDrop)) { note in
+                    // As a drop by hand: only the card `treeCarry:` picked up moves.
                     guard let pair = note.object as? [String], pair.count == 2 else { return }
-                    _ = TreeCardDrag.drop([TreeCardDrag.carrying + pair[0]], after: pair[1], tree: shown, model: model)
+                    _ = TreeCardDrag.drop([TreeCardDrag.carrying + pair[0]], after: pair[1], carried: carried, tree: shown, model: model)
                     carried = nil
                     held = false
                 }
@@ -168,14 +169,17 @@ struct PageTreeView: View {
         .focused($boardFocused)
         .onKeyPress(phases: .down, action: key)
         // The carried card is forgotten once the button is let go, dropped or not (Esc is the drag's own way out).
+        // Seen let go twice, so the drop that comes with letting go still finds the card it carried.
         .task(id: carried) {
             guard carried != nil else { return }
+            var up = 0
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(150))
                 #if DEBUG
                 if held { continue }
                 #endif
-                if NSEvent.pressedMouseButtons & 1 == 0 {
+                up = NSEvent.pressedMouseButtons & 1 == 0 ? up + 1 : 0
+                if up >= 2 {
                     carried = nil
                     edge = nil
                     return
@@ -479,7 +483,7 @@ private struct TreeCard: View {
         .overlay(alignment: .bottom) { foldButton }
         .onHover { hovering = $0 }
         .contextMenu { actions }
-        .modifier(TreeCardDrag(node: node, tree: tree, model: model, carry: carry, dropping: $dropping))
+        .modifier(TreeCardDrag(node: node, tree: tree, model: model, carried: carried, carry: carry, dropping: $dropping))
     }
 
     /// Its kind, what it does and its state: what the card shows, said in that order.
