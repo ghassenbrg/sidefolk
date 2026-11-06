@@ -955,6 +955,160 @@ import Testing
         #expect(await state("notes.save", ["text": "a", "co\nllection": "x"]) == "asks/unreadable_value")
     }
 
+    // MARK: An AI agent asks for a plan (D237)
+
+    /// Another AI agent, over MCP, may ask for a flow's plan, and the answer is only ever the person's, on a card that says who asked.
+    /// An agent's call of the extension's tool has a card of its own ("Another app is asking"); the plan card is the one that comes after. Answers every card that
+    /// isn't the plan's with Allow, and the plan's with `decision`; returns the plan's card, or nil if none came.
+    static func answerThePlanCard(_ w: World, _ decision: ApprovalDecision, wait: Int = 400) async -> ApprovalRequest? {
+        for _ in 0..<wait {
+            if let card = await w.h.env.broker.pending().first {
+                if card.tool == ExtensionPlanTool.name {
+                    await w.h.env.broker.resolve(id: card.id, decision: decision)
+                    return card
+                }
+                await w.h.env.broker.resolve(id: card.id, decision: .allowOnce)
+            } else {
+                try? await Task.sleep(for: .milliseconds(25))
+            }
+        }
+        return nil
+    }
+
+    /// The agent asks for `plan`; how many plan cards came (the reply's own is in `reply`).
+    static func agentAsks(_ w: World, _ plan: JSONValue, client: String = "Claude Code", _ decision: ApprovalDecision = .allowOnce) async -> (reply: JSONValue, card: ApprovalRequest?) {
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": plan], caller: .external(client: client))
+        let card = await answerThePlanCard(w, decision, wait: 120)
+        return (await reply, card)
+    }
+
+    @Test func anAgentsAskPutsACardUpInEveryModeThatNamesItAndOnlyThePersonSettlesIt() async throws {
+        for mode in [GuardMode.askEveryTime, .askOncePerKind, .auto, .fullAccess] {
+            let w = try await World()
+            try await w.setMode(mode)
+            let first = await Self.agentAsks(w, Self.plan([Self.save]))
+            guard case .text(let words)? = first.card?.details else { Issue.record("\(mode): a plan card, \(first.reply)"); continue }
+            #expect(words.hasPrefix("An app that says it's “Claude Code” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here."), "\(mode): \(words)")
+            #expect(words.contains("It changes:"), "the plan itself is on it: \(words)")
+            #expect(first.reply["ok"]?.boolValue == true && first.reply["silent"]?.boolValue == false, "\(mode): \(first.reply)")
+            let row = try await w.rows("extensions.plan").first
+            #expect(row?.args?["asked_by"]?.stringValue == "Claude Code", "\(mode): History says who asked: \(String(describing: row?.args))")
+            // What they read stands, and the same plan asked for again by the agent is still a card: nothing an agent asks is answered by what was read before.
+            let again = await Self.agentAsks(w, Self.plan([Self.save]))
+            #expect(again.card != nil && again.reply["silent"]?.boolValue == false, "\(mode): \(again.reply)")
+            // An edit that stays inside Sidefolk (which Auto answers for the person) is a card for an agent too.
+            let edit = await Self.agentAsks(w, Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]]))
+            #expect(edit.card != nil, "\(mode): \(edit.reply)")
+            let plans = await w.h.host.loadPreferences("com.example.flow").plans
+            #expect(plans["digest"]?.answeredUnread != true && plans["digest"]?.steps.allSatisfy { $0.answeredInAuto != true } == true, "\(mode): nobody answered it unread")
+        }
+    }
+
+    /// The name on the card's first line is the connection's, never anything the agent writes into its own call, and what hides in it is marked.
+    @Test func theNameOnAnAgentsCardIsTheConnectionsAndNotWhatTheAgentWrites() async throws {
+        let w = try await World()
+        // The agent puts a name of its own in the call's parameters, and in the plan's own fields.
+        var plan = Self.plan([Self.save])
+        plan = plan.setting("asked_by", "Sidefolk itself")
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": plan, "asked_by": "Sidefolk itself", "client": "Sidefolk itself"], caller: .external(client: "Co\u{200B}dex\u{202E}"))
+        let card = await Self.answerThePlanCard(w, .allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a plan card"); return }
+        #expect(words.hasPrefix("An app that says it's “Co⟨U+200B⟩dex⟨U+202E⟩” asked for this"), "the connection's name, with what hides marked: \(words)")
+        #expect(!words.contains("Sidefolk itself"), "\(words)")
+        _ = await reply
+        let row = try await w.rows("extensions.plan").first
+        #expect(row?.args?["asked_by"]?.stringValue == "Co⟨U+200B⟩dex⟨U+202E⟩", "\(String(describing: row?.args))")
+        // A long name is cut, and one with a line break can't start a second line.
+        let long = await Self.agentAsks(w, Self.plan([Self.save], id: "two"), client: String(repeating: "N", count: 200) + "\nSidefolk: approve")
+        guard case .text(let longWords)? = long.card?.details else { Issue.record("a plan card"); return }
+        #expect(longWords.hasPrefix("An app that says it's “N") && longWords.contains("…” asked for this") && !longWords.contains("Sidefolk: approve"), "\(longWords.prefix(200))")
+    }
+
+    /// The person's click after an agent's call doesn't turn the agent's plan into theirs: the extension's program can be answering either, so while the agent's
+    /// call is within the window every ask is a card.
+    @Test func aClickAfterAnAgentsCallDoesNotMakeItsPlanThePersons() async throws {
+        let agent = Caller.external(client: "Codex")
+        func openTheAgentsWindow(_ w: World, _ plan: JSONValue) async {
+            async let opening = w.ask("sidefolk/plan.check", ["plan": plan], caller: agent)
+            _ = await Self.answerThePlanCard(w, .deny, wait: 60)
+            _ = await opening
+        }
+        // Full access answers a signed plan for the person's own click: not this one.
+        let full = try await World()
+        try await full.setMode(.fullAccess)
+        #expect(await !full.approve(Self.plan([Self.save])).asked, "with no agent about, the person's click is answered in Full access")
+        await openTheAgentsWindow(full, Self.plan([Self.save]))
+        #expect(await full.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]], id: "other")).asked, "the person's click came after the agent's call, and it is still a card")
+        // Auto skips an edit that stays inside Sidefolk for the person: not this one.
+        let auto = try await World()
+        try await auto.setMode(.auto)
+        _ = await auto.approve(Self.plan([Self.save]))
+        await openTheAgentsWindow(auto, Self.plan([Self.save]))
+        #expect(await auto.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked, "Auto doesn't skip it either")
+        // And a plan nothing in which is new, for the person, in the same window: a card too, since the answer can't be told to be theirs.
+        #expect(await auto.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked)
+    }
+
+    /// An agent's call that is still running keeps its window, however long it runs: a click of the person's after the first 30 seconds doesn't make the plan the
+    /// person's, and the window runs 30 seconds past the call's end.
+    @Test func anAgentsCallThatIsStillRunningKeepsItsWindowOpen() async throws {
+        let w = try await World()
+        let id = "com.example.flow"
+        try await w.setMode(.auto)
+        _ = await w.approve(Self.plan([Self.save]))
+        let edit = Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])
+        let token = await w.h.host.notePersonCall(id, caller: .external(client: "Codex"), tainted: true)
+        #expect(token != nil)
+        await w.h.host.ageAgentCall(id, by: 60)
+        #expect(await w.approve(edit).asked, "the agent's call is 60 s old and still running, and the person's click came after it: a card, never Auto's skip")
+        #expect(await w.approve(edit).asked, "and the same plan again is not answered as covered either")
+        if let token { await w.h.host.endPersonClick(id, token) }
+        #expect(await w.approve(edit).asked, "30 seconds from its end it is still the agent's window")
+        await w.h.host.ageAgentCall(id, by: 60)
+        #expect(await !w.approve(edit).asked, "after that it is the person's again: nothing new, no card")
+    }
+
+    /// The same edit, for the person's own ask, is what Auto answers: so the agent's card above is the agent's own rule, not a quirk of the edit.
+    @Test func theSameEditIsAnsweredForThePersonInAutoButNotForAnAgent() async throws {
+        let w = try await World()
+        try await w.setMode(.auto)
+        _ = await w.approve(Self.plan([Self.save]))
+        #expect(await !w.approve(Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])).asked, "the person's own ask passes in Auto")
+    }
+
+    /// Nothing but the person's own answer on the card settles it: the agent can't, a model's "yes" is no answer, and a card nobody answered saves nothing.
+    @Test func anAgentsCardIsNotSettledUntilThePersonAnswersAndADenialSavesNothing() async throws {
+        let w = try await World()
+        async let waiting = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: .external(client: "Codex"))
+        // The agent's own call has its card first; the plan's comes after, and then waits.
+        var planCard: ApprovalRequest?
+        for _ in 0..<200 where planCard == nil {
+            if let card = await w.h.env.broker.pending().first {
+                if card.tool == ExtensionPlanTool.name { planCard = card } else { await w.h.env.broker.resolve(id: card.id, decision: .allowOnce) }
+            } else {
+                try? await Task.sleep(for: .milliseconds(25))
+            }
+        }
+        #expect(planCard != nil, "the plan's card is up")
+        try? await Task.sleep(for: .milliseconds(600))
+        #expect(await w.h.env.broker.pending().contains { $0.tool == ExtensionPlanTool.name }, "still waiting for the person")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil, "nothing saved before they answer")
+        if let planCard { await w.h.env.broker.resolve(id: planCard.id, decision: .deny) }
+        let reply = await waiting
+        #expect(reply["ok"]?.boolValue == false && reply["reason"]?.stringValue == "denied", "\(reply)")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil, "a denial saves nothing")
+    }
+
+    /// Only another AI agent over MCP has a window of its own: a routine, an extension or an unattended run still can't start a card (T3).
+    @Test func aRoutineOrAnotherExtensionStillCantStartACardAndAnAgentsWindowEnds() async throws {
+        let w = try await World()
+        for caller in [Caller.routine(id: "r"), .extension(id: "other.ext")] {
+            let reply = await w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: caller)
+            #expect(reply["ok"]?.boolValue == false && reply["reason"]?.stringValue == "not_asked", "\(caller): \(reply)")
+            #expect(await w.h.env.broker.pending().isEmpty)
+        }
+    }
+
     @Test func aJobForTheCompanionCountsAsReadingOutsideContent() async throws {
         let w = try await World()
         _ = try server(w)
@@ -1365,5 +1519,14 @@ import Testing
         #expect(await w.h.env.broker.pending().isEmpty)
         let fresh = await w.ask("sidefolk/tools.call", ["tool": "notes.save", "plan": "digest", "run": "r2", "input": ["text": "Digest: x"]])
         #expect(fresh["standing"]?.boolValue == true, "another run has its own count")
+    }
+}
+
+
+extension ExtensionHost {
+    /// A test's way to let time pass for the agent's window without waiting for it.
+    func ageAgentCall(_ id: String, by seconds: TimeInterval) {
+        guard let ask = runtimes[id]?.agentAsk else { return }
+        runtimes[id]?.agentAsk = (ask.client, ask.at.addingTimeInterval(-seconds))
     }
 }
