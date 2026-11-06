@@ -821,6 +821,30 @@ import Testing
         #expect(all.reply["standing"]?.arrayValue?.compactMap(\.boolValue) == [false], "in Ask every time every call asks")
     }
 
+    /// Sideflow's demo saves a note whose words are filled in from earlier steps, in a run that read AI and spare values. Approved once, it runs without a card in
+    /// every mode that lets a plan stand; only Ask every time asks, and says so (the founder saw "asks each time" with that mode on).
+    @Test func anApprovedNoteSaveWithFilledInWordsAsksOnlyWhenTheModeIsAskEveryTime() async throws {
+        let w = try await World()
+        let save: JSONValue = ["tool": "notes.save", "input": ["text": "Sideflow demo: {{hello}} Spare value: {{spare}}. {{joke}}"]]
+        let plan = Self.plan([["tool": "ask.user", "as": "hello", "input": ["question": "Hello?"]], save])
+        let call: JSONValue = ["tool": "notes.save", "plan": "digest", "input": ["text": "Sideflow demo: hi Spare value: none. a joke"]]
+        for mode in [GuardMode.askOncePerKind, .auto, .fullAccess] {
+            try await w.setMode(mode)
+            _ = await w.approve(plan)
+            let states = await w.check(plan)["steps"]?.arrayValue?.compactMap { $0["state"]?.stringValue }
+            #expect(states?.last == "stands", "\(mode): \(String(describing: states))")
+            async let run = w.ask("sidefolk/tools.call", call)
+            #expect(await w.answerCard(.deny, wait: 20) == nil, "\(mode): no card for what they approved")
+            #expect(await run["standing"]?.boolValue == true, "\(mode)")
+        }
+        try await w.setMode(.askEveryTime)
+        let checked = await w.check(plan)["steps"]?.arrayValue?.last
+        #expect(checked?["state"]?.stringValue == "asks" && checked?["why"]?.stringValue == "ask_every_time", "\(String(describing: checked))")
+        async let run = w.ask("sidefolk/tools.call", call)
+        #expect(await w.answerCard(.allowOnce) != nil, "Ask every time puts a card up for every call, however it was approved")
+        #expect(await run["standing"]?.boolValue == false)
+    }
+
     @Test func aJobForTheCompanionCountsAsReadingOutsideContent() async throws {
         let w = try await World()
         _ = try server(w)
