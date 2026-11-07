@@ -263,6 +263,11 @@ struct PageTreeView: View {
             }
         }
         #if DEBUG
+        .onReceive(NotificationCenter.default.publisher(for: Self.devPick)) { note in
+            guard let words = (note.object as? String)?.split(separator: ":").map(String.init), let id = words.first else { return }
+            pick(id, adding: words.last == "add")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Self.devRemove)) { _ in removePicked(tree.folding(folded)) }
         .onReceive(NotificationCenter.default.publisher(for: Self.devCarry)) { note in
             // `<id>` stays carried until a drop; `<id>:loose` is let go of at once, as a drag whose button came up.
             let words = (note.object as? String)?.split(separator: ":").map(String.init) ?? []
@@ -279,6 +284,9 @@ struct PageTreeView: View {
     static let devZoom = Notification.Name("sidefolk.dev.treeZoom")
     static let devCarry = Notification.Name("sidefolk.dev.treeCarry")
     static let devDrop = Notification.Name("sidefolk.dev.treeDrop")
+    /// `treePick:` and `treeRemove`: a card clicked (⌘-clicked with `:add`), and Delete, as the person's would.
+    static let devPick = Notification.Name("sidefolk.dev.treePick")
+    static let devRemove = Notification.Name("sidefolk.dev.treeRemove")
     #endif
 
     @ViewBuilder private var tools: some View {
