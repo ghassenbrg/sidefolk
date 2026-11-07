@@ -697,3 +697,33 @@ extension ExtensionPage.Tree {
         return picked.map(\.id).filter { !inside.contains($0) }
     }
 }
+
+/// The cards a person chose on a board (D233): the board's own, beside the tree's `selected`, which the extension keeps. Delete takes what the edge shows,
+/// never a card chosen before the selection or the cards moved on.
+public struct TreeChoice: Sendable, Hashable {
+    public private(set) var cards: Set<String> = []
+
+    public init() {}
+
+    /// A click: the card alone, or with ⌘ or ⇧ added to the others, or taken away from them.
+    public mutating func click(_ id: String, adding: Bool) {
+        if !adding { cards = [id] } else if cards.contains(id) { cards.remove(id) } else { cards.insert(id) }
+    }
+
+    /// The extension's selection moved (the click it heard, an arrow, its own refresh): the choice is that card now.
+    public mutating func selected(_ id: String?) { cards = id.map { [$0] } ?? [] }
+
+    /// Other cards, or the same in another order: whatever was chosen is let go.
+    public mutating func clear() { cards = [] }
+
+    /// Whether a card draws the selected edge: those chosen when there are any, else the tree's selected card.
+    public func shows(_ id: String, selected: String?) -> Bool { cards.isEmpty ? selected == id : cards.contains(id) }
+
+    /// What Delete sends: all the chosen cards in one `remove_many`, when there are several and the tree has it; else one `remove` each, last
+    /// first, so an extension that names its cards by place still finds every one.
+    public func removals(in tree: ExtensionPage.Tree) -> (together: [String]?, oneByOne: [String]) {
+        let ids = tree.removals(of: cards)
+        if ids.count > 1, tree.removeMany != nil { return (ids, []) }
+        return (nil, tree.remove == nil ? [] : ids.reversed())
+    }
+}

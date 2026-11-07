@@ -17,8 +17,10 @@ struct PageTreeView: View {
     /// The edge a carried card is held at, which the board scrolls toward.
     @State private var edge: CGRectEdge?
     @State private var layouts = TreeLayoutCache()
-    /// The cards the person chose on the board, to remove together: the board's own, apart from the tree's `selected`, which the extension keeps.
-    @State private var picked: Set<String> = []
+    /// The cards the person chose on the board, to remove together: the board's own, following the tree's `selected`, which the extension keeps.
+    @State private var choice = TreeChoice()
+    /// How many cards Delete would take, while the board asks first (four or more).
+    @State private var asking: Int?
     @State private var outline = false
     @FocusState private var boardFocused: Bool
     /// Cards folded and words looked for are the person's view of it, not the tree's: kept here, told to no one.
@@ -33,10 +35,14 @@ struct PageTreeView: View {
     @State private var held = false
     @Environment(\.treeSnapshot) private var snapshot
     private var carrying: String? { carried?.id ?? snapshot.carrying }
-    private var chosen: Set<String> { picked.union(snapshot.picked) }
+    private var chosen: TreeChoice {
+        var shown = choice
+        for id in snapshot.picked { shown.click(id, adding: true) }
+        return shown
+    }
     #else
     private var carrying: String? { carried?.id }
-    private var chosen: Set<String> { picked }
+    private var chosen: TreeChoice { choice }
     #endif
 
     /// A card let go at a spot: it moves only if it's the one this board picked up, on the tree as it was then. The board forgets it either way.
@@ -58,23 +64,29 @@ struct PageTreeView: View {
 
     /// A click on a card chooses it alone, and tells the extension it was pressed; with ⌘ or ⇧ it joins the chosen cards, or leaves them, and tells no one.
     private func pick(_ id: String, adding: Bool) {
-        if adding {
-            if picked.contains(id) { picked.remove(id) } else { picked.insert(id) }
-        } else {
-            picked = [id]
-        }
+        choice.click(id, adding: adding)
         boardFocused = true
     }
 
-    /// Delete, or Remove on a chosen card: every chosen card that isn't inside another, through the tree's own hooks: `remove_many` once with all of them
-    /// when there are several and the tree has it, else `remove` once each, as one card's Remove does.
-    private func removePicked(_ shown: ExtensionPage.Tree) {
-        let ids = shown.removals(of: picked)
-        picked = []
-        if ids.count > 1, let many = shown.removeMany {
-            Task { await model.run(tool: many.tool, input: many.input(.array(ids.map { .string($0) }))) }
+    /// Delete, or Remove on a chosen card: what the edge shows, through the tree's own hooks (`TreeChoice.removals`): `remove_many` once with all of them,
+    /// else `remove` once each, last first, stopping at the first that fails. Four or more are asked about first; the extension's undo stays its own.
+    private func removeChosen(_ shown: ExtensionPage.Tree, asked: Bool = false) {
+        let going = choice.removals(in: shown)
+        let count = going.together?.count ?? going.oneByOne.count
+        guard count > 0 else { return }
+        if count >= 4, !asked {
+            asking = count
+            return
+        }
+        choice.clear()
+        if let together = going.together, let many = shown.removeMany {
+            Task { _ = await model.run(tool: many.tool, input: many.input(.array(together.map { .string($0) }))) }
         } else if let remove = shown.remove {
-            Task { for id in ids { await model.run(tool: remove.tool, input: remove.input(.string(id))) } }
+            Task {
+                for id in going.oneByOne {
+                    guard await model.run(tool: remove.tool, input: remove.input(.string(id))) else { break }
+                }
+            }
         }
     }
 
@@ -111,14 +123,16 @@ struct PageTreeView: View {
     /// The arrows go through the cards in reading order, ⌘ and an arrow moves the selected one, Delete takes the chosen ones (or the selected one) away, Esc
     /// lets the chosen ones go. Only while the board has the keyboard: a field being typed in keeps its keys.
     private func key(_ press: KeyPress) -> KeyPress.Result {
+        // A field being typed in (Find a step) keeps every key, Backspace and Esc included.
+        guard !findFocused else { return .ignored }
         let selected = tree.selected
         let shown = tree.folding(folded)
-        if press.key == .escape, !picked.isEmpty {
-            picked = []
+        if press.key == .escape, !choice.cards.isEmpty {
+            choice.clear()
             return .handled
         }
-        if press.key == .delete || press.key == .deleteForward, !shown.removals(of: picked).isEmpty {
-            removePicked(shown)
+        if press.key == .delete || press.key == .deleteForward, !choice.cards.isEmpty {
+            removeChosen(shown)
             return .handled
         }
         switch press.key {
@@ -164,12 +178,11 @@ struct PageTreeView: View {
     }
 
     private func canvas(_ shown: ExtensionPage.Tree, layout: TreeLayout, marked: Set<String>) -> TreeCanvas {
-        let ids = Set(shown.reading.map(\.id))
         let order = Dictionary(tree.reading.enumerated().map { ($1.id, $0 + 1) }, uniquingKeysWith: { a, _ in a })
         return TreeCanvas(tree: shown, layout: layout, model: model, folded: $folded, marked: marked, carried: carrying,
                           carry: { id in carried = id.map { ExtensionPage.Tree.Carry(id: $0, on: shown) } },
                           land: { land($0, after: $1, on: shown) }, put: { put($0, at: $1, layout: layout, on: shown, rightToLeft: $2) },
-                          order: order, picked: chosen.intersection(ids), pick: pick, clear: { picked = [] }, removePicked: { removePicked(shown) })
+                          order: order, choice: chosen, pick: pick, clear: { choice.clear() }, removeChosen: { removeChosen(shown) })
     }
 
     private var board: some View {
@@ -237,6 +250,17 @@ struct PageTreeView: View {
         .focusEffectDisabled()
         .focused($boardFocused)
         .onKeyPress(phases: .down, action: key)
+        // The choice is what the edge shows: it follows the extension's selection, and goes when the cards change (D233).
+        .onChange(of: tree.selected) { _, new in choice.selected(new) }
+        .onChange(of: tree.reading.map(\.id)) { _, _ in choice.clear() }
+        .confirmationDialog(Text("Remove \(asking ?? 0) cards?", comment: "A board of cards on an extension's page: asked before Delete removes four or more"),
+                            isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } }), titleVisibility: .visible) {
+            Button(role: .destructive) {
+                asking = nil
+                removeChosen(tree.folding(folded), asked: true)
+            } label: { Text("Remove", comment: "A card on an extension's page: its menu") }
+            Button("Cancel", role: .cancel) { asking = nil }
+        }
         // A drop forgets the carried card as it lands. A drag let go anywhere else (Esc is the drag's own way out) is forgotten a second
         // after the button comes up: long enough that the drop that comes with letting go still finds it.
         .task(id: carried) {
@@ -267,7 +291,7 @@ struct PageTreeView: View {
             guard let words = (note.object as? String)?.split(separator: ":").map(String.init), let id = words.first else { return }
             pick(id, adding: words.last == "add")
         }
-        .onReceive(NotificationCenter.default.publisher(for: Self.devRemove)) { _ in removePicked(tree.folding(folded)) }
+        .onReceive(NotificationCenter.default.publisher(for: Self.devRemove)) { _ in removeChosen(tree.folding(folded)) }
         .onReceive(NotificationCenter.default.publisher(for: Self.devCarry)) { note in
             // `<id>` stays carried until a drop; `<id>:loose` is let go of at once, as a drag whose button came up.
             let words = (note.object as? String)?.split(separator: ":").map(String.init) ?? []
@@ -429,16 +453,19 @@ private struct TreeCanvas: View {
     var put: ([String], CGPoint, Bool) -> Bool = { _, _, _ in false }
     /// Each card's place in the whole tree's order, folded cards counted: what the numbers say.
     var order: [String: Int] = [:]
-    var picked: Set<String> = []
+    var choice = TreeChoice()
     var pick: (String, Bool) -> Void = { _, _ in }
     var clear: () -> Void = {}
-    var removePicked: () -> Void = {}
+    var removeChosen: () -> Void = {}
     @Environment(\.layoutDirection) private var direction
 
     var body: some View {
         let line = TreeLine(tree.line)
         // Once cards stand where the person put them, each says its place in the order, which the lines also follow.
         let numbers = layout.placed ? order : [:]
+        // How many Delete would really take: the menu offers it for several only when it will act.
+        let going = choice.removals(in: tree)
+        let several = (going.together?.count ?? going.oneByOne.count) > 1
         ZStack(alignment: .topLeading) {
             // The board's empty space takes a card let go there, as a place to stand (D234); a card or a + spot over it takes it first. Measured
             // from the left edge whatever the reading direction, and mirrored back in `corner` when the board is drawn right to left.
@@ -451,7 +478,8 @@ private struct TreeCanvas: View {
             TreeBoard(size: layout.size) {
                 ForEach(layout.cards, id: \.node.id) { card in
                     TreeCard(node: card.node, tree: tree, line: line, model: model, folded: $folded, marked: marked.contains(card.node.id), carried: carried, carry: carry, land: land,
-                             picked: picked.contains(card.node.id), many: picked.count > 1, pick: pick, removePicked: removePicked)
+                             shownSelected: choice.shows(card.node.id, selected: tree.selected),
+                             removeChosen: several && choice.cards.contains(card.node.id) ? removeChosen : nil, pick: pick)
                         .overlay(alignment: .topLeading) { if let n = numbers[card.node.id] { TreeStepNumber(number: n, line: line) } }
                         // VoiceOver goes through placed cards in the order, never by where they stand (D234).
                         .accessibilitySortPriority(numbers[card.node.id].map { Double(-$0) } ?? 0)
@@ -543,16 +571,16 @@ private struct TreeCard: View {
     var carried: String?
     var carry: (String?) -> Void
     var land: ([String], String) -> Bool
-    /// One of the cards the person chose on the board; `many`: with others.
-    var picked = false
-    var many = false
+    /// Draws the selected edge: chosen on the board, or the tree's selected card when nothing is chosen.
+    var shownSelected = false
+    /// On a card chosen with others, when Delete would take several: its menu's Remove takes them all.
+    var removeChosen: (() -> Void)?
     var pick: (String, Bool) -> Void = { _, _ in }
-    var removePicked: () -> Void = {}
     @State private var hovering = false
     @State private var dropping = false
     @Environment(\.pageSelected) private var chosen
 
-    private var selected: Bool { tree.selected == node.id || picked }
+    private var selected: Bool { shownSelected }
     private var hasActions: Bool { !node.fixed && (tree.remove != nil || (tree.reorder != nil && !tree.spots(for: node.id).isEmpty)) }
     /// One colour on a card's edge: the line alone runs from one to the other.
     private var edge: Color { chosen ?? line.to }
@@ -669,7 +697,7 @@ private struct TreeCard: View {
         }
     }
 
-    private var actions: some View { TreeCardActions(node: node, tree: tree, model: model, removeChosen: picked && many ? removePicked : nil) }
+    private var actions: some View { TreeCardActions(node: node, tree: tree, model: model, removeChosen: removeChosen) }
 }
 
 /// What can be added, found by typing or by category, and picked with the arrows and Return.

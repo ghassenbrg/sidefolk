@@ -143,7 +143,8 @@ public struct CardTree {
     public var reorder: StepRail.Hook?
     /// Takes a card away, from its menu: its id goes under the key.
     public var remove: StepRail.Hook?
-    /// Takes several cards the person chose on the board away in one call: their ids, as a list, under its key. Without it, `remove` is called once each.
+    /// Takes several cards the person chose on the board away in one call: their ids, as a list, under its key. Without it, `remove` is called once each,
+    /// last card first, stopping at the first that fails. Either way, a card's id must name the same card until the call is done.
     public var removeMany: StepRail.Hook?
     /// Gets `{"id", "x", "y"}` when a card is let go on the board's empty space, and `{"clear": true}` from Tidy up, under its key (D234). Keep the
     /// place on the card (`at`); it's only where the card is drawn, never what runs or in what order.
