@@ -35,7 +35,10 @@ public struct ApprovalReason: Sendable, Hashable {
         guard request.tainted else { return nil }
         // Other apps' medium calls are evaluated as tainted so they're asked every time (T4): nothing was read.
         if request.caller.kind == "external" {
-            text = String(localized: "Another app is asking, so I check with you each time.")
+            // Full access covers Sidefolk's own companion and the person, not other apps, unless the person let them in its sheet (D240): then this is one that asks anyway.
+            text = request.mode == .fullAccess
+                ? String(localized: "Another app is asking. This one asks even when you let other apps act without asking.")
+                : String(localized: "Another app is asking, so I check with you each time. Full access covers Sidefolk's own companion, not other apps, unless you chose that in Settings › Trust.")
             calm = false
             return
         }

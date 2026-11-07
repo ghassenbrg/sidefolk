@@ -93,6 +93,12 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     /// A flow the person approved may pass what it read to a server or another extension's tool, in the fields its card names (D189). Off: those
     /// lines ask each time. On by default, as the founder asked: a flow is automation.
     public var flowsMayPassToServers = true
+    /// Chosen in the Full access sheet, off unless the person turns it on there (D240): while Full access is on, other AI agents' calls to the tools Sidefolk offers them
+    /// run without a card, and a flow plan one asks for is approved without its card. It ends when Full access does and is never kept for the next time.
+    public var agentsFullAccess = false
+
+    /// Other agents act as Full access does for Sidefolk's own: the person said so, and the mode is Full access now.
+    public var agentsMayActFreely: Bool { mode == .fullAccess && agentsFullAccess }
 
     public init(mode: GuardMode = .askOncePerKind, disabled: Set<Capability> = [], unanswered: UnansweredRule = UnansweredRule(),
                 internet: InternetRule = .oncePerSite) {
@@ -116,6 +122,8 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         beforeFullAccess = before == .fullAccess ? .askOncePerKind : before
         // Absent: on, the default. Present and unreadable: off, never a yes nobody gave.
         flowsMayPassToServers = c.contains(.flowsMayPassToServers) ? ((try? c.decode(Bool.self, forKey: .flowsMayPassToServers)) ?? false) : true
+        // Absent or unreadable: off. A yes to other apps is only ever one the person gave in the sheet.
+        agentsFullAccess = (try? c.decode(Bool.self, forKey: .agentsFullAccess)) ?? false
     }
 
     /// The policy as it holds at `now`: Full access past its end is the mode it replaced (D84). Guard reads the policy
@@ -125,17 +133,21 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         var policy = self
         policy.mode = beforeFullAccess
         policy.fullAccessEnds = nil
+        policy.agentsFullAccess = false
         return policy
     }
 
     /// Switches to `mode`. Full access remembers what it replaced and ends at `ends` (nil: when turned off); any other
     /// mode forgets an end.
-    public mutating func choose(_ mode: GuardMode, fullAccessEnds ends: Date? = nil) {
+    /// `agentsToo`: other AI agents act freely as well while it lasts (D240); every turning on starts from the choice made then, never from an earlier one.
+    public mutating func choose(_ mode: GuardMode, fullAccessEnds ends: Date? = nil, agentsToo: Bool = false) {
         if mode == .fullAccess {
             if self.mode != .fullAccess { beforeFullAccess = self.mode }
             fullAccessEnds = ends
+            agentsFullAccess = agentsToo
         } else {
             fullAccessEnds = nil
+            agentsFullAccess = false
         }
         self.mode = mode
     }
@@ -146,6 +158,7 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
         guard mode == .fullAccess else { return }
         mode = beforeFullAccess
         fullAccessEnds = nil
+        agentsFullAccess = false
     }
 
     /// The mode Guard applies to `caller`. Only Sidefolk's own agent, which acts on the person's own
@@ -154,6 +167,8 @@ public struct GuardPolicy: Codable, Sendable, Equatable {
     /// rules (SECURITY T4, D37).
     public func mode(for caller: Caller) -> GuardMode {
         if Self.actsForTheAgent(caller) { return mode }
+        // The one exception: the person chose, in the Full access sheet, that other AI agents act freely while it lasts (D240).
+        if case .external = caller, agentsMayActFreely { return .fullAccess }
         return mode == .askEveryTime ? .askEveryTime : .askOncePerKind
     }
 

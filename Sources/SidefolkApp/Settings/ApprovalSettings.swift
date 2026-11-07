@@ -26,10 +26,23 @@ struct TrustHero: View {
                 ModeCard(mode: .auto, current: mode, ends: nil) { choose(.auto) }
                 ModeCard(mode: .fullAccess, current: mode, ends: model.policy.fullAccessEnds) { choose(.fullAccess) }
             }
-            Text("For what you ask Sidefolk to do. Other agents and extensions keep their own rules, except that Full access answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History.")
+            Text("For what you ask Sidefolk to do. Other apps (Claude Code, Codex…) and extensions keep their own rules: each call from another app asks, unless you also let other apps act freely while Full access is on. Full access also answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History.",
+                 comment: "Settings › Trust: under the four modes")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, Theme.Space.xs)
+            if model.policy.agentsMayActFreely {
+                HStack(alignment: .center, spacing: Theme.Space.m) {
+                    Text("Other apps are acting without asking while Full access lasts. Everything shows in History with who asked.", comment: "Settings › Trust: shown while other apps may act freely in Full access")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button { Task { await model.stopLettingAgentsAct() } } label: { Text("Turn off", comment: "Settings › Trust: ends other apps acting without asking") }
+                        .buttonStyle(.sf(.secondary))
+                }
+                .padding(Theme.Space.s)
+                .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous))
+            }
         }
         .settingAnchor(.approvalMode)
         .sheet(isPresented: Binding(get: { model.confirmingFullAccess }, set: { model.confirmingFullAccess = $0 })) {
@@ -192,6 +205,8 @@ struct FullAccessSheet: View {
     /// Inert for a moment, like an approval card, so a stray keypress can't turn it on.
     @State private var armed = false
     @State private var end: FullAccessEnd = .never
+    /// Off every time the sheet opens: other apps are never let in by an earlier choice (D240).
+    @State private var agentsToo = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -233,8 +248,17 @@ struct FullAccessSheet: View {
                 section(Text("Ends", comment: "The Full access sheet: when Full access turns itself off")) {
                     SegmentedPicker(Text("Ends", comment: "The Full access sheet: when Full access turns itself off"), selection: $end,
                                     segments: FullAccessEnd.offered().map { .init($0, verbatim: $0.title) })
-                    Text("While it's on, the Ask panel shows a red “Full access” and the menu bar icon turns orange. Turn it off there with one click.",
+                    Text("While it's on, the Ask panel shows a red “Full access” and the menu bar icon turns orange. Turn it off there with one click. It goes on while the Mac sleeps or Sidefolk restarts, until it ends.",
                          comment: "The Full access sheet, under Ends")
+                        .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                section(Text("Other apps", comment: "The Full access sheet: whether other AI apps may act without asking too")) {
+                    Toggle(isOn: $agentsToo) {
+                        Text("Also let other apps (Claude Code, Codex…) act without asking", comment: "The Full access sheet: the switch for other apps; off unless turned on here")
+                    }
+                    Text("Off, unless you turn it on here. Each call from another app asks, even in Full access. If you turn it on, any app connected to Sidefolk can use the tools Sidefolk offers it, and turn flows on and run them, with no card, even if a web page has tricked that app. Everything shows in History with who asked. It ends when Full access ends, and you can turn it off with one click in Settings › Trust.",
+                         comment: "The Full access sheet, under the switch for other apps: what it means")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -246,7 +270,7 @@ struct FullAccessSheet: View {
                 Button("Cancel") { dismiss() }.buttonStyle(.sf(.secondary, size: .large)).keyboardShortcut(.cancelAction)
                 Button("Turn On Full Access") {
                     Task {
-                        await model.setMode(.fullAccess, fullAccessEnds: end.date())
+                        await model.setMode(.fullAccess, fullAccessEnds: end.date(), agentsToo: agentsToo)
                         dismiss()
                     }
                 }
@@ -288,17 +312,18 @@ struct FullAccessSheet: View {
 
 /// When Full access ends (D84): in an hour, tonight, or when the person turns it off.
 enum FullAccessEnd: Hashable {
-    case inAnHour, tonight(Date), never
+    case inAnHour, inEightHours, tonight(Date), never
 
-    /// "Tonight at 22:00" only while that is more than an hour away.
+    /// "Tonight at 22:00" only while that is more than an hour away, and not when 8 hours say nearly the same.
     static func offered(now: Date = Date()) -> [FullAccessEnd] {
         let tonight = Calendar.current.date(bySettingHour: 22, minute: 0, second: 0, of: now)
-        return [.inAnHour] + (tonight.map { $0.timeIntervalSince(now) > 3600 ? [.tonight($0)] : [] } ?? []) + [.never]
+        return [.inAnHour, .inEightHours] + (tonight.map { $0.timeIntervalSince(now) > 3600 && abs($0.timeIntervalSince(now) - 8 * 3600) > 1800 ? [.tonight($0)] : [] } ?? []) + [.never]
     }
 
     var title: String {
         switch self {
         case .inAnHour: String(localized: "In 1 hour", comment: "Full access ends")
+        case .inEightHours: String(localized: "In 8 hours", comment: "Full access ends")
         case .tonight(let at): String(localized: "Tonight at \(TimeText.clock(at))", comment: "Full access ends: “Tonight at 22:00”")
         case .never: String(localized: "When I turn it off", comment: "Full access ends")
         }
@@ -307,6 +332,7 @@ enum FullAccessEnd: Hashable {
     func date(now: Date = Date()) -> Date? {
         switch self {
         case .inAnHour: now.addingTimeInterval(3600)
+        case .inEightHours: now.addingTimeInterval(8 * 3600)
         case .tonight(let at): at
         case .never: nil
         }

@@ -464,7 +464,7 @@ extension ExtensionHost {
         let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
         // An agent asked, not the person: the card says who, first, and that nothing is allowed until they say so here.
         var shown = words
-        if let agent {
+        if let agent, answer == nil {
             // The person may approve here, or give the agent this code in its chat: one card, one use, two minutes. It is only ever in this card's words and in memory.
             let code = AgentCode.fresh()
             shown = String(localized: "An app that says it's “\(agent)” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.", comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself")
@@ -483,6 +483,8 @@ extension ExtensionHost {
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
         if let agent { rowInput["asked_by"] = .string(agent) }
         if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
+        // Nobody read it, and why: the person's own choice for other apps, which the row says beside who asked.
+        if agent != nil, answer == .fullAccess { rowInput["because"] = .string("other apps act without asking: on, chosen in the Full access sheet") }
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
             await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer, card: whole)
@@ -491,8 +493,13 @@ extension ExtensionHost {
 
     /// Whether the person needs a card for this plan at all (D186–D188). Guard checks the mode again itself: this only says what the host found.
     private func planAnswer(_ id: String, _ e: PlanEvaluation, throughAgent: Bool = false) -> PlanAnswer? {
-        // An agent's ask is never answered for the person: not by what they read before (covered), not by Full access, not by Auto (D237). Only a card.
-        guard !throughAgent else { return nil }
+        // An agent's ask is never answered for the person: not by what they read before (covered), not by Full access, not by Auto (D237). Only a card, unless the person
+        // chose in the Full access sheet that other agents act freely while it lasts (D240): then it is answered as Full access answers a plan, and only for a signed
+        // extension's plan that History can say in full.
+        if throughAgent {
+            guard e.agentsMayActFreely, e.mode == .fullAccess, runtimes[id]?.pin.origin?.firstParty == true, ExtensionPlanWords.historyRecord(e) != nil else { return nil }
+            return e.covered ? .covered : .fullAccess
+        }
         if e.covered { return .covered }
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
