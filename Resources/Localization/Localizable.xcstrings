@@ -89296,61 +89296,61 @@
         }
       }
     },
-    "Full access ended. Other apps ask again." : {
+    "Full access ended. Other apps' calls follow your rules again." : {
       "comment" : "A whisper: Full access ended by itself while other apps were let act without asking",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "انتهى الوصول الكامل. التطبيقات الأخرى تسأل من جديد."
+            "value" : "انتهى الوصول الكامل. استدعاءات التطبيقات الأخرى تتبع قواعدك من جديد."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Vollzugriff ist beendet. Andere Apps fragen wieder nach."
+            "value" : "Der Vollzugriff ist beendet. Aufrufe anderer Apps folgen wieder deinen Regeln."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El Acceso total terminó. Otras apps vuelven a preguntar."
+            "value" : "El Acceso total terminó. Las llamadas de otras apps vuelven a seguir tus reglas."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le Plein accès est terminé. Les autres apps demandent de nouveau."
+            "value" : "Le Plein accès est terminé. Les appels des autres apps suivent de nouveau vos règles."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’Accesso totale è terminato. Le altre app chiedono di nuovo."
+            "value" : "L’Accesso totale è terminato. Le chiamate delle altre app seguono di nuovo le tue regole."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "フルアクセスが終了しました。ほかのアプリは再び確認します。"
+            "value" : "フルアクセスが終了しました。ほかのアプリの呼び出しは、再びあなたのルールに従います。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "전체 접근이 끝났어요. 다른 앱은 다시 물어봐요."
+            "value" : "전체 접근이 끝났어요. 다른 앱의 호출은 다시 당신의 규칙을 따라요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Acesso total terminou. Outros apps voltam a perguntar."
+            "value" : "O Acesso total terminou. As chamadas de outros apps voltam a seguir suas regras."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "完全访问已结束。其他应用会再次询问。"
+            "value" : "完全访问已结束。其他应用的调用再次遵循你的规则。"
           }
         }
       }

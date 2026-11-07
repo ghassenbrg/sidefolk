@@ -1236,6 +1236,21 @@ import Testing
         #expect(after?.answeredUnread == before?.answeredUnread, "what the person read stays what they read")
     }
 
+    /// An agent's re-ask of an unchanged plan changes nothing: its dates and its end stay what the person read, so the switch can't lengthen a plan's time.
+    @Test func anAgentsReAskOfAnUnchangedPlanKeepsItsDatesAndItsEnd() async throws {
+        let w = try await World()
+        let timed = Self.plan([Self.save]).setting("ttl", .number(3600))
+        _ = await w.approve(timed)
+        let approved = Date().addingTimeInterval(-1800), ends = Date().addingTimeInterval(1200)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["digest"]?.approvedAt = approved; $0.plans["digest"]?.expiresAt = ends }
+        try await w.h.env.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true) }
+        let reply = await w.ask("sidefolk/plan.approve", ["plan": timed], caller: .external(client: "Claude Code"))
+        #expect(reply["ok"]?.boolValue == true && reply["silent"]?.boolValue == true, "\(reply)")
+        let after = await w.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(after?.approvedAt == approved && after?.expiresAt == ends, "its dates are the ones that were read: \(String(describing: after?.approvedAt)) \(String(describing: after?.expiresAt))")
+        #expect(after?.answeredUnread != true, "and it was not made a plan nobody read")
+    }
+
     @Test func theSwitchDoesNotAnswerAnAgentsPlanWithoutFullAccessOrForAPlanHistoryCantSayInFull() async throws {
         // Auto, with the flag cleared by choosing it: a card.
         let auto = try await World()

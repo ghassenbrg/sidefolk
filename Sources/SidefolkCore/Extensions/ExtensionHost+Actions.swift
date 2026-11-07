@@ -573,7 +573,9 @@ extension ExtensionHost {
         // (A card the person approved is use of its own, though nothing in it was new: Ask every time shows one for a covered plan, and that approval renews it.
         // What decides is what Guard did, not the mode read earlier: it reads the mode again, and the person may have changed it meanwhile.)
         let withoutCard = outcome.activity.decision == .plan || outcome.activity.decision == .autoPlan
-        if withoutCard, answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
+        // An agent's re-ask of a plan with nothing new in it, answered by the person's switch, changes nothing either: the dates and the end of what was read stay (D240).
+        let unchangedForAgents = answer == .fullAccessForAgents && evaluation.covered && outcome.activity.decision == .fullAccessPlan
+        if withoutCard && (answer == .covered || answer == .autoSkipped) || unchangedForAgents, let was = evaluation.previous {
             plan.approvedAt = was.approvedAt
             // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
             plan.expiresAt = was.expiresAt ?? plan.expiresAt

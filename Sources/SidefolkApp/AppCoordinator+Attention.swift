@@ -89,7 +89,7 @@ extension AppCoordinator {
             runtime.events.changed(.permissions)
             if agentsToo {
                 sidecard.present(AttentionItem(level: .gentle, source: Self.ownVoice,
-                                               title: String(localized: "Full access ended. Other apps ask again.", comment: "A whisper: Full access ended by itself while other apps were let act without asking"),
+                                               title: String(localized: "Full access ended. Other apps' calls follow your rules again.", comment: "A whisper: Full access ended by itself while other apps were let act without asking"),
                                                refKind: "full_access_ended"),
                                  .gentle(autoDismiss: AttentionPolicy.gentleSeconds * 2))
             }

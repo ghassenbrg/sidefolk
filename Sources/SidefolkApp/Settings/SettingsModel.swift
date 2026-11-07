@@ -256,12 +256,11 @@ final class SettingsModel {
         return nil
     }
 
-    /// One click off: other apps ask again, and Full access goes on for Sidefolk's own companion (D240).
+    /// One click off: other apps' calls follow the person's own rules again, and Full access goes on for Sidefolk's own companion (D240).
     func stopLettingAgentsAct() async { await setPolicy { $0.agentsFullAccess = false } }
 
     /// Changes the stored policy, not this window's copy of it: a copy that failed to load is the default, and
     /// saving it would switch back on what the person turned off.
-
     func setPolicy(_ change: @escaping @Sendable (inout GuardPolicy) -> Void) async {
         change(&policy)
         try? await runtime.permissions.updatePolicy(change)
