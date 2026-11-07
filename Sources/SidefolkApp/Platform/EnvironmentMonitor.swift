@@ -98,6 +98,9 @@ final class EnvironmentMonitor {
     }
 
     private func spaceMoved() {
+        #if DEBUG
+        layersLine("moved")
+        #endif
         refreshFullscreen()
         onSpaceChanged?()
         // A swipe is still moving when this comes, and the space may not have settled: look again, and tell only when the
@@ -108,11 +111,26 @@ final class EnvironmentMonitor {
                 try? await Task.sleep(for: .seconds(pause))
                 guard let self, !Task.isCancelled else { return }
                 let was = self.fullScreen.inFullScreen
+                #if DEBUG
+                self.layersLine("settled \(pause)")
+                #endif
                 self.refreshFullscreen()
                 if self.fullScreen.inFullScreen != was { self.onSpaceChanged?() }
             }
         }
     }
+
+    #if DEBUG
+    /// The desktop's layers on screen at each space change, levels and sizes only, to check the rule on a real space.
+    private func layersLine(_ when: String) {
+        let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+        let layers = list.compactMap { info -> String? in
+            guard let layer = info[kCGWindowLayer as String] as? Int, layer < 0, let b = info[kCGWindowBounds as String] as? [String: CGFloat] else { return nil }
+            return "\(layer):\(Int(b["Width"] ?? 0))x\(Int(b["Height"] ?? 0))"
+        }
+        Log.shared.info("fullscreen", "layers", ["when": when, "desktop": layers.joined(separator: " "), "full_screen": "\(fullScreen.inFullScreen)"])
+    }
+    #endif
 
     private func setAway(_ away: Bool) {
         Task { await attention.update { $0.away = away } }
