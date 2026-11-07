@@ -224,6 +224,9 @@ struct ExternalFacade: Tool {
     func summary(for input: JSONValue) -> String { onCard ?? base.summary(for: input) }
     func scope(for input: JSONValue) -> ToolScope { base.scope(for: input) }
     func refusal(for input: JSONValue, context: ToolContext) -> String? { refused ?? base.refusal(for: input, context: context) }
+    /// What the real tool says of its own rows: every external call goes through here, and a tool that writes its own row (the plan code's, which keeps the code out of History)
+    /// would otherwise get a second one with its input.
+    func leavesNoRow(for input: JSONValue, caller: Caller) -> Bool { base.leavesNoRow(for: input, caller: caller) }
 
     func run(_ input: JSONValue, context: ToolContext) async throws -> ToolResult {
         if let why = ExternalToolPolicy.refusal(spec.name, input: input) { throw ToolError.unavailable(why) }

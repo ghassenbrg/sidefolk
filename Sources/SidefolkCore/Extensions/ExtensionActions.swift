@@ -169,12 +169,12 @@ public final class ExtensionActionGateway: Sendable {
     }
 
     /// Answers yes to the plan card whose words are exactly `text`, for the code the person gave an agent (D239): the one card of that extension, found by what it says (the plan's
-    /// words and the code are in it), never by anything an agent sends. False when no such card is up any more.
+    /// words and the code are in it), never by anything an agent sends. False when no such card is up any more, or the person's click settled it first.
     func settleCard(extensionId id: String, text: String) async -> Bool {
         for request in await broker.pending() where request.tool == ExtensionPlanTool.name && request.extensionId == id {
             guard case .text(let words) = request.details, words == text else { continue }
-            await broker.resolve(id: request.id, decision: .allowOnce)
-            return true
+            // Only if this was the answer: a click on Approve a moment earlier settled it, and then nothing was approved by the code.
+            return await broker.resolve(id: request.id, decision: .allowOnce)
         }
         return false
     }

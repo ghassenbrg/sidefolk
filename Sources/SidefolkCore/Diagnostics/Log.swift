@@ -179,7 +179,8 @@ public enum Redactor {
             var result: [String: JSONValue] = [:]
             for (k, v) in o {
                 let lower = k.lowercased()
-                if ["api_key", "apikey", "token", "password", "secret", "authorization"].contains(where: lower.contains) {
+                // A field named `code` is a one-time code (a flow card's, D239): whatever tool takes one, a row never keeps it.
+                if lower == "code" || ["api_key", "apikey", "token", "password", "secret", "authorization"].contains(where: lower.contains) {
                     result[k] = "[redacted]"
                 } else {
                     result[k] = arguments(v)

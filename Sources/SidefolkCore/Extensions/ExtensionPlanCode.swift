@@ -53,9 +53,19 @@ extension ExtensionHost {
     /// that has ended is none. Three wrong tries lock a card (it is then a click only), and an agent can try six times a minute.
     func confirmWithCode(client raw: String, code typed: String) async -> CodeAnswer {
         let client = Self.agentName(raw), now = Date()
-        let recent = (codeTries[client] ?? []).filter { now.timeIntervalSince($0) < 60 }
+        // Only the last minute is kept, for every name: a name that stopped trying leaves nothing behind.
+        codeTries = codeTries.compactMapValues { tries in
+            let recent = tries.filter { now.timeIntervalSince($0) < 60 }
+            return recent.isEmpty ? nil : recent
+        }
+        codeLimited = codeLimited.filter { now.timeIntervalSince($0.value) < 60 }
+        let recent = codeTries[client] ?? []
         guard recent.count < AgentCode.triesPerMinute else {
-            codeTries[client] = recent
+            // One row for the minute it happened in, not one for every try after it.
+            if codeLimited[client] == nil {
+                codeLimited[client] = now
+                await configuration.actions?.recordPlanCodeTry(client: client, outcome: .tooMany)
+            }
             return .tooMany
         }
         codeTries[client] = recent + [now]

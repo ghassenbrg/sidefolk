@@ -188,6 +188,8 @@ public actor ExtensionHost {
     var runtimes: [String: Runtime] = [:]
     /// When an agent last tried a code, by its name: the rate limit of `confirmWithCode` (D239).
     var codeTries: [String: [Date]] = [:]
+    /// When an agent was last told to wait, by name: the row for it is written once a minute (D239).
+    var codeLimited: [String: Date] = [:]
     private var launches = 0
     /// What extension pages' charts said (D62).
     public nonisolated let pageHistory: ExtensionPageHistory
