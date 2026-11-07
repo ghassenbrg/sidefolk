@@ -108,20 +108,24 @@ final class MacPlatform: PlatformBridge {
     }
 }
 
-/// Fullscreen detection without permissions: a window of the frontmost app covers a whole display.
+/// Fullscreen detection without permissions, from the window server's list (`FullScreenSignals`, D138).
 enum Fullscreen {
     static func isFrontmostFullscreen(pid: pid_t) -> Bool {
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
-            return false
+        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return false }
+        let windows = list.compactMap { info -> FullScreenSignals.Window? in
+            guard let layer = info[kCGWindowLayer as String] as? Int, let b = info[kCGWindowBounds as String] as? [String: CGFloat] else { return nil }
+            let frame = CGRect(x: b["X"] ?? 0, y: b["Y"] ?? 0, width: b["Width"] ?? 0, height: b["Height"] ?? 0)
+            return .init(layer: layer, frame: frame, front: (info[kCGWindowOwnerPID as String] as? pid_t) == pid)
         }
-        let screens = NSScreen.screens.map { $0.frame }
-        for info in list {
-            guard (info[kCGWindowOwnerPID as String] as? pid_t) == pid,
-                  (info[kCGWindowLayer as String] as? Int) == 0,
-                  let b = info[kCGWindowBounds as String] as? [String: CGFloat] else { continue }
-            let size = CGSize(width: b["Width"] ?? 0, height: b["Height"] ?? 0)
-            if screens.contains(where: { abs($0.width - size.width) < 2 && abs($0.height - size.height) < 2 }) { return true }
+        return FullScreenSignals.inFullScreen(windows: windows, displays: displays, desktopIconLevel: Int(CGWindowLevelForKey(.desktopIconWindow)))
+    }
+
+    /// The displays in the window server's coordinates: top left of the main display, y down.
+    static var displays: [FullScreenSignals.Display] {
+        let mainHeight = NSScreen.screens.first?.frame.height ?? 0
+        return NSScreen.screens.map { screen in
+            let f = screen.frame
+            return .init(frame: CGRect(x: f.minX, y: mainHeight - f.maxY, width: f.width, height: f.height), menuBar: f.maxY - screen.visibleFrame.maxY)
         }
-        return false
     }
 }

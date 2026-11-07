@@ -3,7 +3,8 @@ import CoreGraphics
 import SidefolkCore
 
 /// Watches what affects interruptions — idle, lock, sleep, fullscreen — and keeps the attention
-/// center informed. Event driven; the only timer runs while something is waiting for the user to return.
+/// center informed. Event driven; the only timer runs while something is waiting for the user to return, and a space change
+/// looks again twice in its next second and a half.
 @MainActor
 final class EnvironmentMonitor {
     private let attention: AttentionCenter
@@ -20,18 +21,11 @@ final class EnvironmentMonitor {
 
     func start() {
         let ws = NSWorkspace.shared.notificationCenter
-        observers.append(ws.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.refreshFullscreen()
-                self?.onSpaceChanged?()
-            }
-        })
-        observers.append(ws.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.refreshFullscreen()
-                self?.onSpaceChanged?()
-            }
-        })
+        for name in [NSWorkspace.didActivateApplicationNotification, NSWorkspace.activeSpaceDidChangeNotification] {
+            observers.append(ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.spaceMoved() }
+            })
+        }
         observers.append(ws.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.onWake?() }
         })
@@ -84,10 +78,59 @@ final class EnvironmentMonitor {
 
     var onSpaceChanged: (() -> Void)?
 
+    private var fullScreen = FullScreenState()
+    private var settling: Task<Void, Never>?
+
+    /// Whether the person is on a full-screen app (D138), looked at now. Sidefolk in front keeps the last answer.
+    var inFullScreen: Bool {
+        if let app = NSWorkspace.shared.frontmostApplication {
+            let own = app.processIdentifier == ProcessInfo.processInfo.processIdentifier
+            let was = fullScreen.inFullScreen
+            fullScreen.observe(frontmostIsSidefolk: own, inFullScreen: !own && Fullscreen.isFrontmostFullscreen(pid: app.processIdentifier))
+            if fullScreen.inFullScreen != was { Log.shared.info("fullscreen", "changed", ["full_screen": "\(fullScreen.inFullScreen)"]) }
+        }
+        return fullScreen.inFullScreen
+    }
+
     func refreshFullscreen() {
-        let full = NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false
+        let full = inFullScreen
         Task { await attention.update { $0.fullscreen = full } }
     }
+
+    private func spaceMoved() {
+        #if DEBUG
+        layersLine("moved")
+        #endif
+        refreshFullscreen()
+        onSpaceChanged?()
+        // A swipe is still moving when this comes, and the space may not have settled: look again, and tell only when the
+        // answer changed.
+        settling?.cancel()
+        settling = Task { [weak self] in
+            for pause in [0.4, 1.2] {
+                try? await Task.sleep(for: .seconds(pause))
+                guard let self, !Task.isCancelled else { return }
+                let was = self.fullScreen.inFullScreen
+                #if DEBUG
+                self.layersLine("settled \(pause)")
+                #endif
+                self.refreshFullscreen()
+                if self.fullScreen.inFullScreen != was { self.onSpaceChanged?() }
+            }
+        }
+    }
+
+    #if DEBUG
+    /// The desktop's layers on screen at each space change, levels and sizes only, to check the rule on a real space.
+    private func layersLine(_ when: String) {
+        let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+        let layers = list.compactMap { info -> String? in
+            guard let layer = info[kCGWindowLayer as String] as? Int, layer < 0, let b = info[kCGWindowBounds as String] as? [String: CGFloat] else { return nil }
+            return "\(layer):\(Int(b["Width"] ?? 0))x\(Int(b["Height"] ?? 0))"
+        }
+        Log.shared.info("fullscreen", "layers", ["when": when, "desktop": layers.joined(separator: " "), "full_screen": "\(fullScreen.inFullScreen)"])
+    }
+    #endif
 
     private func setAway(_ away: Bool) {
         Task { await attention.update { $0.away = away } }
