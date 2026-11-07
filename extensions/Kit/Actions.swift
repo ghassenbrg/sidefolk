@@ -482,16 +482,42 @@ public struct Plan: @unchecked Sendable {
         }
     }
 
+    private static var waitingBoth: [String: CheckedContinuation<(Answer, also: Answer?), Never>] = [:]
+
+    /// One card for `plan` and `also`, a plan of this extension's that `plan` goes with (a flow that turns on another one it calls): one answer saves both or
+    /// neither, and each is kept, ended and limited on its own. The second answer is nil when Sidefolk didn't say it saved `also` (a copy older than this
+    /// showed `plan`'s card alone), so `also` counts only when it says so.
+    public static func approve(_ plan: Plan, also: Plan) async -> (Answer, also: Answer?) {
+        let id = UUID().uuidString
+        return await withCheckedContinuation { (c: CheckedContinuation<(Answer, also: Answer?), Never>) in
+            waitingBoth[id] = c
+            ExtensionServices.send?("sidefolk/plan.approve", ["request": id, "plan": plan.wire, "also": [also.wire]])
+            Task {
+                try? await Task.sleep(for: .seconds(150))
+                waitingBoth.removeValue(forKey: id)?.resume(returning: (.refused("unanswered"), nil))
+            }
+        }
+    }
+
     public static func forget(_ id: String) {
         ExtensionServices.send?("sidefolk/plan.forget", ["plan": id])
     }
 
+    private static func answer(_ args: Arguments) -> Answer {
+        guard args.bool("ok") == true else { return .refused(args.string("reason") ?? "denied") }
+        return .allowed(standing: args.values["standing"] as? [Bool] ?? [], silent: args.bool("silent") ?? false, new: args.int("new") ?? 0)
+    }
+
     static func receive(_ args: Arguments) {
-        guard let id = args.string("request"), let c = waiting.removeValue(forKey: id) else { return }
-        if args.bool("ok") == true {
-            c.resume(returning: .allowed(standing: args.values["standing"] as? [Bool] ?? [], silent: args.bool("silent") ?? false, new: args.int("new") ?? 0))
-        } else {
-            c.resume(returning: .refused(args.string("reason") ?? "denied"))
+        guard let id = args.string("request") else { return }
+        if let c = waiting.removeValue(forKey: id) { return c.resume(returning: answer(args)) }
+        guard let c = waitingBoth.removeValue(forKey: id) else { return }
+        let main = answer(args)
+        // Only an answer that names it: anything else saved the first plan alone, or nothing.
+        let also = (args.values["also"] as? [[String: Any]])?.first.flatMap { one -> Answer? in
+            guard case .allowed = main else { return nil }
+            return answer(Arguments(one.merging(["ok": true]) { mine, _ in mine }))
         }
+        c.resume(returning: (main, also))
     }
 }

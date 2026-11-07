@@ -43047,6 +43047,65 @@
         }
       }
     },
+    "Also turns on “%@”:" : {
+      "comment" : "A plan's card: a second flow that is turned on with this one; its title",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشغّل أيضًا «%@»:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schaltet außerdem „%@“ ein:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "También activa «%@»:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active aussi « %@ » :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attiva anche «%@»:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あわせて「%@」もオンにします："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”도 함께 켜요:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Também liga “%@”:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时开启“%@”："
+          }
+        }
+      }
+    },
     "Always" : {
       "localizations" : {
         "ar" : {
@@ -47088,6 +47147,65 @@
         }
       }
     },
+    "Approve both" : {
+      "comment" : "A plan's card: the button when one answer approves two plans",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الموافقة على الاثنين"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beide genehmigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobar ambos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout approuver"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approva entrambi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "両方を承認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "둘 다 승인"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovar os dois"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "两者都批准"
+          }
+        }
+      }
+    },
     "Approve with a code" : {
       "comment" : "A tool for other AI agents: approves a flow with the code from its card",
       "localizations" : {
@@ -47261,6 +47379,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "批准也意味着允许它把读到的内容交给 %@。"
+          }
+        }
+      }
+    },
+    "Approving turns on both. Each one can be ended on its own in Settings › Trust." : {
+      "comment" : "A plan's card: said under two plans that one answer approves",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تؤدي الموافقة إلى تشغيل الاثنين. يمكن إنهاء كل منهما على حدة في الإعدادات › الثقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genehmigen schaltet beide ein. Jeder kann einzeln in Einstellungen › Vertrauen beendet werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobar activa ambos. Cada uno puede terminarse por separado en Ajustes › Confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuver active les deux. Chacun peut être arrêté séparément dans Réglages › Confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approvare attiva entrambi. Ognuno può essere terminato separatamente in Impostazioni › Fiducia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "承認すると両方がオンになります。それぞれ設定 › 信頼で個別に終了できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "승인하면 둘 다 켜져요. 각각 설정 › 신뢰에서 따로 끝낼 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovar liga os dois. Cada um pode ser encerrado separadamente em Ajustes › Confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "批准会同时开启两者。可在设置 › 信任中分别结束。"
           }
         }
       }
@@ -251776,6 +251953,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许"
+          }
+        }
+      }
+    },
+    "also turns on “%@”" : {
+      "comment" : "History: the second of two plans one answer approved; its title",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشغّل أيضًا «%@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "schaltet außerdem „%@“ ein"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "también activa «%@»"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "active aussi « %@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "attiva anche «%@»"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あわせて「%@」もオン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”도 함께 켬"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "também liga “%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时开启“%@”"
           }
         }
       }

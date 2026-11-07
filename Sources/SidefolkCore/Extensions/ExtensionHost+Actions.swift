@@ -459,9 +459,37 @@ extension ExtensionHost {
             return await refuse(reason.rawValue)
         case .success(let found): evaluation = found
         }
+        // A second plan that goes with it (D241), a flow it turns on with it: one, a different one, this extension's by construction, and none that sets another
+        // flow off, so what one card carries is two plans and never a chain. Each is read on its own, as `plan.check` reads one.
+        var also: PlanEvaluation?
+        if let extra = params["also"] {
+            guard let list = extra.arrayValue, list.count == 1, let second = list.first, second["id"]?.stringValue != plan["id"]?.stringValue else {
+                runtimes[id]?.planAsking = false
+                return await refuse("unusable")
+            }
+            switch await evaluatePlan(id, plan: second.setting("intent", .string("turn_on")), gateway: gateway) {
+            case .failure(let reason):
+                runtimes[id]?.planAsking = false
+                return await refuse(reason.rawValue)
+            case .success(let found):
+                guard !found.lines.contains(where: { $0.step.kind == "flow" }) else {
+                    runtimes[id]?.planAsking = false
+                    return await refuse("unusable")
+                }
+                also = found
+            }
+        }
+        let both = [evaluation] + (also.map { [$0] } ?? [])
         // One reading of the person's mode decides all of it: the card's words, the answer, what is marked and what the reply says.
-        let answer = planAnswer(id, evaluation, throughAgent: agent != nil)
-        let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
+        let answer = planAnswer(id, both, throughAgent: agent != nil)
+        let wordsFirst = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
+        func title(_ e: PlanEvaluation) -> String { ToolFormat.oneLine(e.plan.title.isEmpty ? e.plan.id : e.plan.title, 80) }
+        var words = wordsFirst
+        if let also {
+            words += "\n\n" + String(localized: "Also turns on “\(ExtensionPlanWords.safe(title(also), 80))”:", comment: "A plan's card: a second flow that is turned on with this one; its title")
+                + "\n\n" + ExtensionPlanWords.card(for: also, extensionName: name(rt), mode: also.mode)
+                + "\n\n" + String(localized: "Approving turns on both. Each one can be ended on its own in Settings › Trust.", comment: "A plan's card: said under two plans that one answer approves")
+        }
         // An agent asked, not the person: the card says who, first, and that nothing is allowed until they say so here.
         var shown = words
         if let agent, answer == nil {
@@ -470,49 +498,68 @@ extension ExtensionHost {
             shown = String(localized: "An app that says it's “\(agent)” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.", comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself")
                 + "\n\n" + String(localized: "You can also give that app this code in its chat: \(AgentCode.spoken(code)). It works once, for 2 minutes. Give it only to that app, and only after reading what this will do.", comment: "A plan's card: a one-time code the person may type into the AI agent's chat to approve instead of pressing Approve; the code")
                 + "\n\n" + words
-            runtimes[id]?.agentCode = AgentCode(digits: code, client: agent, body: shown, plan: evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, expires: Date().addingTimeInterval(AgentCode.life))
+            runtimes[id]?.agentCode = AgentCode(digits: code, client: agent, body: shown, plan: both.map(title).joined(separator: " + "), expires: Date().addingTimeInterval(AgentCode.life))
         }
-        let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: shown,
-                                     answer: answer, intent: evaluation.intent, approveLabel: String(localized: "Approve"), approveNote: ExtensionPlanWords.approveNote(for: evaluation))
-        // What Trust shows later is the whole plan as the card says it, not only what an edit added.
-        var all = evaluation
-        all.previous = nil
-        let whole = evaluation.previous == nil ? words : ExtensionPlanWords.card(for: all, extensionName: name(rt), mode: evaluation.mode)
+        let notes = both.compactMap { ExtensionPlanWords.approveNote(for: $0) }
+        let card = ExtensionPlanTool(extensionId: id, plan: title(evaluation), when: evaluation.plan.when, body: shown, answer: answer, intent: evaluation.intent,
+                                     approveLabel: also == nil ? String(localized: "Approve") : String(localized: "Approve both", comment: "A plan's card: the button when one answer approves two plans"),
+                                     approveNote: notes.isEmpty ? nil : notes.joined(separator: " "))
+        // What Trust shows later is each plan whole, as its card says it, not only what an edit added.
+        func whole(_ e: PlanEvaluation, _ shown: String) -> String {
+            var all = e
+            all.previous = nil
+            return e.previous == nil ? shown : ExtensionPlanWords.card(for: all, extensionName: name(rt), mode: e.mode)
+        }
+        let wholes = [whole(evaluation, wordsFirst)] + (also.map { [whole($0, ExtensionPlanWords.card(for: $0, extensionName: name(rt), mode: $0.mode))] } ?? [])
         let asker = asker(rt)
         // What nobody read is named on the approval's own row in History: the lines it let through.
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
         if let agent { rowInput["asked_by"] = .string(agent) }
-        if answer == .autoSkipped || answer == .fullAccess || answer == .fullAccessForAgents { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
+        if let also { rowInput["also"] = .string(also.plan.id) }
+        if answer == .autoSkipped || answer == .fullAccess || answer == .fullAccessForAgents { rowInput["lines"] = .array((Self.recorded(both) ?? []).map { .string($0) }) }
         // Nobody read it, and why: the person's own choice for other apps, which the row says beside who asked.
         if agent != nil, answer == .fullAccessForAgents { rowInput["because"] = .string("other apps act without asking: on, chosen in the Full access sheet") }
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
-            await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer, card: whole)
+            await self?.finishPlan(id, request: request, outcome: outcome, evaluations: both, answer: answer, cards: wholes)
         }
     }
 
-    /// Whether the person needs a card for this plan at all (D186–D188). Guard checks the mode again itself: this only says what the host found.
-    private func planAnswer(_ id: String, _ e: PlanEvaluation, throughAgent: Bool = false) -> PlanAnswer? {
+    /// What History says of the plans one answer settles with no card: each one's record in full, the second after a line that names it. Nil when it can't be said in
+    /// full on one row, which the two share (64 entries, 300 characters each): the card then shows, in every mode.
+    static func recorded(_ evaluations: [PlanEvaluation]) -> [String]? {
+        guard let first = evaluations.first.flatMap(ExtensionPlanWords.historyRecord) else { return nil }
+        guard evaluations.count > 1 else { return first }
+        guard let second = ExtensionPlanWords.historyRecord(evaluations[1]) else { return nil }
+        let heading = String(localized: "also turns on “\(ExtensionPlanWords.safe(evaluations[1].plan.title.isEmpty ? evaluations[1].plan.id : evaluations[1].plan.title, 80))”",
+                             comment: "History: the second of two plans one answer approved; its title")
+        let all = first + [heading] + second
+        return all.count <= 64 && all.allSatisfy { $0.count <= 300 } ? all : nil
+    }
+
+    /// Whether the person needs a card for these plans at all (D186–D188): one plan, or two that one answer settles. Only when every one of them would pass with the same
+    /// answer does it pass; else the card shows. Guard checks the mode again itself: this only says what the host found.
+    private func planAnswer(_ id: String, _ evaluations: [PlanEvaluation], throughAgent: Bool = false) -> PlanAnswer? {
         // An agent's ask is never answered for the person: not by what they read before (covered), not by Full access, not by Auto (D237). Only a card, unless the person
         // chose in the Full access sheet that other agents act freely while it lasts (D240): then it is answered as Full access answers a plan, and only for a signed
         // extension's plan that History can say in full.
         if throughAgent {
-            guard e.agentsMayActFreely, e.mode == .fullAccess, runtimes[id]?.pin.origin?.firstParty == true, ExtensionPlanWords.historyRecord(e) != nil else { return nil }
+            guard evaluations.allSatisfy({ $0.agentsMayActFreely && $0.mode == .fullAccess }), runtimes[id]?.pin.origin?.firstParty == true, Self.recorded(evaluations) != nil else { return nil }
             // Never `covered`: nothing an agent asks is answered by what was read before, only by the person's choice for other apps, with its own row (D237, D240).
             return .fullAccessForAgents
         }
-        if e.covered { return .covered }
+        if evaluations.allSatisfy(\.covered) { return .covered }
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
         guard runtimes[id]?.pin.origin?.firstParty == true else { return nil }
         // A plan that can't be recorded in full on one History row always shows its card, in every mode: nothing passes that History could not say.
-        guard ExtensionPlanWords.historyRecord(e) != nil else { return nil }
+        guard Self.recorded(evaluations) != nil else { return nil }
         // Full access answers for the person's own click, once: not for a turn of Sidefolk's agent, and not for a click of a minute ago.
-        if e.mode == .fullAccess, let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
+        if evaluations.allSatisfy({ $0.mode == .fullAccess }), let click = runtimes[id]?.personClicks.first(where: { Date().timeIntervalSince($0.value) <= ExtensionPlanRules.clickWindow })?.key {
             runtimes[id]?.personClicks[click] = nil
             return .fullAccess
         }
         // In Auto, an edit that only adds what stays inside Sidefolk asks nothing; History still has the row.
-        if Self.autoSkips(e) { return .autoSkipped }
+        if evaluations.allSatisfy(Self.autoSkips) { return .autoSkipped }
         return nil
     }
 
@@ -542,61 +589,76 @@ extension ExtensionHost {
             && ExtensionPlanWords.historyRecord(e) != nil
     }
 
-    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?, card: String) async {
+    /// What the person's answer does for the plan or the two plans one card carried: all saved, or none (D241).
+    private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluations: [PlanEvaluation], answer: PlanAnswer?, cards: [String]) async {
         runtimes[id]?.planAsking = false
         // The card is over, answered or not: its code is of no use to anyone now.
         runtimes[id]?.agentCode = nil
         // An extension that was turned off while its card was up has nobody to answer, and an Allow now saves nothing for it.
         guard let rt = runtimes[id], rt.record.enabled else { return }
+        func refused(_ reason: String) async {
+            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
+        }
         guard outcome.isOK else {
             let reason = if case .unanswered = outcome.status { "unanswered" } else { "denied" }
-            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": .string(reason)])
-            return
+            return await refused(reason)
         }
         // The extension that was read is the one that is saved for: if it was replaced or changed meanwhile, what the person read isn't its plan.
-        guard owner(rt) == evaluation.plan.owner else {
-            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
-            return
-        }
+        guard evaluations.allSatisfy({ owner(rt) == $0.plan.owner }) else { return await refused("changed") }
         // What the person read was an edit of the plan standing then: if they ended it or it changed while the card was up (or while an answer was on its way),
-        // saving the whole candidate would bring back lines they took away. The program asks again and the whole plan is shown.
-        // (A run in the meantime only changes when it last ran, which is not the person's to read.)
+        // saving the whole candidate would bring back lines they took away. The program asks again and the whole plan is shown. With two plans, either one
+        // changed saves neither. (A run in the meantime only changes when it last ran, which is not the person's to read.)
         func withoutUse(_ plan: ExtensionPlan?) -> ExtensionPlan? { plan.map { var copy = $0; copy.lastUsed = nil; return copy } }
-        if let was = evaluation.previous, withoutUse(rt.preferences.plans[was.id]) != withoutUse(was) {
-            await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": false, "reason": "changed"])
-            return
+        for evaluation in evaluations {
+            if let was = evaluation.previous, withoutUse(rt.preferences.plans[was.id]) != withoutUse(was) { return await refused("changed") }
         }
-        var plan = evaluation.plan
-        if card.count <= 20_000 { plan.card = card }
         // Nothing new was read, or what is new stays inside Sidefolk and was answered without a card: nothing was renewed. A plan that ends by itself ends
         // when it was going to, however often its program asks again. (A plan nobody read never gets here with a previous: it is shown whole.)
         // (A card the person approved is use of its own, though nothing in it was new: Ask every time shows one for a covered plan, and that approval renews it.
         // What decides is what Guard did, not the mode read earlier: it reads the mode again, and the person may have changed it meanwhile.)
         let withoutCard = outcome.activity.decision == .plan || outcome.activity.decision == .autoPlan
-        // An agent's re-ask of a plan with nothing new in it, answered by the person's switch, changes nothing either: the dates and the end of what was read stay (D240).
-        let unchangedForAgents = answer == .fullAccessForAgents && evaluation.covered && outcome.activity.decision == .fullAccessPlan
-        if withoutCard && (answer == .covered || answer == .autoSkipped) || unchangedForAgents, let was = evaluation.previous {
-            plan.approvedAt = was.approvedAt
-            // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
-            plan.expiresAt = was.expiresAt ?? plan.expiresAt
+        // Answered with no card of the person's own: by what Guard did, not by the mode read earlier.
+        let noCard = withoutCard || outcome.activity.decision == .fullAccessPlan
+        var saved: [ExtensionPlan] = []
+        for (index, evaluation) in evaluations.enumerated() {
+            var plan = evaluation.plan
+            if cards[index].count <= 20_000 { plan.card = cards[index] }
+            if withoutCard, answer == .covered || answer == .autoSkipped, let was = evaluation.previous {
+                plan.approvedAt = was.approvedAt
+                // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
+                plan.expiresAt = was.expiresAt ?? plan.expiresAt
+            } else if evaluation.covered, noCard, let was = evaluation.previous {
+                // A partner with nothing new in it, in a pair that Full access or the person's switch answered: nobody read anything of it now, so it is as it was, with the date of
+                // the card they read and the end it had, and it still stands in every mode (D241). Alone, it would have been `covered` and untouched.
+                plan.approvedAt = was.approvedAt
+                plan.expiresAt = was.expiresAt ?? plan.expiresAt
+            }
+            // Only a plan with something new in it was answered unread: what was read before stays read.
+            if (answer == .fullAccess || answer == .fullAccessForAgents), !evaluation.covered { plan.answeredUnread = true }
+            // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
+            if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
+            saved.append(plan)
         }
-        // (An agent's ask with nothing new in it keeps what was read: only a plan nobody read stands in Full access alone.)
-        if answer == .fullAccess || (answer == .fullAccessForAgents && !evaluation.covered) { plan.answeredUnread = true }
-        // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
-        if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
         // When it last ran is the host's record, not the candidate's: an edit or a new approval does not make a plan that ran yesterday idle. Only the plan
         // this one replaces has a record to keep: an entry that ended some other way (its time, another owner) is not this plan's past.
-        let replaces = evaluation.previous != nil
+        let replaces = evaluations.map { $0.previous != nil }
         await updatePreferences(id) { prefs in
-            var saved = plan
-            saved.lastUsed = replaces ? prefs.plans[plan.id]?.lastUsed : nil
-            prefs.plans[plan.id] = saved
+            for (plan, replaced) in zip(saved, replaces) {
+                var kept = plan
+                kept.lastUsed = replaced ? prefs.plans[plan.id]?.lastUsed : nil
+                prefs.plans[plan.id] = kept
+            }
         }
         events.changed(.extensions)
-        await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
-                                                                             "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),
-                                                                             "silent": .bool((answer == .covered || answer == .autoSkipped) && evaluation.mode != .askEveryTime || answer == .fullAccess || answer == .fullAccessForAgents),
-                                                                             "new": .number(Double(evaluation.fresh.count))])
+        func told(_ evaluation: PlanEvaluation) -> [String: JSONValue] {
+            ["standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),
+             "silent": .bool((answer == .covered || answer == .autoSkipped) && evaluation.mode != .askEveryTime || answer == .fullAccess || answer == .fullAccessForAgents),
+             "new": .number(Double(evaluation.fresh.count))]
+        }
+        var reply = told(evaluations[0]).merging(["request": request, "ok": true, "plan": .string(saved[0].id)]) { mine, _ in mine }
+        // The second plan is named only when it was saved too: an answer without it means the first alone, and that is what an older host says.
+        if evaluations.count > 1 { reply["also"] = .array([.object(told(evaluations[1]))]) }
+        await runtimes[id]?.client?.notify("sidefolk/plan.result", params: .object(reply))
     }
 
     /// `sidefolk/plan.check`: what `plan.approve` would find, with nothing shown, saved or run, so an editor can say it while the person builds (D186).
