@@ -11,6 +11,8 @@ struct AgentCode: Sendable {
     /// The card's words, code included: the card is found by saying exactly this, and a card with other words (another plan) is not it.
     let body: String
     let plan: String
+    /// The second plan one code approves with it, by title (D241).
+    var also: String?
     let expires: Date
     var wrong = 0
     var locked = false
@@ -98,7 +100,7 @@ extension ExtensionHost {
         guard let gateway = configuration.actions, await gateway.settleCard(extensionId: match.id, text: match.code.body) else {
             return .nothingPending
         }
-        await gateway.recordPlanCode(extensionId: match.id, plan: match.code.plan, client: client)
+        await gateway.recordPlanCode(extensionId: match.id, plan: match.code.plan, also: match.code.also, client: client)
         return .approved(plan: match.code.plan)
     }
 }

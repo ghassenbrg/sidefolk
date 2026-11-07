@@ -482,13 +482,16 @@ extension ExtensionHost {
         let both = [evaluation] + (also.map { [$0] } ?? [])
         // One reading of the person's mode decides all of it: the card's words, the answer, what is marked and what the reply says.
         let answer = planAnswer(id, both, throughAgent: agent != nil)
-        let wordsFirst = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
+        // The warnings of both plans come first on a card of two, above all of its words: the card scrolls, and the second plan's must not be read last.
+        let warnings = both.compactMap { ExtensionPlanWords.crossingWarning($0) }
+        let wordsFirst = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode, warning: also == nil)
         func title(_ e: PlanEvaluation) -> String { ToolFormat.oneLine(e.plan.title.isEmpty ? e.plan.id : e.plan.title, 80) }
         var words = wordsFirst
         if let also {
             words += "\n\n" + String(localized: "Also turns on “\(ExtensionPlanWords.safe(title(also), 80))”:", comment: "A plan's card: a second flow that is turned on with this one; its title")
-                + "\n\n" + ExtensionPlanWords.card(for: also, extensionName: name(rt), mode: also.mode)
+                + "\n\n" + ExtensionPlanWords.card(for: also, extensionName: name(rt), mode: also.mode, warning: false)
                 + "\n\n" + String(localized: "Approving turns on both. Each one can be ended on its own in Settings › Trust.", comment: "A plan's card: said under two plans that one answer approves")
+            if !warnings.isEmpty { words = warnings.joined(separator: "\n\n") + "\n\n" + words }
         }
         // An agent asked, not the person: the card says who, first, and that nothing is allowed until they say so here.
         var shown = words
@@ -498,7 +501,7 @@ extension ExtensionHost {
             shown = String(localized: "An app that says it's “\(agent)” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.", comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself")
                 + "\n\n" + String(localized: "You can also give that app this code in its chat: \(AgentCode.spoken(code)). It works once, for 2 minutes. Give it only to that app, and only after reading what this will do.", comment: "A plan's card: a one-time code the person may type into the AI agent's chat to approve instead of pressing Approve; the code")
                 + "\n\n" + words
-            runtimes[id]?.agentCode = AgentCode(digits: code, client: agent, body: shown, plan: both.map(title).joined(separator: " + "), expires: Date().addingTimeInterval(AgentCode.life))
+            runtimes[id]?.agentCode = AgentCode(digits: code, client: agent, body: shown, plan: title(evaluation), also: also.map(title), expires: Date().addingTimeInterval(AgentCode.life))
         }
         let notes = both.compactMap { ExtensionPlanWords.approveNote(for: $0) }
         let card = ExtensionPlanTool(extensionId: id, plan: title(evaluation), when: evaluation.plan.when, body: shown, answer: answer, intent: evaluation.intent,
@@ -510,7 +513,7 @@ extension ExtensionHost {
             all.previous = nil
             return e.previous == nil ? shown : ExtensionPlanWords.card(for: all, extensionName: name(rt), mode: e.mode)
         }
-        let wholes = [whole(evaluation, wordsFirst)] + (also.map { [whole($0, ExtensionPlanWords.card(for: $0, extensionName: name(rt), mode: $0.mode))] } ?? [])
+        let wholes = both.map { whole($0, ExtensionPlanWords.card(for: $0, extensionName: name(rt), mode: $0.mode)) }
         let asker = asker(rt)
         // What nobody read is named on the approval's own row in History: the lines it let through.
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]

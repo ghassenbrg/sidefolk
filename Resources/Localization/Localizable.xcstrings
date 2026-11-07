@@ -47324,6 +47324,65 @@
         }
       }
     },
+    "Approved with the code the person gave %@: “%@” and “%@”" : {
+      "comment" : "History: two flow plans the person approved together by typing the code from their card into an AI agent's chat; the agent's name, the two plans",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تمت الموافقة برمز أعطاه الشخص إلى %@: «%@» و«%@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genehmigt mit dem Code, den die Person %@ gegeben hat: „%@“ und „%@“"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobados con el código que la persona dio a %@: «%@» y «%@»"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuvés avec le code que la personne a donné à %@ : « %@ » et « %@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approvati con il codice che la persona ha dato a %@: «%@» e «%@»"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本人が%@に伝えたコードで承認：「%@」と「%@」"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용자가 %@에게 알려 준 코드로 승인: “%@”와(과) “%@”"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovados com o código que a pessoa deu a %@: “%@” e “%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已用用户告诉 %@ 的代码批准：“%@”和“%@”"
+          }
+        }
+      }
+    },
     "Approving also lets it pass what it reads to %@." : {
       "comment" : "Above a plan card's Approve button: what else the person approves; the names of servers and extensions",
       "localizations" : {

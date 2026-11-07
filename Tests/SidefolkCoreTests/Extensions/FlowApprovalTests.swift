@@ -88,7 +88,8 @@ import Testing
             // Answers a card whenever one comes, until the reply is in: a card that comes late is still seen, and "no card" means none came.
             let done = Mutex(false)
             let reply = Task { () -> JSONValue in
-                let answer = await ask("sidefolk/plan.approve", ["plan": plan], caller: caller)
+                // A plan, or the whole request when it already holds `plan` (and `also`).
+                let answer = await ask("sidefolk/plan.approve", plan["plan"] != nil && plan["steps"] == nil ? plan : ["plan": plan], caller: caller)
                 done.withLock { $0 = true }
                 return answer
             }
@@ -1196,6 +1197,164 @@ import Testing
         _ = await second
     }
 
+    // MARK: Two plans on one card (D241)
+
+    /// The caller's plan and the plan of a flow it turns on with it, one request.
+    static func pair(_ steps: [JSONValue] = [save], calledSteps: [JSONValue] = [["tool": "notify.user", "input": ["title": "Done"]]], calledId: String = "callee") -> JSONValue {
+        let called = plan(calledSteps, id: calledId).setting("title", .string("Callee"))
+        return ["plan": plan(steps), "also": .array([called])]
+    }
+
+    @Test func oneAnswerSavesBothPlansOnOneCardThatSaysSo() async throws {
+        let w = try await World()
+        async let reply = w.ask("sidefolk/plan.approve", Self.pair())
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        #expect(card?.allowLabel == "Approve both", "\(String(describing: card?.allowLabel))")
+        #expect(words.contains("Also turns on “Callee”:") && words.contains("Approving turns on both. Each one can be ended on its own in Settings › Trust."), "\(words)")
+        #expect(words.contains("It changes:") && words.contains("It tells or asks you:"), "both plans' lines are on it: \(words)")
+        let answered = await reply
+        #expect(answered["ok"]?.boolValue == true && answered["plan"]?.stringValue == "digest", "\(answered)")
+        #expect(answered["also"]?.arrayValue?.count == 1 && answered["also"]?.arrayValue?.first?["standing"]?.arrayValue != nil, "the second is named: \(answered)")
+        let saved = await w.h.host.loadPreferences("com.example.flow").plans
+        #expect(saved["digest"] != nil && saved["callee"] != nil, "both stand, each on its own: \(saved.keys)")
+        let infos = await w.h.host.info(id: "com.example.flow")?.plans.map(\.id).sorted() ?? []
+        #expect(infos == ["callee", "digest"], "Trust lists each: \(infos)")
+        #expect(saved["callee"]?.card?.contains("It tells or asks you:") == true && saved["digest"]?.card?.contains("It changes:") == true, "each keeps its own words")
+        let row = try await w.rows("extensions.plan").first
+        #expect(row?.args?["also"]?.stringValue == "callee", "the row names both: \(String(describing: row?.args))")
+        // Nothing new in either: no card, and both answers say silent.
+        let again = await w.approve(Self.pair())
+        #expect(!again.asked && again.reply["silent"]?.boolValue == true && again.reply["also"]?.arrayValue?.first?["silent"]?.boolValue == true, "\(again.reply)")
+    }
+
+    @Test func aDenialOrAChangeMeanwhileSavesNeitherPlan() async throws {
+        let w = try await World()
+        async let denied = w.ask("sidefolk/plan.approve", Self.pair())
+        _ = await w.answerCard(.deny)
+        let no = await denied
+        #expect(no["ok"]?.boolValue == false && no["also"] == nil, "\(no)")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans.isEmpty, "a no saves neither")
+        // The called plan stood already: while the card of the pair is up it changes, and the answer is `changed`, with the caller's plan not saved either.
+        _ = await w.approve(Self.plan([["tool": "notify.user", "input": ["title": "Done"]]], id: "callee").setting("title", .string("Callee")))
+        async let racing = w.ask("sidefolk/plan.approve", Self.pair([Self.save], calledSteps: [["tool": "notify.user", "input": ["title": "Done"]], ["tool": "voice.say", "input": ["text": "Hi"]]]))
+        var waited = 0
+        while await w.h.env.broker.pending().isEmpty, waited < 200 { try? await Task.sleep(for: .milliseconds(25)); waited += 1 }
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["callee"]?.perDay = 7 }
+        _ = await w.answerCard(.allowOnce)
+        let changed = await racing
+        #expect(changed["ok"]?.boolValue == false && changed["reason"]?.stringValue == "changed" && changed["also"] == nil, "\(changed)")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil, "the caller's plan wasn't saved either")
+    }
+
+    @Test func morePlansTheSamePlanOrAChainAreRefusedWithNoCard() async throws {
+        let w = try await World()
+        let one = Self.plan([Self.save], id: "callee")
+        let two = Self.plan([Self.save], id: "third")
+        for also in [JSONValue.array([one, two]), .array([Self.plan([Self.save], id: "digest")]), .array([Self.plan([["kind": "flow", "name": "Another"]], id: "chain")]), .string("callee"), .array([])] {
+            let reply = await w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save]), "also": also])
+            #expect(reply["ok"]?.boolValue == false && reply["reason"]?.stringValue == "unusable", "\(also.jsonString): \(reply)")
+            #expect(await w.h.env.broker.pending().isEmpty)
+        }
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans.isEmpty)
+    }
+
+    @Test func theCodeOnAnAgentsCardApprovesBothPlansAndTheRowNamesBothInFull() async throws {
+        let w = try await World()
+        let long = String(repeating: "W", count: 70)
+        let pair: JSONValue = ["plan": Self.plan([Self.save]), "also": .array([Self.plan([["tool": "notify.user", "input": ["title": "Done"]]], id: "callee").setting("title", .string(long))])]
+        async let reply = w.ask("sidefolk/plan.approve", pair, caller: .external(client: "Claude Code"))
+        guard let (_, code) = await Self.waitForThePlanCard(w) else { Issue.record("a plan card with a code"); return }
+        let given = await w.confirm(code)
+        #expect(given.ok, "\(given.text)")
+        let answered = await reply
+        #expect(answered["ok"]?.boolValue == true && answered["also"]?.arrayValue?.count == 1, "\(answered)")
+        let saved = await w.h.host.loadPreferences("com.example.flow").plans
+        #expect(saved["digest"] != nil && saved["callee"] != nil)
+        let rows = try await w.h.env.activity.recent(limit: 50)
+        let approval = rows.first { $0.tool == PlanCodeTool.name && $0.decision == .allowed }
+        #expect(approval?.summary.contains("and “\(long)”") == true && approval?.args?["also"]?.stringValue == long, "the second plan is named in full in the code's row: \(String(describing: approval?.summary))")
+    }
+
+    @Test func inFullAccessWithOtherAppsLetInAnAgentsPairIsAnsweredWithOneRowThatNamesBoth() async throws {
+        let w = try await World()
+        try await w.h.env.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true) }
+        let reply = await w.ask("sidefolk/plan.approve", Self.pair(), caller: .external(client: "Claude Code"))
+        #expect(reply["ok"]?.boolValue == true && reply["silent"]?.boolValue == true && reply["also"]?.arrayValue?.first?["silent"]?.boolValue == true, "\(reply)")
+        let row = try await w.rows("extensions.plan").first
+        let lines = row?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        #expect(row?.args?["also"]?.stringValue == "callee" && lines.contains { $0.hasPrefix("also turns on “Callee”") }, "\(lines)")
+        let saved = await w.h.host.loadPreferences("com.example.flow").plans
+        #expect(saved["digest"]?.answeredUnread == true && saved["callee"]?.answeredUnread == true)
+    }
+
+    /// A partner with nothing new in it keeps what was read: its date, its end, and that it was read, as it would alone (covered, untouched).
+    @Test func aCoveredPartnerIsNotRenewedWhenFullAccessAnswersThePair() async throws {
+        let w = try await World()
+        let callee = Self.plan([["tool": "notify.user", "input": ["title": "Done"]]], id: "callee").setting("title", .string("Callee"))
+        _ = await w.approve(callee)
+        await w.h.host.updatePreferences("com.example.flow") { $0.plans["callee"]?.approvedAt = Date().addingTimeInterval(-30 * 24 * 3600) }
+        let before = await w.h.host.loadPreferences("com.example.flow").plans["callee"]
+        try await w.setMode(.fullAccess)
+        let pair: JSONValue = ["plan": Self.plan([Self.save]), "also": .array([callee])]
+        let answered = await w.approve(pair)
+        #expect(!answered.asked && answered.reply["ok"]?.boolValue == true, "Full access answers it for the person's click: \(answered.reply)")
+        let plans = await w.h.host.loadPreferences("com.example.flow").plans
+        #expect(plans["digest"]?.answeredUnread == true, "the new one was answered unread")
+        #expect(plans["callee"]?.answeredUnread != true && plans["callee"]?.approvedAt == before?.approvedAt && plans["callee"]?.expiresAt == before?.expiresAt,
+                "the covered one is as it was: \(String(describing: plans["callee"]?.approvedAt)) vs \(String(describing: before?.approvedAt))")
+    }
+
+    /// Mixed pairs: Auto answers only a pair of edits that stay inside Sidefolk, and a new partner makes it a card; Full access answers a pair of two new plans.
+    @Test func mixedPairsAreAnsweredOnlyWhenBothWouldBe() async throws {
+        let inside: JSONValue = ["tool": "notify.user", "input": ["title": "Done"]]
+        let edited = [inside, ["tool": "voice.say", "input": ["text": "Hi"]]] as [JSONValue]
+        // Auto: both stood and the edit of each stays inside Sidefolk: no card. One of them new: a card.
+        let auto = try await World()
+        _ = await auto.approve(Self.pair([Self.save], calledSteps: [inside]))
+        try await auto.setMode(.auto)
+        let both = await auto.approve(Self.pair([Self.save, inside], calledSteps: edited))
+        #expect(!both.asked, "Auto: two edits that stay inside Sidefolk: \(both.reply)")
+        let newPartner = await auto.approve(Self.pair([Self.save, inside], calledSteps: edited, calledId: "another"))
+        #expect(newPartner.asked, "Auto: a new partner is a card")
+        // Full access answers a pair of two new plans for the person's click.
+        let full = try await World()
+        try await full.setMode(.fullAccess)
+        let fresh = await full.approve(Self.pair())
+        #expect(!fresh.asked && fresh.reply["silent"]?.boolValue == true && fresh.reply["also"]?.arrayValue?.first?["silent"]?.boolValue == true, "\(fresh.reply)")
+    }
+
+    /// The pair shares one History row: 64 entries in all, 300 characters each. A pair that doesn't fit is a card in every mode, though each plan alone fits.
+    @Test func aPairHistoryCantSayInFullOnOneRowIsACardInEveryMode() async throws {
+        func lines(_ n: Int, _ tag: String) -> [JSONValue] { (0..<n).map { ["tool": "notify.user", "input": ["title": .string("\(tag)\($0)")]] } }
+        let w = try await World()
+        try await w.setMode(.fullAccess)
+        let alone = await w.approve(Self.plan(lines(20, "a"), id: "big"))
+        #expect(!alone.asked, "a plan of 20 lines fits one row alone: \(alone.reply)")
+        let pair = await w.approve(Self.pair(lines(20, "p"), calledSteps: lines(20, "q")))
+        #expect(pair.asked, "two of them don't fit 64 entries together, so the card shows: \(pair.reply)")
+        // 300 characters each: a written value that makes one entry too long keeps its card in the pair too.
+        let wide: JSONValue = ["tool": "notes.save", "input": ["text": .string(String(repeating: "a", count: 295))]]
+        let wideCalled = await w.approve(Self.pair([Self.save], calledSteps: [wide], calledId: "wide"))
+        #expect(wideCalled.asked, "an entry over 300 characters in either plan: \(wideCalled.reply)")
+    }
+
+    /// The warning for what a plan reads and sends on is at the top of the card of two plans, whichever plan has it.
+    @Test func theWarningOfTheSecondPlanIsFirstOnTheCard() async throws {
+        let w = try await World()
+        _ = try server(w)
+        let notes: JSONValue = ["tool": "notes.search", "as": "mine", "input": ["query": "plans"]]
+        let crossing = Self.plan([notes, Self.page, Self.post(["body": "{{page}}"])], id: "callee").setting("title", .string("Callee"))
+        let pair: JSONValue = ["plan": Self.plan([Self.save]), "also": .array([crossing])]
+        async let reply = w.ask("sidefolk/plan.approve", pair)
+        let card = await w.answerCard(.allowOnce)
+        guard case .text(let words)? = card?.details else { Issue.record("a card"); return }
+        let warning = words.range(of: "reads things of yours and outside content")
+        let firstPlan = words.range(of: "It changes:")
+        #expect(warning != nil && firstPlan != nil && warning!.lowerBound < firstPlan!.lowerBound, "the warning comes before the first plan's lines: \(words)")
+        _ = await reply
+    }
+
     // MARK: Other apps let in by the person in Full access (D240)
 
     @Test func aPlanAnAgentAsksForNeedsNoCardWhenThePersonLetOtherAppsActInFullAccess() async throws {
@@ -1777,7 +1936,7 @@ extension ExtensionHost {
     /// A test's way to let time pass for an agent's code without waiting for it.
     func ageAgentCode(_ id: String, by seconds: TimeInterval) {
         guard var code = runtimes[id]?.agentCode else { return }
-        code = AgentCode(digits: code.digits, client: code.client, body: code.body, plan: code.plan, expires: code.expires.addingTimeInterval(-seconds), wrong: code.wrong, locked: code.locked)
+        code = AgentCode(digits: code.digits, client: code.client, body: code.body, plan: code.plan, also: code.also, expires: code.expires.addingTimeInterval(-seconds), wrong: code.wrong, locked: code.locked)
         runtimes[id]?.agentCode = code
     }
 
