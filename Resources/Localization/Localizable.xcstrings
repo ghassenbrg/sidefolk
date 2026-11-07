@@ -45505,6 +45505,65 @@
         }
       }
     },
+    "Answered with no card because you let other apps act without asking: %@ asked." : {
+      "comment" : "History: a plan an AI agent asked for, answered because the person chose that in the Full access sheet; the agent's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُجيب دون بطاقة لأنك سمحت للتطبيقات الأخرى بالعمل دون سؤال: طلبه %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Karte beantwortet, weil du andere Apps ohne Nachfrage handeln lässt: %@ hat angefragt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respondido sin tarjeta porque dejas que otras apps actúen sin preguntar: lo pidió %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répondu sans carte parce que vous laissez les autres apps agir sans demander : %@ l’a demandé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Risposto senza scheda perché lasci agire le altre app senza chiedere: l’ha chiesto %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのアプリを確認なしで動作させる設定のため、カードなしで答えました。依頼元：%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱이 묻지 않고 작업하게 해 두어서 카드 없이 답했어요. 요청한 앱: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respondido sem cartão porque você deixa outros apps agirem sem perguntar: %@ pediu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "因为你允许其他应用无需询问即可行动，所以未显示卡片就已回答：由 %@ 请求。"
+          }
+        }
+      }
+    },
     "Answers it from the keyboard." : {
       "comment" : "VoiceOver: the card beside the companion",
       "localizations" : {
@@ -75922,6 +75981,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不再询问，直接按你的要求做事，读取网页或文件之后也一样。只有你关掉的开关和受保护的位置依然有效。"
+          }
+        }
+      }
+    },
+    "Does what you ask without asking, even after reading a web page or file. Only your off switches and protected places hold. Other apps keep their own rules, unless you let them in the sheet." : {
+      "comment" : "Settings › Trust: Full access's line",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينفذ ما تطلبه دون سؤال، حتى بعد قراءة صفحة ويب أو ملف. لا يصمد سوى مفاتيح الإيقاف التي أوقفتها والأماكن المحمية. تحتفظ التطبيقات الأخرى بقواعدها ما لم تسمح لها في اللوحة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tut, was du verlangst, ohne nachzufragen, auch nach dem Lesen einer Webseite oder Datei. Nur deine Schalter und geschützte Orte gelten. Andere Apps behalten ihre eigenen Regeln, außer du lässt sie im Dialog zu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hace lo que pides sin preguntar, incluso tras leer una página web o un archivo. Solo se mantienen tus interruptores y los lugares protegidos. Otras apps mantienen sus propias reglas, salvo que las dejes entrar en la hoja."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fait ce que vous demandez sans demander, même après avoir lu une page web ou un fichier. Seuls vos interrupteurs et les lieux protégés tiennent. Les autres apps gardent leurs propres règles, sauf si vous les laissez entrer dans la feuille."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fa ciò che chiedi senza chiedere, anche dopo aver letto una pagina web o un file. Valgono solo i tuoi interruttori e i luoghi protetti. Le altre app mantengono le proprie regole, a meno che tu non le ammetta nella scheda."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "頼んだことは、ウェブページやファイルを読んだあとでも確認なしで行います。守られるのは、オフにした項目と保護された場所だけです。ほかのアプリは、シートで許可しない限り独自のルールのままです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웹페이지나 파일을 읽은 뒤에도 부탁한 일을 묻지 않고 해요. 꺼 둔 항목과 보호된 장소만 지켜져요. 다른 앱은 시트에서 허용하지 않는 한 각자의 규칙을 따라요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faz o que você pede sem perguntar, mesmo depois de ler uma página web ou arquivo. Só valem seus interruptores e os lugares protegidos. Outros apps mantêm suas próprias regras, a menos que você os deixe entrar na folha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即使在读取网页或文件之后，也会不经询问就执行你要求的事。只有你关闭的开关和受保护的位置依然有效。除非你在面板中允许，其他应用保持各自的规则。"
           }
         }
       }
@@ -142673,6 +142791,65 @@
         }
       }
     },
+    "Off, unless you turn it on here: other apps then keep what you set under “What other agents may do”, and Full access covers Sidefolk's own companion and you, not them. If you turn it on, any app connected to Sidefolk can use the tools Sidefolk offers it, and turn flows on and run them, with no card, even if a web page has tricked that app, except the few that always ask. Everything shows in History with who asked. It ends when Full access ends, and you can turn it off with one click in Settings › Trust." : {
+      "comment" : "The Full access sheet, under the switch for other apps: what it means",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف ما لم تشغّله هنا: تحتفظ التطبيقات الأخرى حينها بما ضبطته ضمن «ما يمكن للوكلاء الآخرين فعله»، ويشمل الوصول الكامل رفيق Sidefolk وأنت لا هي. إذا شغّلته، يمكن لأي تطبيق متصل بـ Sidefolk استخدام الأدوات التي تقدمها له وتشغيل التدفقات وتنفيذها دون بطاقة، حتى لو خدعته صفحة ويب، باستثناء القليل الذي يسأل دائمًا. كل شيء يظهر في السجل مع من طلبه. ينتهي بانتهاء الوصول الكامل، ويمكنك إيقافه بنقرة واحدة في الإعدادات › الثقة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, solange du es nicht hier einschaltest: Andere Apps behalten dann, was du unter „Was andere Agenten dürfen“ eingestellt hast, und Vollzugriff gilt für Sidefolks Begleiter und dich, nicht für sie. Wenn du es einschaltest, kann jede mit Sidefolk verbundene App die Werkzeuge nutzen, die Sidefolk ihr anbietet, und Abläufe einschalten und starten, ohne Karte, selbst wenn eine Webseite diese App getäuscht hat, außer den wenigen, die immer nachfragen. Alles steht im Verlauf mit dem Anfragenden. Es endet mit dem Vollzugriff, und du kannst es mit einem Klick in Einstellungen › Vertrauen ausschalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado, salvo que lo actives aquí: las otras apps conservan lo que ajustaste en «Lo que otros agentes pueden hacer», y el Acceso total cubre al compañero de Sidefolk y a ti, no a ellas. Si lo activas, cualquier app conectada a Sidefolk puede usar las herramientas que Sidefolk le ofrece y activar y ejecutar flujos, sin tarjeta, aunque una página web haya engañado a esa app, salvo las pocas que siempre preguntan. Todo aparece en el Historial con quién lo pidió. Termina cuando termina el Acceso total, y puedes desactivarlo con un clic en Ajustes › Confianza."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé, sauf si vous l’activez ici : les autres apps gardent alors ce que vous avez réglé sous « Ce que les autres agents peuvent faire », et le Plein accès couvre le compagnon de Sidefolk et vous, pas elles. Si vous l’activez, toute app connectée à Sidefolk peut utiliser les outils que Sidefolk lui offre, activer et lancer des flux, sans carte, même si une page web l’a piégée, sauf les quelques outils qui demandent toujours. Tout apparaît dans l’Historique avec qui l’a demandé. Cela prend fin avec le Plein accès, et vous pouvez le désactiver d’un clic dans Réglages › Confiance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivato, a meno che tu non lo attivi qui: le altre app mantengono allora ciò che hai impostato in «Cosa possono fare gli altri agenti», e l’Accesso totale vale per il compagno di Sidefolk e per te, non per loro. Se lo attivi, qualsiasi app collegata a Sidefolk può usare gli strumenti che Sidefolk le offre e attivare ed eseguire flussi, senza scheda, anche se una pagina web ha ingannato quell’app, tranne i pochi che chiedono sempre. Tutto compare nella Cronologia con chi l’ha chiesto. Finisce quando finisce l’Accesso totale, e puoi disattivarlo con un clic in Impostazioni › Fiducia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここでオンにしない限りオフです。その場合、ほかのアプリは「ほかのエージェントができること」の設定のままで、フルアクセスはSidefolk自身のコンパニオンとあなたに適用され、ほかのアプリには適用されません。オンにすると、Sidefolkに接続した任意のアプリが、Sidefolkが提供するツールを使い、フローをオンにして実行できます。カードは出ず、そのアプリがウェブページにだまされていてもです。ただし常に確認する少数のものは除きます。すべて、依頼元とともに履歴に表示されます。フルアクセスが終わると終了し、設定 › 信頼で1クリックでオフにできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여기에서 켜지 않으면 꺼져 있어요. 그러면 다른 앱은 “다른 에이전트가 할 수 있는 일”에서 정한 대로 두고, 전체 접근은 Sidefolk의 동반자와 당신에게만 적용돼요. 켜면 Sidefolk에 연결된 모든 앱이 Sidefolk가 제공하는 도구를 쓰고, 카드 없이 플로우를 켜고 실행할 수 있어요. 웹페이지에 속은 앱이라도 마찬가지예요. 다만 항상 묻는 몇 가지는 예외예요. 모든 것이 요청한 앱과 함께 기록에 남아요. 전체 접근이 끝나면 함께 끝나고, 설정 › 신뢰에서 한 번의 클릭으로 끌 수 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligado, a menos que você ligue aqui: os outros apps mantêm então o que você definiu em “O que outros agentes podem fazer”, e o Acesso total vale para o companheiro do Sidefolk e para você, não para eles. Se você ligar, qualquer app conectado ao Sidefolk pode usar as ferramentas que o Sidefolk oferece a ele e ligar e executar fluxos, sem cartão, mesmo que uma página web tenha enganado esse app, exceto as poucas que sempre perguntam. Tudo aparece no Histórico com quem pediu. Termina quando o Acesso total termina, e você pode desligar com um clique em Ajustes › Confiança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除非你在这里开启，否则保持关闭：其他应用将保持你在“其他代理可以做什么”下的设置，完全访问只适用于 Sidefolk 自己的伙伴和你，不适用于它们。开启后，任何连接到 Sidefolk 的应用都可以使用 Sidefolk 提供给它的工具，并无需卡片即可开启和运行流程，即使该应用被网页欺骗，但少数始终询问的除外。一切都会连同请求者显示在历史记录中。它会随完全访问结束而结束，你也可以在设置 › 信任中一键关闭。"
+          }
+        }
+      }
+    },
     "Okay, no reminder." : {
       "localizations" : {
         "ar" : {
@@ -144947,6 +145124,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅限 %@"
+          }
+        }
+      }
+    },
+    "Only tools an extension marks for other agents. A card asks you each time, unless you let other apps act without asking in the Full access sheet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فقط الأدوات التي تخصصها إضافة للوكلاء الآخرين. تسألك بطاقة في كل مرة، إلا إذا سمحت للتطبيقات الأخرى بالعمل دون سؤال في ورقة الوصول الكامل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Werkzeuge, die eine Erweiterung für andere Agenten freigibt. Eine Karte fragt dich jedes Mal, außer du lässt andere Apps im Vollzugriff-Dialog ohne Nachfrage handeln."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo las herramientas que una extensión reserva para otros agentes. Una tarjeta te pregunta cada vez, salvo que dejes que otras apps actúen sin preguntar en la hoja de Acceso total."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement les outils qu’une extension réserve aux autres agents. Une carte vous demande à chaque fois, sauf si vous laissez les autres apps agir sans demander dans la feuille Plein accès."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo gli strumenti che un’estensione riserva ad altri agenti. Una scheda ti chiede ogni volta, a meno che tu non lasci agire le altre app senza chiedere nella scheda Accesso totale."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拡張機能がほかのエージェント向けに指定したツールのみ。フルアクセスのシートでほかのアプリを確認なしで動作させない限り、毎回カードで確認します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확장 기능이 다른 에이전트용으로 표시한 도구만 해당돼요. 전체 접근 시트에서 다른 앱이 묻지 않고 작업하게 하지 않는 한, 매번 카드로 물어봐요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só as ferramentas que uma extensão marca para outros agentes. Um cartão pergunta toda vez, a menos que você deixe outros apps agirem sem perguntar na folha do Acesso total."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅限扩展标记给其他代理的工具。除非你在完全访问面板中允许其他应用无需询问即可行动，否则每次都会用卡片询问。"
           }
         }
       }
@@ -150186,6 +150421,65 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Other agents and extensions keep their own rules, unless you let other apps act without asking above. The one exception is a flow of Sidefolk's own extensions: turning it on or running it yourself is your approval, with no card, and it stands only while Full access is on." : {
+      "comment" : "The Full access sheet",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتفظ الوكلاء الآخرون والإضافات بقواعدهم، إلا إذا سمحت أعلاه للتطبيقات الأخرى بالعمل دون سؤال. الاستثناء الوحيد هو تدفق من إضافات Sidefolk نفسها: تشغيله أو تنفيذه بنفسك هو موافقتك، دون بطاقة، ولا يسري إلا أثناء تشغيل الوصول الكامل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere Agenten und Erweiterungen behalten ihre eigenen Regeln, außer du lässt oben andere Apps ohne Nachfrage handeln. Die eine Ausnahme ist ein Ablauf von Sidefolks eigenen Erweiterungen: Ihn selbst einzuschalten oder zu starten gilt als deine Genehmigung, ohne Karte, und er gilt nur, solange Vollzugriff an ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otros agentes y las extensiones mantienen sus propias reglas, salvo que dejes arriba que otras apps actúen sin preguntar. La única excepción es un flujo de las extensiones de Sidefolk: activarlo o ejecutarlo tú es tu aprobación, sin tarjeta, y solo se mantiene mientras el Acceso total esté activo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les autres agents et les extensions gardent leurs propres règles, sauf si vous laissez les autres apps agir sans demander ci-dessus. La seule exception est un flux des extensions de Sidefolk : l’activer ou le lancer vous-même vaut votre approbation, sans carte, et il ne tient que tant que le Plein accès est actif."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli altri agenti e le estensioni mantengono le proprie regole, a meno che tu non lasci sopra agire le altre app senza chiedere. L’unica eccezione è un flusso delle estensioni di Sidefolk: attivarlo o avviarlo tu è la tua approvazione, senza scheda, e vale solo finché l’Accesso totale è attivo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのエージェントと拡張機能は、上でほかのアプリを確認なしで動作させない限り、独自のルールのままです。唯一の例外はSidefolk自身の拡張機能のフローで、自分でオンにしたり実行したりすることが承認となり、カードは出ず、フルアクセスがオンの間だけ有効です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "위에서 다른 앱이 묻지 않고 작업하게 하지 않는 한, 다른 에이전트와 확장 기능은 각자의 규칙을 따라요. 유일한 예외는 Sidefolk 자체 확장 기능의 플로우예요. 직접 켜거나 실행하면 그것이 승인이 되어 카드가 없고, 전체 접근이 켜져 있는 동안만 유지돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outros agentes e extensões mantêm suas próprias regras, a menos que você deixe acima outros apps agirem sem perguntar. A única exceção é um fluxo das extensões do Sidefolk: ligá-lo ou executá-lo você mesmo é sua aprovação, sem cartão, e só vale enquanto o Acesso total estiver ligado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他代理和扩展保持各自的规则，除非你在上方允许其他应用无需询问即可行动。唯一的例外是 Sidefolk 自带扩展的流程：你亲自开启或运行它就是你的批准，无需卡片，且只在完全访问开启时有效。"
           }
         }
       }
@@ -238132,6 +238426,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他智能体可以做什么"
+          }
+        }
+      }
+    },
+    "What other apps (Claude Code, Codex…) and extensions may do is set separately in this tab, and Full access doesn't change it, unless you also let other apps act without asking when you turn Full access on. Full access also answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History." : {
+      "comment" : "Settings › Trust: under the four modes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما يمكن للتطبيقات الأخرى (Claude Code وCodex…) والإضافات فعله يُضبط على حدة في هذا التبويب، ولا يغيّره الوصول الكامل، إلا إذا سمحت أيضًا للتطبيقات الأخرى بالعمل دون سؤال عند تشغيله. كما يجيب الوصول الكامل عن تدفق من إضافات Sidefolk نفسها حين تشغّله أو تبدأه بنفسك. كل شيء يظهر في السجل."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was andere Apps (Claude Code, Codex…) und Erweiterungen dürfen, wird getrennt in diesem Tab eingestellt, und Vollzugriff ändert das nicht, außer du lässt beim Einschalten auch andere Apps ohne Nachfrage handeln. Vollzugriff beantwortet außerdem einen Ablauf von Sidefolks eigenen Erweiterungen, wenn du ihn einschaltest oder selbst startest. Alles steht im Verlauf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que otras apps (Claude Code, Codex…) y las extensiones pueden hacer se ajusta por separado en esta pestaña, y el Acceso total no lo cambia, salvo que también dejes que otras apps actúen sin preguntar al activarlo. El Acceso total también responde por un flujo de las extensiones de Sidefolk cuando lo activas o lo ejecutas tú. Todo aparece en el Historial."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que les autres apps (Claude Code, Codex…) et les extensions peuvent faire se règle séparément dans cet onglet, et le Plein accès ne le change pas, sauf si vous laissez aussi les autres apps agir sans demander en l’activant. Le Plein accès répond aussi à un flux des extensions de Sidefolk quand vous l’activez ou le lancez vous-même. Tout apparaît dans l’Historique."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciò che altre app (Claude Code, Codex…) ed estensioni possono fare si imposta separatamente in questa scheda, e l’Accesso totale non lo cambia, a meno che tu non lasci agire senza chiedere anche le altre app quando lo attivi. L’Accesso totale risponde anche a un flusso delle estensioni di Sidefolk quando lo attivi o lo avvii tu. Tutto compare nella Cronologia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのアプリ（Claude Code、Codexなど）や拡張機能にできることはこのタブで別に設定し、フルアクセスをオンにするときにほかのアプリも確認なしで動作させない限り、フルアクセスはそれを変えません。フルアクセスは、Sidefolk自身の拡張機能のフローを自分でオンにしたり実行したりしたときにも答えます。すべて履歴に表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱(Claude Code, Codex 등)과 확장 기능이 할 수 있는 일은 이 탭에서 따로 정하고, 전체 접근을 켤 때 다른 앱도 묻지 않고 작업하게 하지 않는 한 전체 접근은 이를 바꾸지 않아요. 전체 접근은 직접 켜거나 실행한 Sidefolk 자체 확장 기능의 플로우에도 답해요. 모든 것이 기록에 남아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que outros apps (Claude Code, Codex…) e extensões podem fazer é definido separadamente nesta aba, e o Acesso total não muda isso, a menos que você também deixe outros apps agirem sem perguntar ao ligá-lo. O Acesso total também responde por um fluxo das extensões do Sidefolk quando você o liga ou o executa. Tudo aparece no Histórico."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他应用（Claude Code、Codex…）和扩展能做什么在此标签页单独设置，完全访问不会改变它，除非你开启完全访问时也允许其他应用无需询问即可行动。完全访问也会回答 Sidefolk 自带扩展的流程，当你亲自开启或运行它时。一切都显示在历史记录中。"
           }
         }
       }

@@ -23,7 +23,7 @@ extension GuardMode {
         case .auto:
             String(localized: "Gets on with it. Asks before deleting things you can't get back, before sending anything out after reading outside content, and for folders you haven't shared.", comment: "Settings › Trust: Auto's line")
         case .fullAccess:
-            String(localized: "Does what you ask without asking, even after reading a web page or file. Only your off switches and protected places hold. Other apps still ask each time, unless you let them in the sheet.", comment: "Settings › Trust: Full access's line")
+            String(localized: "Does what you ask without asking, even after reading a web page or file. Only your off switches and protected places hold. Other apps keep their own rules, unless you let them in the sheet.", comment: "Settings › Trust: Full access's line")
         }
     }
 

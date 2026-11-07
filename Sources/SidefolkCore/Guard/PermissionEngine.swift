@@ -65,6 +65,7 @@ public struct PermissionEngine: Sendable {
             switch answer {
             case .covered where policy.mode(for: caller) != .askEveryTime: return .allow(.plan)
             case .fullAccess where policy.mode == .fullAccess: return .allow(.fullAccessPlan)
+            case .fullAccessForAgents where policy.agentsMayActFreely: return .allow(.fullAccessPlan)
             case .autoSkipped where policy.mode == .auto: return .allow(.autoPlan)
             default: break
             }
@@ -104,7 +105,10 @@ public struct PermissionEngine: Sendable {
         let outwardUntyped = outward && !typed
         let carriesTaint = tainted && (outwardUntyped
             || (spec.mutates && !spec.capabilities.isDisjoint(with: [.memory, .clipboard])))
-        let mode = policy.mode(for: caller)
+        var mode = policy.mode(for: caller)
+        // The few tools that always ask another agent (`alwaysAsks`: more room for its watchers, a collection's name, making one) keep their card even when the person let
+        // other apps act freely: that is a limit, not a setting (D240).
+        if case .external = caller, mode == .fullAccess, ExternalToolPolicy.alwaysAsks.contains(spec.name) { mode = .askOncePerKind }
         let honoursGrants = mode != .askEveryTime && !askEachTime
         // Every path of a file change is inside a folder the person shared with write access (or allowed in a card for this
         // call, or, in Full access, in their home): the folder check above is what let it get here. Sharing a folder for

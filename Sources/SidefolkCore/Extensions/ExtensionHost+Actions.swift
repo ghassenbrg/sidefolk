@@ -482,9 +482,9 @@ extension ExtensionHost {
         // What nobody read is named on the approval's own row in History: the lines it let through.
         var rowInput: [String: JSONValue] = ["extension": .string(id), "plan": .string(evaluation.plan.id)]
         if let agent { rowInput["asked_by"] = .string(agent) }
-        if answer == .autoSkipped || answer == .fullAccess { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
+        if answer == .autoSkipped || answer == .fullAccess || answer == .fullAccessForAgents { rowInput["lines"] = .array((ExtensionPlanWords.historyRecord(evaluation) ?? []).map { .string($0) }) }
         // Nobody read it, and why: the person's own choice for other apps, which the row says beside who asked.
-        if agent != nil, answer == .fullAccess { rowInput["because"] = .string("other apps act without asking: on, chosen in the Full access sheet") }
+        if agent != nil, answer == .fullAccessForAgents { rowInput["because"] = .string("other apps act without asking: on, chosen in the Full access sheet") }
         Task { [weak self] in
             let outcome = await gateway.askForPlan(card, input: .object(rowInput), extensionId: id, asker: asker)
             await self?.finishPlan(id, request: request, outcome: outcome, evaluation: evaluation, answer: answer, card: whole)
@@ -498,7 +498,8 @@ extension ExtensionHost {
         // extension's plan that History can say in full.
         if throughAgent {
             guard e.agentsMayActFreely, e.mode == .fullAccess, runtimes[id]?.pin.origin?.firstParty == true, ExtensionPlanWords.historyRecord(e) != nil else { return nil }
-            return e.covered ? .covered : .fullAccess
+            // Never `covered`: nothing an agent asks is answered by what was read before, only by the person's choice for other apps, with its own row (D237, D240).
+            return .fullAccessForAgents
         }
         if e.covered { return .covered }
         // Only a signed extension's plan can be answered for the person: another's program is untrusted (T44).
@@ -577,7 +578,8 @@ extension ExtensionHost {
             // An end that was there stays; one that wasn't and now is, is narrower, and is taken.
             plan.expiresAt = was.expiresAt ?? plan.expiresAt
         }
-        if answer == .fullAccess { plan.answeredUnread = true }
+        // (An agent's ask with nothing new in it keeps what was read: only a plan nobody read stands in Full access alone.)
+        if answer == .fullAccess || (answer == .fullAccessForAgents && !evaluation.covered) { plan.answeredUnread = true }
         // What Auto let through with no card was never read: it stands while Auto is on and asks a card first in any other mode.
         if answer == .autoSkipped { for i in evaluation.fresh { plan.steps[i].answeredInAuto = true } }
         // When it last ran is the host's record, not the candidate's: an edit or a new approval does not make a plan that ran yesterday idle. Only the plan
@@ -591,7 +593,7 @@ extension ExtensionHost {
         events.changed(.extensions)
         await runtimes[id]?.client?.notify("sidefolk/plan.result", params: ["request": request, "ok": true, "plan": .string(plan.id),
                                                                              "standing": .array(evaluation.lines.map { .bool(evaluation.standsNow($0)) }),
-                                                                             "silent": .bool((answer == .covered || answer == .autoSkipped) && evaluation.mode != .askEveryTime || answer == .fullAccess),
+                                                                             "silent": .bool((answer == .covered || answer == .autoSkipped) && evaluation.mode != .askEveryTime || answer == .fullAccess || answer == .fullAccessForAgents),
                                                                              "new": .number(Double(evaluation.fresh.count))])
     }
 

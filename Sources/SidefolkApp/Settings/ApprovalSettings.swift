@@ -26,7 +26,7 @@ struct TrustHero: View {
                 ModeCard(mode: .auto, current: mode, ends: nil) { choose(.auto) }
                 ModeCard(mode: .fullAccess, current: mode, ends: model.policy.fullAccessEnds) { choose(.fullAccess) }
             }
-            Text("For what you ask Sidefolk to do. Other apps (Claude Code, Codex…) and extensions keep their own rules: each call from another app asks, unless you also let other apps act freely while Full access is on. Full access also answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History.",
+            Text("For what you ask Sidefolk to do. What other apps (Claude Code, Codex…) and extensions may do is set separately in this tab, and Full access doesn't change it, unless you also let other apps act without asking when you turn Full access on. Full access also answers a flow of Sidefolk's own extensions when you turn it on or run it yourself. Everything shows in History.",
                  comment: "Settings › Trust: under the four modes")
                 .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -238,7 +238,7 @@ struct FullAccessSheet: View {
                     line("switch.2", Text("What you switched off under “What Sidefolk may do” stays off, and system, hidden and other people's folders are never touched.", comment: "The Full access sheet"), nil)
                     line("text.badge.checkmark", Text("Saving a new skill, or removing notes from Apple Notes, still asks: both show what they are in full first, and a skill outlasts Full access.", comment: "The Full access sheet"), nil)
                     line("externaldrive", Text("A folder outside your home that can be shared, such as an external drive, still asks; system and hidden places are never touched.", comment: "The Full access sheet"), nil)
-                    line("person.2", Text("Other agents and extensions keep their own rules. The one exception is a flow of Sidefolk's own extensions: turning it on or running it yourself is your approval, with no card, and it stands only while Full access is on.", comment: "The Full access sheet"), nil)
+                    line("person.2", Text("Other agents and extensions keep their own rules, unless you let other apps act without asking above. The one exception is a flow of Sidefolk's own extensions: turning it on or running it yourself is your approval, with no card, and it stands only while Full access is on.", comment: "The Full access sheet"), nil)
                     line("doc.badge.clock", Text("Watching one hidden file, by its size and time, still asks.", comment: "The Full access sheet: D180's card"), nil)
                     if model.policy.internet == .askEachTime {
                         line("globe", Text("You chose to be asked before it reads pages: that stays.", comment: "The Full access sheet: shown when “Using the internet” is Ask each time"), nil)
@@ -257,7 +257,7 @@ struct FullAccessSheet: View {
                     Toggle(isOn: $agentsToo) {
                         Text("Also let other apps (Claude Code, Codex…) act without asking", comment: "The Full access sheet: the switch for other apps; off unless turned on here")
                     }
-                    Text("Off, unless you turn it on here. Each call from another app asks, even in Full access. If you turn it on, any app connected to Sidefolk can use the tools Sidefolk offers it, and turn flows on and run them, with no card, even if a web page has tricked that app. Everything shows in History with who asked. It ends when Full access ends, and you can turn it off with one click in Settings › Trust.",
+                    Text("Off, unless you turn it on here: other apps then keep what you set under “What other agents may do”, and Full access covers Sidefolk's own companion and you, not them. If you turn it on, any app connected to Sidefolk can use the tools Sidefolk offers it, and turn flows on and run them, with no card, even if a web page has tricked that app, except the few that always ask. Everything shows in History with who asked. It ends when Full access ends, and you can turn it off with one click in Settings › Trust.",
                          comment: "The Full access sheet, under the switch for other apps: what it means")
                         .font(Theme.Font.caption).foregroundStyle(Theme.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)

@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import Testing
 @testable import SidefolkCore
 
@@ -103,6 +104,49 @@ import Testing
         let after = await env.executor.execute(name: "notes.update", input: ["x": "a"], caller: .external(client: "codex"), tainted: true)
         guard case .denied = after.status else { Issue.record("off again: \(after.status)"); return }
         #expect(counter.value == 1)
+    }
+
+    /// The few tools that always ask another agent keep their card with the switch on: a limit, not a setting.
+    @Test func theToolsThatAlwaysAskAnotherAgentStillAskWithTheSwitch() async throws {
+        for name in ExternalToolPolicy.alwaysAsks.sorted() {
+            let env = try TestEnv()
+            env.registry.register(ProbeTool(name: name, risk: .medium, capabilities: [.notebook]))
+            try await env.permissions.setPolicy(Self.fullWithAgents())
+            let (counter, listener) = cards(env)
+            defer { listener.cancel() }
+            let out = await env.executor.execute(name: name, input: ["x": "a"], caller: .external(client: "codex"), tainted: true)
+            guard case .denied = out.status else { Issue.record("\(name): still asks: \(out.status)"); continue }
+            #expect(counter.value == 1, "\(name): one card")
+        }
+    }
+
+    /// Guard checks the switch itself for a plan an agent asked for, as it checks the mode: a switch turned off after the host decided is not a yes.
+    @Test func guardRechecksTheSwitchForAPlanAnAgentAskedFor() {
+        let tool = ExtensionPlanTool(extensionId: "com.example.flow", plan: "digest", body: "words", answer: .fullAccessForAgents)
+        func decide(_ policy: GuardPolicy) -> GuardDecision {
+            PermissionEngine().evaluate(spec: tool.spec, input: .object([:]), summary: "", scope: tool.scope(for: .object([:])), caller: .extension(id: "com.example.flow"),
+                                        tainted: false, policy: policy, grants: [], folders: [])
+        }
+        #expect(decide(Self.fullWithAgents()) == .allow(.fullAccessPlan))
+        var plain = GuardPolicy()
+        plain.choose(.fullAccess)
+        if case .ask = decide(plain) {} else { Issue.record("the switch is off: it asks") }
+        if case .ask = decide(GuardPolicy(mode: .auto)) {} else { Issue.record("Auto: it asks") }
+    }
+
+    /// A restore brings back the person's data, not the yes they gave to other apps on that Mac: the restored policy starts with the switch off (D240).
+    @Test func aRestoredPolicyStartsWithTheSwitchOff() async throws {
+        let paths = SidefolkPaths(home: try ExtFixtures.tempDir("agents-full"))
+        let runtime = try await SidefolkRuntime.open(paths: paths, platform: NullPlatform())
+        try await runtime.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true) }
+        let copy = try ExtFixtures.tempDir("agents-copy").appendingPathComponent("restore.sqlite")
+        do {
+            let target = try DatabaseQueue(path: copy.path)
+            try runtime.db.writer.backup(to: target)
+        }
+        try BackupRestore.sanitize(copy)
+        let after = try await DatabaseQueue(path: copy.path).read { try KeyValue.fetchOne($0, key: PermissionStore.policyKey)?.value.decode(GuardPolicy.self) }
+        #expect(after?.mode == .fullAccess && after?.agentsFullAccess == false, "Full access itself is as it was; the switch is off: \(String(describing: after))")
     }
 
     @Test func whatHoldsForEveryCallerHoldsForAgentsWithTheSwitch() async throws {

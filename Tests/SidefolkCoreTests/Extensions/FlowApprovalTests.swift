@@ -1196,6 +1196,62 @@ import Testing
         _ = await second
     }
 
+    // MARK: Other apps let in by the person in Full access (D240)
+
+    @Test func aPlanAnAgentAsksForNeedsNoCardWhenThePersonLetOtherAppsActInFullAccess() async throws {
+        let w = try await World()
+        try await w.h.env.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true) }
+        let agent = Caller.external(client: "Claude Code")
+        let reply = await w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]])], caller: agent)
+        #expect(reply["ok"]?.boolValue == true && reply["silent"]?.boolValue == true, "\(reply)")
+        #expect(await w.h.env.broker.pending().isEmpty, "no card")
+        let saved = await w.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(saved != nil && saved?.answeredUnread == true, "it stands only while Full access is on, as any plan Full access answered")
+        // The row says who asked, why nobody was asked, and the plan's words, in full.
+        let row = try await w.rows("extensions.plan").first
+        #expect(row?.args?["asked_by"]?.stringValue == "Claude Code" && row?.args?["because"]?.stringValue?.contains("Full access sheet") == true, "\(String(describing: row?.args))")
+        let lines = row?.args?["lines"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        #expect(lines.contains { $0.contains("Save to notebook") || $0.contains("notes.save") } && lines.first?.hasPrefix("limits:") == true, "the record is the plan's words: \(lines)")
+        #expect(row?.decision == .fullAccessPlan)
+        // Ending Full access ends it for the plan too, and an agent's next ask is a card.
+        try await w.h.env.permissions.updatePolicy { $0.endFullAccess() }
+        let again = await Self.agentAsks(w, Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]], id: "next"))
+        #expect(again.card != nil, "after Full access, an agent's ask is a card again")
+    }
+
+    /// An agent's ask is never "covered": with the switch on, a plan the person already read is answered with its own row (who asked, why, the plan's words), and keeps
+    /// standing as what was read.
+    @Test func anAgentsAskForAPlanAlreadyReadIsAnsweredWithARowNotAsCovered() async throws {
+        let w = try await World()
+        _ = await w.approve(Self.plan([Self.save]))
+        let before = await w.h.host.loadPreferences("com.example.flow").plans["digest"]
+        try await w.h.env.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true) }
+        let reply = await w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: .external(client: "Claude Code"))
+        #expect(reply["ok"]?.boolValue == true && reply["silent"]?.boolValue == true, "\(reply)")
+        #expect(await w.h.env.broker.pending().isEmpty)
+        let row = try await w.rows("extensions.plan").first
+        #expect(row?.args?["asked_by"]?.stringValue == "Claude Code" && row?.args?["because"] != nil && row?.args?["lines"]?.arrayValue?.isEmpty == false, "\(String(describing: row?.args))")
+        #expect(row?.decision == .fullAccessPlan, "not a plain `plan` row: \(String(describing: row?.decision))")
+        let after = await w.h.host.loadPreferences("com.example.flow").plans["digest"]
+        #expect(after?.answeredUnread == before?.answeredUnread, "what the person read stays what they read")
+    }
+
+    @Test func theSwitchDoesNotAnswerAnAgentsPlanWithoutFullAccessOrForAPlanHistoryCantSayInFull() async throws {
+        // Auto, with the flag cleared by choosing it: a card.
+        let auto = try await World()
+        try await auto.h.env.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true); $0.choose(.auto) }
+        #expect(await Self.agentAsks(auto, Self.plan([Self.save])).card != nil, "Auto: a card")
+        // Full access without the switch: a card.
+        let plain = try await World()
+        try await plain.h.env.permissions.updatePolicy { $0.choose(.fullAccess) }
+        #expect(await Self.agentAsks(plain, Self.plan([Self.save])).card != nil, "Full access alone: a card")
+        // With the switch, but a plan one History row can't hold in full (a written value so long its entry is cut): the card still comes.
+        let long = try await World()
+        try await long.h.env.permissions.updatePolicy { $0.choose(.fullAccess, agentsToo: true) }
+        let wide: JSONValue = ["tool": "notes.save", "input": ["text": .string(String(repeating: "a", count: 295))]]
+        #expect(await Self.agentAsks(long, Self.plan([wide])).card != nil, "a plan History can't record in full is never answered without its card")
+    }
+
     @Test func anAgentCantTryCodesFasterThanSixAMinute() async throws {
         let w = try await World()
         var last = (ok: true, text: "")
