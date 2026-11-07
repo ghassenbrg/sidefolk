@@ -15,8 +15,7 @@ extension AppCoordinator {
         cues.soundsAllowed = { [weak self] in
             guard let self else { return false }
             let s = self.runtime.settings.current
-            let full = NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false
-            return !s.isQuiet(at: Date()) && !full
+            return !s.isQuiet(at: Date()) && !self.inFullScreen
         }
         return cues
     }

@@ -1326,9 +1326,7 @@ extension AppCoordinator {
     /// How long the companion stays on a full-screen space it came to, with nothing done and the pointer elsewhere.
     static let visitSeconds: TimeInterval = 30
 
-    var inFullScreen: Bool {
-        NSWorkspace.shared.frontmostApplication.map { Fullscreen.isFrontmostFullscreen(pid: $0.processIdentifier) } ?? false
-    }
+    var inFullScreen: Bool { monitor.inFullScreen }
 
     /// What the person is on now decides whether the companion shows: while it visits, it does.
     func applyFullScreenHiding() {
