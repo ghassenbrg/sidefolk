@@ -720,6 +720,16 @@ final class AppCoordinator {
             NotificationCenter.default.post(name: PageTreeView.devCarry, object: id == "off" ? nil : id)
             return
         }
+        if command.hasPrefix("treePick:") {
+            // treePick:<card id>[:add]: a click on that card (with ⌘ when `add`) on the open tree board.
+            NotificationCenter.default.post(name: PageTreeView.devPick, object: String(command.dropFirst("treePick:".count)))
+            return
+        }
+        if command == "treeRemove" {
+            // Delete on the open tree board: its chosen cards removed.
+            NotificationCenter.default.post(name: PageTreeView.devRemove, object: nil)
+            return
+        }
         if command.hasPrefix("treeDrop:") {
             // treeDrop:<card id>:<spot>: that card let go at a spot (a card's id, or a branch's), as a drop there does.
             let pair = command.dropFirst("treeDrop:".count).split(separator: ":", maxSplits: 1).map(String.init)

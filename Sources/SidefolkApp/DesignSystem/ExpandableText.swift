@@ -13,6 +13,7 @@ struct ExpandableText: View {
     var maxHeight: CGFloat = 220
     /// Told when it opens or closes, for a window that fits itself to its content (the Sidecard).
     var changed: (() -> Void)?
+    @Environment(\.accessibilityReduceMotion) private var still
     #if DEBUG
     @Environment(\.opensLongText) private var startsOpen
     #else
@@ -64,7 +65,8 @@ struct ExpandableText: View {
     }
 
     private func toggle() {
-        withAnimation(Theme.Motion.ease(0.2)) { open = !expanded }
+        // With Reduce Motion it opens at once: nothing grows on screen.
+        withAnimation(still ? nil : Theme.Motion.ease(0.2)) { open = !expanded }
         changed?()
     }
 

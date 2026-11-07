@@ -167,6 +167,49 @@ struct ExtensionPageTreeTests {
         }
     }
 
+    @Test func removingChosenCardsAsksOnceForEachThatIsntInsideAnother() throws {
+        var start = node("start").objectValue ?? [:]
+        start["fixed"] = true
+        let t = try tree([.object(start), node("a"), node("b", branches: [branch("then:b", [node("c"), node("d")])]), node("e")], extra: ["remove": ["tool": "ui", "key": "step"]])
+        #expect(t.removals(of: ["e", "a", "start"]) == ["a", "e"], "in reading order, never the card that stays put")
+        #expect(t.removals(of: ["c", "b", "d"]) == ["b"], "what's inside a chosen card goes with it")
+        #expect(t.removals(of: ["gone", "d"]) == ["d"], "a card the tree no longer has is left out")
+        #expect(t.removals(of: []).isEmpty)
+        #expect(t.removeMany == nil, "several are one remove each unless the tree says otherwise")
+        let many = try tree([node("a"), node("b")], extra: ["remove": ["tool": "ui", "key": "step"], "remove_many": ["tool": "ui", "key": "steps"]])
+        #expect(many.removeMany?.key == "steps")
+    }
+
+    @Test func theChoiceFollowsTheSelectionSoDeleteTakesWhatTheEdgeShows() {
+        var choice = TreeChoice()
+        choice.click("a", adding: false)
+        choice.selected("a")
+        choice.click("c", adding: true)
+        #expect(choice.cards == ["a", "c"])
+        #expect(choice.shows("c", selected: "a") && !choice.shows("b", selected: "a"))
+        // An arrow moves the extension's selection to b: the choice is b now, not a and c.
+        choice.selected("b")
+        #expect(choice.cards == ["b"] && choice.shows("b", selected: "b") && !choice.shows("a", selected: "b"))
+        choice.click("b", adding: true)
+        #expect(choice.cards.isEmpty && choice.shows("b", selected: "b"), "with nothing chosen, the tree's selected card shows")
+        choice.click("d", adding: false)
+        choice.clear()
+        #expect(choice.cards.isEmpty)
+    }
+
+    @Test func severalAreRemovedTogetherOrLastFirst() throws {
+        var choice = TreeChoice()
+        for id in ["a", "c", "e"] { choice.click(id, adding: true) }
+        let one = try tree([node("a"), node("b"), node("c"), node("d"), node("e")], extra: ["remove": ["tool": "ui", "key": "step"]])
+        #expect(one.removals(of: choice.cards) == ["a", "c", "e"])
+        #expect(choice.removals(in: one).together == nil && choice.removals(in: one).oneByOne == ["e", "c", "a"],
+                "last first: an extension that names cards by place still finds each one")
+        let many = try tree([node("a"), node("b"), node("c"), node("d"), node("e")], extra: ["remove": ["tool": "ui", "key": "step"], "remove_many": ["tool": "ui", "key": "steps"]])
+        #expect(choice.removals(in: many).together == ["a", "c", "e"] && choice.removals(in: many).oneByOne.isEmpty)
+        let none = try tree([node("a"), node("c")])
+        #expect(choice.removals(in: none).together == nil && choice.removals(in: none).oneByOne.isEmpty, "nothing to remove with")
+    }
+
     @Test func aDropIsKeptTheSameWayWhicheverWayTheBoardReads() throws {
         let t = try tree([node("a"), placed("b", x: 600, y: 300)], extra: ["placed": ["tool": "ui", "key": "spot"]])
         let board = TreeLayout(t, editable: true, free: true)
