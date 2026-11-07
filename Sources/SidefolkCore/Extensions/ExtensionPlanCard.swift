@@ -15,14 +15,20 @@ extension ExtensionPlanWords {
     /// Blocks and paragraphs as one text.
     static func text(_ parts: [String]) -> String { parts.joined(separator: "\n\n") }
 
-    static func card(for e: PlanEvaluation, extensionName name: String, mode: GuardMode) -> String {
+    /// The warning for what a plan reads and sends on, as the card says it first, or nil: pulled out so a card of two plans can put both warnings above all of its words.
+    static func crossingWarning(_ e: PlanEvaluation) -> String? {
+        let crossings = crossingSentences(e, shown: e.previous != nil ? e.fresh : Array(e.lines.indices))
+        return crossings.isEmpty ? nil : crossings.joined(separator: " ")
+    }
+
+    /// `warning: false` leaves the warning out, for a card of two plans that has put it first itself (D241).
+    static func card(for e: PlanEvaluation, extensionName name: String, mode: GuardMode, warning: Bool = true) -> String {
         var parts: [String] = []
         let plan = e.plan
         let delta = e.previous != nil
         let shown = delta ? e.fresh : Array(e.lines.indices)
         // The one warning that matters most comes first: the card scrolls, and what is below its fold is read last.
-        let crossings = crossingSentences(e, shown: shown)
-        if !crossings.isEmpty { parts.append(crossings.joined(separator: " ")) }
+        if warning, let crossings = crossingWarning(e) { parts.append(crossings) }
         // Whole, here, where the summary above the card is clipped: its own words, marked as that, and what it's the only place to say.
         if !plan.when.isEmpty { parts.append(String(localized: "When, in \(ToolFormat.oneLine(ExtensionText.clean(name), 60))'s words: \(ToolFormat.oneLine(ExtensionText.clean(plan.when), 600))", comment: "A plan's card: the extension's own description of when it runs and what else it sets off")) }
         if delta, !shown.isEmpty {

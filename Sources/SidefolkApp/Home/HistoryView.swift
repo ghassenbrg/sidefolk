@@ -498,7 +498,7 @@ struct ActivityDetails: View {
             }
             line("Decision") {
                 HStack(spacing: Theme.Space.s) {
-                    Text(verbatim: Describe.decision(entry.decision))
+                    Text(verbatim: Describe.decision(entry.decision, args: entry.args))
                     if let seeRule {
                         Button("See the rule in Settings…", action: seeRule).buttonStyle(.sf(.plain))
                     }

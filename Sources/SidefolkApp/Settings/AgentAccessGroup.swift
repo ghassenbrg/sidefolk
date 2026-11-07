@@ -23,7 +23,7 @@ struct AgentAccessGroup: View {
                 value: access.read) { p in model.update { $0.agentAccess.read = p } }
             // Asked each time or off: Allow isn't offered, because Sidefolk can't tell what an extension's tool does (D112).
             SettingsRow(title: Text("Use tools extensions offer them"),
-                        detail: Text("Only tools an extension marks for other agents. A card asks you each time.")) {
+                        detail: Text("Only tools an extension marks for other agents. A card asks you each time, unless you let other apps act without asking in the Full access sheet.")) {
                 Picker(selection: Binding(get: { access.extensions }, set: { p in model.update { $0.agentAccess.extensions = p } })) {
                     Text("Ask each time").tag(AgentPermission.ask)
                     Text("Off").tag(AgentPermission.off)

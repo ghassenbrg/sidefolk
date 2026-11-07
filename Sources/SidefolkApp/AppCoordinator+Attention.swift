@@ -81,10 +81,18 @@ extension AppCoordinator {
         fullAccessTimer?.cancel()
         fullAccessTimer = nil
         guard policy.mode == .fullAccess, let ends = policy.fullAccessEnds else { return }
+        // Other apps were let in with it (D240): its end is theirs too, and the person hears so, in one line, so that an agent that asks again isn't a surprise.
+        let agentsToo = policy.agentsMayActFreely
         fullAccessTimer = Task { [weak self] in
             try? await Task.sleep(for: .seconds(max(0.5, ends.timeIntervalSinceNow + 0.5)))
             guard !Task.isCancelled, let self else { return }
             runtime.events.changed(.permissions)
+            if agentsToo {
+                sidecard.present(AttentionItem(level: .gentle, source: Self.ownVoice,
+                                               title: String(localized: "Full access ended. Other apps' calls follow your rules again.", comment: "A whisper: Full access ended by itself while other apps were let act without asking"),
+                                               refKind: "full_access_ended"),
+                                 .gentle(autoDismiss: AttentionPolicy.gentleSeconds * 2))
+            }
         }
     }
 }

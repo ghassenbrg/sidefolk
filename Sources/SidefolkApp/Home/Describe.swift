@@ -135,8 +135,12 @@ enum Describe {
     }
 
     /// How an action came to run, or why it didn't, for Activity's details.
-    static func decision(_ d: ActivityEntry.Decision) -> String {
-        switch d {
+    static func decision(_ d: ActivityEntry.Decision, args: JSONValue? = nil) -> String {
+        // A plan an AI agent asked for that the person's own choice answered (D240): nobody clicked, and the row says so, with who asked.
+        if (d == .fullAccessPlan || d == .plan), args?["because"] != nil, let agent = args?["asked_by"]?.stringValue {
+            return String(localized: "Answered with no card because you let other apps act without asking: \(agent) asked.", comment: "History: a plan an AI agent asked for, answered because the person chose that in the Full access sheet; the agent's name")
+        }
+        return switch d {
         case .auto: String(localized: "Ran without asking: Sidefolk's rules allow it.")
         case .allowed: String(localized: "You allowed it.")
         case .always: String(localized: "Allowed by an “Always allow” you gave earlier.")

@@ -60,7 +60,7 @@ struct ApprovalReasonTests {
     @Test func anotherAppIsNotSaidToHaveReadAnything() {
         // Other apps' medium calls are evaluated as tainted so they ask every time (T4); nothing was read.
         let r = ApprovalReason(request(caller: .external(client: "Codex"), source: nil, mode: .askOncePerKind))
-        #expect(r?.text == "Another app is asking, so I check with you each time.")
+        #expect(r?.text == "Another app is asking, so I check with you each time. Full access covers Sidefolk's own companion, not other apps, unless you chose that in Settings › Trust.")
     }
 
     /// The executor hands the card what it needs: the first outside source of the run, the exact request, the mode.

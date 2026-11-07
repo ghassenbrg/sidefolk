@@ -176,6 +176,8 @@ public enum PlanAnswer: Sendable, Hashable {
     case fullAccess
     /// In Auto, an edit whose new lines stay inside Sidefolk: no card, and nobody read them.
     case autoSkipped
+    /// Full access with the person's switch for other apps on (D240): an AI agent asked, and nobody was asked. Guard checks the switch itself.
+    case fullAccessForAgents
 }
 
 /// Where a call reaches on the network, as Sidefolk's own code knows it (D47). Only Sidefolk's code says so: a

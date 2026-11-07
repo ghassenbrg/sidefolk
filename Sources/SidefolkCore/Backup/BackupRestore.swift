@@ -86,6 +86,12 @@ public struct BackupRestore: Sendable {
             // Sessions and running commands belonged to the other Mac's processes.
             try db.execute(sql: "DELETE FROM sessions")
             try db.execute(sql: "UPDATE jobs SET state = 'cancelled' WHERE state = 'running'")
+            // A yes to other apps was the person's, in the sheet, on that Mac and for that Full access: the restored policy starts with it off (D240).
+            if var row = try KeyValue.fetchOne(db, key: PermissionStore.policyKey), var policy = try? row.value.decode(GuardPolicy.self), policy.agentsFullAccess {
+                policy.agentsFullAccess = false
+                row.value = try JSONValue.from(policy)
+                try row.save(db)
+            }
         }
     }
 

@@ -180,11 +180,16 @@ public final class ExtensionActionGateway: Sendable {
     }
 
     /// A plan approved with the code, a row of its own: the card's own row says it was allowed, and this says how and through whom (D239).
-    func recordPlanCode(extensionId id: String, plan: String, client: String) async {
+    func recordPlanCode(extensionId id: String, plan: String, also: String? = nil, client: String) async {
         let caller = Caller.external(client: client)
-        let summary = String(localized: "Approved with the code the person gave \(ExtensionPlanWords.safe(client, 60)): “\(ExtensionPlanWords.safe(plan, 80))”", comment: "History: a flow's plan the person approved by typing the code from its card into an AI agent's chat; the agent's name, the plan")
+        let who = ExtensionPlanWords.safe(client, 60), first = ExtensionPlanWords.safe(plan, 80)
+        // Each plan is named in full (80 characters each) when one code approved two.
+        let summary = also.map { String(localized: "Approved with the code the person gave \(who): “\(first)” and “\(ExtensionPlanWords.safe($0, 80))”", comment: "History: two flow plans the person approved together by typing the code from their card into an AI agent's chat; the agent's name, the two plans") }
+            ?? String(localized: "Approved with the code the person gave \(who): “\(first)”", comment: "History: a flow's plan the person approved by typing the code from its card into an AI agent's chat; the agent's name, the plan")
+        var args: [String: JSONValue] = ["extension": .string(id), "plan": .string(plan), "how": "code"]
+        if let also { args["also"] = .string(also) }
         let entry = ActivityEntry(at: clock.now, caller: "\(caller.kind):\(caller)", tool: PlanCodeTool.name, risk: Risk.low.rawValue, decision: .allowed, summary: summary,
-                                  args: ["extension": .string(id), "plan": .string(plan), "how": "code"])
+                                  args: .object(args))
         _ = try? await activity.log(entry)
     }
 

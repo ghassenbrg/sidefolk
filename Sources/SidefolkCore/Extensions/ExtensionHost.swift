@@ -62,15 +62,18 @@ public actor ExtensionHost {
     public struct FlowPolicy: Sendable {
         public var mode: GuardMode
         public var mayPassToServers: Bool
+        /// The person chose in the Full access sheet that other AI agents act freely while it lasts (D240): a plan one asks for is then answered as Full access answers any.
+        public var agentsMayActFreely: Bool
 
-        public init(mode: GuardMode = .askOncePerKind, mayPassToServers: Bool = true) {
+        public init(mode: GuardMode = .askOncePerKind, mayPassToServers: Bool = true, agentsMayActFreely: Bool = false) {
             self.mode = mode
             self.mayPassToServers = mayPassToServers
+            self.agentsMayActFreely = agentsMayActFreely && mode == .fullAccess
         }
 
         /// From the person's policy. One that can't be read is not a permission: every action asks and nothing is passed on to servers.
         public init(policy: GuardPolicy?) {
-            self.init(mode: policy?.mode ?? .askEveryTime, mayPassToServers: policy?.flowsMayPassToServers ?? false)
+            self.init(mode: policy?.mode ?? .askEveryTime, mayPassToServers: policy?.flowsMayPassToServers ?? false, agentsMayActFreely: policy?.agentsMayActFreely ?? false)
         }
     }
 

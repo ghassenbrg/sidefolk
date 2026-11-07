@@ -37,6 +37,8 @@ struct PlanEvaluation {
     var askOnline = false
     /// The person's mode when it was read.
     var mode: GuardMode = .askOncePerKind
+    /// Other AI agents act freely while Full access lasts, by the person's choice in its sheet (D240).
+    var agentsMayActFreely = false
 
     /// Whether the line would run without a card now, in this mode and with this setting for the internet: what the replies say, so they say one thing.
     func standsNow(_ line: Line) -> Bool {
@@ -178,6 +180,7 @@ extension ExtensionHost {
         let intent = plan["intent"]?.stringValue.flatMap { ["run", "turn_on"].contains($0) ? $0 : nil }
         var evaluation = PlanEvaluation(lines: lines, rows: rows, plan: candidate, previous: read, fresh: fresh, widened: widened, intent: intent, askOnline: askOnline, mode: flow.mode)
         evaluation.inside = inside
+        evaluation.agentsMayActFreely = flow.agentsMayActFreely
         return .success(evaluation)
     }
 
