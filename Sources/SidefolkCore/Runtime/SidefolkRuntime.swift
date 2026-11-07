@@ -177,6 +177,7 @@ public final class SidefolkRuntime: Sendable {
         registry.register(ExtensionOccurrencesTool(host: host))
         registry.register(ExtensionPlaceSearchTool(shelfName: { id in host.shelf.names[id] }))
         registry.register(ExtensionPlanEndTool(host: host))
+        registry.register(PlanCodeTool(host: host))
         registry.register(CompanionJobTool(agent: companionAgent))
         registry.register(AttentionSetTool(settings: settings, attention: attention, events: events))
         registry.register(VoiceSayTool(settings: settings, events: events))

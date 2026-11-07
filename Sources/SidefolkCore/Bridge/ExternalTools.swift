@@ -7,8 +7,8 @@ import Foundation
 /// in Settings › Privacy › Other agents what each group may do (`AgentAccess`).
 public enum ExternalToolPolicy {
     /// Always offered and run without asking: they reach the user only through Sidefolk's own bubbles,
-    /// and `status` only counts.
-    public static let always: Set<String> = ["notify.user", "ask.user", "status"]
+    /// and `status` only counts. `plans.approve_with_code` approves nothing without the code from the person's own card (D239).
+    public static let always: Set<String> = ["notify.user", "ask.user", "status", PlanCodeTool.name]
     /// Always offered and always asked, whatever the settings say: how agents get past their shared room (D116), and
     /// making or changing a collection, since a name of theirs beside the person's own is theirs only on a yes (T3, T4, D160).
     public static let alwaysAsks: Set<String> = ["watch.more_room", "notes.collection", "collections.create"]

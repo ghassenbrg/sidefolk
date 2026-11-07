@@ -125,6 +125,8 @@ public actor ExtensionHost {
         var agentAsk: (client: String, at: Date)?
         /// Agent calls of its tools still running, by call: the window is open while any runs and for 30 s after the last ends, however long it runs (D237).
         var agentCalls: [UUID: String] = [:]
+        /// The code on the card an agent's ask put up, for the person to give that agent (D239). In memory only: never saved, never in a reply or a row.
+        var agentCode: AgentCode?
         var actionCalls: [Date] = []
         /// Calls under way, by the request that made them: what a program can ask to stop.
         var actionTasks: [String: Task<Void, Never>] = [:]
@@ -184,6 +186,8 @@ public actor ExtensionHost {
     private let integrity = ExtensionIntegrity()
     private let outputMute: OutputMuteRouter
     var runtimes: [String: Runtime] = [:]
+    /// When an agent last tried a code, by its name: the rate limit of `confirmWithCode` (D239).
+    var codeTries: [String: [Date]] = [:]
     private var launches = 0
     /// What extension pages' charts said (D62).
     public nonisolated let pageHistory: ExtensionPageHistory

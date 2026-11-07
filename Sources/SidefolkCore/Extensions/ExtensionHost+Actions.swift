@@ -264,7 +264,7 @@ extension ExtensionHost {
         // alone can settle it: no mode answers it, and no click of theirs from before counts for it.
         case .external(let client):
             // The name comes from the connection and is the client's own word for itself (unverified, `clientName`): shown as that, with anything that hides marked.
-            let name = ExtensionPlanWords.unquoted(client.hiddenShown.clipped(60)), token = UUID()
+            let name = Self.agentName(client), token = UUID()
             runtimes[id]?.agentAsk = (name, Date())
             runtimes[id]?.agentCalls[token] = name
             return token
@@ -463,7 +463,15 @@ extension ExtensionHost {
         let answer = planAnswer(id, evaluation, throughAgent: agent != nil)
         let words = ExtensionPlanWords.card(for: evaluation, extensionName: name(rt), mode: evaluation.mode)
         // An agent asked, not the person: the card says who, first, and that nothing is allowed until they say so here.
-        let shown = agent.map { String(localized: "An app that says it's “\($0)” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.", comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself") + "\n\n" + words } ?? words
+        var shown = words
+        if let agent {
+            // The person may approve here, or give the agent this code in its chat: one card, one use, two minutes. It is only ever in this card's words and in memory.
+            let code = AgentCode.fresh()
+            shown = String(localized: "An app that says it's “\(agent)” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.", comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself")
+                + "\n\n" + String(localized: "You can also give that app this code in its chat: \(AgentCode.spoken(code)). It works once, for 2 minutes. Give it only to that app, and only after reading what this will do.", comment: "A plan's card: a one-time code the person may type into the AI agent's chat to approve instead of pressing Approve; the code")
+                + "\n\n" + words
+            runtimes[id]?.agentCode = AgentCode(digits: code, client: agent, body: shown, plan: evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, expires: Date().addingTimeInterval(AgentCode.life))
+        }
         let card = ExtensionPlanTool(extensionId: id, plan: ToolFormat.oneLine(evaluation.plan.title.isEmpty ? evaluation.plan.id : evaluation.plan.title, 80), when: evaluation.plan.when, body: shown,
                                      answer: answer, intent: evaluation.intent, approveLabel: String(localized: "Approve"), approveNote: ExtensionPlanWords.approveNote(for: evaluation))
         // What Trust shows later is the whole plan as the card says it, not only what an edit added.
@@ -528,6 +536,8 @@ extension ExtensionHost {
 
     private func finishPlan(_ id: String, request: JSONValue, outcome: ToolOutcome, evaluation: PlanEvaluation, answer: PlanAnswer?, card: String) async {
         runtimes[id]?.planAsking = false
+        // The card is over, answered or not: its code is of no use to anyone now.
+        runtimes[id]?.agentCode = nil
         // An extension that was turned off while its card was up has nobody to answer, and an Allow now saves nothing for it.
         guard let rt = runtimes[id], rt.record.enabled else { return }
         guard outcome.isOK else {

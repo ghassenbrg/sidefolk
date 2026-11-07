@@ -101,11 +101,13 @@ public final class ExtensionActionGateway: Sendable {
     private let exposed = ToolRegistry()
     private let executor: ToolExecutor
     private let activity: ActivityStore
+    private let broker: ApprovalBroker
     private let clock: any Clock
 
     public init(registry: ToolRegistry, permissions: PermissionStore, broker: ApprovalBroker, activity: ActivityStore,
                 events: EventBus, clock: any Clock = SystemClock()) {
         self.activity = activity
+        self.broker = broker
         self.clock = clock
         source = registry
         executor = ToolExecutor(registry: exposed, permissions: permissions, broker: broker, activity: activity, events: events, clock: clock)
@@ -163,6 +165,41 @@ public final class ExtensionActionGateway: Sendable {
             : String(localized: "A plan ended: nobody used “\(shown)” for 60 days. Its extension was not running, so it was not told.", comment: "History: a plan that was idle for 60 days ended by itself while its extension was not running; its title")
         let entry = ActivityEntry(at: clock.now, caller: "\(caller.kind):\(caller)", tool: "extensions.plan_end", risk: Risk.low.rawValue, decision: .planEnded, summary: summary,
                                   args: ["extension": .string(id), "plan": .string(plan), "told": .bool(told)])
+        _ = try? await activity.log(entry)
+    }
+
+    /// Answers yes to the plan card whose words are exactly `text`, for the code the person gave an agent (D239): the one card of that extension, found by what it says (the plan's
+    /// words and the code are in it), never by anything an agent sends. False when no such card is up any more.
+    func settleCard(extensionId id: String, text: String) async -> Bool {
+        for request in await broker.pending() where request.tool == ExtensionPlanTool.name && request.extensionId == id {
+            guard case .text(let words) = request.details, words == text else { continue }
+            await broker.resolve(id: request.id, decision: .allowOnce)
+            return true
+        }
+        return false
+    }
+
+    /// A plan approved with the code, a row of its own: the card's own row says it was allowed, and this says how and through whom (D239).
+    func recordPlanCode(extensionId id: String, plan: String, client: String) async {
+        let caller = Caller.external(client: client)
+        let summary = String(localized: "Approved with the code the person gave \(ExtensionPlanWords.safe(client, 60)): “\(ExtensionPlanWords.safe(plan, 80))”", comment: "History: a flow's plan the person approved by typing the code from its card into an AI agent's chat; the agent's name, the plan")
+        let entry = ActivityEntry(at: clock.now, caller: "\(caller.kind):\(caller)", tool: PlanCodeTool.name, risk: Risk.low.rawValue, decision: .allowed, summary: summary,
+                                  args: ["extension": .string(id), "plan": .string(plan), "how": "code"])
+        _ = try? await activity.log(entry)
+    }
+
+    /// A code tried that did not work, without the code: who tried and what came of it, so a guess is on the record (D239).
+    func recordPlanCodeTry(client: String, outcome: CodeAnswer) async {
+        let caller = Caller.external(client: client)
+        let who = ExtensionPlanWords.safe(client, 60)
+        let summary: String = switch outcome {
+        case .locked: String(localized: "\(who) gave a wrong code too many times: that card now needs your click.", comment: "History: an AI agent gave a flow card's code wrongly three times; its name")
+        case .tooMany: String(localized: "\(who) tried codes too often and was told to wait.", comment: "History: an AI agent tried flow-card codes more than six times in a minute; its name")
+        case .nothingPending: String(localized: "\(who) gave a code, but none of its cards was waiting for one.", comment: "History: an AI agent gave a code and no card of its own was waiting; its name")
+        default: String(localized: "\(who) gave a wrong code.", comment: "History: an AI agent gave a flow card's code wrongly; its name")
+        }
+        let entry = ActivityEntry(at: clock.now, caller: "\(caller.kind):\(caller)", tool: PlanCodeTool.name, risk: Risk.low.rawValue, decision: .denied, summary: summary,
+                                  args: ["how": "code"])
         _ = try? await activity.log(entry)
     }
 

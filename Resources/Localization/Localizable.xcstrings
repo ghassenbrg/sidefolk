@@ -4790,6 +4790,183 @@
         }
       }
     },
+    "%@ gave a code, but none of its cards was waiting for one." : {
+      "comment" : "History: an AI agent gave a code and no card of its own was waiting; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعطى %@ رمزًا، لكن لم تكن أي من بطاقاته تنتظر رمزًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat einen Code gegeben, aber keine seiner Karten wartete darauf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dio un código, pero ninguna de sus tarjetas lo esperaba."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a donné un code, mais aucune de ses cartes n’en attendait."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ha dato un codice, ma nessuna sua scheda ne aspettava uno."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がコードを伝えましたが、待っているカードはありませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 코드를 알려 줬지만 기다리던 카드가 없었어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ deu um código, mas nenhum cartão dele estava esperando por um."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 给出了一个代码，但它没有任何卡片在等待代码。"
+          }
+        }
+      }
+    },
+    "%@ gave a wrong code too many times: that card now needs your click." : {
+      "comment" : "History: an AI agent gave a flow card's code wrongly three times; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعطى %@ رمزًا خاطئًا مرات كثيرة: تحتاج هذه البطاقة الآن إلى نقرتك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat zu oft einen falschen Code gegeben: Diese Karte braucht jetzt deinen Klick."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dio un código erróneo demasiadas veces: esa tarjeta ahora necesita tu clic."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a donné un mauvais code trop de fois : cette carte demande maintenant votre clic."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ha dato un codice sbagliato troppe volte: ora quella scheda richiede il tuo clic."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が間違ったコードを何度も伝えました。このカードはあなたのクリックが必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 틀린 코드를 너무 여러 번 알려 줬어요. 이제 이 카드는 직접 클릭해야 해요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ deu um código errado vezes demais: esse cartão agora precisa do seu clique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 多次给出错误的代码：该卡片现在需要你亲自点击。"
+          }
+        }
+      }
+    },
+    "%@ gave a wrong code." : {
+      "comment" : "History: an AI agent gave a flow card's code wrongly; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعطى %@ رمزًا خاطئًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat einen falschen Code gegeben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dio un código erróneo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a donné un mauvais code."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ha dato un codice sbagliato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が間違ったコードを伝えました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 틀린 코드를 알려 줬어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ deu um código errado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 给出了错误的代码。"
+          }
+        }
+      }
+    },
     "%@ gave an answer I couldn't use for %@." : {
       "localizations" : {
         "ar" : {
@@ -12364,6 +12541,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 执行%2$@用时太长，所以我不再等待。"
+          }
+        }
+      }
+    },
+    "%@ tried codes too often and was told to wait." : {
+      "comment" : "History: an AI agent tried flow-card codes more than six times in a minute; its name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حاول %@ إدخال الرموز كثيرًا وطُلب منه الانتظار."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat zu oft Codes probiert und sollte warten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ probó códigos con demasiada frecuencia y se le pidió esperar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a essayé des codes trop souvent et a dû attendre."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ha provato codici troppo spesso ed è stato invitato ad aspettare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がコードを試す回数が多すぎたため、待つように伝えました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 코드를 너무 자주 시도해서 기다리라고 했어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tentou códigos com frequência demais e foi mandado esperar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 尝试代码过于频繁，已被要求等待。"
           }
         }
       }
@@ -46555,6 +46791,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "批准"
+          }
+        }
+      }
+    },
+    "Approve a flow with the code from its card" : {
+      "comment" : "History: another AI agent gave the code from a flow's card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الموافقة على تدفق برمز بطاقته"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Ablauf mit dem Code seiner Karte genehmigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobar un flujo con el código de su tarjeta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuver un flux avec le code de sa carte"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approva un flusso con il codice della sua scheda"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フローをカードのコードで承認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플로우를 카드의 코드로 승인"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovar um fluxo com o código do cartão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用卡片上的代码批准流程"
+          }
+        }
+      }
+    },
+    "Approve with a code" : {
+      "comment" : "A tool for other AI agents: approves a flow with the code from its card",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الموافقة برمز"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einem Code genehmigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobar con un código"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuver avec un code"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approva con un codice"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コードで承認"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "코드로 승인"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovar com um código"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用代码批准"
+          }
+        }
+      }
+    },
+    "Approved with the code the person gave %@: “%@”" : {
+      "comment" : "History: a flow's plan the person approved by typing the code from its card into an AI agent's chat; the agent's name, the plan",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تمت الموافقة برمز أعطاه الشخص إلى %@: «%@»"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genehmigt mit dem Code, den die Person %@ gegeben hat: „%@“"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprobado con el código que la persona dio a %@: «%@»"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuvé avec le code que la personne a donné à %@ : « %@ »"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approvato con il codice che la persona ha dato a %@: «%@»"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本人が%@に伝えたコードで承認：「%@」"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용자가 %@에게 알려 준 코드로 승인: “%@”"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aprovado com o código que a pessoa deu a %@: “%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已用用户告诉 %@ 的代码批准：“%@”"
           }
         }
       }
@@ -243587,6 +244000,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你昨天 %@ 让我提醒的。"
+          }
+        }
+      }
+    },
+    "You can also give that app this code in its chat: %@. It works once, for 2 minutes. Give it only to that app, and only after reading what this will do." : {
+      "comment" : "A plan's card: a one-time code the person may type into the AI agent's chat to approve instead of pressing Approve; the code",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنك أيضًا إعطاء ذلك التطبيق هذا الرمز في محادثته: %@. يعمل مرة واحدة ولمدة دقيقتين. أعطِه لذلك التطبيق فقط، وبعد قراءة ما سيفعله."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kannst dieser App auch diesen Code in ihrem Chat geben: %@. Er gilt einmal, für 2 Minuten. Gib ihn nur dieser App und erst, nachdem du gelesen hast, was das bewirkt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "También puedes dar a esa app este código en su chat: %@. Sirve una vez, durante 2 minutos. Dáselo solo a esa app, y solo después de leer lo que hará."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez aussi donner ce code à cette app dans son chat : %@. Il ne marche qu’une fois, pendant 2 minutes. Ne le donnez qu’à cette app, et seulement après avoir lu ce que cela fera."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puoi anche dare a quell’app questo codice nella sua chat: %@. Vale una volta sola, per 2 minuti. Dallo solo a quell’app, e solo dopo aver letto cosa farà."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのアプリのチャットにこのコードを伝えて承認することもできます：%@。1回だけ、2分間有効です。そのアプリにだけ、内容を読んだうえで伝えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그 앱의 채팅에 이 코드를 알려 주어 승인할 수도 있어요: %@. 한 번만, 2분 동안 유효해요. 그 앱에만, 무엇을 하는지 읽은 뒤에 알려 주세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você também pode dar a esse app este código no chat dele: %@. Vale uma vez, por 2 minutos. Dê só a esse app, e só depois de ler o que isso vai fazer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你也可以在该应用的聊天中告诉它这个代码：%@。只能用一次，2 分钟内有效。只告诉那个应用，并且要先读完这将执行的内容。"
           }
         }
       }
