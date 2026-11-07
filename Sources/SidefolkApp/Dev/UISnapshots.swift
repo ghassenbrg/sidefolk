@@ -612,7 +612,7 @@ enum UISnapshots {
             calmDay.tab = .today
             let panels = [("desktop-ask-found", finding), ("desktop-ask-glance", glancing), ("desktop-ask-today-empty", calmDay), ("desktop-ask", sampleAsk()), ("desktop-ask-apple-notes", sampleAskAppleNotes()),
                           ("desktop-ask-question", sampleAskQuestion()), ("desktop-ask-long", longAnswerAsk()),
-                          ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()),
+                          ("desktop-ask-fresh", freshAsk()), ("desktop-ask-extensions", sampleAskExtensions()), ("desktop-ask-plan-agent", samplePlanFromAgent()),
                           ("desktop-ask-internet", sampleAskInternet()), ("desktop-ask-outside", sampleAskOutside()),
                           ("desktop-ask-auto", awayAsk(.auto)), ("desktop-ask-full-access", awayAsk(.fullAccess)),
                           ("desktop-ask-no-ai", noAIAsk(ready: [])), ("desktop-ask-no-ai-found", noAIAsk(ready: [.claudeCode, .codex])),
@@ -679,7 +679,7 @@ enum UISnapshots {
             // A board a person edits (D233): as it fits, zoomed out and in, and with a card carried: every place it can go shows.
             if let board = SampleExtensionPage.board() {
                 let looks: [(String, TreeSnapshot)] = [("page-tree-board", TreeSnapshot()), ("page-tree-board-zoomed-out", TreeSnapshot(zoom: 0.25)),
-                                                        ("page-tree-board-zoomed-in", TreeSnapshot(zoom: 2)), ("page-tree-board-carrying", TreeSnapshot(carrying: "save"))]
+                                                        ("page-tree-board-zoomed-in", TreeSnapshot(zoom: 2)), ("page-tree-board-carrying", TreeSnapshot(carrying: "save")), ("page-tree-board-chosen", TreeSnapshot(picked: ["read", "sum"]))]
                 for (name, look) in looks {
                     try await page(name, PageTreeView(tree: board, model: SampleExtensionPage.model()).environment(\.treeSnapshot, look).frame(height: 760), width: 1000)
                 }
@@ -699,6 +699,9 @@ enum UISnapshots {
             }
             try await accessible("design-system-sidecard", DesignSystemSheet(page: .sidecard), width: 1600)
             try await accessible("page-today", TodayView(model: full), width: 1100)
+            if let placed = SampleExtensionPage.boardPlaced() {
+                try await accessible("page-tree-board-placed", PageTreeView(tree: placed, model: SampleExtensionPage.model()).frame(height: 760), width: 1000)
+            }
             if let (_, content) = SamplePocket.states(name: full.companionName).first {
                 let pocket = PocketModel()
                 pocket.content = content
@@ -1093,6 +1096,20 @@ enum UISnapshots {
     }
 
     /// The founder's case (D39): cloning into ~/git with an extension, after a Time Zones answer.
+    /// A plan's card an AI agent asked for over MCP: who asked, first, and words written over two lines drawn with the break mark (⏎).
+    private static func samplePlanFromAgent() -> AskModel {
+        let ask = AskModel()
+        let flows = "dev.example.flows"
+        ask.extensionLooks = [flows: ExtensionLook(name: "Flows", iconPath: FixtureServices.sampleIcon, folk: "tempo")]
+        let first = String(localized: "An app that says it's “\("Claude Code")” asked for this through Sidefolk's connection. Nothing is allowed until you approve it here.",
+                           comment: "A plan's card, first line: an AI agent connected over MCP asked for it, by the name it gave itself")
+        let body = first + "\n\nEvery weekday at 8:00, Flows will:\n1. Read example.com/forecast\n2. Save a note to your notebook: “Morning\u{23CE}Take an umbrella\u{23CE}Leave by 8:30”\n3. Tell you: “Your morning note is ready”"
+        ask.add(.approval(ApprovalRequest(tool: "extensions.plan", title: "Run “Morning brief”", summary: "Every weekday at 8:00",
+                                          risk: .medium, caller: .extension(id: flows), details: .text(body), canAlways: false, extensionId: flows)),
+                caption: nil)
+        return ask
+    }
+
     private static func sampleAskExtensions() -> AskModel {
         let ask = AskModel()
         let repos = FixtureServices.repoPal

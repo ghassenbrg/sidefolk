@@ -167,6 +167,19 @@ struct ExtensionPageTreeTests {
         }
     }
 
+    @Test func removingChosenCardsAsksOnceForEachThatIsntInsideAnother() throws {
+        var start = node("start").objectValue ?? [:]
+        start["fixed"] = true
+        let t = try tree([.object(start), node("a"), node("b", branches: [branch("then:b", [node("c"), node("d")])]), node("e")], extra: ["remove": ["tool": "ui", "key": "step"]])
+        #expect(t.removals(of: ["e", "a", "start"]) == ["a", "e"], "in reading order, never the card that stays put")
+        #expect(t.removals(of: ["c", "b", "d"]) == ["b"], "what's inside a chosen card goes with it")
+        #expect(t.removals(of: ["gone", "d"]) == ["d"], "a card the tree no longer has is left out")
+        #expect(t.removals(of: []).isEmpty)
+        #expect(t.removeMany == nil, "several are one remove each unless the tree says otherwise")
+        let many = try tree([node("a"), node("b")], extra: ["remove": ["tool": "ui", "key": "step"], "remove_many": ["tool": "ui", "key": "steps"]])
+        #expect(many.removeMany?.key == "steps")
+    }
+
     @Test func aDropIsKeptTheSameWayWhicheverWayTheBoardReads() throws {
         let t = try tree([node("a"), placed("b", x: 600, y: 300)], extra: ["placed": ["tool": "ui", "key": "spot"]])
         let board = TreeLayout(t, editable: true, free: true)

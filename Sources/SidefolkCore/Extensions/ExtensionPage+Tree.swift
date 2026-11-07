@@ -76,6 +76,9 @@ extension ExtensionPage {
         public var placed: Steps.Hook?
         /// Takes a card away: its id goes under the hook's key. On a card's menu.
         public var remove: Steps.Hook?
+        /// Takes several cards the person chose away in one call: their ids, as a list, under the hook's key, so one undo can bring them back.
+        /// Without it, several chosen cards are one `remove` each.
+        public var removeMany: Steps.Hook?
         public var picker: Picker?
         /// Small buttons floating beside it, each drawn as its symbol.
         public var tools: [Control]
@@ -263,6 +266,7 @@ extension ExtensionPage {
                         tools: (j["tools"]?.arrayValue ?? []).prefix(6).compactMap { button($0, characters: 30) },
                         line: Array((j["line"]?.arrayValue ?? []).compactMap { color($0) }.prefix(2)))
         tree.placed = hook(j["placed"])
+        tree.removeMany = hook(j["remove_many"])
         return tree
     }
 
@@ -623,18 +627,23 @@ public struct TreeLayout: Sendable {
             for fold in folds where fold.0 != one.0 && meets(fold.1, one.1) { return fallBack() }
             if work > budget { return fallBack() }
         }
-        for spot in spots {
-            // As drawn: a + of its own, or words in a capsule for the start of an empty branch.
+        // As drawn: a + of its own, or words in a capsule for the start of an empty branch; a label as its pill.
+        let spotBoxes = spots.map { spot in
             let half: CGFloat = spot.hint == nil ? 14 : 75
-            let box = CGRect(x: spot.point.x - half, y: spot.point.y - 14, width: half * 2, height: 28)
+            return (spot.target, CGRect(x: spot.point.x - half, y: spot.point.y - 14, width: half * 2, height: 28))
+        }
+        let nameBoxes = names.map { CGRect(x: $0.point.x - 60, y: $0.point.y - 11, width: 120, height: 22) }
+        for (i, spot) in spotBoxes.enumerated() {
             // A branch's own + sits on the line just above its first card, as when the tree lays itself out.
-            for card in drawn where card.0 != first[spot.target] && meets(box, card.1) { return fallBack() }
-            for fold in folds where meets(box, fold.1) { return fallBack() }
+            for card in drawn where card.0 != first[spot.0] && meets(spot.1, card.1) { return fallBack() }
+            for fold in folds where meets(spot.1, fold.1) { return fallBack() }
+            for other in spotBoxes[(i + 1)...] where meets(spot.1, other.1) { return fallBack() }
             if work > budget { return fallBack() }
         }
-        for name in names {
-            let box = CGRect(x: name.point.x - 60, y: name.point.y - 11, width: 120, height: 22)
+        for (i, box) in nameBoxes.enumerated() {
             for card in drawn where meets(box, card.1) { return fallBack() }
+            for fold in folds where meets(box, fold.1) { return fallBack() }
+            for other in nameBoxes[(i + 1)...] where meets(box, other) { return fallBack() }
             if work > budget { return fallBack() }
         }
 
@@ -676,5 +685,15 @@ extension ExtensionPage.Tree {
     public func dropped(_ words: [String], carried: Carry?) -> String? {
         guard let carried, words.first == Self.dragPrefix + carried.id, carried.cards == reading.map(\.id) else { return nil }
         return carried.id
+    }
+}
+
+extension ExtensionPage.Tree {
+    /// What removing the cards the person chose on a board asks the extension (`remove`, once each): those of them it has, in the order they're read,
+    /// none that stays put (`fixed`), and none inside another chosen card, which goes with it.
+    public func removals(of chosen: Set<String>) -> [String] {
+        let picked = reading.filter { chosen.contains($0.id) && !$0.fixed }
+        let inside = Set(picked.flatMap { family(of: $0.id).subtracting([$0.id]) })
+        return picked.map(\.id).filter { !inside.contains($0) }
     }
 }

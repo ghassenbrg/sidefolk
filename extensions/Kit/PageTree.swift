@@ -143,6 +143,8 @@ public struct CardTree {
     public var reorder: StepRail.Hook?
     /// Takes a card away, from its menu: its id goes under the key.
     public var remove: StepRail.Hook?
+    /// Takes several cards the person chose on the board away in one call: their ids, as a list, under its key. Without it, `remove` is called once each.
+    public var removeMany: StepRail.Hook?
     /// Gets `{"id", "x", "y"}` when a card is let go on the board's empty space, and `{"clear": true}` from Tidy up, under its key (D234). Keep the
     /// place on the card (`at`); it's only where the card is drawn, never what runs or in what order.
     public var placed: StepRail.Hook?
@@ -151,7 +153,8 @@ public struct CardTree {
     /// `#RRGGBB`, one or two: the line, running from one to the other.
     public var line: [String]
 
-    public init(_ nodes: [Node], selected: String? = nil, select: StepRail.Hook? = nil, insert: StepRail.Hook? = nil, reorder: StepRail.Hook? = nil, remove: StepRail.Hook? = nil, picker: Picker? = nil, tools: [Action] = [], line: [String] = [], placed: StepRail.Hook? = nil) {
+    public init(_ nodes: [Node], selected: String? = nil, select: StepRail.Hook? = nil, insert: StepRail.Hook? = nil, reorder: StepRail.Hook? = nil, remove: StepRail.Hook? = nil, picker: Picker? = nil, tools: [Action] = [], line: [String] = [], placed: StepRail.Hook? = nil, removeMany: StepRail.Hook? = nil) {
+        self.removeMany = removeMany
         self.placed = placed
         self.remove = remove
         self.nodes = nodes
@@ -172,6 +175,7 @@ public struct CardTree {
         if let reorder { out["reorder"] = reorder.json }
         if let remove { out["remove"] = remove.json }
         if let placed { out["placed"] = placed.json }
+        if let removeMany { out["remove_many"] = removeMany.json }
         if let picker { out["picker"] = picker.json }
         return out
     }

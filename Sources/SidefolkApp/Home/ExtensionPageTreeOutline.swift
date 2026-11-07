@@ -6,6 +6,8 @@ struct TreeCardActions: View {
     var node: ExtensionPage.Tree.Node
     var tree: ExtensionPage.Tree
     var model: ExtensionPageModel
+    /// On a card chosen with others on the board: Remove takes them all.
+    var removeChosen: (() -> Void)?
 
     var body: some View {
         if let reorder = tree.reorder, !node.fixed {
@@ -27,7 +29,9 @@ struct TreeCardActions: View {
                 } label: { Text("Move to", comment: "A card on an extension's page: its menu, listing everywhere it can go") }
             }
         }
-        if let remove = tree.remove, !node.fixed {
+        if let removeChosen {
+            Button(role: .destructive, action: removeChosen) { Text("Remove the chosen cards", comment: "A card on an extension's board, chosen with others: its menu, removes them all") }
+        } else if let remove = tree.remove, !node.fixed {
             Button(role: .destructive) { Task { await model.run(tool: remove.tool, input: remove.input(.string(node.id))) } } label: { Text("Remove", comment: "A card on an extension's page: its menu") }
         }
     }
