@@ -208,11 +208,14 @@ public actor ApprovalBroker {
         return decision
     }
 
-    public func resolve(id: String, decision: ApprovalDecision) {
-        guard let c = waiting.removeValue(forKey: id) else { return }
+    /// Whether this answer was the one that settled it: false when it had been answered already (a click got in first), or was never there.
+    @discardableResult
+    public func resolve(id: String, decision: ApprovalDecision) -> Bool {
+        guard let c = waiting.removeValue(forKey: id) else { return false }
         requests[id] = nil
         events.publish(.approvalResolved(id: id, decision: decision))
         c.resume(returning: decision)
+        return true
     }
 
     /// Denies every request a run is still waiting on: once the run ended, a later Allow must not act for it.

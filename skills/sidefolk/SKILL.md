@@ -44,6 +44,7 @@ your client's name (shown to the user as unverified). You act as another app, no
 | "delete that note", "remove the old ideas about X" | find the id, then `notes_trash` |
 | "is Sidefolk running?" | `status` |
 | "make an automation that…", something only an add-on does | an add-on's own tools, when it offers them: see "Add-ons' tools" below |
+| "the code is 482 913" (after you asked to turn a flow on) | `plans_approve_with_code` |
 
 Use Sidefolk only for what the user asked. Don't set reminders or watches on your own initiative, and don't
 read their notes or reminders unless the task needs them.
@@ -170,6 +171,23 @@ These read the user's own data, so by default Sidefolk shows them a card first (
 reminders and open tasks"); the user may have allowed reads without a card. Call one, wait for it, and if the
 result says they declined, don't ask again; answer from what you have. `agenda_today` is the one to use for "what's on my plate today": today's reminders, open tasks
 and how many watches are running, in one read.
+
+### plans_approve_with_code
+
+```json
+{"code": "482913"}
+```
+
+When you asked, through another tool of Sidefolk, to turn a flow on and the user chose to approve it from this chat,
+this settles the flow's card with the six-digit code they read on the card on their own desktop and typed to
+you. Only they can see it: tell them to look for the code on that card, that it works once for 2 minutes, and to
+give it to you only after they have read what the flow will do. Then pass it exactly as they typed it.
+
+Never guess a code, never try codes to see what happens, and don't ask the user to read one out before they have had
+the chance to read what the card says the flow will do. Three wrong tries lock the card: if the answer says it
+needs their click, stop, tell them to press Approve on the card themselves, and don't try again. The same
+if the answer says no card of yours is waiting (it may have been answered, or its 2 minutes passed): say so, and
+ask for the flow again only if they still want it.
 
 ### status
 

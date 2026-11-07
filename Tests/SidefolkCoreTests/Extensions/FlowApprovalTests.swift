@@ -10,6 +10,7 @@ import Testing
     final class World: @unchecked Sendable {
         let h: HostEnv
         let gateway: ExtensionActionGateway
+        let external: ExternalToolGateway
         let tool: String
 
         init(origin: ExtensionOrigin? = .official, name: String = "flow") async throws {
@@ -32,6 +33,8 @@ import Testing
                 h.env.registry.register(ExtensionActionsTests.Probe(name: name, risk: risk, capabilities: caps, mutates: mutates, urlParameter: name == "web.fetch" ? "url" : nil))
             }
             h.env.registry.register(ExtensionPlanEndTool(host: h.host))
+            h.env.registry.register(PlanCodeTool(host: h.host))
+            external = ExternalToolGateway(registry: h.env.registry, permissions: permissions, broker: h.env.broker, activity: h.env.activity, events: h.env.events)
             let manifest: JSONValue = ["id": .string("com.example.\(name)"), "name": .string(name.capitalized), "version": "1.0.0", "run": ["command": "python3", "args": ["server.py"]],
                                        "permissions": ["act": ["purpose": "to run what you set up"]], "tools": ["ask_host": ["title": "Ask the host", "risk": "low", "mutates": false]]]
             try await h.host.install(from: h.source(name, manifest: manifest, files: ["server.py": ExtensionActionsTests.bridge]), origin: origin)
@@ -39,6 +42,28 @@ import Testing
         }
 
         func setMode(_ mode: GuardMode) async throws { try await h.env.permissions.updatePolicy { $0.mode = mode } }
+
+        /// The way a real agent comes: through the external gateway, with the facade, the external spec and the rows it writes.
+        func confirmThroughTheGateway(_ code: String, as client: String = "Claude Code") async -> (ok: Bool, text: String) {
+            let outcome = await external.call(PlanCodeTool.name, input: ["code": .string(code)], client: client)
+            switch outcome.status {
+            case .ok(let result): return (!result.isError, result.text)
+            case .denied(let why): return (false, why)
+            case .failed(let error): return (false, "\(error)")
+            default: return (false, "\(outcome.status)")
+            }
+        }
+
+        /// An agent gives a code (`plans.approve_with_code`): whether it worked, and what the agent is told.
+        func confirm(_ code: String, as client: String = "Claude Code", caller: Caller? = nil) async -> (ok: Bool, text: String) {
+            let outcome = await h.env.executor.execute(name: PlanCodeTool.name, input: ["code": .string(code)], caller: caller ?? .external(client: client), timeout: 10)
+            switch outcome.status {
+            case .ok(let result): return (!result.isError, result.text)
+            case .denied(let why): return (false, why)
+            case .failed(let error): return (false, "\(error)")
+            default: return (false, "\(outcome.status)")
+            }
+        }
 
         func ask(_ method: String, _ params: JSONValue = .object([:]), caller: Caller = .user) async -> JSONValue {
             let outcome = await h.env.executor.execute(name: tool, input: ["method": .string(method), "params": params], caller: caller, timeout: 30)
@@ -1024,6 +1049,160 @@ import Testing
         #expect(longWords.hasPrefix("An app that says it's “N") && longWords.contains("…” asked for this") && !longWords.contains("Sidefolk: approve"), "\(longWords.prefix(200))")
     }
 
+    // MARK: The code on an agent's card (D239)
+
+    /// The agent's plan card and the code on it, with the card left up for the person; the agent's own call card is answered Allow on the way.
+    static func waitForThePlanCard(_ w: World) async -> (card: ApprovalRequest, code: String)? {
+        for _ in 0..<400 {
+            if let card = await w.h.env.broker.pending().first {
+                if card.tool == ExtensionPlanTool.name {
+                    guard case .text(let words) = card.details, let found = words.firstMatch(of: /(\d{3}) (\d{3})/) else { return nil }
+                    return (card, String(found.1) + String(found.2))
+                }
+                await w.h.env.broker.resolve(id: card.id, decision: .allowOnce)
+            } else {
+                try? await Task.sleep(for: .milliseconds(25))
+            }
+        }
+        return nil
+    }
+
+    @Test func theCodeOnAnAgentsCardApprovesItInEveryModeAndNowhereElseIsItSeen() async throws {
+        for mode in [GuardMode.askEveryTime, .askOncePerKind, .auto, .fullAccess] {
+            let w = try await World()
+            try await w.setMode(mode)
+            async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: .external(client: "Claude Code"))
+            guard let (card, code) = await Self.waitForThePlanCard(w) else { Issue.record("\(mode): a plan card with a code"); continue }
+            guard case .text(let words) = card.details else { continue }
+            #expect(words.contains("You can also give that app this code in its chat: \(code.prefix(3)) \(code.suffix(3))."), "\(mode): \(words)")
+            // Nowhere a card is read from but its words: not the summary a notice carries, not the exact request, not a row.
+            #expect(!card.summary.contains(code) && !(card.input ?? "").contains(code) && !card.title.contains(code), "\(mode): the code is only in the card's words")
+            let given = await w.confirm(code)
+            #expect(given.ok, "\(mode): \(given.text)")
+            #expect(!given.text.contains(code), "the answer to the agent doesn't repeat it")
+            let answered = await reply
+            #expect(answered["ok"]?.boolValue == true && answered["silent"]?.boolValue == false, "\(mode): \(answered)")
+            #expect(!"\(answered)".contains(code), "\(mode): nor does the extension's reply")
+            #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] != nil, "\(mode): the plan stands")
+            #expect(await w.h.env.broker.pending().isEmpty, "\(mode): the card is gone")
+            let rows = try await w.h.env.activity.recent(limit: 50)
+            #expect(rows.contains { $0.tool == PlanCodeTool.name && $0.decision == .allowed && $0.summary.contains("Claude Code") && $0.args?["how"]?.stringValue == "code" }, "\(mode): a row says how")
+            #expect(!rows.contains { "\($0.summary) \(String(describing: $0.args)) \($0.caller)".contains(code) }, "\(mode): no row has the code")
+            // One use: the same code again finds nothing.
+            let again = await w.confirm(code)
+            #expect(!again.ok && again.text.contains("No card of yours is waiting"), "\(mode): \(again.text)")
+        }
+    }
+
+    /// Through the external gateway, as a real agent calls: no row, whatever came of the try, holds the digits (the facade must pass the tool's own word on its rows, and
+    /// a field called `code` is redacted in any row as a second line), and the ones that tell of a try say so without them.
+    @Test func noHistoryRowHoldsTheCodeWhenAnAgentGivesItThroughTheGateway() async throws {
+        let w = try await World()
+        func rowsText() async throws -> String {
+            try await w.h.env.activity.recent(limit: 200).map { String(describing: $0) }.joined(separator: "\n")
+        }
+        let agent = Caller.external(client: "Claude Code")
+        // Wrong, wrong, wrong (locked), then the right one is refused too.
+        async let first = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: agent)
+        guard let (card, code) = await Self.waitForThePlanCard(w) else { Issue.record("a plan card"); return }
+        let wrong = code == "246810" ? "135791" : "246810"
+        for _ in 0..<3 { let tried = await w.confirmThroughTheGateway(wrong); #expect(!tried.ok, "\(tried.text)") }
+        let late = await w.confirmThroughTheGateway(code)
+        #expect(!late.ok, "locked: \(late.text)")
+        var text = try await rowsText()
+        #expect(!text.contains(code) && !text.contains(wrong), "wrong and locked: no row holds a digit of it:\n\(text)")
+        #expect(text.contains("[redacted]"), "the rows that tell of a try keep the field, redacted")
+        await w.h.env.broker.resolve(id: card.id, decision: .allowOnce)
+        _ = await first
+        // A new card and the right code: approved, and still no row has it.
+        async let second = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save], id: "other")], caller: agent)
+        guard let (_, code2) = await Self.waitForThePlanCard(w) else { Issue.record("a second plan card"); return }
+        let approved = await w.confirmThroughTheGateway(code2)
+        #expect(approved.ok, "\(approved.text)")
+        _ = await second
+        text = try await rowsText()
+        #expect(!text.contains(code2), "approved: no row holds the code:\n\(text)")
+        #expect(text.contains("Approved with the code the person gave Claude Code"), "and one row says how")
+        // Too many tries in a minute: the row says so, once, without a digit.
+        var last = (ok: true, text: "")
+        for _ in 0..<9 { last = await w.confirmThroughTheGateway("999999") }
+        #expect(!last.ok && last.text.contains("Too many tries"), "\(last.text)")
+        text = try await rowsText()
+        #expect(!text.contains("999999") && text.components(separatedBy: "tried codes too often").count == 2, "one row for the minute, no digits:\n\(text)")
+    }
+
+    @Test func aClickThatSettledTheCardFirstIsNotAnApprovalByTheCode() async throws {
+        let w = try await World()
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: .external(client: "Claude Code"))
+        guard let (card, code) = await Self.waitForThePlanCard(w) else { Issue.record("a plan card"); return }
+        // The person's click lands, then the agent gives the right code a moment later: nothing was approved by it.
+        await w.h.env.broker.resolve(id: card.id, decision: .allowOnce)
+        _ = await reply
+        let late = await w.confirmThroughTheGateway(code)
+        #expect(!late.ok, "\(late.text)")
+        let rows = try await w.h.env.activity.recent(limit: 50)
+        #expect(!rows.contains { $0.summary.contains("Approved with the code") }, "no row says the code approved it")
+    }
+
+    @Test func aWrongCodeThreeTimesLocksTheCardAndTheClickStillWorks() async throws {
+        let w = try await World()
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: .external(client: "Claude Code"))
+        guard let (card, code) = await Self.waitForThePlanCard(w) else { Issue.record("a plan card"); return }
+        let wrong = code == "000000" ? "111111" : "000000"
+        let first = await w.confirm(wrong), second = await w.confirm(wrong), third = await w.confirm(wrong)
+        #expect(!first.ok && first.text.contains("2 tries left") && !second.ok && second.text.contains("1 try left"), "\(first.text) \(second.text)")
+        #expect(!third.ok && third.text.contains("needs the person's click"), "\(third.text)")
+        // Locked: even the right code is no longer taken, and nothing was approved.
+        let late = await w.confirm(code)
+        #expect(!late.ok, "\(late.text)")
+        #expect(await w.h.env.broker.pending().contains { $0.id == card.id }, "the card is still up")
+        #expect(await w.h.host.loadPreferences("com.example.flow").plans["digest"] == nil)
+        // The person's click on the desktop works as it always did.
+        await w.h.env.broker.resolve(id: card.id, decision: .allowOnce)
+        let answered = await reply
+        #expect(answered["ok"]?.boolValue == true, "\(answered)")
+        let rows = try await w.h.env.activity.recent(limit: 50)
+        #expect(rows.contains { $0.tool == PlanCodeTool.name && $0.decision == .denied && $0.summary.contains("too many times") }, "the lock is on the record")
+        #expect(!rows.contains { "\($0.summary) \(String(describing: $0.args))".contains(wrong) && $0.tool == PlanCodeTool.name && $0.summary.contains(wrong) }, "a wrong code isn't recorded either")
+    }
+
+    @Test func aCodeIsForOneCardOneAgentAndTwoMinutes() async throws {
+        let w = try await World()
+        // Another agent's name, or a call that isn't an agent's at all, gets nothing.
+        async let reply = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save])], caller: .external(client: "Claude Code"))
+        guard let (card, code) = await Self.waitForThePlanCard(w) else { Issue.record("a plan card"); return }
+        let other = await w.confirm(code, as: "Codex")
+        #expect(!other.ok && other.text.contains("No card of yours"), "another agent's name: \(other.text)")
+        for caller in [Caller.user, .agent(runId: "r"), .routine(id: "r"), .extension(id: "com.example.flow")] {
+            let refused = await w.confirm(code, caller: caller)
+            #expect(!refused.ok, "\(caller)")
+        }
+        #expect(await w.h.env.broker.pending().contains { $0.id == card.id }, "none of that touched the card")
+        // Two minutes: past them the code is nothing, and the card is a click.
+        await w.h.host.ageAgentCode("com.example.flow", by: 121)
+        let late = await w.confirm(code)
+        #expect(!late.ok && late.text.contains("No card of yours"), "\(late.text)")
+        await w.h.env.broker.resolve(id: card.id, decision: .deny)
+        _ = await reply
+        // Another plan's card has a code of its own, and the first card's is of no use for it.
+        async let second = w.ask("sidefolk/plan.approve", ["plan": Self.plan([Self.save, ["tool": "notify.user", "input": ["title": "Done"]]], id: "other")], caller: .external(client: "Claude Code"))
+        guard let (card2, code2) = await Self.waitForThePlanCard(w) else { Issue.record("a second plan card"); return }
+        if code2 != code {
+            let replay = await w.confirm(code)
+            #expect(!replay.ok && !replay.text.contains("Approved"), "the old code for the new card: \(replay.text)")
+        }
+        #expect(await w.h.env.broker.pending().contains { $0.id == card2.id }, "the new card is untouched by a wrong code")
+        await w.h.env.broker.resolve(id: card2.id, decision: .deny)
+        _ = await second
+    }
+
+    @Test func anAgentCantTryCodesFasterThanSixAMinute() async throws {
+        let w = try await World()
+        var last = (ok: true, text: "")
+        for _ in 0..<7 { last = await w.confirm("123456") }
+        #expect(!last.ok && last.text.contains("Too many tries"), "\(last.text)")
+    }
+
     /// The person's click after an agent's call doesn't turn the agent's plan into theirs: the extension's program can be answering either, so while the agent's
     /// call is within the window every ask is a card.
     @Test func aClickAfterAnAgentsCallDoesNotMakeItsPlanThePersons() async throws {
@@ -1524,6 +1703,13 @@ import Testing
 
 
 extension ExtensionHost {
+    /// A test's way to let time pass for an agent's code without waiting for it.
+    func ageAgentCode(_ id: String, by seconds: TimeInterval) {
+        guard var code = runtimes[id]?.agentCode else { return }
+        code = AgentCode(digits: code.digits, client: code.client, body: code.body, plan: code.plan, expires: code.expires.addingTimeInterval(-seconds), wrong: code.wrong, locked: code.locked)
+        runtimes[id]?.agentCode = code
+    }
+
     /// A test's way to let time pass for the agent's window without waiting for it.
     func ageAgentCall(_ id: String, by seconds: TimeInterval) {
         guard let ask = runtimes[id]?.agentAsk else { return }
